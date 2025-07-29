@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, LogOut, Calendar, Users } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import AddLeadDialog from "./AddLeadDialog";
 
 interface Lead {
   id: string;
@@ -165,10 +166,7 @@ const CrmDashboard = () => {
                 <CardTitle>Recent Leads</CardTitle>
                 <CardDescription>Your latest potential clients</CardDescription>
               </div>
-              <Button size="sm">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Lead
-              </Button>
+              <AddLeadDialog onLeadAdded={fetchData} />
             </CardHeader>
             <CardContent>
               <div className="space-y-4">

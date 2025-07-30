@@ -6,9 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Calendar, Search } from "lucide-react";
+import { Plus, Calendar, Search, ChevronDown, Check } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
@@ -47,6 +47,7 @@ const NewSessionDialog = ({ onSessionScheduled }: NewSessionDialogProps) => {
 
   const [selectedLeadId, setSelectedLeadId] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -272,77 +273,118 @@ const NewSessionDialog = ({ onSessionScheduled }: NewSessionDialogProps) => {
               </div>
               
               {!isNewLead && (
-                <div className="space-y-3">
-                  {/* Search Input */}
-                  <div className="space-y-2">
-                    <Label htmlFor="search-leads">Search clients</Label>
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                      <Input
-                        id="search-leads"
-                        placeholder="Search by name or email..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10"
-                      />
-                    </div>
-                  </div>
-                  
-                  {/* Lead Selection */}
-                  <div className="space-y-2">
-                    <Label htmlFor="lead-select">Select client</Label>
-                    {loadingLeads ? (
-                      <div className="p-4 text-center text-sm text-muted-foreground border rounded-md">
-                        Loading clients...
+                <div className="space-y-2">
+                  <Label htmlFor="lead-search">Select client</Label>
+                  <Popover open={dropdownOpen} onOpenChange={setDropdownOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={dropdownOpen}
+                        className="w-full justify-between text-left h-auto min-h-[40px]"
+                        disabled={loadingLeads}
+                      >
+                        {selectedLeadId ? (
+                          <div className="flex items-center justify-between w-full">
+                            <div className="flex flex-col">
+                              <span className="font-medium">{leads.find(lead => lead.id === selectedLeadId)?.name}</span>
+                              {leads.find(lead => lead.id === selectedLeadId)?.email && (
+                                <span className="text-xs text-muted-foreground">{leads.find(lead => lead.id === selectedLeadId)?.email}</span>
+                              )}
+                            </div>
+                            {leads.find(lead => lead.id === selectedLeadId) && (
+                              <Badge
+                                variant={
+                                  leads.find(lead => lead.id === selectedLeadId)?.sessionStatus === 'scheduled' ? 'destructive' :
+                                  leads.find(lead => lead.id === selectedLeadId)?.sessionStatus === 'completed' ? 'secondary' : 'outline'
+                                }
+                                className="text-xs"
+                              >
+                                {leads.find(lead => lead.id === selectedLeadId)?.sessionStatus === 'none' ? 'Available' : leads.find(lead => lead.id === selectedLeadId)?.sessionStatus}
+                              </Badge>
+                            )}
+                          </div>
+                        ) : loadingLeads ? (
+                          "Loading clients..."
+                        ) : (
+                          "Search and select a client..."
+                        )}
+                        <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-full p-0" align="start">
+                      <div className="p-3 border-b">
+                        <div className="relative">
+                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                          <Input
+                            placeholder="Search by name or email..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="pl-10"
+                            autoFocus
+                          />
+                        </div>
                       </div>
-                    ) : filteredLeads.length === 0 ? (
-                      <div className="p-4 text-center text-sm text-muted-foreground border rounded-md">
-                        {searchTerm ? 'No clients match your search' : 'No clients found'}
-                      </div>
-                    ) : (
-                      <Select value={selectedLeadId} onValueChange={setSelectedLeadId}>
-                        <SelectTrigger id="lead-select">
-                          <SelectValue placeholder="Choose a client..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {filteredLeads.map((lead) => (
-                            <SelectItem 
-                              key={lead.id} 
-                              value={lead.id}
-                              disabled={lead.hasScheduledSession}
+                      <div className="max-h-64 overflow-auto">
+                        {loadingLeads ? (
+                          <div className="p-4 text-center text-sm text-muted-foreground">
+                            Loading clients...
+                          </div>
+                        ) : filteredLeads.length === 0 ? (
+                          <div className="p-4 text-center text-sm text-muted-foreground">
+                            {searchTerm ? 'No clients match your search' : 'No clients found'}
+                          </div>
+                        ) : (
+                          filteredLeads.map((lead) => (
+                            <div
+                              key={lead.id}
+                              onClick={() => {
+                                if (!lead.hasScheduledSession) {
+                                  setSelectedLeadId(lead.id);
+                                  setDropdownOpen(false);
+                                  setSearchTerm("");
+                                }
+                              }}
                               className={cn(
-                                "flex items-center justify-between cursor-pointer",
-                                lead.hasScheduledSession && "opacity-50"
+                                "flex items-center justify-between p-3 hover:bg-muted/50 cursor-pointer border-b last:border-b-0",
+                                lead.hasScheduledSession && "opacity-50 cursor-not-allowed hover:bg-transparent",
+                                selectedLeadId === lead.id && "bg-muted"
                               )}
                             >
-                              <div className="flex items-center justify-between w-full">
+                              <div className="flex items-center space-x-3">
+                                <Check
+                                  className={cn(
+                                    "h-4 w-4",
+                                    selectedLeadId === lead.id ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
                                 <div className="flex flex-col">
                                   <span className="font-medium">{lead.name}</span>
                                   {lead.email && (
                                     <span className="text-xs text-muted-foreground">{lead.email}</span>
                                   )}
                                 </div>
-                                <div className="flex items-center space-x-2 ml-2">
-                                  <Badge
-                                    variant={
-                                      lead.sessionStatus === 'scheduled' ? 'destructive' :
-                                      lead.sessionStatus === 'completed' ? 'secondary' : 'outline'
-                                    }
-                                    className="text-xs"
-                                  >
-                                    {lead.sessionStatus === 'none' ? 'Available' : lead.sessionStatus}
-                                  </Badge>
-                                  {lead.hasScheduledSession && (
-                                    <span className="text-xs text-muted-foreground">Already scheduled</span>
-                                  )}
-                                </div>
                               </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-                  </div>
+                              <div className="flex items-center space-x-2">
+                                <Badge
+                                  variant={
+                                    lead.sessionStatus === 'scheduled' ? 'destructive' :
+                                    lead.sessionStatus === 'completed' ? 'secondary' : 'outline'
+                                  }
+                                  className="text-xs"
+                                >
+                                  {lead.sessionStatus === 'none' ? 'Available' : lead.sessionStatus}
+                                </Badge>
+                                {lead.hasScheduledSession && (
+                                  <span className="text-xs text-muted-foreground">Already scheduled</span>
+                                )}
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
                 </div>
               )}
 

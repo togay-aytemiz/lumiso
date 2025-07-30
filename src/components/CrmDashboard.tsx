@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, LogOut, Calendar, Users } from "lucide-react";
+import { Plus, LogOut, Calendar, Users, CheckCircle, XCircle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import AddLeadDialog from "./AddLeadDialog";
@@ -72,26 +72,30 @@ const CrmDashboard = () => {
       // Fetch upcoming sessions - only for leads with 'booked' status
       const { data: sessionsData, error: sessionsError } = await supabase
         .from('sessions')
-        .select('*, leads!inner(status)')
+        .select('*')
         .gte('session_date', new Date().toISOString().split('T')[0])
         .eq('status', 'scheduled')
-        .eq('leads.status', 'booked')
         .order('session_date', { ascending: true });
 
       if (sessionsError) throw sessionsError;
 
-      // Get lead names for sessions
+      // Filter sessions by lead status and get lead names
       if (sessionsData && sessionsData.length > 0) {
         const leadIds = sessionsData.map(session => session.lead_id);
         const { data: leadNamesData } = await supabase
           .from('leads')
-          .select('id, name')
+          .select('id, name, status')
           .in('id', leadIds);
 
-        const sessionsWithNames = sessionsData.map(session => ({
-          ...session,
-          lead_name: leadNamesData?.find(lead => lead.id === session.lead_id)?.name || 'Unknown Client'
-        }));
+        const sessionsWithNames = sessionsData
+          .filter(session => {
+            const lead = leadNamesData?.find(lead => lead.id === session.lead_id);
+            return lead && lead.status === 'booked';
+          })
+          .map(session => ({
+            ...session,
+            lead_name: leadNamesData?.find(lead => lead.id === session.lead_id)?.name || 'Unknown Client'
+          }));
 
         setUpcomingSessions(sessionsWithNames);
       } else {
@@ -132,7 +136,7 @@ const CrmDashboard = () => {
   const getStatCardGradient = (type: 'leads' | 'sessions' | 'booked' | 'completed' | 'lost') => {
     switch (type) {
       case 'leads': return 'bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-950/20 dark:to-indigo-950/30';
-      case 'sessions': return 'bg-gradient-to-br from-emerald-50 to-teal-100 dark:from-emerald-950/20 dark:to-teal-950/30';
+      case 'sessions': return 'bg-gradient-to-br from-purple-50 to-violet-100 dark:from-purple-950/20 dark:to-violet-950/30';
       case 'booked': return 'bg-gradient-to-br from-amber-50 to-orange-100 dark:from-amber-950/20 dark:to-orange-950/30';
       case 'completed': return 'bg-gradient-to-br from-green-50 to-emerald-100 dark:from-green-950/20 dark:to-emerald-950/30';
       case 'lost': return 'bg-gradient-to-br from-red-50 to-rose-100 dark:from-red-950/20 dark:to-rose-950/30';
@@ -142,7 +146,7 @@ const CrmDashboard = () => {
   const getIconColor = (type: 'leads' | 'sessions' | 'booked' | 'completed' | 'lost') => {
     switch (type) {
       case 'leads': return 'text-blue-600 dark:text-blue-400';
-      case 'sessions': return 'text-emerald-600 dark:text-emerald-400';
+      case 'sessions': return 'text-purple-600 dark:text-purple-400';
       case 'booked': return 'text-amber-600 dark:text-amber-400';
       case 'completed': return 'text-green-600 dark:text-green-400';
       case 'lost': return 'text-red-600 dark:text-red-400';
@@ -225,7 +229,7 @@ const CrmDashboard = () => {
           <Card className={`${getStatCardGradient('completed')} border-0 shadow-md hover:shadow-lg transition-shadow`}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-slate-700 dark:text-slate-300">Completed Leads</CardTitle>
-              <Users className={`h-5 w-5 ${getIconColor('completed')}`} />
+              <CheckCircle className={`h-5 w-5 ${getIconColor('completed')}`} />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-slate-800 dark:text-slate-200">
@@ -245,7 +249,7 @@ const CrmDashboard = () => {
           <Card className={`${getStatCardGradient('lost')} border-0 shadow-md hover:shadow-lg transition-shadow`}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-slate-700 dark:text-slate-300">Lost Leads</CardTitle>
-              <Users className={`h-5 w-5 ${getIconColor('lost')}`} />
+              <XCircle className={`h-5 w-5 ${getIconColor('lost')}`} />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-slate-800 dark:text-slate-200">

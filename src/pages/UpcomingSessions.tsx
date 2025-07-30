@@ -31,31 +31,36 @@ const UpcomingSessions = () => {
     try {
       const today = new Date().toISOString().split('T')[0];
       
-      // Get sessions for today and future - only for leads with 'booked' status
+      // Get sessions for today and future
       const { data: sessionsData, error: sessionsError } = await supabase
         .from('sessions')
-        .select('*, leads!inner(status)')
+        .select('*')
         .gte('session_date', today)
         .eq('status', 'scheduled')
-        .eq('leads.status', 'booked')
         .order('session_date', { ascending: true })
         .order('session_time', { ascending: true });
 
       if (sessionsError) throw sessionsError;
 
-      // Then get lead names for each session
+      // Filter sessions by lead status and get lead names
       if (sessionsData && sessionsData.length > 0) {
         const leadIds = [...new Set(sessionsData.map(session => session.lead_id))];
         
         const { data: leadsData, error: leadsError } = await supabase
           .from('leads')
-          .select('id, name')
+          .select('id, name, status')
           .in('id', leadIds);
 
         if (leadsError) throw leadsError;
 
+        // Filter sessions to only include those with 'booked' lead status
+        const filteredSessions = sessionsData.filter(session => {
+          const lead = leadsData?.find(lead => lead.id === session.lead_id);
+          return lead && lead.status === 'booked';
+        });
+
         // Map lead names to sessions
-        const sessionsWithNames = sessionsData.map(session => ({
+        const sessionsWithNames = filteredSessions.map(session => ({
           ...session,
           lead_name: leadsData?.find(lead => lead.id === session.lead_id)?.name || 'Unknown'
         }));

@@ -5,13 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { CalendarIcon, Clock, FileText, Plus, MessageSquare, Bell } from "lucide-react";
-import { format } from "date-fns";
-import { cn } from "@/lib/utils";
+import { Clock, FileText, Plus, MessageSquare, Bell } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 interface Activity {
@@ -44,10 +40,9 @@ const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
   const [saving, setSaving] = useState(false);
   
   // Form state
-  const [activityType, setActivityType] = useState<'note' | 'reminder'>('note');
   const [content, setContent] = useState('');
-  const [reminderDate, setReminderDate] = useState<Date>();
-  const [reminderTime, setReminderTime] = useState('');
+  const [isReminderMode, setIsReminderMode] = useState(false);
+  const [reminderDateTime, setReminderDateTime] = useState('');
 
   useEffect(() => {
     fetchActivities();
@@ -96,7 +91,7 @@ const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
       return;
     }
 
-    if (activityType === 'reminder' && (!reminderDate || !reminderTime)) {
+    if (isReminderMode && !reminderDateTime) {
       toast({
         title: "Validation error",
         description: "Date and time are required for reminders.",
@@ -113,11 +108,11 @@ const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
       const activityData = {
         user_id: userData.user.id,
         lead_id: leadId,
-        type: activityType,
+        type: isReminderMode ? 'reminder' : 'note',
         content: content.trim(),
-        ...(activityType === 'reminder' && {
-          reminder_date: reminderDate?.toISOString().split('T')[0],
-          reminder_time: reminderTime
+        ...(isReminderMode && reminderDateTime && {
+          reminder_date: reminderDateTime.split('T')[0],
+          reminder_time: reminderDateTime.split('T')[1]
         })
       };
 
@@ -129,13 +124,13 @@ const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
 
       toast({
         title: "Success",
-        description: `${activityType === 'note' ? 'Note' : 'Reminder'} added successfully.`
+        description: `${isReminderMode ? 'Reminder' : 'Note'} added successfully.`
       });
 
       // Reset form
       setContent('');
-      setReminderDate(undefined);
-      setReminderTime('');
+      setReminderDateTime('');
+      setIsReminderMode(false);
       
       // Refresh data
       await fetchActivities();
@@ -148,6 +143,13 @@ const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
       });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleReminderToggle = (checked: boolean) => {
+    setIsReminderMode(checked);
+    if (!checked) {
+      setReminderDateTime('');
     }
   };
 
@@ -215,71 +217,49 @@ const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label>Activity Type</Label>
-            <Select value={activityType} onValueChange={(value: 'note' | 'reminder') => setActivityType(value)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="note">Note</SelectItem>
-                <SelectItem value="reminder">Reminder</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Note</Label>
+              <Textarea
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                placeholder="Enter your note..."
+                rows={3}
+                className="resize-none"
+              />
+            </div>
 
-          <div className="space-y-2">
-            <Label>Content</Label>
-            <Textarea
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder={`Enter ${activityType} content...`}
-              rows={3}
-            />
-          </div>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="reminder-toggle" className="text-sm font-medium">
+                Set Reminder?
+              </Label>
+              <Switch
+                id="reminder-toggle"
+                checked={isReminderMode}
+                onCheckedChange={handleReminderToggle}
+              />
+            </div>
 
-          {activityType === 'reminder' && (
-            <div className="grid grid-cols-2 gap-4">
+            {isReminderMode && (
               <div className="space-y-2">
-                <Label>Date</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "justify-start text-left font-normal",
-                        !reminderDate && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {reminderDate ? format(reminderDate, "PPP") : "Pick a date"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={reminderDate}
-                      onSelect={setReminderDate}
-                      initialFocus
-                      className="pointer-events-auto"
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-              <div className="space-y-2">
-                <Label>Time</Label>
+                <Label>Date & Time</Label>
                 <Input
-                  type="time"
-                  value={reminderTime}
-                  onChange={(e) => setReminderTime(e.target.value)}
+                  type="datetime-local"
+                  value={reminderDateTime}
+                  onChange={(e) => setReminderDateTime(e.target.value)}
+                  className="w-full"
                 />
               </div>
-            </div>
-          )}
+            )}
 
-          <Button onClick={handleSaveActivity} disabled={saving || !content.trim()}>
-            {saving ? "Saving..." : `Add ${activityType === 'note' ? 'Note' : 'Reminder'}`}
-          </Button>
+            <Button 
+              onClick={handleSaveActivity} 
+              disabled={saving || !content.trim() || (isReminderMode && !reminderDateTime)}
+              className="w-full"
+            >
+              {saving ? "Saving..." : `Add ${isReminderMode ? 'Reminder' : 'Note'}`}
+            </Button>
+          </div>
         </CardContent>
       </Card>
 

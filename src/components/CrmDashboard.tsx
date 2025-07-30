@@ -18,6 +18,7 @@ interface Lead {
   notes: string;
   status: string;
   created_at: string;
+  updated_at: string;
 }
 
 interface Appointment {
@@ -68,12 +69,13 @@ const CrmDashboard = () => {
 
       if (appointmentsError) throw appointmentsError;
 
-      // Fetch upcoming sessions
+      // Fetch upcoming sessions - only for leads with 'booked' status
       const { data: sessionsData, error: sessionsError } = await supabase
         .from('sessions')
-        .select('*')
+        .select('*, leads!inner(status)')
         .gte('session_date', new Date().toISOString().split('T')[0])
         .eq('status', 'scheduled')
+        .eq('leads.status', 'booked')
         .order('session_date', { ascending: true });
 
       if (sessionsError) throw sessionsError;
@@ -127,19 +129,23 @@ const CrmDashboard = () => {
     }
   };
 
-  const getStatCardGradient = (type: 'leads' | 'sessions' | 'booked') => {
+  const getStatCardGradient = (type: 'leads' | 'sessions' | 'booked' | 'completed' | 'lost') => {
     switch (type) {
       case 'leads': return 'bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-950/20 dark:to-indigo-950/30';
       case 'sessions': return 'bg-gradient-to-br from-emerald-50 to-teal-100 dark:from-emerald-950/20 dark:to-teal-950/30';
       case 'booked': return 'bg-gradient-to-br from-amber-50 to-orange-100 dark:from-amber-950/20 dark:to-orange-950/30';
+      case 'completed': return 'bg-gradient-to-br from-green-50 to-emerald-100 dark:from-green-950/20 dark:to-emerald-950/30';
+      case 'lost': return 'bg-gradient-to-br from-red-50 to-rose-100 dark:from-red-950/20 dark:to-rose-950/30';
     }
   };
 
-  const getIconColor = (type: 'leads' | 'sessions' | 'booked') => {
+  const getIconColor = (type: 'leads' | 'sessions' | 'booked' | 'completed' | 'lost') => {
     switch (type) {
       case 'leads': return 'text-blue-600 dark:text-blue-400';
       case 'sessions': return 'text-emerald-600 dark:text-emerald-400';
       case 'booked': return 'text-amber-600 dark:text-amber-400';
+      case 'completed': return 'text-green-600 dark:text-green-400';
+      case 'lost': return 'text-red-600 dark:text-red-400';
     }
   };
 
@@ -172,7 +178,7 @@ const CrmDashboard = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 mb-8">
           <Card className={`${getStatCardGradient('leads')} border-0 shadow-md hover:shadow-lg transition-shadow`}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-slate-700 dark:text-slate-300">Total Leads</CardTitle>
@@ -212,6 +218,46 @@ const CrmDashboard = () => {
               </div>
               <p className="text-xs text-slate-600 dark:text-slate-400">
                 Ready for shoots
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className={`${getStatCardGradient('completed')} border-0 shadow-md hover:shadow-lg transition-shadow`}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-slate-700 dark:text-slate-300">Completed Leads</CardTitle>
+              <Users className={`h-5 w-5 ${getIconColor('completed')}`} />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-slate-800 dark:text-slate-200">
+                {leads.filter(lead => {
+                  if (lead.status !== 'completed') return false;
+                  const updatedDate = new Date(lead.updated_at);
+                  const now = new Date();
+                  return updatedDate.getMonth() === now.getMonth() && updatedDate.getFullYear() === now.getFullYear();
+                }).length}
+              </div>
+              <p className="text-xs text-slate-600 dark:text-slate-400">
+                This month
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className={`${getStatCardGradient('lost')} border-0 shadow-md hover:shadow-lg transition-shadow`}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-slate-700 dark:text-slate-300">Lost Leads</CardTitle>
+              <Users className={`h-5 w-5 ${getIconColor('lost')}`} />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-slate-800 dark:text-slate-200">
+                {leads.filter(lead => {
+                  if (lead.status !== 'lost') return false;
+                  const updatedDate = new Date(lead.updated_at);
+                  const now = new Date();
+                  return updatedDate.getMonth() === now.getMonth() && updatedDate.getFullYear() === now.getFullYear();
+                }).length}
+              </div>
+              <p className="text-xs text-slate-600 dark:text-slate-400">
+                Marked as lost this month
               </p>
             </CardContent>
           </Card>
@@ -312,7 +358,7 @@ const CrmDashboard = () => {
                         )}
                       </div>
                       <Badge variant="outline" className="shadow-sm border-emerald-200 text-emerald-700 dark:border-emerald-800 dark:text-emerald-400">
-                        {session.status}
+                        Upcoming
                       </Badge>
                     </div>
                   ))

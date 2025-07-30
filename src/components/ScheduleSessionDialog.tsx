@@ -40,6 +40,25 @@ const ScheduleSessionDialog = ({ leadId, leadName, onSessionScheduled }: Schedul
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("User not authenticated");
 
+      // First check if lead status should be updated
+      const { data: leadData, error: leadError } = await supabase
+        .from('leads')
+        .select('status')
+        .eq('id', leadId)
+        .single();
+
+      if (leadError) throw leadError;
+
+      // Update lead status to 'booked' if not already 'completed' or 'lost'
+      if (leadData && !['completed', 'lost'].includes(leadData.status)) {
+        const { error: updateError } = await supabase
+          .from('leads')
+          .update({ status: 'booked' })
+          .eq('id', leadId);
+
+        if (updateError) throw updateError;
+      }
+
       const { error } = await supabase
         .from('sessions')
         .insert({

@@ -31,11 +31,13 @@ const UpcomingSessions = () => {
     try {
       const today = new Date().toISOString().split('T')[0];
       
-      // First get sessions for today and future
+      // Get sessions for today and future - only for leads with 'booked' status
       const { data: sessionsData, error: sessionsError } = await supabase
         .from('sessions')
-        .select('*')
+        .select('*, leads!inner(status)')
         .gte('session_date', today)
+        .eq('status', 'scheduled')
+        .eq('leads.status', 'booked')
         .order('session_date', { ascending: true })
         .order('session_time', { ascending: true });
 

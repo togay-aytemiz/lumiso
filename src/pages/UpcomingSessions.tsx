@@ -145,9 +145,14 @@ const UpcomingSessions = () => {
                 <TableBody>
                   {sessions.map((session) => (
                     <TableRow key={session.id}>
-                      <TableCell className="font-medium">
-                        {session.lead_name}
-                      </TableCell>
+                       <TableCell className="font-medium">
+                         <button
+                           onClick={() => navigate(`/leads/${session.lead_id}`, { state: { from: 'all-sessions' } })}
+                           className="text-primary hover:underline cursor-pointer"
+                         >
+                           {session.lead_name}
+                         </button>
+                       </TableCell>
                       <TableCell>
                         {formatDate(session.session_date)}
                       </TableCell>

@@ -7,6 +7,7 @@ import { Plus, LogOut, Calendar, Users } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import AddLeadDialog from "./AddLeadDialog";
+import NewSessionDialog from "./NewSessionDialog";
 
 interface Lead {
   id: string;
@@ -199,16 +200,28 @@ const CrmDashboard = () => {
 
         <div className="grid gap-6 lg:grid-cols-2">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Recent Leads</CardTitle>
-                <CardDescription>Your latest potential clients</CardDescription>
+            <CardHeader>
+              <div className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle>Recent Leads</CardTitle>
+                  <CardDescription>Your latest potential clients</CardDescription>
+                </div>
+                <AddLeadDialog onLeadAdded={fetchData} />
               </div>
-              <AddLeadDialog onLeadAdded={fetchData} />
+              {leads.length > 0 && (
+                <Button 
+                  variant="secondary" 
+                  size="sm" 
+                  className="w-fit mt-4"
+                  onClick={() => navigate("/leads")}
+                >
+                  See All Leads
+                </Button>
+              )}
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {leads.slice(0, 5).map((lead) => (
+                 {leads.slice(0, 5).map((lead) => (
                   <div 
                     key={lead.id} 
                     className="flex items-center justify-between p-4 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
@@ -235,30 +248,25 @@ const CrmDashboard = () => {
                   </div>
                 )}
               </div>
-              {leads.length > 0 && (
-                <div className="pt-4 border-t">
-                  <Button 
-                    variant="secondary" 
-                    size="sm" 
-                    className="w-full"
-                    onClick={() => navigate("/leads")}
-                  >
-                    See All Leads
-                  </Button>
-                </div>
-              )}
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Upcoming Sessions</CardTitle>
-                <CardDescription>Your next photography sessions</CardDescription>
+            <CardHeader>
+              <div className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle>Upcoming Sessions</CardTitle>
+                  <CardDescription>Your next photography sessions</CardDescription>
+                </div>
+                <NewSessionDialog onSessionScheduled={fetchData} />
               </div>
-              <Button size="sm" onClick={() => navigate("/sessions")}>
-                <Plus className="h-4 w-4 mr-2" />
-                View All
+              <Button 
+                variant="secondary" 
+                size="sm" 
+                className="w-fit mt-4"
+                onClick={() => navigate("/sessions")}
+              >
+                View All Sessions
               </Button>
             </CardHeader>
             <CardContent>
@@ -285,18 +293,6 @@ const CrmDashboard = () => {
                   ))
                 )}
               </div>
-              {upcomingSessions.length > 0 && (
-                <div className="pt-4 border-t">
-                  <Button 
-                    variant="secondary" 
-                    size="sm" 
-                    className="w-full"
-                    onClick={() => navigate("/sessions")}
-                  >
-                    View All Sessions
-                  </Button>
-                </div>
-              )}
             </CardContent>
           </Card>
         </div>

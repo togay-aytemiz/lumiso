@@ -236,6 +236,8 @@ const LeadDetail = () => {
       navigate('/');
     } else if (from === 'all-leads') {
       navigate('/leads');
+    } else if (from === 'all-sessions') {
+      navigate('/sessions');
     } else {
       // Default fallback - go back in history if possible, otherwise to all leads
       if (window.history.length > 1) {
@@ -288,7 +290,8 @@ const LeadDetail = () => {
             size="sm"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            {location.state?.from === 'dashboard' ? 'Back to Dashboard' : 'Back to All Leads'}
+            {location.state?.from === 'dashboard' ? 'Back to Dashboard' : 
+             location.state?.from === 'all-sessions' ? 'Back to All Sessions' : 'Back to All Leads'}
           </Button>
           <div>
             <h1 className="text-2xl font-bold">Lead Details</h1>

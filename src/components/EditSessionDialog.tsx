@@ -7,6 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Edit, Save } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { sessionSchema, sanitizeInput, sanitizeHtml } from "@/lib/validation";
+import { ZodError } from "zod";
 
 interface EditSessionDialogProps {
   sessionId: string;
@@ -19,6 +21,7 @@ interface EditSessionDialogProps {
 const EditSessionDialog = ({ sessionId, currentDate, currentTime, currentNotes, onSessionUpdated }: EditSessionDialogProps) => {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [formData, setFormData] = useState({
     session_date: currentDate,
     session_time: currentTime,
@@ -33,26 +36,42 @@ const EditSessionDialog = ({ sessionId, currentDate, currentTime, currentNotes, 
     });
   }, [currentDate, currentTime, currentNotes]);
 
+  const validateForm = async () => {
+    setErrors({});
+    
+    try {
+      await sessionSchema.parseAsync({
+        session_date: sanitizeInput(formData.session_date),
+        session_time: sanitizeInput(formData.session_time),
+        notes: formData.notes ? await sanitizeHtml(formData.notes) : undefined
+      });
+      return true;
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const newErrors: Record<string, string> = {};
+        error.issues.forEach((err) => {
+          const field = err.path[0] as string;
+          newErrors[field] = err.message;
+        });
+        setErrors(newErrors);
+      }
+      return false;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.session_date || !formData.session_time) {
-      toast({
-        title: "Validation error",
-        description: "Please fill in both date and time.",
-        variant: "destructive"
-      });
-      return;
-    }
+    if (!(await validateForm())) return;
 
     setLoading(true);
     try {
       const { error } = await supabase
         .from('sessions')
         .update({
-          session_date: formData.session_date,
-          session_time: formData.session_time,
-          notes: formData.notes.trim() || null
+          session_date: sanitizeInput(formData.session_date),
+          session_time: sanitizeInput(formData.session_time),
+          notes: formData.notes ? await sanitizeHtml(formData.notes) : null
         })
         .eq('id', sessionId);
 
@@ -105,6 +124,7 @@ const EditSessionDialog = ({ sessionId, currentDate, currentTime, currentNotes, 
               onChange={(e) => handleInputChange("session_date", e.target.value)}
               required
             />
+            {errors.session_date && <p className="text-sm text-destructive">{errors.session_date}</p>}
           </div>
           <div className="space-y-2">
             <Label htmlFor="session_time">Time</Label>
@@ -115,6 +135,7 @@ const EditSessionDialog = ({ sessionId, currentDate, currentTime, currentNotes, 
               onChange={(e) => handleInputChange("session_time", e.target.value)}
               required
             />
+            {errors.session_time && <p className="text-sm text-destructive">{errors.session_time}</p>}
           </div>
           <div className="space-y-2">
             <Label htmlFor="notes">Notes</Label>
@@ -123,8 +144,10 @@ const EditSessionDialog = ({ sessionId, currentDate, currentTime, currentNotes, 
               value={formData.notes}
               onChange={(e) => handleInputChange("notes", e.target.value)}
               placeholder="Enter session notes (optional)"
+              maxLength={1000}
               rows={3}
             />
+            {errors.notes && <p className="text-sm text-destructive">{errors.notes}</p>}
           </div>
           <DialogFooter className="gap-2">
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>

@@ -7,11 +7,15 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
+import { signInSchema, signUpSchema, sanitizeInput } from "@/lib/validation";
+import { ZodError } from "zod";
 
 const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -25,15 +29,43 @@ const Auth = () => {
     checkUser();
   }, [navigate]);
 
+  const validateForm = (isSignUp: boolean = false) => {
+    setEmailError("");
+    setPasswordError("");
+    
+    try {
+      const schema = isSignUp ? signUpSchema : signInSchema;
+      schema.parse({
+        email: sanitizeInput(email),
+        password: sanitizeInput(password)
+      });
+      return true;
+    } catch (error) {
+      if (error instanceof ZodError) {
+        error.issues.forEach((err) => {
+          if (err.path[0] === "email") {
+            setEmailError(err.message);
+          } else if (err.path[0] === "password") {
+            setPasswordError(err.message);
+          }
+        });
+      }
+      return false;
+    }
+  };
+
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!validateForm(true)) return;
+    
     setLoading(true);
 
     const redirectUrl = `${window.location.origin}/`;
     
     const { error } = await supabase.auth.signUp({
-      email,
-      password,
+      email: sanitizeInput(email),
+      password: sanitizeInput(password),
       options: {
         emailRedirectTo: redirectUrl
       }
@@ -56,11 +88,14 @@ const Auth = () => {
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!validateForm(false)) return;
+    
     setLoading(true);
 
     const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password
+      email: sanitizeInput(email),
+      password: sanitizeInput(password)
     });
 
     if (error) {
@@ -100,8 +135,10 @@ const Auth = () => {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    maxLength={254}
                     required
                   />
+                  {emailError && <p className="text-sm text-destructive mt-1">{emailError}</p>}
                 </div>
                 <div>
                   <Label htmlFor="password">Password</Label>
@@ -110,8 +147,10 @@ const Auth = () => {
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    maxLength={128}
                     required
                   />
+                  {passwordError && <p className="text-sm text-destructive mt-1">{passwordError}</p>}
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading ? "Signing in..." : "Sign In"}
@@ -128,8 +167,10 @@ const Auth = () => {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    maxLength={254}
                     required
                   />
+                  {emailError && <p className="text-sm text-destructive mt-1">{emailError}</p>}
                 </div>
                 <div>
                   <Label htmlFor="password">Password</Label>
@@ -138,9 +179,11 @@ const Auth = () => {
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    maxLength={128}
                     required
-                    minLength={6}
+                    minLength={8}
                   />
+                  {passwordError && <p className="text-sm text-destructive mt-1">{passwordError}</p>}
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading ? "Creating account..." : "Sign Up"}

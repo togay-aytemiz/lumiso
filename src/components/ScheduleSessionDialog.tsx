@@ -71,6 +71,24 @@ const ScheduleSessionDialog = ({ leadId, leadName, onSessionScheduled }: Schedul
 
       if (error) throw error;
 
+      // Add activity entry for the scheduled session
+      const sessionDate = new Date(formData.session_date).toLocaleDateString();
+      const activityContent = `Photo session scheduled for ${sessionDate} at ${formData.session_time}`;
+      
+      const { error: activityError } = await supabase
+        .from('activities')
+        .insert({
+          user_id: user.id,
+          lead_id: leadId,
+          type: 'note',
+          content: activityContent
+        });
+
+      if (activityError) {
+        console.error('Error creating activity:', activityError);
+        // Don't throw here - session was created successfully
+      }
+
       toast({
         title: "Success",
         description: "Session scheduled successfully.",

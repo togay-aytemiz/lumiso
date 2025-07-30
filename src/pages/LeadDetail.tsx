@@ -299,6 +299,37 @@ const LeadDetail = () => {
     }
   };
 
+  const handleMarkAsLost = async () => {
+    if (!lead) return;
+
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from('leads')
+        .update({ status: 'lost' })
+        .eq('id', lead.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Lead marked as lost.",
+      });
+
+      // Refresh lead data
+      await fetchLead();
+      await fetchSession();
+    } catch (error: any) {
+      toast({
+        title: "Error updating lead",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleInputChange = (field: keyof typeof formData, value: string) => {
     setFormData(prev => ({
       ...prev,
@@ -380,17 +411,6 @@ const LeadDetail = () => {
                   onSessionScheduled={handleSessionScheduled}
                 />
               )}
-              
-              <Button 
-                onClick={handleSave} 
-                disabled={saving || !hasChanges}
-                variant="secondary"
-                size="sm"
-                className="h-10"
-              >
-                <Save className="h-4 w-4 mr-2" />
-                {saving ? "Saving..." : "Save Changes"}
-              </Button>
 
               {formData.status !== "completed" && (
                 <AlertDialog>
@@ -401,7 +421,7 @@ const LeadDetail = () => {
                       size="sm"
                     >
                       <CheckCircle className="h-4 w-4 mr-2" />
-                      Mark as Completed
+                      Completed
                     </Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent>
@@ -417,7 +437,39 @@ const LeadDetail = () => {
                         onClick={handleMarkAsCompleted}
                         className="bg-green-600 hover:bg-green-700 text-white"
                       >
-                        {saving ? "Updating..." : "Mark as Completed"}
+                        {saving ? "Updating..." : "Completed"}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
+
+              {formData.status !== "lost" && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button 
+                      disabled={saving}
+                      variant="destructive"
+                      size="sm"
+                      className="h-10"
+                    >
+                      Lost
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Mark Lead as Lost?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Are you sure you want to mark "{lead.name}" as lost? This will update the lead's status to "Lost".
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction 
+                        onClick={handleMarkAsLost}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        {saving ? "Updating..." : "Lost"}
                       </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>
@@ -428,10 +480,64 @@ const LeadDetail = () => {
         </div>
       </header>
 
-      {/* Session Banner */}
+      {/* Planned Photo Session Header */}
       {session && (
         <div className="container mx-auto px-4 pt-6">
-          <SessionBanner session={session} leadName={lead.name} />
+          <Card className="border-l-4 border-l-primary bg-primary/5">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div>
+                    <h3 className="font-semibold text-lg">Planned Photo Session</h3>
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
+                      <div className="flex items-center gap-1">
+                        <Calendar className="h-4 w-4" />
+                        <span>{new Date(session.session_date).toLocaleDateString()}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Clock className="h-4 w-4" />
+                        <span>{session.session_time}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <EditSessionDialog
+                    sessionId={session.id}
+                    currentDate={session.session_date}
+                    currentTime={session.session_time}
+                    currentNotes={session.notes}
+                    onSessionUpdated={handleSessionUpdated}
+                  />
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive" size="sm" disabled={deletingSession}>
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete Session
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Session?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to delete this session? This action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction 
+                          onClick={handleDeleteSession}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          {deletingSession ? "Deleting..." : "Delete Session"}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       )}
 
@@ -518,63 +624,18 @@ const LeadDetail = () => {
                   </div>
                 </div>
 
-                {/* Session Information */}
-                {session && (
-                  <div className="space-y-4 pt-4 border-t">
-                    <h4 className="font-semibold">Scheduled Session</h4>
-                    <div className="grid gap-3 p-3 border rounded-lg bg-muted/50">
-                      <div className="flex items-center gap-2 text-sm">
-                        <Calendar className="h-4 w-4 text-muted-foreground" />
-                        <span className="font-medium">Date:</span>
-                        <span>{new Date(session.session_date).toLocaleDateString()}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm">
-                        <Clock className="h-4 w-4 text-muted-foreground" />
-                        <span className="font-medium">Time:</span>
-                        <span>{session.session_time}</span>
-                      </div>
-                      {session.notes && (
-                        <div className="flex items-start gap-2 text-sm">
-                          <FileText className="h-4 w-4 text-muted-foreground mt-0.5" />
-                          <span className="font-medium">Notes:</span>
-                          <span className="flex-1">{session.notes}</span>
-                        </div>
-                      )}
-                      <div className="flex flex-col gap-2 pt-2">
-                        <EditSessionDialog
-                          sessionId={session.id}
-                          currentDate={session.session_date}
-                          currentTime={session.session_time}
-                          currentNotes={session.notes}
-                          onSessionUpdated={handleSessionUpdated}
-                        />
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="destructive" size="sm" disabled={deletingSession} className="w-full">
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Delete Session
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Delete Session?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Are you sure you want to delete this session? This action cannot be undone.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction 
-                                onClick={handleDeleteSession}
-                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                              >
-                                {deletingSession ? "Deleting..." : "Delete Session"}
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    </div>
+                {/* Save Changes Button - Only show if there are unsaved changes */}
+                {hasChanges && (
+                  <div className="flex justify-end pt-4 border-t">
+                    <Button 
+                      onClick={handleSave} 
+                      disabled={saving}
+                      variant="secondary"
+                      size="sm"
+                    >
+                      <Save className="h-4 w-4 mr-2" />
+                      {saving ? "Saving..." : "Save Changes"}
+                    </Button>
                   </div>
                 )}
 

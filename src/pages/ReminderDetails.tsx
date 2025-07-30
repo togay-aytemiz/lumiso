@@ -236,8 +236,15 @@ const ReminderDetails = () => {
 
   const toggleCompletion = async (activityId: string, completed: boolean) => {
     try {
-      // Note: Since we don't have a completed field in the activities table,
-      // we'll just update the local state for now
+      // Update the completion status in the database
+      const { error } = await supabase
+        .from('activities')
+        .update({ completed })
+        .eq('id', activityId);
+
+      if (error) throw error;
+
+      // Update local state to reflect the change immediately
       setActivities(prev => 
         prev.map(activity => 
           activity.id === activityId ? { ...activity, completed } : activity

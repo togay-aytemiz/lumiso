@@ -3,10 +3,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ArrowLeft, Bell, AlertTriangle, Clock, Calendar, CheckCircle, Circle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
+import { DateRangePicker } from "@/components/DateRangePicker";
+import type { DateRange } from "react-day-picker";
 
 interface Activity {
   id: string;
@@ -32,6 +33,7 @@ const ReminderDetails = () => {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedFilter, setSelectedFilter] = useState<FilterType>('today');
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -133,6 +135,21 @@ const ReminderDetails = () => {
     return reminder.getTime() >= startOfNextWeek.getTime() && reminder.getTime() <= endOfNextWeek.getTime();
   };
 
+  const isInDateRange = (reminderDate: string) => {
+    if (!dateRange?.from) return true;
+    
+    const reminder = new Date(reminderDate);
+    reminder.setHours(0, 0, 0, 0);
+    
+    const from = new Date(dateRange.from);
+    from.setHours(0, 0, 0, 0);
+    
+    const to = dateRange.to ? new Date(dateRange.to) : new Date(dateRange.from);
+    to.setHours(23, 59, 59, 999);
+    
+    return reminder.getTime() >= from.getTime() && reminder.getTime() <= to.getTime();
+  };
+
   const getFilteredActivities = () => {
     const overdueActivities = activities.filter(activity => isOverdue(activity.reminder_date));
     
@@ -154,6 +171,8 @@ const ReminderDetails = () => {
         filteredActivities = activities.filter(activity => isNextWeek(activity.reminder_date));
         break;
       case 'selectPeriod':
+        filteredActivities = activities.filter(activity => isInDateRange(activity.reminder_date));
+        break;
       default:
         filteredActivities = activities;
     }
@@ -256,21 +275,23 @@ const ReminderDetails = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 dark:from-gray-900 dark:to-slate-800">
       <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-sm">
-        <div className="container mx-auto px-4 py-4 flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate("/")}
-            className="hover:shadow-md transition-shadow"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Dashboard
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
-              Reminder Details
-            </h1>
-            <p className="text-muted-foreground">Manage your task reminders</p>
+        <div className="container mx-auto px-4 py-6">
+          <div className="space-y-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate("/")}
+              className="hover:shadow-md transition-shadow"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Dashboard
+            </Button>
+            <div>
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+                Reminder Details
+              </h1>
+              <p className="text-muted-foreground">Manage your task reminders</p>
+            </div>
           </div>
         </div>
       </header>
@@ -290,6 +311,13 @@ const ReminderDetails = () => {
                 {option.label}
               </Button>
             ))}
+            {selectedFilter === 'selectPeriod' && (
+              <DateRangePicker
+                dateRange={dateRange}
+                onDateRangeChange={setDateRange}
+                className="ml-2"
+              />
+            )}
           </div>
         </div>
       </div>
@@ -315,11 +343,11 @@ const ReminderDetails = () => {
                       <div className="flex items-start gap-3 flex-1">
                         {getReminderIcon(activity.reminder_date)}
                         <div className="flex-1 space-y-1">
-                          <div className="flex items-center gap-2">
-                            <h4 className="font-medium text-slate-800 dark:text-slate-200">
-                              {activity.content}
-                            </h4>
-                          </div>
+                           <div className="flex items-center gap-2">
+                             <h4 className={`font-medium text-slate-800 dark:text-slate-200 ${activity.completed ? 'line-through opacity-60' : ''}`}>
+                               {activity.content}
+                             </h4>
+                           </div>
                           <p className="text-sm text-slate-600 dark:text-slate-400">
                             Lead: {getLeadName(activity.lead_id)}
                           </p>
@@ -337,35 +365,33 @@ const ReminderDetails = () => {
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <div className="text-right">
-                          {isOverdue(activity.reminder_date) && (
-                            <Badge variant="destructive" className="text-xs">
-                              Overdue
-                            </Badge>
-                          )}
-                          {isToday(activity.reminder_date) && (
-                            <Badge variant="default" className="text-xs">
-                              Due Today
-                            </Badge>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                          <RadioGroup
-                            value={activity.completed ? "completed" : "notCompleted"}
-                            onValueChange={(value) => toggleCompletion(activity.id, value === "completed")}
-                          >
-                            <div className="flex items-center space-x-1">
-                              <RadioGroupItem value="notCompleted" id={`not-completed-${activity.id}`} />
-                              <Circle className="h-4 w-4 text-slate-400" />
-                            </div>
-                            <div className="flex items-center space-x-1">
-                              <RadioGroupItem value="completed" id={`completed-${activity.id}`} />
-                              <CheckCircle className="h-4 w-4 text-green-600" />
-                            </div>
-                          </RadioGroup>
-                        </div>
-                      </div>
+                       <div className="flex items-center gap-3">
+                         <div className="flex items-center gap-2">
+                           {isOverdue(activity.reminder_date) && (
+                             <Badge variant="destructive" className="text-xs bg-red-100 text-red-700 border-red-200 dark:bg-red-950/50 dark:text-red-300 dark:border-red-800">
+                               Overdue
+                             </Badge>
+                           )}
+                           {isToday(activity.reminder_date) && (
+                             <Badge className="text-xs bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-800">
+                               Due Today
+                             </Badge>
+                           )}
+                         </div>
+                         <button
+                           onClick={(e) => {
+                             e.stopPropagation();
+                             toggleCompletion(activity.id, !activity.completed);
+                           }}
+                           className="flex items-center justify-center w-6 h-6 rounded-full border-2 border-slate-300 dark:border-slate-600 hover:border-primary transition-colors"
+                         >
+                           {activity.completed ? (
+                             <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+                           ) : (
+                             <div className="w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-600" />
+                           )}
+                         </button>
+                       </div>
                     </div>
                   </div>
                 ))

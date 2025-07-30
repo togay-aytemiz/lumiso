@@ -290,9 +290,9 @@ const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
                   <div className="space-y-3 pl-4 border-l-2 border-muted">
                     {items.map((item, index) => (
                       <div key={`${item.type}-${item.data.id}-${index}`} className="relative">
-                        <div className="absolute -left-6 top-0.5 w-3 h-3 bg-background border-2 border-primary rounded-full"></div>
+                        <div className="absolute -left-6 top-3 w-3 h-3 bg-background border-2 border-muted-foreground/40 rounded-full"></div>
                         <div className="bg-muted/50 rounded-lg p-3 space-y-2">
-                          <div className="flex items-start justify-between">
+                          <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                               {item.type === 'activity' ? (
                                 item.data.type === 'note' ? (

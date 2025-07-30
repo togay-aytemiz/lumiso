@@ -624,54 +624,57 @@ const LeadDetail = () => {
                   </div>
                 </div>
 
-                {/* Save Changes Button - Only show if there are unsaved changes */}
-                {hasChanges && (
-                  <div className="flex justify-end pt-4 border-t">
-                    <Button 
-                      onClick={handleSave} 
-                      disabled={saving}
-                      variant="secondary"
-                      size="sm"
-                    >
-                      <Save className="h-4 w-4 mr-2" />
-                      {saving ? "Saving..." : "Save Changes"}
-                    </Button>
-                  </div>
-                )}
+                {/* Save Changes Button - Always visible, disabled if no changes */}
+                <div className="flex justify-end pt-4 border-t">
+                  <Button 
+                    onClick={handleSave} 
+                    disabled={saving || !hasChanges}
+                    size="sm"
+                    className="min-w-[120px]"
+                  >
+                    <Save className="h-4 w-4 mr-2" />
+                    {saving ? "Saving..." : "Save Changes"}
+                  </Button>
+                </div>
 
-                {/* Delete Lead - Keep at bottom as destructive action */}
-                <div className="flex justify-start pt-4 border-t">
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button 
-                        variant="destructive" 
-                        disabled={deleting}
-                        size="sm"
-                        className="w-full"
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Delete Lead
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This action cannot be undone. This will permanently delete the lead
-                          "{lead.name}" and remove all associated data.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction 
-                          onClick={handleDelete}
-                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                {/* Delete Lead - Less prominent, at bottom */}
+                <div className="pt-6 mt-6 border-t border-muted">
+                  <div className="text-center">
+                    <p className="text-sm text-muted-foreground mb-3">
+                      Danger Zone
+                    </p>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button 
+                          variant="outline" 
+                          disabled={deleting}
+                          size="sm"
+                          className="text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground"
                         >
-                          {deleting ? "Deleting..." : "Delete Lead"}
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete Lead
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete the lead
+                            "{lead.name}" and remove all associated data.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction 
+                            onClick={handleDelete}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            {deleting ? "Deleting..." : "Delete Lead"}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
                 </div>
               </CardContent>
             </Card>

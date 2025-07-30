@@ -9,7 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { ArrowLeft, Save, Trash2, Calendar, Clock, FileText, CheckCircle } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { ArrowLeft, Save, Trash2, Calendar, Clock, FileText, CheckCircle, MoreHorizontal } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import ScheduleSessionDialog from "@/components/ScheduleSessionDialog";
 import EditSessionDialog from "@/components/EditSessionDialog";
@@ -402,79 +403,121 @@ const LeadDetail = () => {
               <p className="text-muted-foreground">Edit lead information</p>
             </div>
             
-            {/* Header Action Buttons */}
-            <div className="flex flex-wrap gap-2 lg:gap-4">
-              {!session && (
-                <ScheduleSessionDialog 
-                  leadId={lead.id} 
-                  leadName={lead.name}
-                  onSessionScheduled={handleSessionScheduled}
-                />
-              )}
+            <div className="flex items-center gap-4">
+              {/* Header Action Buttons */}
+              <div className="flex flex-wrap gap-2 lg:gap-4">
+                {!session && (
+                  <ScheduleSessionDialog 
+                    leadId={lead.id} 
+                    leadName={lead.name}
+                    onSessionScheduled={handleSessionScheduled}
+                  />
+                )}
 
-              {formData.status !== "completed" && (
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button 
-                      disabled={saving}
-                      className="bg-green-600 hover:bg-green-700 text-white h-10"
-                      size="sm"
-                    >
-                      <CheckCircle className="h-4 w-4 mr-2" />
-                      Completed
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Mark Lead as Completed?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Are you sure you want to mark "{lead.name}" as completed? This will update the lead's status to "Completed".
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction 
-                        onClick={handleMarkAsCompleted}
-                        className="bg-green-600 hover:bg-green-700 text-white"
+                {formData.status !== "completed" && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button 
+                        disabled={saving}
+                        className="bg-green-600 hover:bg-green-700 text-white h-10"
+                        size="sm"
                       >
-                        {saving ? "Updating..." : "Completed"}
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              )}
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                        Completed
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Mark Lead as Completed?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to mark "{lead.name}" as completed? This will update the lead's status to "Completed".
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction 
+                          onClick={handleMarkAsCompleted}
+                          className="bg-green-600 hover:bg-green-700 text-white"
+                        >
+                          {saving ? "Updating..." : "Completed"}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
 
-              {formData.status !== "lost" && (
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button 
-                      disabled={saving}
-                      variant="destructive"
-                      size="sm"
-                      className="h-10"
-                    >
-                      Lost
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Mark Lead as Lost?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Are you sure you want to mark "{lead.name}" as lost? This will update the lead's status to "Lost".
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction 
-                        onClick={handleMarkAsLost}
-                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                {formData.status !== "lost" && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button 
+                        disabled={saving}
+                        variant="destructive"
+                        size="sm"
+                        className="h-10"
                       >
-                        {saving ? "Updating..." : "Lost"}
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              )}
+                        Lost
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Mark Lead as Lost?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to mark "{lead.name}" as lost? This will update the lead's status to "Lost".
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction 
+                          onClick={handleMarkAsLost}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          {saving ? "Updating..." : "Lost"}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
+              </div>
+
+              {/* More Menu */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <DropdownMenuItem 
+                        className="text-destructive focus:text-destructive cursor-pointer"
+                        onSelect={(e) => e.preventDefault()}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete
+                      </DropdownMenuItem>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action cannot be undone. This will permanently delete the lead
+                          "{lead.name}" and remove all associated data.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction 
+                          onClick={handleDelete}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          {deleting ? "Deleting..." : "Delete Lead"}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </div>
@@ -624,58 +667,20 @@ const LeadDetail = () => {
                   </div>
                 </div>
 
-                {/* Save Changes Button - Always visible, disabled if no changes */}
-                <div className="flex justify-end pt-4 border-t">
+                {/* Save Changes Button - Full width, primary styling */}
+                <div className="pt-4 border-t">
                   <Button 
                     onClick={handleSave} 
                     disabled={saving || !hasChanges}
                     size="sm"
-                    className="min-w-[120px]"
+                    className="w-full"
+                    variant={hasChanges ? "default" : "secondary"}
                   >
                     <Save className="h-4 w-4 mr-2" />
                     {saving ? "Saving..." : "Save Changes"}
                   </Button>
                 </div>
 
-                {/* Delete Lead - Less prominent, at bottom */}
-                <div className="pt-6 mt-6 border-t border-muted">
-                  <div className="text-center">
-                    <p className="text-sm text-muted-foreground mb-3">
-                      Danger Zone
-                    </p>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button 
-                          variant="outline" 
-                          disabled={deleting}
-                          size="sm"
-                          className="text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground"
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Delete Lead
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete the lead
-                            "{lead.name}" and remove all associated data.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction 
-                            onClick={handleDelete}
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                          >
-                            {deleting ? "Deleting..." : "Delete Lead"}
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
-                </div>
               </CardContent>
             </Card>
           </div>

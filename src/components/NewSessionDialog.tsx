@@ -284,14 +284,14 @@ const NewSessionDialog = ({ onSessionScheduled }: NewSessionDialogProps) => {
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-full p-0" side="bottom">
-                      <Command shouldFilter={false}>
+                      <Command>
                         <CommandInput placeholder="Search clients by name or email..." />
                         <CommandEmpty>No clients found.</CommandEmpty>
                         <CommandGroup className="max-h-64 overflow-auto">
-                          {leads && leads.length > 0 ? leads.map((lead) => (
+                          {leads.map((lead) => (
                             <CommandItem
                               key={lead.id}
-                              value={`${lead.name} ${lead.email || ''}`}
+                              value={lead.name}
                               onSelect={() => {
                                 if (!lead.hasScheduledSession) {
                                   setSelectedLeadId(lead.id);
@@ -300,7 +300,7 @@ const NewSessionDialog = ({ onSessionScheduled }: NewSessionDialogProps) => {
                               }}
                               disabled={lead.hasScheduledSession}
                               className={cn(
-                                "flex items-center justify-between",
+                                "flex items-center justify-between cursor-pointer",
                                 lead.hasScheduledSession && "opacity-50 cursor-not-allowed"
                               )}
                             >
@@ -333,7 +333,7 @@ const NewSessionDialog = ({ onSessionScheduled }: NewSessionDialogProps) => {
                                 )}
                               </div>
                             </CommandItem>
-                          )) : null}
+                          ))}
                         </CommandGroup>
                       </Command>
                     </PopoverContent>

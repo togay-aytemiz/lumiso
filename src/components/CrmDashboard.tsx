@@ -8,6 +8,7 @@ import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import AddLeadDialog from "./AddLeadDialog";
 import NewSessionDialog from "./NewSessionDialog";
+import GlobalSearch from "./GlobalSearch";
 
 interface Lead {
   id: string;
@@ -241,14 +242,17 @@ const CrmDashboard = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 dark:from-gray-900 dark:to-slate-800">
       <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-sm">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div>
+        <div className="container mx-auto px-4 py-4 flex items-center gap-4">
+          <div className="flex-shrink-0">
             <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
               Sweet Dreams CRM
             </h1>
             <p className="text-muted-foreground">Newborn Photography Business</p>
           </div>
-          <Button onClick={handleSignOut} variant="outline" className="hover:shadow-md transition-shadow">
+          
+          <GlobalSearch />
+          
+          <Button onClick={handleSignOut} variant="outline" className="hover:shadow-md transition-shadow flex-shrink-0">
             <LogOut className="h-4 w-4 mr-2" />
             Sign Out
           </Button>

@@ -1,8 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Search, FileText, Clock, Calendar, User, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
@@ -47,6 +45,7 @@ const GlobalSearch = () => {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
   const searchRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
@@ -54,6 +53,7 @@ const GlobalSearch = () => {
     const handleClickOutside = (event: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
         setIsOpen(false);
+        setActiveIndex(-1);
       }
     };
 
@@ -68,11 +68,37 @@ const GlobalSearch = () => {
       } else {
         setResults([]);
         setIsOpen(false);
+        setActiveIndex(-1);
       }
     }, 300);
 
     return () => clearTimeout(delayedSearch);
   }, [query]);
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!isOpen || results.length === 0) return;
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        setActiveIndex(prev => (prev + 1) % results.length);
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setActiveIndex(prev => prev <= 0 ? results.length - 1 : prev - 1);
+        break;
+      case 'Enter':
+        e.preventDefault();
+        if (activeIndex >= 0 && results[activeIndex]) {
+          handleResultClick(results[activeIndex]);
+        }
+        break;
+      case 'Escape':
+        setIsOpen(false);
+        setActiveIndex(-1);
+        break;
+    }
+  };
 
   const performSearch = async (searchQuery: string) => {
     setLoading(true);
@@ -89,7 +115,7 @@ const GlobalSearch = () => {
 
       // Add lead results
       leads?.forEach((lead: Lead) => {
-        let matchedContent = 'Lead profile';
+        let matchedContent = '';
         if (lead.email?.toLowerCase().includes(searchQuery.toLowerCase())) {
           matchedContent = `Email: ${lead.email}`;
         } else if (lead.phone?.toLowerCase().includes(searchQuery.toLowerCase())) {
@@ -203,6 +229,7 @@ const GlobalSearch = () => {
 
       setResults(sortedResults);
       setIsOpen(sortedResults.length > 0);
+      setActiveIndex(-1);
     } catch (error: any) {
       toast({
         title: "Search error",
@@ -214,27 +241,35 @@ const GlobalSearch = () => {
     }
   };
 
-  const getStatusBadgeVariant = (status: string) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
-      case 'new': return 'default';
-      case 'contacted': return 'secondary';
-      case 'qualified': return 'outline';
-      case 'booked': return 'default';
-      case 'completed': return 'default';
-      case 'lost': return 'destructive';
-      default: return 'secondary';
+      case 'new': 
+        return 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200';
+      case 'contacted': 
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
+      case 'qualified': 
+        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
+      case 'booked': 
+        return 'text-amber-800 dark:text-amber-200';
+      case 'completed': 
+        return 'text-emerald-800 dark:text-emerald-200';
+      case 'lost': 
+        return 'text-red-800 dark:text-red-200';
+      default: 
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusBackgroundColor = (status: string) => {
     switch (status) {
-      case 'new': return 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200';
-      case 'contacted': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
-      case 'qualified': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
-      case 'booked': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
-      case 'completed': return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200';
-      case 'lost': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
-      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
+      case 'booked': 
+        return '#f6c97f';
+      case 'completed': 
+        return '#a0eec0';
+      case 'lost': 
+        return '#f7c1c1';
+      default: 
+        return '';
     }
   };
 
@@ -242,6 +277,7 @@ const GlobalSearch = () => {
     navigate(`/leads/${result.leadId}`);
     setIsOpen(false);
     setQuery("");
+    setActiveIndex(-1);
   };
 
   const groupedResults = results.reduce((acc, result) => {
@@ -259,23 +295,26 @@ const GlobalSearch = () => {
     session: 'Sessions'
   };
 
+  let resultIndex = 0;
+
   return (
-    <div className="relative flex-1 max-w-md mx-4" ref={searchRef}>
+    <div className="relative w-full" ref={searchRef}>
       <div className="relative">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
-          placeholder="Search leads, notes, reminders, sessions..."
+          placeholder="Search leads, reminders, notes..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={handleKeyDown}
           onFocus={() => {
             if (results.length > 0) setIsOpen(true);
           }}
-          className="pl-10 pr-4 h-9 border-slate-200 dark:border-slate-700"
+          className="pl-10 pr-4 h-10 border-slate-200 dark:border-slate-700 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
         />
       </div>
 
       {isOpen && (
-        <div className="absolute top-full mt-2 w-full bg-background border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg z-50 max-h-96 overflow-y-auto">
+        <div className="absolute top-full mt-2 w-full bg-background border border-slate-200 dark:border-slate-700 rounded-lg shadow-xl backdrop-blur-sm z-50 max-h-96 overflow-y-auto">
           {loading ? (
             <div className="p-4 text-center text-muted-foreground">
               <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary mx-auto"></div>
@@ -295,33 +334,48 @@ const GlobalSearch = () => {
                   <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                     {typeLabels[type as keyof typeof typeLabels]} ({typeResults.length})
                   </div>
-                  {typeResults.map((result) => (
-                    <button
-                      key={`${result.type}-${result.id}`}
-                      onClick={() => handleResultClick(result)}
-                      className="w-full text-left px-3 py-2 hover:bg-accent hover:text-accent-foreground transition-colors group"
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className="flex-shrink-0 mt-0.5 text-muted-foreground">
-                          {result.icon}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between">
-                            <p className="font-medium text-sm truncate">{result.leadName}</p>
-                            <div className="flex items-center gap-2 ml-2">
-                              <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(result.status)}`}>
-                                {result.status}
-                              </span>
-                              <ChevronRight className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                            </div>
+                  {typeResults.map((result) => {
+                    const currentIndex = resultIndex++;
+                    const isActive = currentIndex === activeIndex;
+                    const bgColor = getStatusBackgroundColor(result.status);
+                    
+                    return (
+                      <button
+                        key={`${result.type}-${result.id}`}
+                        onClick={() => handleResultClick(result)}
+                        className={`w-full text-left px-3 py-2 transition-colors group ${
+                          isActive ? 'bg-accent text-accent-foreground' : 'hover:bg-accent hover:text-accent-foreground'
+                        }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="flex-shrink-0 mt-0.5 text-muted-foreground">
+                            {result.icon}
                           </div>
-                          <p className="text-xs text-muted-foreground mt-1 truncate">
-                            {result.matchedContent}
-                          </p>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between">
+                              <p className="font-medium text-sm truncate">{result.leadName}</p>
+                              <div className="flex items-center gap-2 ml-2">
+                                <span 
+                                  className={`px-2 py-1 text-xs rounded-full font-medium ${
+                                    bgColor ? '' : getStatusColor(result.status)
+                                  }`}
+                                  style={bgColor ? { backgroundColor: bgColor } : {}}
+                                >
+                                  {result.status}
+                                </span>
+                                <ChevronRight className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                              </div>
+                            </div>
+                            {result.matchedContent && (
+                              <p className="text-xs text-muted-foreground mt-1 truncate">
+                                {result.matchedContent}
+                              </p>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    </button>
-                  ))}
+                      </button>
+                    );
+                  })}
                 </div>
               ))}
               {results.length === 10 && (

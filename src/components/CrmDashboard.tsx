@@ -250,7 +250,9 @@ const CrmDashboard = () => {
             <p className="text-muted-foreground">Newborn Photography Business</p>
           </div>
           
-          <GlobalSearch />
+          <div className="flex-1 max-w-2xl mx-4">
+            <GlobalSearch />
+          </div>
           
           <Button onClick={handleSignOut} variant="outline" className="hover:shadow-md transition-shadow flex-shrink-0">
             <LogOut className="h-4 w-4 mr-2" />

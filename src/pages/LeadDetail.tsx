@@ -8,9 +8,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { ArrowLeft, Save, Trash2 } from "lucide-react";
+import { ArrowLeft, Save, Trash2, Calendar, Clock, FileText } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import ScheduleSessionDialog from "@/components/ScheduleSessionDialog";
+import EditSessionDialog from "@/components/EditSessionDialog";
 
 interface Lead {
   id: string;
@@ -23,14 +24,24 @@ interface Lead {
   created_at: string;
 }
 
+interface Session {
+  id: string;
+  session_date: string;
+  session_time: string;
+  notes: string;
+  status: string;
+}
+
 const LeadDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
   const [lead, setLead] = useState<Lead | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [deletingSession, setDeletingSession] = useState(false);
   
   // Form state
   const [formData, setFormData] = useState({
@@ -45,6 +56,7 @@ const LeadDetail = () => {
   useEffect(() => {
     if (id) {
       fetchLead();
+      fetchSession();
     }
   }, [id]);
 
@@ -89,6 +101,24 @@ const LeadDetail = () => {
     }
   };
 
+  const fetchSession = async () => {
+    if (!id) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('sessions')
+        .select('*')
+        .eq('lead_id', id)
+        .eq('status', 'scheduled')
+        .maybeSingle();
+
+      if (error) throw error;
+      setSession(data);
+    } catch (error: any) {
+      console.error('Error fetching session:', error);
+    }
+  };
+
   const handleSave = async () => {
     if (!lead || !formData.name.trim()) {
       toast({
@@ -122,6 +152,7 @@ const LeadDetail = () => {
 
       // Refresh lead data
       await fetchLead();
+      await fetchSession();
     } catch (error: any) {
       toast({
         title: "Error updating lead",
@@ -160,6 +191,43 @@ const LeadDetail = () => {
     } finally {
       setDeleting(false);
     }
+  };
+
+  const handleDeleteSession = async () => {
+    if (!session) return;
+
+    setDeletingSession(true);
+    try {
+      const { error } = await supabase
+        .from('sessions')
+        .delete()
+        .eq('id', session.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Session deleted successfully."
+      });
+
+      setSession(null);
+    } catch (error: any) {
+      toast({
+        title: "Error deleting session",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setDeletingSession(false);
+    }
+  };
+
+  const handleSessionScheduled = () => {
+    fetchSession();
+  };
+
+  const handleSessionUpdated = () => {
+    fetchSession();
   };
 
   const handleBack = () => {
@@ -308,6 +376,66 @@ const LeadDetail = () => {
               </div>
             </div>
 
+            {/* Session Information */}
+            {session ? (
+              <div className="space-y-4 pt-6 border-t">
+                <h3 className="text-lg font-semibold">Scheduled Session</h3>
+                <div className="grid gap-4 p-4 border rounded-lg bg-muted/50">
+                  <div className="flex items-center gap-2 text-sm">
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                    <span className="font-medium">Date:</span>
+                    <span>{new Date(session.session_date).toLocaleDateString()}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                    <span className="font-medium">Time:</span>
+                    <span>{session.session_time}</span>
+                  </div>
+                  {session.notes && (
+                    <div className="flex items-start gap-2 text-sm">
+                      <FileText className="h-4 w-4 text-muted-foreground mt-0.5" />
+                      <span className="font-medium">Notes:</span>
+                      <span className="flex-1">{session.notes}</span>
+                    </div>
+                  )}
+                  <div className="flex gap-2 pt-2">
+                    <EditSessionDialog
+                      sessionId={session.id}
+                      currentDate={session.session_date}
+                      currentTime={session.session_time}
+                      currentNotes={session.notes}
+                      onSessionUpdated={handleSessionUpdated}
+                    />
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="destructive" size="sm" disabled={deletingSession}>
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete Session
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete Session?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to delete this session? This action cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction 
+                            onClick={handleDeleteSession}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            {deletingSession ? "Deleting..." : "Delete Session"}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
             <div className="flex flex-col sm:flex-row gap-4 pt-6">
               <Button 
                 onClick={handleSave} 
@@ -318,10 +446,13 @@ const LeadDetail = () => {
                 {saving ? "Saving..." : "Save Changes"}
               </Button>
 
-              <ScheduleSessionDialog 
-                leadId={lead.id} 
-                leadName={lead.name} 
-              />
+              {!session && (
+                <ScheduleSessionDialog 
+                  leadId={lead.id} 
+                  leadName={lead.name}
+                  onSessionScheduled={handleSessionScheduled}
+                />
+              )}
 
               <AlertDialog>
                 <AlertDialogTrigger asChild>

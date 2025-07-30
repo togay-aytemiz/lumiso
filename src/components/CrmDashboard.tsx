@@ -28,9 +28,19 @@ interface Appointment {
   lead_id: string;
 }
 
+interface Session {
+  id: string;
+  session_date: string;
+  session_time: string;
+  notes: string;
+  status: string;
+  lead_name?: string;
+}
+
 const CrmDashboard = () => {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [upcomingSessions, setUpcomingSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -55,6 +65,34 @@ const CrmDashboard = () => {
         .order('date', { ascending: true });
 
       if (appointmentsError) throw appointmentsError;
+
+      // Fetch upcoming sessions
+      const { data: sessionsData, error: sessionsError } = await supabase
+        .from('sessions')
+        .select('*')
+        .gte('session_date', new Date().toISOString().split('T')[0])
+        .eq('status', 'scheduled')
+        .order('session_date', { ascending: true });
+
+      if (sessionsError) throw sessionsError;
+
+      // Get lead names for sessions
+      if (sessionsData && sessionsData.length > 0) {
+        const leadIds = sessionsData.map(session => session.lead_id);
+        const { data: leadNamesData } = await supabase
+          .from('leads')
+          .select('id, name')
+          .in('id', leadIds);
+
+        const sessionsWithNames = sessionsData.map(session => ({
+          ...session,
+          lead_name: leadNamesData?.find(lead => lead.id === session.lead_id)?.name || 'Unknown Client'
+        }));
+
+        setUpcomingSessions(sessionsWithNames);
+      } else {
+        setUpcomingSessions([]);
+      }
 
       setLeads(leadsData || []);
       setAppointments(appointmentsData || []);
@@ -135,7 +173,7 @@ const CrmDashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {appointments.filter(apt => new Date(apt.date) > new Date()).length}
+                {upcomingSessions.length}
               </div>
               <p className="text-xs text-muted-foreground">
                 Next 30 days
@@ -215,42 +253,39 @@ const CrmDashboard = () => {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
-                <CardTitle>Upcoming Appointments</CardTitle>
-                <CardDescription>Scheduled photo sessions</CardDescription>
+                <CardTitle>Upcoming Sessions</CardTitle>
+                <CardDescription>Your next photography sessions</CardDescription>
               </div>
-              <Button size="sm">
+              <Button size="sm" onClick={() => navigate("/sessions")}>
                 <Plus className="h-4 w-4 mr-2" />
-                Schedule
+                View All
               </Button>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {appointments
-                  .filter(apt => new Date(apt.date) > new Date())
-                  .slice(0, 5)
-                  .map((appointment) => (
-                    <div key={appointment.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="space-y-1">
-                        <h4 className="font-medium">{appointment.title}</h4>
-                        <p className="text-sm text-muted-foreground">
-                          {new Date(appointment.date).toLocaleDateString()} at{' '}
-                          {new Date(appointment.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </p>
-                        {appointment.location && (
-                          <p className="text-xs text-muted-foreground">{appointment.location}</p>
-                        )}
-                      </div>
-                      <Badge variant="outline">{appointment.status}</Badge>
-                    </div>
-                  ))}
-                {appointments.filter(apt => new Date(apt.date) > new Date()).length === 0 && (
+                {upcomingSessions.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
                     <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>No upcoming appointments. Schedule your first session!</p>
+                    <p>No upcoming sessions</p>
                   </div>
+                ) : (
+                  upcomingSessions.slice(0, 3).map((session) => (
+                    <div key={session.id} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div className="space-y-1">
+                        <h4 className="font-medium">{session.lead_name || 'Unknown Client'}</h4>
+                        <p className="text-sm text-muted-foreground">
+                          {new Date(session.session_date).toLocaleDateString()} at {session.session_time}
+                        </p>
+                        {session.notes && (
+                          <p className="text-xs text-muted-foreground">{session.notes}</p>
+                        )}
+                      </div>
+                      <Badge variant="outline">{session.status}</Badge>
+                    </div>
+                  ))
                 )}
               </div>
-              {appointments.filter(apt => new Date(apt.date) > new Date()).length > 0 && (
+              {upcomingSessions.length > 0 && (
                 <div className="pt-4 border-t">
                   <Button 
                     variant="secondary" 

@@ -25,7 +25,7 @@ export const nameSchema = z
   .string()
   .min(1, "Name is required")
   .max(100, "Name is too long")
-  .regex(/^[a-zA-Z\s\-'\.]+$/, "Name contains invalid characters");
+  .regex(/^[\p{L}\p{M}\s\-'\.]+$/u, "Name contains invalid characters");
 
 export const notesSchema = z
   .string()

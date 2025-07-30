@@ -395,9 +395,9 @@ const LeadDetail = () => {
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <div className="flex items-center gap-3 mb-1">
-                <h1 className="text-2xl font-bold">{formData.name || 'Lead Details'}</h1>
-                <Badge variant={getStatusBadgeVariant(formData.status)}>
-                  {formData.status.replace('_', ' ')}
+                <h1 className="text-2xl font-bold">{lead.name || 'Lead Details'}</h1>
+                <Badge variant={getStatusBadgeVariant(lead.status)}>
+                  {lead.status.replace('_', ' ')}
                 </Badge>
               </div>
               <p className="text-muted-foreground">Edit lead information</p>

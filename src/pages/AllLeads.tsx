@@ -5,8 +5,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowLeft, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { ArrowLeft, ArrowUpDown, ArrowUp, ArrowDown, Plus } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import AddLeadDialog from "@/components/AddLeadDialog";
 import { useNavigate } from "react-router-dom";
 
 interface Lead {
@@ -98,8 +99,7 @@ const AllLeads = () => {
   };
 
   const handleRowClick = (leadId: string) => {
-    // Navigate to lead detail page (to be implemented)
-    console.log('Navigate to lead detail:', leadId);
+    navigate(`/leads/${leadId}`);
   };
 
   const getStatusBadgeVariant = (status: string) => {
@@ -171,20 +171,23 @@ const AllLeads = () => {
                   All your leads in one place
                 </CardDescription>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">Filter by status:</span>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-48">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {statusOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                <AddLeadDialog onLeadAdded={fetchLeads} />
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">Filter by status:</span>
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="w-48">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {statusOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
           </CardHeader>

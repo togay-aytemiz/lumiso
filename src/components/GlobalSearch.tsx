@@ -48,6 +48,7 @@ const GlobalSearch = () => {
   const [loading, setLoading] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
   const searchRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -248,6 +249,8 @@ const GlobalSearch = () => {
     setResults([]);
     setIsOpen(false);
     setActiveIndex(-1);
+    // Keep focus in the search bar for continued typing
+    setTimeout(() => inputRef.current?.focus(), 0);
   };
 
   const handleResultClick = (result: SearchResult) => {
@@ -277,6 +280,7 @@ const GlobalSearch = () => {
       <div className="relative">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
+          ref={inputRef}
           placeholder="Search leads, reminders, notes..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}

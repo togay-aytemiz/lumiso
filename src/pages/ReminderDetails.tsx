@@ -26,7 +26,7 @@ interface Lead {
   status: string;
 }
 
-type FilterType = 'overdue' | 'today' | 'tomorrow' | 'thisWeek' | 'nextWeek' | 'selectPeriod';
+type FilterType = 'overdue' | 'today' | 'tomorrow' | 'thisWeek' | 'nextWeek' | 'thisMonth' | 'selectPeriod';
 
 const ReminderDetails = () => {
   const [activities, setActivities] = useState<Activity[]>([]);
@@ -135,6 +135,14 @@ const ReminderDetails = () => {
     return reminder.getTime() >= startOfNextWeek.getTime() && reminder.getTime() <= endOfNextWeek.getTime();
   };
 
+  const isThisMonth = (reminderDate: string) => {
+    const today = new Date();
+    const reminder = new Date(reminderDate);
+    
+    return today.getFullYear() === reminder.getFullYear() && 
+           today.getMonth() === reminder.getMonth();
+  };
+
   const isInDateRange = (reminderDate: string) => {
     if (!dateRange?.from) return true;
     
@@ -169,6 +177,9 @@ const ReminderDetails = () => {
         break;
       case 'nextWeek':
         filteredActivities = activities.filter(activity => isNextWeek(activity.reminder_date));
+        break;
+      case 'thisMonth':
+        filteredActivities = activities.filter(activity => isThisMonth(activity.reminder_date));
         break;
       case 'selectPeriod':
         filteredActivities = activities.filter(activity => isInDateRange(activity.reminder_date));
@@ -256,6 +267,7 @@ const ReminderDetails = () => {
     { key: 'tomorrow', label: 'Tomorrow' },
     { key: 'thisWeek', label: 'This Week' },
     { key: 'nextWeek', label: 'Next Week' },
+    { key: 'thisMonth', label: 'This Month' },
     { key: 'selectPeriod', label: 'Select Period' }
   ];
 

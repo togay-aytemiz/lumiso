@@ -8,6 +8,7 @@ import Auth from "./pages/Auth";
 import AllLeads from "./pages/AllLeads";
 import LeadDetail from "./pages/LeadDetail";
 import UpcomingSessions from "./pages/UpcomingSessions";
+import ReminderDetails from "./pages/ReminderDetails";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +25,7 @@ const App = () => (
           <Route path="/leads" element={<AllLeads />} />
           <Route path="/leads/:id" element={<LeadDetail />} />
           <Route path="/sessions" element={<UpcomingSessions />} />
+          <Route path="/reminders" element={<ReminderDetails />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

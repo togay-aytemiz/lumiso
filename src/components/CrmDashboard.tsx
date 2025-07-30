@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, LogOut, Calendar, Users, CheckCircle, XCircle } from "lucide-react";
+import { Plus, LogOut, Calendar, Users, CheckCircle, XCircle, Bell, AlertTriangle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import AddLeadDialog from "./AddLeadDialog";
@@ -40,10 +40,20 @@ interface Session {
   lead_name?: string;
 }
 
+interface Activity {
+  id: string;
+  content: string;
+  reminder_date: string;
+  reminder_time: string;
+  type: string;
+  lead_id: string;
+}
+
 const CrmDashboard = () => {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [upcomingSessions, setUpcomingSessions] = useState<Session[]>([]);
+  const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -68,6 +78,15 @@ const CrmDashboard = () => {
         .order('date', { ascending: true });
 
       if (appointmentsError) throw appointmentsError;
+
+      // Fetch activities with reminders
+      const { data: activitiesData, error: activitiesError } = await supabase
+        .from('activities')
+        .select('*')
+        .not('reminder_date', 'is', null)
+        .order('reminder_date', { ascending: true });
+
+      if (activitiesError) throw activitiesError;
 
       // Fetch upcoming sessions - only for leads with 'booked' status
       const { data: sessionsData, error: sessionsError } = await supabase
@@ -105,6 +124,7 @@ const CrmDashboard = () => {
 
       setLeads(leadsData || []);
       setAppointments(appointmentsData || []);
+      setActivities(activitiesData || []);
     } catch (error: any) {
       toast({
         title: "Error fetching data",
@@ -169,6 +189,24 @@ const CrmDashboard = () => {
       case 'completed': return 'text-green-600 dark:text-green-400';
       case 'lost': return 'text-red-600 dark:text-red-400';
     }
+  };
+
+  const getReminderCounts = () => {
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+    
+    const todayReminders = activities.filter(activity => 
+      activity.reminder_date === todayStr
+    );
+    
+    const overdueReminders = activities.filter(activity => 
+      activity.reminder_date < todayStr
+    );
+    
+    return {
+      today: todayReminders.length,
+      overdue: overdueReminders.length
+    };
   };
 
   if (loading) {
@@ -284,6 +322,67 @@ const CrmDashboard = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Reminders Card */}
+        <Card className="mb-8 shadow-md hover:shadow-lg transition-shadow border-slate-200 dark:border-slate-700">
+          <CardHeader className="bg-gradient-to-r from-slate-50 to-gray-50 dark:from-slate-800 dark:to-gray-800 rounded-t-lg">
+            <div className="flex flex-row items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Bell className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                <div>
+                  <CardTitle className="text-slate-800 dark:text-slate-200">Reminders</CardTitle>
+                  <CardDescription className="text-slate-600 dark:text-slate-400">Task reminders and notifications</CardDescription>
+                </div>
+              </div>
+              <Button 
+                variant="secondary" 
+                size="sm" 
+                className="hover:shadow-md transition-shadow"
+                onClick={() => navigate("/reminders")}
+              >
+                View All
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <div className="space-y-3">
+              {(() => {
+                const { today, overdue } = getReminderCounts();
+                const hasReminders = today > 0 || overdue > 0;
+                
+                if (!hasReminders) {
+                  return (
+                    <div className="text-center py-8 text-slate-500 dark:text-slate-400">
+                      <Bell className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p>No reminders scheduled</p>
+                    </div>
+                  );
+                }
+                
+                return (
+                  <>
+                    {today > 0 && (
+                      <div className="flex items-center gap-3 p-4 border border-blue-200 dark:border-blue-800 rounded-lg bg-blue-50/50 dark:bg-blue-950/20">
+                        <Bell className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                        <p className="text-slate-700 dark:text-slate-300">
+                          You have <span className="font-semibold text-blue-700 dark:text-blue-300">{today}</span> task{today === 1 ? '' : 's'} scheduled for today.
+                        </p>
+                      </div>
+                    )}
+                    {overdue > 0 && (
+                      <div className="flex items-center gap-3 p-4 border border-red-200 dark:border-red-800 rounded-lg bg-red-50/50 dark:bg-red-950/20">
+                        <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" />
+                        <p className="text-slate-700 dark:text-slate-300">
+                          You have <span className="font-semibold text-red-700 dark:text-red-300">{overdue}</span> overdue task{overdue === 1 ? '' : 's'} that still need{overdue === 1 ? 's' : ''} your attention.
+                        </p>
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
+            </div>
+          </CardContent>
+        </Card>
 
         <div className="grid gap-6 lg:grid-cols-2">
           <Card className="shadow-md hover:shadow-lg transition-shadow border-slate-200 dark:border-slate-700">

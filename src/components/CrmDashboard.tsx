@@ -194,28 +194,31 @@ const CrmDashboard = () => {
   const getReminderCounts = () => {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const todayStr = today.toISOString().split('T')[0];
     
     const todayReminders = activities.filter(activity => {
       if (!activity.reminder_date) return false;
-      const reminderDate = new Date(activity.reminder_date + 'T00:00:00');
+      // Parse the reminder date properly (it's already in ISO format from Supabase)
+      const reminderDate = new Date(activity.reminder_date);
       const reminderDateOnly = new Date(reminderDate.getFullYear(), reminderDate.getMonth(), reminderDate.getDate());
       return reminderDateOnly.getTime() === today.getTime();
     });
     
     const overdueReminders = activities.filter(activity => {
       if (!activity.reminder_date) return false;
-      const reminderDate = new Date(activity.reminder_date + 'T00:00:00');
+      const reminderDate = new Date(activity.reminder_date);
       const reminderDateOnly = new Date(reminderDate.getFullYear(), reminderDate.getMonth(), reminderDate.getDate());
       return reminderDateOnly.getTime() < today.getTime();
     });
     
     const upcomingReminders = activities.filter(activity => {
       if (!activity.reminder_date) return false;
-      const reminderDate = new Date(activity.reminder_date + 'T00:00:00');
+      const reminderDate = new Date(activity.reminder_date);
       const reminderDateOnly = new Date(reminderDate.getFullYear(), reminderDate.getMonth(), reminderDate.getDate());
       return reminderDateOnly.getTime() > today.getTime();
     });
+    
+    console.log('Reminder counts:', { today: todayReminders.length, overdue: overdueReminders.length, upcoming: upcomingReminders.length });
+    console.log('Activities:', activities);
     
     return {
       today: todayReminders.length,

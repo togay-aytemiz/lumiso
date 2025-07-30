@@ -219,24 +219,25 @@ const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
         <CardContent className="space-y-4">
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Note</Label>
+              <div className="flex items-center justify-between">
+                <Label>Note</Label>
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="reminder-toggle" className="text-sm font-medium">
+                    Set Reminder?
+                  </Label>
+                  <Switch
+                    id="reminder-toggle"
+                    checked={isReminderMode}
+                    onCheckedChange={handleReminderToggle}
+                  />
+                </div>
+              </div>
               <Textarea
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 placeholder="Enter your note..."
                 rows={3}
                 className="resize-none"
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <Label htmlFor="reminder-toggle" className="text-sm font-medium">
-                Set Reminder?
-              </Label>
-              <Switch
-                id="reminder-toggle"
-                checked={isReminderMode}
-                onCheckedChange={handleReminderToggle}
               />
             </div>
 
@@ -252,13 +253,16 @@ const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
               </div>
             )}
 
-            <Button 
-              onClick={handleSaveActivity} 
-              disabled={saving || !content.trim() || (isReminderMode && !reminderDateTime)}
-              className="w-full"
-            >
-              {saving ? "Saving..." : `Add ${isReminderMode ? 'Reminder' : 'Note'}`}
-            </Button>
+            <div className="flex justify-end">
+              <Button 
+                onClick={handleSaveActivity} 
+                disabled={saving || !content.trim() || (isReminderMode && !reminderDateTime)}
+                size="sm"
+                className="animate-fade-in"
+              >
+                {saving ? "Saving..." : `Add ${isReminderMode ? 'Reminder' : 'Note'}`}
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -286,19 +290,21 @@ const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
                   <div className="space-y-3 pl-4 border-l-2 border-muted">
                     {items.map((item, index) => (
                       <div key={`${item.type}-${item.data.id}-${index}`} className="relative">
-                        <div className="absolute -left-6 top-2 w-3 h-3 bg-background border-2 border-primary rounded-full"></div>
+                        <div className="absolute -left-6 top-1 w-3 h-3 bg-background border-2 border-primary rounded-full"></div>
                         <div className="bg-muted/50 rounded-lg p-3 space-y-2">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              {item.type === 'activity' ? (
-                                item.data.type === 'note' ? (
-                                  <MessageSquare className="h-4 w-4 text-blue-500" />
+                          <div className="flex items-start justify-between">
+                            <div className="flex items-start gap-2">
+                              <div className="mt-0.5">
+                                {item.type === 'activity' ? (
+                                  item.data.type === 'note' ? (
+                                    <MessageSquare className="h-4 w-4 text-blue-500" />
+                                  ) : (
+                                    <Bell className="h-4 w-4 text-orange-500" />
+                                  )
                                 ) : (
-                                  <Bell className="h-4 w-4 text-orange-500" />
-                                )
-                              ) : (
-                                <FileText className="h-4 w-4 text-gray-500" />
-                              )}
+                                  <FileText className="h-4 w-4 text-gray-500" />
+                                )}
+                              </div>
                               <Badge variant="outline" className="text-xs">
                                 {item.type === 'activity' 
                                   ? item.data.type 
@@ -306,7 +312,7 @@ const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
                                 }
                               </Badge>
                             </div>
-                            <span className="text-xs text-muted-foreground">
+                            <span className="text-xs text-muted-foreground mt-0.5">
                               {new Date(item.date).toLocaleTimeString('en-US', { 
                                 hour: '2-digit', 
                                 minute: '2-digit' 

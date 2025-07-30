@@ -345,12 +345,9 @@ const CrmDashboard = () => {
         <Card className="mb-8 shadow-md hover:shadow-lg transition-shadow border-slate-200 dark:border-slate-700">
           <CardHeader className="bg-gradient-to-r from-slate-50 to-gray-50 dark:from-slate-800 dark:to-gray-800 rounded-t-lg pb-4">
             <div className="flex flex-row items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Bell className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-                <div>
-                  <CardTitle className="text-slate-800 dark:text-slate-200">Reminders</CardTitle>
-                  <CardDescription className="text-slate-600 dark:text-slate-400">Task reminders and notifications</CardDescription>
-                </div>
+              <div>
+                <CardTitle className="text-slate-800 dark:text-slate-200">Reminders</CardTitle>
+                <CardDescription className="text-slate-600 dark:text-slate-400">Task reminders and notifications</CardDescription>
               </div>
               <Button 
                 variant="secondary" 

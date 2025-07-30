@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Bell, AlertTriangle, Clock, Calendar } from "lucide-react";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { ArrowLeft, Bell, AlertTriangle, Clock, Calendar, CheckCircle, Circle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 
@@ -15,6 +16,7 @@ interface Activity {
   type: string;
   lead_id: string;
   created_at: string;
+  completed?: boolean;
 }
 
 interface Lead {
@@ -23,10 +25,13 @@ interface Lead {
   status: string;
 }
 
+type FilterType = 'overdue' | 'today' | 'tomorrow' | 'thisWeek' | 'nextWeek' | 'selectPeriod';
+
 const ReminderDetails = () => {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedFilter, setSelectedFilter] = useState<FilterType>('today');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -74,13 +79,91 @@ const ReminderDetails = () => {
   };
 
   const isOverdue = (reminderDate: string) => {
-    const today = new Date().toISOString().split('T')[0];
-    return reminderDate < today;
+    const today = new Date();
+    const reminder = new Date(reminderDate);
+    today.setHours(0, 0, 0, 0);
+    reminder.setHours(0, 0, 0, 0);
+    return reminder.getTime() < today.getTime();
   };
 
   const isToday = (reminderDate: string) => {
-    const today = new Date().toISOString().split('T')[0];
-    return reminderDate === today;
+    const today = new Date();
+    const reminder = new Date(reminderDate);
+    today.setHours(0, 0, 0, 0);
+    reminder.setHours(0, 0, 0, 0);
+    return reminder.getTime() === today.getTime();
+  };
+
+  const isTomorrow = (reminderDate: string) => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const reminder = new Date(reminderDate);
+    tomorrow.setHours(0, 0, 0, 0);
+    reminder.setHours(0, 0, 0, 0);
+    return reminder.getTime() === tomorrow.getTime();
+  };
+
+  const isThisWeek = (reminderDate: string) => {
+    const today = new Date();
+    const reminder = new Date(reminderDate);
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() - today.getDay());
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+    
+    startOfWeek.setHours(0, 0, 0, 0);
+    endOfWeek.setHours(23, 59, 59, 999);
+    reminder.setHours(0, 0, 0, 0);
+    
+    return reminder.getTime() >= startOfWeek.getTime() && reminder.getTime() <= endOfWeek.getTime();
+  };
+
+  const isNextWeek = (reminderDate: string) => {
+    const today = new Date();
+    const reminder = new Date(reminderDate);
+    const startOfNextWeek = new Date(today);
+    startOfNextWeek.setDate(today.getDate() - today.getDay() + 7);
+    const endOfNextWeek = new Date(startOfNextWeek);
+    endOfNextWeek.setDate(startOfNextWeek.getDate() + 6);
+    
+    startOfNextWeek.setHours(0, 0, 0, 0);
+    endOfNextWeek.setHours(23, 59, 59, 999);
+    reminder.setHours(0, 0, 0, 0);
+    
+    return reminder.getTime() >= startOfNextWeek.getTime() && reminder.getTime() <= endOfNextWeek.getTime();
+  };
+
+  const getFilteredActivities = () => {
+    const overdueActivities = activities.filter(activity => isOverdue(activity.reminder_date));
+    
+    let filteredActivities: Activity[] = [];
+    
+    switch (selectedFilter) {
+      case 'overdue':
+        return overdueActivities;
+      case 'today':
+        filteredActivities = activities.filter(activity => isToday(activity.reminder_date));
+        break;
+      case 'tomorrow':
+        filteredActivities = activities.filter(activity => isTomorrow(activity.reminder_date));
+        break;
+      case 'thisWeek':
+        filteredActivities = activities.filter(activity => isThisWeek(activity.reminder_date));
+        break;
+      case 'nextWeek':
+        filteredActivities = activities.filter(activity => isNextWeek(activity.reminder_date));
+        break;
+      case 'selectPeriod':
+      default:
+        filteredActivities = activities;
+    }
+    
+    // Always show overdue at the top (unless overdue filter is selected)
+    if (selectedFilter !== 'overdue' as FilterType) {
+      return [...overdueActivities, ...filteredActivities.filter(activity => !isOverdue(activity.reminder_date))];
+    }
+    
+    return filteredActivities;
   };
 
   const formatDate = (dateStr: string) => {
@@ -121,6 +204,42 @@ const ReminderDetails = () => {
     }
   };
 
+  const toggleCompletion = async (activityId: string, completed: boolean) => {
+    try {
+      // Note: Since we don't have a completed field in the activities table,
+      // we'll just update the local state for now
+      setActivities(prev => 
+        prev.map(activity => 
+          activity.id === activityId ? { ...activity, completed } : activity
+        )
+      );
+      
+      toast({
+        title: completed ? "Reminder marked as completed" : "Reminder marked as not completed",
+        description: "Reminder status updated successfully."
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error updating reminder",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleReminderClick = (leadId: string) => {
+    navigate(`/leads/${leadId}`);
+  };
+
+  const filterOptions = [
+    { key: 'overdue', label: 'Overdue' },
+    { key: 'today', label: 'Today' },
+    { key: 'tomorrow', label: 'Tomorrow' },
+    { key: 'thisWeek', label: 'This Week' },
+    { key: 'nextWeek', label: 'Next Week' },
+    { key: 'selectPeriod', label: 'Select Period' }
+  ];
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-gray-100 dark:from-gray-900 dark:to-slate-800">
@@ -131,6 +250,8 @@ const ReminderDetails = () => {
       </div>
     );
   }
+
+  const filteredActivities = getFilteredActivities();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 dark:from-gray-900 dark:to-slate-800">
@@ -154,32 +275,41 @@ const ReminderDetails = () => {
         </div>
       </header>
 
+      {/* Filter Bar */}
+      <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container mx-auto px-4 py-3">
+          <div className="flex items-center gap-2 overflow-x-auto">
+            {filterOptions.map((option) => (
+              <Button
+                key={option.key}
+                variant={selectedFilter === option.key ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSelectedFilter(option.key as FilterType)}
+                className="whitespace-nowrap"
+              >
+                {option.label}
+              </Button>
+            ))}
+          </div>
+        </div>
+      </div>
+
       <main className="container mx-auto px-4 py-8">
         <Card className="shadow-md hover:shadow-lg transition-shadow border-slate-200 dark:border-slate-700">
-          <CardHeader className="bg-gradient-to-r from-slate-50 to-gray-50 dark:from-slate-800 dark:to-gray-800 rounded-t-lg">
-            <div className="flex items-center gap-3">
-              <Bell className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
-              <div>
-                <CardTitle className="text-slate-800 dark:text-slate-200">All Reminders</CardTitle>
-                <CardDescription className="text-slate-600 dark:text-slate-400">
-                  {activities.length} total reminder{activities.length === 1 ? '' : 's'}
-                </CardDescription>
-              </div>
-            </div>
-          </CardHeader>
           <CardContent className="pt-6">
             <div className="space-y-4">
-              {activities.length === 0 ? (
+              {filteredActivities.length === 0 ? (
                 <div className="text-center py-12 text-slate-500 dark:text-slate-400">
                   <Bell className="h-16 w-16 mx-auto mb-4 opacity-50" />
                   <h3 className="text-lg font-medium mb-2">No reminders found</h3>
-                  <p>You don't have any reminders set up yet.</p>
+                  <p>You don't have any reminders for the selected filter.</p>
                 </div>
               ) : (
-                activities.map((activity) => (
+                filteredActivities.map((activity) => (
                   <div
                     key={activity.id}
-                    className={`p-4 border rounded-lg transition-all duration-200 ${getReminderBorder(activity.reminder_date)}`}
+                    className={`p-4 border rounded-lg transition-all duration-200 cursor-pointer ${getReminderBorder(activity.reminder_date)}`}
+                    onClick={() => handleReminderClick(activity.lead_id)}
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex items-start gap-3 flex-1">
@@ -189,9 +319,6 @@ const ReminderDetails = () => {
                             <h4 className="font-medium text-slate-800 dark:text-slate-200">
                               {activity.content}
                             </h4>
-                            <Badge variant="outline" className="text-xs">
-                              {activity.type}
-                            </Badge>
                           </div>
                           <p className="text-sm text-slate-600 dark:text-slate-400">
                             Lead: {getLeadName(activity.lead_id)}
@@ -210,17 +337,34 @@ const ReminderDetails = () => {
                           </div>
                         </div>
                       </div>
-                      <div className="text-right">
-                        {isOverdue(activity.reminder_date) && (
-                          <Badge variant="destructive" className="text-xs">
-                            Overdue
-                          </Badge>
-                        )}
-                        {isToday(activity.reminder_date) && (
-                          <Badge variant="default" className="text-xs">
-                            Due Today
-                          </Badge>
-                        )}
+                      <div className="flex items-center gap-3">
+                        <div className="text-right">
+                          {isOverdue(activity.reminder_date) && (
+                            <Badge variant="destructive" className="text-xs">
+                              Overdue
+                            </Badge>
+                          )}
+                          {isToday(activity.reminder_date) && (
+                            <Badge variant="default" className="text-xs">
+                              Due Today
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                          <RadioGroup
+                            value={activity.completed ? "completed" : "notCompleted"}
+                            onValueChange={(value) => toggleCompletion(activity.id, value === "completed")}
+                          >
+                            <div className="flex items-center space-x-1">
+                              <RadioGroupItem value="notCompleted" id={`not-completed-${activity.id}`} />
+                              <Circle className="h-4 w-4 text-slate-400" />
+                            </div>
+                            <div className="flex items-center space-x-1">
+                              <RadioGroupItem value="completed" id={`completed-${activity.id}`} />
+                              <CheckCircle className="h-4 w-4 text-green-600" />
+                            </div>
+                          </RadioGroup>
+                        </div>
                       </div>
                     </div>
                   </div>

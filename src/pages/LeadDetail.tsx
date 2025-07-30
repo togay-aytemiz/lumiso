@@ -13,6 +13,8 @@ import { ArrowLeft, Save, Trash2, Calendar, Clock, FileText, CheckCircle } from 
 import { toast } from "@/hooks/use-toast";
 import ScheduleSessionDialog from "@/components/ScheduleSessionDialog";
 import EditSessionDialog from "@/components/EditSessionDialog";
+import ActivitySection from "@/components/ActivitySection";
+import SessionBanner from "@/components/SessionBanner";
 
 interface Lead {
   id: string;
@@ -426,180 +428,199 @@ const LeadDetail = () => {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8 max-w-2xl">
-        <Card>
-          <CardHeader>
-            <CardTitle>Lead Information</CardTitle>
-            <CardDescription>
-              Update the lead's details below. Created on {new Date(lead.created_at).toLocaleDateString()}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Name *</Label>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => handleInputChange("name", e.target.value)}
-                  placeholder="Enter lead name"
-                />
-              </div>
+      {/* Session Banner */}
+      {session && (
+        <div className="container mx-auto px-4 pt-6">
+          <SessionBanner session={session} leadName={lead.name} />
+        </div>
+      )}
 
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => handleInputChange("email", e.target.value)}
-                  placeholder="Enter email address"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone</Label>
-                <Input
-                  id="phone"
-                  value={formData.phone}
-                  onChange={(e) => handleInputChange("phone", e.target.value)}
-                  placeholder="Enter phone number"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="status">Status</Label>
-                <Select value={formData.status} onValueChange={(value) => handleInputChange("status", value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {statusOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="due_date">Due Date</Label>
-                <Input
-                  id="due_date"
-                  type="date"
-                  value={formData.due_date}
-                  onChange={(e) => handleInputChange("due_date", e.target.value)}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="notes">Notes</Label>
-                <Textarea
-                  id="notes"
-                  value={formData.notes}
-                  onChange={(e) => handleInputChange("notes", e.target.value)}
-                  placeholder="Enter any notes about this lead"
-                  rows={4}
-                />
-              </div>
-            </div>
-
-            {/* Session Information */}
-            {session ? (
-              <div className="space-y-4 pt-6 border-t">
-                <h3 className="text-lg font-semibold">Scheduled Session</h3>
-                <div className="grid gap-4 p-4 border rounded-lg bg-muted/50">
-                  <div className="flex items-center gap-2 text-sm">
-                    <Calendar className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-medium">Date:</span>
-                    <span>{new Date(session.session_date).toLocaleDateString()}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <Clock className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-medium">Time:</span>
-                    <span>{session.session_time}</span>
-                  </div>
-                  {session.notes && (
-                    <div className="flex items-start gap-2 text-sm">
-                      <FileText className="h-4 w-4 text-muted-foreground mt-0.5" />
-                      <span className="font-medium">Notes:</span>
-                      <span className="flex-1">{session.notes}</span>
-                    </div>
-                  )}
-                  <div className="flex gap-2 pt-2">
-                    <EditSessionDialog
-                      sessionId={session.id}
-                      currentDate={session.session_date}
-                      currentTime={session.session_time}
-                      currentNotes={session.notes}
-                      onSessionUpdated={handleSessionUpdated}
+      <main className="container mx-auto px-4 py-6">
+        {/* Two-column layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          {/* Left column - Lead Details (25%) */}
+          <div className="lg:col-span-1 space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Lead Information</CardTitle>
+                <CardDescription>
+                  Created on {new Date(lead.created_at).toLocaleDateString()}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Name *</Label>
+                    <Input
+                      id="name"
+                      value={formData.name}
+                      onChange={(e) => handleInputChange("name", e.target.value)}
+                      placeholder="Enter lead name"
                     />
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="destructive" size="sm" disabled={deletingSession}>
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Delete Session
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Delete Session?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Are you sure you want to delete this session? This action cannot be undone.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction 
-                            onClick={handleDeleteSession}
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                          >
-                            {deletingSession ? "Deleting..." : "Delete Session"}
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => handleInputChange("email", e.target.value)}
+                      placeholder="Enter email address"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Phone</Label>
+                    <Input
+                      id="phone"
+                      value={formData.phone}
+                      onChange={(e) => handleInputChange("phone", e.target.value)}
+                      placeholder="Enter phone number"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="status">Status</Label>
+                    <Select value={formData.status} onValueChange={(value) => handleInputChange("status", value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {statusOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="due_date">Due Date</Label>
+                    <Input
+                      id="due_date"
+                      type="date"
+                      value={formData.due_date}
+                      onChange={(e) => handleInputChange("due_date", e.target.value)}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="notes">Notes</Label>
+                    <Textarea
+                      id="notes"
+                      value={formData.notes}
+                      onChange={(e) => handleInputChange("notes", e.target.value)}
+                      placeholder="Enter any notes about this lead"
+                      rows={3}
+                    />
                   </div>
                 </div>
-              </div>
-            ) : null}
 
-            {/* Delete Lead - Keep at bottom as destructive action */}
-            <div className="flex justify-start pt-6 border-t">
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button 
-                    variant="destructive" 
-                    disabled={deleting}
-                    size="sm"
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Delete Lead
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This action cannot be undone. This will permanently delete the lead
-                      "{lead.name}" and remove all associated data.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction 
-                      onClick={handleDelete}
-                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                    >
-                      {deleting ? "Deleting..." : "Delete Lead"}
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </div>
-          </CardContent>
-        </Card>
+                {/* Session Information */}
+                {session && (
+                  <div className="space-y-4 pt-4 border-t">
+                    <h4 className="font-semibold">Scheduled Session</h4>
+                    <div className="grid gap-3 p-3 border rounded-lg bg-muted/50">
+                      <div className="flex items-center gap-2 text-sm">
+                        <Calendar className="h-4 w-4 text-muted-foreground" />
+                        <span className="font-medium">Date:</span>
+                        <span>{new Date(session.session_date).toLocaleDateString()}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm">
+                        <Clock className="h-4 w-4 text-muted-foreground" />
+                        <span className="font-medium">Time:</span>
+                        <span>{session.session_time}</span>
+                      </div>
+                      {session.notes && (
+                        <div className="flex items-start gap-2 text-sm">
+                          <FileText className="h-4 w-4 text-muted-foreground mt-0.5" />
+                          <span className="font-medium">Notes:</span>
+                          <span className="flex-1">{session.notes}</span>
+                        </div>
+                      )}
+                      <div className="flex flex-col gap-2 pt-2">
+                        <EditSessionDialog
+                          sessionId={session.id}
+                          currentDate={session.session_date}
+                          currentTime={session.session_time}
+                          currentNotes={session.notes}
+                          onSessionUpdated={handleSessionUpdated}
+                        />
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="destructive" size="sm" disabled={deletingSession} className="w-full">
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Delete Session
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete Session?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Are you sure you want to delete this session? This action cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction 
+                                onClick={handleDeleteSession}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              >
+                                {deletingSession ? "Deleting..." : "Delete Session"}
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Delete Lead - Keep at bottom as destructive action */}
+                <div className="flex justify-start pt-4 border-t">
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button 
+                        variant="destructive" 
+                        disabled={deleting}
+                        size="sm"
+                        className="w-full"
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete Lead
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action cannot be undone. This will permanently delete the lead
+                          "{lead.name}" and remove all associated data.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction 
+                          onClick={handleDelete}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          {deleting ? "Deleting..." : "Delete Lead"}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Right column - Activity Section (75%) */}
+          <div className="lg:col-span-3">
+            <ActivitySection leadId={lead.id} leadName={lead.name} />
+          </div>
+        </div>
       </main>
     </div>
   );

@@ -360,12 +360,12 @@ const ReminderDetails = () => {
                               {activity.content}
                             </h4>
                             {isOverdue(activity.reminder_date) && (
-                              <Badge className="text-xs bg-red-100 text-red-700 border-red-200 dark:bg-red-950/50 dark:text-red-300 dark:border-red-800">
+                              <Badge className="text-xs bg-red-100 text-red-700 border-red-200 dark:bg-red-950/50 dark:text-red-300 dark:border-red-800 pointer-events-none">
                                 Overdue
                               </Badge>
                             )}
-                            {isToday(activity.reminder_date) && (
-                              <Badge className="text-xs bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-800">
+                            {isToday(activity.reminder_date) && selectedFilter !== 'today' && (
+                              <Badge className="text-xs bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-800 pointer-events-none">
                                 Due Today
                               </Badge>
                             )}

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { ArrowLeft, Save, Trash2, Calendar, Clock, FileText } from "lucide-react";
+import { ArrowLeft, Save, Trash2, Calendar, Clock, FileText, CheckCircle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import ScheduleSessionDialog from "@/components/ScheduleSessionDialog";
 import EditSessionDialog from "@/components/EditSessionDialog";
@@ -53,6 +53,21 @@ const LeadDetail = () => {
     status: "new" as string
   });
 
+  // Track initial form data to detect changes
+  const [initialFormData, setInitialFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    due_date: "",
+    notes: "",
+    status: "new" as string
+  });
+
+  // Check if form has changes
+  const hasChanges = useMemo(() => {
+    return JSON.stringify(formData) !== JSON.stringify(initialFormData);
+  }, [formData, initialFormData]);
+
   useEffect(() => {
     if (id) {
       fetchLead();
@@ -81,14 +96,16 @@ const LeadDetail = () => {
       }
 
       setLead(data);
-      setFormData({
+      const newFormData = {
         name: data.name || "",
         email: data.email || "",
         phone: data.phone || "",
         due_date: data.due_date || "",
         notes: data.notes || "",
         status: data.status || "new"
-      });
+      };
+      setFormData(newFormData);
+      setInitialFormData(newFormData);
     } catch (error: any) {
       toast({
         title: "Error fetching lead",
@@ -248,6 +265,37 @@ const LeadDetail = () => {
     }
   };
 
+  const handleMarkAsCompleted = async () => {
+    if (!lead) return;
+
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from('leads')
+        .update({ status: 'completed' })
+        .eq('id', lead.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Lead marked as completed.",
+      });
+
+      // Refresh lead data
+      await fetchLead();
+      await fetchSession();
+    } catch (error: any) {
+      toast({
+        title: "Error updating lead",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleInputChange = (field: keyof typeof formData, value: string) => {
     setFormData(prev => ({
       ...prev,
@@ -283,19 +331,56 @@ const LeadDetail = () => {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b">
-        <div className="container mx-auto px-4 py-4 flex items-center gap-4">
-          <Button 
-            onClick={handleBack} 
-            variant="outline" 
-            size="sm"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            {location.state?.from === 'dashboard' ? 'Back to Dashboard' : 
-             location.state?.from === 'all-sessions' ? 'Back to All Sessions' : 'Back to All Leads'}
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold">Lead Details</h1>
-            <p className="text-muted-foreground">Edit lead information</p>
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex items-center gap-4">
+              <Button 
+                onClick={handleBack} 
+                variant="outline" 
+                size="sm"
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                {location.state?.from === 'dashboard' ? 'Back to Dashboard' : 
+                 location.state?.from === 'all-sessions' ? 'Back to All Sessions' : 'Back to All Leads'}
+              </Button>
+              <div>
+                <h1 className="text-2xl font-bold">Lead Details</h1>
+                <p className="text-muted-foreground">Edit lead information</p>
+              </div>
+            </div>
+            
+            {/* Header Action Buttons */}
+            <div className="flex flex-wrap gap-2">
+              {!session && (
+                <ScheduleSessionDialog 
+                  leadId={lead.id} 
+                  leadName={lead.name}
+                  onSessionScheduled={handleSessionScheduled}
+                />
+              )}
+              
+              <Button 
+                onClick={handleSave} 
+                disabled={saving || !hasChanges}
+                variant="secondary"
+                size="sm"
+              >
+                <Save className="h-4 w-4 mr-2" />
+                {saving ? "Saving..." : "Save Changes"}
+              </Button>
+
+              {formData.status !== "completed" && (
+                <Button 
+                  onClick={handleMarkAsCompleted} 
+                  disabled={saving}
+                  className="bg-green-600 hover:bg-green-700 text-white"
+                  size="sm"
+                >
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Mark as Completed
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </header>
@@ -439,30 +524,14 @@ const LeadDetail = () => {
               </div>
             ) : null}
 
-            <div className="flex flex-col sm:flex-row gap-4 pt-6">
-              <Button 
-                onClick={handleSave} 
-                disabled={saving}
-                className="flex-1"
-              >
-                <Save className="h-4 w-4 mr-2" />
-                {saving ? "Saving..." : "Save Changes"}
-              </Button>
-
-              {!session && (
-                <ScheduleSessionDialog 
-                  leadId={lead.id} 
-                  leadName={lead.name}
-                  onSessionScheduled={handleSessionScheduled}
-                />
-              )}
-
+            {/* Delete Lead - Keep at bottom as destructive action */}
+            <div className="flex justify-start pt-6 border-t">
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button 
                     variant="destructive" 
                     disabled={deleting}
-                    className="flex-1 sm:flex-initial"
+                    size="sm"
                   >
                     <Trash2 className="h-4 w-4 mr-2" />
                     Delete Lead

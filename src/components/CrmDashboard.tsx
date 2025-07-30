@@ -117,8 +117,25 @@ const CrmDashboard = () => {
   };
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    navigate("/auth");
+    try {
+      // Clean up any auth state first
+      localStorage.removeItem('supabase.auth.token');
+      Object.keys(localStorage).forEach((key) => {
+        if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+          localStorage.removeItem(key);
+        }
+      });
+
+      // Sign out with global scope to ensure all sessions are terminated
+      await supabase.auth.signOut({ scope: 'global' });
+      
+      // Force a full page refresh to ensure clean state
+      window.location.href = '/auth';
+    } catch (error) {
+      console.error('Sign out error:', error);
+      // Force navigation even if signOut fails
+      window.location.href = '/auth';
+    }
   };
 
   const getStatusBadgeVariant = (status: string) => {

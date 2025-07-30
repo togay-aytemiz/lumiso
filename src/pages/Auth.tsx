@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { signInSchema, signUpSchema, sanitizeInput } from "@/lib/validation";
 import { ZodError } from "zod";
+import newbornBg from "@/assets/newborn-bg.jpg";
 
 const Auth = () => {
   const [email, setEmail] = useState("");
@@ -111,88 +112,173 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Sweet Dreams CRM</CardTitle>
-          <CardDescription>
-            Manage your newborn photography business
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Tabs defaultValue="signin">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="signin">Sign In</TabsTrigger>
-              <TabsTrigger value="signup">Sign Up</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="signin">
-              <form onSubmit={handleSignIn} className="space-y-4">
-                <div>
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    maxLength={254}
-                    required
-                  />
-                  {emailError && <p className="text-sm text-destructive mt-1">{emailError}</p>}
-                </div>
-                <div>
-                  <Label htmlFor="password">Password</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    maxLength={128}
-                    required
-                  />
-                  {passwordError && <p className="text-sm text-destructive mt-1">{passwordError}</p>}
-                </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Signing in..." : "Sign In"}
-                </Button>
-              </form>
-            </TabsContent>
-            
-            <TabsContent value="signup">
-              <form onSubmit={handleSignUp} className="space-y-4">
-                <div>
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    maxLength={254}
-                    required
-                  />
-                  {emailError && <p className="text-sm text-destructive mt-1">{emailError}</p>}
-                </div>
-                <div>
-                  <Label htmlFor="password">Password</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    maxLength={128}
-                    required
-                    minLength={8}
-                  />
-                  {passwordError && <p className="text-sm text-destructive mt-1">{passwordError}</p>}
-                </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Creating account..." : "Sign Up"}
-                </Button>
-              </form>
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
+    <div 
+      className="min-h-screen flex items-center justify-center relative overflow-hidden"
+      style={{
+        backgroundImage: `url(${newbornBg})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      }}
+    >
+      {/* Soft overlay for better text readability */}
+      <div className="absolute inset-0 bg-white/40 dark:bg-black/40 backdrop-blur-sm"></div>
+      
+      {/* Gradient overlay for extra softness */}
+      <div className="absolute inset-0 bg-gradient-to-br from-pink-50/60 via-purple-50/40 to-blue-50/60 dark:from-pink-950/60 dark:via-purple-950/40 dark:to-blue-950/60"></div>
+      
+      <div className="relative z-10 w-full max-w-md mx-4">
+        {/* Main Header */}
+        <div className="text-center mb-8 animate-fade-in">
+          <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-pink-600 via-purple-600 to-blue-600 bg-clip-text text-transparent font-serif">
+            Sweet Dreams CRM
+          </h1>
+          <p className="text-lg text-slate-600 dark:text-slate-300 font-light">
+            Where precious moments become lasting memories
+          </p>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">
+            Professional newborn photography management
+          </p>
+        </div>
+
+        {/* Auth Card */}
+        <Card className="backdrop-blur-md bg-white/80 dark:bg-slate-800/80 border-white/20 shadow-2xl shadow-pink-200/50 dark:shadow-purple-900/50 animate-scale-in">
+          <CardHeader className="text-center pb-4">
+            <CardTitle className="text-2xl font-semibold text-slate-800 dark:text-slate-200">
+              Welcome Back
+            </CardTitle>
+            <CardDescription className="text-slate-600 dark:text-slate-400">
+              Access your photography dashboard
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Tabs defaultValue="signin" className="w-full">
+              <TabsList className="grid w-full grid-cols-2 bg-slate-100/70 dark:bg-slate-700/70">
+                <TabsTrigger 
+                  value="signin" 
+                  className="data-[state=active]:bg-white data-[state=active]:shadow-md transition-all duration-200"
+                >
+                  Sign In
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="signup"
+                  className="data-[state=active]:bg-white data-[state=active]:shadow-md transition-all duration-200"
+                >
+                  Sign Up
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="signin" className="mt-6">
+                <form onSubmit={handleSignIn} className="space-y-5">
+                  <div>
+                    <Label htmlFor="email" className="text-slate-700 dark:text-slate-300 font-medium">
+                      Email Address
+                    </Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      maxLength={254}
+                      required
+                      className="mt-1 bg-white/70 dark:bg-slate-800/70 border-slate-200/50 focus:border-pink-300 focus:ring-pink-200 rounded-xl h-12"
+                      placeholder="your@email.com"
+                    />
+                    {emailError && <p className="text-sm text-red-500 mt-1 font-medium">{emailError}</p>}
+                  </div>
+                  <div>
+                    <Label htmlFor="password" className="text-slate-700 dark:text-slate-300 font-medium">
+                      Password
+                    </Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      maxLength={128}
+                      required
+                      className="mt-1 bg-white/70 dark:bg-slate-800/70 border-slate-200/50 focus:border-pink-300 focus:ring-pink-200 rounded-xl h-12"
+                      placeholder="••••••••"
+                    />
+                    {passwordError && <p className="text-sm text-red-500 mt-1 font-medium">{passwordError}</p>}
+                  </div>
+                  <Button 
+                    type="submit" 
+                    className="w-full h-12 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-50 disabled:transform-none" 
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                        Signing you in...
+                      </div>
+                    ) : (
+                      "Get Started"
+                    )}
+                  </Button>
+                </form>
+              </TabsContent>
+              
+              <TabsContent value="signup" className="mt-6">
+                <form onSubmit={handleSignUp} className="space-y-5">
+                  <div>
+                    <Label htmlFor="email" className="text-slate-700 dark:text-slate-300 font-medium">
+                      Email Address
+                    </Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      maxLength={254}
+                      required
+                      className="mt-1 bg-white/70 dark:bg-slate-800/70 border-slate-200/50 focus:border-pink-300 focus:ring-pink-200 rounded-xl h-12"
+                      placeholder="your@email.com"
+                    />
+                    {emailError && <p className="text-sm text-red-500 mt-1 font-medium">{emailError}</p>}
+                  </div>
+                  <div>
+                    <Label htmlFor="password" className="text-slate-700 dark:text-slate-300 font-medium">
+                      Password
+                    </Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      maxLength={128}
+                      required
+                      minLength={8}
+                      className="mt-1 bg-white/70 dark:bg-slate-800/70 border-slate-200/50 focus:border-pink-300 focus:ring-pink-200 rounded-xl h-12"
+                      placeholder="At least 8 characters"
+                    />
+                    {passwordError && <p className="text-sm text-red-500 mt-1 font-medium">{passwordError}</p>}
+                  </div>
+                  <Button 
+                    type="submit" 
+                    className="w-full h-12 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-50 disabled:transform-none" 
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                        Creating account...
+                      </div>
+                    ) : (
+                      "Join Sweet Dreams"
+                    )}
+                  </Button>
+                </form>
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
+        
+        {/* Footer */}
+        <div className="text-center mt-8 text-sm text-slate-500 dark:text-slate-400">
+          <p>Trusted by photographers worldwide</p>
+        </div>
+      </div>
     </div>
   );
 };

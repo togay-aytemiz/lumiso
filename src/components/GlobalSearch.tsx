@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
-import { Search, FileText, Clock, Calendar, User, ChevronRight } from "lucide-react";
+import { Search, FileText, Clock, Calendar, User, ChevronRight, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import { getLeadStatusStyles, formatStatusText } from "@/lib/leadStatusColors";
@@ -243,11 +243,16 @@ const GlobalSearch = () => {
   };
 
 
+  const handleClearSearch = () => {
+    setQuery("");
+    setResults([]);
+    setIsOpen(false);
+    setActiveIndex(-1);
+  };
+
   const handleResultClick = (result: SearchResult) => {
     navigate(`/leads/${result.leadId}`);
-    setIsOpen(false);
-    setQuery("");
-    setActiveIndex(-1);
+    handleClearSearch(); // Auto-clear when navigating to a result
   };
 
   const groupedResults = results.reduce((acc, result) => {
@@ -279,8 +284,17 @@ const GlobalSearch = () => {
           onFocus={() => {
             if (results.length > 0) setIsOpen(true);
           }}
-          className="pl-10 pr-4 h-10 border-slate-200 dark:border-slate-700 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
+          className="pl-10 pr-10 h-10 border-slate-200 dark:border-slate-700 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
         />
+        {query && (
+          <button
+            onClick={handleClearSearch}
+            className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+            aria-label="Clear search"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
       </div>
 
       {isOpen && (

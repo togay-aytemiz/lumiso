@@ -284,58 +284,68 @@ const NewSessionDialog = ({ onSessionScheduled }: NewSessionDialogProps) => {
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-full p-0" side="bottom">
-                      <Command>
-                        <CommandInput placeholder="Search clients by name or email..." />
-                        <CommandEmpty>No clients found.</CommandEmpty>
-                        <CommandGroup className="max-h-64 overflow-auto">
-                          {leads.map((lead) => (
-                            <CommandItem
-                              key={lead.id}
-                              value={lead.name}
-                              onSelect={() => {
-                                if (!lead.hasScheduledSession) {
-                                  setSelectedLeadId(lead.id);
-                                  setLeadDropdownOpen(false);
-                                }
-                              }}
-                              disabled={lead.hasScheduledSession}
-                              className={cn(
-                                "flex items-center justify-between cursor-pointer",
-                                lead.hasScheduledSession && "opacity-50 cursor-not-allowed"
-                              )}
-                            >
-                              <div className="flex items-center space-x-2">
-                                <Check
-                                  className={cn(
-                                    "mr-2 h-4 w-4",
-                                    selectedLeadId === lead.id ? "opacity-100" : "opacity-0"
-                                  )}
-                                />
-                                <div>
-                                  <div className="font-medium">{lead.name}</div>
-                                  {lead.email && (
-                                    <div className="text-sm text-muted-foreground">{lead.email}</div>
+                      {loadingLeads ? (
+                        <div className="p-4 text-center text-sm text-muted-foreground">
+                          Loading clients...
+                        </div>
+                      ) : leads.length === 0 ? (
+                        <div className="p-4 text-center text-sm text-muted-foreground">
+                          No clients found
+                        </div>
+                      ) : (
+                        <Command>
+                          <CommandInput placeholder="Search clients by name or email..." />
+                          <CommandEmpty>No clients found.</CommandEmpty>
+                          <CommandGroup className="max-h-64 overflow-auto">
+                            {leads.map((lead) => (
+                              <CommandItem
+                                key={lead.id}
+                                value={lead.name || ''}
+                                onSelect={() => {
+                                  if (!lead.hasScheduledSession) {
+                                    setSelectedLeadId(lead.id);
+                                    setLeadDropdownOpen(false);
+                                  }
+                                }}
+                                disabled={lead.hasScheduledSession}
+                                className={cn(
+                                  "flex items-center justify-between cursor-pointer",
+                                  lead.hasScheduledSession && "opacity-50 cursor-not-allowed"
+                                )}
+                              >
+                                <div className="flex items-center space-x-2">
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      selectedLeadId === lead.id ? "opacity-100" : "opacity-0"
+                                    )}
+                                  />
+                                  <div>
+                                    <div className="font-medium">{lead.name}</div>
+                                    {lead.email && (
+                                      <div className="text-sm text-muted-foreground">{lead.email}</div>
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <Badge
+                                    variant={
+                                      lead.sessionStatus === 'scheduled' ? 'destructive' :
+                                      lead.sessionStatus === 'completed' ? 'secondary' : 'outline'
+                                    }
+                                    className="text-xs"
+                                  >
+                                    {lead.sessionStatus === 'none' ? 'Available' : lead.sessionStatus}
+                                  </Badge>
+                                  {lead.hasScheduledSession && (
+                                    <span className="text-xs text-muted-foreground">Already scheduled</span>
                                   )}
                                 </div>
-                              </div>
-                              <div className="flex items-center space-x-2">
-                                <Badge
-                                  variant={
-                                    lead.sessionStatus === 'scheduled' ? 'destructive' :
-                                    lead.sessionStatus === 'completed' ? 'secondary' : 'outline'
-                                  }
-                                  className="text-xs"
-                                >
-                                  {lead.sessionStatus === 'none' ? 'Available' : lead.sessionStatus}
-                                </Badge>
-                                {lead.hasScheduledSession && (
-                                  <span className="text-xs text-muted-foreground">Already scheduled</span>
-                                )}
-                              </div>
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </Command>
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </Command>
+                      )}
                     </PopoverContent>
                   </Popover>
                 </div>

@@ -341,13 +341,35 @@ const ReminderDetails = () => {
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex items-start gap-3 flex-1">
-                        {getReminderIcon(activity.reminder_date)}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleCompletion(activity.id, !activity.completed);
+                          }}
+                          className="flex items-center justify-center w-6 h-6 rounded-full border-2 border-slate-300 dark:border-slate-600 hover:border-primary transition-colors mt-0.5"
+                        >
+                          {activity.completed ? (
+                            <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+                          ) : (
+                            <div className="w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-600" />
+                          )}
+                        </button>
                         <div className="flex-1 space-y-1">
-                           <div className="flex items-center gap-2">
-                             <h4 className={`font-medium text-slate-800 dark:text-slate-200 ${activity.completed ? 'line-through opacity-60' : ''}`}>
-                               {activity.content}
-                             </h4>
-                           </div>
+                          <div className="flex items-center gap-2">
+                            <h4 className={`font-medium text-slate-800 dark:text-slate-200 ${activity.completed ? 'line-through opacity-60' : ''}`}>
+                              {activity.content}
+                            </h4>
+                            {isOverdue(activity.reminder_date) && (
+                              <Badge className="text-xs bg-red-100 text-red-700 border-red-200 dark:bg-red-950/50 dark:text-red-300 dark:border-red-800">
+                                Overdue
+                              </Badge>
+                            )}
+                            {isToday(activity.reminder_date) && (
+                              <Badge className="text-xs bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-800">
+                                Due Today
+                              </Badge>
+                            )}
+                          </div>
                           <p className="text-sm text-slate-600 dark:text-slate-400">
                             Lead: {getLeadName(activity.lead_id)}
                           </p>
@@ -365,33 +387,6 @@ const ReminderDetails = () => {
                           </div>
                         </div>
                       </div>
-                       <div className="flex items-center gap-3">
-                         <div className="flex items-center gap-2">
-                           {isOverdue(activity.reminder_date) && (
-                             <Badge variant="destructive" className="text-xs bg-red-100 text-red-700 border-red-200 dark:bg-red-950/50 dark:text-red-300 dark:border-red-800">
-                               Overdue
-                             </Badge>
-                           )}
-                           {isToday(activity.reminder_date) && (
-                             <Badge className="text-xs bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-800">
-                               Due Today
-                             </Badge>
-                           )}
-                         </div>
-                         <button
-                           onClick={(e) => {
-                             e.stopPropagation();
-                             toggleCompletion(activity.id, !activity.completed);
-                           }}
-                           className="flex items-center justify-center w-6 h-6 rounded-full border-2 border-slate-300 dark:border-slate-600 hover:border-primary transition-colors"
-                         >
-                           {activity.completed ? (
-                             <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
-                           ) : (
-                             <div className="w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-600" />
-                           )}
-                         </button>
-                       </div>
                     </div>
                   </div>
                 ))

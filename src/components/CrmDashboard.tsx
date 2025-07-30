@@ -171,7 +171,11 @@ const CrmDashboard = () => {
             <CardContent>
               <div className="space-y-4">
                 {leads.slice(0, 5).map((lead) => (
-                  <div key={lead.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div 
+                    key={lead.id} 
+                    className="flex items-center justify-between p-4 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+                    onClick={() => navigate(`/leads/${lead.id}`, { state: { from: 'dashboard' } })}
+                  >
                     <div className="space-y-1">
                       <h4 className="font-medium">{lead.name}</h4>
                       <p className="text-sm text-muted-foreground">{lead.email}</p>
@@ -246,6 +250,18 @@ const CrmDashboard = () => {
                   </div>
                 )}
               </div>
+              {appointments.filter(apt => new Date(apt.date) > new Date()).length > 0 && (
+                <div className="pt-4 border-t">
+                  <Button 
+                    variant="secondary" 
+                    size="sm" 
+                    className="w-full"
+                    onClick={() => navigate("/sessions")}
+                  >
+                    View All Sessions
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

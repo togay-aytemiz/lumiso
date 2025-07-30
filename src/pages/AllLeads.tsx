@@ -99,7 +99,7 @@ const AllLeads = () => {
   };
 
   const handleRowClick = (leadId: string) => {
-    navigate(`/leads/${leadId}`);
+    navigate(`/leads/${leadId}`, { state: { from: 'all-leads' } });
   };
 
   const getStatusBadgeVariant = (status: string) => {

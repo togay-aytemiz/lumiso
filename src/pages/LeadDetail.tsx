@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,6 +26,7 @@ interface Lead {
 const LeadDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const [lead, setLead] = useState<Lead | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -161,6 +162,22 @@ const LeadDetail = () => {
     }
   };
 
+  const handleBack = () => {
+    const from = location.state?.from;
+    if (from === 'dashboard') {
+      navigate('/');
+    } else if (from === 'all-leads') {
+      navigate('/leads');
+    } else {
+      // Default fallback - go back in history if possible, otherwise to all leads
+      if (window.history.length > 1) {
+        navigate(-1);
+      } else {
+        navigate('/leads');
+      }
+    }
+  };
+
   const handleInputChange = (field: keyof typeof formData, value: string) => {
     setFormData(prev => ({
       ...prev,
@@ -198,12 +215,12 @@ const LeadDetail = () => {
       <header className="border-b">
         <div className="container mx-auto px-4 py-4 flex items-center gap-4">
           <Button 
-            onClick={() => navigate("/leads")} 
+            onClick={handleBack} 
             variant="outline" 
             size="sm"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to All Leads
+            {location.state?.from === 'dashboard' ? 'Back to Dashboard' : 'Back to All Leads'}
           </Button>
           <div>
             <h1 className="text-2xl font-bold">Lead Details</h1>

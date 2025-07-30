@@ -284,11 +284,11 @@ const NewSessionDialog = ({ onSessionScheduled }: NewSessionDialogProps) => {
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-full p-0" side="bottom">
-                      <Command>
+                      <Command shouldFilter={false}>
                         <CommandInput placeholder="Search clients by name or email..." />
                         <CommandEmpty>No clients found.</CommandEmpty>
                         <CommandGroup className="max-h-64 overflow-auto">
-                          {leads.map((lead) => (
+                          {leads && leads.length > 0 ? leads.map((lead) => (
                             <CommandItem
                               key={lead.id}
                               value={`${lead.name} ${lead.email || ''}`}
@@ -333,7 +333,7 @@ const NewSessionDialog = ({ onSessionScheduled }: NewSessionDialogProps) => {
                                 )}
                               </div>
                             </CommandItem>
-                          ))}
+                          )) : null}
                         </CommandGroup>
                       </Command>
                     </PopoverContent>

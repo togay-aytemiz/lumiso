@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { ArrowLeft, Save, Trash2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import ScheduleSessionDialog from "@/components/ScheduleSessionDialog";
 
 interface Lead {
   id: string;
@@ -299,6 +300,11 @@ const LeadDetail = () => {
                 <Save className="h-4 w-4 mr-2" />
                 {saving ? "Saving..." : "Save Changes"}
               </Button>
+
+              <ScheduleSessionDialog 
+                leadId={lead.id} 
+                leadName={lead.name} 
+              />
 
               <AlertDialog>
                 <AlertDialogTrigger asChild>

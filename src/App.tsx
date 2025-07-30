@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import AllLeads from "./pages/AllLeads";
 import LeadDetail from "./pages/LeadDetail";
+import UpcomingSessions from "./pages/UpcomingSessions";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -22,6 +23,7 @@ const App = () => (
           <Route path="/auth" element={<Auth />} />
           <Route path="/leads" element={<AllLeads />} />
           <Route path="/leads/:id" element={<LeadDetail />} />
+          <Route path="/sessions" element={<UpcomingSessions />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

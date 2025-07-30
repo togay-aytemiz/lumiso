@@ -87,12 +87,11 @@ const CrmDashboard = () => {
           .select('id, name, status')
           .in('id', leadIds);
 
-        // Include sessions for leads that are 'booked' OR have scheduled sessions (even if completed)
+        // Only include sessions for leads with 'booked' status
         const sessionsWithNames = sessionsData
           .filter(session => {
             const lead = leadNamesData?.find(lead => lead.id === session.lead_id);
-            // Show sessions for booked leads, or keep existing scheduled sessions even if lead was completed
-            return lead && (lead.status === 'booked' || session.status === 'scheduled');
+            return lead && lead.status === 'booked';
           })
           .map(session => ({
             ...session,
@@ -363,9 +362,6 @@ const CrmDashboard = () => {
                           <p className="text-xs text-slate-500 dark:text-slate-500">{session.notes}</p>
                         )}
                       </div>
-                      <Badge variant="outline" className="shadow-sm border-emerald-200 text-emerald-700 dark:border-emerald-800 dark:text-emerald-400">
-                        Upcoming
-                      </Badge>
                     </div>
                   ))
                 )}

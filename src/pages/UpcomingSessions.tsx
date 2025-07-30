@@ -53,11 +53,10 @@ const UpcomingSessions = () => {
 
         if (leadsError) throw leadsError;
 
-        // Include sessions for leads that are 'booked' OR have scheduled sessions (even if completed)
+        // Only include sessions for leads with 'booked' status
         const filteredSessions = sessionsData.filter(session => {
           const lead = leadsData?.find(lead => lead.id === session.lead_id);
-          // Show sessions for booked leads, or keep existing scheduled sessions even if lead was completed
-          return lead && (lead.status === 'booked' || session.status === 'scheduled');
+          return lead && lead.status === 'booked';
         });
 
         // Map lead names to sessions

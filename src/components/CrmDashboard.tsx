@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 import AddLeadDialog from "./AddLeadDialog";
 import NewSessionDialog from "./NewSessionDialog";
 import GlobalSearch from "./GlobalSearch";
+import { getLeadStatusStyles, formatStatusText } from "@/lib/leadStatusColors";
 
 interface Lead {
   id: string;
@@ -159,18 +160,6 @@ const CrmDashboard = () => {
     }
   };
 
-  const getStatusBadgeVariant = (status: string) => {
-    switch (status) {
-      case 'new': return 'default';
-      case 'contacted': return 'secondary';
-      case 'qualified': return 'outline';
-      case 'proposal_sent': return 'destructive';
-      case 'booked': return 'default';
-      case 'completed': return 'success';
-      case 'lost': return 'destructive';
-      default: return 'default';
-    }
-  };
 
   const getStatCardGradient = (type: 'leads' | 'sessions' | 'booked' | 'completed' | 'lost') => {
     switch (type) {
@@ -451,9 +440,9 @@ const CrmDashboard = () => {
                         </p>
                       )}
                     </div>
-                    <Badge variant={getStatusBadgeVariant(lead.status)} className="shadow-sm">
-                      {lead.status.replace('_', ' ')}
-                    </Badge>
+                    <span className={`px-2 py-1 text-xs rounded-full font-medium shadow-sm ${getLeadStatusStyles(lead.status).className}`}>
+                      {formatStatusText(lead.status)}
+                    </span>
                   </div>
                 ))}
                 {leads.length === 0 && (

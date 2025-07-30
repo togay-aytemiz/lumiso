@@ -61,6 +61,34 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				'status-new': {
+					bg: 'hsl(var(--status-new-bg))',
+					text: 'hsl(var(--status-new-text))'
+				},
+				'status-contacted': {
+					bg: 'hsl(var(--status-contacted-bg))',
+					text: 'hsl(var(--status-contacted-text))'
+				},
+				'status-qualified': {
+					bg: 'hsl(var(--status-qualified-bg))',
+					text: 'hsl(var(--status-qualified-text))'
+				},
+				'status-proposal-sent': {
+					bg: 'hsl(var(--status-proposal-sent-bg))',
+					text: 'hsl(var(--status-proposal-sent-text))'
+				},
+				'status-booked': {
+					bg: 'hsl(var(--status-booked-bg))',
+					text: 'hsl(var(--status-booked-text))'
+				},
+				'status-lost': {
+					bg: 'hsl(var(--status-lost-bg))',
+					text: 'hsl(var(--status-lost-text))'
+				},
+				'status-completed': {
+					bg: 'hsl(var(--status-completed-bg))',
+					text: 'hsl(var(--status-completed-text))'
 				}
 			},
 			borderRadius: {

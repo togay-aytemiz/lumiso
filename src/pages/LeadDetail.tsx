@@ -16,6 +16,7 @@ import ScheduleSessionDialog from "@/components/ScheduleSessionDialog";
 import EditSessionDialog from "@/components/EditSessionDialog";
 import ActivitySection from "@/components/ActivitySection";
 import SessionBanner from "@/components/SessionBanner";
+import { getLeadStatusStyles, formatStatusText } from "@/lib/leadStatusColors";
 
 interface Lead {
   id: string;
@@ -348,18 +349,6 @@ const LeadDetail = () => {
     { value: "lost", label: "Lost" }
   ];
 
-  const getStatusBadgeVariant = (status: string) => {
-    switch (status) {
-      case 'new': return 'default';
-      case 'contacted': return 'secondary';
-      case 'qualified': return 'outline';
-      case 'proposal_sent': return 'destructive';
-      case 'booked': return 'default';
-      case 'completed': return 'success';
-      case 'lost': return 'destructive';
-      default: return 'default';
-    }
-  };
 
   if (loading) {
     return (
@@ -396,9 +385,9 @@ const LeadDetail = () => {
             <div>
               <div className="flex items-center gap-3 mb-1">
                 <h1 className="text-2xl font-bold">{lead.name || 'Lead Details'}</h1>
-                <Badge variant={getStatusBadgeVariant(lead.status)}>
-                  {lead.status.replace('_', ' ')}
-                </Badge>
+                <span className={`px-2 py-1 text-xs rounded-full font-medium ${getLeadStatusStyles(lead.status).className}`}>
+                  {formatStatusText(lead.status)}
+                </span>
               </div>
               <p className="text-muted-foreground">Edit lead information</p>
             </div>

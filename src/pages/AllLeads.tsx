@@ -9,6 +9,7 @@ import { ArrowLeft, ArrowUpDown, ArrowUp, ArrowDown, Plus } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import AddLeadDialog from "@/components/AddLeadDialog";
 import { useNavigate } from "react-router-dom";
+import { getLeadStatusStyles, formatStatusText } from "@/lib/leadStatusColors";
 
 interface Lead {
   id: string;
@@ -102,18 +103,6 @@ const AllLeads = () => {
     navigate(`/leads/${leadId}`, { state: { from: 'all-leads' } });
   };
 
-  const getStatusBadgeVariant = (status: string) => {
-    switch (status) {
-      case 'new': return 'default';
-      case 'contacted': return 'secondary';
-      case 'qualified': return 'outline';
-      case 'proposal_sent': return 'destructive';
-      case 'booked': return 'default';
-      case 'completed': return 'success';
-      case 'lost': return 'destructive';
-      default: return 'default';
-    }
-  };
 
   const getSortIcon = (field: SortField) => {
     if (sortField !== field) return <ArrowUpDown className="h-4 w-4" />;
@@ -256,11 +245,11 @@ const AllLeads = () => {
                       <TableCell className="font-medium">{lead.name}</TableCell>
                       <TableCell>{lead.email || '-'}</TableCell>
                       <TableCell>{lead.phone || '-'}</TableCell>
-                      <TableCell>
-                        <Badge variant={getStatusBadgeVariant(lead.status)}>
-                          {lead.status.replace('_', ' ')}
-                        </Badge>
-                      </TableCell>
+                       <TableCell>
+                        <span className={`px-2 py-1 text-xs rounded-full font-medium ${getLeadStatusStyles(lead.status).className}`}>
+                          {formatStatusText(lead.status)}
+                        </span>
+                       </TableCell>
                       <TableCell>
                         {lead.due_date ? new Date(lead.due_date).toLocaleDateString() : '-'}
                       </TableCell>

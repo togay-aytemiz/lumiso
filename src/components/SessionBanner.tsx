@@ -1,6 +1,7 @@
 import { Calendar, Clock, Badge as BadgeIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { getLeadStatusStyles, formatStatusText } from "@/lib/leadStatusColors";
 
 interface Session {
   id: string;
@@ -16,14 +17,6 @@ interface SessionBannerProps {
 }
 
 const SessionBanner = ({ session, leadName }: SessionBannerProps) => {
-  const getStatusBadgeVariant = (status: string) => {
-    switch (status) {
-      case 'scheduled': return 'default';
-      case 'completed': return 'secondary';
-      case 'cancelled': return 'destructive';
-      default: return 'outline';
-    }
-  };
 
   return (
     <Card className="border-l-4 border-l-primary bg-primary/5">
@@ -44,9 +37,9 @@ const SessionBanner = ({ session, leadName }: SessionBannerProps) => {
               </div>
             </div>
           </div>
-          <Badge variant={getStatusBadgeVariant(session.status)} className="capitalize">
+          <span className={`px-2 py-1 text-xs rounded-full font-medium capitalize ${getLeadStatusStyles(session.status).className}`}>
             {session.status}
-          </Badge>
+          </span>
         </div>
       </CardContent>
     </Card>

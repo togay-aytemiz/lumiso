@@ -53,6 +53,22 @@ All colors MUST be HSL.
     --sidebar-border: 220 13% 91%;
 
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Lead Status Colors */
+    --status-new-bg: 198 93% 93%;
+    --status-new-text: 212 86% 43%;
+    --status-contacted-bg: 55 91% 91%;
+    --status-contacted-text: 39 80% 29%;
+    --status-qualified-bg: 142 84% 89%;
+    --status-qualified-text: 158 64% 31%;
+    --status-proposal-sent-bg: 252 94% 91%;
+    --status-proposal-sent-text: 255 48% 44%;
+    --status-booked-bg: 46 89% 89%;
+    --status-booked-text: 33 82% 38%;
+    --status-lost-bg: 0 93% 94%;
+    --status-lost-text: 0 68% 43%;
+    --status-completed-bg: 138 76% 91%;
+    --status-completed-text: 152 69% 31%;
   }
 
   .dark {
@@ -91,6 +107,22 @@ All colors MUST be HSL.
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+    
+    /* Lead Status Colors - Dark Mode */
+    --status-new-bg: 198 65% 15%;
+    --status-new-text: 198 90% 80%;
+    --status-contacted-bg: 55 65% 15%;
+    --status-contacted-text: 55 90% 80%;
+    --status-qualified-bg: 142 65% 15%;
+    --status-qualified-text: 142 90% 80%;
+    --status-proposal-sent-bg: 252 65% 15%;
+    --status-proposal-sent-text: 252 90% 80%;
+    --status-booked-bg: 46 65% 15%;
+    --status-booked-text: 46 90% 80%;
+    --status-lost-bg: 0 65% 15%;
+    --status-lost-text: 0 90% 80%;
+    --status-completed-bg: 138 65% 15%;
+    --status-completed-text: 138 90% 80%;
   }
 }
 

@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Search, FileText, Clock, Calendar, User, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
+import { getLeadStatusStyles, formatStatusText } from "@/lib/leadStatusColors";
 
 interface SearchResult {
   id: string;
@@ -241,37 +242,6 @@ const GlobalSearch = () => {
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'new': 
-        return 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200';
-      case 'contacted': 
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
-      case 'qualified': 
-        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
-      case 'booked': 
-        return 'text-amber-800 dark:text-amber-200';
-      case 'completed': 
-        return 'text-emerald-800 dark:text-emerald-200';
-      case 'lost': 
-        return 'text-red-800 dark:text-red-200';
-      default: 
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
-    }
-  };
-
-  const getStatusBackgroundColor = (status: string) => {
-    switch (status) {
-      case 'booked': 
-        return '#f6c97f';
-      case 'completed': 
-        return '#a0eec0';
-      case 'lost': 
-        return '#f7c1c1';
-      default: 
-        return '';
-    }
-  };
 
   const handleResultClick = (result: SearchResult) => {
     navigate(`/leads/${result.leadId}`);
@@ -337,7 +307,7 @@ const GlobalSearch = () => {
                   {typeResults.map((result) => {
                     const currentIndex = resultIndex++;
                     const isActive = currentIndex === activeIndex;
-                    const bgColor = getStatusBackgroundColor(result.status);
+                    const statusStyles = getLeadStatusStyles(result.status);
                     
                     return (
                       <button
@@ -355,13 +325,8 @@ const GlobalSearch = () => {
                             <div className="flex items-center justify-between">
                               <p className="font-medium text-sm truncate">{result.leadName}</p>
                               <div className="flex items-center gap-2 ml-2">
-                                <span 
-                                  className={`px-2 py-1 text-xs rounded-full font-medium ${
-                                    bgColor ? '' : getStatusColor(result.status)
-                                  }`}
-                                  style={bgColor ? { backgroundColor: bgColor } : {}}
-                                >
-                                  {result.status}
+                                <span className={`px-2 py-1 text-xs rounded-full font-medium ${statusStyles.className}`}>
+                                  {formatStatusText(result.status)}
                                 </span>
                                 <ChevronRight className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                               </div>

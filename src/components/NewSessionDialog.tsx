@@ -5,16 +5,21 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { Plus, Calendar } from "lucide-react";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Badge } from "@/components/ui/badge";
+import { Plus, Calendar, Check, ChevronsUpDown } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
 interface Lead {
   id: string;
   name: string;
   email: string;
   phone: string;
+  sessionStatus: 'none' | 'scheduled' | 'completed';
+  hasScheduledSession: boolean;
 }
 
 interface NewSessionDialogProps {
@@ -42,6 +47,7 @@ const NewSessionDialog = ({ onSessionScheduled }: NewSessionDialogProps) => {
   });
 
   const [selectedLeadId, setSelectedLeadId] = useState("");
+  const [leadDropdownOpen, setLeadDropdownOpen] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -52,13 +58,45 @@ const NewSessionDialog = ({ onSessionScheduled }: NewSessionDialogProps) => {
   const fetchLeads = async () => {
     setLoadingLeads(true);
     try {
-      const { data, error } = await supabase
+      // First get all leads
+      const { data: leadsData, error: leadsError } = await supabase
         .from('leads')
         .select('id, name, email, phone')
         .order('name', { ascending: true });
 
-      if (error) throw error;
-      setLeads(data || []);
+      if (leadsError) throw leadsError;
+
+      // Then get sessions for these leads
+      const { data: sessionsData, error: sessionsError } = await supabase
+        .from('sessions')
+        .select('lead_id, status');
+
+      if (sessionsError) throw sessionsError;
+
+      // Process leads to determine session status
+      const processedLeads = (leadsData || []).map(lead => {
+        const leadSessions = sessionsData?.filter(session => session.lead_id === lead.id) || [];
+        const hasScheduledSession = leadSessions.some(session => session.status === 'scheduled');
+        const hasCompletedSession = leadSessions.some(session => session.status === 'completed');
+        
+        let sessionStatus: 'none' | 'scheduled' | 'completed' = 'none';
+        if (hasScheduledSession) {
+          sessionStatus = 'scheduled';
+        } else if (hasCompletedSession) {
+          sessionStatus = 'completed';
+        }
+        
+        return {
+          id: lead.id,
+          name: lead.name,
+          email: lead.email,
+          phone: lead.phone,
+          sessionStatus,
+          hasScheduledSession
+        };
+      });
+      
+      setLeads(processedLeads);
     } catch (error: any) {
       toast({
         title: "Error fetching leads",
@@ -230,18 +268,76 @@ const NewSessionDialog = ({ onSessionScheduled }: NewSessionDialogProps) => {
               
               {!isNewLead && (
                 <div className="space-y-2">
-                  <Select value={selectedLeadId} onValueChange={setSelectedLeadId} disabled={loadingLeads}>
-                    <SelectTrigger>
-                      <SelectValue placeholder={loadingLeads ? "Loading clients..." : "Select a client"} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {leads.map((lead) => (
-                        <SelectItem key={lead.id} value={lead.id}>
-                          {lead.name} {lead.email && `(${lead.email})`}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Popover open={leadDropdownOpen} onOpenChange={setLeadDropdownOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={leadDropdownOpen}
+                        className="w-full justify-between"
+                        disabled={loadingLeads}
+                      >
+                        {selectedLeadId
+                          ? leads.find((lead) => lead.id === selectedLeadId)?.name
+                          : loadingLeads ? "Loading clients..." : "Select a client"}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-full p-0" side="bottom">
+                      <Command>
+                        <CommandInput placeholder="Search clients by name or email..." />
+                        <CommandEmpty>No clients found.</CommandEmpty>
+                        <CommandGroup className="max-h-64 overflow-auto">
+                          {leads.map((lead) => (
+                            <CommandItem
+                              key={lead.id}
+                              value={`${lead.name} ${lead.email || ''}`}
+                              onSelect={() => {
+                                if (!lead.hasScheduledSession) {
+                                  setSelectedLeadId(lead.id);
+                                  setLeadDropdownOpen(false);
+                                }
+                              }}
+                              disabled={lead.hasScheduledSession}
+                              className={cn(
+                                "flex items-center justify-between",
+                                lead.hasScheduledSession && "opacity-50 cursor-not-allowed"
+                              )}
+                            >
+                              <div className="flex items-center space-x-2">
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    selectedLeadId === lead.id ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                <div>
+                                  <div className="font-medium">{lead.name}</div>
+                                  {lead.email && (
+                                    <div className="text-sm text-muted-foreground">{lead.email}</div>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <Badge
+                                  variant={
+                                    lead.sessionStatus === 'scheduled' ? 'destructive' :
+                                    lead.sessionStatus === 'completed' ? 'secondary' : 'outline'
+                                  }
+                                  className="text-xs"
+                                >
+                                  {lead.sessionStatus === 'none' ? 'Available' : lead.sessionStatus}
+                                </Badge>
+                                {lead.hasScheduledSession && (
+                                  <span className="text-xs text-muted-foreground">Already scheduled</span>
+                                )}
+                              </div>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                 </div>
               )}
 

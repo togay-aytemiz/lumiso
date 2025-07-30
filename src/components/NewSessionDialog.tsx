@@ -375,9 +375,6 @@ const NewSessionDialog = ({ onSessionScheduled }: NewSessionDialogProps) => {
                                 >
                                   {lead.sessionStatus === 'none' ? 'Available' : lead.sessionStatus}
                                 </Badge>
-                                {lead.hasScheduledSession && (
-                                  <span className="text-xs text-muted-foreground">Already scheduled</span>
-                                )}
                               </div>
                             </div>
                           ))

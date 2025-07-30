@@ -286,24 +286,23 @@ const ReminderDetails = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 dark:from-gray-900 dark:to-slate-800">
-      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-sm">
-        <div className="container mx-auto px-4 py-6">
-          <div className="space-y-4">
+      <header className="border-b">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center gap-4 mb-2">
             <Button
-              variant="ghost"
+              variant="outline"
               size="sm"
               onClick={() => navigate("/")}
-              className="hover:shadow-md transition-shadow"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Dashboard
             </Button>
-            <div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
-                Reminder Details
-              </h1>
-              <p className="text-muted-foreground">Manage your task reminders</p>
-            </div>
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold">
+              Reminder Details
+            </h1>
+            <p className="text-muted-foreground">Manage your task reminders</p>
           </div>
         </div>
       </header>

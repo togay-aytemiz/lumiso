@@ -290,21 +290,19 @@ const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
                   <div className="space-y-3 pl-4 border-l-2 border-muted">
                     {items.map((item, index) => (
                       <div key={`${item.type}-${item.data.id}-${index}`} className="relative">
-                        <div className="absolute -left-6 top-1 w-3 h-3 bg-background border-2 border-primary rounded-full"></div>
+                        <div className="absolute -left-6 top-0.5 w-3 h-3 bg-background border-2 border-primary rounded-full"></div>
                         <div className="bg-muted/50 rounded-lg p-3 space-y-2">
                           <div className="flex items-start justify-between">
-                            <div className="flex items-start gap-2">
-                              <div className="mt-0.5">
-                                {item.type === 'activity' ? (
-                                  item.data.type === 'note' ? (
-                                    <MessageSquare className="h-4 w-4 text-blue-500" />
-                                  ) : (
-                                    <Bell className="h-4 w-4 text-orange-500" />
-                                  )
+                            <div className="flex items-center gap-2">
+                              {item.type === 'activity' ? (
+                                item.data.type === 'note' ? (
+                                  <MessageSquare className="h-4 w-4 text-blue-500" />
                                 ) : (
-                                  <FileText className="h-4 w-4 text-gray-500" />
-                                )}
-                              </div>
+                                  <Bell className="h-4 w-4 text-orange-500" />
+                                )
+                              ) : (
+                                <FileText className="h-4 w-4 text-gray-500" />
+                              )}
                               <Badge variant="outline" className="text-xs">
                                 {item.type === 'activity' 
                                   ? item.data.type 
@@ -312,7 +310,7 @@ const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
                                 }
                               </Badge>
                             </div>
-                            <span className="text-xs text-muted-foreground mt-0.5">
+                            <span className="text-xs text-muted-foreground">
                               {new Date(item.date).toLocaleTimeString('en-US', { 
                                 hour: '2-digit', 
                                 minute: '2-digit' 

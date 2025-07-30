@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -313,6 +314,19 @@ const LeadDetail = () => {
     { value: "lost", label: "Lost" }
   ];
 
+  const getStatusBadgeVariant = (status: string) => {
+    switch (status) {
+      case 'new': return 'default';
+      case 'contacted': return 'secondary';
+      case 'qualified': return 'outline';
+      case 'proposal_sent': return 'destructive';
+      case 'booked': return 'default';
+      case 'completed': return 'success';
+      case 'lost': return 'destructive';
+      default: return 'default';
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -346,7 +360,12 @@ const LeadDetail = () => {
           
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <h1 className="text-2xl font-bold">Lead Details</h1>
+              <div className="flex items-center gap-3 mb-1">
+                <h1 className="text-2xl font-bold">{formData.name || 'Lead Details'}</h1>
+                <Badge variant={getStatusBadgeVariant(formData.status)}>
+                  {formData.status.replace('_', ' ')}
+                </Badge>
+              </div>
               <p className="text-muted-foreground">Edit lead information</p>
             </div>
             
@@ -365,6 +384,7 @@ const LeadDetail = () => {
                 disabled={saving || !hasChanges}
                 variant="secondary"
                 size="sm"
+                className="h-10"
               >
                 <Save className="h-4 w-4 mr-2" />
                 {saving ? "Saving..." : "Save Changes"}
@@ -375,7 +395,7 @@ const LeadDetail = () => {
                   <AlertDialogTrigger asChild>
                     <Button 
                       disabled={saving}
-                      className="bg-green-600 hover:bg-green-700 text-white"
+                      className="bg-green-600 hover:bg-green-700 text-white h-10"
                       size="sm"
                     >
                       <CheckCircle className="h-4 w-4 mr-2" />

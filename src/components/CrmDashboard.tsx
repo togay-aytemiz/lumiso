@@ -31,6 +31,7 @@ interface Appointment {
 
 interface Session {
   id: string;
+  lead_id: string;
   session_date: string;
   session_time: string;
   notes: string;
@@ -296,9 +297,13 @@ const CrmDashboard = () => {
                   </div>
                 ) : (
                   upcomingSessions.slice(0, 3).map((session) => (
-                    <div key={session.id} className="flex items-center justify-between p-4 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 hover:shadow-sm dark:hover:bg-slate-800 transition-all duration-200">
+                    <div 
+                      key={session.id} 
+                      className="flex items-center justify-between p-4 border border-slate-200 dark:border-slate-700 rounded-lg cursor-pointer hover:bg-slate-50 hover:shadow-sm dark:hover:bg-slate-800 transition-all duration-200"
+                      onClick={() => navigate(`/leads/${session.lead_id}`, { state: { from: 'dashboard' } })}
+                    >
                       <div className="space-y-1">
-                        <h4 className="font-medium text-slate-800 dark:text-slate-200">{session.lead_name || 'Unknown Client'}</h4>
+                        <h4 className="font-medium text-slate-800 dark:text-slate-200 hover:text-primary transition-colors">{session.lead_name || 'Unknown Client'}</h4>
                         <p className="text-sm text-slate-600 dark:text-slate-400">
                           {new Date(session.session_date).toLocaleDateString()} at {session.session_time}
                         </p>

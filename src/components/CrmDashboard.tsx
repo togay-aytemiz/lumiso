@@ -192,20 +192,35 @@ const CrmDashboard = () => {
   };
 
   const getReminderCounts = () => {
-    const today = new Date();
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const todayStr = today.toISOString().split('T')[0];
     
-    const todayReminders = activities.filter(activity => 
-      activity.reminder_date === todayStr
-    );
+    const todayReminders = activities.filter(activity => {
+      if (!activity.reminder_date) return false;
+      const reminderDate = new Date(activity.reminder_date + 'T00:00:00');
+      const reminderDateOnly = new Date(reminderDate.getFullYear(), reminderDate.getMonth(), reminderDate.getDate());
+      return reminderDateOnly.getTime() === today.getTime();
+    });
     
-    const overdueReminders = activities.filter(activity => 
-      activity.reminder_date < todayStr
-    );
+    const overdueReminders = activities.filter(activity => {
+      if (!activity.reminder_date) return false;
+      const reminderDate = new Date(activity.reminder_date + 'T00:00:00');
+      const reminderDateOnly = new Date(reminderDate.getFullYear(), reminderDate.getMonth(), reminderDate.getDate());
+      return reminderDateOnly.getTime() < today.getTime();
+    });
+    
+    const upcomingReminders = activities.filter(activity => {
+      if (!activity.reminder_date) return false;
+      const reminderDate = new Date(activity.reminder_date + 'T00:00:00');
+      const reminderDateOnly = new Date(reminderDate.getFullYear(), reminderDate.getMonth(), reminderDate.getDate());
+      return reminderDateOnly.getTime() > today.getTime();
+    });
     
     return {
       today: todayReminders.length,
-      overdue: overdueReminders.length
+      overdue: overdueReminders.length,
+      upcoming: upcomingReminders.length
     };
   };
 
@@ -325,7 +340,7 @@ const CrmDashboard = () => {
 
         {/* Reminders Card */}
         <Card className="mb-8 shadow-md hover:shadow-lg transition-shadow border-slate-200 dark:border-slate-700">
-          <CardHeader className="bg-gradient-to-r from-slate-50 to-gray-50 dark:from-slate-800 dark:to-gray-800 rounded-t-lg">
+          <CardHeader className="bg-gradient-to-r from-slate-50 to-gray-50 dark:from-slate-800 dark:to-gray-800 rounded-t-lg pb-4">
             <div className="flex flex-row items-center justify-between">
               <div className="flex items-center gap-3">
                 <Bell className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
@@ -344,43 +359,49 @@ const CrmDashboard = () => {
               </Button>
             </div>
           </CardHeader>
-          <CardContent className="pt-6">
-            <div className="space-y-3">
-              {(() => {
-                const { today, overdue } = getReminderCounts();
-                const hasReminders = today > 0 || overdue > 0;
-                
-                if (!hasReminders) {
-                  return (
-                    <div className="text-center py-8 text-slate-500 dark:text-slate-400">
-                      <Bell className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                      <p>No reminders scheduled</p>
-                    </div>
-                  );
-                }
-                
+          <CardContent className="pt-4 pb-6">
+            {(() => {
+              const { today, overdue, upcoming } = getReminderCounts();
+              const totalTasks = today + overdue + upcoming;
+              
+              if (totalTasks === 0) {
                 return (
-                  <>
-                    {today > 0 && (
-                      <div className="flex items-center gap-3 p-4 border border-blue-200 dark:border-blue-800 rounded-lg bg-blue-50/50 dark:bg-blue-950/20">
-                        <Bell className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                        <p className="text-slate-700 dark:text-slate-300">
-                          You have <span className="font-semibold text-blue-700 dark:text-blue-300">{today}</span> task{today === 1 ? '' : 's'} scheduled for today.
-                        </p>
-                      </div>
-                    )}
-                    {overdue > 0 && (
-                      <div className="flex items-center gap-3 p-4 border border-red-200 dark:border-red-800 rounded-lg bg-red-50/50 dark:bg-red-950/20">
-                        <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" />
-                        <p className="text-slate-700 dark:text-slate-300">
-                          You have <span className="font-semibold text-red-700 dark:text-red-300">{overdue}</span> overdue task{overdue === 1 ? '' : 's'} that still need{overdue === 1 ? 's' : ''} your attention.
-                        </p>
-                      </div>
-                    )}
-                  </>
+                  <div className="text-center py-6">
+                    <p className="text-slate-600 dark:text-slate-400">
+                      No tasks scheduled. Enjoy your day 👏
+                    </p>
+                  </div>
                 );
-              })()}
-            </div>
+              }
+              
+              return (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="flex items-center gap-2 p-3 rounded-lg bg-blue-50/50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800">
+                    <Bell className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                    <div className="text-sm">
+                      <span className="text-slate-600 dark:text-slate-400">Today: </span>
+                      <span className="font-semibold text-blue-700 dark:text-blue-300">{today}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-2 p-3 rounded-lg bg-red-50/50 dark:bg-red-950/20 border border-red-200 dark:border-red-800">
+                    <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
+                    <div className="text-sm">
+                      <span className="text-slate-600 dark:text-slate-400">Overdue: </span>
+                      <span className="font-semibold text-red-700 dark:text-red-300">{overdue}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-2 p-3 rounded-lg bg-slate-50/50 dark:bg-slate-950/20 border border-slate-200 dark:border-slate-700">
+                    <Calendar className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                    <div className="text-sm">
+                      <span className="text-slate-600 dark:text-slate-400">Upcoming: </span>
+                      <span className="font-semibold text-slate-700 dark:text-slate-300">{upcoming}</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
           </CardContent>
         </Card>
 

@@ -193,6 +193,18 @@ const CrmDashboard = () => {
                   </div>
                 )}
               </div>
+              {leads.length > 0 && (
+                <div className="pt-4 border-t">
+                  <Button 
+                    variant="secondary" 
+                    size="sm" 
+                    className="w-full"
+                    onClick={() => navigate("/leads")}
+                  >
+                    See All Leads
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
 

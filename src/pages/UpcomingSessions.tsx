@@ -107,15 +107,17 @@ const UpcomingSessions = () => {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b">
-        <div className="container mx-auto px-4 py-4 flex items-center gap-4">
-          <Button 
-            onClick={() => navigate("/")} 
-            variant="outline" 
-            size="sm"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Dashboard
-          </Button>
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center gap-4 mb-2">
+            <Button 
+              onClick={() => navigate("/")} 
+              variant="outline" 
+              size="sm"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Dashboard
+            </Button>
+          </div>
           <div>
             <h1 className="text-2xl font-bold">Upcoming Sessions</h1>
             <p className="text-muted-foreground">Your scheduled photography sessions</p>

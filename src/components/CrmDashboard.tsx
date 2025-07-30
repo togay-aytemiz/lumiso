@@ -120,7 +120,7 @@ const CrmDashboard = () => {
       case 'qualified': return 'outline';
       case 'proposal_sent': return 'destructive';
       case 'booked': return 'default';
-      case 'completed': return 'default';
+      case 'completed': return 'success';
       case 'lost': return 'destructive';
       default: return 'default';
     }

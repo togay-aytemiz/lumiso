@@ -332,25 +332,26 @@ const LeadDetail = () => {
     <div className="min-h-screen bg-background">
       <header className="border-b">
         <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center gap-4 mb-2">
+            <Button 
+              onClick={handleBack} 
+              variant="outline" 
+              size="sm"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              {location.state?.from === 'dashboard' ? 'Back to Dashboard' : 
+               location.state?.from === 'all-sessions' ? 'Back to All Sessions' : 'Back to All Leads'}
+            </Button>
+          </div>
+          
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex items-center gap-4">
-              <Button 
-                onClick={handleBack} 
-                variant="outline" 
-                size="sm"
-              >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                {location.state?.from === 'dashboard' ? 'Back to Dashboard' : 
-                 location.state?.from === 'all-sessions' ? 'Back to All Sessions' : 'Back to All Leads'}
-              </Button>
-              <div>
-                <h1 className="text-2xl font-bold">Lead Details</h1>
-                <p className="text-muted-foreground">Edit lead information</p>
-              </div>
+            <div>
+              <h1 className="text-2xl font-bold">Lead Details</h1>
+              <p className="text-muted-foreground">Edit lead information</p>
             </div>
             
             {/* Header Action Buttons */}
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 lg:gap-4">
               {!session && (
                 <ScheduleSessionDialog 
                   leadId={lead.id} 
@@ -370,15 +371,35 @@ const LeadDetail = () => {
               </Button>
 
               {formData.status !== "completed" && (
-                <Button 
-                  onClick={handleMarkAsCompleted} 
-                  disabled={saving}
-                  className="bg-green-600 hover:bg-green-700 text-white"
-                  size="sm"
-                >
-                  <CheckCircle className="h-4 w-4 mr-2" />
-                  Mark as Completed
-                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button 
+                      disabled={saving}
+                      className="bg-green-600 hover:bg-green-700 text-white"
+                      size="sm"
+                    >
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      Mark as Completed
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Mark Lead as Completed?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Are you sure you want to mark "{lead.name}" as completed? This will update the lead's status to "Completed".
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction 
+                        onClick={handleMarkAsCompleted}
+                        className="bg-green-600 hover:bg-green-700 text-white"
+                      >
+                        {saving ? "Updating..." : "Mark as Completed"}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               )}
             </div>
           </div>

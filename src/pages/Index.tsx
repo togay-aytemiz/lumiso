@@ -4,6 +4,7 @@ import { User, Session } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
 import CrmDashboard from "@/components/CrmDashboard";
 import { Button } from "@/components/ui/button";
+import Layout from "@/components/Layout";
 
 const Index = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -81,7 +82,11 @@ const Index = () => {
     );
   }
 
-  return <CrmDashboard />;
+  return (
+    <Layout>
+      <CrmDashboard />
+    </Layout>
+  );
 };
 
 export default Index;

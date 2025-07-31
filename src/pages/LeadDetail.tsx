@@ -17,6 +17,7 @@ import EditSessionDialog from "@/components/EditSessionDialog";
 import ActivitySection from "@/components/ActivitySection";
 import SessionBanner from "@/components/SessionBanner";
 import { getLeadStatusStyles, formatStatusText } from "@/lib/leadStatusColors";
+import Layout from "@/components/Layout";
 
 interface Lead {
   id: string;
@@ -366,21 +367,19 @@ const LeadDetail = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center gap-4 mb-2">
-            <Button 
-              onClick={handleBack} 
-              variant="outline" 
-              size="sm"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              {location.state?.from === 'dashboard' ? 'Back to Dashboard' : 
-               location.state?.from === 'all-sessions' ? 'Back to All Sessions' : 'Back to All Leads'}
-            </Button>
-          </div>
-          
+    <Layout>
+      <div className="p-8">
+        <div className="mb-6">
+          <Button 
+            onClick={handleBack} 
+            variant="outline" 
+            size="sm"
+            className="mb-4"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            {location.state?.from === 'dashboard' ? 'Back to Dashboard' : 
+             location.state?.from === 'all-sessions' ? 'Back to All Sessions' : 'Back to All Leads'}
+          </Button>
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <div className="flex items-center gap-3 mb-1">
@@ -510,12 +509,10 @@ const LeadDetail = () => {
             </div>
           </div>
         </div>
-      </header>
 
-      {/* Planned Photo Session Header */}
-      {session && (
-        <div className="container mx-auto px-4 pt-6">
-          <Card className="border-l-4 border-l-primary bg-primary/5">
+        {/* Planned Photo Session Header */}
+        {session && (
+          <Card className="border-l-4 border-l-primary bg-primary/5 mb-6">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
@@ -570,10 +567,8 @@ const LeadDetail = () => {
               </div>
             </CardContent>
           </Card>
-        </div>
-      )}
+        )}
 
-      <main className="container mx-auto px-4 py-6">
         {/* Two-column layout */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Left column - Lead Details (25%) */}
@@ -679,8 +674,8 @@ const LeadDetail = () => {
             <ActivitySection leadId={lead.id} leadName={lead.name} />
           </div>
         </div>
-      </main>
-    </div>
+      </div>
+    </Layout>
   );
 };
 

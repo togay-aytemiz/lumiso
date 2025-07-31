@@ -95,7 +95,7 @@ const CrmDashboard = () => {
         .from('sessions')
         .select('*')
         .gte('session_date', new Date().toISOString().split('T')[0])
-        .eq('status', 'scheduled')
+        .eq('status', 'planned')
         .order('session_date', { ascending: true });
 
       if (sessionsError) throw sessionsError;

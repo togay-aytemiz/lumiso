@@ -37,7 +37,7 @@ const UpcomingSessions = () => {
         .from('sessions')
         .select('*')
         .gte('session_date', today)
-        .eq('status', 'scheduled')
+        .eq('status', 'planned')
         .order('session_date', { ascending: true })
         .order('session_time', { ascending: true });
 

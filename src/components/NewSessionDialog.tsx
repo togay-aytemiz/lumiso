@@ -18,7 +18,7 @@ interface Lead {
   name: string;
   email: string;
   phone: string;
-  sessionStatus: 'none' | 'scheduled' | 'completed';
+  sessionStatus: 'none' | 'planned' | 'completed';
   hasScheduledSession: boolean;
 }
 
@@ -78,12 +78,12 @@ const NewSessionDialog = ({ onSessionScheduled }: NewSessionDialogProps) => {
       // Process leads to determine session status
       const processedLeads = (leadsData || []).map(lead => {
         const leadSessions = sessionsData?.filter(session => session.lead_id === lead.id) || [];
-        const hasScheduledSession = leadSessions.some(session => session.status === 'scheduled');
+        const hasScheduledSession = leadSessions.some(session => session.status === 'planned');
         const hasCompletedSession = leadSessions.some(session => session.status === 'completed');
         
-        let sessionStatus: 'none' | 'scheduled' | 'completed' = 'none';
+        let sessionStatus: 'none' | 'planned' | 'completed' = 'none';
         if (hasScheduledSession) {
-          sessionStatus = 'scheduled';
+          sessionStatus = 'planned';
         } else if (hasCompletedSession) {
           sessionStatus = 'completed';
         }
@@ -316,7 +316,7 @@ const NewSessionDialog = ({ onSessionScheduled }: NewSessionDialogProps) => {
                             {leads.find(lead => lead.id === selectedLeadId) && (
                               <Badge
                                 variant={
-                                  leads.find(lead => lead.id === selectedLeadId)?.sessionStatus === 'scheduled' ? 'destructive' :
+                                  leads.find(lead => lead.id === selectedLeadId)?.sessionStatus === 'planned' ? 'destructive' :
                                   leads.find(lead => lead.id === selectedLeadId)?.sessionStatus === 'completed' ? 'secondary' : 'outline'
                                 }
                                 className="text-xs"
@@ -387,15 +387,15 @@ const NewSessionDialog = ({ onSessionScheduled }: NewSessionDialogProps) => {
                                 </div>
                               </div>
                               <div className="flex items-center space-x-2">
-                                <Badge
-                                  variant={
-                                    lead.sessionStatus === 'scheduled' ? 'destructive' :
-                                    lead.sessionStatus === 'completed' ? 'secondary' : 'outline'
-                                  }
-                                  className="text-xs"
-                                >
-                                  {lead.sessionStatus === 'none' ? 'Available' : lead.sessionStatus}
-                                </Badge>
+                                 <Badge
+                                   variant={
+                                     lead.sessionStatus === 'planned' ? 'destructive' :
+                                     lead.sessionStatus === 'completed' ? 'secondary' : 'outline'
+                                   }
+                                   className="text-xs"
+                                 >
+                                   {lead.sessionStatus === 'none' ? 'Available' : lead.sessionStatus}
+                                 </Badge>
                               </div>
                             </div>
                           ))

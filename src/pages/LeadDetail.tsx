@@ -30,12 +30,14 @@ interface Lead {
   created_at: string;
 }
 
+type SessionStatus = 'planned' | 'completed' | 'in_post_processing' | 'delivered' | 'cancelled';
+
 interface Session {
   id: string;
   session_date: string;
   session_time: string;
   notes: string;
-  status: string;
+  status: SessionStatus;
 }
 
 const LeadDetail = () => {
@@ -128,11 +130,13 @@ const LeadDetail = () => {
     if (!id) return;
     
     try {
+      // Get any session for this lead (any status)
       const { data, error } = await supabase
         .from('sessions')
         .select('*')
         .eq('lead_id', id)
-        .eq('status', 'scheduled')
+        .order('created_at', { ascending: false })
+        .limit(1)
         .maybeSingle();
 
       if (error) throw error;
@@ -384,7 +388,7 @@ const LeadDetail = () => {
             <div className="flex items-center gap-4">
               {/* Header Action Buttons */}
               <div className="flex flex-wrap gap-2 lg:gap-4">
-                {!session && (
+                {(!session || session.status !== 'planned') && (
                   <ScheduleSessionDialog 
                     leadId={lead.id} 
                     leadName={lead.name}
@@ -500,63 +504,50 @@ const LeadDetail = () => {
           </div>
         </div>
 
-        {/* Planned Photo Session Header */}
+        {/* Session Card */}
         {session && (
-          <Card className="border-l-4 border-l-primary bg-primary/5 mb-6">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div>
-                    <h3 className="font-semibold text-lg">Planned Photo Session</h3>
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-4 w-4" />
-                        <span>{new Date(session.session_date).toLocaleDateString()}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-4 w-4" />
-                        <span>{session.session_time}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <EditSessionDialog
-                    sessionId={session.id}
-                    currentDate={session.session_date}
-                    currentTime={session.session_time}
-                    currentNotes={session.notes}
-                    onSessionUpdated={handleSessionUpdated}
-                  />
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="destructive" size="sm" disabled={deletingSession}>
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Delete Session
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Delete Session?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Are you sure you want to delete this session? This action cannot be undone.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction 
-                          onClick={handleDeleteSession}
-                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                        >
-                          {deletingSession ? "Deleting..." : "Delete Session"}
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="mb-6">
+            <SessionBanner 
+              session={session} 
+              leadName={lead.name} 
+              onStatusUpdate={handleSessionUpdated}
+            />
+            <div className="flex gap-2 mt-3 justify-end">
+              <EditSessionDialog
+                sessionId={session.id}
+                currentDate={session.session_date}
+                currentTime={session.session_time}
+                currentNotes={session.notes}
+                leadName={lead.name}
+                onSessionUpdated={handleSessionUpdated}
+              />
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" size="sm" disabled={deletingSession}>
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete Session
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete Session?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to delete this session? This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction 
+                      onClick={handleDeleteSession}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      {deletingSession ? "Deleting..." : "Delete Session"}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          </div>
         )}
 
         {/* Two-column layout */}

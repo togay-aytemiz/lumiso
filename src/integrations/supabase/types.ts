@@ -223,7 +223,7 @@ export type Database = {
           notes: string | null
           session_date: string
           session_time: string
-          status: string
+          status: Database["public"]["Enums"]["session_status"]
           updated_at: string
           user_id: string
         }
@@ -235,7 +235,7 @@ export type Database = {
           notes?: string | null
           session_date: string
           session_time: string
-          status?: string
+          status?: Database["public"]["Enums"]["session_status"]
           updated_at?: string
           user_id: string
         }
@@ -247,7 +247,7 @@ export type Database = {
           notes?: string | null
           session_date?: string
           session_time?: string
-          status?: string
+          status?: Database["public"]["Enums"]["session_status"]
           updated_at?: string
           user_id?: string
         }
@@ -283,6 +283,12 @@ export type Database = {
         | "booked"
         | "completed"
         | "lost"
+      session_status:
+        | "planned"
+        | "completed"
+        | "in_post_processing"
+        | "delivered"
+        | "cancelled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -425,6 +431,13 @@ export const Constants = {
         "booked",
         "completed",
         "lost",
+      ],
+      session_status: [
+        "planned",
+        "completed",
+        "in_post_processing",
+        "delivered",
+        "cancelled",
       ],
     },
   },

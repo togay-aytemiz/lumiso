@@ -79,9 +79,22 @@ Deno.serve(async (req) => {
       authUrl.searchParams.set('access_type', 'offline');
       authUrl.searchParams.set('prompt', 'consent');
 
-      const state = url.searchParams.get('state') || '';
+      // Get state from request body for POST requests
+      let state = '';
+      if (req.method === 'POST') {
+        try {
+          const body = await req.json();
+          state = body.state || '';
+        } catch (e) {
+          console.log('Failed to parse request body for state:', e.message);
+        }
+      } else {
+        state = url.searchParams.get('state') || '';
+      }
+
       if (state) {
         authUrl.searchParams.set('state', state);
+        console.log('Added state parameter to auth URL');
       }
 
       console.log('Generated auth URL:', authUrl.toString());
@@ -193,15 +206,19 @@ Deno.serve(async (req) => {
       // Calculate token expiry
       const tokenExpiry = new Date(Date.now() + tokens.expires_in * 1000).toISOString();
 
-      // Extract user ID from state parameter if present
+      // Extract user ID from state parameter
       let userId = null;
       if (state) {
         try {
           const stateData = JSON.parse(atob(state));
           userId = stateData.userId;
+          console.log('Successfully extracted user ID from state:', userId);
         } catch (e) {
-          console.error('Failed to parse state:', e);
+          console.error('Failed to parse state parameter:', e);
+          console.log('Raw state value:', state);
         }
+      } else {
+        console.warn('No state parameter provided in callback - user ID cannot be determined');
       }
 
       // Store tokens in database if we have a user ID
@@ -253,6 +270,30 @@ Deno.serve(async (req) => {
         }
 
         console.log('Tokens stored successfully');
+      } else {
+        console.error('Cannot store tokens: no user ID available');
+        return new Response(`
+          <html>
+            <head><title>Authorization Error</title></head>
+            <body>
+              <h1>Authorization Error</h1>
+              <p>Unable to complete authorization - user session not found.</p>
+              <p>Please close this window and try again.</p>
+              <script>
+                if (window.opener) {
+                  window.opener.postMessage({ 
+                    type: 'google-calendar-error',
+                    error: 'no_user_session',
+                    description: 'User session not found in state parameter'
+                  }, '*');
+                }
+                setTimeout(() => window.close(), 3000);
+              </script>
+            </body>
+          </html>
+        `, {
+          headers: { 'Content-Type': 'text/html' },
+        });
       }
 
       // Return success page

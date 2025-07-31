@@ -92,6 +92,19 @@ export const useGoogleCalendar = () => {
 
           popup?.close();
           window.removeEventListener('message', messageListener);
+          setLoading(false);
+        } else if (event.data.type === 'google-calendar-error') {
+          console.error('OAuth error from popup:', event.data);
+          
+          toast({
+            title: "Connection failed",
+            description: event.data.description || "Failed to connect to Google Calendar. Please try again.",
+            variant: "destructive",
+          });
+
+          popup?.close();
+          window.removeEventListener('message', messageListener);
+          setLoading(false);
         }
       };
 

@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Clock, FileText, Plus, MessageSquare, Bell, CheckCircle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import ReminderCard from "@/components/ReminderCard";
+import { useCalendarSync } from "@/hooks/useCalendarSync";
 
 interface Activity {
   id: string;
@@ -33,7 +34,7 @@ interface AuditLog {
 
 interface ActivitySectionProps {
   leadId: string;
-  leadName: string;
+  leadName?: string;
 }
 
 const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
@@ -46,6 +47,8 @@ const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
   const [content, setContent] = useState('');
   const [isReminderMode, setIsReminderMode] = useState(false);
   const [reminderDateTime, setReminderDateTime] = useState('');
+  
+  const { createReminderEvent } = useCalendarSync();
 
   useEffect(() => {
     fetchActivities();
@@ -119,11 +122,27 @@ const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
         })
       };
 
-      const { error } = await supabase
+      const { data: newActivity, error } = await supabase
         .from('activities')
-        .insert(activityData);
+        .insert(activityData)
+        .select('id')
+        .single();
 
       if (error) throw error;
+
+      // Sync reminder to Google Calendar
+      if (isReminderMode && newActivity && leadName) {
+        createReminderEvent(
+          {
+            id: newActivity.id,
+            lead_id: leadId,
+            content: content.trim(),
+            reminder_date: reminderDateTime.split('T')[0],
+            reminder_time: reminderDateTime.split('T')[1]
+          },
+          { name: leadName }
+        );
+      }
 
       toast({
         title: "Success",

@@ -19,6 +19,7 @@ export type Database = {
           completed: boolean | null
           content: string
           created_at: string
+          google_event_id: string | null
           id: string
           lead_id: string
           reminder_date: string | null
@@ -31,6 +32,7 @@ export type Database = {
           completed?: boolean | null
           content: string
           created_at?: string
+          google_event_id?: string | null
           id?: string
           lead_id: string
           reminder_date?: string | null
@@ -43,6 +45,7 @@ export type Database = {
           completed?: boolean | null
           content?: string
           created_at?: string
+          google_event_id?: string | null
           id?: string
           lead_id?: string
           reminder_date?: string | null
@@ -214,6 +217,7 @@ export type Database = {
       sessions: {
         Row: {
           created_at: string
+          google_event_id: string | null
           id: string
           lead_id: string
           notes: string | null
@@ -225,6 +229,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          google_event_id?: string | null
           id?: string
           lead_id: string
           notes?: string | null
@@ -236,6 +241,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          google_event_id?: string | null
           id?: string
           lead_id?: string
           notes?: string | null

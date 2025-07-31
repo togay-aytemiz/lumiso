@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Calendar, Search, ChevronDown, Check } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { useCalendarSync } from "@/hooks/useCalendarSync";
 
 interface Lead {
   id: string;
@@ -31,6 +32,7 @@ const NewSessionDialog = ({ onSessionScheduled }: NewSessionDialogProps) => {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loadingLeads, setLoadingLeads] = useState(false);
   const [isNewLead, setIsNewLead] = useState(false);
+  const { createSessionEvent } = useCalendarSync();
   
   const [sessionData, setSessionData] = useState({
     session_date: "",
@@ -173,7 +175,7 @@ const NewSessionDialog = ({ onSessionScheduled }: NewSessionDialogProps) => {
       }
 
       // Create session
-      const { error: sessionError } = await supabase
+      const { data: newSession, error: sessionError } = await supabase
         .from('sessions')
         .insert({
           user_id: user.id,
@@ -181,9 +183,28 @@ const NewSessionDialog = ({ onSessionScheduled }: NewSessionDialogProps) => {
           session_date: sessionData.session_date,
           session_time: sessionData.session_time,
           notes: sessionData.notes.trim() || null
-        });
+        })
+        .select('id')
+        .single();
 
       if (sessionError) throw sessionError;
+
+      // Get lead name for calendar sync
+      const leadName = isNewLead ? newLeadData.name : leads.find(l => l.id === leadId)?.name || 'Unknown Client';
+      
+      // Sync to Google Calendar
+      if (newSession) {
+        createSessionEvent(
+          {
+            id: newSession.id,
+            lead_id: leadId,
+            session_date: sessionData.session_date,
+            session_time: sessionData.session_time,
+            notes: sessionData.notes.trim() || undefined
+          },
+          { name: leadName }
+        );
+      }
 
       toast({
         title: "Success",

@@ -9,16 +9,18 @@ import { Edit, Save } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { sessionSchema, sanitizeInput, sanitizeHtml } from "@/lib/validation";
 import { ZodError } from "zod";
+import { useCalendarSync } from "@/hooks/useCalendarSync";
 
 interface EditSessionDialogProps {
   sessionId: string;
   currentDate: string;
   currentTime: string;
   currentNotes: string;
+  leadName?: string;
   onSessionUpdated?: () => void;
 }
 
-const EditSessionDialog = ({ sessionId, currentDate, currentTime, currentNotes, onSessionUpdated }: EditSessionDialogProps) => {
+const EditSessionDialog = ({ sessionId, currentDate, currentTime, currentNotes, leadName, onSessionUpdated }: EditSessionDialogProps) => {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -27,6 +29,7 @@ const EditSessionDialog = ({ sessionId, currentDate, currentTime, currentNotes, 
     session_time: currentTime,
     notes: currentNotes || ""
   });
+  const { updateSessionEvent } = useCalendarSync();
 
   useEffect(() => {
     setFormData({
@@ -76,6 +79,20 @@ const EditSessionDialog = ({ sessionId, currentDate, currentTime, currentNotes, 
         .eq('id', sessionId);
 
       if (error) throw error;
+
+      // Sync to Google Calendar
+      if (leadName) {
+        updateSessionEvent(
+          {
+            id: sessionId,
+            lead_id: '', // Not needed for update
+            session_date: sanitizeInput(formData.session_date),
+            session_time: sanitizeInput(formData.session_time),
+            notes: formData.notes ? await sanitizeHtml(formData.notes) : undefined
+          },
+          { name: leadName }
+        );
+      }
 
       toast({
         title: "Success",

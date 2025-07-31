@@ -75,7 +75,8 @@ export const useGoogleCalendar = () => {
       console.log('Created state parameter:', state);
 
       const { data, error } = await supabase.functions.invoke('google-calendar-oauth', {
-        body: { action: 'authorize', state }
+        body: { action: 'authorize', state },
+        headers: { 'Authorization': `Bearer ${session.access_token}` }
       });
 
       console.log('Authorization response:', { data, error });
@@ -153,8 +154,14 @@ export const useGoogleCalendar = () => {
     try {
       setLoading(true);
 
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('No session found');
+      }
+
       const { data, error } = await supabase.functions.invoke('google-calendar-oauth', {
-        body: { action: 'disconnect' }
+        body: { action: 'disconnect' },
+        headers: { 'Authorization': `Bearer ${session.access_token}` }
       });
 
       if (error || !data.success) {

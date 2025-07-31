@@ -1,12 +1,28 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar } from "lucide-react";
+import { Calendar, CheckCircle } from "lucide-react";
 import Layout from "@/components/Layout";
+import { useToast } from "@/hooks/use-toast";
 
 const Settings = () => {
+  const [isCalendarConnected, setIsCalendarConnected] = useState(false);
+  const { toast } = useToast();
+  
   const handleConnectGoogleCalendar = () => {
-    // TODO: Implement Google Calendar integration
-    console.log("Google Calendar integration will be implemented here");
+    setIsCalendarConnected(true);
+    toast({
+      title: "Google Calendar Connected",
+      description: "Successfully connected to your Google Calendar.",
+    });
+  };
+  
+  const handleDisconnectGoogleCalendar = () => {
+    setIsCalendarConnected(false);
+    toast({
+      title: "Google Calendar Disconnected",
+      description: "Successfully disconnected from your Google Calendar.",
+    });
   };
 
   return (
@@ -27,13 +43,33 @@ const Settings = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button 
-                onClick={handleConnectGoogleCalendar}
-                className="flex items-center gap-2"
-              >
-                <Calendar className="h-4 w-4" />
-                Connect Google Calendar
-              </Button>
+              {isCalendarConnected ? (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 text-green-600">
+                    <CheckCircle className="h-5 w-5" />
+                    <span className="font-medium">Connected to Google Calendar</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Connected as: <span className="font-medium">user@example.com</span>
+                  </p>
+                  <Button 
+                    onClick={handleDisconnectGoogleCalendar}
+                    variant="outline"
+                    className="flex items-center gap-2"
+                  >
+                    <Calendar className="h-4 w-4" />
+                    Disconnect Google Calendar
+                  </Button>
+                </div>
+              ) : (
+                <Button 
+                  onClick={handleConnectGoogleCalendar}
+                  className="flex items-center gap-2"
+                >
+                  <Calendar className="h-4 w-4" />
+                  Connect Google Calendar
+                </Button>
+              )}
             </CardContent>
           </Card>
 

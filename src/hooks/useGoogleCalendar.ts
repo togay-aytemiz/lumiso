@@ -16,17 +16,29 @@ export const useGoogleCalendar = () => {
   const checkConnectionStatus = async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
-
-      const { data, error } = await supabase.functions.invoke('google-calendar-oauth', {
-        body: { action: 'status' }
-      });
-
-      if (error) {
-        console.error('Failed to check connection status:', error);
+      if (!session?.access_token) {
+        setConnection({ connected: false });
         return;
       }
 
+      const response = await fetch(
+        `https://rifdykpdubrowzbylffe.supabase.co/functions/v1/google-calendar-oauth?action=status`,
+        {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (!response.ok) {
+        console.error('Failed to check connection status:', response.status, response.statusText);
+        setConnection({ connected: false });
+        return;
+      }
+
+      const data = await response.json();
       setConnection(data);
 
       if (data.expired) {
@@ -38,6 +50,7 @@ export const useGoogleCalendar = () => {
       }
     } catch (error) {
       console.error('Error checking connection:', error);
+      setConnection({ connected: false });
     }
   };
 

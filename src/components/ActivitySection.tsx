@@ -186,6 +186,12 @@ const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
     }
   };
 
+  const shouldShowStatusBadge = (activity: Activity) => {
+    // Never show overdue badge for completed reminders
+    if (activity.completed) return false;
+    return true;
+  };
+
   const formatAuditAction = (log: AuditLog) => {
     if (log.entity_type === 'lead') {
       if (log.action === 'created') {
@@ -360,6 +366,7 @@ const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
                                     leadName={leadName}
                                     onToggleCompletion={toggleCompletion}
                                     showCompletedBadge={false}
+                                    hideStatusBadge={!shouldShowStatusBadge(item.data)}
                                   />
                                 </div>
                               ) : (

@@ -1,29 +1,11 @@
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, CheckCircle } from "lucide-react";
+import { Calendar, CheckCircle, Loader2 } from "lucide-react";
 import Layout from "@/components/Layout";
-import { useToast } from "@/hooks/use-toast";
+import { useGoogleCalendar } from "@/hooks/useGoogleCalendar";
 
 const Settings = () => {
-  const [isCalendarConnected, setIsCalendarConnected] = useState(false);
-  const { toast } = useToast();
-  
-  const handleConnectGoogleCalendar = () => {
-    setIsCalendarConnected(true);
-    toast({
-      title: "Google Calendar Connected",
-      description: "Successfully connected to your Google Calendar.",
-    });
-  };
-  
-  const handleDisconnectGoogleCalendar = () => {
-    setIsCalendarConnected(false);
-    toast({
-      title: "Google Calendar Disconnected",
-      description: "Successfully disconnected from your Google Calendar.",
-    });
-  };
+  const { connection, loading, connectCalendar, disconnectCalendar } = useGoogleCalendar();
 
   return (
     <Layout>
@@ -43,30 +25,45 @@ const Settings = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {isCalendarConnected ? (
+              {connection.connected ? (
                 <div className="space-y-4">
                   <div className="flex items-center gap-2 text-green-600">
                     <CheckCircle className="h-5 w-5" />
                     <span className="font-medium">Connected to Google Calendar</span>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    Connected as: <span className="font-medium">user@example.com</span>
+                    Connected as: <span className="font-medium">{connection.email}</span>
                   </p>
+                  {connection.expired && (
+                    <p className="text-sm text-destructive">
+                      Session expired. Please reconnect your calendar.
+                    </p>
+                  )}
                   <Button 
-                    onClick={handleDisconnectGoogleCalendar}
+                    onClick={disconnectCalendar}
                     variant="outline"
+                    disabled={loading}
                     className="flex items-center gap-2"
                   >
-                    <Calendar className="h-4 w-4" />
+                    {loading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Calendar className="h-4 w-4" />
+                    )}
                     Disconnect Google Calendar
                   </Button>
                 </div>
               ) : (
                 <Button 
-                  onClick={handleConnectGoogleCalendar}
+                  onClick={connectCalendar}
+                  disabled={loading}
                   className="flex items-center gap-2"
                 >
-                  <Calendar className="h-4 w-4" />
+                  {loading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Calendar className="h-4 w-4" />
+                  )}
                   Connect Google Calendar
                 </Button>
               )}

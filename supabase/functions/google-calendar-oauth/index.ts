@@ -327,7 +327,7 @@ Deno.serve(async (req) => {
       }
 
       // Get user from JWT token
-      const { data: { user }, error: userError } = await supabase.auth.getUser(
+      const { data: { user }, error: userError } = await supabase.auth.getUserFromJWT(
         authHeader.replace('Bearer ', '')
       );
 
@@ -374,7 +374,7 @@ Deno.serve(async (req) => {
       }
 
       // Get user from JWT token
-      const { data: { user }, error: userError } = await supabase.auth.getUser(
+      const { data: { user }, error: userError } = await supabase.auth.getUserFromJWT(
         authHeader.replace('Bearer ', '')
       );
 

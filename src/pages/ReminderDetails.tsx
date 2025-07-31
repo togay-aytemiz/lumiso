@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Bell } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { ArrowLeft, Bell, CheckSquare } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import { DateRangePicker } from "@/components/DateRangePicker";
@@ -16,6 +17,7 @@ interface Activity {
   type: string;
   lead_id: string;
   created_at: string;
+  updated_at: string;
   completed?: boolean;
 }
 
@@ -33,6 +35,7 @@ const ReminderDetails = () => {
   const [loading, setLoading] = useState(true);
   const [selectedFilter, setSelectedFilter] = useState<FilterType>('today');
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
+  const [showCompleted, setShowCompleted] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -158,55 +161,144 @@ const ReminderDetails = () => {
   };
 
   const getFilteredActivities = () => {
-    // Exclude completed reminders from active filters (overdue, today, etc.)
     const activeActivities = activities.filter(activity => !activity.completed);
     const completedActivities = activities.filter(activity => activity.completed);
     
-    let filteredActivities: Activity[] = [];
+    let filteredActiveActivities: Activity[] = [];
+    let filteredCompletedActivities: Activity[] = [];
     
+    // Filter active activities based on selected filter
     switch (selectedFilter) {
       case 'overdue':
-        filteredActivities = activeActivities.filter(activity => isOverdue(activity.reminder_date));
+        filteredActiveActivities = activeActivities.filter(activity => isOverdue(activity.reminder_date));
         break;
       case 'today':
-        filteredActivities = activeActivities.filter(activity => isToday(activity.reminder_date));
+        filteredActiveActivities = activeActivities.filter(activity => isToday(activity.reminder_date));
         break;
       case 'tomorrow':
-        filteredActivities = activeActivities.filter(activity => isTomorrow(activity.reminder_date));
+        filteredActiveActivities = activeActivities.filter(activity => isTomorrow(activity.reminder_date));
         break;
       case 'thisWeek':
-        filteredActivities = activeActivities.filter(activity => isThisWeek(activity.reminder_date));
+        filteredActiveActivities = activeActivities.filter(activity => isThisWeek(activity.reminder_date));
         break;
       case 'nextWeek':
-        filteredActivities = activeActivities.filter(activity => isNextWeek(activity.reminder_date));
+        filteredActiveActivities = activeActivities.filter(activity => isNextWeek(activity.reminder_date));
         break;
       case 'thisMonth':
-        filteredActivities = activeActivities.filter(activity => isThisMonth(activity.reminder_date));
+        filteredActiveActivities = activeActivities.filter(activity => isThisMonth(activity.reminder_date));
         break;
       case 'selectPeriod':
-        // For select period, show both active and completed reminders
-        filteredActivities = activities.filter(activity => isInDateRange(activity.reminder_date));
+        filteredActiveActivities = activeActivities.filter(activity => isInDateRange(activity.reminder_date));
+        filteredCompletedActivities = completedActivities.filter(activity => isInDateRange(activity.reminder_date));
         break;
       default:
-        filteredActivities = activities;
+        filteredActiveActivities = activeActivities;
     }
     
-    // For select period, return as is (includes completed)
-    if (selectedFilter === 'selectPeriod') {
-      return filteredActivities;
+    // Filter completed activities when showCompleted is true (except for selectPeriod which handles it above)
+    if (showCompleted && selectedFilter !== 'selectPeriod') {
+      switch (selectedFilter) {
+        case 'overdue':
+          filteredCompletedActivities = completedActivities.filter(activity => isOverdue(activity.reminder_date));
+          break;
+        case 'today':
+          filteredCompletedActivities = completedActivities.filter(activity => isToday(activity.reminder_date));
+          break;
+        case 'tomorrow':
+          filteredCompletedActivities = completedActivities.filter(activity => isTomorrow(activity.reminder_date));
+          break;
+        case 'thisWeek':
+          filteredCompletedActivities = completedActivities.filter(activity => isThisWeek(activity.reminder_date));
+          break;
+        case 'nextWeek':
+          filteredCompletedActivities = completedActivities.filter(activity => isNextWeek(activity.reminder_date));
+          break;
+        case 'thisMonth':
+          filteredCompletedActivities = completedActivities.filter(activity => isThisMonth(activity.reminder_date));
+          break;
+        default:
+          filteredCompletedActivities = completedActivities;
+      }
     }
     
-    // For other filters, show overdue at the top if not on overdue filter
-    const overdueActivities = activeActivities.filter(activity => isOverdue(activity.reminder_date));
+    // For active activities, show overdue at the top if not on overdue filter
+    let finalActiveActivities = filteredActiveActivities;
     if (selectedFilter !== 'overdue') {
-      return [...overdueActivities, ...filteredActivities.filter(activity => !isOverdue(activity.reminder_date))];
+      const overdueActivities = activeActivities.filter(activity => isOverdue(activity.reminder_date));
+      finalActiveActivities = [...overdueActivities, ...filteredActiveActivities.filter(activity => !isOverdue(activity.reminder_date))];
     }
     
-    return filteredActivities;
+    // Combine active and completed activities
+    const allActivities = [...finalActiveActivities];
+    if (showCompleted || selectedFilter === 'selectPeriod') {
+      allActivities.push(...filteredCompletedActivities);
+    }
+    
+    return allActivities;
+  };
+
+  const getCompletedActivitiesGroupedByDate = () => {
+    const completedActivities = activities.filter(activity => activity.completed);
+    let filteredCompletedActivities: Activity[] = [];
+    
+    // Filter completed activities based on selected filter
+    switch (selectedFilter) {
+      case 'overdue':
+        filteredCompletedActivities = completedActivities.filter(activity => isOverdue(activity.reminder_date));
+        break;
+      case 'today':
+        filteredCompletedActivities = completedActivities.filter(activity => isToday(activity.reminder_date));
+        break;
+      case 'tomorrow':
+        filteredCompletedActivities = completedActivities.filter(activity => isTomorrow(activity.reminder_date));
+        break;
+      case 'thisWeek':
+        filteredCompletedActivities = completedActivities.filter(activity => isThisWeek(activity.reminder_date));
+        break;
+      case 'nextWeek':
+        filteredCompletedActivities = completedActivities.filter(activity => isNextWeek(activity.reminder_date));
+        break;
+      case 'thisMonth':
+        filteredCompletedActivities = completedActivities.filter(activity => isThisMonth(activity.reminder_date));
+        break;
+      case 'selectPeriod':
+        filteredCompletedActivities = completedActivities.filter(activity => isInDateRange(activity.reminder_date));
+        break;
+      default:
+        filteredCompletedActivities = completedActivities;
+    }
+    
+    // Group by completion date (using updated_at as completion date)
+    const groupedByDate = filteredCompletedActivities.reduce((groups, activity) => {
+      const completionDate = new Date(activity.updated_at);
+      const dateKey = completionDate.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      
+      if (!groups[dateKey]) {
+        groups[dateKey] = [];
+      }
+      groups[dateKey].push(activity);
+      return groups;
+    }, {} as Record<string, Activity[]>);
+    
+    // Sort groups by date (most recent first)
+    const sortedGroups = Object.entries(groupedByDate).sort(([, a], [, b]) => {
+      const dateA = new Date(a[0].updated_at);
+      const dateB = new Date(b[0].updated_at);
+      return dateB.getTime() - dateA.getTime();
+    });
+    
+    return sortedGroups;
   };
 
 
   const shouldShowStatusBadge = (activity: Activity) => {
+    // Never show overdue badge for completed reminders
+    if (activity.completed) return false;
     // Hide badge if current filter already implies the status
     if (selectedFilter === 'overdue' && isOverdue(activity.reminder_date)) return false;
     if (selectedFilter === 'today' && isToday(activity.reminder_date)) return false;
@@ -269,6 +361,8 @@ const ReminderDetails = () => {
   }
 
   const filteredActivities = getFilteredActivities();
+  const completedGroupedByDate = getCompletedActivitiesGroupedByDate();
+  const activeActivities = filteredActivities.filter(activity => !activity.completed);
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
@@ -296,48 +390,101 @@ const ReminderDetails = () => {
       {/* Filter Bar */}
       <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center gap-2 overflow-x-auto">
-            {filterOptions.map((option) => (
-              <Button
-                key={option.key}
-                variant={selectedFilter === option.key ? "default" : "outline"}
-                size="sm"
-                onClick={() => setSelectedFilter(option.key as FilterType)}
-                className="whitespace-nowrap"
-              >
-                {option.label}
-              </Button>
-            ))}
-            {selectedFilter === 'selectPeriod' && (
-              <DateRangePicker
-                dateRange={dateRange}
-                onDateRangeChange={setDateRange}
-                className="ml-2"
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2 overflow-x-auto">
+              {filterOptions.map((option) => (
+                <Button
+                  key={option.key}
+                  variant={selectedFilter === option.key ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setSelectedFilter(option.key as FilterType)}
+                  className="whitespace-nowrap"
+                >
+                  {option.label}
+                </Button>
+              ))}
+              {selectedFilter === 'selectPeriod' && (
+                <DateRangePicker
+                  dateRange={dateRange}
+                  onDateRangeChange={setDateRange}
+                  className="ml-2"
+                />
+              )}
+            </div>
+            
+            {/* Show Completed Toggle */}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <CheckSquare className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground whitespace-nowrap">Show Completed</span>
+              <Switch
+                checked={showCompleted}
+                onCheckedChange={setShowCompleted}
               />
-            )}
+            </div>
           </div>
         </div>
       </div>
 
       <main className="container mx-auto px-4 py-6">
-        <div className="space-y-3">
-          {filteredActivities.length === 0 ? (
+        <div className="space-y-6">
+          {/* Active Reminders */}
+          {activeActivities.length === 0 && (!showCompleted || completedGroupedByDate.length === 0) ? (
             <div className="text-center py-12 text-slate-500 dark:text-slate-400">
               <Bell className="h-16 w-16 mx-auto mb-4 opacity-50" />
               <h3 className="text-lg font-medium mb-2">No reminders found</h3>
               <p>You don't have any reminders for the selected filter.</p>
             </div>
           ) : (
-            filteredActivities.map((activity) => (
-              <ReminderCard
-                key={activity.id}
-                activity={activity}
-                leadName={getLeadName(activity.lead_id)}
-                onToggleCompletion={toggleCompletion}
-                onClick={() => handleReminderClick(activity.lead_id)}
-                hideStatusBadge={!shouldShowStatusBadge(activity)}
-              />
-            ))
+            <>
+              {/* Show active reminders */}
+              {activeActivities.length > 0 && (
+                <div className="space-y-3">
+                  {activeActivities.map((activity) => (
+                    <ReminderCard
+                      key={activity.id}
+                      activity={activity}
+                      leadName={getLeadName(activity.lead_id)}
+                      onToggleCompletion={toggleCompletion}
+                      onClick={() => handleReminderClick(activity.lead_id)}
+                      hideStatusBadge={!shouldShowStatusBadge(activity)}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {/* Show completed reminders grouped by completion date */}
+              {showCompleted && completedGroupedByDate.length > 0 && (
+                <div className="space-y-4">
+                  {activeActivities.length > 0 && (
+                    <div className="border-t border-slate-200 dark:border-slate-700 pt-6">
+                      <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">
+                        Completed Reminders
+                      </h2>
+                    </div>
+                  )}
+                  
+                  {completedGroupedByDate.map(([dateKey, activities]) => (
+                    <div key={dateKey} className="space-y-3">
+                      <h3 className="text-sm font-medium text-slate-600 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 pb-2">
+                        {dateKey}
+                      </h3>
+                      <div className="space-y-2 ml-4">
+                        {activities.map((activity) => (
+                          <ReminderCard
+                            key={activity.id}
+                            activity={activity}
+                            leadName={getLeadName(activity.lead_id)}
+                            onToggleCompletion={toggleCompletion}
+                            onClick={() => handleReminderClick(activity.lead_id)}
+                            hideStatusBadge={!shouldShowStatusBadge(activity)}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </div>
       </main>

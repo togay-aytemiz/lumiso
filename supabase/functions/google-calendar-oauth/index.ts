@@ -23,6 +23,7 @@ interface GoogleUserInfo {
 Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
+    console.log('CORS preflight request received');
     return new Response(null, { headers: corsHeaders });
   }
 
@@ -35,17 +36,30 @@ Deno.serve(async (req) => {
     const url = new URL(req.url);
     let action = url.searchParams.get('action');
     
+    console.log(`Request received: ${req.method} ${req.url}`);
+    console.log('URL search params:', url.searchParams.toString());
+    console.log('Request headers:', JSON.stringify(Object.fromEntries(req.headers.entries())));
+    
     // If action is not in URL params, try to get it from request body
     if (!action && req.method === 'POST') {
       try {
         const body = await req.json();
         action = body.action;
+        console.log('Action from request body:', action);
       } catch (e) {
-        // If parsing fails, continue with null action
+        console.log('Failed to parse request body:', e.message);
       }
     }
 
     console.log('Google Calendar OAuth action:', action);
+    
+    // Log environment variables (without exposing secrets)
+    console.log('Environment check:', {
+      SUPABASE_URL: Deno.env.get('SUPABASE_URL') ? 'SET' : 'NOT SET',
+      SUPABASE_SERVICE_ROLE_KEY: Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ? 'SET' : 'NOT SET',
+      GOOGLE_OAUTH_CLIENT_ID: Deno.env.get('GOOGLE_OAUTH_CLIENT_ID') ? 'SET' : 'NOT SET',
+      GOOGLE_OAUTH_CLIENT_SECRET: Deno.env.get('GOOGLE_OAUTH_CLIENT_SECRET') ? 'SET' : 'NOT SET'
+    });
 
     if (action === 'authorize') {
       // Generate OAuth URL
@@ -78,18 +92,43 @@ Deno.serve(async (req) => {
 
     } else if (action === 'callback') {
       // Handle OAuth callback
+      console.log('=== CALLBACK REQUEST RECEIVED ===');
+      console.log('Full URL:', req.url);
+      console.log('All URL params:', Object.fromEntries(url.searchParams.entries()));
+      
       const code = url.searchParams.get('code');
       const state = url.searchParams.get('state');
       const error = url.searchParams.get('error');
+      const errorDescription = url.searchParams.get('error_description');
+
+      console.log('Callback parameters:', { 
+        code: code ? 'PRESENT' : 'MISSING', 
+        state: state ? 'PRESENT' : 'MISSING', 
+        error: error || 'NONE',
+        errorDescription: errorDescription || 'NONE'
+      });
 
       if (error) {
-        console.error('OAuth error:', error);
+        console.error('OAuth error received:', error, errorDescription);
         return new Response(`
           <html>
+            <head><title>Authorization Failed</title></head>
             <body>
               <h1>Authorization Failed</h1>
               <p>Error: ${error}</p>
-              <script>window.close();</script>
+              ${errorDescription ? `<p>Description: ${errorDescription}</p>` : ''}
+              <p>Please close this window and try again.</p>
+              <script>
+                console.error('OAuth error:', '${error}', '${errorDescription || ''}');
+                if (window.opener) {
+                  window.opener.postMessage({ 
+                    type: 'google-calendar-error',
+                    error: '${error}',
+                    description: '${errorDescription || ''}'
+                  }, '*');
+                }
+                setTimeout(() => window.close(), 3000);
+              </script>
             </body>
           </html>
         `, {
@@ -98,10 +137,12 @@ Deno.serve(async (req) => {
       }
 
       if (!code) {
+        console.error('No authorization code received in callback');
+        console.log('All search params:', url.searchParams.toString());
         throw new Error('No authorization code received');
       }
 
-      console.log('Received OAuth callback with code');
+      console.log('✅ OAuth callback received with valid code');
 
       // Exchange code for tokens
       const clientId = Deno.env.get('GOOGLE_OAUTH_CLIENT_ID');
@@ -325,8 +366,31 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
 
+    } else if (action === 'test') {
+      // Test endpoint to verify function is reachable
+      console.log('=== TEST ENDPOINT CALLED ===');
+      return new Response(`
+        <html>
+          <head><title>OAuth Function Test</title></head>
+          <body>
+            <h1>✅ Google Calendar OAuth Function is Working!</h1>
+            <p>Function URL: ${req.url}</p>
+            <p>Timestamp: ${new Date().toISOString()}</p>
+            <h3>Test the callback:</h3>
+            <p><a href="?action=callback&code=test123&state=teststate">Test callback with mock parameters</a></p>
+          </body>
+        </html>
+      `, {
+        headers: { 'Content-Type': 'text/html' },
+      });
     } else {
-      return new Response(JSON.stringify({ error: 'Invalid action' }), {
+      console.log('Unknown action received:', action);
+      console.log('Available actions: authorize, callback, status, disconnect, test');
+      return new Response(JSON.stringify({ 
+        error: 'Invalid action', 
+        received: action,
+        available: ['authorize', 'callback', 'status', 'disconnect', 'test']
+      }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });

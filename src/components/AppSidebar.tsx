@@ -59,9 +59,9 @@ export function AppSidebar() {
                 <SidebarMenuButton
                   asChild
                   className={`
-                    w-full h-10 px-3 py-2 text-left transition-all duration-200
+                    w-full h-10 px-3 py-3 mb-3 text-left transition-all duration-200 rounded-lg
                     ${active
-                      ? "bg-pink-600/20 text-pink-100 border-l-4 border-pink-500"
+                      ? "bg-blue-500/20 text-blue-100 border-l-4 border-blue-400"
                       : "text-slate-300 hover:bg-slate-700/50 hover:text-white"
                     }
                   `}

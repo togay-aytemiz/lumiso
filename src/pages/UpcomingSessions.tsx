@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ArrowLeft, Calendar } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import Layout from "@/components/Layout";
 
 interface Session {
   id: string;
@@ -112,27 +113,12 @@ const UpcomingSessions = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center gap-4 mb-2">
-            <Button 
-              onClick={() => navigate("/")} 
-              variant="outline" 
-              size="sm"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Dashboard
-            </Button>
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold">Upcoming Sessions</h1>
-            <p className="text-muted-foreground">Your scheduled photography sessions</p>
-          </div>
+    <Layout>
+      <div className="p-8">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold">Upcoming Sessions</h1>
+          <p className="text-muted-foreground">Your scheduled photography sessions</p>
         </div>
-      </header>
-
-      <main className="container mx-auto px-4 py-8">
         <Card>
           <CardHeader>
             <CardTitle>Scheduled Sessions ({sessions.length})</CardTitle>
@@ -194,8 +180,8 @@ const UpcomingSessions = () => {
             )}
           </CardContent>
         </Card>
-      </main>
-    </div>
+      </div>
+    </Layout>
   );
 };
 

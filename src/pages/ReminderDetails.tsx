@@ -8,6 +8,7 @@ import { toast } from "@/hooks/use-toast";
 import { DateRangePicker } from "@/components/DateRangePicker";
 import ReminderCard from "@/components/ReminderCard";
 import type { DateRange } from "react-day-picker";
+import Layout from "@/components/Layout";
 
 interface Activity {
   id: string;
@@ -365,31 +366,16 @@ const ReminderDetails = () => {
   const activeActivities = filteredActivities.filter(activity => !activity.completed);
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
-      <header className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center gap-4 mb-4">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate("/")}
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Dashboard
-            </Button>
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-              Reminder Details
-            </h1>
-            <p className="text-slate-600 dark:text-slate-400">Manage your task reminders</p>
-          </div>
+    <Layout>
+      <div className="bg-background">
+        <div className="p-6 border-b">
+          <h1 className="text-3xl font-bold">Reminder Details</h1>
+          <p className="text-muted-foreground">Manage your task reminders</p>
         </div>
-      </header>
 
-      {/* Filter Bar */}
-      <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
-        <div className="container mx-auto px-4 py-4">
+        {/* Filter Bar */}
+        <div className="bg-background border-b">
+          <div className="px-6 py-4">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-2 overflow-x-auto">
               {filterOptions.map((option) => (
@@ -422,10 +408,10 @@ const ReminderDetails = () => {
               />
             </div>
           </div>
+          </div>
         </div>
-      </div>
 
-      <main className="container mx-auto px-4 py-6">
+        <main className="px-6 py-6">
         <div className="space-y-6">
           {/* Active Reminders */}
           {activeActivities.length === 0 && (!showCompleted || completedGroupedByDate.length === 0) ? (
@@ -487,8 +473,9 @@ const ReminderDetails = () => {
             </>
           )}
         </div>
-      </main>
-    </div>
+        </main>
+      </div>
+    </Layout>
   );
 };
 

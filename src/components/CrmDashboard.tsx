@@ -239,8 +239,8 @@ const CrmDashboard = () => {
             Welcome back! Here's an overview of your photography business
           </p>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="flex-1 min-w-[400px]">
+        <div className="flex items-center justify-end flex-1 ml-8">
+          <div className="w-full max-w-lg min-w-[480px]">
             <GlobalSearch />
           </div>
         </div>

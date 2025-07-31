@@ -1,12 +1,11 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Bell, AlertTriangle, Clock, Calendar, CheckCircle, Circle } from "lucide-react";
+import { ArrowLeft, Bell } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import { DateRangePicker } from "@/components/DateRangePicker";
+import ReminderCard from "@/components/ReminderCard";
 import type { DateRange } from "react-day-picker";
 
 interface Activity {
@@ -159,79 +158,59 @@ const ReminderDetails = () => {
   };
 
   const getFilteredActivities = () => {
-    const overdueActivities = activities.filter(activity => isOverdue(activity.reminder_date));
+    // Exclude completed reminders from active filters (overdue, today, etc.)
+    const activeActivities = activities.filter(activity => !activity.completed);
+    const completedActivities = activities.filter(activity => activity.completed);
     
     let filteredActivities: Activity[] = [];
     
     switch (selectedFilter) {
       case 'overdue':
-        return overdueActivities;
+        filteredActivities = activeActivities.filter(activity => isOverdue(activity.reminder_date));
+        break;
       case 'today':
-        filteredActivities = activities.filter(activity => isToday(activity.reminder_date));
+        filteredActivities = activeActivities.filter(activity => isToday(activity.reminder_date));
         break;
       case 'tomorrow':
-        filteredActivities = activities.filter(activity => isTomorrow(activity.reminder_date));
+        filteredActivities = activeActivities.filter(activity => isTomorrow(activity.reminder_date));
         break;
       case 'thisWeek':
-        filteredActivities = activities.filter(activity => isThisWeek(activity.reminder_date));
+        filteredActivities = activeActivities.filter(activity => isThisWeek(activity.reminder_date));
         break;
       case 'nextWeek':
-        filteredActivities = activities.filter(activity => isNextWeek(activity.reminder_date));
+        filteredActivities = activeActivities.filter(activity => isNextWeek(activity.reminder_date));
         break;
       case 'thisMonth':
-        filteredActivities = activities.filter(activity => isThisMonth(activity.reminder_date));
+        filteredActivities = activeActivities.filter(activity => isThisMonth(activity.reminder_date));
         break;
       case 'selectPeriod':
+        // For select period, show both active and completed reminders
         filteredActivities = activities.filter(activity => isInDateRange(activity.reminder_date));
         break;
       default:
         filteredActivities = activities;
     }
     
-    // Always show overdue at the top (unless overdue filter is selected)
-    if (selectedFilter !== 'overdue' as FilterType) {
+    // For select period, return as is (includes completed)
+    if (selectedFilter === 'selectPeriod') {
+      return filteredActivities;
+    }
+    
+    // For other filters, show overdue at the top if not on overdue filter
+    const overdueActivities = activeActivities.filter(activity => isOverdue(activity.reminder_date));
+    if (selectedFilter !== 'overdue') {
       return [...overdueActivities, ...filteredActivities.filter(activity => !isOverdue(activity.reminder_date))];
     }
     
     return filteredActivities;
   };
 
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
 
-  const formatTime = (timeStr: string) => {
-    if (!timeStr) return '';
-    return new Date(`1970-01-01T${timeStr}`).toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    });
-  };
-
-  const getReminderIcon = (reminderDate: string) => {
-    if (isOverdue(reminderDate)) {
-      return <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" />;
-    } else if (isToday(reminderDate)) {
-      return <Bell className="h-5 w-5 text-blue-600 dark:text-blue-400" />;
-    } else {
-      return <Clock className="h-5 w-5 text-slate-600 dark:text-slate-400" />;
-    }
-  };
-
-  const getReminderBorder = (reminderDate: string) => {
-    if (isOverdue(reminderDate)) {
-      return 'border-red-200 dark:border-red-800 bg-red-50/50 dark:bg-red-950/20';
-    } else if (isToday(reminderDate)) {
-      return 'border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-950/20';
-    } else {
-      return 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800';
-    }
+  const shouldShowStatusBadge = (activity: Activity) => {
+    // Hide badge if current filter already implies the status
+    if (selectedFilter === 'overdue' && isOverdue(activity.reminder_date)) return false;
+    if (selectedFilter === 'today' && isToday(activity.reminder_date)) return false;
+    return true;
   };
 
   const toggleCompletion = async (activityId: string, completed: boolean) => {
@@ -292,10 +271,10 @@ const ReminderDetails = () => {
   const filteredActivities = getFilteredActivities();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 dark:from-gray-900 dark:to-slate-800">
-      <header className="border-b">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center gap-4 mb-2">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
+      <header className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+        <div className="container mx-auto px-4 py-6">
+          <div className="flex items-center gap-4 mb-4">
             <Button
               variant="outline"
               size="sm"
@@ -306,17 +285,17 @@ const ReminderDetails = () => {
             </Button>
           </div>
           <div>
-            <h1 className="text-2xl font-bold">
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
               Reminder Details
             </h1>
-            <p className="text-muted-foreground">Manage your task reminders</p>
+            <p className="text-slate-600 dark:text-slate-400">Manage your task reminders</p>
           </div>
         </div>
       </header>
 
       {/* Filter Bar */}
-      <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto px-4 py-3">
+      <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+        <div className="container mx-auto px-4 py-4">
           <div className="flex items-center gap-2 overflow-x-auto">
             {filterOptions.map((option) => (
               <Button
@@ -340,78 +319,27 @@ const ReminderDetails = () => {
         </div>
       </div>
 
-      <main className="container mx-auto px-4 py-8">
-        <Card className="shadow-md hover:shadow-lg transition-shadow border-slate-200 dark:border-slate-700">
-          <CardContent className="pt-6">
-            <div className="space-y-4">
-              {filteredActivities.length === 0 ? (
-                <div className="text-center py-12 text-slate-500 dark:text-slate-400">
-                  <Bell className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                  <h3 className="text-lg font-medium mb-2">No reminders found</h3>
-                  <p>You don't have any reminders for the selected filter.</p>
-                </div>
-              ) : (
-                filteredActivities.map((activity) => (
-                  <div
-                    key={activity.id}
-                    className={`p-4 border rounded-lg transition-all duration-200 cursor-pointer ${getReminderBorder(activity.reminder_date)}`}
-                    onClick={() => handleReminderClick(activity.lead_id)}
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-start gap-3 flex-1">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleCompletion(activity.id, !activity.completed);
-                          }}
-                          className="flex items-center justify-center w-6 h-6 rounded-full border-2 border-slate-300 dark:border-slate-600 hover:border-primary transition-colors mt-0.5"
-                        >
-                          {activity.completed ? (
-                            <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
-                          ) : (
-                            <div className="w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-600" />
-                          )}
-                        </button>
-                        <div className="flex-1 space-y-1">
-                          <div className="flex items-center gap-2">
-                            <h4 className={`font-medium text-slate-800 dark:text-slate-200 ${activity.completed ? 'line-through opacity-60' : ''}`}>
-                              {activity.content}
-                            </h4>
-                            {isOverdue(activity.reminder_date) && (
-                              <Badge className="text-xs bg-red-100 text-red-700 border-red-200 dark:bg-red-950/50 dark:text-red-300 dark:border-red-800 pointer-events-none">
-                                Overdue
-                              </Badge>
-                            )}
-                            {isToday(activity.reminder_date) && selectedFilter !== 'today' && (
-                              <Badge className="text-xs bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-800 pointer-events-none">
-                                Due Today
-                              </Badge>
-                            )}
-                          </div>
-                          <p className="text-sm text-slate-600 dark:text-slate-400">
-                            Lead: {getLeadName(activity.lead_id)}
-                          </p>
-                          <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-500">
-                            <div className="flex items-center gap-1">
-                              <Calendar className="h-3 w-3" />
-                              {formatDate(activity.reminder_date)}
-                            </div>
-                            {activity.reminder_time && (
-                              <div className="flex items-center gap-1">
-                                <Clock className="h-3 w-3" />
-                                {formatTime(activity.reminder_time)}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
+      <main className="container mx-auto px-4 py-6">
+        <div className="space-y-3">
+          {filteredActivities.length === 0 ? (
+            <div className="text-center py-12 text-slate-500 dark:text-slate-400">
+              <Bell className="h-16 w-16 mx-auto mb-4 opacity-50" />
+              <h3 className="text-lg font-medium mb-2">No reminders found</h3>
+              <p>You don't have any reminders for the selected filter.</p>
             </div>
-          </CardContent>
-        </Card>
+          ) : (
+            filteredActivities.map((activity) => (
+              <ReminderCard
+                key={activity.id}
+                activity={activity}
+                leadName={getLeadName(activity.lead_id)}
+                onToggleCompletion={toggleCompletion}
+                onClick={() => handleReminderClick(activity.lead_id)}
+                hideStatusBadge={!shouldShowStatusBadge(activity)}
+              />
+            ))
+          )}
+        </div>
       </main>
     </div>
   );

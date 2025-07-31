@@ -9,6 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Clock, FileText, Plus, MessageSquare, Bell, CheckCircle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import ReminderCard from "@/components/ReminderCard";
 
 interface Activity {
   id: string;
@@ -18,6 +19,7 @@ interface Activity {
   reminder_time?: string;
   created_at: string;
   completed?: boolean;
+  lead_id: string;
 }
 
 interface AuditLog {
@@ -351,33 +353,37 @@ const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
                           
                           {item.type === 'activity' && (
                             <>
-                              <div className="flex items-start gap-3">
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    toggleCompletion(item.data.id, !item.data.completed);
-                                  }}
-                                  className="flex items-center justify-center w-5 h-5 rounded-full border-2 border-muted-foreground/40 hover:border-primary transition-colors mt-0.5 flex-shrink-0"
-                                >
-                                  {item.data.completed ? (
-                                    <CheckCircle className="h-3 w-3 text-green-600 dark:text-green-400" />
-                                  ) : (
-                                    <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40" />
-                                  )}
-                                </button>
-                                <div className="flex-1">
-                                  <p className={`text-sm ${item.data.completed ? 'line-through opacity-60' : ''}`}>
-                                    {item.data.content}
-                                  </p>
-                                  {item.data.type === 'reminder' && item.data.reminder_date && (
-                                    <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
-                                      <Clock className="h-3 w-3" />
-                                      Reminder set for {new Date(item.data.reminder_date).toLocaleDateString()} 
-                                      {item.data.reminder_time && ` at ${item.data.reminder_time}`}
-                                    </div>
-                                  )}
+                              {item.data.type === 'reminder' ? (
+                                <div className="mt-2">
+                                  <ReminderCard
+                                    activity={item.data}
+                                    leadName={leadName}
+                                    onToggleCompletion={toggleCompletion}
+                                    showCompletedBadge={false}
+                                  />
                                 </div>
-                              </div>
+                              ) : (
+                                <div className="flex items-start gap-3">
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      toggleCompletion(item.data.id, !item.data.completed);
+                                    }}
+                                    className="flex items-center justify-center w-5 h-5 rounded-full border-2 border-muted-foreground/40 hover:border-primary transition-colors mt-0.5 flex-shrink-0"
+                                  >
+                                    {item.data.completed ? (
+                                      <CheckCircle className="h-3 w-3 text-green-600 dark:text-green-400" />
+                                    ) : (
+                                      <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40" />
+                                    )}
+                                  </button>
+                                  <div className="flex-1">
+                                    <p className={`text-sm ${item.data.completed ? 'line-through opacity-60' : ''}`}>
+                                      {item.data.content}
+                                    </p>
+                                  </div>
+                                </div>
+                              )}
                             </>
                           )}
                         </div>

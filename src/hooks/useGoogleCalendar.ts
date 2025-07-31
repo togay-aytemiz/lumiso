@@ -55,12 +55,17 @@ export const useGoogleCalendar = () => {
         return;
       }
 
+      console.log('Starting Google Calendar connection for user:', session.user.id);
+
       // Create state parameter with user ID
       const state = btoa(JSON.stringify({ userId: session.user.id }));
+      console.log('Created state parameter:', state);
 
       const { data, error } = await supabase.functions.invoke('google-calendar-oauth', {
         body: { action: 'authorize', state }
       });
+
+      console.log('Authorization response:', { data, error });
 
       if (error) {
         throw error;

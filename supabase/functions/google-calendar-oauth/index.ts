@@ -41,10 +41,11 @@ Deno.serve(async (req) => {
     console.log('Request headers:', JSON.stringify(Object.fromEntries(req.headers.entries())));
     
     // If action is not in URL params, try to get it from request body
+    let requestBody = null;
     if (!action && req.method === 'POST') {
       try {
-        const body = await req.json();
-        action = body.action;
+        requestBody = await req.json();
+        action = requestBody.action;
         console.log('Action from request body:', action);
       } catch (e) {
         console.log('Failed to parse request body:', e.message);
@@ -81,13 +82,8 @@ Deno.serve(async (req) => {
 
       // Get state from request body for POST requests
       let state = '';
-      if (req.method === 'POST') {
-        try {
-          const body = await req.json();
-          state = body.state || '';
-        } catch (e) {
-          console.log('Failed to parse request body for state:', e.message);
-        }
+      if (req.method === 'POST' && requestBody) {
+        state = requestBody.state || '';
       } else {
         state = url.searchParams.get('state') || '';
       }
@@ -106,8 +102,10 @@ Deno.serve(async (req) => {
     } else if (action === 'callback') {
       // Handle OAuth callback
       console.log('=== CALLBACK REQUEST RECEIVED ===');
+      console.log('Request method:', req.method);
       console.log('Full URL:', req.url);
       console.log('All URL params:', Object.fromEntries(url.searchParams.entries()));
+      console.log('Request headers:', JSON.stringify(Object.fromEntries(req.headers.entries())));
       
       const code = url.searchParams.get('code');
       const state = url.searchParams.get('state');

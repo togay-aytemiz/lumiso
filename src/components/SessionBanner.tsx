@@ -99,9 +99,6 @@ const SessionBanner = ({ session, leadName, onStatusUpdate }: SessionBannerProps
                 <SelectItem value="cancelled">Cancelled</SelectItem>
               </SelectContent>
             </Select>
-            <Badge className={getStatusBadgeColor(session.status)}>
-              {formatStatusText(session.status)}
-            </Badge>
           </div>
         </div>
       </CardContent>

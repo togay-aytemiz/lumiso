@@ -370,16 +370,6 @@ const LeadDetail = () => {
     <Layout>
       <div className="p-8">
         <div className="mb-6">
-          <Button 
-            onClick={handleBack} 
-            variant="outline" 
-            size="sm"
-            className="mb-4"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            {location.state?.from === 'dashboard' ? 'Back to Dashboard' : 
-             location.state?.from === 'all-sessions' ? 'Back to All Sessions' : 'Back to All Leads'}
-          </Button>
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <div className="flex items-center gap-3 mb-1">

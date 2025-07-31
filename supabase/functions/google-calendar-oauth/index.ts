@@ -2,7 +2,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.53.0'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'Authorization, authorization, x-client-info, apikey, content-type',
 }
 
 interface GoogleTokenResponse {
@@ -40,6 +40,10 @@ Deno.serve(async (req) => {
     console.log('URL search params:', url.searchParams.toString());
     console.log('Request headers:', JSON.stringify(Object.fromEntries(req.headers.entries())));
     
+    // Helper function to get authorization header (case-insensitive)
+    const getAuthHeader = () => {
+      return req.headers.get('Authorization') || req.headers.get('authorization') || null;
+    };
     // If action is not in URL params and it's a POST request, try to get it from request body
     let requestBody = null;
     if (!action && req.method === 'POST') {
@@ -319,9 +323,23 @@ Deno.serve(async (req) => {
 
     } else if (action === 'status') {
       // Check connection status
-      const authHeader = req.headers.get('Authorization');
+      const authHeader = getAuthHeader();
+      console.log('Authorization header for status check:', authHeader ? 'PRESENT' : 'MISSING');
+      
       if (!authHeader) {
-        return new Response(JSON.stringify({ connected: false, error: 'No authorization header' }), {
+        return new Response(JSON.stringify({ 
+          connected: false, 
+          error: 'Missing authorization header. Please ensure Authorization header is included in the request.' 
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      if (!authHeader.startsWith('Bearer ')) {
+        return new Response(JSON.stringify({ 
+          connected: false, 
+          error: 'Invalid authorization header format. Expected "Bearer <token>".' 
+        }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
@@ -366,9 +384,23 @@ Deno.serve(async (req) => {
 
     } else if (action === 'disconnect') {
       // Disconnect calendar
-      const authHeader = req.headers.get('Authorization');
+      const authHeader = getAuthHeader();
+      console.log('Authorization header for disconnect:', authHeader ? 'PRESENT' : 'MISSING');
+      
       if (!authHeader) {
-        return new Response(JSON.stringify({ success: false, error: 'No authorization header' }), {
+        return new Response(JSON.stringify({ 
+          success: false, 
+          error: 'Missing authorization header. Please ensure Authorization header is included in the request.' 
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      if (!authHeader.startsWith('Bearer ')) {
+        return new Response(JSON.stringify({ 
+          success: false, 
+          error: 'Invalid authorization header format. Expected "Bearer <token>".' 
+        }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }

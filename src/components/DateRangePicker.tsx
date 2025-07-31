@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { format } from "date-fns";
+import { enUS } from "date-fns/locale";
 import { Calendar, CalendarIcon } from "lucide-react";
 import { DayPicker } from "react-day-picker";
 import type { DateRange } from "react-day-picker";
@@ -15,6 +16,15 @@ interface DateRangePickerProps {
 
 export const DateRangePicker = ({ dateRange, onDateRangeChange, className }: DateRangePickerProps) => {
   const [isOpen, setIsOpen] = useState(false);
+
+  // Create a custom locale with Monday as first day of week
+  const mondayFirstLocale = {
+    ...enUS,
+    options: {
+      ...enUS.options,
+      weekStartsOn: 1 as const,
+    },
+  };
 
   const formatDateRange = (range: DateRange | undefined) => {
     if (!range?.from) {
@@ -53,6 +63,7 @@ export const DateRangePicker = ({ dateRange, onDateRangeChange, className }: Dat
             }
           }}
           weekStartsOn={1}
+          locale={mondayFirstLocale}
           className="p-4 pointer-events-auto bg-background rounded-lg"
           numberOfMonths={2}
           classNames={{

@@ -40,7 +40,7 @@ Deno.serve(async (req) => {
     console.log('URL search params:', url.searchParams.toString());
     console.log('Request headers:', JSON.stringify(Object.fromEntries(req.headers.entries())));
     
-    // If action is not in URL params, try to get it from request body
+    // If action is not in URL params and it's a POST request, try to get it from request body
     let requestBody = null;
     if (!action && req.method === 'POST') {
       try {

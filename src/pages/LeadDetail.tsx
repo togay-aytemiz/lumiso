@@ -513,14 +513,16 @@ const LeadDetail = () => {
               onStatusUpdate={handleSessionUpdated}
             />
             <div className="flex gap-2 mt-3 justify-end">
-              <EditSessionDialog
-                sessionId={session.id}
-                currentDate={session.session_date}
-                currentTime={session.session_time}
-                currentNotes={session.notes}
-                leadName={lead.name}
-                onSessionUpdated={handleSessionUpdated}
-              />
+              {session.status === 'planned' && (
+                <EditSessionDialog
+                  sessionId={session.id}
+                  currentDate={session.session_date}
+                  currentTime={session.session_time}
+                  currentNotes={session.notes}
+                  leadName={lead.name}
+                  onSessionUpdated={handleSessionUpdated}
+                />
+              )}
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button variant="destructive" size="sm" disabled={deletingSession}>

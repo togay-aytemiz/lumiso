@@ -85,12 +85,16 @@ export function AppSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
+              asChild
               className="w-full h-10 px-3 py-2 text-[#f1f5f9] hover:bg-slate-700/50 hover:text-[#f1f5f9] transition-all duration-200"
             >
-              <div className="flex items-center gap-3 w-full">
+              <NavLink
+                to="/settings"
+                className="flex items-center gap-3 w-full"
+              >
                 <Settings className="h-4 w-4" />
                 {open && <span className="font-medium">Settings</span>}
-              </div>
+              </NavLink>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>

@@ -52,6 +52,7 @@ export const DateRangePicker = ({ dateRange, onDateRangeChange, className }: Dat
               setIsOpen(false);
             }
           }}
+          weekStartsOn={1}
           className="p-4 pointer-events-auto bg-background rounded-lg"
           numberOfMonths={2}
           classNames={{

@@ -296,6 +296,30 @@ const ReminderDetails = () => {
     return sortedGroups;
   };
 
+  const getReminderCountForFilter = (filterType: FilterType) => {
+    // Get activities based on showCompleted toggle
+    let targetActivities = showCompleted ? activities : activities.filter(activity => !activity.completed);
+    
+    switch (filterType) {
+      case 'overdue':
+        return targetActivities.filter(activity => isOverdue(activity.reminder_date)).length;
+      case 'today':
+        return targetActivities.filter(activity => isToday(activity.reminder_date)).length;
+      case 'tomorrow':
+        return targetActivities.filter(activity => isTomorrow(activity.reminder_date)).length;
+      case 'thisWeek':
+        return targetActivities.filter(activity => isThisWeek(activity.reminder_date)).length;
+      case 'nextWeek':
+        return targetActivities.filter(activity => isNextWeek(activity.reminder_date)).length;
+      case 'thisMonth':
+        return targetActivities.filter(activity => isThisMonth(activity.reminder_date)).length;
+      case 'selectPeriod':
+        return targetActivities.filter(activity => isInDateRange(activity.reminder_date)).length;
+      default:
+        return targetActivities.length;
+    }
+  };
+
 
   const shouldShowStatusBadge = (activity: Activity) => {
     // Never show overdue badge for completed reminders
@@ -386,7 +410,7 @@ const ReminderDetails = () => {
                   onClick={() => setSelectedFilter(option.key as FilterType)}
                   className="whitespace-nowrap"
                 >
-                  {option.label}
+                  {option.label} ({getReminderCountForFilter(option.key as FilterType)})
                 </Button>
               ))}
               {selectedFilter === 'selectPeriod' && (

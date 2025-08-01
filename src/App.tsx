@@ -9,6 +9,7 @@ import AllLeads from "./pages/AllLeads";
 import LeadDetail from "./pages/LeadDetail";
 import UpcomingSessions from "./pages/UpcomingSessions";
 import ReminderDetails from "./pages/ReminderDetails";
+import Analytics from "./pages/Analytics";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
@@ -27,6 +28,7 @@ const App = () => (
           <Route path="/leads/:id" element={<LeadDetail />} />
           <Route path="/sessions" element={<UpcomingSessions />} />
           <Route path="/reminders" element={<ReminderDetails />} />
+          <Route path="/analytics" element={<Analytics />} />
           <Route path="/settings" element={<Settings />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

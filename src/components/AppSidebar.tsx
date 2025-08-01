@@ -1,5 +1,5 @@
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Users, Calendar, Bell, Settings, LogOut } from "lucide-react";
+import { LayoutDashboard, Users, Calendar, Bell, BarChart3, Settings, LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Sidebar,
@@ -14,10 +14,11 @@ import {
 import { Separator } from "@/components/ui/separator";
 
 const navigationItems = [
-  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
+  { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Leads", url: "/leads", icon: Users },
   { title: "Sessions", url: "/sessions", icon: Calendar },
   { title: "Reminders", url: "/reminders", icon: Bell },
+  { title: "Analytics", url: "/analytics", icon: BarChart3 },
 ];
 
 export function AppSidebar() {
@@ -27,8 +28,8 @@ export function AppSidebar() {
   const currentPath = location.pathname;
 
   const isActive = (path: string) => {
-    if (path === "/dashboard") {
-      return currentPath === "/" || currentPath === "/dashboard";
+    if (path === "/") {
+      return currentPath === "/";
     }
     return currentPath.startsWith(path);
   };
@@ -67,7 +68,7 @@ export function AppSidebar() {
                   `}
                 >
                   <NavLink
-                    to={item.url === "/dashboard" ? "/" : item.url}
+                    to={item.url}
                     className="flex items-center gap-3 w-full"
                   >
                     <item.icon className="h-4 w-4" />

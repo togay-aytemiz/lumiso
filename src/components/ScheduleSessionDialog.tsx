@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Calendar } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
@@ -12,9 +13,11 @@ interface ScheduleSessionDialogProps {
   leadId: string;
   leadName: string;
   onSessionScheduled?: () => void;
+  disabled?: boolean;
+  disabledTooltip?: string;
 }
 
-const ScheduleSessionDialog = ({ leadId, leadName, onSessionScheduled }: ScheduleSessionDialogProps) => {
+const ScheduleSessionDialog = ({ leadId, leadName, onSessionScheduled, disabled = false, disabledTooltip }: ScheduleSessionDialogProps) => {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -124,14 +127,29 @@ const ScheduleSessionDialog = ({ leadId, leadName, onSessionScheduled }: Schedul
     }));
   };
 
+  const buttonContent = (
+    <Button disabled={disabled}>
+      <Calendar className="h-4 w-4 mr-2" />
+      Schedule Session
+    </Button>
+  );
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button>
-          <Calendar className="h-4 w-4 mr-2" />
-          Schedule Session
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={!disabled ? setOpen : undefined}>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <DialogTrigger asChild disabled={disabled}>
+              {buttonContent}
+            </DialogTrigger>
+          </TooltipTrigger>
+          {disabled && disabledTooltip && (
+            <TooltipContent>
+              <p>{disabledTooltip}</p>
+            </TooltipContent>
+          )}
+        </Tooltip>
+      </TooltipProvider>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Schedule Session</DialogTitle>

@@ -388,13 +388,13 @@ const LeadDetail = () => {
             <div className="flex items-center gap-4">
               {/* Header Action Buttons */}
               <div className="flex flex-wrap gap-2 lg:gap-4">
-                {(!session || session.status !== 'planned') && (
-                  <ScheduleSessionDialog 
-                    leadId={lead.id} 
-                    leadName={lead.name}
-                    onSessionScheduled={handleSessionScheduled}
-                  />
-                )}
+                <ScheduleSessionDialog 
+                  leadId={lead.id} 
+                  leadName={lead.name}
+                  onSessionScheduled={handleSessionScheduled}
+                  disabled={session?.status === 'planned'}
+                  disabledTooltip="A planned session already exists."
+                />
 
                 {formData.status !== "completed" && (
                   <AlertDialog>

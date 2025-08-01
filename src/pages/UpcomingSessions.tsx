@@ -8,7 +8,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ArrowLeft, ArrowUpDown, ArrowUp, ArrowDown, Plus, Calendar } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-import Layout from "@/components/Layout";
 import NewSessionDialog from "@/components/NewSessionDialog";
 import { formatDate, formatTime, formatLongDate, getWeekRange } from "@/lib/utils";
 
@@ -266,194 +265,192 @@ const AllSessions = () => {
   }
 
   return (
-    <Layout>
-      <div className="p-8">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold">Sessions</h1>
-        </div>
-        <Card>
-          <CardHeader>
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                <NewSessionDialog onSessionScheduled={fetchSessions} />
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">Filter by status:</span>
-                  <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-48">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {statusOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {/* Quick Date Filters */}
-            <div className="mb-6">
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  variant={dateFilter === "all" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setDateFilter("all")}
-                >
-                  All ({getSessionCountForDateFilter("all")})
-                </Button>
-                <Button
-                  variant={dateFilter === "past" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setDateFilter("past")}
-                >
-                  Past ({getSessionCountForDateFilter("past")})
-                </Button>
-                <Button
-                  variant={dateFilter === "today" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setDateFilter("today")}
-                >
-                  Today ({getSessionCountForDateFilter("today")})
-                </Button>
-                <Button
-                  variant={dateFilter === "tomorrow" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setDateFilter("tomorrow")}
-                >
-                  Tomorrow ({getSessionCountForDateFilter("tomorrow")})
-                </Button>
-                <Button
-                  variant={dateFilter === "thisweek" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setDateFilter("thisweek")}
-                >
-                  This Week ({getSessionCountForDateFilter("thisweek")})
-                </Button>
-                <Button
-                  variant={dateFilter === "nextweek" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setDateFilter("nextweek")}
-                >
-                  Next Week ({getSessionCountForDateFilter("nextweek")})
-                </Button>
-                <Button
-                  variant={dateFilter === "thismonth" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setDateFilter("thismonth")}
-                >
-                  This Month ({getSessionCountForDateFilter("thismonth")})
-                </Button>
-                <Button
-                  variant={dateFilter === "nextmonth" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setDateFilter("nextmonth")}
-                >
-                  Next Month ({getSessionCountForDateFilter("nextmonth")})
-                </Button>
-              </div>
-            </div>
-            
-            {filteredAndSortedSessions.length > 0 ? (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead 
-                      className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => handleSort('lead_name')}
-                    >
-                      <div className="flex items-center gap-2">
-                        Client Name
-                        {getSortIcon('lead_name')}
-                      </div>
-                    </TableHead>
-                    <TableHead 
-                      className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => handleSort('session_date')}
-                    >
-                      <div className="flex items-center gap-2">
-                        Date
-                        {getSortIcon('session_date')}
-                      </div>
-                    </TableHead>
-                    <TableHead 
-                      className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => handleSort('session_time')}
-                    >
-                      <div className="flex items-center gap-2">
-                        Time
-                        {getSortIcon('session_time')}
-                      </div>
-                    </TableHead>
-                    <TableHead 
-                      className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => handleSort('status')}
-                    >
-                      <div className="flex items-center gap-2">
-                        Status
-                        {getSortIcon('status')}
-                      </div>
-                    </TableHead>
-                    <TableHead>Notes</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredAndSortedSessions.map((session) => (
-                    <TableRow 
-                      key={session.id}
-                      className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => handleRowClick(session)}
-                    >
-                      <TableCell className="font-medium">
-                        {session.lead_name}
-                      </TableCell>
-                      <TableCell>
-                        {formatLongDate(session.session_date)}
-                      </TableCell>
-                      <TableCell>
-                        {formatTime(session.session_time)}
-                      </TableCell>
-                      <TableCell>
-                        <span className={`px-2 py-1 text-xs rounded-full font-medium ${getStatusBadgeColor(session.status)}`}>
-                          {formatStatusText(session.status)}
-                        </span>
-                      </TableCell>
-                      <TableCell className="max-w-xs">
-                        {session.notes ? (
-                          <div 
-                            className="truncate hover:whitespace-normal hover:overflow-visible hover:text-wrap cursor-help"
-                            title={session.notes}
-                          >
-                            {session.notes}
-                          </div>
-                        ) : (
-                          '-'
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            ) : (
-              <div className="text-center py-12 text-muted-foreground">
-                <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <h3 className="text-lg font-medium mb-2">No sessions found</h3>
-                <p>
-                  {statusFilter === "all" 
-                    ? "You don't have any sessions yet."
-                    : `No sessions found with status "${statusFilter}".`
-                  }
-                </p>
-                <p className="text-sm mt-2">Click "Schedule Session" to add your first session.</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+    <div className="p-8">
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold">Sessions</h1>
       </div>
-    </Layout>
+      <Card>
+        <CardHeader>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+              <NewSessionDialog onSessionScheduled={fetchSessions} />
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">Filter by status:</span>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-48">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {statusOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {/* Quick Date Filters */}
+          <div className="mb-6">
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant={dateFilter === "all" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setDateFilter("all")}
+              >
+                All ({getSessionCountForDateFilter("all")})
+              </Button>
+              <Button
+                variant={dateFilter === "past" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setDateFilter("past")}
+              >
+                Past ({getSessionCountForDateFilter("past")})
+              </Button>
+              <Button
+                variant={dateFilter === "today" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setDateFilter("today")}
+              >
+                Today ({getSessionCountForDateFilter("today")})
+              </Button>
+              <Button
+                variant={dateFilter === "tomorrow" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setDateFilter("tomorrow")}
+              >
+                Tomorrow ({getSessionCountForDateFilter("tomorrow")})
+              </Button>
+              <Button
+                variant={dateFilter === "thisweek" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setDateFilter("thisweek")}
+              >
+                This Week ({getSessionCountForDateFilter("thisweek")})
+              </Button>
+              <Button
+                variant={dateFilter === "nextweek" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setDateFilter("nextweek")}
+              >
+                Next Week ({getSessionCountForDateFilter("nextweek")})
+              </Button>
+              <Button
+                variant={dateFilter === "thismonth" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setDateFilter("thismonth")}
+              >
+                This Month ({getSessionCountForDateFilter("thismonth")})
+              </Button>
+              <Button
+                variant={dateFilter === "nextmonth" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setDateFilter("nextmonth")}
+              >
+                Next Month ({getSessionCountForDateFilter("nextmonth")})
+              </Button>
+            </div>
+          </div>
+          
+          {filteredAndSortedSessions.length > 0 ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead 
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={() => handleSort('lead_name')}
+                  >
+                    <div className="flex items-center gap-2">
+                      Client Name
+                      {getSortIcon('lead_name')}
+                    </div>
+                  </TableHead>
+                  <TableHead 
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={() => handleSort('session_date')}
+                  >
+                    <div className="flex items-center gap-2">
+                      Date
+                      {getSortIcon('session_date')}
+                    </div>
+                  </TableHead>
+                  <TableHead 
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={() => handleSort('session_time')}
+                  >
+                    <div className="flex items-center gap-2">
+                      Time
+                      {getSortIcon('session_time')}
+                    </div>
+                  </TableHead>
+                  <TableHead 
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={() => handleSort('status')}
+                  >
+                    <div className="flex items-center gap-2">
+                      Status
+                      {getSortIcon('status')}
+                    </div>
+                  </TableHead>
+                  <TableHead>Notes</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredAndSortedSessions.map((session) => (
+                  <TableRow 
+                    key={session.id}
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={() => handleRowClick(session)}
+                  >
+                    <TableCell className="font-medium">
+                      {session.lead_name}
+                    </TableCell>
+                    <TableCell>
+                      {formatLongDate(session.session_date)}
+                    </TableCell>
+                    <TableCell>
+                      {formatTime(session.session_time)}
+                    </TableCell>
+                    <TableCell>
+                      <span className={`px-2 py-1 text-xs rounded-full font-medium ${getStatusBadgeColor(session.status)}`}>
+                        {formatStatusText(session.status)}
+                      </span>
+                    </TableCell>
+                    <TableCell className="max-w-xs">
+                      {session.notes ? (
+                        <div 
+                          className="truncate hover:whitespace-normal hover:overflow-visible hover:text-wrap cursor-help"
+                          title={session.notes}
+                        >
+                          {session.notes}
+                        </div>
+                      ) : (
+                        '-'
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <div className="text-center py-12 text-muted-foreground">
+              <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <h3 className="text-lg font-medium mb-2">No sessions found</h3>
+              <p>
+                {statusFilter === "all" 
+                  ? "You don't have any sessions yet."
+                  : `No sessions found with status "${statusFilter}".`
+                }
+              </p>
+              <p className="text-sm mt-2">Click "Schedule Session" to add your first session.</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 

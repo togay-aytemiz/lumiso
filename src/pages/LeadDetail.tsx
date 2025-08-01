@@ -18,7 +18,6 @@ import ActivitySection from "@/components/ActivitySection";
 import SessionBanner from "@/components/SessionBanner";
 import { getLeadStatusStyles, formatStatusText } from "@/lib/leadStatusColors";
 import { formatDate } from "@/lib/utils";
-import Layout from "@/components/Layout";
 
 interface Lead {
   id: string;
@@ -380,263 +379,261 @@ const LeadDetail = () => {
   }
 
   return (
-    <Layout>
-      <div className="p-8">
-        <div className="mb-6">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <div className="flex items-center gap-3 mb-1">
-                <h1 className="text-2xl font-bold">{lead.name || 'Lead Details'}</h1>
-                <span className={`px-2 py-1 text-xs rounded-full font-medium ${getLeadStatusStyles(lead.status).className}`}>
-                  {formatStatusText(lead.status)}
-                </span>
-              </div>
-              <p className="text-muted-foreground">Edit lead information</p>
+    <div className="p-8">
+      <div className="mb-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <div className="flex items-center gap-3 mb-1">
+              <h1 className="text-2xl font-bold">{lead.name || 'Lead Details'}</h1>
+              <span className={`px-2 py-1 text-xs rounded-full font-medium ${getLeadStatusStyles(lead.status).className}`}>
+                {formatStatusText(lead.status)}
+              </span>
             </div>
-            
-            <div className="flex items-center gap-4">
-              {/* Header Action Buttons */}
-              <div className="flex flex-wrap gap-2 lg:gap-4">
-                <ScheduleSessionDialog 
-                  leadId={lead.id} 
-                  leadName={lead.name}
-                  onSessionScheduled={handleSessionScheduled}
-                  disabled={sessions.some(s => s.status === 'planned')}
-                  disabledTooltip="A planned session already exists."
-                />
+            <p className="text-muted-foreground">Edit lead information</p>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            {/* Header Action Buttons */}
+            <div className="flex flex-wrap gap-2 lg:gap-4">
+              <ScheduleSessionDialog 
+                leadId={lead.id} 
+                leadName={lead.name}
+                onSessionScheduled={handleSessionScheduled}
+                disabled={sessions.some(s => s.status === 'planned')}
+                disabledTooltip="A planned session already exists."
+              />
 
-                {formData.status !== "completed" && (
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button 
-                        disabled={saving}
-                        className="bg-green-600 hover:bg-green-700 text-white h-10"
-                        size="sm"
+              {formData.status !== "completed" && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button 
+                      disabled={saving}
+                      className="bg-green-600 hover:bg-green-700 text-white h-10"
+                      size="sm"
+                    >
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      Completed
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Mark Lead as Completed?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Are you sure you want to mark "{lead.name}" as completed? This will update the lead's status to "Completed".
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction 
+                        onClick={handleMarkAsCompleted}
+                        className="bg-green-600 hover:bg-green-700 text-white"
                       >
-                        <CheckCircle className="h-4 w-4 mr-2" />
-                        Completed
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Mark Lead as Completed?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Are you sure you want to mark "{lead.name}" as completed? This will update the lead's status to "Completed".
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction 
-                          onClick={handleMarkAsCompleted}
-                          className="bg-green-600 hover:bg-green-700 text-white"
-                        >
-                          {saving ? "Updating..." : "Completed"}
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                )}
+                        {saving ? "Updating..." : "Completed"}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
 
-                {formData.status !== "lost" && (
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button 
-                        disabled={saving}
-                        variant="destructive"
-                        size="sm"
-                        className="h-10"
+              {formData.status !== "lost" && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button 
+                      disabled={saving}
+                      variant="destructive"
+                      size="sm"
+                      className="h-10"
+                    >
+                      Lost
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Mark Lead as Lost?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Are you sure you want to mark "{lead.name}" as lost? This will update the lead's status to "Lost".
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction 
+                        onClick={handleMarkAsLost}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                       >
-                        Lost
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Mark Lead as Lost?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Are you sure you want to mark "{lead.name}" as lost? This will update the lead's status to "Lost".
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction 
-                          onClick={handleMarkAsLost}
-                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                        >
-                          {saving ? "Updating..." : "Lost"}
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                )}
-              </div>
-
-              {/* More Menu */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                    <MoreHorizontal className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <DropdownMenuItem 
-                        className="text-destructive focus:text-destructive cursor-pointer"
-                        onSelect={(e) => e.preventDefault()}
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Delete
-                      </DropdownMenuItem>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This action cannot be undone. This will permanently delete the lead
-                          "{lead.name}" and remove all associated data.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction 
-                          onClick={handleDelete}
-                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                        >
-                          {deleting ? "Deleting..." : "Delete Lead"}
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                        {saving ? "Updating..." : "Lost"}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
             </div>
+
+            {/* More Menu */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <DropdownMenuItem 
+                      className="text-destructive focus:text-destructive cursor-pointer"
+                      onSelect={(e) => e.preventDefault()}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete
+                    </DropdownMenuItem>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This action cannot be undone. This will permanently delete the lead
+                        "{lead.name}" and remove all associated data.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction 
+                        onClick={handleDelete}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        {deleting ? "Deleting..." : "Delete Lead"}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
+      </div>
 
-        {/* Sessions Section */}
-        {sessions.length > 0 && (
-          <div className="mb-6">
-            <div className="space-y-4">
-              {sessions.map((session) => (
-                <div key={session.id}>
-                  <SessionBanner 
-                    session={session} 
-                    leadName={lead.name} 
-                    onStatusUpdate={handleSessionUpdated}
-                    onEdit={() => setEditingSessionId(session.id)}
-                    onDelete={() => setDeletingSessionId(session.id)}
+      {/* Sessions Section */}
+      {sessions.length > 0 && (
+        <div className="mb-6">
+          <div className="space-y-4">
+            {sessions.map((session) => (
+              <div key={session.id}>
+                <SessionBanner 
+                  session={session} 
+                  leadName={lead.name} 
+                  onStatusUpdate={handleSessionUpdated}
+                  onEdit={() => setEditingSessionId(session.id)}
+                  onDelete={() => setDeletingSessionId(session.id)}
+                />
+                
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Two-column layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        {/* Left column - Lead Details (25%) */}
+        <div className="lg:col-span-1 space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Lead Information</CardTitle>
+              <CardDescription>
+                Created on {formatDate(lead.created_at)}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Name *</Label>
+                  <Input
+                    id="name"
+                    value={formData.name}
+                    onChange={(e) => handleInputChange("name", e.target.value)}
+                    placeholder="Enter lead name"
                   />
-                  
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Two-column layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Left column - Lead Details (25%) */}
-          <div className="lg:col-span-1 space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Lead Information</CardTitle>
-                <CardDescription>
-                  Created on {formatDate(lead.created_at)}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Name *</Label>
-                    <Input
-                      id="name"
-                      value={formData.name}
-                      onChange={(e) => handleInputChange("name", e.target.value)}
-                      placeholder="Enter lead name"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => handleInputChange("email", e.target.value)}
-                      placeholder="Enter email address"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Phone</Label>
-                    <Input
-                      id="phone"
-                      value={formData.phone}
-                      onChange={(e) => handleInputChange("phone", e.target.value)}
-                      placeholder="Enter phone number"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="status">Status</Label>
-                    <Select value={formData.status} onValueChange={(value) => handleInputChange("status", value)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {statusOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="due_date">Due Date</Label>
-                    <Input
-                      id="due_date"
-                      type="date"
-                      value={formData.due_date}
-                      onChange={(e) => handleInputChange("due_date", e.target.value)}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="notes">Notes</Label>
-                    <Textarea
-                      id="notes"
-                      value={formData.notes}
-                      onChange={(e) => handleInputChange("notes", e.target.value)}
-                      placeholder="Enter any notes about this lead"
-                      rows={3}
-                    />
-                  </div>
                 </div>
 
-                {/* Save Changes Button - Full width, primary styling */}
-                <div className="pt-4 border-t">
-                  <Button 
-                    onClick={handleSave} 
-                    disabled={saving || !hasChanges}
-                    size="sm"
-                    className="w-full"
-                    variant={hasChanges ? "default" : "secondary"}
-                  >
-                    <Save className="h-4 w-4 mr-2" />
-                    {saving ? "Saving..." : "Save Changes"}
-                  </Button>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => handleInputChange("email", e.target.value)}
+                    placeholder="Enter email address"
+                  />
                 </div>
 
-              </CardContent>
-            </Card>
-          </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Phone</Label>
+                  <Input
+                    id="phone"
+                    value={formData.phone}
+                    onChange={(e) => handleInputChange("phone", e.target.value)}
+                    placeholder="Enter phone number"
+                  />
+                </div>
 
-          {/* Right column - Activity Section (75%) */}
-          <div className="lg:col-span-3">
-            <ActivitySection leadId={lead.id} leadName={lead.name} />
-          </div>
+                <div className="space-y-2">
+                  <Label htmlFor="status">Status</Label>
+                  <Select value={formData.status} onValueChange={(value) => handleInputChange("status", value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {statusOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="due_date">Due Date</Label>
+                  <Input
+                    id="due_date"
+                    type="date"
+                    value={formData.due_date}
+                    onChange={(e) => handleInputChange("due_date", e.target.value)}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="notes">Notes</Label>
+                  <Textarea
+                    id="notes"
+                    value={formData.notes}
+                    onChange={(e) => handleInputChange("notes", e.target.value)}
+                    placeholder="Enter any notes about this lead"
+                    rows={3}
+                  />
+                </div>
+              </div>
+
+              {/* Save Changes Button - Full width, primary styling */}
+              <div className="pt-4 border-t">
+                <Button 
+                  onClick={handleSave} 
+                  disabled={saving || !hasChanges}
+                  size="sm"
+                  className="w-full"
+                  variant={hasChanges ? "default" : "secondary"}
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  {saving ? "Saving..." : "Save Changes"}
+                </Button>
+              </div>
+
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Right column - Activity Section (75%) */}
+        <div className="lg:col-span-3">
+          <ActivitySection leadId={lead.id} leadName={lead.name} />
         </div>
       </div>
 
@@ -689,7 +686,7 @@ const LeadDetail = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </Layout>
+    </div>
   );
 };
 

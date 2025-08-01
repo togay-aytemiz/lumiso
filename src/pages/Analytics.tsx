@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
-import Layout from "@/components/Layout";
 import {
   ChartContainer,
   ChartTooltip,
@@ -230,117 +229,115 @@ const Analytics = () => {
   }
 
   return (
-    <Layout>
-      <div className="p-8">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold">Analytics</h1>
-        </div>
-        
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Sessions per Day Chart */}
-          <Card>
-            <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
-              <div className="space-y-1">
-                <CardTitle>Sessions per Day</CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  {sessionDateMode === 'scheduled' 
-                    ? "Showing sessions scheduled in the next 30 days"
-                    : "Showing sessions created in the last 30 days"
-                  }
-                </p>
-              </div>
-              <ToggleGroup
-                type="single"
-                value={sessionDateMode}
-                onValueChange={(value) => value && setSessionDateMode(value as 'scheduled' | 'created')}
-                className="border rounded-md"
-                size="sm"
-              >
-                <ToggleGroupItem value="scheduled" className="text-xs px-3">
-                  Scheduled
-                </ToggleGroupItem>
-                <ToggleGroupItem value="created" className="text-xs px-3">
-                  Created
-                </ToggleGroupItem>
-              </ToggleGroup>
-            </CardHeader>
-            <CardContent>
-              <ChartContainer config={chartConfig} className="h-[300px]">
-                <LineChart data={sessionsPerDay}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis 
-                    dataKey="date" 
-                    tick={{ fontSize: 12 }}
-                    interval="preserveStartEnd"
-                  />
-                  <YAxis />
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <Line 
-                    type="monotone" 
-                    dataKey="sessions" 
-                    stroke={chartConfig.sessions.color}
-                    strokeWidth={2}
-                    dot={{ fill: chartConfig.sessions.color, strokeWidth: 2, r: 4 }}
-                  />
-                </LineChart>
-              </ChartContainer>
-            </CardContent>
-          </Card>
-
-          {/* Sessions by Status Chart */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Sessions by Status</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ChartContainer config={chartConfig} className="h-[300px]">
-                <PieChart>
-                  <Pie
-                    data={sessionsByStatus}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ status, count, percent }) => 
-                      `${status}: ${count} (${(percent * 100).toFixed(1)}%)`
-                    }
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="count"
-                  >
-                    {sessionsByStatus.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.fill} />
-                    ))}
-                  </Pie>
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                </PieChart>
-              </ChartContainer>
-            </CardContent>
-          </Card>
-
-          {/* New Leads per Month Chart */}
-          <Card className="lg:col-span-2">
-            <CardHeader>
-              <CardTitle>New Leads per Month (Last 6 Months)</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ChartContainer config={chartConfig} className="h-[300px]">
-                <BarChart data={leadsByMonth}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <Bar 
-                    dataKey="leads" 
-                    fill={chartConfig.leads.color}
-                    radius={[4, 4, 0, 0]}
-                  />
-                </BarChart>
-              </ChartContainer>
-            </CardContent>
-          </Card>
-        </div>
+    <div className="p-8">
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold">Analytics</h1>
       </div>
-    </Layout>
+      
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Sessions per Day Chart */}
+        <Card>
+          <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
+            <div className="space-y-1">
+              <CardTitle>Sessions per Day</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                {sessionDateMode === 'scheduled' 
+                  ? "Showing sessions scheduled in the next 30 days"
+                  : "Showing sessions created in the last 30 days"
+                }
+              </p>
+            </div>
+            <ToggleGroup
+              type="single"
+              value={sessionDateMode}
+              onValueChange={(value) => value && setSessionDateMode(value as 'scheduled' | 'created')}
+              className="border rounded-md"
+              size="sm"
+            >
+              <ToggleGroupItem value="scheduled" className="text-xs px-3">
+                Scheduled
+              </ToggleGroupItem>
+              <ToggleGroupItem value="created" className="text-xs px-3">
+                Created
+              </ToggleGroupItem>
+            </ToggleGroup>
+          </CardHeader>
+          <CardContent>
+            <ChartContainer config={chartConfig} className="h-[300px]">
+              <LineChart data={sessionsPerDay}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis 
+                  dataKey="date" 
+                  tick={{ fontSize: 12 }}
+                  interval="preserveStartEnd"
+                />
+                <YAxis />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Line 
+                  type="monotone" 
+                  dataKey="sessions" 
+                  stroke={chartConfig.sessions.color}
+                  strokeWidth={2}
+                  dot={{ fill: chartConfig.sessions.color, strokeWidth: 2, r: 4 }}
+                />
+              </LineChart>
+            </ChartContainer>
+          </CardContent>
+        </Card>
+
+        {/* Sessions by Status Chart */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Sessions by Status</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ChartContainer config={chartConfig} className="h-[300px]">
+              <PieChart>
+                <Pie
+                  data={sessionsByStatus}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ status, count, percent }) => 
+                    `${status}: ${count} (${(percent * 100).toFixed(1)}%)`
+                  }
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="count"
+                >
+                  {sessionsByStatus.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.fill} />
+                  ))}
+                </Pie>
+                <ChartTooltip content={<ChartTooltipContent />} />
+              </PieChart>
+            </ChartContainer>
+          </CardContent>
+        </Card>
+
+        {/* New Leads per Month Chart */}
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle>New Leads per Month (Last 6 Months)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ChartContainer config={chartConfig} className="h-[300px]">
+              <BarChart data={leadsByMonth}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="month" />
+                <YAxis />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Bar 
+                  dataKey="leads" 
+                  fill={chartConfig.leads.color}
+                  radius={[4, 4, 0, 0]}
+                />
+              </BarChart>
+            </ChartContainer>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   );
 };
 

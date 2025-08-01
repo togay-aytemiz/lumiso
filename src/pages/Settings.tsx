@@ -1,61 +1,45 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, CheckCircle, Loader2 } from "lucide-react";
-import Layout from "@/components/Layout";
 import { useGoogleCalendar } from "@/hooks/useGoogleCalendar";
 
 const Settings = () => {
   const { connection, loading, connectCalendar, disconnectCalendar } = useGoogleCalendar();
 
   return (
-    <Layout>
-      <div className="p-8">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold">Settings</h1>
-          <p className="text-muted-foreground">Manage your account and integrations</p>
-        </div>
+    <div className="p-8">
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold">Settings</h1>
+        <p className="text-muted-foreground">Manage your account and integrations</p>
+      </div>
 
-        <div className="space-y-8">
-          {/* Calendar Integration Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Calendar Integration</CardTitle>
-              <CardDescription>
-                Connect your Google Calendar to sync sessions and reminders
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {connection.connected ? (
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2 text-green-600">
-                    <CheckCircle className="h-5 w-5" />
-                    <span className="font-medium">Connected to Google Calendar</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Connected as: <span className="font-medium">{connection.email}</span>
-                  </p>
-                  {connection.expired && (
-                    <p className="text-sm text-destructive">
-                      Session expired. Please reconnect your calendar.
-                    </p>
-                  )}
-                  <Button 
-                    onClick={disconnectCalendar}
-                    variant="outline"
-                    disabled={loading}
-                    className="flex items-center gap-2"
-                  >
-                    {loading ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Calendar className="h-4 w-4" />
-                    )}
-                    Disconnect Google Calendar
-                  </Button>
+      <div className="space-y-8">
+        {/* Calendar Integration Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Calendar Integration</CardTitle>
+            <CardDescription>
+              Connect your Google Calendar to sync sessions and reminders
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {connection.connected ? (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 text-green-600">
+                  <CheckCircle className="h-5 w-5" />
+                  <span className="font-medium">Connected to Google Calendar</span>
                 </div>
-              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Connected as: <span className="font-medium">{connection.email}</span>
+                </p>
+                {connection.expired && (
+                  <p className="text-sm text-destructive">
+                    Session expired. Please reconnect your calendar.
+                  </p>
+                )}
                 <Button 
-                  onClick={connectCalendar}
+                  onClick={disconnectCalendar}
+                  variant="outline"
                   disabled={loading}
                   className="flex items-center gap-2"
                 >
@@ -64,21 +48,34 @@ const Settings = () => {
                   ) : (
                     <Calendar className="h-4 w-4" />
                   )}
-                  Connect Google Calendar
+                  Disconnect Google Calendar
                 </Button>
-              )}
-            </CardContent>
-          </Card>
+              </div>
+            ) : (
+              <Button 
+                onClick={connectCalendar}
+                disabled={loading}
+                className="flex items-center gap-2"
+              >
+                {loading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Calendar className="h-4 w-4" />
+                )}
+                Connect Google Calendar
+              </Button>
+            )}
+          </CardContent>
+        </Card>
 
-          {/* Future Settings Placeholder */}
-          <div className="pt-16">
-            <p className="text-sm text-muted-foreground">
-              More settings like profile, notifications, and preferences will appear here soon.
-            </p>
-          </div>
+        {/* Future Settings Placeholder */}
+        <div className="pt-16">
+          <p className="text-sm text-muted-foreground">
+            More settings like profile, notifications, and preferences will appear here soon.
+          </p>
         </div>
       </div>
-    </Layout>
+    </div>
   );
 };
 

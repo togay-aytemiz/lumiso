@@ -9,7 +9,6 @@ import { DateRangePicker } from "@/components/DateRangePicker";
 import ReminderCard from "@/components/ReminderCard";
 import type { DateRange } from "react-day-picker";
 import { formatDate, formatTime, formatDateTime, formatGroupDate, getWeekRange } from "@/lib/utils";
-import Layout from "@/components/Layout";
 
 interface Activity {
   id: string;
@@ -381,109 +380,107 @@ const ReminderDetails = () => {
   const activeActivities = filteredActivities.filter(activity => !activity.completed);
 
   return (
-    <Layout>
-      <div className="bg-background">
-        <div className="p-6 border-b">
-          <h1 className="text-3xl font-bold">Reminder Details</h1>
-          <p className="text-muted-foreground">Manage your task reminders</p>
-        </div>
+    <div className="bg-background">
+      <div className="p-6 border-b">
+        <h1 className="text-3xl font-bold">Reminder Details</h1>
+        <p className="text-muted-foreground">Manage your task reminders</p>
+      </div>
 
-        {/* Filter Bar */}
-        <div className="bg-background border-b">
-          <div className="px-6 py-4">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2 overflow-x-auto">
-              {filterOptions.map((option) => (
-                <Button
-                  key={option.key}
-                  variant={selectedFilter === option.key ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setSelectedFilter(option.key as FilterType)}
-                  className="whitespace-nowrap"
-                >
-                  {option.label} ({getReminderCountForFilter(option.key as FilterType)})
-                </Button>
+      {/* Filter Bar */}
+      <div className="bg-background border-b">
+        <div className="px-6 py-4">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-2 overflow-x-auto">
+            {filterOptions.map((option) => (
+              <Button
+                key={option.key}
+                variant={selectedFilter === option.key ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSelectedFilter(option.key as FilterType)}
+                className="whitespace-nowrap"
+              >
+                {option.label} ({getReminderCountForFilter(option.key as FilterType)})
+              </Button>
+              ))}
+            </div>
+          
+          {/* Show Completed Toggle */}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <CheckSquare className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground whitespace-nowrap">Show Completed</span>
+            <Switch
+              checked={showCompleted}
+              onCheckedChange={setShowCompleted}
+            />
+          </div>
+        </div>
+        </div>
+      </div>
+
+      <main className="px-6 py-6">
+      <div className="space-y-6">
+        {/* Active Reminders */}
+        {activeActivities.length === 0 && (!showCompleted || completedGroupedByDate.length === 0) ? (
+          <div className="text-center py-12 text-slate-500 dark:text-slate-400">
+            <Bell className="h-16 w-16 mx-auto mb-4 opacity-50" />
+            <h3 className="text-lg font-medium mb-2">No reminders found</h3>
+            <p>You don't have any reminders for the selected filter.</p>
+          </div>
+        ) : (
+          <>
+            {/* Show active reminders */}
+            {activeActivities.length > 0 && (
+              <div className="space-y-3">
+                {activeActivities.map((activity) => (
+                  <ReminderCard
+                    key={activity.id}
+                    activity={activity}
+                    leadName={getLeadName(activity.lead_id)}
+                    onToggleCompletion={toggleCompletion}
+                    onClick={() => handleReminderClick(activity.lead_id)}
+                    hideStatusBadge={!shouldShowStatusBadge(activity)}
+                  />
                 ))}
               </div>
-            
-            {/* Show Completed Toggle */}
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <CheckSquare className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground whitespace-nowrap">Show Completed</span>
-              <Switch
-                checked={showCompleted}
-                onCheckedChange={setShowCompleted}
-              />
-            </div>
-          </div>
-          </div>
-        </div>
+            )}
 
-        <main className="px-6 py-6">
-        <div className="space-y-6">
-          {/* Active Reminders */}
-          {activeActivities.length === 0 && (!showCompleted || completedGroupedByDate.length === 0) ? (
-            <div className="text-center py-12 text-slate-500 dark:text-slate-400">
-              <Bell className="h-16 w-16 mx-auto mb-4 opacity-50" />
-              <h3 className="text-lg font-medium mb-2">No reminders found</h3>
-              <p>You don't have any reminders for the selected filter.</p>
-            </div>
-          ) : (
-            <>
-              {/* Show active reminders */}
-              {activeActivities.length > 0 && (
-                <div className="space-y-3">
-                  {activeActivities.map((activity) => (
-                    <ReminderCard
-                      key={activity.id}
-                      activity={activity}
-                      leadName={getLeadName(activity.lead_id)}
-                      onToggleCompletion={toggleCompletion}
-                      onClick={() => handleReminderClick(activity.lead_id)}
-                      hideStatusBadge={!shouldShowStatusBadge(activity)}
-                    />
-                  ))}
-                </div>
-              )}
-
-              {/* Show completed reminders grouped by completion date */}
-              {showCompleted && completedGroupedByDate.length > 0 && (
-                <div className="space-y-4">
-                  {activeActivities.length > 0 && (
-                    <div className="border-t border-slate-200 dark:border-slate-700 pt-6">
-                      <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">
-                        Completed Reminders
-                      </h2>
+            {/* Show completed reminders grouped by completion date */}
+            {showCompleted && completedGroupedByDate.length > 0 && (
+              <div className="space-y-4">
+                {activeActivities.length > 0 && (
+                  <div className="border-t border-slate-200 dark:border-slate-700 pt-6">
+                    <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">
+                      Completed Reminders
+                    </h2>
+                  </div>
+                )}
+                
+                {completedGroupedByDate.map(([dateKey, activities]) => (
+                  <div key={dateKey} className="space-y-3">
+                    <h3 className="text-sm font-medium text-slate-600 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 pb-2">
+                      {dateKey}
+                    </h3>
+                    <div className="space-y-2 ml-4">
+                      {activities.map((activity) => (
+                        <ReminderCard
+                          key={activity.id}
+                          activity={activity}
+                          leadName={getLeadName(activity.lead_id)}
+                          onToggleCompletion={toggleCompletion}
+                          onClick={() => handleReminderClick(activity.lead_id)}
+                          hideStatusBadge={!shouldShowStatusBadge(activity)}
+                        />
+                      ))}
                     </div>
-                  )}
-                  
-                  {completedGroupedByDate.map(([dateKey, activities]) => (
-                    <div key={dateKey} className="space-y-3">
-                      <h3 className="text-sm font-medium text-slate-600 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700 pb-2">
-                        {dateKey}
-                      </h3>
-                      <div className="space-y-2 ml-4">
-                        {activities.map((activity) => (
-                          <ReminderCard
-                            key={activity.id}
-                            activity={activity}
-                            leadName={getLeadName(activity.lead_id)}
-                            onToggleCompletion={toggleCompletion}
-                            onClick={() => handleReminderClick(activity.lead_id)}
-                            hideStatusBadge={!shouldShowStatusBadge(activity)}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </>
-          )}
-        </div>
-        </main>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        )}
       </div>
-    </Layout>
+      </main>
+    </div>
   );
 };
 

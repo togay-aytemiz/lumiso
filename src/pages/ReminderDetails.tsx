@@ -237,6 +237,8 @@ const ReminderDetails = () => {
     let filteredCompletedActivities: Activity[] = [];
     
     // Filter completed activities based on selected filter
+    // For completed activities, we filter by REMINDER DATE (not completion date)
+    // This ensures consistency with the active activities filtering
     switch (selectedFilter) {
       case 'all':
         filteredCompletedActivities = completedActivities;

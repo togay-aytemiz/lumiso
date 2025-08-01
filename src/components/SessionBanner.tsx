@@ -124,7 +124,6 @@ const SessionBanner = ({ session, leadName, onStatusUpdate, onEdit, onDelete, sh
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            console.log('Edit button clicked for session:', session.id, 'status:', session.status);
                             if (session.status === 'planned') {
                               onEdit();
                             }

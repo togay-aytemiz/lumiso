@@ -522,10 +522,7 @@ const LeadDetail = () => {
                     session={session} 
                     leadName={lead.name} 
                     onStatusUpdate={handleSessionUpdated}
-                    onEdit={() => {
-                      console.log('Setting editingSessionId to:', session.id);
-                      setEditingSessionId(session.id);
-                    }}
+                    onEdit={() => setEditingSessionId(session.id)}
                     onDelete={() => setDeletingSessionId(session.id)}
                   />
                   
@@ -652,6 +649,12 @@ const LeadDetail = () => {
             currentTime={session.session_time}
             currentNotes={session.notes}
             leadName={lead.name}
+            open={!!editingSessionId}
+            onOpenChange={(open) => {
+              if (!open) {
+                setEditingSessionId(null);
+              }
+            }}
             onSessionUpdated={() => {
               handleSessionUpdated();
               setEditingSessionId(null);

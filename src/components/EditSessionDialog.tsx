@@ -18,10 +18,11 @@ interface EditSessionDialogProps {
   currentNotes: string;
   leadName?: string;
   onSessionUpdated?: () => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-const EditSessionDialog = ({ sessionId, currentDate, currentTime, currentNotes, leadName, onSessionUpdated }: EditSessionDialogProps) => {
-  const [open, setOpen] = useState(false);
+const EditSessionDialog = ({ sessionId, currentDate, currentTime, currentNotes, leadName, onSessionUpdated, open = false, onOpenChange }: EditSessionDialogProps) => {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formData, setFormData] = useState({
@@ -99,7 +100,7 @@ const EditSessionDialog = ({ sessionId, currentDate, currentTime, currentNotes, 
         description: "Session updated successfully."
       });
 
-      setOpen(false);
+      onOpenChange?.(false);
       onSessionUpdated?.();
     } catch (error: any) {
       toast({
@@ -120,13 +121,7 @@ const EditSessionDialog = ({ sessionId, currentDate, currentTime, currentNotes, 
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          <Edit className="h-4 w-4 mr-2" />
-          Edit Session
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Edit Session</DialogTitle>
@@ -167,7 +162,7 @@ const EditSessionDialog = ({ sessionId, currentDate, currentTime, currentNotes, 
             {errors.notes && <p className="text-sm text-destructive">{errors.notes}</p>}
           </div>
           <DialogFooter className="gap-2">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+            <Button type="button" variant="outline" onClick={() => onOpenChange?.(false)}>
               Cancel
             </Button>
             <Button type="submit" disabled={loading}>

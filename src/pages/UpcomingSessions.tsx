@@ -30,6 +30,7 @@ const AllSessions = () => {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>("planned");
+  const [dateFilter, setDateFilter] = useState<string>("all");
   const [sortField, setSortField] = useState<SortField>("session_date");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const navigate = useNavigate();
@@ -82,12 +83,66 @@ const AllSessions = () => {
     }
   };
 
+  const getDateRangeForFilter = (filter: string) => {
+    const today = new Date();
+    const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const endOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+    
+    switch (filter) {
+      case 'past':
+        return { start: new Date(0), end: startOfToday };
+      case 'today':
+        return { start: startOfToday, end: endOfToday };
+      case 'tomorrow':
+        const tomorrow = new Date(today);
+        tomorrow.setDate(today.getDate() + 1);
+        const startOfTomorrow = new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate());
+        const endOfTomorrow = new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate() + 1);
+        return { start: startOfTomorrow, end: endOfTomorrow };
+      case 'thisweek':
+        const startOfWeek = new Date(today);
+        startOfWeek.setDate(today.getDate() - today.getDay());
+        startOfWeek.setHours(0, 0, 0, 0);
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 7);
+        return { start: startOfWeek, end: endOfWeek };
+      case 'nextweek':
+        const nextWeekStart = new Date(today);
+        nextWeekStart.setDate(today.getDate() + (7 - today.getDay()));
+        nextWeekStart.setHours(0, 0, 0, 0);
+        const nextWeekEnd = new Date(nextWeekStart);
+        nextWeekEnd.setDate(nextWeekStart.getDate() + 7);
+        return { start: nextWeekStart, end: nextWeekEnd };
+      case 'thismonth':
+        const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+        const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+        return { start: startOfMonth, end: endOfMonth };
+      case 'nextmonth':
+        const nextMonthStart = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+        const nextMonthEnd = new Date(today.getFullYear(), today.getMonth() + 2, 1);
+        return { start: nextMonthStart, end: nextMonthEnd };
+      default:
+        return null;
+    }
+  };
+
   const filteredAndSortedSessions = useMemo(() => {
     let filtered = sessions;
     
     // Apply status filter
     if (statusFilter !== "all") {
-      filtered = sessions.filter(session => session.status === statusFilter);
+      filtered = filtered.filter(session => session.status === statusFilter);
+    }
+
+    // Apply date filter
+    if (dateFilter !== "all") {
+      const dateRange = getDateRangeForFilter(dateFilter);
+      if (dateRange) {
+        filtered = filtered.filter(session => {
+          const sessionDate = new Date(session.session_date);
+          return sessionDate >= dateRange.start && sessionDate < dateRange.end;
+        });
+      }
     }
 
     // Apply sorting
@@ -136,7 +191,7 @@ const AllSessions = () => {
     });
 
     return filtered;
-  }, [sessions, statusFilter, sortField, sortDirection]);
+  }, [sessions, statusFilter, dateFilter, sortField, sortDirection]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -244,6 +299,68 @@ const AllSessions = () => {
             </div>
           </CardHeader>
           <CardContent>
+            {/* Quick Date Filters */}
+            <div className="mb-6">
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  variant={dateFilter === "all" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setDateFilter("all")}
+                >
+                  All
+                </Button>
+                <Button
+                  variant={dateFilter === "past" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setDateFilter("past")}
+                >
+                  Past
+                </Button>
+                <Button
+                  variant={dateFilter === "today" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setDateFilter("today")}
+                >
+                  Today
+                </Button>
+                <Button
+                  variant={dateFilter === "tomorrow" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setDateFilter("tomorrow")}
+                >
+                  Tomorrow
+                </Button>
+                <Button
+                  variant={dateFilter === "thisweek" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setDateFilter("thisweek")}
+                >
+                  This Week
+                </Button>
+                <Button
+                  variant={dateFilter === "nextweek" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setDateFilter("nextweek")}
+                >
+                  Next Week
+                </Button>
+                <Button
+                  variant={dateFilter === "thismonth" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setDateFilter("thismonth")}
+                >
+                  This Month
+                </Button>
+                <Button
+                  variant={dateFilter === "nextmonth" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setDateFilter("nextmonth")}
+                >
+                  Next Month
+                </Button>
+              </div>
+            </div>
+            
             {filteredAndSortedSessions.length > 0 ? (
               <Table>
                 <TableHeader>

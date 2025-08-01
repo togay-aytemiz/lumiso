@@ -113,24 +113,27 @@ const SessionBanner = ({ session, leadName, onStatusUpdate, onEdit, onDelete, sh
             {showActions && (
               <TooltipProvider>
                 <div className="flex items-center gap-1 ml-2">
-                  {session.status === 'planned' && onEdit && (
+                  {onEdit && (
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button
                           variant="ghost"
                           size="sm"
                           className="h-8 w-8 p-0"
+                          disabled={session.status !== 'planned'}
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            onEdit();
+                            if (session.status === 'planned') {
+                              onEdit();
+                            }
                           }}
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p>Edit Session</p>
+                        <p>{session.status === 'planned' ? 'Edit Session' : 'Can only edit planned sessions'}</p>
                       </TooltipContent>
                     </Tooltip>
                   )}

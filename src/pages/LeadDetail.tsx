@@ -45,7 +45,7 @@ const LeadDetail = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [lead, setLead] = useState<Lead | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
+  const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -79,7 +79,7 @@ const LeadDetail = () => {
   useEffect(() => {
     if (id) {
       fetchLead();
-      fetchSession();
+      fetchSessions();
     }
   }, [id]);
 
@@ -126,23 +126,35 @@ const LeadDetail = () => {
     }
   };
 
-  const fetchSession = async () => {
+  const fetchSessions = async () => {
     if (!id) return;
     
     try {
-      // Get any session for this lead (any status)
+      // Get all sessions for this lead
       const { data, error } = await supabase
         .from('sessions')
         .select('*')
         .eq('lead_id', id)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setSession(data);
+      
+      // Sort sessions: planned first, then others by session_date descending
+      const sortedSessions = (data || []).sort((a, b) => {
+        if (a.status === 'planned' && b.status !== 'planned') return -1;
+        if (b.status === 'planned' && a.status !== 'planned') return 1;
+        
+        // For non-planned sessions, sort by session_date descending (newest first)
+        if (a.status !== 'planned' && b.status !== 'planned') {
+          return new Date(b.session_date).getTime() - new Date(a.session_date).getTime();
+        }
+        
+        return 0;
+      });
+      
+      setSessions(sortedSessions);
     } catch (error: any) {
-      console.error('Error fetching session:', error);
+      console.error('Error fetching sessions:', error);
     }
   };
 
@@ -179,7 +191,7 @@ const LeadDetail = () => {
 
       // Refresh lead data
       await fetchLead();
-      await fetchSession();
+      await fetchSessions();
     } catch (error: any) {
       toast({
         title: "Error updating lead",
@@ -220,15 +232,12 @@ const LeadDetail = () => {
     }
   };
 
-  const handleDeleteSession = async () => {
-    if (!session) return;
-
-    setDeletingSession(true);
+  const handleDeleteSession = async (sessionId: string) => {
     try {
       const { error } = await supabase
         .from('sessions')
         .delete()
-        .eq('id', session.id);
+        .eq('id', sessionId);
 
       if (error) throw error;
 
@@ -237,24 +246,22 @@ const LeadDetail = () => {
         description: "Session deleted successfully."
       });
 
-      setSession(null);
+      fetchSessions();
     } catch (error: any) {
       toast({
         title: "Error deleting session",
         description: error.message,
         variant: "destructive"
       });
-    } finally {
-      setDeletingSession(false);
     }
   };
 
   const handleSessionScheduled = () => {
-    fetchSession();
+    fetchSessions();
   };
 
   const handleSessionUpdated = () => {
-    fetchSession();
+    fetchSessions();
   };
 
   const handleBack = () => {
@@ -294,7 +301,7 @@ const LeadDetail = () => {
 
       // Refresh lead data
       await fetchLead();
-      await fetchSession();
+      await fetchSessions();
     } catch (error: any) {
       toast({
         title: "Error updating lead",
@@ -325,7 +332,7 @@ const LeadDetail = () => {
 
       // Refresh lead data
       await fetchLead();
-      await fetchSession();
+      await fetchSessions();
     } catch (error: any) {
       toast({
         title: "Error updating lead",
@@ -392,7 +399,7 @@ const LeadDetail = () => {
                   leadId={lead.id} 
                   leadName={lead.name}
                   onSessionScheduled={handleSessionScheduled}
-                  disabled={session?.status === 'planned'}
+                  disabled={sessions.some(s => s.status === 'planned')}
                   disabledTooltip="A planned session already exists."
                 />
 
@@ -504,50 +511,56 @@ const LeadDetail = () => {
           </div>
         </div>
 
-        {/* Session Card */}
-        {session && (
+        {/* Sessions Section */}
+        {sessions.length > 0 && (
           <div className="mb-6">
-            <SessionBanner 
-              session={session} 
-              leadName={lead.name} 
-              onStatusUpdate={handleSessionUpdated}
-            />
-            <div className="flex gap-2 mt-3 justify-end">
-              {session.status === 'planned' && (
-                <EditSessionDialog
-                  sessionId={session.id}
-                  currentDate={session.session_date}
-                  currentTime={session.session_time}
-                  currentNotes={session.notes}
-                  leadName={lead.name}
-                  onSessionUpdated={handleSessionUpdated}
-                />
-              )}
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="destructive" size="sm" disabled={deletingSession}>
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Delete Session
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Delete Session?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Are you sure you want to delete this session? This action cannot be undone.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction 
-                      onClick={handleDeleteSession}
-                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                    >
-                      {deletingSession ? "Deleting..." : "Delete Session"}
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+            <div className="space-y-4">
+              {sessions.map((session) => (
+                <div key={session.id}>
+                  <SessionBanner 
+                    session={session} 
+                    leadName={lead.name} 
+                    onStatusUpdate={handleSessionUpdated}
+                  />
+                  <div className="flex gap-2 mt-3 justify-end">
+                    {session.status === 'planned' && (
+                      <EditSessionDialog
+                        sessionId={session.id}
+                        currentDate={session.session_date}
+                        currentTime={session.session_time}
+                        currentNotes={session.notes}
+                        leadName={lead.name}
+                        onSessionUpdated={handleSessionUpdated}
+                      />
+                    )}
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="destructive" size="sm">
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete Session
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete Session?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to delete this session? This action cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction 
+                            onClick={() => handleDeleteSession(session.id)}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            Delete Session
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}

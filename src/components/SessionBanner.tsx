@@ -61,22 +61,27 @@ const SessionBanner = ({ session, leadName, onStatusUpdate }: SessionBannerProps
     }
   };
 
+  const formatTime = (time: string) => {
+    // Convert time to HH:mm format
+    return time.slice(0, 5);
+  };
+
   return (
     <Card className={cn("border-l-4", getCardBgColor(session.status))}>
       <CardContent className="p-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="flex items-center gap-4">
-            <div>
-              <h3 className="font-semibold text-lg">{leadName} - Photo Session</h3>
+            <div className="min-w-0 flex-1">
+              <h3 className="font-semibold text-lg">Photo Session</h3>
               {session.status === 'planned' ? (
-                <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-muted-foreground mt-1">
                   <div className="flex items-center gap-1">
-                    <Calendar className="h-4 w-4" />
-                    <span>{new Date(session.session_date).toLocaleDateString()}</span>
+                    <Calendar className="h-4 w-4 flex-shrink-0" />
+                    <span className="truncate">{new Date(session.session_date).toLocaleDateString()}</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <Clock className="h-4 w-4" />
-                    <span>{session.session_time}</span>
+                    <Clock className="h-4 w-4 flex-shrink-0" />
+                    <span>{formatTime(session.session_time)}</span>
                   </div>
                 </div>
               ) : (
@@ -86,7 +91,7 @@ const SessionBanner = ({ session, leadName, onStatusUpdate }: SessionBannerProps
               )}
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-shrink-0">
             <Select value={session.status} onValueChange={handleStatusChange}>
               <SelectTrigger className="w-auto min-w-[140px]">
                 <SelectValue />

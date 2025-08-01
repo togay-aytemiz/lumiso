@@ -31,7 +31,7 @@ const AllSessions = () => {
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>("planned");
   const [sortField, setSortField] = useState<SortField>("session_date");
-  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -92,11 +92,28 @@ const AllSessions = () => {
 
     // Apply sorting
     filtered.sort((a, b) => {
+      // For date sorting, always add secondary sort by time
+      if (sortField === 'session_date') {
+        const aDate = a.session_date ? new Date(a.session_date).getTime() : 0;
+        const bDate = b.session_date ? new Date(b.session_date).getTime() : 0;
+        
+        // First compare dates
+        if (aDate !== bDate) {
+          return sortDirection === 'asc' ? aDate - bDate : bDate - aDate;
+        }
+        
+        // If dates are equal, sort by time (always ascending for better UX)
+        const aTime = a.session_time || '';
+        const bTime = b.session_time || '';
+        return aTime.localeCompare(bTime);
+      }
+      
+      // For other fields, use regular sorting
       let aValue: any = a[sortField];
       let bValue: any = b[sortField];
 
       // Handle date values
-      if (sortField === 'session_date' || sortField === 'created_at') {
+      if (sortField === 'created_at') {
         aValue = aValue ? new Date(aValue).getTime() : 0;
         bValue = bValue ? new Date(bValue).getTime() : 0;
       }

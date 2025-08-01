@@ -1,12 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowLeft, Calendar } from "lucide-react";
+import { ArrowLeft, ArrowUpDown, ArrowUp, ArrowDown, Plus, Calendar } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
+import NewSessionDialog from "@/components/NewSessionDialog";
 
 interface Session {
   id: string;
@@ -14,14 +17,21 @@ interface Session {
   session_date: string;
   session_time: string;
   notes: string;
-  status: string;
+  status: 'planned' | 'completed' | 'in_post_processing' | 'delivered' | 'cancelled';
   created_at: string;
   lead_name?: string;
+  lead_status?: string;
 }
 
-const UpcomingSessions = () => {
+type SortField = 'session_date' | 'session_time' | 'status' | 'lead_name' | 'created_at';
+type SortDirection = 'asc' | 'desc';
+
+const AllSessions = () => {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [sortField, setSortField] = useState<SortField>("session_date");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -30,20 +40,16 @@ const UpcomingSessions = () => {
 
   const fetchSessions = async () => {
     try {
-      const today = new Date().toISOString().split('T')[0];
-      
-      // Get sessions for today and future
+      // Get ALL sessions (not just upcoming or planned)
       const { data: sessionsData, error: sessionsError } = await supabase
         .from('sessions')
         .select('*')
-        .gte('session_date', today)
-        .eq('status', 'planned')
-        .order('session_date', { ascending: true })
-        .order('session_time', { ascending: true });
+        .order('session_date', { ascending: false })
+        .order('session_time', { ascending: false });
 
       if (sessionsError) throw sessionsError;
 
-      // Filter sessions by lead status and get lead names
+      // Get lead names and statuses for all sessions
       if (sessionsData && sessionsData.length > 0) {
         const leadIds = [...new Set(sessionsData.map(session => session.lead_id))];
         
@@ -54,19 +60,14 @@ const UpcomingSessions = () => {
 
         if (leadsError) throw leadsError;
 
-        // Only include sessions for leads with 'booked' status
-        const filteredSessions = sessionsData.filter(session => {
-          const lead = leadsData?.find(lead => lead.id === session.lead_id);
-          return lead && lead.status === 'booked';
-        });
-
-        // Map lead names to sessions
-        const sessionsWithNames = filteredSessions.map(session => ({
+        // Map lead names and statuses to sessions
+        const sessionsWithLeadInfo = sessionsData.map(session => ({
           ...session,
-          lead_name: leadsData?.find(lead => lead.id === session.lead_id)?.name || 'Unknown'
+          lead_name: leadsData?.find(lead => lead.id === session.lead_id)?.name || 'Unknown',
+          lead_status: leadsData?.find(lead => lead.id === session.lead_id)?.status || 'unknown'
         }));
 
-        setSessions(sessionsWithNames);
+        setSessions(sessionsWithLeadInfo);
       } else {
         setSessions([]);
       }
@@ -78,6 +79,81 @@ const UpcomingSessions = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const filteredAndSortedSessions = useMemo(() => {
+    let filtered = sessions;
+    
+    // Apply status filter
+    if (statusFilter !== "all") {
+      filtered = sessions.filter(session => session.status === statusFilter);
+    }
+
+    // Apply sorting
+    filtered.sort((a, b) => {
+      let aValue: any = a[sortField];
+      let bValue: any = b[sortField];
+
+      // Handle date values
+      if (sortField === 'session_date' || sortField === 'created_at') {
+        aValue = aValue ? new Date(aValue).getTime() : 0;
+        bValue = bValue ? new Date(bValue).getTime() : 0;
+      }
+
+      // Handle time values
+      if (sortField === 'session_time') {
+        aValue = aValue ? aValue : '';
+        bValue = bValue ? bValue : '';
+      }
+
+      // Handle string values
+      if (typeof aValue === 'string' && typeof bValue === 'string') {
+        aValue = aValue.toLowerCase();
+        bValue = bValue.toLowerCase();
+      }
+
+      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    return filtered;
+  }, [sessions, statusFilter, sortField, sortDirection]);
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  const handleRowClick = (session: Session) => {
+    navigate(`/leads/${session.lead_id}`, { state: { from: 'all-sessions' } });
+  };
+
+  const getSortIcon = (field: SortField) => {
+    if (sortField !== field) return <ArrowUpDown className="h-4 w-4" />;
+    return sortDirection === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />;
+  };
+
+  const getStatusBadgeColor = (status: string) => {
+    switch (status) {
+      case 'planned': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
+      case 'completed': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+      case 'in_post_processing': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
+      case 'delivered': return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200';
+      case 'cancelled': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
+      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
+    }
+  };
+
+  const formatStatusText = (status: string) => {
+    switch (status) {
+      case 'in_post_processing': return 'In Post-Processing';
+      default: return status.charAt(0).toUpperCase() + status.slice(1);
     }
   };
 
@@ -101,6 +177,15 @@ const UpcomingSessions = () => {
     });
   };
 
+  const statusOptions = [
+    { value: "all", label: "All Statuses" },
+    { value: "planned", label: "Planned" },
+    { value: "completed", label: "Completed" },
+    { value: "in_post_processing", label: "In Post-Processing" },
+    { value: "delivered", label: "Delivered" },
+    { value: "cancelled", label: "Cancelled" }
+  ];
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -119,33 +204,92 @@ const UpcomingSessions = () => {
           <h1 className="text-3xl font-bold">Sessions</h1>
         </div>
         <Card>
+          <CardHeader>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                <NewSessionDialog onSessionScheduled={fetchSessions} />
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">Filter by status:</span>
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="w-48">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {statusOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+          </CardHeader>
           <CardContent>
-            {sessions.length > 0 ? (
+            {filteredAndSortedSessions.length > 0 ? (
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Client Name</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Time</TableHead>
+                    <TableHead 
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => handleSort('lead_name')}
+                    >
+                      <div className="flex items-center gap-2">
+                        Client Name
+                        {getSortIcon('lead_name')}
+                      </div>
+                    </TableHead>
+                    <TableHead 
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => handleSort('session_date')}
+                    >
+                      <div className="flex items-center gap-2">
+                        Date
+                        {getSortIcon('session_date')}
+                      </div>
+                    </TableHead>
+                    <TableHead 
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => handleSort('session_time')}
+                    >
+                      <div className="flex items-center gap-2">
+                        Time
+                        {getSortIcon('session_time')}
+                      </div>
+                    </TableHead>
+                    <TableHead 
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => handleSort('status')}
+                    >
+                      <div className="flex items-center gap-2">
+                        Status
+                        {getSortIcon('status')}
+                      </div>
+                    </TableHead>
                     <TableHead>Notes</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {sessions.map((session) => (
-                    <TableRow key={session.id}>
-                       <TableCell className="font-medium">
-                         <button
-                           onClick={() => navigate(`/leads/${session.lead_id}`, { state: { from: 'all-sessions' } })}
-                           className="text-primary hover:underline cursor-pointer"
-                         >
-                           {session.lead_name}
-                         </button>
-                       </TableCell>
+                  {filteredAndSortedSessions.map((session) => (
+                    <TableRow 
+                      key={session.id}
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => handleRowClick(session)}
+                    >
+                      <TableCell className="font-medium">
+                        {session.lead_name}
+                      </TableCell>
                       <TableCell>
                         {formatDate(session.session_date)}
                       </TableCell>
                       <TableCell>
                         {formatTime(session.session_time)}
+                      </TableCell>
+                      <TableCell>
+                        <span className={`px-2 py-1 text-xs rounded-full font-medium ${getStatusBadgeColor(session.status)}`}>
+                          {formatStatusText(session.status)}
+                        </span>
                       </TableCell>
                       <TableCell className="max-w-xs">
                         {session.notes ? (
@@ -156,7 +300,7 @@ const UpcomingSessions = () => {
                             {session.notes}
                           </div>
                         ) : (
-                          <span className="text-muted-foreground">-</span>
+                          '-'
                         )}
                       </TableCell>
                     </TableRow>
@@ -166,9 +310,14 @@ const UpcomingSessions = () => {
             ) : (
               <div className="text-center py-12 text-muted-foreground">
                 <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <h3 className="text-lg font-medium mb-2">No upcoming sessions</h3>
-                <p>You don't have any sessions scheduled yet.</p>
-                <p className="text-sm mt-2">Schedule sessions from the lead detail pages.</p>
+                <h3 className="text-lg font-medium mb-2">No sessions found</h3>
+                <p>
+                  {statusFilter === "all" 
+                    ? "You don't have any sessions yet."
+                    : `No sessions found with status "${statusFilter}".`
+                  }
+                </p>
+                <p className="text-sm mt-2">Click "Schedule Session" to add your first session.</p>
               </div>
             )}
           </CardContent>
@@ -178,4 +327,4 @@ const UpcomingSessions = () => {
   );
 };
 
-export default UpcomingSessions;
+export default AllSessions;

@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Clock, FileText, Plus, MessageSquare, Bell, CheckCircle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import ReminderCard from "@/components/ReminderCard";
+import { formatLongDate, formatTime } from "@/lib/utils";
 import { useCalendarSync } from "@/hooks/useCalendarSync";
 
 interface Activity {
@@ -338,12 +339,7 @@ const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
               {Object.entries(groupedItems).map(([date, items]) => (
                 <div key={date}>
                   <h4 className="font-medium text-sm text-muted-foreground mb-3 sticky top-0 bg-background">
-                    {new Date(date).toLocaleDateString('en-US', { 
-                      weekday: 'long', 
-                      year: 'numeric', 
-                      month: 'long', 
-                      day: 'numeric' 
-                    })}
+                    {formatLongDate(date)}
                   </h4>
                   <div className="space-y-3 pl-4 border-l-2 border-muted">
                     {items.map((item, index) => (
@@ -369,10 +365,7 @@ const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
                               </Badge>
                             </div>
                             <span className="text-xs text-muted-foreground">
-                              {new Date(item.date).toLocaleTimeString('en-US', { 
-                                hour: '2-digit', 
-                                minute: '2-digit' 
-                              })}
+                              {formatTime(new Date(item.date).toTimeString().slice(0,5))}
                             </span>
                           </div>
                           

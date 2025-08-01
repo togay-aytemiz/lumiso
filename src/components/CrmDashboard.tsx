@@ -10,6 +10,7 @@ import AddLeadDialog from "./AddLeadDialog";
 import NewSessionDialog from "./NewSessionDialog";
 import GlobalSearch from "./GlobalSearch";
 import { getLeadStatusStyles, formatStatusText } from "@/lib/leadStatusColors";
+import { getWeekRange, getUserLocale } from "@/lib/utils";
 
 interface Lead {
   id: string;
@@ -92,10 +93,7 @@ const CrmDashboard = () => {
 
       // Fetch this week's sessions
       const today = new Date();
-      const startOfWeek = new Date(today);
-      startOfWeek.setDate(today.getDate() - today.getDay()); // Sunday
-      const endOfWeek = new Date(startOfWeek);
-      endOfWeek.setDate(startOfWeek.getDate() + 6); // Saturday
+      const { start: startOfWeek, end: endOfWeek } = getWeekRange(today);
       
       const { data: sessionsData, error: sessionsError } = await supabase
         .from('sessions')
@@ -272,7 +270,7 @@ const CrmDashboard = () => {
                 {upcomingSessions.length}
               </div>
               <p className="text-xs text-slate-600 dark:text-slate-400">
-                This week (Sun-Sat)
+                This week ({getUserLocale().startsWith('tr') ? 'Mon-Sun' : 'Sun-Sat'})
               </p>
             </CardContent>
           </Card>
@@ -455,7 +453,7 @@ const CrmDashboard = () => {
               <div className="flex flex-row items-center justify-between">
                 <div>
                   <CardTitle className="text-slate-800 dark:text-slate-200">This Week's Sessions</CardTitle>
-                  <CardDescription className="text-slate-600 dark:text-slate-400">Sessions scheduled for this week (Sun-Sat)</CardDescription>
+                  <CardDescription className="text-slate-600 dark:text-slate-400">Sessions scheduled for this week ({getUserLocale().startsWith('tr') ? 'Mon-Sun' : 'Sun-Sat'})</CardDescription>
                 </div>
                 <NewSessionDialog onSessionScheduled={fetchData} />
               </div>

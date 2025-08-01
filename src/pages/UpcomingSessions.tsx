@@ -10,7 +10,7 @@ import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
 import NewSessionDialog from "@/components/NewSessionDialog";
-import { formatDate, formatTime, formatLongDate } from "@/lib/utils";
+import { formatDate, formatTime, formatLongDate, getWeekRange } from "@/lib/utils";
 
 interface Session {
   id: string;
@@ -101,19 +101,11 @@ const AllSessions = () => {
         const endOfTomorrow = new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate() + 1);
         return { start: startOfTomorrow, end: endOfTomorrow };
       case 'thisweek':
-        const startOfWeek = new Date(today);
-        startOfWeek.setDate(today.getDate() - today.getDay());
-        startOfWeek.setHours(0, 0, 0, 0);
-        const endOfWeek = new Date(startOfWeek);
-        endOfWeek.setDate(startOfWeek.getDate() + 7);
-        return { start: startOfWeek, end: endOfWeek };
+        return getWeekRange(today);
       case 'nextweek':
-        const nextWeekStart = new Date(today);
-        nextWeekStart.setDate(today.getDate() + (7 - today.getDay()));
-        nextWeekStart.setHours(0, 0, 0, 0);
-        const nextWeekEnd = new Date(nextWeekStart);
-        nextWeekEnd.setDate(nextWeekStart.getDate() + 7);
-        return { start: nextWeekStart, end: nextWeekEnd };
+        const nextWeekDate = new Date(today);
+        nextWeekDate.setDate(today.getDate() + 7);
+        return getWeekRange(nextWeekDate);
       case 'thismonth':
         const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
         const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);

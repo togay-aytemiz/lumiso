@@ -8,7 +8,7 @@ import { toast } from "@/hooks/use-toast";
 import { DateRangePicker } from "@/components/DateRangePicker";
 import ReminderCard from "@/components/ReminderCard";
 import type { DateRange } from "react-day-picker";
-import { formatDate, formatTime, formatDateTime } from "@/lib/utils";
+import { formatDate, formatTime, formatDateTime, getWeekRange } from "@/lib/utils";
 import Layout from "@/components/Layout";
 
 interface Activity {
@@ -112,13 +112,7 @@ const ReminderDetails = () => {
   const isThisWeek = (reminderDate: string) => {
     const today = new Date();
     const reminder = new Date(reminderDate);
-    const startOfWeek = new Date(today);
-    startOfWeek.setDate(today.getDate() - today.getDay());
-    const endOfWeek = new Date(startOfWeek);
-    endOfWeek.setDate(startOfWeek.getDate() + 6);
-    
-    startOfWeek.setHours(0, 0, 0, 0);
-    endOfWeek.setHours(23, 59, 59, 999);
+    const { start: startOfWeek, end: endOfWeek } = getWeekRange(today);
     reminder.setHours(0, 0, 0, 0);
     
     return reminder.getTime() >= startOfWeek.getTime() && reminder.getTime() <= endOfWeek.getTime();
@@ -127,10 +121,9 @@ const ReminderDetails = () => {
   const isNextWeek = (reminderDate: string) => {
     const today = new Date();
     const reminder = new Date(reminderDate);
-    const startOfNextWeek = new Date(today);
-    startOfNextWeek.setDate(today.getDate() - today.getDay() + 7);
-    const endOfNextWeek = new Date(startOfNextWeek);
-    endOfNextWeek.setDate(startOfNextWeek.getDate() + 6);
+    const nextWeekDate = new Date(today);
+    nextWeekDate.setDate(today.getDate() + 7);
+    const { start: startOfNextWeek, end: endOfNextWeek } = getWeekRange(nextWeekDate);
     
     startOfNextWeek.setHours(0, 0, 0, 0);
     endOfNextWeek.setHours(23, 59, 59, 999);

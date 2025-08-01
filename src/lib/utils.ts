@@ -79,3 +79,49 @@ export const formatLongDate = (dateString: string | Date, locale?: string): stri
     day: 'numeric'
   }).format(date);
 };
+
+// Locale-aware week utilities
+export const getStartOfWeek = (date: Date, locale?: string): Date => {
+  const userLocale = locale || getUserLocale();
+  const startOfWeek = new Date(date);
+  
+  // For Turkish and most European locales, week starts on Monday (1)
+  // For US and some other locales, week starts on Sunday (0)
+  const weekStartsOnMonday = userLocale.startsWith('tr') || 
+                            userLocale.startsWith('de') || 
+                            userLocale.startsWith('fr') || 
+                            userLocale.startsWith('es') ||
+                            userLocale.startsWith('it') ||
+                            userLocale.startsWith('nl') ||
+                            userLocale.startsWith('pl');
+  
+  const currentDay = startOfWeek.getDay();
+  
+  if (weekStartsOnMonday) {
+    // Monday = 1, so we need to subtract (currentDay - 1) to get to Monday
+    // But if currentDay is 0 (Sunday), we need to go back 6 days
+    const daysToSubtract = currentDay === 0 ? 6 : currentDay - 1;
+    startOfWeek.setDate(startOfWeek.getDate() - daysToSubtract);
+  } else {
+    // Week starts on Sunday (US style)
+    startOfWeek.setDate(startOfWeek.getDate() - currentDay);
+  }
+  
+  startOfWeek.setHours(0, 0, 0, 0);
+  return startOfWeek;
+};
+
+export const getEndOfWeek = (date: Date, locale?: string): Date => {
+  const startOfWeek = getStartOfWeek(date, locale);
+  const endOfWeek = new Date(startOfWeek);
+  endOfWeek.setDate(startOfWeek.getDate() + 6);
+  endOfWeek.setHours(23, 59, 59, 999);
+  return endOfWeek;
+};
+
+export const getWeekRange = (date: Date, locale?: string): { start: Date; end: Date } => {
+  return {
+    start: getStartOfWeek(date, locale),
+    end: getEndOfWeek(date, locale)
+  };
+};

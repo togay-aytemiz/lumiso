@@ -90,17 +90,24 @@ const CrmDashboard = () => {
 
       if (activitiesError) throw activitiesError;
 
-      // Fetch upcoming sessions - only for leads with 'booked' status
+      // Fetch this week's sessions
+      const today = new Date();
+      const startOfWeek = new Date(today);
+      startOfWeek.setDate(today.getDate() - today.getDay()); // Sunday
+      const endOfWeek = new Date(startOfWeek);
+      endOfWeek.setDate(startOfWeek.getDate() + 6); // Saturday
+      
       const { data: sessionsData, error: sessionsError } = await supabase
         .from('sessions')
         .select('*')
-        .gte('session_date', new Date().toISOString().split('T')[0])
-        .eq('status', 'planned')
-        .order('session_date', { ascending: true });
+        .gte('session_date', startOfWeek.toISOString().split('T')[0])
+        .lte('session_date', endOfWeek.toISOString().split('T')[0])
+        .order('session_date', { ascending: true })
+        .order('session_time', { ascending: true });
 
       if (sessionsError) throw sessionsError;
 
-      // Filter sessions by lead status and get lead names
+      // Get lead names for all sessions (no status filtering - show all sessions this week)
       if (sessionsData && sessionsData.length > 0) {
         const leadIds = sessionsData.map(session => session.lead_id);
         const { data: leadNamesData } = await supabase
@@ -108,16 +115,10 @@ const CrmDashboard = () => {
           .select('id, name, status')
           .in('id', leadIds);
 
-        // Only include sessions for leads with 'booked' status
-        const sessionsWithNames = sessionsData
-          .filter(session => {
-            const lead = leadNamesData?.find(lead => lead.id === session.lead_id);
-            return lead && lead.status === 'booked';
-          })
-          .map(session => ({
-            ...session,
-            lead_name: leadNamesData?.find(lead => lead.id === session.lead_id)?.name || 'Unknown Client'
-          }));
+        const sessionsWithNames = sessionsData.map(session => ({
+          ...session,
+          lead_name: leadNamesData?.find(lead => lead.id === session.lead_id)?.name || 'Unknown Client'
+        }));
 
         setUpcomingSessions(sessionsWithNames);
       } else {
@@ -263,7 +264,7 @@ const CrmDashboard = () => {
 
           <Card className={`${getStatCardGradient('sessions')} border-0 shadow-md hover:shadow-lg transition-shadow`}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-slate-700 dark:text-slate-300">Upcoming Sessions</CardTitle>
+              <CardTitle className="text-sm font-medium text-slate-700 dark:text-slate-300">This Week's Sessions</CardTitle>
               <Calendar className={`h-5 w-5 ${getIconColor('sessions')}`} />
             </CardHeader>
             <CardContent>
@@ -271,7 +272,7 @@ const CrmDashboard = () => {
                 {upcomingSessions.length}
               </div>
               <p className="text-xs text-slate-600 dark:text-slate-400">
-                Next 30 days
+                This week (Sun-Sat)
               </p>
             </CardContent>
           </Card>
@@ -453,8 +454,8 @@ const CrmDashboard = () => {
             <CardHeader className="bg-gradient-to-r from-slate-50 to-gray-50 dark:from-slate-800 dark:to-gray-800 rounded-t-lg">
               <div className="flex flex-row items-center justify-between">
                 <div>
-                  <CardTitle className="text-slate-800 dark:text-slate-200">Upcoming Sessions</CardTitle>
-                  <CardDescription className="text-slate-600 dark:text-slate-400">Your next photography sessions</CardDescription>
+                  <CardTitle className="text-slate-800 dark:text-slate-200">This Week's Sessions</CardTitle>
+                  <CardDescription className="text-slate-600 dark:text-slate-400">Sessions scheduled for this week (Sun-Sat)</CardDescription>
                 </div>
                 <NewSessionDialog onSessionScheduled={fetchData} />
               </div>

@@ -23,7 +23,8 @@ import {
   BarChart,
   Bar,
 } from "recharts";
-import { format, subDays, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, eachMonthOfInterval } from "date-fns";
+import { format, subDays, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, eachMonthOfInterval, addDays } from "date-fns";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 interface SessionsByDayData {
   date: string;
@@ -46,10 +47,17 @@ const Analytics = () => {
   const [sessionsByStatus, setSessionsByStatus] = useState<SessionsByStatusData[]>([]);
   const [leadsByMonth, setLeadsByMonth] = useState<LeadsByMonthData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [sessionDateMode, setSessionDateMode] = useState<'scheduled' | 'created'>('scheduled');
 
   useEffect(() => {
     fetchAnalyticsData();
   }, []);
+
+  useEffect(() => {
+    if (!loading) {
+      fetchSessionsPerDay();
+    }
+  }, [sessionDateMode]);
 
   const fetchAnalyticsData = async () => {
     try {
@@ -70,34 +78,69 @@ const Analytics = () => {
   };
 
   const fetchSessionsPerDay = async () => {
-    const endDate = new Date();
-    const startDate = subDays(endDate, 29); // Last 30 days
-
-    const { data, error } = await supabase
-      .from('sessions')
-      .select('created_at')
-      .gte('created_at', startDate.toISOString())
-      .lte('created_at', endDate.toISOString());
-
-    if (error) throw error;
-
-    // Create array of all days in the range
-    const days = eachDayOfInterval({ start: startDate, end: endDate });
+    const today = new Date();
     
-    // Count sessions per day
-    const sessionCounts = days.map(day => {
-      const dayStr = format(day, 'yyyy-MM-dd');
-      const count = data?.filter(session => 
-        format(new Date(session.created_at), 'yyyy-MM-dd') === dayStr
-      ).length || 0;
-      
-      return {
-        date: format(day, 'MMM dd'),
-        sessions: count
-      };
-    });
+    if (sessionDateMode === 'scheduled') {
+      // Next 30 days for scheduled sessions
+      const startDate = today;
+      const endDate = addDays(today, 29);
 
-    setSessionsPerDay(sessionCounts);
+      const { data, error } = await supabase
+        .from('sessions')
+        .select('session_date')
+        .gte('session_date', format(startDate, 'yyyy-MM-dd'))
+        .lte('session_date', format(endDate, 'yyyy-MM-dd'));
+
+      if (error) throw error;
+
+      // Create array of all days in the range
+      const days = eachDayOfInterval({ start: startDate, end: endDate });
+      
+      // Count sessions per day
+      const sessionCounts = days.map(day => {
+        const dayStr = format(day, 'yyyy-MM-dd');
+        const count = data?.filter(session => 
+          session.session_date === dayStr
+        ).length || 0;
+        
+        return {
+          date: format(day, 'MMM dd'),
+          sessions: count
+        };
+      });
+
+      setSessionsPerDay(sessionCounts);
+    } else {
+      // Last 30 days for created sessions
+      const endDate = today;
+      const startDate = subDays(endDate, 29);
+
+      const { data, error } = await supabase
+        .from('sessions')
+        .select('created_at')
+        .gte('created_at', startDate.toISOString())
+        .lte('created_at', endDate.toISOString());
+
+      if (error) throw error;
+
+      // Create array of all days in the range
+      const days = eachDayOfInterval({ start: startDate, end: endDate });
+      
+      // Count sessions per day
+      const sessionCounts = days.map(day => {
+        const dayStr = format(day, 'yyyy-MM-dd');
+        const count = data?.filter(session => 
+          format(new Date(session.created_at), 'yyyy-MM-dd') === dayStr
+        ).length || 0;
+        
+        return {
+          date: format(day, 'MMM dd'),
+          sessions: count
+        };
+      });
+
+      setSessionsPerDay(sessionCounts);
+    }
   };
 
   const fetchSessionsByStatus = async () => {
@@ -196,8 +239,30 @@ const Analytics = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Sessions per Day Chart */}
           <Card>
-            <CardHeader>
-              <CardTitle>Sessions per Day (Last 30 Days)</CardTitle>
+            <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
+              <div className="space-y-1">
+                <CardTitle>Sessions per Day</CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  {sessionDateMode === 'scheduled' 
+                    ? "Showing sessions scheduled in the next 30 days"
+                    : "Showing sessions created in the last 30 days"
+                  }
+                </p>
+              </div>
+              <ToggleGroup
+                type="single"
+                value={sessionDateMode}
+                onValueChange={(value) => value && setSessionDateMode(value as 'scheduled' | 'created')}
+                className="border rounded-md"
+                size="sm"
+              >
+                <ToggleGroupItem value="scheduled" className="text-xs px-3">
+                  Scheduled
+                </ToggleGroupItem>
+                <ToggleGroupItem value="created" className="text-xs px-3">
+                  Created
+                </ToggleGroupItem>
+              </ToggleGroup>
             </CardHeader>
             <CardContent>
               <ChartContainer config={chartConfig} className="h-[300px]">

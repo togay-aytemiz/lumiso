@@ -128,28 +128,32 @@ const ScheduleSessionDialog = ({ leadId, leadName, onSessionScheduled, disabled 
   };
 
   const buttonContent = (
-    <Button disabled={disabled}>
+    <Button disabled={disabled} className={disabled ? "opacity-50 cursor-not-allowed" : ""}>
       <Calendar className="h-4 w-4 mr-2" />
       Schedule Session
     </Button>
   );
 
-  return (
-    <Dialog open={open} onOpenChange={!disabled ? setOpen : undefined}>
+  if (disabled) {
+    return (
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <DialogTrigger asChild disabled={disabled}>
-              {buttonContent}
-            </DialogTrigger>
+            {buttonContent}
           </TooltipTrigger>
-          {disabled && disabledTooltip && (
-            <TooltipContent>
-              <p>{disabledTooltip}</p>
-            </TooltipContent>
-          )}
+          <TooltipContent>
+            <p>{disabledTooltip}</p>
+          </TooltipContent>
         </Tooltip>
       </TooltipProvider>
+    );
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        {buttonContent}
+      </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Schedule Session</DialogTitle>

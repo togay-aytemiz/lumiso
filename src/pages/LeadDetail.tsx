@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -49,7 +49,8 @@ const LeadDetail = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [deletingSession, setDeletingSession] = useState(false);
+  const [deletingSessionId, setDeletingSessionId] = useState<string | null>(null);
+  const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
   
   // Form state
   const [formData, setFormData] = useState({
@@ -521,44 +522,10 @@ const LeadDetail = () => {
                     session={session} 
                     leadName={lead.name} 
                     onStatusUpdate={handleSessionUpdated}
+                    onEdit={session.status === 'planned' ? () => setEditingSessionId(session.id) : undefined}
+                    onDelete={() => setDeletingSessionId(session.id)}
                   />
-                  <div className="flex gap-2 mt-3 justify-end">
-                    {session.status === 'planned' && (
-                      <EditSessionDialog
-                        sessionId={session.id}
-                        currentDate={session.session_date}
-                        currentTime={session.session_time}
-                        currentNotes={session.notes}
-                        leadName={lead.name}
-                        onSessionUpdated={handleSessionUpdated}
-                      />
-                    )}
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="destructive" size="sm">
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Delete Session
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Delete Session?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Are you sure you want to delete this session? This action cannot be undone.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction 
-                            onClick={() => handleDeleteSession(session.id)}
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                          >
-                            Delete Session
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
+                  
                 </div>
               ))}
             </div>
@@ -671,6 +638,50 @@ const LeadDetail = () => {
           </div>
         </div>
       </div>
+
+      {/* Edit Session Dialog */}
+      {editingSessionId && (() => {
+        const session = sessions.find(s => s.id === editingSessionId);
+        return session ? (
+          <EditSessionDialog
+            sessionId={session.id}
+            currentDate={session.session_date}
+            currentTime={session.session_time}
+            currentNotes={session.notes}
+            leadName={lead.name}
+            onSessionUpdated={() => {
+              handleSessionUpdated();
+              setEditingSessionId(null);
+            }}
+          />
+        ) : null;
+      })()}
+
+      {/* Delete Session Dialog */}
+      <AlertDialog open={!!deletingSessionId} onOpenChange={(open) => !open && setDeletingSessionId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Session?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this session? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => {
+                if (deletingSessionId) {
+                  handleDeleteSession(deletingSessionId);
+                  setDeletingSessionId(null);
+                }
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete Session
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Layout>
   );
 };

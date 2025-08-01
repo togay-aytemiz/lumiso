@@ -1,7 +1,9 @@
-import { Calendar, Clock, Badge as BadgeIcon } from "lucide-react";
+import { Calendar, Clock, Badge as BadgeIcon, Edit, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { getLeadStatusStyles, formatStatusText } from "@/lib/leadStatusColors";
 import { cn } from "@/lib/utils";
 import { useSessionActions } from "@/hooks/useSessionActions";
@@ -20,9 +22,12 @@ interface SessionBannerProps {
   session: Session;
   leadName: string;
   onStatusUpdate?: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
+  showActions?: boolean;
 }
 
-const SessionBanner = ({ session, leadName, onStatusUpdate }: SessionBannerProps) => {
+const SessionBanner = ({ session, leadName, onStatusUpdate, onEdit, onDelete, showActions = true }: SessionBannerProps) => {
   const { updateSessionStatus } = useSessionActions();
 
   const getStatusBadgeColor = (status: string) => {
@@ -91,7 +96,7 @@ const SessionBanner = ({ session, leadName, onStatusUpdate }: SessionBannerProps
               )}
             </div>
           </div>
-          <div className="flex items-center gap-3 flex-shrink-0">
+          <div className="flex items-center gap-2 flex-shrink-0">
             <Select value={session.status} onValueChange={handleStatusChange}>
               <SelectTrigger className="w-auto min-w-[140px]">
                 <SelectValue />
@@ -104,6 +109,48 @@ const SessionBanner = ({ session, leadName, onStatusUpdate }: SessionBannerProps
                 <SelectItem value="cancelled">Cancelled</SelectItem>
               </SelectContent>
             </Select>
+            
+            {showActions && (
+              <TooltipProvider>
+                <div className="flex items-center gap-1 ml-2">
+                  {session.status === 'planned' && onEdit && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          onClick={onEdit}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Edit Session</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+                  
+                  {onDelete && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                          onClick={onDelete}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Delete Session</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+                </div>
+              </TooltipProvider>
+            )}
           </div>
         </div>
       </CardContent>

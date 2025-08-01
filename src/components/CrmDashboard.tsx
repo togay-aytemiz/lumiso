@@ -10,7 +10,7 @@ import AddLeadDialog from "./AddLeadDialog";
 import NewSessionDialog from "./NewSessionDialog";
 import GlobalSearch from "./GlobalSearch";
 import { getLeadStatusStyles, formatStatusText } from "@/lib/leadStatusColors";
-import { getWeekRange, getUserLocale, formatLongDate, formatTime } from "@/lib/utils";
+import { getWeekRange, getUserLocale, formatLongDate, formatTime, formatDate } from "@/lib/utils";
 
 interface Lead {
   id: string;
@@ -467,11 +467,11 @@ const CrmDashboard = () => {
                     <div className="space-y-1">
                       <h4 className="font-medium text-slate-800 dark:text-slate-200">{lead.name}</h4>
                       <p className="text-sm text-slate-600 dark:text-slate-400">{lead.email}</p>
-                      {lead.due_date && (
-                        <p className="text-xs text-slate-500 dark:text-slate-500">
-                          Due: {new Date(lead.due_date).toLocaleDateString()}
-                        </p>
-                      )}
+                       {lead.due_date && (
+                         <p className="text-xs text-slate-500 dark:text-slate-500">
+                           Due: {formatDate(lead.due_date)}
+                         </p>
+                       )}
                     </div>
                     <span className={`px-2 py-1 text-xs rounded-full font-medium shadow-sm ${getLeadStatusStyles(lead.status).className}`}>
                       {formatStatusText(lead.status)}

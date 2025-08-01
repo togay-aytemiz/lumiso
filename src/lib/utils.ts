@@ -80,6 +80,18 @@ export const formatLongDate = (dateString: string | Date, locale?: string): stri
   }).format(date);
 };
 
+export const formatGroupDate = (dateString: string | Date, locale?: string): string => {
+  const userLocale = locale || getUserLocale();
+  const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
+  
+  return new Intl.DateTimeFormat(userLocale, {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  }).format(date);
+};
+
 // Locale-aware week utilities
 export const getStartOfWeek = (date: Date, locale?: string): Date => {
   const userLocale = locale || getUserLocale();

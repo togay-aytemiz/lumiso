@@ -8,7 +8,7 @@ import { toast } from "@/hooks/use-toast";
 import { DateRangePicker } from "@/components/DateRangePicker";
 import ReminderCard from "@/components/ReminderCard";
 import type { DateRange } from "react-day-picker";
-import { formatDate, formatTime, formatDateTime, getWeekRange } from "@/lib/utils";
+import { formatDate, formatTime, formatDateTime, formatGroupDate, getWeekRange } from "@/lib/utils";
 import Layout from "@/components/Layout";
 
 interface Activity {
@@ -266,12 +266,7 @@ const ReminderDetails = () => {
     // Group by completion date (using updated_at as completion date)
     const groupedByDate = filteredCompletedActivities.reduce((groups, activity) => {
       const completionDate = new Date(activity.updated_at);
-      const dateKey = completionDate.toLocaleDateString('en-US', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      });
+      const dateKey = formatGroupDate(completionDate);
       
       if (!groups[dateKey]) {
         groups[dateKey] = [];

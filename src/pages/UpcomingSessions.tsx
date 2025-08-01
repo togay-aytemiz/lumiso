@@ -10,6 +10,7 @@ import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
 import NewSessionDialog from "@/components/NewSessionDialog";
+import { formatDate, formatTime, formatLongDate } from "@/lib/utils";
 
 interface Session {
   id: string;
@@ -251,25 +252,6 @@ const AllSessions = () => {
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      weekday: 'short',
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  };
-
-  const formatTime = (timeString: string) => {
-    const [hours, minutes] = timeString.split(':');
-    const time = new Date();
-    time.setHours(parseInt(hours), parseInt(minutes));
-    return time.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true
-    });
-  };
 
   const statusOptions = [
     { value: "all", label: "All Statuses" },
@@ -437,7 +419,7 @@ const AllSessions = () => {
                         {session.lead_name}
                       </TableCell>
                       <TableCell>
-                        {formatDate(session.session_date)}
+                        {formatLongDate(session.session_date)}
                       </TableCell>
                       <TableCell>
                         {formatTime(session.session_time)}

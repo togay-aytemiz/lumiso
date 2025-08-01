@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Calendar } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { formatDate, formatTime } from "@/lib/utils";
 
 interface ScheduleSessionDialogProps {
   leadId: string;
@@ -75,8 +76,9 @@ const ScheduleSessionDialog = ({ leadId, leadName, onSessionScheduled, disabled 
       if (error) throw error;
 
       // Add activity entry for the scheduled session
-      const sessionDate = new Date(formData.session_date).toLocaleDateString();
-      const activityContent = `Photo session scheduled for ${sessionDate} at ${formData.session_time}`;
+      const sessionDate = formatDate(formData.session_date);
+      const sessionTime = formatTime(formData.session_time);
+      const activityContent = `Photo session scheduled for ${sessionDate} at ${sessionTime}`;
       
       const { error: activityError } = await supabase
         .from('activities')

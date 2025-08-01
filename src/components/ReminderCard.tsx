@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle } from "lucide-react";
+import { formatLongDate, formatTime } from "@/lib/utils";
 
 interface ReminderActivity {
   id: string;
@@ -47,23 +48,6 @@ const ReminderCard = ({
     return reminder.getTime() === today.getTime();
   };
 
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
-
-  const formatTime = (timeStr: string) => {
-    if (!timeStr) return '';
-    return new Date(`1970-01-01T${timeStr}`).toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    });
-  };
 
   const getVisualMarker = () => {
     if (activity.completed) {
@@ -118,7 +102,7 @@ const ReminderCard = ({
             {/* Date and Time */}
             {activity.reminder_date && (
               <p className={`text-sm text-slate-500 dark:text-slate-500 mt-1 ${activity.completed ? 'opacity-60' : ''}`}>
-                {formatDate(activity.reminder_date)}
+                {formatLongDate(activity.reminder_date)}
                 {activity.reminder_time && ` – ${formatTime(activity.reminder_time)}`}
               </p>
             )}

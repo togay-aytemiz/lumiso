@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { getLeadStatusStyles, formatStatusText } from "@/lib/leadStatusColors";
 import { cn } from "@/lib/utils";
+import { formatDate, formatTime } from "@/lib/utils";
 import { useSessionActions } from "@/hooks/useSessionActions";
 
 type SessionStatus = 'planned' | 'completed' | 'in_post_processing' | 'delivered' | 'cancelled';
@@ -66,10 +67,6 @@ const SessionBanner = ({ session, leadName, onStatusUpdate, onEdit, onDelete, sh
     }
   };
 
-  const formatTime = (time: string) => {
-    // Convert time to HH:mm format
-    return time.slice(0, 5);
-  };
 
   return (
     <Card className={cn("border-l-4", getCardBgColor(session.status))}>
@@ -82,7 +79,7 @@ const SessionBanner = ({ session, leadName, onStatusUpdate, onEdit, onDelete, sh
                 <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-muted-foreground mt-1">
                   <div className="flex items-center gap-1">
                     <Calendar className="h-4 w-4 flex-shrink-0" />
-                    <span className="truncate">{new Date(session.session_date).toLocaleDateString()}</span>
+                    <span className="truncate">{formatDate(session.session_date)}</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <Clock className="h-4 w-4 flex-shrink-0" />

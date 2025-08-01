@@ -10,6 +10,7 @@ import { toast } from "@/hooks/use-toast";
 import AddLeadDialog from "@/components/AddLeadDialog";
 import { useNavigate } from "react-router-dom";
 import { getLeadStatusStyles, formatStatusText } from "@/lib/leadStatusColors";
+import { formatDate } from "@/lib/utils";
 import Layout from "@/components/Layout";
 
 interface Lead {
@@ -230,7 +231,7 @@ const AllLeads = () => {
                         </span>
                        </TableCell>
                       <TableCell>
-                        {lead.due_date ? new Date(lead.due_date).toLocaleDateString() : '-'}
+                        {lead.due_date ? formatDate(lead.due_date) : '-'}
                       </TableCell>
                       <TableCell className="max-w-xs">
                         {lead.notes ? (

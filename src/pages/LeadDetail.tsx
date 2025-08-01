@@ -17,6 +17,7 @@ import EditSessionDialog from "@/components/EditSessionDialog";
 import ActivitySection from "@/components/ActivitySection";
 import SessionBanner from "@/components/SessionBanner";
 import { getLeadStatusStyles, formatStatusText } from "@/lib/leadStatusColors";
+import { formatDate } from "@/lib/utils";
 import Layout from "@/components/Layout";
 
 interface Lead {
@@ -540,7 +541,7 @@ const LeadDetail = () => {
               <CardHeader>
                 <CardTitle>Lead Information</CardTitle>
                 <CardDescription>
-                  Created on {new Date(lead.created_at).toLocaleDateString()}
+                  Created on {formatDate(lead.created_at)}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">

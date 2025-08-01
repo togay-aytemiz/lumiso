@@ -522,7 +522,7 @@ const LeadDetail = () => {
                     session={session} 
                     leadName={lead.name} 
                     onStatusUpdate={handleSessionUpdated}
-                    onEdit={session.status === 'planned' ? () => setEditingSessionId(session.id) : undefined}
+                    onEdit={() => setEditingSessionId(session.id)}
                     onDelete={() => setDeletingSessionId(session.id)}
                   />
                   

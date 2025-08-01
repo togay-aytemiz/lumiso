@@ -126,6 +126,28 @@ const AllSessions = () => {
     }
   };
 
+  const getSessionCountForDateFilter = (filter: string) => {
+    let filtered = sessions;
+    
+    // Apply status filter first
+    if (statusFilter !== "all") {
+      filtered = filtered.filter(session => session.status === statusFilter);
+    }
+
+    // Then apply date filter
+    if (filter === "all") {
+      return filtered.length;
+    }
+
+    const dateRange = getDateRangeForFilter(filter);
+    if (!dateRange) return 0;
+
+    return filtered.filter(session => {
+      const sessionDate = new Date(session.session_date);
+      return sessionDate >= dateRange.start && sessionDate < dateRange.end;
+    }).length;
+  };
+
   const filteredAndSortedSessions = useMemo(() => {
     let filtered = sessions;
     
@@ -307,56 +329,56 @@ const AllSessions = () => {
                   size="sm"
                   onClick={() => setDateFilter("all")}
                 >
-                  All
+                  All ({getSessionCountForDateFilter("all")})
                 </Button>
                 <Button
                   variant={dateFilter === "past" ? "default" : "outline"}
                   size="sm"
                   onClick={() => setDateFilter("past")}
                 >
-                  Past
+                  Past ({getSessionCountForDateFilter("past")})
                 </Button>
                 <Button
                   variant={dateFilter === "today" ? "default" : "outline"}
                   size="sm"
                   onClick={() => setDateFilter("today")}
                 >
-                  Today
+                  Today ({getSessionCountForDateFilter("today")})
                 </Button>
                 <Button
                   variant={dateFilter === "tomorrow" ? "default" : "outline"}
                   size="sm"
                   onClick={() => setDateFilter("tomorrow")}
                 >
-                  Tomorrow
+                  Tomorrow ({getSessionCountForDateFilter("tomorrow")})
                 </Button>
                 <Button
                   variant={dateFilter === "thisweek" ? "default" : "outline"}
                   size="sm"
                   onClick={() => setDateFilter("thisweek")}
                 >
-                  This Week
+                  This Week ({getSessionCountForDateFilter("thisweek")})
                 </Button>
                 <Button
                   variant={dateFilter === "nextweek" ? "default" : "outline"}
                   size="sm"
                   onClick={() => setDateFilter("nextweek")}
                 >
-                  Next Week
+                  Next Week ({getSessionCountForDateFilter("nextweek")})
                 </Button>
                 <Button
                   variant={dateFilter === "thismonth" ? "default" : "outline"}
                   size="sm"
                   onClick={() => setDateFilter("thismonth")}
                 >
-                  This Month
+                  This Month ({getSessionCountForDateFilter("thismonth")})
                 </Button>
                 <Button
                   variant={dateFilter === "nextmonth" ? "default" : "outline"}
                   size="sm"
                   onClick={() => setDateFilter("nextmonth")}
                 >
-                  Next Month
+                  Next Month ({getSessionCountForDateFilter("nextmonth")})
                 </Button>
               </div>
             </div>

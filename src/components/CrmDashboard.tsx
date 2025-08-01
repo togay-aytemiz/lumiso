@@ -10,7 +10,7 @@ import AddLeadDialog from "./AddLeadDialog";
 import NewSessionDialog from "./NewSessionDialog";
 import GlobalSearch from "./GlobalSearch";
 import { getLeadStatusStyles, formatStatusText } from "@/lib/leadStatusColors";
-import { getWeekRange, getUserLocale } from "@/lib/utils";
+import { getWeekRange, getUserLocale, formatLongDate, formatTime } from "@/lib/utils";
 
 interface Lead {
   id: string;
@@ -520,11 +520,11 @@ const CrmDashboard = () => {
                       className="flex items-center justify-between p-4 border border-slate-200 dark:border-slate-700 rounded-lg cursor-pointer hover:bg-slate-50 hover:shadow-sm dark:hover:bg-slate-800 transition-all duration-200"
                       onClick={() => navigate(`/leads/${session.lead_id}`, { state: { from: 'dashboard' } })}
                     >
-                      <div className="space-y-1">
-                        <h4 className="font-medium text-slate-800 dark:text-slate-200 hover:text-primary transition-colors">{session.lead_name || 'Unknown Client'}</h4>
-                        <p className="text-sm text-slate-600 dark:text-slate-400">
-                          {new Date(session.session_date).toLocaleDateString()} at {session.session_time}
-                        </p>
+                       <div className="space-y-1">
+                         <h4 className="font-medium text-slate-800 dark:text-slate-200 hover:text-primary transition-colors">{session.lead_name || 'Unknown Client'}</h4>
+                         <p className="text-sm text-slate-600 dark:text-slate-400">
+                           {formatLongDate(session.session_date)} – {formatTime(session.session_time)}
+                         </p>
                         {session.notes && (
                           <p className="text-xs text-slate-500 dark:text-slate-500">{session.notes}</p>
                         )}

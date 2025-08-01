@@ -29,7 +29,7 @@ interface Lead {
   status: string;
 }
 
-type FilterType = 'overdue' | 'today' | 'tomorrow' | 'thisWeek' | 'nextWeek' | 'thisMonth' | 'selectPeriod';
+type FilterType = 'all' | 'overdue' | 'today' | 'tomorrow' | 'thisWeek' | 'nextWeek' | 'thisMonth' | 'selectPeriod';
 
 const ReminderDetails = () => {
   const [activities, setActivities] = useState<Activity[]>([]);
@@ -164,6 +164,10 @@ const ReminderDetails = () => {
     
     // Filter active activities based on selected filter
     switch (selectedFilter) {
+      case 'all':
+        filteredActiveActivities = activeActivities;
+        filteredCompletedActivities = completedActivities;
+        break;
       case 'overdue':
         filteredActiveActivities = activeActivities.filter(activity => isOverdue(activity.reminder_date));
         break;
@@ -190,8 +194,8 @@ const ReminderDetails = () => {
         filteredActiveActivities = activeActivities;
     }
     
-    // Filter completed activities when showCompleted is true (except for selectPeriod which handles it above)
-    if (showCompleted && selectedFilter !== 'selectPeriod') {
+    // Filter completed activities when showCompleted is true (except for 'all' and 'selectPeriod' which handle it above)
+    if (showCompleted && selectedFilter !== 'selectPeriod' && selectedFilter !== 'all') {
       switch (selectedFilter) {
         case 'overdue':
           filteredCompletedActivities = completedActivities.filter(activity => isOverdue(activity.reminder_date));
@@ -225,7 +229,7 @@ const ReminderDetails = () => {
     
     // Combine active and completed activities
     const allActivities = [...finalActiveActivities];
-    if (showCompleted || selectedFilter === 'selectPeriod') {
+    if (showCompleted || selectedFilter === 'selectPeriod' || selectedFilter === 'all') {
       allActivities.push(...filteredCompletedActivities);
     }
     
@@ -238,6 +242,9 @@ const ReminderDetails = () => {
     
     // Filter completed activities based on selected filter
     switch (selectedFilter) {
+      case 'all':
+        filteredCompletedActivities = completedActivities;
+        break;
       case 'overdue':
         filteredCompletedActivities = completedActivities.filter(activity => isOverdue(activity.reminder_date));
         break;
@@ -295,6 +302,8 @@ const ReminderDetails = () => {
     let targetActivities = showCompleted ? activities : activities.filter(activity => !activity.completed);
     
     switch (filterType) {
+      case 'all':
+        return targetActivities.length;
       case 'overdue':
         return targetActivities.filter(activity => isOverdue(activity.reminder_date)).length;
       case 'today':
@@ -359,6 +368,7 @@ const ReminderDetails = () => {
   };
 
   const filterOptions = [
+    { key: 'all', label: 'All' },
     { key: 'overdue', label: 'Overdue' },
     { key: 'today', label: 'Today' },
     { key: 'tomorrow', label: 'Tomorrow' },

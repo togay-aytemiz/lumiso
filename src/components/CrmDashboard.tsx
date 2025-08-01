@@ -50,6 +50,7 @@ interface Activity {
   reminder_time: string;
   type: string;
   lead_id: string;
+  completed?: boolean;
 }
 
 const CrmDashboard = () => {
@@ -184,35 +185,34 @@ const CrmDashboard = () => {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     
-    const todayReminders = activities.filter(activity => {
+    // Only count non-completed reminders
+    const activeActivities = activities.filter(activity => !activity.completed);
+    
+    const todayReminders = activeActivities.filter(activity => {
       if (!activity.reminder_date) return false;
-      // Parse the reminder date properly (it's already in ISO format from Supabase)
       const reminderDate = new Date(activity.reminder_date);
       const reminderDateOnly = new Date(reminderDate.getFullYear(), reminderDate.getMonth(), reminderDate.getDate());
       return reminderDateOnly.getTime() === today.getTime();
     });
     
-    const overdueReminders = activities.filter(activity => {
+    const overdueReminders = activeActivities.filter(activity => {
       if (!activity.reminder_date) return false;
       const reminderDate = new Date(activity.reminder_date);
       const reminderDateOnly = new Date(reminderDate.getFullYear(), reminderDate.getMonth(), reminderDate.getDate());
       return reminderDateOnly.getTime() < today.getTime();
     });
     
-    const upcomingReminders = activities.filter(activity => {
+    const upcomingReminders = activeActivities.filter(activity => {
       if (!activity.reminder_date) return false;
       const reminderDate = new Date(activity.reminder_date);
       const reminderDateOnly = new Date(reminderDate.getFullYear(), reminderDate.getMonth(), reminderDate.getDate());
       return reminderDateOnly.getTime() > today.getTime();
     });
     
-    console.log('Reminder counts:', { today: todayReminders.length, overdue: overdueReminders.length, upcoming: upcomingReminders.length });
-    console.log('Activities:', activities);
-    
     return {
-      today: todayReminders.length,
-      overdue: overdueReminders.length,
-      upcoming: upcomingReminders.length
+      today: todayReminders,
+      overdue: overdueReminders,
+      upcoming: upcomingReminders
     };
   };
 
@@ -352,7 +352,7 @@ const CrmDashboard = () => {
           <CardContent className="pt-4 pb-6">
             {(() => {
               const { today, overdue, upcoming } = getReminderCounts();
-              const totalTasks = today + overdue + upcoming;
+              const totalTasks = today.length + overdue.length + upcoming.length;
               
               if (totalTasks === 0) {
                 return (
@@ -363,32 +363,72 @@ const CrmDashboard = () => {
                   </div>
                 );
               }
+
+              const getLeadName = (leadId: string) => {
+                const lead = leads.find(l => l.id === leadId);
+                return lead?.name || 'Unknown Lead';
+              };
+
+              const renderReminderSummary = (reminders: any[], type: string, bgColor: string, textColor: string, iconColor: string, icon: any) => {
+                const IconComponent = icon;
+                const displayReminders = reminders.slice(0, 3);
+                const hasMore = reminders.length > 3;
+
+                return (
+                  <div className={`p-3 rounded-lg ${bgColor} border border-opacity-20`}>
+                    <div className="flex items-center gap-2 mb-2">
+                      <IconComponent className={`h-4 w-4 ${iconColor}`} />
+                      <div className="text-sm">
+                        <span className="text-slate-600 dark:text-slate-400">{type}: </span>
+                        <span className={`font-semibold ${textColor}`}>{reminders.length}</span>
+                      </div>
+                    </div>
+                    {displayReminders.length > 0 && (
+                      <div className="space-y-1">
+                        {displayReminders.map((reminder, index) => (
+                          <div key={index} className="text-xs text-slate-600 dark:text-slate-400 truncate">
+                            {getLeadName(reminder.lead_id)} - {reminder.content}
+                          </div>
+                        ))}
+                        {hasMore && (
+                          <div className="text-xs text-slate-500 dark:text-slate-500 italic">
+                            +{reminders.length - 3} more
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              };
               
               return (
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="flex items-center gap-2 p-3 rounded-lg bg-blue-50/50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800">
-                    <Bell className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                    <div className="text-sm">
-                      <span className="text-slate-600 dark:text-slate-400">Today: </span>
-                      <span className="font-semibold text-blue-700 dark:text-blue-300">{today}</span>
-                    </div>
-                  </div>
+                  {renderReminderSummary(
+                    today, 
+                    "Today", 
+                    "bg-blue-50/50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800",
+                    "text-blue-700 dark:text-blue-300",
+                    "text-blue-600 dark:text-blue-400",
+                    Bell
+                  )}
                   
-                  <div className="flex items-center gap-2 p-3 rounded-lg bg-red-50/50 dark:bg-red-950/20 border border-red-200 dark:border-red-800">
-                    <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
-                    <div className="text-sm">
-                      <span className="text-slate-600 dark:text-slate-400">Overdue: </span>
-                      <span className="font-semibold text-red-700 dark:text-red-300">{overdue}</span>
-                    </div>
-                  </div>
+                  {renderReminderSummary(
+                    overdue, 
+                    "Overdue", 
+                    "bg-red-50/50 dark:bg-red-950/20 border-red-200 dark:border-red-800",
+                    "text-red-700 dark:text-red-300",
+                    "text-red-600 dark:text-red-400",
+                    AlertTriangle
+                  )}
                   
-                  <div className="flex items-center gap-2 p-3 rounded-lg bg-slate-50/50 dark:bg-slate-950/20 border border-slate-200 dark:border-slate-700">
-                    <Calendar className="h-4 w-4 text-slate-600 dark:text-slate-400" />
-                    <div className="text-sm">
-                      <span className="text-slate-600 dark:text-slate-400">Upcoming: </span>
-                      <span className="font-semibold text-slate-700 dark:text-slate-300">{upcoming}</span>
-                    </div>
-                  </div>
+                  {renderReminderSummary(
+                    upcoming, 
+                    "Upcoming", 
+                    "bg-slate-50/50 dark:bg-slate-950/20 border-slate-200 dark:border-slate-700",
+                    "text-slate-700 dark:text-slate-300",
+                    "text-slate-600 dark:text-slate-400",
+                    Calendar
+                  )}
                 </div>
               );
             })()}

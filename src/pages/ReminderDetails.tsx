@@ -29,7 +29,7 @@ interface Lead {
   status: string;
 }
 
-type FilterType = 'all' | 'overdue' | 'today' | 'tomorrow' | 'thisWeek' | 'nextWeek' | 'thisMonth' | 'selectPeriod';
+type FilterType = 'all' | 'overdue' | 'today' | 'tomorrow' | 'thisWeek' | 'nextWeek' | 'thisMonth';
 
 const ReminderDetails = () => {
   const [activities, setActivities] = useState<Activity[]>([]);
@@ -186,16 +186,12 @@ const ReminderDetails = () => {
       case 'thisMonth':
         filteredActiveActivities = activeActivities.filter(activity => isThisMonth(activity.reminder_date));
         break;
-      case 'selectPeriod':
-        filteredActiveActivities = activeActivities.filter(activity => isInDateRange(activity.reminder_date));
-        filteredCompletedActivities = completedActivities.filter(activity => isInDateRange(activity.reminder_date));
-        break;
       default:
         filteredActiveActivities = activeActivities;
     }
     
-    // Filter completed activities when showCompleted is true (except for 'all' and 'selectPeriod' which handle it above)
-    if (showCompleted && selectedFilter !== 'selectPeriod' && selectedFilter !== 'all') {
+    // Filter completed activities when showCompleted is true (except for 'all' which handles it above)
+    if (showCompleted && selectedFilter !== 'all') {
       switch (selectedFilter) {
         case 'overdue':
           filteredCompletedActivities = completedActivities.filter(activity => isOverdue(activity.reminder_date));
@@ -229,7 +225,7 @@ const ReminderDetails = () => {
     
     // Combine active and completed activities
     const allActivities = [...finalActiveActivities];
-    if (showCompleted || selectedFilter === 'selectPeriod' || selectedFilter === 'all') {
+    if (showCompleted || selectedFilter === 'all') {
       allActivities.push(...filteredCompletedActivities);
     }
     
@@ -262,9 +258,6 @@ const ReminderDetails = () => {
         break;
       case 'thisMonth':
         filteredCompletedActivities = completedActivities.filter(activity => isThisMonth(activity.reminder_date));
-        break;
-      case 'selectPeriod':
-        filteredCompletedActivities = completedActivities.filter(activity => isInDateRange(activity.reminder_date));
         break;
       default:
         filteredCompletedActivities = completedActivities;
@@ -316,8 +309,6 @@ const ReminderDetails = () => {
         return targetActivities.filter(activity => isNextWeek(activity.reminder_date)).length;
       case 'thisMonth':
         return targetActivities.filter(activity => isThisMonth(activity.reminder_date)).length;
-      case 'selectPeriod':
-        return targetActivities.filter(activity => isInDateRange(activity.reminder_date)).length;
       default:
         return targetActivities.length;
     }
@@ -374,8 +365,7 @@ const ReminderDetails = () => {
     { key: 'tomorrow', label: 'Tomorrow' },
     { key: 'thisWeek', label: 'This Week' },
     { key: 'nextWeek', label: 'Next Week' },
-    { key: 'thisMonth', label: 'This Month' },
-    { key: 'selectPeriod', label: 'Select Period' }
+    { key: 'thisMonth', label: 'This Month' }
   ];
 
   if (loading) {
@@ -416,15 +406,8 @@ const ReminderDetails = () => {
                 >
                   {option.label} ({getReminderCountForFilter(option.key as FilterType)})
                 </Button>
-              ))}
-              {selectedFilter === 'selectPeriod' && (
-                <DateRangePicker
-                  dateRange={dateRange}
-                  onDateRangeChange={setDateRange}
-                  className="ml-2"
-                />
-              )}
-            </div>
+                ))}
+              </div>
             
             {/* Show Completed Toggle */}
             <div className="flex items-center gap-2 flex-shrink-0">

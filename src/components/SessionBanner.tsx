@@ -120,7 +120,11 @@ const SessionBanner = ({ session, leadName, onStatusUpdate, onEdit, onDelete, sh
                           variant="ghost"
                           size="sm"
                           className="h-8 w-8 p-0"
-                          onClick={onEdit}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            onEdit();
+                          }}
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
@@ -138,7 +142,11 @@ const SessionBanner = ({ session, leadName, onStatusUpdate, onEdit, onDelete, sh
                           variant="ghost"
                           size="sm"
                           className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                          onClick={onDelete}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            onDelete();
+                          }}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

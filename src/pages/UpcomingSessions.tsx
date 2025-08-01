@@ -29,7 +29,7 @@ type SortDirection = 'asc' | 'desc';
 const AllSessions = () => {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("planned");
   const [sortField, setSortField] = useState<SortField>("session_date");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const navigate = useNavigate();

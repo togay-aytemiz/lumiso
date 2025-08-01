@@ -72,12 +72,12 @@ const ReminderCard = ({
     if (activity.completed) {
       return 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800';
     }
-    return 'bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700';
+    return 'bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-750';
   };
 
   return (
     <div
-      className={`flex items-center gap-4 p-4 rounded-lg border ${onClick ? 'cursor-pointer' : ''} ${getCardBackground()}`}
+      className={`flex items-center gap-4 p-4 rounded-lg border transition-all duration-200 ${onClick ? 'cursor-pointer' : ''} ${getCardBackground()}`}
       onClick={onClick}
     >
       {/* Visual Marker */}
@@ -109,7 +109,7 @@ const ReminderCard = ({
           </div>
 
           {/* Status Badge */}
-          <div className="flex items-center flex-wrap gap-1">
+          <div className="flex items-center justify-center flex-wrap gap-1">
             {activity.completed && showCompletedBadge ? (
               <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800">
                 Completed
@@ -138,7 +138,7 @@ const ReminderCard = ({
           e.stopPropagation();
           onToggleCompletion(activity.id, !activity.completed);
         }}
-        className="flex items-center justify-center w-6 h-6 rounded-full border-2 border-slate-300 dark:border-slate-600 flex-shrink-0"
+        className="flex items-center justify-center w-6 h-6 rounded-full border-2 border-slate-300 dark:border-slate-600 hover:border-primary hover:bg-primary/5 transition-all duration-200 flex-shrink-0"
       >
         {activity.completed ? (
           <CheckCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />

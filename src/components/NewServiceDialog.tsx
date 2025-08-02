@@ -32,21 +32,34 @@ export const NewServiceDialog = ({ open, onOpenChange, existingCategories }: New
 
   const createServiceMutation = useMutation({
     mutationFn: async (serviceData: { name: string; category?: string; description?: string }) => {
+      console.log('Creating service with data:', serviceData);
+      
       const { data: { user } } = await supabase.auth.getUser();
+      console.log('Current user:', user?.id);
+      
       if (!user) throw new Error('User not authenticated');
+
+      const insertData = {
+        name: serviceData.name,
+        category: serviceData.category || null,
+        description: serviceData.description || null,
+        user_id: user.id,
+      };
+      
+      console.log('Inserting data:', insertData);
 
       const { data, error } = await supabase
         .from('services')
-        .insert({
-          name: serviceData.name,
-          category: serviceData.category || null,
-          description: serviceData.description || null,
-          user_id: user.id,
-        })
+        .insert(insertData)
         .select()
         .single();
       
-      if (error) throw error;
+      console.log('Insert result:', { data, error });
+      
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
       return data;
     },
     onSuccess: () => {

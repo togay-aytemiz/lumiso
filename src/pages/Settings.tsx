@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, CheckCircle, Loader2 } from "lucide-react";
 import { useGoogleCalendar } from "@/hooks/useGoogleCalendar";
+import ServicesSection from "@/components/ServicesSection";
 
 const Settings = () => {
   const { connection, loading, connectCalendar, disconnectCalendar } = useGoogleCalendar();
@@ -67,6 +68,9 @@ const Settings = () => {
             )}
           </CardContent>
         </Card>
+
+        {/* Services Management Section */}
+        <ServicesSection />
 
         {/* Future Settings Placeholder */}
         <div className="pt-16">

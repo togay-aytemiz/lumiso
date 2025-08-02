@@ -83,18 +83,16 @@ export const NewServiceDialog = ({ open, onOpenChange, existingCategories }: New
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
-    try {
-      nameSchema.parse(name);
-    } catch (error: any) {
-      newErrors.name = error.errors[0]?.message || "Invalid name";
+    // Name validation
+    if (!name || name.trim().length === 0) {
+      newErrors.name = "Name is required";
+    } else if (name.trim().length > 100) {
+      newErrors.name = "Name is too long (max 100 characters)";
     }
 
-    if (description) {
-      try {
-        notesSchema.parse(description);
-      } catch (error: any) {
-        newErrors.description = error.errors[0]?.message || "Description too long";
-      }
+    // Description validation (optional)
+    if (description && description.trim().length > 1000) {
+      newErrors.description = "Description is too long (max 1000 characters)";
     }
 
     setErrors(newErrors);

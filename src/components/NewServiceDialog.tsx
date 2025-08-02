@@ -8,13 +8,19 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { nameSchema, notesSchema } from "@/lib/validation";
 
 interface NewServiceDialogProps {
   open: boolean;
@@ -146,18 +152,39 @@ export const NewServiceDialog = ({ open, onOpenChange, existingCategories }: New
 
           <div className="space-y-2">
             <Label htmlFor="category">Category</Label>
+            <Select value={category} onValueChange={setCategory}>
+              <SelectTrigger>
+                <SelectValue placeholder="e.g., Albums, Prints, Extras" />
+              </SelectTrigger>
+              <SelectContent>
+                {/* Pre-defined common categories */}
+                <SelectItem value="Albums">Albums</SelectItem>
+                <SelectItem value="Prints">Prints</SelectItem>
+                <SelectItem value="Extras">Extras</SelectItem>
+                <SelectItem value="Digital">Digital</SelectItem>
+                <SelectItem value="Packages">Packages</SelectItem>
+                
+                {/* Existing categories from database */}
+                {existingCategories
+                  .filter(cat => !['Albums', 'Prints', 'Extras', 'Digital', 'Packages'].includes(cat))
+                  .map((cat) => (
+                    <SelectItem key={cat} value={cat}>
+                      {cat}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+            
+            {/* Alternative: Allow custom category input */}
+            <div className="text-xs text-muted-foreground">
+              Or enter a custom category:
+            </div>
             <Input
-              id="category"
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              placeholder="e.g., Albüm, Baskı, Ekstra"
-              list="categories"
+              placeholder="Custom category name"
+              className="h-8 text-sm"
             />
-            <datalist id="categories">
-              {existingCategories.map((cat) => (
-                <option key={cat} value={cat} />
-              ))}
-            </datalist>
           </div>
 
           <div className="space-y-2">

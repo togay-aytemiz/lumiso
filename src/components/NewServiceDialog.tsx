@@ -32,6 +32,8 @@ export const NewServiceDialog = ({ open, onOpenChange, existingCategories }: New
   const [name, setName] = useState("");
   const [category, setCategory] = useState("");
   const [description, setDescription] = useState("");
+  const [isCreatingNewCategory, setIsCreatingNewCategory] = useState(false);
+  const [newCategoryInput, setNewCategoryInput] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -117,10 +119,47 @@ export const NewServiceDialog = ({ open, onOpenChange, existingCategories }: New
     });
   };
 
+  const handleCategoryChange = (value: string) => {
+    if (value === "__create_new__") {
+      setIsCreatingNewCategory(true);
+      setNewCategoryInput("");
+      setCategory("");
+    } else {
+      setCategory(value);
+      setIsCreatingNewCategory(false);
+    }
+  };
+
+  const handleNewCategorySubmit = () => {
+    const trimmedCategory = newCategoryInput.trim();
+    if (trimmedCategory) {
+      // Check for duplicates (case-insensitive)
+      const isDuplicate = existingCategories.some(
+        cat => cat.toLowerCase() === trimmedCategory.toLowerCase()
+      ) || ['Albums', 'Prints', 'Extras', 'Digital', 'Packages'].some(
+        cat => cat.toLowerCase() === trimmedCategory.toLowerCase()
+      );
+      
+      if (!isDuplicate) {
+        setCategory(trimmedCategory);
+        setIsCreatingNewCategory(false);
+        setNewCategoryInput("");
+      }
+    }
+  };
+
+  const handleNewCategoryCancel = () => {
+    setIsCreatingNewCategory(false);
+    setNewCategoryInput("");
+    setCategory("");
+  };
+
   const handleClose = () => {
     setName("");
     setCategory("");
     setDescription("");
+    setIsCreatingNewCategory(false);
+    setNewCategoryInput("");
     setErrors({});
     onOpenChange(false);
   };
@@ -152,39 +191,82 @@ export const NewServiceDialog = ({ open, onOpenChange, existingCategories }: New
 
           <div className="space-y-2">
             <Label htmlFor="category">Category</Label>
-            <Select value={category} onValueChange={setCategory}>
-              <SelectTrigger>
-                <SelectValue placeholder="e.g., Albums, Prints, Extras" />
-              </SelectTrigger>
-              <SelectContent>
-                {/* Pre-defined common categories */}
-                <SelectItem value="Albums">Albums</SelectItem>
-                <SelectItem value="Prints">Prints</SelectItem>
-                <SelectItem value="Extras">Extras</SelectItem>
-                <SelectItem value="Digital">Digital</SelectItem>
-                <SelectItem value="Packages">Packages</SelectItem>
-                
-                {/* Existing categories from database */}
-                {existingCategories
-                  .filter(cat => !['Albums', 'Prints', 'Extras', 'Digital', 'Packages'].includes(cat))
-                  .map((cat) => (
-                    <SelectItem key={cat} value={cat}>
-                      {cat}
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
-            
-            {/* Alternative: Allow custom category input */}
-            <div className="text-xs text-muted-foreground">
-              Or enter a custom category:
-            </div>
-            <Input
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              placeholder="Custom category name"
-              className="h-8 text-sm"
-            />
+            {isCreatingNewCategory ? (
+              <div className="space-y-2">
+                <Input
+                  value={newCategoryInput}
+                  onChange={(e) => setNewCategoryInput(e.target.value)}
+                  placeholder="Enter new category name"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleNewCategorySubmit();
+                    } else if (e.key === 'Escape') {
+                      handleNewCategoryCancel();
+                    }
+                  }}
+                  autoFocus
+                />
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={handleNewCategorySubmit}
+                    disabled={!newCategoryInput.trim()}
+                  >
+                    Add Category
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={handleNewCategoryCancel}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <Select value={category} onValueChange={handleCategoryChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select or create a category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {/* Pre-defined common categories */}
+                  <SelectItem value="Albums">Albums</SelectItem>
+                  <SelectItem value="Prints">Prints</SelectItem>
+                  <SelectItem value="Extras">Extras</SelectItem>
+                  <SelectItem value="Digital">Digital</SelectItem>
+                  <SelectItem value="Packages">Packages</SelectItem>
+                  
+                  {/* Separator if there are existing categories */}
+                  {existingCategories.length > 0 && (
+                    <div className="px-2 py-1">
+                      <div className="h-px bg-border" />
+                    </div>
+                  )}
+                  
+                  {/* Existing categories from database */}
+                  {existingCategories
+                    .filter(cat => !['Albums', 'Prints', 'Extras', 'Digital', 'Packages'].includes(cat))
+                    .map((cat) => (
+                      <SelectItem key={cat} value={cat}>
+                        {cat}
+                      </SelectItem>
+                    ))}
+                  
+                  {/* Separator before create new option */}
+                  <div className="px-2 py-1">
+                    <div className="h-px bg-border" />
+                  </div>
+                  
+                  {/* Create new category option */}
+                  <SelectItem value="__create_new__" className="text-primary">
+                    + Create new category
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            )}
           </div>
 
           <div className="space-y-2">

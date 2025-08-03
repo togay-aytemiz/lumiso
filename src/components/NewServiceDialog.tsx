@@ -26,9 +26,10 @@ interface NewServiceDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   existingCategories: string[];
+  onCategoryAdded?: (category: string) => void;
 }
 
-export const NewServiceDialog = ({ open, onOpenChange, existingCategories }: NewServiceDialogProps) => {
+export const NewServiceDialog = ({ open, onOpenChange, existingCategories, onCategoryAdded }: NewServiceDialogProps) => {
   const [name, setName] = useState("");
   const [category, setCategory] = useState("");
   const [description, setDescription] = useState("");
@@ -149,6 +150,8 @@ export const NewServiceDialog = ({ open, onOpenChange, existingCategories }: New
         setCategory(trimmedCategory);
         setIsCreatingNewCategory(false);
         setNewCategoryInput("");
+        // Notify parent component about the new category
+        onCategoryAdded?.(trimmedCategory);
       } else {
         console.log('Category is duplicate, showing toast');
         toast({
@@ -189,20 +192,6 @@ export const NewServiceDialog = ({ open, onOpenChange, existingCategories }: New
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Name *</Label>
-            <Input
-              id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g., Wedding Album, Photo Prints"
-              required
-            />
-            {errors.name && (
-              <p className="text-sm text-destructive">{errors.name}</p>
-            )}
-          </div>
-
           <div className="space-y-2">
             <Label htmlFor="category">Category</Label>
             {isCreatingNewCategory ? (
@@ -280,6 +269,20 @@ export const NewServiceDialog = ({ open, onOpenChange, existingCategories }: New
                   </SelectItem>
                 </SelectContent>
               </Select>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="name">Name *</Label>
+            <Input
+              id="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g., Wedding Album, Photo Prints"
+              required
+            />
+            {errors.name && (
+              <p className="text-sm text-destructive">{errors.name}</p>
             )}
           </div>
 

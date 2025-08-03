@@ -18,6 +18,7 @@ interface Service {
 const ServicesSection = () => {
   const [showNewServiceDialog, setShowNewServiceDialog] = useState(false);
   const [openCategories, setOpenCategories] = useState<Set<string>>(new Set());
+  const [newCategoriesAdded, setNewCategoriesAdded] = useState<string[]>([]);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -85,6 +86,11 @@ const ServicesSection = () => {
 
   const handleDeleteService = (serviceId: string) => {
     deleteServiceMutation.mutate(serviceId);
+  };
+
+  const handleCategoryAdded = (newCategory: string) => {
+    // Add the new category to our local state for immediate availability
+    setNewCategoriesAdded(prev => [...prev, newCategory]);
   };
 
   if (isLoading) {
@@ -196,7 +202,11 @@ const ServicesSection = () => {
       <NewServiceDialog
         open={showNewServiceDialog}
         onOpenChange={setShowNewServiceDialog}
-        existingCategories={Object.keys(groupedServices).filter(cat => cat !== 'Uncategorized')}
+        existingCategories={[
+          ...Object.keys(groupedServices).filter(cat => cat !== 'Uncategorized'),
+          ...newCategoriesAdded
+        ]}
+        onCategoryAdded={handleCategoryAdded}
       />
     </>
   );

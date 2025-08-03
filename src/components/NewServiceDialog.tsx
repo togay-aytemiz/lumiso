@@ -132,6 +132,8 @@ export const NewServiceDialog = ({ open, onOpenChange, existingCategories }: New
 
   const handleNewCategorySubmit = () => {
     const trimmedCategory = newCategoryInput.trim();
+    console.log('handleNewCategorySubmit called:', { trimmedCategory, newCategoryInput });
+    
     if (trimmedCategory) {
       // Check for duplicates (case-insensitive)
       const isDuplicate = existingCategories.some(
@@ -140,11 +142,23 @@ export const NewServiceDialog = ({ open, onOpenChange, existingCategories }: New
         cat => cat.toLowerCase() === trimmedCategory.toLowerCase()
       );
       
+      console.log('Duplicate check:', { isDuplicate, existingCategories });
+      
       if (!isDuplicate) {
+        console.log('Setting category:', trimmedCategory);
         setCategory(trimmedCategory);
         setIsCreatingNewCategory(false);
         setNewCategoryInput("");
+      } else {
+        console.log('Category is duplicate, showing toast');
+        toast({
+          title: "Category already exists",
+          description: "This category name is already in use. Please choose a different name.",
+          variant: "destructive",
+        });
       }
+    } else {
+      console.log('Empty category name');
     }
   };
 

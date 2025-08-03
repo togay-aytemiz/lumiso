@@ -90,7 +90,22 @@ const ServicesSection = () => {
 
   const handleCategoryAdded = (newCategory: string) => {
     // Add the new category to our local state for immediate availability
-    setNewCategoriesAdded(prev => [...prev, newCategory]);
+    // But only if it's not already in existing categories or newCategoriesAdded
+    const existingCats = Object.keys(groupedServices).filter(cat => cat !== 'Uncategorized');
+    const allExistingCats = [...existingCats, ...newCategoriesAdded];
+    
+    if (!allExistingCats.some(cat => cat.toLowerCase() === newCategory.toLowerCase())) {
+      setNewCategoriesAdded(prev => [...prev, newCategory]);
+    }
+  };
+
+  // Clear new categories when dialog closes or service is created successfully
+  const handleDialogChange = (open: boolean) => {
+    setShowNewServiceDialog(open);
+    if (!open) {
+      // Clear the temporary categories when dialog closes
+      setNewCategoriesAdded([]);
+    }
   };
 
   if (isLoading) {
@@ -201,7 +216,7 @@ const ServicesSection = () => {
 
       <NewServiceDialog
         open={showNewServiceDialog}
-        onOpenChange={setShowNewServiceDialog}
+        onOpenChange={handleDialogChange}
         existingCategories={[
           ...Object.keys(groupedServices).filter(cat => cat !== 'Uncategorized'),
           ...newCategoriesAdded

@@ -92,6 +92,11 @@ export const NewServiceDialog = ({ open, onOpenChange, existingCategories, onCat
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
+    // Category validation
+    if (!category || category.trim().length === 0) {
+      newErrors.category = "Category is required";
+    }
+
     // Name validation
     if (!name || name.trim().length === 0) {
       newErrors.name = "Name is required";
@@ -193,7 +198,7 @@ export const NewServiceDialog = ({ open, onOpenChange, existingCategories, onCat
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="category">Category</Label>
+            <Label htmlFor="category">Category *</Label>
             {isCreatingNewCategory ? (
               <div className="space-y-2">
                 <Input
@@ -269,6 +274,9 @@ export const NewServiceDialog = ({ open, onOpenChange, existingCategories, onCat
                   </SelectItem>
                 </SelectContent>
               </Select>
+            )}
+            {errors.category && (
+              <p className="text-sm text-destructive">{errors.category}</p>
             )}
           </div>
 

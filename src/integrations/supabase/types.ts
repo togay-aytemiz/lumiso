@@ -281,6 +281,7 @@ export type Database = {
           id: string
           lead_id: string
           notes: string | null
+          project_id: string | null
           session_date: string
           session_time: string
           status: Database["public"]["Enums"]["session_status"]
@@ -293,6 +294,7 @@ export type Database = {
           id?: string
           lead_id: string
           notes?: string | null
+          project_id?: string | null
           session_date: string
           session_time: string
           status?: Database["public"]["Enums"]["session_status"]
@@ -305,6 +307,7 @@ export type Database = {
           id?: string
           lead_id?: string
           notes?: string | null
+          project_id?: string | null
           session_date?: string
           session_time?: string
           status?: Database["public"]["Enums"]["session_status"]
@@ -312,6 +315,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_sessions_project_id"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "sessions_lead_id_fkey"
             columns: ["lead_id"]

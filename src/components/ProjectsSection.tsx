@@ -126,10 +126,12 @@ export function ProjectsSection({ leadId }: ProjectsSectionProps) {
     <Card className="w-full">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
         <CardTitle className="text-xl font-semibold">Projects</CardTitle>
-        <Button onClick={handleAddProject} size="sm">
-          <Plus className="h-4 w-4 mr-2" />
-          Add Project
-        </Button>
+        {projects.length > 0 && (
+          <Button onClick={handleAddProject} size="sm">
+            <Plus className="h-4 w-4 mr-2" />
+            Add Project
+          </Button>
+        )}
       </CardHeader>
       <CardContent>
         {isLoading ? (

@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Calendar, Search, ChevronDown, Check } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -50,12 +51,24 @@ const NewSessionDialog = ({ onSessionScheduled }: NewSessionDialogProps) => {
   const [selectedLeadId, setSelectedLeadId] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [selectedProjectId, setSelectedProjectId] = useState("");
+  const [projects, setProjects] = useState<{id: string, name: string}[]>([]);
 
   useEffect(() => {
     if (open) {
       fetchLeads();
     }
   }, [open]);
+
+  // Fetch projects when a lead is selected
+  useEffect(() => {
+    if (selectedLeadId && !isNewLead) {
+      fetchProjects(selectedLeadId);
+    } else {
+      setProjects([]);
+      setSelectedProjectId("");
+    }
+  }, [selectedLeadId, isNewLead]);
 
   const fetchLeads = async () => {
     setLoadingLeads(true);
@@ -107,6 +120,26 @@ const NewSessionDialog = ({ onSessionScheduled }: NewSessionDialogProps) => {
       });
     } finally {
       setLoadingLeads(false);
+    }
+  };
+
+  const fetchProjects = async (leadId: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: projectsData, error } = await supabase
+        .from('projects')
+        .select('id, name')
+        .eq('lead_id', leadId)
+        .eq('user_id', user.id)
+        .order('name', { ascending: true });
+
+      if (error) throw error;
+      setProjects(projectsData || []);
+    } catch (error: any) {
+      console.error('Error fetching projects:', error);
+      setProjects([]);
     }
   };
 
@@ -182,7 +215,8 @@ const NewSessionDialog = ({ onSessionScheduled }: NewSessionDialogProps) => {
           lead_id: leadId,
           session_date: sessionData.session_date,
           session_time: sessionData.session_time,
-          notes: sessionData.notes.trim() || null
+          notes: sessionData.notes.trim() || null,
+          project_id: selectedProjectId || null
         })
         .select('id')
         .single();
@@ -224,6 +258,7 @@ const NewSessionDialog = ({ onSessionScheduled }: NewSessionDialogProps) => {
         notes: ""
       });
       setSelectedLeadId("");
+      setSelectedProjectId("");
       setIsNewLead(false);
       setOpen(false);
       
@@ -488,6 +523,25 @@ const NewSessionDialog = ({ onSessionScheduled }: NewSessionDialogProps) => {
                   onChange={(e) => handleSessionDataChange("session_time", e.target.value)}
                 />
               </div>
+
+              {/* Project selection - only show for existing leads */}
+              {!isNewLead && selectedLeadId && (
+                <div className="space-y-2">
+                  <Label htmlFor="project">Project (Optional)</Label>
+                  <Select value={selectedProjectId} onValueChange={setSelectedProjectId} disabled={projects.length === 0}>
+                    <SelectTrigger>
+                      <SelectValue placeholder={projects.length === 0 ? "No projects created yet" : "Select a project"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {projects.map((project) => (
+                        <SelectItem key={project.id} value={project.id}>
+                          {project.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label htmlFor="session_notes">Session Notes</Label>

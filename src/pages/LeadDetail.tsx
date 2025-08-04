@@ -39,6 +39,8 @@ interface Session {
   session_time: string;
   notes: string;
   status: SessionStatus;
+  project_id?: string;
+  project_name?: string;
 }
 
 const LeadDetail = () => {
@@ -132,17 +134,28 @@ const LeadDetail = () => {
     if (!id) return;
     
     try {
-      // Get all sessions for this lead
+      // Get all sessions for this lead with project information
       const { data, error } = await supabase
         .from('sessions')
-        .select('*')
+        .select(`
+          *,
+          projects:project_id (
+            name
+          )
+        `)
         .eq('lead_id', id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
       
+      // Process sessions to include project name
+      const processedSessions = (data || []).map(session => ({
+        ...session,
+        project_name: session.projects?.name || undefined
+      }));
+
       // Sort sessions: planned first, then others by session_date descending
-      const sortedSessions = (data || []).sort((a, b) => {
+      const sortedSessions = processedSessions.sort((a, b) => {
         if (a.status === 'planned' && b.status !== 'planned') return -1;
         if (b.status === 'planned' && a.status !== 'planned') return 1;
         
@@ -520,7 +533,8 @@ const LeadDetail = () => {
               <div key={session.id}>
                 <SessionBanner 
                   session={session} 
-                  leadName={lead.name} 
+                  leadName={lead.name}
+                  projectName={session.project_name}
                   onStatusUpdate={handleSessionUpdated}
                   onEdit={() => setEditingSessionId(session.id)}
                   onDelete={() => setDeletingSessionId(session.id)}

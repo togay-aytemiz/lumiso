@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Calendar } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
@@ -24,8 +25,37 @@ const ScheduleSessionDialog = ({ leadId, leadName, onSessionScheduled, disabled 
   const [formData, setFormData] = useState({
     session_date: "",
     session_time: "",
-    notes: ""
+    notes: "",
+    project_id: ""
   });
+  const [projects, setProjects] = useState<{id: string, name: string}[]>([]);
+
+  const fetchProjects = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: projectsData, error } = await supabase
+        .from('projects')
+        .select('id, name')
+        .eq('lead_id', leadId)
+        .eq('user_id', user.id)
+        .order('name', { ascending: true });
+
+      if (error) throw error;
+      setProjects(projectsData || []);
+    } catch (error: any) {
+      console.error('Error fetching projects:', error);
+      setProjects([]);
+    }
+  };
+
+  // Fetch projects when dialog opens
+  useEffect(() => {
+    if (open) {
+      fetchProjects();
+    }
+  }, [open]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,7 +100,8 @@ const ScheduleSessionDialog = ({ leadId, leadName, onSessionScheduled, disabled 
           lead_id: leadId,
           session_date: formData.session_date,
           session_time: formData.session_time,
-          notes: formData.notes.trim() || null
+          notes: formData.notes.trim() || null,
+          project_id: formData.project_id || null
         });
 
       if (error) throw error;
@@ -103,7 +134,8 @@ const ScheduleSessionDialog = ({ leadId, leadName, onSessionScheduled, disabled 
       setFormData({
         session_date: "",
         session_time: "",
-        notes: ""
+        notes: "",
+        project_id: ""
       });
       setOpen(false);
       
@@ -194,6 +226,22 @@ const ScheduleSessionDialog = ({ leadId, leadName, onSessionScheduled, disabled 
                 value={formData.session_time}
                 onChange={(e) => handleInputChange("session_time", e.target.value)}
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="project">Project (Optional)</Label>
+              <Select value={formData.project_id} onValueChange={(value) => handleInputChange("project_id", value)} disabled={projects.length === 0}>
+                <SelectTrigger>
+                  <SelectValue placeholder={projects.length === 0 ? "No projects created yet" : "Select a project"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {projects.map((project) => (
+                    <SelectItem key={project.id} value={project.id}>
+                      {project.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">

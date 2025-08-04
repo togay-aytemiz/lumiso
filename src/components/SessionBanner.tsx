@@ -17,18 +17,20 @@ interface Session {
   session_time: string;
   notes: string;
   status: SessionStatus;
+  project_id?: string;
 }
 
 interface SessionBannerProps {
   session: Session;
   leadName: string;
+  projectName?: string;
   onStatusUpdate?: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
   showActions?: boolean;
 }
 
-const SessionBanner = ({ session, leadName, onStatusUpdate, onEdit, onDelete, showActions = true }: SessionBannerProps) => {
+const SessionBanner = ({ session, leadName, projectName, onStatusUpdate, onEdit, onDelete, showActions = true }: SessionBannerProps) => {
   const { updateSessionStatus } = useSessionActions();
 
   const getStatusBadgeColor = (status: string) => {
@@ -75,6 +77,11 @@ const SessionBanner = ({ session, leadName, onStatusUpdate, onEdit, onDelete, sh
           <div className="flex items-center gap-4">
             <div className="min-w-0 flex-1">
               <h3 className="font-semibold text-lg">Photo Session</h3>
+              {projectName && (
+                <p className="text-sm text-muted-foreground">
+                  Project: {projectName}
+                </p>
+              )}
               {session.status === 'planned' ? (
                 <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-muted-foreground mt-1">
                   <div className="flex items-center gap-1">

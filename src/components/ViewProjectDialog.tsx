@@ -13,7 +13,6 @@ import { ProjectActivitySection } from "./ProjectActivitySection";
 import { ProjectTodoList } from "./ProjectTodoList";
 import { ProjectServicesSection } from "./ProjectServicesSection";
 import { SessionsSection } from "./SessionsSection";
-import { UnifiedActivityArea } from "./UnifiedActivityArea";
 import { ProjectTodoListEnhanced } from "./ProjectTodoListEnhanced";
 
 interface Project {
@@ -303,19 +302,7 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
               onDeleteSession={handleDeleteSession}
             />
 
-            {/* Unified Activity Area */}
-            <UnifiedActivityArea
-              projectId={project.id}
-              leadId={project.lead_id}
-              leadName={leadName}
-              projectName={project.name}
-              onActivityUpdated={onActivityUpdated}
-            />
-            
-            {/* Enhanced Todos Section */}
-            <ProjectTodoListEnhanced projectId={project.id} />
-            
-            {/* Project Activities Section (for viewing existing activities) */}
+            {/* Project Activities Section */}
             <ProjectActivitySection
               projectId={project.id}
               leadId={project.lead_id}
@@ -323,6 +310,9 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
               projectName={project.name}
               onActivityUpdated={onActivityUpdated}
             />
+            
+            {/* Enhanced Todos Section with inline addition */}
+            <ProjectTodoListEnhanced projectId={project.id} />
             
             {/* Delete Project Section - Danger Zone */}
             <div className="pt-8 border-t border-destructive/20 bg-destructive/5 -mx-6 px-6 pb-6 rounded-b-lg">

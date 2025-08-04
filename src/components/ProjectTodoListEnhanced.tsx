@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { CheckSquare, Trash2 } from "lucide-react";
+import { CheckSquare, Trash2, Plus } from "lucide-react";
 import { ProgressBar } from "@/components/ui/progress-bar";
 
 interface Todo {
@@ -21,6 +22,8 @@ interface ProjectTodoListEnhancedProps {
 export function ProjectTodoListEnhanced({ projectId }: ProjectTodoListEnhancedProps) {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [loading, setLoading] = useState(true);
+  const [newTodoContent, setNewTodoContent] = useState("");
+  const [isAdding, setIsAdding] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -72,6 +75,44 @@ export function ProjectTodoListEnhanced({ projectId }: ProjectTodoListEnhancedPr
         description: error.message,
         variant: "destructive"
       });
+    }
+  };
+
+  const handleAddTodo = async () => {
+    if (!newTodoContent.trim()) return;
+
+    setIsAdding(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      const { data, error } = await supabase
+        .from('todos')
+        .insert({
+          user_id: user.id,
+          project_id: projectId,
+          content: newTodoContent.trim()
+        })
+        .select('*')
+        .single();
+
+      if (error) throw error;
+
+      setTodos([data, ...todos]);
+      setNewTodoContent("");
+      
+      toast({
+        title: "Success",
+        description: "Todo added successfully."
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error adding todo",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setIsAdding(false);
     }
   };
 
@@ -132,6 +173,29 @@ export function ProjectTodoListEnhanced({ projectId }: ProjectTodoListEnhancedPr
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* Add Todo Input */}
+        <div className="flex gap-2">
+          <Input
+            placeholder="Add a new todo..."
+            value={newTodoContent}
+            onChange={(e) => setNewTodoContent(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleAddTodo();
+              }
+            }}
+            className="flex-1"
+          />
+          <Button 
+            onClick={handleAddTodo}
+            disabled={!newTodoContent.trim() || isAdding}
+            size="sm"
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
+        </div>
+
         {todos.length > 0 ? (
           <>
             <div className="space-y-3">
@@ -176,7 +240,7 @@ export function ProjectTodoListEnhanced({ projectId }: ProjectTodoListEnhancedPr
             <CheckSquare className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
             <p className="text-muted-foreground text-sm">No todos yet</p>
             <p className="text-xs text-muted-foreground mt-1">
-              Use the Todo tab above to add tasks
+              Add your first todo above
             </p>
           </div>
         )}

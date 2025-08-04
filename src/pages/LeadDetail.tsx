@@ -54,6 +54,7 @@ const LeadDetail = () => {
   const [deleting, setDeleting] = useState(false);
   const [deletingSessionId, setDeletingSessionId] = useState<string | null>(null);
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
+  const [activityRefreshKey, setActivityRefreshKey] = useState(0);
   
   // Form state
   const [formData, setFormData] = useState({
@@ -277,6 +278,13 @@ const LeadDetail = () => {
 
   const handleSessionUpdated = () => {
     fetchSessions();
+  };
+
+  const handleProjectUpdated = () => {
+    // Refresh sessions to get updated project names in session cards
+    fetchSessions();
+    // Force ActivitySection to refresh by updating its key
+    setActivityRefreshKey(prev => prev + 1);
   };
 
   const handleBack = () => {
@@ -648,8 +656,12 @@ const LeadDetail = () => {
 
         {/* Right column - Projects and Activity Section (75%) */}
         <div className="lg:col-span-3 space-y-6">
-          <ProjectsSection leadId={lead.id} leadName={lead.name} />
-          <ActivitySection leadId={lead.id} leadName={lead.name} />
+          <ProjectsSection 
+            leadId={lead.id} 
+            leadName={lead.name} 
+            onProjectUpdated={handleProjectUpdated}
+          />
+          <ActivitySection key={activityRefreshKey} leadId={lead.id} leadName={lead.name} />
         </div>
       </div>
 

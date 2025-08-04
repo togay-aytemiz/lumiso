@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import SessionBanner from "./SessionBanner";
+import { ProjectActivitySection } from "./ProjectActivitySection";
 import EditSessionDialog from "./EditSessionDialog";
 
 interface Project {
@@ -144,6 +145,16 @@ export function ViewProjectDialog({ project, open, onOpenChange, leadName }: Vie
                 <p className="text-muted-foreground">No sessions linked to this project yet.</p>
               </div>
             )}
+            
+            {/* Project Activities Section */}
+            <div className="mt-8 pt-6 border-t">
+              <ProjectActivitySection
+                projectId={project.id}
+                leadId={project.lead_id}
+                leadName={leadName}
+                projectName={project.name}
+              />
+            </div>
           </div>
         </DialogContent>
       </Dialog>

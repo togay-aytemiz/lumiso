@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { ProjectCard } from "./ProjectCard";
 import { ViewProjectDialog } from "./ViewProjectDialog";
-import { EnhancedProjectDialog } from "./EnhancedProjectDialog";
+import { ProjectDialog } from "./ProjectDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -44,6 +44,7 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
   const [showViewDialog, setShowViewDialog] = useState(false);
   const [viewingProject, setViewingProject] = useState<Project | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [showAddDialog, setShowAddDialog] = useState(false);
   const { toast } = useToast();
 
   const fetchProjects = async () => {
@@ -76,6 +77,9 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
     fetchProjects();
   }, [leadId]);
 
+  const handleAddProject = () => {
+    setShowAddDialog(true);
+  };
 
   const handleViewProject = (project: Project) => {
     setViewingProject(project);
@@ -123,18 +127,10 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
         <CardTitle className="text-xl font-semibold">Projects</CardTitle>
         {projects.length > 0 && (
-          <EnhancedProjectDialog
-            onProjectCreated={() => {
-              fetchProjects();
-              setRefreshTrigger(prev => prev + 1);
-              onProjectUpdated?.();
-            }}
-          >
-            <Button size="sm">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Project
-            </Button>
-          </EnhancedProjectDialog>
+          <Button onClick={handleAddProject} size="sm">
+            <Plus className="h-4 w-4 mr-2" />
+            Add Project
+          </Button>
         )}
       </CardHeader>
       <CardContent>
@@ -145,18 +141,10 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
         ) : projects.length === 0 ? (
           <div className="text-center text-muted-foreground py-8">
             <p className="mb-4">No projects created yet.</p>
-            <EnhancedProjectDialog
-              onProjectCreated={() => {
-                fetchProjects();
-                setRefreshTrigger(prev => prev + 1);
-                onProjectUpdated?.();
-              }}
-            >
-              <Button variant="outline">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Project
-              </Button>
-            </EnhancedProjectDialog>
+            <Button onClick={handleAddProject} variant="outline">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Project
+            </Button>
           </div>
         ) : (
           <div className="space-y-4">
@@ -172,6 +160,17 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
         )}
       </CardContent>
 
+
+      <ProjectDialog
+        open={showAddDialog}
+        onOpenChange={setShowAddDialog}
+        leadId={leadId}
+        onProjectCreated={() => {
+          fetchProjects();
+          setRefreshTrigger(prev => prev + 1);
+          onProjectUpdated?.();
+        }}
+      />
 
       <ViewProjectDialog
         project={viewingProject}

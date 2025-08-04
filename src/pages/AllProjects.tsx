@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ArrowLeft, ArrowUpDown, ArrowUp, ArrowDown, Plus, FolderOpen, User } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { ProjectDialogWithLeadSelector } from "@/components/ProjectDialogWithLeadSelector";
+import { EnhancedProjectDialog } from "@/components/EnhancedProjectDialog";
 import { ViewProjectDialog } from "@/components/ViewProjectDialog";
 import { useNavigate } from "react-router-dom";
 import { formatDate } from "@/lib/utils";
@@ -48,7 +48,7 @@ const AllProjects = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sortField, setSortField] = useState<SortField>("updated_at");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
-  const [showAddDialog, setShowAddDialog] = useState(false);
+  
   const [viewingProject, setViewingProject] = useState<Project | null>(null);
   const [showViewDialog, setShowViewDialog] = useState(false);
   const navigate = useNavigate();
@@ -281,13 +281,16 @@ const AllProjects = () => {
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-              <Button 
-                onClick={() => setShowAddDialog(true)}
-                className="flex items-center gap-2"
+              <EnhancedProjectDialog
+                onProjectCreated={() => {
+                  fetchProjects();
+                }}
               >
-                <Plus className="h-4 w-4" />
-                Add Project
-              </Button>
+                <Button className="flex items-center gap-2">
+                  <Plus className="h-4 w-4" />
+                  Add Project
+                </Button>
+              </EnhancedProjectDialog>
               <div className="flex items-center gap-2">
                 <span className="text-sm text-muted-foreground">Filter by lead status:</span>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -433,15 +436,6 @@ const AllProjects = () => {
         </CardContent>
       </Card>
 
-      {/* Add Project Dialog */}
-      <ProjectDialogWithLeadSelector
-        open={showAddDialog}
-        onOpenChange={setShowAddDialog}
-        onProjectCreated={() => {
-          fetchProjects();
-          setShowAddDialog(false);
-        }}
-      />
 
       {/* View Project Dialog */}
       <ViewProjectDialog

@@ -183,18 +183,6 @@ const EditSessionDialog = ({ sessionId, leadId, currentDate, currentTime, curren
             {errors.session_time && <p className="text-sm text-destructive">{errors.session_time}</p>}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="notes">Notes</Label>
-            <Textarea
-              id="notes"
-              value={formData.notes}
-              onChange={(e) => handleInputChange("notes", e.target.value)}
-              placeholder="Enter session notes (optional)"
-              maxLength={1000}
-              rows={3}
-            />
-            {errors.notes && <p className="text-sm text-destructive">{errors.notes}</p>}
-          </div>
-          <div className="space-y-2">
             <Label htmlFor="project">Project (Optional)</Label>
             <Select value={formData.project_id} onValueChange={(value) => handleInputChange("project_id", value)} disabled={projects.length === 0}>
               <SelectTrigger>

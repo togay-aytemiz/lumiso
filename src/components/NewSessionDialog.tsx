@@ -38,7 +38,8 @@ const NewSessionDialog = ({ onSessionScheduled }: NewSessionDialogProps) => {
   const [sessionData, setSessionData] = useState({
     session_date: "",
     session_time: "",
-    notes: ""
+    notes: "",
+    sessionNote: ""
   });
 
   const [newLeadData, setNewLeadData] = useState({
@@ -223,6 +224,23 @@ const NewSessionDialog = ({ onSessionScheduled }: NewSessionDialogProps) => {
 
       if (sessionError) throw sessionError;
 
+      // Add note as activity if provided
+      if (sessionData.sessionNote.trim()) {
+        const { error: activityError } = await supabase
+          .from('activities')
+          .insert({
+            user_id: user.id,
+            lead_id: leadId,
+            type: 'note',
+            content: sessionData.sessionNote.trim()
+          });
+
+        if (activityError) {
+          console.error('Error creating activity:', activityError);
+          // Don't throw here - session was created successfully
+        }
+      }
+
       // Get lead name for calendar sync
       const leadName = isNewLead ? newLeadData.name : leads.find(l => l.id === leadId)?.name || 'Unknown Client';
       
@@ -249,7 +267,8 @@ const NewSessionDialog = ({ onSessionScheduled }: NewSessionDialogProps) => {
       setSessionData({
         session_date: "",
         session_time: "",
-        notes: ""
+        notes: "",
+        sessionNote: ""
       });
       setNewLeadData({
         name: "",
@@ -551,6 +570,17 @@ const NewSessionDialog = ({ onSessionScheduled }: NewSessionDialogProps) => {
                   onChange={(e) => handleSessionDataChange("notes", e.target.value)}
                   placeholder="Any special requirements or notes for this session..."
                   rows={3}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="session_note">Note</Label>
+                <Textarea
+                  id="session_note"
+                  value={sessionData.sessionNote}
+                  onChange={(e) => handleSessionDataChange("sessionNote", e.target.value)}
+                  placeholder="Add a note that will appear in the activity timeline..."
+                  rows={2}
                 />
               </div>
             </div>

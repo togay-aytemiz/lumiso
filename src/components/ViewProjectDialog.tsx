@@ -258,20 +258,20 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
                 )}
               </div>
               
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
                 {!isEditing && (
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => setIsEditing(true)}
-                    className="text-muted-foreground hover:text-foreground text-sm"
+                    className="text-muted-foreground hover:text-foreground text-sm h-10 px-3"
                   >
                     Edit
                   </Button>
                 )}
-                <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
+                <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground h-10 w-10 p-0">
                   <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4h16v16H4V4z M8 8h8v8H8V8z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
                   </svg>
                 </Button>
               </div>

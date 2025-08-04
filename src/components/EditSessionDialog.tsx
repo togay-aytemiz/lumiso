@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Edit, Save } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
@@ -13,32 +14,63 @@ import { useCalendarSync } from "@/hooks/useCalendarSync";
 
 interface EditSessionDialogProps {
   sessionId: string;
+  leadId: string;
   currentDate: string;
   currentTime: string;
   currentNotes: string;
+  currentProjectId?: string;
   leadName?: string;
   onSessionUpdated?: () => void;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 }
 
-const EditSessionDialog = ({ sessionId, currentDate, currentTime, currentNotes, leadName, onSessionUpdated, open = false, onOpenChange }: EditSessionDialogProps) => {
+const EditSessionDialog = ({ sessionId, leadId, currentDate, currentTime, currentNotes, currentProjectId, leadName, onSessionUpdated, open = false, onOpenChange }: EditSessionDialogProps) => {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formData, setFormData] = useState({
     session_date: currentDate,
     session_time: currentTime,
-    notes: currentNotes || ""
+    notes: currentNotes || "",
+    project_id: currentProjectId || ""
   });
+  const [projects, setProjects] = useState<{id: string, name: string}[]>([]);
   const { updateSessionEvent } = useCalendarSync();
+
+  const fetchProjects = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: projectsData, error } = await supabase
+        .from('projects')
+        .select('id, name')
+        .eq('lead_id', leadId)
+        .eq('user_id', user.id)
+        .order('name', { ascending: true });
+
+      if (error) throw error;
+      setProjects(projectsData || []);
+    } catch (error: any) {
+      console.error('Error fetching projects:', error);
+      setProjects([]);
+    }
+  };
 
   useEffect(() => {
     setFormData({
       session_date: currentDate,
       session_time: currentTime,
-      notes: currentNotes || ""
+      notes: currentNotes || "",
+      project_id: currentProjectId || ""
     });
-  }, [currentDate, currentTime, currentNotes]);
+  }, [currentDate, currentTime, currentNotes, currentProjectId]);
+
+  useEffect(() => {
+    if (open) {
+      fetchProjects();
+    }
+  }, [open]);
 
   const validateForm = async () => {
     setErrors({});
@@ -75,7 +107,8 @@ const EditSessionDialog = ({ sessionId, currentDate, currentTime, currentNotes, 
         .update({
           session_date: sanitizeInput(formData.session_date),
           session_time: sanitizeInput(formData.session_time),
-          notes: formData.notes ? await sanitizeHtml(formData.notes) : null
+          notes: formData.notes ? await sanitizeHtml(formData.notes) : null,
+          project_id: formData.project_id || null
         })
         .eq('id', sessionId);
 
@@ -160,6 +193,21 @@ const EditSessionDialog = ({ sessionId, currentDate, currentTime, currentNotes, 
               rows={3}
             />
             {errors.notes && <p className="text-sm text-destructive">{errors.notes}</p>}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="project">Project (Optional)</Label>
+            <Select value={formData.project_id} onValueChange={(value) => handleInputChange("project_id", value)} disabled={projects.length === 0}>
+              <SelectTrigger>
+                <SelectValue placeholder={projects.length === 0 ? "No projects available" : "Select a project"} />
+              </SelectTrigger>
+              <SelectContent>
+                {projects.map((project) => (
+                  <SelectItem key={project.id} value={project.id}>
+                    {project.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <DialogFooter className="gap-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange?.(false)}>

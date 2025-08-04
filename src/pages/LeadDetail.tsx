@@ -659,9 +659,11 @@ const LeadDetail = () => {
         return session ? (
           <EditSessionDialog
             sessionId={session.id}
+            leadId={lead.id}
             currentDate={session.session_date}
             currentTime={session.session_time}
             currentNotes={session.notes}
+            currentProjectId={session.project_id}
             leadName={lead.name}
             open={!!editingSessionId}
             onOpenChange={(open) => {

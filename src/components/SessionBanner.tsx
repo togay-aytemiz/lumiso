@@ -78,9 +78,9 @@ const SessionBanner = ({ session, leadName, projectName, onStatusUpdate, onEdit,
             <div className="min-w-0 flex-1">
               <h3 className="font-semibold text-lg">Photo Session</h3>
               {projectName && (
-                <p className="text-sm text-muted-foreground">
+                <Badge variant="secondary" className="text-xs mt-1 w-fit">
                   Project: {projectName}
-                </p>
+                </Badge>
               )}
               {session.status === 'planned' ? (
                 <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-muted-foreground mt-1">

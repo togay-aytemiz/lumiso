@@ -314,9 +314,9 @@ const GlobalSearch = () => {
   };
 
   const handleResultClick = (result: SearchResult) => {
-    if (result.type === 'project') {
-      navigate('/projects');
-    } else {
+    if (result.type === 'project' && result.leadId) {
+      navigate(`/leads/${result.leadId}`);
+    } else if (result.leadId) {
       navigate(`/leads/${result.leadId}`);
     }
     handleClearSearch(); // Auto-clear when navigating to a result

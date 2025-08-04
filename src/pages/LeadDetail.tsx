@@ -648,7 +648,7 @@ const LeadDetail = () => {
 
         {/* Right column - Projects and Activity Section (75%) */}
         <div className="lg:col-span-3 space-y-6">
-          <ProjectsSection leadId={lead.id} />
+          <ProjectsSection leadId={lead.id} leadName={lead.name} />
           <ActivitySection leadId={lead.id} leadName={lead.name} />
         </div>
       </div>

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { ProjectCard } from "./ProjectCard";
 import { ProjectDialog } from "./ProjectDialog";
+import { ViewProjectDialog } from "./ViewProjectDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,9 +30,10 @@ interface Project {
 
 interface ProjectsSectionProps {
   leadId: string;
+  leadName?: string;
 }
 
-export function ProjectsSection({ leadId }: ProjectsSectionProps) {
+export function ProjectsSection({ leadId, leadName = "" }: ProjectsSectionProps) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showProjectDialog, setShowProjectDialog] = useState(false);
@@ -39,6 +41,8 @@ export function ProjectsSection({ leadId }: ProjectsSectionProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showViewDialog, setShowViewDialog] = useState(false);
+  const [viewingProject, setViewingProject] = useState<Project | null>(null);
   const { toast } = useToast();
 
   const fetchProjects = async () => {
@@ -74,6 +78,11 @@ export function ProjectsSection({ leadId }: ProjectsSectionProps) {
   const handleAddProject = () => {
     setEditingProject(null);
     setShowProjectDialog(true);
+  };
+
+  const handleViewProject = (project: Project) => {
+    setViewingProject(project);
+    setShowViewDialog(true);
   };
 
   const handleEditProject = (project: Project) => {
@@ -152,6 +161,7 @@ export function ProjectsSection({ leadId }: ProjectsSectionProps) {
               <ProjectCard
                 key={project.id}
                 project={project}
+                onView={handleViewProject}
                 onEdit={handleEditProject}
                 onDelete={handleDeleteProject}
               />
@@ -166,6 +176,13 @@ export function ProjectsSection({ leadId }: ProjectsSectionProps) {
         leadId={leadId}
         project={editingProject}
         onProjectSaved={handleProjectSaved}
+      />
+
+      <ViewProjectDialog
+        project={viewingProject}
+        open={showViewDialog}
+        onOpenChange={setShowViewDialog}
+        leadName={leadName}
       />
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>

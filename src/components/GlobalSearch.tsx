@@ -1,16 +1,18 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
-import { Search, FileText, Clock, Calendar, User, ChevronRight, X } from "lucide-react";
+import { Search, FileText, Clock, Calendar, User, ChevronRight, X, FolderOpen } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import { getLeadStatusStyles, formatStatusText } from "@/lib/leadStatusColors";
 
 interface SearchResult {
   id: string;
-  leadId: string;
-  leadName: string;
-  type: 'lead' | 'note' | 'reminder' | 'session';
+  leadId?: string;
+  leadName?: string;
+  projectId?: string;
+  projectName?: string;
+  type: 'lead' | 'note' | 'reminder' | 'session' | 'project';
   matchedContent: string;
   status: string;
   icon: React.ReactNode;
@@ -39,6 +41,20 @@ interface Session {
   session_date: string;
   session_time: string;
   notes?: string;
+}
+
+interface Project {
+  id: string;
+  name: string;
+  description?: string;
+  lead_id: string;
+  created_at: string;
+  updated_at: string;
+  lead?: {
+    id: string;
+    name: string;
+    status: string;
+  };
 }
 
 const GlobalSearch = () => {
@@ -221,10 +237,47 @@ const GlobalSearch = () => {
         });
       }
 
+      // Search projects
+      const { data: projects, error: projectsError } = await supabase
+        .from('projects')
+        .select(`
+          *,
+          lead:leads(id, name, status)
+        `)
+        .or(`name.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`);
+
+      if (projectsError) throw projectsError;
+
+      // Add project results
+      projects?.forEach((project: any) => {
+        let matchedContent = '';
+        if (project.description?.toLowerCase().includes(searchQuery.toLowerCase())) {
+          matchedContent = `Description: ${project.description}`;
+          if (matchedContent.length > 80) {
+            matchedContent = `${matchedContent.substring(0, 80)}...`;
+          }
+        }
+
+        // Get the first lead from the array (should only be one)
+        const lead = project.lead?.[0];
+
+        searchResults.push({
+          id: project.id,
+          projectId: project.id,
+          projectName: project.name,
+          leadId: lead?.id,
+          leadName: lead?.name,
+          type: 'project',
+          matchedContent,
+          status: lead?.status || 'unknown',
+          icon: <FolderOpen className="h-4 w-4" />
+        });
+      });
+
       // Sort results by type and limit to 10
       const sortedResults = searchResults
         .sort((a, b) => {
-          const typeOrder = { lead: 0, note: 1, reminder: 2, session: 3 };
+          const typeOrder = { lead: 0, project: 1, note: 2, reminder: 3, session: 4 };
           return typeOrder[a.type] - typeOrder[b.type];
         })
         .slice(0, 10);
@@ -254,7 +307,11 @@ const GlobalSearch = () => {
   };
 
   const handleResultClick = (result: SearchResult) => {
-    navigate(`/leads/${result.leadId}`);
+    if (result.type === 'project') {
+      navigate('/projects');
+    } else {
+      navigate(`/leads/${result.leadId}`);
+    }
     handleClearSearch(); // Auto-clear when navigating to a result
   };
 
@@ -268,6 +325,7 @@ const GlobalSearch = () => {
 
   const typeLabels = {
     lead: 'Leads',
+    project: 'Projects',
     note: 'Notes',
     reminder: 'Reminders',
     session: 'Sessions'
@@ -281,7 +339,7 @@ const GlobalSearch = () => {
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground z-10 pointer-events-none" />
         <Input
           ref={inputRef}
-          placeholder="Search leads, reminders, notes..."
+          placeholder="Search leads, projects, reminders, notes..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={handleKeyDown}
@@ -341,17 +399,26 @@ const GlobalSearch = () => {
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between">
-                              <p className="font-medium text-sm truncate">{result.leadName}</p>
+                              <p className="font-medium text-sm truncate">
+                                {result.type === 'project' ? result.projectName : result.leadName}
+                              </p>
                               <div className="flex items-center gap-2 ml-2">
-                                <span className={`px-2 py-1 text-xs rounded-full font-medium ${statusStyles.className}`}>
-                                  {formatStatusText(result.status)}
-                                </span>
+                                {result.status !== 'unknown' && (
+                                  <span className={`px-2 py-1 text-xs rounded-full font-medium ${statusStyles.className}`}>
+                                    {formatStatusText(result.status)}
+                                  </span>
+                                )}
                                 <ChevronRight className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                               </div>
                             </div>
                             {result.matchedContent && (
                               <p className="text-xs text-muted-foreground mt-1 truncate">
                                 {result.matchedContent}
+                              </p>
+                            )}
+                            {result.type === 'project' && result.leadName && (
+                              <p className="text-xs text-muted-foreground mt-1 truncate">
+                                Lead: {result.leadName}
                               </p>
                             )}
                           </div>

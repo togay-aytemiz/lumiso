@@ -7,7 +7,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Search, ChevronDown, Check, X, Save } from "lucide-react";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { getLeadStatusStyles, formatStatusText } from "@/lib/leadStatusColors";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -287,7 +286,7 @@ export function EnhancedProjectDialog({ onProjectCreated, children }: EnhancedPr
                           />
                         </div>
                       </div>
-                      <ScrollArea className="max-h-64">
+                      <div className="max-h-64 overflow-y-auto">
                         <div className="py-1">
                           {loadingLeads ? (
                             <div className="p-4 text-center text-sm text-muted-foreground">
@@ -330,7 +329,7 @@ export function EnhancedProjectDialog({ onProjectCreated, children }: EnhancedPr
                             ))
                           )}
                         </div>
-                      </ScrollArea>
+                      </div>
                     </PopoverContent>
                   </Popover>
                 </div>

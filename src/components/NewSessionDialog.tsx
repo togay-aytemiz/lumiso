@@ -10,7 +10,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Calendar, Search, ChevronDown, Check } from "lucide-react";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { getLeadStatusStyles, formatStatusText } from "@/lib/leadStatusColors";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -383,7 +382,7 @@ const NewSessionDialog = ({ onSessionScheduled }: NewSessionDialogProps) => {
                           />
                         </div>
                       </div>
-                      <ScrollArea className="max-h-64">
+                      <div className="max-h-64 overflow-y-auto">
                         {loadingLeads ? (
                           <div className="p-4 text-center text-sm text-muted-foreground">
                             Loading clients...
@@ -437,7 +436,7 @@ const NewSessionDialog = ({ onSessionScheduled }: NewSessionDialogProps) => {
                             </div>
                           ))
                         )}
-                      </ScrollArea>
+                      </div>
                     </PopoverContent>
                   </Popover>
                 </div>

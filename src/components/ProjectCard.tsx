@@ -2,7 +2,7 @@ import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { ChevronRight, Trash2 } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { format } from "date-fns";
 
 interface Project {
@@ -18,10 +18,9 @@ interface Project {
 interface ProjectCardProps {
   project: Project;
   onView: (project: Project) => void;
-  onDelete: (project: Project) => void;
 }
 
-export function ProjectCard({ project, onView, onDelete }: ProjectCardProps) {
+export function ProjectCard({ project, onView }: ProjectCardProps) {
   return (
     <Card className="w-full hover:shadow-md transition-shadow cursor-pointer">
       <CardContent className="p-4">
@@ -38,28 +37,8 @@ export function ProjectCard({ project, onView, onDelete }: ProjectCardProps) {
               Created {format(new Date(project.created_at), "MMM d, yyyy")}
             </p>
           </div>
-          <div className="flex items-center space-x-2 ml-4">
+          <div className="flex items-center ml-4">
             <ChevronRight className="h-5 w-5 text-muted-foreground" />
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDelete(project);
-                    }}
-                    className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Delete Project</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
           </div>
         </div>
       </CardContent>

@@ -189,20 +189,24 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
             <div className="flex items-start gap-3">
               <div className="flex-1">
                 {isEditing ? (
-                  <div className="space-y-3">
-                    <Input
-                      value={editName}
-                      onChange={(e) => setEditName(e.target.value)}
-                      placeholder="Project name"
-                      className="text-xl font-semibold border-0 px-0 focus-visible:ring-0"
-                    />
-                    <Textarea
-                      value={editDescription}
-                      onChange={(e) => setEditDescription(e.target.value)}
-                      placeholder="Project description (optional)"
-                      className="text-muted-foreground border-0 px-0 focus-visible:ring-0 resize-none"
-                      rows={2}
-                    />
+                  <div className="space-y-4">
+                    <div>
+                      <Input
+                        value={editName}
+                        onChange={(e) => setEditName(e.target.value)}
+                        placeholder="Project name"
+                        className="text-xl font-semibold"
+                      />
+                    </div>
+                    <div>
+                      <Textarea
+                        value={editDescription}
+                        onChange={(e) => setEditDescription(e.target.value)}
+                        placeholder="Project description (optional)"
+                        className="text-base resize-none"
+                        rows={3}
+                      />
+                    </div>
                     <div className="flex gap-2">
                       <Button 
                         size="sm" 
@@ -241,7 +245,7 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
                       </Button>
                     </div>
                     {project?.description && (
-                      <p className="text-muted-foreground">{project.description}</p>
+                      <p className="text-muted-foreground text-base">{project.description}</p>
                     )}
                     <p className="text-sm text-muted-foreground">
                       Created on {project && format(new Date(project.created_at), "MMMM d, yyyy")}

@@ -193,7 +193,6 @@ export function ProjectsSection({ leadId, leadName = "" }: ProjectsSectionProps)
                 key={project.id}
                 project={project}
                 onView={handleViewProject}
-                onDelete={handleDeleteProject}
               />
             ))}
           </div>

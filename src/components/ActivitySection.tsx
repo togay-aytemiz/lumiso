@@ -33,6 +33,8 @@ interface AuditLog {
   old_values?: any;
   new_values?: any;
   created_at: string;
+  session_project_id?: string;
+  project_name?: string;
 }
 
 interface Session {
@@ -111,14 +113,52 @@ const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
 
   const fetchAuditLogs = async () => {
     try {
+      // Get sessions for this lead to include session audit logs
+      const { data: sessionsData } = await supabase
+        .from('sessions')
+        .select('id, project_id')
+        .eq('lead_id', leadId);
+      
+      const sessionIds = sessionsData?.map(s => s.id) || [];
+      
       const { data, error } = await supabase
         .from('audit_log')
         .select('*')
-        .eq('entity_id', leadId)
+        .or(`entity_id.eq.${leadId},entity_id.in.(${sessionIds.join(',')})`)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setAuditLogs(data || []);
+      
+      // Get project names for session audit logs
+      const projectIds = [...new Set(sessionsData?.map(s => s.project_id).filter(Boolean) || [])];
+      let projectsData: any[] = [];
+      
+      if (projectIds.length > 0) {
+        const { data: projects } = await supabase
+          .from('projects')
+          .select('id, name')
+          .in('id', projectIds);
+        projectsData = projects || [];
+      }
+      
+      // Enrich session audit logs with project information
+      const enrichedLogs = data?.map(log => {
+        if (log.entity_type === 'session') {
+          const sessionData = log.new_values || log.old_values;
+          const projectId = (sessionData as any)?.project_id;
+          if (projectId) {
+            const project = projectsData.find(p => p.id === projectId);
+            return {
+              ...log,
+              session_project_id: projectId,
+              project_name: project?.name
+            };
+          }
+        }
+        return log;
+      }) || [];
+      
+      setAuditLogs(enrichedLogs);
     } catch (error: any) {
       console.error('Error fetching audit logs:', error);
     } finally {
@@ -423,21 +463,30 @@ const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
                                    : formatAuditAction(item.data as AuditLog)
                                  }
                                </Badge>
-                               {/* Show project/lead badge */}
-                               {(item.type === 'activity' || item.type === 'session') && (
-                                 <Badge 
-                                   variant="secondary" 
-                                   className={`text-xs ${
-                                     item.data.project_id 
-                                       ? 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300' 
-                                       : 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
-                                    }`}
+                                {/* Show project/lead badge */}
+                                {(item.type === 'activity' || item.type === 'session') && (
+                                  <Badge 
+                                    variant="secondary" 
+                                    className={`text-xs ${
+                                      item.data.project_id 
+                                        ? 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300' 
+                                        : 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
+                                     }`}
+                                   >
+                                     {item.data.project_id 
+                                       ? item.data.projects?.name || 'Project' 
+                                       : 'Lead'}
+                                   </Badge>
+                                )}
+                                {/* Show project badge for session audit logs */}
+                                {item.type === 'audit' && (item.data as AuditLog).entity_type === 'session' && (item.data as AuditLog).project_name && (
+                                  <Badge 
+                                    variant="secondary" 
+                                    className="text-xs bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300"
                                   >
-                                    {item.data.project_id 
-                                      ? item.data.projects?.name || 'Project' 
-                                      : 'Lead'}
+                                    {(item.data as AuditLog).project_name}
                                   </Badge>
-                               )}
+                                )}
                              </div>
                              <span className="text-xs text-muted-foreground">
                                {formatTime(new Date(item.date).toTimeString().slice(0,5))}

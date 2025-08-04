@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Clock, FileText, Plus, MessageSquare, Bell, CheckCircle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import ReminderCard from "@/components/ReminderCard";
@@ -324,17 +325,12 @@ const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
     return `${log.entity_type} ${log.action}`;
   };
 
-  // Combine and sort activities, audit logs, and sessions by date
-  const timelineItems = [
+  // Separate activities+sessions from audit logs for tabs
+  const activitiesAndSessions = [
     ...activities.map(activity => ({
       type: 'activity' as const,
       data: activity,
       date: activity.created_at
-    })),
-    ...auditLogs.map(log => ({
-      type: 'audit' as const,
-      data: log,
-      date: log.created_at
     })),
     ...sessions.map(session => ({
       type: 'session' as const,
@@ -343,15 +339,31 @@ const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
     }))
   ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-  // Group by date
-  const groupedItems = timelineItems.reduce((groups, item) => {
+  const auditLogsOnly = auditLogs.map(log => ({
+    type: 'audit' as const,
+    data: log,
+    date: log.created_at
+  })).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+  // Group activities and sessions by date
+  const groupedActivities = activitiesAndSessions.reduce((groups, item) => {
     const date = new Date(item.date).toDateString();
     if (!groups[date]) {
       groups[date] = [];
     }
     groups[date].push(item);
     return groups;
-  }, {} as Record<string, typeof timelineItems>);
+  }, {} as Record<string, typeof activitiesAndSessions>);
+
+  // Group audit logs by date
+  const groupedAuditLogs = auditLogsOnly.reduce((groups, item) => {
+    const date = new Date(item.date).toDateString();
+    if (!groups[date]) {
+      groups[date] = [];
+    }
+    groups[date].push(item);
+    return groups;
+  }, {} as Record<string, typeof auditLogsOnly>);
 
   if (loading) {
     return (
@@ -422,49 +434,48 @@ const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
         </CardContent>
       </Card>
 
-      {/* Timeline */}
+      {/* Timeline with Tabs */}
       <Card>
         <CardHeader>
           <CardTitle>Activity Timeline</CardTitle>
         </CardHeader>
         <CardContent>
-          {Object.keys(groupedItems).length === 0 ? (
-            <p className="text-muted-foreground text-center py-8">No activity yet</p>
-          ) : (
-            <div className="space-y-6">
-              {Object.entries(groupedItems).map(([date, items]) => (
-                <div key={date}>
-                  <h4 className="font-medium text-sm text-muted-foreground mb-3 sticky top-0 bg-background">
-                    {formatLongDate(date)}
-                  </h4>
-                  <div className="space-y-3 pl-4 border-l-2 border-muted">
-                     {items.map((item, index) => (
-                       <div key={`${item.type}-${item.data.id}-${index}`} className="relative">
-                         <div className="absolute -left-6 top-3 w-3 h-3 bg-background border-2 border-muted-foreground/40 rounded-full"></div>
-                         <div className="bg-muted/50 rounded-lg p-3 space-y-2">
-                           <div className="flex items-center justify-between">
-                             <div className="flex items-center gap-2">
-                               {item.type === 'activity' ? (
-                                 item.data.type === 'note' ? (
-                                   <MessageSquare className="h-4 w-4 text-blue-500" />
-                                 ) : (
-                                   <Bell className="h-4 w-4 text-orange-500" />
-                                 )
-                               ) : item.type === 'session' ? (
-                                 <Clock className="h-4 w-4 text-green-500" />
-                               ) : (
-                                 <FileText className="h-4 w-4 text-gray-500" />
-                               )}
-                               <Badge variant="outline" className="text-xs">
-                                 {item.type === 'activity' 
-                                   ? item.data.type 
-                                   : item.type === 'session'
-                                   ? 'session'
-                                   : formatAuditAction(item.data as AuditLog)
-                                 }
-                               </Badge>
-                                {/* Show project/lead badge */}
-                                {(item.type === 'activity' || item.type === 'session') && (
+          <Tabs defaultValue="activities" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="activities">Activities</TabsTrigger>
+              <TabsTrigger value="history">History</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="activities" className="mt-4">
+              {Object.keys(groupedActivities).length === 0 ? (
+                <p className="text-muted-foreground text-center py-8">No activities yet</p>
+              ) : (
+                <div className="space-y-6">
+                  {Object.entries(groupedActivities).map(([date, items]) => (
+                    <div key={date}>
+                      <h4 className="font-medium text-sm text-muted-foreground mb-3 sticky top-0 bg-background">
+                        {formatLongDate(date)}
+                      </h4>
+                      <div className="space-y-3 pl-4 border-l-2 border-muted">
+                        {items.map((item, index) => (
+                          <div key={`${item.type}-${item.data.id}-${index}`} className="relative">
+                            <div className="absolute -left-6 top-3 w-3 h-3 bg-background border-2 border-muted-foreground/40 rounded-full"></div>
+                            <div className="bg-muted/50 rounded-lg p-3 space-y-2">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  {item.type === 'activity' ? (
+                                    item.data.type === 'note' ? (
+                                      <MessageSquare className="h-4 w-4 text-blue-500" />
+                                    ) : (
+                                      <Bell className="h-4 w-4 text-orange-500" />
+                                    )
+                                  ) : (
+                                    <Clock className="h-4 w-4 text-green-500" />
+                                  )}
+                                  <Badge variant="outline" className="text-xs">
+                                    {item.type === 'activity' ? item.data.type : 'session'}
+                                  </Badge>
+                                  {/* Show project/lead badge */}
                                   <Badge 
                                     variant="secondary" 
                                     className={`text-xs ${
@@ -477,90 +488,127 @@ const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
                                        ? item.data.projects?.name || 'Project' 
                                        : 'Lead'}
                                    </Badge>
-                                )}
-                                {/* Show project badge for session audit logs */}
-                                {item.type === 'audit' && (item.data as AuditLog).entity_type === 'session' && (item.data as AuditLog).project_name && (
-                                  <Badge 
-                                    variant="secondary" 
-                                    className="text-xs bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300"
-                                  >
-                                    {(item.data as AuditLog).project_name}
-                                  </Badge>
-                                )}
-                             </div>
-                             <span className="text-xs text-muted-foreground">
-                               {formatTime(new Date(item.date).toTimeString().slice(0,5))}
-                             </span>
-                           </div>
-                           
-                           {item.type === 'activity' && (
-                             <>
-                               {(item.data as Activity).type === 'reminder' ? (
-                                 <div className="mt-2">
-                                   <ReminderCard
-                                     activity={item.data as Activity}
-                                     leadName={leadName}
-                                     onToggleCompletion={toggleCompletion}
-                                     showCompletedBadge={false}
-                                     hideStatusBadge={!shouldShowStatusBadge(item.data as Activity)}
-                                   />
-                                 </div>
-                               ) : (item.data as Activity).type === 'note' ? (
-                                 // Regular note - no completion button
-                                 <div className="mt-2">
-                                   <p className="text-sm">
-                                     {(item.data as Activity).content}
-                                   </p>
-                                 </div>
-                               ) : (
-                                 // Other activity types that might need completion
-                                 <div className="flex items-start gap-3">
-                                   <button
-                                     onClick={(e) => {
-                                       e.stopPropagation();
-                                       toggleCompletion((item.data as Activity).id, !(item.data as Activity).completed);
-                                     }}
-                                     className="flex items-center justify-center w-5 h-5 rounded-full border-2 border-muted-foreground/40 hover:border-primary transition-colors mt-0.5 flex-shrink-0"
-                                   >
-                                     {(item.data as Activity).completed ? (
-                                       <CheckCircle className="h-3 w-3 text-green-600 dark:text-green-400" />
-                                     ) : (
-                                       <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40" />
-                                     )}
-                                   </button>
-                                   <div className="flex-1">
-                                     <p className={`text-sm ${(item.data as Activity).completed ? 'line-through opacity-60' : ''}`}>
-                                       {(item.data as Activity).content}
-                                     </p>
-                                   </div>
-                                 </div>
-                               )}
-                             </>
-                           )}
-                           
-                           {item.type === 'session' && (
-                             <div className="mt-2">
-                               <p className="text-sm font-medium">
-                                 Session scheduled for {formatLongDate((item.data as Session).session_date)} at {formatTime((item.data as Session).session_time)}
-                               </p>
-                               <p className="text-xs text-muted-foreground">
-                                 Status: {(item.data as Session).status}
-                               </p>
-                               {(item.data as Session).notes && (
-                                 <p className="text-sm text-muted-foreground mt-1 italic">
-                                   "{(item.data as Session).notes}"
-                                 </p>
-                               )}
-                             </div>
-                           )}
-                         </div>
-                       </div>
-                     ))}
-                  </div>
+                                </div>
+                                <span className="text-xs text-muted-foreground">
+                                  {formatTime(new Date(item.date).toTimeString().slice(0,5))}
+                                </span>
+                              </div>
+                              
+                              {item.type === 'activity' && (
+                                <>
+                                  {(item.data as Activity).type === 'reminder' ? (
+                                    <div className="mt-2">
+                                      <ReminderCard
+                                        activity={item.data as Activity}
+                                        leadName={leadName}
+                                        onToggleCompletion={toggleCompletion}
+                                        showCompletedBadge={false}
+                                        hideStatusBadge={!shouldShowStatusBadge(item.data as Activity)}
+                                      />
+                                    </div>
+                                  ) : (item.data as Activity).type === 'note' ? (
+                                    // Regular note - no completion button
+                                    <div className="mt-2">
+                                      <p className="text-sm">
+                                        {(item.data as Activity).content}
+                                      </p>
+                                    </div>
+                                  ) : (
+                                    // Other activity types that might need completion
+                                    <div className="flex items-start gap-3">
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          toggleCompletion((item.data as Activity).id, !(item.data as Activity).completed);
+                                        }}
+                                        className="flex items-center justify-center w-5 h-5 rounded-full border-2 border-muted-foreground/40 hover:border-primary transition-colors mt-0.5 flex-shrink-0"
+                                      >
+                                        {(item.data as Activity).completed ? (
+                                          <CheckCircle className="h-3 w-3 text-green-600 dark:text-green-400" />
+                                        ) : (
+                                          <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40" />
+                                        )}
+                                      </button>
+                                      <div className="flex-1">
+                                        <p className={`text-sm ${(item.data as Activity).completed ? 'line-through opacity-60' : ''}`}>
+                                          {(item.data as Activity).content}
+                                        </p>
+                                      </div>
+                                    </div>
+                                  )}
+                                </>
+                              )}
+                              
+                              {item.type === 'session' && (
+                                <div className="mt-2">
+                                  <p className="text-sm font-medium">
+                                    Session scheduled for {formatLongDate((item.data as Session).session_date)} at {formatTime((item.data as Session).session_time)}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">
+                                    Status: {(item.data as Session).status}
+                                  </p>
+                                  {(item.data as Session).notes && (
+                                    <p className="text-sm text-muted-foreground mt-1 italic">
+                                      "{(item.data as Session).notes}"
+                                    </p>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          )}
+              )}
+            </TabsContent>
+            
+            <TabsContent value="history" className="mt-4">
+              {Object.keys(groupedAuditLogs).length === 0 ? (
+                <p className="text-muted-foreground text-center py-8">No history yet</p>
+              ) : (
+                <div className="space-y-6">
+                  {Object.entries(groupedAuditLogs).map(([date, items]) => (
+                    <div key={date}>
+                      <h4 className="font-medium text-sm text-muted-foreground mb-3 sticky top-0 bg-background">
+                        {formatLongDate(date)}
+                      </h4>
+                      <div className="space-y-3 pl-4 border-l-2 border-muted">
+                        {items.map((item, index) => (
+                          <div key={`${item.type}-${item.data.id}-${index}`} className="relative">
+                            <div className="absolute -left-6 top-3 w-3 h-3 bg-background border-2 border-muted-foreground/40 rounded-full"></div>
+                            <div className="bg-muted/50 rounded-lg p-3 space-y-2">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <FileText className="h-4 w-4 text-gray-500" />
+                                  <Badge variant="outline" className="text-xs">
+                                    {formatAuditAction(item.data as AuditLog)}
+                                  </Badge>
+                                  {/* Show project badge for session audit logs */}
+                                  {(item.data as AuditLog).entity_type === 'session' && (item.data as AuditLog).project_name && (
+                                    <Badge 
+                                      variant="secondary" 
+                                      className="text-xs bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300"
+                                    >
+                                      {(item.data as AuditLog).project_name}
+                                    </Badge>
+                                  )}
+                                </div>
+                                <span className="text-xs text-muted-foreground">
+                                  {formatTime(new Date(item.date).toTimeString().slice(0,5))}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
     </div>

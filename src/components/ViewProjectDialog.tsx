@@ -9,11 +9,10 @@ import { Badge } from "@/components/ui/badge";
 import { Edit2, Save, X } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
-import SessionBanner from "./SessionBanner";
 import { ProjectActivitySection } from "./ProjectActivitySection";
 import { ProjectTodoList } from "./ProjectTodoList";
 import { ProjectServicesSection } from "./ProjectServicesSection";
-import EditSessionDialog from "./EditSessionDialog";
+import { SessionsSection } from "./SessionsSection";
 
 interface Project {
   id: string;
@@ -286,50 +285,26 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
             />
             
             {/* Sessions Section */}
-            {loading ? (
-              <div className="text-center py-8">
-                <div className="text-muted-foreground">Loading sessions...</div>
-              </div>
-            ) : sessions.length > 0 ? (
-              <>
-                <h3 className="text-lg font-medium">
-                  This project includes {sessions.length} session{sessions.length !== 1 ? 's' : ''}
-                </h3>
-                <div className="space-y-3">
-                  {sessions.map((session) => (
-                    <SessionBanner
-                      key={session.id}
-                      session={session}
-                      leadName={leadName}
-                      projectName={project.name}
-                      onStatusUpdate={handleSessionUpdated}
-                      onEdit={() => setEditingSessionId(session.id)}
-                      onDelete={() => handleDeleteSession(session.id)}
-                    />
-                  ))}
-                </div>
-              </>
-            ) : (
-              <div className="text-center py-8">
-                <p className="text-muted-foreground">No sessions linked to this project yet.</p>
-              </div>
-            )}
+            <SessionsSection
+              sessions={sessions}
+              loading={loading}
+              leadName={leadName}
+              projectName={project.name}
+              onSessionUpdated={handleSessionUpdated}
+              onDeleteSession={handleDeleteSession}
+            />
             
             {/* Project Activities Section */}
-            <div className="mt-8 pt-6 border-t">
-              <ProjectActivitySection
-                projectId={project.id}
-                leadId={project.lead_id}
-                leadName={leadName}
-                projectName={project.name}
-                onActivityUpdated={onActivityUpdated}
-              />
-            </div>
+            <ProjectActivitySection
+              projectId={project.id}
+              leadId={project.lead_id}
+              leadName={leadName}
+              projectName={project.name}
+              onActivityUpdated={onActivityUpdated}
+            />
             
             {/* Project Todos Section */}
-            <div className="mt-8 pt-6 border-t">
-              <ProjectTodoList projectId={project.id} />
-            </div>
+            <ProjectTodoList projectId={project.id} />
             
             {/* Delete Project Section */}
             <div className="mt-8 pt-6 border-t">
@@ -371,28 +346,6 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Edit Session Dialog */}
-      {editingSessionId && (() => {
-        const session = sessions.find(s => s.id === editingSessionId);
-        return session ? (
-          <EditSessionDialog
-            sessionId={session.id}
-            leadId={session.lead_id}
-            currentDate={session.session_date}
-            currentTime={session.session_time}
-            currentNotes={session.notes}
-            currentProjectId={session.project_id}
-            leadName={leadName}
-            open={!!editingSessionId}
-            onOpenChange={(open) => {
-              if (!open) {
-                setEditingSessionId(null);
-              }
-            }}
-            onSessionUpdated={handleSessionUpdated}
-          />
-        ) : null;
-      })()}
     </>
   );
 }

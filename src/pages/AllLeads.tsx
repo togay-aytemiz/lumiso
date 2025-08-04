@@ -136,6 +136,7 @@ const AllLeads = () => {
     <div className="p-8">
       <div className="mb-6">
         <h1 className="text-3xl font-bold">Leads</h1>
+        <p className="text-muted-foreground">Track and manage your potential clients</p>
       </div>
       <Card>
         <CardHeader>

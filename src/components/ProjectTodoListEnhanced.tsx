@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { CheckSquare, Trash2, Plus } from "lucide-react";
+import { CheckSquare, Trash2, Plus, Edit, Check, X } from "lucide-react";
 import { ProgressBar } from "@/components/ui/progress-bar";
 
 interface Todo {
@@ -24,6 +24,8 @@ export function ProjectTodoListEnhanced({ projectId }: ProjectTodoListEnhancedPr
   const [loading, setLoading] = useState(true);
   const [newTodoContent, setNewTodoContent] = useState("");
   const [isAdding, setIsAdding] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editContent, setEditContent] = useState("");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -114,6 +116,47 @@ export function ProjectTodoListEnhanced({ projectId }: ProjectTodoListEnhancedPr
     } finally {
       setIsAdding(false);
     }
+  };
+
+  const handleEditTodo = async (todoId: string, newContent: string) => {
+    if (!newContent.trim()) return;
+
+    try {
+      const { error } = await supabase
+        .from('todos')
+        .update({ content: newContent.trim() })
+        .eq('id', todoId);
+
+      if (error) throw error;
+
+      setTodos(todos.map(todo => 
+        todo.id === todoId ? { ...todo, content: newContent.trim() } : todo
+      ));
+
+      setEditingId(null);
+      setEditContent("");
+      
+      toast({
+        title: "Success",
+        description: "Todo updated successfully."
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error updating todo",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  };
+
+  const startEditing = (todo: Todo) => {
+    setEditingId(todo.id);
+    setEditContent(todo.content);
+  };
+
+  const cancelEditing = () => {
+    setEditingId(null);
+    setEditContent("");
   };
 
   const handleDeleteTodo = async (todoId: string) => {
@@ -212,26 +255,71 @@ export function ProjectTodoListEnhanced({ projectId }: ProjectTodoListEnhancedPr
               {todos.map((todo) => (
                 <div
                   key={todo.id}
-                  className="flex items-start gap-3 p-3 bg-muted/30 rounded-lg border"
+                  className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg border"
                 >
                   <Checkbox
                     checked={todo.is_completed}
                     onCheckedChange={() => handleToggleComplete(todo.id, todo.is_completed)}
-                    className="mt-1"
                   />
                   <div className="flex-1 min-w-0">
-                    <p className={`text-sm ${todo.is_completed ? 'line-through text-muted-foreground' : ''}`}>
-                      {todo.content}
-                    </p>
+                    {editingId === todo.id ? (
+                      <div className="flex items-center gap-2">
+                        <Input
+                          value={editContent}
+                          onChange={(e) => setEditContent(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              handleEditTodo(todo.id, editContent);
+                            } else if (e.key === 'Escape') {
+                              cancelEditing();
+                            }
+                          }}
+                          className="flex-1"
+                          autoFocus
+                        />
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEditTodo(todo.id, editContent)}
+                          className="h-8 w-8 p-0 text-green-600 hover:text-green-700"
+                        >
+                          <Check className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={cancelEditing}
+                          className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <p className={`text-sm ${todo.is_completed ? 'line-through text-muted-foreground' : ''}`}>
+                        {todo.content}
+                      </p>
+                    )}
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleDeleteTodo(todo.id)}
-                    className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  {editingId !== todo.id && (
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => startEditing(todo)}
+                        className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteTodo(todo.id)}
+                        className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

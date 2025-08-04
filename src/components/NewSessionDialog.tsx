@@ -10,6 +10,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Calendar, Search, ChevronDown, Check } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { getLeadStatusStyles, formatStatusText } from "@/lib/leadStatusColors";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useCalendarSync } from "@/hooks/useCalendarSync";
@@ -368,7 +370,7 @@ const NewSessionDialog = ({ onSessionScheduled }: NewSessionDialogProps) => {
                         <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-full p-0 z-50" align="start">
+                    <PopoverContent className="w-full p-0 z-50 bg-popover" align="start">
                       <div className="p-3 border-b">
                         <div className="relative">
                           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
@@ -381,7 +383,7 @@ const NewSessionDialog = ({ onSessionScheduled }: NewSessionDialogProps) => {
                           />
                         </div>
                       </div>
-                      <div className="max-h-64 overflow-y-auto overscroll-contain" style={{ scrollBehavior: 'smooth' }}>
+                      <ScrollArea className="max-h-64">
                         {loadingLeads ? (
                           <div className="p-4 text-center text-sm text-muted-foreground">
                             Loading clients...
@@ -435,7 +437,7 @@ const NewSessionDialog = ({ onSessionScheduled }: NewSessionDialogProps) => {
                             </div>
                           ))
                         )}
-                      </div>
+                      </ScrollArea>
                     </PopoverContent>
                   </Popover>
                 </div>

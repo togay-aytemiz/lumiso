@@ -7,6 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Search, ChevronDown, Check, X, Save } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { getLeadStatusStyles, formatStatusText } from "@/lib/leadStatusColors";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -197,15 +199,13 @@ export function EnhancedProjectDialog({ onProjectCreated, children }: EnhancedPr
     (lead.email && lead.email.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  const getStatusVariant = (status: string) => {
-    switch (status) {
-      case 'new': return 'outline';
-      case 'contacted': return 'secondary';
-      case 'qualified': return 'default';
-      case 'booked': return 'default';
-      case 'lost': return 'destructive';
-      default: return 'outline';
-    }
+  const getStatusBadge = (status: string) => {
+    const styles = getLeadStatusStyles(status);
+    return (
+      <Badge className={`text-xs ${styles.className}`}>
+        {formatStatusText(status)}
+      </Badge>
+    );
   };
 
   return (
@@ -262,14 +262,9 @@ export function EnhancedProjectDialog({ onProjectCreated, children }: EnhancedPr
                                 <span className="text-xs text-muted-foreground">{leads.find(lead => lead.id === selectedLeadId)?.email}</span>
                               )}
                             </div>
-                            {leads.find(lead => lead.id === selectedLeadId) && (
-                              <Badge
-                                variant={getStatusVariant(leads.find(lead => lead.id === selectedLeadId)?.status || '')}
-                                className="text-xs"
-                              >
-                                {leads.find(lead => lead.id === selectedLeadId)?.status}
-                              </Badge>
-                            )}
+                            {leads.find(lead => lead.id === selectedLeadId) && 
+                              getStatusBadge(leads.find(lead => lead.id === selectedLeadId)?.status || '')
+                            }
                           </div>
                         ) : loadingLeads ? (
                           "Loading clients..."
@@ -279,7 +274,7 @@ export function EnhancedProjectDialog({ onProjectCreated, children }: EnhancedPr
                         <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-full p-0 z-50" align="start">
+                    <PopoverContent className="w-full p-0 z-50 bg-popover" align="start">
                       <div className="p-3 border-b">
                         <div className="relative">
                           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
@@ -292,53 +287,50 @@ export function EnhancedProjectDialog({ onProjectCreated, children }: EnhancedPr
                           />
                         </div>
                       </div>
-                      <div className="max-h-64 overflow-y-auto overscroll-contain" style={{ scrollBehavior: 'smooth' }}>
-                        {loadingLeads ? (
-                          <div className="p-4 text-center text-sm text-muted-foreground">
-                            Loading clients...
-                          </div>
-                        ) : filteredLeads.length === 0 ? (
-                          <div className="p-4 text-center text-sm text-muted-foreground">
-                            {searchTerm ? 'No clients match your search' : 'No clients found'}
-                          </div>
-                        ) : (
-                          filteredLeads.map((lead) => (
-                            <div
-                              key={lead.id}
-                              onClick={() => {
-                                setSelectedLeadId(lead.id);
-                                setDropdownOpen(false);
-                                setSearchTerm("");
-                              }}
-                              className={cn(
-                                "flex items-center justify-between p-3 hover:bg-muted/50 cursor-pointer border-b last:border-b-0",
-                                selectedLeadId === lead.id && "bg-muted"
-                              )}
-                            >
-                              <div className="flex items-center space-x-3">
-                                <Check
-                                  className={cn(
-                                    "h-4 w-4",
-                                    selectedLeadId === lead.id ? "opacity-100" : "opacity-0"
-                                  )}
-                                />
-                                <div className="flex flex-col">
-                                  <span className="font-medium">{lead.name}</span>
-                                  {lead.email && (
-                                    <span className="text-xs text-muted-foreground">{lead.email}</span>
-                                  )}
-                                </div>
-                              </div>
-                              <Badge
-                                variant={getStatusVariant(lead.status)}
-                                className="text-xs"
-                              >
-                                {lead.status}
-                              </Badge>
+                      <ScrollArea className="max-h-64">
+                        <div className="py-1">
+                          {loadingLeads ? (
+                            <div className="p-4 text-center text-sm text-muted-foreground">
+                              Loading clients...
                             </div>
-                          ))
-                        )}
-                      </div>
+                          ) : filteredLeads.length === 0 ? (
+                            <div className="p-4 text-center text-sm text-muted-foreground">
+                              {searchTerm ? 'No clients match your search' : 'No clients found'}
+                            </div>
+                          ) : (
+                            filteredLeads.map((lead) => (
+                              <div
+                                key={lead.id}
+                                onClick={() => {
+                                  setSelectedLeadId(lead.id);
+                                  setDropdownOpen(false);
+                                  setSearchTerm("");
+                                }}
+                                className={cn(
+                                  "flex items-center justify-between p-3 hover:bg-muted/50 cursor-pointer border-b last:border-b-0",
+                                  selectedLeadId === lead.id && "bg-muted"
+                                )}
+                              >
+                                <div className="flex items-center space-x-3">
+                                  <Check
+                                    className={cn(
+                                      "h-4 w-4",
+                                      selectedLeadId === lead.id ? "opacity-100" : "opacity-0"
+                                    )}
+                                  />
+                                  <div className="flex flex-col">
+                                    <span className="font-medium">{lead.name}</span>
+                                    {lead.email && (
+                                      <span className="text-xs text-muted-foreground">{lead.email}</span>
+                                    )}
+                                  </div>
+                                </div>
+                                {getStatusBadge(lead.status)}
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </ScrollArea>
                     </PopoverContent>
                   </Popover>
                 </div>

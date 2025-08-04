@@ -262,6 +262,19 @@ const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
         }
         return 'Lead updated';
       }
+    } else if (log.entity_type === 'session') {
+      if (log.action === 'created') {
+        return 'Session created';
+      } else if (log.action === 'updated') {
+        const oldStatus = log.old_values?.status;
+        const newStatus = log.new_values?.status;
+        if (oldStatus !== newStatus) {
+          return `Session status: ${oldStatus} → ${newStatus}`;
+        }
+        return 'Session updated';
+      } else if (log.action === 'deleted') {
+        return 'Session deleted';
+      }
     } else if (log.entity_type === 'activity') {
       const activityType = log.new_values?.type || log.old_values?.type;
       if (log.action === 'created') {

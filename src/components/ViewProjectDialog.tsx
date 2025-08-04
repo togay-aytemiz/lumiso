@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -55,6 +55,7 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
   const [isSaving, setIsSaving] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   
   const { toast } = useToast();
 
@@ -90,8 +91,34 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
       setEditName(project.name);
       setEditDescription(project.description || "");
       setIsEditing(false);
+      setIsFullscreen(false);
     }
   }, [project, open]);
+
+  // Handle ESC key for fullscreen mode
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      if (isFullscreen) {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsFullscreen(false);
+      }
+      // If not in fullscreen, let the dialog handle the ESC to close
+    }
+  }, [isFullscreen]);
+
+  useEffect(() => {
+    if (open) {
+      document.addEventListener('keydown', handleKeyDown);
+      return () => {
+        document.removeEventListener('keydown', handleKeyDown);
+      };
+    }
+  }, [open, handleKeyDown]);
+
+  const toggleFullscreen = () => {
+    setIsFullscreen(!isFullscreen);
+  };
 
   const handleSaveProject = async () => {
     if (!project || !editName.trim()) return;
@@ -202,7 +229,7 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
           onProjectUpdated();
         }
       }}>
-        <DialogContent className="sm:max-w-5xl max-h-[85vh] overflow-y-auto [&>button]:hidden">
+        <DialogContent className={`${isFullscreen ? 'max-w-none w-[100vw] h-[100vh] m-0 rounded-none' : 'sm:max-w-5xl max-h-[85vh]'} overflow-y-auto [&>button]:hidden`}>
           <DialogHeader className="pb-6">
             <div className="flex items-start justify-between">
               <div className="flex-1 space-y-2">
@@ -269,10 +296,21 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
                     Edit
                   </Button>
                 )}
-                <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground h-10 w-10 p-0">
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-                  </svg>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={toggleFullscreen}
+                  className="text-muted-foreground hover:text-foreground h-10 w-10 p-0"
+                >
+                  {isFullscreen ? (
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 9l6 6m0-6l-6 6m2-10V3m0 0h6m-6 0l6 6M15 15v6m0 0H9m6 0l-6-6" />
+                    </svg>
+                  ) : (
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                    </svg>
+                  )}
                 </Button>
                 <Button
                   variant="ghost"

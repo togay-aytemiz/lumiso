@@ -194,7 +194,7 @@ export function ProjectActivitySection({ projectId, leadId, leadName, projectNam
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-lg font-medium">
           <FileText className="h-4 w-4" />
-          Notes
+          Project specific activities
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">

@@ -22,6 +22,7 @@ interface Activity {
   created_at: string;
   completed?: boolean;
   lead_id: string;
+  project_id?: string; // Add project_id to the interface
 }
 
 interface AuditLog {
@@ -60,7 +61,7 @@ const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
     try {
       const { data, error } = await supabase
         .from('activities')
-        .select('*')
+        .select('id, type, content, reminder_date, reminder_time, created_at, completed, lead_id, project_id')
         .eq('lead_id', leadId)
         .order('created_at', { ascending: false });
 
@@ -363,6 +364,19 @@ const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
                                   : formatAuditAction(item.data)
                                 }
                               </Badge>
+                              {/* Show project/lead badge for activities */}
+                              {item.type === 'activity' && (
+                                <Badge 
+                                  variant="secondary" 
+                                  className={`text-xs ${
+                                    item.data.project_id 
+                                      ? 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300' 
+                                      : 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
+                                  }`}
+                                >
+                                  {item.data.project_id ? 'Project' : 'Lead'}
+                                </Badge>
+                              )}
                             </div>
                             <span className="text-xs text-muted-foreground">
                               {formatTime(new Date(item.date).toTimeString().slice(0,5))}

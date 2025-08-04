@@ -22,6 +22,7 @@ export type Database = {
           google_event_id: string | null
           id: string
           lead_id: string
+          project_id: string | null
           reminder_date: string | null
           reminder_time: string | null
           type: string
@@ -35,6 +36,7 @@ export type Database = {
           google_event_id?: string | null
           id?: string
           lead_id: string
+          project_id?: string | null
           reminder_date?: string | null
           reminder_time?: string | null
           type: string
@@ -48,13 +50,22 @@ export type Database = {
           google_event_id?: string | null
           id?: string
           lead_id?: string
+          project_id?: string | null
           reminder_date?: string | null
           reminder_time?: string | null
           type?: string
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "activities_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       appointments: {
         Row: {

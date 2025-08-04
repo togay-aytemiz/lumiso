@@ -3,7 +3,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { ProjectCard } from "./ProjectCard";
-import { ProjectDialog } from "./ProjectDialog";
 import { ViewProjectDialog } from "./ViewProjectDialog";
 import {
   AlertDialog,
@@ -36,8 +35,6 @@ interface ProjectsSectionProps {
 export function ProjectsSection({ leadId, leadName = "" }: ProjectsSectionProps) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [showProjectDialog, setShowProjectDialog] = useState(false);
-  const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -76,18 +73,57 @@ export function ProjectsSection({ leadId, leadName = "" }: ProjectsSectionProps)
   }, [leadId]);
 
   const handleAddProject = () => {
-    setEditingProject(null);
-    setShowProjectDialog(true);
+    // This will create a new project with a default name and then open the view dialog for immediate editing
+    createDefaultProject();
+  };
+
+  const createDefaultProject = async () => {
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) {
+        toast({
+          title: "Authentication required",
+          description: "Please log in to create a project.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      const { data: newProject, error } = await supabase
+        .from('projects')
+        .insert({
+          name: "New Project",
+          description: "",
+          lead_id: leadId,
+          user_id: userData.user.id
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Project created successfully."
+      });
+
+      fetchProjects();
+      
+      // Open the new project for immediate editing
+      setViewingProject(newProject);
+      setShowViewDialog(true);
+    } catch (error: any) {
+      toast({
+        title: "Error creating project",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
   };
 
   const handleViewProject = (project: Project) => {
     setViewingProject(project);
     setShowViewDialog(true);
-  };
-
-  const handleEditProject = (project: Project) => {
-    setEditingProject(project);
-    setShowProjectDialog(true);
   };
 
   const handleDeleteProject = (project: Project) => {
@@ -113,22 +149,17 @@ export function ProjectsSection({ leadId, leadName = "" }: ProjectsSectionProps)
       });
 
       fetchProjects();
-      setShowDeleteDialog(false);
-      setProjectToDelete(null);
-    } catch (error) {
-      console.error("Error deleting project:", error);
+    } catch (error: any) {
       toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to delete project. Please try again.",
+        title: "Error deleting project",
+        description: error.message,
+        variant: "destructive"
       });
     } finally {
       setIsDeleting(false);
+      setShowDeleteDialog(false);
+      setProjectToDelete(null);
     }
-  };
-
-  const handleProjectSaved = () => {
-    fetchProjects();
   };
 
   return (
@@ -162,7 +193,6 @@ export function ProjectsSection({ leadId, leadName = "" }: ProjectsSectionProps)
                 key={project.id}
                 project={project}
                 onView={handleViewProject}
-                onEdit={handleEditProject}
                 onDelete={handleDeleteProject}
               />
             ))}
@@ -170,18 +200,11 @@ export function ProjectsSection({ leadId, leadName = "" }: ProjectsSectionProps)
         )}
       </CardContent>
 
-      <ProjectDialog
-        open={showProjectDialog}
-        onOpenChange={setShowProjectDialog}
-        leadId={leadId}
-        project={editingProject}
-        onProjectSaved={handleProjectSaved}
-      />
-
       <ViewProjectDialog
         project={viewingProject}
         open={showViewDialog}
         onOpenChange={setShowViewDialog}
+        onProjectUpdated={fetchProjects}
         leadName={leadName}
       />
 

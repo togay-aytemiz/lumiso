@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { ProjectCard } from "./ProjectCard";
 import { ViewProjectDialog } from "./ViewProjectDialog";
+import { ProjectDialog } from "./ProjectDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -43,6 +44,7 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
   const [showViewDialog, setShowViewDialog] = useState(false);
   const [viewingProject, setViewingProject] = useState<Project | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [showAddDialog, setShowAddDialog] = useState(false);
   const { toast } = useToast();
 
   const fetchProjects = async () => {
@@ -76,52 +78,7 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
   }, [leadId]);
 
   const handleAddProject = () => {
-    // This will create a new project with a default name and then open the view dialog for immediate editing
-    createDefaultProject();
-  };
-
-  const createDefaultProject = async () => {
-    try {
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user) {
-        toast({
-          title: "Authentication required",
-          description: "Please log in to create a project.",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      const { data: newProject, error } = await supabase
-        .from('projects')
-        .insert({
-          name: "New Project",
-          description: "",
-          lead_id: leadId,
-          user_id: userData.user.id
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Project created successfully."
-      });
-
-      fetchProjects();
-      
-      // Open the new project for immediate editing
-      setViewingProject(newProject);
-      setShowViewDialog(true);
-    } catch (error: any) {
-      toast({
-        title: "Error creating project",
-        description: error.message,
-        variant: "destructive"
-      });
-    }
+    setShowAddDialog(true);
   };
 
   const handleViewProject = (project: Project) => {
@@ -202,6 +159,17 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
           </div>
         )}
       </CardContent>
+
+      <ProjectDialog
+        open={showAddDialog}
+        onOpenChange={setShowAddDialog}
+        leadId={leadId}
+        onProjectCreated={() => {
+          fetchProjects();
+          setRefreshTrigger(prev => prev + 1);
+          onProjectUpdated?.();
+        }}
+      />
 
       <ViewProjectDialog
         project={viewingProject}

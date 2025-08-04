@@ -49,16 +49,21 @@ export function ProjectActivitySection({ projectId, leadId, leadName, projectNam
 
   const fetchProjectActivities = async () => {
     try {
-      const { data, error } = await supabase
-        .from('activities')
-        .select('id, type, content, reminder_date, reminder_time, created_at, completed, lead_id')
-        .eq('lead_id', leadId)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setActivities(data || []);
+      // TODO: Once project_id column is added to activities table, uncomment the proper filter
+      // For now, we'll show empty state since we can't filter by project_id yet
+      setActivities([]);
+      
+      // This will be the proper query once migration is applied:
+      // const { data, error } = await supabase
+      //   .from('activities')
+      //   .select('id, type, content, reminder_date, reminder_time, created_at, completed, lead_id, project_id')
+      //   .eq('lead_id', leadId)
+      //   .eq('project_id', projectId)
+      //   .order('created_at', { ascending: false });
+      
     } catch (error: any) {
       console.error('Error fetching project activities:', error);
+      setActivities([]);
     } finally {
       setLoading(false);
     }
@@ -91,6 +96,8 @@ export function ProjectActivitySection({ projectId, leadId, leadName, projectNam
       const activityData = {
         user_id: userData.user.id,
         lead_id: leadId,
+        // TODO: Add project_id once migration is applied
+        // project_id: projectId,
         type: isReminderMode ? 'reminder' : 'note',
         content: content.trim(),
         ...(isReminderMode && reminderDateTime && {

@@ -2,8 +2,10 @@ import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { ProgressBar } from "@/components/ui/progress-bar";
 import { ChevronRight } from "lucide-react";
 import { format } from "date-fns";
+import { useProjectProgress } from "@/hooks/useProjectProgress";
 
 interface Project {
   id: string;
@@ -21,6 +23,8 @@ interface ProjectCardProps {
 }
 
 export function ProjectCard({ project, onView }: ProjectCardProps) {
+  const { progress, loading } = useProjectProgress(project.id);
+
   return (
     <Card className="w-full hover:shadow-md transition-shadow cursor-pointer">
       <CardContent className="p-4">
@@ -33,6 +37,32 @@ export function ProjectCard({ project, onView }: ProjectCardProps) {
             {project.description && (
               <p className="text-muted-foreground mb-2">{project.description}</p>
             )}
+            
+            {/* Progress Bar - only show if project has todos */}
+            {!loading && progress.total > 0 && (
+              <div className="mb-3">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div>
+                        <ProgressBar
+                          value={progress.percentage}
+                          total={progress.total}
+                          completed={progress.completed}
+                          className="max-w-xs"
+                        />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>
+                        {progress.completed} done, {progress.total - progress.completed} remaining
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+            )}
+            
             <div className="flex items-center gap-3 text-xs text-muted-foreground">
               <span>Created {format(new Date(project.created_at), "M/d/yy")}</span>
               {project.updated_at !== project.created_at && (

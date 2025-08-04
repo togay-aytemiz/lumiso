@@ -12,7 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import SessionBanner from "./SessionBanner";
 import { ProjectActivitySection } from "./ProjectActivitySection";
 import { ProjectTodoList } from "./ProjectTodoList";
-import { ServiceSelector } from "./ServiceSelector";
+import { ProjectServicesSection } from "./ProjectServicesSection";
 import EditSessionDialog from "./EditSessionDialog";
 
 interface Project {
@@ -35,11 +35,6 @@ interface Session {
   lead_id: string;
 }
 
-interface Service {
-  id: string;
-  name: string;
-  category: string | null;
-}
 
 interface ViewProjectDialogProps {
   project: Project | null;
@@ -60,7 +55,7 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
   const [isSaving, setIsSaving] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [selectedServices, setSelectedServices] = useState<Service[]>([]);
+  
   const { toast } = useToast();
 
   const fetchProjectSessions = async () => {
@@ -88,39 +83,10 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
     }
   };
 
-  const fetchProjectServices = async () => {
-    if (!project) return;
-    
-    try {
-      const { data, error } = await supabase
-        .from('project_services')
-        .select(`
-          services!inner (
-            id,
-            name,
-            category
-          )
-        `)
-        .eq('project_id', project.id);
-
-      if (error) throw error;
-      
-      const services = data?.map(ps => ps.services).filter(Boolean) as Service[] || [];
-      setSelectedServices(services);
-    } catch (error: any) {
-      console.error('Error fetching project services:', error);
-      toast({
-        title: "Error loading project services",
-        description: error.message,
-        variant: "destructive"
-      });
-    }
-  };
 
   useEffect(() => {
     if (project && open) {
       fetchProjectSessions();
-      fetchProjectServices();
       setEditName(project.name);
       setEditDescription(project.description || "");
       setIsEditing(false);
@@ -146,29 +112,6 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
 
       if (projectError) throw projectError;
 
-      // Update project services
-      // First, delete existing project services
-      const { error: deleteError } = await supabase
-        .from('project_services')
-        .delete()
-        .eq('project_id', project.id);
-
-      if (deleteError) throw deleteError;
-
-      // Then, insert new project services
-      if (selectedServices.length > 0) {
-        const serviceInserts = selectedServices.map(service => ({
-          project_id: project.id,
-          service_id: service.id,
-          user_id: user.id
-        }));
-
-        const { error: insertError } = await supabase
-          .from('project_services')
-          .insert(serviceInserts);
-
-        if (insertError) throw insertError;
-      }
 
       toast({
         title: "Success",
@@ -282,14 +225,6 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
                         rows={3}
                       />
                     </div>
-                    <div>
-                      <ServiceSelector
-                        projectId={project?.id}
-                        selectedServices={selectedServices}
-                        onServicesChange={setSelectedServices}
-                        disabled={isSaving}
-                      />
-                    </div>
                     <div className="flex gap-2">
                       <Button 
                         size="sm" 
@@ -306,7 +241,7 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
                           setIsEditing(false);
                           setEditName(project?.name || "");
                           setEditDescription(project?.description || "");
-                          fetchProjectServices(); // Reset services to original state
+                          
                         }}
                         disabled={isSaving}
                       >
@@ -331,18 +266,6 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
                     {project?.description && (
                       <p className="text-muted-foreground text-base">{project.description}</p>
                     )}
-                    {selectedServices.length > 0 && (
-                      <div className="space-y-2">
-                        <p className="text-sm font-medium">Services:</p>
-                        <div className="flex flex-wrap gap-1">
-                          {selectedServices.map((service) => (
-                            <Badge key={service.id} variant="secondary" className="text-xs">
-                              {service.name}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    )}
                     <p className="text-sm text-muted-foreground">
                       Created on {project && format(new Date(project.created_at), "MMMM d, yyyy")}
                     </p>
@@ -352,7 +275,17 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
             </div>
           </DialogHeader>
           
-          <div className="mt-6 space-y-4">
+          <div className="mt-6 space-y-6">
+            {/* Project Services Section - Prominently displayed */}
+            <ProjectServicesSection
+              projectId={project.id}
+              onServicesUpdated={() => {
+                onProjectUpdated();
+                onActivityUpdated?.();
+              }}
+            />
+            
+            {/* Sessions Section */}
             {loading ? (
               <div className="text-center py-8">
                 <div className="text-muted-foreground">Loading sessions...</div>

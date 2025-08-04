@@ -96,22 +96,20 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
   }, [project, open]);
 
   // Handle ESC key for fullscreen mode
-  const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (e.key === 'Escape' && isFullscreen) {
-      e.preventDefault();
-      e.stopPropagation();
+  const handleDialogOpenChange = (newOpen: boolean) => {
+    // If we're in fullscreen mode and user tries to close (ESC or other means)
+    if (!newOpen && isFullscreen) {
+      // Instead of closing, just exit fullscreen
       setIsFullscreen(false);
+      return; // Don't close the modal
     }
-  }, [isFullscreen]);
-
-  useEffect(() => {
-    if (open && isFullscreen) {
-      document.addEventListener('keydown', handleKeyDown, true); // Use capture phase
-      return () => {
-        document.removeEventListener('keydown', handleKeyDown, true);
-      };
+    
+    // Normal behavior - close the modal
+    if (!newOpen) {
+      onOpenChange(newOpen);
+      onProjectUpdated();
     }
-  }, [open, isFullscreen, handleKeyDown]);
+  };
 
   const toggleFullscreen = () => {
     setIsFullscreen(!isFullscreen);
@@ -219,13 +217,7 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
 
   return (
     <>
-      <Dialog open={open} onOpenChange={(newOpen) => {
-        if (!newOpen) {
-          onOpenChange(newOpen);
-          // Trigger refresh of project data when modal closes
-          onProjectUpdated();
-        }
-      }}>
+      <Dialog open={open} onOpenChange={handleDialogOpenChange}>
         <DialogContent className={`${isFullscreen ? 'max-w-none w-[100vw] h-[100vh] m-0 rounded-none' : 'sm:max-w-5xl max-h-[85vh]'} overflow-y-auto [&>button]:hidden`}>
           <DialogHeader className="pb-6">
             <div className="flex items-start justify-between">

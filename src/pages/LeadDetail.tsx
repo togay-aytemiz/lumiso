@@ -85,8 +85,11 @@ const LeadDetail = () => {
     if (id) {
       fetchLead();
       fetchSessions();
+    } else {
+      // If no id parameter, redirect to leads page
+      navigate('/leads');
     }
-  }, [id]);
+  }, [id, navigate]);
 
   const fetchLead = async () => {
     try {
@@ -208,6 +211,9 @@ const LeadDetail = () => {
       // Refresh lead data
       await fetchLead();
       await fetchSessions();
+      
+      // Refresh activity timeline to show lead changes
+      setActivityRefreshKey(prev => prev + 1);
     } catch (error: any) {
       toast({
         title: "Error updating lead",
@@ -330,6 +336,9 @@ const LeadDetail = () => {
       // Refresh lead data
       await fetchLead();
       await fetchSessions();
+      
+      // Refresh activity timeline to show status change
+      setActivityRefreshKey(prev => prev + 1);
     } catch (error: any) {
       toast({
         title: "Error updating lead",
@@ -361,6 +370,9 @@ const LeadDetail = () => {
       // Refresh lead data
       await fetchLead();
       await fetchSessions();
+      
+      // Refresh activity timeline to show status change
+      setActivityRefreshKey(prev => prev + 1);
     } catch (error: any) {
       toast({
         title: "Error updating lead",

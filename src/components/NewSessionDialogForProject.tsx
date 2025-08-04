@@ -13,13 +13,15 @@ interface NewSessionDialogForProjectProps {
   leadId: string;
   leadName: string;
   projectName: string;
+  projectId: string;
   onSessionScheduled?: () => void;
 }
 
 export function NewSessionDialogForProject({ 
   leadId, 
   leadName, 
-  projectName, 
+  projectName,
+  projectId, 
   onSessionScheduled 
 }: NewSessionDialogForProjectProps) {
   const [open, setOpen] = useState(false);
@@ -49,19 +51,7 @@ export function NewSessionDialogForProject({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("User not authenticated");
 
-      // Get the project ID for this lead
-      const { data: projectData, error: projectError } = await supabase
-        .from('projects')
-        .select('id')
-        .eq('lead_id', leadId)
-        .eq('user_id', user.id)
-        .single();
-
-      if (projectError) {
-        console.error('Project not found, creating session without project link');
-      }
-
-      // Create session
+      // Create session with the specific project ID
       const { data: newSession, error: sessionError } = await supabase
         .from('sessions')
         .insert({
@@ -70,7 +60,7 @@ export function NewSessionDialogForProject({
           session_date: sessionData.session_date,
           session_time: sessionData.session_time,
           notes: sessionData.notes.trim() || null,
-          project_id: projectData?.id || null
+          project_id: projectId
         })
         .select('id')
         .single();

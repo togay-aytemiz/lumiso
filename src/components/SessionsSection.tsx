@@ -20,6 +20,7 @@ interface SessionsSectionProps {
   sessions: Session[];
   loading: boolean;
   leadId: string;
+  projectId: string;
   leadName: string;
   projectName: string;
   onSessionUpdated: () => void;
@@ -30,6 +31,7 @@ export function SessionsSection({
   sessions, 
   loading, 
   leadId,
+  projectId,
   leadName, 
   projectName, 
   onSessionUpdated, 
@@ -74,6 +76,7 @@ export function SessionsSection({
               leadId={leadId}
               leadName={leadName}
               projectName={projectName}
+              projectId={projectId}
               onSessionScheduled={onSessionUpdated}
             />
           </CardTitle>

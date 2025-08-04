@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import AllLeads from "./pages/AllLeads";
+import AllProjects from "./pages/AllProjects";
 import LeadDetail from "./pages/LeadDetail";
 import UpcomingSessions from "./pages/UpcomingSessions";
 import ReminderDetails from "./pages/ReminderDetails";
@@ -27,6 +28,7 @@ const App = () => (
             <Route path="/" element={<ProtectedRoute />}>
               <Route index element={<Index />} />
               <Route path="leads" element={<AllLeads />} />
+              <Route path="projects" element={<AllProjects />} />
               <Route path="leads/:id" element={<LeadDetail />} />
               <Route path="sessions" element={<UpcomingSessions />} />
               <Route path="reminders" element={<ReminderDetails />} />

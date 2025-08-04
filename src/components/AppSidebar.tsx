@@ -1,5 +1,5 @@
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Users, Calendar, Bell, BarChart3, Settings, LogOut } from "lucide-react";
+import { LayoutDashboard, Users, Calendar, Bell, BarChart3, Settings, LogOut, FolderOpen } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Sidebar,
@@ -16,6 +16,7 @@ import { Separator } from "@/components/ui/separator";
 const navigationItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Leads", url: "/leads", icon: Users },
+  { title: "Projects", url: "/projects", icon: FolderOpen },
   { title: "Sessions", url: "/sessions", icon: Calendar },
   { title: "Reminders", url: "/reminders", icon: Bell },
   { title: "Analytics", url: "/analytics", icon: BarChart3 },

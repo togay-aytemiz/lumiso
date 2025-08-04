@@ -267,7 +267,8 @@ export function ProjectActivitySection({ projectId, leadId, leadName, projectNam
                           showCompletedBadge={false}
                           hideStatusBadge={activity.completed}
                         />
-                      ) : (
+                      ) : activity.type === 'reminder' ? (
+                        // Reminder without date - show with completion button
                         <div className="flex items-start gap-3">
                           <button
                             onClick={(e) => {
@@ -287,6 +288,13 @@ export function ProjectActivitySection({ projectId, leadId, leadName, projectNam
                               {activity.content}
                             </p>
                           </div>
+                        </div>
+                      ) : (
+                        // Regular note - no completion button
+                        <div className="flex-1">
+                          <p className="text-sm">
+                            {activity.content}
+                          </p>
                         </div>
                       )}
                       <div className="flex items-center gap-2 text-xs text-muted-foreground mt-2">

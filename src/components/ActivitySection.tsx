@@ -401,7 +401,15 @@ const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
                                     hideStatusBadge={!shouldShowStatusBadge(item.data)}
                                   />
                                 </div>
+                              ) : item.data.type === 'note' ? (
+                                // Regular note - no completion button
+                                <div className="mt-2">
+                                  <p className="text-sm">
+                                    {item.data.content}
+                                  </p>
+                                </div>
                               ) : (
+                                // Other activity types that might need completion
                                 <div className="flex items-start gap-3">
                                   <button
                                     onClick={(e) => {

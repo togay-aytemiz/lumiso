@@ -49,7 +49,8 @@ export function ProjectCard({ project, onView }: ProjectCardProps) {
                           value={progress.percentage}
                           total={progress.total}
                           completed={progress.completed}
-                          className="max-w-xs"
+                          className="w-full"
+                          showLabel={false}
                         />
                       </div>
                     </TooltipTrigger>

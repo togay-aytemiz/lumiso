@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { ProgressBar } from '@/components/ui/progress-bar';
 import { Trash2, Plus, Check } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -181,6 +182,7 @@ export const ProjectTodoList: React.FC<ProjectTodoListProps> = ({ projectId }) =
 
   const completedCount = todos.filter(todo => todo.is_completed).length;
   const totalCount = todos.length;
+  const progressPercentage = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
 
   if (loading) {
     return (
@@ -201,6 +203,17 @@ export const ProjectTodoList: React.FC<ProjectTodoListProps> = ({ projectId }) =
         <CardTitle className="text-lg">
           Project Todos {totalCount > 0 && `(${completedCount}/${totalCount})`}
         </CardTitle>
+        {totalCount > 0 && (
+          <div className="mt-3">
+            <ProgressBar
+              value={progressPercentage}
+              total={totalCount}
+              completed={completedCount}
+              className="w-full"
+              size="sm"
+            />
+          </div>
+        )}
       </CardHeader>
       <CardContent className="space-y-2">
         {/* Add Todo Input */}

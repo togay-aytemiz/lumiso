@@ -185,7 +185,13 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
 
   return (
     <>
-      <Dialog open={open} onOpenChange={onOpenChange}>
+      <Dialog open={open} onOpenChange={(newOpen) => {
+        onOpenChange(newOpen);
+        if (!newOpen) {
+          // Trigger refresh of project data when modal closes
+          onProjectUpdated();
+        }
+      }}>
         <DialogContent className="sm:max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <div className="flex items-start gap-3">

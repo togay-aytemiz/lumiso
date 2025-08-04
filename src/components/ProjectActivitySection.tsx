@@ -51,13 +51,12 @@ export function ProjectActivitySection({ projectId, leadId, leadName, projectNam
     try {
       const { data, error } = await supabase
         .from('activities')
-        .select('id, type, content, reminder_date, reminder_time, created_at, completed, lead_id, project_id')
+        .select('id, type, content, reminder_date, reminder_time, created_at, completed, lead_id')
         .eq('lead_id', leadId)
-        .eq('project_id', projectId)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setActivities((data as ProjectActivity[]) || []);
+      setActivities(data || []);
     } catch (error: any) {
       console.error('Error fetching project activities:', error);
     } finally {
@@ -92,7 +91,6 @@ export function ProjectActivitySection({ projectId, leadId, leadName, projectNam
       const activityData = {
         user_id: userData.user.id,
         lead_id: leadId,
-        project_id: projectId,
         type: isReminderMode ? 'reminder' : 'note',
         content: content.trim(),
         ...(isReminderMode && reminderDateTime && {

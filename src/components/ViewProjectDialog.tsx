@@ -13,6 +13,8 @@ import { ProjectActivitySection } from "./ProjectActivitySection";
 import { ProjectTodoList } from "./ProjectTodoList";
 import { ProjectServicesSection } from "./ProjectServicesSection";
 import { SessionsSection } from "./SessionsSection";
+import { UnifiedActivityArea } from "./UnifiedActivityArea";
+import { ProjectTodoListEnhanced } from "./ProjectTodoListEnhanced";
 
 interface Project {
   id: string;
@@ -201,10 +203,10 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
           onProjectUpdated();
         }
       }}>
-        <DialogContent className="sm:max-w-4xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <div className="flex items-start gap-3">
-              <div className="flex-1">
+        <DialogContent className="sm:max-w-5xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader className="pb-6">
+            <div className="flex items-start justify-between">
+              <div className="flex-1 space-y-2">
                 {isEditing ? (
                   <div className="space-y-4">
                     <div>
@@ -212,7 +214,7 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
                         value={editName}
                         onChange={(e) => setEditName(e.target.value)}
                         placeholder="Project name"
-                        className="text-xl font-semibold"
+                        className="text-2xl font-bold h-auto py-2 border-0 px-0 focus-visible:ring-0"
                       />
                     </div>
                     <div>
@@ -220,8 +222,8 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
                         value={editDescription}
                         onChange={(e) => setEditDescription(e.target.value)}
                         placeholder="Project description (optional)"
-                        className="text-base resize-none"
-                        rows={3}
+                        className="text-base resize-none border-0 px-0 focus-visible:ring-0"
+                        rows={2}
                       />
                     </div>
                     <div className="flex gap-2">
@@ -240,7 +242,6 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
                           setIsEditing(false);
                           setEditName(project?.name || "");
                           setEditDescription(project?.description || "");
-                          
                         }}
                         disabled={isSaving}
                       >
@@ -250,18 +251,8 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
                     </div>
                   </div>
                 ) : (
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <DialogTitle className="text-xl font-semibold">{project?.name}</DialogTitle>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setIsEditing(true)}
-                        className="h-8 w-8 p-0"
-                      >
-                        <Edit2 className="h-4 w-4" />
-                      </Button>
-                    </div>
+                  <div className="space-y-1">
+                    <DialogTitle className="text-2xl font-bold leading-tight">{project?.name}</DialogTitle>
                     {project?.description && (
                       <p className="text-muted-foreground text-base">{project.description}</p>
                     )}
@@ -271,11 +262,29 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
                   </div>
                 )}
               </div>
+              
+              <div className="flex items-center gap-2 ml-4">
+                {!isEditing && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsEditing(true)}
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    Edit
+                  </Button>
+                )}
+                <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                  </svg>
+                </Button>
+              </div>
             </div>
           </DialogHeader>
           
-          <div className="mt-6 space-y-6">
-            {/* Project Services Section - Prominently displayed */}
+          <div className="space-y-8">
+            {/* Project Services Section */}
             <ProjectServicesSection
               projectId={project.id}
               onServicesUpdated={() => {
@@ -293,8 +302,20 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
               onSessionUpdated={handleSessionUpdated}
               onDeleteSession={handleDeleteSession}
             />
+
+            {/* Unified Activity Area */}
+            <UnifiedActivityArea
+              projectId={project.id}
+              leadId={project.lead_id}
+              leadName={leadName}
+              projectName={project.name}
+              onActivityUpdated={onActivityUpdated}
+            />
             
-            {/* Project Activities Section */}
+            {/* Enhanced Todos Section */}
+            <ProjectTodoListEnhanced projectId={project.id} />
+            
+            {/* Project Activities Section (for viewing existing activities) */}
             <ProjectActivitySection
               projectId={project.id}
               leadId={project.lead_id}
@@ -303,21 +324,21 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
               onActivityUpdated={onActivityUpdated}
             />
             
-            {/* Project Todos Section */}
-            <ProjectTodoList projectId={project.id} />
-            
-            {/* Delete Project Section */}
-            <div className="mt-8 pt-6 border-t">
-              <Button
-                variant="destructive"
-                onClick={() => setShowDeleteDialog(true)}
-                className="w-full"
-              >
-                Delete Project
-              </Button>
-              <p className="text-sm text-muted-foreground mt-2 text-center">
-                Deleting this project will not remove sessions, notes, or reminders.
-              </p>
+            {/* Delete Project Section - Danger Zone */}
+            <div className="pt-8 border-t border-destructive/20 bg-destructive/5 -mx-6 px-6 pb-6 rounded-b-lg">
+              <div className="space-y-3">
+                <h3 className="text-sm font-medium text-destructive">Danger Zone</h3>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowDeleteDialog(true)}
+                  className="w-full border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                >
+                  Delete Project
+                </Button>
+                <p className="text-xs text-muted-foreground text-center">
+                  This will not delete sessions, notes, or reminders.
+                </p>
+              </div>
             </div>
           </div>
         </DialogContent>

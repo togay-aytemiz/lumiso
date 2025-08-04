@@ -240,39 +240,46 @@ const GlobalSearch = () => {
       // Search projects
       const { data: projects, error: projectsError } = await supabase
         .from('projects')
-        .select(`
-          *,
-          lead:leads(id, name, status)
-        `)
+        .select('*')
         .or(`name.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`);
 
       if (projectsError) throw projectsError;
 
-      // Add project results
-      projects?.forEach((project: any) => {
-        let matchedContent = '';
-        if (project.description?.toLowerCase().includes(searchQuery.toLowerCase())) {
-          matchedContent = `Description: ${project.description}`;
-          if (matchedContent.length > 80) {
-            matchedContent = `${matchedContent.substring(0, 80)}...`;
+      // Get leads for the found projects
+      if (projects && projects.length > 0) {
+        const projectLeadIds = [...new Set(projects.map((p: any) => p.lead_id))];
+        const { data: projectLeads } = await supabase
+          .from('leads')
+          .select('id, name, status')
+          .in('id', projectLeadIds);
+
+        const projectLeadMap = new Map(projectLeads?.map(l => [l.id, l]) || []);
+
+        // Add project results
+        projects.forEach((project: any) => {
+          let matchedContent = '';
+          if (project.description?.toLowerCase().includes(searchQuery.toLowerCase())) {
+            matchedContent = `Description: ${project.description}`;
+            if (matchedContent.length > 80) {
+              matchedContent = `${matchedContent.substring(0, 80)}...`;
+            }
           }
-        }
 
-        // Get the first lead from the array (should only be one)
-        const lead = project.lead?.[0];
+          const lead = projectLeadMap.get(project.lead_id);
 
-        searchResults.push({
-          id: project.id,
-          projectId: project.id,
-          projectName: project.name,
-          leadId: lead?.id,
-          leadName: lead?.name,
-          type: 'project',
-          matchedContent,
-          status: lead?.status || 'unknown',
-          icon: <FolderOpen className="h-4 w-4" />
+          searchResults.push({
+            id: project.id,
+            projectId: project.id,
+            projectName: project.name,
+            leadId: lead?.id,
+            leadName: lead?.name,
+            type: 'project',
+            matchedContent,
+            status: lead?.status || 'unknown',
+            icon: <FolderOpen className="h-4 w-4" />
+          });
         });
-      });
+      }
 
       // Sort results by type and limit to 10
       const sortedResults = searchResults

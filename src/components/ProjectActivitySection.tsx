@@ -257,11 +257,8 @@ export function ProjectActivitySection({ projectId, leadId, leadName, projectNam
                       <Badge variant="outline" className="text-xs">
                         {activity.type}
                       </Badge>
-                      <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300">
-                        Project
-                      </Badge>
                     </div>
-                    <div className="flex-1 space-y-2">
+                    <div className="flex-1">
                       {activity.type === 'reminder' && activity.reminder_date ? (
                         <ReminderCard
                           activity={activity}
@@ -292,7 +289,7 @@ export function ProjectActivitySection({ projectId, leadId, leadName, projectNam
                           </div>
                         </div>
                       )}
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground mt-2">
                         <Clock className="h-3 w-3" />
                         {new Date(activity.created_at).toLocaleDateString()} at {formatTime(new Date(activity.created_at).toTimeString().slice(0,5))}
                       </div>

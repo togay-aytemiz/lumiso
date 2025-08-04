@@ -10,6 +10,7 @@ import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import SessionBanner from "./SessionBanner";
 import { ProjectActivitySection } from "./ProjectActivitySection";
+import { ProjectTodoList } from "./ProjectTodoList";
 import EditSessionDialog from "./EditSessionDialog";
 
 interface Project {
@@ -296,6 +297,11 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
                 projectName={project.name}
                 onActivityUpdated={onActivityUpdated}
               />
+            </div>
+            
+            {/* Project Todos Section */}
+            <div className="mt-8 pt-6 border-t">
+              <ProjectTodoList projectId={project.id} />
             </div>
             
             {/* Delete Project Section */}

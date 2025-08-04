@@ -187,6 +187,7 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
   const handleSessionUpdated = () => {
     fetchProjectSessions();
     setEditingSessionId(null);
+    onProjectUpdated(); // Notify parent component to refresh sessions
   };
 
   const handleDeleteSession = async (sessionId: string) => {
@@ -204,6 +205,7 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
       });
 
       fetchProjectSessions();
+      onProjectUpdated(); // Notify parent component to refresh sessions
     } catch (error: any) {
       toast({
         title: "Error deleting session",

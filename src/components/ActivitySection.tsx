@@ -114,21 +114,36 @@ const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
 
   const fetchAuditLogs = async () => {
     try {
-      // Get sessions for this lead to include session audit logs
+      // Get current sessions for project name mapping
       const { data: sessionsData } = await supabase
         .from('sessions')
         .select('id, project_id')
         .eq('lead_id', leadId);
       
-      const sessionIds = sessionsData?.map(s => s.id) || [];
-      
-      const { data, error } = await supabase
+      // Get all session audit logs and filter by lead_id from the session data
+      const { data: allSessionAuditLogs } = await supabase
         .from('audit_log')
         .select('*')
-        .or(`entity_id.eq.${leadId},entity_id.in.(${sessionIds.join(',')})`)
-        .order('created_at', { ascending: false });
+        .eq('entity_type', 'session');
+      
+      // Filter session audit logs to only include sessions that belong to this lead
+      const sessionAuditLogs = allSessionAuditLogs?.filter(log => {
+        const sessionData = log.new_values || log.old_values;
+        return sessionData && typeof sessionData === 'object' && sessionData !== null && 
+               'lead_id' in sessionData && sessionData.lead_id === leadId;
+      }) || [];
+      
+      // Get lead audit logs  
+      const { data: leadAuditLogs } = await supabase
+        .from('audit_log')
+        .select('*')
+        .eq('entity_id', leadId);
+      
+      // Combine all audit logs for this lead
+      const data = [...(leadAuditLogs || []), ...sessionAuditLogs]
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
-      if (error) throw error;
+      // No error to check since we did multiple queries
       
       // Get project names for session audit logs
       const projectIds = [...new Set(sessionsData?.map(s => s.project_id).filter(Boolean) || [])];

@@ -456,7 +456,7 @@ const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="activities" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-fit grid-cols-2">
               <TabsTrigger value="activities">Activities</TabsTrigger>
               <TabsTrigger value="history">History</TabsTrigger>
             </TabsList>

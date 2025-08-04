@@ -368,7 +368,7 @@ const NewSessionDialog = ({ onSessionScheduled }: NewSessionDialogProps) => {
                         <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-full p-0" align="start">
+                    <PopoverContent className="w-full p-0 z-50" align="start">
                       <div className="p-3 border-b">
                         <div className="relative">
                           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
@@ -381,7 +381,7 @@ const NewSessionDialog = ({ onSessionScheduled }: NewSessionDialogProps) => {
                           />
                         </div>
                       </div>
-                      <div className="max-h-64 overflow-auto">
+                      <div className="max-h-64 overflow-y-auto overscroll-contain" style={{ scrollBehavior: 'smooth' }}>
                         {loadingLeads ? (
                           <div className="p-4 text-center text-sm text-muted-foreground">
                             Loading clients...

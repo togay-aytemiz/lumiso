@@ -20,10 +20,11 @@ interface Project {
 interface ProjectCardProps {
   project: Project;
   onView: (project: Project) => void;
+  refreshTrigger?: number;
 }
 
-export function ProjectCard({ project, onView }: ProjectCardProps) {
-  const { progress, loading } = useProjectProgress(project.id);
+export function ProjectCard({ project, onView, refreshTrigger }: ProjectCardProps) {
+  const { progress, loading } = useProjectProgress(project.id, refreshTrigger);
 
   return (
     <Card className="w-full hover:shadow-md transition-shadow cursor-pointer">

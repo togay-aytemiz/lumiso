@@ -42,6 +42,7 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
   const [isDeleting, setIsDeleting] = useState(false);
   const [showViewDialog, setShowViewDialog] = useState(false);
   const [viewingProject, setViewingProject] = useState<Project | null>(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const { toast } = useToast();
 
   const fetchProjects = async () => {
@@ -195,6 +196,7 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
                 key={project.id}
                 project={project}
                 onView={handleViewProject}
+                refreshTrigger={refreshTrigger}
               />
             ))}
           </div>
@@ -207,6 +209,7 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
         onOpenChange={setShowViewDialog}
         onProjectUpdated={() => {
           fetchProjects();
+          setRefreshTrigger(prev => prev + 1); // Force refresh progress bars
           onProjectUpdated?.(); // Notify parent component about project update
         }}
         onActivityUpdated={onActivityUpdated}

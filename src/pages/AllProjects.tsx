@@ -361,9 +361,13 @@ const AllProjects = () => {
                     onClick={() => handleProjectClick(project)}
                   >
                     <TableCell className="font-medium">
-                      <span className="hover:underline cursor-pointer">
+                      <Button
+                        variant="link"
+                        className="p-0 h-auto text-left justify-start font-medium"
+                        onClick={() => handleProjectClick(project)}
+                      >
                         {project.name}
-                      </span>
+                      </Button>
                     </TableCell>
                     <TableCell>
                       {project.lead ? (

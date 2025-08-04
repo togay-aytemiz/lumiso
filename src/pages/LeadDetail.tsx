@@ -16,6 +16,7 @@ import ScheduleSessionDialog from "@/components/ScheduleSessionDialog";
 import EditSessionDialog from "@/components/EditSessionDialog";
 import ActivitySection from "@/components/ActivitySection";
 import SessionBanner from "@/components/SessionBanner";
+import { ProjectsSection } from "@/components/ProjectsSection";
 import { getLeadStatusStyles, formatStatusText } from "@/lib/leadStatusColors";
 import { formatDate } from "@/lib/utils";
 
@@ -631,8 +632,9 @@ const LeadDetail = () => {
           </Card>
         </div>
 
-        {/* Right column - Activity Section (75%) */}
-        <div className="lg:col-span-3">
+        {/* Right column - Projects and Activity Section (75%) */}
+        <div className="lg:col-span-3 space-y-6">
+          <ProjectsSection leadId={lead.id} />
           <ActivitySection leadId={lead.id} leadName={lead.name} />
         </div>
       </div>

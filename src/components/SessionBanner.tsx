@@ -98,6 +98,11 @@ const SessionBanner = ({ session, leadName, projectName, onStatusUpdate, onEdit,
                   This session has been marked as {formatStatusText(session.status).toLowerCase()}
                 </p>
               )}
+              {session.notes && (
+                <p className="text-sm text-muted-foreground mt-1 italic">
+                  "{session.notes}"
+                </p>
+              )}
             </div>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">

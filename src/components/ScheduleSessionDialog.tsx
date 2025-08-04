@@ -26,8 +26,7 @@ const ScheduleSessionDialog = ({ leadId, leadName, onSessionScheduled, disabled 
     session_date: "",
     session_time: "",
     notes: "",
-    project_id: "",
-    sessionNote: ""
+    project_id: ""
   });
   const [projects, setProjects] = useState<{id: string, name: string}[]>([]);
 
@@ -126,23 +125,6 @@ const ScheduleSessionDialog = ({ leadId, leadName, onSessionScheduled, disabled 
         // Don't throw here - session was created successfully
       }
 
-      // Add note as activity if provided
-      if (formData.sessionNote.trim()) {
-        const { error: noteActivityError } = await supabase
-          .from('activities')
-          .insert({
-            user_id: user.id,
-            lead_id: leadId,
-            type: 'note',
-            content: formData.sessionNote.trim()
-          });
-
-        if (noteActivityError) {
-          console.error('Error creating note activity:', noteActivityError);
-          // Don't throw here - session was created successfully
-        }
-      }
-
       toast({
         title: "Success",
         description: "Session scheduled successfully.",
@@ -153,8 +135,7 @@ const ScheduleSessionDialog = ({ leadId, leadName, onSessionScheduled, disabled 
         session_date: "",
         session_time: "",
         notes: "",
-        project_id: "",
-        sessionNote: ""
+        project_id: ""
       });
       setOpen(false);
       
@@ -270,18 +251,7 @@ const ScheduleSessionDialog = ({ leadId, leadName, onSessionScheduled, disabled 
                 value={formData.notes}
                 onChange={(e) => handleInputChange("notes", e.target.value)}
                 placeholder="Any special requirements or notes for this session..."
-                rows={2}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="sessionNote">Note (Optional)</Label>
-              <Textarea
-                id="sessionNote"
-                value={formData.sessionNote}
-                onChange={(e) => handleInputChange("sessionNote", e.target.value)}
-                placeholder="Add a note that will appear in the activity timeline..."
-                rows={2}
+                rows={3}
               />
             </div>
           </div>

@@ -33,9 +33,12 @@ export function ProjectCard({ project, onView }: ProjectCardProps) {
             {project.description && (
               <p className="text-muted-foreground mb-2">{project.description}</p>
             )}
-            <p className="text-sm text-muted-foreground">
-              Created {format(new Date(project.created_at), "MMM d, yyyy")}
-            </p>
+            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+              <span>Created {format(new Date(project.created_at), "M/d/yy")}</span>
+              {project.updated_at !== project.created_at && (
+                <span>Updated {format(new Date(project.updated_at), "M/d/yy")}</span>
+              )}
+            </div>
           </div>
           <div className="flex items-center ml-4">
             <ChevronRight className="h-5 w-5 text-muted-foreground" />

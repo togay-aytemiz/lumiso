@@ -1,8 +1,10 @@
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Calendar, CheckCircle, Loader2 } from "lucide-react";
 import { useGoogleCalendar } from "@/hooks/useGoogleCalendar";
 import ServicesSection from "@/components/ServicesSection";
+import GlobalSearch from "@/components/GlobalSearch";
 
 const Settings = () => {
   const { connection, loading, connectCalendar, disconnectCalendar } = useGoogleCalendar();
@@ -10,8 +12,15 @@ const Settings = () => {
   return (
     <div className="p-8">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold">Settings</h1>
-        <p className="text-muted-foreground">Manage your account and integrations</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">Settings</h1>
+            <p className="text-muted-foreground">Manage your account and integrations</p>
+          </div>
+          <div className="w-full max-w-lg min-w-[480px] ml-8">
+            <GlobalSearch />
+          </div>
+        </div>
       </div>
 
       <div className="space-y-8">

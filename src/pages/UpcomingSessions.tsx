@@ -10,6 +10,7 @@ import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import NewSessionDialog from "@/components/NewSessionDialog";
 import { formatDate, formatTime, formatLongDate, getWeekRange } from "@/lib/utils";
+import GlobalSearch from "@/components/GlobalSearch";
 
 interface Session {
   id: string;
@@ -267,8 +268,15 @@ const AllSessions = () => {
   return (
     <div className="p-8">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold">Sessions</h1>
-        <p className="text-muted-foreground">Manage your photo sessions and appointments</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">Sessions</h1>
+            <p className="text-muted-foreground">Manage your photo sessions and appointments</p>
+          </div>
+          <div className="w-full max-w-lg min-w-[480px] ml-8">
+            <GlobalSearch />
+          </div>
+        </div>
       </div>
       <Card>
         <CardHeader>

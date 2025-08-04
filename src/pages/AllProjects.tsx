@@ -12,6 +12,7 @@ import { ViewProjectDialog } from "@/components/ViewProjectDialog";
 import { useNavigate } from "react-router-dom";
 import { formatDate } from "@/lib/utils";
 import { getLeadStatusStyles, formatStatusText } from "@/lib/leadStatusColors";
+import GlobalSearch from "@/components/GlobalSearch";
 
 interface Project {
   id: string;
@@ -265,8 +266,15 @@ const AllProjects = () => {
   return (
     <div className="p-8">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold">Projects</h1>
-        <p className="text-muted-foreground">Manage all your projects in one place</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">Projects</h1>
+            <p className="text-muted-foreground">Manage all your projects in one place</p>
+          </div>
+          <div className="w-full max-w-lg min-w-[480px] ml-8">
+            <GlobalSearch />
+          </div>
+        </div>
       </div>
       
       <Card>

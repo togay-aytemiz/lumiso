@@ -9,6 +9,7 @@ import { DateRangePicker } from "@/components/DateRangePicker";
 import ReminderCard from "@/components/ReminderCard";
 import type { DateRange } from "react-day-picker";
 import { formatDate, formatTime, formatDateTime, formatGroupDate, getWeekRange } from "@/lib/utils";
+import GlobalSearch from "@/components/GlobalSearch";
 
 interface Activity {
   id: string;
@@ -382,8 +383,15 @@ const ReminderDetails = () => {
   return (
     <div className="bg-background">
       <div className="p-6 border-b">
-        <h1 className="text-3xl font-bold">Reminder Details</h1>
-        <p className="text-muted-foreground">Manage your task reminders</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">Reminder Details</h1>
+            <p className="text-muted-foreground">Manage your task reminders</p>
+          </div>
+          <div className="w-full max-w-lg min-w-[480px] ml-8">
+            <GlobalSearch />
+          </div>
+        </div>
       </div>
 
       {/* Filter Bar */}

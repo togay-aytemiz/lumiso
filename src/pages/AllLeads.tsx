@@ -11,6 +11,7 @@ import AddLeadDialog from "@/components/AddLeadDialog";
 import { useNavigate } from "react-router-dom";
 import { getLeadStatusStyles, formatStatusText } from "@/lib/leadStatusColors";
 import { formatDate } from "@/lib/utils";
+import GlobalSearch from "@/components/GlobalSearch";
 
 interface Lead {
   id: string;
@@ -135,8 +136,15 @@ const AllLeads = () => {
   return (
     <div className="p-8">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold">Leads</h1>
-        <p className="text-muted-foreground">Track and manage your potential clients</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">Leads</h1>
+            <p className="text-muted-foreground">Track and manage your potential clients</p>
+          </div>
+          <div className="w-full max-w-lg min-w-[480px] ml-8">
+            <GlobalSearch />
+          </div>
+        </div>
       </div>
       <Card>
         <CardHeader>

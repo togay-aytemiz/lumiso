@@ -196,13 +196,13 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
   return (
     <>
       <Dialog open={open} onOpenChange={(newOpen) => {
-        onOpenChange(newOpen);
         if (!newOpen) {
+          onOpenChange(newOpen);
           // Trigger refresh of project data when modal closes
           onProjectUpdated();
         }
       }}>
-        <DialogContent className="sm:max-w-5xl max-h-[85vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-5xl max-h-[85vh] overflow-y-auto [&>button]:hidden">
           <DialogHeader className="pb-6">
             <div className="flex items-start justify-between">
               <div className="flex-1 space-y-2">
@@ -273,6 +273,14 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
                   <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
                   </svg>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onOpenChange(false)}
+                  className="text-muted-foreground hover:text-foreground text-sm h-10 px-3"
+                >
+                  Close
                 </Button>
               </div>
             </div>

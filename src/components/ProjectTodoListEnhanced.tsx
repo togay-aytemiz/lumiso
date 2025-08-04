@@ -142,13 +142,13 @@ export function ProjectTodoListEnhanced({ projectId }: ProjectTodoListEnhancedPr
 
   if (loading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <CheckSquare className="h-5 w-5" />
-            Todos
-          </CardTitle>
-        </CardHeader>
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-lg font-medium">
+          <CheckSquare className="h-4 w-4" />
+          Todos
+        </CardTitle>
+      </CardHeader>
         <CardContent>
           <div className="space-y-3">
             <div className="w-full h-4 bg-muted animate-pulse rounded" />
@@ -166,11 +166,21 @@ export function ProjectTodoListEnhanced({ projectId }: ProjectTodoListEnhancedPr
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <CheckSquare className="h-5 w-5" />
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-lg font-medium">
+          <CheckSquare className="h-4 w-4" />
           Todos
         </CardTitle>
+        {todos.length > 0 && (
+          <div className="pt-2">
+            <ProgressBar
+              value={progressPercentage}
+              total={totalCount}
+              completed={completedCount}
+              size="md"
+            />
+          </div>
+        )}
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Add Todo Input */}
@@ -224,15 +234,6 @@ export function ProjectTodoListEnhanced({ projectId }: ProjectTodoListEnhancedPr
                   </Button>
                 </div>
               ))}
-            </div>
-
-            <div className="pt-2">
-              <ProgressBar
-                value={progressPercentage}
-                total={totalCount}
-                completed={completedCount}
-                size="md"
-              />
             </div>
           </>
         ) : (

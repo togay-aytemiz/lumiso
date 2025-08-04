@@ -63,9 +63,9 @@ export function SessionsSection({
     <>
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center justify-between">
+          <CardTitle className="flex items-center justify-between text-lg font-medium">
             <div className="flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
+              <Calendar className="h-4 w-4" />
               Sessions
             </div>
             <NewSessionDialogForProject

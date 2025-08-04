@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Clock, MessageSquare, Bell, CheckCircle, Plus } from "lucide-react";
+import { Clock, MessageSquare, Bell, CheckCircle, FileText } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import ReminderCard from "@/components/ReminderCard";
 import { formatTime } from "@/lib/utils";
@@ -190,132 +190,133 @@ export function ProjectActivitySection({ projectId, leadId, leadName, projectNam
   };
 
   return (
-    <div className="space-y-4">
-      {/* Add Activity Section */}
-      <div className="space-y-2">
-        <Label className="text-sm text-muted-foreground">Add project-specific activity</Label>
-        <Card>
-          <CardContent className="p-4 space-y-4">
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label>Note</Label>
-                  <div className="flex items-center gap-2">
-                    <Label htmlFor="project-reminder-toggle" className="text-sm font-medium">
-                      Set Reminder?
-                    </Label>
-                    <Switch
-                      id="project-reminder-toggle"
-                      checked={isReminderMode}
-                      onCheckedChange={handleReminderToggle}
-                    />
-                  </div>
-                </div>
-                <Textarea
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  placeholder="Enter your project note..."
-                  rows={3}
-                  className="resize-none"
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-lg font-medium">
+          <FileText className="h-4 w-4" />
+          Notes
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Add Activity Form */}
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label>Note</Label>
+              <div className="flex items-center gap-2">
+                <Label htmlFor="project-reminder-toggle" className="text-sm font-medium">
+                  Set Reminder?
+                </Label>
+                <Switch
+                  id="project-reminder-toggle"
+                  checked={isReminderMode}
+                  onCheckedChange={handleReminderToggle}
                 />
               </div>
-
-              {isReminderMode && (
-                <div className="space-y-2">
-                  <Label>Date & Time</Label>
-                  <Input
-                    type="datetime-local"
-                    value={reminderDateTime}
-                    onChange={(e) => setReminderDateTime(e.target.value)}
-                    className="w-full"
-                  />
-                </div>
-              )}
-
-              <div className="flex justify-end">
-                <Button 
-                  onClick={handleSaveActivity} 
-                  disabled={saving || !content.trim() || (isReminderMode && !reminderDateTime)}
-                  size="sm"
-                >
-                  {saving ? "Saving..." : `Add ${isReminderMode ? 'Reminder' : 'Note'}`}
-                </Button>
-              </div>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+            <Textarea
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              placeholder="Enter your project note..."
+              rows={3}
+              className="resize-none"
+            />
+          </div>
 
-      {/* Project Activities List */}
-      {!loading && activities.length > 0 && (
-        <div className="space-y-2">
-          <Label className="text-sm text-muted-foreground">Project activities</Label>
-          <div className="space-y-2">
-            {activities.map((activity) => (
-              <Card key={activity.id}>
-                <CardContent className="p-3">
-                  <div className="flex items-start gap-3">
-                    <div className="flex items-center gap-2 mt-0.5">
-                      {activity.type === 'note' ? (
-                        <MessageSquare className="h-4 w-4 text-blue-500" />
-                      ) : (
-                        <Bell className="h-4 w-4 text-orange-500" />
-                      )}
-                      <Badge variant="outline" className="text-xs">
-                        {activity.type}
-                      </Badge>
-                    </div>
-                    <div className="flex-1">
-                      {activity.type === 'reminder' && activity.reminder_date ? (
-                        <ReminderCard
-                          activity={activity}
-                          leadName={leadName}
-                          onToggleCompletion={toggleCompletion}
-                          showCompletedBadge={false}
-                          hideStatusBadge={activity.completed}
-                        />
-                      ) : activity.type === 'reminder' ? (
-                        // Reminder without date - show with completion button
-                        <div className="flex items-start gap-3">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleCompletion(activity.id, !activity.completed);
-                            }}
-                            className="flex items-center justify-center w-5 h-5 rounded-full border-2 border-muted-foreground/40 hover:border-primary transition-colors mt-0.5 flex-shrink-0"
-                          >
-                            {activity.completed ? (
-                              <CheckCircle className="h-3 w-3 text-green-600 dark:text-green-400" />
-                            ) : (
-                              <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40" />
-                            )}
-                          </button>
+          {isReminderMode && (
+            <div className="space-y-2">
+              <Label>Date & Time</Label>
+              <Input
+                type="datetime-local"
+                value={reminderDateTime}
+                onChange={(e) => setReminderDateTime(e.target.value)}
+                className="w-full"
+              />
+            </div>
+          )}
+
+          <div className="flex justify-end">
+            <Button 
+              onClick={handleSaveActivity} 
+              disabled={saving || !content.trim() || (isReminderMode && !reminderDateTime)}
+              size="sm"
+            >
+              {saving ? "Saving..." : `Add ${isReminderMode ? 'Reminder' : 'Note'}`}
+            </Button>
+          </div>
+        </div>
+
+        {/* Project Activities List */}
+        {!loading && activities.length > 0 && (
+          <div className="space-y-3">
+            <Label className="text-sm text-muted-foreground">Recent activities</Label>
+            <div className="space-y-2">
+              {activities.map((activity) => (
+                <Card key={activity.id}>
+                  <CardContent className="p-3">
+                    <div className="flex items-start gap-3">
+                      <div className="flex items-center gap-2 mt-0.5">
+                        {activity.type === 'note' ? (
+                          <MessageSquare className="h-4 w-4 text-blue-500" />
+                        ) : (
+                          <Bell className="h-4 w-4 text-orange-500" />
+                        )}
+                        <Badge variant="outline" className="text-xs">
+                          {activity.type}
+                        </Badge>
+                      </div>
+                      <div className="flex-1">
+                        {activity.type === 'reminder' && activity.reminder_date ? (
+                          <ReminderCard
+                            activity={activity}
+                            leadName={leadName}
+                            onToggleCompletion={toggleCompletion}
+                            showCompletedBadge={false}
+                            hideStatusBadge={activity.completed}
+                          />
+                        ) : activity.type === 'reminder' ? (
+                          // Reminder without date - show with completion button
+                          <div className="flex items-start gap-3">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleCompletion(activity.id, !activity.completed);
+                              }}
+                              className="flex items-center justify-center w-5 h-5 rounded-full border-2 border-muted-foreground/40 hover:border-primary transition-colors mt-0.5 flex-shrink-0"
+                            >
+                              {activity.completed ? (
+                                <CheckCircle className="h-3 w-3 text-green-600 dark:text-green-400" />
+                              ) : (
+                                <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40" />
+                              )}
+                            </button>
+                            <div className="flex-1">
+                              <p className={`text-sm ${activity.completed ? 'line-through opacity-60' : ''}`}>
+                                {activity.content}
+                              </p>
+                            </div>
+                          </div>
+                        ) : (
+                          // Regular note - no completion button
                           <div className="flex-1">
-                            <p className={`text-sm ${activity.completed ? 'line-through opacity-60' : ''}`}>
+                            <p className="text-sm">
                               {activity.content}
                             </p>
                           </div>
+                        )}
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground mt-2">
+                          <Clock className="h-3 w-3" />
+                          {new Date(activity.created_at).toLocaleDateString()} at {formatTime(new Date(activity.created_at).toTimeString().slice(0,5))}
                         </div>
-                      ) : (
-                        // Regular note - no completion button
-                        <div className="flex-1">
-                          <p className="text-sm">
-                            {activity.content}
-                          </p>
-                        </div>
-                      )}
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground mt-2">
-                        <Clock className="h-3 w-3" />
-                        {new Date(activity.created_at).toLocaleDateString()} at {formatTime(new Date(activity.created_at).toTimeString().slice(0,5))}
                       </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }

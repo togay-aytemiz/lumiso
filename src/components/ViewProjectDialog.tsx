@@ -207,24 +207,20 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
             <div className="flex items-start justify-between">
               <div className="flex-1 space-y-2">
                 {isEditing ? (
-                  <div className="space-y-4">
-                    <div>
+                    <div className="space-y-3">
                       <Input
                         value={editName}
                         onChange={(e) => setEditName(e.target.value)}
                         placeholder="Project name"
-                        className="text-2xl font-bold h-auto py-2 border-0 px-0 focus-visible:ring-0"
+                        className="text-2xl font-bold border rounded-md px-3 py-2"
                       />
-                    </div>
-                    <div>
                       <Textarea
                         value={editDescription}
                         onChange={(e) => setEditDescription(e.target.value)}
                         placeholder="Project description (optional)"
-                        className="text-base resize-none border-0 px-0 focus-visible:ring-0"
+                        className="text-base border rounded-md px-3 py-2 resize-none"
                         rows={2}
                       />
-                    </div>
                     <div className="flex gap-2">
                       <Button 
                         size="sm" 
@@ -262,20 +258,20 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
                 )}
               </div>
               
-              <div className="flex items-center gap-2 ml-4">
+              <div className="flex items-center gap-2">
                 {!isEditing && (
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => setIsEditing(true)}
-                    className="text-muted-foreground hover:text-foreground"
+                    className="text-muted-foreground hover:text-foreground text-sm"
                   >
                     Edit
                   </Button>
                 )}
                 <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
                   <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4h16v16H4V4z M8 8h8v8H8V8z" />
                   </svg>
                 </Button>
               </div>
@@ -315,7 +311,7 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
             <ProjectTodoListEnhanced projectId={project.id} />
             
             {/* Delete Project Section - Danger Zone */}
-            <div className="pt-8 border-t border-destructive/20 bg-destructive/5 -mx-6 px-6 pb-6 rounded-b-lg">
+            <div className="pt-6 border-t border-destructive/20 bg-destructive/5 -mx-6 px-6 -mb-6 pb-6">
               <div className="space-y-3">
                 <h3 className="text-sm font-medium text-destructive">Danger Zone</h3>
                 <Button

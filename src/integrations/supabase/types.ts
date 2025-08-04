@@ -225,6 +225,30 @@ export type Database = {
         }
         Relationships: []
       }
+      project_services: {
+        Row: {
+          created_at: string
+          id: string
+          project_id: string
+          service_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          project_id: string
+          service_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          project_id?: string
+          service_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       projects: {
         Row: {
           created_at: string

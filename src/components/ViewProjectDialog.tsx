@@ -327,6 +327,7 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
             <SessionsSection
               sessions={sessions}
               loading={loading}
+              leadId={project.lead_id}
               leadName={leadName}
               projectName={project.name}
               onSessionUpdated={handleSessionUpdated}

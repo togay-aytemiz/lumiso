@@ -19,6 +19,7 @@ interface Session {
 interface SessionsSectionProps {
   sessions: Session[];
   loading: boolean;
+  leadId: string;
   leadName: string;
   projectName: string;
   onSessionUpdated: () => void;
@@ -28,6 +29,7 @@ interface SessionsSectionProps {
 export function SessionsSection({ 
   sessions, 
   loading, 
+  leadId,
   leadName, 
   projectName, 
   onSessionUpdated, 
@@ -69,7 +71,7 @@ export function SessionsSection({
               Sessions
             </div>
             <NewSessionDialogForProject
-              leadId={sessions[0]?.lead_id}
+              leadId={leadId}
               leadName={leadName}
               projectName={projectName}
               onSessionScheduled={onSessionUpdated}

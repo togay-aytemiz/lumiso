@@ -32,6 +32,10 @@ interface Project {
   completed_session_count?: number;
   todo_count?: number;
   completed_todo_count?: number;
+  services?: Array<{
+    id: string;
+    name: string;
+  }>;
 }
 
 type SortField = 'name' | 'lead_name' | 'lead_status' | 'created_at' | 'updated_at' | 'session_count';
@@ -85,6 +89,19 @@ const AllProjects = () => {
             .select('id, is_completed')
             .eq('project_id', project.id);
 
+          // Get services for this project
+          const { data: projectServices } = await supabase
+            .from('project_services')
+            .select(`
+              services (
+                id,
+                name
+              )
+            `)
+            .eq('project_id', project.id);
+
+          const services = projectServices?.map(ps => ps.services).filter(Boolean) || [];
+
           return {
             ...project,
             lead: leadsMap.get(project.lead_id) || null,
@@ -92,6 +109,7 @@ const AllProjects = () => {
             completed_session_count: sessions?.filter(s => s.status === 'completed').length || 0,
             todo_count: todos?.length || 0,
             completed_todo_count: todos?.filter(t => t.is_completed).length || 0,
+            services: services,
           };
         })
       );
@@ -194,7 +212,7 @@ const AllProjects = () => {
   ];
 
   const getProgressBadge = (completed: number, total: number) => {
-    if (total === 0) return <span className="text-muted-foreground text-xs">-</span>;
+    if (total === 0) return <span className="text-muted-foreground text-xs">0/0</span>;
     
     const percentage = (completed / total) * 100;
     const isComplete = percentage === 100;
@@ -206,6 +224,30 @@ const AllProjects = () => {
       >
         {completed}/{total}
       </Badge>
+    );
+  };
+
+  const renderServicesChips = (services: Array<{ id: string; name: string }>) => {
+    if (!services || services.length === 0) {
+      return <span className="text-muted-foreground text-xs">-</span>;
+    }
+
+    const displayServices = services.slice(0, 3);
+    const overflowCount = services.length - 3;
+
+    return (
+      <div className="flex flex-wrap gap-1">
+        {displayServices.map((service) => (
+          <Badge key={service.id} variant="outline" className="text-xs">
+            {service.name}
+          </Badge>
+        ))}
+        {overflowCount > 0 && (
+          <Badge variant="secondary" className="text-xs">
+            +{overflowCount}
+          </Badge>
+        )}
+      </div>
     );
   };
 
@@ -266,7 +308,6 @@ const AllProjects = () => {
                   onClick={() => handleSort('name')}
                 >
                   <div className="flex items-center gap-2">
-                    <FolderOpen className="h-4 w-4" />
                     Project Name
                     {getSortIcon('name')}
                   </div>
@@ -276,7 +317,6 @@ const AllProjects = () => {
                   onClick={() => handleSort('lead_name')}
                 >
                   <div className="flex items-center gap-2">
-                    <User className="h-4 w-4" />
                     Lead
                     {getSortIcon('lead_name')}
                   </div>
@@ -286,21 +326,21 @@ const AllProjects = () => {
                   onClick={() => handleSort('lead_status')}
                 >
                   <div className="flex items-center gap-2">
-                    Lead Status
+                    Status
                     {getSortIcon('lead_status')}
                   </div>
                 </TableHead>
-                <TableHead>Description</TableHead>
                 <TableHead 
-                  className="cursor-pointer hover:bg-muted/50"
+                  className="cursor-pointer hover:bg-muted/50 text-center"
                   onClick={() => handleSort('session_count')}
                 >
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center justify-center gap-2">
                     Sessions
                     {getSortIcon('session_count')}
                   </div>
                 </TableHead>
-                <TableHead>Todos</TableHead>
+                <TableHead className="text-center">Todos</TableHead>
+                <TableHead>Services</TableHead>
                 <TableHead 
                   className="cursor-pointer hover:bg-muted/50"
                   onClick={() => handleSort('updated_at')}
@@ -308,15 +348,6 @@ const AllProjects = () => {
                   <div className="flex items-center gap-2">
                     Last Updated
                     {getSortIcon('updated_at')}
-                  </div>
-                </TableHead>
-                <TableHead 
-                  className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => handleSort('created_at')}
-                >
-                  <div className="flex items-center gap-2">
-                    Created
-                    {getSortIcon('created_at')}
                   </div>
                 </TableHead>
               </TableRow>
@@ -330,10 +361,7 @@ const AllProjects = () => {
                     onClick={() => handleProjectClick(project)}
                   >
                     <TableCell className="font-medium">
-                      <div className="flex items-center gap-2">
-                        <FolderOpen className="h-4 w-4 text-muted-foreground" />
-                        {project.name}
-                      </div>
+                      {project.name}
                     </TableCell>
                     <TableCell>
                       {project.lead ? (
@@ -343,10 +371,7 @@ const AllProjects = () => {
                             className="p-0 h-auto text-left justify-start"
                             onClick={(e) => handleLeadClick(e, project.lead.id)}
                           >
-                            <div className="flex items-center gap-2">
-                              <User className="h-3 w-3" />
-                              {project.lead.name}
-                            </div>
+                            {project.lead.name}
                           </Button>
                           {project.lead.email && (
                             <div className="text-xs text-muted-foreground">{project.lead.email}</div>
@@ -365,48 +390,23 @@ const AllProjects = () => {
                         <span className="text-muted-foreground">-</span>
                       )}
                     </TableCell>
-                    <TableCell className="max-w-xs">
-                      {project.description ? (
-                        <div 
-                          className="truncate hover:whitespace-normal hover:overflow-visible hover:text-wrap cursor-help"
-                          title={project.description}
-                        >
-                          {project.description}
-                        </div>
-                      ) : (
-                        <span className="text-muted-foreground">-</span>
-                      )}
+                    <TableCell className="text-center">
+                      {getProgressBadge(project.completed_session_count || 0, project.session_count || 0)}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {getProgressBadge(project.completed_todo_count || 0, project.todo_count || 0)}
                     </TableCell>
                     <TableCell>
-                      <div className="flex flex-col gap-1">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm">{project.session_count || 0} total</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {getProgressBadge(project.completed_session_count || 0, project.session_count || 0)}
-                          <span className="text-xs text-muted-foreground">completed</span>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        {getProgressBadge(project.completed_todo_count || 0, project.todo_count || 0)}
-                        <span className="text-xs text-muted-foreground">
-                          {project.todo_count || 0} task{(project.todo_count || 0) !== 1 ? 's' : ''}
-                        </span>
-                      </div>
+                      {renderServicesChips(project.services || [])}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {formatDate(project.updated_at)}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {formatDate(project.created_at)}
                     </TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                     {statusFilter === "all" 
                       ? "No projects found. Create your first project to get started!"
                       : `No projects found for leads with status "${statusFilter}".`

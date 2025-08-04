@@ -51,13 +51,13 @@ export function ProjectActivitySection({ projectId, leadId, leadName, projectNam
     try {
       const { data, error } = await supabase
         .from('activities')
-        .select('*')
+        .select('id, type, content, reminder_date, reminder_time, created_at, completed, lead_id, project_id')
         .eq('lead_id', leadId)
         .eq('project_id', projectId)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setActivities(data || []);
+      setActivities((data as ProjectActivity[]) || []);
     } catch (error: any) {
       console.error('Error fetching project activities:', error);
     } finally {

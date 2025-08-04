@@ -287,6 +287,11 @@ const LeadDetail = () => {
     setActivityRefreshKey(prev => prev + 1);
   };
 
+  const handleActivityUpdated = () => {
+    // Force ActivitySection to refresh when activities are updated in project modal
+    setActivityRefreshKey(prev => prev + 1);
+  };
+
   const handleBack = () => {
     const from = location.state?.from;
     if (from === 'dashboard') {
@@ -660,6 +665,7 @@ const LeadDetail = () => {
             leadId={lead.id} 
             leadName={lead.name} 
             onProjectUpdated={handleProjectUpdated}
+            onActivityUpdated={handleActivityUpdated}
           />
           <ActivitySection key={activityRefreshKey} leadId={lead.id} leadName={lead.name} />
         </div>

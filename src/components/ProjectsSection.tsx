@@ -31,9 +31,10 @@ interface ProjectsSectionProps {
   leadId: string;
   leadName?: string;
   onProjectUpdated?: () => void;
+  onActivityUpdated?: () => void;
 }
 
-export function ProjectsSection({ leadId, leadName = "", onProjectUpdated }: ProjectsSectionProps) {
+export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onActivityUpdated }: ProjectsSectionProps) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -208,6 +209,7 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated }: Pro
           fetchProjects();
           onProjectUpdated?.(); // Notify parent component about project update
         }}
+        onActivityUpdated={onActivityUpdated}
         leadName={leadName}
       />
 

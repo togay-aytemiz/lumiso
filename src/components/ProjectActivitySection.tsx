@@ -29,9 +29,10 @@ interface ProjectActivitySectionProps {
   leadId: string;
   leadName: string;
   projectName: string;
+  onActivityUpdated?: () => void;
 }
 
-export function ProjectActivitySection({ projectId, leadId, leadName, projectName }: ProjectActivitySectionProps) {
+export function ProjectActivitySection({ projectId, leadId, leadName, projectName, onActivityUpdated }: ProjectActivitySectionProps) {
   const [activities, setActivities] = useState<ProjectActivity[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -136,6 +137,9 @@ export function ProjectActivitySection({ projectId, leadId, leadName, projectNam
       
       // Refresh data
       await fetchProjectActivities();
+      
+      // Notify parent about activity change
+      onActivityUpdated?.();
     } catch (error: any) {
       toast({
         title: "Error",
@@ -173,6 +177,9 @@ export function ProjectActivitySection({ projectId, leadId, leadName, projectNam
         title: completed ? "Task marked as completed" : "Task marked as incomplete",
         description: "Task status updated successfully."
       });
+      
+      // Notify parent about activity change
+      onActivityUpdated?.();
     } catch (error: any) {
       toast({
         title: "Error updating task",

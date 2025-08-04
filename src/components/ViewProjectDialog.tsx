@@ -37,10 +37,11 @@ interface ViewProjectDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onProjectUpdated: () => void;
+  onActivityUpdated?: () => void;
   leadName: string;
 }
 
-export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdated, leadName }: ViewProjectDialogProps) {
+export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdated, onActivityUpdated, leadName }: ViewProjectDialogProps) {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(false);
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
@@ -293,6 +294,7 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
                 leadId={project.lead_id}
                 leadName={leadName}
                 projectName={project.name}
+                onActivityUpdated={onActivityUpdated}
               />
             </div>
             

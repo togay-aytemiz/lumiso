@@ -97,24 +97,21 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
 
   // Handle ESC key for fullscreen mode
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (e.key === 'Escape') {
-      if (isFullscreen) {
-        e.preventDefault();
-        e.stopPropagation();
-        setIsFullscreen(false);
-      }
-      // If not in fullscreen, let the dialog handle the ESC to close
+    if (e.key === 'Escape' && isFullscreen) {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsFullscreen(false);
     }
   }, [isFullscreen]);
 
   useEffect(() => {
-    if (open) {
-      document.addEventListener('keydown', handleKeyDown);
+    if (open && isFullscreen) {
+      document.addEventListener('keydown', handleKeyDown, true); // Use capture phase
       return () => {
-        document.removeEventListener('keydown', handleKeyDown);
+        document.removeEventListener('keydown', handleKeyDown, true);
       };
     }
-  }, [open, handleKeyDown]);
+  }, [open, isFullscreen, handleKeyDown]);
 
   const toggleFullscreen = () => {
     setIsFullscreen(!isFullscreen);
@@ -304,7 +301,7 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
                 >
                   {isFullscreen ? (
                     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 9l6 6m0-6l-6 6m2-10V3m0 0h6m-6 0l6 6M15 15v6m0 0H9m6 0l-6-6" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 9h6m-6 0V3m0 6l6-6M15 15v6m0-6H9m6 0l-6 6" />
                     </svg>
                   ) : (
                     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

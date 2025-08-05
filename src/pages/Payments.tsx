@@ -4,22 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
+import { DataTable, type Column } from "@/components/ui/data-table";
 import { DateRangePicker } from "@/components/DateRangePicker";
 import { toast } from "@/hooks/use-toast";
 import { DollarSign, TrendingUp, AlertCircle } from "lucide-react";
@@ -63,8 +48,6 @@ const Payments = () => {
   const [loading, setLoading] = useState(true);
   const [selectedFilter, setSelectedFilter] = useState<DateFilterType>('allTime');
   const [customDateRange, setCustomDateRange] = useState<DateRange | undefined>();
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 20;
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -197,26 +180,6 @@ const Payments = () => {
     };
   }, [filteredPayments]);
 
-  // Pagination
-  const totalPages = Math.ceil(filteredPayments.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedPayments = filteredPayments.slice(startIndex, startIndex + itemsPerPage);
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
-
-  const getStatusBadgeVariant = (status: string) => {
-    switch (status) {
-      case 'paid':
-        return 'default';
-      case 'due':
-        return 'secondary';
-      default:
-        return 'outline';
-    }
-  };
-
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('tr-TR', {
       style: 'currency',
@@ -224,6 +187,101 @@ const Payments = () => {
       minimumFractionDigits: 0,
     }).format(amount);
   };
+
+  const columns: Column<Payment>[] = [
+    {
+      key: 'date_paid',
+      header: 'Date',
+      sortable: true,
+      filterable: false,
+      render: (payment) => formatDate(payment.date_paid || payment.created_at)
+    },
+    {
+      key: 'amount',
+      header: 'Amount',
+      sortable: true,
+      filterable: false,
+      render: (payment) => (
+        <span className="font-medium">{formatCurrency(Number(payment.amount))}</span>
+      )
+    },
+    {
+      key: 'projects.name',
+      header: 'Project',
+      sortable: true,
+      filterable: true,
+      accessor: (payment) => payment.projects?.name,
+      render: (payment) => (
+        payment.projects ? (
+          <Button
+            variant="link"
+            className="p-0 h-auto font-normal text-primary"
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/projects`);
+            }}
+          >
+            {payment.projects.name}
+          </Button>
+        ) : (
+          <span className="text-muted-foreground">-</span>
+        )
+      )
+    },
+    {
+      key: 'projects.leads.name',
+      header: 'Lead',
+      sortable: true,
+      filterable: true,
+      accessor: (payment) => payment.projects?.leads?.name,
+      render: (payment) => (
+        payment.projects?.leads ? (
+          <Button
+            variant="link"
+            className="p-0 h-auto font-normal text-primary"
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/leads/${payment.projects?.leads?.id}`);
+            }}
+          >
+            {payment.projects.leads.name}
+          </Button>
+        ) : (
+          <span className="text-muted-foreground">-</span>
+        )
+      )
+    },
+    {
+      key: 'description',
+      header: 'Label',
+      sortable: true,
+      filterable: true,
+      render: (payment) => payment.description || 'Payment'
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      sortable: true,
+      filterable: true,
+      render: (payment) => (
+        <Badge variant={payment.status === 'paid' ? 'default' : 'secondary'}>
+          {payment.status === 'paid' ? 'Paid' : 'Due'}
+        </Badge>
+      )
+    },
+    {
+      key: 'type',
+      header: 'Type',
+      sortable: true,
+      filterable: true,
+      render: (payment) => (
+        <Badge variant="outline">
+          {payment.type === 'base_price' ? 'Base' : 
+           payment.type === 'extra' ? 'Extra' : 'Manual'}
+        </Badge>
+      )
+    }
+  ];
 
   if (loading) {
     return (
@@ -257,7 +315,6 @@ const Payments = () => {
             value={selectedFilter}
             onValueChange={(value) => {
               setSelectedFilter(value as DateFilterType);
-              setCurrentPage(1);
             }}
           >
             <SelectTrigger className="w-48">
@@ -281,7 +338,6 @@ const Payments = () => {
               dateRange={customDateRange}
               onDateRangeChange={(range) => {
                 setCustomDateRange(range);
-                setCurrentPage(1);
               }}
             />
           )}
@@ -323,120 +379,19 @@ const Payments = () => {
 
       {/* Payments Table */}
       <Card>
-        <CardContent className="p-0">
-          {filteredPayments.length === 0 ? (
-            <div className="text-center py-12">
-              <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-medium mb-2">No payments found</h3>
-              <p className="text-muted-foreground">No payments found for selected period.</p>
-            </div>
-          ) : (
-            <>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Project</TableHead>
-                    <TableHead>Lead</TableHead>
-                    <TableHead>Label</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Type</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {paginatedPayments.map((payment, index) => (
-                    <TableRow 
-                      key={payment.id} 
-                      className={index % 2 === 0 ? "bg-muted/30" : ""}
-                    >
-                      <TableCell>
-                        {formatDate(payment.date_paid || payment.created_at)}
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        {formatCurrency(Number(payment.amount))}
-                      </TableCell>
-                      <TableCell>
-                        {payment.projects ? (
-                          <Button
-                            variant="link"
-                            className="p-0 h-auto font-normal text-primary"
-                            onClick={() => navigate(`/projects`)}
-                          >
-                            {payment.projects.name}
-                          </Button>
-                        ) : (
-                          <span className="text-muted-foreground">-</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {payment.projects?.leads ? (
-                          <Button
-                            variant="link"
-                            className="p-0 h-auto font-normal text-primary"
-                            onClick={() => navigate(`/leads/${payment.projects?.leads?.id}`)}
-                          >
-                            {payment.projects.leads.name}
-                          </Button>
-                        ) : (
-                          <span className="text-muted-foreground">-</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {payment.description || 'Payment'}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={getStatusBadgeVariant(payment.status)}>
-                          {payment.status === 'paid' ? 'Paid' : 'Due'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline">
-                          {payment.type === 'base_price' ? 'Base' : 
-                           payment.type === 'extra' ? 'Extra' : 'Manual'}
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="flex justify-center py-4">
-                  <Pagination>
-                    <PaginationContent>
-                      <PaginationItem>
-                        <PaginationPrevious
-                          onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
-                          className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                        />
-                      </PaginationItem>
-                      
-                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                        <PaginationItem key={page}>
-                          <PaginationLink
-                            onClick={() => handlePageChange(page)}
-                            isActive={currentPage === page}
-                            className="cursor-pointer"
-                          >
-                            {page}
-                          </PaginationLink>
-                        </PaginationItem>
-                      ))}
-                      
-                      <PaginationItem>
-                        <PaginationNext
-                          onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
-                          className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                        />
-                      </PaginationItem>
-                    </PaginationContent>
-                  </Pagination>
-                </div>
-              )}
-            </>
-          )}
+        <CardContent className="p-6">
+          <DataTable
+            data={filteredPayments}
+            columns={columns}
+            itemsPerPage={20}
+            emptyState={
+              <div className="text-center py-12">
+                <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-medium mb-2">No payments found</h3>
+                <p className="text-muted-foreground">No payments found for selected period.</p>
+              </div>
+            }
+          />
         </CardContent>
       </Card>
     </div>

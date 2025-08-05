@@ -39,6 +39,7 @@ interface Project {
   session_count?: number;
   completed_session_count?: number;
   upcoming_session_count?: number;
+  planned_session_count?: number;
   next_session_date?: string | null;
   todo_count?: number;
   completed_todo_count?: number;
@@ -180,6 +181,7 @@ const AllProjects = () => {
           session_count: sessions.length,
           completed_session_count: sessions.filter(s => s.status === 'completed').length,
           upcoming_session_count: upcomingSessions.length,
+          planned_session_count: sessions.filter(s => s.status === 'planned').length,
           next_session_date: upcomingSessions.length > 0 ? upcomingSessions[0].session_date : null,
           todo_count: todos.length,
           completed_todo_count: todos.filter(t => t.is_completed).length,

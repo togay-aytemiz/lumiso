@@ -41,6 +41,7 @@ interface Project {
   } | null;
   session_count?: number;
   upcoming_session_count?: number;
+  planned_session_count?: number;
   next_session_date?: string | null;
   todo_count?: number;
   completed_todo_count?: number;
@@ -205,10 +206,10 @@ const ProjectKanbanBoard = ({ projects, onProjectsChange }: ProjectKanbanBoardPr
               {/* Bottom section */}
               <div className="space-y-2">
                 {/* Session info */}
-                {(project.upcoming_session_count || 0) > 0 && (
+                {(project.planned_session_count || 0) > 0 && (
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <Calendar className="h-3 w-3" />
-                    <span>{project.upcoming_session_count} upcoming session{project.upcoming_session_count !== 1 ? 's' : ''}</span>
+                    <span>{project.planned_session_count} planned session{project.planned_session_count !== 1 ? 's' : ''}</span>
                   </div>
                 )}
                 

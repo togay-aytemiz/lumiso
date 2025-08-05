@@ -411,7 +411,7 @@ const AllProjects = () => {
                           {getSortIcon('lead_name')}
                         </div>
                       </TableHead>
-                      <TableHead>Status</TableHead>
+                      <TableHead>Stage</TableHead>
                       <TableHead 
                         className="cursor-pointer hover:bg-muted/50"
                         onClick={() => handleSort('project_type')}
@@ -444,43 +444,7 @@ const AllProjects = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {loading ? (
-                      // Show skeleton rows while loading
-                      Array.from({ length: 5 }).map((_, index) => (
-                        <TableRow key={`skeleton-${index}`}>
-                          <TableCell>
-                            <Skeleton className="h-4 w-[180px]" />
-                          </TableCell>
-                          <TableCell>
-                            <div className="space-y-1">
-                              <Skeleton className="h-4 w-[120px]" />
-                              <Skeleton className="h-3 w-[160px]" />
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Skeleton className="h-6 w-[80px] rounded-full" />
-                          </TableCell>
-                          <TableCell>
-                            <Skeleton className="h-6 w-[70px] rounded-full" />
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Skeleton className="h-6 w-[50px] rounded-full mx-auto" />
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Skeleton className="h-6 w-[50px] rounded-full mx-auto" />
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex gap-1">
-                              <Skeleton className="h-5 w-[60px] rounded-full" />
-                              <Skeleton className="h-5 w-[70px] rounded-full" />
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Skeleton className="h-4 w-[100px]" />
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    ) : filteredAndSortedProjects.length > 0 ? (
+                    {filteredAndSortedProjects.length > 0 ? (
                       filteredAndSortedProjects.map((project) => (
                         <TableRow 
                           key={project.id}

@@ -462,19 +462,19 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
           </DialogHeader>
           
           <div className="space-y-8">
-            {/* Project Services Section */}
-            <ProjectServicesSection
+            {/* Payments Section */}
+            <ProjectPaymentsSection
               projectId={project.id}
-              onServicesUpdated={() => {
+              onPaymentsUpdated={() => {
                 onProjectUpdated();
                 onActivityUpdated?.();
               }}
             />
             
-            {/* Payments Section */}
-            <ProjectPaymentsSection
+            {/* Project Services Section */}
+            <ProjectServicesSection
               projectId={project.id}
-              onPaymentsUpdated={() => {
+              onServicesUpdated={() => {
                 onProjectUpdated();
                 onActivityUpdated?.();
               }}

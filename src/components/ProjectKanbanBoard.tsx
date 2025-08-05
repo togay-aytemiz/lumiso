@@ -191,7 +191,7 @@ const ProjectKanbanBoard = ({ projects, onProjectsChange }: ProjectKanbanBoardPr
               </div>
               
               {/* Project name (middle) */}
-              <h4 className="font-medium text-base mb-2 line-clamp-2">{project.name}</h4>
+              <h4 className="font-normal text-sm mb-2 line-clamp-2">{project.name}</h4>
               
               {/* Project type badge */}
               {project.project_type && (

@@ -27,12 +27,17 @@ interface Project {
   created_at: string;
   updated_at: string;
   status_id?: string | null;
+  project_type_id?: string | null;
   lead: {
     id: string;
     name: string;
     status: string;
     email: string | null;
     phone: string | null;
+  } | null;
+  project_type?: {
+    id: string;
+    name: string;
   } | null;
   session_count?: number;
   upcoming_session_count?: number;
@@ -186,7 +191,16 @@ const ProjectKanbanBoard = ({ projects, onProjectsChange }: ProjectKanbanBoardPr
               </div>
               
               {/* Project name (middle) */}
-              <h4 className="font-medium text-base mb-3 line-clamp-2">{project.name}</h4>
+              <h4 className="font-medium text-base mb-2 line-clamp-2">{project.name}</h4>
+              
+              {/* Project type badge */}
+              {project.project_type && (
+                <div className="mb-3">
+                  <Badge variant="outline" className="text-xs">
+                    {project.project_type.name.toUpperCase()}
+                  </Badge>
+                </div>
+              )}
               
               {/* Bottom section */}
               <div className="space-y-2">

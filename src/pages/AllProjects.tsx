@@ -23,12 +23,17 @@ interface Project {
   created_at: string;
   updated_at: string;
   status_id?: string | null;
+  project_type_id?: string | null;
   lead: {
     id: string;
     name: string;
     status: string;
     email: string | null;
     phone: string | null;
+  } | null;
+  project_type?: {
+    id: string;
+    name: string;
   } | null;
   session_count?: number;
   completed_session_count?: number;
@@ -42,7 +47,7 @@ interface Project {
   }>;
 }
 
-type SortField = 'name' | 'lead_name' | 'created_at' | 'updated_at' | 'session_count';
+type SortField = 'name' | 'lead_name' | 'created_at' | 'updated_at' | 'session_count' | 'project_type';
 type SortDirection = 'asc' | 'desc';
 
 const AllProjects = () => {
@@ -62,10 +67,14 @@ const AllProjects = () => {
 
   const fetchProjects = async () => {
     try {
-      // First get all projects with their status
+      // First get all projects with their status and project type
       const { data: projectsData, error } = await supabase
         .from('projects')
-        .select('*, project_statuses(id, name, color)')
+        .select(`
+          *, 
+          project_statuses(id, name, color),
+          project_types(id, name)
+        `)
         .order('updated_at', { ascending: false });
 
       if (error) throw error;
@@ -116,6 +125,7 @@ const AllProjects = () => {
           return {
             ...project,
             lead: leadsMap.get(project.lead_id) || null,
+            project_type: project.project_types || null,
             session_count: sessions?.length || 0,
             completed_session_count: sessions?.filter(s => s.status === 'completed').length || 0,
             upcoming_session_count: upcomingSessions.length,
@@ -153,6 +163,10 @@ const AllProjects = () => {
         case 'lead_name':
           aValue = a.lead?.name?.toLowerCase() || '';
           bValue = b.lead?.name?.toLowerCase() || '';
+          break;
+        case 'project_type':
+          aValue = a.project_type?.name?.toLowerCase() || '';
+          bValue = b.project_type?.name?.toLowerCase() || '';
           break;
         case 'session_count':
           aValue = a.session_count || 0;
@@ -361,6 +375,15 @@ const AllProjects = () => {
                       </TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead 
+                        className="cursor-pointer hover:bg-muted/50"
+                        onClick={() => handleSort('project_type')}
+                      >
+                        <div className="flex items-center gap-2">
+                          Type
+                          {getSortIcon('project_type')}
+                        </div>
+                      </TableHead>
+                      <TableHead 
                         className="cursor-pointer hover:bg-muted/50 text-center"
                         onClick={() => handleSort('session_count')}
                       >
@@ -426,6 +449,15 @@ const AllProjects = () => {
                               onStatusChange={() => fetchProjects()}
                             />
                           </TableCell>
+                          <TableCell>
+                            {project.project_type ? (
+                              <Badge variant="outline" className="text-xs">
+                                {project.project_type.name.toUpperCase()}
+                              </Badge>
+                            ) : (
+                              <span className="text-muted-foreground text-xs">-</span>
+                            )}
+                          </TableCell>
                           <TableCell className="text-center">
                             {getProgressBadge(project.completed_session_count || 0, project.session_count || 0)}
                           </TableCell>
@@ -442,7 +474,7 @@ const AllProjects = () => {
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                        <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                           No projects found. Create your first project to get started!
                         </TableCell>
                       </TableRow>

@@ -11,6 +11,7 @@ import { getLeadStatusStyles, formatStatusText } from "@/lib/leadStatusColors";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { ProjectTypeSelector } from "./ProjectTypeSelector";
 
 interface Lead {
   id: string;
@@ -36,7 +37,8 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
 
   const [projectData, setProjectData] = useState({
     name: "",
-    description: ""
+    description: "",
+    projectTypeId: ""
   });
 
   const [newLeadData, setNewLeadData] = useState({
@@ -82,7 +84,7 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
   };
 
   const resetForm = () => {
-    setProjectData({ name: "", description: "" });
+    setProjectData({ name: "", description: "", projectTypeId: "" });
     setNewLeadData({ name: "", email: "", phone: "", notes: "" });
     setSelectedLeadId("");
     setSearchTerm("");
@@ -114,6 +116,15 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
       toast({
         title: "Validation error",
         description: "Lead name is required when creating a new lead.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!projectData.projectTypeId) {
+      toast({
+        title: "Validation error",
+        description: "Please select a project type.",
         variant: "destructive"
       });
       return;
@@ -161,7 +172,8 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
           lead_id: leadId,
           name: projectData.name.trim(),
           description: projectData.description.trim() || null,
-          status_id: statusId
+          status_id: statusId,
+          project_type_id: projectData.projectTypeId
         });
 
       if (projectError) throw projectError;
@@ -415,6 +427,16 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
               </div>
               
               <div className="space-y-2">
+                <Label htmlFor="project-type">Project Type *</Label>
+                <ProjectTypeSelector
+                  value={projectData.projectTypeId}
+                  onValueChange={(value) => handleProjectDataChange("projectTypeId", value)}
+                  disabled={loading}
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
                 <Label htmlFor="project-description">Description</Label>
                 <Textarea
                   id="project-description"
@@ -444,7 +466,7 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
             </Button>
             <Button 
               type="submit"
-              disabled={loading || !projectData.name.trim() || (!isNewLead && !selectedLeadId) || (isNewLead && !newLeadData.name.trim())}
+              disabled={loading || !projectData.name.trim() || (!isNewLead && !selectedLeadId) || (isNewLead && !newLeadData.name.trim()) || !projectData.projectTypeId}
             >
               <Save className="h-4 w-4 mr-2" />
               {loading ? "Creating..." : "Create Project"}

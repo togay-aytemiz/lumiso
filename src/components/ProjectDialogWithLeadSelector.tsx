@@ -9,6 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Save, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { ProjectTypeSelector } from "./ProjectTypeSelector";
 
 interface Lead {
   id: string;
@@ -31,6 +32,7 @@ export function ProjectDialogWithLeadSelector({
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [selectedLeadId, setSelectedLeadId] = useState<string>("");
+  const [projectTypeId, setProjectTypeId] = useState("");
   const [leads, setLeads] = useState<Lead[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [loadingLeads, setLoadingLeads] = useState(false);
@@ -67,6 +69,7 @@ export function ProjectDialogWithLeadSelector({
     setName("");
     setDescription("");
     setSelectedLeadId("");
+    setProjectTypeId("");
   };
 
   const handleCancel = () => {
@@ -88,6 +91,15 @@ export function ProjectDialogWithLeadSelector({
       toast({
         title: "Validation Error",
         description: "Please select a lead for this project.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!projectTypeId) {
+      toast({
+        title: "Validation Error",
+        description: "Please select a project type.",
         variant: "destructive"
       });
       return;
@@ -116,7 +128,8 @@ export function ProjectDialogWithLeadSelector({
           description: description.trim() || null,
           lead_id: selectedLeadId,
           user_id: userData.user.id,
-          status_id: defaultStatusId
+          status_id: defaultStatusId,
+          project_type_id: projectTypeId
         });
 
       if (error) throw error;
@@ -196,6 +209,16 @@ export function ProjectDialogWithLeadSelector({
             </div>
             
             <div className="space-y-2">
+              <Label htmlFor="project-type">Project Type *</Label>
+              <ProjectTypeSelector
+                value={projectTypeId}
+                onValueChange={setProjectTypeId}
+                disabled={isSaving}
+                required
+              />
+            </div>
+            
+            <div className="space-y-2">
               <Label htmlFor="project-description">Description</Label>
               <Textarea
                 id="project-description"
@@ -221,7 +244,7 @@ export function ProjectDialogWithLeadSelector({
           </Button>
           <Button 
             onClick={handleSave}
-            disabled={isSaving || !name.trim() || !selectedLeadId}
+            disabled={isSaving || !name.trim() || !selectedLeadId || !projectTypeId}
           >
             <Save className="h-4 w-4 mr-2" />
             {isSaving ? "Creating..." : "Create Project"}

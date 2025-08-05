@@ -15,6 +15,7 @@ import { ProjectServicesSection } from "./ProjectServicesSection";
 import { SessionsSection } from "./SessionsSection";
 import { ProjectTodoListEnhanced } from "./ProjectTodoListEnhanced";
 import { ProjectStatusBadge } from "./ProjectStatusBadge";
+import { ProjectTypeSelector } from "./ProjectTypeSelector";
 
 interface Project {
   id: string;
@@ -25,6 +26,7 @@ interface Project {
   created_at: string;
   updated_at: string;
   status_id?: string | null;
+  project_type_id?: string | null;
 }
 
 interface Session {
@@ -54,6 +56,8 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState("");
   const [editDescription, setEditDescription] = useState("");
+  const [editProjectTypeId, setEditProjectTypeId] = useState("");
+  const [projectType, setProjectType] = useState<{id: string, name: string} | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -87,11 +91,30 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
   };
 
 
+  const fetchProjectType = async () => {
+    if (!project?.project_type_id) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('project_types')
+        .select('id, name')
+        .eq('id', project.project_type_id)
+        .single();
+        
+      if (error) throw error;
+      setProjectType(data);
+    } catch (error: any) {
+      console.error('Error fetching project type:', error);
+    }
+  };
+
   useEffect(() => {
     if (project && open) {
       fetchProjectSessions();
+      fetchProjectType();
       setEditName(project.name);
       setEditDescription(project.description || "");
+      setEditProjectTypeId(project.project_type_id || "");
       setIsEditing(false);
       setIsFullscreen(false);
     }
@@ -118,7 +141,7 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
   };
 
   const handleSaveProject = async () => {
-    if (!project || !editName.trim()) return;
+    if (!project || !editName.trim() || !editProjectTypeId) return;
     
     setIsSaving(true);
     try {
@@ -130,7 +153,8 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
         .from('projects')
         .update({
           name: editName.trim(),
-          description: editDescription.trim() || null
+          description: editDescription.trim() || null,
+          project_type_id: editProjectTypeId
         })
         .eq('id', project.id);
 
@@ -241,11 +265,17 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
                         className="text-base border rounded-md px-3 py-2 resize-none"
                         rows={2}
                       />
+                      <ProjectTypeSelector
+                        value={editProjectTypeId}
+                        onValueChange={setEditProjectTypeId}
+                        disabled={isSaving}
+                        required
+                      />
                     <div className="flex gap-2">
                       <Button 
                         size="sm" 
                         onClick={handleSaveProject}
-                        disabled={isSaving || !editName.trim()}
+                        disabled={isSaving || !editName.trim() || !editProjectTypeId}
                       >
                         <Save className="h-4 w-4 mr-1" />
                         {isSaving ? "Saving..." : "Save"}
@@ -257,6 +287,7 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
                           setIsEditing(false);
                           setEditName(project?.name || "");
                           setEditDescription(project?.description || "");
+                          setEditProjectTypeId(project?.project_type_id || "");
                         }}
                         disabled={isSaving}
                       >
@@ -280,6 +311,13 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
                         editable={true}
                         className="text-sm" // Made bigger
                       />
+                      
+                      {/* Project Type Badge */}
+                      {projectType && (
+                        <Badge variant="outline" className="text-xs">
+                          {projectType.name.toUpperCase()}
+                        </Badge>
+                      )}
                     </div>
                     
                     {project?.description && (

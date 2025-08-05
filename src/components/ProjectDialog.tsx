@@ -8,6 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Save, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { ProjectTypeSelector } from "./ProjectTypeSelector";
 
 interface ProjectDialogProps {
   open: boolean;
@@ -19,12 +20,14 @@ interface ProjectDialogProps {
 export function ProjectDialog({ open, onOpenChange, leadId, onProjectCreated }: ProjectDialogProps) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [projectTypeId, setProjectTypeId] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
 
   const resetForm = () => {
     setName("");
     setDescription("");
+    setProjectTypeId("");
   };
 
   const handleCancel = () => {
@@ -37,6 +40,15 @@ export function ProjectDialog({ open, onOpenChange, leadId, onProjectCreated }: 
       toast({
         title: "Validation Error",
         description: "Project name is required.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!projectTypeId) {
+      toast({
+        title: "Validation Error",
+        description: "Please select a project type.",
         variant: "destructive"
       });
       return;
@@ -65,7 +77,8 @@ export function ProjectDialog({ open, onOpenChange, leadId, onProjectCreated }: 
           description: description.trim() || null,
           lead_id: leadId,
           user_id: userData.user.id,
-          status_id: defaultStatusId
+          status_id: defaultStatusId,
+          project_type_id: projectTypeId
         });
 
       if (error) throw error;
@@ -118,6 +131,16 @@ export function ProjectDialog({ open, onOpenChange, leadId, onProjectCreated }: 
             </div>
             
             <div className="space-y-2">
+              <Label htmlFor="project-type">Project Type *</Label>
+              <ProjectTypeSelector
+                value={projectTypeId}
+                onValueChange={setProjectTypeId}
+                disabled={isSaving}
+                required
+              />
+            </div>
+            
+            <div className="space-y-2">
               <Label htmlFor="project-description">Description</Label>
               <Textarea
                 id="project-description"
@@ -143,7 +166,7 @@ export function ProjectDialog({ open, onOpenChange, leadId, onProjectCreated }: 
           </Button>
           <Button 
             onClick={handleSave}
-            disabled={isSaving || !name.trim()}
+            disabled={isSaving || !name.trim() || !projectTypeId}
           >
             <Save className="h-4 w-4 mr-2" />
             {isSaving ? "Creating..." : "Create Project"}

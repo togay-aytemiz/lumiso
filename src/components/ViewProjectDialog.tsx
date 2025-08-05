@@ -29,6 +29,14 @@ interface Project {
   project_type_id?: string | null;
 }
 
+interface Lead {
+  id: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  status: string;
+}
+
 interface Session {
   id: string;
   session_date: string;
@@ -51,6 +59,7 @@ interface ViewProjectDialogProps {
 
 export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdated, onActivityUpdated, leadName }: ViewProjectDialogProps) {
   const [sessions, setSessions] = useState<Session[]>([]);
+  const [lead, setLead] = useState<Lead | null>(null);
   const [loading, setLoading] = useState(false);
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -108,10 +117,28 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
     }
   };
 
+  const fetchLead = async () => {
+    if (!project?.lead_id) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('leads')
+        .select('id, name, email, phone, status')
+        .eq('id', project.lead_id)
+        .single();
+        
+      if (error) throw error;
+      setLead(data);
+    } catch (error: any) {
+      console.error('Error fetching lead:', error);
+    }
+  };
+
   useEffect(() => {
     if (project && open) {
       fetchProjectSessions();
       fetchProjectType();
+      fetchLead();
       setEditName(project.name);
       setEditDescription(project.description || "");
       setEditProjectTypeId(project.project_type_id || "");
@@ -340,6 +367,32 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
                     {project?.description && (
                       <p className="text-muted-foreground text-base">{project.description}</p>
                     )}
+                    
+                    {/* Lead Information */}
+                    {lead && (
+                      <div className="p-4 bg-muted/30 rounded-lg">
+                        <h4 className="text-sm font-medium text-muted-foreground mb-2">Lead Information</h4>
+                        <div className="space-y-1">
+                          <Button
+                            variant="link"
+                            className="p-0 h-auto text-left justify-start font-medium text-base"
+                            onClick={() => {
+                              // Navigate to lead details page
+                              window.location.href = `/leads/${lead.id}`;
+                            }}
+                          >
+                            {lead.name}
+                          </Button>
+                          {lead.email && (
+                            <p className="text-sm text-muted-foreground">{lead.email}</p>
+                          )}
+                          {lead.phone && (
+                            <p className="text-sm text-muted-foreground">{lead.phone}</p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                    
                     <p className="text-sm text-muted-foreground">
                       Created on {project && format(new Date(project.created_at), "MMMM d, yyyy")}
                     </p>

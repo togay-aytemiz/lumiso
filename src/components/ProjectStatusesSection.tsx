@@ -197,6 +197,12 @@ const ProjectStatusesSection = () => {
     setIsEditDialogOpen(true);
   };
 
+  const handleAdd = () => {
+    setEditingStatus(null);
+    form.reset({ name: "", color: PREDEFINED_COLORS[0] });
+    setIsAddDialogOpen(true);
+  };
+
   const handleDelete = async (statusId: string) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -208,7 +214,12 @@ const ProjectStatusesSection = () => {
         .eq('id', statusId)
         .eq('user_id', user.id);
 
-      if (error) throw error;
+      if (error) {
+        if (error.code === '23503') { // Foreign key constraint violation
+          throw new Error('Cannot delete this stage because it is being used by existing projects. Please change those projects to a different stage first.');
+        }
+        throw error;
+      }
 
       toast({
         title: "Success",
@@ -219,7 +230,7 @@ const ProjectStatusesSection = () => {
       console.error('Error deleting project status:', error);
       toast({
         title: "Error",
-        description: "Failed to delete project status",
+        description: error instanceof Error ? error.message : "Failed to delete project status",
         variant: "destructive",
       });
     }
@@ -429,9 +440,15 @@ const ProjectStatusesSection = () => {
               Add, rename and reorder stages to customize your workflow.
             </CardDescription>
           </div>
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+          <Dialog open={isAddDialogOpen} onOpenChange={(open) => {
+            setIsAddDialogOpen(open);
+            if (!open) {
+              form.reset({ name: "", color: PREDEFINED_COLORS[0] });
+              setEditingStatus(null);
+            }
+          }}>
             <Button 
-              onClick={() => setIsAddDialogOpen(true)}
+              onClick={handleAdd}
               className="flex items-center gap-2"
               variant="default"
             >
@@ -511,7 +528,13 @@ const ProjectStatusesSection = () => {
         </DragDropContext>
 
         {/* Edit Dialog */}
-        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <Dialog open={isEditDialogOpen} onOpenChange={(open) => {
+          setIsEditDialogOpen(open);
+          if (!open) {
+            form.reset({ name: "", color: PREDEFINED_COLORS[0] });
+            setEditingStatus(null);
+          }
+        }}>
           {renderStatusDialog(true)}
         </Dialog>
       </CardContent>

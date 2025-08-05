@@ -443,13 +443,24 @@ const ProjectStatusesSection = () => {
         </div>
       </CardHeader>
       <CardContent>
+        <div className="mb-4 p-3 bg-muted/30 rounded-lg border border-dashed border-muted-foreground/20">
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            <strong>Drag to reorder:</strong> Use the grip handle (⋮⋮) to drag stages and change their order. 
+            <strong>Click to edit:</strong> Click on any stage to rename it or change its color. 
+            The stage order will be consistent across all project views.
+          </p>
+        </div>
+
         <DragDropContext onDragEnd={handleDragEnd}>
-          <Droppable droppableId="statuses">
-            {(provided) => (
+          <Droppable droppableId="statuses" direction="horizontal">
+            {(provided, snapshot) => (
               <div
                 {...provided.droppableProps}
                 ref={provided.innerRef}
-                className="flex flex-wrap gap-3"
+                className={cn(
+                  "flex flex-wrap gap-3 min-h-[48px] transition-colors rounded-lg p-2",
+                  snapshot.isDraggingOver && "bg-accent/20"
+                )}
               >
                 {statuses.map((status, index) => (
                   <Draggable key={status.id} draggableId={status.id} index={index}>
@@ -458,8 +469,9 @@ const ProjectStatusesSection = () => {
                         ref={provided.innerRef}
                         {...provided.draggableProps}
                         className={cn(
-                          "inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all hover:opacity-80 cursor-pointer select-none",
-                          snapshot.isDragging && "opacity-70 shadow-lg"
+                          "inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all select-none",
+                          snapshot.isDragging ? "opacity-80 shadow-xl scale-105 z-50" : "hover:opacity-80 cursor-pointer",
+                          !snapshot.isDragging && "hover:scale-[1.02]"
                         )}
                         style={{ 
                           backgroundColor: status.color + '20',
@@ -467,19 +479,27 @@ const ProjectStatusesSection = () => {
                           border: `1px solid ${status.color}40`,
                           ...provided.draggableProps.style
                         }}
-                        onClick={() => handleEdit(status)}
                       >
                         <div 
                           {...provided.dragHandleProps}
-                          className="flex items-center cursor-grab active:cursor-grabbing"
+                          className="flex items-center cursor-grab active:cursor-grabbing hover:opacity-70 transition-opacity"
+                          onClick={(e) => e.stopPropagation()}
                         >
-                          <GripVertical className="w-3 h-3 text-current opacity-50" />
+                          <GripVertical className="w-3 h-3 text-current opacity-60" />
                         </div>
                         <div 
-                          className="w-2 h-2 rounded-full" 
+                          className="w-2 h-2 rounded-full flex-shrink-0" 
                           style={{ backgroundColor: status.color }}
                         />
-                        <span className="uppercase tracking-wide font-semibold">{status.name}</span>
+                        <span 
+                          className="uppercase tracking-wide font-semibold cursor-pointer"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEdit(status);
+                          }}
+                        >
+                          {status.name}
+                        </span>
                       </div>
                     )}
                   </Draggable>

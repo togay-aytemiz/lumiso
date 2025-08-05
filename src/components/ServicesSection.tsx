@@ -123,29 +123,20 @@ const ServicesSection = () => {
     <>
       <Card>
         <CardHeader>
-          {Object.keys(groupedServices).length > 0 && (
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Services</CardTitle>
-                <CardDescription>
-                  Define the photography services you offer, like albums, prints, and extras.
-                </CardDescription>
-              </div>
-              <Button onClick={() => setShowNewServiceDialog(true)} className="flex items-center gap-2">
-                <Plus className="h-4 w-4" />
-                New Service
-              </Button>
-            </div>
-          )}
-          
-          {Object.keys(groupedServices).length === 0 && (
+          <div className="flex items-center justify-between">
             <div>
               <CardTitle>Services</CardTitle>
               <CardDescription>
                 Define the photography services you offer, like albums, prints, and extras.
               </CardDescription>
             </div>
-          )}
+            {Object.keys(groupedServices).length > 0 && (
+              <Button onClick={() => setShowNewServiceDialog(true)} className="flex items-center gap-2">
+                <Plus className="h-4 w-4" />
+                New Service
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           {Object.keys(groupedServices).length === 0 ? (

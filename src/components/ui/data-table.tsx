@@ -108,10 +108,10 @@ export function DataTable<T>({
       )}
 
       {/* Table */}
-      <div className="rounded-md border bg-background">
+      <div className="rounded-md bg-background">
         <Table>
           <TableHeader>
-            <TableRow className="hover:bg-transparent">
+            <TableRow className="hover:bg-transparent border-b">
               {columns.map((column) => (
                 <TableHead
                   key={String(column.key)}
@@ -142,7 +142,7 @@ export function DataTable<T>({
                   className={`
                     ${index % 2 === 0 ? "bg-background" : "bg-muted/30"}
                     ${onRowClick ? "cursor-pointer hover:bg-muted/50" : ""}
-                    transition-colors
+                    transition-colors border-0
                   `}
                   onClick={onRowClick ? () => onRowClick(item) : undefined}
                 >

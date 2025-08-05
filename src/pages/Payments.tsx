@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DataTable, type Column } from "@/components/ui/data-table";
 import { DateRangePicker } from "@/components/DateRangePicker";
+import { ViewProjectDialog } from "@/components/ViewProjectDialog";
 import { toast } from "@/hooks/use-toast";
 import { DollarSign, TrendingUp, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -28,6 +29,12 @@ interface Payment {
     name: string;
     base_price: number | null;
     lead_id: string;
+    status_id?: string | null;
+    project_type_id?: string | null;
+    description?: string | null;
+    updated_at?: string;
+    created_at?: string;
+    user_id?: string;
     leads: {
       id: string;
       name: string;
@@ -41,13 +48,15 @@ interface PaymentMetrics {
   remainingBalance: number;
 }
 
-type DateFilterType = 'last7days' | 'last4weeks' | 'last3months' | 'last12months' | 'monthToDate' | 'quarterToDate' | 'yearToDate' | 'lastMonth' | 'custom';
+type DateFilterType = 'last7days' | 'last4weeks' | 'last3months' | 'last12months' | 'monthToDate' | 'quarterToDate' | 'yearToDate' | 'lastMonth' | 'allTime' | 'custom';
 
 const Payments = () => {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedFilter, setSelectedFilter] = useState<DateFilterType>('lastMonth');
+  const [selectedFilter, setSelectedFilter] = useState<DateFilterType>('allTime');
   const [customDateRange, setCustomDateRange] = useState<DateRange | undefined>();
+  const [viewingProject, setViewingProject] = useState<any>(null);
+  const [showProjectDialog, setShowProjectDialog] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -68,10 +77,10 @@ const Payments = () => {
       // Get unique project IDs
       const projectIds = Array.from(new Set(paymentsData?.map(p => p.project_id).filter(Boolean) || []));
       
-      // Fetch projects
+      // Fetch projects with more detailed info
       const { data: projectsData, error: projectsError } = await supabase
         .from('projects')
-        .select('id, name, base_price, lead_id')
+        .select('id, name, base_price, lead_id, status_id, project_type_id, description, updated_at, created_at, user_id')
         .in('id', projectIds);
 
       if (projectsError) throw projectsError;
@@ -133,6 +142,7 @@ const Payments = () => {
       case 'lastMonth':
         const lastMonth = subMonths(now, 1);
         return { start: startOfMonth(lastMonth), end: startOfMonth(now) };
+      case 'allTime':
       case 'custom':
         if (customDateRange?.from && customDateRange?.to) {
           return { start: customDateRange.from, end: customDateRange.to };
@@ -146,13 +156,15 @@ const Payments = () => {
   const filteredPayments = useMemo(() => {
     let filtered = payments;
 
-    // Apply date filter - always apply filter now since we don't have "all time" anymore
-    const dateRange = getDateRangeForFilter(selectedFilter);
-    if (dateRange) {
+    // Apply date filter
+    if (selectedFilter !== 'allTime') {
+      const dateRange = getDateRangeForFilter(selectedFilter);
+      if (dateRange) {
         filtered = filtered.filter(payment => {
           const paymentDate = new Date(payment.date_paid || payment.created_at);
           return paymentDate >= dateRange.start && paymentDate <= dateRange.end;
       });
+      }
     }
 
     return filtered;
@@ -218,9 +230,10 @@ const Payments = () => {
             className="p-0 h-auto font-normal text-primary"
             onClick={(e) => {
               e.stopPropagation();
-              // Navigate to project details by finding a way to open project details
-              // For now, let's navigate to a more specific route
-              navigate(`/projects`); // This might need to be updated when we have project detail routes
+              if (payment.projects) {
+                setViewingProject(payment.projects);
+                setShowProjectDialog(true);
+              }
             }}
           >
             {payment.projects.name}
@@ -332,8 +345,8 @@ const Payments = () => {
               <SelectItem value="last12months">Last 12 months</SelectItem>
               <SelectItem value="monthToDate">Month to date</SelectItem>
               <SelectItem value="quarterToDate">Quarter to date</SelectItem>
-              <SelectItem value="yearToDate">Year to date</SelectItem>
               <SelectItem value="lastMonth">Last month</SelectItem>
+              <SelectItem value="allTime">All time</SelectItem>
               <SelectItem value="custom">Custom range</SelectItem>
             </SelectContent>
           </Select>
@@ -396,6 +409,15 @@ const Payments = () => {
           />
         </CardContent>
       </Card>
+
+      {/* Project Details Dialog */}
+      <ViewProjectDialog
+        project={viewingProject}
+        open={showProjectDialog}
+        onOpenChange={setShowProjectDialog}
+        onProjectUpdated={fetchPayments}
+        leadName={viewingProject?.leads?.name || ""}
+      />
     </div>
   );
 };

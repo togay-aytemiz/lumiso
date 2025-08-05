@@ -305,21 +305,21 @@ export function ProjectPaymentsSection({ projectId, onPaymentsUpdated }: Project
                 <div className="w-2 h-2 rounded-full bg-green-500"></div>
                 <span className="text-sm font-medium text-muted-foreground">Total paid</span>
               </div>
-              <div className="text-xl font-semibold">TRY {totalPaid.toFixed(2)}</div>
-            </div>
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-2 mb-1">
-                <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
-                <span className="text-sm font-medium text-muted-foreground">Total outstanding</span>
-              </div>
-              <div className="text-xl font-semibold">TRY {totalOutstanding.toFixed(2)}</div>
+              <div className="text-xl font-semibold">TRY {Math.round(totalPaid)}</div>
             </div>
             <div className="text-center">
               <div className="flex items-center justify-center gap-2 mb-1">
                 <div className="w-2 h-2 rounded-full bg-gray-500"></div>
                 <span className="text-sm font-medium text-muted-foreground">Extra services</span>
               </div>
-              <div className="text-xl font-semibold">TRY {extraServices.toFixed(2)}</div>
+              <div className="text-xl font-semibold">TRY {Math.round(extraServices)}</div>
+            </div>
+            <div className="text-center">
+              <div className="flex items-center justify-center gap-2 mb-1">
+                <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
+                <span className="text-sm font-medium text-muted-foreground">Remaining balance</span>
+              </div>
+              <div className="text-xl font-semibold">TRY {Math.round(totalOutstanding)}</div>
             </div>
           </div>
 
@@ -355,7 +355,7 @@ export function ProjectPaymentsSection({ projectId, onPaymentsUpdated }: Project
                       </div>
                     </div>
                     <div className="min-w-0">
-                      <div className="font-semibold">TRY {payment.amount.toFixed(2)}</div>
+                      <div className="font-semibold">TRY {Math.round(payment.amount)}</div>
                     </div>
                     <div className="flex-1 min-w-0 flex items-center gap-2">
                       {payment.type === 'base_price' && <Lock className="h-3 w-3 text-muted-foreground" />}

@@ -195,7 +195,7 @@ const ProjectKanbanBoard = ({ projects, onProjectsChange }: ProjectKanbanBoardPr
               <h4 className="font-normal text-sm mb-2 line-clamp-2">{project.name}</h4>
               
               {/* Project type badge and todo completion side by side */}
-              <div className="flex items-center gap-2 mb-3">
+              <div className={`flex items-center gap-2 ${(project.planned_session_count || 0) > 0 ? 'mb-3' : 'mb-1'}`}>
                 {project.project_type && (
                   <Badge variant="outline" className="text-xs">
                     {project.project_type.name.toUpperCase()}
@@ -212,15 +212,15 @@ const ProjectKanbanBoard = ({ projects, onProjectsChange }: ProjectKanbanBoardPr
               </div>
               
               {/* Bottom section */}
-              <div className="space-y-2">
-                {/* Session info */}
-                {(project.planned_session_count || 0) > 0 && (
+              {(project.planned_session_count || 0) > 0 && (
+                <div className="space-y-2">
+                  {/* Session info */}
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <Calendar className="h-3 w-3" />
                     <span>{project.planned_session_count} planned session{project.planned_session_count !== 1 ? 's' : ''}</span>
                   </div>
-                )}
-              </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

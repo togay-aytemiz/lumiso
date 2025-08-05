@@ -260,190 +260,200 @@ const AllProjects = () => {
   }
 
   return (
-    <div className="p-8">
-      <div className="mb-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">Projects</h1>
-            <p className="text-muted-foreground">Manage all your projects in one place</p>
+    <div className="flex flex-col h-screen">
+      {/* Fixed header section */}
+      <div className="flex-none p-8 pb-0">
+        <div className="mb-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold">Projects</h1>
+              <p className="text-muted-foreground">Manage all your projects in one place</p>
+            </div>
+            <div className="w-full max-w-lg min-w-[480px] ml-8">
+              <GlobalSearch />
+            </div>
           </div>
-          <div className="w-full max-w-lg min-w-[480px] ml-8">
-            <GlobalSearch />
-          </div>
-        </div>
-      </div>
-      
-      {/* View Toggle */}
-      <div className="mb-6">
-        <div className="flex items-center gap-1 border-b border-border">
-          <Button
-            variant="ghost"
-            onClick={() => setViewMode('board')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-none border-b-2 transition-colors ${
-              viewMode === 'board' 
-                ? 'border-primary text-primary bg-primary/5' 
-                : 'border-transparent text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            <LayoutGrid className="h-4 w-4" />
-            Board View
-          </Button>
-          <Button
-            variant="ghost"
-            onClick={() => setViewMode('list')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-none border-b-2 transition-colors ${
-              viewMode === 'list' 
-                ? 'border-primary text-primary bg-primary/5' 
-                : 'border-transparent text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            <List className="h-4 w-4" />
-            List View
-          </Button>
         </div>
       </div>
 
-      {/* Board View */}
-      {viewMode === 'board' ? (
-        <ProjectKanbanBoard 
-          projects={projects} 
-          onProjectsChange={fetchProjects}
-        />
-      ) : (
-        /* List View */
-        <Card>
-          <CardHeader>
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                <EnhancedProjectDialog
-                  onProjectCreated={() => {
-                    fetchProjects();
-                  }}
-                >
-                  <Button className="flex items-center gap-2">
-                    <Plus className="h-4 w-4" />
-                    Add Project
-                  </Button>
-                </EnhancedProjectDialog>
-              </div>
-            </div>
-          </CardHeader>
-        
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead 
-                  className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => handleSort('name')}
-                >
-                  <div className="flex items-center gap-2">
-                    Project Name
-                    {getSortIcon('name')}
-                  </div>
-                </TableHead>
-                <TableHead 
-                  className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => handleSort('lead_name')}
-                >
-                  <div className="flex items-center gap-2">
-                    Lead
-                    {getSortIcon('lead_name')}
-                  </div>
-                </TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead 
-                  className="cursor-pointer hover:bg-muted/50 text-center"
-                  onClick={() => handleSort('session_count')}
-                >
-                  <div className="flex items-center justify-center gap-2">
-                    Sessions
-                    {getSortIcon('session_count')}
-                  </div>
-                </TableHead>
-                <TableHead className="text-center">Todos</TableHead>
-                <TableHead>Services</TableHead>
-                <TableHead 
-                  className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => handleSort('updated_at')}
-                >
-                  <div className="flex items-center gap-2">
-                    Last Updated
-                    {getSortIcon('updated_at')}
-                  </div>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredAndSortedProjects.length > 0 ? (
-                filteredAndSortedProjects.map((project) => (
-                  <TableRow 
-                    key={project.id}
-                    className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => handleProjectClick(project)}
-                  >
-                    <TableCell className="font-medium">
-                      <Button
-                        variant="link"
-                        className="p-0 h-auto text-left justify-start font-medium"
-                        onClick={() => handleProjectClick(project)}
-                      >
-                        {project.name}
+      {/* View Toggle - Fixed */}
+      <div className="flex-none px-8">
+        <div className="border-b border-border w-full">
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              onClick={() => setViewMode('board')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-none border-b-2 transition-colors ${
+                viewMode === 'board' 
+                  ? 'border-primary text-primary bg-primary/5' 
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <LayoutGrid className="h-4 w-4" />
+              Board View
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => setViewMode('list')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-none border-b-2 transition-colors ${
+                viewMode === 'list' 
+                  ? 'border-primary text-primary bg-primary/5' 
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <List className="h-4 w-4" />
+              List View
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Content area - Scrollable */}
+      <div className="flex-1 overflow-hidden">
+        {viewMode === 'board' ? (
+          <div className="h-full p-8 pt-6">
+            <ProjectKanbanBoard 
+              projects={projects} 
+              onProjectsChange={fetchProjects}
+            />
+          </div>
+        ) : (
+          <div className="h-full overflow-y-auto p-8 pt-6">
+            <Card>
+              <CardHeader>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                    <EnhancedProjectDialog
+                      onProjectCreated={() => {
+                        fetchProjects();
+                      }}
+                    >
+                      <Button className="flex items-center gap-2">
+                        <Plus className="h-4 w-4" />
+                        Add Project
                       </Button>
-                    </TableCell>
-                    <TableCell>
-                      {project.lead ? (
-                        <>
-                          <Button
-                            variant="link"
-                            className="p-0 h-auto text-left justify-start"
-                            onClick={(e) => handleLeadClick(e, project.lead.id)}
-                          >
-                            {project.lead.name}
-                          </Button>
-                          {project.lead.email && (
-                            <div className="text-xs text-muted-foreground">{project.lead.email}</div>
-                          )}
-                        </>
-                      ) : (
-                        <span className="text-muted-foreground">Lead not found</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <ProjectStatusBadge 
-                        projectId={project.id}
-                        currentStatusId={project.status_id}
-                        editable={false}
-                        size="sm"
-                        onStatusChange={() => fetchProjects()}
-                      />
-                    </TableCell>
-                    <TableCell className="text-center">
-                      {getProgressBadge(project.completed_session_count || 0, project.session_count || 0)}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      {getProgressBadge(project.completed_todo_count || 0, project.todo_count || 0)}
-                    </TableCell>
-                    <TableCell>
-                      {renderServicesChips(project.services || [])}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {formatDate(project.updated_at)}
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                    No projects found. Create your first project to get started!
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-        </Card>
-      )}
+                    </EnhancedProjectDialog>
+                  </div>
+                </div>
+              </CardHeader>
+            
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead 
+                        className="cursor-pointer hover:bg-muted/50"
+                        onClick={() => handleSort('name')}
+                      >
+                        <div className="flex items-center gap-2">
+                          Project Name
+                          {getSortIcon('name')}
+                        </div>
+                      </TableHead>
+                      <TableHead 
+                        className="cursor-pointer hover:bg-muted/50"
+                        onClick={() => handleSort('lead_name')}
+                      >
+                        <div className="flex items-center gap-2">
+                          Lead
+                          {getSortIcon('lead_name')}
+                        </div>
+                      </TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead 
+                        className="cursor-pointer hover:bg-muted/50 text-center"
+                        onClick={() => handleSort('session_count')}
+                      >
+                        <div className="flex items-center justify-center gap-2">
+                          Sessions
+                          {getSortIcon('session_count')}
+                        </div>
+                      </TableHead>
+                      <TableHead className="text-center">Todos</TableHead>
+                      <TableHead>Services</TableHead>
+                      <TableHead 
+                        className="cursor-pointer hover:bg-muted/50"
+                        onClick={() => handleSort('updated_at')}
+                      >
+                        <div className="flex items-center gap-2">
+                          Last Updated
+                          {getSortIcon('updated_at')}
+                        </div>
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredAndSortedProjects.length > 0 ? (
+                      filteredAndSortedProjects.map((project) => (
+                        <TableRow 
+                          key={project.id}
+                          className="cursor-pointer hover:bg-muted/50"
+                          onClick={() => handleProjectClick(project)}
+                        >
+                          <TableCell className="font-medium">
+                            <Button
+                              variant="link"
+                              className="p-0 h-auto text-left justify-start font-medium"
+                              onClick={() => handleProjectClick(project)}
+                            >
+                              {project.name}
+                            </Button>
+                          </TableCell>
+                          <TableCell>
+                            {project.lead ? (
+                              <>
+                                <Button
+                                  variant="link"
+                                  className="p-0 h-auto text-left justify-start"
+                                  onClick={(e) => handleLeadClick(e, project.lead.id)}
+                                >
+                                  {project.lead.name}
+                                </Button>
+                                {project.lead.email && (
+                                  <div className="text-xs text-muted-foreground">{project.lead.email}</div>
+                                )}
+                              </>
+                            ) : (
+                              <span className="text-muted-foreground">Lead not found</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <ProjectStatusBadge 
+                              projectId={project.id}
+                              currentStatusId={project.status_id}
+                              editable={false}
+                              size="sm"
+                              onStatusChange={() => fetchProjects()}
+                            />
+                          </TableCell>
+                          <TableCell className="text-center">
+                            {getProgressBadge(project.completed_session_count || 0, project.session_count || 0)}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            {getProgressBadge(project.completed_todo_count || 0, project.todo_count || 0)}
+                          </TableCell>
+                          <TableCell>
+                            {renderServicesChips(project.services || [])}
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground">
+                            {formatDate(project.updated_at)}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                          No projects found. Create your first project to get started!
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+      </div>
 
       {/* View Project Dialog */}
       <ViewProjectDialog

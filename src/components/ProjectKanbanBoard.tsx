@@ -324,6 +324,7 @@ const ProjectKanbanBoard = ({ projects, onProjectsChange }: ProjectKanbanBoardPr
 
       {/* Add Project Dialog */}
       <EnhancedProjectDialog
+        defaultStatusId={selectedStatusId}
         onProjectCreated={() => {
           onProjectsChange();
           setSelectedStatusId(null);

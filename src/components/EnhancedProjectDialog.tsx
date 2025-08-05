@@ -23,9 +23,10 @@ interface Lead {
 interface EnhancedProjectDialogProps {
   onProjectCreated?: () => void;
   children?: React.ReactNode;
+  defaultStatusId?: string | null;
 }
 
-export function EnhancedProjectDialog({ onProjectCreated, children }: EnhancedProjectDialogProps) {
+export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatusId }: EnhancedProjectDialogProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -144,9 +145,13 @@ export function EnhancedProjectDialog({ onProjectCreated, children }: EnhancedPr
         leadId = newLead.id;
       }
 
-      // Get default project status
-      const { data: defaultStatusId } = await supabase
-        .rpc('get_default_project_status', { user_uuid: user.id });
+      // Use provided status or get default project status
+      let statusId = defaultStatusId;
+      if (!statusId) {
+        const { data: defaultStatus } = await supabase
+          .rpc('get_default_project_status', { user_uuid: user.id });
+        statusId = defaultStatus;
+      }
 
       // Create project
       const { error: projectError } = await supabase
@@ -156,7 +161,7 @@ export function EnhancedProjectDialog({ onProjectCreated, children }: EnhancedPr
           lead_id: leadId,
           name: projectData.name.trim(),
           description: projectData.description.trim() || null,
-          status_id: defaultStatusId
+          status_id: statusId
         });
 
       if (projectError) throw projectError;

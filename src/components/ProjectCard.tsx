@@ -74,6 +74,7 @@ export function ProjectCard({ project, onView, refreshTrigger }: ProjectCardProp
                   projectId={project.id}
                   currentStatusId={project.status_id}
                   editable={false}
+                  size="sm"
                   className="text-xs"
                 />
                 <span>Created {format(new Date(project.created_at), "M/d/yy")}</span>

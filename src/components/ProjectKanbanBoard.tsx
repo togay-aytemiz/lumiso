@@ -311,7 +311,7 @@ const ProjectKanbanBoard = ({ projects, onProjectsChange }: ProjectKanbanBoardPr
   }
 
   return (
-    <div className="w-full h-full p-6">
+    <div className="w-full h-full">
       <DragDropContext onDragEnd={handleDragEnd}>
         {/* Horizontally scrollable board area with fixed height */}
         <div className="overflow-x-auto h-full">

@@ -260,10 +260,10 @@ const AllProjects = () => {
   }
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden">
+    <div className="flex flex-col h-screen">
       {/* Fixed header section */}
-      <div className="sticky top-0 z-10 bg-background border-b border-border">
-        <div className="p-6 pb-4">
+      <div className="flex-none p-8 pb-0">
+        <div className="mb-6">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold">Projects</h1>
@@ -274,36 +274,36 @@ const AllProjects = () => {
             </div>
           </div>
         </div>
+      </div>
 
-        {/* View Toggle - Fixed with header */}
-        <div className="px-6">
-          <div className="border-b border-border w-full">
-            <div className="flex items-center gap-1">
-              <Button
-                variant="ghost"
-                onClick={() => setViewMode('board')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-none border-b-2 transition-colors ${
-                  viewMode === 'board' 
-                    ? 'border-primary text-primary bg-primary/5' 
-                    : 'border-transparent text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                <LayoutGrid className="h-4 w-4" />
-                Board View
-              </Button>
-              <Button
-                variant="ghost"
-                onClick={() => setViewMode('list')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-none border-b-2 transition-colors ${
-                  viewMode === 'list' 
-                    ? 'border-primary text-primary bg-primary/5' 
-                    : 'border-transparent text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                <List className="h-4 w-4" />
-                List View
-              </Button>
-            </div>
+      {/* View Toggle - Fixed */}
+      <div className="flex-none px-8">
+        <div className="border-b border-border w-full">
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              onClick={() => setViewMode('board')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-none border-b-2 transition-colors ${
+                viewMode === 'board' 
+                  ? 'border-primary text-primary bg-primary/5' 
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <LayoutGrid className="h-4 w-4" />
+              Board View
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => setViewMode('list')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-none border-b-2 transition-colors ${
+                viewMode === 'list' 
+                  ? 'border-primary text-primary bg-primary/5' 
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <List className="h-4 w-4" />
+              List View
+            </Button>
           </div>
         </div>
       </div>
@@ -311,14 +311,14 @@ const AllProjects = () => {
       {/* Content area - Scrollable */}
       <div className="flex-1 overflow-hidden">
         {viewMode === 'board' ? (
-          <div className="h-full">
+          <div className="h-full p-8 pt-6">
             <ProjectKanbanBoard 
               projects={projects} 
               onProjectsChange={fetchProjects}
             />
           </div>
         ) : (
-          <div className="h-full overflow-y-auto p-6">
+          <div className="h-full overflow-y-auto p-8 pt-6">
             <Card>
               <CardHeader>
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">

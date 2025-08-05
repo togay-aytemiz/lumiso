@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 
 interface Payment {
   id: string;
+  project_id: string;
   amount: number;
   description: string | null;
   status: 'paid' | 'due';
@@ -63,17 +64,32 @@ export function EditPaymentDialog({ payment, open, onOpenChange, onPaymentUpdate
 
     setIsLoading(true);
     try {
+      const updateData: any = {
+        amount: parseFloat(amount),
+        description: description.trim() || null,
+        status,
+        date_paid: status === 'paid' ? datePaid?.toISOString().split('T')[0] : null
+      };
+
       const { error } = await supabase
         .from('payments')
-        .update({
-          amount: parseFloat(amount),
-          description: description.trim() || null,
-          status,
-          date_paid: status === 'paid' ? datePaid?.toISOString().split('T')[0] : null
-        })
+        .update(updateData)
         .eq('id', payment.id);
 
       if (error) throw error;
+
+      // If this is a base price payment, update the project's base_price field
+      if (payment.type === 'base_price') {
+        const { error: projectError } = await supabase
+          .from('projects')
+          .update({ base_price: parseFloat(amount) })
+          .eq('id', payment.project_id);
+
+        if (projectError) {
+          console.error('Error updating project base price:', projectError);
+          // Don't throw here as the payment was updated successfully
+        }
+      }
 
       toast({
         title: "Success",

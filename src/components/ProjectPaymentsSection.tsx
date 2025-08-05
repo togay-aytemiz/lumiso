@@ -14,6 +14,7 @@ import { EditPaymentDialog } from "./EditPaymentDialog";
 
 interface Payment {
   id: string;
+  project_id: string;
   amount: number;
   description: string | null;
   status: 'paid' | 'due';
@@ -124,83 +125,42 @@ export function ProjectPaymentsSection({ projectId, onPaymentsUpdated }: Project
     fetchProjectServices();
   }, [projectId]);
 
-  const handleBasePriceUpdate = async () => {
-    if (!project) return;
+  // Ensure base price payment exists
+  useEffect(() => {
+    const ensureBasePricePayment = async () => {
+      if (!project) return;
 
-    const newBasePrice = parseFloat(basePrice) || 0;
-    
-    setIsUpdatingBasePrice(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
+      const existingBasePricePayment = payments.find(p => p.type === 'base_price');
+      
+      if (!existingBasePricePayment) {
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (!user) return;
 
-      // Update project base price
-      const { error: projectError } = await supabase
-        .from('projects')
-        .update({ base_price: newBasePrice })
-        .eq('id', projectId);
-
-      if (projectError) throw projectError;
-
-      // Handle base price payment
-      if (newBasePrice > 0) {
-        // Check if base price payment exists
-        const existingBasePricePayment = payments.find(p => p.type === 'base_price');
-        
-        if (existingBasePricePayment) {
-          // Update existing base price payment
-          const { error: updateError } = await supabase
-            .from('payments')
-            .update({ amount: newBasePrice })
-            .eq('id', existingBasePricePayment.id);
-
-          if (updateError) throw updateError;
-        } else {
-          // Create new base price payment
-          const { error: insertError } = await supabase
+          const { error } = await supabase
             .from('payments')
             .insert({
               project_id: projectId,
               user_id: user.id,
-              amount: newBasePrice,
+              amount: project.base_price || 0,
               description: 'Base Price',
               status: 'due',
               type: 'base_price'
             });
 
-          if (insertError) throw insertError;
-        }
-      } else {
-        // Remove base price payment if base price is 0
-        const existingBasePricePayment = payments.find(p => p.type === 'base_price');
-        if (existingBasePricePayment) {
-          const { error: deleteError } = await supabase
-            .from('payments')
-            .delete()
-            .eq('id', existingBasePricePayment.id);
-
-          if (deleteError) throw deleteError;
+          if (!error) {
+            fetchPayments();
+          }
+        } catch (error) {
+          console.error('Error creating base price payment:', error);
         }
       }
+    };
 
-      setProject({ ...project, base_price: newBasePrice });
-      fetchPayments();
-      onPaymentsUpdated?.();
-
-      toast({
-        title: "Success",
-        description: "Base price updated successfully"
-      });
-    } catch (error: any) {
-      toast({
-        title: "Error updating base price",
-        description: error.message,
-        variant: "destructive"
-      });
-    } finally {
-      setIsUpdatingBasePrice(false);
+    if (project && payments.length > 0) {
+      ensureBasePricePayment();
     }
-  };
+  }, [project, payments, projectId]);
 
   const handlePaymentUpdated = () => {
     fetchPayments();
@@ -208,17 +168,12 @@ export function ProjectPaymentsSection({ projectId, onPaymentsUpdated }: Project
   };
 
   const handleEditPayment = (payment: Payment) => {
-    if (payment.type === 'base_price') {
-      // For base price payments, we don't open the edit dialog
-      // Instead, they should edit via the base price input
-      return;
-    }
     setEditingPayment(payment);
     setShowEditDialog(true);
   };
 
   const handleDeletePayment = async () => {
-    if (!paymentToDelete || paymentToDelete.type === 'base_price') return;
+    if (!paymentToDelete) return;
     
     setIsDeleting(true);
     try {
@@ -275,29 +230,6 @@ export function ProjectPaymentsSection({ projectId, onPaymentsUpdated }: Project
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Base Price Input */}
-          <div className="space-y-2">
-            <Label htmlFor="base-price">Base Price (TRY)</Label>
-            <div className="flex gap-2">
-              <Input
-                id="base-price"
-                type="number"
-                step="0.01"
-                placeholder="0.00"
-                value={basePrice}
-                onChange={(e) => setBasePrice(e.target.value)}
-                className="flex-1"
-              />
-              <Button 
-                onClick={handleBasePriceUpdate}
-                disabled={isUpdatingBasePrice}
-                size="sm"
-              >
-                {isUpdatingBasePrice ? "Updating..." : "Update"}
-              </Button>
-            </div>
-          </div>
-
           {/* Summary Metrics */}
           <div className="grid grid-cols-3 gap-4">
             <div className="text-center">
@@ -358,7 +290,6 @@ export function ProjectPaymentsSection({ projectId, onPaymentsUpdated }: Project
                       <div className="font-semibold">TRY {Math.round(payment.amount)}</div>
                     </div>
                     <div className="flex-1 min-w-0 flex items-center gap-2">
-                      {payment.type === 'base_price' && <Lock className="h-3 w-3 text-muted-foreground" />}
                       <div className="text-sm text-muted-foreground truncate">
                         {payment.description || "No description"}
                       </div>
@@ -373,28 +304,26 @@ export function ProjectPaymentsSection({ projectId, onPaymentsUpdated }: Project
                     </div>
                   </div>
                   <div className="flex items-center gap-1 ml-4">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleEditPayment(payment)}
+                      className="h-8 w-8 p-0"
+                    >
+                      <Edit2 className="h-4 w-4" />
+                    </Button>
                     {payment.type === 'manual' && (
-                      <>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEditPayment(payment)}
-                          className="h-8 w-8 p-0"
-                        >
-                          <Edit2 className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setPaymentToDelete(payment);
-                            setShowDeleteDialog(true);
-                          }}
-                          className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setPaymentToDelete(payment);
+                          setShowDeleteDialog(true);
+                        }}
+                        className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     )}
                   </div>
                 </div>

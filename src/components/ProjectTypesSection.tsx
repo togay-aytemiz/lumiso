@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -13,6 +12,7 @@ import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import SettingsSection from "./SettingsSection";
 
 const projectTypeSchema = z.object({
   name: z.string().min(1, "Type name is required").max(50, "Type name must be less than 50 characters"),
@@ -381,52 +381,28 @@ const ProjectTypesSection = () => {
 
   if (loading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Project Types</CardTitle>
-          <CardDescription>
-            Customize your project types to reflect the type of work you offer.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-8 w-8 animate-spin" />
-          </div>
-        </CardContent>
-      </Card>
+      <SettingsSection 
+        title="Project Types" 
+        description="Customize your project types to reflect the type of work you offer."
+      >
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      </SettingsSection>
     );
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle>Project Types</CardTitle>
-            <CardDescription>
-              Customize your project types to reflect the type of work you offer.
-            </CardDescription>
-          </div>
-          <Dialog open={isAddDialogOpen} onOpenChange={(open) => {
-            setIsAddDialogOpen(open);
-            if (!open) {
-              form.reset({ name: "", is_default: false });
-              setEditingType(null);
-            }
-          }}>
-            <Button 
-              onClick={handleAdd}
-              className="flex items-center gap-2"
-              variant="default"
-            >
-              <Plus className="h-4 w-4" />
-              Add Type
-            </Button>
-            {renderTypeDialog(false)}
-          </Dialog>
-        </div>
-      </CardHeader>
-      <CardContent>
+    <>
+      <SettingsSection 
+        title="Project Types" 
+        description="Customize your project types to reflect the type of work you offer."
+        action={{
+          label: "Add Type",
+          onClick: handleAdd,
+          icon: <Plus className="h-4 w-4" />
+        }}
+      >
         <div className="flex flex-wrap gap-3 p-2">
           {types.map((type) => (
             <div
@@ -449,6 +425,17 @@ const ProjectTypesSection = () => {
           ))}
         </div>
 
+        {/* Add Dialog */}
+        <Dialog open={isAddDialogOpen} onOpenChange={(open) => {
+          setIsAddDialogOpen(open);
+          if (!open) {
+            form.reset({ name: "", is_default: false });
+            setEditingType(null);
+          }
+        }}>
+          {renderTypeDialog(false)}
+        </Dialog>
+
         {/* Edit Dialog */}
         <Dialog open={isEditDialogOpen} onOpenChange={(open) => {
           setIsEditDialogOpen(open);
@@ -459,8 +446,8 @@ const ProjectTypesSection = () => {
         }}>
           {renderTypeDialog(true)}
         </Dialog>
-      </CardContent>
-    </Card>
+      </SettingsSection>
+    </>
   );
 };
 

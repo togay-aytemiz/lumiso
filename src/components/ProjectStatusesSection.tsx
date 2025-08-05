@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -13,6 +12,7 @@ import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import SettingsSection from "./SettingsSection";
 
 const projectStatusSchema = z.object({
   name: z.string().min(1, "Status name is required").max(50, "Status name must be less than 50 characters"),
@@ -420,59 +420,35 @@ const ProjectStatusesSection = () => {
 
   if (loading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Project Stages</CardTitle>
-          <CardDescription>
-            Add, rename and reorder stages to customize your workflow.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-8 w-8 animate-spin" />
-          </div>
-        </CardContent>
-      </Card>
+      <SettingsSection 
+        title="Project Stages" 
+        description="Add, rename and reorder stages to customize your workflow."
+      >
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      </SettingsSection>
     );
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle>Project Stages</CardTitle>
-            <CardDescription>
-              Add, rename and reorder stages to customize your workflow.
-            </CardDescription>
-          </div>
-          <Dialog open={isAddDialogOpen} onOpenChange={(open) => {
-            setIsAddDialogOpen(open);
-            if (!open) {
-              form.reset({ name: "", color: PREDEFINED_COLORS[0] });
-              setEditingStatus(null);
-            }
-          }}>
-            <Button 
-              onClick={handleAdd}
-              className="flex items-center gap-2"
-              variant="default"
-            >
-              <Plus className="h-4 w-4" />
-              Add Stage
-            </Button>
-            {renderStatusDialog(false)}
-          </Dialog>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="mb-4 p-3 bg-muted/30 rounded-lg border border-dashed border-muted-foreground/20">
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            <strong>Drag to reorder:</strong> Use the grip handle (⋮⋮) to drag stages and change their order. 
-            <strong>Click to edit:</strong> Click on any stage to rename it or change its color. 
-            The stage order will be consistent across all project views.
-          </p>
-        </div>
+    <>
+    <SettingsSection 
+      title="Project Stages" 
+      description="Add, rename and reorder stages to customize your workflow."
+      action={{
+        label: "Add Stage",
+        onClick: handleAdd,
+        icon: <Plus className="h-4 w-4" />
+      }}
+    >
+      <div className="mb-4 p-3 bg-muted/30 rounded-lg border border-dashed border-muted-foreground/20">
+        <p className="text-sm text-muted-foreground leading-relaxed">
+          <strong>Drag to reorder:</strong> Use the grip handle (⋮⋮) to drag stages and change their order. 
+          <strong>Click to edit:</strong> Click on any stage to rename it or change its color. 
+          The stage order will be consistent across all project views.
+        </p>
+      </div>
 
         <DragDropContext onDragEnd={handleDragEnd}>
           <Droppable droppableId="statuses" direction="horizontal">
@@ -533,6 +509,17 @@ const ProjectStatusesSection = () => {
           </Droppable>
         </DragDropContext>
 
+        {/* Add Dialog */}
+        <Dialog open={isAddDialogOpen} onOpenChange={(open) => {
+          setIsAddDialogOpen(open);
+          if (!open) {
+            form.reset({ name: "", color: PREDEFINED_COLORS[0] });
+            setEditingStatus(null);
+          }
+        }}>
+          {renderStatusDialog(false)}
+        </Dialog>
+
         {/* Edit Dialog */}
         <Dialog open={isEditDialogOpen} onOpenChange={(open) => {
           setIsEditDialogOpen(open);
@@ -543,8 +530,8 @@ const ProjectStatusesSection = () => {
         }}>
           {renderStatusDialog(true)}
         </Dialog>
-      </CardContent>
-    </Card>
+      </SettingsSection>
+    </>
   );
 };
 

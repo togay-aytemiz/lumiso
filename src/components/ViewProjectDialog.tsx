@@ -385,7 +385,7 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
                           <span className="text-sm font-medium text-muted-foreground">Name:</span>
                           <Button
                             variant="link"
-                            className="p-0 h-auto text-left justify-start font-medium text-sm"
+                            className="p-0 h-auto text-left justify-start font-medium text-sm text-blue-600 hover:text-blue-800 hover:underline"
                             onClick={() => {
                               // Navigate to lead details page
                               window.location.href = `/leads/${lead.id}`;

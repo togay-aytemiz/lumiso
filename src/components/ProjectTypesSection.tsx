@@ -127,10 +127,18 @@ const ProjectTypesSection = () => {
 
         if (error) throw error;
 
-        toast({
-          title: "Success",
-          description: "Project type updated successfully",
-        });
+        // Show appropriate message based on what changed
+        if (data.is_default && !editingType.is_default) {
+          toast({
+            title: "Success",
+            description: `"${data.name}" is now the default project type`,
+          });
+        } else {
+          toast({
+            title: "Success",
+            description: "Project type updated successfully",
+          });
+        }
         setIsEditDialogOpen(false);
       } else {
         // Create new type

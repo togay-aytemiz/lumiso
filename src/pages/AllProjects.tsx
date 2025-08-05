@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowLeft, ArrowUpDown, ArrowUp, ArrowDown, Plus, FolderOpen, User } from "lucide-react";
+import { ArrowLeft, ArrowUpDown, ArrowUp, ArrowDown, Plus, FolderOpen, User, LayoutGrid, List } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { EnhancedProjectDialog } from "@/components/EnhancedProjectDialog";
 import { ViewProjectDialog } from "@/components/ViewProjectDialog";
@@ -12,6 +12,7 @@ import { ProjectStatusBadge } from "@/components/ProjectStatusBadge";
 import { useNavigate } from "react-router-dom";
 import { formatDate } from "@/lib/utils";
 import GlobalSearch from "@/components/GlobalSearch";
+import ProjectKanbanBoard from "@/components/ProjectKanbanBoard";
 
 interface Project {
   id: string;
@@ -31,6 +32,8 @@ interface Project {
   } | null;
   session_count?: number;
   completed_session_count?: number;
+  upcoming_session_count?: number;
+  next_session_date?: string | null;
   todo_count?: number;
   completed_todo_count?: number;
   services?: Array<{
@@ -47,6 +50,7 @@ const AllProjects = () => {
   const [loading, setLoading] = useState(true);
   const [sortField, setSortField] = useState<SortField>("updated_at");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+  const [viewMode, setViewMode] = useState<'board' | 'list'>('board');
   
   const [viewingProject, setViewingProject] = useState<Project | null>(null);
   const [showViewDialog, setShowViewDialog] = useState(false);
@@ -77,11 +81,18 @@ const AllProjects = () => {
       // Fetch additional project statistics
       const projectsWithStats = await Promise.all(
         (projectsData || []).map(async (project) => {
-          // Get session counts
+          // Get session counts and upcoming sessions
           const { data: sessions } = await supabase
             .from('sessions')
-            .select('id, status')
+            .select('id, status, session_date, session_time')
             .eq('project_id', project.id);
+
+          // Calculate upcoming sessions (future sessions)
+          const now = new Date();
+          const upcomingSessions = sessions?.filter(session => {
+            const sessionDateTime = new Date(`${session.session_date}T${session.session_time}`);
+            return sessionDateTime > now && session.status !== 'completed';
+          }) || [];
 
           // Get todo counts
           const { data: todos } = await supabase
@@ -107,6 +118,8 @@ const AllProjects = () => {
             lead: leadsMap.get(project.lead_id) || null,
             session_count: sessions?.length || 0,
             completed_session_count: sessions?.filter(s => s.status === 'completed').length || 0,
+            upcoming_session_count: upcomingSessions.length,
+            next_session_date: upcomingSessions.length > 0 ? upcomingSessions[0].session_date : null,
             todo_count: todos?.length || 0,
             completed_todo_count: todos?.filter(t => t.is_completed).length || 0,
             services: services,
@@ -260,24 +273,61 @@ const AllProjects = () => {
         </div>
       </div>
       
-      <Card>
-        <CardHeader>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-              <EnhancedProjectDialog
-                onProjectCreated={() => {
-                  fetchProjects();
-                }}
-              >
-                <Button className="flex items-center gap-2">
-                  <Plus className="h-4 w-4" />
-                  Add Project
-                </Button>
-              </EnhancedProjectDialog>
-              {/* Removed lead status filter */}
+      {/* View Toggle */}
+      <div className="mb-6">
+        <div className="flex items-center gap-1 border-b border-border">
+          <Button
+            variant="ghost"
+            onClick={() => setViewMode('board')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-none border-b-2 transition-colors ${
+              viewMode === 'board' 
+                ? 'border-primary text-primary bg-primary/5' 
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            <LayoutGrid className="h-4 w-4" />
+            Board View
+          </Button>
+          <Button
+            variant="ghost"
+            onClick={() => setViewMode('list')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-none border-b-2 transition-colors ${
+              viewMode === 'list' 
+                ? 'border-primary text-primary bg-primary/5' 
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            <List className="h-4 w-4" />
+            List View
+          </Button>
+        </div>
+      </div>
+
+      {/* Board View */}
+      {viewMode === 'board' ? (
+        <ProjectKanbanBoard 
+          projects={projects} 
+          onProjectsChange={fetchProjects}
+        />
+      ) : (
+        /* List View */
+        <Card>
+          <CardHeader>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                <EnhancedProjectDialog
+                  onProjectCreated={() => {
+                    fetchProjects();
+                  }}
+                >
+                  <Button className="flex items-center gap-2">
+                    <Plus className="h-4 w-4" />
+                    Add Project
+                  </Button>
+                </EnhancedProjectDialog>
+              </div>
             </div>
-          </div>
-        </CardHeader>
+          </CardHeader>
         
         <CardContent>
           <Table>
@@ -392,8 +442,8 @@ const AllProjects = () => {
             </TableBody>
           </Table>
         </CardContent>
-      </Card>
-
+        </Card>
+      )}
 
       {/* View Project Dialog */}
       <ViewProjectDialog

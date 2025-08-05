@@ -350,7 +350,7 @@ const ProjectStatusesSection = () => {
           />
           
           <div className="flex justify-between items-center pt-4">
-            {isEdit && (
+            {isEdit && editingStatus && editingStatus.name.toLowerCase() !== 'planned' && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button type="button" variant="destructive">
@@ -381,6 +381,12 @@ const ProjectStatusesSection = () => {
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
+            )}
+            
+            {isEdit && editingStatus && editingStatus.name.toLowerCase() === 'planned' && (
+              <p className="text-sm text-muted-foreground">
+                The "Planned" stage cannot be deleted as it's the default stage for new projects.
+              </p>
             )}
             
             <div className="flex gap-2 ml-auto">

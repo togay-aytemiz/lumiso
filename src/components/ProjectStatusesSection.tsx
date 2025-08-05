@@ -290,7 +290,7 @@ const ProjectStatusesSection = () => {
             {isEdit && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button type="button" variant="ghost" className="text-destructive hover:text-destructive">
+                  <Button type="button" variant="destructive">
                     <Trash2 className="h-4 w-4 mr-2" />
                     Delete
                   </Button>

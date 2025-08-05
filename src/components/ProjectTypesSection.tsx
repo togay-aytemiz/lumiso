@@ -120,23 +120,33 @@ const ProjectTypesSection = () => {
       if (editingType) {
         // If setting this as default, first unset all other defaults
         if (data.is_default) {
+          console.log('Unsetting other defaults for user:', user.id);
           const { error: unsetError } = await supabase
             .from('project_types')
             .update({ is_default: false })
             .eq('user_id', user.id)
             .neq('id', editingType.id);
 
-          if (unsetError) throw unsetError;
+          if (unsetError) {
+            console.error('Error unsetting defaults:', unsetError);
+            throw unsetError;
+          }
+          console.log('Successfully unset other defaults');
         }
 
         // Update existing type
+        console.log('Updating type:', editingType.id, 'with data:', data);
         const { error } = await supabase
           .from('project_types')
           .update({ name: data.name, is_default: data.is_default })
           .eq('id', editingType.id)
           .eq('user_id', user.id);
 
-        if (error) throw error;
+        if (error) {
+          console.error('Error updating type:', error);
+          throw error;
+        }
+        console.log('Successfully updated type');
 
         // Show appropriate message based on what changed
         if (data.is_default && !editingType.is_default) {

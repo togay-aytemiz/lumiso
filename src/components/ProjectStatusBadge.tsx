@@ -17,7 +17,8 @@ interface ProjectStatusBadgeProps {
   onStatusChange?: () => void;
   editable?: boolean;
   className?: string;
-  size?: 'sm' | 'default'; // Add size variant
+  size?: 'sm' | 'default';
+  statuses?: ProjectStatus[]; // Add optional statuses prop
 }
 
 export function ProjectStatusBadge({ 
@@ -26,7 +27,8 @@ export function ProjectStatusBadge({
   onStatusChange, 
   editable = false,
   className,
-  size = 'default'
+  size = 'default',
+  statuses: passedStatuses
 }: ProjectStatusBadgeProps) {
   const [statuses, setStatuses] = useState<ProjectStatus[]>([]);
   const [currentStatus, setCurrentStatus] = useState<ProjectStatus | null>(null);
@@ -39,8 +41,13 @@ export function ProjectStatusBadge({
   console.log('ProjectStatusBadge rendered:', { projectId, currentStatusId, editable });
 
   useEffect(() => {
-    fetchProjectStatuses();
-  }, []);
+    if (passedStatuses) {
+      setStatuses(passedStatuses);
+      setLoading(false);
+    } else {
+      fetchProjectStatuses();
+    }
+  }, [passedStatuses]);
 
   useEffect(() => {
     if (currentStatusId && statuses.length > 0) {

@@ -53,6 +53,7 @@ type SortDirection = 'asc' | 'desc';
 
 const AllProjects = () => {
   const [projects, setProjects] = useState<Project[]>([]);
+  const [projectStatuses, setProjectStatuses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [sortField, setSortField] = useState<SortField>("updated_at");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
@@ -76,7 +77,8 @@ const AllProjects = () => {
         { data: leadsData, error: leadsError },
         { data: sessionsData, error: sessionsError },
         { data: todosData, error: todosError },
-        { data: servicesData, error: servicesError }
+        { data: servicesData, error: servicesError },
+        { data: statusesData, error: statusesError }
       ] = await Promise.all([
         supabase
           .from('projects')
@@ -107,7 +109,13 @@ const AllProjects = () => {
               id,
               name
             )
-          `)
+           `)
+        ,
+        
+        supabase
+          .from('project_statuses')
+          .select('*')
+          .order('sort_order', { ascending: true })
       ]);
 
       if (projectsError) throw projectsError;
@@ -115,6 +123,10 @@ const AllProjects = () => {
       if (sessionsError) throw sessionsError;
       if (todosError) throw todosError;
       if (servicesError) throw servicesError;
+      if (statusesError) throw statusesError;
+
+      // Set project statuses for use in components
+      setProjectStatuses(statusesData || []);
 
       // Create lookup maps for efficient data joining
       const leadsMap = new Map(leadsData?.map(lead => [lead.id, lead]) || []);
@@ -484,6 +496,7 @@ const AllProjects = () => {
                               currentStatusId={project.status_id}
                               editable={false}
                               size="sm"
+                              statuses={projectStatuses}
                               onStatusChange={() => fetchProjects()}
                             />
                           </TableCell>

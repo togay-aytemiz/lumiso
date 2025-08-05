@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
+import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Plus, Trash2, Loader2 } from "lucide-react";
+import { Plus, Trash2, Loader2, GripVertical } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -26,6 +27,7 @@ interface ProjectStatus {
   color: string;
   created_at: string;
   updated_at: string;
+  sort_order: number;
 }
 
 // Predefined color palette (similar to Pixieset)
@@ -72,7 +74,7 @@ const ProjectStatusesSection = () => {
         .from('project_statuses')
         .select('*')
         .eq('user_id', user.id)
-        .order('created_at', { ascending: true });
+        .order('sort_order', { ascending: true });
 
       if (error) throw error;
 
@@ -102,11 +104,11 @@ const ProjectStatusesSection = () => {
 
       // Updated default statuses as requested
       const defaultStatuses = [
-        { name: 'Planned', color: '#A0AEC0' },
-        { name: 'Booked', color: '#ECC94B' },
-        { name: 'Post Production', color: '#9F7AEA' },
-        { name: 'Completed', color: '#48BB78' },
-        { name: 'Cancelled', color: '#F56565' }
+        { name: 'Planned', color: '#A0AEC0', sort_order: 1 },
+        { name: 'Booked', color: '#ECC94B', sort_order: 2 },
+        { name: 'Post Production', color: '#9F7AEA', sort_order: 3 },
+        { name: 'Completed', color: '#48BB78', sort_order: 4 },
+        { name: 'Cancelled', color: '#F56565', sort_order: 5 }
       ];
 
       const { data, error } = await supabase
@@ -148,13 +150,16 @@ const ProjectStatusesSection = () => {
         });
         setIsEditDialogOpen(false);
       } else {
-        // Create new status
+        // Create new status with the next sort order
+        const maxSortOrder = Math.max(...statuses.map(s => s.sort_order), 0);
+        
         const { error } = await supabase
           .from('project_statuses')
           .insert({
             name: data.name,
             color: data.color,
             user_id: user.id,
+            sort_order: maxSortOrder + 1,
           });
 
         if (error) {
@@ -217,6 +222,53 @@ const ProjectStatusesSection = () => {
         description: "Failed to delete project status",
         variant: "destructive",
       });
+    }
+  };
+
+  const handleDragEnd = async (result: any) => {
+    if (!result.destination) return;
+
+    const items = Array.from(statuses);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+
+    // Update local state immediately for responsive UI
+    setStatuses(items);
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      // Update sort_order for all items
+      const updates = items.map((status, index) => ({
+        id: status.id,
+        sort_order: index + 1,
+      }));
+
+      // Execute all updates
+      for (const update of updates) {
+        const { error } = await supabase
+          .from('project_statuses')
+          .update({ sort_order: update.sort_order })
+          .eq('id', update.id)
+          .eq('user_id', user.id);
+
+        if (error) throw error;
+      }
+
+      toast({
+        title: "Success",
+        description: "Status order updated successfully",
+      });
+    } catch (error) {
+      console.error('Error updating status order:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update status order",
+        variant: "destructive",
+      });
+      // Revert to original order on error
+      fetchStatuses();
     }
   };
 
@@ -391,27 +443,52 @@ const ProjectStatusesSection = () => {
         </div>
       </CardHeader>
       <CardContent>
-        {/* Compact status badges display (like Pixieset) */}
-        <div className="flex flex-wrap gap-3">
-          {statuses.map((status) => (
-            <button
-              key={status.id}
-              onClick={() => handleEdit(status)}
-              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all hover:opacity-80"
-              style={{ 
-                backgroundColor: status.color + '20',
-                color: status.color,
-                border: `1px solid ${status.color}40`
-              }}
-            >
-              <div 
-                className="w-2 h-2 rounded-full" 
-                style={{ backgroundColor: status.color }}
-              />
-              <span className="uppercase tracking-wide font-semibold">{status.name}</span>
-            </button>
-          ))}
-        </div>
+        <DragDropContext onDragEnd={handleDragEnd}>
+          <Droppable droppableId="statuses">
+            {(provided) => (
+              <div
+                {...provided.droppableProps}
+                ref={provided.innerRef}
+                className="flex flex-wrap gap-3"
+              >
+                {statuses.map((status, index) => (
+                  <Draggable key={status.id} draggableId={status.id} index={index}>
+                    {(provided, snapshot) => (
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        className={cn(
+                          "inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all hover:opacity-80 cursor-pointer select-none",
+                          snapshot.isDragging && "opacity-70 shadow-lg"
+                        )}
+                        style={{ 
+                          backgroundColor: status.color + '20',
+                          color: status.color,
+                          border: `1px solid ${status.color}40`,
+                          ...provided.draggableProps.style
+                        }}
+                        onClick={() => handleEdit(status)}
+                      >
+                        <div 
+                          {...provided.dragHandleProps}
+                          className="flex items-center cursor-grab active:cursor-grabbing"
+                        >
+                          <GripVertical className="w-3 h-3 text-current opacity-50" />
+                        </div>
+                        <div 
+                          className="w-2 h-2 rounded-full" 
+                          style={{ backgroundColor: status.color }}
+                        />
+                        <span className="uppercase tracking-wide font-semibold">{status.name}</span>
+                      </div>
+                    )}
+                  </Draggable>
+                ))}
+                {provided.placeholder}
+              </div>
+            )}
+          </Droppable>
+        </DragDropContext>
 
         {/* Edit Dialog */}
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>

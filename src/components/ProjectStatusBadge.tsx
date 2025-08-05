@@ -70,7 +70,7 @@ export function ProjectStatusBadge({
       const { data, error } = await supabase
         .from('project_statuses')
         .select('*')
-        .order('created_at', { ascending: true });
+        .order('sort_order', { ascending: true });
 
       if (error) throw error;
       console.log('Fetched statuses:', data);

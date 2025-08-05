@@ -118,6 +118,17 @@ const ProjectTypesSection = () => {
       if (!user) throw new Error('Not authenticated');
 
       if (editingType) {
+        // If setting this as default, first unset all other defaults
+        if (data.is_default) {
+          const { error: unsetError } = await supabase
+            .from('project_types')
+            .update({ is_default: false })
+            .eq('user_id', user.id)
+            .neq('id', editingType.id);
+
+          if (unsetError) throw unsetError;
+        }
+
         // Update existing type
         const { error } = await supabase
           .from('project_types')
@@ -141,6 +152,16 @@ const ProjectTypesSection = () => {
         }
         setIsEditDialogOpen(false);
       } else {
+        // If setting this new type as default, first unset all other defaults
+        if (data.is_default) {
+          const { error: unsetError } = await supabase
+            .from('project_types')
+            .update({ is_default: false })
+            .eq('user_id', user.id);
+
+          if (unsetError) throw unsetError;
+        }
+
         // Create new type
         const { error } = await supabase
           .from('project_types')
@@ -159,7 +180,7 @@ const ProjectTypesSection = () => {
 
         toast({
           title: "Success",
-          description: "Project type created successfully",
+          description: data.is_default ? `"${data.name}" created and set as default` : "Project type created successfully",
         });
         setIsAddDialogOpen(false);
       }

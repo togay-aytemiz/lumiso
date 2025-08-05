@@ -187,7 +187,6 @@ const ProjectKanbanBoard = ({ projects, onProjectsChange }: ProjectKanbanBoardPr
             <CardContent className="p-4">
               {/* Lead name (bold, top) */}
               <div className="flex items-center gap-2 mb-2">
-                <User className="h-4 w-4 text-muted-foreground" />
                 <span className="font-bold text-sm">{project.lead?.name || 'No Lead'}</span>
               </div>
               

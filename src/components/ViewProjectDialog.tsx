@@ -371,12 +371,12 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
                     
                     {/* Lead Information */}
                     {lead && (
-                      <div className="p-4 bg-muted/30 rounded-lg">
-                        <h4 className="text-sm font-medium text-muted-foreground mb-2">Lead Information</h4>
-                        <div className="space-y-1">
+                      <div className="bg-muted/30 rounded-lg p-4 w-full">
+                        <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-2">
+                          <span className="text-sm font-medium text-muted-foreground">Name:</span>
                           <Button
                             variant="link"
-                            className="p-0 h-auto text-left justify-start font-medium text-base"
+                            className="p-0 h-auto text-left justify-start font-medium text-sm"
                             onClick={() => {
                               // Navigate to lead details page
                               window.location.href = `/leads/${lead.id}`;
@@ -384,17 +384,26 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
                           >
                             {lead.name}
                           </Button>
+                          
                           {lead.email && (
-                            <p className="text-sm text-muted-foreground">{lead.email}</p>
+                            <>
+                              <span className="text-sm font-medium text-muted-foreground">Email:</span>
+                              <span className="text-sm text-foreground">{lead.email}</span>
+                            </>
                           )}
+                          
                           {lead.phone && (
-                            <p className="text-sm text-muted-foreground">{lead.phone}</p>
+                            <>
+                              <span className="text-sm font-medium text-muted-foreground">Phone:</span>
+                              <span className="text-sm text-foreground">{lead.phone}</span>
+                            </>
                           )}
+                          
                           {lead.notes && (
-                            <div className="mt-2 pt-2 border-t border-border">
-                              <p className="text-xs font-medium text-muted-foreground mb-1">Notes:</p>
-                              <p className="text-sm text-foreground whitespace-pre-wrap">{lead.notes}</p>
-                            </div>
+                            <>
+                              <span className="text-sm font-medium text-muted-foreground self-start">Notes:</span>
+                              <span className="text-sm text-foreground whitespace-pre-wrap">{lead.notes}</span>
+                            </>
                           )}
                         </div>
                       </div>

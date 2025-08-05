@@ -35,6 +35,7 @@ interface Lead {
   email: string | null;
   phone: string | null;
   status: string;
+  notes: string | null;
 }
 
 interface Session {
@@ -123,7 +124,7 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
     try {
       const { data, error } = await supabase
         .from('leads')
-        .select('id, name, email, phone, status')
+        .select('id, name, email, phone, status, notes')
         .eq('id', project.lead_id)
         .single();
         
@@ -388,6 +389,12 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
                           )}
                           {lead.phone && (
                             <p className="text-sm text-muted-foreground">{lead.phone}</p>
+                          )}
+                          {lead.notes && (
+                            <div className="mt-2 pt-2 border-t border-border">
+                              <p className="text-xs font-medium text-muted-foreground mb-1">Notes:</p>
+                              <p className="text-sm text-foreground whitespace-pre-wrap">{lead.notes}</p>
+                            </div>
                           )}
                         </div>
                       </div>

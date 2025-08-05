@@ -262,7 +262,7 @@ const ProjectKanbanBoard = ({ projects, onProjectsChange }: ProjectKanbanBoardPr
                 <div
                   ref={provided.innerRef}
                   {...provided.droppableProps}
-                  className={`min-h-[200px] rounded-lg transition-colors pb-2 ${
+                  className={`min-h-full bg-muted/30 rounded-lg transition-colors pb-2 ${
                     snapshot.isDraggingOver ? 'bg-accent/50' : ''
                   }`}
                 >

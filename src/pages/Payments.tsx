@@ -41,12 +41,12 @@ interface PaymentMetrics {
   remainingBalance: number;
 }
 
-type DateFilterType = 'last7days' | 'last4weeks' | 'last3months' | 'last12months' | 'monthToDate' | 'quarterToDate' | 'yearToDate' | 'allTime' | 'custom';
+type DateFilterType = 'last7days' | 'last4weeks' | 'last3months' | 'last12months' | 'monthToDate' | 'quarterToDate' | 'yearToDate' | 'lastMonth' | 'custom';
 
 const Payments = () => {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedFilter, setSelectedFilter] = useState<DateFilterType>('allTime');
+  const [selectedFilter, setSelectedFilter] = useState<DateFilterType>('lastMonth');
   const [customDateRange, setCustomDateRange] = useState<DateRange | undefined>();
   const navigate = useNavigate();
 
@@ -130,12 +130,14 @@ const Payments = () => {
         return { start: startOfQuarter(now), end: now };
       case 'yearToDate':
         return { start: startOfYear(now), end: now };
+      case 'lastMonth':
+        const lastMonth = subMonths(now, 1);
+        return { start: startOfMonth(lastMonth), end: startOfMonth(now) };
       case 'custom':
         if (customDateRange?.from && customDateRange?.to) {
           return { start: customDateRange.from, end: customDateRange.to };
         }
         return null;
-      case 'allTime':
       default:
         return null;
     }
@@ -144,15 +146,13 @@ const Payments = () => {
   const filteredPayments = useMemo(() => {
     let filtered = payments;
 
-    // Apply date filter
-    if (selectedFilter !== 'allTime') {
-      const dateRange = getDateRangeForFilter(selectedFilter);
-      if (dateRange) {
+    // Apply date filter - always apply filter now since we don't have "all time" anymore
+    const dateRange = getDateRangeForFilter(selectedFilter);
+    if (dateRange) {
         filtered = filtered.filter(payment => {
           const paymentDate = new Date(payment.date_paid || payment.created_at);
           return paymentDate >= dateRange.start && paymentDate <= dateRange.end;
-        });
-      }
+      });
     }
 
     return filtered;
@@ -218,7 +218,9 @@ const Payments = () => {
             className="p-0 h-auto font-normal text-primary"
             onClick={(e) => {
               e.stopPropagation();
-              navigate(`/projects`);
+              // Navigate to project details by finding a way to open project details
+              // For now, let's navigate to a more specific route
+              navigate(`/projects`); // This might need to be updated when we have project detail routes
             }}
           >
             {payment.projects.name}
@@ -255,16 +257,19 @@ const Payments = () => {
       key: 'description',
       header: 'Label',
       sortable: true,
-      filterable: true,
+      filterable: false,
       render: (payment) => payment.description || 'Payment'
     },
     {
       key: 'status',
       header: 'Status',
       sortable: true,
-      filterable: true,
+      filterable: false,
       render: (payment) => (
-        <Badge variant={payment.status === 'paid' ? 'default' : 'secondary'}>
+        <Badge 
+          variant={payment.status === 'paid' ? 'default' : 'secondary'}
+          className={payment.status === 'paid' ? 'bg-green-100 text-green-800 hover:bg-green-100' : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100'}
+        >
           {payment.status === 'paid' ? 'Paid' : 'Due'}
         </Badge>
       )
@@ -328,7 +333,7 @@ const Payments = () => {
               <SelectItem value="monthToDate">Month to date</SelectItem>
               <SelectItem value="quarterToDate">Quarter to date</SelectItem>
               <SelectItem value="yearToDate">Year to date</SelectItem>
-              <SelectItem value="allTime">All time</SelectItem>
+              <SelectItem value="lastMonth">Last month</SelectItem>
               <SelectItem value="custom">Custom range</SelectItem>
             </SelectContent>
           </Select>
@@ -349,7 +354,6 @@ const Payments = () => {
         <Card className="bg-muted/20">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Paid</CardTitle>
-            <div className="h-2 w-2 rounded-full bg-green-500"></div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(metrics.totalPaid)}</div>
@@ -359,7 +363,6 @@ const Payments = () => {
         <Card className="bg-muted/20">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Extra Services</CardTitle>
-            <div className="h-2 w-2 rounded-full bg-blue-600"></div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(metrics.extraServices)}</div>
@@ -369,7 +372,6 @@ const Payments = () => {
         <Card className="bg-muted/20">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Remaining Balance</CardTitle>
-            <div className="h-2 w-2 rounded-full bg-yellow-500"></div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(metrics.remainingBalance)}</div>

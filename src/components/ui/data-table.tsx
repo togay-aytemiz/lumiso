@@ -65,7 +65,7 @@ export function DataTable<T>({
 
   return (
     <div className={className}>
-      {/* Filters */}
+      {/* Filters - Only show if there are filterable columns */}
       {columns.some(col => col.filterable) && (
         <div className="mb-4 space-y-4">
           <div className="flex items-center justify-between">

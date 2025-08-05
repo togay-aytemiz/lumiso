@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,7 +6,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Plus, Trash2, Loader2, GripVertical } from "lucide-react";
+import { Plus, Trash2, Loader2, Check } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -28,7 +27,6 @@ interface ProjectType {
   is_default: boolean;
   created_at: string;
   updated_at: string;
-  sort_order: number;
 }
 
 const ProjectTypesSection = () => {
@@ -57,7 +55,7 @@ const ProjectTypesSection = () => {
         .from('project_types')
         .select('*')
         .eq('user_id', user.id)
-        .order('sort_order', { ascending: true });
+        .order('name', { ascending: true });
 
       if (error) throw error;
 
@@ -86,14 +84,14 @@ const ProjectTypesSection = () => {
       if (!user) return;
 
       const defaultTypes = [
-        { name: 'Corporate', is_default: false, sort_order: 1 },
-        { name: 'Event', is_default: false, sort_order: 2 },
-        { name: 'Family', is_default: false, sort_order: 3 },
-        { name: 'Maternity', is_default: false, sort_order: 4 },
-        { name: 'Newborn', is_default: true, sort_order: 5 },
-        { name: 'Portrait', is_default: false, sort_order: 6 },
-        { name: 'Wedding', is_default: false, sort_order: 7 },
-        { name: 'Other', is_default: false, sort_order: 8 }
+        { name: 'Corporate', is_default: false },
+        { name: 'Event', is_default: false },
+        { name: 'Family', is_default: false },
+        { name: 'Maternity', is_default: false },
+        { name: 'Newborn', is_default: true },
+        { name: 'Portrait', is_default: false },
+        { name: 'Wedding', is_default: false },
+        { name: 'Other', is_default: false }
       ];
 
       const { data, error } = await supabase
@@ -135,16 +133,13 @@ const ProjectTypesSection = () => {
         });
         setIsEditDialogOpen(false);
       } else {
-        // Create new type with the next sort order
-        const maxSortOrder = Math.max(...types.map(t => t.sort_order), 0);
-        
+        // Create new type
         const { error } = await supabase
           .from('project_types')
           .insert({
             name: data.name,
             is_default: data.is_default,
             user_id: user.id,
-            sort_order: maxSortOrder + 1,
           });
 
         if (error) {
@@ -218,53 +213,6 @@ const ProjectTypesSection = () => {
         description: error instanceof Error ? error.message : "Failed to delete project type",
         variant: "destructive",
       });
-    }
-  };
-
-  const handleDragEnd = async (result: any) => {
-    if (!result.destination) return;
-
-    const items = Array.from(types);
-    const [reorderedItem] = items.splice(result.source.index, 1);
-    items.splice(result.destination.index, 0, reorderedItem);
-
-    // Update local state immediately for responsive UI
-    setTypes(items);
-
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
-
-      // Update sort_order for all items
-      const updates = items.map((type, index) => ({
-        id: type.id,
-        sort_order: index + 1,
-      }));
-
-      // Execute all updates
-      for (const update of updates) {
-        const { error } = await supabase
-          .from('project_types')
-          .update({ sort_order: update.sort_order })
-          .eq('id', update.id)
-          .eq('user_id', user.id);
-
-        if (error) throw error;
-      }
-
-      toast({
-        title: "Success",
-        description: "Type order updated successfully",
-      });
-    } catch (error) {
-      console.error('Error updating type order:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update type order",
-        variant: "destructive",
-      });
-      // Revert to original order on error
-      fetchTypes();
     }
   };
 
@@ -440,69 +388,27 @@ const ProjectTypesSection = () => {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="mb-4 p-3 bg-muted/30 rounded-lg border border-dashed border-muted-foreground/20">
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            <strong>Drag to reorder:</strong> Use the grip handle (⋮⋮) to drag types and change their order. 
-            <strong>Click to edit:</strong> Click on any type to rename it or set it as default. 
-            The type order will be consistent across all project views.
-          </p>
+        <div className="flex flex-wrap gap-3 p-2">
+          {types.map((type) => (
+            <div
+              key={type.id}
+              className={cn(
+                "inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all select-none border cursor-pointer hover:opacity-80",
+                type.is_default 
+                  ? "bg-primary/10 border-primary/20 text-primary" 
+                  : "bg-muted/50 border-muted text-muted-foreground hover:bg-muted/70"
+              )}
+              onClick={() => handleEdit(type)}
+            >
+              <span className="uppercase tracking-wide font-semibold">
+                {type.name}
+              </span>
+              {type.is_default && (
+                <Check className="w-3 h-3 text-primary" />
+              )}
+            </div>
+          ))}
         </div>
-
-        <DragDropContext onDragEnd={handleDragEnd}>
-          <Droppable droppableId="types" direction="horizontal">
-            {(provided, snapshot) => (
-              <div
-                {...provided.droppableProps}
-                ref={provided.innerRef}
-                className={cn(
-                  "flex flex-wrap gap-3 min-h-[48px] transition-colors rounded-lg p-2",
-                  snapshot.isDraggingOver && "bg-accent/20"
-                )}
-              >
-                {types.map((type, index) => (
-                  <Draggable key={type.id} draggableId={type.id} index={index}>
-                    {(provided, snapshot) => (
-                      <div
-                        ref={provided.innerRef}
-                        {...provided.draggableProps}
-                        className={cn(
-                          "inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all select-none border",
-                          snapshot.isDragging ? "opacity-80 shadow-xl scale-105 z-50" : "hover:opacity-80 cursor-pointer",
-                          !snapshot.isDragging && "hover:scale-[1.02]",
-                          type.is_default ? "bg-primary/10 border-primary/20 text-primary" : "bg-muted/50 border-muted text-muted-foreground"
-                        )}
-                        style={provided.draggableProps.style}
-                      >
-                        <div 
-                          {...provided.dragHandleProps}
-                          className="flex items-center cursor-grab active:cursor-grabbing hover:opacity-70 transition-opacity"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <GripVertical className="w-3 h-3 text-current opacity-60" />
-                        </div>
-                        <span 
-                          className="uppercase tracking-wide font-semibold cursor-pointer"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleEdit(type);
-                          }}
-                        >
-                          {type.name}
-                        </span>
-                        {type.is_default && (
-                          <span className="text-xs bg-primary/20 text-primary px-1.5 py-0.5 rounded font-medium">
-                            DEFAULT
-                          </span>
-                        )}
-                      </div>
-                    )}
-                  </Draggable>
-                ))}
-                {provided.placeholder}
-              </div>
-            )}
-          </Droppable>
-        </DragDropContext>
 
         {/* Edit Dialog */}
         <Dialog open={isEditDialogOpen} onOpenChange={(open) => {

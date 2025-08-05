@@ -20,6 +20,7 @@ interface Payment {
   status: 'paid' | 'due';
   date_paid: string | null;
   created_at: string;
+  type: 'base_price' | 'manual';
 }
 
 interface EditPaymentDialogProps {

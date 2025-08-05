@@ -53,7 +53,8 @@ export function AddPaymentDialog({ projectId, onPaymentAdded }: AddPaymentDialog
           amount: parseFloat(amount),
           description: description.trim() || null,
           status,
-          date_paid: status === 'paid' ? datePaid?.toISOString().split('T')[0] : null
+          date_paid: status === 'paid' ? datePaid?.toISOString().split('T')[0] : null,
+          type: 'manual'
         });
 
       if (error) throw error;

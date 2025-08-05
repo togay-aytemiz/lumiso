@@ -234,6 +234,7 @@ export type Database = {
           id: string
           project_id: string
           status: string
+          type: string
           updated_at: string
           user_id: string
         }
@@ -245,6 +246,7 @@ export type Database = {
           id?: string
           project_id: string
           status: string
+          type?: string
           updated_at?: string
           user_id: string
         }
@@ -256,6 +258,7 @@ export type Database = {
           id?: string
           project_id?: string
           status?: string
+          type?: string
           updated_at?: string
           user_id?: string
         }
@@ -362,6 +365,7 @@ export type Database = {
       }
       projects: {
         Row: {
+          base_price: number | null
           created_at: string
           description: string | null
           id: string
@@ -373,6 +377,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          base_price?: number | null
           created_at?: string
           description?: string | null
           id?: string
@@ -384,6 +389,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          base_price?: number | null
           created_at?: string
           description?: string | null
           id?: string

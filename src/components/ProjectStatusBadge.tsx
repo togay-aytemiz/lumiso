@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
+import { ChevronDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
 interface ProjectStatus {
   id: string;
@@ -29,6 +33,7 @@ export function ProjectStatusBadge({
   const [currentStatus, setCurrentStatus] = useState<ProjectStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -104,6 +109,7 @@ export function ProjectStatusBadge({
       }
 
       setCurrentStatus(newStatus);
+      setDropdownOpen(false);
       onStatusChange?.();
 
       toast({
@@ -138,61 +144,91 @@ export function ProjectStatusBadge({
   };
 
   if (loading) {
-    return <Badge variant="secondary" className={className}>Loading...</Badge>;
+    return (
+      <div className={cn("inline-flex items-center gap-2 px-3 py-1 bg-muted text-muted-foreground rounded-full text-xs", className)}>
+        <div className="w-2 h-2 bg-muted-foreground/30 rounded-full" />
+        <span>Loading...</span>
+      </div>
+    );
   }
 
   if (!currentStatus) {
-    return <Badge variant="secondary" className={className}>No status</Badge>;
+    return (
+      <div className={cn("inline-flex items-center gap-2 px-3 py-1 bg-muted text-muted-foreground rounded-full text-xs", className)}>
+        <div className="w-2 h-2 bg-muted-foreground/30 rounded-full" />
+        <span>No status</span>
+      </div>
+    );
   }
 
   if (!editable) {
     return (
-      <Badge 
-        className={className}
+      <div 
+        className={cn("inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium", className)}
         style={{ 
-          backgroundColor: currentStatus.color,
-          color: getTextColor(currentStatus.color),
-          border: 'none'
+          backgroundColor: currentStatus.color + '20', // 20% opacity background
+          color: currentStatus.color,
+          border: `1px solid ${currentStatus.color}40` // 40% opacity border
         }}
       >
-        {currentStatus.name}
-      </Badge>
+        <div 
+          className="w-2 h-2 rounded-full" 
+          style={{ backgroundColor: currentStatus.color }}
+        />
+        <span className="uppercase tracking-wide font-semibold">{currentStatus.name}</span>
+      </div>
     );
   }
 
   return (
-    <Select 
-      value={currentStatus.id} 
-      onValueChange={handleStatusChange}
-      disabled={isUpdating}
-    >
-      <SelectTrigger className="w-auto h-auto p-0 border-none bg-transparent hover:bg-muted/50 focus:ring-0">
-        <SelectValue asChild>
-          <Badge 
-            className={`cursor-pointer ${className}`}
-            style={{ 
-              backgroundColor: currentStatus.color,
-              color: getTextColor(currentStatus.color),
-              border: 'none'
-            }}
-          >
-            {currentStatus.name}
-          </Badge>
-        </SelectValue>
-      </SelectTrigger>
-      <SelectContent>
-        {statuses.map((status) => (
-          <SelectItem key={status.id} value={status.id}>
-            <div className="flex items-center gap-2">
-              <div 
-                className="w-3 h-3 rounded-full" 
-                style={{ backgroundColor: status.color }}
-              />
-              {status.name}
-            </div>
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+    <Popover open={dropdownOpen} onOpenChange={setDropdownOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="ghost"
+          className={cn(
+            "inline-flex items-center gap-2 px-3 py-1 h-auto rounded-full text-xs font-medium hover:bg-transparent",
+            isUpdating && "cursor-not-allowed opacity-50",
+            className
+          )}
+          style={{ 
+            backgroundColor: currentStatus.color + '20', // 20% opacity background
+            color: currentStatus.color,
+            border: `1px solid ${currentStatus.color}40` // 40% opacity border
+          }}
+          disabled={isUpdating}
+        >
+          <div 
+            className="w-2 h-2 rounded-full" 
+            style={{ backgroundColor: currentStatus.color }}
+          />
+          <span className="uppercase tracking-wide font-semibold">{currentStatus.name}</span>
+          <ChevronDown className="w-3 h-3 ml-1" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-2" align="start">
+        <div className="space-y-1">
+          {statuses.map((status) => (
+            <Button
+              key={status.id}
+              variant="ghost"
+              className={cn(
+                "w-full justify-start h-auto py-2 px-3 text-xs font-medium",
+                currentStatus.id === status.id && "bg-muted"
+              )}
+              onClick={() => handleStatusChange(status.id)}
+              disabled={isUpdating}
+            >
+              <div className="flex items-center gap-3 w-full">
+                <div 
+                  className="w-2 h-2 rounded-full flex-shrink-0" 
+                  style={{ backgroundColor: status.color }}
+                />
+                <span className="uppercase tracking-wide font-semibold">{status.name}</span>
+              </div>
+            </Button>
+          ))}
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }

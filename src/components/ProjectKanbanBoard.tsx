@@ -225,16 +225,32 @@ const ProjectKanbanBoard = ({ projects, onProjectsChange }: ProjectKanbanBoardPr
     return (
       <div key={statusId} className="flex-shrink-0 w-80 bg-muted/30 rounded-lg p-4">
         {/* Column header */}
-        <div className="mb-4">
-          <div 
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-semibold text-white mb-2"
-            style={{ backgroundColor: statusColor }}
+        <div className="mb-4 flex items-center justify-between">
+          <button
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all hover:opacity-80"
+            style={{ 
+              backgroundColor: statusColor + '20',
+              color: statusColor,
+              border: `1px solid ${statusColor}40`
+            }}
           >
-            <span className="uppercase tracking-wide">{statusName}</span>
-            <Badge variant="secondary" className="bg-white/20 text-white text-xs">
+            <div 
+              className="w-2 h-2 rounded-full" 
+              style={{ backgroundColor: statusColor }}
+            />
+            <span className="uppercase tracking-wide font-semibold">{statusName}</span>
+            <Badge variant="secondary" className="text-xs ml-1">
               {projects.length}
             </Badge>
-          </div>
+          </button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => handleAddProject(status?.id || null)}
+            className="h-6 w-6 text-muted-foreground hover:text-foreground"
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
         </div>
 
         {/* Droppable area */}
@@ -292,14 +308,17 @@ const ProjectKanbanBoard = ({ projects, onProjectsChange }: ProjectKanbanBoardPr
   return (
     <div className="w-full">
       <DragDropContext onDragEnd={handleDragEnd}>
-        <div className="flex gap-6 overflow-x-auto pb-4">
-          {/* Render columns for each status */}
-          {statuses.map(status => 
-            renderColumn(status, getProjectsByStatus(status.id))
-          )}
-          
-          {/* Column for projects without status */}
-          {getProjectsWithoutStatus().length > 0 && renderColumn(null, getProjectsWithoutStatus())}
+        {/* Horizontally scrollable board area only */}
+        <div className="overflow-x-auto">
+          <div className="flex gap-6 pb-4 min-w-fit">
+            {/* Render columns for each status */}
+            {statuses.map(status => 
+              renderColumn(status, getProjectsByStatus(status.id))
+            )}
+            
+            {/* Column for projects without status */}
+            {getProjectsWithoutStatus().length > 0 && renderColumn(null, getProjectsWithoutStatus())}
+          </div>
         </div>
       </DragDropContext>
 
@@ -307,6 +326,7 @@ const ProjectKanbanBoard = ({ projects, onProjectsChange }: ProjectKanbanBoardPr
       <EnhancedProjectDialog
         onProjectCreated={() => {
           onProjectsChange();
+          setSelectedStatusId(null);
         }}
       >
         <Button 

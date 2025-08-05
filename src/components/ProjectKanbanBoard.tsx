@@ -224,9 +224,9 @@ const ProjectKanbanBoard = ({ projects, onProjectsChange }: ProjectKanbanBoardPr
     const statusColor = status?.color || '#6B7280';
 
     return (
-      <div key={statusId} className="flex-shrink-0 w-80 bg-muted/30 rounded-lg flex flex-col h-full">
+      <div key={statusId} className="flex-shrink-0 w-80 bg-muted/30 rounded-lg flex flex-col h-full min-h-0">
         {/* Column header - Fixed */}
-        <div className="p-4 pb-2 flex items-center justify-between">
+        <div className="p-4 pb-2 flex items-center justify-between flex-shrink-0">
           <button
             className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all hover:opacity-80"
             style={{ 
@@ -255,15 +255,15 @@ const ProjectKanbanBoard = ({ projects, onProjectsChange }: ProjectKanbanBoardPr
         </div>
 
         {/* Scrollable droppable area */}
-        <div className="flex-1 px-4 pb-4">
+        <div className="flex-1 min-h-0 px-4 pb-4">
           <ScrollArea className="h-full">
             <Droppable droppableId={statusId}>
               {(provided, snapshot) => (
                 <div
                   ref={provided.innerRef}
                   {...provided.droppableProps}
-                  className={`min-h-full bg-muted/30 rounded-lg transition-colors pb-2 ${
-                    snapshot.isDraggingOver ? 'bg-accent/50' : ''
+                  className={`min-h-full transition-colors pb-2 ${
+                    snapshot.isDraggingOver ? 'bg-accent/20' : ''
                   }`}
                 >
                   {/* Project cards */}

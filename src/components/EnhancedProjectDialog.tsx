@@ -38,7 +38,8 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
   const [projectData, setProjectData] = useState({
     name: "",
     description: "",
-    projectTypeId: ""
+    projectTypeId: "",
+    basePrice: ""
   });
 
   const [newLeadData, setNewLeadData] = useState({
@@ -84,7 +85,7 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
   };
 
   const resetForm = () => {
-    setProjectData({ name: "", description: "", projectTypeId: "" });
+    setProjectData({ name: "", description: "", projectTypeId: "", basePrice: "" });
     setNewLeadData({ name: "", email: "", phone: "", notes: "" });
     setSelectedLeadId("");
     setSearchTerm("");
@@ -165,7 +166,9 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
       }
 
       // Create project
-      const { error: projectError } = await supabase
+      const basePrice = parseFloat(projectData.basePrice) || 0;
+      
+      const { data: newProject, error: projectError } = await supabase
         .from('projects')
         .insert({
           user_id: user.id,
@@ -173,10 +176,29 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
           name: projectData.name.trim(),
           description: projectData.description.trim() || null,
           status_id: statusId,
-          project_type_id: projectData.projectTypeId
-        });
+          project_type_id: projectData.projectTypeId,
+          base_price: basePrice
+        })
+        .select('id')
+        .single();
 
       if (projectError) throw projectError;
+
+      // Create base price payment if base price > 0
+      if (basePrice > 0) {
+        const { error: paymentError } = await supabase
+          .from('payments')
+          .insert({
+            project_id: newProject.id,
+            user_id: user.id,
+            amount: basePrice,
+            description: 'Base Price',
+            status: 'due',
+            type: 'base_price'
+          });
+
+        if (paymentError) throw paymentError;
+      }
 
       toast({
         title: "Success",
@@ -433,6 +455,20 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
                   onValueChange={(value) => handleProjectDataChange("projectTypeId", value)}
                   disabled={loading}
                   required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="base-price">Base Price (TRY)</Label>
+                <Input
+                  id="base-price"
+                  type="number"
+                  step="1"
+                  min="0"
+                  value={projectData.basePrice}
+                  onChange={(e) => handleProjectDataChange("basePrice", e.target.value)}
+                  placeholder="0"
+                  disabled={loading}
                 />
               </div>
               

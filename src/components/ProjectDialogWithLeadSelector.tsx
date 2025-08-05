@@ -33,6 +33,7 @@ export function ProjectDialogWithLeadSelector({
   const [description, setDescription] = useState("");
   const [selectedLeadId, setSelectedLeadId] = useState<string>("");
   const [projectTypeId, setProjectTypeId] = useState("");
+  const [basePrice, setBasePrice] = useState("");
   const [leads, setLeads] = useState<Lead[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [loadingLeads, setLoadingLeads] = useState(false);
@@ -70,6 +71,7 @@ export function ProjectDialogWithLeadSelector({
     setDescription("");
     setSelectedLeadId("");
     setProjectTypeId("");
+    setBasePrice("");
   };
 
   const handleCancel = () => {
@@ -121,7 +123,9 @@ export function ProjectDialogWithLeadSelector({
       const { data: defaultStatusId } = await supabase
         .rpc('get_default_project_status', { user_uuid: userData.user.id });
 
-      const { error } = await supabase
+      const basePriceValue = parseFloat(basePrice) || 0;
+
+      const { data: newProject, error: projectError } = await supabase
         .from('projects')
         .insert({
           name: name.trim(),
@@ -129,10 +133,29 @@ export function ProjectDialogWithLeadSelector({
           lead_id: selectedLeadId,
           user_id: userData.user.id,
           status_id: defaultStatusId,
-          project_type_id: projectTypeId
-        });
+          project_type_id: projectTypeId,
+          base_price: basePriceValue
+        })
+        .select('id')
+        .single();
 
-      if (error) throw error;
+      if (projectError) throw projectError;
+
+      // Create base price payment if base price > 0
+      if (basePriceValue > 0) {
+        const { error: paymentError } = await supabase
+          .from('payments')
+          .insert({
+            project_id: newProject.id,
+            user_id: userData.user.id,
+            amount: basePriceValue,
+            description: 'Base Price',
+            status: 'due',
+            type: 'base_price'
+          });
+
+        if (paymentError) throw paymentError;
+      }
 
       toast({
         title: "Success",
@@ -215,6 +238,20 @@ export function ProjectDialogWithLeadSelector({
                 onValueChange={setProjectTypeId}
                 disabled={isSaving}
                 required
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="base-price">Base Price (TRY)</Label>
+              <Input
+                id="base-price"
+                type="number"
+                step="1"
+                min="0"
+                value={basePrice}
+                onChange={(e) => setBasePrice(e.target.value)}
+                placeholder="0"
+                disabled={isSaving}
               />
             </div>
             

@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, LogOut, Calendar, Users, CheckCircle, XCircle, Bell, AlertTriangle, Wifi, WifiOff } from "lucide-react";
+import { Plus, LogOut, Calendar, Users, CheckCircle, XCircle, Bell, AlertTriangle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import AddLeadDialog from "./AddLeadDialog";
@@ -11,7 +11,6 @@ import NewSessionDialog from "./NewSessionDialog";
 import GlobalSearch from "./GlobalSearch";
 import { getLeadStatusStyles, formatStatusText } from "@/lib/leadStatusColors";
 import { getWeekRange, getUserLocale, formatLongDate, formatTime, formatDate } from "@/lib/utils";
-import { useConnectionStatus } from "@/hooks/useConnectionStatus";
 
 interface Lead {
   id: string;
@@ -61,7 +60,6 @@ const CrmDashboard = () => {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  const { isConnected } = useConnectionStatus();
 
   useEffect(() => {
     fetchData();
@@ -216,19 +214,9 @@ const CrmDashboard = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 dark:from-gray-900 dark:to-slate-800">
       <header className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-8 px-6 py-6">
         <div className="flex-1">
-          <div className="flex items-center gap-3 mb-2">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-              Dashboard
-            </h1>
-            <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs ${
-              isConnected 
-                ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-300'
-                : 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-300'
-            }`}>
-              {isConnected ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
-              {isConnected ? 'Connected' : 'Offline'}
-            </div>
-          </div>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+            Dashboard
+          </h1>
           <p className="text-muted-foreground">
             Welcome back! Here's an overview of your photography business
           </p>

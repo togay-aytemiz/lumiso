@@ -343,26 +343,35 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    <div className="flex items-center gap-3 flex-wrap">
-                      <DialogTitle className="text-2xl font-bold leading-tight">{project?.name}</DialogTitle>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <DialogTitle className="text-2xl font-bold leading-tight">{project?.name}</DialogTitle>
+                        
+                        {/* Project Status Badge - positioned next to project name */}
+                        <ProjectStatusBadge 
+                          projectId={project.id}
+                          currentStatusId={project.status_id}
+                          onStatusChange={() => {
+                            onProjectUpdated();
+                          }}
+                          editable={true}
+                          className="text-sm" // Made bigger
+                        />
+                        
+                        {/* Project Type Badge */}
+                        {projectType && (
+                          <Badge variant="outline" className="text-xs">
+                            {projectType.name.toUpperCase()}
+                          </Badge>
+                        )}
+                      </div>
                       
-                      {/* Project Status Badge - positioned next to project name */}
-                      <ProjectStatusBadge 
-                        projectId={project.id}
-                        currentStatusId={project.status_id}
-                        onStatusChange={() => {
-                          onProjectUpdated();
-                        }}
-                        editable={true}
-                        className="text-sm" // Made bigger
-                      />
-                      
-                      {/* Project Type Badge */}
-                      {projectType && (
-                        <Badge variant="outline" className="text-xs">
-                          {projectType.name.toUpperCase()}
-                        </Badge>
-                      )}
+                      {/* Created and Updated dates */}
+                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                        <span>Created {project && format(new Date(project.created_at), "MMM d, yyyy")}</span>
+                        <span>•</span>
+                        <span>Updated {project && format(new Date(project.updated_at), "MMM d, yyyy")}</span>
+                      </div>
                     </div>
                     
                     {project?.description && (
@@ -408,10 +417,6 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
                         </div>
                       </div>
                     )}
-                    
-                    <p className="text-sm text-muted-foreground">
-                      Created on {project && format(new Date(project.created_at), "MMMM d, yyyy")}
-                    </p>
                   </div>
                 )}
               </div>

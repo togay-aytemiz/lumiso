@@ -1,5 +1,5 @@
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Users, Calendar, Bell, BarChart3, Settings, LogOut, FolderOpen } from "lucide-react";
+import { LayoutDashboard, Users, Calendar, Bell, BarChart3, Settings, LogOut, FolderOpen, CreditCard } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Sidebar,
@@ -20,6 +20,7 @@ const navigationItems = [
   { title: "Sessions", url: "/sessions", icon: Calendar },
   { title: "Reminders", url: "/reminders", icon: Bell },
   { title: "Analytics", url: "/analytics", icon: BarChart3 },
+  { title: "Payments", url: "/payments", icon: CreditCard },
 ];
 
 export function AppSidebar() {

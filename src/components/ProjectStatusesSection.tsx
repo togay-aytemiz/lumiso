@@ -380,8 +380,8 @@ const ProjectStatusesSection = () => {
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <Button 
               onClick={() => setIsAddDialogOpen(true)}
-              className="flex items-center gap-2 text-sm font-medium text-teal-600 hover:text-teal-700 bg-transparent hover:bg-transparent border-none p-0"
-              variant="ghost"
+              className="flex items-center gap-2"
+              variant="default"
             >
               <Plus className="h-4 w-4" />
               Add Stage

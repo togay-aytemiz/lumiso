@@ -333,8 +333,20 @@ const AllProjects = () => {
               <h1 className="text-3xl font-bold">Projects</h1>
               <p className="text-muted-foreground">Manage all your projects in one place</p>
             </div>
-            <div className="w-full max-w-lg min-w-[480px] ml-8">
-              <GlobalSearch />
+            <div className="flex items-center gap-4">
+              <EnhancedProjectDialog
+                onProjectCreated={() => {
+                  fetchProjects();
+                }}
+              >
+                <Button className="flex items-center gap-2">
+                  <Plus className="h-4 w-4" />
+                  Add Project
+                </Button>
+              </EnhancedProjectDialog>
+              <div className="w-full max-w-lg min-w-[480px]">
+                <GlobalSearch />
+              </div>
             </div>
           </div>
         </div>
@@ -384,24 +396,7 @@ const AllProjects = () => {
         ) : (
           <div className="h-full overflow-y-auto p-8 pt-6">
             <Card>
-              <CardHeader>
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                    <EnhancedProjectDialog
-                      onProjectCreated={() => {
-                        fetchProjects();
-                      }}
-                    >
-                      <Button className="flex items-center gap-2">
-                        <Plus className="h-4 w-4" />
-                        Add Project
-                      </Button>
-                    </EnhancedProjectDialog>
-                  </div>
-                </div>
-              </CardHeader>
-            
-              <CardContent>
+              <CardContent className="pt-6">
                 <Table>
                   <TableHeader>
                     <TableRow>

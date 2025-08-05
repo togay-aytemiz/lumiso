@@ -3,7 +3,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ArrowLeft, ArrowUpDown, ArrowUp, ArrowDown, Plus, FolderOpen, User } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
@@ -12,7 +11,6 @@ import { ViewProjectDialog } from "@/components/ViewProjectDialog";
 import { ProjectStatusBadge } from "@/components/ProjectStatusBadge";
 import { useNavigate } from "react-router-dom";
 import { formatDate } from "@/lib/utils";
-import { getLeadStatusStyles, formatStatusText } from "@/lib/leadStatusColors";
 import GlobalSearch from "@/components/GlobalSearch";
 
 interface Project {
@@ -41,13 +39,12 @@ interface Project {
   }>;
 }
 
-type SortField = 'name' | 'lead_name' | 'lead_status' | 'created_at' | 'updated_at' | 'session_count';
+type SortField = 'name' | 'lead_name' | 'created_at' | 'updated_at' | 'session_count';
 type SortDirection = 'asc' | 'desc';
 
 const AllProjects = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
-  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sortField, setSortField] = useState<SortField>("updated_at");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   
@@ -132,10 +129,7 @@ const AllProjects = () => {
   const filteredAndSortedProjects = useMemo(() => {
     let filtered = projects;
     
-    // Apply status filter based on lead status
-    if (statusFilter !== "all") {
-      filtered = projects.filter(project => project.lead?.status === statusFilter);
-    }
+    // No filtering needed since we removed lead status filter
 
     // Apply sorting
     filtered.sort((a, b) => {
@@ -146,10 +140,6 @@ const AllProjects = () => {
         case 'lead_name':
           aValue = a.lead?.name?.toLowerCase() || '';
           bValue = b.lead?.name?.toLowerCase() || '';
-          break;
-        case 'lead_status':
-          aValue = a.lead?.status || '';
-          bValue = b.lead?.status || '';
           break;
         case 'session_count':
           aValue = a.session_count || 0;
@@ -177,7 +167,7 @@ const AllProjects = () => {
     });
 
     return filtered;
-  }, [projects, statusFilter, sortField, sortDirection]);
+  }, [projects, sortField, sortDirection]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -203,16 +193,7 @@ const AllProjects = () => {
     return sortDirection === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />;
   };
 
-  const statusOptions = [
-    { value: "all", label: "All Lead Statuses" },
-    { value: "new", label: "New" },
-    { value: "contacted", label: "Contacted" },
-    { value: "qualified", label: "Qualified" },
-    { value: "proposal_sent", label: "Proposal Sent" },
-    { value: "booked", label: "Booked" },
-    { value: "completed", label: "Completed" },
-    { value: "lost", label: "Lost" }
-  ];
+  // Removed unused statusOptions since we no longer filter by lead status
 
   const getProgressBadge = (completed: number, total: number) => {
     if (total === 0) return <span className="text-muted-foreground text-xs">0/0</span>;
@@ -293,21 +274,7 @@ const AllProjects = () => {
                   Add Project
                 </Button>
               </EnhancedProjectDialog>
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">Filter by lead status:</span>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-48">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {statusOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              {/* Removed lead status filter */}
             </div>
           </div>
         </CardHeader>
@@ -334,15 +301,7 @@ const AllProjects = () => {
                     {getSortIcon('lead_name')}
                   </div>
                 </TableHead>
-                <TableHead 
-                  className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => handleSort('lead_status')}
-                >
-                  <div className="flex items-center gap-2">
-                    Status
-                    {getSortIcon('lead_status')}
-                  </div>
-                </TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead 
                   className="cursor-pointer hover:bg-muted/50 text-center"
                   onClick={() => handleSort('session_count')}
@@ -353,7 +312,6 @@ const AllProjects = () => {
                   </div>
                 </TableHead>
                 <TableHead className="text-center">Todos</TableHead>
-                <TableHead>Status</TableHead>
                 <TableHead>Services</TableHead>
                 <TableHead 
                   className="cursor-pointer hover:bg-muted/50"
@@ -402,27 +360,19 @@ const AllProjects = () => {
                       )}
                     </TableCell>
                     <TableCell>
-                      {project.lead ? (
-                        <span className={`px-2 py-1 text-xs rounded-full font-medium ${getLeadStatusStyles(project.lead.status).className}`}>
-                          {formatStatusText(project.lead.status)}
-                        </span>
-                      ) : (
-                        <span className="text-muted-foreground">-</span>
-                      )}
+                      <ProjectStatusBadge 
+                        projectId={project.id}
+                        currentStatusId={project.status_id}
+                        editable={false}
+                        size="sm"
+                        onStatusChange={() => fetchProjects()}
+                      />
                     </TableCell>
                     <TableCell className="text-center">
                       {getProgressBadge(project.completed_session_count || 0, project.session_count || 0)}
                     </TableCell>
                     <TableCell className="text-center">
                       {getProgressBadge(project.completed_todo_count || 0, project.todo_count || 0)}
-                    </TableCell>
-                    <TableCell>
-                      <ProjectStatusBadge 
-                        projectId={project.id}
-                        currentStatusId={project.status_id}
-                        editable={false}
-                        className="text-xs"
-                      />
                     </TableCell>
                     <TableCell>
                       {renderServicesChips(project.services || [])}
@@ -434,11 +384,8 @@ const AllProjects = () => {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
-                    {statusFilter === "all" 
-                      ? "No projects found. Create your first project to get started!"
-                      : `No projects found for leads with status "${statusFilter}".`
-                    }
+                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                    No projects found. Create your first project to get started!
                   </TableCell>
                 </TableRow>
               )}

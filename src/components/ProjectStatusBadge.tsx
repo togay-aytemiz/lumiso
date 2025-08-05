@@ -17,6 +17,7 @@ interface ProjectStatusBadgeProps {
   onStatusChange?: () => void;
   editable?: boolean;
   className?: string;
+  size?: 'sm' | 'default'; // Add size variant
 }
 
 export function ProjectStatusBadge({ 
@@ -24,7 +25,8 @@ export function ProjectStatusBadge({
   currentStatusId, 
   onStatusChange, 
   editable = false,
-  className 
+  className,
+  size = 'default'
 }: ProjectStatusBadgeProps) {
   const [statuses, setStatuses] = useState<ProjectStatus[]>([]);
   const [currentStatus, setCurrentStatus] = useState<ProjectStatus | null>(null);
@@ -159,11 +161,16 @@ export function ProjectStatusBadge({
     }
   };
 
+  const isSmall = size === 'sm';
+  const dotSize = isSmall ? 'w-2 h-2' : 'w-2.5 h-2.5';
+  const textSize = isSmall ? 'text-xs' : 'text-sm';
+  const padding = isSmall ? 'px-2 py-1' : 'px-4 py-2';
+
   if (loading) {
     return (
-      <div className={cn("inline-flex items-center gap-2 px-3 py-1.5 bg-muted text-muted-foreground rounded-full", className)}>
-        <div className="w-2.5 h-2.5 bg-muted-foreground/30 rounded-full animate-pulse" />
-        <span className="text-sm">Loading...</span>
+      <div className={cn("inline-flex items-center gap-2 bg-muted text-muted-foreground rounded-full", padding, className)}>
+        <div className={cn("bg-muted-foreground/30 rounded-full animate-pulse", dotSize)} />
+        <span className={textSize}>Loading...</span>
       </div>
     );
   }
@@ -177,8 +184,9 @@ export function ProjectStatusBadge({
         <Button
           variant="ghost"
           className={cn(
-            "inline-flex items-center gap-2 px-4 py-2 h-auto rounded-full font-medium hover:opacity-80 transition-opacity",
+            "inline-flex items-center gap-2 h-auto rounded-full font-medium hover:opacity-80 transition-opacity",
             "border cursor-pointer",
+            padding,
             isUpdating && "cursor-not-allowed opacity-50",
             className
           )}
@@ -196,11 +204,11 @@ export function ProjectStatusBadge({
           }}
         >
           <div 
-            className="w-2.5 h-2.5 rounded-full border-2" 
+            className={cn("rounded-full border-2", dotSize)}
             style={{ borderColor: defaultColor }}
           />
-          <span className="uppercase tracking-wide font-semibold text-sm">SELECT STATUS</span>
-          <ChevronDown className={cn("w-4 h-4 ml-1 transition-transform", dropdownOpen && "rotate-180")} />
+          <span className={cn("uppercase tracking-wide font-semibold", textSize)}>SELECT STATUS</span>
+          <ChevronDown className={cn("ml-1 transition-transform", isSmall ? "w-3 h-3" : "w-4 h-4", dropdownOpen && "rotate-180")} />
         </Button>
 
         {/* Dropdown for status selection */}
@@ -222,10 +230,10 @@ export function ProjectStatusBadge({
                 >
                   <div className="flex items-center gap-3 w-full">
                     <div 
-                      className="w-2.5 h-2.5 rounded-full flex-shrink-0" 
+                      className={cn("rounded-full flex-shrink-0", dotSize)}
                       style={{ backgroundColor: status.color }}
                     />
-                    <span className="uppercase tracking-wide font-semibold text-sm">{status.name}</span>
+                    <span className={cn("uppercase tracking-wide font-semibold", textSize)}>{status.name}</span>
                   </div>
                 </Button>
               ))}
@@ -238,18 +246,17 @@ export function ProjectStatusBadge({
 
   if (!currentStatus) {
     return (
-      <div className={cn("inline-flex items-center gap-2 px-3 py-1.5 bg-muted text-muted-foreground rounded-full", className)}>
-        <div className="w-2.5 h-2.5 bg-muted-foreground/30 rounded-full" />
-        <span className="text-sm">No status available</span>
+      <div className={cn("inline-flex items-center gap-2 bg-muted text-muted-foreground rounded-full", padding, className)}>
+        <div className={cn("bg-muted-foreground/30 rounded-full", dotSize)} />
+        <span className={textSize}>No status available</span>
       </div>
     );
   }
 
-  // Non-editable status badge
   if (!editable) {
     return (
       <div 
-        className={cn("inline-flex items-center gap-2 px-3 py-1.5 rounded-full font-medium", className)}
+        className={cn("inline-flex items-center gap-2 rounded-full font-medium", padding, className)}
         style={{ 
           backgroundColor: currentStatus.color + '15',
           color: currentStatus.color,
@@ -257,10 +264,10 @@ export function ProjectStatusBadge({
         }}
       >
         <div 
-          className="w-2.5 h-2.5 rounded-full" 
+          className={cn("rounded-full", dotSize)}
           style={{ backgroundColor: currentStatus.color }}
         />
-        <span className="uppercase tracking-wide font-semibold text-sm">{currentStatus.name}</span>
+        <span className={cn("uppercase tracking-wide font-semibold", textSize)}>{currentStatus.name}</span>
       </div>
     );
   }
@@ -271,8 +278,9 @@ export function ProjectStatusBadge({
       <Button
         variant="ghost"
         className={cn(
-          "inline-flex items-center gap-2 px-4 py-2 h-auto rounded-full font-medium hover:opacity-80 transition-opacity",
+          "inline-flex items-center gap-2 h-auto rounded-full font-medium hover:opacity-80 transition-opacity",
           "border cursor-pointer",
+          padding,
           isUpdating && "cursor-not-allowed opacity-50",
           className
         )}
@@ -290,11 +298,11 @@ export function ProjectStatusBadge({
         }}
       >
         <div 
-          className="w-2.5 h-2.5 rounded-full" 
+          className={cn("rounded-full", dotSize)}
           style={{ backgroundColor: currentStatus.color }}
         />
-        <span className="uppercase tracking-wide font-semibold text-sm">{currentStatus.name}</span>
-        <ChevronDown className={cn("w-4 h-4 ml-1 transition-transform", dropdownOpen && "rotate-180")} />
+        <span className={cn("uppercase tracking-wide font-semibold", textSize)}>{currentStatus.name}</span>
+        <ChevronDown className={cn("ml-1 transition-transform", isSmall ? "w-3 h-3" : "w-4 h-4", dropdownOpen && "rotate-180")} />
       </Button>
 
       {/* Dropdown for changing status */}
@@ -319,10 +327,10 @@ export function ProjectStatusBadge({
               >
                 <div className="flex items-center gap-3 w-full">
                   <div 
-                    className="w-2.5 h-2.5 rounded-full flex-shrink-0" 
+                    className={cn("rounded-full flex-shrink-0", dotSize)}
                     style={{ backgroundColor: status.color }}
                   />
-                  <span className="uppercase tracking-wide font-semibold text-sm">{status.name}</span>
+                  <span className={cn("uppercase tracking-wide font-semibold", textSize)}>{status.name}</span>
                 </div>
               </Button>
             ))}

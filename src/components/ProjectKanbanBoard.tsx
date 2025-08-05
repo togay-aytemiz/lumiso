@@ -241,23 +241,25 @@ const ProjectKanbanBoard = ({ projects, onProjectsChange }: ProjectKanbanBoardPr
       <div key={statusId} className="flex-shrink-0 w-80 bg-muted/30 rounded-lg flex flex-col">
         {/* Column header - Fixed */}
         <div className="p-4 pb-2 flex items-center justify-between flex-shrink-0">
-          <button
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all hover:opacity-80"
-            style={{ 
-              backgroundColor: statusColor + '20',
-              color: statusColor,
-              border: `1px solid ${statusColor}40`
-            }}
-          >
-            <div 
-              className="w-2 h-2 rounded-full" 
-              style={{ backgroundColor: statusColor }}
-            />
-            <span className="uppercase tracking-wide font-semibold">{statusName}</span>
-            <Badge variant="secondary" className="text-xs ml-1">
+          <div className="flex items-center gap-2">
+            <button
+              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all hover:opacity-80"
+              style={{ 
+                backgroundColor: statusColor + '20',
+                color: statusColor,
+                border: `1px solid ${statusColor}40`
+              }}
+            >
+              <div 
+                className="w-2 h-2 rounded-full" 
+                style={{ backgroundColor: statusColor }}
+              />
+              <span className="uppercase tracking-wide font-semibold">{statusName}</span>
+            </button>
+            <Badge variant="secondary" className="text-xs">
               {projects.length}
             </Badge>
-          </button>
+          </div>
           <Button
             variant="ghost"
             size="icon"

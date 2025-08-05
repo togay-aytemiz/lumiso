@@ -164,7 +164,7 @@ export function ProjectStatusBadge({
   if (!editable) {
     return (
       <div 
-        className={cn("inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium", className)}
+        className={cn("inline-flex items-center gap-2 px-3 py-1.5 rounded-full font-medium", className)}
         style={{ 
           backgroundColor: currentStatus.color + '20', // 20% opacity background
           color: currentStatus.color,
@@ -172,7 +172,7 @@ export function ProjectStatusBadge({
         }}
       >
         <div 
-          className="w-2 h-2 rounded-full" 
+          className="w-2.5 h-2.5 rounded-full" 
           style={{ backgroundColor: currentStatus.color }}
         />
         <span className="uppercase tracking-wide font-semibold">{currentStatus.name}</span>
@@ -186,7 +186,7 @@ export function ProjectStatusBadge({
         <Button
           variant="ghost"
           className={cn(
-            "inline-flex items-center gap-2 px-3 py-1 h-auto rounded-full text-xs font-medium hover:bg-transparent",
+            "inline-flex items-center gap-2 px-3 py-1.5 h-auto rounded-full font-medium hover:bg-transparent transition-all duration-200",
             isUpdating && "cursor-not-allowed opacity-50",
             className
           )}
@@ -196,9 +196,13 @@ export function ProjectStatusBadge({
             border: `1px solid ${currentStatus.color}40` // 40% opacity border
           }}
           disabled={isUpdating}
+          onClick={() => {
+            console.log('Status badge clicked, opening dropdown');
+            setDropdownOpen(true);
+          }}
         >
           <div 
-            className="w-2 h-2 rounded-full" 
+            className="w-2.5 h-2.5 rounded-full" 
             style={{ backgroundColor: currentStatus.color }}
           />
           <span className="uppercase tracking-wide font-semibold">{currentStatus.name}</span>
@@ -212,18 +216,21 @@ export function ProjectStatusBadge({
               key={status.id}
               variant="ghost"
               className={cn(
-                "w-full justify-start h-auto py-2 px-3 text-xs font-medium",
+                "w-full justify-start h-auto py-2 px-3 font-medium hover:bg-muted",
                 currentStatus.id === status.id && "bg-muted"
               )}
-              onClick={() => handleStatusChange(status.id)}
+              onClick={() => {
+                console.log('Status option clicked:', status.name);
+                handleStatusChange(status.id);
+              }}
               disabled={isUpdating}
             >
               <div className="flex items-center gap-3 w-full">
                 <div 
-                  className="w-2 h-2 rounded-full flex-shrink-0" 
+                  className="w-2.5 h-2.5 rounded-full flex-shrink-0" 
                   style={{ backgroundColor: status.color }}
                 />
-                <span className="uppercase tracking-wide font-semibold">{status.name}</span>
+                <span className="uppercase tracking-wide font-semibold text-sm">{status.name}</span>
               </div>
             </Button>
           ))}

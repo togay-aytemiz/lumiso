@@ -267,18 +267,20 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    <DialogTitle className="text-2xl font-bold leading-tight">{project?.name}</DialogTitle>
-                    
-                    {/* Project Status Badge */}
-                    <ProjectStatusBadge 
-                      projectId={project.id}
-                      currentStatusId={project.status_id}
-                      onStatusChange={() => {
-                        onProjectUpdated();
-                      }}
-                      editable={true}
-                      className="text-xs"
-                    />
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <DialogTitle className="text-2xl font-bold leading-tight">{project?.name}</DialogTitle>
+                      
+                      {/* Project Status Badge - positioned next to project name */}
+                      <ProjectStatusBadge 
+                        projectId={project.id}
+                        currentStatusId={project.status_id}
+                        onStatusChange={() => {
+                          onProjectUpdated();
+                        }}
+                        editable={true}
+                        className="text-sm" // Made bigger
+                      />
+                    </div>
                     
                     {project?.description && (
                       <p className="text-muted-foreground text-base">{project.description}</p>

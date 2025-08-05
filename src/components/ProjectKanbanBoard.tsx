@@ -254,49 +254,47 @@ const ProjectKanbanBoard = ({ projects, onProjectsChange }: ProjectKanbanBoardPr
           </Button>
         </div>
 
-        {/* Scrollable droppable area */}
-        <div className="flex-1 min-h-0 px-4 pb-4">
-          <ScrollArea className="h-full">
-            <Droppable droppableId={statusId}>
-              {(provided, snapshot) => (
-                <div
-                  ref={provided.innerRef}
-                  {...provided.droppableProps}
-                  className={`min-h-full transition-colors pb-2 ${
-                    snapshot.isDraggingOver ? 'bg-accent/20' : ''
-                  }`}
-                >
-                  {/* Project cards */}
-                  {projects.map((project, index) => renderProjectCard(project, index))}
-                  
-                  {/* Add project button */}
-                  {projects.length === 0 ? (
-                    <div className="flex items-center justify-center h-32">
-                      <Button
-                        variant="outline"
-                        onClick={() => handleAddProject(status?.id || null)}
-                        className="flex items-center gap-2 border-dashed"
-                      >
-                        <Plus className="h-4 w-4" />
-                        Add Project
-                      </Button>
-                    </div>
-                  ) : (
+        {/* Droppable area without individual scrolling */}
+        <div className="flex-1 px-4 pb-4">
+          <Droppable droppableId={statusId}>
+            {(provided, snapshot) => (
+              <div
+                ref={provided.innerRef}
+                {...provided.droppableProps}
+                className={`min-h-full transition-colors pb-2 ${
+                  snapshot.isDraggingOver ? 'bg-accent/20' : ''
+                }`}
+              >
+                {/* Project cards */}
+                {projects.map((project, index) => renderProjectCard(project, index))}
+                
+                {/* Add project button */}
+                {projects.length === 0 ? (
+                  <div className="flex items-center justify-center h-32">
                     <Button
                       variant="outline"
                       onClick={() => handleAddProject(status?.id || null)}
-                      className="w-full flex items-center gap-2 border-dashed mt-2"
+                      className="flex items-center gap-2 border-dashed"
                     >
                       <Plus className="h-4 w-4" />
                       Add Project
                     </Button>
-                  )}
-                  
-                  {provided.placeholder}
-                </div>
-              )}
-            </Droppable>
-          </ScrollArea>
+                  </div>
+                ) : (
+                  <Button
+                    variant="outline"
+                    onClick={() => handleAddProject(status?.id || null)}
+                    className="w-full flex items-center gap-2 border-dashed mt-2"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Add Project
+                  </Button>
+                )}
+                
+                {provided.placeholder}
+              </div>
+            )}
+          </Droppable>
         </div>
       </div>
     );

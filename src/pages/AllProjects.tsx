@@ -311,7 +311,7 @@ const AllProjects = () => {
       {/* Content area - Scrollable */}
       <div className="flex-1 overflow-hidden">
         {viewMode === 'board' ? (
-          <div className="h-full p-8 pt-6">
+          <div className="h-full p-8 pt-6 overflow-y-auto">
             <ProjectKanbanBoard 
               projects={projects} 
               onProjectsChange={fetchProjects}

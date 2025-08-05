@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, ArrowUpDown, ArrowUp, ArrowDown, Plus, FolderOpen, User, LayoutGrid, List } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { EnhancedProjectDialog } from "@/components/EnhancedProjectDialog";
@@ -67,75 +68,112 @@ const AllProjects = () => {
 
   const fetchProjects = async () => {
     try {
-      // First get all projects with their status and project type
-      const { data: projectsData, error } = await supabase
-        .from('projects')
-        .select(`
-          *, 
-          project_statuses(id, name, color),
-          project_types(id, name)
-        `)
-        .order('updated_at', { ascending: false });
+      setLoading(true);
+      
+      // Fetch all data in parallel to avoid sequential loading
+      const [
+        { data: projectsData, error: projectsError },
+        { data: leadsData, error: leadsError },
+        { data: sessionsData, error: sessionsError },
+        { data: todosData, error: todosError },
+        { data: servicesData, error: servicesError }
+      ] = await Promise.all([
+        supabase
+          .from('projects')
+          .select(`
+            *, 
+            project_statuses(id, name, color),
+            project_types(id, name)
+          `)
+          .order('updated_at', { ascending: false }),
+        
+        supabase
+          .from('leads')
+          .select('id, name, status, email, phone'),
+        
+        supabase
+          .from('sessions')
+          .select('id, status, session_date, session_time, project_id'),
+        
+        supabase
+          .from('todos')
+          .select('id, is_completed, project_id'),
+        
+        supabase
+          .from('project_services')
+          .select(`
+            project_id,
+            services (
+              id,
+              name
+            )
+          `)
+      ]);
 
-      if (error) throw error;
+      if (projectsError) throw projectsError;
+      if (leadsError) throw leadsError;
+      if (sessionsError) throw sessionsError;
+      if (todosError) throw todosError;
+      if (servicesError) throw servicesError;
 
-      // Then get all leads info
-      const { data: leadsData } = await supabase
-        .from('leads')
-        .select('id, name, status, email, phone');
-
-      // Create a map of leads for quick lookup
+      // Create lookup maps for efficient data joining
       const leadsMap = new Map(leadsData?.map(lead => [lead.id, lead]) || []);
+      const sessionsMap = new Map<string, any[]>();
+      const todosMap = new Map<string, any[]>();
+      const servicesMap = new Map<string, any[]>();
 
-      // Fetch additional project statistics
-      const projectsWithStats = await Promise.all(
-        (projectsData || []).map(async (project) => {
-          // Get session counts and upcoming sessions
-          const { data: sessions } = await supabase
-            .from('sessions')
-            .select('id, status, session_date, session_time')
-            .eq('project_id', project.id);
+      // Group sessions by project_id
+      sessionsData?.forEach(session => {
+        if (!sessionsMap.has(session.project_id)) {
+          sessionsMap.set(session.project_id, []);
+        }
+        sessionsMap.get(session.project_id)!.push(session);
+      });
 
-          // Calculate upcoming sessions (future sessions)
-          const now = new Date();
-          const upcomingSessions = sessions?.filter(session => {
-            const sessionDateTime = new Date(`${session.session_date}T${session.session_time}`);
-            return sessionDateTime > now && session.status !== 'completed';
-          }) || [];
+      // Group todos by project_id
+      todosData?.forEach(todo => {
+        if (!todosMap.has(todo.project_id)) {
+          todosMap.set(todo.project_id, []);
+        }
+        todosMap.get(todo.project_id)!.push(todo);
+      });
 
-          // Get todo counts
-          const { data: todos } = await supabase
-            .from('todos')
-            .select('id, is_completed')
-            .eq('project_id', project.id);
+      // Group services by project_id
+      servicesData?.forEach(projectService => {
+        if (!servicesMap.has(projectService.project_id)) {
+          servicesMap.set(projectService.project_id, []);
+        }
+        if (projectService.services) {
+          servicesMap.get(projectService.project_id)!.push(projectService.services);
+        }
+      });
 
-          // Get services for this project
-          const { data: projectServices } = await supabase
-            .from('project_services')
-            .select(`
-              services (
-                id,
-                name
-              )
-            `)
-            .eq('project_id', project.id);
+      // Process all projects with their statistics
+      const projectsWithStats = (projectsData || []).map(project => {
+        const sessions = sessionsMap.get(project.id) || [];
+        const todos = todosMap.get(project.id) || [];
+        const services = servicesMap.get(project.id) || [];
 
-          const services = projectServices?.map(ps => ps.services).filter(Boolean) || [];
+        // Calculate upcoming sessions (future sessions)
+        const now = new Date();
+        const upcomingSessions = sessions.filter(session => {
+          const sessionDateTime = new Date(`${session.session_date}T${session.session_time}`);
+          return sessionDateTime > now && session.status !== 'completed';
+        });
 
-          return {
-            ...project,
-            lead: leadsMap.get(project.lead_id) || null,
-            project_type: project.project_types || null,
-            session_count: sessions?.length || 0,
-            completed_session_count: sessions?.filter(s => s.status === 'completed').length || 0,
-            upcoming_session_count: upcomingSessions.length,
-            next_session_date: upcomingSessions.length > 0 ? upcomingSessions[0].session_date : null,
-            todo_count: todos?.length || 0,
-            completed_todo_count: todos?.filter(t => t.is_completed).length || 0,
-            services: services,
-          };
-        })
-      );
+        return {
+          ...project,
+          lead: leadsMap.get(project.lead_id) || null,
+          project_type: project.project_types || null,
+          session_count: sessions.length,
+          completed_session_count: sessions.filter(s => s.status === 'completed').length,
+          upcoming_session_count: upcomingSessions.length,
+          next_session_date: upcomingSessions.length > 0 ? upcomingSessions[0].session_date : null,
+          todo_count: todos.length,
+          completed_todo_count: todos.filter(t => t.is_completed).length,
+          services: services,
+        };
+      });
 
       setProjects(projectsWithStats);
     } catch (error: any) {
@@ -406,7 +444,43 @@ const AllProjects = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredAndSortedProjects.length > 0 ? (
+                    {loading ? (
+                      // Show skeleton rows while loading
+                      Array.from({ length: 5 }).map((_, index) => (
+                        <TableRow key={`skeleton-${index}`}>
+                          <TableCell>
+                            <Skeleton className="h-4 w-[180px]" />
+                          </TableCell>
+                          <TableCell>
+                            <div className="space-y-1">
+                              <Skeleton className="h-4 w-[120px]" />
+                              <Skeleton className="h-3 w-[160px]" />
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Skeleton className="h-6 w-[80px] rounded-full" />
+                          </TableCell>
+                          <TableCell>
+                            <Skeleton className="h-6 w-[70px] rounded-full" />
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Skeleton className="h-6 w-[50px] rounded-full mx-auto" />
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Skeleton className="h-6 w-[50px] rounded-full mx-auto" />
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-1">
+                              <Skeleton className="h-5 w-[60px] rounded-full" />
+                              <Skeleton className="h-5 w-[70px] rounded-full" />
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Skeleton className="h-4 w-[100px]" />
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : filteredAndSortedProjects.length > 0 ? (
                       filteredAndSortedProjects.map((project) => (
                         <TableRow 
                           key={project.id}

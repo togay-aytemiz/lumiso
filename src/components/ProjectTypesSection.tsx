@@ -55,7 +55,7 @@ const ProjectTypesSection = () => {
         .from('project_types')
         .select('*')
         .eq('user_id', user.id)
-        .order('name', { ascending: true });
+        .order('created_at', { ascending: true }); // Order by creation time so new ones go to end
 
       if (error) throw error;
 

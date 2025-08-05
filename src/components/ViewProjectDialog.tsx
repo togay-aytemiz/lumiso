@@ -166,6 +166,23 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
         description: "Project updated successfully."
       });
 
+      // Update the project type display immediately with the new data
+      if (editProjectTypeId) {
+        try {
+          const { data: typeData, error: typeError } = await supabase
+            .from('project_types')
+            .select('id, name')
+            .eq('id', editProjectTypeId)
+            .single();
+            
+          if (!typeError) {
+            setProjectType(typeData);
+          }
+        } catch (typeError: any) {
+          console.error('Error fetching updated project type:', typeError);
+        }
+      }
+
       setIsEditing(false);
       onProjectUpdated();
     } catch (error: any) {

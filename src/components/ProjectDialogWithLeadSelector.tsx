@@ -105,13 +105,18 @@ export function ProjectDialogWithLeadSelector({
         return;
       }
 
+      // Get default project status
+      const { data: defaultStatusId } = await supabase
+        .rpc('get_default_project_status', { user_uuid: userData.user.id });
+
       const { error } = await supabase
         .from('projects')
         .insert({
           name: name.trim(),
           description: description.trim() || null,
           lead_id: selectedLeadId,
-          user_id: userData.user.id
+          user_id: userData.user.id,
+          status_id: defaultStatusId
         });
 
       if (error) throw error;

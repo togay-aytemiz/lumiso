@@ -144,6 +144,10 @@ export function EnhancedProjectDialog({ onProjectCreated, children }: EnhancedPr
         leadId = newLead.id;
       }
 
+      // Get default project status
+      const { data: defaultStatusId } = await supabase
+        .rpc('get_default_project_status', { user_uuid: user.id });
+
       // Create project
       const { error: projectError } = await supabase
         .from('projects')
@@ -151,7 +155,8 @@ export function EnhancedProjectDialog({ onProjectCreated, children }: EnhancedPr
           user_id: user.id,
           lead_id: leadId,
           name: projectData.name.trim(),
-          description: projectData.description.trim() || null
+          description: projectData.description.trim() || null,
+          status_id: defaultStatusId
         });
 
       if (projectError) throw projectError;

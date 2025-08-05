@@ -9,6 +9,7 @@ import { ArrowLeft, ArrowUpDown, ArrowUp, ArrowDown, Plus, FolderOpen, User } fr
 import { toast } from "@/hooks/use-toast";
 import { EnhancedProjectDialog } from "@/components/EnhancedProjectDialog";
 import { ViewProjectDialog } from "@/components/ViewProjectDialog";
+import { ProjectStatusBadge } from "@/components/ProjectStatusBadge";
 import { useNavigate } from "react-router-dom";
 import { formatDate } from "@/lib/utils";
 import { getLeadStatusStyles, formatStatusText } from "@/lib/leadStatusColors";
@@ -22,6 +23,7 @@ interface Project {
   user_id: string;
   created_at: string;
   updated_at: string;
+  status_id?: string | null;
   lead: {
     id: string;
     name: string;
@@ -59,10 +61,10 @@ const AllProjects = () => {
 
   const fetchProjects = async () => {
     try {
-      // First get all projects
+      // First get all projects with their status
       const { data: projectsData, error } = await supabase
         .from('projects')
-        .select('*')
+        .select('*, project_statuses(id, name, color)')
         .order('updated_at', { ascending: false });
 
       if (error) throw error;
@@ -351,6 +353,7 @@ const AllProjects = () => {
                   </div>
                 </TableHead>
                 <TableHead className="text-center">Todos</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead>Services</TableHead>
                 <TableHead 
                   className="cursor-pointer hover:bg-muted/50"
@@ -414,6 +417,14 @@ const AllProjects = () => {
                       {getProgressBadge(project.completed_todo_count || 0, project.todo_count || 0)}
                     </TableCell>
                     <TableCell>
+                      <ProjectStatusBadge 
+                        projectId={project.id}
+                        currentStatusId={project.status_id}
+                        editable={false}
+                        className="text-xs"
+                      />
+                    </TableCell>
+                    <TableCell>
                       {renderServicesChips(project.services || [])}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
@@ -423,7 +434,7 @@ const AllProjects = () => {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                     {statusFilter === "all" 
                       ? "No projects found. Create your first project to get started!"
                       : `No projects found for leads with status "${statusFilter}".`

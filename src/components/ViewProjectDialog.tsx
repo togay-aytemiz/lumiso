@@ -14,6 +14,7 @@ import { ProjectTodoList } from "./ProjectTodoList";
 import { ProjectServicesSection } from "./ProjectServicesSection";
 import { SessionsSection } from "./SessionsSection";
 import { ProjectTodoListEnhanced } from "./ProjectTodoListEnhanced";
+import { ProjectStatusBadge } from "./ProjectStatusBadge";
 
 interface Project {
   id: string;
@@ -23,6 +24,7 @@ interface Project {
   user_id: string;
   created_at: string;
   updated_at: string;
+  status_id?: string | null;
 }
 
 interface Session {
@@ -264,8 +266,20 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
                     </div>
                   </div>
                 ) : (
-                  <div className="space-y-1">
+                  <div className="space-y-3">
                     <DialogTitle className="text-2xl font-bold leading-tight">{project?.name}</DialogTitle>
+                    
+                    {/* Project Status Badge */}
+                    <ProjectStatusBadge 
+                      projectId={project.id}
+                      currentStatusId={project.status_id}
+                      onStatusChange={() => {
+                        onProjectUpdated();
+                      }}
+                      editable={true}
+                      className="text-xs"
+                    />
+                    
                     {project?.description && (
                       <p className="text-muted-foreground text-base">{project.description}</p>
                     )}

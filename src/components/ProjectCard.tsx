@@ -6,6 +6,7 @@ import { ProgressBar } from "@/components/ui/progress-bar";
 import { ChevronRight } from "lucide-react";
 import { format } from "date-fns";
 import { useProjectProgress } from "@/hooks/useProjectProgress";
+import { ProjectStatusBadge } from "@/components/ProjectStatusBadge";
 
 interface Project {
   id: string;
@@ -15,6 +16,7 @@ interface Project {
   user_id: string;
   created_at: string;
   updated_at: string;
+  status_id?: string | null;
 }
 
 interface ProjectCardProps {
@@ -65,11 +67,20 @@ export function ProjectCard({ project, onView, refreshTrigger }: ProjectCardProp
               </div>
             )}
             
-            <div className="flex items-center gap-3 text-xs text-muted-foreground">
-              <span>Created {format(new Date(project.created_at), "M/d/yy")}</span>
-              {project.updated_at !== project.created_at && (
-                <span>Updated {format(new Date(project.updated_at), "M/d/yy")}</span>
-              )}
+            <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
+              {/* Status badge and creation/update dates */}
+              <div className="flex items-center gap-3">
+                <ProjectStatusBadge 
+                  projectId={project.id}
+                  currentStatusId={project.status_id}
+                  editable={false}
+                  className="text-xs"
+                />
+                <span>Created {format(new Date(project.created_at), "M/d/yy")}</span>
+                {project.updated_at !== project.created_at && (
+                  <span>Updated {format(new Date(project.updated_at), "M/d/yy")}</span>
+                )}
+              </div>
             </div>
           </div>
           <div className="flex items-center ml-4">

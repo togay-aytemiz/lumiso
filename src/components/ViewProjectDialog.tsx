@@ -16,6 +16,7 @@ import { SessionsSection } from "./SessionsSection";
 import { ProjectTodoListEnhanced } from "./ProjectTodoListEnhanced";
 import { ProjectStatusBadge } from "./ProjectStatusBadge";
 import { ProjectTypeSelector } from "./ProjectTypeSelector";
+import { ProjectPaymentsSection } from "./ProjectPaymentsSection";
 
 interface Project {
   id: string;
@@ -465,6 +466,15 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
             <ProjectServicesSection
               projectId={project.id}
               onServicesUpdated={() => {
+                onProjectUpdated();
+                onActivityUpdated?.();
+              }}
+            />
+            
+            {/* Payments Section */}
+            <ProjectPaymentsSection
+              projectId={project.id}
+              onPaymentsUpdated={() => {
                 onProjectUpdated();
                 onActivityUpdated?.();
               }}

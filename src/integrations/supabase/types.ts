@@ -225,6 +225,42 @@ export type Database = {
         }
         Relationships: []
       }
+      payments: {
+        Row: {
+          amount: number
+          created_at: string
+          date_paid: string | null
+          description: string | null
+          id: string
+          project_id: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          date_paid?: string | null
+          description?: string | null
+          id?: string
+          project_id: string
+          status: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          date_paid?: string | null
+          description?: string | null
+          id?: string
+          project_id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       project_services: {
         Row: {
           created_at: string
@@ -380,8 +416,10 @@ export type Database = {
           category: string | null
           created_at: string
           description: string | null
+          extra: boolean | null
           id: string
           name: string
+          price: number | null
           updated_at: string
           user_id: string
         }
@@ -389,8 +427,10 @@ export type Database = {
           category?: string | null
           created_at?: string
           description?: string | null
+          extra?: boolean | null
           id?: string
           name: string
+          price?: number | null
           updated_at?: string
           user_id: string
         }
@@ -398,8 +438,10 @@ export type Database = {
           category?: string | null
           created_at?: string
           description?: string | null
+          extra?: boolean | null
           id?: string
           name?: string
+          price?: number | null
           updated_at?: string
           user_id?: string
         }

@@ -311,13 +311,11 @@ const AllProjects = () => {
       {/* Content area - Scrollable */}
       <div className="flex-1 overflow-hidden">
         {viewMode === 'board' ? (
-          <div className="h-full overflow-y-auto">
-            <div className="p-8 pt-6">
-              <ProjectKanbanBoard 
-                projects={projects} 
-                onProjectsChange={fetchProjects}
-              />
-            </div>
+          <div className="h-full p-8 pt-6">
+            <ProjectKanbanBoard 
+              projects={projects} 
+              onProjectsChange={fetchProjects}
+            />
           </div>
         ) : (
           <div className="h-full overflow-y-auto p-8 pt-6">

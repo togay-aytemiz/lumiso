@@ -3,6 +3,7 @@ import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Plus, Calendar, CheckSquare, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -223,9 +224,9 @@ const ProjectKanbanBoard = ({ projects, onProjectsChange }: ProjectKanbanBoardPr
     const statusColor = status?.color || '#6B7280';
 
     return (
-      <div key={statusId} className="flex-shrink-0 w-80 bg-muted/30 rounded-lg p-4">
-        {/* Column header */}
-        <div className="mb-4 flex items-center justify-between">
+      <div key={statusId} className="flex-shrink-0 w-80 bg-muted/30 rounded-lg flex flex-col h-full">
+        {/* Column header - Fixed */}
+        <div className="p-4 pb-2 flex items-center justify-between">
           <button
             className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all hover:opacity-80"
             style={{ 
@@ -253,46 +254,50 @@ const ProjectKanbanBoard = ({ projects, onProjectsChange }: ProjectKanbanBoardPr
           </Button>
         </div>
 
-        {/* Droppable area */}
-        <Droppable droppableId={statusId}>
-          {(provided, snapshot) => (
-            <div
-              ref={provided.innerRef}
-              {...provided.droppableProps}
-              className={`min-h-[200px] rounded-lg transition-colors ${
-                snapshot.isDraggingOver ? 'bg-accent/50' : ''
-              }`}
-            >
-              {/* Project cards */}
-              {projects.map((project, index) => renderProjectCard(project, index))}
-              
-              {/* Add project button */}
-              {projects.length === 0 ? (
-                <div className="flex items-center justify-center h-32">
-                  <Button
-                    variant="outline"
-                    onClick={() => handleAddProject(status?.id || null)}
-                    className="flex items-center gap-2 border-dashed"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Add Project
-                  </Button>
-                </div>
-              ) : (
-                <Button
-                  variant="outline"
-                  onClick={() => handleAddProject(status?.id || null)}
-                  className="w-full flex items-center gap-2 border-dashed mt-2"
+        {/* Scrollable droppable area */}
+        <div className="flex-1 px-4 pb-4">
+          <ScrollArea className="h-full">
+            <Droppable droppableId={statusId}>
+              {(provided, snapshot) => (
+                <div
+                  ref={provided.innerRef}
+                  {...provided.droppableProps}
+                  className={`min-h-[200px] rounded-lg transition-colors pb-2 ${
+                    snapshot.isDraggingOver ? 'bg-accent/50' : ''
+                  }`}
                 >
-                  <Plus className="h-4 w-4" />
-                  Add Project
-                </Button>
+                  {/* Project cards */}
+                  {projects.map((project, index) => renderProjectCard(project, index))}
+                  
+                  {/* Add project button */}
+                  {projects.length === 0 ? (
+                    <div className="flex items-center justify-center h-32">
+                      <Button
+                        variant="outline"
+                        onClick={() => handleAddProject(status?.id || null)}
+                        className="flex items-center gap-2 border-dashed"
+                      >
+                        <Plus className="h-4 w-4" />
+                        Add Project
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      onClick={() => handleAddProject(status?.id || null)}
+                      className="w-full flex items-center gap-2 border-dashed mt-2"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Add Project
+                    </Button>
+                  )}
+                  
+                  {provided.placeholder}
+                </div>
               )}
-              
-              {provided.placeholder}
-            </div>
-          )}
-        </Droppable>
+            </Droppable>
+          </ScrollArea>
+        </div>
       </div>
     );
   };
@@ -306,11 +311,11 @@ const ProjectKanbanBoard = ({ projects, onProjectsChange }: ProjectKanbanBoardPr
   }
 
   return (
-    <div className="w-full">
+    <div className="w-full h-full">
       <DragDropContext onDragEnd={handleDragEnd}>
-        {/* Horizontally scrollable board area only */}
-        <div className="overflow-x-auto">
-          <div className="flex gap-6 pb-4 min-w-fit">
+        {/* Horizontally scrollable board area with fixed height */}
+        <div className="overflow-x-auto h-full">
+          <div className="flex gap-6 pb-4 min-w-fit h-full">
             {/* Render columns for each status */}
             {statuses.map(status => 
               renderColumn(status, getProjectsByStatus(status.id))

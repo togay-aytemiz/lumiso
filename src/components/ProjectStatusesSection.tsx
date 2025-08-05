@@ -2,16 +2,16 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Plus, Edit2, Trash2, Palette, Loader2 } from "lucide-react";
+import { Plus, Trash2, Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
 const projectStatusSchema = z.object({
   name: z.string().min(1, "Status name is required").max(50, "Status name must be less than 50 characters"),
@@ -28,10 +28,21 @@ interface ProjectStatus {
   updated_at: string;
 }
 
-const generateRandomColor = () => {
-  const colors = ['#A0AEC0', '#ECC94B', '#9F7AEA', '#63B3ED', '#48BB78', '#F56565', '#38B2AC', '#ED8936', '#EC4899', '#8B5CF6'];
-  return colors[Math.floor(Math.random() * colors.length)];
-};
+// Predefined color palette (similar to Pixieset)
+const PREDEFINED_COLORS = [
+  '#F56565', // Red
+  '#ED8936', // Orange  
+  '#ECC94B', // Yellow
+  '#9AE6B4', // Light Green
+  '#48BB78', // Green
+  '#38B2AC', // Teal
+  '#63B3ED', // Light Blue
+  '#4299E1', // Blue
+  '#667EEA', // Indigo
+  '#9F7AEA', // Purple
+  '#ED64A6', // Pink
+  '#A0AEC0', // Gray
+];
 
 const ProjectStatusesSection = () => {
   const [statuses, setStatuses] = useState<ProjectStatus[]>([]);
@@ -46,9 +57,11 @@ const ProjectStatusesSection = () => {
     resolver: zodResolver(projectStatusSchema),
     defaultValues: {
       name: "",
-      color: generateRandomColor(),
+      color: PREDEFINED_COLORS[0],
     },
   });
+
+  const selectedColor = form.watch("color");
 
   const fetchStatuses = async () => {
     try {
@@ -87,11 +100,11 @@ const ProjectStatusesSection = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      // Updated default statuses as requested
       const defaultStatuses = [
         { name: 'Planned', color: '#A0AEC0' },
         { name: 'Booked', color: '#ECC94B' },
-        { name: 'Editing', color: '#9F7AEA' },
-        { name: 'Ready to Deliver', color: '#63B3ED' },
+        { name: 'Post Production', color: '#9F7AEA' },
         { name: 'Completed', color: '#48BB78' },
         { name: 'Cancelled', color: '#F56565' }
       ];
@@ -158,7 +171,7 @@ const ProjectStatusesSection = () => {
         setIsAddDialogOpen(false);
       }
 
-      form.reset({ name: "", color: generateRandomColor() });
+      form.reset({ name: "", color: PREDEFINED_COLORS[0] });
       setEditingStatus(null);
       fetchStatuses();
     } catch (error) {
@@ -184,18 +197,6 @@ const ProjectStatusesSection = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      // Check if status is in use by any projects
-      const { data: projects, error: projectsError } = await supabase
-        .from('projects')
-        .select('id')
-        .eq('user_id', user.id)
-        .limit(1);
-
-      if (projectsError) throw projectsError;
-
-      // For now, we'll allow deletion since projects don't have status field yet
-      // This check will be needed when projects start using statuses
-
       const { error } = await supabase
         .from('project_statuses')
         .delete()
@@ -219,6 +220,131 @@ const ProjectStatusesSection = () => {
     }
   };
 
+  const renderColorSwatches = (onColorSelect: (color: string) => void) => (
+    <div className="grid grid-cols-6 gap-2">
+      {PREDEFINED_COLORS.map((color) => (
+        <button
+          key={color}
+          type="button"
+          className={cn(
+            "w-8 h-8 rounded-full border-2 transition-all hover:scale-110",
+            selectedColor === color ? "border-foreground ring-2 ring-offset-2 ring-foreground" : "border-muted"
+          )}
+          style={{ backgroundColor: color }}
+          onClick={() => onColorSelect(color)}
+          title={color}
+        />
+      ))}
+    </div>
+  );
+
+  const renderStatusDialog = (isEdit: boolean) => (
+    <DialogContent className="sm:max-w-md">
+      <DialogHeader>
+        <DialogTitle className="text-lg font-medium">
+          {isEdit ? 'EDIT STAGE' : 'ADD STAGE'}
+        </DialogTitle>
+      </DialogHeader>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-sm font-medium">Name</FormLabel>
+                <FormControl>
+                  <Input 
+                    placeholder={isEdit ? "" : "e.g. Inquiry, Post Production, Completed"} 
+                    {...field} 
+                    className="mt-1"
+                  />
+                </FormControl>
+                <FormMessage />
+                {!isEdit && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Organise your workflow in stages.
+                  </p>
+                )}
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="color"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-sm font-medium">Stage Color</FormLabel>
+                <FormControl>
+                  <div className="mt-2">
+                    {renderColorSwatches(field.onChange)}
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <div className="flex justify-between items-center pt-4">
+            {isEdit && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button type="button" variant="ghost" className="text-destructive hover:text-destructive">
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete Project Status</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to delete "{editingStatus?.name}"? This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => {
+                        if (editingStatus) {
+                          handleDelete(editingStatus.id);
+                          setIsEditDialogOpen(false);
+                        }
+                      }}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+            
+            <div className="flex gap-2 ml-auto">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => isEdit ? setIsEditDialogOpen(false) : setIsAddDialogOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={submitting}>
+                {submitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    {isEdit ? 'Saving...' : 'Adding...'}
+                  </>
+                ) : (
+                  isEdit ? 'Save' : 'Add'
+                )}
+              </Button>
+            </div>
+          </div>
+        </form>
+      </Form>
+    </DialogContent>
+  );
+
   useEffect(() => {
     fetchStatuses();
   }, []);
@@ -227,9 +353,9 @@ const ProjectStatusesSection = () => {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Project Statuses</CardTitle>
+          <CardTitle>Project Stages</CardTitle>
           <CardDescription>
-            Manage your project pipeline stages with custom statuses and colors
+            Add, rename and reorder stages to customize your workflow.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -246,209 +372,50 @@ const ProjectStatusesSection = () => {
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle>Project Statuses</CardTitle>
+            <CardTitle>Project Stages</CardTitle>
             <CardDescription>
-              Manage your project pipeline stages with custom statuses and colors
+              Add, rename and reorder stages to customize your workflow.
             </CardDescription>
           </div>
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="flex items-center gap-2">
-                <Plus className="h-4 w-4" />
-                Add Status
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Add New Project Status</DialogTitle>
-                <DialogDescription>
-                  Create a new status for your project pipeline
-                </DialogDescription>
-              </DialogHeader>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Status Name</FormLabel>
-                        <FormControl>
-                          <Input placeholder="e.g. In Progress" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="color"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Color</FormLabel>
-                        <FormControl>
-                          <div className="flex items-center gap-2">
-                            <input
-                              type="color"
-                              value={field.value}
-                              onChange={field.onChange}
-                              className="w-12 h-10 rounded border cursor-pointer"
-                            />
-                            <Input {...field} placeholder="#000000" className="flex-1" />
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <div className="flex justify-end gap-2">
-                    <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)}>
-                      Cancel
-                    </Button>
-                    <Button type="submit" disabled={submitting}>
-                      {submitting ? (
-                        <>
-                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                          Creating...
-                        </>
-                      ) : (
-                        'Create Status'
-                      )}
-                    </Button>
-                  </div>
-                </form>
-              </Form>
-            </DialogContent>
+            <Button 
+              onClick={() => setIsAddDialogOpen(true)}
+              className="flex items-center gap-2 text-sm font-medium text-teal-600 hover:text-teal-700 bg-transparent hover:bg-transparent border-none p-0"
+              variant="ghost"
+            >
+              <Plus className="h-4 w-4" />
+              Add Stage
+            </Button>
+            {renderStatusDialog(false)}
           </Dialog>
         </div>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Status Name</TableHead>
-              <TableHead>Color</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {statuses.map((status) => (
-              <TableRow key={status.id}>
-                <TableCell className="font-medium">{status.name}</TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <div
-                      className="w-6 h-6 rounded border"
-                      style={{ backgroundColor: status.color }}
-                      title={status.color}
-                    />
-                    <span className="text-sm text-muted-foreground">{status.color}</span>
-                  </div>
-                </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex items-center justify-end gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleEdit(status)}
-                      className="h-8 w-8 p-0"
-                    >
-                      <Edit2 className="h-4 w-4" />
-                    </Button>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-destructive hover:text-destructive">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Delete Project Status</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Are you sure you want to delete "{status.name}"? This action cannot be undone.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={() => handleDelete(status.id)}
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                          >
-                            Delete
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        {/* Compact status badges display (like Pixieset) */}
+        <div className="flex flex-wrap gap-3">
+          {statuses.map((status) => (
+            <button
+              key={status.id}
+              onClick={() => handleEdit(status)}
+              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all hover:opacity-80"
+              style={{ 
+                backgroundColor: status.color + '20',
+                color: status.color,
+                border: `1px solid ${status.color}40`
+              }}
+            >
+              <div 
+                className="w-2 h-2 rounded-full" 
+                style={{ backgroundColor: status.color }}
+              />
+              <span className="uppercase tracking-wide font-semibold">{status.name}</span>
+            </button>
+          ))}
+        </div>
 
         {/* Edit Dialog */}
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Edit Project Status</DialogTitle>
-              <DialogDescription>
-                Update the status name and color
-              </DialogDescription>
-            </DialogHeader>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Status Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g. In Progress" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="color"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Color</FormLabel>
-                      <FormControl>
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="color"
-                            value={field.value}
-                            onChange={field.onChange}
-                            className="w-12 h-10 rounded border cursor-pointer"
-                          />
-                          <Input {...field} placeholder="#000000" className="flex-1" />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <div className="flex justify-end gap-2">
-                  <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button type="submit" disabled={submitting}>
-                    {submitting ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                        Updating...
-                      </>
-                    ) : (
-                      'Update Status'
-                    )}
-                  </Button>
-                </div>
-              </form>
-            </Form>
-          </DialogContent>
+          {renderStatusDialog(true)}
         </Dialog>
       </CardContent>
     </Card>

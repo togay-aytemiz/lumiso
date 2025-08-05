@@ -216,12 +216,11 @@ const ProjectKanbanBoard = ({ projects, onProjectsChange }: ProjectKanbanBoardPr
                 {/* Todo progress */}
                 {(project.todo_count || 0) > 0 && (
                   <div className="flex items-center gap-2">
-                    <CheckSquare className="h-3 w-3 text-muted-foreground" />
                     <Badge 
-                      variant="secondary" 
-                      className="text-xs h-5 px-2"
+                      variant={(project.completed_todo_count || 0) === (project.todo_count || 0) ? "default" : "secondary"}
+                      className={`text-xs h-5 px-2 ${(project.completed_todo_count || 0) === (project.todo_count || 0) ? 'bg-green-600 text-white' : ''}`}
                     >
-                      {project.completed_todo_count || 0}/{project.todo_count || 0} todos complete
+                      {project.completed_todo_count || 0}/{project.todo_count || 0}
                     </Badge>
                   </div>
                 )}

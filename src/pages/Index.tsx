@@ -47,7 +47,7 @@ const Index = () => {
       <div 
         className="min-h-screen flex items-center justify-center relative overflow-hidden"
         style={{
-          backgroundImage: `url(/src/assets/newborn-bg.jpg)`,
+          backgroundImage: `url(./src/assets/newborn-bg.jpg)`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat'

@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
@@ -34,7 +33,10 @@ export function ProjectStatusBadge({
   const [loading, setLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+
+  console.log('ProjectStatusBadge rendered:', { projectId, currentStatusId, editable });
 
   useEffect(() => {
     fetchProjectStatuses();
@@ -44,10 +46,26 @@ export function ProjectStatusBadge({
     if (currentStatusId && statuses.length > 0) {
       const status = statuses.find(s => s.id === currentStatusId);
       setCurrentStatus(status || null);
+      console.log('Current status set:', status);
     }
   }, [currentStatusId, statuses]);
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setDropdownOpen(false);
+      }
+    };
+
+    if (dropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [dropdownOpen]);
+
   const fetchProjectStatuses = async () => {
+    console.log('Fetching project statuses...');
     try {
       const { data, error } = await supabase
         .from('project_statuses')
@@ -55,6 +73,7 @@ export function ProjectStatusBadge({
         .order('created_at', { ascending: true });
 
       if (error) throw error;
+      console.log('Fetched statuses:', data);
       setStatuses(data || []);
     } catch (error: any) {
       console.error('Error fetching project statuses:', error);
@@ -180,62 +199,70 @@ export function ProjectStatusBadge({
     );
   }
 
+  // Simple clickable status badge that opens dropdown (like Pixieset)
   return (
-    <Popover open={dropdownOpen} onOpenChange={setDropdownOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="ghost"
-          className={cn(
-            "inline-flex items-center gap-2 px-3 py-1.5 h-auto rounded-full font-medium hover:bg-transparent transition-all duration-200",
-            isUpdating && "cursor-not-allowed opacity-50",
-            className
-          )}
-          style={{ 
-            backgroundColor: currentStatus.color + '20', // 20% opacity background
-            color: currentStatus.color,
-            border: `1px solid ${currentStatus.color}40` // 40% opacity border
-          }}
-          disabled={isUpdating}
-          onClick={() => {
-            console.log('Status badge clicked, opening dropdown');
-            setDropdownOpen(true);
-          }}
-        >
-          <div 
-            className="w-2.5 h-2.5 rounded-full" 
-            style={{ backgroundColor: currentStatus.color }}
-          />
-          <span className="uppercase tracking-wide font-semibold">{currentStatus.name}</span>
-          <ChevronDown className="w-3 h-3 ml-1" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-auto p-2" align="start">
-        <div className="space-y-1">
-          {statuses.map((status) => (
-            <Button
-              key={status.id}
-              variant="ghost"
-              className={cn(
-                "w-full justify-start h-auto py-2 px-3 font-medium hover:bg-muted",
-                currentStatus.id === status.id && "bg-muted"
-              )}
-              onClick={() => {
-                console.log('Status option clicked:', status.name);
-                handleStatusChange(status.id);
-              }}
-              disabled={isUpdating}
-            >
-              <div className="flex items-center gap-3 w-full">
-                <div 
-                  className="w-2.5 h-2.5 rounded-full flex-shrink-0" 
-                  style={{ backgroundColor: status.color }}
-                />
-                <span className="uppercase tracking-wide font-semibold text-sm">{status.name}</span>
-              </div>
-            </Button>
-          ))}
+    <div className="relative" ref={dropdownRef}>
+      <Button
+        variant="ghost"
+        className={cn(
+          "inline-flex items-center gap-2 px-4 py-2 h-auto rounded-full font-medium hover:opacity-80 transition-opacity",
+          "border cursor-pointer",
+          isUpdating && "cursor-not-allowed opacity-50",
+          className
+        )}
+        style={{ 
+          backgroundColor: currentStatus.color + '15', // 15% opacity background
+          color: currentStatus.color,
+          borderColor: currentStatus.color + '60' // 60% opacity border
+        }}
+        disabled={isUpdating}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          console.log('Status badge clicked, current dropdown state:', dropdownOpen);
+          setDropdownOpen(!dropdownOpen);
+        }}
+      >
+        <div 
+          className="w-2.5 h-2.5 rounded-full" 
+          style={{ backgroundColor: currentStatus.color }}
+        />
+        <span className="uppercase tracking-wide font-semibold text-sm">{currentStatus.name}</span>
+        <ChevronDown className={cn("w-4 h-4 ml-1 transition-transform", dropdownOpen && "rotate-180")} />
+      </Button>
+
+      {/* Custom dropdown instead of Popover */}
+      {dropdownOpen && (
+        <div className="absolute top-full left-0 mt-2 w-auto min-w-[200px] bg-background border rounded-lg shadow-lg z-50 p-2">
+          <div className="space-y-1">
+            {statuses.map((status) => (
+              <Button
+                key={status.id}
+                variant="ghost"
+                className={cn(
+                  "w-full justify-start h-auto py-2 px-3 font-medium hover:bg-muted rounded-md",
+                  currentStatus.id === status.id && "bg-muted"
+                )}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log('Status option clicked:', status.name);
+                  handleStatusChange(status.id);
+                }}
+                disabled={isUpdating}
+              >
+                <div className="flex items-center gap-3 w-full">
+                  <div 
+                    className="w-2.5 h-2.5 rounded-full flex-shrink-0" 
+                    style={{ backgroundColor: status.color }}
+                  />
+                  <span className="uppercase tracking-wide font-semibold text-sm">{status.name}</span>
+                </div>
+              </Button>
+            ))}
+          </div>
         </div>
-      </PopoverContent>
-    </Popover>
+      )}
+    </div>
   );
 }

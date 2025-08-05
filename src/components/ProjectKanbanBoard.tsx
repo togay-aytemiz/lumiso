@@ -194,14 +194,22 @@ const ProjectKanbanBoard = ({ projects, onProjectsChange }: ProjectKanbanBoardPr
               {/* Project name (middle) */}
               <h4 className="font-normal text-sm mb-2 line-clamp-2">{project.name}</h4>
               
-              {/* Project type badge */}
-              {project.project_type && (
-                <div className="mb-3">
+              {/* Project type badge and todo completion side by side */}
+              <div className="flex items-center gap-2 mb-3">
+                {project.project_type && (
                   <Badge variant="outline" className="text-xs">
                     {project.project_type.name.toUpperCase()}
                   </Badge>
-                </div>
-              )}
+                )}
+                {(project.todo_count || 0) > 0 && (
+                  <Badge 
+                    variant={(project.completed_todo_count || 0) === (project.todo_count || 0) ? "default" : "secondary"}
+                    className={`text-xs h-5 px-2 ${(project.completed_todo_count || 0) === (project.todo_count || 0) ? 'bg-green-600 text-white' : ''}`}
+                  >
+                    {project.completed_todo_count || 0}/{project.todo_count || 0}
+                  </Badge>
+                )}
+              </div>
               
               {/* Bottom section */}
               <div className="space-y-2">
@@ -210,18 +218,6 @@ const ProjectKanbanBoard = ({ projects, onProjectsChange }: ProjectKanbanBoardPr
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <Calendar className="h-3 w-3" />
                     <span>{project.planned_session_count} planned session{project.planned_session_count !== 1 ? 's' : ''}</span>
-                  </div>
-                )}
-                
-                {/* Todo progress */}
-                {(project.todo_count || 0) > 0 && (
-                  <div className="flex items-center gap-2">
-                    <Badge 
-                      variant={(project.completed_todo_count || 0) === (project.todo_count || 0) ? "default" : "secondary"}
-                      className={`text-xs h-5 px-2 ${(project.completed_todo_count || 0) === (project.todo_count || 0) ? 'bg-green-600 text-white' : ''}`}
-                    >
-                      {project.completed_todo_count || 0}/{project.todo_count || 0}
-                    </Badge>
                   </div>
                 )}
               </div>

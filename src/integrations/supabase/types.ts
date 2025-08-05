@@ -298,6 +298,7 @@ export type Database = {
           id: string
           lead_id: string
           name: string
+          status_id: string | null
           updated_at: string
           user_id: string
         }
@@ -307,6 +308,7 @@ export type Database = {
           id?: string
           lead_id: string
           name: string
+          status_id?: string | null
           updated_at?: string
           user_id: string
         }
@@ -316,10 +318,19 @@ export type Database = {
           id?: string
           lead_id?: string
           name?: string
+          status_id?: string | null
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "projects_status_id_fkey"
+            columns: ["status_id"]
+            isOneToOne: false
+            referencedRelation: "project_statuses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       services: {
         Row: {
@@ -443,7 +454,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_default_project_status: {
+        Args: { user_uuid: string }
+        Returns: string
+      }
     }
     Enums: {
       appointment_status:

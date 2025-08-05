@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar, CheckCircle, Loader2 } from "lucide-react";
 import { useGoogleCalendar } from "@/hooks/useGoogleCalendar";
 import ServicesSection from "@/components/ServicesSection";
+import ProjectStatusesSection from "@/components/ProjectStatusesSection";
 import GlobalSearch from "@/components/GlobalSearch";
 
 const Settings = () => {
@@ -80,6 +81,9 @@ const Settings = () => {
 
         {/* Services Management Section */}
         <ServicesSection />
+
+        {/* Project Statuses Management Section */}
+        <ProjectStatusesSection />
 
         {/* Future Settings Placeholder */}
         <div className="pt-16">

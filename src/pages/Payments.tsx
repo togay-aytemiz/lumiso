@@ -4,11 +4,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DataTable, type Column } from "@/components/ui/data-table";
+import { Input } from "@/components/ui/input";
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from "@/components/ui/table";
 import { DateRangePicker } from "@/components/DateRangePicker";
 import { ViewProjectDialog } from "@/components/ViewProjectDialog";
 import { toast } from "@/hooks/use-toast";
-import { DollarSign, TrendingUp, AlertCircle } from "lucide-react";
+import { ArrowUpDown, ArrowUp, ArrowDown, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { format, subDays, subMonths, startOfMonth, startOfQuarter, startOfYear } from "date-fns";
 import type { DateRange } from "react-day-picker";
@@ -48,6 +56,8 @@ interface PaymentMetrics {
   remainingBalance: number;
 }
 
+type SortField = 'date_paid' | 'amount' | 'project_name' | 'lead_name' | 'description' | 'status' | 'type';
+type SortDirection = 'asc' | 'desc';
 type DateFilterType = 'last7days' | 'last4weeks' | 'last3months' | 'last12months' | 'monthToDate' | 'quarterToDate' | 'yearToDate' | 'lastMonth' | 'allTime' | 'custom';
 
 const Payments = () => {
@@ -55,6 +65,9 @@ const Payments = () => {
   const [loading, setLoading] = useState(true);
   const [selectedFilter, setSelectedFilter] = useState<DateFilterType>('allTime');
   const [customDateRange, setCustomDateRange] = useState<DateRange | undefined>();
+  const [labelFilter, setLabelFilter] = useState<string>("");
+  const [sortField, setSortField] = useState<SortField>("date_paid");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [viewingProject, setViewingProject] = useState<any>(null);
   const [showProjectDialog, setShowProjectDialog] = useState(false);
   const navigate = useNavigate();
@@ -153,7 +166,7 @@ const Payments = () => {
     }
   };
 
-  const filteredPayments = useMemo(() => {
+  const filteredAndSortedPayments = useMemo(() => {
     let filtered = payments;
 
     // Apply date filter
@@ -163,24 +176,96 @@ const Payments = () => {
         filtered = filtered.filter(payment => {
           const paymentDate = new Date(payment.date_paid || payment.created_at);
           return paymentDate >= dateRange.start && paymentDate <= dateRange.end;
-      });
+        });
       }
     }
 
+    // Apply label filter
+    if (labelFilter.trim()) {
+      filtered = filtered.filter(payment => {
+        const label = payment.description || 'Payment';
+        return label.toLowerCase().includes(labelFilter.toLowerCase());
+      });
+    }
+
+    // Apply sorting
+    filtered.sort((a, b) => {
+      let aValue: any;
+      let bValue: any;
+
+      switch (sortField) {
+        case 'date_paid':
+          aValue = new Date(a.date_paid || a.created_at).getTime();
+          bValue = new Date(b.date_paid || b.created_at).getTime();
+          break;
+        case 'amount':
+          aValue = Number(a.amount);
+          bValue = Number(b.amount);
+          break;
+        case 'project_name':
+          aValue = a.projects?.name?.toLowerCase() || '';
+          bValue = b.projects?.name?.toLowerCase() || '';
+          break;
+        case 'lead_name':
+          aValue = a.projects?.leads?.name?.toLowerCase() || '';
+          bValue = b.projects?.leads?.name?.toLowerCase() || '';
+          break;
+        case 'description':
+          aValue = (a.description || 'Payment').toLowerCase();
+          bValue = (b.description || 'Payment').toLowerCase();
+          break;
+        case 'status':
+          aValue = a.status.toLowerCase();
+          bValue = b.status.toLowerCase();
+          break;
+        case 'type':
+          aValue = a.type.toLowerCase();
+          bValue = b.type.toLowerCase();
+          break;
+        default:
+          aValue = a[sortField];
+          bValue = b[sortField];
+      }
+
+      // Handle string values
+      if (typeof aValue === 'string' && typeof bValue === 'string') {
+        aValue = aValue.toLowerCase();
+        bValue = bValue.toLowerCase();
+      }
+
+      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+
     return filtered;
-  }, [payments, selectedFilter, customDateRange]);
+  }, [payments, selectedFilter, customDateRange, labelFilter, sortField, sortDirection]);
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  const getSortIcon = (field: SortField) => {
+    if (sortField !== field) return <ArrowUpDown className="h-4 w-4" />;
+    return sortDirection === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />;
+  };
 
   const metrics = useMemo((): PaymentMetrics => {
-    const totalPaid = filteredPayments
+    const totalPaid = filteredAndSortedPayments
       .filter(p => p.status === 'paid')
       .reduce((sum, p) => sum + Number(p.amount), 0);
 
-    const extraServices = filteredPayments
+    const extraServices = filteredAndSortedPayments
       .filter(p => p.type === 'extra' && p.status === 'paid')
       .reduce((sum, p) => sum + Number(p.amount), 0);
 
     // Calculate remaining balance based on base prices and unpaid amounts
-    const totalBaseAndExtras = filteredPayments
+    const totalBaseAndExtras = filteredAndSortedPayments
       .reduce((sum, p) => sum + Number(p.amount), 0);
     
     const remainingBalance = totalBaseAndExtras - totalPaid;
@@ -190,7 +275,7 @@ const Payments = () => {
       extraServices,
       remainingBalance
     };
-  }, [filteredPayments]);
+  }, [filteredAndSortedPayments]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('tr-TR', {
@@ -199,107 +284,6 @@ const Payments = () => {
       minimumFractionDigits: 0,
     }).format(amount);
   };
-
-  const columns: Column<Payment>[] = [
-    {
-      key: 'date_paid',
-      header: 'Date',
-      sortable: true,
-      filterable: false,
-      render: (payment) => formatDate(payment.date_paid || payment.created_at)
-    },
-    {
-      key: 'amount',
-      header: 'Amount',
-      sortable: true,
-      filterable: false,
-      render: (payment) => (
-        <span className="font-medium">{formatCurrency(Number(payment.amount))}</span>
-      )
-    },
-    {
-      key: 'projects.name',
-      header: 'Project',
-      sortable: true,
-      filterable: true,
-      accessor: (payment) => payment.projects?.name,
-      render: (payment) => (
-        payment.projects ? (
-          <Button
-            variant="link"
-            className="p-0 h-auto font-normal text-primary"
-            onClick={(e) => {
-              e.stopPropagation();
-              if (payment.projects) {
-                setViewingProject(payment.projects);
-                setShowProjectDialog(true);
-              }
-            }}
-          >
-            {payment.projects.name}
-          </Button>
-        ) : (
-          <span className="text-muted-foreground">-</span>
-        )
-      )
-    },
-    {
-      key: 'projects.leads.name',
-      header: 'Lead',
-      sortable: true,
-      filterable: true,
-      accessor: (payment) => payment.projects?.leads?.name,
-      render: (payment) => (
-        payment.projects?.leads ? (
-          <Button
-            variant="link"
-            className="p-0 h-auto font-normal text-primary"
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate(`/leads/${payment.projects?.leads?.id}`);
-            }}
-          >
-            {payment.projects.leads.name}
-          </Button>
-        ) : (
-          <span className="text-muted-foreground">-</span>
-        )
-      )
-    },
-    {
-      key: 'description',
-      header: 'Label',
-      sortable: true,
-      filterable: false,
-      render: (payment) => payment.description || 'Payment'
-    },
-    {
-      key: 'status',
-      header: 'Status',
-      sortable: true,
-      filterable: false,
-      render: (payment) => (
-        <Badge 
-          variant={payment.status === 'paid' ? 'default' : 'secondary'}
-          className={payment.status === 'paid' ? 'bg-green-100 text-green-800 hover:bg-green-100' : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100'}
-        >
-          {payment.status === 'paid' ? 'Paid' : 'Due'}
-        </Badge>
-      )
-    },
-    {
-      key: 'type',
-      header: 'Type',
-      sortable: true,
-      filterable: true,
-      render: (payment) => (
-        <Badge variant="outline">
-          {payment.type === 'base_price' ? 'Base' : 
-           payment.type === 'extra' ? 'Extra' : 'Manual'}
-        </Badge>
-      )
-    }
-  ];
 
   if (loading) {
     return (
@@ -345,6 +329,7 @@ const Payments = () => {
               <SelectItem value="last12months">Last 12 months</SelectItem>
               <SelectItem value="monthToDate">Month to date</SelectItem>
               <SelectItem value="quarterToDate">Quarter to date</SelectItem>
+              <SelectItem value="yearToDate">Year to date</SelectItem>
               <SelectItem value="lastMonth">Last month</SelectItem>
               <SelectItem value="allTime">All time</SelectItem>
               <SelectItem value="custom">Custom range</SelectItem>
@@ -394,19 +379,167 @@ const Payments = () => {
 
       {/* Payments Table */}
       <Card>
-        <CardContent className="p-6">
-          <DataTable
-            data={filteredPayments}
-            columns={columns}
-            itemsPerPage={20}
-            emptyState={
-              <div className="text-center py-12">
-                <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-medium mb-2">No payments found</h3>
-                <p className="text-muted-foreground">No payments found for selected period.</p>
+        <CardHeader>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">Filter by label:</span>
+                <Input
+                  placeholder="Filter by label..."
+                  value={labelFilter}
+                  onChange={(e) => setLabelFilter(e.target.value)}
+                  className="w-48"
+                />
               </div>
-            }
-          />
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead 
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => handleSort('date_paid')}
+                >
+                  <div className="flex items-center gap-2">
+                    Date
+                    {getSortIcon('date_paid')}
+                  </div>
+                </TableHead>
+                <TableHead 
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => handleSort('amount')}
+                >
+                  <div className="flex items-center gap-2">
+                    Amount
+                    {getSortIcon('amount')}
+                  </div>
+                </TableHead>
+                <TableHead 
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => handleSort('project_name')}
+                >
+                  <div className="flex items-center gap-2">
+                    Project
+                    {getSortIcon('project_name')}
+                  </div>
+                </TableHead>
+                <TableHead 
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => handleSort('lead_name')}
+                >
+                  <div className="flex items-center gap-2">
+                    Lead
+                    {getSortIcon('lead_name')}
+                  </div>
+                </TableHead>
+                <TableHead 
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => handleSort('description')}
+                >
+                  <div className="flex items-center gap-2">
+                    Label
+                    {getSortIcon('description')}
+                  </div>
+                </TableHead>
+                <TableHead 
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => handleSort('status')}
+                >
+                  <div className="flex items-center gap-2">
+                    Status
+                    {getSortIcon('status')}
+                  </div>
+                </TableHead>
+                <TableHead 
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => handleSort('type')}
+                >
+                  <div className="flex items-center gap-2">
+                    Type
+                    {getSortIcon('type')}
+                  </div>
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredAndSortedPayments.length > 0 ? (
+                filteredAndSortedPayments.map((payment, index) => (
+                  <TableRow 
+                    key={payment.id}
+                    className={`cursor-pointer hover:bg-muted/50 ${index % 2 === 0 ? "" : "bg-muted/30"}`}
+                  >
+                    <TableCell>
+                      {formatDate(payment.date_paid || payment.created_at)}
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      {formatCurrency(Number(payment.amount))}
+                    </TableCell>
+                    <TableCell>
+                      {payment.projects ? (
+                        <Button
+                          variant="link"
+                          className="p-0 h-auto font-normal text-primary"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setViewingProject(payment.projects);
+                            setShowProjectDialog(true);
+                          }}
+                        >
+                          {payment.projects.name}
+                        </Button>
+                      ) : (
+                        <span className="text-muted-foreground">-</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {payment.projects?.leads ? (
+                        <Button
+                          variant="link"
+                          className="p-0 h-auto font-normal text-primary"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/leads/${payment.projects?.leads?.id}`);
+                          }}
+                        >
+                          {payment.projects.leads.name}
+                        </Button>
+                      ) : (
+                        <span className="text-muted-foreground">-</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {payment.description || 'Payment'}
+                    </TableCell>
+                    <TableCell>
+                      <Badge 
+                        variant={payment.status === 'paid' ? 'default' : 'secondary'}
+                        className={payment.status === 'paid' ? 'bg-green-100 text-green-800 hover:bg-green-100' : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100'}
+                      >
+                        {payment.status === 'paid' ? 'Paid' : 'Due'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline">
+                        {payment.type === 'base_price' ? 'Base' : 
+                         payment.type === 'extra' ? 'Extra' : 'Manual'}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                    {labelFilter 
+                      ? `No payments found with label containing "${labelFilter}".`
+                      : "No payments found for selected period."
+                    }
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
 

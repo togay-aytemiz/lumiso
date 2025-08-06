@@ -11,10 +11,12 @@ export function LeadPreferencesSection() {
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [systemStatuses, setSystemStatuses] = useState<any[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
     fetchSettings();
+    fetchSystemStatuses();
   }, []);
 
   const fetchSettings = async () => {
@@ -46,6 +48,30 @@ export function LeadPreferencesSection() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchSystemStatuses = async () => {
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) return;
+
+      const { data, error } = await supabase
+        .from('lead_statuses')
+        .select('name, is_system_final')
+        .eq('user_id', userData.user.id)
+        .eq('is_system_final', true)
+        .order('name');
+
+      if (error && error.code !== 'PGRST116') {
+        throw error;
+      }
+
+      if (data) {
+        setSystemStatuses(data);
+      }
+    } catch (error: any) {
+      console.error('Error fetching system statuses:', error);
     }
   };
 
@@ -114,7 +140,13 @@ export function LeadPreferencesSection() {
               Show quick status buttons on lead details
             </Label>
             <p className="text-sm text-muted-foreground">
-              Display "Mark as Completed" and "Mark as Lost" buttons on lead detail pages
+              {systemStatuses.length >= 2 ? (
+                `Display "Mark as ${systemStatuses[0]?.name}" and "Mark as ${systemStatuses[1]?.name}" buttons on lead detail pages and related dropdowns`
+              ) : systemStatuses.length === 1 ? (
+                `Display "Mark as ${systemStatuses[0]?.name}" button on lead detail pages and related dropdowns`
+              ) : (
+                "Display quick action buttons on lead detail pages and related dropdowns"
+              )}
             </p>
           </div>
           <Switch

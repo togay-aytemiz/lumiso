@@ -1,20 +1,22 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { AlertCircle, GripVertical, Plus, Trash2 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Plus, Trash2, Loader2, GripVertical } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { toast } from "sonner";
-import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 import SettingsSection from "./SettingsSection";
 
 const leadStatusSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  color: z.string().min(1, "Color is required"),
+  name: z.string().min(1, "Status name is required").max(50, "Status name must be less than 50 characters"),
+  color: z.string().regex(/^#[0-9A-F]{6}$/i, "Color must be a valid hex code"),
 });
 
 type LeadStatusForm = z.infer<typeof leadStatusSchema>;
@@ -23,11 +25,27 @@ interface LeadStatus {
   id: string;
   name: string;
   color: string;
-  sort_order: number;
-  is_default: boolean;
   created_at: string;
   updated_at: string;
+  sort_order: number;
+  is_default: boolean;
 }
+
+// Predefined color palette (same as project statuses)
+const PREDEFINED_COLORS = [
+  '#F56565', // Red
+  '#ED8936', // Orange  
+  '#ECC94B', // Yellow
+  '#9AE6B4', // Light Green
+  '#48BB78', // Green
+  '#38B2AC', // Teal
+  '#63B3ED', // Light Blue
+  '#4299E1', // Blue
+  '#667EEA', // Indigo
+  '#9F7AEA', // Purple
+  '#ED64A6', // Pink
+  '#A0AEC0', // Gray
+];
 
 const LeadStatusesSection = () => {
   const [statuses, setStatuses] = useState<LeadStatus[]>([]);
@@ -36,43 +54,41 @@ const LeadStatusesSection = () => {
   const [editingStatus, setEditingStatus] = useState<LeadStatus | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [selectedColor, setSelectedColor] = useState<string>(PREDEFINED_COLORS[0]);
 
-  const {
-    register,
-    handleSubmit,
-    reset,
-    setValue,
-    watch,
-    formState: { errors },
-  } = useForm<LeadStatusForm>({
+  const { toast } = useToast();
+
+  const form = useForm<LeadStatusForm>({
     resolver: zodResolver(leadStatusSchema),
     defaultValues: {
       name: "",
-      color: "#6b7280",
+      color: PREDEFINED_COLORS[0],
     },
   });
 
-  const watchedColor = watch("color");
-
   const fetchStatuses = async () => {
     try {
-      const { data: user } = await supabase.auth.getUser();
-      if (!user.user) return;
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
 
       const { data: existingStatuses } = await supabase
         .from("lead_statuses")
         .select("*")
-        .eq("user_id", user.user.id)
+        .eq("user_id", user.id)
         .order("sort_order");
 
       if (existingStatuses && existingStatuses.length > 0) {
         setStatuses(existingStatuses);
       } else {
-        await createDefaultStatuses(user.user.id);
+        await createDefaultStatuses(user.id);
       }
     } catch (error) {
       console.error("Error fetching lead statuses:", error);
-      toast.error("Failed to load lead statuses");
+      toast({
+        title: "Error",
+        description: "Failed to load lead statuses",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -80,11 +96,11 @@ const LeadStatusesSection = () => {
 
   const createDefaultStatuses = async (userId: string) => {
     const defaultStatuses = [
-      { name: "New", color: "#6b7280", sort_order: 1, is_default: true },
-      { name: "Contacted", color: "#3b82f6", sort_order: 2, is_default: false },
-      { name: "Qualified", color: "#10b981", sort_order: 3, is_default: false },
-      { name: "Booked", color: "#8b5cf6", sort_order: 4, is_default: false },
-      { name: "Not Interested", color: "#ef4444", sort_order: 5, is_default: false },
+      { name: "New", color: "#A0AEC0", sort_order: 1, is_default: true },
+      { name: "Contacted", color: "#4299E1", sort_order: 2, is_default: false },
+      { name: "Qualified", color: "#48BB78", sort_order: 3, is_default: false },
+      { name: "Booked", color: "#9F7AEA", sort_order: 4, is_default: false },
+      { name: "Not Interested", color: "#F56565", sort_order: 5, is_default: false },
     ];
 
     try {
@@ -102,15 +118,19 @@ const LeadStatusesSection = () => {
       if (data) setStatuses(data);
     } catch (error) {
       console.error("Error creating default statuses:", error);
-      toast.error("Failed to create default lead statuses");
+      toast({
+        title: "Error",
+        description: "Failed to create default lead statuses",
+        variant: "destructive",
+      });
     }
   };
 
   const onSubmit = async (data: LeadStatusForm) => {
     setSubmitting(true);
     try {
-      const { data: user } = await supabase.auth.getUser();
-      if (!user.user) throw new Error("Not authenticated");
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
 
       // Check for duplicate names (case-insensitive)
       const existingStatus = statuses.find(
@@ -120,7 +140,11 @@ const LeadStatusesSection = () => {
       );
 
       if (existingStatus) {
-        toast.error("A status with this name already exists");
+        toast({
+          title: "Error",
+          description: "A status with this name already exists",
+          variant: "destructive",
+        });
         setSubmitting(false);
         return;
       }
@@ -134,49 +158,48 @@ const LeadStatusesSection = () => {
             color: data.color,
           })
           .eq("id", editingStatus.id)
-          .eq("user_id", user.user.id);
+          .eq("user_id", user.id);
 
         if (error) throw error;
 
-        setStatuses(prev =>
-          prev.map(status =>
-            status.id === editingStatus.id
-              ? { ...status, name: data.name, color: data.color }
-              : status
-          )
-        );
-
-        toast.success("Status updated successfully");
+        toast({
+          title: "Success",
+          description: "Status updated successfully",
+        });
         setIsEditDialogOpen(false);
       } else {
         // Create new status
         const maxSortOrder = Math.max(...statuses.map(s => s.sort_order), 0);
         
-        const { data: newStatus, error } = await supabase
+        const { error } = await supabase
           .from("lead_statuses")
           .insert({
             name: data.name,
             color: data.color,
-            user_id: user.user.id,
+            user_id: user.id,
             sort_order: maxSortOrder + 1,
             is_default: false,
-          })
-          .select()
-          .single();
+          });
 
         if (error) throw error;
-        if (newStatus) {
-          setStatuses(prev => [...prev, newStatus]);
-          toast.success("Status created successfully");
-        }
+
+        toast({
+          title: "Success",
+          description: "Status created successfully",
+        });
         setIsAddDialogOpen(false);
       }
 
-      reset();
+      fetchStatuses();
+      form.reset({ name: "", color: PREDEFINED_COLORS[0] });
       setEditingStatus(null);
     } catch (error) {
       console.error("Error saving status:", error);
-      toast.error("Failed to save status");
+      toast({
+        title: "Error",
+        description: "Failed to save status",
+        variant: "destructive",
+      });
     } finally {
       setSubmitting(false);
     }
@@ -184,179 +207,229 @@ const LeadStatusesSection = () => {
 
   const handleEdit = (status: LeadStatus) => {
     setEditingStatus(status);
-    setValue("name", status.name);
-    setValue("color", status.color);
+    setSelectedColor(status.color);
+    form.reset({ name: status.name, color: status.color });
     setIsEditDialogOpen(true);
   };
 
   const handleAdd = () => {
     setEditingStatus(null);
-    reset({ name: "", color: "#6b7280" });
+    form.reset({ name: "", color: PREDEFINED_COLORS[0] });
+    setSelectedColor(PREDEFINED_COLORS[0]);
     setIsAddDialogOpen(true);
   };
 
   const handleDelete = async (statusId: string) => {
     try {
-      const statusToDelete = statuses.find(s => s.id === statusId);
-      
-      // Prevent deletion of the "New" status
-      if (statusToDelete?.name.toLowerCase() === "new") {
-        toast.error("The 'New' status cannot be deleted as it's required for new leads");
-        return;
-      }
-
-      const { data: user } = await supabase.auth.getUser();
-      if (!user.user) throw new Error("Not authenticated");
-
-      // Check if any leads are using this status
-      const { data: leadsWithStatus } = await supabase
-        .from("leads")
-        .select("id")
-        .eq("status_id", statusId)
-        .eq("user_id", user.user.id);
-
-      if (leadsWithStatus && leadsWithStatus.length > 0) {
-        toast.error(`Cannot delete status. ${leadsWithStatus.length} lead(s) are using this status.`);
-        return;
-      }
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
 
       const { error } = await supabase
-        .from("lead_statuses")
+        .from('lead_statuses')
         .delete()
-        .eq("id", statusId)
-        .eq("user_id", user.user.id);
+        .eq('id', statusId)
+        .eq('user_id', user.id);
 
-      if (error) throw error;
+      if (error) {
+        if (error.code === '23503') { // Foreign key constraint violation
+          throw new Error('Cannot delete this status because it is being used by existing leads. Please change those leads to a different status first.');
+        }
+        throw error;
+      }
 
-      setStatuses(prev => prev.filter(status => status.id !== statusId));
-      toast.success("Status deleted successfully");
-      setIsEditDialogOpen(false);
+      toast({
+        title: "Success",
+        description: "Lead status deleted successfully",
+      });
+      fetchStatuses();
     } catch (error) {
-      console.error("Error deleting status:", error);
-      toast.error("Failed to delete status");
+      console.error('Error deleting lead status:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to delete lead status",
+        variant: "destructive",
+      });
     }
   };
 
-  const handleDragEnd = async (result: DropResult) => {
+  const handleDragEnd = async (result: any) => {
     if (!result.destination) return;
 
     const items = Array.from(statuses);
     const [reorderedItem] = items.splice(result.source.index, 1);
     items.splice(result.destination.index, 0, reorderedItem);
 
-    // Update sort_order based on new positions
-    const updatedItems = items.map((item, index) => ({
-      ...item,
-      sort_order: index + 1,
-    }));
-
-    setStatuses(updatedItems);
+    // Update local state immediately for responsive UI
+    setStatuses(items);
 
     try {
-      const { data: user } = await supabase.auth.getUser();
-      if (!user.user) throw new Error("Not authenticated");
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
 
-      // Update sort_order in database
-      const updates = updatedItems.map(item => ({
-        id: item.id,
-        sort_order: item.sort_order,
+      // Update sort_order for all items
+      const updates = items.map((status, index) => ({
+        id: status.id,
+        sort_order: index + 1,
       }));
 
+      // Execute all updates
       for (const update of updates) {
-        await supabase
-          .from("lead_statuses")
+        const { error } = await supabase
+          .from('lead_statuses')
           .update({ sort_order: update.sort_order })
-          .eq("id", update.id)
-          .eq("user_id", user.user.id);
+          .eq('id', update.id)
+          .eq('user_id', user.id);
+
+        if (error) throw error;
       }
 
-      toast.success("Status order updated");
+      toast({
+        title: "Success",
+        description: "Status order updated successfully",
+      });
     } catch (error) {
-      console.error("Error updating status order:", error);
-      toast.error("Failed to update status order");
-      fetchStatuses(); // Revert on error
+      console.error('Error updating status order:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update status order",
+        variant: "destructive",
+      });
+      // Revert to original order on error
+      fetchStatuses();
     }
   };
 
-  const renderStatusDialog = () => (
+  const renderColorSwatches = (onColorSelect: (color: string) => void) => (
+    <div className="grid grid-cols-6 gap-2">
+      {PREDEFINED_COLORS.map((color) => (
+        <button
+          key={color}
+          type="button"
+          className={cn(
+            "w-8 h-8 rounded-full border-2 transition-all hover:scale-110",
+            selectedColor === color ? "border-foreground ring-2 ring-offset-2 ring-foreground" : "border-muted"
+          )}
+          style={{ backgroundColor: color }}
+          onClick={() => {
+            setSelectedColor(color);
+            onColorSelect(color);
+          }}
+          title={color}
+        />
+      ))}
+    </div>
+  );
+
+  const renderStatusDialog = (isEdit: boolean) => (
     <DialogContent className="sm:max-w-md">
       <DialogHeader>
-        <DialogTitle>
-          {editingStatus ? "Edit Status" : "Add Status"}
+        <DialogTitle className="text-lg font-medium">
+          {isEdit ? 'EDIT STATUS' : 'ADD STATUS'}
         </DialogTitle>
       </DialogHeader>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="name">Status Name</Label>
-          <Input
-            id="name"
-            {...register("name")}
-            placeholder="Enter status name"
-          />
-          {errors.name && (
-            <p className="text-sm text-destructive">{errors.name.message}</p>
-          )}
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="color">Color</Label>
-          <div className="flex items-center space-x-2">
-            <Input
-              id="color"
-              type="color"
-              {...register("color")}
-              className="w-16 h-10 p-1 border rounded"
-            />
-            <div
-              className="w-10 h-10 rounded border flex-shrink-0"
-              style={{ backgroundColor: watchedColor }}
-            />
-            <Input
-              type="text"
-              {...register("color")}
-              placeholder="#000000"
-              className="flex-1"
-            />
-          </div>
-          {errors.color && (
-            <p className="text-sm text-destructive">{errors.color.message}</p>
-          )}
-        </div>
-
-        <div className="flex items-center justify-between pt-4">
-          <div>
-            {editingStatus && editingStatus.name.toLowerCase() !== "new" && (
-              <Button
-                type="button"
-                variant="destructive"
-                size="sm"
-                onClick={() => handleDelete(editingStatus.id)}
-                className="flex items-center gap-2"
-              >
-                <Trash2 className="w-4 h-4" />
-                Delete
-              </Button>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-sm font-medium">Name</FormLabel>
+                <FormControl>
+                  <Input 
+                    placeholder={isEdit ? "" : "e.g. Qualified, Proposal Sent, Won"} 
+                    {...field} 
+                    className="mt-1"
+                  />
+                </FormControl>
+                <FormMessage />
+                {!isEdit && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Organise your lead workflow in statuses.
+                  </p>
+                )}
+              </FormItem>
             )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="color"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-sm font-medium">Status Color</FormLabel>
+                <FormControl>
+                  <div className="mt-2">
+                    {renderColorSwatches(field.onChange)}
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <div className="flex justify-between items-center pt-4">
+            {isEdit && editingStatus && editingStatus.name.toLowerCase() !== 'new' && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button type="button" variant="destructive">
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete Lead Status</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to delete "{editingStatus?.name}"? This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => {
+                        if (editingStatus) {
+                          handleDelete(editingStatus.id);
+                          setIsEditDialogOpen(false);
+                        }
+                      }}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+            
+            {isEdit && editingStatus && editingStatus.name.toLowerCase() === 'new' && (
+              <p className="text-sm text-muted-foreground">
+                The "New" status cannot be deleted as it's the default status for new leads.
+              </p>
+            )}
+            
+            <div className="flex gap-2 ml-auto">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => isEdit ? setIsEditDialogOpen(false) : setIsAddDialogOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={submitting}>
+                {submitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    {isEdit ? 'Saving...' : 'Adding...'}
+                  </>
+                ) : (
+                  isEdit ? 'Save' : 'Add'
+                )}
+              </Button>
+            </div>
           </div>
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                setIsAddDialogOpen(false);
-                setIsEditDialogOpen(false);
-                reset();
-                setEditingStatus(null);
-              }}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={submitting}>
-              {submitting ? "Saving..." : "Save"}
-            </Button>
-          </div>
-        </div>
-      </form>
+        </form>
+      </Form>
     </DialogContent>
   );
 
@@ -366,50 +439,46 @@ const LeadStatusesSection = () => {
 
   if (loading) {
     return (
-      <SettingsSection
-        title="Lead Statuses"
+      <SettingsSection 
+        title="Lead Statuses" 
         description="Add, rename and reorder statuses to customize your lead workflow."
       >
-        <div className="flex items-center justify-center p-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="h-8 w-8 animate-spin" />
         </div>
       </SettingsSection>
     );
   }
 
   return (
-    <SettingsSection
-      title="Lead Statuses"
-      description="Add, rename and reorder statuses to customize your lead workflow."
-      action={{
-        label: "Add Status",
-        onClick: handleAdd,
-        icon: <Plus className="w-4 h-4" />,
-      }}
-    >
-      <div className="space-y-4">
-        <div className="bg-muted/50 border border-border rounded-lg p-4">
-          <div className="flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-muted-foreground mt-0.5 flex-shrink-0" />
-            <div className="space-y-2 text-sm text-muted-foreground">
-              <p>
-                <strong>Lead statuses</strong> help you track progress through your sales pipeline.
-              </p>
-              <p>
-                You can <strong>drag and drop</strong> to reorder statuses, and click any status to edit it.
-                The "New" status is required and cannot be deleted.
-              </p>
-            </div>
-          </div>
+    <>
+      <SettingsSection 
+        title="Lead Statuses" 
+        description="Add, rename and reorder statuses to customize your lead workflow."
+        action={{
+          label: "Add Status",
+          onClick: handleAdd,
+          icon: <Plus className="h-4 w-4" />
+        }}
+      >
+        <div className="mb-4 p-3 bg-muted/30 rounded-lg border border-dashed border-muted-foreground/20">
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            <strong>Drag to reorder:</strong> Use the grip handle (⋮⋮) to drag statuses and change their order. 
+            <strong>Click to edit:</strong> Click on any status to rename it or change its color. 
+            The status order will be consistent across all lead views.
+          </p>
         </div>
 
         <DragDropContext onDragEnd={handleDragEnd}>
-          <Droppable droppableId="lead-statuses">
-            {(provided) => (
+          <Droppable droppableId="statuses" direction="horizontal">
+            {(provided, snapshot) => (
               <div
                 {...provided.droppableProps}
                 ref={provided.innerRef}
-                className="space-y-2"
+                className={cn(
+                  "flex flex-wrap gap-3 min-h-[48px] transition-colors rounded-lg p-2",
+                  snapshot.isDraggingOver && "bg-accent/20"
+                )}
               >
                 {statuses.map((status, index) => (
                   <Draggable key={status.id} draggableId={status.id} index={index}>
@@ -417,26 +486,38 @@ const LeadStatusesSection = () => {
                       <div
                         ref={provided.innerRef}
                         {...provided.draggableProps}
-                        className={`flex items-center gap-3 p-3 bg-background border rounded-lg transition-shadow ${
-                          snapshot.isDragging ? "shadow-lg" : "hover:shadow-sm"
-                        }`}
+                        className={cn(
+                          "inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all select-none",
+                          snapshot.isDragging ? "opacity-80 shadow-xl scale-105 z-50" : "hover:opacity-80 cursor-pointer",
+                          !snapshot.isDragging && "hover:scale-[1.02]"
+                        )}
+                        style={{ 
+                          backgroundColor: status.color + '20',
+                          color: status.color,
+                          border: `1px solid ${status.color}40`,
+                          ...provided.draggableProps.style
+                        }}
                       >
-                        <div
+                        <div 
                           {...provided.dragHandleProps}
-                          className="text-muted-foreground hover:text-foreground cursor-grab active:cursor-grabbing"
+                          className="flex items-center cursor-grab active:cursor-grabbing hover:opacity-70 transition-opacity"
+                          onClick={(e) => e.stopPropagation()}
                         >
-                          <GripVertical className="w-4 h-4" />
+                          <GripVertical className="w-3 h-3 text-current opacity-60" />
                         </div>
-                        <button
-                          onClick={() => handleEdit(status)}
-                          className="flex items-center gap-2 flex-1 text-left hover:bg-accent/50 rounded px-2 py-1 transition-colors"
+                        <div 
+                          className="w-2 h-2 rounded-full flex-shrink-0" 
+                          style={{ backgroundColor: status.color }}
+                        />
+                        <span 
+                          className="uppercase tracking-wide font-semibold cursor-pointer"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEdit(status);
+                          }}
                         >
-                          <div
-                            className="w-3 h-3 rounded-full flex-shrink-0"
-                            style={{ backgroundColor: status.color }}
-                          />
-                          <span className="text-sm font-medium">{status.name}</span>
-                        </button>
+                          {status.name}
+                        </span>
                       </div>
                     )}
                   </Draggable>
@@ -446,22 +527,30 @@ const LeadStatusesSection = () => {
             )}
           </Droppable>
         </DragDropContext>
-      </div>
 
-      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogTrigger asChild>
-          <div style={{ display: "none" }} />
-        </DialogTrigger>
-        {renderStatusDialog()}
-      </Dialog>
+        {/* Add Dialog */}
+        <Dialog open={isAddDialogOpen} onOpenChange={(open) => {
+          setIsAddDialogOpen(open);
+          if (!open) {
+            form.reset({ name: "", color: PREDEFINED_COLORS[0] });
+            setEditingStatus(null);
+          }
+        }}>
+          {renderStatusDialog(false)}
+        </Dialog>
 
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogTrigger asChild>
-          <div style={{ display: "none" }} />
-        </DialogTrigger>
-        {renderStatusDialog()}
-      </Dialog>
-    </SettingsSection>
+        {/* Edit Dialog */}
+        <Dialog open={isEditDialogOpen} onOpenChange={(open) => {
+          setIsEditDialogOpen(open);
+          if (!open) {
+            form.reset({ name: "", color: PREDEFINED_COLORS[0] });
+            setEditingStatus(null);
+          }
+        }}>
+          {renderStatusDialog(true)}
+        </Dialog>
+      </SettingsSection>
+    </>
   );
 };
 

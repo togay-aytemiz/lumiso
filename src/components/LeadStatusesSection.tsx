@@ -668,9 +668,6 @@ const LeadStatusesSection = () => {
           {settings.show_quick_status_buttons && (
             <div className="space-y-3">
               <h4 className="text-sm font-medium">System Statuses</h4>
-              <p className="text-sm text-muted-foreground">
-                {dynamicDescription}
-              </p>
               
               <div className="flex flex-wrap gap-3">
                 {systemStatuses.map((status) => (

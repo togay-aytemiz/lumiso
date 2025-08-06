@@ -69,6 +69,12 @@ const LeadDetail = () => {
       setActivityRefreshKey(prev => prev + 1);
     }
   });
+
+  // Get system status labels for buttons
+  const completedStatus = leadStatuses.find(s => s.is_system_final && s.name.toLowerCase().includes('completed')) || 
+                          leadStatuses.find(s => s.name === 'Completed');
+  const lostStatus = leadStatuses.find(s => s.is_system_final && s.name.toLowerCase().includes('lost')) || 
+                     leadStatuses.find(s => s.name === 'Lost');
   
   // Form state
   const [formData, setFormData] = useState({
@@ -346,13 +352,13 @@ const LeadDetail = () => {
   };
 
   const handleMarkAsCompleted = () => {
-    if (!lead) return;
-    markAsCompleted(lead.status);
+    if (!lead || !completedStatus) return;
+    markAsCompleted(lead.status, completedStatus.name);
   };
 
   const handleMarkAsLost = () => {
-    if (!lead) return;
-    markAsLost(lead.status);
+    if (!lead || !lostStatus) return;
+    markAsLost(lead.status, lostStatus.name);
   };
 
   const handleInputChange = (field: keyof typeof formData, value: string) => {
@@ -415,7 +421,7 @@ const LeadDetail = () => {
                 disabledTooltip="A planned session already exists."
               />
 
-              {!settingsLoading && userSettings.show_quick_status_buttons && formData.status !== "Completed" && (
+              {!settingsLoading && userSettings.show_quick_status_buttons && completedStatus && formData.status !== completedStatus.name && (
                 <Button 
                   onClick={handleMarkAsCompleted}
                   disabled={isUpdating}
@@ -423,11 +429,11 @@ const LeadDetail = () => {
                   size="sm"
                 >
                   <CheckCircle className="h-4 w-4 mr-2" />
-                  {isUpdating ? "Updating..." : "Mark as Completed"}
+                  {isUpdating ? "Updating..." : `Mark as ${completedStatus.name}`}
                 </Button>
               )}
 
-              {!settingsLoading && userSettings.show_quick_status_buttons && formData.status !== "Lost" && (
+              {!settingsLoading && userSettings.show_quick_status_buttons && lostStatus && formData.status !== lostStatus.name && (
                 <Button 
                   onClick={handleMarkAsLost}
                   disabled={isUpdating}
@@ -435,7 +441,7 @@ const LeadDetail = () => {
                   size="sm"
                   className="h-10"
                 >
-                  {isUpdating ? "Updating..." : "Mark as Lost"}
+                  {isUpdating ? "Updating..." : `Mark as ${lostStatus.name}`}
                 </Button>
               )}
             </div>

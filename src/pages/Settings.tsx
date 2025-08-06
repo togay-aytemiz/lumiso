@@ -82,20 +82,20 @@ const Settings = () => {
           </CardContent>
         </Card>
 
-        {/* Services Management Section */}
-        <ServicesSection />
-
-        {/* Project Statuses Management Section */}
-        <ProjectStatusesSection />
-
         {/* Lead Statuses Management Section */}
         <LeadStatusesSection />
 
         {/* Lead Preferences Section */}
         <LeadPreferencesSection />
 
+        {/* Project Statuses Management Section */}
+        <ProjectStatusesSection />
+
         {/* Project Types Management Section */}
         <ProjectTypesSection />
+
+        {/* Services Management Section */}
+        <ServicesSection />
 
         {/* Future Settings Placeholder */}
         <div className="pt-16">

@@ -60,6 +60,8 @@ export function LeadPreferencesSection() {
         .upsert({
           user_id: userData.user.id,
           [key]: value
+        }, {
+          onConflict: 'user_id'
         });
 
       if (error) throw error;

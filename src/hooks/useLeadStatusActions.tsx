@@ -83,11 +83,11 @@ export function useLeadStatusActions({ leadId, onStatusChange }: UseLeadStatusAc
     }
   };
 
-  const markAsCompleted = (previousStatus?: string) => 
-    updateLeadStatus('Completed', previousStatus);
+  const markAsCompleted = (previousStatus?: string, customCompletedLabel?: string) => 
+    updateLeadStatus(customCompletedLabel || 'Completed', previousStatus);
 
-  const markAsLost = (previousStatus?: string) => 
-    updateLeadStatus('Lost', previousStatus);
+  const markAsLost = (previousStatus?: string, customLostLabel?: string) => 
+    updateLeadStatus(customLostLabel || 'Lost', previousStatus);
 
   return {
     markAsCompleted,

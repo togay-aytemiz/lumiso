@@ -364,21 +364,35 @@ const LeadStatusesSection = () => {
             )}
           />
           
-          <FormField
-            control={form.control}
-            name="color"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-sm font-medium">Status Color</FormLabel>
-                <FormControl>
-                  <div className="mt-2">
-                    {renderColorSwatches(field.onChange)}
-                  </div>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          {/* Color picker - disabled for system statuses */}
+          {(!editingStatus || !editingStatus.is_system_final) && (
+            <FormField
+              control={form.control}
+              name="color"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm font-medium">Status Color</FormLabel>
+                  <FormControl>
+                    <div className="mt-2">
+                      {renderColorSwatches(field.onChange)}
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
+          
+          {editingStatus && editingStatus.is_system_final && (
+            <div className="space-y-2">
+              <FormLabel className="text-sm font-medium">Status Color</FormLabel>
+              <div className="p-3 bg-muted/50 rounded-lg border border-dashed">
+                <p className="text-sm text-muted-foreground">
+                  Color cannot be changed for system statuses. This ensures consistency with quick action buttons.
+                </p>
+              </div>
+            </div>
+          )}
           
           <div className="flex justify-between items-center pt-4">
             {isEdit && editingStatus && !editingStatus.is_system_final && editingStatus.name.toLowerCase() !== 'new' && (
@@ -484,6 +498,45 @@ const LeadStatusesSection = () => {
           </p>
         </div>
 
+        {/* System statuses section */}
+        <div className="mb-6">
+          <div className="mb-3 p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+            <h4 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-1">System Statuses</h4>
+            <p className="text-xs text-blue-700 dark:text-blue-300 leading-relaxed">
+              These statuses are managed by the <strong>Lead Preferences</strong> section and are used for quick actions.
+              You can rename them but not delete them or change their colors.
+            </p>
+          </div>
+          
+          <div className="flex flex-wrap gap-3">
+            {statuses.filter(status => status.is_system_final).map((status, index) => (
+              <div
+                key={status.id}
+                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium cursor-pointer hover:opacity-80 transition-all"
+                style={{ 
+                  backgroundColor: status.color + '20',
+                  color: status.color,
+                  border: `1px solid ${status.color}40`
+                }}
+                onClick={() => handleEdit(status)}
+              >
+                <div 
+                  className="w-2 h-2 rounded-full flex-shrink-0" 
+                  style={{ backgroundColor: status.color }}
+                />
+                <span className="uppercase tracking-wide font-semibold">
+                  {status.name}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* User-defined statuses section */}
+        <div className="mb-4">
+          <h4 className="text-sm font-medium mb-3">Custom Statuses</h4>
+        </div>
+
         <DragDropContext onDragEnd={handleDragEnd}>
           <Droppable droppableId="statuses" direction="horizontal">
             {(provided, snapshot) => (
@@ -495,7 +548,7 @@ const LeadStatusesSection = () => {
                   snapshot.isDraggingOver && "bg-accent/20"
                 )}
               >
-                {statuses.map((status, index) => (
+                {statuses.filter(status => !status.is_system_final).map((status, index) => (
                   <Draggable key={status.id} draggableId={status.id} index={index}>
                     {(provided, snapshot) => (
                       <div

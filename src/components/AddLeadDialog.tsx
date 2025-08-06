@@ -10,6 +10,7 @@ import { toast } from "@/hooks/use-toast";
 import { Plus } from "lucide-react";
 import { leadSchema, sanitizeInput, sanitizeHtml } from "@/lib/validation";
 import { ZodError } from "zod";
+import { useUserSettings } from "@/hooks/useUserSettings";
 
 interface AddLeadDialogProps {
   onLeadAdded: () => void;
@@ -20,6 +21,7 @@ const AddLeadDialog = ({ onLeadAdded }: AddLeadDialogProps) => {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [leadStatuses, setLeadStatuses] = useState<any[]>([]);
+  const { settings: userSettings } = useUserSettings();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -205,7 +207,9 @@ const AddLeadDialog = ({ onLeadAdded }: AddLeadDialogProps) => {
                 <SelectValue placeholder="Select status" />
               </SelectTrigger>
               <SelectContent>
-                {leadStatuses.map((status) => (
+                {leadStatuses
+                  .filter(status => userSettings.show_quick_status_buttons || !status.is_system_final)
+                  .map((status) => (
                   <SelectItem key={status.id} value={status.name}>
                     <div className="flex items-center gap-2">
                       <div 

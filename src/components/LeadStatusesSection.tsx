@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { Plus, Trash2, Loader2, GripVertical } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -56,6 +58,13 @@ const LeadStatusesSection = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedColor, setSelectedColor] = useState<string>(PREDEFINED_COLORS[0]);
+  
+  // User settings state
+  const [settings, setSettings] = useState({
+    show_quick_status_buttons: true
+  });
+  const [settingsLoading, setSettingsLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
   const { toast } = useToast();
 
@@ -98,6 +107,73 @@ const LeadStatusesSection = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchSettings = async () => {
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) return;
+
+      const { data, error } = await supabase
+        .from('user_settings')
+        .select('show_quick_status_buttons')
+        .eq('user_id', userData.user.id)
+        .maybeSingle();
+
+      if (error && error.code !== 'PGRST116') {
+        throw error;
+      }
+
+      if (data) {
+        setSettings({
+          show_quick_status_buttons: data.show_quick_status_buttons
+        });
+      }
+    } catch (error: any) {
+      console.error('Error fetching settings:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load preferences",
+        variant: "destructive"
+      });
+    } finally {
+      setSettingsLoading(false);
+    }
+  };
+
+  const updateSetting = async (key: keyof typeof settings, value: boolean) => {
+    setSaving(true);
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) throw new Error('User not authenticated');
+
+      const { error } = await supabase
+        .from('user_settings')
+        .upsert({
+          user_id: userData.user.id,
+          [key]: value
+        }, {
+          onConflict: 'user_id'
+        });
+
+      if (error) throw error;
+
+      setSettings(prev => ({ ...prev, [key]: value }));
+
+      toast({
+        title: "Success",
+        description: "Preferences updated"
+      });
+    } catch (error: any) {
+      console.error('Error updating setting:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update preferences",
+        variant: "destructive"
+      });
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -486,6 +562,7 @@ const LeadStatusesSection = () => {
 
   useEffect(() => {
     fetchStatuses();
+    fetchSettings();
   }, []);
 
   if (loading) {
@@ -501,122 +578,202 @@ const LeadStatusesSection = () => {
     );
   }
 
+  // Get system statuses for dynamic description
+  const systemStatuses = statuses.filter(status => status.is_system_final);
+  const systemStatusNames = systemStatuses.map(s => s.name).join(' and ');
+  const dynamicDescription = systemStatusNames 
+    ? `Used for quick actions like marking leads as ${systemStatusNames.toLowerCase()}.`
+    : "Used for quick actions like marking leads as completed or lost.";
+
+  // Filter out only non-system statuses for drag and drop
+  const customStatuses = statuses.filter(status => !status.is_system_final);
+
+  const handleCustomDragEnd = async (result: any) => {
+    if (!result.destination) return;
+
+    const items = Array.from(customStatuses);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+
+    // Update local state immediately for responsive UI - only reorder custom statuses
+    const newStatuses = [
+      ...systemStatuses,
+      ...items
+    ];
+    setStatuses(newStatuses);
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      // Update sort_order for custom statuses only
+      const updates = items.map((status, index) => ({
+        id: status.id,
+        sort_order: systemStatuses.length + index + 1, // Start after system statuses
+      }));
+
+      // Execute all updates
+      for (const update of updates) {
+        const { error } = await supabase
+          .from('lead_statuses')
+          .update({ sort_order: update.sort_order })
+          .eq('id', update.id)
+          .eq('user_id', user.id);
+
+        if (error) throw error;
+      }
+
+      toast({
+        title: "Success",
+        description: "Status order updated successfully",
+      });
+    } catch (error) {
+      console.error('Error updating status order:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update status order",
+        variant: "destructive",
+      });
+      // Revert to original order on error
+      fetchStatuses();
+    }
+  };
+
   return (
     <>
       <SettingsSection 
         title="Lead Statuses" 
-        description="Add, rename and reorder statuses to customize your lead workflow."
-        action={{
-          label: "Add Status",
-          onClick: handleAdd,
-          icon: <Plus className="h-4 w-4" />
-        }}
+        description="Configure your lead workflow and system status preferences."
       >
-        <div className="mb-4 p-3 bg-muted/30 rounded-lg border border-dashed border-muted-foreground/20">
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            <strong>Drag to reorder:</strong> Use the grip handle (⋮⋮) to drag statuses and change their order. 
-            <strong>Click to edit:</strong> Click on any status to rename it or change its color. 
-            The status order will be consistent across all lead views.
-          </p>
-        </div>
-
-        {/* System statuses section */}
-        <div className="mb-6">
-          <div className="mb-3 p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
-            <h4 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-1">System Statuses</h4>
-            <p className="text-xs text-blue-700 dark:text-blue-300 leading-relaxed">
-              These statuses are managed by the <strong>Lead Preferences</strong> section and are used for quick actions.
-              You can rename them but not delete them or change their colors. Click on a status to rename it.
-            </p>
+        {/* Settings Toggle Section */}
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label htmlFor="quick-status-buttons" className="text-base">
+                Show quick system status buttons on lead details
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                {dynamicDescription}
+              </p>
+            </div>
+            <Switch
+              id="quick-status-buttons"
+              checked={settings.show_quick_status_buttons}
+              onCheckedChange={(checked) => updateSetting('show_quick_status_buttons', checked)}
+              disabled={saving || settingsLoading}
+            />
           </div>
-          
-          <div className="flex flex-wrap gap-3">
-            {statuses.filter(status => status.is_system_final).map((status, index) => (
-              <div
-                key={status.id}
-                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium cursor-pointer hover:opacity-80 transition-all"
-                style={{ 
-                  backgroundColor: status.color + '20',
-                  color: status.color,
-                  border: `1px solid ${status.color}40`
-                }}
-                onClick={() => handleEdit(status)}
-              >
-                <div 
-                  className="w-2 h-2 rounded-full flex-shrink-0" 
-                  style={{ backgroundColor: status.color }}
-                />
-                <span className="uppercase tracking-wide font-semibold">
-                  {status.name}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
 
-        {/* User-defined statuses section */}
-        <div className="mb-4">
-          <h4 className="text-sm font-medium mb-3">Custom Statuses</h4>
-        </div>
-
-        <DragDropContext onDragEnd={handleDragEnd}>
-          <Droppable droppableId="statuses" direction="horizontal">
-            {(provided, snapshot) => (
-              <div
-                {...provided.droppableProps}
-                ref={provided.innerRef}
-                className={cn(
-                  "flex flex-wrap gap-3 min-h-[48px] transition-colors rounded-lg p-2",
-                  snapshot.isDraggingOver && "bg-accent/20"
-                )}
-              >
-                {statuses.filter(status => !status.is_system_final).map((status, index) => (
-                  <Draggable key={status.id} draggableId={status.id} index={index}>
-                    {(provided, snapshot) => (
-                      <div
-                        ref={provided.innerRef}
-                        {...provided.draggableProps}
-                        className={cn(
-                          "inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all select-none",
-                          snapshot.isDragging ? "opacity-80 shadow-xl scale-105 z-50" : "hover:opacity-80 cursor-pointer",
-                          !snapshot.isDragging && "hover:scale-[1.02]"
-                        )}
-                        style={{ 
-                          backgroundColor: status.color + '20',
-                          color: status.color,
-                          border: `1px solid ${status.color}40`,
-                          ...provided.draggableProps.style
-                        }}
-                      >
-                        <div 
-                          {...provided.dragHandleProps}
-                          className="flex items-center cursor-grab active:cursor-grabbing hover:opacity-70 transition-opacity"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <GripVertical className="w-3 h-3 text-current opacity-60" />
-                        </div>
-                        <div 
-                          className="w-2 h-2 rounded-full flex-shrink-0" 
-                          style={{ backgroundColor: status.color }}
-                        />
-                        <span 
-                          className="uppercase tracking-wide font-semibold cursor-pointer"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleEdit(status);
-                          }}
-                        >
-                          {status.name}
-                        </span>
-                      </div>
-                    )}
-                  </Draggable>
+          {/* System Statuses Section */}
+          {settings.show_quick_status_buttons && (
+            <div className="space-y-3">
+              <h4 className="text-sm font-medium">System Statuses</h4>
+              <p className="text-sm text-muted-foreground">
+                {dynamicDescription}
+              </p>
+              
+              <div className="flex flex-wrap gap-3">
+                {systemStatuses.map((status) => (
+                  <div
+                    key={status.id}
+                    className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium cursor-pointer hover:opacity-80 transition-all"
+                    style={{ 
+                      backgroundColor: status.color + '20',
+                      color: status.color,
+                      border: `1px solid ${status.color}40`
+                    }}
+                    onClick={() => handleEdit(status)}
+                  >
+                    <div 
+                      className="w-2 h-2 rounded-full flex-shrink-0" 
+                      style={{ backgroundColor: status.color }}
+                    />
+                    <span className="uppercase tracking-wide font-semibold">
+                      {status.name}
+                    </span>
+                  </div>
                 ))}
-                {provided.placeholder}
               </div>
-            )}
-          </Droppable>
-        </DragDropContext>
+            </div>
+          )}
+
+          {/* Custom Statuses Section */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h4 className="text-sm font-medium">Custom Statuses</h4>
+              <Button onClick={handleAdd} size="sm" className="gap-2">
+                <Plus className="h-4 w-4" />
+                Add Status
+              </Button>
+            </div>
+            
+            <div className="p-3 bg-muted/30 rounded-lg border border-dashed border-muted-foreground/20">
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                <strong>Drag to reorder:</strong> Use the grip handle (⋮⋮) to drag statuses and change their order. 
+                <strong>Click to edit:</strong> Click on any status to rename it or change its color.
+              </p>
+            </div>
+
+            <DragDropContext onDragEnd={handleCustomDragEnd}>
+              <Droppable droppableId="custom-statuses" direction="horizontal">
+                {(provided, snapshot) => (
+                  <div
+                    {...provided.droppableProps}
+                    ref={provided.innerRef}
+                    className={cn(
+                      "flex flex-wrap gap-3 min-h-[48px] transition-colors rounded-lg p-2",
+                      snapshot.isDraggingOver && "bg-accent/20"
+                    )}
+                  >
+                    {customStatuses.map((status, index) => (
+                      <Draggable key={status.id} draggableId={status.id} index={index}>
+                        {(provided, snapshot) => (
+                          <div
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            className={cn(
+                              "inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all select-none",
+                              snapshot.isDragging ? "opacity-80 shadow-xl scale-105 z-50" : "hover:opacity-80 cursor-pointer",
+                              !snapshot.isDragging && "hover:scale-[1.02]"
+                            )}
+                            style={{ 
+                              backgroundColor: status.color + '20',
+                              color: status.color,
+                              border: `1px solid ${status.color}40`,
+                              ...provided.draggableProps.style
+                            }}
+                          >
+                            <div 
+                              {...provided.dragHandleProps}
+                              className="flex items-center cursor-grab active:cursor-grabbing hover:opacity-70 transition-opacity"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <GripVertical className="w-3 h-3 text-current opacity-60" />
+                            </div>
+                            <div 
+                              className="w-2 h-2 rounded-full flex-shrink-0" 
+                              style={{ backgroundColor: status.color }}
+                            />
+                            <span 
+                              className="uppercase tracking-wide font-semibold cursor-pointer"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEdit(status);
+                              }}
+                            >
+                              {status.name}
+                            </span>
+                          </div>
+                        )}
+                      </Draggable>
+                    ))}
+                    {provided.placeholder}
+                  </div>
+                )}
+              </Droppable>
+            </DragDropContext>
+          </div>
+        </div>
 
         {/* Add Dialog */}
         <Dialog open={isAddDialogOpen} onOpenChange={(open) => {

@@ -7,7 +7,7 @@ import ServicesSection from "@/components/ServicesSection";
 import ProjectStatusesSection from "@/components/ProjectStatusesSection";
 import ProjectTypesSection from "@/components/ProjectTypesSection";
 import LeadStatusesSection from "@/components/LeadStatusesSection";
-import { LeadPreferencesSection } from "@/components/LeadPreferencesSection";
+
 import GlobalSearch from "@/components/GlobalSearch";
 
 const Settings = () => {
@@ -84,9 +84,6 @@ const Settings = () => {
 
         {/* Lead Statuses Management Section */}
         <LeadStatusesSection />
-
-        {/* Lead Preferences Section */}
-        <LeadPreferencesSection />
 
         {/* Project Statuses Management Section */}
         <ProjectStatusesSection />

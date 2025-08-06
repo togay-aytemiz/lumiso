@@ -18,6 +18,7 @@ import ActivitySection from "@/components/ActivitySection";
 import SessionBanner from "@/components/SessionBanner";
 import { ProjectsSection } from "@/components/ProjectsSection";
 import { getLeadStatusStyles, formatStatusText } from "@/lib/leadStatusColors";
+import { LeadStatusBadge } from "@/components/LeadStatusBadge";
 import { formatDate } from "@/lib/utils";
 
 interface Lead {
@@ -55,6 +56,7 @@ const LeadDetail = () => {
   const [deletingSessionId, setDeletingSessionId] = useState<string | null>(null);
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
   const [activityRefreshKey, setActivityRefreshKey] = useState(0);
+  const [leadStatuses, setLeadStatuses] = useState<any[]>([]);
   
   // Form state
   const [formData, setFormData] = useState({
@@ -85,6 +87,7 @@ const LeadDetail = () => {
     if (id) {
       fetchLead();
       fetchSessions();
+      fetchLeadStatuses();
     } else {
       // If no id parameter, redirect to leads page
       navigate('/leads');
@@ -174,6 +177,20 @@ const LeadDetail = () => {
       setSessions(sortedSessions);
     } catch (error: any) {
       console.error('Error fetching sessions:', error);
+    }
+  };
+
+  const fetchLeadStatuses = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('lead_statuses')
+        .select('*')
+        .order('sort_order', { ascending: true });
+
+      if (error) throw error;
+      setLeadStatuses(data || []);
+    } catch (error: any) {
+      console.error('Error fetching lead statuses:', error);
     }
   };
 
@@ -391,15 +408,10 @@ const LeadDetail = () => {
     }));
   };
 
-  const statusOptions = [
-    { value: "new", label: "New" },
-    { value: "contacted", label: "Contacted" },
-    { value: "qualified", label: "Qualified" },
-    { value: "proposal_sent", label: "Proposal Sent" },
-    { value: "booked", label: "Booked" },
-    { value: "completed", label: "Completed" },
-    { value: "lost", label: "Lost" }
-  ];
+  const statusOptions = leadStatuses.map(status => ({
+    value: status.name,
+    label: status.name
+  }));
 
 
   if (loading) {
@@ -424,9 +436,16 @@ const LeadDetail = () => {
           <div>
             <div className="flex items-center gap-3 mb-1">
               <h1 className="text-2xl font-bold">{lead.name || 'Lead Details'}</h1>
-              <span className={`px-2 py-1 text-xs rounded-full font-medium ${getLeadStatusStyles(lead.status).className}`}>
-                {formatStatusText(lead.status)}
-              </span>
+              <LeadStatusBadge
+                leadId={lead.id}
+                currentStatus={lead.status}
+                onStatusChange={() => {
+                  fetchLead();
+                  setActivityRefreshKey(prev => prev + 1);
+                }}
+                editable={true}
+                statuses={leadStatuses}
+              />
             </div>
             <p className="text-muted-foreground">Edit lead information</p>
           </div>
@@ -616,15 +635,26 @@ const LeadDetail = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="status">Status</Label>
-                  <Select value={formData.status} onValueChange={(value) => handleInputChange("status", value)}>
+                  <Label htmlFor="status" className="text-sm font-medium">Lead Status</Label>
+                  <Select 
+                    value={formData.status} 
+                    onValueChange={(value) => handleInputChange('status', value)}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
                     <SelectContent>
                       {statusOptions.map((option) => (
                         <SelectItem key={option.value} value={option.value}>
-                          {option.label}
+                          <div className="flex items-center gap-2">
+                            <div 
+                              className="w-2 h-2 rounded-full flex-shrink-0"
+                              style={{ 
+                                backgroundColor: leadStatuses.find(s => s.name === option.value)?.color || '#A0AEC0'
+                              }}
+                            />
+                            <span>{option.label}</span>
+                          </div>
                         </SelectItem>
                       ))}
                     </SelectContent>

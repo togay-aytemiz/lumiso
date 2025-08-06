@@ -10,6 +10,7 @@ import { toast } from "@/hooks/use-toast";
 import AddLeadDialog from "@/components/AddLeadDialog";
 import { useNavigate } from "react-router-dom";
 import { getLeadStatusStyles, formatStatusText } from "@/lib/leadStatusColors";
+import { LeadStatusBadge } from "@/components/LeadStatusBadge";
 import { formatDate } from "@/lib/utils";
 import GlobalSearch from "@/components/GlobalSearch";
 
@@ -33,11 +34,27 @@ const AllLeads = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sortField, setSortField] = useState<SortField>("created_at");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+  const [leadStatuses, setLeadStatuses] = useState<any[]>([]);
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchLeads();
+    fetchLeadStatuses();
   }, []);
+
+  const fetchLeadStatuses = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('lead_statuses')
+        .select('*')
+        .order('sort_order', { ascending: true });
+
+      if (error) throw error;
+      setLeadStatuses(data || []);
+    } catch (error: any) {
+      console.error('Error fetching lead statuses:', error);
+    }
+  };
 
   const fetchLeads = async () => {
     try {
@@ -113,13 +130,10 @@ const AllLeads = () => {
 
   const statusOptions = [
     { value: "all", label: "All Statuses" },
-    { value: "new", label: "New" },
-    { value: "contacted", label: "Contacted" },
-    { value: "qualified", label: "Qualified" },
-    { value: "proposal_sent", label: "Proposal Sent" },
-    { value: "booked", label: "Booked" },
-    { value: "completed", label: "Completed" },
-    { value: "lost", label: "Lost" }
+    ...leadStatuses.map(status => ({
+      value: status.name,
+      label: status.name
+    }))
   ];
 
   if (loading) {
@@ -233,10 +247,14 @@ const AllLeads = () => {
                     <TableCell>{lead.email || '-'}</TableCell>
                     <TableCell>{lead.phone || '-'}</TableCell>
                      <TableCell>
-                      <span className={`px-2 py-1 text-xs rounded-full font-medium ${getLeadStatusStyles(lead.status).className}`}>
-                        {formatStatusText(lead.status)}
-                      </span>
-                     </TableCell>
+                       <LeadStatusBadge
+                         leadId={lead.id}
+                         currentStatus={lead.status}
+                         editable={false}
+                         size="sm"
+                         statuses={leadStatuses}
+                       />
+                      </TableCell>
                     <TableCell>
                       {lead.due_date ? formatDate(lead.due_date) : '-'}
                     </TableCell>

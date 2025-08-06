@@ -122,7 +122,7 @@ export function LeadStatusBadge({
       // Update lead status
       const { error: updateError } = await supabase
         .from('leads')
-        .update({ status: newStatusName as any })
+        .update({ status: newStatusName })
         .eq('id', leadId);
 
       if (updateError) throw updateError;

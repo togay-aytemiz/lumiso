@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -19,14 +19,38 @@ const AddLeadDialog = ({ onLeadAdded }: AddLeadDialogProps) => {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [leadStatuses, setLeadStatuses] = useState<any[]>([]);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     phone: "",
     notes: "",
-    status: "new" as const,
+    status: "",
     due_date: ""
   });
+
+  useEffect(() => {
+    fetchLeadStatuses();
+  }, []);
+
+  const fetchLeadStatuses = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('lead_statuses')
+        .select('*')
+        .order('sort_order', { ascending: true });
+
+      if (error) throw error;
+      setLeadStatuses(data || []);
+      
+      // Set default status to the first status (typically "New")
+      if (data && data.length > 0 && !formData.status) {
+        setFormData(prev => ({ ...prev, status: data[0].name }));
+      }
+    } catch (error: any) {
+      console.error('Error fetching lead statuses:', error);
+    }
+  };
 
   const validateForm = async () => {
     setErrors({});
@@ -93,12 +117,13 @@ const AddLeadDialog = ({ onLeadAdded }: AddLeadDialogProps) => {
       });
 
       // Reset form and close dialog
+      const defaultStatus = leadStatuses.length > 0 ? leadStatuses[0].name : "";
       setFormData({
         name: "",
         email: "",
         phone: "",
         notes: "",
-        status: "new",
+        status: defaultStatus,
         due_date: ""
       });
       setErrors({});
@@ -180,12 +205,17 @@ const AddLeadDialog = ({ onLeadAdded }: AddLeadDialogProps) => {
                 <SelectValue placeholder="Select status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="new">New</SelectItem>
-                <SelectItem value="contacted">Contacted</SelectItem>
-                <SelectItem value="qualified">Qualified</SelectItem>
-                <SelectItem value="proposal_sent">Proposal Sent</SelectItem>
-                <SelectItem value="booked">Booked</SelectItem>
-                <SelectItem value="lost">Lost</SelectItem>
+                {leadStatuses.map((status) => (
+                  <SelectItem key={status.id} value={status.name}>
+                    <div className="flex items-center gap-2">
+                      <div 
+                        className="w-2 h-2 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: status.color }}
+                      />
+                      <span>{status.name}</span>
+                    </div>
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

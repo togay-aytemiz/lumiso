@@ -214,7 +214,7 @@ const LeadDetail = () => {
           phone: formData.phone.trim() || null,
           due_date: formData.due_date || null,
           notes: formData.notes.trim() || null,
-          status: formData.status as any
+          status: formData.status
         })
         .eq('id', lead.id);
 
@@ -634,32 +634,7 @@ const LeadDetail = () => {
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="status" className="text-sm font-medium">Lead Status</Label>
-                  <Select 
-                    value={formData.status} 
-                    onValueChange={(value) => handleInputChange('status', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {statusOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          <div className="flex items-center gap-2">
-                            <div 
-                              className="w-2 h-2 rounded-full flex-shrink-0"
-                              style={{ 
-                                backgroundColor: leadStatuses.find(s => s.name === option.value)?.color || '#A0AEC0'
-                              }}
-                            />
-                            <span>{option.label}</span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                {/* Status section removed - now handled by the status badge in header */}
 
                 <div className="space-y-2">
                   <Label htmlFor="due_date">Due Date</Label>

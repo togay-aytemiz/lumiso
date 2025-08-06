@@ -228,7 +228,7 @@ export type Database = {
           name: string
           notes: string | null
           phone: string | null
-          status: Database["public"]["Enums"]["lead_status"]
+          status: string
           status_id: string | null
           updated_at: string
           user_id: string
@@ -241,7 +241,7 @@ export type Database = {
           name: string
           notes?: string | null
           phone?: string | null
-          status?: Database["public"]["Enums"]["lead_status"]
+          status?: string
           status_id?: string | null
           updated_at?: string
           user_id: string
@@ -254,7 +254,7 @@ export type Database = {
           name?: string
           notes?: string | null
           phone?: string | null
-          status?: Database["public"]["Enums"]["lead_status"]
+          status?: string
           status_id?: string | null
           updated_at?: string
           user_id?: string

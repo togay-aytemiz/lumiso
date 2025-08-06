@@ -61,7 +61,7 @@ export function LeadPreferencesSection() {
         .select('name, is_system_final')
         .eq('user_id', userData.user.id)
         .eq('is_system_final', true)
-        .order('name');
+        .order('sort_order');
 
       if (error && error.code !== 'PGRST116') {
         throw error;
@@ -160,9 +160,9 @@ export function LeadPreferencesSection() {
             </Label>
             <p className="text-sm text-muted-foreground">
               {systemStatuses.length >= 2 ? (
-                `Display "Mark as ${systemStatuses[0]?.name}" and "Mark as ${systemStatuses[1]?.name}" buttons on lead detail pages and related dropdowns`
+                `Display "${systemStatuses[0]?.name}" and "${systemStatuses[1]?.name}" buttons on lead detail pages and related dropdowns`
               ) : systemStatuses.length === 1 ? (
-                `Display "Mark as ${systemStatuses[0]?.name}" button on lead detail pages and related dropdowns`
+                `Display "${systemStatuses[0]?.name}" button on lead detail pages and related dropdowns`
               ) : (
                 "Display quick action buttons on lead detail pages and related dropdowns"
               )}

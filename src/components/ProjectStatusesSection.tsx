@@ -444,7 +444,7 @@ const ProjectStatusesSection = () => {
     >
       <div className="mb-4 p-3 bg-muted/30 rounded-lg border border-dashed border-muted-foreground/20">
         <p className="text-sm text-muted-foreground leading-relaxed">
-          <strong>Drag (⋮⋮) to reorder</strong> • <strong>Click to edit</strong> stage names and colors.
+          Drag (⋮⋮) to reorder • Click to edit stage names and colors.
         </p>
       </div>
 

@@ -709,7 +709,7 @@ const LeadStatusesSection = () => {
             
             <div className="p-3 bg-muted/30 rounded-lg border border-dashed border-muted-foreground/20">
               <p className="text-sm text-muted-foreground leading-relaxed">
-                <strong>Drag (⋮⋮) to reorder</strong> • <strong>Click to edit</strong> status names and colors.
+                Drag (⋮⋮) to reorder • Click to edit status names and colors.
               </p>
             </div>
 

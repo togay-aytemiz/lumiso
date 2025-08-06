@@ -29,6 +29,7 @@ interface LeadStatus {
   updated_at: string;
   sort_order: number;
   is_default: boolean;
+  is_system_final?: boolean;
 }
 
 // Predefined color palette (same as project statuses)
@@ -70,6 +71,11 @@ const LeadStatusesSection = () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
+
+      // Ensure system statuses exist first
+      await supabase.rpc('ensure_system_lead_statuses', {
+        user_uuid: user.id
+      });
 
       const { data: existingStatuses } = await supabase
         .from("lead_statuses")
@@ -224,6 +230,12 @@ const LeadStatusesSection = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
+      // Check if this is a system final status
+      const statusToDelete = statuses.find(s => s.id === statusId);
+      if (statusToDelete?.is_system_final) {
+        throw new Error('Cannot delete system statuses (Completed/Lost). These are required for lead management.');
+      }
+
       const { error } = await supabase
         .from('lead_statuses')
         .delete()
@@ -369,7 +381,7 @@ const LeadStatusesSection = () => {
           />
           
           <div className="flex justify-between items-center pt-4">
-            {isEdit && editingStatus && editingStatus.name.toLowerCase() !== 'new' && (
+            {isEdit && editingStatus && !editingStatus.is_system_final && editingStatus.name.toLowerCase() !== 'new' && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button type="button" variant="destructive">
@@ -402,9 +414,12 @@ const LeadStatusesSection = () => {
               </AlertDialog>
             )}
             
-            {isEdit && editingStatus && editingStatus.name.toLowerCase() === 'new' && (
+            {isEdit && editingStatus && (editingStatus.name.toLowerCase() === 'new' || editingStatus.is_system_final) && (
               <p className="text-sm text-muted-foreground">
-                The "New" status cannot be deleted as it's the default status for new leads.
+                {editingStatus.name.toLowerCase() === 'new' 
+                  ? 'The "New" status cannot be deleted as it\'s the default status for new leads.'
+                  : 'System statuses (Completed/Lost) cannot be deleted as they are required for lead management.'
+                }
               </p>
             )}
             

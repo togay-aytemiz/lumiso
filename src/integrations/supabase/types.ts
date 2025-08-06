@@ -192,6 +192,7 @@ export type Database = {
           created_at: string
           id: string
           is_default: boolean
+          is_system_final: boolean
           name: string
           sort_order: number
           updated_at: string
@@ -202,6 +203,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_default?: boolean
+          is_system_final?: boolean
           name: string
           sort_order?: number
           updated_at?: string
@@ -212,6 +214,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_default?: boolean
+          is_system_final?: boolean
           name?: string
           sort_order?: number
           updated_at?: string
@@ -576,11 +579,39 @@ export type Database = {
         }
         Relationships: []
       }
+      user_settings: {
+        Row: {
+          created_at: string
+          id: string
+          show_quick_status_buttons: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          show_quick_status_buttons?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          show_quick_status_buttons?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      ensure_system_lead_statuses: {
+        Args: { user_uuid: string }
+        Returns: undefined
+      }
       get_default_lead_status: {
         Args: { user_uuid: string }
         Returns: string

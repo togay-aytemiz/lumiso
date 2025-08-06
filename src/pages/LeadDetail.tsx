@@ -20,6 +20,8 @@ import { ProjectsSection } from "@/components/ProjectsSection";
 import { getLeadStatusStyles, formatStatusText } from "@/lib/leadStatusColors";
 import { LeadStatusBadge } from "@/components/LeadStatusBadge";
 import { formatDate } from "@/lib/utils";
+import { useUserSettings } from "@/hooks/useUserSettings";
+import { useLeadStatusActions } from "@/hooks/useLeadStatusActions";
 
 interface Lead {
   id: string;
@@ -57,6 +59,16 @@ const LeadDetail = () => {
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
   const [activityRefreshKey, setActivityRefreshKey] = useState(0);
   const [leadStatuses, setLeadStatuses] = useState<any[]>([]);
+  
+  // User settings and status actions
+  const { settings: userSettings, loading: settingsLoading } = useUserSettings();
+  const { markAsCompleted, markAsLost, isUpdating } = useLeadStatusActions({
+    leadId: lead?.id || '',
+    onStatusChange: () => {
+      fetchLead();
+      setActivityRefreshKey(prev => prev + 1);
+    }
+  });
   
   // Form state
   const [formData, setFormData] = useState({
@@ -333,72 +345,14 @@ const LeadDetail = () => {
     }
   };
 
-  const handleMarkAsCompleted = async () => {
+  const handleMarkAsCompleted = () => {
     if (!lead) return;
-
-    setSaving(true);
-    try {
-      const { error } = await supabase
-        .from('leads')
-        .update({ status: 'completed' })
-        .eq('id', lead.id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Lead marked as completed.",
-      });
-
-      // Refresh lead data
-      await fetchLead();
-      await fetchSessions();
-      
-      // Refresh activity timeline to show status change
-      setActivityRefreshKey(prev => prev + 1);
-    } catch (error: any) {
-      toast({
-        title: "Error updating lead",
-        description: error.message,
-        variant: "destructive"
-      });
-    } finally {
-      setSaving(false);
-    }
+    markAsCompleted(lead.status);
   };
 
-  const handleMarkAsLost = async () => {
+  const handleMarkAsLost = () => {
     if (!lead) return;
-
-    setSaving(true);
-    try {
-      const { error } = await supabase
-        .from('leads')
-        .update({ status: 'lost' })
-        .eq('id', lead.id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Lead marked as lost.",
-      });
-
-      // Refresh lead data
-      await fetchLead();
-      await fetchSessions();
-      
-      // Refresh activity timeline to show status change
-      setActivityRefreshKey(prev => prev + 1);
-    } catch (error: any) {
-      toast({
-        title: "Error updating lead",
-        description: error.message,
-        variant: "destructive"
-      });
-    } finally {
-      setSaving(false);
-    }
+    markAsLost(lead.status);
   };
 
   const handleInputChange = (field: keyof typeof formData, value: string) => {
@@ -461,68 +415,28 @@ const LeadDetail = () => {
                 disabledTooltip="A planned session already exists."
               />
 
-              {formData.status !== "completed" && (
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button 
-                      disabled={saving}
-                      className="bg-green-600 hover:bg-green-700 text-white h-10"
-                      size="sm"
-                    >
-                      <CheckCircle className="h-4 w-4 mr-2" />
-                      Completed
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Mark Lead as Completed?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Are you sure you want to mark "{lead.name}" as completed? This will update the lead's status to "Completed".
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction 
-                        onClick={handleMarkAsCompleted}
-                        className="bg-green-600 hover:bg-green-700 text-white"
-                      >
-                        {saving ? "Updating..." : "Completed"}
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
+              {!settingsLoading && userSettings.show_quick_status_buttons && formData.status !== "Completed" && (
+                <Button 
+                  onClick={handleMarkAsCompleted}
+                  disabled={isUpdating}
+                  className="bg-green-600 hover:bg-green-700 text-white h-10"
+                  size="sm"
+                >
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  {isUpdating ? "Updating..." : "Mark as Completed"}
+                </Button>
               )}
 
-              {formData.status !== "lost" && (
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button 
-                      disabled={saving}
-                      variant="destructive"
-                      size="sm"
-                      className="h-10"
-                    >
-                      Lost
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Mark Lead as Lost?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Are you sure you want to mark "{lead.name}" as lost? This will update the lead's status to "Lost".
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction 
-                        onClick={handleMarkAsLost}
-                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                      >
-                        {saving ? "Updating..." : "Lost"}
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
+              {!settingsLoading && userSettings.show_quick_status_buttons && formData.status !== "Lost" && (
+                <Button 
+                  onClick={handleMarkAsLost}
+                  disabled={isUpdating}
+                  variant="destructive"
+                  size="sm"
+                  className="h-10"
+                >
+                  {isUpdating ? "Updating..." : "Mark as Lost"}
+                </Button>
               )}
             </div>
 

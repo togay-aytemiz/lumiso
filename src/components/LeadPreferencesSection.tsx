@@ -110,6 +110,25 @@ export function LeadPreferencesSection() {
     }
   };
 
+  // Add a function to refetch system statuses when needed
+  const refreshSystemStatuses = () => {
+    fetchSystemStatuses();
+  };
+
+  // Listen for storage events to refresh when statuses are updated
+  useEffect(() => {
+    const handleStorageChange = () => {
+      fetchSystemStatuses();
+    };
+
+    // Check for updates periodically or on window focus
+    window.addEventListener('focus', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('focus', handleStorageChange);
+    };
+  }, []);
+
   if (loading) {
     return (
       <Card>

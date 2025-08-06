@@ -157,12 +157,18 @@ const LeadStatusesSection = () => {
 
       if (editingStatus) {
         // Update existing status
+        const updateData: any = {
+          name: data.name,
+        };
+        
+        // Only update color for non-system statuses
+        if (!editingStatus.is_system_final) {
+          updateData.color = data.color;
+        }
+        
         const { error } = await supabase
           .from("lead_statuses")
-          .update({
-            name: data.name,
-            color: data.color,
-          })
+          .update(updateData)
           .eq("id", editingStatus.id)
           .eq("user_id", user.id);
 
@@ -214,7 +220,12 @@ const LeadStatusesSection = () => {
   const handleEdit = (status: LeadStatus) => {
     setEditingStatus(status);
     setSelectedColor(status.color);
-    form.reset({ name: status.name, color: status.color });
+    // For system statuses, only set the name since color can't be changed
+    if (status.is_system_final) {
+      form.reset({ name: status.name, color: status.color });
+    } else {
+      form.reset({ name: status.name, color: status.color });
+    }
     setIsEditDialogOpen(true);
   };
 
@@ -504,7 +515,7 @@ const LeadStatusesSection = () => {
             <h4 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-1">System Statuses</h4>
             <p className="text-xs text-blue-700 dark:text-blue-300 leading-relaxed">
               These statuses are managed by the <strong>Lead Preferences</strong> section and are used for quick actions.
-              You can rename them but not delete them or change their colors.
+              You can rename them but not delete them or change their colors. Click on a status to rename it.
             </p>
           </div>
           

@@ -70,10 +70,10 @@ const LeadDetail = () => {
     }
   });
 
-  // Get system status labels for buttons
-  const completedStatus = leadStatuses.find(s => s.is_system_final && s.name.toLowerCase().includes('completed')) || 
+  // Get system status labels for buttons (refresh when leadStatuses changes)
+  const completedStatus = leadStatuses.find(s => s.is_system_final && (s.name.toLowerCase().includes('completed') || s.name.toLowerCase().includes('delivered'))) || 
                           leadStatuses.find(s => s.name === 'Completed');
-  const lostStatus = leadStatuses.find(s => s.is_system_final && s.name.toLowerCase().includes('lost')) || 
+  const lostStatus = leadStatuses.find(s => s.is_system_final && (s.name.toLowerCase().includes('lost') || s.name.toLowerCase().includes('not interested'))) || 
                      leadStatuses.find(s => s.name === 'Lost');
   
   // Form state

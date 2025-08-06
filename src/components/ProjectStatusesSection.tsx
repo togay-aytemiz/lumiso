@@ -444,9 +444,7 @@ const ProjectStatusesSection = () => {
     >
       <div className="mb-4 p-3 bg-muted/30 rounded-lg border border-dashed border-muted-foreground/20">
         <p className="text-sm text-muted-foreground leading-relaxed">
-          <strong>Drag to reorder:</strong> Use the grip handle (⋮⋮) to drag stages and change their order. 
-          <strong>Click to edit:</strong> Click on any stage to rename it or change its color. 
-          The stage order will be consistent across all project views.
+          <strong>Drag (⋮⋮) to reorder</strong> • <strong>Click to edit</strong> stage names and colors.
         </p>
       </div>
 

@@ -72,18 +72,19 @@ const LeadStatusesSection = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      // Ensure system statuses exist first
+      // Ensure system statuses exist first (this will only create them if they don't exist)
       await supabase.rpc('ensure_system_lead_statuses', {
         user_uuid: user.id
       });
 
+      // Fetch all statuses
       const { data: existingStatuses } = await supabase
         .from("lead_statuses")
         .select("*")
         .eq("user_id", user.id)
         .order("sort_order");
 
-      if (existingStatuses && existingStatuses.length > 0) {
+      if (existingStatuses) {
         setStatuses(existingStatuses);
       } else {
         await createDefaultStatuses(user.id);
@@ -138,14 +139,24 @@ const LeadStatusesSection = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      // Check for duplicate names (case-insensitive)
-      const existingStatus = statuses.find(
-        (status) =>
-          status.name.toLowerCase() === data.name.toLowerCase() &&
-          status.id !== editingStatus?.id
-      );
+      // For system statuses, only check duplicates against other system statuses
+      // For regular statuses, check against all statuses
+      const isDuplicateSystemStatus = editingStatus?.is_system_final && 
+        statuses.find(
+          (status) =>
+            status.name.toLowerCase() === data.name.toLowerCase() &&
+            status.id !== editingStatus?.id &&
+            status.is_system_final
+        );
 
-      if (existingStatus) {
+      const isDuplicateRegularStatus = !editingStatus?.is_system_final &&
+        statuses.find(
+          (status) =>
+            status.name.toLowerCase() === data.name.toLowerCase() &&
+            status.id !== editingStatus?.id
+        );
+
+      if (isDuplicateSystemStatus || isDuplicateRegularStatus) {
         toast({
           title: "Error",
           description: "A status with this name already exists",

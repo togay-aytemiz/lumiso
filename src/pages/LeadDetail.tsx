@@ -438,7 +438,7 @@ const LeadDetail = () => {
                   size="sm"
                 >
                   <CheckCircle className="h-4 w-4 mr-2" />
-                  {isUpdating ? "Updating..." : `Mark as ${completedStatus.name}`}
+                  {isUpdating ? "Updating..." : completedStatus.name}
                 </Button>
               )}
 
@@ -450,7 +450,7 @@ const LeadDetail = () => {
                   size="sm"
                   className="h-10"
                 >
-                  {isUpdating ? "Updating..." : `Mark as ${lostStatus.name}`}
+                  {isUpdating ? "Updating..." : lostStatus.name}
                 </Button>
               )}
             </div>

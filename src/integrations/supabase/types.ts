@@ -186,6 +186,39 @@ export type Database = {
         }
         Relationships: []
       }
+      lead_statuses: {
+        Row: {
+          color: string
+          created_at: string
+          id: string
+          is_default: boolean
+          name: string
+          sort_order: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          color: string
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          name: string
+          sort_order?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          name?: string
+          sort_order?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       leads: {
         Row: {
           created_at: string
@@ -196,6 +229,7 @@ export type Database = {
           notes: string | null
           phone: string | null
           status: Database["public"]["Enums"]["lead_status"]
+          status_id: string | null
           updated_at: string
           user_id: string
         }
@@ -208,6 +242,7 @@ export type Database = {
           notes?: string | null
           phone?: string | null
           status?: Database["public"]["Enums"]["lead_status"]
+          status_id?: string | null
           updated_at?: string
           user_id: string
         }
@@ -220,6 +255,7 @@ export type Database = {
           notes?: string | null
           phone?: string | null
           status?: Database["public"]["Enums"]["lead_status"]
+          status_id?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -545,6 +581,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_default_lead_status: {
+        Args: { user_uuid: string }
+        Returns: string
+      }
       get_default_project_status: {
         Args: { user_uuid: string }
         Returns: string

@@ -6,6 +6,7 @@ import { useGoogleCalendar } from "@/hooks/useGoogleCalendar";
 import ServicesSection from "@/components/ServicesSection";
 import ProjectStatusesSection from "@/components/ProjectStatusesSection";
 import ProjectTypesSection from "@/components/ProjectTypesSection";
+import LeadStatusesSection from "@/components/LeadStatusesSection";
 import GlobalSearch from "@/components/GlobalSearch";
 
 const Settings = () => {
@@ -85,6 +86,9 @@ const Settings = () => {
 
         {/* Project Statuses Management Section */}
         <ProjectStatusesSection />
+
+        {/* Lead Statuses Management Section */}
+        <LeadStatusesSection />
 
         {/* Project Types Management Section */}
         <ProjectTypesSection />

@@ -22,6 +22,7 @@ interface Lead {
   due_date: string;
   notes: string;
   status: string;
+  status_id?: string;
   created_at: string;
 }
 
@@ -60,7 +61,10 @@ const AllLeads = () => {
     try {
       const { data, error } = await supabase
         .from('leads')
-        .select('*')
+        .select(`
+          *,
+          lead_statuses(id, name, color, is_system_final)
+        `)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -246,15 +250,17 @@ const AllLeads = () => {
                     <TableCell className="font-medium">{lead.name}</TableCell>
                     <TableCell>{lead.email || '-'}</TableCell>
                     <TableCell>{lead.phone || '-'}</TableCell>
-                     <TableCell>
-                       <LeadStatusBadge
-                         leadId={lead.id}
-                         currentStatus={lead.status}
-                         editable={false}
-                         size="sm"
-                         statuses={leadStatuses}
-                       />
-                      </TableCell>
+                      <TableCell>
+                        <LeadStatusBadge
+                          leadId={lead.id}
+                          currentStatusId={lead.status_id}
+                          currentStatus={lead.status}
+                          onStatusChange={fetchLeads}
+                          editable={true}
+                          size="sm"
+                          statuses={leadStatuses}
+                        />
+                       </TableCell>
                     <TableCell>
                       {lead.due_date ? formatDate(lead.due_date) : '-'}
                     </TableCell>

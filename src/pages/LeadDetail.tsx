@@ -31,6 +31,7 @@ interface Lead {
   due_date: string;
   notes: string;
   status: string;
+  status_id?: string;
   created_at: string;
 }
 
@@ -116,7 +117,10 @@ const LeadDetail = () => {
     try {
       const { data, error } = await supabase
         .from('leads')
-        .select('*')
+        .select(`
+          *,
+          lead_statuses(id, name, color, is_system_final)
+        `)
         .eq('id', id)
         .maybeSingle();
 
@@ -224,6 +228,9 @@ const LeadDetail = () => {
 
     setSaving(true);
     try {
+      // Find the status ID for the selected status
+      const selectedStatus = leadStatuses.find(s => s.name === formData.status);
+      
       const { error } = await supabase
         .from('leads')
         .update({
@@ -232,7 +239,8 @@ const LeadDetail = () => {
           phone: formData.phone.trim() || null,
           due_date: formData.due_date || null,
           notes: formData.notes.trim() || null,
-          status: formData.status
+          status: formData.status,
+          status_id: selectedStatus?.id || null
         })
         .eq('id', lead.id);
 
@@ -398,6 +406,7 @@ const LeadDetail = () => {
               <h1 className="text-2xl font-bold">{lead.name || 'Lead Details'}</h1>
               <LeadStatusBadge
                 leadId={lead.id}
+                currentStatusId={lead.status_id}
                 currentStatus={lead.status}
                 onStatusChange={() => {
                   fetchLead();

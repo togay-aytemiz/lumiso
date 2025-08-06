@@ -15,7 +15,8 @@ interface LeadStatus {
 
 interface LeadStatusBadgeProps {
   leadId: string;
-  currentStatus?: string;
+  currentStatusId?: string;
+  currentStatus?: string; // Keep for backward compatibility
   onStatusChange?: () => void;
   editable?: boolean;
   className?: string;
@@ -25,6 +26,7 @@ interface LeadStatusBadgeProps {
 
 export function LeadStatusBadge({ 
   leadId, 
+  currentStatusId,
   currentStatus, 
   onStatusChange, 
   editable = false,
@@ -51,12 +53,21 @@ export function LeadStatusBadge({
   }, [passedStatuses]);
 
   useEffect(() => {
-    if (currentStatus && statuses.length > 0) {
-      // First try to find by status name (for backward compatibility)
-      let status = statuses.find(s => s.name.toLowerCase() === currentStatus.toLowerCase());
+    if (statuses.length > 0) {
+      let status: LeadStatus | undefined;
+      
+      // First try to find by status ID (preferred method)
+      if (currentStatusId) {
+        status = statuses.find(s => s.id === currentStatusId);
+      }
+      
+      // Fallback to name-based lookup for backward compatibility
+      if (!status && currentStatus) {
+        status = statuses.find(s => s.name.toLowerCase() === currentStatus.toLowerCase());
+      }
       
       // If not found by name, create a temporary status object for legacy statuses
-      if (!status) {
+      if (!status && currentStatus) {
         status = {
           id: currentStatus,
           name: currentStatus,
@@ -64,9 +75,9 @@ export function LeadStatusBadge({
         };
       }
       
-      setCurrentStatusData(status);
+      setCurrentStatusData(status || null);
     }
-  }, [currentStatus, statuses]);
+  }, [currentStatusId, currentStatus, statuses]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -111,21 +122,24 @@ export function LeadStatusBadge({
     }
   };
 
-  const handleStatusChange = async (newStatusName: string) => {
-    if (currentStatusData && newStatusName === currentStatusData.name) return;
+  const handleStatusChange = async (newStatusId: string) => {
+    if (currentStatusData && newStatusId === currentStatusData.id) return;
 
     setIsUpdating(true);
     try {
       const { data: userData } = await supabase.auth.getUser();
       if (!userData.user) throw new Error('User not authenticated');
 
-      const newStatus = statuses.find(s => s.name === newStatusName);
+      const newStatus = statuses.find(s => s.id === newStatusId);
       if (!newStatus) throw new Error('Status not found');
 
-      // Update lead status
+      // Update lead status using status_id
       const { error: updateError } = await supabase
         .from('leads')
-        .update({ status: newStatusName })
+        .update({ 
+          status_id: newStatusId,
+          status: newStatus.name // Keep text field updated for backward compatibility
+        })
         .eq('id', leadId);
 
       if (updateError) throw updateError;
@@ -242,7 +256,7 @@ export function LeadStatusBadge({
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    handleStatusChange(status.name);
+                    handleStatusChange(status.id);
                   }}
                   disabled={isUpdating}
                 >
@@ -339,7 +353,7 @@ export function LeadStatusBadge({
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  handleStatusChange(status.name);
+                  handleStatusChange(status.id);
                 }}
                 disabled={isUpdating}
               >

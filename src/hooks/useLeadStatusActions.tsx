@@ -12,7 +12,7 @@ export function useLeadStatusActions({ leadId, onStatusChange }: UseLeadStatusAc
   const [isUpdating, setIsUpdating] = useState(false);
   const { toast } = useToast();
 
-  const updateLeadStatus = async (newStatus: string, previousStatus?: string) => {
+  const updateLeadStatus = async (newStatusName: string, previousStatus?: string) => {
     setIsUpdating(true);
     try {
       const { data: userData } = await supabase.auth.getUser();
@@ -23,9 +23,23 @@ export function useLeadStatusActions({ leadId, onStatusChange }: UseLeadStatusAc
         user_uuid: userData.user.id
       });
 
+      // Find the status by name to get the ID
+      const { data: statusData, error: statusError } = await supabase
+        .from('lead_statuses')
+        .select('id, name')
+        .eq('user_id', userData.user.id)
+        .eq('name', newStatusName)
+        .maybeSingle();
+
+      if (statusError) throw statusError;
+      if (!statusData) throw new Error('Status not found');
+
       const { error } = await supabase
         .from('leads')
-        .update({ status: newStatus })
+        .update({ 
+          status_id: statusData.id,
+          status: newStatusName // Keep text field updated for backward compatibility
+        })
         .eq('id', leadId);
 
       if (error) throw error;
@@ -37,7 +51,7 @@ export function useLeadStatusActions({ leadId, onStatusChange }: UseLeadStatusAc
       
       toast({
         title: "Status Updated",
-        description: `Lead marked as ${newStatus}`,
+        description: `Lead marked as ${newStatusName}`,
         action: previousStatus ? (
           <ToastAction
             altText="Undo status change"
@@ -46,9 +60,23 @@ export function useLeadStatusActions({ leadId, onStatusChange }: UseLeadStatusAc
               undoRef.current = true;
               
               try {
+                // Find the previous status by name to get the ID
+                const { data: prevStatusData, error: prevStatusError } = await supabase
+                  .from('lead_statuses')
+                  .select('id, name')
+                  .eq('user_id', userData.user.id)
+                  .eq('name', previousStatus)
+                  .maybeSingle();
+
+                if (prevStatusError) throw prevStatusError;
+                if (!prevStatusData) throw new Error('Previous status not found');
+
                 const { error: undoError } = await supabase
                   .from('leads')
-                  .update({ status: previousStatus })
+                  .update({ 
+                    status_id: prevStatusData.id,
+                    status: previousStatus 
+                  })
                   .eq('id', leadId);
 
                 if (undoError) throw undoError;

@@ -248,9 +248,12 @@ const LeadStatusesSection = () => {
           name: data.name,
         };
         
-        // Only update color for non-system statuses
+        // For system statuses, preserve the original color to maintain consistency
         if (!editingStatus.is_system_final) {
           updateData.color = data.color;
+        } else {
+          // Ensure system status colors remain consistent with their purpose
+          updateData.color = editingStatus.color;
         }
         
         const { error } = await supabase

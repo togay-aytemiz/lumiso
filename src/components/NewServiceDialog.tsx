@@ -33,6 +33,8 @@ export const NewServiceDialog = ({ open, onOpenChange, existingCategories, onCat
   const [name, setName] = useState("");
   const [category, setCategory] = useState("");
   const [description, setDescription] = useState("");
+  const [costPrice, setCostPrice] = useState("");
+  const [sellingPrice, setSellingPrice] = useState("");
   const [isCreatingNewCategory, setIsCreatingNewCategory] = useState(false);
   const [newCategoryInput, setNewCategoryInput] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -40,7 +42,7 @@ export const NewServiceDialog = ({ open, onOpenChange, existingCategories, onCat
   const queryClient = useQueryClient();
 
   const createServiceMutation = useMutation({
-    mutationFn: async (serviceData: { name: string; category?: string; description?: string }) => {
+    mutationFn: async (serviceData: { name: string; category?: string; description?: string; costPrice?: number; sellingPrice?: number }) => {
       console.log('Creating service with data:', serviceData);
       
       const { data: { user } } = await supabase.auth.getUser();
@@ -52,6 +54,8 @@ export const NewServiceDialog = ({ open, onOpenChange, existingCategories, onCat
         name: serviceData.name,
         category: serviceData.category || null,
         description: serviceData.description || null,
+        cost_price: serviceData.costPrice || 0,
+        selling_price: serviceData.sellingPrice || 0,
         user_id: user.id,
       };
       
@@ -122,6 +126,8 @@ export const NewServiceDialog = ({ open, onOpenChange, existingCategories, onCat
       name: name.trim(),
       category: category.trim() || undefined,
       description: description.trim() || undefined,
+      costPrice: costPrice ? parseFloat(costPrice) : undefined,
+      sellingPrice: sellingPrice ? parseFloat(sellingPrice) : undefined,
     });
   };
 
@@ -180,6 +186,8 @@ export const NewServiceDialog = ({ open, onOpenChange, existingCategories, onCat
     setName("");
     setCategory("");
     setDescription("");
+    setCostPrice("");
+    setSellingPrice("");
     setIsCreatingNewCategory(false);
     setNewCategoryInput("");
     setErrors({});
@@ -292,6 +300,33 @@ export const NewServiceDialog = ({ open, onOpenChange, existingCategories, onCat
             {errors.name && (
               <p className="text-sm text-destructive">{errors.name}</p>
             )}
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="costPrice">Cost Price (TRY)</Label>
+              <Input
+                id="costPrice"
+                type="number"
+                step="0.01"
+                min="0"
+                value={costPrice}
+                onChange={(e) => setCostPrice(e.target.value)}
+                placeholder="0.00"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="sellingPrice">Selling Price (TRY)</Label>
+              <Input
+                id="sellingPrice"
+                type="number"
+                step="0.01"
+                min="0"
+                value={sellingPrice}
+                onChange={(e) => setSellingPrice(e.target.value)}
+                placeholder="0.00"
+              />
+            </div>
           </div>
 
           <div className="space-y-2">

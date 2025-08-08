@@ -13,6 +13,8 @@ interface Service {
   id: string;
   name: string;
   category: string | null;
+  cost_price?: number;
+  selling_price?: number;
 }
 
 interface ServiceSelectorProps {
@@ -40,7 +42,7 @@ export function ServiceSelector({
 
       const { data, error } = await supabase
         .from("services")
-        .select("id, name, category")
+        .select("id, name, category, cost_price, selling_price")
         .eq("user_id", user.id)
         .order("category", { ascending: true })
         .order("name", { ascending: true });
@@ -177,7 +179,23 @@ export function ServiceSelector({
                               <div className="w-4 h-4 border border-primary rounded-sm flex items-center justify-center">
                                 {isSelected && <Check className="h-3 w-3" />}
                               </div>
-                              <span className="text-sm">{service.name}</span>
+                              <div className="flex-1">
+                                <span className="text-sm">{service.name}</span>
+                                {((service.cost_price || 0) > 0 || (service.selling_price || 0) > 0) && (
+                                  <div className="flex gap-3 mt-1">
+                                    {(service.cost_price || 0) > 0 && (
+                                      <span className="text-xs text-muted-foreground">
+                                        Cost: TRY {service.cost_price}
+                                      </span>
+                                    )}
+                                    {(service.selling_price || 0) > 0 && (
+                                      <span className="text-xs text-muted-foreground">
+                                        Selling: TRY {service.selling_price}
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
                             </div>
                           </div>
                         );

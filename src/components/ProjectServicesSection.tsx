@@ -11,6 +11,8 @@ interface Service {
   id: string;
   name: string;
   category: string | null;
+  cost_price?: number;
+  selling_price?: number;
 }
 
 interface ProjectServicesSectionProps {
@@ -33,7 +35,9 @@ export function ProjectServicesSection({ projectId, onServicesUpdated }: Project
           services!inner (
             id,
             name,
-            category
+            category,
+            cost_price,
+            selling_price
           )
         `)
         .eq('project_id', projectId);
@@ -187,11 +191,25 @@ export function ProjectServicesSection({ projectId, onServicesUpdated }: Project
         ) : (
           <div>
             {services.length > 0 ? (
-              <div className="flex flex-wrap gap-2">
+              <div className="space-y-2">
                 {services.map((service) => (
-                  <Badge key={service.id} variant="secondary">
-                    {service.name}
-                  </Badge>
+                  <div key={service.id} className="flex items-center justify-between p-2 border rounded-md">
+                    <div className="flex-1">
+                      <span className="font-medium">{service.name}</span>
+                      <div className="flex gap-4 mt-1">
+                        {(service.cost_price || 0) > 0 && (
+                          <span className="text-xs text-muted-foreground">
+                            Cost: TRY {service.cost_price}
+                          </span>
+                        )}
+                        {(service.selling_price || 0) > 0 && (
+                          <span className="text-xs text-muted-foreground">
+                            Selling: TRY {service.selling_price}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 ))}
               </div>
             ) : (

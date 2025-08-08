@@ -26,8 +26,10 @@ interface Payment {
 interface Service {
   id: string;
   name: string;
-  price: number;
+  price: number; // Deprecated - keeping for backward compatibility
   extra: boolean;
+  cost_price?: number;
+  selling_price?: number;
 }
 
 interface Project {
@@ -105,7 +107,9 @@ export function ProjectPaymentsSection({ projectId, onPaymentsUpdated }: Project
             id,
             name,
             price,
-            extra
+            extra,
+            cost_price,
+            selling_price
           )
         `)
         .eq('project_id', projectId);
@@ -215,7 +219,7 @@ export function ProjectPaymentsSection({ projectId, onPaymentsUpdated }: Project
 
   const extraServices = services
     .filter(s => s.extra)
-    .reduce((sum, s) => sum + (s.price || 0), 0);
+    .reduce((sum, s) => sum + (s.selling_price || s.price || 0), 0);
 
   // Remaining Balance = Base Price + Due Payments + Extra Services - Paid Payments
   const remainingBalance = totalDue + extraServices - totalPaid;

@@ -13,6 +13,8 @@ interface Service {
   name: string;
   category?: string;
   description?: string;
+  cost_price?: number;
+  selling_price?: number;
 }
 
 const ServicesSection = () => {
@@ -176,6 +178,18 @@ const ServicesSection = () => {
                               {service.description}
                             </p>
                           )}
+                          <div className="flex gap-4 mt-2">
+                            {(service.cost_price || 0) > 0 && (
+                              <span className="text-xs text-muted-foreground">
+                                Cost: TRY {service.cost_price}
+                              </span>
+                            )}
+                            {(service.selling_price || 0) > 0 && (
+                              <span className="text-xs text-muted-foreground">
+                                Selling: TRY {service.selling_price}
+                              </span>
+                            )}
+                          </div>
                         </div>
                         
                         <Button

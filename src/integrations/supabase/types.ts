@@ -467,34 +467,40 @@ export type Database = {
       services: {
         Row: {
           category: string | null
+          cost_price: number | null
           created_at: string
           description: string | null
           extra: boolean | null
           id: string
           name: string
           price: number | null
+          selling_price: number | null
           updated_at: string
           user_id: string
         }
         Insert: {
           category?: string | null
+          cost_price?: number | null
           created_at?: string
           description?: string | null
           extra?: boolean | null
           id?: string
           name: string
           price?: number | null
+          selling_price?: number | null
           updated_at?: string
           user_id: string
         }
         Update: {
           category?: string | null
+          cost_price?: number | null
           created_at?: string
           description?: string | null
           extra?: boolean | null
           id?: string
           name?: string
           price?: number | null
+          selling_price?: number | null
           updated_at?: string
           user_id?: string
         }

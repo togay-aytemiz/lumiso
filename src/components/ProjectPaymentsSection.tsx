@@ -205,17 +205,20 @@ export function ProjectPaymentsSection({ projectId, onPaymentsUpdated }: Project
   };
 
   // Calculate totals
-  const manualPayments = payments.filter(p => p.type === 'manual');
-  const totalPaid = manualPayments
+  const totalPaid = payments
     .filter(p => p.status === 'paid')
     .reduce((sum, p) => sum + p.amount, 0);
 
-  const projectBasePrice = project?.base_price || 0;
+  const totalDue = payments
+    .filter(p => p.status === 'due')
+    .reduce((sum, p) => sum + p.amount, 0);
+
   const extraServices = services
     .filter(s => s.extra)
     .reduce((sum, s) => sum + (s.price || 0), 0);
 
-  const totalOutstanding = (projectBasePrice + extraServices) - totalPaid;
+  // Remaining Balance = Base Price + Due Payments + Extra Services - Paid Payments
+  const remainingBalance = totalDue + extraServices - totalPaid;
 
   return (
     <>
@@ -251,7 +254,7 @@ export function ProjectPaymentsSection({ projectId, onPaymentsUpdated }: Project
                 <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
                 <span className="text-sm font-medium text-muted-foreground">Remaining balance</span>
               </div>
-              <div className="text-xl font-semibold">TRY {Math.round(totalOutstanding)}</div>
+              <div className="text-xl font-semibold">TRY {Math.round(remainingBalance)}</div>
             </div>
           </div>
 
@@ -262,7 +265,7 @@ export function ProjectPaymentsSection({ projectId, onPaymentsUpdated }: Project
                 <div key={i} className="h-12 bg-muted rounded-md animate-pulse" />
               ))}
             </div>
-          ) : payments.length === 0 && projectBasePrice === 0 ? (
+          ) : payments.length === 0 && (project?.base_price || 0) === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               No payments recorded yet. Set a base price to get started.
             </div>

@@ -234,26 +234,25 @@ export function ProjectServicesSection({ projectId, onServicesUpdated }: Project
         ) : (
           <div>
             {services.length > 0 ? (
-              <div className="space-y-2">
-                {services.map((service) => (
-                  <div key={service.id} className="flex items-center justify-between p-2 border rounded-md">
-                    <div className="flex-1">
-                      <span className="font-medium">{service.name}</span>
-                      <div className="flex gap-4 mt-1">
-                        {(service.cost_price || 0) > 0 && (
-                          <span className="text-xs text-muted-foreground">
-                            Cost: TRY {service.cost_price}
-                          </span>
-                        )}
-                        {(service.selling_price || 0) > 0 && (
-                          <span className="text-xs text-muted-foreground">
-                            Selling: TRY {service.selling_price}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
+              <div className="flex flex-wrap gap-2">
+                {services.map((service) => {
+                  const price = service.selling_price || service.cost_price || 0;
+                  return (
+                    <Badge
+                      key={service.id}
+                      variant="secondary"
+                      className="h-7 rounded-full px-3 text-xs"
+                    >
+                      <span>
+                        {service.name}
+                        <span className="mx-1">·</span>
+                        <span className="text-foreground/70">
+                          TRY {price}
+                        </span>
+                      </span>
+                    </Badge>
+                  );
+                })}
               </div>
             ) : (
               <div className="text-center py-6">

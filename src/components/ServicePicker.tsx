@@ -113,7 +113,7 @@ export function ServicePicker({
           const items = grouped[cat] || [];
           const selectedCount = items.filter((s) => value.includes(s.id)).length;
           return (
-            <AccordionItem key={cat} value={cat} className="border rounded-md">
+            <AccordionItem key={cat} value={cat} className="border rounded-md mb-3">
               <AccordionTrigger className="px-3 py-2 text-sm">
                 <div className="flex w-full items-center justify-between">
                   <span className="font-medium">{cat}</span>
@@ -153,7 +153,7 @@ export function ServicePicker({
                             <span className="text-sm">
                               {s.name}
                               <span className="mx-1">·</span>
-                              <span className="text-muted-foreground">
+                              <span className={selected ? "text-primary-foreground/80" : "text-muted-foreground"}>
                                 {formatCurrency(price, s.salesCurrency)}
                               </span>
                             </span>
@@ -197,7 +197,7 @@ export function ServicePicker({
                   <span>
                     {s.name}
                     <span className="mx-1">·</span>
-                    <span className="text-muted-foreground">
+                    <span className="text-foreground/70">
                       {formatCurrency(price, s.salesCurrency)}
                     </span>
                   </span>

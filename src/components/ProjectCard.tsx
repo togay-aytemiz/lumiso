@@ -3,9 +3,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ProgressBar } from "@/components/ui/progress-bar";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, CheckCircle2 } from "lucide-react";
 import { format } from "date-fns";
 import { useProjectProgress } from "@/hooks/useProjectProgress";
+import { useProjectPayments } from "@/hooks/useProjectPayments";
 import { ProjectStatusBadge } from "@/components/ProjectStatusBadge";
 
 interface Project {
@@ -27,6 +28,15 @@ interface ProjectCardProps {
 
 export function ProjectCard({ project, onView, refreshTrigger }: ProjectCardProps) {
   const { progress, loading } = useProjectProgress(project.id, refreshTrigger);
+  const { paymentSummary, loading: paymentsLoading } = useProjectPayments(project.id, refreshTrigger);
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat("tr-TR", {
+      style: "currency",
+      currency: "TRY",
+      minimumFractionDigits: 0,
+    }).format(amount);
+  };
 
   return (
     <Card className="w-full hover:shadow-md transition-shadow cursor-pointer">
@@ -41,9 +51,15 @@ export function ProjectCard({ project, onView, refreshTrigger }: ProjectCardProp
               <p className="text-muted-foreground mb-2">{project.description}</p>
             )}
             
-            {/* Progress Bar - only show if project has todos */}
+            {/* Progress Bar and Todo Status */}
             {!loading && progress.total > 0 && (
               <div className="mb-3">
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <CheckCircle2 className="h-3 w-3" />
+                    <span>{progress.completed}/{progress.total} todos completed</span>
+                  </div>
+                </div>
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -82,6 +98,24 @@ export function ProjectCard({ project, onView, refreshTrigger }: ProjectCardProp
                   <span>Updated {format(new Date(project.updated_at), "M/d/yy")}</span>
                 )}
               </div>
+              
+              {/* Payment Status */}
+              {!paymentsLoading && paymentSummary.totalProject > 0 && (
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="text-green-600 font-medium">
+                    {formatCurrency(paymentSummary.totalPaid)}
+                  </span>
+                  <span className="text-muted-foreground">/</span>
+                  <span className="text-muted-foreground">
+                    {formatCurrency(paymentSummary.totalProject)}
+                  </span>
+                  {paymentSummary.remaining > 0 && (
+                    <span className="text-orange-600 ml-1">
+                      ({formatCurrency(paymentSummary.remaining)} remaining)
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
           </div>
           <div className="flex items-center ml-4">

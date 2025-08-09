@@ -28,6 +28,19 @@ export const useProjectPayments = (projectId: string, refreshTrigger?: number) =
 
       if (projectError) throw projectError;
 
+      // Get total cost of added services
+      const { data: servicesData, error: servicesError } = await supabase
+        .from('project_services')
+        .select(`
+          services!inner (
+            selling_price,
+            price
+          )
+        `)
+        .eq('project_id', projectId);
+
+      if (servicesError) throw servicesError;
+
       // Get total paid amount
       const { data: paymentsData, error: paymentsError } = await supabase
         .from('payments')
@@ -37,7 +50,14 @@ export const useProjectPayments = (projectId: string, refreshTrigger?: number) =
 
       if (paymentsError) throw paymentsError;
 
-      const totalProject = projectData?.base_price || 0;
+      const basePrice = projectData?.base_price || 0;
+      const servicesCost = servicesData?.reduce((sum, ps) => {
+        const service = ps.services;
+        const price = service.selling_price || service.price || 0;
+        return sum + Number(price);
+      }, 0) || 0;
+      
+      const totalProject = basePrice + servicesCost;
       const totalPaid = paymentsData?.reduce((sum, payment) => sum + Number(payment.amount), 0) || 0;
       const remaining = Math.max(0, totalProject - totalPaid);
 

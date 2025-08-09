@@ -571,7 +571,7 @@ const LeadDetail = () => {
                 </CardDescription>
               </div>
               <Button
-                variant="link"
+                variant="ghost"
                 size="sm"
                 onClick={() => {
                   setFormData({
@@ -591,50 +591,58 @@ const LeadDetail = () => {
                   setEditOpen(true);
                 }}
                 aria-label="Edit lead information"
+                className="text-muted-foreground hover:text-foreground text-sm h-10 px-3 -mt-2 -mr-2 self-start"
               >
                 Edit
               </Button>
             </CardHeader>
             <CardContent className="space-y-3">
               {/* Rows */}
-              <div>
-                <div className="text-xs text-muted-foreground">Name</div>
-                <div className="text-sm font-medium mt-1">{(lead.name && lead.name.trim()) ? lead.name : "—"}</div>
-              </div>
-              <div>
-                <div className="text-xs text-muted-foreground">Email</div>
-                <div className="text-sm font-medium mt-1">{(lead.email && lead.email.trim()) ? lead.email : "—"}</div>
-              </div>
-              <div>
-                <div className="text-xs text-muted-foreground">Phone</div>
-                <div className="text-sm font-medium mt-1">{(() => { const norm = normalizeTRPhone(lead.phone); return norm ? norm.e164 : ((lead.phone && lead.phone.trim()) ? lead.phone : "—"); })()}</div>
-              </div>
-              <div>
-                <div className="text-xs text-muted-foreground">Notes</div>
-                {lead.notes ? (
-                  <div>
-                    <div
-                      ref={notesRef}
-                      className={cn(
-                        "text-sm mt-1 transition-all",
-                        !notesExpanded && "max-h-12 overflow-hidden"
+              <div className="space-y-2">
+                <div className="flex items-start gap-3">
+                  <div className="w-28 shrink-0 text-xs text-muted-foreground">Name</div>
+                  <div className="text-sm font-medium">{(lead.name && lead.name.trim()) ? lead.name : "—"}</div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-28 shrink-0 text-xs text-muted-foreground">Email</div>
+                  <div className="text-sm font-medium">{(lead.email && lead.email.trim()) ? lead.email : "—"}</div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-28 shrink-0 text-xs text-muted-foreground">Phone</div>
+                  <div className="text-sm font-medium">{(() => { const norm = normalizeTRPhone(lead.phone); return norm ? norm.e164 : ((lead.phone && lead.phone.trim()) ? lead.phone : "—"); })()}</div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-28 shrink-0 text-xs text-muted-foreground">Notes</div>
+                  {lead.notes ? (
+                    <div className="flex-1">
+                      <div className="relative">
+                        <div
+                          ref={notesRef}
+                          className={cn(
+                            "text-sm transition-all whitespace-pre-wrap",
+                            !notesExpanded && "max-h-12 overflow-hidden"
+                          )}
+                        >
+                          {lead.notes}
+                        </div>
+                        {!notesExpanded && isNotesTruncatable && (
+                          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-background to-transparent" />
+                        )}
+                      </div>
+                      {(isNotesTruncatable || notesExpanded) && (
+                        <button
+                          type="button"
+                          className="text-xs text-muted-foreground underline underline-offset-4 mt-1"
+                          onClick={() => setNotesExpanded((v) => !v)}
+                        >
+                          {notesExpanded ? "Show less" : "Show more"}
+                        </button>
                       )}
-                    >
-                      {lead.notes}
                     </div>
-                    {(isNotesTruncatable || notesExpanded) && (
-                      <button
-                        type="button"
-                        className="text-xs text-muted-foreground underline underline-offset-4 mt-1"
-                        onClick={() => setNotesExpanded((v) => !v)}
-                      >
-                        {notesExpanded ? "Show less" : "Show more"}
-                      </button>
-                    )}
-                  </div>
-                ) : (
-                  <div className="text-sm font-medium mt-1">—</div>
-                )}
+                  ) : (
+                    <div className="text-sm font-medium">—</div>
+                  )}
+                </div>
               </div>
 
               {/* Quick Actions */}

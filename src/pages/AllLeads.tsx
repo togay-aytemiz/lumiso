@@ -85,10 +85,7 @@ const AllLeads = () => {
     
     // Apply status filter
     if (statusFilter !== "all") {
-      filtered = leads.filter(lead => {
-        const leadStatus = (lead as any).lead_statuses;
-        return leadStatus && leadStatus.name === statusFilter;
-      });
+      filtered = leads.filter(lead => (lead as any).lead_statuses?.name === statusFilter);
     }
 
     // Apply sorting

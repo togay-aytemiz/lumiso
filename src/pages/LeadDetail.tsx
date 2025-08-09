@@ -10,9 +10,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { ArrowLeft, Save, Trash2, Calendar, Clock, FileText, CheckCircle, MoreHorizontal, Phone, Mail, MessageSquare } from "lucide-react";
+import { ArrowLeft, Save, Trash2, Calendar, Clock, FileText, CheckCircle, MoreHorizontal } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import ClientDetailsList from "@/components/ClientDetailsList";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import ScheduleSessionDialog from "@/components/ScheduleSessionDialog";
 import EditSessionDialog from "@/components/EditSessionDialog";
@@ -598,122 +598,13 @@ const LeadDetail = () => {
               </Button>
             </CardHeader>
             <CardContent className="space-y-3">
-              {/* Rows */}
-              <div className="space-y-1">
-                <TooltipProvider delayDuration={200}>
-                  <div className="flex items-baseline overflow-hidden">
-                    <span className="text-xs text-muted-foreground">Name:</span>
-                    {(() => { const v = (lead.name && lead.name.trim()) ? lead.name : null; return v ? (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span className="ml-1 text-sm font-medium truncate inline-block max-w-full">{v}</span>
-                        </TooltipTrigger>
-                        <TooltipContent>{v}</TooltipContent>
-                      </Tooltip>
-                    ) : (
-                      <span className="ml-1 text-sm font-medium">—</span>
-                    ); })()}
-                  </div>
-
-                  <div className="flex items-baseline overflow-hidden">
-                    <span className="text-xs text-muted-foreground">Email:</span>
-                    {(() => { const v = (lead.email && lead.email.trim()) ? lead.email : null; return v ? (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span className="ml-1 text-sm font-medium truncate inline-block max-w-full">{v}</span>
-                        </TooltipTrigger>
-                        <TooltipContent>{v}</TooltipContent>
-                      </Tooltip>
-                    ) : (
-                      <span className="ml-1 text-sm font-medium">—</span>
-                    ); })()}
-                  </div>
-
-                  <div className="flex items-baseline overflow-hidden">
-                    <span className="text-xs text-muted-foreground">Phone:</span>
-                    {(() => { const norm = normalizeTRPhone(lead.phone); const v = norm ? norm.e164 : ((lead.phone && lead.phone.trim()) ? lead.phone : null); return v ? (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span className="ml-1 text-sm font-medium truncate inline-block max-w-full">{v}</span>
-                        </TooltipTrigger>
-                        <TooltipContent>{v}</TooltipContent>
-                      </Tooltip>
-                    ) : (
-                      <span className="ml-1 text-sm font-medium">—</span>
-                    ); })()}
-                  </div>
-
-                  <div className="flex items-start overflow-hidden">
-                    <span className="text-xs text-muted-foreground mt-[2px]">Notes:</span>
-                    {lead.notes ? (
-                      <div className="ml-1 flex-1">
-                        <div className="relative">
-                          <div
-                            ref={notesRef}
-                            className={cn(
-                              "text-sm transition-all whitespace-pre-wrap",
-                              !notesExpanded && "max-h-12 overflow-hidden"
-                            )}
-                            style={!notesExpanded ? { WebkitMaskImage: "linear-gradient(to bottom, black 70%, transparent 100%)", maskImage: "linear-gradient(to bottom, black 70%, transparent 100%)" } : undefined}
-                          >
-                            {lead.notes}
-                          </div>
-                        </div>
-                        {(isNotesTruncatable || notesExpanded) && (
-                          <button
-                            type="button"
-                            className="text-xs text-muted-foreground underline underline-offset-4 mt-1"
-                            onClick={() => setNotesExpanded((v) => !v)}
-                          >
-                            {notesExpanded ? "Show less" : "Show more"}
-                          </button>
-                        )}
-                      </div>
-                    ) : (
-                      <span className="ml-1 text-sm font-medium">—</span>
-                    )}
-                  </div>
-                </TooltipProvider>
-              </div>
-
-              {/* Quick Actions */}
-              <div className="border-t mt-4 pt-3">
-                <div className="flex flex-wrap gap-2">
-                  {(() => {
-                    const norm = normalizeTRPhone(lead.phone);
-                    return (
-                      <>
-                        {norm && (
-                          <Button asChild variant="secondary" size="sm">
-                            <a
-                              href={`https://wa.me/${norm.e164NoPlus}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              aria-label="WhatsApp"
-                            >
-                              <MessageSquare className="mr-2" /> WhatsApp
-                            </a>
-                          </Button>
-                        )}
-                        {norm && (
-                          <Button asChild variant="secondary" size="sm">
-                            <a href={`tel:${norm.e164}`} aria-label="Call">
-                              <Phone className="mr-2" /> Call
-                            </a>
-                          </Button>
-                        )}
-                        {isValidEmail(lead.email) && (
-                          <Button asChild variant="secondary" size="sm">
-                            <a href={`mailto:${lead.email}`} aria-label="Email">
-                              <Mail className="mr-2" /> Email
-                            </a>
-                          </Button>
-                        )}
-                      </>
-                    );
-                  })()}
-                </div>
-              </div>
+              <ClientDetailsList
+                name={lead.name}
+                email={lead.email}
+                phone={lead.phone}
+                notes={lead.notes}
+                showQuickActions
+              />
             </CardContent>
           </Card>
 

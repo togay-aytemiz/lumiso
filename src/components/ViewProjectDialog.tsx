@@ -17,6 +17,7 @@ import { ProjectTodoListEnhanced } from "./ProjectTodoListEnhanced";
 import { ProjectStatusBadge } from "./ProjectStatusBadge";
 import { ProjectTypeSelector } from "./ProjectTypeSelector";
 import { ProjectPaymentsSection } from "./ProjectPaymentsSection";
+import ClientDetailsList from "@/components/ClientDetailsList";
 
 interface Project {
   id: string;
@@ -379,45 +380,19 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
                       <p className="text-muted-foreground text-base">{project.description}</p>
                     )}
                     
-                    {/* Lead Information */}
-                    {lead && (
-                      <div className="bg-muted/30 rounded-lg p-4 w-full">
-                        <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-2">
-                          <span className="text-sm font-medium text-muted-foreground">Name:</span>
-                          <Button
-                            variant="link"
-                            className="p-0 h-auto text-left justify-start font-medium text-sm text-blue-600 hover:text-blue-800 hover:underline"
-                            onClick={() => {
-                              // Navigate to lead details page
-                              window.location.href = `/leads/${lead.id}`;
-                            }}
-                          >
-                            {lead.name}
-                          </Button>
-                          
-                          {lead.email && (
-                            <>
-                              <span className="text-sm font-medium text-muted-foreground">Email:</span>
-                              <span className="text-sm text-foreground">{lead.email}</span>
-                            </>
-                          )}
-                          
-                          {lead.phone && (
-                            <>
-                              <span className="text-sm font-medium text-muted-foreground">Phone:</span>
-                              <span className="text-sm text-foreground">{lead.phone}</span>
-                            </>
-                          )}
-                          
-                          {lead.notes && (
-                            <>
-                              <span className="text-sm font-medium text-muted-foreground self-start">Notes:</span>
-                              <span className="text-sm text-foreground whitespace-pre-wrap">{lead.notes}</span>
-                            </>
-                          )}
+                      {/* Lead Information */}
+                      {lead && (
+                        <div className="bg-muted/30 rounded-lg p-4 w-full">
+                          <ClientDetailsList
+                            name={lead.name}
+                            email={lead.email}
+                            phone={lead.phone}
+                            notes={lead.notes}
+                            clickableNameHref={`/leads/${lead.id}`}
+                            showQuickActions={false}
+                          />
                         </div>
-                      </div>
-                    )}
+                      )}
                   </div>
                 )}
               </div>

@@ -28,7 +28,6 @@ const AddLeadDialog = ({ onLeadAdded }: AddLeadDialogProps) => {
     phone: "",
     notes: "",
     status: "",
-    due_date: ""
   });
 
   useEffect(() => {
@@ -104,7 +103,6 @@ const AddLeadDialog = ({ onLeadAdded }: AddLeadDialogProps) => {
         phone: formData.phone ? sanitizeInput(formData.phone) : null,
         notes: formData.notes ? await sanitizeHtml(formData.notes) : null,
         status: formData.status,
-        due_date: formData.due_date || null
       };
 
       const { error } = await supabase
@@ -126,7 +124,6 @@ const AddLeadDialog = ({ onLeadAdded }: AddLeadDialogProps) => {
         phone: "",
         notes: "",
         status: defaultStatus,
-        due_date: ""
       });
       setErrors({});
       setOpen(false);
@@ -224,15 +221,6 @@ const AddLeadDialog = ({ onLeadAdded }: AddLeadDialogProps) => {
             </Select>
           </div>
           
-          <div className="space-y-2">
-            <Label htmlFor="due_date">Due Date</Label>
-            <Input
-              id="due_date"
-              type="date"
-              value={formData.due_date}
-              onChange={(e) => handleInputChange("due_date", e.target.value)}
-            />
-          </div>
           
           <div className="space-y-2">
             <Label htmlFor="notes">Notes</Label>

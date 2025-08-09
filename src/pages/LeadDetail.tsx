@@ -10,8 +10,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { ArrowLeft, Save, Trash2, Calendar, Clock, FileText, CheckCircle, MoreHorizontal } from "lucide-react";
+import { ArrowLeft, Save, Trash2, Calendar, Clock, FileText, CheckCircle, MoreHorizontal, Phone, Mail, MessageSquare } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import ScheduleSessionDialog from "@/components/ScheduleSessionDialog";
 import EditSessionDialog from "@/components/EditSessionDialog";
 import ActivitySection from "@/components/ActivitySection";
@@ -19,7 +20,7 @@ import SessionBanner from "@/components/SessionBanner";
 import { ProjectsSection } from "@/components/ProjectsSection";
 import { getLeadStatusStyles, formatStatusText } from "@/lib/leadStatusColors";
 import { LeadStatusBadge } from "@/components/LeadStatusBadge";
-import { formatDate } from "@/lib/utils";
+import { formatDate, cn } from "@/lib/utils";
 import { useUserSettings } from "@/hooks/useUserSettings";
 import { useLeadStatusActions } from "@/hooks/useLeadStatusActions";
 
@@ -28,7 +29,6 @@ interface Lead {
   name: string;
   email: string;
   phone: string;
-  due_date: string;
   notes: string;
   status: string;
   status_id?: string;
@@ -45,6 +45,32 @@ interface Session {
   status: SessionStatus;
   project_id?: string;
   project_name?: string;
+}
+
+// Helpers: validation and phone normalization (TR defaults)
+const isValidEmail = (email?: string | null) => !!email && /[^\s@]+@[^\s@]+\.[^\s@]+/.test(email);
+
+function normalizeTRPhone(phone?: string | null): null | { e164: string; e164NoPlus: string } {
+  if (!phone) return null;
+  const digits = phone.replace(/\D/g, "");
+  let e164 = "";
+  if (phone.trim().startsWith("+")) {
+    // already has plus, ensure it is +90XXXXXXXXXX
+    if (digits.startsWith("90") && digits.length === 12) {
+      e164 = "+" + digits;
+    } else {
+      return null;
+    }
+  } else if (digits.startsWith("90") && digits.length === 12) {
+    e164 = "+" + digits;
+  } else if (digits.startsWith("0") && digits.length === 11) {
+    e164 = "+90" + digits.slice(1);
+  } else if (digits.length === 10) {
+    e164 = "+90" + digits;
+  } else {
+    return null;
+  }
+  return { e164, e164NoPlus: e164.slice(1) };
 }
 
 const LeadDetail = () => {
@@ -71,6 +97,13 @@ const LeadDetail = () => {
     }
   });
 
+  // UI state for Lead Information card
+  const [editOpen, setEditOpen] = useState(false);
+  const [notesExpanded, setNotesExpanded] = useState(false);
+  const notesRef = useRef<HTMLDivElement>(null);
+  const [isNotesTruncatable, setIsNotesTruncatable] = useState(false);
+
+
   // Get system status labels for buttons (refresh when leadStatuses changes)
   const completedStatus = leadStatuses.find(s => s.is_system_final && (s.name.toLowerCase().includes('completed') || s.name.toLowerCase().includes('delivered'))) || 
                           leadStatuses.find(s => s.name === 'Completed');
@@ -82,7 +115,6 @@ const LeadDetail = () => {
     name: "",
     email: "",
     phone: "",
-    due_date: "",
     notes: "",
     status: "new" as string
   });
@@ -92,7 +124,6 @@ const LeadDetail = () => {
     name: "",
     email: "",
     phone: "",
-    due_date: "",
     notes: "",
     status: "new" as string
   });
@@ -141,7 +172,6 @@ const LeadDetail = () => {
         name: data.name || "",
         email: data.email || "",
         phone: data.phone || "",
-        due_date: data.due_date || "",
         notes: data.notes || "",
         status: data.status || "new"
       };
@@ -216,6 +246,16 @@ const LeadDetail = () => {
     }
   };
 
+  // Detect if notes content is truncatable to 2 lines
+  useEffect(() => {
+    if (!notesRef.current || !lead?.notes) { setIsNotesTruncatable(false); return; }
+    const el = notesRef.current;
+    requestAnimationFrame(() => {
+      if (!el) return;
+      setIsNotesTruncatable(el.scrollHeight > el.clientHeight + 1);
+    });
+  }, [lead?.notes, notesExpanded]);
+
   const handleSave = async () => {
     if (!lead || !formData.name.trim()) {
       toast({
@@ -237,7 +277,6 @@ const LeadDetail = () => {
           name: formData.name.trim(),
           email: formData.email.trim() || null,
           phone: formData.phone.trim() || null,
-          due_date: formData.due_date || null,
           notes: formData.notes.trim() || null,
           status: formData.status,
           status_id: selectedStatus?.id || null
@@ -524,85 +563,180 @@ const LeadDetail = () => {
         {/* Left column - Lead Details (25%) */}
         <div className="lg:col-span-1 space-y-6">
           <Card>
-            <CardHeader>
-              <CardTitle>Lead Information</CardTitle>
-              <CardDescription>
-                Created on {formatDate(lead.created_at)}
-              </CardDescription>
+            <CardHeader className="flex flex-row items-start justify-between">
+              <div>
+                <CardTitle>Lead Information</CardTitle>
+                <CardDescription>
+                  Created on {formatDate(lead.created_at)}
+                </CardDescription>
+              </div>
+              <Button
+                variant="link"
+                size="sm"
+                onClick={() => {
+                  setFormData({
+                    name: lead.name || "",
+                    email: lead.email || "",
+                    phone: lead.phone || "",
+                    notes: lead.notes || "",
+                    status: lead.status || formData.status,
+                  });
+                  setInitialFormData({
+                    name: lead.name || "",
+                    email: lead.email || "",
+                    phone: lead.phone || "",
+                    notes: lead.notes || "",
+                    status: lead.status || formData.status,
+                  });
+                  setEditOpen(true);
+                }}
+                aria-label="Edit lead information"
+              >
+                Edit
+              </Button>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-3">
+              {/* Rows */}
+              <div>
+                <div className="text-xs text-muted-foreground">Name</div>
+                <div className="text-sm font-medium mt-1">{(lead.name && lead.name.trim()) ? lead.name : "—"}</div>
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground">Email</div>
+                <div className="text-sm font-medium mt-1">{(lead.email && lead.email.trim()) ? lead.email : "—"}</div>
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground">Phone</div>
+                <div className="text-sm font-medium mt-1">{(() => { const norm = normalizeTRPhone(lead.phone); return norm ? norm.e164 : ((lead.phone && lead.phone.trim()) ? lead.phone : "—"); })()}</div>
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground">Notes</div>
+                {lead.notes ? (
+                  <div>
+                    <div
+                      ref={notesRef}
+                      className={cn(
+                        "text-sm mt-1 transition-all",
+                        !notesExpanded && "max-h-12 overflow-hidden"
+                      )}
+                    >
+                      {lead.notes}
+                    </div>
+                    {(isNotesTruncatable || notesExpanded) && (
+                      <button
+                        type="button"
+                        className="text-xs text-muted-foreground underline underline-offset-4 mt-1"
+                        onClick={() => setNotesExpanded((v) => !v)}
+                      >
+                        {notesExpanded ? "Show less" : "Show more"}
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-sm font-medium mt-1">—</div>
+                )}
+              </div>
+
+              {/* Quick Actions */}
+              <div className="border-t mt-4 pt-3">
+                <div className="flex flex-wrap gap-2">
+                  {(() => {
+                    const norm = normalizeTRPhone(lead.phone);
+                    return (
+                      <>
+                        {norm && (
+                          <Button asChild variant="secondary" size="sm">
+                            <a
+                              href={`https://wa.me/${norm.e164NoPlus}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              aria-label="WhatsApp"
+                            >
+                              <MessageSquare className="mr-2" /> WhatsApp
+                            </a>
+                          </Button>
+                        )}
+                        {norm && (
+                          <Button asChild variant="secondary" size="sm">
+                            <a href={`tel:${norm.e164}`} aria-label="Call">
+                              <Phone className="mr-2" /> Call
+                            </a>
+                          </Button>
+                        )}
+                        {isValidEmail(lead.email) && (
+                          <Button asChild variant="secondary" size="sm">
+                            <a href={`mailto:${lead.email}`} aria-label="Email">
+                              <Mail className="mr-2" /> Email
+                            </a>
+                          </Button>
+                        )}
+                      </>
+                    );
+                  })()}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Edit Lead Modal */}
+          <Dialog open={editOpen} onOpenChange={setEditOpen}>
+            <DialogContent className="sm:max-w-[480px]">
+              <DialogHeader>
+                <DialogTitle>Edit Lead</DialogTitle>
+                <DialogDescription>Update lead details below.</DialogDescription>
+              </DialogHeader>
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Name *</Label>
+                  <Label htmlFor="edit-name">Name *</Label>
                   <Input
-                    id="name"
+                    id="edit-name"
                     value={formData.name}
                     onChange={(e) => handleInputChange("name", e.target.value)}
-                    placeholder="Enter lead name"
+                    required
                   />
                 </div>
-
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="edit-email">Email</Label>
                   <Input
-                    id="email"
+                    id="edit-email"
                     type="email"
                     value={formData.email}
                     onChange={(e) => handleInputChange("email", e.target.value)}
-                    placeholder="Enter email address"
                   />
                 </div>
-
                 <div className="space-y-2">
-                  <Label htmlFor="phone">Phone</Label>
+                  <Label htmlFor="edit-phone">Phone</Label>
                   <Input
-                    id="phone"
+                    id="edit-phone"
                     value={formData.phone}
                     onChange={(e) => handleInputChange("phone", e.target.value)}
-                    placeholder="Enter phone number"
                   />
                 </div>
-
-                {/* Status section removed - now handled by the status badge in header */}
-
                 <div className="space-y-2">
-                  <Label htmlFor="due_date">Due Date</Label>
-                  <Input
-                    id="due_date"
-                    type="date"
-                    value={formData.due_date}
-                    onChange={(e) => handleInputChange("due_date", e.target.value)}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="notes">Notes</Label>
+                  <Label htmlFor="edit-notes">Notes</Label>
                   <Textarea
-                    id="notes"
+                    id="edit-notes"
                     value={formData.notes}
                     onChange={(e) => handleInputChange("notes", e.target.value)}
-                    placeholder="Enter any notes about this lead"
-                    rows={3}
+                    rows={4}
                   />
                 </div>
+                <div className="flex justify-end gap-2 pt-2">
+                  <Button variant="outline" type="button" onClick={() => setEditOpen(false)}>Cancel</Button>
+                  <Button
+                    type="button"
+                    onClick={async () => {
+                      await handleSave();
+                      setEditOpen(false);
+                    }}
+                    disabled={saving || !hasChanges}
+                  >
+                    {saving ? "Saving..." : "Save"}
+                  </Button>
+                </div>
               </div>
-
-              {/* Save Changes Button - Full width, primary styling */}
-              <div className="pt-4 border-t">
-                <Button 
-                  onClick={handleSave} 
-                  disabled={saving || !hasChanges}
-                  size="sm"
-                  className="w-full"
-                  variant={hasChanges ? "default" : "secondary"}
-                >
-                  <Save className="h-4 w-4 mr-2" />
-                  {saving ? "Saving..." : "Save Changes"}
-                </Button>
-              </div>
-
-            </CardContent>
-          </Card>
+            </DialogContent>
+          </Dialog>
         </div>
 
         {/* Right column - Projects and Activity Section (75%) */}

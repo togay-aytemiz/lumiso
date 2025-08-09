@@ -463,7 +463,7 @@ const AllProjects = () => {
                           <TableCell className="font-medium">
                             <Button
                               variant="link"
-                              className="p-0 h-auto text-left justify-start font-medium"
+                              className="p-0 h-auto text-left justify-start font-medium text-foreground hover:text-foreground hover:underline"
                               onClick={() => handleProjectClick(project)}
                             >
                               {project.name}
@@ -474,7 +474,7 @@ const AllProjects = () => {
                               <>
                                 <Button
                                   variant="link"
-                                  className="p-0 h-auto text-left justify-start"
+                                  className="p-0 h-auto text-left justify-start text-foreground hover:text-foreground hover:underline"
                                   onClick={(e) => handleLeadClick(e, project.lead.id)}
                                 >
                                   {project.lead.name}

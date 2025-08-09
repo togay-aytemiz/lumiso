@@ -647,19 +647,17 @@ const LeadDetail = () => {
                     <span className="text-xs text-muted-foreground mt-[2px]">Notes:</span>
                     {lead.notes ? (
                       <div className="ml-1 flex-1">
-                        <div className="relative overflow-hidden">
+                        <div className="relative">
                           <div
                             ref={notesRef}
                             className={cn(
                               "text-sm transition-all whitespace-pre-wrap",
                               !notesExpanded && "max-h-12 overflow-hidden"
                             )}
+                            style={!notesExpanded ? { WebkitMaskImage: "linear-gradient(to bottom, black 70%, transparent 100%)", maskImage: "linear-gradient(to bottom, black 70%, transparent 100%)" } : undefined}
                           >
                             {lead.notes}
                           </div>
-                          {!notesExpanded && isNotesTruncatable && (
-                            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-background to-transparent" />
-                          )}
                         </div>
                         {(isNotesTruncatable || notesExpanded) && (
                           <button

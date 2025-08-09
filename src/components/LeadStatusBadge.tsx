@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -39,6 +40,8 @@ export function LeadStatusBadge({
   const [loading, setLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 });
+  const buttonRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { settings: userSettings } = useUserSettings();
@@ -120,6 +123,30 @@ export function LeadStatusBadge({
     } finally {
       setLoading(false);
     }
+  };
+
+  const calculateDropdownPosition = () => {
+    if (!buttonRef.current) return;
+    
+    const rect = buttonRef.current.getBoundingClientRect();
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+    
+    setDropdownPosition({
+      top: rect.bottom + scrollTop + 8,
+      left: rect.left + scrollLeft,
+      width: Math.max(rect.width, 200)
+    });
+  };
+
+  const handleDropdownToggle = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!dropdownOpen) {
+      calculateDropdownPosition();
+    }
+    setDropdownOpen(!dropdownOpen);
   };
 
   const handleStatusChange = async (newStatusId: string) => {
@@ -212,8 +239,9 @@ export function LeadStatusBadge({
     const defaultColor = "#A0AEC0";
     
     return (
-      <div className="relative" ref={dropdownRef}>
+      <div className="relative">
         <Button
+          ref={buttonRef}
           variant="ghost"
           className={cn(
             "inline-flex items-center gap-2 h-auto rounded-full font-medium hover:opacity-80 transition-opacity",
@@ -228,11 +256,7 @@ export function LeadStatusBadge({
             borderColor: defaultColor + '60'
           }}
           disabled={isUpdating}
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            setDropdownOpen(!dropdownOpen);
-          }}
+          onClick={handleDropdownToggle}
         >
           <div 
             className={cn("rounded-full border-2", dotSize)}
@@ -242,9 +266,17 @@ export function LeadStatusBadge({
           <ChevronDown className={cn("ml-1 transition-transform", isSmall ? "w-3 h-3" : "w-4 h-4", dropdownOpen && "rotate-180")} />
         </Button>
 
-        {/* Dropdown for status selection */}
-        {dropdownOpen && (
-          <div className="absolute top-full left-0 mt-2 w-auto min-w-[200px] bg-background border rounded-lg shadow-lg z-[999] p-2">
+        {/* Portal dropdown for status selection */}
+        {dropdownOpen && createPortal(
+          <div 
+            ref={dropdownRef}
+            className="fixed bg-background border rounded-lg shadow-lg z-[9999] p-2"
+            style={{
+              top: dropdownPosition.top,
+              left: dropdownPosition.left,
+              minWidth: dropdownPosition.width
+            }}
+          >
             <div className="space-y-1">
               {statuses
                 .filter(status => userSettings.show_quick_status_buttons || !status.is_system_final)
@@ -270,7 +302,8 @@ export function LeadStatusBadge({
                 </Button>
               ))}
             </div>
-          </div>
+          </div>,
+          document.body
         )}
       </div>
     );
@@ -306,8 +339,9 @@ export function LeadStatusBadge({
 
   // Editable status badge with current status
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className="relative">
       <Button
+        ref={buttonRef}
         variant="ghost"
         className={cn(
           "inline-flex items-center gap-2 h-auto rounded-full font-medium hover:opacity-80 transition-opacity",
@@ -322,11 +356,7 @@ export function LeadStatusBadge({
           borderColor: currentStatusData.color + '60'
         }}
         disabled={isUpdating}
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          setDropdownOpen(!dropdownOpen);
-        }}
+        onClick={handleDropdownToggle}
       >
         <div 
           className={cn("rounded-full", dotSize)}
@@ -336,9 +366,17 @@ export function LeadStatusBadge({
         <ChevronDown className={cn("ml-1 transition-transform", isSmall ? "w-3 h-3" : "w-4 h-4", dropdownOpen && "rotate-180")} />
       </Button>
 
-      {/* Dropdown for changing status */}
-      {dropdownOpen && (
-        <div className="absolute top-full left-0 mt-2 w-auto min-w-[200px] bg-background border rounded-lg shadow-lg z-[999] p-2">
+      {/* Portal dropdown for changing status */}
+      {dropdownOpen && createPortal(
+        <div 
+          ref={dropdownRef}
+          className="fixed bg-background border rounded-lg shadow-lg z-[9999] p-2"
+          style={{
+            top: dropdownPosition.top,
+            left: dropdownPosition.left,
+            minWidth: dropdownPosition.width
+          }}
+        >
           <div className="space-y-1">
             {statuses
               .filter(status => userSettings.show_quick_status_buttons || !status.is_system_final)
@@ -367,7 +405,8 @@ export function LeadStatusBadge({
               </Button>
             ))}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

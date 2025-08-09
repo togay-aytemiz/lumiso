@@ -382,7 +382,7 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
                     
                       {/* Lead Information */}
                       {lead && (
-                        <div className="bg-muted/30 rounded-lg p-4 w-full">
+                        <div className="w-full">
                           <ClientDetailsList
                             name={lead.name}
                             email={lead.email}
@@ -391,6 +391,7 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
                             clickableNameHref={`/leads/${lead.id}`}
                             clickableNameClasses="text-blue-600 hover:text-blue-800 hover:underline"
                             showQuickActions={false}
+                            clampNotes={false}
                           />
                         </div>
                       )}

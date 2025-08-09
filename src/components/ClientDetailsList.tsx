@@ -12,6 +12,7 @@ interface ClientDetailsListProps {
   clickableNameHref?: string; // if provided, name becomes a link
   clickableNameClasses?: string; // custom classes for clickable name (e.g., blue link)
   showQuickActions?: boolean; // default true
+  clampNotes?: boolean; // if false, never truncate notes
 }
 
 const isValidEmail = (email?: string | null) => !!email && /[^\s@]+@[^\s@]+\.[^\s@]+/.test(email);
@@ -38,19 +39,20 @@ function normalizeTRPhone(phone?: string | null): null | { e164: string; e164NoP
   return { e164, e164NoPlus: e164.slice(1) };
 }
 
-export function ClientDetailsList({ name, email, phone, notes, clickableNameHref, clickableNameClasses, showQuickActions = true }: ClientDetailsListProps) {
+export function ClientDetailsList({ name, email, phone, notes, clickableNameHref, clickableNameClasses, showQuickActions = true, clampNotes = true }: ClientDetailsListProps) {
   const [notesExpanded, setNotesExpanded] = useState(false);
   const [isNotesTruncatable, setIsNotesTruncatable] = useState(false);
   const notesRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (!clampNotes) { setIsNotesTruncatable(false); return; }
     if (!notesRef.current || !notes) { setIsNotesTruncatable(false); return; }
     const el = notesRef.current;
     requestAnimationFrame(() => {
       if (!el) return;
       setIsNotesTruncatable(el.scrollHeight > el.clientHeight + 1);
     });
-  }, [notes, notesExpanded]);
+  }, [notes, notesExpanded, clampNotes]);
 
   const normalized = useMemo(() => normalizeTRPhone(phone), [phone]);
 
@@ -120,14 +122,14 @@ export function ClientDetailsList({ name, email, phone, notes, clickableNameHref
                     ref={notesRef}
                     className={cn(
                       "text-sm transition-all whitespace-pre-wrap",
-                      !notesExpanded && "max-h-12 overflow-hidden"
+                      clampNotes && !notesExpanded && "max-h-12 overflow-hidden"
                     )}
-                    style={!notesExpanded ? { WebkitMaskImage: "linear-gradient(to bottom, black 70%, transparent 100%)", maskImage: "linear-gradient(to bottom, black 70%, transparent 100%)" } : undefined}
+                    style={clampNotes && !notesExpanded ? { WebkitMaskImage: "linear-gradient(to bottom, black 70%, transparent 100%)", maskImage: "linear-gradient(to bottom, black 70%, transparent 100%)" } : undefined}
                   >
                     {notes}
                   </div>
                 </div>
-                {(isNotesTruncatable || notesExpanded) && (
+                {clampNotes && (isNotesTruncatable || notesExpanded) && (
                   <button
                     type="button"
                     className="text-xs text-muted-foreground underline underline-offset-4 mt-1"

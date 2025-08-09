@@ -17,7 +17,7 @@ import { ProjectTodoListEnhanced } from "./ProjectTodoListEnhanced";
 import { ProjectStatusBadge } from "./ProjectStatusBadge";
 import { ProjectTypeSelector } from "./ProjectTypeSelector";
 import { ProjectPaymentsSection } from "./ProjectPaymentsSection";
-import ClientDetailsList from "@/components/ClientDetailsList";
+import ClientDetailsCard from "@/components/ClientDetailsCard";
 
 interface Project {
   id: string;
@@ -383,15 +383,16 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
                       {/* Lead Information */}
                       {lead && (
                         <div className="w-full">
-                          <ClientDetailsList
+                          <ClientDetailsCard
+                            title="Client Details"
                             name={lead.name}
                             email={lead.email}
                             phone={lead.phone}
                             notes={lead.notes}
                             clickableNameHref={`/leads/${lead.id}`}
                             clickableNameClasses="text-blue-600 hover:text-blue-800 hover:underline"
-                            showQuickActions={false}
-                            clampNotes={false}
+                            showQuickActions={true}
+                            clampNotes={true}
                           />
                         </div>
                       )}

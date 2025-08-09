@@ -456,9 +456,19 @@ const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="activities" className="w-full">
-            <TabsList className="grid w-fit grid-cols-2">
-              <TabsTrigger value="activities">Activities</TabsTrigger>
-              <TabsTrigger value="history">History</TabsTrigger>
+            <TabsList className="bg-transparent border-b border-border p-0 h-auto w-full">
+              <TabsTrigger 
+                value="activities" 
+                className="bg-transparent border-0 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:shadow-none px-4 py-3 font-medium text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Activities
+              </TabsTrigger>
+              <TabsTrigger 
+                value="history" 
+                className="bg-transparent border-0 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:shadow-none px-4 py-3 font-medium text-muted-foreground hover:text-foreground transition-colors"
+              >
+                History
+              </TabsTrigger>
             </TabsList>
             
             <TabsContent value="activities" className="mt-4">

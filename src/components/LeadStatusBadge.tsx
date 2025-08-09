@@ -132,10 +132,22 @@ export function LeadStatusBadge({
     const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
     const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
     
+    // Calculate optimal width based on content
+    const longestStatusName = statuses.reduce((longest, status) => 
+      status.name.length > longest.length ? status.name : longest, ""
+    );
+    
+    // Calculate width: base padding + icon + text + chevron + extra padding
+    const estimatedWidth = Math.max(
+      longestStatusName.length * 8 + 80, // 8px per character + padding and icons
+      rect.width,
+      180 // minimum width
+    );
+    
     setDropdownPosition({
       top: rect.bottom + scrollTop + 8,
       left: rect.left + scrollLeft,
-      width: Math.max(rect.width, 200)
+      width: Math.min(estimatedWidth, 300) // max width 300px
     });
   };
 

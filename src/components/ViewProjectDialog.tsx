@@ -22,6 +22,7 @@ import ProjectSummaryCard from "@/components/project-details/Summary/ProjectSumm
 import ClientCard from "@/components/project-details/Summary/ClientCard";
 import FinancialSummaryCard from "@/components/project-details/Summary/FinancialSummaryCard";
 import SessionsSummaryCard from "@/components/project-details/Summary/SessionsSummaryCard";
+import ClientDetailsCard from "@/components/ClientDetailsCard";
 
 interface Project {
   id: string;

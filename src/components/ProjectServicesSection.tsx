@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Edit2, Save, X, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { ServiceSelector } from "./ServiceSelector";
+import { ServicePicker, type PickerService } from "./ServicePicker";
 
 interface Service {
   id: string;
@@ -13,6 +13,7 @@ interface Service {
   category: string | null;
   cost_price?: number;
   selling_price?: number;
+  price?: number;
 }
 
 interface ProjectServicesSectionProps {
@@ -25,6 +26,9 @@ export function ProjectServicesSection({ projectId, onServicesUpdated }: Project
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [availableServices, setAvailableServices] = useState<Service[]>([]);
+  const [loadingAvailable, setLoadingAvailable] = useState(true);
+  const [errorAvailable, setErrorAvailable] = useState<string | null>(null);
   const { toast } = useToast();
 
   const fetchProjectServices = async () => {
@@ -58,8 +62,33 @@ export function ProjectServicesSection({ projectId, onServicesUpdated }: Project
     }
   };
 
+  const fetchAvailableServices = async () => {
+    setLoadingAvailable(true);
+    setErrorAvailable(null);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from("services")
+        .select("id, name, category, cost_price, selling_price, price")
+        .eq("user_id", user.id)
+        .order("category", { ascending: true })
+        .order("name", { ascending: true });
+
+      if (error) throw error;
+      setAvailableServices(data || []);
+    } catch (err: any) {
+      console.error("Error fetching available services:", err);
+      setErrorAvailable(err.message || "Failed to load services");
+    } finally {
+      setLoadingAvailable(false);
+    }
+  };
+
   useEffect(() => {
     fetchProjectServices();
+    fetchAvailableServices();
   }, [projectId]);
 
   const handleSaveServices = async (selectedServices: Service[]) => {

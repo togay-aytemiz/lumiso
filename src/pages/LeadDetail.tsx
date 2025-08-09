@@ -565,8 +565,8 @@ const LeadDetail = () => {
           <Card>
             <CardHeader className="flex flex-row items-start justify-between">
               <div>
-                <CardTitle>Lead Information</CardTitle>
-                <CardDescription>
+                <CardTitle>Contact Info</CardTitle>
+                <CardDescription className="text-xs">
                   Created on {formatDate(lead.created_at)}
                 </CardDescription>
               </div>
@@ -598,21 +598,21 @@ const LeadDetail = () => {
             </CardHeader>
             <CardContent className="space-y-3">
               {/* Rows */}
-              <div className="space-y-2">
-                <div className="flex items-start gap-3">
-                  <div className="w-28 shrink-0 text-xs text-muted-foreground">Name</div>
+              <div className="space-y-1">
+                <div className="flex items-start gap-2">
+                  <div className="w-24 shrink-0 text-xs text-muted-foreground">Name</div>
                   <div className="text-sm font-medium">{(lead.name && lead.name.trim()) ? lead.name : "—"}</div>
                 </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-28 shrink-0 text-xs text-muted-foreground">Email</div>
+                <div className="flex items-start gap-2">
+                  <div className="w-24 shrink-0 text-xs text-muted-foreground">Email</div>
                   <div className="text-sm font-medium">{(lead.email && lead.email.trim()) ? lead.email : "—"}</div>
                 </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-28 shrink-0 text-xs text-muted-foreground">Phone</div>
+                <div className="flex items-start gap-2">
+                  <div className="w-24 shrink-0 text-xs text-muted-foreground">Phone</div>
                   <div className="text-sm font-medium">{(() => { const norm = normalizeTRPhone(lead.phone); return norm ? norm.e164 : ((lead.phone && lead.phone.trim()) ? lead.phone : "—"); })()}</div>
                 </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-28 shrink-0 text-xs text-muted-foreground">Notes</div>
+                <div className="flex items-start gap-2">
+                  <div className="w-24 shrink-0 text-xs text-muted-foreground">Notes</div>
                   {lead.notes ? (
                     <div className="flex-1">
                       <div className="relative">

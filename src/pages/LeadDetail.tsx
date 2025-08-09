@@ -456,7 +456,7 @@ const LeadDetail = () => {
                 statuses={leadStatuses}
               />
             </div>
-            <p className="text-muted-foreground">Edit lead information</p>
+            
           </div>
           
           <div className="flex items-center gap-4">

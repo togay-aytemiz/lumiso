@@ -297,7 +297,7 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
     <>
       <Dialog open={open} onOpenChange={handleDialogOpenChange}>
         <DialogContent className={`${isFullscreen ? 'max-w-none w-[100vw] h-[100vh] m-0 rounded-none' : 'sm:max-w-5xl max-h-[85vh]'} overflow-y-auto [&>button]:hidden`}>
-          <DialogHeader className="pb-6">
+          <DialogHeader className="pb-4">
             <div className="flex items-start justify-between">
               <div className="flex-1 space-y-2">
                 {isEditing ? (
@@ -347,7 +347,7 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
                     </div>
                   </div>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     <div className="space-y-1">
                       <div className="flex items-center gap-3 flex-wrap">
                         <DialogTitle className="text-2xl font-bold leading-tight">{project?.name}</DialogTitle>
@@ -371,12 +371,6 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
                         )}
                       </div>
                       
-                      {/* Created and Updated dates */}
-                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                        <span>Created {project && format(new Date(project.created_at), "MMM d, yyyy")}</span>
-                        <span>•</span>
-                        <span>Updated {project && format(new Date(project.updated_at), "MMM d, yyyy")}</span>
-                      </div>
                     </div>
                     
                     {project?.description && (

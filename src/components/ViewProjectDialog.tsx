@@ -479,24 +479,24 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
               { id: 'todos', title: 'Todos', content: (
                 <ProjectTodoListEnhanced projectId={project!.id} />
               )},
-              { id: 'danger', title: 'Danger Zone', content: (
-                <div className="pt-6 border-t border-destructive/20 bg-destructive/5 rounded-md p-4">
-                  <div className="space-y-3">
-                    <h3 className="text-sm font-medium text-destructive">Danger Zone</h3>
-                    <Button
-                      variant="outline"
-                      onClick={() => setShowDeleteDialog(true)}
-                      className="w-full border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
-                    >
-                      Delete Project
-                    </Button>
-                    <p className="text-xs text-muted-foreground text-center">
-                      This will not delete sessions, notes, or reminders.
-                    </p>
-                  </div>
-                </div>
-              )},
             ]}
+           rightFooter={
+             <div className="pt-6 border-t border-destructive/20 bg-destructive/5 rounded-md p-4">
+               <div className="space-y-3">
+                 <h3 className="text-sm font-medium text-destructive">Danger Zone</h3>
+                 <Button
+                   variant="outline"
+                   onClick={() => setShowDeleteDialog(true)}
+                   className="w-full border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                 >
+                   Delete Project
+                 </Button>
+                 <p className="text-xs text-muted-foreground text-center">
+                   This will not delete sessions, notes, or reminders.
+                 </p>
+               </div>
+             </div>
+           }
           />
         </DialogContent>
       </Dialog>

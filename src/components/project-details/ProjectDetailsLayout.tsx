@@ -4,9 +4,10 @@ interface ProjectDetailsLayoutProps {
   header: ReactNode;
   left: ReactNode;
   sections: { id: string; title: string; content: ReactNode }[];
+  rightFooter?: ReactNode;
 }
 
-export default function ProjectDetailsLayout({ header, left, sections }: ProjectDetailsLayoutProps) {
+export default function ProjectDetailsLayout({ header, left, sections, rightFooter }: ProjectDetailsLayoutProps) {
   const [activeId, setActiveId] = useState<string>(sections[0]?.id || "");
   const observer = useRef<IntersectionObserver | null>(null);
 
@@ -31,7 +32,7 @@ export default function ProjectDetailsLayout({ header, left, sections }: Project
   };
 
   return (
-    <div className="w-full min-h-screen px-6 py-6">
+    <div className="w-full min-h-screen">
       {/* Header */}
       <header className="mb-4">{header}</header>
 
@@ -65,10 +66,10 @@ export default function ProjectDetailsLayout({ header, left, sections }: Project
           <div className="space-y-8 mt-4">
             {sections.map((s) => (
               <section key={s.id} id={s.id} className="scroll-mt-[88px]">
-                <h2 className="text-lg font-semibold mb-4">{s.title}</h2>
                 <div>{s.content}</div>
               </section>
             ))}
+            {rightFooter ? <div>{rightFooter}</div> : null}
           </div>
         </main>
       </div>

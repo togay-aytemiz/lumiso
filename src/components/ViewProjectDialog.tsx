@@ -22,6 +22,7 @@ import ProjectSummaryCard from "@/components/project-details/Summary/ProjectSumm
 import ClientCard from "@/components/project-details/Summary/ClientCard";
 import FinancialSummaryCard from "@/components/project-details/Summary/FinancialSummaryCard";
 import SessionsSummaryCard from "@/components/project-details/Summary/SessionsSummaryCard";
+import QuickActionsCard from "@/components/project-details/Summary/QuickActionsCard";
 import ClientDetailsCard from "@/components/ClientDetailsCard";
 
 interface Project {
@@ -444,66 +445,97 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
             </div>
           </DialogHeader>
           
-          <div className="space-y-8">
-            {/* Payments Section */}
-            <ProjectPaymentsSection
-              projectId={project.id}
-              onPaymentsUpdated={() => {
-                onProjectUpdated();
-                onActivityUpdated?.();
-              }}
-            />
-            
-            {/* Project Services Section */}
-            <ProjectServicesSection
-              projectId={project.id}
-              onServicesUpdated={() => {
-                onProjectUpdated();
-                onActivityUpdated?.();
-              }}
-            />
-            
-            {/* Sessions Section */}
-            <SessionsSection
-              sessions={sessions}
-              loading={loading}
-              leadId={project.lead_id}
-              projectId={project.id}
-              leadName={leadName}
-              projectName={project.name}
-              onSessionUpdated={handleSessionUpdated}
-              onDeleteSession={handleDeleteSession}
-            />
-
-            {/* Project Activities Section */}
-            <ProjectActivitySection
-              projectId={project.id}
-              leadId={project.lead_id}
-              leadName={leadName}
-              projectName={project.name}
-              onActivityUpdated={onActivityUpdated}
-            />
-            
-            {/* Enhanced Todos Section with inline addition */}
-            <ProjectTodoListEnhanced projectId={project.id} />
-            
-            {/* Delete Project Section - Danger Zone */}
-            <div className="pt-6 border-t border-destructive/20 bg-destructive/5 -mx-6 px-6 -mb-6 pb-6">
-              <div className="space-y-3">
-                <h3 className="text-sm font-medium text-destructive">Danger Zone</h3>
-                <Button
-                  variant="outline"
-                  onClick={() => setShowDeleteDialog(true)}
-                  className="w-full border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
-                >
-                  Delete Project
-                </Button>
-                <p className="text-xs text-muted-foreground text-center">
-                  This will not delete sessions, notes, or reminders.
-                </p>
+          <ProjectDetailsLayout
+            header={<></>}
+            left={
+              <div className="space-y-4">
+                <ProjectSummaryCard
+                  projectId={project!.id}
+                  name={project!.name}
+                  statusId={project!.status_id || undefined}
+                  projectTypeName={projectType?.name}
+                  onStatusChange={() => onProjectUpdated()}
+                />
+                {lead && (
+                  <ClientCard
+                    createdAt={project!.created_at}
+                    name={lead.name}
+                    email={lead.email}
+                    phone={lead.phone}
+                    notes={lead.notes}
+                    leadId={lead.id}
+                  />
+                )}
+                <FinancialSummaryCard onAddPaymentClick={() => {
+                  document.getElementById('payments')?.scrollIntoView({ behavior: 'smooth' });
+                }} />
+                <SessionsSummaryCard
+                  count={sessions.length}
+                  onViewAll={() => document.getElementById('sessions')?.scrollIntoView({ behavior: 'smooth' })}
+                />
+                <QuickActionsCard
+                  onAddNote={() => document.getElementById('activities')?.scrollIntoView({ behavior: 'smooth' })}
+                  onAddTodo={() => document.getElementById('todos')?.scrollIntoView({ behavior: 'smooth' })}
+                  onAddService={() => document.getElementById('services')?.scrollIntoView({ behavior: 'smooth' })}
+                />
               </div>
-            </div>
-          </div>
+            }
+            sections={[
+              { id: 'payments', title: 'Payments', content: (
+                <ProjectPaymentsSection
+                  projectId={project!.id}
+                  onPaymentsUpdated={() => { onProjectUpdated(); onActivityUpdated?.(); }}
+                />
+              )},
+              { id: 'services', title: 'Services', content: (
+                <ProjectServicesSection
+                  projectId={project!.id}
+                  onServicesUpdated={() => { onProjectUpdated(); onActivityUpdated?.(); }}
+                />
+              )},
+              { id: 'sessions', title: 'Sessions', content: (
+                <SessionsSection
+                  sessions={sessions}
+                  loading={loading}
+                  leadId={project!.lead_id}
+                  projectId={project!.id}
+                  leadName={leadName}
+                  projectName={project!.name}
+                  onSessionUpdated={handleSessionUpdated}
+                  onDeleteSession={handleDeleteSession}
+                />
+              )},
+              { id: 'activities', title: 'Activities', content: (
+                <ProjectActivitySection
+                  projectId={project!.id}
+                  leadId={project!.lead_id}
+                  leadName={leadName}
+                  projectName={project!.name}
+                  onActivityUpdated={onActivityUpdated}
+                />
+              )},
+              { id: 'todos', title: 'Todos', content: (
+                <ProjectTodoListEnhanced projectId={project!.id} />
+              )},
+              { id: 'danger', title: 'Danger Zone', content: (
+                <div className="pt-6 border-t border-destructive/20 bg-destructive/5 rounded-md p-4">
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-medium text-destructive">Danger Zone</h3>
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowDeleteDialog(true)}
+                      className="w-full border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                    >
+                      Delete Project
+                    </Button>
+                    <p className="text-xs text-muted-foreground text-center">
+                      This will not delete sessions, notes, or reminders.
+                    </p>
+                  </div>
+                </div>
+              )},
+            ]}
+          />
         </DialogContent>
       </Dialog>
 

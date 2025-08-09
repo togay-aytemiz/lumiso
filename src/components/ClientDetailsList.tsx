@@ -124,7 +124,6 @@ export function ClientDetailsList({ name, email, phone, notes, clickableNameHref
                       "text-sm transition-all whitespace-pre-wrap",
                       clampNotes && !notesExpanded && "max-h-12 overflow-hidden"
                     )}
-                    style={clampNotes && !notesExpanded ? { WebkitMaskImage: "linear-gradient(to bottom, black 70%, transparent 100%)", maskImage: "linear-gradient(to bottom, black 70%, transparent 100%)" } : undefined}
                   >
                     {notes}
                   </div>

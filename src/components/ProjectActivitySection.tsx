@@ -218,7 +218,7 @@ export function ProjectActivitySection({ projectId, leadId, leadName, projectNam
               value={content}
               onChange={(e) => setContent(e.target.value)}
               placeholder="Enter your project note..."
-              rows={3}
+              rows={1}
               className="resize-none"
             />
           </div>

@@ -244,7 +244,7 @@ export function LeadStatusBadge({
 
         {/* Dropdown for status selection */}
         {dropdownOpen && (
-          <div className="absolute top-full left-0 mt-2 w-auto min-w-[200px] bg-background border rounded-lg shadow-lg z-50 p-2">
+          <div className="absolute top-full left-0 mt-2 w-auto min-w-[200px] bg-background border rounded-lg shadow-lg z-[999] p-2">
             <div className="space-y-1">
               {statuses
                 .filter(status => userSettings.show_quick_status_buttons || !status.is_system_final)
@@ -338,7 +338,7 @@ export function LeadStatusBadge({
 
       {/* Dropdown for changing status */}
       {dropdownOpen && (
-        <div className="absolute top-full left-0 mt-2 w-auto min-w-[200px] bg-background border rounded-lg shadow-lg z-50 p-2">
+        <div className="absolute top-full left-0 mt-2 w-auto min-w-[200px] bg-background border rounded-lg shadow-lg z-[999] p-2">
           <div className="space-y-1">
             {statuses
               .filter(status => userSettings.show_quick_status_buttons || !status.is_system_final)

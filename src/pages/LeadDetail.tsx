@@ -568,7 +568,7 @@ const LeadDetail = () => {
               <div>
                 <CardTitle>Client Details</CardTitle>
                 <CardDescription className="text-xs">
-                  Created on {formatDate(lead.created_at)}
+                  Created on {new Date(lead.created_at).toLocaleDateString('tr-TR')}
                 </CardDescription>
               </div>
               <Button

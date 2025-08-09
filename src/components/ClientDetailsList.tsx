@@ -10,6 +10,7 @@ interface ClientDetailsListProps {
   phone?: string | null;
   notes?: string | null;
   clickableNameHref?: string; // if provided, name becomes a link
+  clickableNameClasses?: string; // custom classes for clickable name (e.g., blue link)
   showQuickActions?: boolean; // default true
 }
 
@@ -37,7 +38,7 @@ function normalizeTRPhone(phone?: string | null): null | { e164: string; e164NoP
   return { e164, e164NoPlus: e164.slice(1) };
 }
 
-export function ClientDetailsList({ name, email, phone, notes, clickableNameHref, showQuickActions = true }: ClientDetailsListProps) {
+export function ClientDetailsList({ name, email, phone, notes, clickableNameHref, clickableNameClasses, showQuickActions = true }: ClientDetailsListProps) {
   const [notesExpanded, setNotesExpanded] = useState(false);
   const [isNotesTruncatable, setIsNotesTruncatable] = useState(false);
   const notesRef = useRef<HTMLDivElement>(null);
@@ -67,7 +68,7 @@ export function ClientDetailsList({ name, email, phone, notes, clickableNameHref
                   variant="link"
                   className="ml-1 p-0 h-auto text-left justify-start font-medium text-sm"
                 >
-                  <a href={clickableNameHref}>{v}</a>
+                  <a href={clickableNameHref} className={clickableNameClasses}>{v}</a>
                 </Button>
               ) : (
                 <Tooltip>
@@ -147,28 +148,37 @@ export function ClientDetailsList({ name, email, phone, notes, clickableNameHref
         <div className="border-t mt-4 pt-3">
           <div className="flex flex-wrap gap-2">
             {normalized && (
-              <Button asChild variant="secondary" size="sm">
+              <Button asChild variant="secondary" size="sm" className="rounded-xl">
                 <a
                   href={`https://wa.me/${normalized.e164NoPlus}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="WhatsApp"
                 >
-                  <MessageSquare className="mr-2" /> WhatsApp
+                  <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-muted mr-2">
+                    <MessageSquare className="h-4 w-4" />
+                  </span>
+                  WhatsApp
                 </a>
               </Button>
             )}
             {normalized && (
-              <Button asChild variant="secondary" size="sm">
+              <Button asChild variant="secondary" size="sm" className="rounded-xl">
                 <a href={`tel:${normalized.e164}`} aria-label="Call">
-                  <Phone className="mr-2" /> Call
+                  <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-muted mr-2">
+                    <Phone className="h-4 w-4" />
+                  </span>
+                  Call
                 </a>
               </Button>
             )}
             {isValidEmail(email) && (
-              <Button asChild variant="secondary" size="sm">
+              <Button asChild variant="secondary" size="sm" className="rounded-xl">
                 <a href={`mailto:${email || ""}`} aria-label="Email">
-                  <Mail className="mr-2" /> Email
+                  <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-muted mr-2">
+                    <Mail className="h-4 w-4" />
+                  </span>
+                  Email
                 </a>
               </Button>
             )}

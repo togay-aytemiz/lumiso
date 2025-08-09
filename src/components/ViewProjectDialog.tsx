@@ -389,6 +389,7 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
                             phone={lead.phone}
                             notes={lead.notes}
                             clickableNameHref={`/leads/${lead.id}`}
+                            clickableNameClasses="text-blue-600 hover:text-blue-800 hover:underline"
                             showQuickActions={false}
                           />
                         </div>

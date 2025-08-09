@@ -17,7 +17,11 @@ import { ProjectTodoListEnhanced } from "./ProjectTodoListEnhanced";
 import { ProjectStatusBadge } from "./ProjectStatusBadge";
 import { ProjectTypeSelector } from "./ProjectTypeSelector";
 import { ProjectPaymentsSection } from "./ProjectPaymentsSection";
-import ClientDetailsCard from "@/components/ClientDetailsCard";
+import ProjectDetailsLayout from "@/components/project-details/ProjectDetailsLayout";
+import ProjectSummaryCard from "@/components/project-details/Summary/ProjectSummaryCard";
+import ClientCard from "@/components/project-details/Summary/ClientCard";
+import FinancialSummaryCard from "@/components/project-details/Summary/FinancialSummaryCard";
+import SessionsSummaryCard from "@/components/project-details/Summary/SessionsSummaryCard";
 
 interface Project {
   id: string;

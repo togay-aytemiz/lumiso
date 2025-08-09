@@ -40,9 +40,10 @@ interface Project {
 interface ProjectPaymentsSectionProps {
   projectId: string;
   onPaymentsUpdated?: () => void;
+  refreshToken?: number;
 }
 
-export function ProjectPaymentsSection({ projectId, onPaymentsUpdated }: ProjectPaymentsSectionProps) {
+export function ProjectPaymentsSection({ projectId, onPaymentsUpdated, refreshToken }: ProjectPaymentsSectionProps) {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [project, setProject] = useState<Project | null>(null);
@@ -127,7 +128,7 @@ export function ProjectPaymentsSection({ projectId, onPaymentsUpdated }: Project
     fetchProject();
     fetchPayments();
     fetchProjectServices();
-  }, [projectId]);
+  }, [projectId, refreshToken]);
 
   // Ensure base price payment exists
   useEffect(() => {
@@ -218,7 +219,6 @@ export function ProjectPaymentsSection({ projectId, onPaymentsUpdated }: Project
     .reduce((sum, p) => sum + p.amount, 0);
 
   const extraServices = services
-    .filter(s => s.extra)
     .reduce((sum, s) => sum + (s.selling_price || s.price || 0), 0);
 
   // Remaining Balance = Base Price + Due Payments + Extra Services - Paid Payments

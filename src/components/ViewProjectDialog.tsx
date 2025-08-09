@@ -77,6 +77,7 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [servicesVersion, setServicesVersion] = useState(0);
   
   const { toast } = useToast();
 
@@ -441,12 +442,13 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
                 <ProjectPaymentsSection
                   projectId={project!.id}
                   onPaymentsUpdated={() => { onProjectUpdated(); onActivityUpdated?.(); }}
+                  refreshToken={servicesVersion}
                 />
               )},
               { id: 'services', title: 'Services', content: (
                 <ProjectServicesSection
                   projectId={project!.id}
-                  onServicesUpdated={() => { onProjectUpdated(); onActivityUpdated?.(); }}
+                  onServicesUpdated={() => { setServicesVersion((v) => v + 1); onProjectUpdated(); onActivityUpdated?.(); }}
                 />
               )},
               { id: 'sessions', title: 'Sessions', content: (

@@ -18,7 +18,7 @@ import { ProjectStatusBadge } from "./ProjectStatusBadge";
 import { ProjectTypeSelector } from "./ProjectTypeSelector";
 import { ProjectPaymentsSection } from "./ProjectPaymentsSection";
 import ProjectDetailsLayout from "@/components/project-details/ProjectDetailsLayout";
-import ProjectSummaryCard from "@/components/project-details/Summary/ProjectSummaryCard";
+
 import ClientCard from "@/components/project-details/Summary/ClientCard";
 import FinancialSummaryCard from "@/components/project-details/Summary/FinancialSummaryCard";
 import SessionsSummaryCard from "@/components/project-details/Summary/SessionsSummaryCard";
@@ -433,13 +433,6 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
             header={<></>}
             left={
               <div className="space-y-4">
-                <ProjectSummaryCard
-                  projectId={project!.id}
-                  name={project!.name}
-                  statusId={project!.status_id || undefined}
-                  projectTypeName={projectType?.name}
-                  onStatusChange={() => onProjectUpdated()}
-                />
                 {lead && (
                   <ClientCard
                     createdAt={project!.created_at}

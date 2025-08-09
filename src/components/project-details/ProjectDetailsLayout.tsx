@@ -46,22 +46,6 @@ export default function ProjectDetailsLayout({ header, left, sections, rightFoot
 
         {/* Right detail column */}
         <main className="col-span-12 lg:col-span-8">
-          {/* Anchor sub-nav */}
-          <nav className="sticky top-[64px] z-10 bg-white/80 backdrop-blur border-b">
-            <div className="flex gap-4 overflow-x-auto py-2">
-              {sections.map((s) => (
-                <button
-                  key={s.id}
-                  onClick={() => handleNavClick(s.id)}
-                  className={`px-2 py-1 text-sm rounded-md focus:outline-none focus:ring ${
-                    activeId === s.id ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {s.title}
-                </button>
-              ))}
-            </div>
-          </nav>
 
           <div className="space-y-8 mt-4">
             {sections.map((s) => (

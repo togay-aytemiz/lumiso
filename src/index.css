@@ -8,50 +8,67 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Base colors */
+    --background: 210 20% 98%; /* #F9FAFB */
+    --foreground: 217.2 32.6% 17.5%; /* #1F2937 */
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 217.2 32.6% 17.5%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 217.2 32.6% 17.5%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Brand */
+    --primary: 259 84% 60%;          /* Accent Purple #7C3AED for primary CTAs */
+    --primary-foreground: 0 0% 100%;  /* white */
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 220 14% 96%;        /* #F3F4F6 */
+    --secondary-foreground: 217.2 32.6% 17.5%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%; /* #6B7280 */
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 220 14% 96%;
+    --accent-foreground: 217.2 32.6% 17.5%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 84% 59%;        /* #EF4444 */
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 214.3 31.8% 91.4%;     /* Divider #E5E7EB */
+    --input: 214.3 31.8% 84.5%;      /* Border #D1D5DB */
+    --ring: 259 84% 60%;             /* Focus ring #7C3AED */
 
-    --radius: 0.5rem;
+    /* Typography & links */
+    --link: 217.2 91.2% 59.8%;       /* #2563EB */
 
-    --sidebar-background: 0 0% 98%;
+    /* Gradients */
+    --gradient-primary-start: 292 84% 60%; /* #D946EF */
+    --gradient-primary-end: 262 83% 53%;   /* #9333EA */
 
-    --sidebar-foreground: 240 5.3% 26.1%;
+    /* States */
+    --success: 160 84% 39%;                  /* #10B981 */
+    --success-bg: 160 84% 90%;               /* light background */
+    --success-foreground: 160 84% 22%;       /* dark text */
 
-    --sidebar-primary: 240 5.9% 10%;
+    --warning: 36 100% 50%;                  /* #F59E0B */
+    --warning-bg: 36 100% 90%;
+    --warning-foreground: 36 100% 22%;
 
+    --info: 217.2 91.2% 59.8%;               /* #2563EB */
+    --info-bg: 217.2 91.2% 92%;
+    --info-foreground: 217.2 60% 22%;
+
+    /* Radius */
+    --radius: 0.75rem; /* 12px */
+
+    /* Sidebar (dark fixed) */
+    --sidebar-background: 222.2 47.4% 11.2%; /* #111827 */
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 217.2 91.2% 59.8%;
     --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
 
     /* Lead Status Colors */
@@ -81,8 +98,8 @@ All colors MUST be HSL.
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 259 84% 60%;
+    --primary-foreground: 0 0% 100%;
 
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
@@ -98,7 +115,8 @@ All colors MUST be HSL.
 
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --ring: 259 84% 60%;
+
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
@@ -107,6 +125,21 @@ All colors MUST be HSL.
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    --link: 217.2 91.2% 59.8%;
+
+    /* States (dark) */
+    --success: 160 84% 39%;
+    --success-bg: 160 30% 18%;
+    --success-foreground: 160 70% 80%;
+
+    --warning: 36 100% 50%;
+    --warning-bg: 36 30% 18%;
+    --warning-foreground: 36 90% 80%;
+
+    --info: 217.2 91.2% 59.8%;
+    --info-bg: 217.2 40% 18%;
+    --info-foreground: 217.2 80% 85%;
     
     /* Lead Status Colors - Dark Mode */
     --status-new-bg: 198 65% 15%;
@@ -132,6 +165,6 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans;
   }
 }

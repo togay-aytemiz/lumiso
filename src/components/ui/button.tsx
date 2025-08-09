@@ -17,7 +17,9 @@ const buttonVariants = cva(
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
-        link: "text-primary underline-offset-4 hover:underline",
+        link: "text-[hsl(var(--link))] underline-offset-4 hover:underline",
+        cta: "rounded-full h-11 px-6 text-white shadow bg-gradient-to-r from-[hsl(var(--gradient-primary-start))] to-[hsl(var(--gradient-primary-end))] hover:brightness-105 transition-transform hover:scale-[1.02]",
+        dangerOutline: "border border-destructive text-destructive hover:bg-destructive/10",
       },
       size: {
         default: "h-10 px-4 py-2",

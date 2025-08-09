@@ -119,8 +119,9 @@ export function NewSessionDialogForProject({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-          <Plus className="h-4 w-4" />
+        <Button variant="ghost" size="sm">
+          <Plus className="h-4 w-4 mr-1" />
+          Add Session
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">

@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import ClientDetailsList from "@/components/ClientDetailsList";
 
 interface ClientCardProps {
@@ -13,10 +13,10 @@ interface ClientCardProps {
 export default function ClientCard({ createdAt, name, email, phone, notes, leadId }: ClientCardProps) {
   return (
     <Card className="rounded-2xl border bg-white shadow-sm">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-base">Client Details</CardTitle>
+      <CardHeader className="pb-3">
+        <CardTitle>Client Details</CardTitle>
         {createdAt && (
-          <p className="text-xs text-muted-foreground">Created on {new Date(createdAt).toLocaleDateString('tr-TR')}</p>
+          <CardDescription className="text-xs">Created on {new Date(createdAt).toLocaleDateString('tr-TR')}</CardDescription>
         )}
       </CardHeader>
       <CardContent className="p-4 pt-0">

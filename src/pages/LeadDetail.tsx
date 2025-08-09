@@ -566,7 +566,7 @@ const LeadDetail = () => {
           <Card className="relative">
             <CardHeader className="flex flex-row items-start justify-between">
               <div>
-                <CardTitle>Contact Info</CardTitle>
+                <CardTitle>Client Details</CardTitle>
                 <CardDescription className="text-xs">
                   Created on {formatDate(lead.created_at)}
                 </CardDescription>

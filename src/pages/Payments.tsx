@@ -480,7 +480,7 @@ const Payments = () => {
                       {payment.projects ? (
                         <Button
                           variant="link"
-                          className="p-0 h-auto font-normal text-primary"
+                          className="p-0 h-auto font-normal text-foreground hover:text-foreground hover:underline"
                           onClick={(e) => {
                             e.stopPropagation();
                             setViewingProject(payment.projects);
@@ -497,7 +497,7 @@ const Payments = () => {
                       {payment.projects?.leads ? (
                         <Button
                           variant="link"
-                          className="p-0 h-auto font-normal text-primary"
+                          className="p-0 h-auto font-normal text-foreground hover:text-foreground hover:underline"
                           onClick={(e) => {
                             e.stopPropagation();
                             navigate(`/leads/${payment.projects?.leads?.id}`);

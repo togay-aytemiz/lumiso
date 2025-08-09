@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { MessageSquare, Phone, Mail } from "lucide-react";
+import { MessageCircle, Phone, Mail } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ClientDetailsListProps {
@@ -149,24 +149,24 @@ export function ClientDetailsList({ name, email, phone, notes, clickableNameHref
         <div className="border-t mt-4 pt-3">
           <div className="flex flex-wrap gap-2">
             {normalized && (
-              <Button asChild variant="secondary" size="sm" className="rounded-xl">
+              <Button asChild variant="secondary" size="sm" className="rounded-xl gap-2">
                 <a
                   href={`https://wa.me/${normalized.e164NoPlus}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="WhatsApp"
                 >
-                  <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-muted mr-2">
-                    <MessageSquare className="h-4 w-4" />
+                  <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-muted">
+                    <MessageCircle className="h-4 w-4" />
                   </span>
                   WhatsApp
                 </a>
               </Button>
             )}
             {normalized && (
-              <Button asChild variant="secondary" size="sm" className="rounded-xl">
+              <Button asChild variant="secondary" size="sm" className="rounded-xl gap-2">
                 <a href={`tel:${normalized.e164}`} aria-label="Call">
-                  <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-muted mr-2">
+                  <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-muted">
                     <Phone className="h-4 w-4" />
                   </span>
                   Call
@@ -174,9 +174,9 @@ export function ClientDetailsList({ name, email, phone, notes, clickableNameHref
               </Button>
             )}
             {isValidEmail(email) && (
-              <Button asChild variant="secondary" size="sm" className="rounded-xl">
+              <Button asChild variant="secondary" size="sm" className="rounded-xl gap-2">
                 <a href={`mailto:${email || ""}`} aria-label="Email">
-                  <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-muted mr-2">
+                  <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-muted">
                     <Mail className="h-4 w-4" />
                   </span>
                   Email

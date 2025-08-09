@@ -47,7 +47,7 @@ export default function ProjectDetailsLayout({ header, left, sections, rightFoot
         {/* Right detail column */}
         <main className="col-span-12 lg:col-span-8">
 
-          <div className="space-y-8 mt-4">
+          <div className="space-y-8">
             {sections.map((s) => (
               <section key={s.id} id={s.id} className="scroll-mt-[88px]">
                 <div>{s.content}</div>

@@ -363,7 +363,7 @@ const AllProjects = () => {
               onClick={() => setViewMode('board')}
               className={`flex items-center gap-2 px-4 py-2 rounded-none border-b-2 transition-colors ${
                 viewMode === 'board' 
-                  ? 'border-primary text-primary bg-primary/5' 
+                  ? 'border-primary text-primary' 
                   : 'border-transparent text-muted-foreground hover:text-foreground'
               }`}
             >
@@ -375,7 +375,7 @@ const AllProjects = () => {
               onClick={() => setViewMode('list')}
               className={`flex items-center gap-2 px-4 py-2 rounded-none border-b-2 transition-colors ${
                 viewMode === 'list' 
-                  ? 'border-primary text-primary bg-primary/5' 
+                  ? 'border-primary text-primary' 
                   : 'border-transparent text-muted-foreground hover:text-foreground'
               }`}
             >

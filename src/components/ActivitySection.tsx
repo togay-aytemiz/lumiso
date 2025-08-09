@@ -456,7 +456,7 @@ const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="activities" className="w-full">
-            <TabsList className="bg-transparent border-b border-border p-0 h-auto w-full">
+            <TabsList className="bg-transparent border-b border-border p-0 h-auto w-full justify-start">
               <TabsTrigger 
                 value="activities" 
                 className="bg-transparent border-0 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:shadow-none px-4 py-3 font-medium text-muted-foreground hover:text-foreground transition-colors"

@@ -91,6 +91,13 @@ export function ProjectServicesSection({ projectId, onServicesUpdated }: Project
     fetchAvailableServices();
   }, [projectId]);
 
+  const handleServicePickerChange = (serviceIds: string[]) => {
+    const selectedServices = availableServices.filter(service => 
+      serviceIds.includes(service.id)
+    );
+    setServices(selectedServices);
+  };
+
   const handleSaveServices = async (selectedServices: Service[]) => {
     setSaving(true);
     try {
@@ -188,11 +195,18 @@ export function ProjectServicesSection({ projectId, onServicesUpdated }: Project
       <CardContent>
         {isEditing ? (
           <div className="space-y-4">
-            <ServiceSelector
-              projectId={projectId}
-              selectedServices={services}
-              onServicesChange={setServices}
+            <ServicePicker
+              services={availableServices.map(s => ({
+                ...s,
+                price: s.selling_price || 0,
+                active: true
+              }))}
+              value={services.map(s => s.id)}
+              onChange={handleServicePickerChange}
               disabled={saving}
+              isLoading={loadingAvailable}
+              error={errorAvailable}
+              onRetry={fetchAvailableServices}
             />
             <div className="flex gap-2">
               <Button 

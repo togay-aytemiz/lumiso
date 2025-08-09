@@ -20,9 +20,6 @@ import { ProjectPaymentsSection } from "./ProjectPaymentsSection";
 import ProjectDetailsLayout from "@/components/project-details/ProjectDetailsLayout";
 
 import ClientCard from "@/components/project-details/Summary/ClientCard";
-import FinancialSummaryCard from "@/components/project-details/Summary/FinancialSummaryCard";
-import SessionsSummaryCard from "@/components/project-details/Summary/SessionsSummaryCard";
-import QuickActionsCard from "@/components/project-details/Summary/QuickActionsCard";
 
 
 interface Project {
@@ -443,18 +440,6 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
                     leadId={lead.id}
                   />
                 )}
-                <FinancialSummaryCard onAddPaymentClick={() => {
-                  document.getElementById('payments')?.scrollIntoView({ behavior: 'smooth' });
-                }} />
-                <SessionsSummaryCard
-                  count={sessions.length}
-                  onViewAll={() => document.getElementById('sessions')?.scrollIntoView({ behavior: 'smooth' })}
-                />
-                <QuickActionsCard
-                  onAddNote={() => document.getElementById('activities')?.scrollIntoView({ behavior: 'smooth' })}
-                  onAddTodo={() => document.getElementById('todos')?.scrollIntoView({ behavior: 'smooth' })}
-                  onAddService={() => document.getElementById('services')?.scrollIntoView({ behavior: 'smooth' })}
-                />
               </div>
             }
             sections={[

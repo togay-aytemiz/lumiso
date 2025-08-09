@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ArrowLeft, Save, Trash2, Calendar, Clock, FileText, CheckCircle, MoreHorizontal, Phone, Mail, MessageSquare } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -562,7 +563,7 @@ const LeadDetail = () => {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         {/* Left column - Lead Details (25%) */}
         <div className="lg:col-span-1 space-y-6">
-          <Card>
+          <Card className="relative">
             <CardHeader className="flex flex-row items-start justify-between">
               <div>
                 <CardTitle>Contact Info</CardTitle>
@@ -591,7 +592,7 @@ const LeadDetail = () => {
                   setEditOpen(true);
                 }}
                 aria-label="Edit lead information"
-                className="text-muted-foreground hover:text-foreground text-sm h-10 px-3 -mt-2 -mr-2 self-start"
+                className="absolute top-2 right-2 text-muted-foreground hover:text-foreground text-sm h-8 px-2"
               >
                 Edit
               </Button>
@@ -599,50 +600,82 @@ const LeadDetail = () => {
             <CardContent className="space-y-3">
               {/* Rows */}
               <div className="space-y-1">
-                <div className="flex items-start gap-2">
-                  <div className="w-24 shrink-0 text-xs text-muted-foreground">Name</div>
-                  <div className="text-sm font-medium">{(lead.name && lead.name.trim()) ? lead.name : "—"}</div>
-                </div>
-                <div className="flex items-start gap-2">
-                  <div className="w-24 shrink-0 text-xs text-muted-foreground">Email</div>
-                  <div className="text-sm font-medium">{(lead.email && lead.email.trim()) ? lead.email : "—"}</div>
-                </div>
-                <div className="flex items-start gap-2">
-                  <div className="w-24 shrink-0 text-xs text-muted-foreground">Phone</div>
-                  <div className="text-sm font-medium">{(() => { const norm = normalizeTRPhone(lead.phone); return norm ? norm.e164 : ((lead.phone && lead.phone.trim()) ? lead.phone : "—"); })()}</div>
-                </div>
-                <div className="flex items-start gap-2">
-                  <div className="w-24 shrink-0 text-xs text-muted-foreground">Notes</div>
-                  {lead.notes ? (
-                    <div className="flex-1">
-                      <div className="relative">
-                        <div
-                          ref={notesRef}
-                          className={cn(
-                            "text-sm transition-all whitespace-pre-wrap",
-                            !notesExpanded && "max-h-12 overflow-hidden"
+                <TooltipProvider delayDuration={200}>
+                  <div className="flex items-baseline overflow-hidden">
+                    <span className="text-xs text-muted-foreground">Name:</span>
+                    {(() => { const v = (lead.name && lead.name.trim()) ? lead.name : null; return v ? (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="ml-1 text-sm font-medium truncate inline-block max-w-full">{v}</span>
+                        </TooltipTrigger>
+                        <TooltipContent>{v}</TooltipContent>
+                      </Tooltip>
+                    ) : (
+                      <span className="ml-1 text-sm font-medium">—</span>
+                    ); })()}
+                  </div>
+
+                  <div className="flex items-baseline overflow-hidden">
+                    <span className="text-xs text-muted-foreground">Email:</span>
+                    {(() => { const v = (lead.email && lead.email.trim()) ? lead.email : null; return v ? (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="ml-1 text-sm font-medium truncate inline-block max-w-full">{v}</span>
+                        </TooltipTrigger>
+                        <TooltipContent>{v}</TooltipContent>
+                      </Tooltip>
+                    ) : (
+                      <span className="ml-1 text-sm font-medium">—</span>
+                    ); })()}
+                  </div>
+
+                  <div className="flex items-baseline overflow-hidden">
+                    <span className="text-xs text-muted-foreground">Phone:</span>
+                    {(() => { const norm = normalizeTRPhone(lead.phone); const v = norm ? norm.e164 : ((lead.phone && lead.phone.trim()) ? lead.phone : null); return v ? (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="ml-1 text-sm font-medium truncate inline-block max-w-full">{v}</span>
+                        </TooltipTrigger>
+                        <TooltipContent>{v}</TooltipContent>
+                      </Tooltip>
+                    ) : (
+                      <span className="ml-1 text-sm font-medium">—</span>
+                    ); })()}
+                  </div>
+
+                  <div className="flex items-start overflow-hidden">
+                    <span className="text-xs text-muted-foreground mt-[2px]">Notes:</span>
+                    {lead.notes ? (
+                      <div className="ml-1 flex-1">
+                        <div className="relative overflow-hidden">
+                          <div
+                            ref={notesRef}
+                            className={cn(
+                              "text-sm transition-all whitespace-pre-wrap",
+                              !notesExpanded && "max-h-12 overflow-hidden"
+                            )}
+                          >
+                            {lead.notes}
+                          </div>
+                          {!notesExpanded && isNotesTruncatable && (
+                            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-background to-transparent" />
                           )}
-                        >
-                          {lead.notes}
                         </div>
-                        {!notesExpanded && isNotesTruncatable && (
-                          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-background to-transparent" />
+                        {(isNotesTruncatable || notesExpanded) && (
+                          <button
+                            type="button"
+                            className="text-xs text-muted-foreground underline underline-offset-4 mt-1"
+                            onClick={() => setNotesExpanded((v) => !v)}
+                          >
+                            {notesExpanded ? "Show less" : "Show more"}
+                          </button>
                         )}
                       </div>
-                      {(isNotesTruncatable || notesExpanded) && (
-                        <button
-                          type="button"
-                          className="text-xs text-muted-foreground underline underline-offset-4 mt-1"
-                          onClick={() => setNotesExpanded((v) => !v)}
-                        >
-                          {notesExpanded ? "Show less" : "Show more"}
-                        </button>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="text-sm font-medium">—</div>
-                  )}
-                </div>
+                    ) : (
+                      <span className="ml-1 text-sm font-medium">—</span>
+                    )}
+                  </div>
+                </TooltipProvider>
               </div>
 
               {/* Quick Actions */}

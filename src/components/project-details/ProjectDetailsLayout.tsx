@@ -39,7 +39,7 @@ export default function ProjectDetailsLayout({ header, left, sections, rightFoot
       <div className="grid grid-cols-12 gap-6 w-full">
         {/* Left summary column */}
         <aside className="col-span-12 lg:col-span-4">
-          <div className="sticky top-[72px] h-fit min-w-[280px] space-y-4">
+          <div className="h-fit min-w-[280px] space-y-4">
             {left}
           </div>
         </aside>

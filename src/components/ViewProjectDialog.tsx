@@ -235,6 +235,49 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
     
     setIsDeleting(true);
     try {
+      // Delete all related data in the correct order to avoid foreign key constraints
+      
+      // Delete project services
+      const { error: servicesError } = await supabase
+        .from('project_services')
+        .delete()
+        .eq('project_id', project.id);
+      
+      if (servicesError) throw servicesError;
+
+      // Delete todos
+      const { error: todosError } = await supabase
+        .from('todos')
+        .delete()
+        .eq('project_id', project.id);
+      
+      if (todosError) throw todosError;
+
+      // Delete sessions
+      const { error: sessionsError } = await supabase
+        .from('sessions')
+        .delete()
+        .eq('project_id', project.id);
+      
+      if (sessionsError) throw sessionsError;
+
+      // Delete activities related to this project
+      const { error: activitiesError } = await supabase
+        .from('activities')
+        .delete()
+        .eq('project_id', project.id);
+      
+      if (activitiesError) throw activitiesError;
+
+      // Delete payments
+      const { error: paymentsError } = await supabase
+        .from('payments')
+        .delete()
+        .eq('project_id', project.id);
+      
+      if (paymentsError) throw paymentsError;
+
+      // Finally, delete the project itself
       const { error } = await supabase
         .from('projects')
         .delete()
@@ -244,7 +287,7 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
 
       toast({
         title: "Success",
-        description: "Project deleted successfully."
+        description: "Project and all related data deleted successfully."
       });
 
       onOpenChange(false);
@@ -477,7 +520,7 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
               )},
             ]}
            rightFooter={
-             <div className="pt-6 border-t border-destructive/20 bg-destructive/5 rounded-md p-4">
+             <div className="border border-destructive/20 bg-destructive/5 rounded-md p-4">
                <div className="space-y-3">
                  <h3 className="text-sm font-medium text-destructive">Danger Zone</h3>
                  <Button
@@ -487,9 +530,9 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
                  >
                    Delete Project
                  </Button>
-                 <p className="text-xs text-muted-foreground text-center">
-                   This will not delete sessions, notes, or reminders.
-                 </p>
+                  <p className="text-xs text-muted-foreground text-center">
+                    This will permanently delete the project and ALL related data: sessions, payments, todos, services, and activities.
+                  </p>
                </div>
              </div>
            }
@@ -504,7 +547,7 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
             <AlertDialogTitle>Delete Project</AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to delete "{project?.name}"? This action cannot be undone.
-              Sessions, notes, and reminders will not be affected.
+              This will permanently delete the project and ALL related data including sessions, payments, todos, services, and activities.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

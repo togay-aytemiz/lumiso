@@ -23,7 +23,7 @@ import ClientCard from "@/components/project-details/Summary/ClientCard";
 import FinancialSummaryCard from "@/components/project-details/Summary/FinancialSummaryCard";
 import SessionsSummaryCard from "@/components/project-details/Summary/SessionsSummaryCard";
 import QuickActionsCard from "@/components/project-details/Summary/QuickActionsCard";
-import ClientDetailsCard from "@/components/ClientDetailsCard";
+
 
 interface Project {
   id: string;
@@ -386,22 +386,6 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
                       <p className="text-muted-foreground text-base">{project.description}</p>
                     )}
                     
-                      {/* Lead Information */}
-                      {lead && (
-                        <div className="w-full">
-                          <ClientDetailsCard
-                            title="Client Details"
-                            name={lead.name}
-                            email={lead.email}
-                            phone={lead.phone}
-                            notes={lead.notes}
-                            clickableNameHref={`/leads/${lead.id}`}
-                            clickableNameClasses="text-blue-600 hover:text-blue-800 hover:underline"
-                            showQuickActions={true}
-                            clampNotes={true}
-                          />
-                        </div>
-                      )}
                   </div>
                 )}
               </div>

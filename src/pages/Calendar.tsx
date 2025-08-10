@@ -265,113 +265,139 @@ export default function Calendar() {
                   {(() => {
                     const sessionsList = showSessions ? daySessions : [];
                     const remindersList = showReminders ? dayActivities : [];
-                    const combined = [
-                      ...sessionsList.map((s) => ({ kind: 'session' as const, item: s })),
-                      ...remindersList.map((a) => ({ kind: 'activity' as const, item: a })),
-                    ];
-                    const shown = combined.slice(0, 3);
 
-                    return shown.map((entry) => {
-                      if (entry.kind === 'session') {
-                        const session = entry.item as Session;
-                        const leadName = leadsMap[session.lead_id]?.name || "Lead";
-                        const projectName = session.project_id ? projectsMap[session.project_id]?.name : undefined;
-                        const line = `${formatTime(session.session_time, userLocale)} ${leadName}${projectName ? " • " + projectName : ""}`;
-                        return (
-                          <Tooltip key={`s-${session.id}`}>
-                            <TooltipTrigger asChild>
-                              <button
-                                className={`w-full text-left text-xs px-1.5 py-0.5 rounded truncate border hover:bg-primary/15 ${isDayToday ? 'bg-primary/15 border-primary/30' : 'bg-primary/10 border-primary/20'} text-primary`}
-                                onClick={() => handleSessionClick(session)}
-                              >
-                                {line}
-                              </button>
-                            </TooltipTrigger>
-                            <TooltipContent className="max-w-xs">
-                              <div className="text-sm font-medium">{projectName || "Session"}</div>
-                              <div className="text-xs text-muted-foreground">{leadName}</div>
-                              <div className="text-xs text-muted-foreground">{formatDate(session.session_date)} • {formatTime(session.session_time, userLocale)}</div>
-                              {session.notes && <div className="mt-1 text-xs">{session.notes}</div>}
-                              <div className="text-xs">Status: <span className="capitalize">{session.status}</span></div>
-                            </TooltipContent>
-                          </Tooltip>
-                        );
-                      } else {
-                        const activity = entry.item as Activity;
-                        const leadName = leadsMap[activity.lead_id]?.name || "Lead";
-                        const projectName = activity.project_id ? projectsMap[activity.project_id!]?.name : undefined;
-                        const timeText = activity.reminder_time ? formatTime(activity.reminder_time, userLocale) : "All day";
-                        const line = `${timeText} ${leadName}${projectName ? " • " + projectName : ""}`;
-                        return (
-                          <Tooltip key={`a-${activity.id}`}>
-                            <TooltipTrigger asChild>
-                              <button
-                                className={`w-full text-left text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground truncate border border-border hover:bg-accent ${activity.completed ? "line-through opacity-60" : ""}`}
-                                onClick={() => handleActivityClick(activity)}
-                              >
-                                {line}
-                              </button>
-                            </TooltipTrigger>
-                            <TooltipContent className="max-w-xs">
-                              <div className="text-sm font-medium">{activity.content}</div>
-                              <div className="text-xs text-muted-foreground">{formatDate(activity.reminder_date)} • {timeText}</div>
-                              <div className="text-xs text-muted-foreground">{projectName ? `Project: ${projectName}` : `Lead: ${leadName}`}</div>
-                            </TooltipContent>
-                          </Tooltip>
-                        );
-                      }
+                    // Defensive sorting
+                    const sortedSessions = [...sessionsList].sort((a, b) => a.session_time.localeCompare(b.session_time));
+                    const sortedActivities = [...remindersList].sort((a, b) => {
+                      if (!a.reminder_time && !b.reminder_time) return 0;
+                      if (!a.reminder_time) return 1;
+                      if (!b.reminder_time) return -1;
+                      return a.reminder_time.localeCompare(b.reminder_time);
                     });
-                  })()}
 
-                  {(() => {
-                    const extraSessions = showSessions ? daySessions.slice(2) : [];
-                    const extraActivities = showReminders ? dayActivities.slice(1) : [];
-                    const totalExtras = extraSessions.length + extraActivities.length;
-                    if (totalExtras <= 0) return null;
+                    const combined = [
+                      ...sortedSessions.map((s) => ({ kind: 'session' as const, item: s })),
+                      ...sortedActivities.map((a) => ({ kind: 'activity' as const, item: a })),
+                    ];
+
+                    // Allow up to 4 visible lines when space permits
+                    const maxVisible = 4;
+                    const shown = combined.slice(0, maxVisible);
+                    const extras = combined.slice(maxVisible);
+
+                    const sessionExtras = extras
+                      .filter((e) => e.kind === 'session')
+                      .map((e) => e.item as Session)
+                      .sort((a, b) => a.session_time.localeCompare(b.session_time));
+                    const activityExtras = extras
+                      .filter((e) => e.kind === 'activity')
+                      .map((e) => e.item as Activity)
+                      .sort((a, b) => {
+                        if (!a.reminder_time && !b.reminder_time) return 0;
+                        if (!a.reminder_time) return 1;
+                        if (!b.reminder_time) return -1;
+                        return a.reminder_time!.localeCompare(b.reminder_time!);
+                      });
+
                     return (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <div className="text-xs text-muted-foreground cursor-help">
-                            +{totalExtras} more
-                          </div>
-                        </TooltipTrigger>
-                        <TooltipContent className="max-w-xs">
-                          {extraSessions.length > 0 && (
-                            <div className="mb-1">
-                              <div className="text-xs font-medium mb-1">Sessions</div>
-                              <ul className="space-y-0.5">
-                                {extraSessions.map((session) => {
-                                  const leadName = leadsMap[session.lead_id]?.name || "Lead";
-                                  const projectName = session.project_id ? projectsMap[session.project_id]?.name : undefined;
-                                  const timeText = formatTime(session.session_time, userLocale);
-                                  return (
-                                    <li key={session.id} className="text-xs">
-                                      <span className="font-semibold">{timeText}</span> {leadName}{projectName ? ` • ${projectName}` : ""}
-                                    </li>
-                                  );
-                                })}
-                              </ul>
-                            </div>
-                          )}
-                          {extraActivities.length > 0 && (
-                            <div>
-                              <div className="text-xs font-medium mb-1">Reminders</div>
-                              <ul className="space-y-0.5">
-                                {extraActivities.map((activity) => {
-                                  const leadName = leadsMap[activity.lead_id]?.name || "Lead";
-                                  const projectName = activity.project_id ? projectsMap[activity.project_id]?.name : undefined;
-                                  const timeText = activity.reminder_time ? formatTime(activity.reminder_time, userLocale) : "All day";
-                                  return (
-                                    <li key={activity.id} className={`text-xs ${activity.completed ? "line-through opacity-60" : ""}`}>
-                                      <span className="font-semibold">{timeText}</span> {leadName}{projectName ? ` • ${projectName}` : ""}
-                                    </li>
-                                  );
-                                })}
-                              </ul>
-                            </div>
-                          )}
-                        </TooltipContent>
-                      </Tooltip>
+                      <>
+                        {shown.map((entry) => {
+                          if (entry.kind === 'session') {
+                            const session = entry.item as Session;
+                            const leadName = leadsMap[session.lead_id]?.name || "Lead";
+                            const projectName = session.project_id ? projectsMap[session.project_id]?.name : undefined;
+                            const line = `${formatTime(session.session_time, userLocale)} ${leadName}${projectName ? " • " + projectName : ""}`;
+                            return (
+                              <Tooltip key={`s-${session.id}`}>
+                                <TooltipTrigger asChild>
+                                  <button
+                                    className={`w-full text-left text-xs px-1.5 py-0.5 rounded truncate border hover:bg-primary/15 ${isDayToday ? 'bg-primary/15 border-primary/30' : 'bg-primary/10 border-primary/20'} text-primary`}
+                                    onClick={() => handleSessionClick(session)}
+                                  >
+                                    {line}
+                                  </button>
+                                </TooltipTrigger>
+                                <TooltipContent className="max-w-xs">
+                                  <div className="text-sm font-medium">{projectName || "Session"}</div>
+                                  <div className="text-xs text-muted-foreground">{leadName}</div>
+                                  <div className="text-xs text-muted-foreground">{formatDate(session.session_date)} • {formatTime(session.session_time, userLocale)}</div>
+                                  {session.notes && <div className="mt-1 text-xs">{session.notes}</div>}
+                                  <div className="text-xs">Status: <span className="capitalize">{session.status}</span></div>
+                                </TooltipContent>
+                              </Tooltip>
+                            );
+                          } else {
+                            const activity = entry.item as Activity;
+                            const leadName = leadsMap[activity.lead_id]?.name || "Lead";
+                            const projectName = activity.project_id ? projectsMap[activity.project_id!]?.name : undefined;
+                            const timeText = activity.reminder_time ? formatTime(activity.reminder_time, userLocale) : "All day";
+                            const line = `${timeText} ${leadName}${projectName ? " • " + projectName : ""}`;
+                            return (
+                              <Tooltip key={`a-${activity.id}`}>
+                                <TooltipTrigger asChild>
+                                  <button
+                                    className={`w-full text-left text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground truncate border border-border hover:bg-accent ${activity.completed ? "line-through opacity-60" : ""}`}
+                                    onClick={() => handleActivityClick(activity)}
+                                  >
+                                    {line}
+                                  </button>
+                                </TooltipTrigger>
+                                <TooltipContent className="max-w-xs">
+                                  <div className="text-sm font-medium">{activity.content}</div>
+                                  <div className="text-xs text-muted-foreground">{formatDate(activity.reminder_date)} • {timeText}</div>
+                                  <div className="text-xs text-muted-foreground">{projectName ? `Project: ${projectName}` : `Lead: ${leadName}`}</div>
+                                </TooltipContent>
+                              </Tooltip>
+                            );
+                          }
+                        })}
+
+                        {extras.length > 0 && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="text-xs text-muted-foreground cursor-help">
+                                +{extras.length} more
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-xs">
+                              {sessionExtras.length > 0 && (
+                                <div className="mb-1">
+                                  <div className="text-xs font-medium mb-1">Sessions</div>
+                                  <ul className="space-y-0.5">
+                                    {sessionExtras.map((session) => {
+                                      const leadName = leadsMap[session.lead_id]?.name || "Lead";
+                                      const projectName = session.project_id ? projectsMap[session.project_id]?.name : undefined;
+                                      const timeText = formatTime(session.session_time, userLocale);
+                                      return (
+                                        <li key={session.id} className="text-xs">
+                                          <span className="font-semibold">{timeText}</span> {leadName}{projectName ? ` • ${projectName}` : ""}
+                                        </li>
+                                      );
+                                    })}
+                                  </ul>
+                                </div>
+                              )}
+                              {activityExtras.length > 0 && (
+                                <div>
+                                  <div className="text-xs font-medium mb-1">Reminders</div>
+                                  <ul className="space-y-0.5">
+                                    {activityExtras.map((activity) => {
+                                      const leadName = leadsMap[activity.lead_id]?.name || "Lead";
+                                      const projectName = activity.project_id ? projectsMap[activity.project_id]?.name : undefined;
+                                      const timeText = activity.reminder_time ? formatTime(activity.reminder_time, userLocale) : "All day";
+                                      return (
+                                        <li key={activity.id} className={`text-xs ${activity.completed ? "line-through opacity-60" : ""}`}>
+                                          <span className="font-semibold">{timeText}</span> {leadName}{projectName ? ` • ${projectName}` : ""}
+                                        </li>
+                                      );
+                                    })}
+                                  </ul>
+                                </div>
+                              )}
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
+                      </>
                     );
                   })()}
 
@@ -403,55 +429,69 @@ export default function Calendar() {
                 </div>
                 
                 <div className="space-y-2">
-                  {showSessions && daySessions.map((session) => {
-                    const leadName = leadsMap[session.lead_id]?.name || "Lead";
-                    const projectName = session.project_id ? projectsMap[session.project_id]?.name : undefined;
+                  {(() => {
+                    const sortedSessions = [...daySessions].sort((a, b) => a.session_time.localeCompare(b.session_time));
+                    const sortedActivities = [...dayActivities].sort((a, b) => {
+                      if (!a.reminder_time && !b.reminder_time) return 0;
+                      if (!a.reminder_time) return 1;
+                      if (!b.reminder_time) return -1;
+                      return a.reminder_time!.localeCompare(b.reminder_time!);
+                    });
+
                     return (
-                      <Tooltip key={session.id}>
-                        <TooltipTrigger asChild>
-                          <button
-                            className="w-full text-left text-xs p-2 rounded-md bg-primary/10 text-primary border border-primary/20 hover:bg-primary/15 transition-colors cursor-pointer"
-                            onClick={() => handleSessionClick(session)}
-                          >
-                            <div className="font-semibold">{formatTime(session.session_time, userLocale)}</div>
-                            <div className="truncate">{leadName}</div>
-                            {projectName && <div className="truncate">{projectName}</div>}
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent className="max-w-xs">
-                          <div className="text-sm font-medium">{projectName || "Session"}</div>
-                          <div className="text-xs text-muted-foreground">{leadName}</div>
-                          <div className="text-xs text-muted-foreground">{formatDate(session.session_date)} • {formatTime(session.session_time, userLocale)}</div>
-                          {session.notes && <div className="mt-1 text-xs">{session.notes}</div>}
-                          <div className="text-xs">Status: <span className="capitalize">{session.status}</span></div>
-                        </TooltipContent>
-                      </Tooltip>
+                      <>
+                        {showSessions && sortedSessions.map((session) => {
+                          const leadName = leadsMap[session.lead_id]?.name || "Lead";
+                          const projectName = session.project_id ? projectsMap[session.project_id]?.name : undefined;
+                          return (
+                            <Tooltip key={session.id}>
+                              <TooltipTrigger asChild>
+                                <button
+                                  className="w-full text-left text-xs p-2 rounded-md bg-primary/10 text-primary border border-primary/20 hover:bg-primary/15 transition-colors cursor-pointer"
+                                  onClick={() => handleSessionClick(session)}
+                                >
+                                  <div className="font-semibold">{formatTime(session.session_time, userLocale)}</div>
+                                  <div className="truncate">{leadName}</div>
+                                  {projectName && <div className="truncate">{projectName}</div>}
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent className="max-w-xs">
+                                <div className="text-sm font-medium">{projectName || "Session"}</div>
+                                <div className="text-xs text-muted-foreground">{leadName}</div>
+                                <div className="text-xs text-muted-foreground">{formatDate(session.session_date)} • {formatTime(session.session_time, userLocale)}</div>
+                                {session.notes && <div className="mt-1 text-xs">{session.notes}</div>}
+                                <div className="text-xs">Status: <span className="capitalize">{session.status}</span></div>
+                              </TooltipContent>
+                            </Tooltip>
+                          );
+                        })}
+                        {showReminders && sortedActivities.map((activity) => {
+                          const isProjectReminder = !!activity.project_id;
+                          const leadName = leadsMap[activity.lead_id]?.name || "Lead";
+                          const projectName = isProjectReminder ? projectsMap[activity.project_id!]?.name : undefined;
+                          return (
+                            <Tooltip key={activity.id}>
+                              <TooltipTrigger asChild>
+                                <button
+                                  className={`w-full text-left text-xs p-2 rounded-md bg-muted text-muted-foreground border border-border hover:bg-accent transition-colors cursor-pointer ${activity.completed ? "line-through opacity-60" : ""}`}
+                                  onClick={() => handleActivityClick(activity)}
+                                >
+                                  <div className="font-semibold">{activity.reminder_time ? formatTime(activity.reminder_time, userLocale) : "All day"}</div>
+                                  <div className="truncate">{leadName}</div>
+                                  {projectName && <div className="truncate">{projectName}</div>}
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent className="max-w-xs">
+                                <div className="text-sm font-medium">{activity.content}</div>
+                                <div className="text-xs text-muted-foreground">{formatDate(activity.reminder_date)} • {activity.reminder_time ? formatTime(activity.reminder_time, userLocale) : "All day"}</div>
+                                <div className="text-xs text-muted-foreground">{projectName ? `Project: ${projectName}` : `Lead: ${leadName}`}</div>
+                              </TooltipContent>
+                            </Tooltip>
+                          );
+                        })}
+                      </>
                     );
-                  })}
-                  {showReminders && dayActivities.map((activity) => {
-                    const isProjectReminder = !!activity.project_id;
-                    const leadName = leadsMap[activity.lead_id]?.name || "Lead";
-                    const projectName = isProjectReminder ? projectsMap[activity.project_id!]?.name : undefined;
-                    return (
-                      <Tooltip key={activity.id}>
-                        <TooltipTrigger asChild>
-                          <button
-                            className={`w-full text-left text-xs p-2 rounded-md bg-muted text-muted-foreground border border-border hover:bg-accent transition-colors cursor-pointer ${activity.completed ? "line-through opacity-60" : ""}`}
-                            onClick={() => handleActivityClick(activity)}
-                          >
-                            <div className="font-semibold">{activity.reminder_time ? formatTime(activity.reminder_time, userLocale) : "All day"}</div>
-                            <div className="truncate">{leadName}</div>
-                            {projectName && <div className="truncate">{projectName}</div>}
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent className="max-w-xs">
-                          <div className="text-sm font-medium">{activity.content}</div>
-                          <div className="text-xs text-muted-foreground">{formatDate(activity.reminder_date)} • {activity.reminder_time ? formatTime(activity.reminder_time, userLocale) : "All day"}</div>
-                          <div className="text-xs text-muted-foreground">{projectName ? `Project: ${projectName}` : `Lead: ${leadName}`}</div>
-                        </TooltipContent>
-                      </Tooltip>
-                    );
-                  })}
+                  })()}
                 </div>
               </div>
             );

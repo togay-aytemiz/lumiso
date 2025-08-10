@@ -125,7 +125,7 @@ const CalendarPage = () => {
 
   return (
     <Layout fullBleed contentClassName="py-6">
-      <div className="px-0">
+      <div className="w-full">
         <div className="mb-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
@@ -212,7 +212,7 @@ const CalendarPage = () => {
         )}
 
         {/* Calendar */}
-        <Card className="w-full p-4">
+        <Card className="w-full p-4 ml-0">
           {loading && (
             <div className="h-96 flex items-center justify-center">
               <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full"></div>

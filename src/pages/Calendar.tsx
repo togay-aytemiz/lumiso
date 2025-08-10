@@ -29,6 +29,7 @@ interface Activity {
   type: string;
   lead_id: string;
   project_id?: string | null;
+  completed?: boolean;
 }
 
 export default function Calendar() {
@@ -75,7 +76,8 @@ export default function Calendar() {
           reminder_time,
           type,
           lead_id,
-          project_id
+          project_id,
+          completed
         `)
         .order("reminder_date", { ascending: true });
       
@@ -288,7 +290,7 @@ export default function Calendar() {
                       <Tooltip key={activity.id}>
                         <TooltipTrigger asChild>
                           <button
-                            className="w-full text-left text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground truncate border border-border hover:bg-accent"
+                            className={`w-full text-left text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground truncate border border-border hover:bg-accent ${activity.completed ? "line-through opacity-60" : ""}`}
                             onClick={() => handleActivityClick(activity)}
                           >
                             {line}
@@ -371,7 +373,7 @@ export default function Calendar() {
                       <Tooltip key={activity.id}>
                         <TooltipTrigger asChild>
                           <button
-                            className="w-full text-left text-xs p-2 rounded-md bg-muted text-muted-foreground border border-border hover:bg-accent transition-colors cursor-pointer"
+                            className={`w-full text-left text-xs p-2 rounded-md bg-muted text-muted-foreground border border-border hover:bg-accent transition-colors cursor-pointer ${activity.completed ? "line-through opacity-60" : ""}`}
                             onClick={() => (isProjectReminder ? openProjectById(activity.project_id) : navigate(`/leads/${activity.lead_id}`))}
                           >
                             <div className="flex items-center justify-between">
@@ -444,7 +446,7 @@ export default function Calendar() {
             {dayActivities.length > 0 ? (
               <div className="space-y-2">
                 {dayActivities.map((activity) => (
-                  <div key={activity.id} className="p-3 rounded-lg bg-muted border border-border">
+                  <div key={activity.id} className={`p-3 rounded-lg bg-muted border border-border ${activity.completed ? "opacity-60" : ""}`}>
                     <div className="flex justify-between items-start">
                       <div>
                         <div className="font-medium">{activity.content}</div>

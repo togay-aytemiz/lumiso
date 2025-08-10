@@ -127,6 +127,12 @@ export default function Calendar() {
     queryClient.invalidateQueries({ queryKey: ["activities"] });
   };
 
+  const [showSessions, setShowSessions] = useState<boolean>(() => localStorage.getItem("calendar:showSessions") !== "false");
+  const [showReminders, setShowReminders] = useState<boolean>(() => localStorage.getItem("calendar:showReminders") !== "false");
+  useEffect(() => {
+    localStorage.setItem("calendar:showSessions", String(showSessions));
+    localStorage.setItem("calendar:showReminders", String(showReminders));
+  }, [showSessions, showReminders]);
   const openProjectById = async (projectId?: string | null) => {
     if (!projectId) return;
     const { data, error } = await supabase
@@ -256,7 +262,7 @@ export default function Calendar() {
                 
                 {/* Events */}
                 <div className="space-y-1">
-                  {daySessions.slice(0, 2).map((session) => {
+                  {showSessions && daySessions.slice(0, 2).map((session) => {
                     const leadName = leadsMap[session.lead_id]?.name || "Lead";
                     const projectName = session.project_id ? projectsMap[session.project_id]?.name : undefined;
                     const line = `${formatTime(session.session_time, userLocale)} ${leadName}${projectName ? " • " + projectName : ""}`;
@@ -280,7 +286,7 @@ export default function Calendar() {
                       </Tooltip>
                     );
                   })}
-                  {dayActivities.slice(0, 1).map((activity) => {
+                  {showReminders && dayActivities.slice(0, 1).map((activity) => {
                     const isProjectReminder = !!activity.project_id;
                     const leadName = leadsMap[activity.lead_id]?.name || "Lead";
                     const projectName = isProjectReminder ? projectsMap[activity.project_id!]?.name : undefined;
@@ -305,9 +311,9 @@ export default function Calendar() {
                       </Tooltip>
                     );
                   })}
-                  {(daySessions.length + dayActivities.length) > 3 && (
+                  {(((showSessions ? daySessions.length : 0) + (showReminders ? dayActivities.length : 0)) > 3) && (
                     <div className="text-xs text-muted-foreground">
-                      +{(daySessions.length + dayActivities.length) - 3} more
+                      +{((showSessions ? daySessions.length : 0) + (showReminders ? dayActivities.length : 0)) - 3} more
                     </div>
                   )}
                 </div>
@@ -337,7 +343,7 @@ export default function Calendar() {
                 </div>
                 
                 <div className="space-y-2">
-                  {daySessions.map((session) => {
+                  {showSessions && daySessions.map((session) => {
                     const leadName = leadsMap[session.lead_id]?.name || "Lead";
                     const projectName = session.project_id ? projectsMap[session.project_id]?.name : undefined;
                     return (
@@ -362,7 +368,7 @@ export default function Calendar() {
                       </Tooltip>
                     );
                   })}
-                  {dayActivities.map((activity) => {
+                  {showReminders && dayActivities.map((activity) => {
                     const isProjectReminder = !!activity.project_id;
                     const leadName = leadsMap[activity.lead_id]?.name || "Lead";
                     const projectName = isProjectReminder ? projectsMap[activity.project_id!]?.name : undefined;
@@ -371,7 +377,7 @@ export default function Calendar() {
                         <TooltipTrigger asChild>
                           <button
                             className={`w-full text-left text-xs p-2 rounded-md bg-muted text-muted-foreground border border-border hover:bg-accent transition-colors cursor-pointer ${activity.completed ? "line-through opacity-60" : ""}`}
-                            onClick={() => (isProjectReminder ? openProjectById(activity.project_id) : navigate(`/leads/${activity.lead_id}`))}
+                            onClick={() => handleActivityClick(activity)}
                           >
                             <div className="font-semibold">{activity.reminder_time ? formatTime(activity.reminder_time, userLocale) : "All day"}</div>
                             <div className="truncate">{leadName}</div>
@@ -402,64 +408,69 @@ export default function Calendar() {
     
     return (
       <div className="bg-card rounded-xl border border-border shadow-sm p-6">
-        <div className={`text-2xl font-semibold mb-6 ${isDayToday ? "text-primary" : ""}`}>
-          {format(currentDate, "EEEE, MMMM d, yyyy", { locale: undefined })}
-        </div>
         
         <div className="space-y-4">
-          <div>
-            <h3 className="text-lg font-medium mb-3 text-primary">Sessions</h3>
-            {daySessions.length > 0 ? (
-              <div className="space-y-2">
-                {daySessions.map((session) => (
-                  <div key={session.id} className="p-3 rounded-lg bg-primary/10 border border-primary/20">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <div className="font-medium">Photography Session</div>
-                        <div className="text-sm text-muted-foreground">
-                          Status: <span className="capitalize">{session.status}</span>
-                        </div>
+          {showSessions && (
+            <div>
+              <h3 className="text-lg font-medium mb-3 text-primary">Sessions</h3>
+              {daySessions.length > 0 ? (
+                <div className="space-y-2">
+                  {daySessions.map((session) => {
+                    const leadName = leadsMap[session.lead_id]?.name || "Lead";
+                    const projectName = session.project_id ? projectsMap[session.project_id]?.name : undefined;
+                    return (
+                      <button
+                        key={session.id}
+                        className="w-full text-left p-3 rounded-lg bg-primary/10 border border-primary/20 hover:bg-primary/15"
+                        onClick={() => handleSessionClick(session)}
+                      >
+                        <div className="font-semibold">{formatTime(session.session_time, userLocale)}</div>
+                        <div className="truncate">{leadName}</div>
+                        {projectName && <div className="truncate">{projectName}</div>}
                         {session.notes && (
-                          <div className="text-sm text-muted-foreground mt-1">{session.notes}</div>
+                          <div className="text-xs text-muted-foreground mt-1">{session.notes}</div>
                         )}
-                      </div>
-                      <div className="text-sm font-medium text-primary">
-                        {formatTime(session.session_time, userLocale)}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-muted-foreground">No sessions scheduled</p>
-            )}
-          </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-muted-foreground">No sessions scheduled</p>
+              )}
+            </div>
+          )}
           
-          <div>
-            <h3 className="text-lg font-medium mb-3 text-warning">Activities & Reminders</h3>
-            {dayActivities.length > 0 ? (
-              <div className="space-y-2">
-                {dayActivities.map((activity) => (
-                  <div key={activity.id} className={`p-3 rounded-lg bg-muted border border-border ${activity.completed ? "opacity-60" : ""}`}>
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <div className="font-medium">{activity.content}</div>
-                        <div className="text-sm text-muted-foreground">
-                          Type: <span className="capitalize">{activity.type}</span>
-                        </div>
-                        
-                      </div>
-                      <div className="text-sm font-medium text-muted-foreground">
-                        {activity.reminder_time ? formatTime(activity.reminder_time, userLocale) : "All day"}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-muted-foreground">No activities or reminders set</p>
-            )}
-          </div>
+          {showReminders && (
+            <div>
+              <h3 className="text-lg font-medium mb-3">Reminders</h3>
+              {dayActivities.length > 0 ? (
+                <div className="space-y-2">
+                  {dayActivities.map((activity) => {
+                    const isProjectReminder = !!activity.project_id;
+                    const leadName = leadsMap[activity.lead_id]?.name || "Lead";
+                    const projectName = isProjectReminder ? projectsMap[activity.project_id!]?.name : undefined;
+                    const timeText = activity.reminder_time ? formatTime(activity.reminder_time, userLocale) : "All day";
+                    return (
+                      <button
+                        key={activity.id}
+                        className={`w-full text-left p-3 rounded-lg bg-muted border border-border hover:bg-accent ${activity.completed ? 'line-through opacity-60' : ''}`}
+                        onClick={() => handleActivityClick(activity)}
+                      >
+                        <div className="font-semibold">{timeText}</div>
+                        <div className="truncate">{leadName}</div>
+                        {projectName && <div className="truncate">{projectName}</div>}
+                        {activity.content && (
+                          <div className="text-xs text-muted-foreground mt-1">{activity.content}</div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-muted-foreground">No reminders</p>
+              )}
+            </div>
+          )}
         </div>
       </div>
     );
@@ -513,6 +524,24 @@ export default function Calendar() {
                   Reminder
                 </span>
               </div>
+
+              {/* Show/Hide toggles */}
+              <div className="flex bg-muted rounded-lg p-1">
+                <button
+                  onClick={() => setShowSessions((v) => !v)}
+                  className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${showSessions ? 'bg-primary text-primary-foreground' : 'hover:bg-accent text-muted-foreground'}`}
+                >
+                  Sessions
+                </button>
+                <button
+                  onClick={() => setShowReminders((v) => !v)}
+                  className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${showReminders ? 'bg-primary text-primary-foreground' : 'hover:bg-accent text-muted-foreground'}`}
+                >
+                  Reminders
+                </button>
+              </div>
+
+              {/* View mode */}
               <div className="flex bg-muted rounded-lg p-1">
                 {( ["day", "week", "month"] as ViewMode[] ).map((mode) => (
                   <button

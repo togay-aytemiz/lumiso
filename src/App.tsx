@@ -9,6 +9,7 @@ import AllLeads from "./pages/AllLeads";
 import AllProjects from "./pages/AllProjects";
 import LeadDetail from "./pages/LeadDetail";
 import UpcomingSessions from "./pages/UpcomingSessions";
+import Calendar from "./pages/Calendar";
 import ReminderDetails from "./pages/ReminderDetails";
 import Analytics from "./pages/Analytics";
 import Payments from "./pages/Payments";
@@ -34,6 +35,7 @@ const App = () => (
               <Route path="projects" element={<AllProjects />} />
               <Route path="leads/:id" element={<LeadDetail />} />
               <Route path="sessions" element={<UpcomingSessions />} />
+              <Route path="calendar" element={<Calendar />} />
               <Route path="reminders" element={<ReminderDetails />} />
               <Route path="analytics" element={<Analytics />} />
               <Route path="payments" element={<Payments />} />

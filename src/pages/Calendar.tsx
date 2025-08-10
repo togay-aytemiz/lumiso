@@ -1,0 +1,379 @@
+import { useState, useEffect, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-react";
+import Layout from "@/components/Layout";
+import { formatDate, formatTime, getUserLocale, getStartOfWeek, getEndOfWeek } from "@/lib/utils";
+import { addDays, startOfMonth, endOfMonth, eachDayOfInterval, format, isToday, isSameMonth, startOfWeek, endOfWeek, addMonths, subMonths, addWeeks, subWeeks, isSameDay, startOfDay, endOfDay } from "date-fns";
+
+type ViewMode = "day" | "week" | "month";
+
+interface Session {
+  id: string;
+  session_date: string;
+  session_time: string;
+  status: string;
+  notes?: string;
+}
+
+interface Activity {
+  id: string;
+  content: string;
+  reminder_date: string;
+  reminder_time?: string;
+  type: string;
+}
+
+export default function Calendar() {
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [viewMode, setViewMode] = useState<ViewMode>("month");
+  const userLocale = getUserLocale();
+
+  // Fetch sessions
+  const { data: sessions = [] } = useQuery({
+    queryKey: ["sessions"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("sessions")
+        .select(`
+          id,
+          session_date,
+          session_time,
+          status,
+          notes
+        `)
+        .order("session_date", { ascending: true });
+      
+      if (error) throw error;
+      return data as Session[];
+    },
+  });
+
+  // Fetch activities (reminders)
+  const { data: activities = [] } = useQuery({
+    queryKey: ["activities"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("activities")
+        .select(`
+          id,
+          content,
+          reminder_date,
+          reminder_time,
+          type
+        `)
+        .order("reminder_date", { ascending: true });
+      
+      if (error) throw error;
+      return data as Activity[];
+    },
+  });
+
+  // Navigation functions
+  const goToToday = () => setCurrentDate(new Date());
+  
+  const navigatePrevious = () => {
+    switch (viewMode) {
+      case "day":
+        setCurrentDate(prev => addDays(prev, -1));
+        break;
+      case "week":
+        setCurrentDate(prev => addWeeks(prev, -1));
+        break;
+      case "month":
+        setCurrentDate(prev => addMonths(prev, -1));
+        break;
+    }
+  };
+
+  const navigateNext = () => {
+    switch (viewMode) {
+      case "day":
+        setCurrentDate(prev => addDays(prev, 1));
+        break;
+      case "week":
+        setCurrentDate(prev => addWeeks(prev, 1));
+        break;
+      case "month":
+        setCurrentDate(prev => addMonths(prev, 1));
+        break;
+    }
+  };
+
+  // Get events for current view
+  const getEventsForDate = (date: Date) => {
+    const dateStr = format(date, "yyyy-MM-dd");
+    
+    const daySessions = sessions.filter(session => session.session_date === dateStr);
+    const dayActivities = activities.filter(activity => {
+      const activityDate = format(new Date(activity.reminder_date), "yyyy-MM-dd");
+      return activityDate === dateStr;
+    });
+    
+    return { sessions: daySessions, activities: dayActivities };
+  };
+
+  // Render view content
+  const renderMonthView = () => {
+    const monthStart = startOfMonth(currentDate);
+    const monthEnd = endOfMonth(currentDate);
+    const calendarStart = startOfWeek(monthStart, { weekStartsOn: userLocale === 'en-US' ? 0 : 1 });
+    const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: userLocale === 'en-US' ? 0 : 1 });
+    
+    const days = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
+    const weekDays = Array.from({ length: 7 }, (_, i) => {
+      const day = addDays(calendarStart, i);
+      return format(day, "EEE", { locale: undefined });
+    });
+
+    return (
+      <div className="bg-card rounded-xl border border-border shadow-sm">
+        {/* Week header */}
+        <div className="grid grid-cols-7 border-b border-border">
+          {weekDays.map((day, index) => (
+            <div key={index} className="p-3 text-sm font-medium text-muted-foreground text-center">
+              {day}
+            </div>
+          ))}
+        </div>
+        
+        {/* Calendar grid */}
+        <div className="grid grid-cols-7 gap-px bg-border">
+          {days.map((day, index) => {
+            const { sessions: daySessions, activities: dayActivities } = getEventsForDate(day);
+            const isCurrentMonth = isSameMonth(day, currentDate);
+            const isDayToday = isToday(day);
+            
+            return (
+              <div
+                key={index}
+                className={`
+                  min-h-24 p-2 bg-card hover:bg-accent/50 transition-colors
+                  ${!isCurrentMonth ? "text-muted-foreground" : ""}
+                  ${isDayToday ? "bg-primary/5" : ""}
+                `}
+              >
+                <div className={`text-sm font-medium mb-1 ${isDayToday ? "text-primary" : ""}`}>
+                  {format(day, "d")}
+                </div>
+                
+                {/* Events */}
+                <div className="space-y-1">
+                  {daySessions.slice(0, 2).map((session) => (
+                    <div
+                      key={session.id}
+                      className="text-xs p-1 rounded bg-primary/10 text-primary truncate"
+                      title={`Session - ${formatTime(session.session_time, userLocale)}`}
+                    >
+                      Session
+                    </div>
+                  ))}
+                  {dayActivities.slice(0, 1).map((activity) => (
+                    <div
+                      key={activity.id}
+                      className="text-xs p-1 rounded bg-warning/10 text-warning truncate"
+                      title={activity.content}
+                    >
+                      {activity.content}
+                    </div>
+                  ))}
+                  {(daySessions.length + dayActivities.length) > 3 && (
+                    <div className="text-xs text-muted-foreground">
+                      +{(daySessions.length + dayActivities.length) - 3} more
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
+  const renderWeekView = () => {
+    const weekStart = getStartOfWeek(currentDate, userLocale);
+    const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+    
+    return (
+      <div className="bg-card rounded-xl border border-border shadow-sm">
+        <div className="grid grid-cols-7 border-b border-border">
+          {weekDays.map((day, index) => {
+            const { sessions: daySessions, activities: dayActivities } = getEventsForDate(day);
+            const isDayToday = isToday(day);
+            
+            return (
+              <div key={index} className={`p-4 border-r border-border last:border-r-0 ${isDayToday ? "bg-primary/5" : ""}`}>
+                <div className={`text-sm font-medium mb-2 ${isDayToday ? "text-primary" : ""}`}>
+                  {format(day, "EEE d", { locale: undefined })}
+                </div>
+                
+                <div className="space-y-2">
+                  {daySessions.map((session) => (
+                    <div
+                      key={session.id}
+                      className="text-xs p-2 rounded bg-primary/10 text-primary"
+                    >
+                      <div className="font-medium">{formatTime(session.session_time, userLocale)}</div>
+                      <div className="truncate">Session</div>
+                    </div>
+                  ))}
+                  {dayActivities.map((activity) => (
+                    <div
+                      key={activity.id}
+                      className="text-xs p-2 rounded bg-warning/10 text-warning"
+                    >
+                      <div className="font-medium">
+                        {activity.reminder_time ? formatTime(activity.reminder_time, userLocale) : "All day"}
+                      </div>
+                      <div className="truncate">{activity.content}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
+  const renderDayView = () => {
+    const { sessions: daySessions, activities: dayActivities } = getEventsForDate(currentDate);
+    const isDayToday = isToday(currentDate);
+    
+    return (
+      <div className="bg-card rounded-xl border border-border shadow-sm p-6">
+        <div className={`text-2xl font-semibold mb-6 ${isDayToday ? "text-primary" : ""}`}>
+          {format(currentDate, "EEEE, MMMM d, yyyy", { locale: undefined })}
+        </div>
+        
+        <div className="space-y-4">
+          <div>
+            <h3 className="text-lg font-medium mb-3 text-primary">Sessions</h3>
+            {daySessions.length > 0 ? (
+              <div className="space-y-2">
+                {daySessions.map((session) => (
+                  <div key={session.id} className="p-3 rounded-lg bg-primary/10 border border-primary/20">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <div className="font-medium">Photography Session</div>
+                        <div className="text-sm text-muted-foreground">
+                          Status: <span className="capitalize">{session.status}</span>
+                        </div>
+                        {session.notes && (
+                          <div className="text-sm text-muted-foreground mt-1">{session.notes}</div>
+                        )}
+                      </div>
+                      <div className="text-sm font-medium text-primary">
+                        {formatTime(session.session_time, userLocale)}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-muted-foreground">No sessions scheduled</p>
+            )}
+          </div>
+          
+          <div>
+            <h3 className="text-lg font-medium mb-3 text-warning">Activities & Reminders</h3>
+            {dayActivities.length > 0 ? (
+              <div className="space-y-2">
+                {dayActivities.map((activity) => (
+                  <div key={activity.id} className="p-3 rounded-lg bg-warning/10 border border-warning/20">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <div className="font-medium">{activity.content}</div>
+                        <div className="text-sm text-muted-foreground">
+                          Type: <span className="capitalize">{activity.type}</span>
+                        </div>
+                        
+                      </div>
+                      <div className="text-sm font-medium text-warning">
+                        {activity.reminder_time ? formatTime(activity.reminder_time, userLocale) : "All day"}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-muted-foreground">No activities or reminders set</p>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const getViewTitle = () => {
+    switch (viewMode) {
+      case "day":
+        return format(currentDate, "MMMM d, yyyy", { locale: undefined });
+      case "week":
+        const weekStart = getStartOfWeek(currentDate, userLocale);
+        const weekEnd = getEndOfWeek(currentDate, userLocale);
+        return `${format(weekStart, "MMM d", { locale: undefined })} - ${format(weekEnd, "MMM d, yyyy", { locale: undefined })}`;
+      case "month":
+        return format(currentDate, "MMMM yyyy", { locale: undefined });
+    }
+  };
+
+  return (
+    <Layout>
+      <div className="p-6 space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <CalendarIcon className="h-8 w-8 text-primary" />
+            <h1 className="text-3xl font-bold">Calendar</h1>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={goToToday}>
+              Today
+            </Button>
+            <Button variant="outline" size="sm" onClick={navigatePrevious}>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="sm" onClick={navigateNext}>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+
+        {/* View controls */}
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-semibold">{getViewTitle()}</h2>
+          
+          <div className="flex bg-muted rounded-lg p-1">
+            {(["day", "week", "month"] as ViewMode[]).map((mode) => (
+              <button
+                key={mode}
+                onClick={() => setViewMode(mode)}
+                className={`
+                  px-3 py-1 rounded-md text-sm font-medium transition-colors capitalize
+                  ${viewMode === mode 
+                    ? "bg-primary text-primary-foreground" 
+                    : "hover:bg-accent text-muted-foreground"
+                  }
+                `}
+              >
+                {mode}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Calendar content */}
+        <div className="min-h-96">
+          {viewMode === "month" && renderMonthView()}
+          {viewMode === "week" && renderWeekView()}
+          {viewMode === "day" && renderDayView()}
+        </div>
+      </div>
+    </Layout>
+  );
+}

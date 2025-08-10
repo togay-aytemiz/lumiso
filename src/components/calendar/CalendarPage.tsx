@@ -122,9 +122,10 @@ const CalendarPage = () => {
 
   return (
     <Layout>
-      <div className="w-full h-full p-6 space-y-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <h1 className="text-3xl font-bold text-foreground">Calendar</h1>
+      <div className="flex-1 w-full min-h-screen">
+        <div className="p-6 space-y-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <h1 className="text-3xl font-bold text-foreground">Calendar</h1>
           
           {/* Calendar Toolbar */}
           <div className="flex flex-col sm:flex-row items-center gap-4">
@@ -279,6 +280,7 @@ const CalendarPage = () => {
           </div>
         </Card>
       </div>
+    </div>
     </Layout>
   );
 };

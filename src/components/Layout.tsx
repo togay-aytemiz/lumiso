@@ -22,7 +22,7 @@ export default function Layout({ children, fullBleed = false, contentClassName }
             contentClassName
           )}
         >
-          <div className="md:hidden p-2">
+          <div className="md:hidden p-2 border-b">
             <SidebarTrigger />
           </div>
           {children}

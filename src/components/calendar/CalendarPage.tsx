@@ -122,13 +122,16 @@ const CalendarPage = () => {
 
   return (
     <Layout>
-      <div className="flex-1 w-full min-h-screen">
-        <div className="p-6 space-y-6">
+      <div className="p-8">
+        <div className="mb-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <h1 className="text-3xl font-bold text-foreground">Calendar</h1>
-          
-          {/* Calendar Toolbar */}
-          <div className="flex flex-col sm:flex-row items-center gap-4">
+            <div>
+              <h1 className="text-3xl font-bold text-foreground">Calendar</h1>
+              <p className="text-muted-foreground">View your sessions and reminders</p>
+            </div>
+            
+            {/* Calendar Toolbar */}
+            <div className="flex flex-col sm:flex-row items-center gap-4">
             {/* Navigation Controls */}
             <div className="flex items-center gap-2">
               <Button
@@ -191,12 +194,13 @@ const CalendarPage = () => {
                 Month
               </Button>
             </div>
+            </div>
           </div>
         </div>
-
+        
         {/* Empty State */}
         {!loading && !hasEvents && (
-          <Card className="p-8 text-center">
+          <Card className="p-8 text-center mb-6">
             <CalendarDays className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
             <p className="text-muted-foreground">
               No sessions or reminders for this period
@@ -205,7 +209,7 @@ const CalendarPage = () => {
         )}
 
         {/* Calendar */}
-        <Card className="p-4 w-full">
+        <Card className="p-4">
           {loading && (
             <div className="h-96 flex items-center justify-center">
               <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full"></div>
@@ -280,7 +284,6 @@ const CalendarPage = () => {
           </div>
         </Card>
       </div>
-    </div>
     </Layout>
   );
 };

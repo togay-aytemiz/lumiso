@@ -1,18 +1,31 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
+import { cn } from "@/lib/utils";
 
-export default function Layout({ children }: { children: React.ReactNode }) {
+type LayoutProps = {
+  children: React.ReactNode;
+  fullBleed?: boolean;        // removes max-width container beside sidebar
+  contentClassName?: string;  // extra classes for the content wrapper
+}
+
+export default function Layout({ children, fullBleed = false, contentClassName }: LayoutProps) {
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full">
         <AppSidebar />
-        <main className="flex-1 flex flex-col">
+        <main
+          className={cn(
+            "flex-1 min-w-0",                                  // important to prevent right-side gaps
+            fullBleed
+              ? "px-4 md:px-6 lg:px-8"                         // gutters only, no container/max-width
+              : "container mx-auto max-w-7xl px-4 md:px-6 lg:px-8",
+            contentClassName
+          )}
+        >
           <div className="md:hidden p-2">
             <SidebarTrigger />
           </div>
-          <div className="flex-1">
-            {children}
-          </div>
+          {children}
         </main>
       </div>
     </SidebarProvider>

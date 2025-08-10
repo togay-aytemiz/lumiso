@@ -23,11 +23,14 @@ const CalendarPage = () => {
   // Detect if the locale uses 24h format
   const getIs24h = () => {
     try {
+      const resolved = Intl.DateTimeFormat(navigator.language).resolvedOptions() as any;
+      const hourCycle = resolved.hourCycle;
+      return hourCycle === 'h23' || hourCycle === 'h24';
+    } catch {
+      // Fallback detection
       const testDate = new Date(2023, 0, 1, 13, 0);
       const timeString = testDate.toLocaleTimeString(navigator.language);
       return !timeString.includes('PM') && !timeString.includes('AM') && !timeString.includes('ÖS') && !timeString.includes('ÖÖ');
-    } catch {
-      return false;
     }
   };
   const is24h = getIs24h();
@@ -121,8 +124,8 @@ const CalendarPage = () => {
   const hasEvents = events.length > 0;
 
   return (
-    <Layout>
-      <div className="p-8">
+    <Layout fullBleed contentClassName="py-6">
+      <div className="px-0">
         <div className="mb-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
@@ -209,7 +212,7 @@ const CalendarPage = () => {
         )}
 
         {/* Calendar */}
-        <Card className="p-4">
+        <Card className="w-full p-4">
           {loading && (
             <div className="h-96 flex items-center justify-center">
               <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full"></div>
@@ -227,7 +230,7 @@ const CalendarPage = () => {
               navLinks={false}
               selectable={false}
               nowIndicator={true}
-              dayMaxEvents={false} // Allow unlimited events per day
+              dayMaxEvents={true} // Allow unlimited events but enable "more" link
               moreLinkClick="popover"
               eventDisplay="block"
               eventTimeFormat={{

@@ -513,30 +513,27 @@ export default function Calendar() {
             <h2 className="text-xl font-semibold">{getViewTitle()}</h2>
             
             <div className="flex items-center gap-3">
-              <div className="hidden md:flex items-center gap-3 text-xs text-muted-foreground">
-                <span className="inline-flex items-center gap-1">
-                  <span className="h-2 w-2 rounded-full bg-primary"></span>
-                  Session
-                </span>
-                <span className="inline-flex items-center gap-1">
-                  <span className="h-2 w-2 rounded-full bg-muted-foreground/40"></span>
-                  Reminder
-                </span>
-              </div>
-
-              {/* Show/Hide toggles */}
-              <div className="flex bg-muted rounded-lg p-1">
+              {/* Legend + filters (clickable chips) */}
+              <div className="flex items-center gap-2" aria-label="Filter calendar items">
                 <button
+                  type="button"
+                  aria-pressed={showSessions}
                   onClick={() => setShowSessions((v) => !v)}
-                  className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${showSessions ? 'bg-primary text-primary-foreground' : 'hover:bg-accent text-muted-foreground'}`}
+                  className={`inline-flex items-center gap-2 px-2.5 py-1.5 rounded-md border text-xs font-medium transition-colors
+                    ${showSessions ? 'bg-primary/10 border-primary/30 text-foreground' : 'bg-muted border-border text-muted-foreground hover:bg-accent'}`}
                 >
-                  Sessions
+                  <span className={`h-2.5 w-2.5 rounded-full ${showSessions ? 'bg-primary' : 'bg-muted-foreground/40'}`} />
+                  <span>Sessions</span>
                 </button>
                 <button
+                  type="button"
+                  aria-pressed={showReminders}
                   onClick={() => setShowReminders((v) => !v)}
-                  className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${showReminders ? 'bg-primary text-primary-foreground' : 'hover:bg-accent text-muted-foreground'}`}
+                  className={`inline-flex items-center gap-2 px-2.5 py-1.5 rounded-md border text-xs font-medium transition-colors
+                    ${showReminders ? 'bg-primary/10 border-primary/30 text-foreground' : 'bg-muted border-border text-muted-foreground hover:bg-accent'}`}
                 >
-                  Reminders
+                  <span className={`h-2.5 w-2.5 rounded-full ${showReminders ? 'bg-muted-foreground/80' : 'bg-muted-foreground/40'}`} />
+                  <span>Reminders</span>
                 </button>
               </div>
 

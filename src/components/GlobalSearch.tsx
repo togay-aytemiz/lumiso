@@ -69,6 +69,11 @@ const GlobalSearch = () => {
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
 
+  // Preload statuses to avoid per-row fetching and flicker
+  const [leadStatuses, setLeadStatuses] = useState<any[]>([]);
+  const [projectStatuses, setProjectStatuses] = useState<any[]>([]);
+  const [statusesLoading, setStatusesLoading] = useState(true);
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
@@ -81,6 +86,27 @@ const GlobalSearch = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Preload lead/project statuses once to avoid per-row fetching
+  useEffect(() => {
+    let mounted = true;
+    setStatusesLoading(true);
+    (async () => {
+      try {
+        const [ls, ps] = await Promise.all([
+          supabase.from('lead_statuses').select('*').order('sort_order', { ascending: true }),
+          supabase.from('project_statuses').select('*').order('sort_order', { ascending: true })
+        ]);
+        if (!mounted) return;
+        setLeadStatuses(ls.data || []);
+        setProjectStatuses(ps.data || []);
+      } catch (e) {
+        // no-op
+      } finally {
+        if (mounted) setStatusesLoading(false);
+      }
+    })();
+    return () => { mounted = false; };
+  }, []);
   useEffect(() => {
     const delayedSearch = setTimeout(() => {
       if (query.trim().length > 2) {
@@ -413,19 +439,29 @@ const GlobalSearch = () => {
                               </p>
                               <div className="flex items-center gap-2 ml-2">
                                 {result.type === 'project' && result.projectId ? (
-                                  <ProjectStatusBadge
-                                    projectId={result.projectId}
-                                    currentStatusId={result.projectStatusId ?? undefined}
-                                    editable={false}
-                                    size="sm"
-                                  />
+                                  statusesLoading ? (
+                                    <div className="h-5 w-16 rounded-full bg-muted animate-pulse" />
+                                  ) : (
+                                    <ProjectStatusBadge
+                                      projectId={result.projectId}
+                                      currentStatusId={result.projectStatusId ?? undefined}
+                                      editable={false}
+                                      size="sm"
+                                      statuses={projectStatuses}
+                                    />
+                                  )
                                 ) : result.leadId ? (
-                                  <LeadStatusBadge
-                                    leadId={result.leadId}
-                                    currentStatus={result.status}
-                                    editable={false}
-                                    size="sm"
-                                  />
+                                  statusesLoading ? (
+                                    <div className="h-5 w-16 rounded-full bg-muted animate-pulse" />
+                                  ) : (
+                                    <LeadStatusBadge
+                                      leadId={result.leadId}
+                                      currentStatus={result.status}
+                                      editable={false}
+                                      size="sm"
+                                      statuses={leadStatuses}
+                                    />
+                                  )
                                 ) : null}
                                 <ChevronRight className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                               </div>

@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { useNavigate } from "react-router-dom";
+import { ViewProjectDialog } from "@/components/ViewProjectDialog";
 import { formatDate, formatTime, getUserLocale, getStartOfWeek, getEndOfWeek } from "@/lib/utils";
 import { addDays, startOfMonth, endOfMonth, eachDayOfInterval, format, isToday, isSameMonth, startOfWeek, endOfWeek, addMonths, subMonths, addWeeks, subWeeks, isSameDay, startOfDay, endOfDay } from "date-fns";
 
@@ -15,6 +17,8 @@ interface Session {
   session_time: string;
   status: string;
   notes?: string;
+  lead_id: string;
+  project_id?: string | null;
 }
 
 interface Activity {
@@ -23,6 +27,8 @@ interface Activity {
   reminder_date: string;
   reminder_time?: string;
   type: string;
+  lead_id: string;
+  project_id?: string | null;
 }
 
 export default function Calendar() {
@@ -41,7 +47,9 @@ export default function Calendar() {
           session_date,
           session_time,
           status,
-          notes
+          notes,
+          lead_id,
+          project_id
         `)
         .order("session_date", { ascending: true });
       
@@ -69,6 +77,55 @@ export default function Calendar() {
       return data as Activity[];
     },
   });
+
+  // Minimal data for display
+  const { data: projects = [] } = useQuery({
+    queryKey: ["projects-min"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("projects")
+        .select("id,name,lead_id");
+      if (error) throw error;
+      return data as { id: string; name: string; lead_id: string }[];
+    },
+  });
+
+  const { data: leads = [] } = useQuery({
+    queryKey: ["leads-min"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("leads")
+        .select("id,name");
+      if (error) throw error;
+      return data as { id: string; name: string }[];
+    },
+  });
+
+  const projectsMap = useMemo(() =>
+    Object.fromEntries(projects.map((p) => [p.id, p])),
+  [projects]);
+  const leadsMap = useMemo(() =>
+    Object.fromEntries(leads.map((l) => [l.id, l])),
+  [leads]);
+
+  const [projectDialogOpen, setProjectDialogOpen] = useState(false);
+  const [selectedProject, setSelectedProject] = useState<any | null>(null);
+  const [selectedProjectLeadName, setSelectedProjectLeadName] = useState("");
+  const navigate = useNavigate();
+
+  const openProjectById = async (projectId?: string | null) => {
+    if (!projectId) return;
+    const { data, error } = await supabase
+      .from("projects")
+      .select("*")
+      .eq("id", projectId)
+      .maybeSingle();
+    if (!error && data) {
+      setSelectedProject(data);
+      setSelectedProjectLeadName(leadsMap[data.lead_id]?.name || "");
+      setProjectDialogOpen(true);
+    }
+  };
 
   // Navigation functions
   const goToToday = () => setCurrentDate(new Date());

@@ -388,7 +388,6 @@ export default function Calendar() {
                           <div className="text-sm font-medium">{activity.content}</div>
                           <div className="text-xs text-muted-foreground">{formatDate(activity.reminder_date)} • {activity.reminder_time ? formatTime(activity.reminder_time, userLocale) : "All day"}</div>
                           <div className="text-xs text-muted-foreground">{projectName ? `Project: ${projectName}` : `Lead: ${leadName}`}</div>
-                          <div className="text-xs capitalize">Type: {activity.type}</div>
                         </TooltipContent>
                       </Tooltip>
                     );

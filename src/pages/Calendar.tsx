@@ -69,7 +69,9 @@ export default function Calendar() {
           content,
           reminder_date,
           reminder_time,
-          type
+          type,
+          lead_id,
+          project_id
         `)
         .order("reminder_date", { ascending: true });
       
@@ -277,26 +279,62 @@ export default function Calendar() {
                 </div>
                 
                 <div className="space-y-2">
-                  {daySessions.map((session) => (
-                    <div
-                      key={session.id}
-                      className="text-xs p-2 rounded bg-primary/10 text-primary"
-                    >
-                      <div className="font-medium">{formatTime(session.session_time, userLocale)}</div>
-                      <div className="truncate">Session</div>
-                    </div>
-                  ))}
-                  {dayActivities.map((activity) => (
-                    <div
-                      key={activity.id}
-                      className="text-xs p-2 rounded bg-muted text-muted-foreground border border-border"
-                    >
-                      <div className="font-medium">
-                        {activity.reminder_time ? formatTime(activity.reminder_time, userLocale) : "All day"}
-                      </div>
-                      <div className="truncate">{activity.content}</div>
-                    </div>
-                  ))}
+                  {daySessions.map((session) => {
+                    const leadName = leadsMap[session.lead_id]?.name || "Lead";
+                    const projectName = session.project_id ? projectsMap[session.project_id]?.name : undefined;
+                    return (
+                      <Tooltip key={session.id}>
+                        <TooltipTrigger asChild>
+                          <button
+                            className="w-full text-left text-xs p-2 rounded-md bg-primary/10 text-primary border border-primary/20 hover:bg-primary/15 transition-colors cursor-pointer"
+                            onClick={() => (session.project_id ? openProjectById(session.project_id) : navigate(`/leads/${session.lead_id}`))}
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="font-medium">{formatTime(session.session_time, userLocale)}</span>
+                              <span className="capitalize">{session.status}</span>
+                            </div>
+                            <div className="truncate">{leadName}</div>
+                            {projectName && <div className="truncate text-muted-foreground">{projectName}</div>}
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs">
+                          <div className="text-sm font-medium">{projectName || "Session"}</div>
+                          <div className="text-xs text-muted-foreground">{leadName}</div>
+                          <div className="text-xs text-muted-foreground">{formatDate(session.session_date)} • {formatTime(session.session_time, userLocale)}</div>
+                          {session.notes && <div className="mt-1 text-xs">{session.notes}</div>}
+                          <div className="text-xs">Status: <span className="capitalize">{session.status}</span></div>
+                        </TooltipContent>
+                      </Tooltip>
+                    );
+                  })}
+                  {dayActivities.map((activity) => {
+                    const isProjectReminder = !!activity.project_id;
+                    const leadName = leadsMap[activity.lead_id]?.name || "Lead";
+                    const projectName = isProjectReminder ? projectsMap[activity.project_id!]?.name : undefined;
+                    return (
+                      <Tooltip key={activity.id}>
+                        <TooltipTrigger asChild>
+                          <button
+                            className="w-full text-left text-xs p-2 rounded-md bg-muted text-muted-foreground border border-border hover:bg-accent transition-colors cursor-pointer"
+                            onClick={() => (isProjectReminder ? openProjectById(activity.project_id) : navigate(`/leads/${activity.lead_id}`))}
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="font-medium">{activity.reminder_time ? formatTime(activity.reminder_time, userLocale) : "All day"}</span>
+                              <span className="capitalize">{activity.type}</span>
+                            </div>
+                            <div className="truncate">{activity.content}</div>
+                            <div className="truncate text-muted-foreground">{projectName ? projectName : leadName}</div>
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs">
+                          <div className="text-sm font-medium">{activity.content}</div>
+                          <div className="text-xs text-muted-foreground">{formatDate(activity.reminder_date)} • {activity.reminder_time ? formatTime(activity.reminder_time, userLocale) : "All day"}</div>
+                          <div className="text-xs text-muted-foreground">{projectName ? `Project: ${projectName}` : `Lead: ${leadName}`}</div>
+                          <div className="text-xs capitalize">Type: {activity.type}</div>
+                        </TooltipContent>
+                      </Tooltip>
+                    );
+                  })}
                 </div>
               </div>
             );
@@ -389,54 +427,65 @@ export default function Calendar() {
   };
 
   return (
-    <div className="p-6 space-y-6 w-full">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Calendar</h1>
-          
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={goToToday}>
-              Today
-            </Button>
-            <Button variant="outline" size="sm" onClick={navigatePrevious}>
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" size="sm" onClick={navigateNext}>
-              <ChevronRight className="h-4 w-4" />
-            </Button>
+    <>
+      <div className="p-6 space-y-6 w-full">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <h1 className="text-3xl font-bold">Calendar</h1>
+            
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={goToToday}>
+                Today
+              </Button>
+              <Button variant="outline" size="sm" onClick={navigatePrevious}>
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Button variant="outline" size="sm" onClick={navigateNext}>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+
+          {/* View controls */}
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold">{getViewTitle()}</h2>
+            
+            <div className="flex bg-muted rounded-lg p-1">
+              {(["day", "week", "month"] as ViewMode[]).map((mode) => (
+                <button
+                  key={mode}
+                  onClick={() => setViewMode(mode)}
+                  className={`
+                    px-3 py-1 rounded-md text-sm font-medium transition-colors capitalize
+                    ${viewMode === mode 
+                      ? "bg-primary text-primary-foreground" 
+                      : "hover:bg-accent text-muted-foreground"
+                    }
+                  `}
+                >
+                  {mode}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Calendar content */}
+          <div className="min-h-96">
+            {viewMode === "month" && renderMonthView()}
+            {viewMode === "week" && renderWeekView()}
+            {viewMode === "day" && renderDayView()}
           </div>
         </div>
 
-        {/* View controls */}
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold">{getViewTitle()}</h2>
-          
-          <div className="flex bg-muted rounded-lg p-1">
-            {(["day", "week", "month"] as ViewMode[]).map((mode) => (
-              <button
-                key={mode}
-                onClick={() => setViewMode(mode)}
-                className={`
-                  px-3 py-1 rounded-md text-sm font-medium transition-colors capitalize
-                  ${viewMode === mode 
-                    ? "bg-primary text-primary-foreground" 
-                    : "hover:bg-accent text-muted-foreground"
-                  }
-                `}
-              >
-                {mode}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Calendar content */}
-        <div className="min-h-96">
-          {viewMode === "month" && renderMonthView()}
-          {viewMode === "week" && renderWeekView()}
-          {viewMode === "day" && renderDayView()}
-        </div>
-      </div>
-    
+        {selectedProject && (
+          <ViewProjectDialog
+            project={selectedProject}
+            open={projectDialogOpen}
+            onOpenChange={setProjectDialogOpen}
+            onProjectUpdated={() => {}}
+            leadName={selectedProjectLeadName}
+          />
+        )}
+    </>
   );
 }

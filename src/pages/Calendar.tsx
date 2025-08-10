@@ -105,11 +105,21 @@ export default function Calendar() {
   const getEventsForDate = (date: Date) => {
     const dateStr = format(date, "yyyy-MM-dd");
     
-    const daySessions = sessions.filter(session => session.session_date === dateStr);
-    const dayActivities = activities.filter(activity => {
-      const activityDate = format(new Date(activity.reminder_date), "yyyy-MM-dd");
-      return activityDate === dateStr;
-    });
+    const daySessions = sessions
+      .filter(session => session.session_date === dateStr)
+      .sort((a, b) => a.session_time.localeCompare(b.session_time));
+      
+    const dayActivities = activities
+      .filter(activity => {
+        const activityDate = format(new Date(activity.reminder_date), "yyyy-MM-dd");
+        return activityDate === dateStr;
+      })
+      .sort((a, b) => {
+        if (!a.reminder_time && !b.reminder_time) return 0;
+        if (!a.reminder_time) return 1;
+        if (!b.reminder_time) return -1;
+        return a.reminder_time.localeCompare(b.reminder_time);
+      });
     
     return { sessions: daySessions, activities: dayActivities };
   };
@@ -323,13 +333,10 @@ export default function Calendar() {
 
   return (
     <Layout>
-      <div className="p-6 space-y-6">
+      <div className="p-6 space-y-6 w-full">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <CalendarIcon className="h-8 w-8 text-primary" />
-            <h1 className="text-3xl font-bold">Calendar</h1>
-          </div>
+          <h1 className="text-3xl font-bold">Calendar</h1>
           
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={goToToday}>

@@ -91,6 +91,8 @@ export const loadSessions = async (dateRange: { start: string; end: string }): P
  */
 export const loadReminders = async (dateRange: { start: string; end: string }): Promise<CalendarEvent[]> => {
   try {
+    console.log('Loading reminders for date range:', dateRange);
+    
     // First get reminders with lead names joined
     const { data: reminders, error } = await supabase
       .from('activities')
@@ -99,7 +101,12 @@ export const loadReminders = async (dateRange: { start: string; end: string }): 
       .gte('reminder_date', dateRange.start.split('T')[0])
       .lte('reminder_date', dateRange.end.split('T')[0]);
 
-    if (error) throw error;
+    console.log('Raw reminders from DB:', reminders);
+
+    if (error) {
+      console.error('Error loading reminders:', error);
+      throw error;
+    }
 
     // Then get lead names separately 
     const leadIds = reminders?.map(r => r.lead_id).filter(Boolean) || [];
@@ -110,7 +117,7 @@ export const loadReminders = async (dateRange: { start: string; end: string }): 
 
     const leadMap = new Map(leads?.map(lead => [lead.id, lead.name]) || []);
 
-    return (reminders || []).map(reminder => {
+    const reminderEvents = (reminders || []).map(reminder => {
       const startDateTime = reminder.reminder_time 
         ? `${reminder.reminder_date}T${reminder.reminder_time}`
         : `${reminder.reminder_date}T00:00:00`;
@@ -128,7 +135,10 @@ export const loadReminders = async (dateRange: { start: string; end: string }): 
           leadName: leadMap.get(reminder.lead_id),
         },
       };
-    }) || [];
+    });
+
+    console.log('Processed reminder events:', reminderEvents);
+    return reminderEvents;
   } catch (error) {
     console.error('Error loading reminders:', error);
     return [];
@@ -143,6 +153,12 @@ export const loadCalendarEvents = async (dateRange: { start: string; end: string
     loadSessions(dateRange),
     loadReminders(dateRange),
   ]);
+
+  console.log('Loading calendar events:', { 
+    sessionsCount: sessions.length, 
+    remindersCount: reminders.length,
+    dateRange 
+  });
 
   return [...sessions, ...reminders];
 };

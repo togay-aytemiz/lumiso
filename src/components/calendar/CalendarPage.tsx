@@ -122,7 +122,7 @@ const CalendarPage = () => {
 
   return (
     <Layout>
-      <div className="container mx-auto p-6 space-y-6">
+      <div className="w-full h-full p-6 space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <h1 className="text-3xl font-bold text-foreground">Calendar</h1>
           
@@ -204,7 +204,7 @@ const CalendarPage = () => {
         )}
 
         {/* Calendar */}
-        <Card className="p-6">
+        <Card className="p-4 w-full">
           {loading && (
             <div className="h-96 flex items-center justify-center">
               <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full"></div>
@@ -222,7 +222,7 @@ const CalendarPage = () => {
               navLinks={false}
               selectable={false}
               nowIndicator={true}
-              dayMaxEvents={true}
+              dayMaxEvents={false} // Allow unlimited events per day
               moreLinkClick="popover"
               eventDisplay="block"
               eventTimeFormat={{
@@ -245,12 +245,12 @@ const CalendarPage = () => {
               }}
               eventClassNames={(arg) => {
                 const type = arg.event.extendedProps?.type;
-                const baseClasses = 'relative truncate rounded-md border px-2 py-1 text-xs transition-all';
+                const baseClasses = 'relative truncate rounded-md border px-1 py-0.5 text-xs transition-all mb-0.5 overflow-hidden';
                 
                 if (type === 'session') {
-                  return `${baseClasses} bg-purple-500 text-white dark:bg-purple-400 dark:text-gray-900 border-white/30 dark:border-black/10 hover:ring-2 hover:ring-black/5 dark:hover:ring-white/10 before:absolute before:inset-y-0 before:left-0 before:w-1 before:rounded-l-full before:bg-purple-700 dark:before:bg-purple-600`;
+                  return `${baseClasses} bg-purple-500 text-white dark:bg-purple-400 dark:text-gray-900 border-white/30 dark:border-black/10 hover:ring-1 hover:ring-black/5 dark:hover:ring-white/10 before:absolute before:inset-y-0 before:left-0 before:w-0.5 before:bg-purple-700 dark:before:bg-purple-600`;
                 } else {
-                  return `${baseClasses} bg-sky-500 text-white dark:bg-sky-400 dark:text-gray-900 border-white/30 dark:border-black/10 hover:ring-2 hover:ring-black/5 dark:hover:ring-white/10 before:absolute before:inset-y-0 before:left-0 before:w-1 before:rounded-l-full before:bg-sky-700 dark:before:bg-sky-600`;
+                  return `${baseClasses} bg-sky-500 text-white dark:bg-sky-400 dark:text-gray-900 border-white/30 dark:border-black/10 hover:ring-1 hover:ring-black/5 dark:hover:ring-white/10 before:absolute before:inset-y-0 before:left-0 before:w-0.5 before:bg-sky-700 dark:before:bg-sky-600`;
                 }
               }}
               eventDidMount={(info) => {
@@ -272,9 +272,9 @@ const CalendarPage = () => {
               eventClick={handleEventClick}
               eventsSet={handleEventsSet}
               height="auto"
+              contentHeight="auto"
               // Responsive behavior
               handleWindowResize={true}
-              aspectRatio={window.innerWidth < 768 ? 1.0 : 1.35}
             />
           </div>
         </Card>

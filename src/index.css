@@ -215,6 +215,8 @@ All colors MUST be HSL.
 /* Month view event styling */
 .fc-daygrid-event {
   margin: 1px 0 !important;
+  min-height: 16px !important;
+  line-height: 1.2 !important;
 }
 
 .fc-event-title {
@@ -222,6 +224,7 @@ All colors MUST be HSL.
   overflow: hidden !important;
   text-overflow: ellipsis !important;
   white-space: nowrap !important;
+  font-size: 11px !important;
 }
 
 /* Week/Day view event styling */
@@ -233,6 +236,7 @@ All colors MUST be HSL.
 .fc-more-link {
   color: hsl(var(--primary)) !important;
   font-weight: 500 !important;
+  font-size: 10px !important;
 }
 
 /* Now indicator */
@@ -257,7 +261,12 @@ All colors MUST be HSL.
   }
   
   .fc-daygrid-event {
-    font-size: 11px !important;
+    font-size: 10px !important;
+    min-height: 14px !important;
+  }
+  
+  .fc-event-time {
+    font-size: 9px !important;
   }
 }
 

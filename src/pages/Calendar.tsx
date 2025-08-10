@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -118,6 +118,12 @@ export default function Calendar() {
   const [selectedProject, setSelectedProject] = useState<any | null>(null);
   const [selectedProjectLeadName, setSelectedProjectLeadName] = useState("");
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  const refreshCalendar = () => {
+    queryClient.invalidateQueries({ queryKey: ["sessions"] });
+    queryClient.invalidateQueries({ queryKey: ["activities"] });
+  };
 
   const openProjectById = async (projectId?: string | null) => {
     if (!projectId) return;
@@ -241,7 +247,7 @@ export default function Calendar() {
                       <Tooltip key={session.id}>
                         <TooltipTrigger asChild>
                           <button
-                            className="w-full text-left text-xs px-1.5 py-0.5 rounded bg-primary/10 text-primary truncate border border-primary/20 hover:bg-primary/15"
+                            className={`w-full text-left text-xs px-1.5 py-0.5 rounded truncate border hover:bg-primary/15 ${isDayToday ? 'bg-primary/15 border-primary/30' : 'bg-primary/10 border-primary/20'} text-primary`}
                             onClick={() => (session.project_id ? openProjectById(session.project_id) : navigate(`/leads/${session.lead_id}`))}
                           >
                             {line}
@@ -528,8 +534,8 @@ export default function Calendar() {
           <ViewProjectDialog
             project={selectedProject}
             open={projectDialogOpen}
-            onOpenChange={setProjectDialogOpen}
-            onProjectUpdated={() => {}}
+            onOpenChange={(open) => { setProjectDialogOpen(open); if (!open) refreshCalendar(); }}
+            onProjectUpdated={refreshCalendar}
             leadName={selectedProjectLeadName}
           />
         )}

@@ -373,12 +373,9 @@ export default function Calendar() {
                             className={`w-full text-left text-xs p-2 rounded-md bg-muted text-muted-foreground border border-border hover:bg-accent transition-colors cursor-pointer ${activity.completed ? "line-through opacity-60" : ""}`}
                             onClick={() => (isProjectReminder ? openProjectById(activity.project_id) : navigate(`/leads/${activity.lead_id}`))}
                           >
-                            <div className="flex items-center justify-between">
-                              <span className="font-medium">{activity.reminder_time ? formatTime(activity.reminder_time, userLocale) : "All day"}</span>
-                              <span className="capitalize">{activity.type}</span>
-                            </div>
-                            <div className="truncate">{activity.content}</div>
-                            <div className="truncate text-muted-foreground">{projectName ? projectName : leadName}</div>
+                            <div className="font-semibold">{activity.reminder_time ? formatTime(activity.reminder_time, userLocale) : "All day"}</div>
+                            <div className="truncate">{leadName}</div>
+                            {projectName && <div className="truncate">{projectName}</div>}
                           </button>
                         </TooltipTrigger>
                         <TooltipContent className="max-w-xs">

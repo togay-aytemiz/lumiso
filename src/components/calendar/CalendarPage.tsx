@@ -20,6 +20,18 @@ const CalendarPage = () => {
   const [loading, setLoading] = useState(false);
   const calendarRef = useRef<FullCalendar>(null);
 
+  // Detect if the locale uses 24h format
+  const getIs24h = () => {
+    try {
+      const testDate = new Date(2023, 0, 1, 13, 0);
+      const timeString = testDate.toLocaleTimeString(navigator.language);
+      return !timeString.includes('PM') && !timeString.includes('AM') && !timeString.includes('ÖS') && !timeString.includes('ÖÖ');
+    } catch {
+      return false;
+    }
+  };
+  const is24h = getIs24h();
+
   const handleViewChange = (view: CalendarView) => {
     setCurrentView(view);
     const calendarApi = calendarRef.current?.getApi();
@@ -84,10 +96,6 @@ const CalendarPage = () => {
         end: event.end,
         allDay: event.allDay,
         extendedProps: event.extendedProps,
-        classNames: [
-          'calendar-event',
-          event.type === 'session' ? 'calendar-event-session' : 'calendar-event-reminder'
-        ],
       }));
 
       successCallback(fullCalendarEvents);
@@ -214,26 +222,56 @@ const CalendarPage = () => {
               navLinks={false}
               selectable={false}
               nowIndicator={true}
+              dayMaxEvents={true}
+              moreLinkClick="popover"
+              eventDisplay="block"
               eventTimeFormat={{
                 hour: '2-digit',
                 minute: '2-digit',
-                hour12: true,
+                hour12: !is24h,
+              }}
+              slotLabelFormat={{
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: !is24h,
+              }}
+              dayHeaderContent={(info) => {
+                const fmt = new Intl.DateTimeFormat(navigator.language, { 
+                  weekday: 'short', 
+                  day: 'numeric' 
+                });
+                const parts = fmt.format(info.date).replace(',', '');
+                return { html: `<span class="font-medium">${parts}</span>` };
+              }}
+              eventClassNames={(arg) => {
+                const type = arg.event.extendedProps?.type;
+                const baseClasses = 'relative truncate rounded-md border px-2 py-1 text-xs transition-all';
+                
+                if (type === 'session') {
+                  return `${baseClasses} bg-purple-500 text-white dark:bg-purple-400 dark:text-gray-900 border-white/30 dark:border-black/10 hover:ring-2 hover:ring-black/5 dark:hover:ring-white/10 before:absolute before:inset-y-0 before:left-0 before:w-1 before:rounded-l-full before:bg-purple-700 dark:before:bg-purple-600`;
+                } else {
+                  return `${baseClasses} bg-sky-500 text-white dark:bg-sky-400 dark:text-gray-900 border-white/30 dark:border-black/10 hover:ring-2 hover:ring-black/5 dark:hover:ring-white/10 before:absolute before:inset-y-0 before:left-0 before:w-1 before:rounded-l-full before:bg-sky-700 dark:before:bg-sky-600`;
+                }
+              }}
+              eventDidMount={(info) => {
+                info.el.setAttribute('tabindex', '0');
+                const start = info.event.start;
+                const end = info.event.end;
+                const timeFormatter = new Intl.DateTimeFormat(navigator.language, {
+                  hour: '2-digit', 
+                  minute: '2-digit', 
+                  hour12: !is24h
+                });
+                const timeRange = start ? timeFormatter.format(start) + (end ? ` – ${timeFormatter.format(end)}` : '') : '';
+                const type = info.event.extendedProps?.type || '';
+                
+                info.el.setAttribute('aria-label', `${info.event.title}${timeRange ? ' — ' + timeRange : ''} — ${type}`);
+                info.el.title = `${info.event.title}${timeRange ? ' • ' + timeRange : ''}`;
               }}
               events={loadEvents}
               eventClick={handleEventClick}
               eventsSet={handleEventsSet}
               height="auto"
-              dayMaxEvents={3}
-              moreLinkClick="popover"
-              eventDisplay="block"
-              dayHeaderFormat={{
-                weekday: 'short',
-              }}
-              slotLabelFormat={{
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: true,
-              }}
               // Responsive behavior
               handleWindowResize={true}
               aspectRatio={window.innerWidth < 768 ? 1.0 : 1.35}

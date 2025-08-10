@@ -210,43 +210,7 @@ All colors MUST be HSL.
   border-style: dotted;
 }
 
-/* Calendar Event Styles */
-.calendar-event {
-  border: none !important;
-  border-radius: 6px !important;
-  padding: 2px 6px !important;
-  font-size: 12px !important;
-  font-weight: 500 !important;
-  cursor: pointer !important;
-  transition: all 0.2s ease !important;
-}
-
-.calendar-event:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.calendar-event-session {
-  background-color: hsl(259 84% 95%) !important;
-  color: hsl(259 84% 50%) !important;
-  border-left: 3px solid hsl(259 84% 60%) !important;
-}
-
-.calendar-event-reminder {
-  background-color: hsl(199 89% 95%) !important;
-  color: hsl(199 89% 38%) !important;
-  border-left: 3px solid hsl(199 89% 48%) !important;
-}
-
-.dark .calendar-event-session {
-  background-color: hsl(259 84% 15%) !important;
-  color: hsl(259 84% 75%) !important;
-}
-
-.dark .calendar-event-reminder {
-  background-color: hsl(199 89% 15%) !important;
-  color: hsl(199 89% 75%) !important;
-}
+/* Calendar Event Styles - Handled via eventClassNames in component */
 
 /* Month view event styling */
 .fc-daygrid-event {

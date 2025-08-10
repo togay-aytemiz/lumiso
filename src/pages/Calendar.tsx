@@ -311,11 +311,59 @@ export default function Calendar() {
                       </Tooltip>
                     );
                   })}
-                  {(((showSessions ? daySessions.length : 0) + (showReminders ? dayActivities.length : 0)) > 3) && (
-                    <div className="text-xs text-muted-foreground">
-                      +{((showSessions ? daySessions.length : 0) + (showReminders ? dayActivities.length : 0)) - 3} more
-                    </div>
-                  )}
+                  {(() => {
+                    const extraSessions = showSessions ? daySessions.slice(2) : [];
+                    const extraActivities = showReminders ? dayActivities.slice(1) : [];
+                    const totalExtras = extraSessions.length + extraActivities.length;
+                    if (totalExtras <= 0) return null;
+                    return (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="text-xs text-muted-foreground cursor-help">
+                            +{totalExtras} more
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs">
+                          {extraSessions.length > 0 && (
+                            <div className="mb-1">
+                              <div className="text-xs font-medium mb-1">Sessions</div>
+                              <ul className="space-y-0.5">
+                                {extraSessions.map((session) => {
+                                  const leadName = leadsMap[session.lead_id]?.name || "Lead";
+                                  const projectName = session.project_id ? projectsMap[session.project_id]?.name : undefined;
+                                  const timeText = formatTime(session.session_time, userLocale);
+                                  return (
+                                    <li key={session.id} className="text-xs">
+                                      <span className="font-semibold">{timeText}</span> {leadName}{projectName ? ` • ${projectName}` : ""}
+                                    </li>
+                                  );
+                                })}
+                              </ul>
+                            </div>
+                          )}
+                          {extraActivities.length > 0 && (
+                            <div>
+                              <div className="text-xs font-medium mb-1">Reminders</div>
+                              <ul className="space-y-0.5">
+                                {extraActivities.map((activity) => {
+                                  const leadName = leadsMap[activity.lead_id]?.name || "Lead";
+                                  const projectName = activity.project_id ? projectsMap[activity.project_id]?.name : undefined;
+                                  const timeText = activity.reminder_time ? formatTime(activity.reminder_time, userLocale) : "All day";
+                                  return (
+                                    <li key={activity.id} className={`text-xs ${activity.completed ? "line-through opacity-60" : ""}`}>
+                                      <span className="font-semibold">{timeText}</span> {leadName}{projectName ? ` • ${projectName}` : ""}
+                                    </li>
+                                  );
+                                })}
+                              </ul>
+                            </div>
+                          )}
+                        </TooltipContent>
+                      </Tooltip>
+                    );
+                  })()}
+
+                  
                 </div>
               </div>
             );

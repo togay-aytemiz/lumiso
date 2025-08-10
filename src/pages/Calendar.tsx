@@ -348,8 +348,8 @@ export default function Calendar() {
                             onClick={() => handleSessionClick(session)}
                           >
                             <div className="font-semibold">{formatTime(session.session_time, userLocale)}</div>
+                            <div className="truncate">{leadName}</div>
                             {projectName && <div className="truncate">{projectName}</div>}
-                            <div className="truncate text-muted-foreground">{leadName}</div>
                           </button>
                         </TooltipTrigger>
                         <TooltipContent className="max-w-xs">

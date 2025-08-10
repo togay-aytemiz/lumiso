@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -33,8 +33,12 @@ interface Activity {
 
 export default function Calendar() {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [viewMode, setViewMode] = useState<ViewMode>("month");
+  const [viewMode, setViewMode] = useState<ViewMode>(() => (localStorage.getItem("calendar:viewMode") as ViewMode) || "month");
   const userLocale = getUserLocale();
+  
+  useEffect(() => {
+    localStorage.setItem("calendar:viewMode", viewMode);
+  }, [viewMode]);
 
   // Fetch sessions
   const { data: sessions = [] } = useQuery({
@@ -229,24 +233,55 @@ export default function Calendar() {
                 
                 {/* Events */}
                 <div className="space-y-1">
-                  {daySessions.slice(0, 2).map((session) => (
-                    <div
-                      key={session.id}
-                      className="text-xs p-1 rounded bg-primary/10 text-primary truncate"
-                      title={`Session - ${formatTime(session.session_time, userLocale)}`}
-                    >
-                      Session
-                    </div>
-                  ))}
-                  {dayActivities.slice(0, 1).map((activity) => (
-                    <div
-                      key={activity.id}
-                      className="text-xs p-1 rounded bg-muted text-muted-foreground truncate"
-                      title={activity.content}
-                    >
-                      {activity.content}
-                    </div>
-                  ))}
+                  {daySessions.slice(0, 2).map((session) => {
+                    const leadName = leadsMap[session.lead_id]?.name || "Lead";
+                    const projectName = session.project_id ? projectsMap[session.project_id]?.name : undefined;
+                    const line = `${formatTime(session.session_time, userLocale)} ${leadName}${projectName ? " • " + projectName : ""}`;
+                    return (
+                      <Tooltip key={session.id}>
+                        <TooltipTrigger asChild>
+                          <button
+                            className="w-full text-left text-xs px-1.5 py-0.5 rounded bg-primary/10 text-primary truncate border border-primary/20 hover:bg-primary/15"
+                            onClick={() => (session.project_id ? openProjectById(session.project_id) : navigate(`/leads/${session.lead_id}`))}
+                          >
+                            {line}
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs">
+                          <div className="text-sm font-medium">{projectName || "Session"}</div>
+                          <div className="text-xs text-muted-foreground">{leadName}</div>
+                          <div className="text-xs text-muted-foreground">{formatDate(session.session_date)} • {formatTime(session.session_time, userLocale)}</div>
+                          {session.notes && <div className="mt-1 text-xs">{session.notes}</div>}
+                          <div className="text-xs">Status: <span className="capitalize">{session.status}</span></div>
+                        </TooltipContent>
+                      </Tooltip>
+                    );
+                  })}
+                  {dayActivities.slice(0, 1).map((activity) => {
+                    const isProjectReminder = !!activity.project_id;
+                    const leadName = leadsMap[activity.lead_id]?.name || "Lead";
+                    const projectName = isProjectReminder ? projectsMap[activity.project_id!]?.name : undefined;
+                    const timeText = activity.reminder_time ? formatTime(activity.reminder_time, userLocale) : "All day";
+                    const line = `${timeText} ${projectName ?? leadName}`;
+                    return (
+                      <Tooltip key={activity.id}>
+                        <TooltipTrigger asChild>
+                          <button
+                            className="w-full text-left text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground truncate border border-border hover:bg-accent"
+                            onClick={() => (isProjectReminder ? openProjectById(activity.project_id) : navigate(`/leads/${activity.lead_id}`))}
+                          >
+                            {line}
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs">
+                          <div className="text-sm font-medium">{activity.content}</div>
+                          <div className="text-xs text-muted-foreground">{formatDate(activity.reminder_date)} • {timeText}</div>
+                          <div className="text-xs text-muted-foreground">{projectName ? `Project: ${projectName}` : `Lead: ${leadName}`}</div>
+                          <div className="text-xs capitalize">Type: {activity.type}</div>
+                        </TooltipContent>
+                      </Tooltip>
+                    );
+                  })}
                   {(daySessions.length + dayActivities.length) > 3 && (
                     <div className="text-xs text-muted-foreground">
                       +{(daySessions.length + dayActivities.length) - 3} more
@@ -450,22 +485,34 @@ export default function Calendar() {
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold">{getViewTitle()}</h2>
             
-            <div className="flex bg-muted rounded-lg p-1">
-              {(["day", "week", "month"] as ViewMode[]).map((mode) => (
-                <button
-                  key={mode}
-                  onClick={() => setViewMode(mode)}
-                  className={`
-                    px-3 py-1 rounded-md text-sm font-medium transition-colors capitalize
-                    ${viewMode === mode 
-                      ? "bg-primary text-primary-foreground" 
-                      : "hover:bg-accent text-muted-foreground"
-                    }
-                  `}
-                >
-                  {mode}
-                </button>
-              ))}
+            <div className="flex items-center gap-3">
+              <div className="hidden md:flex items-center gap-3 text-xs text-muted-foreground">
+                <span className="inline-flex items-center gap-1">
+                  <span className="h-2 w-2 rounded-full bg-primary"></span>
+                  Session
+                </span>
+                <span className="inline-flex items-center gap-1">
+                  <span className="h-2 w-2 rounded-full bg-muted-foreground/40"></span>
+                  Reminder
+                </span>
+              </div>
+              <div className="flex bg-muted rounded-lg p-1">
+                {( ["day", "week", "month"] as ViewMode[] ).map((mode) => (
+                  <button
+                    key={mode}
+                    onClick={() => setViewMode(mode)}
+                    className={`
+                      px-3 py-1 rounded-md text-sm font-medium transition-colors capitalize
+                      ${viewMode === mode 
+                        ? "bg-primary text-primary-foreground" 
+                        : "hover:bg-accent text-muted-foreground"
+                      }
+                    `}
+                  >
+                    {mode}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 

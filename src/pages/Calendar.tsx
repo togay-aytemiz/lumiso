@@ -1,9 +1,9 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-react";
-import Layout from "@/components/Layout";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+
 import { formatDate, formatTime, getUserLocale, getStartOfWeek, getEndOfWeek } from "@/lib/utils";
 import { addDays, startOfMonth, endOfMonth, eachDayOfInterval, format, isToday, isSameMonth, startOfWeek, endOfWeek, addMonths, subMonths, addWeeks, subWeeks, isSameDay, startOfDay, endOfDay } from "date-fns";
 
@@ -182,7 +182,7 @@ export default function Calendar() {
                   {dayActivities.slice(0, 1).map((activity) => (
                     <div
                       key={activity.id}
-                      className="text-xs p-1 rounded bg-warning/10 text-warning truncate"
+                      className="text-xs p-1 rounded bg-muted text-muted-foreground truncate"
                       title={activity.content}
                     >
                       {activity.content}
@@ -232,7 +232,7 @@ export default function Calendar() {
                   {dayActivities.map((activity) => (
                     <div
                       key={activity.id}
-                      className="text-xs p-2 rounded bg-warning/10 text-warning"
+                      className="text-xs p-2 rounded bg-muted text-muted-foreground border border-border"
                     >
                       <div className="font-medium">
                         {activity.reminder_time ? formatTime(activity.reminder_time, userLocale) : "All day"}
@@ -293,7 +293,7 @@ export default function Calendar() {
             {dayActivities.length > 0 ? (
               <div className="space-y-2">
                 {dayActivities.map((activity) => (
-                  <div key={activity.id} className="p-3 rounded-lg bg-warning/10 border border-warning/20">
+                  <div key={activity.id} className="p-3 rounded-lg bg-muted border border-border">
                     <div className="flex justify-between items-start">
                       <div>
                         <div className="font-medium">{activity.content}</div>
@@ -302,7 +302,7 @@ export default function Calendar() {
                         </div>
                         
                       </div>
-                      <div className="text-sm font-medium text-warning">
+                      <div className="text-sm font-medium text-muted-foreground">
                         {activity.reminder_time ? formatTime(activity.reminder_time, userLocale) : "All day"}
                       </div>
                     </div>
@@ -332,8 +332,7 @@ export default function Calendar() {
   };
 
   return (
-    <Layout>
-      <div className="p-6 space-y-6 w-full">
+    <div className="p-6 space-y-6 w-full">
         {/* Header */}
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold">Calendar</h1>
@@ -381,6 +380,6 @@ export default function Calendar() {
           {viewMode === "day" && renderDayView()}
         </div>
       </div>
-    </Layout>
+    
   );
 }

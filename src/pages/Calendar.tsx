@@ -281,7 +281,7 @@ export default function Calendar() {
                     ];
 
                     // Allow up to 4 visible lines when space permits
-                    const maxVisible = 4;
+                    const maxVisible = 3;
                     const shown = combined.slice(0, maxVisible);
                     const extras = combined.slice(maxVisible);
 

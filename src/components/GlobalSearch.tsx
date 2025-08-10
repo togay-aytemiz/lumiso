@@ -4,7 +4,8 @@ import { Input } from "@/components/ui/input";
 import { Search, FileText, Clock, Calendar, User, ChevronRight, X, FolderOpen } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
-import { getLeadStatusStyles, formatStatusText } from "@/lib/leadStatusColors";
+import { LeadStatusBadge } from "@/components/LeadStatusBadge";
+import { ProjectStatusBadge } from "@/components/ProjectStatusBadge";
 
 interface SearchResult {
   id: string;
@@ -12,6 +13,7 @@ interface SearchResult {
   leadName?: string;
   projectId?: string;
   projectName?: string;
+  projectStatusId?: string | null;
   type: 'lead' | 'note' | 'reminder' | 'session' | 'project';
   matchedContent: string;
   status: string;
@@ -273,6 +275,7 @@ const GlobalSearch = () => {
             projectName: project.name,
             leadId: lead?.id,
             leadName: lead?.name,
+            projectStatusId: project.status_id ?? null,
             type: 'project',
             matchedContent,
             status: lead?.status || 'unknown',
@@ -390,7 +393,6 @@ const GlobalSearch = () => {
                   {typeResults.map((result) => {
                     const currentIndex = resultIndex++;
                     const isActive = currentIndex === activeIndex;
-                    const statusStyles = getLeadStatusStyles(result.status);
                     
                     return (
                       <button
@@ -410,11 +412,21 @@ const GlobalSearch = () => {
                                 {result.type === 'project' ? result.projectName : result.leadName}
                               </p>
                               <div className="flex items-center gap-2 ml-2">
-                                {result.status !== 'unknown' && (
-                                  <span className={`px-2 py-1 text-xs rounded-full font-medium ${statusStyles.className}`}>
-                                    {formatStatusText(result.status)}
-                                  </span>
-                                )}
+                                {result.type === 'project' && result.projectId ? (
+                                  <ProjectStatusBadge
+                                    projectId={result.projectId}
+                                    currentStatusId={result.projectStatusId ?? undefined}
+                                    editable={false}
+                                    size="sm"
+                                  />
+                                ) : result.leadId ? (
+                                  <LeadStatusBadge
+                                    leadId={result.leadId}
+                                    currentStatus={result.status}
+                                    editable={false}
+                                    size="sm"
+                                  />
+                                ) : null}
                                 <ChevronRight className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                               </div>
                             </div>

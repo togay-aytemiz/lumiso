@@ -347,7 +347,7 @@ export default function Calendar() {
                             className="w-full text-left text-xs p-2 rounded-md bg-primary/10 text-primary border border-primary/20 hover:bg-primary/15 transition-colors cursor-pointer"
                             onClick={() => handleSessionClick(session)}
                           >
-                            <div className="font-medium">{formatTime(session.session_time, userLocale)}</div>
+                            <div className="font-semibold">{formatTime(session.session_time, userLocale)}</div>
                             {projectName && <div className="truncate">{projectName}</div>}
                             <div className="truncate text-muted-foreground">{leadName}</div>
                           </button>

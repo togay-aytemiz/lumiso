@@ -347,12 +347,9 @@ export default function Calendar() {
                             className="w-full text-left text-xs p-2 rounded-md bg-primary/10 text-primary border border-primary/20 hover:bg-primary/15 transition-colors cursor-pointer"
                             onClick={() => handleSessionClick(session)}
                           >
-                            <div className="flex items-center justify-between">
-                              <span className="font-medium">{formatTime(session.session_time, userLocale)}</span>
-                              <span className="capitalize">{session.status}</span>
-                            </div>
-                            <div className="truncate">{leadName}</div>
-                            {projectName && <div className="truncate text-muted-foreground">{projectName}</div>}
+                            <div className="font-medium">{formatTime(session.session_time, userLocale)}</div>
+                            {projectName && <div className="truncate">{projectName}</div>}
+                            <div className="truncate text-muted-foreground">{leadName}</div>
                           </button>
                         </TooltipTrigger>
                         <TooltipContent className="max-w-xs">

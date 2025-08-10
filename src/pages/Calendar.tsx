@@ -139,6 +139,21 @@ export default function Calendar() {
     }
   };
 
+  const handleSessionClick = (session: Session) => {
+    if (session.project_id) {
+      openProjectById(session.project_id);
+    } else {
+      navigate(`/leads/${session.lead_id}`);
+    }
+  };
+
+  const handleActivityClick = (activity: Activity) => {
+    if (activity.project_id) {
+      openProjectById(activity.project_id);
+    } else {
+      navigate(`/leads/${activity.lead_id}`);
+    }
+  };
   // Navigation functions
   const goToToday = () => setCurrentDate(new Date());
   
@@ -230,7 +245,7 @@ export default function Calendar() {
                 className={`
                   min-h-24 p-2 bg-card hover:bg-accent/50 transition-colors
                   ${!isCurrentMonth ? "text-muted-foreground" : ""}
-                  ${isDayToday ? "bg-primary/5" : ""}
+                  ${isDayToday ? "bg-primary/10 ring-1 ring-primary/20" : ""}
                 `}
               >
                 <div className={`text-sm font-medium mb-1 ${isDayToday ? "text-primary" : ""}`}>
@@ -248,7 +263,7 @@ export default function Calendar() {
                         <TooltipTrigger asChild>
                           <button
                             className={`w-full text-left text-xs px-1.5 py-0.5 rounded truncate border hover:bg-primary/15 ${isDayToday ? 'bg-primary/15 border-primary/30' : 'bg-primary/10 border-primary/20'} text-primary`}
-                            onClick={() => (session.project_id ? openProjectById(session.project_id) : navigate(`/leads/${session.lead_id}`))}
+                            onClick={() => handleSessionClick(session)}
                           >
                             {line}
                           </button>
@@ -274,7 +289,7 @@ export default function Calendar() {
                         <TooltipTrigger asChild>
                           <button
                             className="w-full text-left text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground truncate border border-border hover:bg-accent"
-                            onClick={() => (isProjectReminder ? openProjectById(activity.project_id) : navigate(`/leads/${activity.lead_id}`))}
+                            onClick={() => handleActivityClick(activity)}
                           >
                             {line}
                           </button>
@@ -314,7 +329,7 @@ export default function Calendar() {
             const isDayToday = isToday(day);
             
             return (
-              <div key={index} className={`p-4 border-r border-border last:border-r-0 ${isDayToday ? "bg-primary/5" : ""}`}>
+              <div key={index} className={`p-4 border-r border-border last:border-r-0 ${isDayToday ? "bg-primary/10 ring-1 ring-primary/20" : ""}`}>
                 <div className={`text-sm font-medium mb-2 ${isDayToday ? "text-primary" : ""}`}>
                   {format(day, "EEE d", { locale: undefined })}
                 </div>
@@ -328,7 +343,7 @@ export default function Calendar() {
                         <TooltipTrigger asChild>
                           <button
                             className="w-full text-left text-xs p-2 rounded-md bg-primary/10 text-primary border border-primary/20 hover:bg-primary/15 transition-colors cursor-pointer"
-                            onClick={() => (session.project_id ? openProjectById(session.project_id) : navigate(`/leads/${session.lead_id}`))}
+                            onClick={() => handleSessionClick(session)}
                           >
                             <div className="flex items-center justify-between">
                               <span className="font-medium">{formatTime(session.session_time, userLocale)}</span>

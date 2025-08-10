@@ -15,9 +15,9 @@ export default function Layout({ children, fullBleed = false, contentClassName }
         <AppSidebar />
         <main
           className={cn(
-            "flex-1 min-w-0",                                  // important to prevent right-side gaps
+            "flex-1 min-w-0",
             fullBleed
-              ? "pl-6 pr-4 md:pl-8 md:pr-6 lg:pl-12 lg:pr-8"   // more left margin for spacing from sidebar
+              ? "px-6 md:px-8 lg:px-12"
               : "container mx-auto max-w-7xl px-4 md:px-6 lg:px-8",
             contentClassName
           )}

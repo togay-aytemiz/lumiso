@@ -168,3 +168,146 @@ All colors MUST be HSL.
     @apply bg-background text-foreground font-sans;
   }
 }
+
+/* FullCalendar Custom Styles */
+.fc {
+  font-family: inherit;
+}
+
+.fc-theme-standard .fc-scrollgrid {
+  border-color: hsl(var(--border));
+}
+
+.fc-theme-standard td,
+.fc-theme-standard th {
+  border-color: hsl(var(--border));
+}
+
+.fc-col-header-cell {
+  background-color: hsl(var(--muted));
+  color: hsl(var(--muted-foreground));
+  font-weight: 600;
+  padding: 8px 4px;
+}
+
+.fc-daygrid-day {
+  background-color: hsl(var(--background));
+}
+
+.fc-daygrid-day:hover {
+  background-color: hsl(var(--muted));
+}
+
+.fc-day-today {
+  background-color: hsl(var(--accent)) !important;
+}
+
+.fc-timegrid-slot {
+  border-color: hsl(var(--border));
+}
+
+.fc-timegrid-slot-minor {
+  border-style: dotted;
+}
+
+/* Calendar Event Styles */
+.calendar-event {
+  border: none !important;
+  border-radius: 6px !important;
+  padding: 2px 6px !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.calendar-event:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.calendar-event-session {
+  background-color: hsl(259 84% 95%) !important;
+  color: hsl(259 84% 50%) !important;
+  border-left: 3px solid hsl(259 84% 60%) !important;
+}
+
+.calendar-event-reminder {
+  background-color: hsl(199 89% 95%) !important;
+  color: hsl(199 89% 38%) !important;
+  border-left: 3px solid hsl(199 89% 48%) !important;
+}
+
+.dark .calendar-event-session {
+  background-color: hsl(259 84% 15%) !important;
+  color: hsl(259 84% 75%) !important;
+}
+
+.dark .calendar-event-reminder {
+  background-color: hsl(199 89% 15%) !important;
+  color: hsl(199 89% 75%) !important;
+}
+
+/* Month view event styling */
+.fc-daygrid-event {
+  margin: 1px 0 !important;
+}
+
+.fc-event-title {
+  font-weight: 500 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+/* Week/Day view event styling */
+.fc-timegrid-event {
+  border-radius: 4px !important;
+}
+
+/* More link styling */
+.fc-more-link {
+  color: hsl(var(--primary)) !important;
+  font-weight: 500 !important;
+}
+
+/* Now indicator */
+.fc-timegrid-now-indicator-line {
+  border-color: hsl(var(--destructive)) !important;
+}
+
+.fc-timegrid-now-indicator-arrow {
+  border-color: hsl(var(--destructive)) !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .fc-header-toolbar {
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+  
+  .fc-toolbar-chunk {
+    flex-direction: row !important;
+    justify-content: center !important;
+  }
+  
+  .fc-daygrid-event {
+    font-size: 11px !important;
+  }
+}
+
+/* Focus styles for accessibility */
+.calendar-event:focus {
+  outline: 2px solid hsl(var(--ring)) !important;
+  outline-offset: 2px !important;
+}
+
+.fc-event[tabindex] {
+  outline: none;
+}
+
+.fc-event[tabindex]:focus {
+  outline: 2px solid hsl(var(--ring)) !important;
+  outline-offset: 2px !important;
+}

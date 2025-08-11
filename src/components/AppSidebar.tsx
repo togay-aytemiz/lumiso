@@ -110,8 +110,11 @@ export function AppSidebar() {
               </div>
             </SidebarMenuButton>
 
-            {open && bookingsOpen && (
-              <div className="mt-1 ml-6">
+            {open && (
+              <div
+                className={`ml-6 overflow-hidden transition-all duration-300 ease-out ${bookingsOpen ? 'mt-1 max-h-40 opacity-100 animate-fade-in' : 'max-h-0 opacity-0'}`}
+                aria-hidden={!bookingsOpen}
+              >
                 <SidebarMenu>
                   <SidebarMenuItem>
                     <SidebarMenuButton

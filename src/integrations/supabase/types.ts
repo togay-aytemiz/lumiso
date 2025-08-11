@@ -655,6 +655,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      ensure_default_session_statuses: {
+        Args: { user_uuid: string }
+        Returns: undefined
+      }
       ensure_system_lead_statuses: {
         Args: { user_uuid: string }
         Returns: undefined

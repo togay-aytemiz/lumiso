@@ -506,6 +506,39 @@ export type Database = {
         }
         Relationships: []
       }
+      session_statuses: {
+        Row: {
+          color: string
+          created_at: string
+          id: string
+          is_system_initial: boolean
+          name: string
+          sort_order: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          color: string
+          created_at?: string
+          id?: string
+          is_system_initial?: boolean
+          name: string
+          sort_order?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          id?: string
+          is_system_initial?: boolean
+          name?: string
+          sort_order?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       sessions: {
         Row: {
           created_at: string
@@ -631,6 +664,10 @@ export type Database = {
         Returns: string
       }
       get_default_project_status: {
+        Args: { user_uuid: string }
+        Returns: string
+      }
+      get_default_session_status: {
         Args: { user_uuid: string }
         Returns: string
       }

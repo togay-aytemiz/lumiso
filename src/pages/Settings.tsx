@@ -7,6 +7,7 @@ import ServicesSection from "@/components/ServicesSection";
 import ProjectStatusesSection from "@/components/ProjectStatusesSection";
 import ProjectTypesSection from "@/components/ProjectTypesSection";
 import LeadStatusesSection from "@/components/LeadStatusesSection";
+import SessionStatusesSection from "@/components/SessionStatusesSection";
 
 import GlobalSearch from "@/components/GlobalSearch";
 
@@ -85,14 +86,17 @@ const Settings = () => {
         {/* Lead Statuses Management Section */}
         <LeadStatusesSection />
 
-        {/* Project Statuses Management Section */}
-        <ProjectStatusesSection />
+{/* Project Statuses Management Section */}
+<ProjectStatusesSection />
 
-        {/* Project Types Management Section */}
-        <ProjectTypesSection />
+{/* Session Statuses Management Section */}
+<SessionStatusesSection />
 
-        {/* Services Management Section */}
-        <ServicesSection />
+{/* Project Types Management Section */}
+<ProjectTypesSection />
+
+{/* Services Management Section */}
+<ServicesSection />
 
         {/* Future Settings Placeholder */}
         <div className="pt-16">

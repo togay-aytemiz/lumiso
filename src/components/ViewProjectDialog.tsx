@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { Save, X, MoreHorizontal, Pencil, Archive, ArchiveRestore } from "lucide-react";
+import { Save, X, ChevronDown, Pencil, Archive, ArchiveRestore } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { ProjectActivitySection } from "./ProjectActivitySection";
@@ -460,9 +460,10 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
                         variant="ghost"
                         size="sm"
                         aria-label="More actions"
-                        className="text-muted-foreground hover:text-foreground h-10 w-10 p-0"
+                        className="text-muted-foreground hover:text-foreground h-10 px-3 gap-1"
                       >
-                        <MoreHorizontal className="h-4 w-4" />
+                        <span className="text-sm">More</span>
+                        <ChevronDown className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" side="bottom">

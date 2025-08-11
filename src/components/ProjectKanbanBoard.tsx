@@ -320,7 +320,7 @@ const ProjectKanbanBoard = ({ projects, onProjectsChange }: ProjectKanbanBoardPr
   }
 
   return (
-    <div className="h-full p-8 pt-6 overflow-auto">
+    <div className="h-full w-full max-w-full p-8 pt-6 overflow-x-auto overflow-y-auto">
       <DragDropContext onDragEnd={handleDragEnd}>
         {/* Board with both horizontal and vertical scrolling */}
         <div className="flex gap-6 pb-4" style={{ minWidth: 'max-content' }}>

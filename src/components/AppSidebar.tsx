@@ -190,13 +190,14 @@ export function AppSidebar() {
             <SidebarMenuItem>
               <SidebarMenuButton
                 asChild
-                className="group/item w-full h-10 px-3 py-2 rounded-lg transition-all duration-200 hover:bg-muted/50"
+                isActive={isActive("/settings")}
+                className="group/item w-full h-10 px-3 py-2 rounded-lg transition-all duration-200 hover:bg-muted/50 data-[active=true]:bg-muted"
               >
                 <NavLink
                   to="/settings"
                   className="flex items-center gap-3 w-full"
                 >
-                  <Settings className="h-4 w-4 text-sidebar-foreground group-hover/item:text-[hsl(var(--sidebar-primary))]" />
+                  <Settings className="h-4 w-4 text-sidebar-foreground group-hover/item:text-[hsl(var(--sidebar-primary))] group-data-[active=true]/item:text-[hsl(var(--sidebar-primary))]" />
                   {open && <span className="font-medium">Settings</span>}
                 </NavLink>
               </SidebarMenuButton>

@@ -476,7 +476,7 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
   return (
     <>
       <Dialog open={open} onOpenChange={handleDialogOpenChange}>
-        <DialogContent className={`${isFullscreen ? 'max-w-none w-[100vw] h-[100vh] m-0 rounded-none overflow-y-auto' : 'sm:max-w-5xl max-h-[85vh] overflow-hidden'} overscroll-contain pr-2 [&>button]:hidden`}>
+        <DialogContent className={`${isFullscreen ? 'max-w-none w-[100vw] h-[100vh] m-0 rounded-none overflow-y-auto' : 'sm:max-w-5xl max-h-[85vh] overflow-y-auto'} overscroll-contain pr-2 [&>button]:hidden`}>
           <DialogHeader className="pb-4">
             <div className="flex items-start justify-between">
               <div className="flex-1 space-y-2">

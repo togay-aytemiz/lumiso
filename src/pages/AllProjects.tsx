@@ -326,7 +326,7 @@ const AllProjects = () => {
   }
 
   return (
-    <div className="flex flex-col h-screen">
+    <div className="flex flex-col h-screen overflow-x-hidden">
       {/* Fixed header section */}
       <div className="flex-none p-8 pb-0">
         <div className="mb-6">
@@ -387,7 +387,7 @@ const AllProjects = () => {
       </div>
 
       {/* Content area - Scrollable */}
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden">
         {viewMode === 'board' ? (
           <div className="h-full">
             <ProjectKanbanBoard 

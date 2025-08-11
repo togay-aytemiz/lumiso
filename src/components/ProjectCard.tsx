@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -8,6 +8,8 @@ import { format } from "date-fns";
 import { useProjectProgress } from "@/hooks/useProjectProgress";
 import { useProjectPayments } from "@/hooks/useProjectPayments";
 import { ProjectStatusBadge } from "@/components/ProjectStatusBadge";
+import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Project {
   id: string;
@@ -30,6 +32,26 @@ export function ProjectCard({ project, onView, refreshTrigger }: ProjectCardProp
   const { progress, loading } = useProjectProgress(project.id, refreshTrigger);
   const { paymentSummary, loading: paymentsLoading } = useProjectPayments(project.id, refreshTrigger);
 
+  const [isArchived, setIsArchived] = useState(false);
+  useEffect(() => {
+    let active = true;
+    const checkArchived = async () => {
+      if (!project.status_id) { if (active) setIsArchived(false); return; }
+      try {
+        const { data } = await supabase
+          .from('project_statuses')
+          .select('name')
+          .eq('id', project.status_id)
+          .maybeSingle();
+        if (active) setIsArchived((data?.name || '').toLowerCase() === 'archived');
+      } catch {
+        if (active) setIsArchived(false);
+      }
+    };
+    checkArchived();
+    return () => { active = false; };
+  }, [project.status_id, refreshTrigger]);
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("tr-TR", {
       style: "currency",
@@ -46,7 +68,10 @@ export function ProjectCard({ project, onView, refreshTrigger }: ProjectCardProp
           onClick={() => onView(project)}
         >
           <div className="flex-1">
-            <h3 className="font-bold text-lg mb-1">{project.name}</h3>
+            <div className="flex items-center gap-2 mb-1">
+              <h3 className="font-bold text-lg">{project.name}</h3>
+              {isArchived && <Badge variant="secondary" className="text-[10px]">Archived</Badge>}
+            </div>
             {project.description && (
               <p className="text-muted-foreground mb-2">{project.description}</p>
             )}

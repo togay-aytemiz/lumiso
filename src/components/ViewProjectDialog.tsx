@@ -240,20 +240,29 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
 
   useEffect(() => {
     const fetchStatus = async () => {
-      if (!project?.status_id) { setIsArchived(false); return; }
+      if (!project?.id) { setIsArchived(false); setLocalStatusId(null); return; }
       try {
-        const { data, error } = await supabase
+        // Determine if current status is Archived
+        const { data: statusData } = await supabase
           .from('project_statuses')
           .select('id, name')
-          .eq('id', project.status_id)
+          .eq('id', project.status_id!)
+          .maybeSingle();
+
+        const archived = Boolean(statusData?.name && statusData.name.toLowerCase() === 'archived');
+        setIsArchived(archived);
+
+        // Always fetch latest previous/current from DB to avoid stale props
+        const { data: projRow } = await supabase
+          .from('projects')
+          .select('status_id, previous_status_id')
+          .eq('id', project.id)
           .single();
-        if (!error && data?.name) {
-          const archived = data.name.toLowerCase() === 'archived';
-          setIsArchived(archived);
-          setLocalStatusId(archived ? (project.previous_status_id || null) : (project.status_id || null));
+
+        if (archived) {
+          setLocalStatusId(projRow?.previous_status_id || null);
         } else {
-          setIsArchived(false);
-          setLocalStatusId(project.status_id || null);
+          setLocalStatusId(projRow?.status_id || null);
         }
       } catch {
         setIsArchived(false);
@@ -261,7 +270,7 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
       }
     };
     fetchStatus();
-  }, [project?.status_id]);
+  }, [project?.id, project?.status_id, open]);
 
   // Handle ESC key for fullscreen mode
   const handleDialogOpenChange = (newOpen: boolean) => {
@@ -449,13 +458,15 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
     try {
       const res = await onArchiveToggle({ id: project.id, status_id: project.status_id });
       setIsArchived(res.isArchived);
-      if (res.isArchived) {
-        // Show the previous status while archived
-        setLocalStatusId(project.status_id || null);
-      } else {
-        // After restore, continue where left off
-        setLocalStatusId(project.previous_status_id || project.status_id || null);
-      }
+
+      // Fetch latest status values from DB to avoid stale props
+      const { data: projRow } = await supabase
+        .from('projects')
+        .select('status_id, previous_status_id')
+        .eq('id', project.id)
+        .single();
+
+      setLocalStatusId(res.isArchived ? (projRow?.previous_status_id || null) : (projRow?.status_id || null));
       onProjectUpdated();
     } catch (e: any) {
       toast({ title: 'Action failed', description: e.message || 'Could not update archive state', variant: 'destructive' });

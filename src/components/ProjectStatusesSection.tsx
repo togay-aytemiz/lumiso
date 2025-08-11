@@ -65,6 +65,11 @@ const ProjectStatusesSection = () => {
 
   const selectedColor = form.watch("color");
 
+  const isProtectedName = (name: string) => {
+    const n = name?.trim().toLowerCase();
+    return n === 'planned' || n === 'new';
+  };
+
   const fetchStatuses = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -208,6 +213,12 @@ const ProjectStatusesSection = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
+      const status = statuses.find(s => s.id === statusId);
+      if (status && isProtectedName(status.name)) {
+        toast({ title: "Not allowed", description: `The "${status.name}" stage cannot be deleted as it's the default stage for new projects.`, variant: "destructive" });
+        return;
+      }
+
       const { error } = await supabase
         .from('project_statuses')
         .delete()
@@ -350,7 +361,7 @@ const ProjectStatusesSection = () => {
           />
           
           <div className="flex justify-between items-center pt-4">
-            {isEdit && editingStatus && editingStatus.name.toLowerCase() !== 'planned' && (
+            {isEdit && editingStatus && !isProtectedName(editingStatus.name) && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button type="button" variant="destructive">
@@ -383,9 +394,9 @@ const ProjectStatusesSection = () => {
               </AlertDialog>
             )}
             
-            {isEdit && editingStatus && editingStatus.name.toLowerCase() === 'planned' && (
+            {isEdit && editingStatus && isProtectedName(editingStatus.name) && (
               <p className="text-sm text-muted-foreground">
-                The "Planned" stage cannot be deleted as it's the default stage for new projects.
+                The "{editingStatus.name}" stage cannot be deleted as it's the default stage for new projects.
               </p>
             )}
             

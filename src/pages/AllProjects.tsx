@@ -56,6 +56,7 @@ const AllProjects = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [projectStatuses, setProjectStatuses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [sortField, setSortField] = useState<SortField>("updated_at");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [viewMode, setViewMode] = useState<'board' | 'list'>('board');
@@ -198,6 +199,7 @@ const AllProjects = () => {
       });
     } finally {
       setLoading(false);
+      setIsInitialLoad(false);
     }
   };
 
@@ -314,7 +316,7 @@ const AllProjects = () => {
     );
   };
 
-  if (loading) {
+  if (loading && isInitialLoad) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">

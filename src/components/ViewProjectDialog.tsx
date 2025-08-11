@@ -116,6 +116,15 @@ export async function onArchiveToggle(project: { id: string; status_id?: string 
       lead_id: proj.lead_id,
       user_id: userData.user.id,
     });
+    // Log to audit history
+    await supabase.from('audit_log').insert({
+      user_id: userData.user.id,
+      entity_type: 'project',
+      entity_id: project.id,
+      action: 'archived',
+      old_values: { status_id: proj.status_id },
+      new_values: { status_id: archivedId }
+    });
     return { isArchived: true };
   }
 
@@ -141,6 +150,15 @@ export async function onArchiveToggle(project: { id: string; status_id?: string 
     project_id: project.id,
     lead_id: proj.lead_id,
     user_id: userData.user.id,
+  });
+  // Log to audit history
+  await supabase.from('audit_log').insert({
+    user_id: userData.user.id,
+    entity_type: 'project',
+    entity_id: project.id,
+    action: 'restored',
+    old_values: { status_id: archivedId },
+    new_values: { status_id: targetStatusId }
   });
   return { isArchived: false };
 }

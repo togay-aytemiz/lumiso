@@ -192,7 +192,6 @@ const LeadDetail = () => {
 
   const fetchSessions = async () => {
     if (!id) return;
-    
     try {
       // Get all sessions for this lead with project information
       const { data, error } = await supabase
@@ -207,9 +206,31 @@ const LeadDetail = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      
+
+      // Determine archived projects for this lead
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData.user?.id;
+      let filteredSessions = data || [];
+      if (userId) {
+        const { data: archivedStatus } = await supabase
+          .from('project_statuses')
+          .select('id')
+          .eq('user_id', userId)
+          .ilike('name', 'archived')
+          .maybeSingle();
+        if (archivedStatus?.id) {
+          const { data: archivedProjects } = await supabase
+            .from('projects')
+            .select('id')
+            .eq('lead_id', id)
+            .eq('status_id', archivedStatus.id);
+          const archivedIds = new Set((archivedProjects || []).map(p => p.id));
+          filteredSessions = filteredSessions.filter(s => !s.project_id || !archivedIds.has(s.project_id));
+        }
+      }
+
       // Process sessions to include project name
-      const processedSessions = (data || []).map(session => ({
+      const processedSessions = (filteredSessions || []).map(session => ({
         ...session,
         project_name: session.projects?.name || undefined
       }));
@@ -218,15 +239,12 @@ const LeadDetail = () => {
       const sortedSessions = processedSessions.sort((a, b) => {
         if (a.status === 'planned' && b.status !== 'planned') return -1;
         if (b.status === 'planned' && a.status !== 'planned') return 1;
-        
-        // For non-planned sessions, sort by session_date descending (newest first)
         if (a.status !== 'planned' && b.status !== 'planned') {
           return new Date(b.session_date).getTime() - new Date(a.session_date).getTime();
         }
-        
         return 0;
       });
-      
+
       setSessions(sortedSessions);
     } catch (error: any) {
       console.error('Error fetching sessions:', error);

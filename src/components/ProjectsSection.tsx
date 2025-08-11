@@ -48,6 +48,7 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
+  const [hasArchived, setHasArchived] = useState(false);
   const { toast } = useToast();
 
   const fetchProjects = async () => {
@@ -72,7 +73,10 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      const filtered = archivedId && !showArchived ? (data || []).filter((p: any) => p.status_id !== archivedId) : (data || []);
+      const all = data || [];
+      const hasArch = archivedId ? all.some((p: any) => p.status_id === archivedId) : false;
+      setHasArchived(hasArch);
+      const filtered = archivedId && !showArchived ? all.filter((p: any) => p.status_id !== archivedId) : all;
       setProjects(filtered);
     } catch (error) {
       console.error("Error fetching projects:", error);
@@ -140,10 +144,12 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
         <CardTitle className="text-xl font-semibold">Projects</CardTitle>
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <span>Show archived</span>
-            <Switch checked={showArchived} onCheckedChange={(v) => setShowArchived(v)} />
-          </div>
+          {hasArchived && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <span>Show archived</span>
+              <Switch checked={showArchived} onCheckedChange={(v) => setShowArchived(v)} />
+            </div>
+          )}
           {projects.length > 0 && (
             <Button onClick={handleAddProject} size="sm">
               <Plus className="h-4 w-4 mr-2" />

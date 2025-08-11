@@ -160,66 +160,69 @@ const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
 
   const fetchAuditLogs = async () => {
     try {
-      // Get current sessions for project name mapping
+      // Get sessions to help enrich with project names
       const { data: sessionsData } = await supabase
         .from('sessions')
         .select('id, project_id')
         .eq('lead_id', leadId);
-      
-      // Get all session audit logs and filter by lead_id from the session data
+
+      // Get projects for this lead for names and filtering project logs
+      const { data: projectsForLead } = await supabase
+        .from('projects')
+        .select('id, name')
+        .eq('lead_id', leadId);
+      const projectIds = [...new Set((projectsForLead || []).map(p => p.id))];
+
+      // Session audit logs for this lead (via session new/old values)
       const { data: allSessionAuditLogs } = await supabase
         .from('audit_log')
         .select('*')
         .eq('entity_type', 'session');
-      
-      // Filter session audit logs to only include sessions that belong to this lead
-      const sessionAuditLogs = allSessionAuditLogs?.filter(log => {
+      const sessionAuditLogs = (allSessionAuditLogs || []).filter(log => {
         const sessionData = log.new_values || log.old_values;
-        return sessionData && typeof sessionData === 'object' && sessionData !== null && 
+        return sessionData && typeof sessionData === 'object' && sessionData !== null &&
                'lead_id' in sessionData && sessionData.lead_id === leadId;
-      }) || [];
-      
-      // Get lead audit logs  
+      });
+
+      // Lead audit logs
       const { data: leadAuditLogs } = await supabase
         .from('audit_log')
         .select('*')
         .eq('entity_id', leadId);
-      
-      // Combine all audit logs for this lead
-      const data = [...(leadAuditLogs || []), ...sessionAuditLogs]
-        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
-      // No error to check since we did multiple queries
-      
-      // Get project names for session audit logs
-      const projectIds = [...new Set(sessionsData?.map(s => s.project_id).filter(Boolean) || [])];
-      let projectsData: any[] = [];
-      
+      // Project audit logs (archived/restored)
+      let projectAuditLogs: any[] = [];
       if (projectIds.length > 0) {
-        const { data: projects } = await supabase
-          .from('projects')
-          .select('id, name')
-          .in('id', projectIds);
-        projectsData = projects || [];
+        const { data: projLogs } = await supabase
+          .from('audit_log')
+          .select('*')
+          .eq('entity_type', 'project')
+          .in('entity_id', projectIds);
+        projectAuditLogs = projLogs || [];
       }
-      
-      // Enrich session audit logs with project information
-      const enrichedLogs = data?.map(log => {
+
+      // Combine and sort
+      const data = [
+        ...(leadAuditLogs || []),
+        ...sessionAuditLogs,
+        ...projectAuditLogs,
+      ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+      // Enrich logs with project names
+      const projectsMap = new Map((projectsForLead || []).map(p => [p.id, p.name]));
+      const enrichedLogs = (data || []).map(log => {
         if (log.entity_type === 'session') {
           const sessionData = log.new_values || log.old_values;
-          const projectId = (sessionData as any)?.project_id;
-          if (projectId) {
-            const project = projectsData.find(p => p.id === projectId);
-            return {
-              ...log,
-              session_project_id: projectId,
-              project_name: project?.name
-            };
-          }
+          const pid = (sessionData as any)?.project_id;
+          return pid ? { ...log, session_project_id: pid, project_name: projectsMap.get(pid) } : log;
+        }
+        if (log.entity_type === 'project') {
+          const pid = log.entity_id as string;
+          return { ...log, project_name: projectsMap.get(pid) };
         }
         return log;
-      }) || [];
-      
+      });
+
       setAuditLogs(enrichedLogs);
     } catch (error: any) {
       console.error('Error fetching audit logs:', error);
@@ -382,6 +385,9 @@ const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
       if (log.action === 'created') {
         return `${activityType === 'note' ? 'Note' : 'Reminder'} added`;
       }
+    } else if (log.entity_type === 'project') {
+      if (log.action === 'archived') return 'Project archived';
+      if (log.action === 'restored') return 'Project restored';
     }
     return `${log.entity_type} ${log.action}`;
   };

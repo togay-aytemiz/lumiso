@@ -45,16 +45,16 @@ export function AppSidebar() {
 
   return (
     <Sidebar
-      className="bg-[#1e1e2f] border-r border-slate-600 shadow-inner"
+      className="border-r border-sidebar-border"
       collapsible="icon"
     >
-      <SidebarHeader className="p-6 bg-[#1e1e2f]">
-        <h1 className="text-xl font-bold text-[#f1f5f9] tracking-tight">
+      <SidebarHeader className="p-6">
+        <h1 className="text-xl font-bold text-sidebar-foreground tracking-tight">
           Sweet Dreams CRM
         </h1>
       </SidebarHeader>
 
-      <SidebarContent className="px-3 bg-[#1e1e2f]">
+      <SidebarContent className="px-3">
         <SidebarMenu>
           {navigationItems.map((item) => {
             const active = isActive(item.url);
@@ -62,19 +62,14 @@ export function AppSidebar() {
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton
                   asChild
-                  className={`
-                    w-full h-10 px-3 py-3 mb-3 text-left transition-all duration-200 rounded-lg
-                    ${active
-                      ? "bg-blue-500/20 text-blue-100 border-l-4 border-blue-400"
-                      : "text-[#f1f5f9] hover:bg-slate-700/50 hover:text-[#f1f5f9]"
-                    }
-                  `}
+                  isActive={active}
+                  className="group w-full h-10 px-3 py-3 mb-2 text-left transition-all duration-200 rounded-lg"
                 >
                   <NavLink
                     to={item.url}
                     className="flex items-center gap-3 w-full"
                   >
-                    <item.icon className="h-4 w-4" />
+                    <item.icon className="h-4 w-4 text-sidebar-foreground group-hover:text-[hsl(var(--sidebar-primary))] group-data-[active=true]:text-[hsl(var(--sidebar-primary))]" />
                     {open && <span className="font-medium">{item.title}</span>}
                   </NavLink>
                 </SidebarMenuButton>
@@ -84,30 +79,30 @@ export function AppSidebar() {
         </SidebarMenu>
       </SidebarContent>
 
-      <SidebarFooter className="p-3 bg-[#1e1e2f]">
+      <SidebarFooter className="p-3">
         <Separator className="mb-3 bg-slate-600" />
         <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              className="w-full h-10 px-3 py-2 text-[#f1f5f9] hover:bg-slate-700/50 hover:text-[#f1f5f9] transition-all duration-200"
-            >
-              <NavLink
-                to="/settings"
-                className="flex items-center gap-3 w-full"
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                className="group w-full h-10 px-3 py-2 rounded-lg transition-all duration-200"
               >
-                <Settings className="h-4 w-4" />
-                {open && <span className="font-medium">Settings</span>}
-              </NavLink>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
+                <NavLink
+                  to="/settings"
+                  className="flex items-center gap-3 w-full"
+                >
+                  <Settings className="h-4 w-4 text-sidebar-foreground group-hover:text-[hsl(var(--sidebar-primary))]" />
+                  {open && <span className="font-medium">Settings</span>}
+                </NavLink>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton
               onClick={handleSignOut}
-              className="w-full h-10 px-3 py-2 text-[#f1f5f9] hover:bg-red-600/20 hover:text-red-200 transition-all duration-200"
+              className="group w-full h-10 px-3 py-2 rounded-lg transition-all duration-200 hover:bg-destructive/10 text-destructive"
             >
               <div className="flex items-center gap-3 w-full">
-                <LogOut className="h-4 w-4" />
+                <LogOut className="h-4 w-4 text-destructive group-hover:text-destructive" />
                 {open && <span className="font-medium">Sign Out</span>}
               </div>
             </SidebarMenuButton>

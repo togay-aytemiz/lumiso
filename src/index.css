@@ -66,8 +66,8 @@ All colors MUST be HSL.
     --sidebar-foreground: 222.2 47.4% 11.2%; /* #111827 */
     --sidebar-primary: 173 70% 43%; /* #21B8A6 */
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 173 70% 43%; /* hover/active background */
-    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-accent: 173 60% 92%; /* light mint hover/active */
+    --sidebar-accent-foreground: 222.2 47.4% 11.2%; /* dark text */
     --sidebar-border: 214.3 31.8% 91.4%; /* light divider */
     --sidebar-ring: 173 70% 43%;
 

@@ -89,11 +89,11 @@ const Settings = () => {
 {/* Project Statuses Management Section */}
 <ProjectStatusesSection />
 
-{/* Session Statuses Management Section */}
-<SessionStatusesSection />
-
 {/* Project Types Management Section */}
 <ProjectTypesSection />
+
+{/* Session Statuses Management Section */}
+<SessionStatusesSection />
 
 {/* Services Management Section */}
 <ServicesSection />

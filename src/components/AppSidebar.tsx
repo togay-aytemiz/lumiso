@@ -1,5 +1,5 @@
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { LayoutDashboard, Users, Calendar, Bell, BarChart3, Settings, LogOut, FolderOpen, CreditCard, CalendarDays, CalendarRange } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -50,6 +50,11 @@ export function AppSidebar() {
     }
   };
 
+  // Auto-close/open Bookings based on current route
+  useEffect(() => {
+    setBookingsOpen(isBookingsChildActive);
+  }, [isBookingsChildActive]);
+
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     localStorage.clear();
@@ -78,7 +83,7 @@ export function AppSidebar() {
                   <SidebarMenuButton
                     asChild
                     isActive={active}
-                    className="group/item w-full h-10 px-3 py-3 mb-2 text-left transition-all duration-200 rounded-lg"
+                    className="group/item w-full h-10 px-3 py-3 mb-2 text-left transition-all duration-200 rounded-lg data-[active=true]:bg-muted"
                   >
                     <NavLink
                       to={item.url}
@@ -97,7 +102,7 @@ export function AppSidebar() {
             <SidebarMenuButton
               onClick={handleBookingsClick}
               isActive={isBookingsChildActive}
-              className="group/item w-full h-10 px-3 py-3 mb-2 text-left transition-all duration-200 rounded-lg"
+              className="group/item w-full h-10 px-3 py-3 mb-2 text-left transition-all duration-200 rounded-lg data-[active=true]:bg-muted"
             >
               <div className="flex items-center gap-3 w-full">
                 <CalendarRange className="h-4 w-4 text-sidebar-foreground group-hover/item:text-[hsl(var(--sidebar-primary))] group-data-[active=true]/item:text-[hsl(var(--sidebar-primary))]" />
@@ -112,7 +117,7 @@ export function AppSidebar() {
                     <SidebarMenuButton
                       asChild
                       isActive={isActive("/calendar")}
-                      className="group/item w-full h-9 px-3 py-2 mb-1 text-left transition-all duration-200 rounded-lg"
+                      className="group/item w-full h-9 px-3 py-2 mb-1 text-left transition-all duration-200 rounded-lg data-[active=true]:bg-muted"
                     >
                       <NavLink to="/calendar" className="flex items-center gap-3 w-full">
                         <CalendarDays className="h-4 w-4 text-sidebar-foreground group-hover/item:text-[hsl(var(--sidebar-primary))] group-data-[active=true]/item:text-[hsl(var(--sidebar-primary))]" />
@@ -125,7 +130,7 @@ export function AppSidebar() {
                     <SidebarMenuButton
                       asChild
                       isActive={isActive("/sessions")}
-                      className="group/item w-full h-9 px-3 py-2 mb-1 text-left transition-all duration-200 rounded-lg"
+                      className="group/item w-full h-9 px-3 py-2 mb-1 text-left transition-all duration-200 rounded-lg data-[active=true]:bg-muted"
                     >
                       <NavLink to="/sessions" className="flex items-center gap-3 w-full">
                         <Calendar className="h-4 w-4 text-sidebar-foreground group-hover/item:text-[hsl(var(--sidebar-primary))] group-data-[active=true]/item:text-[hsl(var(--sidebar-primary))]" />
@@ -138,7 +143,7 @@ export function AppSidebar() {
                     <SidebarMenuButton
                       asChild
                       isActive={isActive("/reminders")}
-                      className="group/item w-full h-9 px-3 py-2 mb-1 text-left transition-all duration-200 rounded-lg"
+                      className="group/item w-full h-9 px-3 py-2 mb-1 text-left transition-all duration-200 rounded-lg data-[active=true]:bg-muted"
                     >
                       <NavLink to="/reminders" className="flex items-center gap-3 w-full">
                         <Bell className="h-4 w-4 text-sidebar-foreground group-hover/item:text-[hsl(var(--sidebar-primary))] group-data-[active=true]/item:text-[hsl(var(--sidebar-primary))]" />
@@ -160,7 +165,7 @@ export function AppSidebar() {
                   <SidebarMenuButton
                     asChild
                     isActive={active}
-                    className="group/item w-full h-10 px-3 py-3 mb-2 text-left transition-all duration-200 rounded-lg"
+                    className="group/item w-full h-10 px-3 py-3 mb-2 text-left transition-all duration-200 rounded-lg data-[active=true]:bg-muted"
                   >
                     <NavLink
                       to={item.url}
@@ -177,7 +182,7 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="p-3">
-        <Separator className="mb-3 bg-[hsl(var(--sidebar-border))]" />
+        <Separator className="mb-3 bg-[hsl(var(--sidebar-border)/0.5)]" />
         <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton

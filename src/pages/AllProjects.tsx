@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, ArrowUpDown, ArrowUp, ArrowDown, Plus, FolderOpen, User, LayoutGrid, List } from "lucide-react";
+import { ArrowLeft, ArrowUpDown, ArrowUp, ArrowDown, Plus, FolderOpen, User, LayoutGrid, List, Archive } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { EnhancedProjectDialog } from "@/components/EnhancedProjectDialog";
 import { ViewProjectDialog } from "@/components/ViewProjectDialog";
@@ -36,6 +36,7 @@ interface Project {
     id: string;
     name: string;
   } | null;
+  base_price?: number | null;
   session_count?: number;
   completed_session_count?: number;
   upcoming_session_count?: number;
@@ -46,7 +47,11 @@ interface Project {
   services?: Array<{
     id: string;
     name: string;
+    price?: number | null;
+    selling_price?: number | null;
   }>;
+  total_paid?: number;
+  remaining_amount?: number;
 }
 
 type SortField = 'name' | 'lead_name' | 'created_at' | 'updated_at' | 'session_count' | 'project_type';
@@ -81,7 +86,8 @@ const AllProjects = () => {
         { data: sessionsData, error: sessionsError },
         { data: todosData, error: todosError },
         { data: servicesData, error: servicesError },
-        { data: statusesData, error: statusesError }
+        { data: statusesData, error: statusesError },
+        { data: paymentsData, error: paymentsError }
       ] = await Promise.all([
         supabase
           .from('projects')
@@ -110,15 +116,20 @@ const AllProjects = () => {
             project_id,
             services (
               id,
-              name
+              name,
+              price,
+              selling_price
             )
-           `)
-        ,
+           `),
         
         supabase
           .from('project_statuses')
           .select('*')
-          .order('sort_order', { ascending: true })
+          .order('sort_order', { ascending: true }),
+        
+        supabase
+          .from('payments')
+          .select('project_id, amount, status, type')
       ]);
 
       if (projectsError) throw projectsError;
@@ -142,6 +153,7 @@ const AllProjects = () => {
       const sessionsMap = new Map<string, any[]>();
       const todosMap = new Map<string, any[]>();
       const servicesMap = new Map<string, any[]>();
+      const paymentsMap = new Map<string, { paid: number; due: number }>();
 
       // Group sessions by project_id
       sessionsData?.forEach(session => {
@@ -167,6 +179,14 @@ const AllProjects = () => {
         if (projectService.services) {
           servicesMap.get(projectService.project_id)!.push(projectService.services);
         }
+      });
+
+      // Aggregate payments by project_id
+      paymentsData?.forEach((p: any) => {
+        const prev = paymentsMap.get(p.project_id) || { paid: 0, due: 0 };
+        if (p.status === 'paid') prev.paid += Number(p.amount) || 0;
+        if (p.status === 'due') prev.due += Number(p.amount) || 0;
+        paymentsMap.set(p.project_id, prev);
       });
 
       // Process all active projects with their statistics
@@ -478,6 +498,7 @@ const AllProjects = () => {
                   : 'border-transparent text-muted-foreground hover:text-foreground'
               }`}
             >
+              <Archive className="h-4 w-4" />
               Archived
             </Button>
           </div>
@@ -500,54 +521,97 @@ const AllProjects = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead 
-                        className="cursor-pointer hover:bg-muted/50"
-                        onClick={() => handleSort('name')}
-                      >
-                        <div className="flex items-center gap-2">
-                          Project Name
-                          {getSortIcon('name')}
-                        </div>
-                      </TableHead>
-                      <TableHead 
-                        className="cursor-pointer hover:bg-muted/50"
-                        onClick={() => handleSort('lead_name')}
-                      >
-                        <div className="flex items-center gap-2">
-                          Lead
-                          {getSortIcon('lead_name')}
-                        </div>
-                      </TableHead>
-                      <TableHead>Stage</TableHead>
-                      <TableHead 
-                        className="cursor-pointer hover:bg-muted/50"
-                        onClick={() => handleSort('project_type')}
-                      >
-                        <div className="flex items-center gap-2">
-                          Type
-                          {getSortIcon('project_type')}
-                        </div>
-                      </TableHead>
-                      <TableHead 
-                        className="cursor-pointer hover:bg-muted/50 text-center"
-                        onClick={() => handleSort('session_count')}
-                      >
-                        <div className="flex items-center justify-center gap-2">
-                          Sessions
-                          {getSortIcon('session_count')}
-                        </div>
-                      </TableHead>
-                      <TableHead className="text-center">Todos</TableHead>
-                      <TableHead>Services</TableHead>
-                      <TableHead 
-                        className="cursor-pointer hover:bg-muted/50"
-                        onClick={() => handleSort('updated_at')}
-                      >
-                        <div className="flex items-center gap-2">
-                          Last Updated
-                          {getSortIcon('updated_at')}
-                        </div>
-                      </TableHead>
+                      {viewMode === 'archived' ? (
+                        <>
+                          <TableHead 
+                            className="cursor-pointer hover:bg-muted/50"
+                            onClick={() => handleSort('name')}
+                          >
+                            <div className="flex items-center gap-2">
+                              Project
+                              {getSortIcon('name')}
+                            </div>
+                          </TableHead>
+                          <TableHead 
+                            className="cursor-pointer hover:bg-muted/50"
+                            onClick={() => handleSort('lead_name')}
+                          >
+                            <div className="flex items-center gap-2">
+                              Lead
+                              {getSortIcon('lead_name')}
+                            </div>
+                          </TableHead>
+                          <TableHead>
+                            Type
+                          </TableHead>
+                          <TableHead>
+                            Paid
+                          </TableHead>
+                          <TableHead>
+                            Remaining
+                          </TableHead>
+                          <TableHead 
+                            className="cursor-pointer hover:bg-muted/50"
+                            onClick={() => handleSort('updated_at')}
+                          >
+                            <div className="flex items-center gap-2">
+                              Last Updated
+                              {getSortIcon('updated_at')}
+                            </div>
+                          </TableHead>
+                        </>
+                      ) : (
+                        <>
+                          <TableHead 
+                            className="cursor-pointer hover:bg-muted/50"
+                            onClick={() => handleSort('name')}
+                          >
+                            <div className="flex items-center gap-2">
+                              Project Name
+                              {getSortIcon('name')}
+                            </div>
+                          </TableHead>
+                          <TableHead 
+                            className="cursor-pointer hover:bg-muted/50"
+                            onClick={() => handleSort('lead_name')}
+                          >
+                            <div className="flex items-center gap-2">
+                              Lead
+                              {getSortIcon('lead_name')}
+                            </div>
+                          </TableHead>
+                          <TableHead>Stage</TableHead>
+                          <TableHead 
+                            className="cursor-pointer hover:bg-muted/50"
+                            onClick={() => handleSort('project_type')}
+                          >
+                            <div className="flex items-center gap-2">
+                              Type
+                              {getSortIcon('project_type')}
+                            </div>
+                          </TableHead>
+                          <TableHead 
+                            className="cursor-pointer hover:bg-muted/50 text-center"
+                            onClick={() => handleSort('session_count')}
+                          >
+                            <div className="flex items-center justify-center gap-2">
+                              Sessions
+                              {getSortIcon('session_count')}
+                            </div>
+                          </TableHead>
+                          <TableHead className="text-center">Todos</TableHead>
+                          <TableHead>Services</TableHead>
+                          <TableHead 
+                            className="cursor-pointer hover:bg-muted/50"
+                            onClick={() => handleSort('updated_at')}
+                          >
+                            <div className="flex items-center gap-2">
+                              Last Updated
+                              {getSortIcon('updated_at')}
+                            </div>
+                          </TableHead>
+                        </>
+                      )}
                     </TableRow>
                   </TableHeader>
                   <TableBody>

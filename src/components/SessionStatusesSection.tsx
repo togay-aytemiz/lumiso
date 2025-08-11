@@ -63,6 +63,12 @@ const SessionStatusesSection = () => {
 
   const selectedColor = form.watch("color");
 
+  const isProtectedStatus = (status: SessionStatus | null) => {
+    if (!status) return false;
+    const n = status.name?.trim().toLowerCase();
+    return status.is_system_initial || n === 'completed' || n === 'cancelled';
+  };
+
   const fetchStatuses = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -169,8 +175,8 @@ const SessionStatusesSection = () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
-      if (status.is_system_initial) {
-        toast({ title: "Not allowed", description: 'The "Planned" stage cannot be deleted', variant: "destructive" });
+      if (isProtectedStatus(status)) {
+        toast({ title: "Not allowed", description: `The "${status.name}" stage cannot be deleted`, variant: "destructive" });
         return;
       }
       const { error } = await supabase
@@ -268,11 +274,11 @@ const SessionStatusesSection = () => {
           />
 
           <div className="flex justify-between items-center pt-4">
-            {isEdit && editingStatus && editingStatus.is_system_initial && (
-              <p className="text-sm text-muted-foreground">The "Planned" stage cannot be deleted.</p>
+            {isEdit && editingStatus && isProtectedStatus(editingStatus) && (
+              <p className="text-sm text-muted-foreground">The "{editingStatus.name}" stage cannot be deleted.</p>
             )}
 
-            {isEdit && editingStatus && !editingStatus.is_system_initial && (
+            {isEdit && editingStatus && !isProtectedStatus(editingStatus) && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button type="button" variant="destructive">

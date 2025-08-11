@@ -648,7 +648,7 @@ const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
                 <div className="space-y-6">
                   {Object.entries(groupedAuditLogs).map(([date, items]) => (
                     <div key={date}>
-                      <h4 className="font-medium text-sm text-muted-foreground mb-3 sticky top-0 bg-background">
+                      <h4 className="font-medium text-sm text-muted-foreground mb-3 sticky top-0">
                         {formatLongDate(date)}
                       </h4>
                       <div className="space-y-3 pl-4 border-l-2 border-muted">

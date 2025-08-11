@@ -340,7 +340,7 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
   return (
     <>
       <Dialog open={open} onOpenChange={handleDialogOpenChange}>
-        <DialogContent className={`${isFullscreen ? 'max-w-none w-[100vw] h-[100vh] m-0 rounded-none' : 'sm:max-w-5xl max-h-[85vh]'} overflow-y-auto [&>button]:hidden`}>
+        <DialogContent onInteractOutside={(e) => e.preventDefault()} className={`${isFullscreen ? 'max-w-none w-[100vw] h-[100vh] m-0 rounded-none' : 'sm:max-w-5xl max-h-[85vh]'} overflow-y-auto [&>button]:hidden`}>
           <DialogHeader className="pb-4">
             <div className="flex items-start justify-between">
               <div className="flex-1 space-y-2">

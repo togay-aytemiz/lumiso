@@ -202,6 +202,12 @@ const AllProjects = () => {
           return sessionDateTime > now && session.status !== 'completed';
         });
 
+        // Payment and remaining calculations
+        const base = Number(project.base_price || 0);
+        const servicesCost = services.reduce((sum: number, s: any) => sum + Number(s?.selling_price ?? s?.price ?? 0), 0);
+        const totalPaid = paymentsMap.get(project.id)?.paid || 0;
+        const remainingAmount = Math.max(0, base + servicesCost - totalPaid);
+
         return {
           ...project,
           lead: leadsMap.get(project.lead_id) || null,
@@ -214,6 +220,8 @@ const AllProjects = () => {
           todo_count: todos.length,
           completed_todo_count: todos.filter(t => t.is_completed).length,
           services: services,
+          total_paid: totalPaid,
+          remaining_amount: remainingAmount,
         };
       });
 
@@ -234,6 +242,12 @@ const AllProjects = () => {
           return sessionDateTime > now && session.status !== 'completed';
         });
 
+        // Payment and remaining calculations
+        const base = Number(project.base_price || 0);
+        const servicesCost = services.reduce((sum: number, s: any) => sum + Number(s?.selling_price ?? s?.price ?? 0), 0);
+        const totalPaid = paymentsMap.get(project.id)?.paid || 0;
+        const remainingAmount = Math.max(0, base + servicesCost - totalPaid);
+
         return {
           ...project,
           lead: leadsMap.get(project.lead_id) || null,
@@ -246,6 +260,8 @@ const AllProjects = () => {
           todo_count: todos.length,
           completed_todo_count: todos.filter(t => t.is_completed).length,
           services: services,
+          total_paid: totalPaid,
+          remaining_amount: remainingAmount,
         };
       });
 
@@ -419,6 +435,15 @@ const AllProjects = () => {
         )}
       </div>
     );
+  };
+
+  const formatCurrency = (amount?: number) => {
+    const value = Number(amount || 0);
+    try {
+      return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(value);
+    } catch {
+      return `${value.toFixed(2)} TRY`;
+    }
   };
 
   if (loading && isInitialLoad) {
@@ -649,37 +674,62 @@ const AllProjects = () => {
                               <span className="text-muted-foreground">Lead not found</span>
                             )}
                           </TableCell>
-                          <TableCell>
-                            <ProjectStatusBadge 
-                              projectId={project.id}
-                              currentStatusId={project.status_id}
-                              editable={false}
-                              size="sm"
-                              statuses={projectStatuses}
-                              onStatusChange={() => fetchProjects()}
-                            />
-                          </TableCell>
-                          <TableCell>
-                            {project.project_type ? (
-                              <Badge variant="outline" className="text-xs">
-                                {project.project_type.name.toUpperCase()}
-                              </Badge>
-                            ) : (
-                              <span className="text-muted-foreground text-xs">-</span>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-center">
-                            {getProgressBadge(project.completed_session_count || 0, project.session_count || 0)}
-                          </TableCell>
-                          <TableCell className="text-center">
-                            {getProgressBadge(project.completed_todo_count || 0, project.todo_count || 0)}
-                          </TableCell>
-                          <TableCell>
-                            {renderServicesChips(project.services || [])}
-                          </TableCell>
-                          <TableCell className="text-sm text-muted-foreground">
-                            {formatDate(project.updated_at)}
-                          </TableCell>
+                          {viewMode === 'archived' ? (
+                            <>
+                              <TableCell>
+                                {project.project_type ? (
+                                  <Badge variant="outline" className="text-xs">
+                                    {project.project_type.name.toUpperCase()}
+                                  </Badge>
+                                ) : (
+                                  <span className="text-muted-foreground text-xs">-</span>
+                                )}
+                              </TableCell>
+                              <TableCell className="text-sm font-medium text-green-600">
+                                {formatCurrency(project.total_paid || 0)}
+                              </TableCell>
+                              <TableCell className="text-sm text-muted-foreground">
+                                {formatCurrency(project.remaining_amount || 0)}
+                              </TableCell>
+                              <TableCell className="text-sm text-muted-foreground">
+                                {formatDate(project.updated_at)}
+                              </TableCell>
+                            </>
+                          ) : (
+                            <>
+                              <TableCell>
+                                <ProjectStatusBadge 
+                                  projectId={project.id}
+                                  currentStatusId={project.status_id}
+                                  editable={false}
+                                  size="sm"
+                                  statuses={projectStatuses}
+                                  onStatusChange={() => fetchProjects()}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                {project.project_type ? (
+                                  <Badge variant="outline" className="text-xs">
+                                    {project.project_type.name.toUpperCase()}
+                                  </Badge>
+                                ) : (
+                                  <span className="text-muted-foreground text-xs">-</span>
+                                )}
+                              </TableCell>
+                              <TableCell className="text-center">
+                                {getProgressBadge(project.completed_session_count || 0, project.session_count || 0)}
+                              </TableCell>
+                              <TableCell className="text-center">
+                                {getProgressBadge(project.completed_todo_count || 0, project.todo_count || 0)}
+                              </TableCell>
+                              <TableCell>
+                                {renderServicesChips(project.services || [])}
+                              </TableCell>
+                              <TableCell className="text-sm text-muted-foreground">
+                                {formatDate(project.updated_at)}
+                              </TableCell>
+                            </>
+                          )}
                         </TableRow>
                       ))
                     ) : (

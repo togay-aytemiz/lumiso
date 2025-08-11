@@ -87,7 +87,7 @@ const AllProjects = () => {
           .from('projects')
           .select(`
             *, 
-            project_statuses(id, name, color),
+            project_statuses:project_statuses!projects_status_id_fkey(id, name, color),
             project_types(id, name)
           `)
           .order('updated_at', { ascending: false }),

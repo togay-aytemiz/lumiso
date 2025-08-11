@@ -330,12 +330,12 @@ const AllProjects = () => {
       {/* Fixed header section */}
       <div className="flex-none p-8 pb-0">
         <div className="mb-6">
-          <div className="flex items-center justify-between">
-            <div>
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div className="min-w-0">
               <h1 className="text-3xl font-bold">Projects</h1>
               <p className="text-muted-foreground">Manage all your projects in one place</p>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 min-w-0 flex-1 justify-end">
               <EnhancedProjectDialog
                 onProjectCreated={() => {
                   fetchProjects();
@@ -346,7 +346,7 @@ const AllProjects = () => {
                   Add Project
                 </Button>
               </EnhancedProjectDialog>
-              <div className="w-full max-w-lg min-w-[480px]">
+              <div className="w-full sm:max-w-lg min-w-0 flex-1">
                 <GlobalSearch />
               </div>
             </div>

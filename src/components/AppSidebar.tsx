@@ -205,7 +205,7 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton
               onClick={handleSignOut}
-              className="group/item w-full h-10 px-3 py-2 rounded-lg transition-all duration-200 hover:bg-destructive/10 text-destructive"
+              className="group/item w-full h-10 px-3 py-2 rounded-lg transition-all duration-200 hover:bg-destructive/10 text-destructive hover:text-destructive focus:text-destructive active:text-destructive"
             >
               <div className="flex items-center gap-3 w-full">
                 <LogOut className="h-4 w-4 text-destructive group-hover/item:text-destructive" />

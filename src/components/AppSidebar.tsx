@@ -1,5 +1,6 @@
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Users, Calendar, Bell, BarChart3, Settings, LogOut, FolderOpen, CreditCard, CalendarDays } from "lucide-react";
+import { useState } from "react";
+import { LayoutDashboard, Users, Calendar, Bell, BarChart3, Settings, LogOut, FolderOpen, CreditCard, CalendarDays, CalendarRange } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Sidebar,
@@ -17,9 +18,6 @@ const navigationItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Leads", url: "/leads", icon: Users },
   { title: "Projects", url: "/projects", icon: FolderOpen },
-  { title: "Sessions", url: "/sessions", icon: Calendar },
-  { title: "Calendar", url: "/calendar", icon: CalendarDays },
-  { title: "Reminders", url: "/reminders", icon: Bell },
   { title: "Analytics", url: "/analytics", icon: BarChart3 },
   { title: "Payments", url: "/payments", icon: CreditCard },
 ];
@@ -35,6 +33,21 @@ export function AppSidebar() {
       return currentPath === "/";
     }
     return currentPath.startsWith(path);
+  };
+
+  const isBookingsChildActive = ["/calendar", "/sessions", "/reminders"].some((path) =>
+    currentPath.startsWith(path)
+  );
+  const [bookingsOpen, setBookingsOpen] = useState(isBookingsChildActive);
+  const handleBookingsClick = () => {
+    if (!bookingsOpen) {
+      setBookingsOpen(true);
+      if (!isBookingsChildActive) {
+        navigate("/calendar");
+      }
+    } else {
+      setBookingsOpen(false);
+    }
   };
 
   const handleSignOut = async () => {
@@ -56,26 +69,110 @@ export function AppSidebar() {
 
       <SidebarContent className="px-3">
         <SidebarMenu>
-          {navigationItems.map((item) => {
-            const active = isActive(item.url);
-            return (
-              <SidebarMenuItem key={item.title}>
-                <SidebarMenuButton
-                  asChild
-                  isActive={active}
-                  className="group/item w-full h-10 px-3 py-3 mb-2 text-left transition-all duration-200 rounded-lg"
-                >
-                  <NavLink
-                    to={item.url}
-                    className="flex items-center gap-3 w-full"
+          {navigationItems
+            .slice(0, navigationItems.findIndex((i) => i.title === "Analytics"))
+            .map((item) => {
+              const active = isActive(item.url);
+              return (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={active}
+                    className="group/item w-full h-10 px-3 py-3 mb-2 text-left transition-all duration-200 rounded-lg"
                   >
-                    <item.icon className="h-4 w-4 text-sidebar-foreground group-hover/item:text-[hsl(var(--sidebar-primary))] group-data-[active=true]/item:text-[hsl(var(--sidebar-primary))]" />
-                    {open && <span className="font-medium">{item.title}</span>}
-                  </NavLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            );
-          })}
+                    <NavLink
+                      to={item.url}
+                      className="flex items-center gap-3 w-full"
+                    >
+                      <item.icon className="h-4 w-4 text-sidebar-foreground group-hover/item:text-[hsl(var(--sidebar-primary))] group-data-[active=true]/item:text-[hsl(var(--sidebar-primary))]" />
+                      {open && <span className="font-medium">{item.title}</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              );
+            })}
+
+          {/* Bookings parent with submenu */}
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              onClick={handleBookingsClick}
+              isActive={isBookingsChildActive}
+              className="group/item w-full h-10 px-3 py-3 mb-2 text-left transition-all duration-200 rounded-lg"
+            >
+              <div className="flex items-center gap-3 w-full">
+                <CalendarRange className="h-4 w-4 text-sidebar-foreground group-hover/item:text-[hsl(var(--sidebar-primary))] group-data-[active=true]/item:text-[hsl(var(--sidebar-primary))]" />
+                {open && <span className="font-medium">Bookings</span>}
+              </div>
+            </SidebarMenuButton>
+
+            {open && bookingsOpen && (
+              <div className="mt-1 ml-6">
+                <SidebarMenu>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive("/calendar")}
+                      className="group/item w-full h-9 px-3 py-2 mb-1 text-left transition-all duration-200 rounded-lg"
+                    >
+                      <NavLink to="/calendar" className="flex items-center gap-3 w-full">
+                        <CalendarDays className="h-4 w-4 text-sidebar-foreground group-hover/item:text-[hsl(var(--sidebar-primary))] group-data-[active=true]/item:text-[hsl(var(--sidebar-primary))]" />
+                        {open && <span className="font-medium">Calendar</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive("/sessions")}
+                      className="group/item w-full h-9 px-3 py-2 mb-1 text-left transition-all duration-200 rounded-lg"
+                    >
+                      <NavLink to="/sessions" className="flex items-center gap-3 w-full">
+                        <Calendar className="h-4 w-4 text-sidebar-foreground group-hover/item:text-[hsl(var(--sidebar-primary))] group-data-[active=true]/item:text-[hsl(var(--sidebar-primary))]" />
+                        {open && <span className="font-medium">Sessions</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive("/reminders")}
+                      className="group/item w-full h-9 px-3 py-2 mb-1 text-left transition-all duration-200 rounded-lg"
+                    >
+                      <NavLink to="/reminders" className="flex items-center gap-3 w-full">
+                        <Bell className="h-4 w-4 text-sidebar-foreground group-hover/item:text-[hsl(var(--sidebar-primary))] group-data-[active=true]/item:text-[hsl(var(--sidebar-primary))]" />
+                        {open && <span className="font-medium">Reminders</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              </div>
+            )}
+          </SidebarMenuItem>
+
+          {navigationItems
+            .slice(navigationItems.findIndex((i) => i.title === "Analytics"))
+            .map((item) => {
+              const active = isActive(item.url);
+              return (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={active}
+                    className="group/item w-full h-10 px-3 py-3 mb-2 text-left transition-all duration-200 rounded-lg"
+                  >
+                    <NavLink
+                      to={item.url}
+                      className="flex items-center gap-3 w-full"
+                    >
+                      <item.icon className="h-4 w-4 text-sidebar-foreground group-hover/item:text-[hsl(var(--sidebar-primary))] group-data-[active=true]/item:text-[hsl(var(--sidebar-primary))]" />
+                      {open && <span className="font-medium">{item.title}</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              );
+            })}
         </SidebarMenu>
       </SidebarContent>
 

@@ -57,9 +57,25 @@ export default function Calendar() {
           project_id
         `)
         .order("session_date", { ascending: true });
-      
       if (error) throw error;
-      return data as Session[];
+
+      // Filter out sessions belonging to archived projects
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData.user?.id;
+      if (!userId) return data as Session[];
+      const { data: archivedStatus } = await supabase
+        .from('project_statuses')
+        .select('id, name')
+        .eq('user_id', userId)
+        .ilike('name', 'archived')
+        .maybeSingle();
+      if (!archivedStatus?.id) return data as Session[];
+      const { data: archivedProjects } = await supabase
+        .from('projects')
+        .select('id')
+        .eq('status_id', archivedStatus.id);
+      const archivedIds = new Set((archivedProjects || []).map(p => p.id));
+      return (data as Session[]).filter(s => !s.project_id || !archivedIds.has(s.project_id));
     },
   });
 
@@ -80,9 +96,25 @@ export default function Calendar() {
           completed
         `)
         .order("reminder_date", { ascending: true });
-      
       if (error) throw error;
-      return data as Activity[];
+
+      // Filter out reminders belonging to archived projects
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData.user?.id;
+      if (!userId) return data as Activity[];
+      const { data: archivedStatus } = await supabase
+        .from('project_statuses')
+        .select('id, name')
+        .eq('user_id', userId)
+        .ilike('name', 'archived')
+        .maybeSingle();
+      if (!archivedStatus?.id) return data as Activity[];
+      const { data: archivedProjects } = await supabase
+        .from('projects')
+        .select('id')
+        .eq('status_id', archivedStatus.id);
+      const archivedIds = new Set((archivedProjects || []).map(p => p.id));
+      return (data as Activity[]).filter(a => !a.project_id || !archivedIds.has(a.project_id!));
     },
   });
 
@@ -670,8 +702,9 @@ export default function Calendar() {
           <ViewProjectDialog
             project={selectedProject}
             open={projectDialogOpen}
-            onOpenChange={(open) => { setProjectDialogOpen(open); if (!open) refreshCalendar(); }}
+            onOpenChange={(open) => { setProjectDialogOpen(open); if (!open) { refreshCalendar(); } }}
             onProjectUpdated={refreshCalendar}
+            onActivityUpdated={refreshCalendar}
             leadName={selectedProjectLeadName}
           />
         )}

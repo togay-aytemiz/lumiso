@@ -84,9 +84,11 @@ export function SessionsSection({
         <CardContent>
           {sessions.length > 0 ? (
             <div className="space-y-3">
-              <p className="text-sm text-muted-foreground mb-3">
-                This project includes {sessions.length} session{sessions.length !== 1 ? 's' : ''}
-              </p>
+              {!loading && (
+                <p className="text-sm text-muted-foreground mb-3">
+                  This project includes {sessions.length} session{sessions.length !== 1 ? 's' : ''}
+                </p>
+              )}
               {sessions.map((session) => (
                 <SessionBanner
                   key={session.id}

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { Plus } from "lucide-react";
 import { ProjectCard } from "./ProjectCard";
 import { ViewProjectDialog } from "./ViewProjectDialog";
@@ -26,6 +27,7 @@ interface Project {
   user_id: string;
   created_at: string;
   updated_at: string;
+  status_id?: string | null;
 }
 
 interface ProjectsSectionProps {
@@ -45,6 +47,7 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
   const [viewingProject, setViewingProject] = useState<Project | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
   const { toast } = useToast();
 
   const fetchProjects = async () => {
@@ -69,7 +72,7 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      const filtered = archivedId ? (data || []).filter((p: any) => p.status_id !== archivedId) : (data || []);
+      const filtered = archivedId && !showArchived ? (data || []).filter((p: any) => p.status_id !== archivedId) : (data || []);
       setProjects(filtered);
     } catch (error) {
       console.error("Error fetching projects:", error);
@@ -85,7 +88,7 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
 
   useEffect(() => {
     fetchProjects();
-  }, [leadId]);
+  }, [leadId, showArchived]);
 
   const handleAddProject = () => {
     setShowAddDialog(true);
@@ -136,12 +139,18 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
     <Card className="w-full">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
         <CardTitle className="text-xl font-semibold">Projects</CardTitle>
-        {projects.length > 0 && (
-          <Button onClick={handleAddProject} size="sm">
-            <Plus className="h-4 w-4 mr-2" />
-            Add Project
-          </Button>
-        )}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <span>Show archived</span>
+            <Switch checked={showArchived} onCheckedChange={(v) => setShowArchived(v)} />
+          </div>
+          {projects.length > 0 && (
+            <Button onClick={handleAddProject} size="sm">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Project
+            </Button>
+          )}
+        </div>
       </CardHeader>
       <CardContent>
         {isLoading ? (

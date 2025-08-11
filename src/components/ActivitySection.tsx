@@ -88,12 +88,35 @@ const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setActivities(data || []);
+
+      // Exclude reminders/notes belonging to archived projects
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData.user?.id;
+      let filtered = data || [];
+      if (userId) {
+        const { data: archivedStatus } = await supabase
+          .from('project_statuses')
+          .select('id, name')
+          .eq('user_id', userId)
+          .ilike('name', 'archived')
+          .maybeSingle();
+
+        if (archivedStatus?.id) {
+          const { data: archivedProjects } = await supabase
+            .from('projects')
+            .select('id')
+            .eq('lead_id', leadId)
+            .eq('status_id', archivedStatus.id);
+          const archivedIds = new Set((archivedProjects || []).map(p => p.id));
+          filtered = filtered.filter(a => !a.project_id || !archivedIds.has(a.project_id));
+        }
+      }
+
+      setActivities(filtered);
     } catch (error: any) {
       console.error('Error fetching activities:', error);
     }
   };
-
   const fetchSessions = async () => {
     try {
       const { data, error } = await supabase
@@ -106,7 +129,30 @@ const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setSessions(data || []);
+
+      // Exclude sessions belonging to archived projects
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData.user?.id;
+      let filtered = data || [];
+      if (userId) {
+        const { data: archivedStatus } = await supabase
+          .from('project_statuses')
+          .select('id, name')
+          .eq('user_id', userId)
+          .ilike('name', 'archived')
+          .maybeSingle();
+        if (archivedStatus?.id) {
+          const { data: archivedProjects } = await supabase
+            .from('projects')
+            .select('id')
+            .eq('lead_id', leadId)
+            .eq('status_id', archivedStatus.id);
+          const archivedIds = new Set((archivedProjects || []).map(p => p.id));
+          filtered = filtered.filter(s => !s.project_id || !archivedIds.has(s.project_id));
+        }
+      }
+
+      setSessions(filtered || []);
     } catch (error: any) {
       console.error('Error fetching sessions:', error);
     }

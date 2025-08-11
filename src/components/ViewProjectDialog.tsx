@@ -274,17 +274,15 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
 
   // Handle ESC key for fullscreen mode
   const handleDialogOpenChange = (newOpen: boolean) => {
-    // If we're in fullscreen mode and user tries to close (ESC or other means)
+    // If we're in fullscreen mode and user tries to close (ESC or click outside)
     if (!newOpen && isFullscreen) {
-      // Instead of closing, just exit fullscreen
       setIsFullscreen(false);
-      return; // Don't close the modal
+      return;
     }
-    
-    // Normal behavior - close the modal
     if (!newOpen) {
       onOpenChange(newOpen);
       onProjectUpdated();
+      onActivityUpdated?.();
     }
   };
 
@@ -478,7 +476,7 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
   return (
     <>
       <Dialog open={open} onOpenChange={handleDialogOpenChange}>
-        <DialogContent onInteractOutside={(e) => e.preventDefault()} className={`${isFullscreen ? 'max-w-none w-[100vw] h-[100vh] m-0 rounded-none' : 'sm:max-w-5xl max-h-[85vh]'} overflow-y-auto [&>button]:hidden`}>
+        <DialogContent className={`${isFullscreen ? 'max-w-none w-[100vw] h-[100vh] m-0 rounded-none overflow-y-auto' : 'sm:max-w-5xl max-h-[85vh] overflow-hidden'} overscroll-contain pr-2 [&>button]:hidden`}>
           <DialogHeader className="pb-4">
             <div className="flex items-start justify-between">
               <div className="flex-1 space-y-2">
@@ -628,7 +626,7 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
           
           {isArchived && (
             <div className="mb-3 rounded-md border border-border bg-muted/40 text-muted-foreground text-sm px-3 py-2">
-              This project is archived. Most actions are disabled. Use More → Restore to re-enable editing.
+              This project is archived. Most actions are disabled. While archived, its sessions and reminders are hidden from calendars, the Sessions page, and activity lists. Use More → Restore to re-enable editing and visibility.
             </div>
           )}
 
@@ -671,7 +669,7 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
                     projectId={project!.id}
                     leadName={leadName}
                     projectName={project!.name}
-                    onSessionUpdated={handleSessionUpdated}
+                    onSessionUpdated={() => { handleSessionUpdated(); onActivityUpdated?.(); }}
                     onDeleteSession={handleDeleteSession}
                   />
                 )},
@@ -681,7 +679,7 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
                     leadId={project!.lead_id}
                     leadName={leadName}
                     projectName={project!.name}
-                    onActivityUpdated={onActivityUpdated}
+                    onActivityUpdated={() => { onActivityUpdated?.(); }}
                   />
                 )},
                 { id: 'todos', title: 'Todos', content: (

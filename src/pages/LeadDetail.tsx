@@ -370,9 +370,8 @@ const LeadDetail = () => {
   };
 
   const handleProjectUpdated = () => {
-    // Refresh sessions to get updated project names in session cards
+    // Refresh sessions and activities when project changes (archive/restore should affect visibility)
     fetchSessions();
-    // Force ActivitySection to refresh by updating its key
     setActivityRefreshKey(prev => prev + 1);
   };
 
@@ -495,7 +494,6 @@ const LeadDetail = () => {
               )}
             </div>
 
-            {/* More Menu */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="h-8 w-8 p-0">

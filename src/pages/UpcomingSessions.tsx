@@ -52,24 +52,41 @@ const AllSessions = () => {
 
       if (sessionsError) throw sessionsError;
 
-      // Get lead names and statuses for all sessions
-      if (sessionsData && sessionsData.length > 0) {
-        const leadIds = [...new Set(sessionsData.map(session => session.lead_id))];
-        
+      // Filter out sessions linked to archived projects
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData.user?.id;
+      let filteredSessions = sessionsData || [];
+      if (userId) {
+        const { data: archivedStatus } = await supabase
+          .from('project_statuses')
+          .select('id, name')
+          .eq('user_id', userId)
+          .ilike('name', 'archived')
+          .maybeSingle();
+        if (archivedStatus?.id) {
+          const { data: archivedProjects } = await supabase
+            .from('projects')
+            .select('id')
+            .eq('status_id', archivedStatus.id);
+          const archivedIds = new Set((archivedProjects || []).map(p => p.id));
+          filteredSessions = filteredSessions.filter(s => !s.project_id || !archivedIds.has(s.project_id));
+        }
+      }
+
+      // Get lead names and statuses for remaining sessions
+      if (filteredSessions.length > 0) {
+        const leadIds = [...new Set(filteredSessions.map(session => session.lead_id))];
         const { data: leadsData, error: leadsError } = await supabase
           .from('leads')
           .select('id, name, status')
           .in('id', leadIds);
-
         if (leadsError) throw leadsError;
 
-        // Map lead names and statuses to sessions
-        const sessionsWithLeadInfo = sessionsData.map(session => ({
+        const sessionsWithLeadInfo = filteredSessions.map(session => ({
           ...session,
           lead_name: leadsData?.find(lead => lead.id === session.lead_id)?.name || 'Unknown',
           lead_status: leadsData?.find(lead => lead.id === session.lead_id)?.status || 'unknown'
         }));
-
         setSessions(sessionsWithLeadInfo);
       } else {
         setSessions([]);

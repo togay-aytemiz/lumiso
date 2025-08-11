@@ -418,6 +418,7 @@ export type Database = {
           id: string
           lead_id: string
           name: string
+          previous_status_id: string | null
           project_type_id: string | null
           status_id: string | null
           updated_at: string
@@ -430,6 +431,7 @@ export type Database = {
           id?: string
           lead_id: string
           name: string
+          previous_status_id?: string | null
           project_type_id?: string | null
           status_id?: string | null
           updated_at?: string
@@ -442,6 +444,7 @@ export type Database = {
           id?: string
           lead_id?: string
           name?: string
+          previous_status_id?: string | null
           project_type_id?: string | null
           status_id?: string | null
           updated_at?: string
@@ -453,6 +456,13 @@ export type Database = {
             columns: ["project_type_id"]
             isOneToOne: false
             referencedRelation: "project_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projects_previous_status_id_fkey"
+            columns: ["previous_status_id"]
+            isOneToOne: false
+            referencedRelation: "project_statuses"
             referencedColumns: ["id"]
           },
           {

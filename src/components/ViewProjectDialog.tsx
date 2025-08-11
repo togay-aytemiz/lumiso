@@ -64,9 +64,84 @@ interface ViewProjectDialogProps {
   leadName: string;
 }
 
-export function onArchiveToggle(projectId: string) {
-  // Phase 2: implement archive/restore toggle
-  console.log("onArchiveToggle called for project:", projectId);
+export async function onArchiveToggle(project: { id: string; status_id?: string | null }) {
+  // Toggle archive/restore for a project using project_statuses
+  const { data: userData, error: userErr } = await supabase.auth.getUser();
+  if (userErr || !userData.user) throw new Error('User not authenticated');
+
+  // Ensure we have an Archived status; create if missing
+  const { data: archivedStatus, error: archivedErr } = await supabase
+    .from('project_statuses')
+    .select('id, name')
+    .eq('user_id', userData.user.id)
+    .ilike('name', 'archived')
+    .maybeSingle();
+
+  let archivedId = archivedStatus?.id as string | undefined;
+  if (!archivedId) {
+    const { data: created, error: createErr } = await supabase
+      .from('project_statuses')
+      .insert({ user_id: userData.user.id, name: 'Archived', color: '#6B7280', sort_order: 9999 })
+      .select('id')
+      .single();
+    if (createErr) throw createErr;
+    archivedId = created.id;
+  }
+
+  // Load current project to get existing status and previous_status_id
+  const { data: proj, error: projErr } = await supabase
+    .from('projects')
+    .select('id, status_id, previous_status_id, lead_id')
+    .eq('id', project.id)
+    .single();
+  if (projErr) throw projErr;
+
+  const currentlyArchived = proj.status_id === archivedId;
+
+  if (!currentlyArchived) {
+    // Archive: remember previous status and set archived
+    const { error: updErr } = await supabase
+      .from('projects')
+      .update({ previous_status_id: proj.status_id, status_id: archivedId })
+      .eq('id', project.id)
+      .eq('user_id', userData.user.id);
+    if (updErr) throw updErr;
+
+    // Log activity
+    await supabase.from('activities').insert({
+      type: 'status_change',
+      content: `Project archived`,
+      project_id: project.id,
+      lead_id: proj.lead_id,
+      user_id: userData.user.id,
+    });
+    return { isArchived: true };
+  }
+
+  // Restore: get target status (previous or default)
+  let targetStatusId: string | null = proj.previous_status_id;
+  if (!targetStatusId) {
+    const { data: def, error: defErr } = await supabase
+      .rpc('get_default_project_status', { user_uuid: userData.user.id });
+    if (defErr) throw defErr;
+    targetStatusId = def as string | null;
+  }
+
+  const { error: restoreErr } = await supabase
+    .from('projects')
+    .update({ status_id: targetStatusId, previous_status_id: null })
+    .eq('id', project.id)
+    .eq('user_id', userData.user.id);
+  if (restoreErr) throw restoreErr;
+
+  await supabase.from('activities').insert({
+    type: 'status_change',
+    content: `Project restored`,
+    project_id: project.id,
+    lead_id: proj.lead_id,
+    user_id: userData.user.id,
+  });
+  return { isArchived: false };
 }
 
 export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdated, onActivityUpdated, leadName }: ViewProjectDialogProps) {
@@ -430,7 +505,7 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
                           onStatusChange={() => {
                             onProjectUpdated();
                           }}
-                          editable={true}
+                          editable={!isArchived}
                           className="text-sm" // Made bigger
                         />
                         
@@ -471,7 +546,7 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
                         <Pencil className="mr-2 h-4 w-4" />
                         <span>Edit Project</span>
                       </DropdownMenuItem>
-                      <DropdownMenuItem role="menuitem" onSelect={() => onArchiveToggle(project.id)}>
+                      <DropdownMenuItem role="menuitem" onSelect={() => { setIsArchived((prev) => !prev); onArchiveToggle({ id: project.id, status_id: project.status_id }).then((res) => { setIsArchived(res.isArchived); onProjectUpdated(); }).catch(() => { setIsArchived((prev) => !prev); toast({ title: 'Action failed', description: 'Could not update archive state', variant: 'destructive' }); }); }}>
                         {isArchived ? (
                           <>
                             <ArchiveRestore className="mr-2 h-4 w-4" />

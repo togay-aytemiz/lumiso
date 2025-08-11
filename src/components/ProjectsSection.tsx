@@ -52,6 +52,15 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      // Find archived status id (if any)
+      const { data: archived, error: archErr } = await supabase
+        .from('project_statuses')
+        .select('id')
+        .eq('user_id', user.id)
+        .ilike('name', 'archived')
+        .maybeSingle();
+      const archivedId = archived?.id as string | undefined;
+
       const { data, error } = await supabase
         .from("projects")
         .select("*")
@@ -60,7 +69,8 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setProjects(data || []);
+      const filtered = archivedId ? (data || []).filter((p: any) => p.status_id !== archivedId) : (data || []);
+      setProjects(filtered);
     } catch (error) {
       console.error("Error fetching projects:", error);
       toast({

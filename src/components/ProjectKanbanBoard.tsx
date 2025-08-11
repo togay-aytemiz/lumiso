@@ -80,7 +80,7 @@ const ProjectKanbanBoard = ({ projects, onProjectsChange }: ProjectKanbanBoardPr
         .order('sort_order', { ascending: true });
 
       if (error) throw error;
-      setStatuses(data || []);
+      setStatuses((data || []).filter(s => s.name?.toLowerCase?.() !== 'archived'));
     } catch (error) {
       console.error('Error fetching project statuses:', error);
       toast({

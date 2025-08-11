@@ -130,6 +130,12 @@ const AllProjects = () => {
       // Set project statuses for use in components
       setProjectStatuses(statusesData || []);
 
+      // Exclude archived projects by default
+      const filteredProjectsData = (projectsData || []).filter((p: any) => {
+        const statusName = p?.project_statuses?.name?.toLowerCase?.();
+        return statusName !== 'archived';
+      });
+
       // Create lookup maps for efficient data joining
       const leadsMap = new Map(leadsData?.map(lead => [lead.id, lead]) || []);
       const sessionsMap = new Map<string, any[]>();
@@ -163,7 +169,7 @@ const AllProjects = () => {
       });
 
       // Process all projects with their statistics
-      const projectsWithStats = (projectsData || []).map(project => {
+      const projectsWithStats = filteredProjectsData.map((project: any) => {
         const sessions = sessionsMap.get(project.id) || [];
         const todos = todosMap.get(project.id) || [];
         const services = servicesMap.get(project.id) || [];

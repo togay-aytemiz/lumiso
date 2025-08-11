@@ -11,6 +11,7 @@ import { useNavigate } from "react-router-dom";
 import NewSessionDialog from "@/components/NewSessionDialog";
 import { formatDate, formatTime, formatLongDate, getWeekRange } from "@/lib/utils";
 import GlobalSearch from "@/components/GlobalSearch";
+import SessionStatusBadge from "@/components/SessionStatusBadge";
 
 interface Session {
   id: string;
@@ -249,7 +250,7 @@ const AllSessions = () => {
     { value: "all", label: "All Statuses" },
     { value: "planned", label: "Planned" },
     { value: "completed", label: "Completed" },
-    { value: "in_post_processing", label: "In Post-Processing" },
+    { value: "in_post_processing", label: "Editing" },
     { value: "delivered", label: "Delivered" },
     { value: "cancelled", label: "Cancelled" }
   ];
@@ -424,9 +425,13 @@ const AllSessions = () => {
                       {formatTime(session.session_time)}
                     </TableCell>
                     <TableCell>
-                      <span className={`px-2 py-1 text-xs rounded-full font-medium ${getStatusBadgeColor(session.status)}`}>
-                        {formatStatusText(session.status)}
-                      </span>
+                    <SessionStatusBadge
+                      sessionId={session.id}
+                      currentStatus={session.status}
+                      editable
+                      size="sm"
+                      onStatusChange={fetchSessions}
+                    />
                     </TableCell>
                     <TableCell className="max-w-xs">
                       {session.notes ? (

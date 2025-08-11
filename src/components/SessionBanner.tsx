@@ -1,13 +1,13 @@
 import { Calendar, Clock, Badge as BadgeIcon, Edit, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { getLeadStatusStyles, formatStatusText } from "@/lib/leadStatusColors";
 import { cn } from "@/lib/utils";
 import { formatLongDate, formatTime } from "@/lib/utils";
 import { useSessionActions } from "@/hooks/useSessionActions";
+import SessionStatusBadge from "@/components/SessionStatusBadge";
 
 type SessionStatus = 'planned' | 'completed' | 'in_post_processing' | 'delivered' | 'cancelled';
 
@@ -57,7 +57,7 @@ const SessionBanner = ({ session, leadName, projectName, onStatusUpdate, onEdit,
 
   const formatStatusText = (status: string) => {
     switch (status) {
-      case 'in_post_processing': return 'In Post-Processing';
+      case 'in_post_processing': return 'Editing';
       default: return status.charAt(0).toUpperCase() + status.slice(1);
     }
   };
@@ -106,18 +106,12 @@ const SessionBanner = ({ session, leadName, projectName, onStatusUpdate, onEdit,
             </div>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
-            <Select value={session.status} onValueChange={handleStatusChange}>
-              <SelectTrigger className="w-auto min-w-[140px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="planned">Planned</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="in_post_processing">In Post-Processing</SelectItem>
-                <SelectItem value="delivered">Delivered</SelectItem>
-                <SelectItem value="cancelled">Cancelled</SelectItem>
-              </SelectContent>
-            </Select>
+            <SessionStatusBadge
+              sessionId={session.id}
+              currentStatus={session.status}
+              editable={true}
+              onStatusChange={onStatusUpdate}
+            />
             
             {showActions && (
               <TooltipProvider>

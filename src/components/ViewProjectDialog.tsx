@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { Edit2, Save, X } from "lucide-react";
+import { Save, X, MoreHorizontal, Pencil, Archive, ArchiveRestore } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { ProjectActivitySection } from "./ProjectActivitySection";
@@ -19,6 +19,7 @@ import { ProjectTypeSelector } from "./ProjectTypeSelector";
 import { ProjectPaymentsSection } from "./ProjectPaymentsSection";
 import ProjectDetailsLayout from "@/components/project-details/ProjectDetailsLayout";
 
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import ClientCard from "@/components/project-details/Summary/ClientCard";
 
 
@@ -63,6 +64,11 @@ interface ViewProjectDialogProps {
   leadName: string;
 }
 
+export function onArchiveToggle(projectId: string) {
+  // Phase 2: implement archive/restore toggle
+  console.log("onArchiveToggle called for project:", projectId);
+}
+
 export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdated, onActivityUpdated, leadName }: ViewProjectDialogProps) {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [lead, setLead] = useState<Lead | null>(null);
@@ -78,9 +84,9 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
   const [isDeleting, setIsDeleting] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [servicesVersion, setServicesVersion] = useState(0);
+  const [isArchived, setIsArchived] = useState(false);
   
   const { toast } = useToast();
-
   const fetchProjectSessions = async () => {
     if (!project) return;
     
@@ -153,6 +159,27 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
       setIsFullscreen(false);
     }
   }, [project, open]);
+
+  useEffect(() => {
+    const fetchStatus = async () => {
+      if (!project?.status_id) { setIsArchived(false); return; }
+      try {
+        const { data, error } = await supabase
+          .from('project_statuses')
+          .select('id, name')
+          .eq('id', project.status_id)
+          .single();
+        if (!error && data?.name) {
+          setIsArchived(data.name.toLowerCase() === 'archived');
+        } else {
+          setIsArchived(false);
+        }
+      } catch {
+        setIsArchived(false);
+      }
+    };
+    fetchStatus();
+  }, [project?.status_id]);
 
   // Handle ESC key for fullscreen mode
   const handleDialogOpenChange = (newOpen: boolean) => {
@@ -427,14 +454,37 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
               
               <div className="flex items-center gap-1">
                 {!isEditing && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setIsEditing(true)}
-                    className="text-muted-foreground hover:text-foreground text-sm h-10 px-3"
-                  >
-                    Edit
-                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        aria-label="More actions"
+                        className="text-muted-foreground hover:text-foreground h-10 w-10 p-0"
+                      >
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" side="bottom">
+                      <DropdownMenuItem role="menuitem" onSelect={() => setIsEditing(true)}>
+                        <Pencil className="mr-2 h-4 w-4" />
+                        <span>Edit Project</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem role="menuitem" onSelect={() => onArchiveToggle(project.id)}>
+                        {isArchived ? (
+                          <>
+                            <ArchiveRestore className="mr-2 h-4 w-4" />
+                            <span>Restore Project</span>
+                          </>
+                        ) : (
+                          <>
+                            <Archive className="mr-2 h-4 w-4" />
+                            <span>Archive Project</span>
+                          </>
+                        )}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 )}
                 <Button 
                   variant="ghost" 

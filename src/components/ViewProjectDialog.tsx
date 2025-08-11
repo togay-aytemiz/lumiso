@@ -541,7 +541,7 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
                         <ChevronDown className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" side="bottom">
+                    <DropdownMenuContent align="end" side="bottom" className="z-50 bg-background">
                       <DropdownMenuItem role="menuitem" onSelect={() => setIsEditing(true)}>
                         <Pencil className="mr-2 h-4 w-4" />
                         <span>Edit Project</span>

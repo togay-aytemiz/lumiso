@@ -67,7 +67,7 @@ const ProjectStatusesSection = () => {
 
   const isProtectedName = (name: string) => {
     const n = name?.trim().toLowerCase();
-    return n === 'planned' || n === 'new';
+    return n === 'planned' || n === 'new' || n === 'archived';
   };
 
   const fetchStatuses = async () => {
@@ -79,6 +79,7 @@ const ProjectStatusesSection = () => {
         .from('project_statuses')
         .select('*')
         .eq('user_id', user.id)
+        .not('name', 'ilike', 'archived')
         .order('sort_order', { ascending: true });
 
       if (error) throw error;
@@ -136,6 +137,16 @@ const ProjectStatusesSection = () => {
   const onSubmit = async (data: ProjectStatusForm) => {
     setSubmitting(true);
     try {
+      const lowerName = data.name.trim().toLowerCase();
+      if (lowerName === 'archived') {
+        toast({
+          title: 'Not allowed',
+          description: 'The "Archived" stage is managed automatically and cannot be created or renamed.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 

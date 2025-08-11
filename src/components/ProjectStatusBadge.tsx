@@ -42,7 +42,8 @@ export function ProjectStatusBadge({
 
   useEffect(() => {
     if (passedStatuses) {
-      setStatuses(passedStatuses);
+      const filtered = passedStatuses.filter(s => s.name?.toLowerCase?.() !== 'archived');
+      setStatuses(filtered);
       setLoading(false);
     } else {
       fetchProjectStatuses();
@@ -77,6 +78,7 @@ export function ProjectStatusBadge({
       const { data, error } = await supabase
         .from('project_statuses')
         .select('*')
+        .not('name', 'ilike', 'archived')
         .order('sort_order', { ascending: true });
 
       if (error) throw error;

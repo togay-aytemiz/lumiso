@@ -32,6 +32,7 @@ interface Project {
   created_at: string;
   updated_at: string;
   status_id?: string | null;
+  previous_status_id?: string | null;
   project_type_id?: string | null;
 }
 
@@ -160,6 +161,7 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [servicesVersion, setServicesVersion] = useState(0);
   const [isArchived, setIsArchived] = useState(false);
+  const [localStatusId, setLocalStatusId] = useState<string | null | undefined>(null);
   
   const { toast } = useToast();
   const fetchProjectSessions = async () => {
@@ -232,6 +234,7 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
       setEditProjectTypeId(project.project_type_id || "");
       setIsEditing(false);
       setIsFullscreen(false);
+      setLocalStatusId(project.status_id || null);
     }
   }, [project, open]);
 
@@ -245,12 +248,16 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
           .eq('id', project.status_id)
           .single();
         if (!error && data?.name) {
-          setIsArchived(data.name.toLowerCase() === 'archived');
+          const archived = data.name.toLowerCase() === 'archived';
+          setIsArchived(archived);
+          setLocalStatusId(archived ? (project.previous_status_id || null) : (project.status_id || null));
         } else {
           setIsArchived(false);
+          setLocalStatusId(project.status_id || null);
         }
       } catch {
         setIsArchived(false);
+        setLocalStatusId(project?.status_id || null);
       }
     };
     fetchStatus();
@@ -437,6 +444,24 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
     }
   };
 
+  const handleArchiveAction = async () => {
+    if (!project) return;
+    try {
+      const res = await onArchiveToggle({ id: project.id, status_id: project.status_id });
+      setIsArchived(res.isArchived);
+      if (res.isArchived) {
+        // Show the previous status while archived
+        setLocalStatusId(project.status_id || null);
+      } else {
+        // After restore, continue where left off
+        setLocalStatusId(project.previous_status_id || project.status_id || null);
+      }
+      onProjectUpdated();
+    } catch (e: any) {
+      toast({ title: 'Action failed', description: e.message || 'Could not update archive state', variant: 'destructive' });
+    }
+  };
+
   if (!project) return null;
 
   return (
@@ -501,7 +526,7 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
                         {/* Project Status Badge - positioned next to project name */}
                         <ProjectStatusBadge 
                           projectId={project.id}
-                          currentStatusId={project.status_id}
+                          currentStatusId={localStatusId || undefined}
                           onStatusChange={() => {
                             onProjectUpdated();
                           }}
@@ -546,7 +571,7 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
                         <Pencil className="mr-2 h-4 w-4" />
                         <span>Edit Project</span>
                       </DropdownMenuItem>
-                      <DropdownMenuItem role="menuitem" onSelect={() => { setIsArchived((prev) => !prev); onArchiveToggle({ id: project.id, status_id: project.status_id }).then((res) => { setIsArchived(res.isArchived); onProjectUpdated(); }).catch(() => { setIsArchived((prev) => !prev); toast({ title: 'Action failed', description: 'Could not update archive state', variant: 'destructive' }); }); }}>
+                      <DropdownMenuItem role="menuitem" onSelect={handleArchiveAction}>
                         {isArchived ? (
                           <>
                             <ArchiveRestore className="mr-2 h-4 w-4" />

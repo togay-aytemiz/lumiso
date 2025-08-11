@@ -121,7 +121,7 @@ export function ClientDetailsList({ name, email, phone, notes, clickableNameHref
                   <div
                     ref={notesRef}
                     className={cn(
-                      "text-sm transition-all whitespace-pre-wrap",
+                      "text-xs transition-all whitespace-pre-wrap",
                       clampNotes && !notesExpanded && "max-h-12 overflow-hidden"
                     )}
                   >

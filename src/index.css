@@ -19,7 +19,7 @@ All colors MUST be HSL.
     --popover-foreground: 217.2 32.6% 17.5%;
 
     /* Brand */
-    --primary: 259 84% 60%;          /* Accent Purple #7C3AED for primary CTAs */
+    --primary: 173 70% 43%;          /* Teal/Mint #21B8A6 for primary accents */
     --primary-foreground: 0 0% 100%;  /* white */
 
     --secondary: 220 14% 96%;        /* #F3F4F6 */
@@ -36,7 +36,7 @@ All colors MUST be HSL.
 
     --border: 214.3 31.8% 91.4%;     /* Divider #E5E7EB */
     --input: 214.3 31.8% 84.5%;      /* Border #D1D5DB */
-    --ring: 259 84% 60%;             /* Focus ring #7C3AED */
+    --ring: 173 70% 43%;             /* Focus ring #21B8A6 */
 
     /* Typography & links */
     --link: 217.2 91.2% 59.8%;       /* #2563EB */
@@ -61,15 +61,15 @@ All colors MUST be HSL.
     /* Radius */
     --radius: 0.75rem; /* 12px */
 
-    /* Sidebar (dark fixed) */
-    --sidebar-background: 222.2 47.4% 11.2%; /* #111827 */
-    --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 217.2 91.2% 59.8%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Sidebar (light) */
+    --sidebar-background: 210 20% 98%; /* same as page background */
+    --sidebar-foreground: 222.2 47.4% 11.2%; /* #111827 */
+    --sidebar-primary: 173 70% 43%; /* #21B8A6 */
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 173 70% 43%; /* hover/active background */
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 214.3 31.8% 91.4%; /* light divider */
+    --sidebar-ring: 173 70% 43%;
 
     /* Lead Status Colors */
     --status-new-bg: 198 93% 93%;
@@ -98,7 +98,7 @@ All colors MUST be HSL.
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 259 84% 60%;
+    --primary: 173 70% 43%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 217.2 32.6% 17.5%;
@@ -115,16 +115,16 @@ All colors MUST be HSL.
 
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 259 84% 60%;
+    --ring: 173 70% 43%;
 
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary: 173 70% 43%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-accent: 173 70% 43%;
+    --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-ring: 173 70% 43%;
 
     --link: 217.2 91.2% 59.8%;
 

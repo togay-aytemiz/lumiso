@@ -68,20 +68,20 @@ export function ClientDetailsList({ name, email, phone, notes, clickableNameHref
                 <Button
                   asChild
                   variant="link"
-                  className="ml-1 p-0 h-auto text-left justify-start font-medium text-sm"
+                  className="ml-1 p-0 h-auto text-left justify-start font-medium text-xs"
                 >
                   <a href={clickableNameHref} className={clickableNameClasses}>{v}</a>
                 </Button>
               ) : (
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <span className="ml-1 text-sm font-medium truncate inline-block max-w-full">{v}</span>
+                    <span className="ml-1 text-xs font-medium truncate inline-block max-w-full">{v}</span>
                   </TooltipTrigger>
                   <TooltipContent>{v}</TooltipContent>
                 </Tooltip>
               )
             ) : (
-              <span className="ml-1 text-sm font-medium">—</span>
+              <span className="ml-1 text-xs font-medium">—</span>
             ); })()}
           </div>
 
@@ -90,12 +90,12 @@ export function ClientDetailsList({ name, email, phone, notes, clickableNameHref
             {(() => { const v = (email && email.trim()) ? email : null; return v ? (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <span className="ml-1 text-sm font-medium truncate inline-block max-w-full">{v}</span>
+                  <span className="ml-1 text-xs font-medium truncate inline-block max-w-full">{v}</span>
                 </TooltipTrigger>
                 <TooltipContent>{v}</TooltipContent>
               </Tooltip>
             ) : (
-              <span className="ml-1 text-sm font-medium">—</span>
+              <span className="ml-1 text-xs font-medium">—</span>
             ); })()}
           </div>
 
@@ -104,12 +104,12 @@ export function ClientDetailsList({ name, email, phone, notes, clickableNameHref
             {(() => { const v = normalized ? normalized.e164 : ((phone && phone.trim()) ? phone : null); return v ? (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <span className="ml-1 text-sm font-medium truncate inline-block max-w-full">{v}</span>
+                  <span className="ml-1 text-xs font-medium truncate inline-block max-w-full">{v}</span>
                 </TooltipTrigger>
                 <TooltipContent>{v}</TooltipContent>
               </Tooltip>
             ) : (
-              <span className="ml-1 text-sm font-medium">—</span>
+              <span className="ml-1 text-xs font-medium">—</span>
             ); })()}
           </div>
 
@@ -139,7 +139,7 @@ export function ClientDetailsList({ name, email, phone, notes, clickableNameHref
                 )}
               </div>
             ) : (
-              <span className="ml-1 text-sm font-medium">—</span>
+              <span className="ml-1 text-xs font-medium">—</span>
             )}
           </div>
         </TooltipProvider>

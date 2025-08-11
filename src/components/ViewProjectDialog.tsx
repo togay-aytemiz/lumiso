@@ -590,79 +590,87 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
             </div>
           </DialogHeader>
           
-          <ProjectDetailsLayout
-            header={<></>}
-            left={
-              <div className="space-y-4">
-                {lead && (
-                  <ClientCard
-                    createdAt={project!.created_at}
-                    name={lead.name}
-                    email={lead.email}
-                    phone={lead.phone}
-                    notes={lead.notes}
-                    leadId={lead.id}
+          {isArchived && (
+            <div className="mb-3 rounded-md border border-border bg-muted/40 text-muted-foreground text-sm px-3 py-2">
+              This project is archived. Most actions are disabled. Use More → Restore to re-enable editing.
+            </div>
+          )}
+
+          <div className={isArchived ? 'opacity-60 pointer-events-none select-none' : ''}>
+            <ProjectDetailsLayout
+              header={<></>}
+              left={
+                <div className="space-y-4">
+                  {lead && (
+                    <ClientCard
+                      createdAt={project!.created_at}
+                      name={lead.name}
+                      email={lead.email}
+                      phone={lead.phone}
+                      notes={lead.notes}
+                      leadId={lead.id}
+                    />
+                  )}
+                </div>
+              }
+              sections={[
+                { id: 'payments', title: 'Payments', content: (
+                  <ProjectPaymentsSection
+                    projectId={project!.id}
+                    onPaymentsUpdated={() => { onProjectUpdated(); onActivityUpdated?.(); }}
+                    refreshToken={servicesVersion}
                   />
-                )}
-              </div>
-            }
-            sections={[
-              { id: 'payments', title: 'Payments', content: (
-                <ProjectPaymentsSection
-                  projectId={project!.id}
-                  onPaymentsUpdated={() => { onProjectUpdated(); onActivityUpdated?.(); }}
-                  refreshToken={servicesVersion}
-                />
-              )},
-              { id: 'services', title: 'Services', content: (
-                <ProjectServicesSection
-                  projectId={project!.id}
-                  onServicesUpdated={() => { setServicesVersion((v) => v + 1); onProjectUpdated(); onActivityUpdated?.(); }}
-                />
-              )},
-              { id: 'sessions', title: 'Sessions', content: (
-                <SessionsSection
-                  sessions={sessions}
-                  loading={loading}
-                  leadId={project!.lead_id}
-                  projectId={project!.id}
-                  leadName={leadName}
-                  projectName={project!.name}
-                  onSessionUpdated={handleSessionUpdated}
-                  onDeleteSession={handleDeleteSession}
-                />
-              )},
-              { id: 'activities', title: 'Activities', content: (
-                <ProjectActivitySection
-                  projectId={project!.id}
-                  leadId={project!.lead_id}
-                  leadName={leadName}
-                  projectName={project!.name}
-                  onActivityUpdated={onActivityUpdated}
-                />
-              )},
-              { id: 'todos', title: 'Todos', content: (
-                <ProjectTodoListEnhanced projectId={project!.id} />
-              )},
-            ]}
-           rightFooter={
-             <div className="border border-destructive/20 bg-destructive/5 rounded-md p-4">
-               <div className="space-y-3">
-                 <h3 className="text-sm font-medium text-destructive">Danger Zone</h3>
-                 <Button
-                   variant="outline"
-                   onClick={() => setShowDeleteDialog(true)}
-                   className="w-full border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
-                 >
-                   Delete Project
-                 </Button>
-                  <p className="text-xs text-muted-foreground text-center">
-                    This will permanently delete the project and ALL related data: sessions, payments, todos, services, and activities.
-                  </p>
-               </div>
-             </div>
-           }
-          />
+                )},
+                { id: 'services', title: 'Services', content: (
+                  <ProjectServicesSection
+                    projectId={project!.id}
+                    onServicesUpdated={() => { setServicesVersion((v) => v + 1); onProjectUpdated(); onActivityUpdated?.(); }}
+                  />
+                )},
+                { id: 'sessions', title: 'Sessions', content: (
+                  <SessionsSection
+                    sessions={sessions}
+                    loading={loading}
+                    leadId={project!.lead_id}
+                    projectId={project!.id}
+                    leadName={leadName}
+                    projectName={project!.name}
+                    onSessionUpdated={handleSessionUpdated}
+                    onDeleteSession={handleDeleteSession}
+                  />
+                )},
+                { id: 'activities', title: 'Activities', content: (
+                  <ProjectActivitySection
+                    projectId={project!.id}
+                    leadId={project!.lead_id}
+                    leadName={leadName}
+                    projectName={project!.name}
+                    onActivityUpdated={onActivityUpdated}
+                  />
+                )},
+                { id: 'todos', title: 'Todos', content: (
+                  <ProjectTodoListEnhanced projectId={project!.id} />
+                )},
+              ]}
+              rightFooter={
+                <div className="border border-destructive/20 bg-destructive/5 rounded-md p-4">
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-medium text-destructive">Danger Zone</h3>
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowDeleteDialog(true)}
+                      className="w-full border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                    >
+                      Delete Project
+                    </Button>
+                     <p className="text-xs text-muted-foreground text-center">
+                       This will permanently delete the project and ALL related data: sessions, payments, todos, services, and activities.
+                     </p>
+                  </div>
+                </div>
+              }
+            />
+          </div>
         </DialogContent>
       </Dialog>
 

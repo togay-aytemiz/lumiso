@@ -54,12 +54,13 @@ type SortDirection = 'asc' | 'desc';
 
 const AllProjects = () => {
   const [projects, setProjects] = useState<Project[]>([]);
+  const [archivedProjects, setArchivedProjects] = useState<Project[]>([]);
   const [projectStatuses, setProjectStatuses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [sortField, setSortField] = useState<SortField>("updated_at");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
-  const [viewMode, setViewMode] = useState<'board' | 'list'>('board');
+  const [viewMode, setViewMode] = useState<'board' | 'list' | 'archived'>('board');
   
   const [viewingProject, setViewingProject] = useState<Project | null>(null);
   const [showViewDialog, setShowViewDialog] = useState(false);
@@ -168,7 +169,7 @@ const AllProjects = () => {
         }
       });
 
-      // Process all projects with their statistics
+      // Process all active projects with their statistics
       const projectsWithStats = filteredProjectsData.map((project: any) => {
         const sessions = sessionsMap.get(project.id) || [];
         const todos = todosMap.get(project.id) || [];
@@ -196,7 +197,40 @@ const AllProjects = () => {
         };
       });
 
+      // Archived projects only
+      const archivedOnly = (projectsData || []).filter((p: any) => {
+        const statusName = p?.project_statuses?.name?.toLowerCase?.();
+        return statusName === 'archived';
+      });
+
+      const archivedWithStats = archivedOnly.map((project: any) => {
+        const sessions = sessionsMap.get(project.id) || [];
+        const todos = todosMap.get(project.id) || [];
+        const services = servicesMap.get(project.id) || [];
+
+        const now = new Date();
+        const upcomingSessions = sessions.filter(session => {
+          const sessionDateTime = new Date(`${session.session_date}T${session.session_time}`);
+          return sessionDateTime > now && session.status !== 'completed';
+        });
+
+        return {
+          ...project,
+          lead: leadsMap.get(project.lead_id) || null,
+          project_type: project.project_types || null,
+          session_count: sessions.length,
+          completed_session_count: sessions.filter(s => s.status === 'completed').length,
+          upcoming_session_count: upcomingSessions.length,
+          planned_session_count: sessions.filter(s => s.status === 'planned').length,
+          next_session_date: upcomingSessions.length > 0 ? upcomingSessions[0].session_date : null,
+          todo_count: todos.length,
+          completed_todo_count: todos.filter(t => t.is_completed).length,
+          services: services,
+        };
+      });
+
       setProjects(projectsWithStats);
+      setArchivedProjects(archivedWithStats);
     } catch (error: any) {
       toast({
         title: "Error fetching projects",
@@ -255,6 +289,51 @@ const AllProjects = () => {
 
     return filtered;
   }, [projects, sortField, sortDirection]);
+
+  const archivedFilteredAndSortedProjects = useMemo(() => {
+    let filtered = archivedProjects;
+
+    filtered.sort((a, b) => {
+      let aValue: any;
+      let bValue: any;
+
+      switch (sortField) {
+        case 'lead_name':
+          aValue = a.lead?.name?.toLowerCase() || '';
+          bValue = b.lead?.name?.toLowerCase() || '';
+          break;
+        case 'project_type':
+          aValue = a.project_type?.name?.toLowerCase() || '';
+          bValue = b.project_type?.name?.toLowerCase() || '';
+          break;
+        case 'session_count':
+          aValue = a.session_count || 0;
+          bValue = b.session_count || 0;
+          break;
+        case 'created_at':
+        case 'updated_at':
+          aValue = new Date(a[sortField]).getTime();
+          bValue = new Date(b[sortField]).getTime();
+          break;
+        default:
+          aValue = a[sortField];
+          bValue = b[sortField];
+      }
+
+      if (typeof aValue === 'string' && typeof bValue === 'string') {
+        aValue = aValue.toLowerCase();
+        bValue = bValue.toLowerCase();
+      }
+
+      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    return filtered;
+  }, [archivedProjects, sortField, sortDirection]);
+
+  const displayedProjects = viewMode === 'archived' ? archivedFilteredAndSortedProjects : filteredAndSortedProjects;
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -390,6 +469,17 @@ const AllProjects = () => {
               <List className="h-4 w-4" />
               List View
             </Button>
+            <Button
+              variant="ghost"
+              onClick={() => setViewMode('archived')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-none border-b-2 transition-colors ${
+                viewMode === 'archived' 
+                  ? 'border-primary text-primary' 
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              Archived
+            </Button>
           </div>
         </div>
       </div>
@@ -461,8 +551,8 @@ const AllProjects = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredAndSortedProjects.length > 0 ? (
-                      filteredAndSortedProjects.map((project) => (
+                    {displayedProjects.length > 0 ? (
+                      displayedProjects.map((project) => (
                         <TableRow 
                           key={project.id}
                           className="cursor-pointer hover:bg-muted/50"

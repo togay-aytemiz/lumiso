@@ -386,12 +386,12 @@ const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
         return `${activityType === 'note' ? 'Note' : 'Reminder'} added`;
       }
     } else if (log.entity_type === 'project') {
-      if (log.action === 'archived') return 'Project archived';
-      if (log.action === 'restored') return 'Project restored';
+      const name = (log as any).project_name || log.new_values?.name || log.old_values?.name;
+      if (log.action === 'archived') return name ? `Project "${name}" archived` : 'Project archived';
+      if (log.action === 'restored') return name ? `Project "${name}" restored` : 'Project restored';
     }
     return `${log.entity_type} ${log.action}`;
   };
-
   // Separate activities+sessions from audit logs for tabs
   const activitiesAndSessions = [
     ...activities.map(activity => ({

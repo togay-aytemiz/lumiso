@@ -239,44 +239,61 @@ export function NewSessionDialogForProject({
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto min-w-[18rem] p-0 rounded-xl border border-border shadow-md" align="start">
-                  <ReactCalendar
-                    className="react-calendar w-full p-2"
-                    locale={browserLocale}
-                    view="month"
-                    minDetail="month"
-                    next2Label={null}
-                    prev2Label={null}
-                    onActiveStartDateChange={({ activeStartDate, view }) => {
-                      if (view === 'month' && activeStartDate) {
-                        setVisibleMonth(activeStartDate);
-                      }
-                    }}
-                    onChange={(value) => {
-                      const d = Array.isArray(value) ? value[0] : value;
-                      const date = d instanceof Date ? d : undefined;
-                      setSelectedDate(date);
-                      if (date) {
-                        handleInputChange("session_date", format(date, "yyyy-MM-dd"));
-                        setDatePickerOpen(false);
-                      }
-                    }}
-                    value={selectedDate ?? null}
-                    formatShortWeekday={(_, date) => new Intl.DateTimeFormat(browserLocale, { weekday: 'short' }).format(date)}
-                    tileContent={({ date, view }) => {
-                      if (view !== 'month') return null;
-                      const key = format(date, 'yyyy-MM-dd');
-                      const count = sessionCountByDate[key] || 0;
-                      const dots = Math.min(count, 3);
-                      if (!dots) return null;
-                      return (
-                        <div className="pointer-events-none absolute bottom-1 left-1/2 -translate-x-1/2 flex items-center justify-center gap-0.5">
-                          {Array.from({ length: dots }).map((_, i) => (
-                            <span key={i} className="h-1.5 w-1.5 rounded-full bg-primary ring-1 ring-background" />
-                          ))}
-                        </div>
-                      );
-                    }}
-                  />
+                  <div className="p-2">
+                    <ReactCalendar
+                      className="react-calendar w-full p-2 pointer-events-auto"
+                      locale={browserLocale}
+                      view="month"
+                      minDetail="month"
+                      next2Label={null}
+                      prev2Label={null}
+                      onActiveStartDateChange={({ activeStartDate, view }) => {
+                        if (view === 'month' && activeStartDate) {
+                          setVisibleMonth(activeStartDate);
+                        }
+                      }}
+                      onChange={(value) => {
+                        const d = Array.isArray(value) ? value[0] : value;
+                        const date = d instanceof Date ? d : undefined;
+                        setSelectedDate(date);
+                        if (date) {
+                          handleInputChange("session_date", format(date, "yyyy-MM-dd"));
+                          setDatePickerOpen(false);
+                        }
+                      }}
+                      value={selectedDate ?? null}
+                      formatShortWeekday={(_, date) => new Intl.DateTimeFormat(browserLocale, { weekday: 'short' }).format(date)}
+                      tileContent={({ date, view }) => {
+                        if (view !== 'month') return null;
+                        const key = format(date, 'yyyy-MM-dd');
+                        const count = sessionCountByDate[key] || 0;
+                        const dots = Math.min(count, 3);
+                        if (!dots) return null;
+                        return (
+                          <div className="pointer-events-none absolute bottom-1 left-1/2 -translate-x-1/2 flex items-center justify-center gap-0.5">
+                            {Array.from({ length: dots }).map((_, i) => (
+                              <span key={i} className="h-1.5 w-1.5 rounded-full bg-primary ring-1 ring-background" />
+                            ))}
+                          </div>
+                        );
+                      }}
+                    />
+                    <div className="mt-2 flex items-center justify-between px-1">
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => {
+                          const today = new Date();
+                          setSelectedDate(today);
+                          handleInputChange("session_date", format(today, "yyyy-MM-dd"));
+                          setDatePickerOpen(false);
+                        }}
+                      >
+                        Today
+                      </Button>
+                    </div>
+                  </div>
                 </PopoverContent>
               </Popover>
               {sessionsForDay.length > 0 && (

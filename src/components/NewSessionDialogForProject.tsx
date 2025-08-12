@@ -182,9 +182,10 @@ export function NewSessionDialogForProject({
 
   // Custom day content to ensure perfect alignment and multi-dot indicators
   function DayContent(rawProps: any) {
-    const { date, className, ...buttonProps } = rawProps as any;
-    const key = format(date as Date, 'yyyy-MM-dd');
-    const count = sessionCountByDate[key] || 0;
+    const { date, className, children, ...buttonProps } = rawProps as any;
+    const isValidDate = date instanceof Date && !isNaN(date.getTime());
+    const key = isValidDate ? format(date as Date, 'yyyy-MM-dd') : '';
+    const count = key ? (sessionCountByDate[key] || 0) : 0;
     const dots = Math.min(count, 3);
 
     return (
@@ -196,7 +197,9 @@ export function NewSessionDialogForProject({
           "relative flex h-10 w-10 items-center justify-center rounded-md"
         )}
       >
-        <span className="leading-none tabular-nums">{(date as Date).getDate()}</span>
+        <span className="leading-none tabular-nums">
+          {isValidDate ? (date as Date).getDate() : children}
+        </span>
         {dots > 0 && (
           <div className="pointer-events-none absolute bottom-1 left-1/2 -translate-x-1/2 flex items-center justify-center gap-0.5">
             {Array.from({ length: dots }).map((_, i) => (

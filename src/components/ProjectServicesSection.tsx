@@ -192,12 +192,12 @@ export function ProjectServicesSection({ projectId, onServicesUpdated }: Project
               </Button>
             ) : (
               <Button
-                variant="ghost"
                 size="sm"
                 onClick={() => setIsEditing(true)}
-                className="h-8 w-8 p-0"
+                className="gap-2"
               >
                 <Edit2 className="h-4 w-4" />
+                Edit
               </Button>
             )
           )}

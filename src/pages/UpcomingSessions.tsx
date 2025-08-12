@@ -12,6 +12,7 @@ import NewSessionDialog from "@/components/NewSessionDialog";
 import { formatDate, formatTime, formatLongDate, getWeekRange } from "@/lib/utils";
 import GlobalSearch from "@/components/GlobalSearch";
 import SessionStatusBadge from "@/components/SessionStatusBadge";
+import { ViewProjectDialog } from "@/components/ViewProjectDialog";
 
 interface Session {
   id: string;
@@ -21,6 +22,8 @@ interface Session {
   notes: string;
   status: 'planned' | 'completed' | 'in_post_processing' | 'delivered' | 'cancelled';
   created_at: string;
+  project_id?: string | null;
+  project_name?: string;
   lead_name?: string;
   lead_status?: string;
 }
@@ -36,6 +39,8 @@ const AllSessions = () => {
   const [sortField, setSortField] = useState<SortField>("session_date");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const navigate = useNavigate();
+  const [viewingProject, setViewingProject] = useState<any>(null);
+  const [showProjectDialog, setShowProjectDialog] = useState(false);
 
   useEffect(() => {
     fetchSessions();
@@ -73,21 +78,31 @@ const AllSessions = () => {
         }
       }
 
-      // Get lead names and statuses for remaining sessions
+      // Enrich with lead and project info
       if (filteredSessions.length > 0) {
-        const leadIds = [...new Set(filteredSessions.map(session => session.lead_id))];
-        const { data: leadsData, error: leadsError } = await supabase
-          .from('leads')
-          .select('id, name, status')
-          .in('id', leadIds);
-        if (leadsError) throw leadsError;
+        const leadIds = [...new Set(filteredSessions.map(s => s.lead_id))];
+        const projectIds = [...new Set(filteredSessions.map(s => s.project_id).filter(Boolean))] as string[];
 
-        const sessionsWithLeadInfo = filteredSessions.map(session => ({
+        const [leadsRes, projectsRes] = await Promise.all([
+          supabase.from('leads').select('id, name, status').in('id', leadIds),
+          projectIds.length
+            ? supabase.from('projects').select('id, name').in('id', projectIds)
+            : Promise.resolve({ data: [] as any[], error: null } as any)
+        ]);
+
+        if (leadsRes.error) throw leadsRes.error;
+        if (projectsRes && 'error' in projectsRes && (projectsRes as any).error) throw (projectsRes as any).error;
+
+        const leadsData = leadsRes.data || [];
+        const projectsData = (projectsRes as any).data || [];
+
+        const sessionsWithInfo = filteredSessions.map(session => ({
           ...session,
-          lead_name: leadsData?.find(lead => lead.id === session.lead_id)?.name || 'Unknown',
-          lead_status: leadsData?.find(lead => lead.id === session.lead_id)?.status || 'unknown'
+          lead_name: leadsData.find((l: any) => l.id === session.lead_id)?.name || 'Unknown',
+          lead_status: leadsData.find((l: any) => l.id === session.lead_id)?.status || 'unknown',
+          project_name: session.project_id ? (projectsData.find((p: any) => p.id === session.project_id)?.name || 'Unknown project') : undefined
         }));
-        setSessions(sessionsWithLeadInfo);
+        setSessions(sessionsWithInfo);
       } else {
         setSessions([]);
       }
@@ -239,6 +254,23 @@ const AllSessions = () => {
     navigate(`/leads/${session.lead_id}`, { state: { from: 'all-sessions' } });
   };
 
+  const handleProjectClick = async (e: React.MouseEvent, session: Session) => {
+    e.stopPropagation();
+    if (!session.project_id) return;
+    try {
+      const { data, error } = await supabase
+        .from('projects')
+        .select('id, name, description, lead_id, user_id, created_at, updated_at, status_id, previous_status_id, project_type_id, leads(name)')
+        .eq('id', session.project_id)
+        .single();
+      if (error) throw error;
+      setViewingProject(data);
+      setShowProjectDialog(true);
+    } catch (err: any) {
+      toast({ title: 'Unable to open project', description: err.message, variant: 'destructive' });
+    }
+  };
+
   const getSortIcon = (field: SortField) => {
     if (sortField !== field) return <ArrowUpDown className="h-4 w-4" />;
     return sortDirection === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />;
@@ -386,6 +418,7 @@ const AllSessions = () => {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Project</TableHead>
                   <TableHead 
                     className="cursor-pointer hover:bg-muted/50"
                     onClick={() => handleSort('lead_name')}
@@ -432,6 +465,20 @@ const AllSessions = () => {
                     className="cursor-pointer hover:bg-muted/50"
                     onClick={() => handleRowClick(session)}
                   >
+                    <TableCell>
+                      {session.project_id ? (
+                        <Button
+                          variant="link"
+                          className="p-0 h-auto font-normal text-foreground hover:text-foreground hover:underline"
+                          onClick={(e) => handleProjectClick(e, session)}
+                          aria-label="View project details"
+                        >
+                          {session.project_name || 'Project'}
+                        </Button>
+                      ) : (
+                        <span className="text-muted-foreground">-</span>
+                      )}
+                    </TableCell>
                     <TableCell className="font-medium">
                       {session.lead_name}
                     </TableCell>
@@ -442,13 +489,13 @@ const AllSessions = () => {
                       {formatTime(session.session_time)}
                     </TableCell>
                     <TableCell>
-                    <SessionStatusBadge
-                      sessionId={session.id}
-                      currentStatus={session.status}
-                      editable
-                      size="sm"
-                      onStatusChange={fetchSessions}
-                    />
+                      <SessionStatusBadge
+                        sessionId={session.id}
+                        currentStatus={session.status}
+                        editable
+                        size="sm"
+                        onStatusChange={fetchSessions}
+                      />
                     </TableCell>
                     <TableCell className="max-w-xs">
                       {session.notes ? (
@@ -481,6 +528,14 @@ const AllSessions = () => {
           )}
         </CardContent>
       </Card>
+
+      <ViewProjectDialog
+        project={viewingProject}
+        open={showProjectDialog}
+        onOpenChange={setShowProjectDialog}
+        onProjectUpdated={fetchSessions}
+        leadName={viewingProject?.leads?.name || ''}
+      />
     </div>
   );
 };

@@ -9,8 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { ArrowLeft, Save, Trash2, Calendar, Clock, FileText, CheckCircle, MoreHorizontal } from "lucide-react";
+import { ArrowLeft, Save, Calendar, Clock, FileText, CheckCircle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import ClientDetailsList from "@/components/ClientDetailsList";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -103,6 +102,8 @@ const LeadDetail = () => {
   const [notesExpanded, setNotesExpanded] = useState(false);
   const notesRef = useRef<HTMLDivElement>(null);
   const [isNotesTruncatable, setIsNotesTruncatable] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [confirmDeleteText, setConfirmDeleteText] = useState("");
 
 
   // Get system status labels for buttons (refresh when leadStatuses changes)
@@ -331,27 +332,91 @@ const LeadDetail = () => {
 
     setDeleting(true);
     try {
-      const { error } = await supabase
+      // 1) Fetch all project IDs for this lead
+      const { data: leadProjects, error: projectsFetchError } = await supabase
+        .from('projects')
+        .select('id')
+        .eq('lead_id', lead.id);
+      if (projectsFetchError) throw projectsFetchError;
+      const projectIds = (leadProjects || []).map((p) => p.id);
+
+      if (projectIds.length > 0) {
+        // Delete related project data in safe order
+        const { error: servicesError } = await supabase
+          .from('project_services')
+          .delete()
+          .in('project_id', projectIds);
+        if (servicesError) throw servicesError;
+
+        const { error: todosError } = await supabase
+          .from('todos')
+          .delete()
+          .in('project_id', projectIds);
+        if (todosError) throw todosError;
+
+        const { error: projSessionsError } = await supabase
+          .from('sessions')
+          .delete()
+          .in('project_id', projectIds);
+        if (projSessionsError) throw projSessionsError;
+
+        const { error: projActivitiesError } = await supabase
+          .from('activities')
+          .delete()
+          .in('project_id', projectIds);
+        if (projActivitiesError) throw projActivitiesError;
+
+        const { error: paymentsError } = await supabase
+          .from('payments')
+          .delete()
+          .in('project_id', projectIds);
+        if (paymentsError) throw paymentsError;
+
+        // Finally delete projects
+        const { error: deleteProjectsError } = await supabase
+          .from('projects')
+          .delete()
+          .in('id', projectIds);
+        if (deleteProjectsError) throw deleteProjectsError;
+      }
+
+      // 2) Delete sessions associated directly with this lead (not tied to a project)
+      const { error: leadSessionsError } = await supabase
+        .from('sessions')
+        .delete()
+        .eq('lead_id', lead.id);
+      if (leadSessionsError) throw leadSessionsError;
+
+      // 3) Delete activities/reminders/notes for this lead
+      const { error: leadActivitiesError } = await supabase
+        .from('activities')
+        .delete()
+        .eq('lead_id', lead.id);
+      if (leadActivitiesError) throw leadActivitiesError;
+
+      // 4) Finally delete the lead
+      const { error: deleteLeadError } = await supabase
         .from('leads')
         .delete()
         .eq('id', lead.id);
-
-      if (error) throw error;
+      if (deleteLeadError) throw deleteLeadError;
 
       toast({
-        title: "Success",
-        description: "Lead deleted successfully.",
+        title: 'Success',
+        description: 'Lead and all related data deleted successfully.',
       });
 
-      navigate("/leads");
+      navigate('/leads');
     } catch (error: any) {
       toast({
-        title: "Error deleting lead",
+        title: 'Error deleting lead',
         description: error.message,
-        variant: "destructive"
+        variant: 'destructive',
       });
     } finally {
       setDeleting(false);
+      setShowDeleteDialog(false);
+      setConfirmDeleteText('');
     }
   };
 
@@ -512,44 +577,6 @@ const LeadDetail = () => {
               )}
             </div>
 
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <DropdownMenuItem 
-                      className="text-destructive focus:text-destructive cursor-pointer"
-                      onSelect={(e) => e.preventDefault()}
-                    >
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      Delete
-                    </DropdownMenuItem>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        This action cannot be undone. This will permanently delete the lead
-                        "{lead.name}" and remove all associated data.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction 
-                        onClick={handleDelete}
-                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                      >
-                        {deleting ? "Deleting..." : "Delete Lead"}
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </DropdownMenuContent>
-            </DropdownMenu>
           </div>
         </div>
       </div>
@@ -694,6 +721,22 @@ const LeadDetail = () => {
             onActivityUpdated={handleActivityUpdated}
           />
           <ActivitySection key={activityRefreshKey} leadId={lead.id} leadName={lead.name} />
+
+          <div className="border border-destructive/20 bg-destructive/5 rounded-md p-4">
+            <div className="space-y-3">
+              <h3 className="text-sm font-medium text-destructive">Danger Zone</h3>
+              <Button
+                variant="outline"
+                onClick={() => setShowDeleteDialog(true)}
+                className="w-full border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+              >
+                Delete Lead
+              </Button>
+              <p className="text-xs text-muted-foreground text-center">
+                This will permanently delete the lead and ALL related data: projects, sessions, reminders/notes, payments, services, and activities.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -744,6 +787,38 @@ const LeadDetail = () => {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Delete Session
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Lead Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={(open) => { setShowDeleteDialog(open); if (!open) setConfirmDeleteText(''); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Lead</AlertDialogTitle>
+            <AlertDialogDescription>
+              Type the lead's name ("{lead.name}") or DELETE to confirm. This will permanently delete the lead and ALL related data including projects, sessions, reminders/notes, payments, services, and activities.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="py-2">
+            <Label htmlFor="confirm-delete" className="sr-only">Confirmation</Label>
+            <Input
+              id="confirm-delete"
+              placeholder={`Type "${lead.name}" or "DELETE"`}
+              value={confirmDeleteText}
+              onChange={(e) => setConfirmDeleteText(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground mt-2">This action cannot be undone.</p>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={deleting || ![lead.name, 'DELETE'].includes(confirmDeleteText.trim())}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? 'Deleting...' : 'Delete Lead'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

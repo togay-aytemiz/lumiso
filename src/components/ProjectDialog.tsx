@@ -140,7 +140,7 @@ export function ProjectDialog({ open, onOpenChange, leadId, onProjectCreated }: 
         </DialogHeader>
         
         <ScrollArea className="max-h-[60vh] pr-4">
-          <div className="space-y-4">
+          <div className="space-y-4 pt-2 pb-2">
             <div className="space-y-2">
               <Label htmlFor="project-name">Project Name *</Label>
               <Input

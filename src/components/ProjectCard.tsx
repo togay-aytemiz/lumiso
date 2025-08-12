@@ -111,13 +111,15 @@ export function ProjectCard({ project, onView, refreshTrigger }: ProjectCardProp
             <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
               {/* Status badge and creation/update dates */}
               <div className="flex items-center gap-3">
-                <ProjectStatusBadge 
-                  projectId={project.id}
-                  currentStatusId={project.status_id}
-                  editable={false}
-                  size="sm"
-                  className="text-xs"
-                />
+                {!isArchived && (
+                  <ProjectStatusBadge 
+                    projectId={project.id}
+                    currentStatusId={project.status_id}
+                    editable={false}
+                    size="sm"
+                    className="text-xs"
+                  />
+                )}
                 <span>Created {format(new Date(project.created_at), "M/d/yy")}</span>
                 {project.updated_at !== project.created_at && (
                   <span>Updated {format(new Date(project.updated_at), "M/d/yy")}</span>

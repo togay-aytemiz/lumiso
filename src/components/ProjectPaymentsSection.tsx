@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Edit2, Trash2, Lock } from "lucide-react";
+import { Edit2, Trash2, Lock, CreditCard } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { AddPaymentDialog } from "./AddPaymentDialog";
@@ -229,7 +229,7 @@ export function ProjectPaymentsSection({ projectId, onPaymentsUpdated, refreshTo
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="text-lg">Payments</CardTitle>
+            <CardTitle className="flex items-center gap-2 text-lg"><CreditCard className="h-4 w-4" />Payments</CardTitle>
             <AddPaymentDialog 
               projectId={projectId} 
               onPaymentAdded={handlePaymentUpdated}

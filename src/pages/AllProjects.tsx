@@ -562,7 +562,7 @@ const AllProjects = () => {
                             onClick={() => handleSort('lead_name')}
                           >
                             <div className="flex items-center gap-2">
-                              Lead
+                              Client
                               {getSortIcon('lead_name')}
                             </div>
                           </TableHead>
@@ -601,7 +601,7 @@ const AllProjects = () => {
                             onClick={() => handleSort('lead_name')}
                           >
                             <div className="flex items-center gap-2">
-                              Lead
+                              Client
                               {getSortIcon('lead_name')}
                             </div>
                           </TableHead>

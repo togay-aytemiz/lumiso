@@ -195,14 +195,22 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
             </Button>
           </div>
         ) : (
-          {(() => {
-            const archivedId = archivedStatusId;
-            const active = archivedId ? projects.filter((p) => p.status_id !== archivedId) : projects;
-            const archived = archivedId ? projects.filter((p) => p.status_id === archivedId) : [];
-            return (
-              <div className="space-y-6">
+          <div className="space-y-6">
+            <div className="space-y-4">
+              {activeProjects.map((project) => (
+                <ProjectCard
+                  key={project.id}
+                  project={project}
+                  onView={handleViewProject}
+                  refreshTrigger={refreshTrigger}
+                />
+              ))}
+            </div>
+            {hasArchived && showArchived && archivedProjects.length > 0 && (
+              <div className="space-y-3">
+                <h3 className="text-sm font-medium text-muted-foreground">Archived Projects</h3>
                 <div className="space-y-4">
-                  {active.map((project) => (
+                  {archivedProjects.map((project) => (
                     <ProjectCard
                       key={project.id}
                       project={project}
@@ -211,24 +219,9 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
                     />
                   ))}
                 </div>
-                {hasArchived && showArchived && archived.length > 0 && (
-                  <div className="space-y-3">
-                    <h3 className="text-sm font-medium text-muted-foreground">Archived Projects</h3>
-                    <div className="space-y-4">
-                      {archived.map((project) => (
-                        <ProjectCard
-                          key={project.id}
-                          project={project}
-                          onView={handleViewProject}
-                          refreshTrigger={refreshTrigger}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
               </div>
-            );
-          })()}
+            )}
+          </div>
         )}
       </CardContent>
 

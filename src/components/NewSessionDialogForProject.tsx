@@ -1,13 +1,17 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Calendar } from "lucide-react";
+import { Plus, Calendar as CalendarIcon } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useCalendarSync } from "@/hooks/useCalendarSync";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
 
 interface NewSessionDialogForProjectProps {
   leadId: string;
@@ -33,6 +37,46 @@ export function NewSessionDialogForProject({
     session_time: "",
     notes: ""
   });
+
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>();
+  const [visibleMonth, setVisibleMonth] = useState<Date>(new Date());
+  const [plannedSessions, setPlannedSessions] = useState<any[]>([]);
+
+  const fetchPlannedSessions = async (month: Date) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const start = new Date(month.getFullYear(), month.getMonth(), 1);
+      const end = new Date(month.getFullYear(), month.getMonth() + 1, 0);
+      const { data, error } = await supabase
+        .from('sessions')
+        .select(`
+          id,
+          session_date,
+          session_time,
+          lead_id,
+          project_id,
+          leads:lead_id (name),
+          projects:project_id (name),
+          status
+        `)
+        .eq('user_id', user.id)
+        .eq('status', 'planned')
+        .gte('session_date', format(start, 'yyyy-MM-dd'))
+        .lte('session_date', format(end, 'yyyy-MM-dd'));
+
+      if (error) throw error;
+      setPlannedSessions(data || []);
+    } catch (err) {
+      console.error('Failed to fetch planned sessions for calendar:', err);
+    }
+  };
+
+  // Fetch when dialog opens and when month changes
+  useEffect(() => {
+    if (open) fetchPlannedSessions(visibleMonth);
+  }, [open, visibleMonth]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -116,6 +160,10 @@ export function NewSessionDialogForProject({
     }));
   };
 
+  const hasSessionDates = Array.from(new Set((plannedSessions || []).map((s: any) => s.session_date))).map((d) => new Date(d));
+  const selectedKey = selectedDate ? format(selectedDate, 'yyyy-MM-dd') : "";
+  const sessionsForDay = selectedKey ? (plannedSessions || []).filter((s: any) => s.session_date === selectedKey) : [];
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -152,13 +200,53 @@ export function NewSessionDialogForProject({
 
             <div className="space-y-2">
               <Label htmlFor="session_date">Session Date *</Label>
-              <Input
-                id="session_date"
-                type="date"
-                value={sessionData.session_date}
-                onChange={(e) => handleInputChange("session_date", e.target.value)}
-                min={new Date().toISOString().split('T')[0]}
-              />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !selectedDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={selectedDate}
+                    onSelect={(date) => {
+                      setSelectedDate(date);
+                      if (date) handleInputChange("session_date", format(date, "yyyy-MM-dd"));
+                    }}
+                    onMonthChange={(m) => setVisibleMonth(m)}
+                    modifiers={{ hasSession: hasSessionDates }}
+                    modifiersClassNames={{
+                      hasSession:
+                        "relative after:content-[''] after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:h-1.5 after:w-1.5 after:rounded-full after:bg-primary",
+                    }}
+                    initialFocus
+                    className="pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+              {sessionsForDay.length > 0 && (
+                <div className="rounded-md border p-3 animate-fade-in">
+                  <div className="text-xs text-muted-foreground mb-2">Planned sessions on this day</div>
+                  <ul className="space-y-2">
+                    {sessionsForDay.map((s: any) => (
+                      <li key={s.id} className="flex items-center gap-3 text-sm">
+                        <span className="font-medium tabular-nums">{(s.session_time || '').slice(0,5)}</span>
+                        <span className="text-muted-foreground truncate">
+                          {s.leads?.name || 'Unknown lead'} · {s.projects?.name || 'No project'}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">

@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar as CalendarIcon } from "lucide-react";
+import { TimePicker } from "@/components/ui/time-picker";
 import { toast } from "@/hooks/use-toast";
 import { useCalendarSync } from "@/hooks/useCalendarSync";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -298,11 +299,11 @@ export function NewSessionDialogForProject({
 
             <div className="space-y-2">
               <Label htmlFor="session_time">Session Time *</Label>
-              <Input
+              <TimePicker
                 id="session_time"
-                type="time"
                 value={sessionData.session_time}
-                onChange={(e) => handleInputChange("session_time", e.target.value)}
+                onChange={(time) => handleInputChange("session_time", time)}
+                placeholder="Select session time"
               />
             </div>
 

@@ -4,7 +4,7 @@
 @tailwind utilities;
 
 .react-calendar {
-  @apply bg-background text-foreground rounded-xl border border-border shadow-sm w-full max-w-[360px];
+  @apply bg-background text-foreground rounded-xl border border-border shadow-sm w-full max-w-[360px] pointer-events-auto;
 }
 
 .react-calendar__navigation {
@@ -33,22 +33,31 @@
   @apply grid grid-cols-7 gap-y-1 px-2 pb-2;
 }
 .react-calendar__tile {
-  @apply relative h-10 flex items-center justify-center rounded-md text-sm hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground transition-colors;
+  @apply relative h-9 md:h-10 flex items-center justify-center text-sm transition-colors rounded-none hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground;
 }
+
+/* Today */
 .react-calendar__tile--now {
   @apply bg-accent text-accent-foreground;
 }
-.react-calendar__tile--active {
-  @apply bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground;
-}
-.react-calendar__tile:disabled {
-  @apply opacity-50 cursor-not-allowed text-muted-foreground;
-}
-.react-calendar__month-view__days__day--weekend {
-  @apply text-destructive;
+
+/* Single active (when start picked but no end yet) */
+.react-calendar__tile--active:not(.react-calendar__tile--rangeStart):not(.react-calendar__tile--rangeEnd) {
+  @apply bg-primary text-primary-foreground rounded-md;
 }
 
-/* Popover fit */
-.react-calendar {
-  @apply pointer-events-auto;
+/* Range selection */
+.react-calendar__tile--range {
+  @apply bg-accent text-foreground;
+}
+.react-calendar__tile--rangeStart,
+.react-calendar__tile--rangeEnd {
+  @apply bg-primary text-primary-foreground;
+}
+.react-calendar__tile--rangeStart { @apply rounded-l-md; }
+.react-calendar__tile--rangeEnd { @apply rounded-r-md; }
+
+/* Weekends */
+.react-calendar__month-view__days__day--weekend {
+  @apply text-destructive;
 }

@@ -51,7 +51,6 @@ export const DateRangePicker = ({ dateRange, onDateRangeChange, className }: Dat
           className="react-calendar w-full p-2 pointer-events-auto"
           locale={browserLocale}
           selectRange
-          showDoubleView
           next2Label={null}
           prev2Label={null}
           onChange={(value: any) => {

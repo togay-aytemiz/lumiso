@@ -181,15 +181,22 @@ export function NewSessionDialogForProject({
   }, [plannedSessions]);
 
   // Custom day content to ensure perfect alignment and multi-dot indicators
-  function DayContent(props: any) {
-    const date: Date = (props as any).day?.date ?? (props as any).date;
-    const key = format(date, 'yyyy-MM-dd');
+  function DayContent(rawProps: any) {
+    const { date, className, ...buttonProps } = rawProps as any;
+    const key = format(date as Date, 'yyyy-MM-dd');
     const count = sessionCountByDate[key] || 0;
     const dots = Math.min(count, 3);
 
     return (
-      <div {...props} className={cn(props.className, "relative flex items-center justify-center")}> 
-        <span className="leading-none tabular-nums">{date.getDate()}</span>
+      <button
+        type="button"
+        {...buttonProps}
+        className={cn(
+          className,
+          "relative flex h-10 w-10 items-center justify-center rounded-md"
+        )}
+      >
+        <span className="leading-none tabular-nums">{(date as Date).getDate()}</span>
         {dots > 0 && (
           <div className="pointer-events-none absolute bottom-1 left-1/2 -translate-x-1/2 flex items-center justify-center gap-0.5">
             {Array.from({ length: dots }).map((_, i) => (
@@ -197,7 +204,7 @@ export function NewSessionDialogForProject({
             ))}
           </div>
         )}
-      </div>
+      </button>
     );
   }
 
@@ -277,12 +284,12 @@ export function NewSessionDialogForProject({
                       caption: "flex items-center px-2 pt-1 relative",
                       caption_label: "text-sm font-medium",
                       nav: "ml-auto flex items-center gap-1",
-                      nav_button_previous: "",
-                      nav_button_next: "",
-                      head_cell: "text-muted-foreground rounded-md w-12 font-medium text-[0.75rem] text-center",
+                      nav_button_previous: "absolute right-9",
+                      nav_button_next: "absolute right-1",
+                      head_cell: "text-muted-foreground rounded-md w-10 font-medium text-[0.75rem] text-center",
                       row: "flex w-full mt-2",
-                      cell: "h-12 w-12 p-0 text-center align-middle relative",
-                      day: "h-12 w-12 rounded-md p-0 font-normal aria-selected:opacity-100",
+                      cell: "h-10 w-10 p-0 text-center align-middle relative",
+                      day: "h-10 w-10 rounded-md p-0 font-normal aria-selected:opacity-100",
                     }}
                     components={{
                       Day: (p: any) => <DayContent {...p} />,

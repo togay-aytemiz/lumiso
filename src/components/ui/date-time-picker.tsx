@@ -143,20 +143,33 @@ export const DateTimePicker: React.FC<DateTimePickerProps> = ({
                 </Select>
               </div>
               <div className="mt-3 flex items-center justify-between">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="text-muted-foreground"
-                  onClick={() => {
-                    setSelectedDate(undefined);
-                    setHours(9);
-                    setMinutes(0);
-                    onChange("");
-                  }}
-                >
-                  Clear
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => {
+                      const today = new Date();
+                      setSelectedDate(today);
+                    }}
+                  >
+                    Today
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="text-muted-foreground"
+                    onClick={() => {
+                      setSelectedDate(undefined);
+                      setHours(9);
+                      setMinutes(0);
+                      onChange("");
+                    }}
+                  >
+                    Clear
+                  </Button>
+                </div>
                 <Button
                   type="button"
                   size="sm"

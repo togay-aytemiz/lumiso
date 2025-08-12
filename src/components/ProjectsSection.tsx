@@ -49,12 +49,15 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
   const [hasArchived, setHasArchived] = useState(false);
+  const [archivedStatusId, setArchivedStatusId] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const fetchProjects = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
+      setUserId(user.id);
 
       // Find archived status id (if any)
       const { data: archived, error: archErr } = await supabase
@@ -63,7 +66,9 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
         .eq('user_id', user.id)
         .ilike('name', 'archived')
         .maybeSingle();
+      if (archErr) throw archErr;
       const archivedId = archived?.id as string | undefined;
+      setArchivedStatusId(archivedId ?? null);
 
       const { data, error } = await supabase
         .from("projects")
@@ -76,8 +81,7 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
       const all = data || [];
       const hasArch = archivedId ? all.some((p: any) => p.status_id === archivedId) : false;
       setHasArchived(hasArch);
-      const filtered = archivedId && !showArchived ? all.filter((p: any) => p.status_id !== archivedId) : all;
-      setProjects(filtered);
+      setProjects(all);
     } catch (error) {
       console.error("Error fetching projects:", error);
       toast({
@@ -92,7 +96,22 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
 
   useEffect(() => {
     fetchProjects();
-  }, [leadId, showArchived]);
+  }, [leadId]);
+
+  // Persist "Show archived" preference per user
+  useEffect(() => {
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const saved = localStorage.getItem(`crm:showArchivedProjects:${user.id}`);
+      if (saved !== null) setShowArchived(saved === 'true');
+    })();
+  }, []);
+
+  useEffect(() => {
+    if (!userId) return;
+    localStorage.setItem(`crm:showArchivedProjects:${userId}`, String(showArchived));
+  }, [showArchived, userId]);
 
   const handleAddProject = () => {
     setShowAddDialog(true);
@@ -139,6 +158,10 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
     }
   };
 
+  const archivedId = archivedStatusId;
+  const activeProjects = archivedId ? projects.filter((p) => p.status_id !== archivedId) : projects;
+  const archivedProjects = archivedId ? projects.filter((p) => p.status_id === archivedId) : [];
+
   return (
     <Card className="w-full">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
@@ -172,16 +195,40 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
             </Button>
           </div>
         ) : (
-          <div className="space-y-4">
-            {projects.map((project) => (
-              <ProjectCard
-                key={project.id}
-                project={project}
-                onView={handleViewProject}
-                refreshTrigger={refreshTrigger}
-              />
-            ))}
-          </div>
+          {(() => {
+            const archivedId = archivedStatusId;
+            const active = archivedId ? projects.filter((p) => p.status_id !== archivedId) : projects;
+            const archived = archivedId ? projects.filter((p) => p.status_id === archivedId) : [];
+            return (
+              <div className="space-y-6">
+                <div className="space-y-4">
+                  {active.map((project) => (
+                    <ProjectCard
+                      key={project.id}
+                      project={project}
+                      onView={handleViewProject}
+                      refreshTrigger={refreshTrigger}
+                    />
+                  ))}
+                </div>
+                {hasArchived && showArchived && archived.length > 0 && (
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-medium text-muted-foreground">Archived Projects</h3>
+                    <div className="space-y-4">
+                      {archived.map((project) => (
+                        <ProjectCard
+                          key={project.id}
+                          project={project}
+                          onView={handleViewProject}
+                          refreshTrigger={refreshTrigger}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         )}
       </CardContent>
 

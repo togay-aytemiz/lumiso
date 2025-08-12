@@ -167,6 +167,16 @@ export function NewSessionDialogForProject({
   const selectedKey = selectedDate ? format(selectedDate, 'yyyy-MM-dd') : "";
   const sessionsForDay = selectedKey ? (plannedSessions || []).filter((s: any) => s.session_date === selectedKey) : [];
 
+  const sortedSessionsForDay = useMemo(() => {
+    const toMinutes = (t: string | null | undefined) => {
+      if (!t) return Number.POSITIVE_INFINITY;
+      const parts = t.split(':');
+      const h = parseInt(parts[0] || '0', 10);
+      const m = parseInt(parts[1] || '0', 10);
+      return h * 60 + m;
+    };
+    return [...sessionsForDay].sort((a: any, b: any) => toMinutes(a.session_time) - toMinutes(b.session_time));
+  }, [sessionsForDay]);
   const browserLocale = getUserLocale();
 
   const sessionCountByDate = useMemo(() => {
@@ -273,7 +283,7 @@ export function NewSessionDialogForProject({
                 <div className="rounded-md border p-3 animate-fade-in">
                   <div className="text-xs text-muted-foreground mb-2">Planned sessions on this day</div>
                   <ul className="space-y-2">
-                    {sessionsForDay.map((s: any) => (
+                    {sortedSessionsForDay.map((s: any) => (
                       <li key={s.id} className="flex items-center gap-3 text-sm">
                         <span className="font-medium tabular-nums">{(s.session_time || '').slice(0,5)}</span>
                         <span className="text-muted-foreground truncate">

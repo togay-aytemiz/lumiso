@@ -5,14 +5,13 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Calendar as CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
+import { Calendar as CalendarIcon } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useCalendarSync } from "@/hooks/useCalendarSync";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { cn, getUserLocale, formatLongDate } from "@/lib/utils";
+import { cn, getUserLocale } from "@/lib/utils";
 import { format } from "date-fns";
-import type { DayProps } from "react-day-picker";
 
 interface NewSessionDialogForProjectProps {
   leadId: string;
@@ -162,10 +161,8 @@ export function NewSessionDialogForProject({
     }));
   };
 
-  const hasSessionDates = Array.from(new Set((plannedSessions || []).map((s: any) => s.session_date))).map((d) => new Date(d));
   const selectedKey = selectedDate ? format(selectedDate, 'yyyy-MM-dd') : "";
   const sessionsForDay = selectedKey ? (plannedSessions || []).filter((s: any) => s.session_date === selectedKey) : [];
-
   // Locale-aware formatting and layout
   const browserLocale = getUserLocale();
   const weekStartsOn = useMemo(() => {
@@ -184,14 +181,15 @@ export function NewSessionDialogForProject({
   }, [plannedSessions]);
 
   // Custom day content to ensure perfect alignment and multi-dot indicators
-  function DayContent(props: DayProps) {
-    const key = format(props.date, 'yyyy-MM-dd');
+  function DayContent(props: any) {
+    const date: Date = (props as any).day?.date ?? (props as any).date;
+    const key = format(date, 'yyyy-MM-dd');
     const count = sessionCountByDate[key] || 0;
     const dots = Math.min(count, 3);
 
     return (
-      <div className="relative flex h-12 w-12 items-center justify-center">
-        <span className="leading-none tabular-nums">{props.date.getDate()}</span>
+      <div {...props} className={cn(props.className, "relative flex items-center justify-center")}> 
+        <span className="leading-none tabular-nums">{date.getDate()}</span>
         {dots > 0 && (
           <div className="pointer-events-none absolute bottom-1 left-1/2 -translate-x-1/2 flex items-center justify-center gap-0.5">
             {Array.from({ length: dots }).map((_, i) => (
@@ -256,7 +254,7 @@ export function NewSessionDialogForProject({
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
+                    {selectedDate ? new Intl.DateTimeFormat(browserLocale, { dateStyle: "medium" }).format(selectedDate) : <span>Pick a date</span>}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
@@ -271,17 +269,23 @@ export function NewSessionDialogForProject({
                       }
                     }}
                     onMonthChange={(m) => setVisibleMonth(m)}
-                    modifiers={{ hasSession: hasSessionDates }}
-                    modifiersClassNames={{
-                      hasSession:
-                        "relative after:content-[''] after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:h-1.5 after:w-1.5 after:rounded-full after:bg-primary",
-                    }}
+                    weekStartsOn={weekStartsOn}
+                    formatters={formatters}
                     initialFocus
                     className={cn("p-2 sm:p-3 pointer-events-auto")}
                     classNames={{
-                      head_cell: "text-muted-foreground rounded-md w-10 font-medium text-[0.75rem]",
-                      cell: "h-11 w-11 p-0 text-center align-middle relative",
-                      day: "h-10 w-10 rounded-md p-0 font-normal aria-selected:opacity-100",
+                      caption: "flex items-center px-2 pt-1 relative",
+                      caption_label: "text-sm font-medium",
+                      nav: "ml-auto flex items-center gap-1",
+                      nav_button_previous: "",
+                      nav_button_next: "",
+                      head_cell: "text-muted-foreground rounded-md w-12 font-medium text-[0.75rem] text-center",
+                      row: "flex w-full mt-2",
+                      cell: "h-12 w-12 p-0 text-center align-middle relative",
+                      day: "h-12 w-12 rounded-md p-0 font-normal aria-selected:opacity-100",
+                    }}
+                    components={{
+                      Day: (p: any) => <DayContent {...p} />,
                     }}
                   />
                 </PopoverContent>

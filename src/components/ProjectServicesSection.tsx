@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -30,6 +30,7 @@ export function ProjectServicesSection({ projectId, onServicesUpdated }: Project
   const [loadingAvailable, setLoadingAvailable] = useState(true);
   const [errorAvailable, setErrorAvailable] = useState<string | null>(null);
   const { toast } = useToast();
+  const sectionRef = useRef<HTMLDivElement>(null);
 
   const fetchProjectServices = async () => {
     try {
@@ -130,6 +131,11 @@ export function ProjectServicesSection({ projectId, onServicesUpdated }: Project
       setServices(selectedServices);
       setIsEditing(false);
       onServicesUpdated?.();
+
+      // Smoothly scroll back to the top of Services section after saving
+      setTimeout(() => {
+        sectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 50);
       
       toast({
         title: "Success",
@@ -171,8 +177,9 @@ export function ProjectServicesSection({ projectId, onServicesUpdated }: Project
   }
 
   return (
-    <Card>
-      <CardHeader>
+    <div ref={sectionRef}>
+      <Card>
+        <CardHeader>
         <CardTitle className="flex items-center justify-between text-lg font-medium">
           <div className="flex items-center gap-2">
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -280,5 +287,6 @@ export function ProjectServicesSection({ projectId, onServicesUpdated }: Project
         )}
       </CardContent>
     </Card>
+    </div>
   );
 }

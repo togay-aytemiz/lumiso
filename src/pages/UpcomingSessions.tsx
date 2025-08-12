@@ -260,11 +260,20 @@ const AllSessions = () => {
     try {
       const { data, error } = await supabase
         .from('projects')
-        .select('id, name, description, lead_id, user_id, created_at, updated_at, status_id, previous_status_id, project_type_id, leads(name)')
+        .select('id, name, description, lead_id, user_id, created_at, updated_at, status_id, previous_status_id, project_type_id')
         .eq('id', session.project_id)
         .single();
       if (error) throw error;
-      setViewingProject(data);
+      
+      // Fetch lead data separately
+      const { data: leadData, error: leadError } = await supabase
+        .from('leads')
+        .select('name')
+        .eq('id', data.lead_id)
+        .single();
+      if (leadError) throw leadError;
+      
+      setViewingProject({ ...data, leads: leadData });
       setShowProjectDialog(true);
     } catch (err: any) {
       toast({ title: 'Unable to open project', description: err.message, variant: 'destructive' });

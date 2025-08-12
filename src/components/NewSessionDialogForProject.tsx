@@ -167,8 +167,6 @@ export function NewSessionDialogForProject({
   const sessionsForDay = selectedKey ? (plannedSessions || []).filter((s: any) => s.session_date === selectedKey) : [];
 
   const browserLocale = getUserLocale();
-  const calendarType: "ISO 8601" | "US" =
-    browserLocale?.toLowerCase().includes("us") ? "US" : "ISO 8601";
 
   // Create modifiers for sessions with different counts
   const sessionModifiers = useMemo(() => {
@@ -246,7 +244,6 @@ export function NewSessionDialogForProject({
                   <ReactCalendar
                     className="react-calendar w-full p-2 pointer-events-auto"
                     locale={browserLocale}
-                    calendarType={calendarType}
                     view="month"
                     minDetail="month"
                     next2Label={null}

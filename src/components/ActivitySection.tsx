@@ -7,7 +7,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Clock, FileText, Plus, MessageSquare, Bell, CheckCircle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
@@ -479,10 +478,11 @@ const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
             {isReminderMode && (
               <div className="space-y-2">
                 <Label>Date & Time</Label>
-                <DateTimePicker
+                <Input
+                  type="datetime-local"
                   value={reminderDateTime}
-                  onChange={setReminderDateTime}
-                  placeholder="Select reminder date and time"
+                  onChange={(e) => setReminderDateTime(e.target.value)}
+                  className="w-full"
                 />
               </div>
             )}

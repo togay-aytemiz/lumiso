@@ -4,25 +4,25 @@
 @tailwind utilities;
 
 .react-calendar {
-  @apply bg-card text-foreground rounded-xl border border-border shadow-sm w-full max-w-[320px] pointer-events-auto;
+  @apply bg-background text-foreground rounded-xl border border-border shadow-sm w-full max-w-[360px] pointer-events-auto;
 }
 
 .react-calendar__navigation {
-  @apply flex items-center justify-between px-3 py-2 border-b border-border;
+  @apply flex items-center justify-between px-2 py-2 border-b border-border;
 }
 .react-calendar__navigation button {
-  @apply rounded-lg p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+  @apply rounded-md p-2 text-muted-foreground hover:text-foreground hover:bg-accent hover:text-accent-foreground disabled:opacity-50 disabled:cursor-not-allowed;
 }
 .react-calendar__navigation__label {
-  @apply text-sm font-medium text-foreground;
+  @apply text-sm font-medium;
 }
 
 /* Weekday header */
 .react-calendar__month-view__weekdays {
-  @apply grid grid-cols-7 gap-0 px-3 pt-2 text-xs font-medium text-muted-foreground;
+  @apply grid grid-cols-7 gap-0 px-2 pt-2 text-xs font-medium text-muted-foreground;
 }
 .react-calendar__month-view__weekdays__weekday {
-  @apply flex items-center justify-center h-8;
+  @apply flex items-center justify-center h-10;
 }
 .react-calendar__month-view__weekdays__weekday abbr {
   @apply no-underline;
@@ -30,63 +30,34 @@
 
 /* Days grid */
 .react-calendar__month-view__days {
-  @apply grid grid-cols-7 gap-1 px-3 pb-3 pt-2;
+  @apply grid grid-cols-7 gap-y-1 px-2 pb-2;
 }
 .react-calendar__tile {
-  @apply relative h-8 w-8 flex items-center justify-center text-sm transition-all duration-200 rounded-lg hover:bg-muted cursor-pointer border-none;
-  color: hsl(var(--foreground));
-}
-
-.react-calendar__tile:hover {
-  background-color: hsl(var(--muted));
-  color: hsl(var(--foreground));
+  @apply relative h-9 md:h-10 flex items-center justify-center text-sm transition-colors rounded-none hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground;
 }
 
 /* Today */
 .react-calendar__tile--now {
-  background-color: hsl(var(--primary) / 0.1);
-  color: hsl(var(--primary));
-  font-weight: 600;
+  @apply bg-accent text-accent-foreground;
 }
 
-.react-calendar__tile--now:hover {
-  background-color: hsl(var(--primary) / 0.2);
-  color: hsl(var(--primary));
-}
-
-/* Active/Selected */
-.react-calendar__tile--active {
-  background-color: hsl(var(--primary)) !important;
-  color: hsl(var(--primary-foreground)) !important;
-  font-weight: 600;
-}
-
-.react-calendar__tile--active:hover {
-  background-color: hsl(var(--primary) / 0.9) !important;
-  color: hsl(var(--primary-foreground)) !important;
+/* Single active (when start picked but no end yet) */
+.react-calendar__tile--active:not(.react-calendar__tile--rangeStart):not(.react-calendar__tile--rangeEnd) {
+  @apply bg-primary text-primary-foreground rounded-md;
 }
 
 /* Range selection */
 .react-calendar__tile--range {
-  background-color: hsl(var(--primary) / 0.1);
-  color: hsl(var(--primary));
+  @apply bg-accent text-foreground;
 }
 .react-calendar__tile--rangeStart,
 .react-calendar__tile--rangeEnd {
-  background-color: hsl(var(--primary));
-  color: hsl(var(--primary-foreground));
-  font-weight: 600;
+  @apply bg-primary text-primary-foreground;
 }
-
-/* Disabled dates */
-.react-calendar__tile:disabled {
-  background-color: transparent;
-  color: hsl(var(--muted-foreground));
-  cursor: not-allowed;
-  opacity: 0.5;
-}
+.react-calendar__tile--rangeStart { @apply rounded-l-md; }
+.react-calendar__tile--rangeEnd { @apply rounded-r-md; }
 
 /* Weekends */
 .react-calendar__month-view__days__day--weekend {
-  color: hsl(var(--muted-foreground));
+  @apply text-destructive;
 }

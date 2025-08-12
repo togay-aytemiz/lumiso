@@ -163,6 +163,7 @@ export function NewSessionDialogForProject({
 
   const selectedKey = selectedDate ? format(selectedDate, 'yyyy-MM-dd') : "";
   const sessionsForDay = selectedKey ? (plannedSessions || []).filter((s: any) => s.session_date === selectedKey) : [];
+
   // Locale-aware formatting and layout
   const browserLocale = getUserLocale();
   const weekStartsOn = useMemo(() => {
@@ -170,46 +171,27 @@ export function NewSessionDialogForProject({
     return l.includes('us') || l.includes('ph') || l.includes('ca') ? 0 : 1;
   }, [browserLocale]);
 
-  // Count sessions per day for dot indicators (max 3 shown)
-  const sessionCountByDate = useMemo(() => {
-    const map: Record<string, number> = {};
+  // Create modifiers for sessions with different counts
+  const sessionModifiers = useMemo(() => {
+    const sessionCountByDate: Record<string, number> = {};
     (plannedSessions || []).forEach((s: any) => {
       if (!s.session_date) return;
-      map[s.session_date] = (map[s.session_date] || 0) + 1;
+      sessionCountByDate[s.session_date] = (sessionCountByDate[s.session_date] || 0) + 1;
     });
-    return map;
+
+    const oneDot: Date[] = [];
+    const twoDots: Date[] = [];
+    const threeDots: Date[] = [];
+    
+    Object.entries(sessionCountByDate).forEach(([dateStr, count]) => {
+      const date = new Date(dateStr);
+      if (count === 1) oneDot.push(date);
+      else if (count === 2) twoDots.push(date);
+      else if (count >= 3) threeDots.push(date);
+    });
+    
+    return { oneDot, twoDots, threeDots };
   }, [plannedSessions]);
-
-  // Custom day content to ensure perfect alignment and multi-dot indicators
-  function DayContent(rawProps: any) {
-    const { date, className, children, ...buttonProps } = rawProps as any;
-    const isValidDate = date instanceof Date && !isNaN(date.getTime());
-    const key = isValidDate ? format(date as Date, 'yyyy-MM-dd') : '';
-    const count = key ? (sessionCountByDate[key] || 0) : 0;
-    const dots = Math.min(count, 3);
-
-    return (
-      <button
-        type="button"
-        {...buttonProps}
-        className={cn(
-          className,
-          "relative flex h-10 w-10 items-center justify-center rounded-md"
-        )}
-      >
-        <span className="leading-none tabular-nums">
-          {isValidDate ? (date as Date).getDate() : children}
-        </span>
-        {dots > 0 && (
-          <div className="pointer-events-none absolute bottom-1 left-1/2 -translate-x-1/2 flex items-center justify-center gap-0.5">
-            {Array.from({ length: dots }).map((_, i) => (
-              <span key={i} className="h-1.5 w-1.5 rounded-full bg-primary ring-1 ring-background" />
-            ))}
-          </div>
-        )}
-      </button>
-    );
-  }
 
   const formatters = {
     formatCaption: (month: Date) =>
@@ -281,22 +263,14 @@ export function NewSessionDialogForProject({
                     onMonthChange={(m) => setVisibleMonth(m)}
                     weekStartsOn={weekStartsOn}
                     formatters={formatters}
+                    modifiers={sessionModifiers}
+                    modifiersClassNames={{
+                      oneDot: "relative after:content-[''] after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:h-1.5 after:w-1.5 after:rounded-full after:bg-primary",
+                      twoDots: "relative after:content-[''] after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:flex after:gap-0.5 after:before:h-1.5 after:before:w-1.5 after:before:rounded-full after:before:bg-primary after:after:h-1.5 after:after:w-1.5 after:after:rounded-full after:after:bg-primary",
+                      threeDots: "relative after:content-[''] after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:flex after:gap-0.5 after:before:h-1.5 after:before:w-1.5 after:before:rounded-full after:before:bg-primary after:after:h-1.5 after:after:w-1.5 after:after:rounded-full after:after:bg-primary after:[&::before]:h-1.5 after:[&::before]:w-1.5 after:[&::before]:rounded-full after:[&::before]:bg-primary",
+                    }}
                     initialFocus
-                    className={cn("p-2 sm:p-3 pointer-events-auto")}
-                    classNames={{
-                      caption: "flex items-center px-2 pt-1 relative",
-                      caption_label: "text-sm font-medium",
-                      nav: "ml-auto flex items-center gap-1",
-                      nav_button_previous: "absolute right-9",
-                      nav_button_next: "absolute right-1",
-                      head_cell: "text-muted-foreground rounded-md w-10 font-medium text-[0.75rem] text-center",
-                      row: "flex w-full mt-2",
-                      cell: "h-10 w-10 p-0 text-center align-middle relative",
-                      day: "h-10 w-10 rounded-md p-0 font-normal aria-selected:opacity-100",
-                    }}
-                    components={{
-                      Day: (p: any) => <DayContent {...p} />,
-                    }}
+                    className="p-3 pointer-events-auto"
                   />
                 </PopoverContent>
               </Popover>

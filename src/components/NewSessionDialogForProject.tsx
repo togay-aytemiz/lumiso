@@ -13,6 +13,7 @@ import { cn, getUserLocale } from "@/lib/utils";
 import { format } from "date-fns";
 import ReactCalendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
+import "@/components/react-calendar.css";
 
 
 interface NewSessionDialogForProjectProps {
@@ -168,26 +169,13 @@ export function NewSessionDialogForProject({
 
   const browserLocale = getUserLocale();
 
-  // Create modifiers for sessions with different counts
-  const sessionModifiers = useMemo(() => {
-    const sessionCountByDate: Record<string, number> = {};
+  const sessionCountByDate = useMemo(() => {
+    const map: Record<string, number> = {};
     (plannedSessions || []).forEach((s: any) => {
       if (!s.session_date) return;
-      sessionCountByDate[s.session_date] = (sessionCountByDate[s.session_date] || 0) + 1;
+      map[s.session_date] = (map[s.session_date] || 0) + 1;
     });
-
-    const oneDot: Date[] = [];
-    const twoDots: Date[] = [];
-    const threeDots: Date[] = [];
-    
-    Object.entries(sessionCountByDate).forEach(([dateStr, count]) => {
-      const date = new Date(dateStr);
-      if (count === 1) oneDot.push(date);
-      else if (count === 2) twoDots.push(date);
-      else if (count >= 3) threeDots.push(date);
-    });
-    
-    return { oneDot, twoDots, threeDots };
+    return map;
   }, [plannedSessions]);
 
 
@@ -240,9 +228,9 @@ export function NewSessionDialogForProject({
                     {selectedDate ? new Intl.DateTimeFormat(browserLocale, { dateStyle: "medium" }).format(selectedDate) : <span>Pick a date</span>}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto min-w-[18rem] p-0" align="start">
+                <PopoverContent className="w-auto min-w-[18rem] p-0 rounded-xl border border-border shadow-md" align="start">
                   <ReactCalendar
-                    className="react-calendar w-full p-2 pointer-events-auto"
+                    className="react-calendar w-full p-2"
                     locale={browserLocale}
                     view="month"
                     minDetail="month"
@@ -264,6 +252,20 @@ export function NewSessionDialogForProject({
                     }}
                     value={selectedDate ?? null}
                     formatShortWeekday={(_, date) => new Intl.DateTimeFormat(browserLocale, { weekday: 'short' }).format(date)}
+                    tileContent={({ date, view }) => {
+                      if (view !== 'month') return null;
+                      const key = format(date, 'yyyy-MM-dd');
+                      const count = sessionCountByDate[key] || 0;
+                      const dots = Math.min(count, 3);
+                      if (!dots) return null;
+                      return (
+                        <div className="pointer-events-none absolute bottom-1 left-1/2 -translate-x-1/2 flex items-center justify-center gap-0.5">
+                          {Array.from({ length: dots }).map((_, i) => (
+                            <span key={i} className="h-1.5 w-1.5 rounded-full bg-primary ring-1 ring-background" />
+                          ))}
+                        </div>
+                      );
+                    }}
                   />
                 </PopoverContent>
               </Popover>

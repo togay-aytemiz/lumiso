@@ -1,0 +1,54 @@
+/* React Calendar overrides to match app design system */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.react-calendar {
+  @apply bg-background text-foreground rounded-xl border border-border shadow-sm w-full max-w-[360px];
+}
+
+.react-calendar__navigation {
+  @apply flex items-center justify-between px-2 py-2 border-b border-border;
+}
+.react-calendar__navigation button {
+  @apply rounded-md p-2 text-muted-foreground hover:text-foreground hover:bg-accent hover:text-accent-foreground disabled:opacity-50 disabled:cursor-not-allowed;
+}
+.react-calendar__navigation__label {
+  @apply text-sm font-medium;
+}
+
+/* Weekday header */
+.react-calendar__month-view__weekdays {
+  @apply grid grid-cols-7 gap-0 px-2 pt-2 text-xs font-medium text-muted-foreground;
+}
+.react-calendar__month-view__weekdays__weekday {
+  @apply flex items-center justify-center h-10;
+}
+.react-calendar__month-view__weekdays__weekday abbr {
+  @apply no-underline;
+}
+
+/* Days grid */
+.react-calendar__month-view__days {
+  @apply grid grid-cols-7 gap-y-1 px-2 pb-2;
+}
+.react-calendar__tile {
+  @apply relative h-10 flex items-center justify-center rounded-md text-sm hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground transition-colors;
+}
+.react-calendar__tile--now {
+  @apply bg-accent text-accent-foreground;
+}
+.react-calendar__tile--active {
+  @apply bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground;
+}
+.react-calendar__tile:disabled {
+  @apply opacity-50 cursor-not-allowed text-muted-foreground;
+}
+.react-calendar__month-view__days__day--weekend {
+  @apply text-destructive;
+}
+
+/* Popover fit */
+.react-calendar {
+  @apply pointer-events-auto;
+}

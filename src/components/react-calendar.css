@@ -38,21 +38,21 @@
 
 /* Today */
 .react-calendar__tile--now {
-  @apply bg-accent text-accent-foreground;
+  @apply bg-muted text-foreground ring-2 ring-primary ring-offset-2;
 }
 
 /* Single active (when start picked but no end yet) */
 .react-calendar__tile--active:not(.react-calendar__tile--rangeStart):not(.react-calendar__tile--rangeEnd) {
-  @apply bg-primary text-primary-foreground rounded-md;
+  @apply bg-primary text-primary-foreground rounded-md hover:bg-primary/90;
 }
 
 /* Range selection */
 .react-calendar__tile--range {
-  @apply bg-accent text-foreground;
+  @apply bg-primary/20 text-foreground;
 }
 .react-calendar__tile--rangeStart,
 .react-calendar__tile--rangeEnd {
-  @apply bg-primary text-primary-foreground;
+  @apply bg-primary text-primary-foreground hover:bg-primary/90;
 }
 .react-calendar__tile--rangeStart { @apply rounded-l-md; }
 .react-calendar__tile--rangeEnd { @apply rounded-r-md; }

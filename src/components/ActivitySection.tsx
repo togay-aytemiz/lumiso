@@ -13,6 +13,7 @@ import { toast } from "@/hooks/use-toast";
 import ReminderCard from "@/components/ReminderCard";
 import { formatLongDate, formatTime } from "@/lib/utils";
 import { useCalendarSync } from "@/hooks/useCalendarSync";
+import DateTimePicker from "@/components/ui/date-time-picker";
 
 interface Activity {
   id: string;
@@ -478,11 +479,9 @@ const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
             {isReminderMode && (
               <div className="space-y-2">
                 <Label>Date & Time</Label>
-                <Input
-                  type="datetime-local"
+                <DateTimePicker
                   value={reminderDateTime}
-                  onChange={(e) => setReminderDateTime(e.target.value)}
-                  className="w-full"
+                  onChange={setReminderDateTime}
                 />
               </div>
             )}

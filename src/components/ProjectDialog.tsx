@@ -139,58 +139,60 @@ export function ProjectDialog({ open, onOpenChange, leadId, onProjectCreated }: 
           <DialogTitle>Add New Project</DialogTitle>
         </DialogHeader>
         
-        <ScrollArea className="max-h-[60vh]">
-          <div className="space-y-4 pt-2 pb-2">
-            <div className="space-y-2">
-              <Label htmlFor="project-name">Project Name *</Label>
-              <Input
-                id="project-name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Enter project name"
-                disabled={isSaving}
-                autoFocus
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="project-type">Project Type *</Label>
-              <ProjectTypeSelector
-                value={projectTypeId}
-                onValueChange={setProjectTypeId}
-                disabled={isSaving}
-                required
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="base-price">Base Price (TRY)</Label>
-              <Input
-                id="base-price"
-                type="number"
-                step="1"
-                min="0"
-                value={basePrice}
-                onChange={(e) => setBasePrice(e.target.value)}
-                placeholder="0"
-                disabled={isSaving}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="project-description">Description</Label>
-              <Textarea
-                id="project-description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Enter project description (optional)"
-                rows={4}
-                disabled={isSaving}
-                className="resize-none"
-              />
-            </div>
+          <div className="-mx-2">
+            <ScrollArea className="max-h-[60vh]">
+              <div className="px-2 space-y-4 pt-2 pb-2">
+                <div className="space-y-2">
+                  <Label htmlFor="project-name">Project Name *</Label>
+                  <Input
+                    id="project-name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Enter project name"
+                    disabled={isSaving}
+                    autoFocus
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="project-type">Project Type *</Label>
+                  <ProjectTypeSelector
+                    value={projectTypeId}
+                    onValueChange={setProjectTypeId}
+                    disabled={isSaving}
+                    required
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="base-price">Base Price (TRY)</Label>
+                  <Input
+                    id="base-price"
+                    type="number"
+                    step="1"
+                    min="0"
+                    value={basePrice}
+                    onChange={(e) => setBasePrice(e.target.value)}
+                    placeholder="0"
+                    disabled={isSaving}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="project-description">Description</Label>
+                  <Textarea
+                    id="project-description"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="Enter project description (optional)"
+                    rows={4}
+                    disabled={isSaving}
+                    className="resize-none"
+                  />
+                </div>
+              </div>
+            </ScrollArea>
           </div>
-        </ScrollArea>
         
         <div className="flex justify-end gap-2 pt-4 border-t">
           <Button 

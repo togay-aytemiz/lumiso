@@ -42,8 +42,14 @@
 }
 
 /* Single active (when start picked but no end yet) */
-.react-calendar__tile--active:not(.react-calendar__tile--rangeStart):not(.react-calendar__tile--rangeEnd) {
+.react-calendar__tile--active:not(.react-calendar__tile--rangeStart):not(.react-calendar__tile--rangeEnd),
+.react-calendar__tile--active:enabled:hover:not(.react-calendar__tile--rangeStart):not(.react-calendar__tile--rangeEnd),
+.react-calendar__tile--active:enabled:focus:not(.react-calendar__tile--rangeStart):not(.react-calendar__tile--rangeEnd) {
   @apply bg-primary text-primary-foreground rounded-md;
+}
+/* Indicate months with an active date (React Calendar default used blue) */
+.react-calendar__tile--hasActive {
+  @apply bg-primary/10 text-foreground;
 }
 
 /* Range selection */

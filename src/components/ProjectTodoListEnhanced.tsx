@@ -255,7 +255,7 @@ export function ProjectTodoListEnhanced({ projectId }: ProjectTodoListEnhancedPr
               {todos.map((todo) => (
                 <div
                   key={todo.id}
-                  className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg border"
+                  className="flex items-center gap-2 p-2 bg-muted/30 rounded-md border"
                 >
                   <Checkbox
                     checked={todo.is_completed}

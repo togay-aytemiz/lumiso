@@ -1,16 +1,30 @@
 import React, { useEffect, useMemo, useState } from "react";
-import ReactCalendar from "react-calendar";
-import "react-calendar/dist/Calendar.css";
-import "@/components/react-calendar.css";
-import { getUserLocale } from "@/lib/utils";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { format } from "date-fns";
+import { CalendarIcon, Clock } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Label } from "@/components/ui/label";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 
 interface DateTimePickerProps {
   value?: string; // ISO local string: YYYY-MM-DDTHH:mm
   onChange: (value: string) => void;
   className?: string;
+  buttonClassName?: string;
+  placeholder?: string;
 }
 
 function toIsoLocal(date: Date, hours: number, minutes: number) {
@@ -28,16 +42,31 @@ function parseIsoLocal(value?: string) {
   return { date: new Date(y, (m || 1) - 1, d || 1), hours: hh || 9, minutes: mm || 0 };
 }
 
-export const DateTimePicker: React.FC<DateTimePickerProps> = ({ value, onChange, className }) => {
-  const browserLocale = getUserLocale();
-  const { date: initialDate, hours: initialHours, minutes: initialMinutes } = useMemo(() => parseIsoLocal(value), [value]);
+const displayFormat = (date?: Date, h?: number, m?: number) => {
+  if (!date) return undefined;
+  const withTime = new Date(date);
+  withTime.setHours(h ?? 0, m ?? 0, 0, 0);
+  return format(withTime, "PP p");
+};
 
+export const DateTimePicker: React.FC<DateTimePickerProps> = ({
+  value,
+  onChange,
+  className,
+  buttonClassName,
+  placeholder = "Pick date & time",
+}) => {
+  const { date: initialDate, hours: initialHours, minutes: initialMinutes } = useMemo(
+    () => parseIsoLocal(value),
+    [value]
+  );
+
+  const [open, setOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(initialDate);
   const [hours, setHours] = useState<number>(initialHours);
   const [minutes, setMinutes] = useState<number>(initialMinutes);
 
   useEffect(() => {
-    // keep external value in sync if it changes from outside
     const parsed = parseIsoLocal(value);
     setSelectedDate(parsed.date);
     setHours(parsed.hours);
@@ -45,96 +74,98 @@ export const DateTimePicker: React.FC<DateTimePickerProps> = ({ value, onChange,
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
 
-  useEffect(() => {
-    if (selectedDate) {
-      onChange(toIsoLocal(selectedDate, hours, minutes));
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedDate, hours, minutes]);
-
   const hourOptions = Array.from({ length: 24 }, (_, i) => i);
-  const minuteOptions = [0, 15, 30, 45];
+  const minuteOptions = [0, 5, 10, 15, 20, 30, 45];
 
   return (
     <div className={className}>
-      <div className="rounded-xl border border-border bg-background shadow-sm p-2">
-        <ReactCalendar
-          className="react-calendar w-full p-2"
-          locale={browserLocale}
-          next2Label={null}
-          prev2Label={null}
-          onChange={(value: any) => {
-            if (value instanceof Date) {
-              setSelectedDate(value);
-            }
-          }}
-          value={selectedDate || null}
-          formatShortWeekday={(_, date) => new Intl.DateTimeFormat(browserLocale, { weekday: 'short' }).format(date)}
-        />
-        <div className="px-2 pb-2">
-          <Label className="text-xs text-muted-foreground">Time</Label>
-          <div className="mt-2 grid grid-cols-2 gap-2">
-            <Select
-              value={String(hours)}
-              onValueChange={(v) => setHours(parseInt(v))}
-            >
-              <SelectTrigger className="rounded-md h-9">
-                <SelectValue placeholder="Hour" />
-              </SelectTrigger>
-              <SelectContent className="max-h-64">
-                {hourOptions.map((h) => (
-                  <SelectItem key={h} value={String(h)}>
-                    {`${String(h).padStart(2, '0')}`}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select
-              value={String(minutes)}
-              onValueChange={(v) => setMinutes(parseInt(v))}
-            >
-              <SelectTrigger className="rounded-md h-9">
-                <SelectValue placeholder="Min" />
-              </SelectTrigger>
-              <SelectContent className="max-h-64">
-                {minuteOptions.map((m) => (
-                  <SelectItem key={m} value={String(m)}>
-                    {`${String(m).padStart(2, '0')}`}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            type="button"
+            className={cn(
+              "justify-start text-left font-normal w-full md:w-[260px]",
+              !value && "text-muted-foreground",
+              buttonClassName
+            )}
+          >
+            <CalendarIcon className="mr-2 h-4 w-4" />
+            {displayFormat(selectedDate, hours, minutes) || placeholder}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0 rounded-xl border border-border shadow-md" align="start">
+          <div className="p-2">
+            <Calendar
+              mode="single"
+              selected={selectedDate}
+              onSelect={setSelectedDate}
+              initialFocus
+              className={cn("p-3 pointer-events-auto rounded-lg border border-border bg-background")}
+            />
+            <div className="px-1 pt-2">
+              <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                <Clock className="h-3 w-3" /> Time
+              </Label>
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                <Select value={String(hours)} onValueChange={(v) => setHours(parseInt(v))}>
+                  <SelectTrigger className="h-9 rounded-md">
+                    <SelectValue placeholder="Hour" />
+                  </SelectTrigger>
+                  <SelectContent align="start" className="max-h-64">
+                    {hourOptions.map((h) => (
+                      <SelectItem key={h} value={String(h)}>
+                        {String(h).padStart(2, "0")}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={String(minutes)} onValueChange={(v) => setMinutes(parseInt(v))}>
+                  <SelectTrigger className="h-9 rounded-md">
+                    <SelectValue placeholder="Min" />
+                  </SelectTrigger>
+                  <SelectContent align="start" className="max-h-64">
+                    {minuteOptions.map((m) => (
+                      <SelectItem key={m} value={String(m)}>
+                        {String(m).padStart(2, "0")}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="mt-3 flex items-center justify-between">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="text-muted-foreground"
+                  onClick={() => {
+                    setSelectedDate(undefined);
+                    setHours(9);
+                    setMinutes(0);
+                    onChange("");
+                  }}
+                >
+                  Clear
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  disabled={!selectedDate}
+                  onClick={() => {
+                    if (selectedDate) {
+                      onChange(toIsoLocal(selectedDate, hours, minutes));
+                      setOpen(false);
+                    }
+                  }}
+                >
+                  Apply
+                </Button>
+              </div>
+            </div>
           </div>
-          <div className="mt-3 flex items-center justify-between">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="text-muted-foreground"
-              onClick={() => {
-                setSelectedDate(undefined);
-                setHours(9);
-                setMinutes(0);
-                onChange("");
-              }}
-            >
-              Clear
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              disabled={!selectedDate}
-              onClick={() => {
-                if (selectedDate) {
-                  onChange(toIsoLocal(selectedDate, hours, minutes));
-                }
-              }}
-            >
-              Apply
-            </Button>
-          </div>
-        </div>
-      </div>
+        </PopoverContent>
+      </Popover>
     </div>
   );
 };

@@ -181,14 +181,25 @@ export function ProjectServicesSection({ projectId, onServicesUpdated }: Project
             Services
           </div>
           {!isEditing && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsEditing(true)}
-              className="h-8 w-8 p-0"
-            >
-              {services.length === 0 ? <Plus className="h-4 w-4" /> : <Edit2 className="h-4 w-4" />}
-            </Button>
+            services.length === 0 ? (
+              <Button
+                size="sm"
+                onClick={() => setIsEditing(true)}
+                className="gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                Add Service
+              </Button>
+            ) : (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsEditing(true)}
+                className="h-8 w-8 p-0"
+              >
+                <Edit2 className="h-4 w-4" />
+              </Button>
+            )
           )}
         </CardTitle>
       </CardHeader>
@@ -260,9 +271,9 @@ export function ProjectServicesSection({ projectId, onServicesUpdated }: Project
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
                 <p className="text-muted-foreground text-sm">No services assigned</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Click the + button to add services to this project
-                </p>
+                 <p className="text-xs text-muted-foreground mt-1">
+                   Click Add Service to add services to this project
+                 </p>
               </div>
             )}
           </div>

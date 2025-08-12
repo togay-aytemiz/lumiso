@@ -3,7 +3,6 @@ import { format } from "date-fns";
 import { CalendarIcon, Clock } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
 import { Label } from "@/components/ui/label";
 import {
   Popover,
@@ -17,7 +16,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { cn } from "@/lib/utils";
+import { cn, getUserLocale } from "@/lib/utils";
+import ReactCalendar from "react-calendar";
+import "react-calendar/dist/Calendar.css";
+import "@/components/react-calendar.css";
 
 interface DateTimePickerProps {
   value?: string; // ISO local string: YYYY-MM-DDTHH:mm
@@ -74,6 +76,7 @@ export const DateTimePicker: React.FC<DateTimePickerProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
 
+  const browserLocale = getUserLocale();
   const hourOptions = Array.from({ length: 24 }, (_, i) => i);
   const minuteOptions = [0, 5, 10, 15, 20, 30, 45];
 
@@ -96,12 +99,18 @@ export const DateTimePicker: React.FC<DateTimePickerProps> = ({
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0 rounded-xl border border-border shadow-md" align="start">
           <div className="p-2">
-            <Calendar
-              mode="single"
-              selected={selectedDate}
-              onSelect={setSelectedDate}
-              initialFocus
-              className={cn("p-3 pointer-events-auto rounded-lg border border-border bg-background")}
+            <ReactCalendar
+              className="react-calendar w-full p-2 pointer-events-auto"
+              locale={browserLocale}
+              view="month"
+              minDetail="month"
+              next2Label={null}
+              prev2Label={null}
+              onChange={(value: any) => {
+                if (value instanceof Date) setSelectedDate(value);
+              }}
+              value={selectedDate || null}
+              formatShortWeekday={(_, date) => new Intl.DateTimeFormat(browserLocale, { weekday: 'short' }).format(date)}
             />
             <div className="px-1 pt-2">
               <Label className="text-xs text-muted-foreground flex items-center gap-1">

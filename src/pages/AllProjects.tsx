@@ -591,10 +591,10 @@ const AllProjects = () => {
                             className="cursor-pointer hover:bg-muted/50"
                             onClick={() => handleSort('name')}
                           >
-                            <div className="flex items-center gap-2">
-                              Project Name
-                              {getSortIcon('name')}
-                            </div>
+                    <div className="flex items-center gap-2">
+                      Project
+                      {getSortIcon('name')}
+                    </div>
                           </TableHead>
                           <TableHead 
                             className="cursor-pointer hover:bg-muted/50"

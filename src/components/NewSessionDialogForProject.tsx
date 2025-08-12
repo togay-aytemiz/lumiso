@@ -12,6 +12,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn, getUserLocale } from "@/lib/utils";
 import { format } from "date-fns";
+import { enUS, tr, de, fr } from "date-fns/locale";
 
 interface NewSessionDialogForProjectProps {
   leadId: string;
@@ -164,12 +165,14 @@ export function NewSessionDialogForProject({
   const selectedKey = selectedDate ? format(selectedDate, 'yyyy-MM-dd') : "";
   const sessionsForDay = selectedKey ? (plannedSessions || []).filter((s: any) => s.session_date === selectedKey) : [];
 
-  // Locale-aware formatting and layout
   const browserLocale = getUserLocale();
-  const weekStartsOn = useMemo(() => {
-    const l = browserLocale.toLowerCase();
-    return l.includes('us') || l.includes('ph') || l.includes('ca') ? 0 : 1;
-  }, [browserLocale]);
+  const dfnsLocale =
+    browserLocale?.toLowerCase().startsWith("tr") ? tr :
+    browserLocale?.toLowerCase().startsWith("de") ? de :
+    browserLocale?.toLowerCase().startsWith("fr") ? fr :
+    enUS;
+
+  const weekStartsOn = (dfnsLocale.options?.weekStartsOn ?? 1) as 0 | 1;
 
   // Create modifiers for sessions with different counts
   const sessionModifiers = useMemo(() => {
@@ -193,12 +196,6 @@ export function NewSessionDialogForProject({
     return { oneDot, twoDots, threeDots };
   }, [plannedSessions]);
 
-  const formatters = {
-    formatCaption: (month: Date) =>
-      new Intl.DateTimeFormat(browserLocale, { month: 'long', year: 'numeric' }).format(month),
-    formatWeekdayName: (date: Date) =>
-      new Intl.DateTimeFormat(browserLocale, { weekday: 'short' }).format(date),
-  } as const;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -262,7 +259,8 @@ export function NewSessionDialogForProject({
                     }}
                     onMonthChange={(m) => setVisibleMonth(m)}
                     weekStartsOn={weekStartsOn}
-                    formatters={formatters}
+                    locale={dfnsLocale}
+                    
                     modifiers={sessionModifiers}
                     modifiersClassNames={{
                       oneDot: "relative after:content-[''] after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:h-1.5 after:w-1.5 after:rounded-full after:bg-primary",
@@ -281,10 +279,10 @@ export function NewSessionDialogForProject({
                       nav_button_previous: "absolute left-1",
                       nav_button_next: "absolute right-1",
                       table: "w-full border-collapse",
-                      head_row: "flex",
-                      head_cell: "text-muted-foreground rounded-md w-10 font-normal text-[0.8rem] flex items-center justify-center h-10",
-                      row: "flex w-full",
-                      cell: "h-10 w-10 text-center text-sm p-0 relative first:[&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected])]:bg-accent last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
+                      head_row: "grid grid-cols-7",
+                      head_cell: "text-muted-foreground rounded-md font-normal text-[0.8rem] h-10 flex items-center justify-center",
+                      row: "grid grid-cols-7 w-full",
+                      cell: "p-0 relative text-center text-sm h-10 flex items-center justify-center first:[&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected])]:bg-accent last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
                       day: "h-10 w-10 p-0 font-normal aria-selected:opacity-100 rounded-md hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground inline-flex items-center justify-center",
                       day_range_end: "day-range-end",
                       day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",

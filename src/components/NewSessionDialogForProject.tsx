@@ -1,17 +1,18 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Calendar as CalendarIcon } from "lucide-react";
+import { Plus, Calendar as CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useCalendarSync } from "@/hooks/useCalendarSync";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
+import { cn, getUserLocale, formatLongDate } from "@/lib/utils";
 import { format } from "date-fns";
+import type { DayProps } from "react-day-picker";
 
 interface NewSessionDialogForProjectProps {
   leadId: string;
@@ -164,6 +165,50 @@ export function NewSessionDialogForProject({
   const hasSessionDates = Array.from(new Set((plannedSessions || []).map((s: any) => s.session_date))).map((d) => new Date(d));
   const selectedKey = selectedDate ? format(selectedDate, 'yyyy-MM-dd') : "";
   const sessionsForDay = selectedKey ? (plannedSessions || []).filter((s: any) => s.session_date === selectedKey) : [];
+
+  // Locale-aware formatting and layout
+  const browserLocale = getUserLocale();
+  const weekStartsOn = useMemo(() => {
+    const l = browserLocale.toLowerCase();
+    return l.includes('us') || l.includes('ph') || l.includes('ca') ? 0 : 1;
+  }, [browserLocale]);
+
+  // Count sessions per day for dot indicators (max 3 shown)
+  const sessionCountByDate = useMemo(() => {
+    const map: Record<string, number> = {};
+    (plannedSessions || []).forEach((s: any) => {
+      if (!s.session_date) return;
+      map[s.session_date] = (map[s.session_date] || 0) + 1;
+    });
+    return map;
+  }, [plannedSessions]);
+
+  // Custom day content to ensure perfect alignment and multi-dot indicators
+  function DayContent(props: DayProps) {
+    const key = format(props.date, 'yyyy-MM-dd');
+    const count = sessionCountByDate[key] || 0;
+    const dots = Math.min(count, 3);
+
+    return (
+      <div className="relative flex h-12 w-12 items-center justify-center">
+        <span className="leading-none tabular-nums">{props.date.getDate()}</span>
+        {dots > 0 && (
+          <div className="pointer-events-none absolute bottom-1 left-1/2 -translate-x-1/2 flex items-center justify-center gap-0.5">
+            {Array.from({ length: dots }).map((_, i) => (
+              <span key={i} className="h-1.5 w-1.5 rounded-full bg-primary ring-1 ring-background" />
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  const formatters = {
+    formatCaption: (month: Date) =>
+      new Intl.DateTimeFormat(browserLocale, { month: 'long', year: 'numeric' }).format(month),
+    formatWeekdayName: (date: Date) =>
+      new Intl.DateTimeFormat(browserLocale, { weekday: 'short' }).format(date),
+  } as const;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

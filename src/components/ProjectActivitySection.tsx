@@ -9,6 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Clock, MessageSquare, Bell, CheckCircle, FileText } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { DateTimePicker } from "@/components/ui/date-time-picker";
 import ReminderCard from "@/components/ReminderCard";
 import { formatTime } from "@/lib/utils";
 import { useCalendarSync } from "@/hooks/useCalendarSync";
@@ -226,11 +227,10 @@ export function ProjectActivitySection({ projectId, leadId, leadName, projectNam
           {isReminderMode && (
             <div className="space-y-2">
               <Label>Date & Time</Label>
-              <Input
-                type="datetime-local"
+              <DateTimePicker
                 value={reminderDateTime}
-                onChange={(e) => setReminderDateTime(e.target.value)}
-                className="w-full"
+                onChange={setReminderDateTime}
+                placeholder="Select reminder date and time"
               />
             </div>
           )}

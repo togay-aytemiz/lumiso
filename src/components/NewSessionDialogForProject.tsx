@@ -39,6 +39,7 @@ export function NewSessionDialogForProject({
   });
 
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [visibleMonth, setVisibleMonth] = useState<Date>(new Date());
   const [plannedSessions, setPlannedSessions] = useState<any[]>([]);
 
@@ -200,7 +201,7 @@ export function NewSessionDialogForProject({
 
             <div className="space-y-2">
               <Label htmlFor="session_date">Session Date *</Label>
-              <Popover>
+              <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
@@ -219,7 +220,10 @@ export function NewSessionDialogForProject({
                     selected={selectedDate}
                     onSelect={(date) => {
                       setSelectedDate(date);
-                      if (date) handleInputChange("session_date", format(date, "yyyy-MM-dd"));
+                      if (date) {
+                        handleInputChange("session_date", format(date, "yyyy-MM-dd"));
+                        setDatePickerOpen(false);
+                      }
                     }}
                     onMonthChange={(m) => setVisibleMonth(m)}
                     modifiers={{ hasSession: hasSessionDates }}
@@ -228,7 +232,12 @@ export function NewSessionDialogForProject({
                         "relative after:content-[''] after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:h-1.5 after:w-1.5 after:rounded-full after:bg-primary",
                     }}
                     initialFocus
-                    className="pointer-events-auto"
+                    className={cn("p-2 sm:p-3 pointer-events-auto")}
+                    classNames={{
+                      head_cell: "text-muted-foreground rounded-md w-10 font-medium text-[0.75rem]",
+                      cell: "h-11 w-11 p-0 text-center align-middle relative",
+                      day: "h-10 w-10 rounded-md p-0 font-normal aria-selected:opacity-100",
+                    }}
                   />
                 </PopoverContent>
               </Popover>

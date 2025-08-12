@@ -174,6 +174,11 @@ export function NewSessionDialogForProject({
 
   const weekStartsOn = (dfnsLocale.options?.weekStartsOn ?? 1) as 0 | 1;
 
+  const formatters = {
+    formatWeekdayName: (date: Date) =>
+      new Intl.DateTimeFormat(browserLocale, { weekday: "short" }).format(date)
+  } as const;
+
   // Create modifiers for sessions with different counts
   const sessionModifiers = useMemo(() => {
     const sessionCountByDate: Record<string, number> = {};
@@ -246,7 +251,7 @@ export function NewSessionDialogForProject({
                     {selectedDate ? new Intl.DateTimeFormat(browserLocale, { dateStyle: "medium" }).format(selectedDate) : <span>Pick a date</span>}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
+                <PopoverContent className="w-auto min-w-[18rem] p-0" align="start">
                   <Calendar
                     mode="single"
                     selected={selectedDate}
@@ -260,7 +265,7 @@ export function NewSessionDialogForProject({
                     onMonthChange={(m) => setVisibleMonth(m)}
                     weekStartsOn={weekStartsOn}
                     locale={dfnsLocale}
-                    
+                    formatters={formatters}
                     modifiers={sessionModifiers}
                     modifiersClassNames={{
                       oneDot: "relative after:content-[''] after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:h-1.5 after:w-1.5 after:rounded-full after:bg-primary",
@@ -280,10 +285,10 @@ export function NewSessionDialogForProject({
                       nav_button_next: "absolute right-1",
                       table: "w-full border-collapse",
                       head_row: "grid grid-cols-7",
-                      head_cell: "text-muted-foreground rounded-md font-normal text-[0.8rem] h-10 flex items-center justify-center",
+                      head_cell: "text-muted-foreground rounded-md font-normal text-[0.8rem] h-10 flex items-center justify-center w-full text-center",
                       row: "grid grid-cols-7 w-full",
-                      cell: "p-0 relative text-center text-sm h-10 flex items-center justify-center first:[&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected])]:bg-accent last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
-                      day: "h-10 w-10 p-0 font-normal aria-selected:opacity-100 rounded-md hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground inline-flex items-center justify-center",
+                      cell: "p-0 relative text-center text-sm h-10 flex items-center justify-center w-full first:[&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected])]:bg-accent last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
+                      day: "h-10 w-full p-0 font-normal aria-selected:opacity-100 rounded-md hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground inline-flex items-center justify-center",
                       day_range_end: "day-range-end",
                       day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
                       day_today: "bg-accent text-accent-foreground",

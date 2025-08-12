@@ -243,9 +243,10 @@ export function ProjectTodoListEnhanced({ projectId }: ProjectTodoListEnhancedPr
           <Button 
             onClick={handleAddTodo}
             disabled={!newTodoContent.trim() || isAdding}
-            size="sm"
+            className="h-11 w-11 p-0"
+            aria-label="Add todo"
           >
-            <Plus className="h-4 w-4" />
+            <Plus className="h-5 w-5" />
           </Button>
         </div>
 

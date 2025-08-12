@@ -106,7 +106,7 @@ export function DateTimePicker({ value, onChange, placeholder = "Select date and
               <Calendar
                 value={date}
                 onChange={handleDateSelect}
-                className="react-calendar w-full p-2 pointer-events-auto"
+                className="react-calendar"
                 locale={browserLocale}
                 next2Label={null}
                 prev2Label={null}

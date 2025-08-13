@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AppSheetModal } from "@/components/ui/app-sheet-modal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -82,20 +82,55 @@ export function AddPaymentDialog({ projectId, onPaymentAdded }: AddPaymentDialog
     }
   };
 
+  const isDirty = Boolean(amount.trim() || description.trim() || status !== "paid");
+
+  const handleDirtyClose = () => {
+    if (window.confirm("Discard changes?")) {
+      setAmount("");
+      setDescription("");
+      setStatus("paid");
+      setDatePaid(new Date());
+      setOpen(false);
+    }
+  };
+
+  const handleSubmitClick = () => {
+    const event = { preventDefault: () => {} } as React.FormEvent;
+    handleSubmit(event);
+  };
+
+  const footerActions = [
+    {
+      label: "Cancel",
+      onClick: () => setOpen(false),
+      variant: "outline" as const,
+      disabled: isLoading
+    },
+    {
+      label: isLoading ? "Adding..." : "Add Payment",
+      onClick: handleSubmitClick,
+      disabled: isLoading || !amount.trim(),
+      loading: isLoading
+    }
+  ];
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button size="sm" className="gap-2">
-          <Plus className="h-4 w-4" />
-          Add
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Add Payment</DialogTitle>
-        </DialogHeader>
-        
-        <form onSubmit={handleSubmit} className="space-y-4">
+    <>
+      <Button size="sm" className="gap-2" onClick={() => setOpen(true)}>
+        <Plus className="h-4 w-4" />
+        Add
+      </Button>
+
+      <AppSheetModal
+        title="Add Payment"
+        isOpen={open}
+        onOpenChange={setOpen}
+        size="content"
+        dirty={isDirty}
+        onDirtyClose={handleDirtyClose}
+        footerActions={footerActions}
+      >
+        <div className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="amount">Amount (TRY) *</Label>
             <Input
@@ -161,22 +196,8 @@ export function AddPaymentDialog({ projectId, onPaymentAdded }: AddPaymentDialog
               </Popover>
             </div>
           )}
-
-          <div className="flex gap-2 pt-4">
-            <Button type="submit" disabled={isLoading} className="flex-1">
-              {isLoading ? "Adding..." : "Add Payment"}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setOpen(false)}
-              disabled={isLoading}
-            >
-              Cancel
-            </Button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+        </div>
+      </AppSheetModal>
+    </>
   );
 }

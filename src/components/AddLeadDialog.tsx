@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AppSheetModal } from "@/components/ui/app-sheet-modal";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -77,9 +77,7 @@ const AddLeadDialog = ({ onLeadAdded }: AddLeadDialogProps) => {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  const handleSubmit = async () => {
     if (!(await validateForm())) return;
     
     setLoading(true);
@@ -143,22 +141,60 @@ const AddLeadDialog = ({ onLeadAdded }: AddLeadDialogProps) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const isDirty = Boolean(
+    formData.name.trim() || 
+    formData.email.trim() || 
+    formData.phone.trim() || 
+    formData.notes.trim()
+  );
+
+  const handleDirtyClose = () => {
+    if (window.confirm("Discard changes?")) {
+      const defaultStatus = leadStatuses.length > 0 ? leadStatuses[0].name : "";
+      setFormData({
+        name: "",
+        email: "",
+        phone: "",
+        notes: "",
+        status: defaultStatus,
+      });
+      setErrors({});
+      setOpen(false);
+    }
+  };
+
+  const footerActions = [
+    {
+      label: "Cancel",
+      onClick: () => setOpen(false),
+      variant: "outline" as const,
+      disabled: loading
+    },
+    {
+      label: loading ? "Adding..." : "Add Lead",
+      onClick: handleSubmit,
+      disabled: loading || !formData.name.trim(),
+      loading: loading
+    }
+  ];
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button size="sm">
-          <Plus className="h-4 w-4 mr-2" />
-          Add Lead
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Add New Lead</DialogTitle>
-          <DialogDescription>
-            Add a new potential client to your CRM. Fill in their details below.
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+    <>
+      <Button size="sm" onClick={() => setOpen(true)}>
+        <Plus className="h-4 w-4 mr-2" />
+        Add Lead
+      </Button>
+
+      <AppSheetModal
+        title="Add New Lead"
+        isOpen={open}
+        onOpenChange={setOpen}
+        size="default"
+        dirty={isDirty}
+        onDirtyClose={handleDirtyClose}
+        footerActions={footerActions}
+      >
+        <div className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="name">Name *</Label>
             <Input
@@ -221,7 +257,6 @@ const AddLeadDialog = ({ onLeadAdded }: AddLeadDialogProps) => {
             </Select>
           </div>
           
-          
           <div className="space-y-2">
             <Label htmlFor="notes">Notes</Label>
             <Textarea
@@ -234,18 +269,9 @@ const AddLeadDialog = ({ onLeadAdded }: AddLeadDialogProps) => {
             />
             {errors.notes && <p className="text-sm text-destructive">{errors.notes}</p>}
           </div>
-          
-          <div className="flex justify-end space-x-2 pt-4">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? "Adding..." : "Add Lead"}
-            </Button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+        </div>
+      </AppSheetModal>
+    </>
   );
 };
 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AppSheetModal } from "@/components/ui/app-sheet-modal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -92,8 +92,7 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
     setIsNewLead(false);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
 
     if (!projectData.name.trim()) {
       toast({
@@ -251,265 +250,278 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
     );
   };
 
+  const isDirty = Boolean(
+    projectData.name.trim() ||
+    projectData.description.trim() ||
+    projectData.basePrice.trim() ||
+    (isNewLead && (newLeadData.name.trim() || newLeadData.email.trim() || newLeadData.phone.trim() || newLeadData.notes.trim())) ||
+    (!isNewLead && selectedLeadId)
+  );
+
+  const handleDirtyClose = () => {
+    if (window.confirm("Discard changes?")) {
+      resetForm();
+      setOpen(false);
+    }
+  };
+
+  const footerActions = [
+    {
+      label: "Cancel",
+      onClick: () => {
+        resetForm();
+        setOpen(false);
+      },
+      variant: "outline" as const,
+      disabled: loading
+    },
+    {
+      label: loading ? "Creating..." : "Create Project",
+      onClick: handleSubmit,
+      disabled: loading || !projectData.name.trim() || (!isNewLead && !selectedLeadId) || (isNewLead && !newLeadData.name.trim()) || !projectData.projectTypeId,
+      loading: loading
+    }
+  ];
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {children || (
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Project
-          </Button>
-        )}
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Create New Project</DialogTitle>
-          <DialogDescription>
-            Create a project for an existing client or add a new client
-          </DialogDescription>
-        </DialogHeader>
-        
-        <form onSubmit={handleSubmit}>
-          <div className="grid gap-4 py-4">
-            {/* Lead Selection */}
-            <div className="space-y-4">
-              <div className="flex items-center space-x-2">
-                <input
-                  type="radio"
-                  id="existing-lead"
-                  name="lead-type"
-                  checked={!isNewLead}
-                  onChange={() => setIsNewLead(false)}
-                  className="h-4 w-4"
-                />
-                <Label htmlFor="existing-lead">Select existing client</Label>
-              </div>
-              
-              {!isNewLead && (
-                <div className="space-y-2">
-                  <Label htmlFor="lead-search">Select client</Label>
-                  <Popover open={dropdownOpen} onOpenChange={setDropdownOpen}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        role="combobox"
-                        aria-expanded={dropdownOpen}
-                        className="w-full justify-between text-left h-auto min-h-[40px]"
-                        disabled={loadingLeads}
-                      >
-                        {selectedLeadId ? (
-                          <div className="flex items-center justify-between w-full">
-                            <div className="flex flex-col">
-                              <span className="font-medium">{leads.find(lead => lead.id === selectedLeadId)?.name}</span>
-                              {leads.find(lead => lead.id === selectedLeadId)?.email && (
-                                <span className="text-xs text-muted-foreground">{leads.find(lead => lead.id === selectedLeadId)?.email}</span>
-                              )}
-                            </div>
-                            {leads.find(lead => lead.id === selectedLeadId) && 
-                              getStatusBadge(leads.find(lead => lead.id === selectedLeadId)?.status || '')
-                            }
+    <>
+      {children ? (
+        <div onClick={() => setOpen(true)}>
+          {children}
+        </div>
+      ) : (
+        <Button onClick={() => setOpen(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          Add Project
+        </Button>
+      )}
+
+      <AppSheetModal
+        title="Create New Project"
+        isOpen={open}
+        onOpenChange={setOpen}
+        size="lg"
+        dirty={isDirty}
+        onDirtyClose={handleDirtyClose}
+        footerActions={footerActions}
+      >
+        <div className="grid gap-4">
+          {/* Lead Selection */}
+          <div className="space-y-4">
+            <div className="flex items-center space-x-2">
+              <input
+                type="radio"
+                id="existing-lead"
+                name="lead-type"
+                checked={!isNewLead}
+                onChange={() => setIsNewLead(false)}
+                className="h-4 w-4"
+              />
+              <Label htmlFor="existing-lead">Select existing client</Label>
+            </div>
+            
+            {!isNewLead && (
+              <div className="space-y-2">
+                <Label htmlFor="lead-search">Select client</Label>
+                <Popover open={dropdownOpen} onOpenChange={setDropdownOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={dropdownOpen}
+                      className="w-full justify-between text-left h-auto min-h-[40px]"
+                      disabled={loadingLeads}
+                    >
+                      {selectedLeadId ? (
+                        <div className="flex items-center justify-between w-full">
+                          <div className="flex flex-col">
+                            <span className="font-medium">{leads.find(lead => lead.id === selectedLeadId)?.name}</span>
+                            {leads.find(lead => lead.id === selectedLeadId)?.email && (
+                              <span className="text-xs text-muted-foreground">{leads.find(lead => lead.id === selectedLeadId)?.email}</span>
+                            )}
                           </div>
-                        ) : loadingLeads ? (
-                          "Loading clients..."
+                          {leads.find(lead => lead.id === selectedLeadId) && 
+                            getStatusBadge(leads.find(lead => lead.id === selectedLeadId)?.status || '')
+                          }
+                        </div>
+                      ) : loadingLeads ? (
+                        "Loading clients..."
+                      ) : (
+                        "Search and select a client..."
+                      )}
+                      <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-full p-0 z-50 bg-popover" align="start">
+                    <div className="p-3 border-b">
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                        <Input
+                          placeholder="Search by name or email..."
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          className="pl-10"
+                          autoFocus
+                        />
+                      </div>
+                    </div>
+                    <div className="max-h-64 overflow-y-auto">
+                      <div className="py-1">
+                        {loadingLeads ? (
+                          <div className="p-4 text-center text-sm text-muted-foreground">
+                            Loading clients...
+                          </div>
+                        ) : filteredLeads.length === 0 ? (
+                          <div className="p-4 text-center text-sm text-muted-foreground">
+                            {searchTerm ? 'No clients match your search' : 'No clients found'}
+                          </div>
                         ) : (
-                          "Search and select a client..."
-                        )}
-                        <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-full p-0 z-50 bg-popover" align="start">
-                      <div className="p-3 border-b">
-                        <div className="relative">
-                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                          <Input
-                            placeholder="Search by name or email..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="pl-10"
-                            autoFocus
-                          />
-                        </div>
-                      </div>
-                      <div className="max-h-64 overflow-y-auto">
-                        <div className="py-1">
-                          {loadingLeads ? (
-                            <div className="p-4 text-center text-sm text-muted-foreground">
-                              Loading clients...
-                            </div>
-                          ) : filteredLeads.length === 0 ? (
-                            <div className="p-4 text-center text-sm text-muted-foreground">
-                              {searchTerm ? 'No clients match your search' : 'No clients found'}
-                            </div>
-                          ) : (
-                            filteredLeads.map((lead) => (
-                              <div
-                                key={lead.id}
-                                onClick={() => {
-                                  setSelectedLeadId(lead.id);
-                                  setDropdownOpen(false);
-                                  setSearchTerm("");
-                                }}
-                                className={cn(
-                                  "flex items-center justify-between p-3 hover:bg-muted/50 cursor-pointer border-b last:border-b-0",
-                                  selectedLeadId === lead.id && "bg-muted"
-                                )}
-                              >
-                                <div className="flex items-center space-x-3">
-                                  <Check
-                                    className={cn(
-                                      "h-4 w-4",
-                                      selectedLeadId === lead.id ? "opacity-100" : "opacity-0"
-                                    )}
-                                  />
-                                  <div className="flex flex-col">
-                                    <span className="font-medium">{lead.name}</span>
-                                    {lead.email && (
-                                      <span className="text-xs text-muted-foreground">{lead.email}</span>
-                                    )}
-                                  </div>
+                          filteredLeads.map((lead) => (
+                            <div
+                              key={lead.id}
+                              onClick={() => {
+                                setSelectedLeadId(lead.id);
+                                setDropdownOpen(false);
+                                setSearchTerm("");
+                              }}
+                              className={cn(
+                                "flex items-center justify-between p-3 hover:bg-muted/50 cursor-pointer border-b last:border-b-0",
+                                selectedLeadId === lead.id && "bg-muted"
+                              )}
+                            >
+                              <div className="flex items-center space-x-3">
+                                <Check
+                                  className={cn(
+                                    "h-4 w-4",
+                                    selectedLeadId === lead.id ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                <div className="flex flex-col">
+                                  <span className="font-medium">{lead.name}</span>
+                                  {lead.email && (
+                                    <span className="text-xs text-muted-foreground">{lead.email}</span>
+                                  )}
                                 </div>
-                                {getStatusBadge(lead.status)}
                               </div>
-                            ))
-                          )}
-                        </div>
+                              {getStatusBadge(lead.status)}
+                            </div>
+                          ))
+                        )}
                       </div>
-                    </PopoverContent>
-                  </Popover>
-                </div>
-              )}
-
-              <div className="flex items-center space-x-2">
-                <input
-                  type="radio"
-                  id="new-lead"
-                  name="lead-type"
-                  checked={isNewLead}
-                  onChange={() => setIsNewLead(true)}
-                  className="h-4 w-4"
-                />
-                <Label htmlFor="new-lead">Create new client</Label>
+                    </div>
+                  </PopoverContent>
+                </Popover>
               </div>
+            )}
 
-              {isNewLead && (
-                <div className="space-y-3 pl-6 border-l-2 border-muted">
-                  <div className="space-y-2">
-                    <Label htmlFor="new-name">Name *</Label>
-                    <Input
-                      id="new-name"
-                      value={newLeadData.name}
-                      onChange={(e) => handleNewLeadDataChange("name", e.target.value)}
-                      placeholder="Enter client name"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="new-email">Email</Label>
-                    <Input
-                      id="new-email"
-                      type="email"
-                      value={newLeadData.email}
-                      onChange={(e) => handleNewLeadDataChange("email", e.target.value)}
-                      placeholder="Enter email address"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="new-phone">Phone</Label>
-                    <Input
-                      id="new-phone"
-                      value={newLeadData.phone}
-                      onChange={(e) => handleNewLeadDataChange("phone", e.target.value)}
-                      placeholder="Enter phone number"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="new-notes">Notes</Label>
-                    <Textarea
-                      id="new-notes"
-                      value={newLeadData.notes}
-                      onChange={(e) => handleNewLeadDataChange("notes", e.target.value)}
-                      placeholder="Any additional notes..."
-                      rows={2}
-                    />
-                  </div>
-                </div>
-              )}
+            <div className="flex items-center space-x-2">
+              <input
+                type="radio"
+                id="new-lead"
+                name="lead-type"
+                checked={isNewLead}
+                onChange={() => setIsNewLead(true)}
+                className="h-4 w-4"
+              />
+              <Label htmlFor="new-lead">Create new client</Label>
             </div>
 
-            {/* Project Details */}
-            <div className="space-y-4 pt-4 border-t">
-              <div className="space-y-2">
-                <Label htmlFor="project-name">Project Name *</Label>
-                <Input
-                  id="project-name"
-                  value={projectData.name}
-                  onChange={(e) => handleProjectDataChange("name", e.target.value)}
-                  placeholder="Enter project name"
-                  disabled={loading}
-                />
+            {isNewLead && (
+              <div className="space-y-3 pl-6 border-l-2 border-muted">
+                <div className="space-y-2">
+                  <Label htmlFor="new-name">Name *</Label>
+                  <Input
+                    id="new-name"
+                    value={newLeadData.name}
+                    onChange={(e) => handleNewLeadDataChange("name", e.target.value)}
+                    placeholder="Enter client name"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="new-email">Email</Label>
+                  <Input
+                    id="new-email"
+                    type="email"
+                    value={newLeadData.email}
+                    onChange={(e) => handleNewLeadDataChange("email", e.target.value)}
+                    placeholder="Enter email address"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="new-phone">Phone</Label>
+                  <Input
+                    id="new-phone"
+                    value={newLeadData.phone}
+                    onChange={(e) => handleNewLeadDataChange("phone", e.target.value)}
+                    placeholder="Enter phone number"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="new-notes">Notes</Label>
+                  <Textarea
+                    id="new-notes"
+                    value={newLeadData.notes}
+                    onChange={(e) => handleNewLeadDataChange("notes", e.target.value)}
+                    placeholder="Any additional notes..."
+                    rows={2}
+                  />
+                </div>
               </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="project-type">Project Type *</Label>
-                <ProjectTypeSelector
-                  value={projectData.projectTypeId}
-                  onValueChange={(value) => handleProjectDataChange("projectTypeId", value)}
-                  disabled={loading}
-                  required
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="base-price">Base Price (TRY)</Label>
-                <Input
-                  id="base-price"
-                  type="number"
-                  step="1"
-                  min="0"
-                  value={projectData.basePrice}
-                  onChange={(e) => handleProjectDataChange("basePrice", e.target.value)}
-                  placeholder="0"
-                  disabled={loading}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="project-description">Description</Label>
-                <Textarea
-                  id="project-description"
-                  value={projectData.description}
-                  onChange={(e) => handleProjectDataChange("description", e.target.value)}
-                  placeholder="Enter project description (optional)"
-                  rows={3}
-                  disabled={loading}
-                  className="resize-none"
-                />
-              </div>
-            </div>
+            )}
           </div>
 
-          <div className="flex justify-end gap-2 pt-4 border-t">
-            <Button 
-              type="button"
-              variant="outline" 
-              onClick={() => {
-                resetForm();
-                setOpen(false);
-              }}
-              disabled={loading}
-            >
-              <X className="h-4 w-4 mr-2" />
-              Cancel
-            </Button>
-            <Button 
-              type="submit"
-              disabled={loading || !projectData.name.trim() || (!isNewLead && !selectedLeadId) || (isNewLead && !newLeadData.name.trim()) || !projectData.projectTypeId}
-            >
-              <Save className="h-4 w-4 mr-2" />
-              {loading ? "Creating..." : "Create Project"}
-            </Button>
+          {/* Project Details */}
+          <div className="space-y-4 pt-4 border-t">
+            <div className="space-y-2">
+              <Label htmlFor="project-name">Project Name *</Label>
+              <Input
+                id="project-name"
+                value={projectData.name}
+                onChange={(e) => handleProjectDataChange("name", e.target.value)}
+                placeholder="Enter project name"
+                disabled={loading}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="project-type">Project Type *</Label>
+              <ProjectTypeSelector
+                value={projectData.projectTypeId}
+                onValueChange={(value) => handleProjectDataChange("projectTypeId", value)}
+                disabled={loading}
+                required
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="base-price">Base Price (TRY)</Label>
+              <Input
+                id="base-price"
+                type="number"
+                step="1"
+                min="0"
+                value={projectData.basePrice}
+                onChange={(e) => handleProjectDataChange("basePrice", e.target.value)}
+                placeholder="0"
+                disabled={loading}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="project-description">Description</Label>
+              <Textarea
+                id="project-description"
+                value={projectData.description}
+                onChange={(e) => handleProjectDataChange("description", e.target.value)}
+                placeholder="Enter project description (optional)"
+                rows={3}
+                disabled={loading}
+                className="resize-none"
+              />
+            </div>
           </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+        </div>
+      </AppSheetModal>
+    </>
   );
 }

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AppSheetModal } from "@/components/ui/app-sheet-modal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -50,9 +50,7 @@ export function EditPaymentDialog({ payment, open, onOpenChange, onPaymentUpdate
     }
   }, [payment, open]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  const handleSubmit = async () => {
     if (!payment || !amount.trim()) {
       toast({
         title: "Error",
@@ -111,95 +109,111 @@ export function EditPaymentDialog({ payment, open, onOpenChange, onPaymentUpdate
 
   if (!payment) return null;
 
+  const isDirty = Boolean(
+    amount !== payment.amount.toString() ||
+    description !== (payment.description || "") ||
+    status !== payment.status ||
+    (status === 'paid' && datePaid?.toISOString().split('T')[0] !== payment.date_paid)
+  );
+
+  const handleDirtyClose = () => {
+    if (window.confirm("Discard changes?")) {
+      onOpenChange(false);
+    }
+  };
+
+  const footerActions = [
+    {
+      label: "Cancel",
+      onClick: () => onOpenChange(false),
+      variant: "outline" as const,
+      disabled: isLoading
+    },
+    {
+      label: isLoading ? "Updating..." : "Update Payment",
+      onClick: handleSubmit,
+      disabled: isLoading || !amount.trim(),
+      loading: isLoading
+    }
+  ];
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Edit Payment</DialogTitle>
-        </DialogHeader>
-        
-        <form onSubmit={handleSubmit} className="space-y-4">
+    <AppSheetModal
+      title="Edit Payment"
+      isOpen={open}
+      onOpenChange={onOpenChange}
+      size="content"
+      dirty={isDirty}
+      onDirtyClose={handleDirtyClose}
+      footerActions={footerActions}
+    >
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="amount">Amount (TRY) *</Label>
+          <Input
+            id="amount"
+            type="number"
+            step="0.01"
+            placeholder="0.00"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            required
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="description">Description</Label>
+          <Textarea
+            id="description"
+            placeholder="e.g., Deposit, Final Payment, Balance"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            rows={2}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="status">Payment Status</Label>
+          <Select value={status} onValueChange={(value: "paid" | "due") => setStatus(value)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="paid">Paid</SelectItem>
+              <SelectItem value="due">Due</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {status === 'paid' && (
           <div className="space-y-2">
-            <Label htmlFor="amount">Amount (TRY) *</Label>
-            <Input
-              id="amount"
-              type="number"
-              step="0.01"
-              placeholder="0.00"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              required
-            />
+            <Label>Date Paid</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal",
+                    !datePaid && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {datePaid ? format(datePaid, "PPP") : <span>Pick a date</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={datePaid}
+                  onSelect={setDatePaid}
+                  initialFocus
+                  className="p-3 pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
           </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              placeholder="e.g., Deposit, Final Payment, Balance"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={2}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="status">Payment Status</Label>
-            <Select value={status} onValueChange={(value: "paid" | "due") => setStatus(value)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="paid">Paid</SelectItem>
-                <SelectItem value="due">Due</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {status === 'paid' && (
-            <div className="space-y-2">
-              <Label>Date Paid</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !datePaid && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {datePaid ? format(datePaid, "PPP") : <span>Pick a date</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={datePaid}
-                    onSelect={setDatePaid}
-                    initialFocus
-                    className="p-3 pointer-events-auto"
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-          )}
-
-          <div className="flex gap-2 pt-4">
-            <Button type="submit" disabled={isLoading} className="flex-1">
-              {isLoading ? "Updating..." : "Update Payment"}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={isLoading}
-            >
-              Cancel
-            </Button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+        )}
+      </div>
+    </AppSheetModal>
   );
 }

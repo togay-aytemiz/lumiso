@@ -238,27 +238,31 @@ export function ProjectPaymentsSection({ projectId, onPaymentsUpdated, refreshTo
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Summary Metrics */}
-          <div className="grid grid-cols-3 gap-4">
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-2 mb-1">
-                <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                <span className="text-sm font-medium text-muted-foreground">Total paid</span>
+          <div className="grid grid-cols-3 gap-4 md:grid-cols-3">
+            {/* Mobile: Single column stack, Desktop: 3 columns */}
+            <div className="md:text-center col-span-3 md:col-span-1">
+              <div className="flex items-center gap-2 mb-1 md:justify-center">
+                <div className="w-2 h-2 rounded-full bg-green-500 shrink-0"></div>
+                <span className="text-sm font-medium text-muted-foreground flex-1 md:flex-none">Total paid</span>
+                <div className="text-lg font-semibold md:hidden">TRY {Math.round(totalPaid)}</div>
               </div>
-              <div className="text-xl font-semibold">TRY {Math.round(totalPaid)}</div>
+              <div className="text-xl font-semibold hidden md:block">TRY {Math.round(totalPaid)}</div>
             </div>
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-2 mb-1">
-                <div className="w-2 h-2 rounded-full bg-gray-500"></div>
-                <span className="text-sm font-medium text-muted-foreground">Extra services</span>
+            <div className="md:text-center col-span-3 md:col-span-1">
+              <div className="flex items-center gap-2 mb-1 md:justify-center">
+                <div className="w-2 h-2 rounded-full bg-gray-500 shrink-0"></div>
+                <span className="text-sm font-medium text-muted-foreground flex-1 md:flex-none">Extra services</span>
+                <div className="text-lg font-semibold md:hidden">TRY {Math.round(extraServices)}</div>
               </div>
-              <div className="text-xl font-semibold">TRY {Math.round(extraServices)}</div>
+              <div className="text-xl font-semibold hidden md:block">TRY {Math.round(extraServices)}</div>
             </div>
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-2 mb-1">
-                <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
-                <span className="text-sm font-medium text-muted-foreground">Remaining balance</span>
+            <div className="md:text-center col-span-3 md:col-span-1">
+              <div className="flex items-center gap-2 mb-1 md:justify-center">
+                <div className="w-2 h-2 rounded-full bg-yellow-500 shrink-0"></div>
+                <span className="text-sm font-medium text-muted-foreground flex-1 md:flex-none">Remaining balance</span>
+                <div className="text-lg font-semibold md:hidden">TRY {Math.round(remainingBalance)}</div>
               </div>
-              <div className="text-xl font-semibold">TRY {Math.round(remainingBalance)}</div>
+              <div className="text-xl font-semibold hidden md:block">TRY {Math.round(remainingBalance)}</div>
             </div>
           </div>
 
@@ -278,60 +282,117 @@ export function ProjectPaymentsSection({ projectId, onPaymentsUpdated, refreshTo
               {payments.map((payment) => (
                 <div 
                   key={payment.id} 
-                  className={`flex items-center justify-between p-3 border rounded-lg transition-colors ${
+                  className={`border rounded-lg transition-colors ${
                     payment.type === 'base_price' 
                       ? 'bg-muted/30 border-muted-foreground/20' 
                       : 'hover:bg-muted/50'
                   }`}
                 >
-                  <div className="flex items-center gap-4 flex-1">
-                    <div className="min-w-0">
-                      <div className="font-medium">
+                  {/* Desktop Layout */}
+                  <div className="hidden md:flex items-center justify-between p-3">
+                    <div className="flex items-center gap-4 flex-1">
+                      <div className="min-w-0">
+                        <div className="font-medium">
+                          {payment.date_paid 
+                            ? format(new Date(payment.date_paid), "MMM d, yyyy")
+                            : format(new Date(payment.created_at), "MMM d, yyyy")
+                          }
+                        </div>
+                      </div>
+                      <div className="min-w-0">
+                        <div className="font-semibold">TRY {Math.round(payment.amount)}</div>
+                      </div>
+                      <div className="flex-1 min-w-0 flex items-center gap-2">
+                        <div className="text-sm text-muted-foreground truncate">
+                          {payment.description || "No description"}
+                        </div>
+                      </div>
+                      <div>
+                        <Badge 
+                          variant={payment.status === 'paid' ? 'default' : 'secondary'}
+                          className={payment.status === 'paid' ? 'bg-green-100 text-green-800 hover:bg-green-100' : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100'}
+                        >
+                          {payment.status === 'paid' ? 'Paid' : 'Due'}
+                        </Badge>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1 ml-4">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleEditPayment(payment)}
+                        className="h-8 w-8 p-0"
+                      >
+                        <Edit2 className="h-4 w-4" />
+                      </Button>
+                      {payment.type === 'manual' && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setPaymentToDelete(payment);
+                            setShowDeleteDialog(true);
+                          }}
+                          className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Mobile Layout */}
+                  <div className="md:hidden p-3 space-y-3">
+                    {/* Row 1: Date + Amount */}
+                    <div className="flex items-center justify-between">
+                      <div className="font-medium text-sm">
                         {payment.date_paid 
                           ? format(new Date(payment.date_paid), "MMM d, yyyy")
                           : format(new Date(payment.created_at), "MMM d, yyyy")
                         }
                       </div>
-                    </div>
-                    <div className="min-w-0">
                       <div className="font-semibold">TRY {Math.round(payment.amount)}</div>
                     </div>
-                    <div className="flex-1 min-w-0 flex items-center gap-2">
-                      <div className="text-sm text-muted-foreground truncate">
-                        {payment.description || "No description"}
+                    
+                    {/* Row 2: Description (if exists) */}
+                    {payment.description && (
+                      <div className="text-sm text-muted-foreground">
+                        {payment.description}
                       </div>
-                    </div>
-                    <div>
+                    )}
+                    
+                    {/* Row 3: Status + Actions */}
+                    <div className="flex items-center justify-between">
                       <Badge 
                         variant={payment.status === 'paid' ? 'default' : 'secondary'}
                         className={payment.status === 'paid' ? 'bg-green-100 text-green-800 hover:bg-green-100' : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100'}
                       >
                         {payment.status === 'paid' ? 'Paid' : 'Due'}
                       </Badge>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEditPayment(payment)}
+                          className="h-9 w-9 p-0"
+                        >
+                          <Edit2 className="h-4 w-4" />
+                        </Button>
+                        {payment.type === 'manual' && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setPaymentToDelete(payment);
+                              setShowDeleteDialog(true);
+                            }}
+                            className="h-9 w-9 p-0 text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-1 ml-4">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleEditPayment(payment)}
-                      className="h-8 w-8 p-0"
-                    >
-                      <Edit2 className="h-4 w-4" />
-                    </Button>
-                    {payment.type === 'manual' && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setPaymentToDelete(payment);
-                          setShowDeleteDialog(true);
-                        }}
-                        className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    )}
                   </div>
                 </div>
               ))}

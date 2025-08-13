@@ -232,12 +232,12 @@ const Analytics = () => {
   return (
     <div className="p-8">
       <div className="mb-6">
-        <div className="flex items-center justify-between">
-          <div>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex-shrink-0">
             <h1 className="text-3xl font-bold">Analytics</h1>
             <p className="text-muted-foreground">View insights and performance metrics</p>
           </div>
-          <div className="w-full max-w-lg min-w-[480px] ml-8">
+          <div className="w-full sm:max-w-lg min-w-0 flex-1">
             <GlobalSearch />
           </div>
         </div>

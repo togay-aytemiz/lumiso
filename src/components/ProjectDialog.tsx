@@ -1,13 +1,10 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { AppSheetModal } from "@/components/ui/app-sheet-modal";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Save, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "@/hooks/use-toast";
 import { ProjectTypeSelector } from "./ProjectTypeSelector";
 
 interface ProjectDialogProps {
@@ -23,18 +20,12 @@ export function ProjectDialog({ open, onOpenChange, leadId, onProjectCreated }: 
   const [projectTypeId, setProjectTypeId] = useState("");
   const [basePrice, setBasePrice] = useState("");
   const [isSaving, setIsSaving] = useState(false);
-  const { toast } = useToast();
 
   const resetForm = () => {
     setName("");
     setDescription("");
     setProjectTypeId("");
     setBasePrice("");
-  };
-
-  const handleCancel = () => {
-    resetForm();
-    onOpenChange(false);
   };
 
   const handleSave = async () => {
@@ -125,93 +116,94 @@ export function ProjectDialog({ open, onOpenChange, leadId, onProjectCreated }: 
     }
   };
 
+  const isDirty = Boolean(name.trim() || description.trim() || projectTypeId || basePrice.trim());
+
+  const handleDirtyClose = () => {
+    if (window.confirm("Discard changes?")) {
+      resetForm();
+      onOpenChange(false);
+    }
+  };
+
+  const footerActions = [
+    {
+      label: "Cancel",
+      onClick: () => {
+        resetForm();
+        onOpenChange(false);
+      },
+      variant: "outline" as const,
+      disabled: isSaving
+    },
+    {
+      label: isSaving ? "Creating..." : "Create Project",
+      onClick: handleSave,
+      disabled: isSaving || !name.trim() || !projectTypeId,
+      loading: isSaving
+    }
+  ];
+
   return (
-    <Dialog 
-      open={open} 
-      onOpenChange={(newOpen) => {
-        if (!newOpen && !isSaving) {
-          handleCancel();
-        }
-      }}
+    <AppSheetModal
+      title="ADD PROJECT"
+      isOpen={open}
+      onOpenChange={onOpenChange}
+      dirty={isDirty}
+      onDirtyClose={handleDirtyClose}
+      footerActions={footerActions}
     >
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Add New Project</DialogTitle>
-        </DialogHeader>
-        
-          <div className="-mx-2">
-            <ScrollArea className="max-h-[60vh]">
-              <div className="px-2 space-y-4 pt-2 pb-2">
-                <div className="space-y-2">
-                  <Label htmlFor="project-name">Project Name *</Label>
-                  <Input
-                    id="project-name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Enter project name"
-                    disabled={isSaving}
-                    autoFocus
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="project-type">Project Type *</Label>
-                  <ProjectTypeSelector
-                    value={projectTypeId}
-                    onValueChange={setProjectTypeId}
-                    disabled={isSaving}
-                    required
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="base-price">Base Price (TRY)</Label>
-                  <Input
-                    id="base-price"
-                    type="number"
-                    step="1"
-                    min="0"
-                    value={basePrice}
-                    onChange={(e) => setBasePrice(e.target.value)}
-                    placeholder="0"
-                    disabled={isSaving}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="project-description">Description</Label>
-                  <Textarea
-                    id="project-description"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Enter project description (optional)"
-                    rows={4}
-                    disabled={isSaving}
-                    className="resize-none"
-                  />
-                </div>
-              </div>
-            </ScrollArea>
-          </div>
-        
-        <div className="flex justify-end gap-2 pt-4 border-t">
-          <Button 
-            variant="outline" 
-            onClick={handleCancel}
+      <div className="space-y-6">
+        <div className="space-y-2">
+          <Label htmlFor="project-name">Project Name *</Label>
+          <Input
+            id="project-name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Enter project name"
             disabled={isSaving}
-          >
-            <X className="h-4 w-4 mr-2" />
-            Cancel
-          </Button>
-          <Button 
-            onClick={handleSave}
-            disabled={isSaving || !name.trim() || !projectTypeId}
-          >
-            <Save className="h-4 w-4 mr-2" />
-            {isSaving ? "Creating..." : "Create Project"}
-          </Button>
+            autoFocus
+            className="rounded-xl border-2 border-primary/20 focus:border-primary"
+          />
         </div>
-      </DialogContent>
-    </Dialog>
+        
+        <div className="space-y-2">
+          <Label htmlFor="project-type">Project Type *</Label>
+          <ProjectTypeSelector
+            value={projectTypeId}
+            onValueChange={setProjectTypeId}
+            disabled={isSaving}
+            required
+          />
+        </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor="base-price">Base Price (TRY)</Label>
+          <Input
+            id="base-price"
+            type="number"
+            step="1"
+            min="0"
+            value={basePrice}
+            onChange={(e) => setBasePrice(e.target.value)}
+            placeholder="0"
+            disabled={isSaving}
+            className="rounded-xl border-2 border-primary/20 focus:border-primary"
+          />
+        </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor="project-description">Description</Label>
+          <Textarea
+            id="project-description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Enter project description (optional)"
+            rows={4}
+            disabled={isSaving}
+            className="resize-none rounded-xl border-2 border-primary/20 focus:border-primary"
+          />
+        </div>
+      </div>
+    </AppSheetModal>
   );
 }

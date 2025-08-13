@@ -11,6 +11,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { AddSessionStatusDialog, EditSessionStatusDialog } from "./settings/SessionStatusDialogs";
 import { cn } from "@/lib/utils";
 import SettingsSection from "./SettingsSection";
 

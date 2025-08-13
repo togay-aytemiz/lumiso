@@ -5,7 +5,7 @@ import { Plus, Trash2, ChevronDown, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { NewServiceDialog } from "./NewServiceDialog";
+import { AddServiceDialog, EditServiceDialog } from "./settings/ServiceDialogs";
 import SettingsSection from "./SettingsSection";
 
 interface Service {
@@ -211,14 +211,13 @@ const ServicesSection = () => {
         )}
       </SettingsSection>
 
-      <NewServiceDialog
+      <AddServiceDialog
         open={showNewServiceDialog}
         onOpenChange={handleDialogChange}
-        existingCategories={[
-          ...Object.keys(groupedServices).filter(cat => cat !== 'Uncategorized'),
-          ...newCategoriesAdded
-        ]}
-        onCategoryAdded={handleCategoryAdded}
+        onServiceAdded={() => {
+          queryClient.invalidateQueries({ queryKey: ['services'] });
+          handleDialogChange(false);
+        }}
       />
     </>
   );

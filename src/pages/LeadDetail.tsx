@@ -15,6 +15,8 @@ import ClientDetailsList from "@/components/ClientDetailsList";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import ScheduleSessionDialog from "@/components/ScheduleSessionDialog";
 import EditSessionDialog from "@/components/EditSessionDialog";
+import { EditLeadDialog } from "@/components/EditLeadDialog";
+import { ProjectDialog } from "@/components/ProjectDialog";
 import ActivitySection from "@/components/ActivitySection";
 import SessionBanner from "@/components/SessionBanner";
 import { ProjectsSection } from "@/components/ProjectsSection";
@@ -99,6 +101,7 @@ const LeadDetail = () => {
 
   // UI state for Lead Information card
   const [editOpen, setEditOpen] = useState(false);
+  const [showAddProjectDialog, setShowAddProjectDialog] = useState(false);
   const [notesExpanded, setNotesExpanded] = useState(false);
   const notesRef = useRef<HTMLDivElement>(null);
   const [isNotesTruncatable, setIsNotesTruncatable] = useState(false);
@@ -651,65 +654,16 @@ const LeadDetail = () => {
             </CardContent>
           </Card>
 
-          {/* Edit Lead Modal */}
-          <Dialog open={editOpen} onOpenChange={setEditOpen}>
-            <DialogContent className="sm:max-w-[480px]">
-              <DialogHeader>
-                <DialogTitle>Edit Lead</DialogTitle>
-                <DialogDescription>Update lead details below.</DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="edit-name">Name *</Label>
-                  <Input
-                    id="edit-name"
-                    value={formData.name}
-                    onChange={(e) => handleInputChange("name", e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-email">Email</Label>
-                  <Input
-                    id="edit-email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => handleInputChange("email", e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-phone">Phone</Label>
-                  <Input
-                    id="edit-phone"
-                    value={formData.phone}
-                    onChange={(e) => handleInputChange("phone", e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-notes">Notes</Label>
-                  <Textarea
-                    id="edit-notes"
-                    value={formData.notes}
-                    onChange={(e) => handleInputChange("notes", e.target.value)}
-                    rows={4}
-                  />
-                </div>
-                <div className="flex justify-end gap-2 pt-2">
-                  <Button variant="outline" type="button" onClick={() => setEditOpen(false)}>Cancel</Button>
-                  <Button
-                    type="button"
-                    onClick={async () => {
-                      await handleSave();
-                      setEditOpen(false);
-                    }}
-                    disabled={saving || !hasChanges}
-                  >
-                    {saving ? "Saving..." : "Save"}
-                  </Button>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
+          {/* Edit Lead Dialog */}
+          <EditLeadDialog
+            lead={lead}
+            open={editOpen}
+            onOpenChange={setEditOpen}
+            onLeadUpdated={() => {
+              fetchLead();
+              setActivityRefreshKey(prev => prev + 1);
+            }}
+          />
         </div>
 
         {/* Right column - Projects and Activity Section (75%) */}
@@ -721,6 +675,17 @@ const LeadDetail = () => {
             onActivityUpdated={handleActivityUpdated}
           />
           <ActivitySection key={activityRefreshKey} leadId={lead.id} leadName={lead.name} />
+
+          {/* Add Project Dialog */}
+          <ProjectDialog
+            open={showAddProjectDialog}
+            onOpenChange={setShowAddProjectDialog}
+            leadId={lead.id}
+            onProjectCreated={() => {
+              handleProjectUpdated();
+              setShowAddProjectDialog(false);
+            }}
+          />
 
           <div className="border border-destructive/20 bg-destructive/5 rounded-md p-4 max-w-full">
             <div className="space-y-3">

@@ -1,28 +1,24 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { AppSheetModal } from "@/components/ui/app-sheet-modal";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-import { leadSchema, sanitizeInput, sanitizeHtml } from "@/lib/validation";
-import { ZodError } from "zod";
-import { useUserSettings } from "@/hooks/useUserSettings";
-import { Edit } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Lead {
   id: string;
   name: string;
-  email: string | null;
-  phone: string | null;
-  notes: string | null;
+  email: string;
+  phone: string;
+  notes: string;
   status: string;
+  status_id?: string;
 }
 
 interface EditLeadDialogProps {
-  lead: Lead;
+  lead: Lead | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onLeadUpdated: () => void;
@@ -30,30 +26,37 @@ interface EditLeadDialogProps {
 
 export function EditLeadDialog({ lead, open, onOpenChange, onLeadUpdated }: EditLeadDialogProps) {
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
   const [leadStatuses, setLeadStatuses] = useState<any[]>([]);
-  const { settings: userSettings } = useUserSettings();
-  
   const [formData, setFormData] = useState({
-    name: lead.name,
-    email: lead.email || "",
-    phone: lead.phone || "",
-    notes: lead.notes || "",
-    status: lead.status,
+    name: "",
+    email: "",
+    phone: "",
+    notes: "",
+    status: ""
+  });
+
+  const [initialFormData, setInitialFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    notes: "",
+    status: ""
   });
 
   useEffect(() => {
-    if (open) {
-      fetchLeadStatuses();
-      setFormData({
-        name: lead.name,
+    if (lead && open) {
+      const newFormData = {
+        name: lead.name || "",
         email: lead.email || "",
         phone: lead.phone || "",
         notes: lead.notes || "",
-        status: lead.status,
-      });
+        status: lead.status || ""
+      };
+      setFormData(newFormData);
+      setInitialFormData(newFormData);
+      fetchLeadStatuses();
     }
-  }, [open, lead]);
+  }, [lead, open]);
 
   const fetchLeadStatuses = async () => {
     try {
@@ -69,54 +72,38 @@ export function EditLeadDialog({ lead, open, onOpenChange, onLeadUpdated }: Edit
     }
   };
 
-  const validateForm = async () => {
-    setErrors({});
-    
-    try {
-      await leadSchema.parseAsync({
-        name: sanitizeInput(formData.name),
-        email: formData.email ? sanitizeInput(formData.email) : undefined,
-        phone: formData.phone ? sanitizeInput(formData.phone) : undefined,
-        notes: formData.notes ? await sanitizeHtml(formData.notes) : undefined
-      });
-      return true;
-    } catch (error) {
-      if (error instanceof ZodError) {
-        const newErrors: Record<string, string> = {};
-        error.issues.forEach((err) => {
-          const field = err.path[0] as string;
-          newErrors[field] = err.message;
-        });
-        setErrors(newErrors);
-      }
-      return false;
-    }
-  };
-
   const handleSubmit = async () => {
-    if (!(await validateForm())) return;
-    
+    if (!lead || !formData.name.trim()) {
+      toast({
+        title: "Validation error",
+        description: "Name is required.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setLoading(true);
-
     try {
-      const leadData = {
-        name: sanitizeInput(formData.name),
-        email: formData.email ? sanitizeInput(formData.email) : null,
-        phone: formData.phone ? sanitizeInput(formData.phone) : null,
-        notes: formData.notes ? await sanitizeHtml(formData.notes) : null,
-        status: formData.status,
-      };
-
+      // Find the status ID for the selected status
+      const selectedStatus = leadStatuses.find(s => s.name === formData.status);
+      
       const { error } = await supabase
         .from('leads')
-        .update(leadData)
+        .update({
+          name: formData.name.trim(),
+          email: formData.email.trim() || null,
+          phone: formData.phone.trim() || null,
+          notes: formData.notes.trim() || null,
+          status: formData.status,
+          status_id: selectedStatus?.id || null
+        })
         .eq('id', lead.id);
 
       if (error) throw error;
 
       toast({
-        title: "Lead updated successfully",
-        description: `${formData.name} has been updated`
+        title: "Success",
+        description: "Lead updated successfully."
       });
 
       onOpenChange(false);
@@ -132,17 +119,9 @@ export function EditLeadDialog({ lead, open, onOpenChange, onLeadUpdated }: Edit
     }
   };
 
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
+  if (!lead) return null;
 
-  const isDirty = Boolean(
-    formData.name !== lead.name ||
-    formData.email !== (lead.email || "") ||
-    formData.phone !== (lead.phone || "") ||
-    formData.notes !== (lead.notes || "") ||
-    formData.status !== lead.status
-  );
+  const isDirty = JSON.stringify(formData) !== JSON.stringify(initialFormData);
 
   const handleDirtyClose = () => {
     if (window.confirm("Discard changes?")) {
@@ -158,7 +137,7 @@ export function EditLeadDialog({ lead, open, onOpenChange, onLeadUpdated }: Edit
       disabled: loading
     },
     {
-      label: loading ? "Updating..." : "Update Lead",
+      label: loading ? "Saving..." : "Save",
       onClick: handleSubmit,
       disabled: loading || !formData.name.trim(),
       loading: loading
@@ -167,88 +146,80 @@ export function EditLeadDialog({ lead, open, onOpenChange, onLeadUpdated }: Edit
 
   return (
     <AppSheetModal
-      title="Edit Lead"
+      title="EDIT LEAD"
       isOpen={open}
       onOpenChange={onOpenChange}
-      size="default"
       dirty={isDirty}
       onDirtyClose={handleDirtyClose}
       footerActions={footerActions}
     >
-      <div className="space-y-4">
+      <div className="space-y-6">
         <div className="space-y-2">
           <Label htmlFor="name">Name *</Label>
           <Input
             id="name"
             value={formData.name}
-            onChange={(e) => handleInputChange("name", e.target.value)}
-            placeholder="Client's full name"
-            maxLength={100}
-            required
+            onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+            placeholder="Lead name"
+            className="rounded-xl border-2 border-primary/20 focus:border-primary"
           />
-          {errors.name && <p className="text-sm text-destructive">{errors.name}</p>}
         </div>
-        
+
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
           <Input
             id="email"
             type="email"
             value={formData.email}
-            onChange={(e) => handleInputChange("email", e.target.value)}
-            placeholder="client@example.com"
-            maxLength={254}
+            onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+            placeholder="email@example.com"
+            className="rounded-xl border-2 border-primary/20 focus:border-primary"
           />
-          {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
         </div>
-        
+
         <div className="space-y-2">
           <Label htmlFor="phone">Phone</Label>
           <Input
             id="phone"
             value={formData.phone}
-            onChange={(e) => handleInputChange("phone", e.target.value)}
-            placeholder="(555) 123-4567"
-            maxLength={20}
+            onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+            placeholder="+90 555 123 4567"
+            className="rounded-xl border-2 border-primary/20 focus:border-primary"
           />
-          {errors.phone && <p className="text-sm text-destructive">{errors.phone}</p>}
         </div>
-        
+
         <div className="space-y-2">
           <Label htmlFor="status">Status</Label>
-          <Select value={formData.status} onValueChange={(value) => handleInputChange("status", value)}>
-            <SelectTrigger>
+          <Select value={formData.status} onValueChange={(value) => setFormData(prev => ({ ...prev, status: value }))}>
+            <SelectTrigger className="rounded-xl border-2 border-primary/20 focus:border-primary">
               <SelectValue placeholder="Select status" />
             </SelectTrigger>
             <SelectContent>
-              {leadStatuses
-                .filter(status => userSettings.show_quick_status_buttons || !status.is_system_final)
-                .map((status) => (
+              {leadStatuses.map((status) => (
                 <SelectItem key={status.id} value={status.name}>
                   <div className="flex items-center gap-2">
                     <div 
-                      className="w-2 h-2 rounded-full flex-shrink-0"
+                      className="w-3 h-3 rounded-full" 
                       style={{ backgroundColor: status.color }}
                     />
-                    <span>{status.name}</span>
+                    {status.name}
                   </div>
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
-        
+
         <div className="space-y-2">
           <Label htmlFor="notes">Notes</Label>
           <Textarea
             id="notes"
             value={formData.notes}
-            onChange={(e) => handleInputChange("notes", e.target.value)}
-            placeholder="Any additional notes about this lead..."
-            maxLength={1000}
-            rows={3}
+            onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+            placeholder="Additional notes about this lead"
+            rows={4}
+            className="rounded-xl border-2 border-primary/20 focus:border-primary resize-none"
           />
-          {errors.notes && <p className="text-sm text-destructive">{errors.notes}</p>}
         </div>
       </div>
     </AppSheetModal>

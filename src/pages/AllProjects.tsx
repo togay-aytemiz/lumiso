@@ -462,23 +462,23 @@ const AllProjects = () => {
       {/* Fixed header section */}
       <div className="flex-none p-8 pb-0">
         <div className="mb-6">
-          <div className="flex items-center justify-between gap-4 flex-wrap">
-            <div className="min-w-0">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex-shrink-0">
               <h1 className="text-3xl font-bold">Projects</h1>
               <p className="text-muted-foreground">Manage all your projects in one place</p>
             </div>
-            <div className="flex items-center gap-4 min-w-0 flex-1 justify-end">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full sm:w-auto">
               <EnhancedProjectDialog
                 onProjectCreated={() => {
                   fetchProjects();
                 }}
               >
-                <Button className="flex items-center gap-2">
+                <Button className="flex items-center gap-2 justify-center">
                   <Plus className="h-4 w-4" />
                   Add Project
                 </Button>
               </EnhancedProjectDialog>
-              <div className="w-full sm:max-w-lg min-w-0 flex-1">
+              <div className="w-full sm:max-w-lg min-w-0">
                 <GlobalSearch />
               </div>
             </div>

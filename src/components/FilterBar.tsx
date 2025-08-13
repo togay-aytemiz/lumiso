@@ -220,19 +220,7 @@ export function FilterBar({
               </Sheet>
             </div>
 
-            {/* Show Completed toggle for reminders (mobile) */}
-            {onShowCompletedChange && (
-              <div className="flex items-center justify-end gap-2">
-                <Label htmlFor="mobile-show-completed" className="text-sm text-muted-foreground">
-                  {showCompletedLabel}
-                </Label>
-                <Switch
-                  id="mobile-show-completed"
-                  checked={showCompleted || false}
-                  onCheckedChange={onShowCompletedChange}
-                />
-              </div>
-            )}
+            {/* Note: Show Completed toggle for reminders is now only in the sheet, not inline */}
           </div>
         ) : (
           // Desktop Layout

@@ -7,24 +7,24 @@ import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { Plus } from "lucide-react";
 
-interface AddLeadStatusDialogProps {
+interface AddProjectStageDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onStatusAdded: () => void;
+  onStageAdded: () => void;
 }
 
-export function AddLeadStatusDialog({ open, onOpenChange, onStatusAdded }: AddLeadStatusDialogProps) {
+export function AddProjectStageDialog({ open, onOpenChange, onStageAdded }: AddProjectStageDialogProps) {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
-    color: "#3B82F6",
+    color: "#EF4444",
   });
 
   const handleSubmit = async () => {
     if (!formData.name.trim()) {
       toast({
         title: "Error",
-        description: "Status name is required",
+        description: "Stage name is required",
         variant: "destructive"
       });
       return;
@@ -36,39 +36,37 @@ export function AddLeadStatusDialog({ open, onOpenChange, onStatusAdded }: AddLe
       if (!user) throw new Error('User not authenticated');
 
       // Get the next sort order
-      const { data: existingStatuses } = await supabase
-        .from('lead_statuses')
+      const { data: existingStages } = await supabase
+        .from('project_statuses')
         .select('sort_order')
         .eq('user_id', user.id)
         .order('sort_order', { ascending: false })
         .limit(1);
 
-      const nextSortOrder = (existingStatuses?.[0]?.sort_order || 0) + 1;
+      const nextSortOrder = (existingStages?.[0]?.sort_order || 0) + 1;
 
       const { error } = await supabase
-        .from('lead_statuses')
+        .from('project_statuses')
         .insert({
           user_id: user.id,
           name: formData.name.trim(),
           color: formData.color,
-          sort_order: nextSortOrder,
-          is_system_final: false,
-          is_default: false
+          sort_order: nextSortOrder
         });
 
       if (error) throw error;
 
       toast({
         title: "Success",
-        description: "Lead status added successfully"
+        description: "Project stage added successfully"
       });
 
-      setFormData({ name: "", color: "#3B82F6" });
+      setFormData({ name: "", color: "#EF4444" });
       onOpenChange(false);
-      onStatusAdded();
+      onStageAdded();
     } catch (error: any) {
       toast({
-        title: "Error adding lead status",
+        title: "Error adding project stage",
         description: error.message,
         variant: "destructive"
       });
@@ -77,11 +75,11 @@ export function AddLeadStatusDialog({ open, onOpenChange, onStatusAdded }: AddLe
     }
   };
 
-  const isDirty = Boolean(formData.name.trim() || formData.color !== "#3B82F6");
+  const isDirty = Boolean(formData.name.trim() || formData.color !== "#EF4444");
 
   const handleDirtyClose = () => {
     if (window.confirm("Discard changes?")) {
-      setFormData({ name: "", color: "#3B82F6" });
+      setFormData({ name: "", color: "#EF4444" });
       onOpenChange(false);
     }
   };
@@ -108,7 +106,7 @@ export function AddLeadStatusDialog({ open, onOpenChange, onStatusAdded }: AddLe
 
   return (
     <AppSheetModal
-      title="ADD STATUS"
+      title="ADD STAGE"
       isOpen={open}
       onOpenChange={onOpenChange}
       size="content"
@@ -123,15 +121,15 @@ export function AddLeadStatusDialog({ open, onOpenChange, onStatusAdded }: AddLe
             id="name"
             value={formData.name}
             onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-            placeholder="e.g. Qualified, Proposal Sent, Won"
+            placeholder="e.g. Inquiry, Post Production, Completed"
             maxLength={50}
             className="rounded-xl border-2 border-primary/20 focus:border-primary"
           />
-          <p className="text-sm text-muted-foreground">Organise your lead workflow in statuses.</p>
+          <p className="text-sm text-muted-foreground">Organise your workflow in stages.</p>
         </div>
 
         <div className="space-y-3">
-          <Label>Status Color</Label>
+          <Label>Stage Color</Label>
           <div className="grid grid-cols-6 gap-3">
             {colorOptions.map((color) => (
               <button
@@ -153,34 +151,34 @@ export function AddLeadStatusDialog({ open, onOpenChange, onStatusAdded }: AddLe
   );
 }
 
-interface EditLeadStatusDialogProps {
-  status: any;
+interface EditProjectStageDialogProps {
+  stage: any;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onStatusUpdated: () => void;
+  onStageUpdated: () => void;
 }
 
-export function EditLeadStatusDialog({ status, open, onOpenChange, onStatusUpdated }: EditLeadStatusDialogProps) {
+export function EditProjectStageDialog({ stage, open, onOpenChange, onStageUpdated }: EditProjectStageDialogProps) {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
-    color: "#3B82F6",
+    color: "#EF4444",
   });
 
   useEffect(() => {
-    if (status && open) {
+    if (stage && open) {
       setFormData({
-        name: status.name,
-        color: status.color,
+        name: stage.name,
+        color: stage.color,
       });
     }
-  }, [status, open]);
+  }, [stage, open]);
 
   const handleSubmit = async () => {
     if (!formData.name.trim()) {
       toast({
         title: "Error",
-        description: "Status name is required",
+        description: "Stage name is required",
         variant: "destructive"
       });
       return;
@@ -189,25 +187,25 @@ export function EditLeadStatusDialog({ status, open, onOpenChange, onStatusUpdat
     setLoading(true);
     try {
       const { error } = await supabase
-        .from('lead_statuses')
+        .from('project_statuses')
         .update({
           name: formData.name.trim(),
           color: formData.color,
         })
-        .eq('id', status.id);
+        .eq('id', stage.id);
 
       if (error) throw error;
 
       toast({
         title: "Success",
-        description: "Lead status updated successfully"
+        description: "Project stage updated successfully"
       });
 
       onOpenChange(false);
-      onStatusUpdated();
+      onStageUpdated();
     } catch (error: any) {
       toast({
-        title: "Error updating lead status",
+        title: "Error updating project stage",
         description: error.message,
         variant: "destructive"
       });
@@ -216,11 +214,41 @@ export function EditLeadStatusDialog({ status, open, onOpenChange, onStatusUpdat
     }
   };
 
-  if (!status) return null;
+  const handleDelete = async () => {
+    if (!window.confirm("Are you sure you want to delete this stage?")) return;
+    
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('project_statuses')
+        .delete()
+        .eq('id', stage.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Project stage deleted successfully"
+      });
+
+      onOpenChange(false);
+      onStageUpdated();
+    } catch (error: any) {
+      toast({
+        title: "Error deleting project stage",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!stage) return null;
 
   const isDirty = Boolean(
-    formData.name !== status.name ||
-    formData.color !== status.color
+    formData.name !== stage.name ||
+    formData.color !== stage.color
   );
 
   const handleDirtyClose = () => {
@@ -229,42 +257,12 @@ export function EditLeadStatusDialog({ status, open, onOpenChange, onStatusUpdat
     }
   };
 
-  const handleDelete = async () => {
-    if (!window.confirm("Are you sure you want to delete this status?")) return;
-    
-    setLoading(true);
-    try {
-      const { error } = await supabase
-        .from('lead_statuses')
-        .delete()
-        .eq('id', status.id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Lead status deleted successfully"
-      });
-
-      onOpenChange(false);
-      onStatusUpdated();
-    } catch (error: any) {
-      toast({
-        title: "Error deleting lead status",
-        description: error.message,
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const footerActions = [
     {
       label: "Delete",
       onClick: handleDelete,
       variant: "destructive" as const,
-      disabled: loading || status.is_system_final
+      disabled: loading
     },
     {
       label: "Cancel",
@@ -287,7 +285,7 @@ export function EditLeadStatusDialog({ status, open, onOpenChange, onStatusUpdat
 
   return (
     <AppSheetModal
-      title="EDIT STATUS"
+      title="EDIT STAGE"
       isOpen={open}
       onOpenChange={onOpenChange}
       size="content"
@@ -302,49 +300,30 @@ export function EditLeadStatusDialog({ status, open, onOpenChange, onStatusUpdat
             id="name"
             value={formData.name}
             onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-            placeholder="e.g., Interested, Follow Up"
+            placeholder="e.g., Planning, In Progress, Completed"
             maxLength={50}
-            disabled={status.is_system_final}
             className="rounded-xl border-2 border-primary/20 focus:border-primary"
           />
-          {status.is_system_final && (
-            <p className="text-sm text-muted-foreground">System statuses cannot be renamed</p>
-          )}
         </div>
 
-        {status.is_system_final ? (
-          <div className="space-y-3">
-            <Label>Status Color</Label>
-            <div className="bg-muted/50 rounded-lg p-4 text-sm text-muted-foreground">
-              Color cannot be changed for system statuses. This ensures consistency with quick action buttons.
-            </div>
+        <div className="space-y-3">
+          <Label>Stage Color</Label>
+          <div className="grid grid-cols-6 gap-3">
+            {colorOptions.map((color) => (
+              <button
+                key={color}
+                type="button"
+                onClick={() => setFormData(prev => ({ ...prev, color }))}
+                className={`w-10 h-10 rounded-full border-4 transition-all ${
+                  formData.color === color 
+                    ? 'border-gray-900 scale-110' 
+                    : 'border-transparent hover:scale-105'
+                }`}
+                style={{ backgroundColor: color }}
+              />
+            ))}
           </div>
-        ) : (
-          <div className="space-y-3">
-            <Label>Status Color</Label>
-            <div className="grid grid-cols-6 gap-3">
-              {colorOptions.map((color) => (
-                <button
-                  key={color}
-                  type="button"
-                  onClick={() => setFormData(prev => ({ ...prev, color }))}
-                  className={`w-10 h-10 rounded-full border-4 transition-all ${
-                    formData.color === color 
-                      ? 'border-gray-900 scale-110' 
-                      : 'border-transparent hover:scale-105'
-                  }`}
-                  style={{ backgroundColor: color }}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {status.is_system_final && (
-          <div className="text-sm text-muted-foreground">
-            System statuses (Completed/Lost) cannot be deleted as they are required for lead management.
-          </div>
-        )}
+        </div>
       </div>
     </AppSheetModal>
   );

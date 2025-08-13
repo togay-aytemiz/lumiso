@@ -116,7 +116,7 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded }: AddServ
       disabled: loading
     },
     {
-      label: loading ? "Adding..." : "Add Service",
+      label: loading ? "Saving..." : "Save Service",
       onClick: handleSubmit,
       disabled: loading || !formData.name.trim(),
       loading: loading
@@ -125,7 +125,7 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded }: AddServ
 
   return (
     <AppSheetModal
-      title="Add Service"
+      title="New Service"
       isOpen={open}
       onOpenChange={onOpenChange}
       size="default"
@@ -134,52 +134,33 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded }: AddServ
       footerActions={footerActions}
     >
       <div className="space-y-4">
+        <p className="text-sm text-muted-foreground">Add a new photography service to your offerings.</p>
+        
         <div className="space-y-2">
-          <Label htmlFor="name">Service Name *</Label>
-          <Input
-            id="name"
-            value={formData.name}
-            onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-            placeholder="e.g., Photo Editing, Album Design"
-            maxLength={100}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="category">Category</Label>
+          <Label htmlFor="category">Category *</Label>
           <Input
             id="category"
             value={formData.category}
             onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-            placeholder="e.g., Photography, Editing, Products"
+            placeholder="Select or create a category"
             maxLength={50}
+            className="rounded-xl border-2 border-primary/20 focus:border-primary"
           />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="description">Description</Label>
-          <Textarea
-            id="description"
-            value={formData.description}
-            onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-            placeholder="Service description..."
-            rows={3}
+          <Label htmlFor="name">Name *</Label>
+          <Input
+            id="name"
+            value={formData.name}
+            onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+            placeholder="e.g., Wedding Album, Photo Prints"
+            maxLength={100}
+            className="rounded-xl border-2 border-primary/20 focus:border-primary"
           />
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="price">Price (TRY)</Label>
-            <Input
-              id="price"
-              type="number"
-              step="0.01"
-              value={formData.price}
-              onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}
-              placeholder="0.00"
-            />
-          </div>
-
+        <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="cost_price">Cost Price (TRY)</Label>
             <Input
@@ -205,15 +186,16 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded }: AddServ
           </div>
         </div>
 
-        <div className="flex items-center space-x-2">
-          <input
-            type="checkbox"
-            id="extra"
-            checked={formData.extra}
-            onChange={(e) => setFormData(prev => ({ ...prev, extra: e.target.checked }))}
-            className="h-4 w-4"
+        <div className="space-y-2">
+          <Label htmlFor="description">Description</Label>
+          <Textarea
+            id="description"
+            value={formData.description}
+            onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+            placeholder="Optional description of the service..."
+            rows={4}
+            className="resize-none"
           />
-          <Label htmlFor="extra">This is an extra/add-on service</Label>
         </div>
       </div>
     </AppSheetModal>

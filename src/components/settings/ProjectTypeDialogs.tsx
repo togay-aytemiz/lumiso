@@ -17,6 +17,7 @@ export function AddProjectTypeDialog({ open, onOpenChange, onTypeAdded }: AddPro
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
+    is_default: false,
   });
 
   const handleSubmit = async () => {
@@ -50,7 +51,7 @@ export function AddProjectTypeDialog({ open, onOpenChange, onTypeAdded }: AddPro
           user_id: user.id,
           name: formData.name.trim(),
           sort_order: nextSortOrder,
-          is_default: false
+          is_default: formData.is_default
         });
 
       if (error) throw error;
@@ -60,7 +61,7 @@ export function AddProjectTypeDialog({ open, onOpenChange, onTypeAdded }: AddPro
         description: "Project type added successfully"
       });
 
-      setFormData({ name: "" });
+      setFormData({ name: "", is_default: false });
       onOpenChange(false);
       onTypeAdded();
     } catch (error: any) {
@@ -74,11 +75,11 @@ export function AddProjectTypeDialog({ open, onOpenChange, onTypeAdded }: AddPro
     }
   };
 
-  const isDirty = Boolean(formData.name.trim());
+  const isDirty = Boolean(formData.name.trim() || formData.is_default);
 
   const handleDirtyClose = () => {
     if (window.confirm("Discard changes?")) {
-      setFormData({ name: "" });
+      setFormData({ name: "", is_default: false });
       onOpenChange(false);
     }
   };
@@ -91,7 +92,7 @@ export function AddProjectTypeDialog({ open, onOpenChange, onTypeAdded }: AddPro
       disabled: loading
     },
     {
-      label: loading ? "Adding..." : "Add Type",
+      label: loading ? "Adding..." : "Add",
       onClick: handleSubmit,
       disabled: loading || !formData.name.trim(),
       loading: loading
@@ -100,7 +101,7 @@ export function AddProjectTypeDialog({ open, onOpenChange, onTypeAdded }: AddPro
 
   return (
     <AppSheetModal
-      title="Add Project Type"
+      title="ADD TYPE"
       isOpen={open}
       onOpenChange={onOpenChange}
       size="content"
@@ -108,16 +109,32 @@ export function AddProjectTypeDialog({ open, onOpenChange, onTypeAdded }: AddPro
       onDirtyClose={handleDirtyClose}
       footerActions={footerActions}
     >
-      <div className="space-y-4">
+      <div className="space-y-6">
         <div className="space-y-2">
-          <Label htmlFor="name">Type Name *</Label>
+          <Label htmlFor="name">Name</Label>
           <Input
             id="name"
             value={formData.name}
             onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-            placeholder="e.g., Wedding, Portrait, Event"
+            placeholder="e.g. Corporate, Wedding, Portrait"
             maxLength={50}
+            className="rounded-xl border-2 border-primary/20 focus:border-primary"
           />
+          <p className="text-sm text-muted-foreground">Customize your project types to reflect the type of work you offer.</p>
+        </div>
+
+        <div className="flex items-center space-x-3">
+          <input
+            type="checkbox"
+            id="is_default"
+            checked={formData.is_default}
+            onChange={(e) => setFormData(prev => ({ ...prev, is_default: e.target.checked }))}
+            className="h-5 w-5 rounded border-2 border-primary/20 text-primary focus:ring-primary"
+          />
+          <div>
+            <Label htmlFor="is_default" className="text-sm font-medium">Set as default</Label>
+            <p className="text-sm text-muted-foreground">This type will be pre-selected when creating new projects.</p>
+          </div>
         </div>
       </div>
     </AppSheetModal>
@@ -135,12 +152,14 @@ export function EditProjectTypeDialog({ type, open, onOpenChange, onTypeUpdated 
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
+    is_default: false,
   });
 
   useEffect(() => {
     if (type && open) {
       setFormData({
         name: type.name,
+        is_default: type.is_default || false,
       });
     }
   }, [type, open]);
@@ -161,6 +180,7 @@ export function EditProjectTypeDialog({ type, open, onOpenChange, onTypeUpdated 
         .from('project_types')
         .update({
           name: formData.name.trim(),
+          is_default: formData.is_default,
         })
         .eq('id', type.id);
 
@@ -186,7 +206,7 @@ export function EditProjectTypeDialog({ type, open, onOpenChange, onTypeUpdated 
 
   if (!type) return null;
 
-  const isDirty = Boolean(formData.name !== type.name);
+  const isDirty = Boolean(formData.name !== type.name || formData.is_default !== (type.is_default || false));
 
   const handleDirtyClose = () => {
     if (window.confirm("Discard changes?")) {
@@ -194,7 +214,43 @@ export function EditProjectTypeDialog({ type, open, onOpenChange, onTypeUpdated 
     }
   };
 
+  const handleDelete = async () => {
+    if (!window.confirm("Are you sure you want to delete this project type?")) return;
+    
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('project_types')
+        .delete()
+        .eq('id', type.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Project type deleted successfully"
+      });
+
+      onOpenChange(false);
+      onTypeUpdated();
+    } catch (error: any) {
+      toast({
+        title: "Error deleting project type",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const footerActions = [
+    {
+      label: "Delete",
+      onClick: handleDelete,
+      variant: "destructive" as const,
+      disabled: loading
+    },
     {
       label: "Cancel",
       onClick: () => onOpenChange(false),
@@ -202,7 +258,7 @@ export function EditProjectTypeDialog({ type, open, onOpenChange, onTypeUpdated 
       disabled: loading
     },
     {
-      label: loading ? "Updating..." : "Update Type",
+      label: loading ? "Saving..." : "Save",
       onClick: handleSubmit,
       disabled: loading || !formData.name.trim(),
       loading: loading
@@ -211,7 +267,7 @@ export function EditProjectTypeDialog({ type, open, onOpenChange, onTypeUpdated 
 
   return (
     <AppSheetModal
-      title="Edit Project Type"
+      title="EDIT TYPE"
       isOpen={open}
       onOpenChange={onOpenChange}
       size="content"
@@ -219,16 +275,31 @@ export function EditProjectTypeDialog({ type, open, onOpenChange, onTypeUpdated 
       onDirtyClose={handleDirtyClose}
       footerActions={footerActions}
     >
-      <div className="space-y-4">
+      <div className="space-y-6">
         <div className="space-y-2">
-          <Label htmlFor="name">Type Name *</Label>
+          <Label htmlFor="name">Name</Label>
           <Input
             id="name"
             value={formData.name}
             onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
             placeholder="e.g., Wedding, Portrait, Event"
             maxLength={50}
+            className="rounded-xl border-2 border-primary/20 focus:border-primary"
           />
+        </div>
+
+        <div className="flex items-center space-x-3">
+          <input
+            type="checkbox"
+            id="is_default"
+            checked={formData.is_default}
+            onChange={(e) => setFormData(prev => ({ ...prev, is_default: e.target.checked }))}
+            className="h-5 w-5 rounded border-2 border-primary/20 text-primary focus:ring-primary"
+          />
+          <div>
+            <Label htmlFor="is_default" className="text-sm font-medium">Set as default</Label>
+            <p className="text-sm text-muted-foreground">This type will be pre-selected when creating new projects.</p>
+          </div>
         </div>
       </div>
     </AppSheetModal>

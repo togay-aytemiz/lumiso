@@ -45,8 +45,8 @@ const ProtectedRoute = () => {
       <div className="flex min-h-screen w-full">
         <AppSidebar />
         <main className="flex-1 flex flex-col">
-          <div className="md:hidden flex items-center justify-center h-16 px-4 pt-4">
-            <SidebarTrigger className="self-center" />
+          <div className="md:hidden flex items-center h-16 px-4 border-b bg-background">
+            <SidebarTrigger className="h-8 w-8 text-foreground hover:bg-muted" />
           </div>
           <div className="flex-1">
             <Outlet />

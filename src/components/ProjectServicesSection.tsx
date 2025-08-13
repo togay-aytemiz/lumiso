@@ -195,7 +195,7 @@ export function ProjectServicesSection({ projectId, onServicesUpdated }: Project
                 className="gap-2"
               >
                 <Plus className="h-4 w-4" />
-                Add Service
+                Add
               </Button>
             ) : (
               <Button

@@ -301,9 +301,9 @@ const NewSessionDialog = ({ onSessionScheduled }: NewSessionDialogProps) => {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm">
-          <Plus className="h-4 w-4 mr-2" />
-          Add Session
+        <Button size="sm" className="gap-2">
+          <Plus className="h-4 w-4" />
+          Add
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">

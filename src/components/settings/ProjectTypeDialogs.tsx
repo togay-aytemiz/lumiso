@@ -129,11 +129,14 @@ export function AddProjectTypeDialog({ open, onOpenChange, onTypeAdded }: AddPro
             id="is_default"
             checked={formData.is_default}
             onChange={(e) => setFormData(prev => ({ ...prev, is_default: e.target.checked }))}
-            className="h-5 w-5 rounded border-2 border-input accent-primary focus:ring-2 focus:ring-primary/20"
+            className="h-5 w-5 rounded border-2 border-input accent-primary focus:ring-2 focus:ring-primary/20 [&:checked]:text-white"
           />
-          <div>
+          <div 
+            className="cursor-pointer flex-1"
+            onClick={() => setFormData(prev => ({ ...prev, is_default: !prev.is_default }))}
+          >
             <Label htmlFor="is_default" className="text-sm font-medium cursor-pointer">Set as default</Label>
-            <p className="text-sm text-muted-foreground">This type will be pre-selected when creating new projects.</p>
+            <p className="text-sm text-muted-foreground cursor-pointer">This type will be pre-selected when creating new projects.</p>
           </div>
         </div>
       </div>
@@ -294,11 +297,14 @@ export function EditProjectTypeDialog({ type, open, onOpenChange, onTypeUpdated 
             id="is_default_edit"
             checked={formData.is_default}
             onChange={(e) => setFormData(prev => ({ ...prev, is_default: e.target.checked }))}
-            className="h-5 w-5 rounded border-2 border-input accent-primary focus:ring-2 focus:ring-primary/20"
+            className="h-5 w-5 rounded border-2 border-input accent-primary focus:ring-2 focus:ring-primary/20 [&:checked]:text-white"
           />
-          <div>
+          <div 
+            className="cursor-pointer flex-1"
+            onClick={() => setFormData(prev => ({ ...prev, is_default: !prev.is_default }))}
+          >
             <Label htmlFor="is_default_edit" className="text-sm font-medium cursor-pointer">Set as default</Label>
-            <p className="text-sm text-muted-foreground">This type will be pre-selected when creating new projects.</p>
+            <p className="text-sm text-muted-foreground cursor-pointer">This type will be pre-selected when creating new projects.</p>
           </div>
         </div>
       </div>

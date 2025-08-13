@@ -83,14 +83,14 @@ export function AppSheetModal({
           </div>
         </SheetHeader>
 
-        <div className="flex-1 overflow-y-auto py-6 px-6">
+        <div className="flex-1 overflow-y-auto py-6 px-1">
           <div className="space-y-4">
             {children}
           </div>
         </div>
 
         {footerActions.length > 0 && (
-          <SheetFooter className="border-t pt-4 gap-2 px-6">
+          <SheetFooter className="border-t pt-4 gap-2 px-1">
             {footerActions.map((action, index) => (
               <Button
                 key={index}

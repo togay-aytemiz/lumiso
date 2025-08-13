@@ -72,7 +72,7 @@ export function AppSidebar() {
   return (
     <Sidebar
       className="border-r border-sidebar-border hidden md:flex"
-      collapsible={isMobile ? "offcanvas" : "icon"}
+      collapsible="icon"
     >
       <SidebarHeader className="p-6">
         <h1 className="text-xl font-bold text-sidebar-foreground tracking-tight">

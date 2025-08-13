@@ -403,8 +403,8 @@ const ReminderDetails = () => {
         </div>
       </div>
 
-      {/* Mobile Filter Bar (≤768px only) */}
-      <div className="block md:hidden">
+      {/* Mobile Filter Bar (≤767px only) */}
+      <div className="md:hidden">
         <FilterBar
           quickFilters={quickFilters}
           activeQuickFilter={selectedFilter}
@@ -419,9 +419,9 @@ const ReminderDetails = () => {
         />
       </div>
 
-      {/* Desktop Filter Bar (≥769px only) */}
-      <div className="hidden md:block bg-background border-b">
-        <div className="px-4 sm:px-6 py-4">
+      {/* Desktop Filter Bar (≥768px only) */}
+      <div className="hidden md:flex bg-background border-b">
+        <div className="px-4 sm:px-6 py-4 w-full">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-2 flex-wrap">
               {allDateFilters.map((option) => (

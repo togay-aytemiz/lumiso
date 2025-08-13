@@ -363,8 +363,8 @@ const AllSessions = () => {
         </div>
       </div>
 
-      {/* Mobile Filter Bar (≤768px only) */}
-      <div className="block md:hidden">
+      {/* Mobile Filter Bar (≤767px only) */}
+      <div className="md:hidden">
         <FilterBar
           quickFilters={quickFilters}
           activeQuickFilter={dateFilter}
@@ -386,7 +386,7 @@ const AllSessions = () => {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                 <NewSessionDialog onSessionScheduled={fetchSessions} />
-                {/* Desktop Status Filter (≥769px only) */}
+                {/* Desktop Status Filter (≥768px only) */}
                 <div className="hidden md:flex flex-col sm:flex-row items-start sm:items-center gap-2">
                   <span className="text-sm text-muted-foreground whitespace-nowrap">Filter by status:</span>
                   <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -406,7 +406,7 @@ const AllSessions = () => {
             </div>
           </CardHeader>
           <CardContent>
-            {/* Desktop Date Filters (≥769px only) */}
+            {/* Desktop Date Filters (≥768px only) */}
             <div className="hidden md:block mb-6">
               <div className="flex flex-wrap gap-2">
                 <Button

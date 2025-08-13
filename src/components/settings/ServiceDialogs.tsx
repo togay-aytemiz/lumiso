@@ -94,7 +94,7 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded }: AddServ
   );
 
   const handleDirtyClose = () => {
-    if (window.confirm("Discard changes?")) {
+    if (window.confirm("Are you sure you want to discard your changes? Any unsaved information will be lost.")) {
       setFormData({
         name: "",
         description: "",
@@ -293,7 +293,7 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
   );
 
   const handleDirtyClose = () => {
-    if (window.confirm("Discard changes?")) {
+    if (window.confirm("Are you sure you want to discard your changes? Any unsaved information will be lost.")) {
       onOpenChange(false);
     }
   };
@@ -357,19 +357,7 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
           />
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="price">Price (TRY)</Label>
-            <Input
-              id="price"
-              type="number"
-              step="0.01"
-              value={formData.price}
-              onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}
-              placeholder="0.00"
-            />
-          </div>
-
+        <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="cost_price">Cost Price (TRY)</Label>
             <Input
@@ -393,17 +381,6 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
               placeholder="0.00"
             />
           </div>
-        </div>
-
-        <div className="flex items-center space-x-2">
-          <input
-            type="checkbox"
-            id="extra"
-            checked={formData.extra}
-            onChange={(e) => setFormData(prev => ({ ...prev, extra: e.target.checked }))}
-            className="h-4 w-4"
-          />
-          <Label htmlFor="extra">This is an extra/add-on service</Label>
         </div>
       </div>
     </AppSheetModal>

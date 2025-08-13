@@ -17,7 +17,7 @@ export function AddLeadStatusDialog({ open, onOpenChange, onStatusAdded }: AddLe
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
-    color: "#3B82F6",
+    color: "#64748B",
   });
 
   const handleSubmit = async () => {
@@ -63,7 +63,7 @@ export function AddLeadStatusDialog({ open, onOpenChange, onStatusAdded }: AddLe
         description: "Lead status added successfully"
       });
 
-      setFormData({ name: "", color: "#3B82F6" });
+      setFormData({ name: "", color: "#64748B" });
       onOpenChange(false);
       onStatusAdded();
     } catch (error: any) {
@@ -77,11 +77,11 @@ export function AddLeadStatusDialog({ open, onOpenChange, onStatusAdded }: AddLe
     }
   };
 
-  const isDirty = Boolean(formData.name.trim() || formData.color !== "#3B82F6");
+  const isDirty = Boolean(formData.name.trim() || formData.color !== "#64748B");
 
   const handleDirtyClose = () => {
-    if (window.confirm("Discard changes?")) {
-      setFormData({ name: "", color: "#3B82F6" });
+    if (window.confirm("Are you sure you want to discard your changes? Any unsaved information will be lost.")) {
+      setFormData({ name: "", color: "#64748B" });
       onOpenChange(false);
     }
   };
@@ -224,7 +224,7 @@ export function EditLeadStatusDialog({ status, open, onOpenChange, onStatusUpdat
   );
 
   const handleDirtyClose = () => {
-    if (window.confirm("Discard changes?")) {
+    if (window.confirm("Are you sure you want to discard your changes? Any unsaved information will be lost.")) {
       onOpenChange(false);
     }
   };

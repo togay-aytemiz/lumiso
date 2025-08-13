@@ -15,7 +15,7 @@ export function AddSessionStatusDialog({ open, onOpenChange, onStatusAdded }: Ad
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
-    color: "#3B82F6",
+    color: "#64748B",
   });
 
   const handleSubmit = async () => {
@@ -60,7 +60,7 @@ export function AddSessionStatusDialog({ open, onOpenChange, onStatusAdded }: Ad
         description: "Session stage added successfully"
       });
 
-      setFormData({ name: "", color: "#3B82F6" });
+      setFormData({ name: "", color: "#64748B" });
       onOpenChange(false);
       onStatusAdded();
     } catch (error: any) {
@@ -74,11 +74,11 @@ export function AddSessionStatusDialog({ open, onOpenChange, onStatusAdded }: Ad
     }
   };
 
-  const isDirty = Boolean(formData.name.trim() || formData.color !== "#3B82F6");
+  const isDirty = Boolean(formData.name.trim() || formData.color !== "#64748B");
 
   const handleDirtyClose = () => {
-    if (window.confirm("Discard changes?")) {
-      setFormData({ name: "", color: "#3B82F6" });
+    if (window.confirm("Are you sure you want to discard your changes? Any unsaved information will be lost.")) {
+      setFormData({ name: "", color: "#64748B" });
       onOpenChange(false);
     }
   };
@@ -129,7 +129,7 @@ export function AddSessionStatusDialog({ open, onOpenChange, onStatusAdded }: Ad
 
         <div className="space-y-3">
           <Label>Stage Color</Label>
-          <div className="grid grid-cols-6 gap-3 p-2">
+          <div className="grid grid-cols-6 gap-3 p-4">
             {colorOptions.map((color) => (
               <button
                 key={color}
@@ -221,7 +221,7 @@ export function EditSessionStatusDialog({ status, open, onOpenChange, onStatusUp
   );
 
   const handleDirtyClose = () => {
-    if (window.confirm("Discard changes?")) {
+    if (window.confirm("Are you sure you want to discard your changes? Any unsaved information will be lost.")) {
       onOpenChange(false);
     }
   };
@@ -308,24 +308,24 @@ export function EditSessionStatusDialog({ status, open, onOpenChange, onStatusUp
             disabled={isProtectedStatus}
             className="rounded-xl border-2 border-primary/20 focus:border-primary"
           />
-          {isProtectedStatus && (
-            <p className="text-sm text-muted-foreground">System stages cannot be renamed</p>
-          )}
+           {isProtectedStatus && (
+             <p className="text-sm text-muted-foreground">System stages cannot be renamed or change color but can be edited for text changes.</p>
+           )}
         </div>
 
-        <div className="space-y-3">
-          <Label>Stage Color</Label>
-          <div className="grid grid-cols-6 gap-3 p-2">
+          <div className="space-y-3">
+            <Label>Stage Color</Label>
+            <div className="grid grid-cols-6 gap-3 p-4">
             {colorOptions.map((color) => (
               <button
                 key={color}
                 type="button"
-                onClick={() => setFormData(prev => ({ ...prev, color }))}
-                className={`w-10 h-10 rounded-full border-4 transition-all ${
-                  formData.color === color 
-                    ? 'border-gray-900 scale-110' 
-                    : 'border-transparent hover:scale-105'
-                }`}
+                 onClick={() => !isProtectedStatus && setFormData(prev => ({ ...prev, color }))}
+                 className={`w-10 h-10 rounded-full border-4 transition-all ${
+                   formData.color === color 
+                     ? 'border-gray-900 scale-110' 
+                     : 'border-transparent hover:scale-105'
+                 } ${isProtectedStatus ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
                 style={{ backgroundColor: color }}
               />
             ))}

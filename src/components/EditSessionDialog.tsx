@@ -32,7 +32,7 @@ const EditSessionDialog = ({ sessionId, leadId, currentDate, currentTime, curren
     session_date: currentDate,
     session_time: currentTime,
     notes: currentNotes || "",
-    project_id: currentProjectId || ""
+    project_id: currentProjectId || "no-project"
   });
   const [projects, setProjects] = useState<{id: string, name: string}[]>([]);
   const { updateSessionEvent } = useCalendarSync();
@@ -62,7 +62,7 @@ const EditSessionDialog = ({ sessionId, leadId, currentDate, currentTime, curren
       session_date: currentDate,
       session_time: currentTime,
       notes: currentNotes || "",
-      project_id: currentProjectId || ""
+      project_id: currentProjectId || "no-project"
     });
   }, [currentDate, currentTime, currentNotes, currentProjectId]);
 
@@ -106,7 +106,7 @@ const EditSessionDialog = ({ sessionId, leadId, currentDate, currentTime, curren
           session_date: sanitizeInput(formData.session_date),
           session_time: sanitizeInput(formData.session_time),
           notes: formData.notes ? await sanitizeHtml(formData.notes) : null,
-          project_id: formData.project_id || null
+          project_id: formData.project_id === "no-project" ? null : formData.project_id || null
         })
         .eq('id', sessionId);
 
@@ -155,11 +155,11 @@ const EditSessionDialog = ({ sessionId, leadId, currentDate, currentTime, curren
     formData.session_date !== currentDate ||
     formData.session_time !== currentTime ||
     formData.notes !== (currentNotes || "") ||
-    formData.project_id !== (currentProjectId || "")
+    formData.project_id !== (currentProjectId || "no-project")
   );
 
   const handleDirtyClose = () => {
-    if (window.confirm("Discard changes?")) {
+    if (window.confirm("Are you sure you want to discard your changes? Any unsaved information will be lost.")) {
       if (onOpenChange) {
         onOpenChange(false);
       }
@@ -223,7 +223,7 @@ const EditSessionDialog = ({ sessionId, leadId, currentDate, currentTime, curren
               <SelectValue placeholder={projects.length === 0 ? "No projects available" : "Select a project"} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">No specific project</SelectItem>
+              <SelectItem value="no-project">No specific project</SelectItem>
               {projects.map((project) => (
                 <SelectItem key={project.id} value={project.id}>
                   {project.name}

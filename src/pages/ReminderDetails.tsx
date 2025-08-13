@@ -403,19 +403,52 @@ const ReminderDetails = () => {
         </div>
       </div>
 
-      {/* Filter Bar */}
-      <FilterBar
-        quickFilters={quickFilters}
-        activeQuickFilter={selectedFilter}
-        onQuickFilterChange={(filter) => setSelectedFilter(filter as FilterType)}
-        allDateFilters={allDateFilters}
-        activeDateFilter={selectedFilter}
-        onDateFilterChange={(filter) => setSelectedFilter(filter as FilterType)}
-        showCompleted={showCompleted}
-        onShowCompletedChange={setShowCompleted}
-        showCompletedLabel="Show Completed"
-        isSticky={true}
-      />
+      {/* Mobile Filter Bar (≤768px only) */}
+      <div className="md:hidden">
+        <FilterBar
+          quickFilters={quickFilters}
+          activeQuickFilter={selectedFilter}
+          onQuickFilterChange={(filter) => setSelectedFilter(filter as FilterType)}
+          allDateFilters={allDateFilters}
+          activeDateFilter={selectedFilter}
+          onDateFilterChange={(filter) => setSelectedFilter(filter as FilterType)}
+          showCompleted={showCompleted}
+          onShowCompletedChange={setShowCompleted}
+          showCompletedLabel="Show Completed"
+          isSticky={true}
+        />
+      </div>
+
+      {/* Desktop Filter Bar (≥769px only) */}
+      <div className="hidden md:block bg-background border-b">
+        <div className="px-4 sm:px-6 py-4">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2 flex-wrap">
+              {allDateFilters.map((option) => (
+                <Button
+                  key={option.key}
+                  variant={selectedFilter === option.key ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setSelectedFilter(option.key as FilterType)}
+                  className="whitespace-nowrap"
+                >
+                  {option.label} ({option.count})
+                </Button>
+              ))}
+            </div>
+            
+            {/* Show Completed Toggle */}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <CheckSquare className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground whitespace-nowrap">Show Completed</span>
+              <Switch
+                checked={showCompleted}
+                onCheckedChange={setShowCompleted}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Main Content */}
       <main className="p-4 sm:p-6">

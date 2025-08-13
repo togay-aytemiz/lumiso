@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { LayoutDashboard, Users, FolderOpen, CalendarRange, Calendar, CalendarDays, Bell, BarChart3, CreditCard, Settings, ChevronUp } from "lucide-react";
 
@@ -21,6 +21,23 @@ export function MobileStickyNav() {
   const [bookingsExpanded, setBookingsExpanded] = useState(false);
   const location = useLocation();
   const currentPath = location.pathname;
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setBookingsExpanded(false);
+      }
+    };
+
+    if (bookingsExpanded) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [bookingsExpanded]);
 
   const isActive = (path: string) => {
     if (path === "/") {
@@ -80,7 +97,7 @@ export function MobileStickyNav() {
         </NavLink>
 
         {/* Bookings Menu with Expandable Options */}
-        <div className="relative">
+        <div className="relative" ref={menuRef}>
           <button
             onClick={() => setBookingsExpanded(!bookingsExpanded)}
             className={`h-12 w-full flex items-center justify-center transition-colors ${

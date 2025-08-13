@@ -36,24 +36,23 @@ export default function ProjectDetailsLayout({ header, left, sections, rightFoot
       {/* Header */}
       <header className="mb-4">{header}</header>
 
-      <div className="grid grid-cols-12 gap-6 w-full">
+      <div className="grid grid-cols-12 gap-4 md:gap-6 w-full max-w-full overflow-hidden">
         {/* Left summary column */}
-        <aside className="col-span-12 lg:col-span-4">
-          <div className="h-fit min-w-[280px] space-y-4">
+        <aside className="col-span-12 lg:col-span-4 min-w-0">
+          <div className="h-fit space-y-4 w-full max-w-full">
             {left}
           </div>
         </aside>
 
         {/* Right detail column */}
-        <main className="col-span-12 lg:col-span-8">
-
-          <div className="space-y-8">
+        <main className="col-span-12 lg:col-span-8 min-w-0">
+          <div className="space-y-6 md:space-y-8 w-full max-w-full">
             {sections.map((s) => (
-              <section key={s.id} id={s.id} className="scroll-mt-[88px]">
-                <div>{s.content}</div>
+              <section key={s.id} id={s.id} className="scroll-mt-[88px] w-full max-w-full overflow-hidden">
+                <div className="w-full max-w-full">{s.content}</div>
               </section>
             ))}
-            {rightFooter ? <div>{rightFooter}</div> : null}
+            {rightFooter ? <div className="w-full max-w-full">{rightFooter}</div> : null}
           </div>
         </main>
       </div>

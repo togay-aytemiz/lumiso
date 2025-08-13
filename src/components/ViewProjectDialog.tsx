@@ -495,9 +495,10 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
     <>
       <Dialog open={open} onOpenChange={handleDialogOpenChange}>
         <DialogContent className={`${isFullscreen ? 'max-w-none w-[100vw] h-[100vh] m-0 rounded-none overflow-y-auto' : 'sm:max-w-5xl max-h-[85vh] overflow-y-auto'} overscroll-contain pr-2 [&>button]:hidden`}>
+          <div className="max-w-full overflow-x-hidden">
           <DialogHeader className="pb-4">
-            <div className="flex items-start justify-between">
-              <div className="flex-1 space-y-2">
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex-1 min-w-0 space-y-2">
                 {isEditing ? (
                     <div className="space-y-3">
                       <Input
@@ -547,26 +548,29 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
                 ) : (
                   <div className="space-y-2">
                     <div className="space-y-1">
-                      <div className="flex items-center gap-3 flex-wrap">
-                        <DialogTitle className="text-2xl font-bold leading-tight">{project?.name}</DialogTitle>
+                      <div className="space-y-2">
+                        <DialogTitle className="text-xl md:text-2xl font-bold leading-tight break-words">{project?.name}</DialogTitle>
                         
-                        {/* Project Status Badge - positioned next to project name */}
-                        <ProjectStatusBadge 
-                          projectId={project.id}
-                          currentStatusId={localStatusId || undefined}
-                          onStatusChange={() => {
-                            onProjectUpdated();
-                          }}
-                          editable={!isArchived}
-                          className="text-sm" // Made bigger
-                        />
-                        
-                        {/* Project Type Badge */}
-                        {projectType && (
-                          <Badge variant="outline" className="text-xs">
-                            {projectType.name.toUpperCase()}
-                          </Badge>
-                        )}
+                        {/* Badges row */}
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {/* Project Status Badge */}
+                          <ProjectStatusBadge 
+                            projectId={project.id}
+                            currentStatusId={localStatusId || undefined}
+                            onStatusChange={() => {
+                              onProjectUpdated();
+                            }}
+                            editable={!isArchived}
+                            className="text-sm"
+                          />
+                          
+                          {/* Project Type Badge */}
+                          {projectType && (
+                            <Badge variant="outline" className="text-xs">
+                              {projectType.name.toUpperCase()}
+                            </Badge>
+                          )}
+                        </div>
                       </div>
                       
                     </div>
@@ -579,7 +583,7 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
                 )}
               </div>
               
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 shrink-0">
                 {!isEditing && (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -587,9 +591,9 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
                         variant="ghost"
                         size="sm"
                         aria-label="More actions"
-                        className="text-muted-foreground hover:text-foreground h-10 px-3 gap-1"
+                        className="text-muted-foreground hover:text-foreground h-8 px-2 gap-1 md:h-10 md:px-3"
                       >
-                        <span className="text-sm">More</span>
+                        <span className="text-sm hidden md:inline">More</span>
                         <ChevronDown className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
@@ -618,7 +622,7 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
                   variant="ghost" 
                   size="sm" 
                   onClick={toggleFullscreen}
-                  className="text-muted-foreground hover:text-foreground h-10 w-10 p-0"
+                  className="text-muted-foreground hover:text-foreground h-8 w-8 p-0 md:h-10 md:w-10"
                 >
                   {isFullscreen ? (
                     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -634,9 +638,10 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
                   variant="ghost"
                   size="sm"
                   onClick={() => onOpenChange(false)}
-                  className="text-muted-foreground hover:text-foreground text-sm h-10 px-3"
+                  className="text-muted-foreground hover:text-foreground text-sm h-8 px-2 md:h-10 md:px-3"
                 >
-                  Close
+                  <span className="hidden md:inline">Close</span>
+                  <X className="h-4 w-4 md:hidden" />
                 </Button>
               </div>
             </div>
@@ -722,6 +727,7 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
                 </div>
               }
             />
+          </div>
           </div>
         </DialogContent>
       </Dialog>

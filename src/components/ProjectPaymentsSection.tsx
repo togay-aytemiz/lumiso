@@ -342,7 +342,7 @@ export function ProjectPaymentsSection({ projectId, onPaymentsUpdated, refreshTo
                   </div>
 
                   {/* Mobile Layout */}
-                  <div className="md:hidden p-3 space-y-3">
+                  <div className="md:hidden p-2.5 space-y-2.5">
                     {/* Row 1: Date + Amount */}
                     <div className="flex items-center justify-between">
                       <div className="font-medium text-sm">
@@ -356,7 +356,7 @@ export function ProjectPaymentsSection({ projectId, onPaymentsUpdated, refreshTo
                     
                     {/* Row 2: Description (if exists) */}
                     {payment.description && (
-                      <div className="text-sm text-muted-foreground">
+                      <div className="text-sm text-muted-foreground truncate">
                         {payment.description}
                       </div>
                     )}
@@ -369,12 +369,12 @@ export function ProjectPaymentsSection({ projectId, onPaymentsUpdated, refreshTo
                       >
                         {payment.status === 'paid' ? 'Paid' : 'Due'}
                       </Badge>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1">
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => handleEditPayment(payment)}
-                          className="h-9 w-9 p-0"
+                          className="h-8 w-8 p-0"
                         >
                           <Edit2 className="h-4 w-4" />
                         </Button>
@@ -386,7 +386,7 @@ export function ProjectPaymentsSection({ projectId, onPaymentsUpdated, refreshTo
                               setPaymentToDelete(payment);
                               setShowDeleteDialog(true);
                             }}
-                            className="h-9 w-9 p-0 text-destructive hover:text-destructive"
+                            className="h-8 w-8 p-0 text-destructive hover:text-destructive"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>

@@ -64,53 +64,61 @@ export function ProjectCard({ project, onView, refreshTrigger }: ProjectCardProp
     <Card className="w-full hover:shadow-md transition-shadow cursor-pointer">
       <CardContent className="p-4">
         <div 
-          className="flex items-start justify-between"
+          className="flex flex-col md:flex-row md:items-start md:justify-between gap-4"
           onClick={() => onView(project)}
         >
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-1">
-              <h3 className="font-bold text-lg">{project.name}</h3>
-              {isArchived && <Badge variant="secondary" className="text-[10px]">Archived</Badge>}
+          <div className="flex-1 min-w-0 space-y-3">
+            {/* Title and Archived Badge */}
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 min-w-0 flex-1">
+                <h3 className="font-bold text-lg truncate">{project.name}</h3>
+                {isArchived && <Badge variant="secondary" className="text-[10px] flex-shrink-0">Archived</Badge>}
+              </div>
+              <div className="md:hidden flex-shrink-0">
+                <ChevronRight className="h-5 w-5 text-muted-foreground" />
+              </div>
             </div>
+
+            {/* Description */}
             {project.description && (
-              <p className="text-muted-foreground mb-2">{project.description}</p>
+              <p className="text-muted-foreground text-sm break-words">{project.description}</p>
             )}
             
-            {/* Progress Bar and Todo Status */}
+            {/* Progress Summary Text */}
             {!loading && progress.total > 0 && (
-              <div className="mb-3">
-                <div className="flex items-center justify-between mb-1">
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <CheckCircle2 className="h-3 w-3" />
-                    <span>{progress.completed}/{progress.total} todos completed</span>
-                  </div>
-                </div>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div>
-                        <ProgressBar
-                          value={progress.percentage}
-                          total={progress.total}
-                          completed={progress.completed}
-                          className="w-full"
-                          showLabel={false}
-                        />
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>
-                        {progress.completed} done, {progress.total - progress.completed} remaining
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <CheckCircle2 className="h-3 w-3 flex-shrink-0" />
+                <span>{progress.completed}/{progress.total} todos completed</span>
               </div>
             )}
+
+            {/* Progress Bar */}
+            {!loading && progress.total > 0 && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div>
+                      <ProgressBar
+                        value={progress.percentage}
+                        total={progress.total}
+                        completed={progress.completed}
+                        className="w-full"
+                        showLabel={false}
+                      />
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>
+                      {progress.completed} done, {progress.total - progress.completed} remaining
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
             
-            <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
-              {/* Status badge and creation/update dates */}
-              <div className="flex items-center gap-3">
+            {/* Status and Dates */}
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-xs text-muted-foreground">
+              <div className="flex items-center gap-3 flex-wrap">
                 {!isArchived && (
                   <ProjectStatusBadge 
                     projectId={project.id}
@@ -120,15 +128,17 @@ export function ProjectCard({ project, onView, refreshTrigger }: ProjectCardProp
                     className="text-xs"
                   />
                 )}
-                <span>Created {format(new Date(project.created_at), "M/d/yy")}</span>
+                <span className="whitespace-nowrap">Created {format(new Date(project.created_at), "M/d/yy")}</span>
                 {project.updated_at !== project.created_at && (
-                  <span>Updated {format(new Date(project.updated_at), "M/d/yy")}</span>
+                  <span className="whitespace-nowrap">Updated {format(new Date(project.updated_at), "M/d/yy")}</span>
                 )}
               </div>
-              
-              {/* Payment Status */}
-              {!paymentsLoading && paymentSummary.totalProject > 0 && (
-                <div className="flex items-center gap-2 text-xs">
+            </div>
+
+            {/* Budget/Payment Information */}
+            {!paymentsLoading && paymentSummary.totalProject > 0 && (
+              <div className="flex flex-col sm:flex-row sm:items-center gap-1 text-xs">
+                <div className="flex items-center gap-2">
                   <span className="text-green-600 font-medium">
                     {formatCurrency(paymentSummary.totalPaid)}
                   </span>
@@ -136,16 +146,18 @@ export function ProjectCard({ project, onView, refreshTrigger }: ProjectCardProp
                   <span className="text-muted-foreground">
                     {formatCurrency(paymentSummary.totalProject)}
                   </span>
-                  {paymentSummary.remaining > 0 && (
-                    <span className="text-orange-600 ml-1">
-                      ({formatCurrency(paymentSummary.remaining)} remaining)
-                    </span>
-                  )}
                 </div>
-              )}
-            </div>
+                {paymentSummary.remaining > 0 && (
+                  <span className="text-orange-600">
+                    ({formatCurrency(paymentSummary.remaining)} remaining)
+                  </span>
+                )}
+              </div>
+            )}
           </div>
-          <div className="flex items-center ml-4">
+
+          {/* Desktop Chevron */}
+          <div className="hidden md:flex items-center ml-4 flex-shrink-0">
             <ChevronRight className="h-5 w-5 text-muted-foreground" />
           </div>
         </div>

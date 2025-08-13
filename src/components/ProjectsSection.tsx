@@ -166,15 +166,15 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
     <Card className="w-full">
       <CardHeader className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between space-y-0 pb-4">
         <CardTitle className="text-xl font-semibold">Projects</CardTitle>
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full md:w-auto">
+        <div className="flex flex-col gap-3 w-full md:w-auto md:flex-row md:items-center">
           {hasArchived && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground w-full sm:w-auto justify-between sm:justify-start">
+            <div className="flex items-center justify-between md:justify-start gap-2 text-sm text-muted-foreground">
               <span className="flex-shrink-0">Show archived</span>
               <Switch checked={showArchived} onCheckedChange={(v) => setShowArchived(v)} />
             </div>
           )}
           {projects.length > 0 && (
-            <Button onClick={handleAddProject} size="sm" className="w-full sm:w-auto">
+            <Button onClick={handleAddProject} size="sm" className="w-full md:w-auto">
               <Plus className="h-4 w-4 mr-2" />
               Add Project
             </Button>

@@ -565,7 +565,7 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
                   <div className="space-y-3">
                     <div className="space-y-2">
                       <DialogTitle asChild>
-                        <h1 className="text-xl md:text-2xl font-bold leading-tight break-words">{project?.name}</h1>
+                        <h1 className="text-xl md:text-2xl font-bold leading-tight break-words text-left">{project?.name}</h1>
                       </DialogTitle>
                       
                       {/* Badges row */}

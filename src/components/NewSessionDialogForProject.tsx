@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AppSheetModal } from "@/components/ui/app-sheet-modal";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -82,8 +82,7 @@ export function NewSessionDialogForProject({
     if (open) fetchPlannedSessions(visibleMonth);
   }, [open, visibleMonth]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     
     if (!sessionData.session_date || !sessionData.session_time) {
       toast({
@@ -189,169 +188,188 @@ export function NewSessionDialogForProject({
   }, [plannedSessions]);
 
 
+  const isDirty = Boolean(
+    sessionData.session_date.trim() ||
+    sessionData.session_time.trim() ||
+    sessionData.notes.trim()
+  );
+
+  const handleDirtyClose = () => {
+    if (window.confirm("Discard changes?")) {
+      setSessionData({
+        session_date: "",
+        session_time: "",
+        notes: ""
+      });
+      setSelectedDate(undefined);
+      setOpen(false);
+    }
+  };
+
+  const footerActions = [
+    {
+      label: "Cancel",
+      onClick: () => setOpen(false),
+      variant: "outline" as const,
+      disabled: loading
+    },
+    {
+      label: loading ? "Scheduling..." : "Schedule Session",
+      onClick: handleSubmit,
+      disabled: loading || !sessionData.session_date || !sessionData.session_time,
+      loading: loading
+    }
+  ];
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button size="sm" className="gap-2">
-          <Plus className="h-4 w-4" />
-          Add
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Schedule Session</DialogTitle>
-          <DialogDescription>
-            Schedule a photography session for {leadName} in {projectName}
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={handleSubmit}>
-          <div className="grid gap-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="client">Client</Label>
-              <Input
-                id="client"
-                value={leadName}
-                disabled
-                className="bg-muted"
-              />
-            </div>
+    <>
+      <Button size="sm" className="gap-2" onClick={() => setOpen(true)}>
+        <Plus className="h-4 w-4" />
+        Add
+      </Button>
 
-            <div className="space-y-2">
-              <Label htmlFor="project">Project</Label>
-              <Input
-                id="project"
-                value={projectName}
-                disabled
-                className="bg-muted"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="session_date">Session Date *</Label>
-              <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !selectedDate && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {selectedDate ? new Intl.DateTimeFormat(browserLocale, { dateStyle: "medium" }).format(selectedDate) : <span>Pick a date</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto min-w-[18rem] p-0 rounded-xl border border-border shadow-md" align="start">
-                  <div className="p-2">
-                    <ReactCalendar
-                      className="react-calendar w-full p-2 pointer-events-auto"
-                      locale={browserLocale}
-                      view="month"
-                      minDetail="month"
-                      next2Label={null}
-                      prev2Label={null}
-                      onActiveStartDateChange={({ activeStartDate, view }) => {
-                        if (view === 'month' && activeStartDate) {
-                          setVisibleMonth(activeStartDate);
-                        }
-                      }}
-                      onChange={(value) => {
-                        const d = Array.isArray(value) ? value[0] : value;
-                        const date = d instanceof Date ? d : undefined;
-                        setSelectedDate(date);
-                        if (date) {
-                          handleInputChange("session_date", format(date, "yyyy-MM-dd"));
-                          setDatePickerOpen(false);
-                        }
-                      }}
-                      value={selectedDate ?? null}
-                      formatShortWeekday={(_, date) => new Intl.DateTimeFormat(browserLocale, { weekday: 'short' }).format(date)}
-                      tileContent={({ date, view }) => {
-                        if (view !== 'month') return null;
-                        const key = format(date, 'yyyy-MM-dd');
-                        const count = sessionCountByDate[key] || 0;
-                        const dots = Math.min(count, 3);
-                        if (!dots) return null;
-                        return (
-                          <div className="pointer-events-none absolute bottom-1 left-1/2 -translate-x-1/2 flex items-center justify-center gap-0.5">
-                            {Array.from({ length: dots }).map((_, i) => (
-                              <span key={i} className="h-1.5 w-1.5 rounded-full bg-primary ring-1 ring-background" />
-                            ))}
-                          </div>
-                        );
-                      }}
-                    />
-                    <div className="mt-2 flex items-center justify-between px-1">
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => {
-                          const today = new Date();
-                          setSelectedDate(today);
-                          handleInputChange("session_date", format(today, "yyyy-MM-dd"));
-                          setDatePickerOpen(false);
-                        }}
-                      >
-                        Today
-                      </Button>
-                    </div>
-                  </div>
-                </PopoverContent>
-              </Popover>
-              {sessionsForDay.length > 0 && (
-                <div className="rounded-md border p-3 animate-fade-in">
-                  <div className="text-xs text-muted-foreground mb-2">Planned sessions on this day</div>
-                  <ul className="space-y-2">
-                    {sortedSessionsForDay.map((s: any) => (
-                      <li key={s.id} className="flex items-center gap-3 text-sm">
-                        <span className="font-medium tabular-nums">{(s.session_time || '').slice(0,5)}</span>
-                        <span className="text-muted-foreground truncate">
-                          {s.leads?.name || 'Unknown lead'} · {s.projects?.name || 'No project'}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="session_time">Session Time *</Label>
-              <Input
-                id="session_time"
-                type="time"
-                value={sessionData.session_time}
-                onChange={(e) => handleInputChange("session_time", e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="notes">Session Notes (Optional)</Label>
-              <Textarea
-                id="notes"
-                value={sessionData.notes}
-                onChange={(e) => handleInputChange("notes", e.target.value)}
-                placeholder="Any special requirements or notes for this session..."
-                rows={3}
-              />
-            </div>
+      <AppSheetModal
+        title="Schedule Session"
+        isOpen={open}
+        onOpenChange={setOpen}
+        size="default"
+        dirty={isDirty}
+        onDirtyClose={handleDirtyClose}
+        footerActions={footerActions}
+      >
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="client">Client</Label>
+            <Input
+              id="client"
+              value={leadName}
+              disabled
+              className="bg-muted"
+            />
           </div>
-          <DialogFooter>
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={() => setOpen(false)}
-              disabled={loading}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? "Scheduling..." : "Schedule Session"}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+
+          <div className="space-y-2">
+            <Label htmlFor="project">Project</Label>
+            <Input
+              id="project"
+              value={projectName}
+              disabled
+              className="bg-muted"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="session_date">Session Date *</Label>
+            <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal",
+                    !selectedDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {selectedDate ? new Intl.DateTimeFormat(browserLocale, { dateStyle: "medium" }).format(selectedDate) : <span>Pick a date</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto min-w-[18rem] p-0 rounded-xl border border-border shadow-md" align="start">
+                <div className="p-2">
+                  <ReactCalendar
+                    className="react-calendar w-full p-2 pointer-events-auto"
+                    locale={browserLocale}
+                    view="month"
+                    minDetail="month"
+                    next2Label={null}
+                    prev2Label={null}
+                    onActiveStartDateChange={({ activeStartDate, view }) => {
+                      if (view === 'month' && activeStartDate) {
+                        setVisibleMonth(activeStartDate);
+                      }
+                    }}
+                    onChange={(value) => {
+                      const d = Array.isArray(value) ? value[0] : value;
+                      const date = d instanceof Date ? d : undefined;
+                      setSelectedDate(date);
+                      if (date) {
+                        handleInputChange("session_date", format(date, "yyyy-MM-dd"));
+                        setDatePickerOpen(false);
+                      }
+                    }}
+                    value={selectedDate ?? null}
+                    formatShortWeekday={(_, date) => new Intl.DateTimeFormat(browserLocale, { weekday: 'short' }).format(date)}
+                    tileContent={({ date, view }) => {
+                      if (view !== 'month') return null;
+                      const key = format(date, 'yyyy-MM-dd');
+                      const count = sessionCountByDate[key] || 0;
+                      const dots = Math.min(count, 3);
+                      if (!dots) return null;
+                      return (
+                        <div className="pointer-events-none absolute bottom-1 left-1/2 -translate-x-1/2 flex items-center justify-center gap-0.5">
+                          {Array.from({ length: dots }).map((_, i) => (
+                            <span key={i} className="h-1.5 w-1.5 rounded-full bg-primary ring-1 ring-background" />
+                          ))}
+                        </div>
+                      );
+                    }}
+                  />
+                  <div className="mt-2 flex items-center justify-between px-1">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => {
+                        const today = new Date();
+                        setSelectedDate(today);
+                        handleInputChange("session_date", format(today, "yyyy-MM-dd"));
+                        setDatePickerOpen(false);
+                      }}
+                    >
+                      Today
+                    </Button>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
+            {sessionsForDay.length > 0 && (
+              <div className="rounded-md border p-3 animate-fade-in">
+                <div className="text-xs text-muted-foreground mb-2">Planned sessions on this day</div>
+                <ul className="space-y-2">
+                  {sortedSessionsForDay.map((s: any) => (
+                    <li key={s.id} className="flex items-center gap-3 text-sm">
+                      <span className="font-medium tabular-nums">{(s.session_time || '').slice(0,5)}</span>
+                      <span className="text-muted-foreground truncate">
+                        {s.leads?.name || 'Unknown lead'} · {s.projects?.name || 'No project'}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="session_time">Session Time *</Label>
+            <Input
+              id="session_time"
+              type="time"
+              value={sessionData.session_time}
+              onChange={(e) => handleInputChange("session_time", e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="notes">Session Notes (Optional)</Label>
+            <Textarea
+              id="notes"
+              value={sessionData.notes}
+              onChange={(e) => handleInputChange("notes", e.target.value)}
+              placeholder="Any special requirements or notes for this session..."
+              rows={3}
+            />
+          </div>
+        </div>
+      </AppSheetModal>
+    </>
   );
 }

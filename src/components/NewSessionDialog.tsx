@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AppSheetModal } from "@/components/ui/app-sheet-modal";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -144,8 +144,7 @@ const NewSessionDialog = ({ onSessionScheduled }: NewSessionDialogProps) => {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     
     if (!sessionData.session_date || !sessionData.session_time) {
       toast({
@@ -298,280 +297,309 @@ const NewSessionDialog = ({ onSessionScheduled }: NewSessionDialogProps) => {
     (lead.email && lead.email.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
+  const isDirty = Boolean(
+    sessionData.session_date.trim() ||
+    sessionData.session_time.trim() ||
+    sessionData.notes.trim() ||
+    (isNewLead && (newLeadData.name.trim() || newLeadData.email.trim() || newLeadData.phone.trim() || newLeadData.notes.trim())) ||
+    (!isNewLead && selectedLeadId)
+  );
+
+  const handleDirtyClose = () => {
+    if (window.confirm("Discard changes?")) {
+      setSessionData({
+        session_date: "",
+        session_time: "",
+        notes: ""
+      });
+      setNewLeadData({
+        name: "",
+        email: "",
+        phone: "",
+        notes: ""
+      });
+      setSelectedLeadId("");
+      setSelectedProjectId("");
+      setIsNewLead(false);
+      setOpen(false);
+    }
+  };
+
+  const footerActions = [
+    {
+      label: "Cancel",
+      onClick: () => setOpen(false),
+      variant: "outline" as const,
+      disabled: loading
+    },
+    {
+      label: loading ? "Scheduling..." : "Schedule Session",
+      onClick: handleSubmit,
+      disabled: loading || !sessionData.session_date || !sessionData.session_time || (!selectedLeadId && !newLeadData.name.trim()),
+      loading: loading
+    }
+  ];
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button size="sm" className="gap-2">
-          <Plus className="h-4 w-4" />
-          Add
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Schedule New Session</DialogTitle>
-          <DialogDescription>
-            Schedule a photography session with an existing or new client
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={handleSubmit}>
-          <div className="grid gap-4 py-4">
-            {/* Lead Selection */}
-            <div className="space-y-4">
-              <div className="flex items-center space-x-2">
-                <input
-                  type="radio"
-                  id="existing-lead"
-                  name="lead-type"
-                  checked={!isNewLead}
-                  onChange={() => setIsNewLead(false)}
-                  className="h-4 w-4"
-                />
-                <Label htmlFor="existing-lead">Select existing client</Label>
-              </div>
-              
-              {!isNewLead && (
-                <div className="space-y-2">
-                  <Label htmlFor="lead-search">Select client</Label>
-                  <Popover open={dropdownOpen} onOpenChange={setDropdownOpen}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        role="combobox"
-                        aria-expanded={dropdownOpen}
-                        className="w-full justify-between text-left h-auto min-h-[40px]"
-                        disabled={loadingLeads}
-                      >
-                        {selectedLeadId ? (
-                          <div className="flex items-center justify-between w-full">
-                            <div className="flex flex-col">
-                              <span className="font-medium">{leads.find(lead => lead.id === selectedLeadId)?.name}</span>
-                              {leads.find(lead => lead.id === selectedLeadId)?.email && (
-                                <span className="text-xs text-muted-foreground">{leads.find(lead => lead.id === selectedLeadId)?.email}</span>
-                              )}
-                            </div>
-                            {leads.find(lead => lead.id === selectedLeadId) && (
-                              <Badge
-                                variant={
-                                  leads.find(lead => lead.id === selectedLeadId)?.sessionStatus === 'planned' ? 'destructive' :
-                                  leads.find(lead => lead.id === selectedLeadId)?.sessionStatus === 'completed' ? 'secondary' : 'outline'
-                                }
-                                className="text-xs"
-                              >
-                                {leads.find(lead => lead.id === selectedLeadId)?.sessionStatus === 'none' ? 'Available' : leads.find(lead => lead.id === selectedLeadId)?.sessionStatus}
-                              </Badge>
+    <>
+      <Button size="sm" className="gap-2" onClick={() => setOpen(true)}>
+        <Plus className="h-4 w-4" />
+        Add
+      </Button>
+
+      <AppSheetModal
+        title="Schedule New Session"
+        isOpen={open}
+        onOpenChange={setOpen}
+        size="lg"
+        dirty={isDirty}
+        onDirtyClose={handleDirtyClose}
+        footerActions={footerActions}
+      >
+        <div className="grid gap-4">
+          {/* Lead Selection */}
+          <div className="space-y-4">
+            <div className="flex items-center space-x-2">
+              <input
+                type="radio"
+                id="existing-lead"
+                name="lead-type"
+                checked={!isNewLead}
+                onChange={() => setIsNewLead(false)}
+                className="h-4 w-4"
+              />
+              <Label htmlFor="existing-lead">Select existing client</Label>
+            </div>
+            
+            {!isNewLead && (
+              <div className="space-y-2">
+                <Label htmlFor="lead-search">Select client</Label>
+                <Popover open={dropdownOpen} onOpenChange={setDropdownOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={dropdownOpen}
+                      className="w-full justify-between text-left h-auto min-h-[40px]"
+                      disabled={loadingLeads}
+                    >
+                      {selectedLeadId ? (
+                        <div className="flex items-center justify-between w-full">
+                          <div className="flex flex-col">
+                            <span className="font-medium">{leads.find(lead => lead.id === selectedLeadId)?.name}</span>
+                            {leads.find(lead => lead.id === selectedLeadId)?.email && (
+                              <span className="text-xs text-muted-foreground">{leads.find(lead => lead.id === selectedLeadId)?.email}</span>
                             )}
                           </div>
-                        ) : loadingLeads ? (
-                          "Loading clients..."
-                        ) : (
-                          "Search and select a client..."
-                        )}
-                        <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-full p-0 z-50 bg-popover" align="start">
-                      <div className="p-3 border-b">
-                        <div className="relative">
-                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                          <Input
-                            placeholder="Search by name or email..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="pl-10"
-                            autoFocus
-                          />
-                        </div>
-                      </div>
-                      <div className="max-h-64 overflow-y-auto">
-                        {loadingLeads ? (
-                          <div className="p-4 text-center text-sm text-muted-foreground">
-                            Loading clients...
-                          </div>
-                        ) : filteredLeads.length === 0 ? (
-                          <div className="p-4 text-center text-sm text-muted-foreground">
-                            {searchTerm ? 'No clients match your search' : 'No clients found'}
-                          </div>
-                        ) : (
-                          filteredLeads.map((lead) => (
-                            <div
-                              key={lead.id}
-                              onClick={() => {
-                                if (!lead.hasScheduledSession) {
-                                  setSelectedLeadId(lead.id);
-                                  setDropdownOpen(false);
-                                  setSearchTerm("");
-                                }
-                              }}
-                              className={cn(
-                                "flex items-center justify-between p-3 hover:bg-muted/50 cursor-pointer border-b last:border-b-0",
-                                lead.hasScheduledSession && "opacity-50 cursor-not-allowed hover:bg-transparent",
-                                selectedLeadId === lead.id && "bg-muted"
-                              )}
+                          {leads.find(lead => lead.id === selectedLeadId) && (
+                            <Badge
+                              variant={
+                                leads.find(lead => lead.id === selectedLeadId)?.sessionStatus === 'planned' ? 'destructive' :
+                                leads.find(lead => lead.id === selectedLeadId)?.sessionStatus === 'completed' ? 'secondary' : 'outline'
+                              }
+                              className="text-xs"
                             >
-                              <div className="flex items-center space-x-3">
-                                <Check
-                                  className={cn(
-                                    "h-4 w-4",
-                                    selectedLeadId === lead.id ? "opacity-100" : "opacity-0"
-                                  )}
-                                />
-                                <div className="flex flex-col">
-                                  <span className="font-medium">{lead.name}</span>
-                                  {lead.email && (
-                                    <span className="text-xs text-muted-foreground">{lead.email}</span>
-                                  )}
-                                </div>
-                              </div>
-                              <div className="flex items-center space-x-2">
-                                 <Badge
-                                   variant={
-                                     lead.sessionStatus === 'planned' ? 'destructive' :
-                                     lead.sessionStatus === 'completed' ? 'secondary' : 'outline'
-                                   }
-                                   className="text-xs"
-                                 >
-                                   {lead.sessionStatus === 'none' ? 'Available' : lead.sessionStatus}
-                                 </Badge>
+                              {leads.find(lead => lead.id === selectedLeadId)?.sessionStatus === 'none' ? 'Available' : leads.find(lead => lead.id === selectedLeadId)?.sessionStatus}
+                            </Badge>
+                          )}
+                        </div>
+                      ) : loadingLeads ? (
+                        "Loading clients..."
+                      ) : (
+                        "Search and select a client..."
+                      )}
+                      <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-full p-0 z-50 bg-popover" align="start">
+                    <div className="p-3 border-b">
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                        <Input
+                          placeholder="Search by name or email..."
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          className="pl-10"
+                          autoFocus
+                        />
+                      </div>
+                    </div>
+                    <div className="max-h-64 overflow-y-auto">
+                      {loadingLeads ? (
+                        <div className="p-4 text-center text-sm text-muted-foreground">
+                          Loading clients...
+                        </div>
+                      ) : filteredLeads.length === 0 ? (
+                        <div className="p-4 text-center text-sm text-muted-foreground">
+                          {searchTerm ? 'No clients match your search' : 'No clients found'}
+                        </div>
+                      ) : (
+                        filteredLeads.map((lead) => (
+                          <div
+                            key={lead.id}
+                            onClick={() => {
+                              if (!lead.hasScheduledSession) {
+                                setSelectedLeadId(lead.id);
+                                setDropdownOpen(false);
+                                setSearchTerm("");
+                              }
+                            }}
+                            className={cn(
+                              "flex items-center justify-between p-3 hover:bg-muted/50 cursor-pointer border-b last:border-b-0",
+                              lead.hasScheduledSession && "opacity-50 cursor-not-allowed hover:bg-transparent",
+                              selectedLeadId === lead.id && "bg-muted"
+                            )}
+                          >
+                            <div className="flex items-center space-x-3">
+                              <Check
+                                className={cn(
+                                  "h-4 w-4",
+                                  selectedLeadId === lead.id ? "opacity-100" : "opacity-0"
+                                )}
+                              />
+                              <div className="flex flex-col">
+                                <span className="font-medium">{lead.name}</span>
+                                {lead.email && (
+                                  <span className="text-xs text-muted-foreground">{lead.email}</span>
+                                )}
                               </div>
                             </div>
-                          ))
-                        )}
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                </div>
-              )}
-
-              <div className="flex items-center space-x-2">
-                <input
-                  type="radio"
-                  id="new-lead"
-                  name="lead-type"
-                  checked={isNewLead}
-                  onChange={() => setIsNewLead(true)}
-                  className="h-4 w-4"
-                />
-                <Label htmlFor="new-lead">Create new client</Label>
+                            <div className="flex items-center space-x-2">
+                               <Badge
+                                 variant={
+                                   lead.sessionStatus === 'planned' ? 'destructive' :
+                                   lead.sessionStatus === 'completed' ? 'secondary' : 'outline'
+                                 }
+                                 className="text-xs"
+                               >
+                                 {lead.sessionStatus === 'none' ? 'Available' : lead.sessionStatus}
+                               </Badge>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </PopoverContent>
+                </Popover>
               </div>
+            )}
 
-              {isNewLead && (
-                <div className="space-y-3 pl-6 border-l-2 border-muted">
-                  <div className="space-y-2">
-                    <Label htmlFor="new-name">Name *</Label>
-                    <Input
-                      id="new-name"
-                      value={newLeadData.name}
-                      onChange={(e) => handleNewLeadDataChange("name", e.target.value)}
-                      placeholder="Enter client name"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="new-email">Email</Label>
-                    <Input
-                      id="new-email"
-                      type="email"
-                      value={newLeadData.email}
-                      onChange={(e) => handleNewLeadDataChange("email", e.target.value)}
-                      placeholder="Enter email address"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="new-phone">Phone</Label>
-                    <Input
-                      id="new-phone"
-                      value={newLeadData.phone}
-                      onChange={(e) => handleNewLeadDataChange("phone", e.target.value)}
-                      placeholder="Enter phone number"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="new-notes">Client Notes</Label>
-                    <Textarea
-                      id="new-notes"
-                      value={newLeadData.notes}
-                      onChange={(e) => handleNewLeadDataChange("notes", e.target.value)}
-                      placeholder="Any notes about this client..."
-                      rows={2}
-                    />
-                  </div>
-                </div>
-              )}
+            <div className="flex items-center space-x-2">
+              <input
+                type="radio"
+                id="new-lead"
+                name="lead-type"
+                checked={isNewLead}
+                onChange={() => setIsNewLead(true)}
+                className="h-4 w-4"
+              />
+              <Label htmlFor="new-lead">Create new client</Label>
             </div>
 
-            <Separator />
-
-            {/* Session Details */}
-            <div className="space-y-4">
-              <h4 className="text-sm font-medium">Session Details</h4>
-              
-              <div className="space-y-2">
-                <Label htmlFor="session_date">Session Date *</Label>
-                <Input
-                  id="session_date"
-                  type="date"
-                  value={sessionData.session_date}
-                  onChange={(e) => handleSessionDataChange("session_date", e.target.value)}
-                  min={new Date().toISOString().split('T')[0]}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="session_time">Session Time *</Label>
-                <Input
-                  id="session_time"
-                  type="time"
-                  value={sessionData.session_time}
-                  onChange={(e) => handleSessionDataChange("session_time", e.target.value)}
-                />
-              </div>
-
-              {/* Project selection - only show for existing leads */}
-              {!isNewLead && selectedLeadId && (
+            {isNewLead && (
+              <div className="space-y-3 pl-6 border-l-2 border-muted">
                 <div className="space-y-2">
-                  <Label htmlFor="project">Project (Optional)</Label>
-                  <Select value={selectedProjectId} onValueChange={setSelectedProjectId} disabled={projects.length === 0}>
-                    <SelectTrigger>
-                      <SelectValue placeholder={projects.length === 0 ? "No projects created yet" : "Select a project"} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {projects.map((project) => (
-                        <SelectItem key={project.id} value={project.id}>
-                          {project.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="new-name">Name *</Label>
+                  <Input
+                    id="new-name"
+                    value={newLeadData.name}
+                    onChange={(e) => handleNewLeadDataChange("name", e.target.value)}
+                    placeholder="Enter client name"
+                  />
                 </div>
-              )}
-
-              <div className="space-y-2">
-                <Label htmlFor="session_notes">Session Notes</Label>
-                <Textarea
-                  id="session_notes"
-                  value={sessionData.notes}
-                  onChange={(e) => handleSessionDataChange("notes", e.target.value)}
-                  placeholder="Any special requirements or notes for this session..."
-                  rows={3}
-                />
+                <div className="space-y-2">
+                  <Label htmlFor="new-email">Email</Label>
+                  <Input
+                    id="new-email"
+                    type="email"
+                    value={newLeadData.email}
+                    onChange={(e) => handleNewLeadDataChange("email", e.target.value)}
+                    placeholder="Enter email address"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="new-phone">Phone</Label>
+                  <Input
+                    id="new-phone"
+                    value={newLeadData.phone}
+                    onChange={(e) => handleNewLeadDataChange("phone", e.target.value)}
+                    placeholder="Enter phone number"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="new-notes">Client Notes</Label>
+                  <Textarea
+                    id="new-notes"
+                    value={newLeadData.notes}
+                    onChange={(e) => handleNewLeadDataChange("notes", e.target.value)}
+                    placeholder="Any notes about this client..."
+                    rows={2}
+                  />
+                </div>
               </div>
+            )}
+          </div>
+
+          <Separator />
+
+          {/* Session Details */}
+          <div className="space-y-4">
+            <h4 className="text-sm font-medium">Session Details</h4>
+            
+            <div className="space-y-2">
+              <Label htmlFor="session_date">Session Date *</Label>
+              <Input
+                id="session_date"
+                type="date"
+                value={sessionData.session_date}
+                onChange={(e) => handleSessionDataChange("session_date", e.target.value)}
+                min={new Date().toISOString().split('T')[0]}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="session_time">Session Time *</Label>
+              <Input
+                id="session_time"
+                type="time"
+                value={sessionData.session_time}
+                onChange={(e) => handleSessionDataChange("session_time", e.target.value)}
+              />
+            </div>
+
+            {/* Project selection - only show for existing leads */}
+            {!isNewLead && selectedLeadId && (
+              <div className="space-y-2">
+                <Label htmlFor="project">Project (Optional)</Label>
+                <Select value={selectedProjectId} onValueChange={setSelectedProjectId} disabled={projects.length === 0}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={projects.length === 0 ? "No projects created yet" : "Select a project"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {projects.map((project) => (
+                      <SelectItem key={project.id} value={project.id}>
+                        {project.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <Label htmlFor="session_notes">Session Notes</Label>
+              <Textarea
+                id="session_notes"
+                value={sessionData.notes}
+                onChange={(e) => handleSessionDataChange("notes", e.target.value)}
+                placeholder="Any special requirements or notes for this session..."
+                rows={3}
+              />
             </div>
           </div>
-          <DialogFooter>
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={() => setOpen(false)}
-              disabled={loading}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? "Scheduling..." : "Schedule Session"}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+        </div>
+      </AppSheetModal>
+    </>
   );
 };
 

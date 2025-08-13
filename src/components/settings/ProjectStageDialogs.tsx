@@ -17,7 +17,7 @@ export function AddProjectStageDialog({ open, onOpenChange, onStageAdded }: AddP
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
-    color: "#64748B",
+    color: "#EF4444",
   });
 
   const handleSubmit = async () => {
@@ -61,7 +61,7 @@ export function AddProjectStageDialog({ open, onOpenChange, onStageAdded }: AddP
         description: "Project stage added successfully"
       });
 
-      setFormData({ name: "", color: "#64748B" });
+      setFormData({ name: "", color: "#EF4444" });
       onOpenChange(false);
       onStageAdded();
     } catch (error: any) {
@@ -75,11 +75,11 @@ export function AddProjectStageDialog({ open, onOpenChange, onStageAdded }: AddP
     }
   };
 
-  const isDirty = Boolean(formData.name.trim() || formData.color !== "#64748B");
+  const isDirty = Boolean(formData.name.trim() || formData.color !== "#EF4444");
 
   const handleDirtyClose = () => {
     if (window.confirm("Are you sure you want to discard your changes? Any unsaved information will be lost.")) {
-      setFormData({ name: "", color: "#64748B" });
+      setFormData({ name: "", color: "#EF4444" });
       onOpenChange(false);
     }
   };

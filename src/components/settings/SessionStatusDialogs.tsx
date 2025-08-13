@@ -15,7 +15,7 @@ export function AddSessionStatusDialog({ open, onOpenChange, onStatusAdded }: Ad
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
-    color: "#64748B",
+    color: "#3B82F6",
   });
 
   const handleSubmit = async () => {
@@ -60,7 +60,7 @@ export function AddSessionStatusDialog({ open, onOpenChange, onStatusAdded }: Ad
         description: "Session stage added successfully"
       });
 
-      setFormData({ name: "", color: "#64748B" });
+      setFormData({ name: "", color: "#3B82F6" });
       onOpenChange(false);
       onStatusAdded();
     } catch (error: any) {
@@ -74,11 +74,11 @@ export function AddSessionStatusDialog({ open, onOpenChange, onStatusAdded }: Ad
     }
   };
 
-  const isDirty = Boolean(formData.name.trim() || formData.color !== "#64748B");
+  const isDirty = Boolean(formData.name.trim() || formData.color !== "#3B82F6");
 
   const handleDirtyClose = () => {
     if (window.confirm("Are you sure you want to discard your changes? Any unsaved information will be lost.")) {
-      setFormData({ name: "", color: "#64748B" });
+      setFormData({ name: "", color: "#3B82F6" });
       onOpenChange(false);
     }
   };

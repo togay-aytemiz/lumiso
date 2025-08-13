@@ -144,7 +144,7 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded }: AddServ
             onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
             placeholder="Select or create a category"
             maxLength={50}
-            className="rounded-xl border-2 border-primary/20 focus-visible:border-primary focus-visible:ring-0"
+            className="rounded-xl"
           />
         </div>
 
@@ -156,7 +156,7 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded }: AddServ
             onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
             placeholder="e.g., Wedding Album, Photo Prints"
             maxLength={100}
-            className="rounded-xl border-2 border-primary/20 focus-visible:border-primary focus-visible:ring-0"
+            className="rounded-xl"
           />
         </div>
 
@@ -332,7 +332,7 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
             onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
             placeholder="e.g., Photography, Editing, Products"
             maxLength={50}
-            className="rounded-xl border-2 border-primary/20 focus-visible:border-primary focus-visible:ring-0"
+            className="rounded-xl"
           />
         </div>
 
@@ -344,7 +344,7 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
             onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
             placeholder="e.g., Wedding Album, Photo Prints"
             maxLength={100}
-            className="rounded-xl border-2 border-primary/20 focus-visible:border-primary focus-visible:ring-0"
+            className="rounded-xl"
           />
         </div>
 
@@ -358,7 +358,7 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
               value={formData.cost_price}
               onChange={(e) => setFormData(prev => ({ ...prev, cost_price: e.target.value }))}
               placeholder="0.00"
-              className="rounded-xl border-2 border-primary/20 focus-visible:border-primary focus-visible:ring-0"
+              className="rounded-xl"
             />
           </div>
 
@@ -371,7 +371,7 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
               value={formData.selling_price}
               onChange={(e) => setFormData(prev => ({ ...prev, selling_price: e.target.value }))}
               placeholder="0.00"
-              className="rounded-xl border-2 border-primary/20 focus-visible:border-primary focus-visible:ring-0"
+              className="rounded-xl"
             />
           </div>
         </div>
@@ -384,7 +384,7 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
             onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
             placeholder="Optional description of the service..."
             rows={4}
-            className="resize-none rounded-xl border-2 border-primary/20 focus-visible:border-primary focus-visible:ring-0"
+            className="resize-none rounded-xl"
           />
         </div>
       </div>

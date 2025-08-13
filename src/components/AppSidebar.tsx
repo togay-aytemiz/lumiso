@@ -64,7 +64,7 @@ export function AppSidebar() {
   };
 
   const handleNavClick = () => {
-    if (isMobile && open) {
+    if (isMobile) {
       setOpen(false);
     }
   };
@@ -72,7 +72,7 @@ export function AppSidebar() {
   return (
     <Sidebar
       className="border-r border-sidebar-border flex flex-col"
-      collapsible="icon"
+      collapsible={isMobile ? "offcanvas" : "icon"}
     >
       <SidebarHeader className="p-6">
         <h1 className="text-xl font-bold text-sidebar-foreground tracking-tight">
@@ -99,7 +99,7 @@ export function AppSidebar() {
                       onClick={handleNavClick}
                     >
                       <item.icon className="h-4 w-4 text-sidebar-foreground group-hover/item:text-[hsl(var(--sidebar-primary))] group-data-[active=true]/item:text-[hsl(var(--sidebar-primary))]" />
-                      {open && <span className="font-medium">{item.title}</span>}
+                      <span className="font-medium">{item.title}</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -115,15 +115,14 @@ export function AppSidebar() {
             >
               <div className="flex items-center gap-3 w-full">
                 <CalendarRange className="h-4 w-4 text-sidebar-foreground group-hover/item:text-[hsl(var(--sidebar-primary))] group-data-[active=true]/item:text-[hsl(var(--sidebar-primary))]" />
-                {open && <span className="font-medium">Bookings</span>}
+                <span className="font-medium">Bookings</span>
               </div>
             </SidebarMenuButton>
 
-            {open && (
-              <div
-                className={`ml-6 overflow-hidden transition-all duration-300 ease-out ${bookingsOpen ? 'mt-1 max-h-40 opacity-100 animate-fade-in' : 'max-h-0 opacity-0'}`}
-                aria-hidden={!bookingsOpen}
-              >
+            <div
+              className={`ml-6 overflow-hidden transition-all duration-300 ease-out ${bookingsOpen ? 'mt-1 max-h-40 opacity-100 animate-fade-in' : 'max-h-0 opacity-0'}`}
+              aria-hidden={!bookingsOpen}
+            >
                 <SidebarMenu>
                   <SidebarMenuItem>
                     <SidebarMenuButton
@@ -133,7 +132,7 @@ export function AppSidebar() {
                     >
                       <NavLink to="/calendar" className="flex items-center gap-3 w-full" onClick={handleNavClick}>
                         <CalendarDays className="h-4 w-4 text-sidebar-foreground group-hover/item:text-[hsl(var(--sidebar-primary))] group-data-[active=true]/item:text-[hsl(var(--sidebar-primary))]" />
-                        {open && <span className="font-medium">Calendar</span>}
+                        <span className="font-medium">Calendar</span>
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -146,7 +145,7 @@ export function AppSidebar() {
                     >
                       <NavLink to="/sessions" className="flex items-center gap-3 w-full" onClick={handleNavClick}>
                         <Calendar className="h-4 w-4 text-sidebar-foreground group-hover/item:text-[hsl(var(--sidebar-primary))] group-data-[active=true]/item:text-[hsl(var(--sidebar-primary))]" />
-                        {open && <span className="font-medium">Sessions</span>}
+                        <span className="font-medium">Sessions</span>
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -159,13 +158,12 @@ export function AppSidebar() {
                     >
                       <NavLink to="/reminders" className="flex items-center gap-3 w-full" onClick={handleNavClick}>
                         <Bell className="h-4 w-4 text-sidebar-foreground group-hover/item:text-[hsl(var(--sidebar-primary))] group-data-[active=true]/item:text-[hsl(var(--sidebar-primary))]" />
-                        {open && <span className="font-medium">Reminders</span>}
+                        <span className="font-medium">Reminders</span>
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 </SidebarMenu>
               </div>
-            )}
           </SidebarMenuItem>
 
           {navigationItems
@@ -185,7 +183,7 @@ export function AppSidebar() {
                       onClick={handleNavClick}
                     >
                       <item.icon className="h-4 w-4 text-sidebar-foreground group-hover/item:text-[hsl(var(--sidebar-primary))] group-data-[active=true]/item:text-[hsl(var(--sidebar-primary))]" />
-                      {open && <span className="font-medium">{item.title}</span>}
+                      <span className="font-medium">{item.title}</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -209,7 +207,7 @@ export function AppSidebar() {
                   onClick={handleNavClick}
                 >
                   <Settings className="h-4 w-4 text-sidebar-foreground group-hover/item:text-[hsl(var(--sidebar-primary))] group-data-[active=true]/item:text-[hsl(var(--sidebar-primary))]" />
-                  {open && <span className="font-medium">Settings</span>}
+                  <span className="font-medium">Settings</span>
                 </NavLink>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -220,7 +218,7 @@ export function AppSidebar() {
             >
               <div className="flex items-center gap-3 w-full">
                 <LogOut className="h-4 w-4 text-destructive group-hover/item:text-destructive" />
-                {open && <span className="font-medium">Sign Out</span>}
+                <span className="font-medium">Sign Out</span>
               </div>
             </SidebarMenuButton>
           </SidebarMenuItem>

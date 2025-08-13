@@ -77,12 +77,9 @@ const ReminderCard = ({
     >
       {/* Mobile Layout */}
       <div className="md:hidden p-3 space-y-2">
-        {/* Row 1: Type badge and status badges */}
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 flex-wrap">
-            <Badge variant="outline" className="text-xs shrink-0">
-              reminder
-            </Badge>
+        {/* Row 1: Status badges and completion toggle */}
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex items-center gap-2 flex-wrap flex-1 min-w-0">
             {!hideStatusBadge && !activity.completed && isOverdue(activity.reminder_date) && (
               <Badge className="bg-red-100 text-red-700 border-red-200 dark:bg-red-950/50 dark:text-red-300 dark:border-red-800 text-xs max-w-20 truncate">
                 Overdue
@@ -116,13 +113,8 @@ const ReminderCard = ({
           </button>
         </div>
 
-        {/* Row 2: Time (smaller, muted) */}
-        <div className="text-xs text-slate-500 dark:text-slate-500">
-          Created: {new Date(activity.created_at).toLocaleDateString()}
-        </div>
-
-        {/* Row 3: Card content (title, lead, date/time) */}
-        <div className="space-y-1">
+        {/* Row 2: Card content (title, lead, date/time) */}
+        <div className="space-y-1 pr-2">
           <h3 className={`text-sm font-medium text-slate-900 dark:text-slate-100 break-words ${activity.completed ? 'opacity-60 line-through' : ''}`}>
             {activity.content}
           </h3>

@@ -522,11 +522,11 @@ const LeadDetail = () => {
   return (
     <div className="p-4 md:p-8 max-w-full overflow-x-hidden">
       <div className="mb-6">
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="min-w-0 flex-1">
-            <div className="flex flex-col sm:flex-row sm:items-start sm:gap-3 mb-1">
-              <h1 className="text-xl sm:text-2xl font-bold truncate min-w-0 flex-1">{lead.name || 'Lead Details'}</h1>
-              <div className="mt-2 sm:mt-0 flex-shrink-0">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+              <h1 className="text-xl sm:text-2xl font-bold truncate min-w-0">{lead.name || 'Lead Details'}</h1>
+              <div className="flex-shrink-0">
                 <LeadStatusBadge
                   leadId={lead.id}
                   currentStatusId={lead.status_id}
@@ -542,7 +542,7 @@ const LeadDetail = () => {
             </div>
           </div>
           
-          <div className="w-full">
+          <div className="lg:flex-shrink-0">
             {/* Header Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
               <ScheduleSessionDialog 

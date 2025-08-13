@@ -173,7 +173,7 @@ export function FilterBar({
                   variant={activeQuickFilter === filter.key ? "default" : "outline"}
                   size="sm"
                   onClick={() => onQuickFilterChange(filter.key)}
-                  className="whitespace-nowrap flex-shrink-0"
+                  className="whitespace-nowrap flex-shrink-0 hidden md:inline-flex"
                 >
                   {filter.label}
                   {filter.count !== undefined && (

@@ -597,7 +597,7 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
                 )}
               </div>
               
-              <div className="flex items-center gap-1 shrink-0">
+              <div className="flex items-center gap-1 shrink-0 self-start">
                 {!isEditing && (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>

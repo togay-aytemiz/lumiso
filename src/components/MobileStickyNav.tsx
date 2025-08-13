@@ -1,16 +1,23 @@
+import React, { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { LayoutDashboard, Users, CalendarRange, BarChart3, CreditCard, Settings } from "lucide-react";
+import { LayoutDashboard, Users, CalendarRange, Calendar, CalendarDays, Bell, BarChart3, CreditCard, Settings, ChevronUp } from "lucide-react";
 
 const navigationItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Leads", url: "/leads", icon: Users },
-  { title: "Bookings", url: "/calendar", icon: CalendarRange },
   { title: "Analytics", url: "/analytics", icon: BarChart3 },
   { title: "Payments", url: "/payments", icon: CreditCard },
   { title: "Settings", url: "/settings", icon: Settings },
 ];
 
+const bookingItems = [
+  { title: "Calendar", url: "/calendar", icon: CalendarDays },
+  { title: "Sessions", url: "/sessions", icon: Calendar },
+  { title: "Reminders", url: "/reminders", icon: Bell },
+];
+
 export function MobileStickyNav() {
+  const [bookingsExpanded, setBookingsExpanded] = useState(false);
   const location = useLocation();
   const currentPath = location.pathname;
 
@@ -18,23 +25,30 @@ export function MobileStickyNav() {
     if (path === "/") {
       return currentPath === "/";
     }
-    if (path === "/calendar") {
-      return currentPath.startsWith("/calendar") || currentPath.startsWith("/sessions") || currentPath.startsWith("/reminders");
-    }
     return currentPath.startsWith(path);
   };
 
+  const isBookingsActive = ["/calendar", "/sessions", "/reminders"].some((path) =>
+    currentPath.startsWith(path)
+  );
+
+  const getCurrentBookingIcon = () => {
+    if (currentPath.startsWith("/sessions")) return Calendar;
+    if (currentPath.startsWith("/reminders")) return Bell;
+    return CalendarDays; // default to calendar
+  };
+
   return (
-    <nav className="md:hidden fixed left-0 top-0 bottom-0 w-16 bg-[#2a1f5d] z-50 flex flex-col">
+    <nav className="md:hidden fixed left-0 top-0 bottom-0 w-16 bg-primary z-50 flex flex-col">
       {/* Logo/Brand */}
-      <div className="h-16 flex items-center justify-center border-b border-white/10">
-        <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
-          <span className="text-white font-bold text-sm">S</span>
+      <div className="h-16 flex items-center justify-center border-b border-primary-foreground/10">
+        <div className="w-8 h-8 bg-primary-foreground/20 rounded-lg flex items-center justify-center">
+          <span className="text-primary-foreground font-bold text-sm">S</span>
         </div>
       </div>
 
       {/* Navigation Items */}
-      <div className="flex-1 flex flex-col py-4">
+      <div className="flex-1 flex flex-col py-4 relative">
         {navigationItems.map((item) => {
           const active = isActive(item.url);
           return (
@@ -43,14 +57,52 @@ export function MobileStickyNav() {
               to={item.url}
               className={`h-12 flex items-center justify-center transition-colors ${
                 active
-                  ? "bg-white/20 text-white"
-                  : "text-white/70 hover:text-white hover:bg-white/10"
+                  ? "bg-primary-foreground/20 text-primary-foreground"
+                  : "text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-foreground/10"
               }`}
             >
               <item.icon className="h-5 w-5" />
             </NavLink>
           );
         })}
+
+        {/* Bookings Menu with Expandable Options */}
+        <div className="relative">
+          <button
+            onClick={() => setBookingsExpanded(!bookingsExpanded)}
+            className={`h-12 w-full flex items-center justify-center transition-colors ${
+              isBookingsActive
+                ? "bg-primary-foreground/20 text-primary-foreground"
+                : "text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-foreground/10"
+            }`}
+          >
+            {React.createElement(getCurrentBookingIcon(), { className: "h-5 w-5" })}
+          </button>
+
+          {/* Expandable Bookings Menu */}
+          {bookingsExpanded && (
+            <div className="absolute left-16 top-0 bg-primary border border-primary-foreground/20 rounded-lg shadow-lg">
+              {bookingItems.map((item) => {
+                const active = isActive(item.url);
+                return (
+                  <NavLink
+                    key={item.title}
+                    to={item.url}
+                    onClick={() => setBookingsExpanded(false)}
+                    className={`flex items-center gap-3 px-4 py-3 min-w-[120px] transition-colors first:rounded-t-lg last:rounded-b-lg ${
+                      active
+                        ? "bg-primary-foreground/20 text-primary-foreground"
+                        : "text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-foreground/10"
+                    }`}
+                  >
+                    <item.icon className="h-4 w-4" />
+                    <span className="text-sm font-medium">{item.title}</span>
+                  </NavLink>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
     </nav>
   );

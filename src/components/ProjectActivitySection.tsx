@@ -253,18 +253,25 @@ export function ProjectActivitySection({ projectId, leadId, leadName, projectNam
               {activities.map((activity) => (
                 <Card key={activity.id}>
                   <CardContent className="p-3">
-                    <div className="flex items-start gap-3">
-                      <div className="flex items-center gap-2 mt-0.5">
-                        {activity.type === 'note' ? (
-                          <MessageSquare className="h-4 w-4 text-blue-500" />
-                        ) : (
-                          <Bell className="h-4 w-4 text-orange-500" />
-                        )}
+                    {/* Mobile: Stack vertically, Desktop: Keep horizontal */}
+                    <div className="flex flex-col md:flex-row md:items-start gap-2 md:gap-3">
+                      {/* Type and tags on first line for mobile */}
+                      <div className="flex items-center gap-2 md:mt-0.5">
+                        {/* Remove redundant icons on mobile when badge already indicates type */}
+                        <div className="hidden md:block">
+                          {activity.type === 'note' ? (
+                            <MessageSquare className="h-4 w-4 text-blue-500" />
+                          ) : (
+                            <Bell className="h-4 w-4 text-orange-500" />
+                          )}
+                        </div>
                         <Badge variant="outline" className="text-xs">
                           {activity.type}
                         </Badge>
                       </div>
-                      <div className="flex-1">
+                      
+                      {/* Content and date stack vertically on mobile */}
+                      <div className="flex-1 space-y-2">
                         {activity.type === 'reminder' && activity.reminder_date ? (
                           <ReminderCard
                             activity={activity}
@@ -290,7 +297,7 @@ export function ProjectActivitySection({ projectId, leadId, leadName, projectNam
                               )}
                             </button>
                             <div className="flex-1">
-                              <p className={`text-sm ${activity.completed ? 'line-through opacity-60' : ''}`}>
+                              <p className={`text-sm break-words ${activity.completed ? 'line-through opacity-60' : ''}`}>
                                 {activity.content}
                               </p>
                             </div>
@@ -298,12 +305,14 @@ export function ProjectActivitySection({ projectId, leadId, leadName, projectNam
                         ) : (
                           // Regular note - no completion button
                           <div className="flex-1">
-                            <p className="text-sm">
+                            <p className="text-sm break-words">
                               {activity.content}
                             </p>
                           </div>
                         )}
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground mt-2">
+                        
+                        {/* Date/time on bottom for mobile */}
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
                           <Clock className="h-3 w-3" />
                           {new Date(activity.created_at).toLocaleDateString()} at {formatTime(new Date(activity.created_at).toTimeString().slice(0,5))}
                         </div>

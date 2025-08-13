@@ -510,13 +510,13 @@ const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
             <TabsList className="bg-transparent border-b border-border p-0 h-auto w-full justify-start">
               <TabsTrigger 
                 value="activities" 
-                className="bg-transparent border-0 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:shadow-none px-4 py-3 font-medium text-muted-foreground hover:text-foreground transition-colors"
+                className="bg-transparent border-0 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:shadow-none px-4 py-3 md:px-4 md:py-3 px-6 py-4 font-medium text-muted-foreground hover:text-foreground transition-colors flex-1 md:flex-initial"
               >
                 Activities
               </TabsTrigger>
               <TabsTrigger 
                 value="history" 
-                className="bg-transparent border-0 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:shadow-none px-4 py-3 font-medium text-muted-foreground hover:text-foreground transition-colors"
+                className="bg-transparent border-0 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:shadow-none px-4 py-3 md:px-4 md:py-3 px-6 py-4 font-medium text-muted-foreground hover:text-foreground transition-colors flex-1 md:flex-initial"
               >
                 History
               </TabsTrigger>
@@ -532,43 +532,47 @@ const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
                        <h4 className="font-medium text-sm text-muted-foreground mb-3 sticky top-0">
                         {formatLongDate(date)}
                       </h4>
-                      <div className="space-y-3 pl-4 border-l-2 border-muted">
-                        {items.map((item, index) => (
-                          <div key={`${item.type}-${item.data.id}-${index}`} className="relative">
-                            <div className="absolute -left-6 top-3 w-3 h-3 bg-background border-2 border-muted-foreground/40 rounded-full"></div>
-                            <div className="bg-muted/50 rounded-lg p-3 space-y-2">
-                              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  {item.type === 'activity' ? (
-                                    item.data.type === 'note' ? (
-                                      <MessageSquare className="h-4 w-4 text-blue-500" />
-                                    ) : (
-                                      <Bell className="h-4 w-4 text-orange-500" />
-                                    )
-                                  ) : (
-                                    <Clock className="h-4 w-4 text-green-500" />
-                                  )}
-                                  <Badge variant="outline" className="text-xs">
-                                    {item.type === 'activity' ? item.data.type : 'session'}
-                                  </Badge>
-                                  {/* Show project/lead badge */}
-                                  <Badge 
-                                    variant="secondary" 
-                                    className={`text-xs max-w-[120px] truncate ${
-                                      item.data.project_id 
-                                        ? 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300' 
-                                        : 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
-                                     }`}
-                                   >
-                                     {item.data.project_id 
-                                       ? item.data.projects?.name || 'Project' 
-                                       : 'Lead'}
+                       <div className="space-y-3 pl-2 md:pl-4 border-l-2 border-muted">
+                         {items.map((item, index) => (
+                           <div key={`${item.type}-${item.data.id}-${index}`} className="relative">
+                             <div className="absolute -left-4 md:-left-6 top-3 w-3 h-3 bg-background border-2 border-muted-foreground/40 rounded-full"></div>
+                             <div className="bg-muted/50 rounded-lg p-3 space-y-2">
+                               {/* Mobile: Stack vertically, Desktop: Keep horizontal */}
+                               <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                                 <div className="flex items-center gap-2 flex-wrap">
+                                   {/* Remove redundant icons on mobile when badge already indicates type */}
+                                   <div className="hidden md:block">
+                                     {item.type === 'activity' ? (
+                                       item.data.type === 'note' ? (
+                                         <MessageSquare className="h-4 w-4 text-blue-500" />
+                                       ) : (
+                                         <Bell className="h-4 w-4 text-orange-500" />
+                                       )
+                                     ) : (
+                                       <Clock className="h-4 w-4 text-green-500" />
+                                     )}
+                                   </div>
+                                   <Badge variant="outline" className="text-xs">
+                                     {item.type === 'activity' ? item.data.type : 'session'}
                                    </Badge>
-                                </div>
-                                <span className="text-xs text-muted-foreground flex-shrink-0">
-                                  {formatTime(new Date(item.date).toTimeString().slice(0,5))}
-                                </span>
-                              </div>
+                                   {/* Show project/lead badge */}
+                                   <Badge 
+                                     variant="secondary" 
+                                     className={`text-xs max-w-[120px] md:max-w-[120px] max-w-full truncate ${
+                                       item.data.project_id 
+                                         ? 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300' 
+                                         : 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
+                                      }`}
+                                    >
+                                      {item.data.project_id 
+                                        ? item.data.projects?.name || 'Project' 
+                                        : 'Lead'}
+                                    </Badge>
+                                 </div>
+                                 <span className="text-xs text-muted-foreground flex-shrink-0 md:block block order-last">
+                                   {formatTime(new Date(item.date).toTimeString().slice(0,5))}
+                                 </span>
+                               </div>
                               
                               {item.type === 'activity' && (
                                 <>
@@ -650,31 +654,36 @@ const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
                       <h4 className="font-medium text-sm text-muted-foreground mb-3 sticky top-0">
                         {formatLongDate(date)}
                       </h4>
-                      <div className="space-y-3 pl-4 border-l-2 border-muted">
-                        {items.map((item, index) => (
-                          <div key={`${item.type}-${item.data.id}-${index}`} className="relative">
-                            <div className="absolute -left-6 top-3 w-3 h-3 bg-background border-2 border-muted-foreground/40 rounded-full"></div>
-                            <div className="bg-muted/50 rounded-lg p-3 space-y-2">
-                               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                                 <div className="flex items-center gap-2 flex-wrap">
-                                   <FileText className="h-4 w-4 text-gray-500" />
-                                   <Badge variant="outline" className="text-xs max-w-[200px] truncate">
-                                     {formatAuditAction(item.data as AuditLog)}
-                                   </Badge>
-                                   {/* Show project badge for session audit logs */}
-                                   {(item.data as AuditLog).entity_type === 'session' && (item.data as AuditLog).project_name && (
-                                     <Badge 
-                                       variant="secondary" 
-                                       className="text-xs bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300 max-w-[120px] truncate"
-                                     >
-                                       {(item.data as AuditLog).project_name}
-                                     </Badge>
-                                   )}
-                                 </div>
-                                 <span className="text-xs text-muted-foreground flex-shrink-0">
-                                   {formatTime(new Date(item.date).toTimeString().slice(0,5))}
-                                 </span>
-                               </div>
+                       <div className="space-y-3 pl-2 md:pl-4 border-l-2 border-muted">
+                         {items.map((item, index) => (
+                           <div key={`${item.type}-${item.data.id}-${index}`} className="relative">
+                             <div className="absolute -left-4 md:-left-6 top-3 w-3 h-3 bg-background border-2 border-muted-foreground/40 rounded-full"></div>
+                             <div className="bg-muted/50 rounded-lg p-2 md:p-3 space-y-1 md:space-y-2">
+                                <div className="flex flex-col gap-1 md:gap-2">
+                                  <div className="flex items-start justify-between gap-2">
+                                    <div className="flex items-center gap-2 flex-wrap flex-1 min-w-0">
+                                      {/* Hide icon on mobile for compact view */}
+                                      <div className="hidden md:block">
+                                        <FileText className="h-4 w-4 text-gray-500" />
+                                      </div>
+                                      <span className="text-xs text-foreground font-medium break-words">
+                                        {formatAuditAction(item.data as AuditLog)}
+                                      </span>
+                                      {/* Show project badge for session audit logs */}
+                                      {(item.data as AuditLog).entity_type === 'session' && (item.data as AuditLog).project_name && (
+                                        <Badge 
+                                          variant="secondary" 
+                                          className="text-xs bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300 max-w-[120px] md:max-w-[120px] max-w-full truncate"
+                                        >
+                                          {(item.data as AuditLog).project_name}
+                                        </Badge>
+                                      )}
+                                    </div>
+                                    <span className="text-xs text-muted-foreground flex-shrink-0">
+                                      {formatTime(new Date(item.date).toTimeString().slice(0,5))}
+                                    </span>
+                                  </div>
+                                </div>
                             </div>
                           </div>
                         ))}

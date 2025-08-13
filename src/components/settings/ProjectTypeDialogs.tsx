@@ -118,7 +118,7 @@ export function AddProjectTypeDialog({ open, onOpenChange, onTypeAdded }: AddPro
             onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
             placeholder="e.g. Corporate, Wedding, Portrait"
             maxLength={50}
-            className="rounded-xl border-2 border-primary/20 focus:border-primary"
+            className="rounded-xl"
           />
           <p className="text-sm text-muted-foreground">Customize your project types to reflect the type of work you offer.</p>
         </div>
@@ -284,7 +284,7 @@ export function EditProjectTypeDialog({ type, open, onOpenChange, onTypeUpdated 
             onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
             placeholder="e.g., Wedding, Portrait, Event"
             maxLength={50}
-            className="rounded-xl border-2 border-primary/20 focus:border-primary"
+            className="rounded-xl"
           />
         </div>
 

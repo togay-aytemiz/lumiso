@@ -123,7 +123,7 @@ export function AddProjectStageDialog({ open, onOpenChange, onStageAdded }: AddP
             onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
             placeholder="e.g. Inquiry, Post Production, Completed"
             maxLength={50}
-            className="rounded-xl border-2 border-primary/20 focus:border-primary"
+            className="rounded-xl"
           />
           <p className="text-sm text-muted-foreground">Organise your workflow in stages.</p>
         </div>
@@ -302,7 +302,7 @@ export function EditProjectStageDialog({ stage, open, onOpenChange, onStageUpdat
             onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
             placeholder="e.g., Planning, In Progress, Completed"
             maxLength={50}
-            className="rounded-xl border-2 border-primary/20 focus:border-primary"
+            className="rounded-xl"
           />
         </div>
 

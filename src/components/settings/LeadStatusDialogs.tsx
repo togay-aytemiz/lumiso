@@ -125,7 +125,7 @@ export function AddLeadStatusDialog({ open, onOpenChange, onStatusAdded }: AddLe
             onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
             placeholder="e.g. Qualified, Proposal Sent, Won"
             maxLength={50}
-            className="rounded-xl border-2 border-primary/20 focus:border-primary"
+            className="rounded-xl"
           />
           <p className="text-sm text-muted-foreground">Organise your lead workflow in statuses.</p>
         </div>
@@ -304,7 +304,7 @@ export function EditLeadStatusDialog({ status, open, onOpenChange, onStatusUpdat
             onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
             placeholder="e.g., Interested, Follow Up"
             maxLength={50}
-            className="rounded-xl border-2 border-primary/20 focus:border-primary"
+            className="rounded-xl"
           />
           <p className="text-sm text-muted-foreground">
             System statuses can be renamed but their color cannot be changed to maintain consistency.

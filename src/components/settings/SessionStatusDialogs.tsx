@@ -122,7 +122,7 @@ export function AddSessionStatusDialog({ open, onOpenChange, onStatusAdded }: Ad
             onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
             placeholder="e.g. Confirmed, Completed, Delivered"
             maxLength={50}
-            className="rounded-xl border-2 border-primary/20 focus:border-primary"
+            className="rounded-xl"
           />
           <p className="text-sm text-muted-foreground">Add, rename and reorder session stages.</p>
         </div>
@@ -306,7 +306,7 @@ export function EditSessionStatusDialog({ status, open, onOpenChange, onStatusUp
             placeholder="e.g., Confirmed, Completed"
             maxLength={50}
             disabled={isProtectedStatus}
-            className="rounded-xl border-2 border-primary/20 focus:border-primary"
+            className="rounded-xl"
           />
            {isProtectedStatus && (
              <p className="text-sm text-muted-foreground">System stages cannot be renamed or change color but can be edited for text changes.</p>

@@ -10,6 +10,7 @@ import ReminderCard from "@/components/ReminderCard";
 import type { DateRange } from "react-day-picker";
 import { formatDate, formatTime, formatDateTime, formatGroupDate, getWeekRange } from "@/lib/utils";
 import GlobalSearch from "@/components/GlobalSearch";
+import { FilterBar } from "@/components/FilterBar";
 
 interface Activity {
   id: string;
@@ -355,14 +356,21 @@ const ReminderDetails = () => {
     navigate(`/leads/${leadId}`);
   };
 
-  const filterOptions = [
-    { key: 'all', label: 'All' },
-    { key: 'overdue', label: 'Overdue' },
-    { key: 'today', label: 'Today' },
-    { key: 'tomorrow', label: 'Tomorrow' },
-    { key: 'thisWeek', label: 'This Week' },
-    { key: 'nextWeek', label: 'Next Week' },
-    { key: 'thisMonth', label: 'This Month' }
+  // Prepare filter options for FilterBar
+  const quickFilters = [
+    { key: 'all', label: 'All', count: getReminderCountForFilter('all') },
+    { key: 'today', label: 'Today', count: getReminderCountForFilter('today') },
+    { key: 'tomorrow', label: 'Tomorrow', count: getReminderCountForFilter('tomorrow') }
+  ];
+
+  const allDateFilters = [
+    { key: 'all', label: 'All', count: getReminderCountForFilter('all') },
+    { key: 'overdue', label: 'Overdue', count: getReminderCountForFilter('overdue') },
+    { key: 'today', label: 'Today', count: getReminderCountForFilter('today') },
+    { key: 'tomorrow', label: 'Tomorrow', count: getReminderCountForFilter('tomorrow') },
+    { key: 'thisWeek', label: 'This Week', count: getReminderCountForFilter('thisWeek') },
+    { key: 'nextWeek', label: 'Next Week', count: getReminderCountForFilter('nextWeek') },
+    { key: 'thisMonth', label: 'This Month', count: getReminderCountForFilter('thisMonth') }
   ];
 
   if (loading) {
@@ -381,11 +389,12 @@ const ReminderDetails = () => {
   const activeActivities = filteredActivities.filter(activity => !activity.completed);
 
   return (
-    <div className="bg-background">
-      <div className="p-6 border-b">
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <div className="p-4 sm:p-6 border-b">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex-shrink-0">
-            <h1 className="text-3xl font-bold">Reminder Details</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold">Reminder Details</h1>
             <p className="text-muted-foreground">Manage your task reminders</p>
           </div>
           <div className="w-full sm:max-w-lg min-w-0 flex-1">
@@ -395,37 +404,21 @@ const ReminderDetails = () => {
       </div>
 
       {/* Filter Bar */}
-      <div className="bg-background border-b">
-        <div className="px-6 py-4">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2 overflow-x-auto">
-            {filterOptions.map((option) => (
-              <Button
-                key={option.key}
-                variant={selectedFilter === option.key ? "default" : "outline"}
-                size="sm"
-                onClick={() => setSelectedFilter(option.key as FilterType)}
-                className="whitespace-nowrap"
-              >
-                {option.label} ({getReminderCountForFilter(option.key as FilterType)})
-              </Button>
-              ))}
-            </div>
-          
-          {/* Show Completed Toggle */}
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <CheckSquare className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm text-muted-foreground whitespace-nowrap">Show Completed</span>
-            <Switch
-              checked={showCompleted}
-              onCheckedChange={setShowCompleted}
-            />
-          </div>
-        </div>
-        </div>
-      </div>
+      <FilterBar
+        quickFilters={quickFilters}
+        activeQuickFilter={selectedFilter}
+        onQuickFilterChange={(filter) => setSelectedFilter(filter as FilterType)}
+        allDateFilters={allDateFilters}
+        activeDateFilter={selectedFilter}
+        onDateFilterChange={(filter) => setSelectedFilter(filter as FilterType)}
+        showCompleted={showCompleted}
+        onShowCompletedChange={setShowCompleted}
+        showCompletedLabel="Show Completed"
+        isSticky={true}
+      />
 
-      <main className="px-6 py-6">
+      {/* Main Content */}
+      <main className="p-4 sm:p-6">
       <div className="space-y-6">
         {/* Active Reminders */}
         {activeActivities.length === 0 && (!showCompleted || completedGroupedByDate.length === 0) ? (

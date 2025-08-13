@@ -13,6 +13,7 @@ import { formatDate, formatTime, formatLongDate, getWeekRange } from "@/lib/util
 import GlobalSearch from "@/components/GlobalSearch";
 import SessionStatusBadge from "@/components/SessionStatusBadge";
 import { ViewProjectDialog } from "@/components/ViewProjectDialog";
+import { FilterBar } from "@/components/FilterBar";
 
 interface Session {
   id: string;
@@ -324,108 +325,70 @@ const AllSessions = () => {
     );
   }
 
+  // Prepare filter options for FilterBar
+  const quickFilters = [
+    { key: "all", label: "All", count: getSessionCountForDateFilter("all") },
+    { key: "today", label: "Today", count: getSessionCountForDateFilter("today") },
+    { key: "tomorrow", label: "Tomorrow", count: getSessionCountForDateFilter("tomorrow") }
+  ];
+
+  const allDateFilters = [
+    { key: "all", label: "All", count: getSessionCountForDateFilter("all") },
+    { key: "past", label: "Past", count: getSessionCountForDateFilter("past") },
+    { key: "today", label: "Today", count: getSessionCountForDateFilter("today") },
+    { key: "tomorrow", label: "Tomorrow", count: getSessionCountForDateFilter("tomorrow") },
+    { key: "thisweek", label: "This Week", count: getSessionCountForDateFilter("thisweek") },
+    { key: "nextweek", label: "Next Week", count: getSessionCountForDateFilter("nextweek") },
+    { key: "thismonth", label: "This Month", count: getSessionCountForDateFilter("thismonth") },
+    { key: "nextmonth", label: "Next Month", count: getSessionCountForDateFilter("nextmonth") }
+  ];
+
+  const statusOptionsForFilter = statusOptions.map(option => ({
+    key: option.value,
+    label: option.label
+  }));
+
   return (
-    <div className="p-4 sm:p-8 max-w-full overflow-x-hidden">
-      <div className="mb-6">
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex-shrink-0 min-w-0">
-              <h1 className="text-2xl sm:text-3xl font-bold">Sessions</h1>
-              <p className="text-muted-foreground">Manage your photo sessions and appointments</p>
-            </div>
-            <div className="w-full sm:w-auto max-w-md">
-              <GlobalSearch />
-            </div>
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <div className="p-4 sm:p-6 border-b">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex-shrink-0">
+            <h1 className="text-2xl sm:text-3xl font-bold">Sessions</h1>
+            <p className="text-muted-foreground">Manage your photo sessions and appointments</p>
+          </div>
+          <div className="w-full sm:max-w-lg min-w-0 flex-1">
+            <GlobalSearch />
           </div>
         </div>
       </div>
-      <Card className="min-w-0">
-        <CardHeader>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-              <NewSessionDialog onSessionScheduled={fetchSessions} />
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                <span className="text-sm text-muted-foreground whitespace-nowrap">Filter by status:</span>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-full sm:w-48 min-w-0">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {statusOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+
+      {/* Filter Bar */}
+      <FilterBar
+        quickFilters={quickFilters}
+        activeQuickFilter={dateFilter}
+        onQuickFilterChange={setDateFilter}
+        allDateFilters={allDateFilters}
+        activeDateFilter={dateFilter}
+        onDateFilterChange={setDateFilter}
+        statusOptions={statusOptionsForFilter}
+        activeStatus={statusFilter}
+        onStatusChange={setStatusFilter}
+        isSticky={true}
+      />
+
+      {/* Main Content */}
+      <div className="p-4 sm:p-6">
+        <Card className="min-w-0">
+          <CardHeader>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <NewSessionDialog onSessionScheduled={fetchSessions} />
               </div>
             </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {/* Quick Date Filters */}
-          <div className="mb-6">
-            <div className="flex flex-wrap gap-2">
-              <Button
-                variant={dateFilter === "all" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setDateFilter("all")}
-              >
-                All ({getSessionCountForDateFilter("all")})
-              </Button>
-              <Button
-                variant={dateFilter === "past" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setDateFilter("past")}
-              >
-                Past ({getSessionCountForDateFilter("past")})
-              </Button>
-              <Button
-                variant={dateFilter === "today" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setDateFilter("today")}
-              >
-                Today ({getSessionCountForDateFilter("today")})
-              </Button>
-              <Button
-                variant={dateFilter === "tomorrow" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setDateFilter("tomorrow")}
-              >
-                Tomorrow ({getSessionCountForDateFilter("tomorrow")})
-              </Button>
-              <Button
-                variant={dateFilter === "thisweek" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setDateFilter("thisweek")}
-              >
-                This Week ({getSessionCountForDateFilter("thisweek")})
-              </Button>
-              <Button
-                variant={dateFilter === "nextweek" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setDateFilter("nextweek")}
-              >
-                Next Week ({getSessionCountForDateFilter("nextweek")})
-              </Button>
-              <Button
-                variant={dateFilter === "thismonth" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setDateFilter("thismonth")}
-              >
-                This Month ({getSessionCountForDateFilter("thismonth")})
-              </Button>
-              <Button
-                variant={dateFilter === "nextmonth" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setDateFilter("nextmonth")}
-              >
-                Next Month ({getSessionCountForDateFilter("nextmonth")})
-              </Button>
-            </div>
-          </div>
-          
-          {filteredAndSortedSessions.length > 0 ? (
+          </CardHeader>
+          <CardContent>
+            {filteredAndSortedSessions.length > 0 ? (
             <div className="overflow-x-auto">
               <Table>
               <TableHeader>
@@ -539,8 +502,9 @@ const AllSessions = () => {
               <p className="text-sm mt-2">Click "Schedule Session" to add your first session.</p>
             </div>
           )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
 
       <ViewProjectDialog
         project={viewingProject}

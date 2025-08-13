@@ -409,32 +409,19 @@ const SessionStatusesSection = () => {
       </DragDropContext>
 
       {/* Add Dialog */}
-      <Dialog
+      <AddSessionStatusDialog
         open={isAddDialogOpen}
-        onOpenChange={(open) => {
-          setIsAddDialogOpen(open);
-          if (!open) {
-            form.reset({ name: "", color: PREDEFINED_COLORS[0] });
-            setEditingStatus(null);
-          }
-        }}
-      >
-        {renderStatusDialog(false)}
-      </Dialog>
+        onOpenChange={setIsAddDialogOpen}
+        onStatusAdded={fetchStatuses}
+      />
 
       {/* Edit Dialog */}
-      <Dialog
+      <EditSessionStatusDialog
+        status={editingStatus}
         open={isEditDialogOpen}
-        onOpenChange={(open) => {
-          setIsEditDialogOpen(open);
-          if (!open) {
-            form.reset({ name: "", color: PREDEFINED_COLORS[0] });
-            setEditingStatus(null);
-          }
-        }}
-      >
-        {renderStatusDialog(true)}
-      </Dialog>
+        onOpenChange={setIsEditDialogOpen}
+        onStatusUpdated={fetchStatuses}
+      />
     </SettingsSection>
   );
 };

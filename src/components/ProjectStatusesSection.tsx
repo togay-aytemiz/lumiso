@@ -531,26 +531,19 @@ const ProjectStatusesSection = () => {
         </DragDropContext>
 
         {/* Add Dialog */}
-        <Dialog open={isAddDialogOpen} onOpenChange={(open) => {
-          setIsAddDialogOpen(open);
-          if (!open) {
-            form.reset({ name: "", color: PREDEFINED_COLORS[0] });
-            setEditingStatus(null);
-          }
-        }}>
-          {renderStatusDialog(false)}
-        </Dialog>
+        <AddProjectStageDialog
+          open={isAddDialogOpen}
+          onOpenChange={setIsAddDialogOpen}
+          onStageAdded={fetchStatuses}
+        />
 
         {/* Edit Dialog */}
-        <Dialog open={isEditDialogOpen} onOpenChange={(open) => {
-          setIsEditDialogOpen(open);
-          if (!open) {
-            form.reset({ name: "", color: PREDEFINED_COLORS[0] });
-            setEditingStatus(null);
-          }
-        }}>
-          {renderStatusDialog(true)}
-        </Dialog>
+        <EditProjectStageDialog
+          stage={editingStatus}
+          open={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
+          onStageUpdated={fetchStatuses}
+        />
       </SettingsSection>
     </>
   );

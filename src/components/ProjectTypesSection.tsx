@@ -427,26 +427,19 @@ const ProjectTypesSection = () => {
         </div>
 
         {/* Add Dialog */}
-        <Dialog open={isAddDialogOpen} onOpenChange={(open) => {
-          setIsAddDialogOpen(open);
-          if (!open) {
-            form.reset({ name: "", is_default: false });
-            setEditingType(null);
-          }
-        }}>
-          {renderTypeDialog(false)}
-        </Dialog>
+        <AddProjectTypeDialog
+          open={isAddDialogOpen}
+          onOpenChange={setIsAddDialogOpen}
+          onTypeAdded={fetchTypes}
+        />
 
         {/* Edit Dialog */}
-        <Dialog open={isEditDialogOpen} onOpenChange={(open) => {
-          setIsEditDialogOpen(open);
-          if (!open) {
-            form.reset({ name: "", is_default: false });
-            setEditingType(null);
-          }
-        }}>
-          {renderTypeDialog(true)}
-        </Dialog>
+        <EditProjectTypeDialog
+          type={editingType}
+          open={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
+          onTypeUpdated={fetchTypes}
+        />
       </SettingsSection>
     </>
   );

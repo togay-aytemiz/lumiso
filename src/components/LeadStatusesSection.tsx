@@ -15,6 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import SettingsSection from "./SettingsSection";
+import { AddLeadStatusDialog, EditLeadStatusDialog } from "./settings/LeadStatusDialogs";
 
 const leadStatusSchema = z.object({
   name: z.string().min(1, "Status name is required").max(50, "Status name must be less than 50 characters"),
@@ -775,26 +776,19 @@ const LeadStatusesSection = () => {
         </div>
 
         {/* Add Dialog */}
-        <Dialog open={isAddDialogOpen} onOpenChange={(open) => {
-          setIsAddDialogOpen(open);
-          if (!open) {
-            form.reset({ name: "", color: PREDEFINED_COLORS[0] });
-            setEditingStatus(null);
-          }
-        }}>
-          {renderStatusDialog(false)}
-        </Dialog>
+        <AddLeadStatusDialog
+          open={isAddDialogOpen}
+          onOpenChange={setIsAddDialogOpen}
+          onStatusAdded={fetchStatuses}
+        />
 
         {/* Edit Dialog */}
-        <Dialog open={isEditDialogOpen} onOpenChange={(open) => {
-          setIsEditDialogOpen(open);
-          if (!open) {
-            form.reset({ name: "", color: PREDEFINED_COLORS[0] });
-            setEditingStatus(null);
-          }
-        }}>
-          {renderStatusDialog(true)}
-        </Dialog>
+        <EditLeadStatusDialog
+          status={editingStatus}
+          open={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
+          onStatusUpdated={fetchStatuses}
+        />
       </SettingsSection>
     </>
   );

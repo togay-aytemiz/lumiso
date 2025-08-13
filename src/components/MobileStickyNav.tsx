@@ -5,8 +5,6 @@ import { LayoutDashboard, Users, FolderOpen, CalendarRange, Calendar, CalendarDa
 const navigationItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Leads", url: "/leads", icon: Users },
-  { title: "Projects", url: "/projects", icon: FolderOpen },
-  // Bookings will be inserted here as expandable
   { title: "Analytics", url: "/analytics", icon: BarChart3 },
   { title: "Payments", url: "/payments", icon: CreditCard },
 ];

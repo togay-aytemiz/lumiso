@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
+import { MobileStickyNav } from "@/components/MobileStickyNav";
 
 const ProtectedRoute = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -41,19 +42,19 @@ const ProtectedRoute = () => {
   }
 
   return (
-    <SidebarProvider>
-      <div className="flex min-h-screen w-full">
-        <AppSidebar />
-        <main className="flex-1 flex flex-col">
-          <div className="md:hidden flex items-center h-16 px-4 border-b bg-background">
-            <SidebarTrigger className="h-8 w-8 text-foreground hover:bg-muted" />
-          </div>
-          <div className="flex-1">
-            <Outlet />
-          </div>
-        </main>
-      </div>
-    </SidebarProvider>
+    <>
+      <MobileStickyNav />
+      <SidebarProvider>
+        <div className="flex min-h-screen w-full">
+          <AppSidebar />
+          <main className="flex-1 flex flex-col md:ml-0 ml-16">
+            <div className="flex-1">
+              <Outlet />
+            </div>
+          </main>
+        </div>
+      </SidebarProvider>
+    </>
   );
 };
 

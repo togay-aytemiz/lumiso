@@ -14,7 +14,7 @@ export default function ClientCard({ createdAt, name, email, phone, notes, leadI
   return (
     <Card className="rounded-2xl border bg-white shadow-sm">
       <CardHeader className="px-4 pt-4 pb-3">
-        <h2 className="text-base sm:text-lg font-semibold">Client Details</h2>
+        <h2 className="text-lg sm:text-base font-semibold">Client Details</h2>
         {createdAt && (
           <CardDescription className="text-xs">Created on {new Date(createdAt).toLocaleDateString('tr-TR')}</CardDescription>
         )}

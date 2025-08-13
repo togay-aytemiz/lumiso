@@ -49,7 +49,6 @@ export default function ProjectDetailsLayout({ header, left, sections, rightFoot
           <div className="space-y-6 md:space-y-8 w-full max-w-full">
             {sections.map((s) => (
               <section key={s.id} id={s.id} className="scroll-mt-[88px] w-full max-w-full overflow-hidden">
-                <h2 className="text-lg font-semibold mb-4">{s.title}</h2>
                 <div className="w-full max-w-full">{s.content}</div>
               </section>
             ))}

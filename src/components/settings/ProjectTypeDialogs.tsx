@@ -129,10 +129,10 @@ export function AddProjectTypeDialog({ open, onOpenChange, onTypeAdded }: AddPro
             id="is_default"
             checked={formData.is_default}
             onChange={(e) => setFormData(prev => ({ ...prev, is_default: e.target.checked }))}
-            className="h-5 w-5 rounded border-2 border-primary/20 text-primary focus:ring-primary"
+            className="h-5 w-5 rounded border-2 border-input accent-primary focus:ring-2 focus:ring-primary/20"
           />
           <div>
-            <Label htmlFor="is_default" className="text-sm font-medium">Set as default</Label>
+            <Label htmlFor="is_default" className="text-sm font-medium cursor-pointer">Set as default</Label>
             <p className="text-sm text-muted-foreground">This type will be pre-selected when creating new projects.</p>
           </div>
         </div>
@@ -291,13 +291,13 @@ export function EditProjectTypeDialog({ type, open, onOpenChange, onTypeUpdated 
         <div className="flex items-center space-x-3">
           <input
             type="checkbox"
-            id="is_default"
+            id="is_default_edit"
             checked={formData.is_default}
             onChange={(e) => setFormData(prev => ({ ...prev, is_default: e.target.checked }))}
-            className="h-5 w-5 rounded border-2 border-primary/20 text-primary focus:ring-primary"
+            className="h-5 w-5 rounded border-2 border-input accent-primary focus:ring-2 focus:ring-primary/20"
           />
           <div>
-            <Label htmlFor="is_default" className="text-sm font-medium">Set as default</Label>
+            <Label htmlFor="is_default_edit" className="text-sm font-medium cursor-pointer">Set as default</Label>
             <p className="text-sm text-muted-foreground">This type will be pre-selected when creating new projects.</p>
           </div>
         </div>

@@ -251,7 +251,11 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
       setEditDescription(project.description || "");
       setEditProjectTypeId(project.project_type_id || "");
       setIsEditing(false);
-      setIsFullscreen(false);
+      
+      // Auto-fullscreen on mobile
+      const isMobile = window.innerWidth <= 768;
+      setIsFullscreen(isMobile);
+      
       setLocalStatusId(project.status_id || null);
     }
   }, [project, open]);
@@ -294,6 +298,14 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
   const handleDialogOpenChange = (newOpen: boolean) => {
     // If we're in fullscreen mode and user tries to close (ESC or click outside)
     if (!newOpen && isFullscreen) {
+      // On mobile, don't allow exiting fullscreen, just close the modal
+      const isMobile = window.innerWidth <= 768;
+      if (isMobile) {
+        onOpenChange(newOpen);
+        onProjectUpdated();
+        onActivityUpdated?.();
+        return;
+      }
       setIsFullscreen(false);
       return;
     }
@@ -305,7 +317,11 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
   };
 
   const toggleFullscreen = () => {
-    setIsFullscreen(!isFullscreen);
+    // Don't allow toggle on mobile - it's always fullscreen
+    const isMobile = window.innerWidth <= 768;
+    if (!isMobile) {
+      setIsFullscreen(!isFullscreen);
+    }
   };
 
   const handleSaveProject = async () => {
@@ -497,8 +513,8 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
         <DialogContent className={`${isFullscreen ? 'max-w-none w-[100vw] h-[100vh] m-0 rounded-none overflow-y-auto' : 'sm:max-w-5xl max-h-[85vh] overflow-y-auto'} overscroll-contain pr-2 [&>button]:hidden`}>
           <div className="max-w-full overflow-x-hidden">
           <DialogHeader className="pb-4">
-            <div className="flex items-start justify-between gap-2">
-              <div className="flex-1 min-w-0 space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex-1 min-w-0 space-y-3">
                 {isEditing ? (
                     <div className="space-y-3">
                       <Input
@@ -546,39 +562,37 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
                     </div>
                   </div>
                 ) : (
-                  <div className="space-y-2">
-                    <div className="space-y-1">
-                      <div className="space-y-2">
-                        <DialogTitle className="text-xl md:text-2xl font-bold leading-tight break-words">{project?.name}</DialogTitle>
-                        
-                        {/* Badges row */}
-                        <div className="flex items-center gap-2 flex-wrap">
-                          {/* Project Status Badge */}
-                          <ProjectStatusBadge 
-                            projectId={project.id}
-                            currentStatusId={localStatusId || undefined}
-                            onStatusChange={() => {
-                              onProjectUpdated();
-                            }}
-                            editable={!isArchived}
-                            className="text-sm"
-                          />
-                          
-                          {/* Project Type Badge */}
-                          {projectType && (
-                            <Badge variant="outline" className="text-xs">
-                              {projectType.name.toUpperCase()}
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
+                  <div className="space-y-3">
+                    <div className="space-y-2">
+                      <DialogTitle asChild>
+                        <h1 className="text-xl md:text-2xl font-bold leading-tight break-words">{project?.name}</h1>
+                      </DialogTitle>
                       
+                      {/* Badges row */}
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {/* Project Status Badge */}
+                        <ProjectStatusBadge 
+                          projectId={project.id}
+                          currentStatusId={localStatusId || undefined}
+                          onStatusChange={() => {
+                            onProjectUpdated();
+                          }}
+                          editable={!isArchived}
+                          className="text-sm"
+                        />
+                        
+                        {/* Project Type Badge */}
+                        {projectType && (
+                          <Badge variant="outline" className="text-xs">
+                            {projectType.name.toUpperCase()}
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                     
                     {project?.description && (
                       <p className="text-muted-foreground text-base">{project.description}</p>
                     )}
-                    
                   </div>
                 )}
               </div>
@@ -618,11 +632,12 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
                     </DropdownMenuContent>
                   </DropdownMenu>
                 )}
+                {/* Hide fullscreen toggle on mobile since it's always fullscreen */}
                 <Button 
                   variant="ghost" 
                   size="sm" 
                   onClick={toggleFullscreen}
-                  className="text-muted-foreground hover:text-foreground h-8 w-8 p-0 md:h-10 md:w-10"
+                  className="text-muted-foreground hover:text-foreground h-8 w-8 p-0 md:h-10 md:w-10 hidden md:flex"
                 >
                   {isFullscreen ? (
                     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

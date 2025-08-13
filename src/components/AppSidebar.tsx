@@ -24,7 +24,7 @@ const navigationItems = [
 ];
 
 export function AppSidebar() {
-  const { open, setOpen } = useSidebar();
+  const { open, setOpen, openMobile, setOpenMobile } = useSidebar();
   const location = useLocation();
   const navigate = useNavigate();
   const currentPath = location.pathname;
@@ -65,13 +65,13 @@ export function AppSidebar() {
 
   const handleNavClick = () => {
     if (isMobile) {
-      setOpen(false);
+      setOpenMobile(false);
     }
   };
 
   return (
     <Sidebar
-      className="border-r border-sidebar-border flex flex-col"
+      className="border-r border-sidebar-border"
       collapsible={isMobile ? "offcanvas" : "icon"}
     >
       <SidebarHeader className="p-6">
@@ -192,7 +192,7 @@ export function AppSidebar() {
         </SidebarMenu>
       </SidebarContent>
 
-      <SidebarFooter className="p-4 mt-auto">
+      <SidebarFooter className="p-4 mt-auto shrink-0">
         <Separator className="mb-3 bg-[hsl(var(--sidebar-border)/0.5)]" />
         <SidebarMenu>
             <SidebarMenuItem>

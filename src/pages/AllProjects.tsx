@@ -460,13 +460,16 @@ const AllProjects = () => {
   return (
     <div className="flex flex-col h-screen overflow-x-hidden">
       {/* Fixed header section */}
-      <div className="flex-none p-8 pb-0">
+      <div className="flex-none p-4 sm:p-8 pb-0">
         <div className="mb-6">
           <div className="flex flex-col gap-4">
-            <div className="flex items-center justify-between">
-              <div className="flex-shrink-0">
-                <h1 className="text-3xl font-bold">Projects</h1>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="flex-shrink-0 min-w-0">
+                <h1 className="text-2xl sm:text-3xl font-bold">Projects</h1>
                 <p className="text-muted-foreground">Manage all your projects in one place</p>
+              </div>
+              <div className="w-full sm:w-auto max-w-md">
+                <GlobalSearch />
               </div>
             </div>
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
@@ -480,9 +483,6 @@ const AllProjects = () => {
                   Add Project
                 </Button>
               </EnhancedProjectDialog>
-              <div className="flex-1 max-w-md">
-                <GlobalSearch />
-              </div>
             </div>
           </div>
         </div>
@@ -542,10 +542,11 @@ const AllProjects = () => {
             />
           </div>
         ) : (
-          <div className="h-full overflow-y-auto p-8 pt-6">
-            <Card>
-              <CardContent className="pt-6">
-                <Table>
+          <div className="h-full overflow-y-auto p-4 sm:p-8 pt-6">
+            <Card className="min-w-0">
+              <CardContent className="pt-6 p-0">
+                <div className="overflow-x-auto">
+                  <Table>
                   <TableHeader>
                     <TableRow>
                       {viewMode === 'archived' ? (
@@ -742,7 +743,8 @@ const AllProjects = () => {
                       </TableRow>
                     )}
                   </TableBody>
-                </Table>
+                  </Table>
+                </div>
               </CardContent>
             </Card>
           </div>

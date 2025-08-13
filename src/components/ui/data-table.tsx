@@ -108,7 +108,7 @@ export function DataTable<T>({
       )}
 
       {/* Table */}
-      <div className="rounded-md bg-background">
+      <div className="rounded-md bg-background overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent border-b">

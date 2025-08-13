@@ -325,31 +325,29 @@ const AllSessions = () => {
   }
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-8 max-w-full overflow-x-hidden">
       <div className="mb-6">
         <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between">
-            <div className="flex-shrink-0">
-              <h1 className="text-3xl font-bold">Sessions</h1>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex-shrink-0 min-w-0">
+              <h1 className="text-2xl sm:text-3xl font-bold">Sessions</h1>
               <p className="text-muted-foreground">Manage your photo sessions and appointments</p>
             </div>
-          </div>
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-            <div className="flex-1 max-w-md">
+            <div className="w-full sm:w-auto max-w-md">
               <GlobalSearch />
             </div>
           </div>
         </div>
       </div>
-      <Card>
+      <Card className="min-w-0">
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
               <NewSessionDialog onSessionScheduled={fetchSessions} />
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">Filter by status:</span>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                <span className="text-sm text-muted-foreground whitespace-nowrap">Filter by status:</span>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-48">
+                  <SelectTrigger className="w-full sm:w-48 min-w-0">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -428,7 +426,8 @@ const AllSessions = () => {
           </div>
           
           {filteredAndSortedSessions.length > 0 ? (
-            <Table>
+            <div className="overflow-x-auto">
+              <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Project</TableHead>
@@ -526,6 +525,7 @@ const AllSessions = () => {
                 ))}
               </TableBody>
             </Table>
+            </div>
           ) : (
             <div className="text-center py-12 text-muted-foreground">
               <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />

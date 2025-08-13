@@ -45,10 +45,10 @@ const ProtectedRoute = () => {
     <>
       <MobileStickyNav />
       <SidebarProvider>
-        <div className="flex min-h-screen w-full">
+        <div className="flex min-h-screen w-full overflow-x-hidden">
           <AppSidebar />
-          <main className="flex-1 flex flex-col md:ml-0 ml-16">
-            <div className="flex-1">
+          <main className="flex-1 flex flex-col md:ml-0 ml-16 min-w-0 overflow-x-hidden">
+            <div className="flex-1 min-w-0">
               <Outlet />
             </div>
           </main>

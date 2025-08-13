@@ -15,17 +15,15 @@ const Settings = () => {
   const { connection, loading, connectCalendar, disconnectCalendar } = useGoogleCalendar();
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-8 max-w-full overflow-x-hidden">
       <div className="mb-6">
         <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between">
-            <div className="flex-shrink-0">
-              <h1 className="text-3xl font-bold">Settings</h1>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex-shrink-0 min-w-0">
+              <h1 className="text-2xl sm:text-3xl font-bold">Settings</h1>
               <p className="text-muted-foreground">Manage your account and integrations</p>
             </div>
-          </div>
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-            <div className="flex-1 max-w-md">
+            <div className="w-full sm:w-auto max-w-md">
               <GlobalSearch />
             </div>
           </div>

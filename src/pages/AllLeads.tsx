@@ -152,31 +152,29 @@ const AllLeads = () => {
   }
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-8 max-w-full overflow-x-hidden">
       <div className="mb-6">
         <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between">
-            <div className="flex-shrink-0">
-              <h1 className="text-3xl font-bold">Leads</h1>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex-shrink-0 min-w-0">
+              <h1 className="text-2xl sm:text-3xl font-bold">Leads</h1>
               <p className="text-muted-foreground">Track and manage your potential clients</p>
             </div>
-          </div>
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-            <div className="flex-1 max-w-md">
+            <div className="w-full sm:w-auto max-w-md">
               <GlobalSearch />
             </div>
           </div>
         </div>
       </div>
-      <Card>
+      <Card className="min-w-0">
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
               <AddLeadDialog onLeadAdded={fetchLeads} />
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">Filter by status:</span>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                <span className="text-sm text-muted-foreground whitespace-nowrap">Filter by status:</span>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-48">
+                  <SelectTrigger className="w-full sm:w-48 min-w-0">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -191,109 +189,111 @@ const AllLeads = () => {
             </div>
           </div>
         </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead 
-                  className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => handleSort('name')}
-                >
-                  <div className="flex items-center gap-2">
-                    Name
-                    {getSortIcon('name')}
-                  </div>
-                </TableHead>
-                <TableHead 
-                  className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => handleSort('email')}
-                >
-                  <div className="flex items-center gap-2">
-                    Email
-                    {getSortIcon('email')}
-                  </div>
-                </TableHead>
-                <TableHead 
-                  className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => handleSort('phone')}
-                >
-                  <div className="flex items-center gap-2">
-                    Phone
-                    {getSortIcon('phone')}
-                  </div>
-                </TableHead>
-                <TableHead 
-                  className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => handleSort('status')}
-                >
-                  <div className="flex items-center gap-2">
-                    Status
-                    {getSortIcon('status')}
-                  </div>
-                </TableHead>
-                <TableHead 
-                  className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => handleSort('due_date')}
-                >
-                  <div className="flex items-center gap-2">
-                    Due Date
-                    {getSortIcon('due_date')}
-                  </div>
-                </TableHead>
-                <TableHead>Notes</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredAndSortedLeads.length > 0 ? (
-                filteredAndSortedLeads.map((lead) => (
-                  <TableRow 
-                    key={lead.id}
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead 
                     className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => handleRowClick(lead.id)}
+                    onClick={() => handleSort('name')}
                   >
-                    <TableCell className="font-medium">{lead.name}</TableCell>
-                    <TableCell>{lead.email || '-'}</TableCell>
-                    <TableCell>{lead.phone || '-'}</TableCell>
+                    <div className="flex items-center gap-2">
+                      Name
+                      {getSortIcon('name')}
+                    </div>
+                  </TableHead>
+                  <TableHead 
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={() => handleSort('email')}
+                  >
+                    <div className="flex items-center gap-2">
+                      Email
+                      {getSortIcon('email')}
+                    </div>
+                  </TableHead>
+                  <TableHead 
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={() => handleSort('phone')}
+                  >
+                    <div className="flex items-center gap-2">
+                      Phone
+                      {getSortIcon('phone')}
+                    </div>
+                  </TableHead>
+                  <TableHead 
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={() => handleSort('status')}
+                  >
+                    <div className="flex items-center gap-2">
+                      Status
+                      {getSortIcon('status')}
+                    </div>
+                  </TableHead>
+                  <TableHead 
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={() => handleSort('due_date')}
+                  >
+                    <div className="flex items-center gap-2">
+                      Due Date
+                      {getSortIcon('due_date')}
+                    </div>
+                  </TableHead>
+                  <TableHead>Notes</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredAndSortedLeads.length > 0 ? (
+                  filteredAndSortedLeads.map((lead) => (
+                    <TableRow 
+                      key={lead.id}
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => handleRowClick(lead.id)}
+                    >
+                      <TableCell className="font-medium">{lead.name}</TableCell>
+                      <TableCell>{lead.email || '-'}</TableCell>
+                      <TableCell>{lead.phone || '-'}</TableCell>
+                        <TableCell>
+                          <LeadStatusBadge
+                            leadId={lead.id}
+                            currentStatusId={lead.status_id}
+                            currentStatus={lead.status}
+                            onStatusChange={fetchLeads}
+                            editable={true}
+                            size="sm"
+                            statuses={leadStatuses}
+                          />
+                         </TableCell>
                       <TableCell>
-                        <LeadStatusBadge
-                          leadId={lead.id}
-                          currentStatusId={lead.status_id}
-                          currentStatus={lead.status}
-                          onStatusChange={fetchLeads}
-                          editable={true}
-                          size="sm"
-                          statuses={leadStatuses}
-                        />
-                       </TableCell>
-                    <TableCell>
-                      {lead.due_date ? formatDate(lead.due_date) : '-'}
-                    </TableCell>
-                    <TableCell className="max-w-xs">
-                      {lead.notes ? (
-                        <div 
-                          className="truncate hover:whitespace-normal hover:overflow-visible hover:text-wrap cursor-help"
-                          title={lead.notes}
-                        >
-                          {lead.notes}
-                        </div>
-                      ) : (
-                        '-'
-                      )}
+                        {lead.due_date ? formatDate(lead.due_date) : '-'}
+                      </TableCell>
+                      <TableCell className="max-w-xs">
+                        {lead.notes ? (
+                          <div 
+                            className="truncate hover:whitespace-normal hover:overflow-visible hover:text-wrap cursor-help"
+                            title={lead.notes}
+                          >
+                            {lead.notes}
+                          </div>
+                        ) : (
+                          '-'
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                      {statusFilter === "all" 
+                        ? "No leads found. Add your first lead to get started!"
+                        : `No leads found with status "${statusFilter}".`
+                      }
                     </TableCell>
                   </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                    {statusFilter === "all" 
-                      ? "No leads found. Add your first lead to get started!"
-                      : `No leads found with status "${statusFilter}".`
-                    }
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
     </div>

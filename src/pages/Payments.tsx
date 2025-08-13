@@ -297,17 +297,15 @@ const Payments = () => {
   }
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-8 max-w-full overflow-x-hidden">
       <div className="mb-6">
         <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between">
-            <div className="flex-shrink-0">
-              <h1 className="text-3xl font-bold">Payments</h1>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex-shrink-0 min-w-0">
+              <h1 className="text-2xl sm:text-3xl font-bold">Payments</h1>
               <p className="text-muted-foreground">Track and manage all payments across projects</p>
             </div>
-          </div>
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-            <div className="flex-1 max-w-md">
+            <div className="w-full sm:w-auto max-w-md">
               <GlobalSearch />
             </div>
           </div>
@@ -382,24 +380,25 @@ const Payments = () => {
       </div>
 
       {/* Payments Table */}
-      <Card>
+      <Card className="min-w-0">
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">Filter by label:</span>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                <span className="text-sm text-muted-foreground whitespace-nowrap">Filter by label:</span>
                 <Input
                   placeholder="Filter by label..."
                   value={labelFilter}
                   onChange={(e) => setLabelFilter(e.target.value)}
-                  className="w-48"
+                  className="w-full sm:w-48 min-w-0"
                 />
               </div>
             </div>
           </div>
         </CardHeader>
-        <CardContent>
-          <Table>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <Table>
             <TableHeader>
               <TableRow>
                 <TableHead 
@@ -543,7 +542,8 @@ const Payments = () => {
                 </TableRow>
               )}
             </TableBody>
-          </Table>
+            </Table>
+          </div>
         </CardContent>
       </Card>
 

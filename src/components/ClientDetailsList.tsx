@@ -61,21 +61,21 @@ export function ClientDetailsList({ name, email, phone, notes, clickableNameHref
       {/* Rows */}
       <div className="space-y-1">
         <TooltipProvider delayDuration={200}>
-          <div className="flex items-baseline overflow-hidden">
-            <span className="text-xs text-muted-foreground">Name:</span>
+          <div className="flex items-baseline min-w-0">
+            <span className="text-xs text-muted-foreground flex-shrink-0">Name:</span>
             {(() => { const v = (name && name.trim()) ? name : null; return v ? (
               clickableNameHref ? (
                 <Button
                   asChild
                   variant="link"
-                  className="ml-1 p-0 h-auto text-left justify-start font-medium text-xs"
+                  className="ml-1 p-0 h-auto text-left justify-start font-medium text-xs min-w-0"
                 >
-                  <a href={clickableNameHref} className={clickableNameClasses}>{v}</a>
+                  <a href={clickableNameHref} className={cn(clickableNameClasses, "truncate")}>{v}</a>
                 </Button>
               ) : (
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <span className="ml-1 text-xs font-medium truncate inline-block max-w-full">{v}</span>
+                    <span className="ml-1 text-xs font-medium truncate min-w-0 flex-1">{v}</span>
                   </TooltipTrigger>
                   <TooltipContent>{v}</TooltipContent>
                 </Tooltip>
@@ -85,12 +85,12 @@ export function ClientDetailsList({ name, email, phone, notes, clickableNameHref
             ); })()}
           </div>
 
-          <div className="flex items-baseline overflow-hidden">
-            <span className="text-xs text-muted-foreground">Email:</span>
+          <div className="flex items-baseline min-w-0">
+            <span className="text-xs text-muted-foreground flex-shrink-0">Email:</span>
             {(() => { const v = (email && email.trim()) ? email : null; return v ? (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <span className="ml-1 text-xs font-medium truncate inline-block max-w-full">{v}</span>
+                  <span className="ml-1 text-xs font-medium truncate min-w-0 flex-1">{v}</span>
                 </TooltipTrigger>
                 <TooltipContent>{v}</TooltipContent>
               </Tooltip>
@@ -99,12 +99,12 @@ export function ClientDetailsList({ name, email, phone, notes, clickableNameHref
             ); })()}
           </div>
 
-          <div className="flex items-baseline overflow-hidden">
-            <span className="text-xs text-muted-foreground">Phone:</span>
+          <div className="flex items-baseline min-w-0">
+            <span className="text-xs text-muted-foreground flex-shrink-0">Phone:</span>
             {(() => { const v = normalized ? normalized.e164 : ((phone && phone.trim()) ? phone : null); return v ? (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <span className="ml-1 text-xs font-medium truncate inline-block max-w-full">{v}</span>
+                  <span className="ml-1 text-xs font-medium truncate min-w-0 flex-1">{v}</span>
                 </TooltipTrigger>
                 <TooltipContent>{v}</TooltipContent>
               </Tooltip>
@@ -113,15 +113,15 @@ export function ClientDetailsList({ name, email, phone, notes, clickableNameHref
             ); })()}
           </div>
 
-          <div className="flex items-start overflow-hidden">
-            <span className="text-xs text-muted-foreground mt-[2px]">Notes:</span>
+          <div className="flex items-start min-w-0">
+            <span className="text-xs text-muted-foreground mt-[2px] flex-shrink-0">Notes:</span>
             {notes ? (
-              <div className="ml-1 flex-1">
+              <div className="ml-1 flex-1 min-w-0">
                 <div className="relative">
                   <div
                     ref={notesRef}
                     className={cn(
-                      "text-xs transition-all whitespace-pre-wrap",
+                      "text-xs transition-all whitespace-pre-wrap break-words",
                       clampNotes && !notesExpanded && "max-h-12 overflow-hidden"
                     )}
                   >

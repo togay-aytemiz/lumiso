@@ -454,7 +454,7 @@ const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
         <CardContent className="space-y-4">
           <div className="space-y-4">
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                 <Label>Note</Label>
                 <div className="flex items-center gap-2">
                   <Label htmlFor="reminder-toggle" className="text-sm font-medium">
@@ -472,7 +472,7 @@ const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
                 onChange={(e) => setContent(e.target.value)}
                 placeholder="Enter your note..."
                 rows={1}
-                className="resize-none min-h-[40px] max-h-[40px]"
+                className="resize-none min-h-[40px] max-h-[40px] w-full"
               />
             </div>
 
@@ -491,7 +491,7 @@ const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
                 onClick={handleSaveActivity} 
                 disabled={saving || !content.trim() || (isReminderMode && !reminderDateTime)}
                 size="sm"
-                className="animate-fade-in"
+                className="animate-fade-in w-full sm:w-auto"
               >
                 {saving ? "Saving..." : `Add ${isReminderMode ? 'Reminder' : 'Note'}`}
               </Button>
@@ -537,8 +537,8 @@ const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
                           <div key={`${item.type}-${item.data.id}-${index}`} className="relative">
                             <div className="absolute -left-6 top-3 w-3 h-3 bg-background border-2 border-muted-foreground/40 rounded-full"></div>
                             <div className="bg-muted/50 rounded-lg p-3 space-y-2">
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
+                              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                                <div className="flex items-center gap-2 flex-wrap">
                                   {item.type === 'activity' ? (
                                     item.data.type === 'note' ? (
                                       <MessageSquare className="h-4 w-4 text-blue-500" />
@@ -554,7 +554,7 @@ const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
                                   {/* Show project/lead badge */}
                                   <Badge 
                                     variant="secondary" 
-                                    className={`text-xs ${
+                                    className={`text-xs max-w-[120px] truncate ${
                                       item.data.project_id 
                                         ? 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300' 
                                         : 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
@@ -565,7 +565,7 @@ const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
                                        : 'Lead'}
                                    </Badge>
                                 </div>
-                                <span className="text-xs text-muted-foreground">
+                                <span className="text-xs text-muted-foreground flex-shrink-0">
                                   {formatTime(new Date(item.date).toTimeString().slice(0,5))}
                                 </span>
                               </div>
@@ -655,26 +655,26 @@ const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
                           <div key={`${item.type}-${item.data.id}-${index}`} className="relative">
                             <div className="absolute -left-6 top-3 w-3 h-3 bg-background border-2 border-muted-foreground/40 rounded-full"></div>
                             <div className="bg-muted/50 rounded-lg p-3 space-y-2">
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                  <FileText className="h-4 w-4 text-gray-500" />
-                                  <Badge variant="outline" className="text-xs">
-                                    {formatAuditAction(item.data as AuditLog)}
-                                  </Badge>
-                                  {/* Show project badge for session audit logs */}
-                                  {(item.data as AuditLog).entity_type === 'session' && (item.data as AuditLog).project_name && (
-                                    <Badge 
-                                      variant="secondary" 
-                                      className="text-xs bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300"
-                                    >
-                                      {(item.data as AuditLog).project_name}
-                                    </Badge>
-                                  )}
-                                </div>
-                                <span className="text-xs text-muted-foreground">
-                                  {formatTime(new Date(item.date).toTimeString().slice(0,5))}
-                                </span>
-                              </div>
+                               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                                 <div className="flex items-center gap-2 flex-wrap">
+                                   <FileText className="h-4 w-4 text-gray-500" />
+                                   <Badge variant="outline" className="text-xs max-w-[200px] truncate">
+                                     {formatAuditAction(item.data as AuditLog)}
+                                   </Badge>
+                                   {/* Show project badge for session audit logs */}
+                                   {(item.data as AuditLog).entity_type === 'session' && (item.data as AuditLog).project_name && (
+                                     <Badge 
+                                       variant="secondary" 
+                                       className="text-xs bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300 max-w-[120px] truncate"
+                                     >
+                                       {(item.data as AuditLog).project_name}
+                                     </Badge>
+                                   )}
+                                 </div>
+                                 <span className="text-xs text-muted-foreground flex-shrink-0">
+                                   {formatTime(new Date(item.date).toTimeString().slice(0,5))}
+                                 </span>
+                               </div>
                             </div>
                           </div>
                         ))}

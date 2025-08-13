@@ -520,30 +520,31 @@ const LeadDetail = () => {
   }
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8 max-w-full overflow-x-hidden">
       <div className="mb-6">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <div className="flex items-center gap-3 mb-1">
-              <h1 className="text-2xl font-bold">{lead.name || 'Lead Details'}</h1>
-              <LeadStatusBadge
-                leadId={lead.id}
-                currentStatusId={lead.status_id}
-                currentStatus={lead.status}
-                onStatusChange={() => {
-                  fetchLead();
-                  setActivityRefreshKey(prev => prev + 1);
-                }}
-                editable={true}
-                statuses={leadStatuses}
-              />
+        <div className="flex flex-col gap-4">
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:gap-3 mb-1">
+              <h1 className="text-xl sm:text-2xl font-bold truncate min-w-0 flex-1">{lead.name || 'Lead Details'}</h1>
+              <div className="mt-2 sm:mt-0 flex-shrink-0">
+                <LeadStatusBadge
+                  leadId={lead.id}
+                  currentStatusId={lead.status_id}
+                  currentStatus={lead.status}
+                  onStatusChange={() => {
+                    fetchLead();
+                    setActivityRefreshKey(prev => prev + 1);
+                  }}
+                  editable={true}
+                  statuses={leadStatuses}
+                />
+              </div>
             </div>
-            
           </div>
           
-          <div className="flex items-center gap-4">
+          <div className="w-full">
             {/* Header Action Buttons */}
-            <div className="flex flex-wrap gap-2 lg:gap-4">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
               <ScheduleSessionDialog 
                 leadId={lead.id} 
                 leadName={lead.name}
@@ -556,7 +557,7 @@ const LeadDetail = () => {
                 <Button 
                   onClick={handleMarkAsCompleted}
                   disabled={isUpdating}
-                  className="bg-green-600 hover:bg-green-700 text-white h-10"
+                  className="bg-green-600 hover:bg-green-700 text-white h-10 w-full sm:w-auto"
                   size="sm"
                 >
                   <CheckCircle className="h-4 w-4 mr-2" />
@@ -570,13 +571,12 @@ const LeadDetail = () => {
                   disabled={isUpdating}
                   variant="destructive"
                   size="sm"
-                  className="h-10"
+                  className="h-10 w-full sm:w-auto"
                 >
                   {isUpdating ? "Updating..." : lostStatus.name}
                 </Button>
               )}
             </div>
-
           </div>
         </div>
       </div>
@@ -603,9 +603,9 @@ const LeadDetail = () => {
       )}
 
       {/* Two-column layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 md:gap-8 max-w-full">
         {/* Left column - Lead Details (25%) */}
-        <div className="lg:col-span-1 space-y-6">
+        <div className="lg:col-span-1 space-y-6 min-w-0">
           <Card className="relative">
             <CardHeader className="flex flex-row items-start justify-between">
               <div>
@@ -713,7 +713,7 @@ const LeadDetail = () => {
         </div>
 
         {/* Right column - Projects and Activity Section (75%) */}
-        <div className="lg:col-span-3 space-y-6">
+        <div className="lg:col-span-3 space-y-6 min-w-0">
           <ProjectsSection 
             leadId={lead.id} 
             leadName={lead.name} 
@@ -722,17 +722,17 @@ const LeadDetail = () => {
           />
           <ActivitySection key={activityRefreshKey} leadId={lead.id} leadName={lead.name} />
 
-          <div className="border border-destructive/20 bg-destructive/5 rounded-md p-4">
+          <div className="border border-destructive/20 bg-destructive/5 rounded-md p-4 max-w-full">
             <div className="space-y-3">
               <h3 className="text-sm font-medium text-destructive">Danger Zone</h3>
               <Button
                 variant="outline"
                 onClick={() => setShowDeleteDialog(true)}
-                className="w-full border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                className="w-full max-w-xs border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
               >
                 Delete Lead
               </Button>
-              <p className="text-xs text-muted-foreground text-center">
+              <p className="text-xs text-muted-foreground break-words">
                 This will permanently delete the lead and ALL related data: projects, sessions, reminders/notes, payments, services, and activities.
               </p>
             </div>

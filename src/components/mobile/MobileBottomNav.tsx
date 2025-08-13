@@ -150,7 +150,7 @@ export function MobileBottomNav() {
   return (
     <>
       <nav 
-        className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-t supports-[backdrop-filter]:bg-background/60 mobile-bottom-nav"
+        className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-md border-t supports-[backdrop-filter]:bg-background/50 mobile-bottom-nav"
         style={{ 
           paddingBottom: 'max(env(safe-area-inset-bottom), 8px)',
           position: 'fixed',

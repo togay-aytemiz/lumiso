@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { AppSheetModal } from "@/components/ui/app-sheet-modal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Edit, Save } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { sessionSchema, sanitizeInput, sanitizeHtml } from "@/lib/validation";
@@ -95,9 +95,7 @@ const EditSessionDialog = ({ sessionId, leadId, currentDate, currentTime, curren
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  const handleSubmit = async () => {
     if (!(await validateForm())) return;
 
     setLoading(true);
@@ -153,62 +151,100 @@ const EditSessionDialog = ({ sessionId, leadId, currentDate, currentTime, curren
     }));
   };
 
+  const isDirty = Boolean(
+    formData.session_date !== currentDate ||
+    formData.session_time !== currentTime ||
+    formData.notes !== (currentNotes || "") ||
+    formData.project_id !== (currentProjectId || "")
+  );
+
+  const handleDirtyClose = () => {
+    if (window.confirm("Discard changes?")) {
+      if (onOpenChange) {
+        onOpenChange(false);
+      }
+    }
+  };
+
+  const footerActions = [
+    {
+      label: "Cancel",
+      onClick: () => onOpenChange && onOpenChange(false),
+      variant: "outline" as const,
+      disabled: loading
+    },
+    {
+      label: loading ? "Updating..." : "Update Session",
+      onClick: handleSubmit,
+      disabled: loading || !formData.session_date.trim() || !formData.session_time.trim(),
+      loading: loading
+    }
+  ];
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Edit Session</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="session_date">Date</Label>
-            <Input
-              id="session_date"
-              type="date"
-              value={formData.session_date}
-              onChange={(e) => handleInputChange("session_date", e.target.value)}
-              required
-            />
-            {errors.session_date && <p className="text-sm text-destructive">{errors.session_date}</p>}
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="session_time">Time</Label>
-            <Input
-              id="session_time"
-              type="time"
-              value={formData.session_time}
-              onChange={(e) => handleInputChange("session_time", e.target.value)}
-              required
-            />
-            {errors.session_time && <p className="text-sm text-destructive">{errors.session_time}</p>}
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="project">Project (Optional)</Label>
-            <Select value={formData.project_id} onValueChange={(value) => handleInputChange("project_id", value)} disabled={projects.length === 0}>
-              <SelectTrigger>
-                <SelectValue placeholder={projects.length === 0 ? "No projects available" : "Select a project"} />
-              </SelectTrigger>
-              <SelectContent>
-                {projects.map((project) => (
-                  <SelectItem key={project.id} value={project.id}>
-                    {project.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <DialogFooter className="gap-2">
-            <Button type="button" variant="outline" onClick={() => onOpenChange?.(false)}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={loading}>
-              <Save className="h-4 w-4 mr-2" />
-              {loading ? "Updating..." : "Update Session"}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+    <AppSheetModal
+      title="Edit Session"
+      isOpen={open}
+      onOpenChange={onOpenChange || (() => {})}
+      size="content"
+      dirty={isDirty}
+      onDirtyClose={handleDirtyClose}
+      footerActions={footerActions}
+    >
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="session_date">Date *</Label>
+          <Input
+            id="session_date"
+            type="date"
+            value={formData.session_date}
+            onChange={(e) => handleInputChange("session_date", e.target.value)}
+            className="w-full"
+          />
+          {errors.session_date && <p className="text-sm text-destructive">{errors.session_date}</p>}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="session_time">Time *</Label>
+          <Input
+            id="session_time"
+            type="time"
+            value={formData.session_time}
+            onChange={(e) => handleInputChange("session_time", e.target.value)}
+            className="w-full"
+          />
+          {errors.session_time && <p className="text-sm text-destructive">{errors.session_time}</p>}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="project_id">Project</Label>
+          <Select value={formData.project_id} onValueChange={(value) => handleInputChange("project_id", value)} disabled={projects.length === 0}>
+            <SelectTrigger>
+              <SelectValue placeholder={projects.length === 0 ? "No projects available" : "Select a project"} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">No specific project</SelectItem>
+              {projects.map((project) => (
+                <SelectItem key={project.id} value={project.id}>
+                  {project.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="notes">Notes</Label>
+          <Textarea
+            id="notes"
+            value={formData.notes}
+            onChange={(e) => handleInputChange("notes", e.target.value)}
+            placeholder="Session notes..."
+            rows={3}
+          />
+        </div>
+      </div>
+    </AppSheetModal>
   );
 };
 

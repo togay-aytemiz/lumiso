@@ -61,7 +61,7 @@ export function AppSheetModal({
     <Sheet open={isOpen} onOpenChange={handleOpenChange}>
       <SheetContent 
         side={sideVariant} 
-        className={sheetContentClass}
+        className={cn(sheetContentClass, "[&>button]:hidden")}
         onPointerDownOutside={(e) => {
           if (dirty && onDirtyClose) {
             e.preventDefault();
@@ -76,7 +76,7 @@ export function AppSheetModal({
               variant="ghost"
               size="sm"
               onClick={() => handleOpenChange(false)}
-              className="h-6 w-6 p-0"
+              className="h-8 w-8 p-0 rounded-full"
             >
               <X className="h-4 w-4" />
             </Button>

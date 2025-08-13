@@ -1,13 +1,14 @@
 import React, { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { LayoutDashboard, Users, CalendarRange, Calendar, CalendarDays, Bell, BarChart3, CreditCard, Settings, ChevronUp } from "lucide-react";
+import { LayoutDashboard, Users, FolderOpen, CalendarRange, Calendar, CalendarDays, Bell, BarChart3, CreditCard, Settings, ChevronUp } from "lucide-react";
 
 const navigationItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Leads", url: "/leads", icon: Users },
+  { title: "Projects", url: "/projects", icon: FolderOpen },
+  // Bookings will be inserted here as expandable
   { title: "Analytics", url: "/analytics", icon: BarChart3 },
   { title: "Payments", url: "/payments", icon: CreditCard },
-  { title: "Settings", url: "/settings", icon: Settings },
 ];
 
 const bookingItems = [
@@ -47,9 +48,9 @@ export function MobileStickyNav() {
         </div>
       </div>
 
-      {/* Navigation Items */}
+      {/* Navigation Items - First Part */}
       <div className="flex-1 flex flex-col py-4 relative">
-        {navigationItems.map((item) => {
+        {navigationItems.slice(0, 2).map((item) => {
           const active = isActive(item.url);
           return (
             <NavLink
@@ -65,6 +66,18 @@ export function MobileStickyNav() {
             </NavLink>
           );
         })}
+
+        {/* Projects */}
+        <NavLink
+          to="/projects"
+          className={`h-12 flex items-center justify-center transition-colors ${
+            isActive("/projects")
+              ? "bg-primary-foreground/20 text-primary-foreground"
+              : "text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-foreground/10"
+          }`}
+        >
+          <FolderOpen className="h-5 w-5" />
+        </NavLink>
 
         {/* Bookings Menu with Expandable Options */}
         <div className="relative">
@@ -102,6 +115,38 @@ export function MobileStickyNav() {
               })}
             </div>
           )}
+        </div>
+
+        {/* Navigation Items - Second Part */}
+        {navigationItems.slice(2).map((item) => {
+          const active = isActive(item.url);
+          return (
+            <NavLink
+              key={item.title}
+              to={item.url}
+              className={`h-12 flex items-center justify-center transition-colors ${
+                active
+                  ? "bg-primary-foreground/20 text-primary-foreground"
+                  : "text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-foreground/10"
+              }`}
+            >
+              <item.icon className="h-5 w-5" />
+            </NavLink>
+          );
+        })}
+
+        {/* Settings at bottom */}
+        <div className="mt-auto">
+          <NavLink
+            to="/settings"
+            className={`h-12 flex items-center justify-center transition-colors ${
+              isActive("/settings")
+                ? "bg-primary-foreground/20 text-primary-foreground"
+                : "text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-foreground/10"
+            }`}
+          >
+            <Settings className="h-5 w-5" />
+          </NavLink>
         </div>
       </div>
     </nav>

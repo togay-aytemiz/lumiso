@@ -327,13 +327,17 @@ const AllSessions = () => {
   return (
     <div className="p-8">
       <div className="mb-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex-shrink-0">
-            <h1 className="text-3xl font-bold">Sessions</h1>
-            <p className="text-muted-foreground">Manage your photo sessions and appointments</p>
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <div className="flex-shrink-0">
+              <h1 className="text-3xl font-bold">Sessions</h1>
+              <p className="text-muted-foreground">Manage your photo sessions and appointments</p>
+            </div>
           </div>
-          <div className="w-full sm:max-w-lg min-w-0 flex-1">
-            <GlobalSearch />
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <div className="flex-1 max-w-md">
+              <GlobalSearch />
+            </div>
           </div>
         </div>
       </div>

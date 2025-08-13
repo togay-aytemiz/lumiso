@@ -150,8 +150,12 @@ export function MobileBottomNav() {
   return (
     <>
       <nav 
-        className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-background border-t"
-        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+        className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-t supports-[backdrop-filter]:bg-background/60 mobile-bottom-nav"
+        style={{ 
+          paddingBottom: 'max(env(safe-area-inset-bottom), 8px)',
+          position: 'fixed',
+          bottom: 0,
+        }}
       >
         <div className="flex items-center justify-around px-2 py-2">
           {tabs.map((tab, index) => {

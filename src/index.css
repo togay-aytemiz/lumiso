@@ -88,6 +88,31 @@ All colors MUST be HSL.
     --status-completed-text: 152 69% 31%;
   }
 
+  /* Mobile navigation stability */
+  @supports (bottom: env(safe-area-inset-bottom)) {
+    .mobile-bottom-nav {
+      position: fixed !important;
+      bottom: 0 !important;
+      transform: translateZ(0);
+      -webkit-transform: translateZ(0);
+      will-change: transform;
+    }
+  }
+
+  /* Prevent mobile browser UI interference */
+  @media (max-width: 768px) {
+    html, body {
+      height: 100vh;
+      height: -webkit-fill-available;
+      overflow-x: hidden;
+    }
+    
+    #root {
+      height: 100vh;
+      height: -webkit-fill-available;
+    }
+  }
+
   .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;

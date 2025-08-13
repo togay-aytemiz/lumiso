@@ -12,7 +12,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <div className="hidden md:block p-2">
             <SidebarTrigger />
           </div>
-          <div className="flex-1 pb-20 md:pb-0">
+          <div className="flex-1 pb-24 md:pb-0">
             {children}
           </div>
         </main>

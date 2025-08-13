@@ -129,7 +129,7 @@ export function AddSessionStatusDialog({ open, onOpenChange, onStatusAdded }: Ad
 
         <div className="space-y-3">
           <Label>Stage Color</Label>
-          <div className="grid grid-cols-6 gap-3">
+          <div className="grid grid-cols-6 gap-3 p-2">
             {colorOptions.map((color) => (
               <button
                 key={color}
@@ -315,7 +315,7 @@ export function EditSessionStatusDialog({ status, open, onOpenChange, onStatusUp
 
         <div className="space-y-3">
           <Label>Stage Color</Label>
-          <div className="grid grid-cols-6 gap-3">
+          <div className="grid grid-cols-6 gap-3 p-2">
             {colorOptions.map((color) => (
               <button
                 key={color}

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Plus, Trash2, ChevronDown, ChevronRight } from "lucide-react";
+import { Plus, Trash2, ChevronDown, ChevronRight, Edit } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -19,6 +19,8 @@ interface Service {
 
 const ServicesSection = () => {
   const [showNewServiceDialog, setShowNewServiceDialog] = useState(false);
+  const [editingService, setEditingService] = useState<Service | null>(null);
+  const [showEditServiceDialog, setShowEditServiceDialog] = useState(false);
   const [openCategories, setOpenCategories] = useState<Set<string>>(new Set());
   const [newCategoriesAdded, setNewCategoriesAdded] = useState<string[]>([]);
   const { toast } = useToast();
@@ -129,7 +131,7 @@ const ServicesSection = () => {
         title="Services" 
         description="Define the photography services you offer, like albums, prints, and extras."
         action={Object.keys(groupedServices).length > 0 ? {
-          label: "New Service",
+          label: "Add Service",
           onClick: () => setShowNewServiceDialog(true),
           icon: <Plus className="h-4 w-4" />
         } : undefined}
@@ -190,17 +192,30 @@ const ServicesSection = () => {
                               </span>
                             )}
                           </div>
-                        </div>
-                        
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDeleteService(service.id)}
-                          disabled={deleteServiceMutation.isPending}
-                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                         </div>
+                         
+                         <div className="flex gap-2">
+                           <Button
+                             variant="ghost"
+                             size="sm"
+                             onClick={() => {
+                               setEditingService(service);
+                               setShowEditServiceDialog(true);
+                             }}
+                             className="text-muted-foreground hover:text-foreground"
+                           >
+                             <Edit className="h-4 w-4" />
+                           </Button>
+                           <Button
+                             variant="ghost"
+                             size="sm"
+                             onClick={() => handleDeleteService(service.id)}
+                             disabled={deleteServiceMutation.isPending}
+                             className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                           >
+                             <Trash2 className="h-4 w-4" />
+                           </Button>
+                         </div>
                       </div>
                     ))}
                   </div>
@@ -217,6 +232,16 @@ const ServicesSection = () => {
         onServiceAdded={() => {
           queryClient.invalidateQueries({ queryKey: ['services'] });
           handleDialogChange(false);
+        }}
+      />
+
+      <EditServiceDialog
+        service={editingService}
+        open={showEditServiceDialog}
+        onOpenChange={setShowEditServiceDialog}
+        onServiceUpdated={() => {
+          queryClient.invalidateQueries({ queryKey: ['services'] });
+          setShowEditServiceDialog(false);
         }}
       />
     </>

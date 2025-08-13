@@ -132,7 +132,7 @@ export function AddLeadStatusDialog({ open, onOpenChange, onStatusAdded }: AddLe
 
         <div className="space-y-3">
           <Label>Status Color</Label>
-          <div className="grid grid-cols-6 gap-3">
+          <div className="grid grid-cols-6 gap-3 p-2">
             {colorOptions.map((color) => (
               <button
                 key={color}
@@ -304,12 +304,11 @@ export function EditLeadStatusDialog({ status, open, onOpenChange, onStatusUpdat
             onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
             placeholder="e.g., Interested, Follow Up"
             maxLength={50}
-            disabled={status.is_system_final}
             className="rounded-xl border-2 border-primary/20 focus:border-primary"
           />
-          {status.is_system_final && (
-            <p className="text-sm text-muted-foreground">System statuses cannot be renamed</p>
-          )}
+          <p className="text-sm text-muted-foreground">
+            System statuses can be renamed but their color cannot be changed to maintain consistency.
+          </p>
         </div>
 
         {status.is_system_final ? (
@@ -322,7 +321,7 @@ export function EditLeadStatusDialog({ status, open, onOpenChange, onStatusUpdat
         ) : (
           <div className="space-y-3">
             <Label>Status Color</Label>
-            <div className="grid grid-cols-6 gap-3">
+            <div className="grid grid-cols-6 gap-3 p-2">
               {colorOptions.map((color) => (
                 <button
                   key={color}

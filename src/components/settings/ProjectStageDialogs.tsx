@@ -130,7 +130,7 @@ export function AddProjectStageDialog({ open, onOpenChange, onStageAdded }: AddP
 
         <div className="space-y-3">
           <Label>Stage Color</Label>
-          <div className="grid grid-cols-6 gap-3">
+          <div className="grid grid-cols-6 gap-3 p-2">
             {colorOptions.map((color) => (
               <button
                 key={color}
@@ -306,11 +306,11 @@ export function EditProjectStageDialog({ stage, open, onOpenChange, onStageUpdat
           />
         </div>
 
-        <div className="space-y-3">
-          <Label>Stage Color</Label>
-          <div className="grid grid-cols-6 gap-3">
-            {colorOptions.map((color) => (
-              <button
+          <div className="space-y-3">
+            <Label>Stage Color</Label>
+            <div className="grid grid-cols-6 gap-3 p-2">
+              {colorOptions.map((color) => (
+                <button
                 key={color}
                 type="button"
                 onClick={() => setFormData(prev => ({ ...prev, color }))}

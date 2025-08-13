@@ -364,7 +364,7 @@ const AllSessions = () => {
       </div>
 
       {/* Mobile Filter Bar (≤768px only) */}
-      <div className="md:hidden">
+      <div className="block md:hidden">
         <FilterBar
           quickFilters={quickFilters}
           activeQuickFilter={dateFilter}

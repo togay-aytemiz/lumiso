@@ -162,85 +162,18 @@ export function FilterBar({
       style={isSticky ? { backdropFilter: 'blur(8px)' } : {}}
     >
       <div className="px-4 sm:px-6 py-3">
-        {isMobile ? (
-          // Mobile Layout
-          <div className="space-y-3">
-            {/* Quick filters + Filters button */}
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2 min-w-0 flex-1">
-                {quickFilters.slice(0, 3).map((filter) => (
-                  <Button
-                    key={filter.key}
-                    variant={activeQuickFilter === filter.key ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => onQuickFilterChange(filter.key)}
-                    className="whitespace-nowrap flex-shrink-0"
-                  >
-                    {filter.label}
-                    {filter.count !== undefined && (
-                      <Badge variant="secondary" className="ml-1 text-xs">
-                        {filter.count}
-                      </Badge>
-                    )}
-                  </Button>
-                ))}
-              </div>
-              
-              <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-                <SheetTrigger asChild>
-                  <Button variant="outline" size="sm" className="relative flex-shrink-0">
-                    <Filter className="h-4 w-4" />
-                    <span className="ml-1">Filters</span>
-                    {activeFilterCount > 0 && (
-                      <Badge 
-                        variant="destructive" 
-                        className="absolute -top-2 -right-2 h-5 w-5 p-0 text-xs flex items-center justify-center"
-                      >
-                        {activeFilterCount}
-                      </Badge>
-                    )}
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="bottom" className="max-h-[80vh]">
-                  <SheetHeader>
-                    <SheetTitle>Filters</SheetTitle>
-                  </SheetHeader>
-                  <div className="py-6">
-                    <FilterContent />
-                  </div>
-                  <SheetFooter className="gap-2">
-                    <Button variant="ghost" onClick={handleClearFilters} className="flex-1">
-                      Clear all
-                    </Button>
-                    <Button onClick={handleApplyFilters} className="flex-1">
-                      Apply
-                    </Button>
-                  </SheetFooter>
-                </SheetContent>
-              </Sheet>
-            </div>
-
-            {/* Note: Show Completed toggle for reminders is now only in the sheet, not inline */}
-          </div>
-        ) : (
-          // Desktop Layout
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2 flex-wrap">
-              {(allDateFilters || quickFilters).map((filter) => (
+        {/* Mobile Layout Only - never show desktop content here */}
+        <div className="space-y-3">
+          {/* Quick filters + Filters button */}
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              {quickFilters.slice(0, 3).map((filter) => (
                 <Button
                   key={filter.key}
-                  variant={
-                    (activeDateFilter || activeQuickFilter) === filter.key ? "default" : "outline"
-                  }
+                  variant={activeQuickFilter === filter.key ? "default" : "outline"}
                   size="sm"
-                  onClick={() => {
-                    if (onDateFilterChange) {
-                      onDateFilterChange(filter.key);
-                    } else {
-                      onQuickFilterChange(filter.key);
-                    }
-                  }}
-                  className="whitespace-nowrap"
+                  onClick={() => onQuickFilterChange(filter.key)}
+                  className="whitespace-nowrap flex-shrink-0"
                 >
                   {filter.label}
                   {filter.count !== undefined && (
@@ -250,57 +183,44 @@ export function FilterBar({
                   )}
                 </Button>
               ))}
-              
-              {/* Filters button for desktop too */}
-              <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-                <SheetTrigger asChild>
-                  <Button variant="outline" size="sm" className="relative">
-                    <Filter className="h-4 w-4" />
-                    <span className="ml-1">Filters</span>
-                    {activeFilterCount > 0 && (
-                      <Badge 
-                        variant="destructive" 
-                        className="absolute -top-2 -right-2 h-5 w-5 p-0 text-xs flex items-center justify-center"
-                      >
-                        {activeFilterCount}
-                      </Badge>
-                    )}
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="right" className="w-96">
-                  <SheetHeader>
-                    <SheetTitle>Filters</SheetTitle>
-                  </SheetHeader>
-                  <div className="py-6">
-                    <FilterContent />
-                  </div>
-                  <SheetFooter className="gap-2">
-                    <Button variant="ghost" onClick={handleClearFilters} className="flex-1">
-                      Clear all
-                    </Button>
-                    <Button onClick={handleApplyFilters} className="flex-1">
-                      Apply
-                    </Button>
-                  </SheetFooter>
-                </SheetContent>
-              </Sheet>
             </div>
-
-            {/* Show Completed toggle for reminders (desktop) */}
-            {onShowCompletedChange && (
-              <div className="flex items-center gap-2 flex-shrink-0">
-                <Label htmlFor="desktop-show-completed" className="text-sm text-muted-foreground">
-                  {showCompletedLabel}
-                </Label>
-                <Switch
-                  id="desktop-show-completed"
-                  checked={showCompleted || false}
-                  onCheckedChange={onShowCompletedChange}
-                />
-              </div>
-            )}
+            
+            <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+              <SheetTrigger asChild>
+                <Button variant="outline" size="sm" className="relative flex-shrink-0">
+                  <Filter className="h-4 w-4" />
+                  <span className="ml-1">Filters</span>
+                  {activeFilterCount > 0 && (
+                    <Badge 
+                      variant="destructive" 
+                      className="absolute -top-2 -right-2 h-5 w-5 p-0 text-xs flex items-center justify-center"
+                    >
+                      {activeFilterCount}
+                    </Badge>
+                  )}
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="bottom" className="max-h-[80vh]">
+                <SheetHeader>
+                  <SheetTitle>Filters</SheetTitle>
+                </SheetHeader>
+                <div className="py-6">
+                  <FilterContent />
+                </div>
+                <SheetFooter className="gap-2">
+                  <Button variant="ghost" onClick={handleClearFilters} className="flex-1">
+                    Clear all
+                  </Button>
+                  <Button onClick={handleApplyFilters} className="flex-1">
+                    Apply
+                  </Button>
+                </SheetFooter>
+              </SheetContent>
+            </Sheet>
           </div>
-        )}
+
+          {/* Note: Show Completed toggle for reminders is now only in the sheet, not inline */}
+        </div>
       </div>
     </div>
   );

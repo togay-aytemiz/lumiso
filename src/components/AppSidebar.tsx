@@ -13,6 +13,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const navigationItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
@@ -23,10 +24,11 @@ const navigationItems = [
 ];
 
 export function AppSidebar() {
-  const { open } = useSidebar();
+  const { open, setOpen } = useSidebar();
   const location = useLocation();
   const navigate = useNavigate();
   const currentPath = location.pathname;
+  const isMobile = useIsMobile();
 
   const isActive = (path: string) => {
     if (path === "/") {
@@ -61,9 +63,15 @@ export function AppSidebar() {
     navigate("/auth");
   };
 
+  const handleNavClick = () => {
+    if (isMobile && open) {
+      setOpen(false);
+    }
+  };
+
   return (
     <Sidebar
-      className="border-r border-sidebar-border"
+      className="border-r border-sidebar-border flex flex-col"
       collapsible="icon"
     >
       <SidebarHeader className="p-6">
@@ -72,7 +80,7 @@ export function AppSidebar() {
         </h1>
       </SidebarHeader>
 
-      <SidebarContent className="px-3">
+      <SidebarContent className="px-3 flex-1 overflow-y-auto">
         <SidebarMenu>
           {navigationItems
             .slice(0, navigationItems.findIndex((i) => i.title === "Analytics"))
@@ -88,6 +96,7 @@ export function AppSidebar() {
                     <NavLink
                       to={item.url}
                       className="flex items-center gap-3 w-full"
+                      onClick={handleNavClick}
                     >
                       <item.icon className="h-4 w-4 text-sidebar-foreground group-hover/item:text-[hsl(var(--sidebar-primary))] group-data-[active=true]/item:text-[hsl(var(--sidebar-primary))]" />
                       {open && <span className="font-medium">{item.title}</span>}
@@ -122,7 +131,7 @@ export function AppSidebar() {
                       isActive={isActive("/calendar")}
                       className="group/item w-full h-9 px-3 py-2 mb-1 text-left transition-all duration-200 rounded-lg hover:bg-muted/50 data-[active=true]:bg-muted"
                     >
-                      <NavLink to="/calendar" className="flex items-center gap-3 w-full">
+                      <NavLink to="/calendar" className="flex items-center gap-3 w-full" onClick={handleNavClick}>
                         <CalendarDays className="h-4 w-4 text-sidebar-foreground group-hover/item:text-[hsl(var(--sidebar-primary))] group-data-[active=true]/item:text-[hsl(var(--sidebar-primary))]" />
                         {open && <span className="font-medium">Calendar</span>}
                       </NavLink>
@@ -135,7 +144,7 @@ export function AppSidebar() {
                       isActive={isActive("/sessions")}
                       className="group/item w-full h-9 px-3 py-2 mb-1 text-left transition-all duration-200 rounded-lg hover:bg-muted/50 data-[active=true]:bg-muted"
                     >
-                      <NavLink to="/sessions" className="flex items-center gap-3 w-full">
+                      <NavLink to="/sessions" className="flex items-center gap-3 w-full" onClick={handleNavClick}>
                         <Calendar className="h-4 w-4 text-sidebar-foreground group-hover/item:text-[hsl(var(--sidebar-primary))] group-data-[active=true]/item:text-[hsl(var(--sidebar-primary))]" />
                         {open && <span className="font-medium">Sessions</span>}
                       </NavLink>
@@ -148,7 +157,7 @@ export function AppSidebar() {
                       isActive={isActive("/reminders")}
                       className="group/item w-full h-9 px-3 py-2 mb-1 text-left transition-all duration-200 rounded-lg hover:bg-muted/50 data-[active=true]:bg-muted"
                     >
-                      <NavLink to="/reminders" className="flex items-center gap-3 w-full">
+                      <NavLink to="/reminders" className="flex items-center gap-3 w-full" onClick={handleNavClick}>
                         <Bell className="h-4 w-4 text-sidebar-foreground group-hover/item:text-[hsl(var(--sidebar-primary))] group-data-[active=true]/item:text-[hsl(var(--sidebar-primary))]" />
                         {open && <span className="font-medium">Reminders</span>}
                       </NavLink>
@@ -173,6 +182,7 @@ export function AppSidebar() {
                     <NavLink
                       to={item.url}
                       className="flex items-center gap-3 w-full"
+                      onClick={handleNavClick}
                     >
                       <item.icon className="h-4 w-4 text-sidebar-foreground group-hover/item:text-[hsl(var(--sidebar-primary))] group-data-[active=true]/item:text-[hsl(var(--sidebar-primary))]" />
                       {open && <span className="font-medium">{item.title}</span>}
@@ -184,7 +194,7 @@ export function AppSidebar() {
         </SidebarMenu>
       </SidebarContent>
 
-      <SidebarFooter className="p-3">
+      <SidebarFooter className="p-4 mt-auto">
         <Separator className="mb-3 bg-[hsl(var(--sidebar-border)/0.5)]" />
         <SidebarMenu>
             <SidebarMenuItem>
@@ -196,6 +206,7 @@ export function AppSidebar() {
                 <NavLink
                   to="/settings"
                   className="flex items-center gap-3 w-full"
+                  onClick={handleNavClick}
                 >
                   <Settings className="h-4 w-4 text-sidebar-foreground group-hover/item:text-[hsl(var(--sidebar-primary))] group-data-[active=true]/item:text-[hsl(var(--sidebar-primary))]" />
                   {open && <span className="font-medium">Settings</span>}

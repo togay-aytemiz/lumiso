@@ -56,7 +56,7 @@ const AllSessions = () => {
         .select(`
           *,
           leads!inner(id, name, status),
-          projects(id, name, status_id, project_statuses(name))
+          projects(id, name, status_id)
         `)
         .order('session_date', { ascending: false })
         .order('session_time', { ascending: false });

@@ -458,36 +458,30 @@ const AllProjects = () => {
   }
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden">
-      {/* Fixed header section - mobile optimized */}
+    <div className="flex flex-col h-screen">
+      {/* Fixed header section */}
       <div className="flex-shrink-0 p-4 sm:p-6 pb-0">
-        <div className="max-w-full">
-          <div className="mb-6">
-            <div className="flex flex-col gap-4">
-              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                <div className="flex-shrink-0 min-w-0">
-                  <h1 className="text-2xl sm:text-3xl font-bold">Projects</h1>
-                  <p className="text-muted-foreground">Manage all your projects in one place</p>
-                </div>
-                <div className="flex-shrink-0">
-                  <EnhancedProjectDialog
-                    onProjectCreated={() => {
-                      fetchProjects();
-                    }}
-                  >
-                    <Button className="flex items-center gap-2 whitespace-nowrap">
-                      <Plus className="h-4 w-4" />
-                      Add Project
-                    </Button>
-                  </EnhancedProjectDialog>
-                </div>
+        <div className="mb-6">
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="flex-shrink-0 min-w-0">
+                <h1 className="text-2xl sm:text-3xl font-bold">Projects</h1>
+                <p className="text-muted-foreground">Manage all your projects in one place</p>
               </div>
-              
-              {/* Search bar - full width but contained */}
-              <div className="w-full">
-                <div className="max-w-md">
+              <div className="flex items-center gap-3 flex-shrink-0">
+                <div className="w-full sm:w-auto max-w-md">
                   <GlobalSearch />
                 </div>
+                <EnhancedProjectDialog
+                  onProjectCreated={() => {
+                    fetchProjects();
+                  }}
+                >
+                  <Button className="flex items-center gap-2 whitespace-nowrap">
+                    <Plus className="h-4 w-4" />
+                    Add Project
+                  </Button>
+                </EnhancedProjectDialog>
               </div>
             </div>
           </div>
@@ -531,8 +525,8 @@ const AllProjects = () => {
         </div>
       </div>
 
-      {/* Content area - Only this scrolls */}
-      <div className="flex-1 min-h-0 overflow-hidden">
+      {/* Content area - Allow horizontal scrolling */}
+      <div className="flex-1 min-h-0">
         {viewMode === 'board' ? (
           <ProjectKanbanBoard 
             projects={projects} 

@@ -894,8 +894,8 @@ export default function Calendar() {
             </div>
           </div>
           
-          {/* View switcher */}
-          <div className="flex bg-muted rounded-lg p-1">
+          {/* View switcher - desktop only */}
+          <div className="hidden lg:flex bg-muted rounded-lg p-1">
             {( ["day", "week", "month"] as ViewMode[] ).map((mode) => (
               <button
                 key={mode}
@@ -931,8 +931,8 @@ export default function Calendar() {
             </Button>
           </div>
           
-          {/* Filter chips aligned left */}
-          <div className="flex items-center gap-2" aria-label="Filter calendar items">
+          {/* Filter chips and view switcher aligned left */}
+          <div className="flex items-center gap-2 flex-wrap" aria-label="Filter calendar items">
             <button
               type="button"
               aria-pressed={showSessions}
@@ -953,6 +953,25 @@ export default function Calendar() {
               <span className={`h-2 w-2 rounded-full ${showReminders ? 'bg-muted-foreground/80' : 'bg-muted-foreground/40'}`} />
               <span>Reminders</span>
             </button>
+            
+            {/* View switcher for mobile/tablet */}
+            <div className="flex bg-muted rounded-lg p-0.5">
+              {( ["day", "week", "month"] as ViewMode[] ).map((mode) => (
+                <button
+                  key={mode}
+                  onClick={() => setViewMode(mode)}
+                  className={`
+                    px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors capitalize
+                    ${viewMode === mode 
+                      ? "bg-primary text-primary-foreground" 
+                      : "hover:bg-accent text-muted-foreground"
+                    }
+                  `}
+                >
+                  {mode}
+                </button>
+              ))}
+            </div>
           </div>
           
           {/* Date display for mobile/tablet */}

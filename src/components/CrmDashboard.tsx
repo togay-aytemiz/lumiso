@@ -6,9 +6,10 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, LogOut, Calendar, Users, CheckCircle, XCircle, Bell, AlertTriangle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-import AddLeadDialog from "./AddLeadDialog";
-import NewSessionDialog from "./NewSessionDialog";
-import GlobalSearch from "./GlobalSearch";
+import AddLeadDialog from "@/components/AddLeadDialog";
+import NewSessionDialog from "@/components/NewSessionDialog";
+import { PageHeader, PageHeaderSearch } from "@/components/ui/page-header";
+import GlobalSearch from "@/components/GlobalSearch";
 import { getLeadStatusStyles, formatStatusText } from "@/lib/leadStatusColors";
 import { getWeekRange, getUserLocale, formatLongDate, formatTime, formatDate } from "@/lib/utils";
 
@@ -212,24 +213,17 @@ const CrmDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 dark:from-gray-900 dark:to-slate-800">
-      <header className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-8 px-6 py-6">
-        <div className="flex-1">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            Dashboard
-          </h1>
-          <p className="text-muted-foreground">
-            Welcome back! Here's an overview of your photography business
-          </p>
-        </div>
-        <div className="flex items-center justify-end flex-1 ml-8">
-          <div className="w-full max-w-lg min-w-[480px]">
-            <GlobalSearch />
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 dark:from-gray-900 dark:to-slate-800 overflow-x-hidden">
+      <PageHeader
+        title="Dashboard"
+        subtitle="Welcome back! Here's an overview of your photography business"
+      >
+        <PageHeaderSearch>
+          <GlobalSearch />
+        </PageHeaderSearch>
+      </PageHeader>
 
-      <main className="px-8 py-8">
+      <main className="px-4 sm:px-6 lg:px-8 py-6">
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 mb-8">
           <Card className={`${getStatCardGradient('leads')} border-0 shadow-md hover:shadow-lg transition-shadow`}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

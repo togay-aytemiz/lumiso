@@ -22,6 +22,7 @@ import { format, subDays, subMonths, startOfMonth, startOfQuarter, startOfYear }
 import type { DateRange } from "react-day-picker";
 import { formatDate } from "@/lib/utils";
 import GlobalSearch from "@/components/GlobalSearch";
+import { PageHeader, PageHeaderSearch } from "@/components/ui/page-header";
 
 interface Payment {
   id: string;
@@ -297,20 +298,17 @@ const Payments = () => {
   }
 
   return (
-    <div className="p-4 sm:p-8 max-w-full overflow-x-hidden">
-      <div className="mb-6">
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex-shrink-0 min-w-0">
-              <h1 className="text-2xl sm:text-3xl font-bold">Payments</h1>
-              <p className="text-muted-foreground">Track and manage all payments across projects</p>
-            </div>
-            <div className="w-full sm:w-auto max-w-md">
-              <GlobalSearch />
-            </div>
-          </div>
-        </div>
-      </div>
+    <div className="min-h-screen overflow-x-hidden">
+      <PageHeader
+        title="Payments"
+        subtitle="Track and manage all payments across projects"
+      >
+        <PageHeaderSearch>
+          <GlobalSearch />
+        </PageHeaderSearch>
+      </PageHeader>
+
+      <div className="p-4 sm:p-6">
 
       {/* Date Filter */}
       <div className="mb-6 flex justify-end">
@@ -557,6 +555,7 @@ const Payments = () => {
         onProjectUpdated={fetchPayments}
         leadName={viewingProject?.leads?.name || ""}
       />
+      </div>
     </div>
   );
 };

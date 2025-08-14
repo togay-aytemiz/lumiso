@@ -166,7 +166,7 @@ const AllLeads = () => {
           <Button 
             size="sm"
             onClick={() => setAddLeadDialogOpen(true)}
-            className="h-10 flex items-center gap-2 whitespace-nowrap flex-shrink-0 sm:px-4 px-3"
+            className="h-10 flex items-center gap-2 whitespace-nowrap flex-shrink-0 px-3 sm:px-4"
           >
             <Plus className="h-4 w-4" />
             <span className="hidden sm:inline">Add Lead</span>

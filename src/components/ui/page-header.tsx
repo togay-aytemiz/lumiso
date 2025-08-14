@@ -25,19 +25,33 @@ export function PageHeader({
       )}
     >
       <div className="p-4 sm:p-6">
-        {/* All Layouts: Stack title, then search + actions in same row */}
-        <div className="flex flex-col gap-4">
-          {/* Title row */}
+        {/* Mobile/Tablet Layout: Stack title, then search + actions */}
+        <div className="flex flex-col gap-4 lg:hidden">
           <div className="flex-shrink-0 min-w-0">
-            <h1 className="text-2xl lg:text-3xl font-bold truncate">{title}</h1>
+            <h1 className="text-2xl font-bold truncate">{title}</h1>
             {subtitle && (
-              <p className="text-muted-foreground text-sm lg:text-base truncate md:hidden lg:block">{subtitle}</p>
+              <p className="text-muted-foreground text-sm truncate md:hidden">{subtitle}</p>
             )}
           </div>
           
-          {/* Search + Actions row - always together */}
           {children && (
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-center">
+              {children}
+            </div>
+          )}
+        </div>
+
+        {/* Desktop Layout: Title + subtitle on left, search + actions on right, same row */}
+        <div className="hidden lg:flex items-center justify-between gap-6">
+          <div className="flex-shrink-0 min-w-0">
+            <h1 className="text-3xl font-bold truncate">{title}</h1>
+            {subtitle && (
+              <p className="text-muted-foreground truncate">{subtitle}</p>
+            )}
+          </div>
+          
+          {children && (
+            <div className="flex items-center gap-4 flex-shrink-0">
               {children}
             </div>
           )}
@@ -55,8 +69,10 @@ interface PageHeaderSearchProps {
 export function PageHeaderSearch({ children, className }: PageHeaderSearchProps) {
   return (
     <div className={cn(
-      // All layouts: flexible width that grows but allows actions to stay visible
-      "flex-1 min-w-0 w-full sm:max-w-lg lg:max-w-xl",
+      // Mobile/Tablet: flexible width that grows
+      "flex-1 min-w-0 w-full sm:max-w-lg",
+      // Desktop: constrained width
+      "lg:max-w-xl",
       className
     )}>
       {children}
@@ -72,8 +88,10 @@ interface PageHeaderActionsProps {
 export function PageHeaderActions({ children, className }: PageHeaderActionsProps) {
   return (
     <div className={cn(
-      // All layouts: flex-shrink-0 to prevent compression, right-aligned on larger screens
+      // Mobile/Tablet: flex-shrink-0 to prevent compression
       "flex items-center gap-2 flex-shrink-0 w-full sm:w-auto sm:justify-end",
+      // Desktop: flex-shrink-0, no wrap
+      "lg:flex-shrink-0",
       className
     )}>
       {children}

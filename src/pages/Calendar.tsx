@@ -855,37 +855,36 @@ export default function Calendar() {
       <PageHeader 
         title="Calendar"
         subtitle="Manage your sessions and reminders"
-      >
-        <PageHeaderActions className="justify-end">
-          {/* Desktop: All controls in one row with dividers */}
-          <div className="hidden lg:flex items-center gap-4 justify-between w-full">
-            {/* Filter chips */}
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                aria-pressed={showSessions}
-                onClick={() => setShowSessions((v) => !v)}
-                className={`inline-flex items-center gap-2 px-3 py-2 rounded-md border text-sm font-medium transition-colors
-                  ${showSessions ? 'bg-primary/10 border-primary/30 text-foreground' : 'bg-muted border-border text-muted-foreground hover:bg-accent'}`}
-              >
-                <span className={`h-2.5 w-2.5 rounded-full ${showSessions ? 'bg-primary' : 'bg-muted-foreground/40'}`} />
-                <span>Sessions</span>
-              </button>
-              <button
-                type="button"
-                aria-pressed={showReminders}
-                onClick={() => setShowReminders((v) => !v)}
-                className={`inline-flex items-center gap-2 px-3 py-2 rounded-md border text-sm font-medium transition-colors
-                  ${showReminders ? 'bg-primary/10 border-primary/30 text-foreground' : 'bg-muted border-border text-muted-foreground hover:bg-accent'}`}
-              >
-                <span className={`h-2.5 w-2.5 rounded-full ${showReminders ? 'bg-muted-foreground/80' : 'bg-muted-foreground/40'}`} />
-                <span>Reminders</span>
-              </button>
-            </div>
-            
-            {/* Divider */}
-            <div className="w-px h-6 bg-border"></div>
-            
+      />
+
+      {/* Desktop controls in separate row */}
+      <div className="hidden lg:block px-4 sm:px-6 lg:px-6">
+        <div className="flex items-center gap-4 justify-between w-full pb-4">
+          {/* Filter chips */}
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              aria-pressed={showSessions}
+              onClick={() => setShowSessions((v) => !v)}
+              className={`inline-flex items-center gap-2 px-3 py-2 rounded-md border text-sm font-medium transition-colors
+                ${showSessions ? 'bg-primary/10 border-primary/30 text-foreground' : 'bg-muted border-border text-muted-foreground hover:bg-accent'}`}
+            >
+              <span className={`h-2.5 w-2.5 rounded-full ${showSessions ? 'bg-primary' : 'bg-muted-foreground/40'}`} />
+              <span>Sessions</span>
+            </button>
+            <button
+              type="button"
+              aria-pressed={showReminders}
+              onClick={() => setShowReminders((v) => !v)}
+              className={`inline-flex items-center gap-2 px-3 py-2 rounded-md border text-sm font-medium transition-colors
+                ${showReminders ? 'bg-primary/10 border-primary/30 text-foreground' : 'bg-muted border-border text-muted-foreground hover:bg-accent'}`}
+            >
+              <span className={`h-2.5 w-2.5 rounded-full ${showReminders ? 'bg-muted-foreground/80' : 'bg-muted-foreground/40'}`} />
+              <span>Reminders</span>
+            </button>
+          </div>
+          
+          <div className="flex items-center gap-4">
             {/* Navigation controls */}
             <div className="flex items-center gap-2">
               <Button variant="outline" size="sm" onClick={goToToday}>
@@ -921,8 +920,8 @@ export default function Calendar() {
               ))}
             </div>
           </div>
-        </PageHeaderActions>
-      </PageHeader>
+        </div>
+      </div>
 
       <div className="px-4 pb-4 pt-0 sm:px-6 sm:pb-6 sm:pt-0 lg:px-6 lg:pb-6 lg:pt-0 space-y-2 lg:space-y-6">
         {/* Mobile/Tablet: Reorganized controls with reduced spacing */}

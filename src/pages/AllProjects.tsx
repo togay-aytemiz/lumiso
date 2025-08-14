@@ -298,8 +298,8 @@ const AllProjects = () => {
                 <h1 className="text-2xl sm:text-3xl font-bold truncate">Projects</h1>
                 <p className="text-muted-foreground truncate">Manage all your projects in one place</p>
               </div>
-              <div className="flex items-center gap-2 w-full sm:w-auto sm:max-w-md">
-                <div className="flex-1 sm:flex-initial">
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <div className="w-full sm:max-w-lg min-w-0 flex-1">
                   <GlobalSearch />
                 </div>
                 <EnhancedProjectDialog

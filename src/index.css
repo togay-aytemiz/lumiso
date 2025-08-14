@@ -214,6 +214,14 @@ All colors MUST be HSL.
   padding: 8px 12px;
 }
 
+/* Kanban Board Horizontal Scrolling */
+.kanban-board-container {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  width: 100%;
+}
+
 /* Ensure tables can scroll horizontally on any device */
 [data-table] {
   overflow-x: auto;

@@ -458,7 +458,7 @@ const AllProjects = () => {
   }
 
   return (
-    <div className="flex flex-col h-screen max-w-full overflow-hidden">
+    <div className="flex flex-col h-screen overflow-hidden">
       {/* Fixed header section */}
       <div className="flex-none p-4 sm:p-8 pb-0 w-full max-w-full overflow-x-hidden">
         <div className="mb-6">
@@ -488,8 +488,8 @@ const AllProjects = () => {
         </div>
       </div>
 
-      {/* View Toggle - Fixed width */}
-      <div className="flex-none px-8 w-full max-w-full overflow-x-hidden">
+      {/* View Toggle - Fixed header section */}
+      <div className="flex-shrink-0 px-8 overflow-hidden">
         <div className="border-b border-border w-full">
           <div className="flex items-center gap-1">
             <Button
@@ -532,8 +532,8 @@ const AllProjects = () => {
         </div>
       </div>
 
-      {/* Content area - Scrollable */}
-      <div className="flex-1 min-h-0">
+      {/* Content area - Only this scrolls */}
+      <div className="flex-1 min-h-0 overflow-hidden">
         {viewMode === 'board' ? (
           <ProjectKanbanBoard 
             projects={projects} 

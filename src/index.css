@@ -227,3 +227,34 @@ All colors MUST be HSL.
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
 }
+
+/* Mobile touch optimization */
+@media (pointer: coarse) {
+  /* Prevent touch interference with popover/select elements */
+  [data-radix-popper-content-wrapper],
+  [data-radix-select-content],
+  [data-radix-popover-content] {
+    touch-action: manipulation;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  
+  /* Make touch targets larger for mobile */
+  button, select, input[type="button"], input[type="submit"] {
+    min-height: 44px;
+    touch-action: manipulation;
+  }
+  
+  /* Prevent zoom on input focus */
+  input, select, textarea {
+    font-size: 16px;
+  }
+  
+  /* Better mobile modal/sheet handling */
+  [data-state="open"][data-radix-dialog-content],
+  [data-state="open"][data-radix-sheet-content] {
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+  }
+}

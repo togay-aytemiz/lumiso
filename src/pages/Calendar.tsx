@@ -858,7 +858,7 @@ export default function Calendar() {
       >
         <PageHeaderActions>
           {/* Desktop: All controls in one row with dividers */}
-          <div className="hidden lg:flex items-center gap-4">
+          <div className="hidden lg:flex items-center gap-4 ml-auto">
             {/* Filter chips */}
             <div className="flex items-center gap-2">
               <button

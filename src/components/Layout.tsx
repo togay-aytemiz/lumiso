@@ -10,13 +10,15 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const isMobile = useIsMobile();
 
   useEffect(() => {
-    if (isMobile) {
-      // Use setTimeout to ensure DOM is ready
-      setTimeout(() => {
-        window.scrollTo(0, 0);
-      }, 0);
+    // Reset scroll position for all devices when route changes
+    window.scrollTo(0, 0);
+    
+    // Also reset any scrollable containers
+    const mainElement = document.querySelector('main');
+    if (mainElement) {
+      mainElement.scrollTop = 0;
     }
-  }, [location.pathname, isMobile]);
+  }, [location.pathname]);
 
   return (
     <SidebarProvider>

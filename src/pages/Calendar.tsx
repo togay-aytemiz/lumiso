@@ -119,6 +119,9 @@ export default function Calendar() {
           projects(id, name, status_id)
         `)
         .order("reminder_date", { ascending: true });
+      
+      console.log('Raw activities query result:', { data, error });
+      
       if (error) throw error;
 
       // Filter out activities with invalid lead references or archived projects
@@ -147,6 +150,8 @@ export default function Calendar() {
         
         return true;
       });
+
+      console.log('Filtered activities:', filteredActivities);
 
       return filteredActivities.map(a => ({
         id: a.id,

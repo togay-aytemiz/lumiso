@@ -15,6 +15,13 @@ import GlobalSearch from "@/components/GlobalSearch";
 import { ProjectStatusBadge } from "@/components/ProjectStatusBadge";
 import { formatDate } from "@/lib/utils";
 
+interface ProjectStatus {
+  id: string;
+  name: string;
+  color: string;
+  sort_order: number;
+}
+
 interface Project {
   id: string;
   name: string;
@@ -63,6 +70,7 @@ type SortDirection = 'asc' | 'desc';
 const AllProjects = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [archivedProjects, setArchivedProjects] = useState<Project[]>([]);
+  const [projectStatuses, setProjectStatuses] = useState<ProjectStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [viewMode, setViewMode] = useState<'board' | 'list' | 'archived'>('board');
@@ -200,8 +208,9 @@ const AllProjects = () => {
         // Get project statuses
         supabase
           .from('project_statuses')
-          .select('id, name, color')
-          .eq('user_id', user.id),
+          .select('id, name, color, sort_order')
+          .eq('user_id', user.id)
+          .order('sort_order', { ascending: true }),
           
         // Get project types
         supabase
@@ -269,6 +278,9 @@ const AllProjects = () => {
         acc[type.id] = type;
         return acc;
       }, {});
+
+      // Store project statuses for reuse
+      setProjectStatuses(projectStatusesData.data || []);
 
       setProjects(activeProjects.map(project => ({
         ...project,
@@ -475,6 +487,7 @@ const AllProjects = () => {
         {viewMode === 'board' ? (
           <ProjectKanbanBoard 
             projects={projects} 
+            projectStatuses={projectStatuses}
             onProjectsChange={fetchProjects}
           />
         ) : (

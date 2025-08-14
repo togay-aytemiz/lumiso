@@ -15,7 +15,10 @@ interface ProjectStatus {
   id: string;
   name: string;
   color: string;
-  created_at: string;
+  sort_order: number;
+  created_at?: string;
+  updated_at?: string;
+  user_id?: string;
 }
 
 interface Project {
@@ -53,10 +56,11 @@ interface Project {
 
 interface ProjectKanbanBoardProps {
   projects: Project[];
+  projectStatuses?: ProjectStatus[];
   onProjectsChange: () => void;
 }
 
-const ProjectKanbanBoard = ({ projects, onProjectsChange }: ProjectKanbanBoardProps) => {
+const ProjectKanbanBoard = ({ projects, projectStatuses, onProjectsChange }: ProjectKanbanBoardProps) => {
   const [statuses, setStatuses] = useState<ProjectStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddProjectDialog, setShowAddProjectDialog] = useState(false);
@@ -65,8 +69,14 @@ const ProjectKanbanBoard = ({ projects, onProjectsChange }: ProjectKanbanBoardPr
   const [showViewDialog, setShowViewDialog] = useState(false);
 
   useEffect(() => {
-    fetchStatuses();
-  }, []);
+    if (projectStatuses && projectStatuses.length > 0) {
+      // Use passed statuses if available
+      setStatuses(projectStatuses.filter(s => s.name?.toLowerCase?.() !== 'archived'));
+      setLoading(false);
+    } else {
+      fetchStatuses();
+    }
+  }, [projectStatuses]);
 
   const fetchStatuses = async () => {
     try {

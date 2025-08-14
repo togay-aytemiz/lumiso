@@ -83,7 +83,7 @@ export function AppSheetModal({
           </div>
         </SheetHeader>
 
-        <div className="flex-1 overflow-y-auto py-6 px-1">
+        <div className="flex-1 overflow-y-auto pb-6 px-1">
           <div className="space-y-4">
             {children}
           </div>

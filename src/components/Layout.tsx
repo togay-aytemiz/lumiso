@@ -1,23 +1,27 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { MobileBottomNav } from "@/components/mobile/MobileBottomNav";
-import { useEffect } from "react";
+import { useLayoutEffect } from "react";
 import { useLocation } from "react-router-dom";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
-  const isMobile = useIsMobile();
 
-  useEffect(() => {
-    // Reset scroll position for all devices when route changes
-    window.scrollTo(0, 0);
-    
-    // Also reset any scrollable containers
-    const mainElement = document.querySelector('main');
-    if (mainElement) {
-      mainElement.scrollTop = 0;
+  useLayoutEffect(() => {
+    // Disable automatic scroll restoration
+    if ('scrollRestoration' in history) {
+      history.scrollRestoration = 'manual';
     }
+    
+    // Force scroll to top immediately and after next frame
+    const scrollToTop = () => {
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    };
+    
+    scrollToTop();
+    requestAnimationFrame(scrollToTop);
   }, [location.pathname]);
 
   return (

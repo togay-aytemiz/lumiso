@@ -424,37 +424,46 @@ const AllProjects = () => {
         </div>
       </div>
 
-      {/* View Toggle - allow wrapping */}
+      {/* View Toggle - mobile friendly tabs */}
       <div className="flex-shrink-0 px-4 sm:px-6 pb-2">
         <div className="border-b border-border">
-          <div className="flex flex-wrap items-center gap-1 pb-2">
-            <Button
-              variant={viewMode === 'board' ? 'default' : 'ghost'}
-              size="sm"
+          <div className="flex items-center gap-0 pb-0 overflow-x-auto">
+            <button
               onClick={() => setViewMode('board')}
-              className="flex items-center gap-2 whitespace-nowrap"
+              className={`flex items-center gap-2 px-3 py-2 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
+                viewMode === 'board' 
+                  ? 'border-primary text-primary' 
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              }`}
             >
               <LayoutGrid className="h-4 w-4" />
-              Board View
-            </Button>
-            <Button
-              variant={viewMode === 'list' ? 'default' : 'ghost'}
-              size="sm"
+              <span className="hidden sm:inline">Board</span>
+            </button>
+            <button
               onClick={() => setViewMode('list')}
-              className="flex items-center gap-2 whitespace-nowrap"
+              className={`flex items-center gap-2 px-3 py-2 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
+                viewMode === 'list' 
+                  ? 'border-primary text-primary' 
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              }`}
             >
               <List className="h-4 w-4" />
-              List View
-            </Button>
-            <Button
-              variant={viewMode === 'archived' ? 'default' : 'ghost'}
-              size="sm"
+              <span className="hidden sm:inline">List</span>
+            </button>
+            <button
               onClick={() => setViewMode('archived')}
-              className="flex items-center gap-2 whitespace-nowrap"
+              className={`flex items-center gap-2 px-3 py-2 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
+                viewMode === 'archived' 
+                  ? 'border-primary text-primary' 
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              }`}
             >
               <Archive className="h-4 w-4" />
-              Archived ({archivedProjects.length})
-            </Button>
+              <span className="hidden sm:inline">Archived</span>
+              <span className="text-xs bg-muted text-muted-foreground px-1.5 py-0.5 rounded ml-1">
+                {archivedProjects.length}
+              </span>
+            </button>
           </div>
         </div>
       </div>

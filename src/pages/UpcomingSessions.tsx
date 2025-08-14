@@ -10,7 +10,7 @@ import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import NewSessionDialog from "@/components/NewSessionDialog";
 import { formatDate, formatTime, formatLongDate, getWeekRange } from "@/lib/utils";
-import UnifiedSearch from "@/components/UnifiedSearch";
+import GlobalSearch from "@/components/GlobalSearch";
 import SessionStatusBadge from "@/components/SessionStatusBadge";
 import { ViewProjectDialog } from "@/components/ViewProjectDialog";
 import { FilterBar } from "@/components/FilterBar";
@@ -358,7 +358,7 @@ const AllSessions = () => {
             <p className="text-muted-foreground">Manage your photo sessions and appointments</p>
           </div>
           <div className="w-full sm:max-w-lg min-w-0 flex-1">
-            <UnifiedSearch />
+            <GlobalSearch />
           </div>
         </div>
       </div>

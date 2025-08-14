@@ -6,7 +6,6 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import { LeadStatusBadge } from "@/components/LeadStatusBadge";
 import { ProjectStatusBadge } from "@/components/ProjectStatusBadge";
-import { cn } from "@/lib/utils";
 
 interface SearchResult {
   id: string;
@@ -60,12 +59,7 @@ interface Project {
   };
 }
 
-interface UnifiedSearchProps {
-  className?: string;
-  variant?: 'default' | 'dashboard';
-}
-
-const UnifiedSearch = ({ className, variant = 'default' }: UnifiedSearchProps) => {
+const GlobalSearch = () => {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isOpen, setIsOpen] = useState(false);
@@ -113,7 +107,6 @@ const UnifiedSearch = ({ className, variant = 'default' }: UnifiedSearchProps) =
     })();
     return () => { mounted = false; };
   }, []);
-
   useEffect(() => {
     const delayedSearch = setTimeout(() => {
       if (query.trim().length > 2) {
@@ -339,6 +332,7 @@ const UnifiedSearch = ({ className, variant = 'default' }: UnifiedSearchProps) =
     }
   };
 
+
   const handleClearSearch = () => {
     setQuery("");
     setResults([]);
@@ -375,20 +369,13 @@ const UnifiedSearch = ({ className, variant = 'default' }: UnifiedSearchProps) =
 
   let resultIndex = 0;
 
-  // Determine container classes based on variant
-  const containerClasses = cn(
-    "relative",
-    variant === 'dashboard' ? "w-full max-w-lg min-w-[480px]" : "w-full",
-    className
-  );
-
   return (
-    <div className={containerClasses} ref={searchRef}>
+    <div className="relative w-full" ref={searchRef}>
       <div className="relative">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground z-10 pointer-events-none" />
         <Input
           ref={inputRef}
-          placeholder="Search everything"
+          placeholder="Search leads, projects, reminders, notes..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={handleKeyDown}
@@ -496,6 +483,15 @@ const UnifiedSearch = ({ className, variant = 'default' }: UnifiedSearchProps) =
                   })}
                 </div>
               ))}
+              {results.length === 10 && (
+                <div className="border-t border-slate-100 dark:border-slate-800 mx-2">
+                  <div className="px-3 py-2 text-center">
+                    <p className="text-xs text-muted-foreground">
+                      Showing first 10 results
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -504,4 +500,4 @@ const UnifiedSearch = ({ className, variant = 'default' }: UnifiedSearchProps) =
   );
 };
 
-export default UnifiedSearch;
+export default GlobalSearch;

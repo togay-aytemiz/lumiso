@@ -21,7 +21,7 @@ import { useNavigate } from "react-router-dom";
 import { format, subDays, subMonths, startOfMonth, startOfQuarter, startOfYear } from "date-fns";
 import type { DateRange } from "react-day-picker";
 import { formatDate } from "@/lib/utils";
-import UnifiedSearch from "@/components/UnifiedSearch";
+import GlobalSearch from "@/components/GlobalSearch";
 
 interface Payment {
   id: string;
@@ -305,8 +305,8 @@ const Payments = () => {
               <h1 className="text-2xl sm:text-3xl font-bold">Payments</h1>
               <p className="text-muted-foreground">Track and manage all payments across projects</p>
             </div>
-            <div className="w-full sm:w-auto sm:max-w-lg min-w-0 flex-1">
-              <UnifiedSearch />
+            <div className="w-full sm:w-auto max-w-md">
+              <GlobalSearch />
             </div>
           </div>
         </div>

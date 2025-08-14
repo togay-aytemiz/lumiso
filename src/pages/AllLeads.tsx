@@ -12,7 +12,7 @@ import { useNavigate } from "react-router-dom";
 import { getLeadStatusStyles, formatStatusText } from "@/lib/leadStatusColors";
 import { LeadStatusBadge } from "@/components/LeadStatusBadge";
 import { formatDate } from "@/lib/utils";
-import UnifiedSearch from "@/components/UnifiedSearch";
+import GlobalSearch from "@/components/GlobalSearch";
 
 interface Lead {
   id: string;
@@ -160,8 +160,8 @@ const AllLeads = () => {
               <h1 className="text-2xl sm:text-3xl font-bold">Leads</h1>
               <p className="text-muted-foreground">Track and manage your potential clients</p>
             </div>
-            <div className="w-full sm:w-auto sm:max-w-lg min-w-0 flex-1">
-              <UnifiedSearch />
+            <div className="w-full sm:w-auto max-w-md">
+              <GlobalSearch />
             </div>
           </div>
         </div>

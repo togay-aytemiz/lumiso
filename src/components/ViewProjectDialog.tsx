@@ -727,7 +727,6 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
               rightFooter={
                 <div className="border border-destructive/20 bg-destructive/5 rounded-md p-4">
                   <div className="space-y-3">
-                    <h3 className="text-sm font-medium text-destructive">Danger Zone</h3>
                     <Button
                       variant="outline"
                       onClick={() => setShowDeleteDialog(true)}

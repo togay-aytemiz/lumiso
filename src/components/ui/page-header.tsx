@@ -43,7 +43,7 @@ export function PageHeader({
 
         {/* Desktop Layout: Title + subtitle on left, search + actions on right, same row */}
         <div className="hidden lg:flex items-center justify-between gap-6">
-          <div className="flex-shrink-0 min-w-0">
+          <div className="flex-shrink-0 min-w-0 lg:max-w-md">
             <h1 className="text-3xl font-bold truncate">{title}</h1>
             {subtitle && (
               <p className="text-muted-foreground truncate">{subtitle}</p>
@@ -51,7 +51,7 @@ export function PageHeader({
           </div>
           
           {children && (
-            <div className="flex items-center gap-4 flex-shrink-0">
+            <div className="flex items-center gap-4 flex-1 max-w-4xl">
               {children}
             </div>
           )}
@@ -71,8 +71,8 @@ export function PageHeaderSearch({ children, className }: PageHeaderSearchProps)
     <div className={cn(
       // Mobile/Tablet: flexible width that grows
       "flex-1 w-full sm:max-w-lg",
-      // Desktop: wider search bar (1.5x increase)
-      "lg:max-w-3xl",
+      // Desktop: much wider search bar
+      "lg:flex-1 lg:max-w-none",
       // Allow overflow for search dropdown
       "overflow-visible",
       className

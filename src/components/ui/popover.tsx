@@ -21,8 +21,13 @@ const PopoverContent = React.forwardRef<
         className
       )}
       onPointerDownOutside={(e) => {
-        // Prevent mobile touch issues by stopping immediate closure
-        e.stopPropagation();
+        // Debug mobile touch issues
+        console.log('Popover onPointerDownOutside triggered', e.target);
+        // Completely prevent any outside interaction on mobile
+        if ('ontouchstart' in window) {
+          e.preventDefault();
+          return false;
+        }
       }}
       {...props}
     />

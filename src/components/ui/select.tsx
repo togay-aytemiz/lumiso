@@ -79,6 +79,14 @@ const SelectContent = React.forwardRef<
         className
       )}
       position={position}
+      onPointerDownOutside={(e) => {
+        console.log('Select onPointerDownOutside triggered', e.target);
+        // Prevent mobile touch interference
+        if ('ontouchstart' in window) {
+          e.preventDefault();
+          return false;
+        }
+      }}
       {...props}
     >
       <SelectScrollUpButton />

@@ -188,8 +188,12 @@ const AllProjects = () => {
       ]);
 
       // Process the data to handle archived projects
-      const activeProjects = (projectsData || []).filter(project => project.status_id !== 'archived');
-      const archived = (projectsData || []).filter(project => project.status_id === 'archived');
+      // Find the archived status ID
+      const archivedStatus = (projectStatusesData.data || []).find(status => status.name.toLowerCase() === 'archived');
+      const archivedStatusId = archivedStatus?.id;
+      
+      const activeProjects = (projectsData || []).filter(project => project.status_id !== archivedStatusId);
+      const archived = (projectsData || []).filter(project => project.status_id === archivedStatusId);
 
       // Create count maps for efficient lookup
       const sessionCounts = (sessionsData.data || []).reduce((acc, session) => {

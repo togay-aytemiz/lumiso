@@ -72,6 +72,16 @@ const AllProjects = () => {
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const navigate = useNavigate();
 
+  // Update sort field when view mode changes
+  useEffect(() => {
+    if (viewMode === 'archived') {
+      setSortField('updated_at');
+    } else {
+      setSortField('created_at');
+    }
+    setSortDirection('desc');
+  }, [viewMode]);
+
   useEffect(() => {
     fetchProjects();
   }, []);

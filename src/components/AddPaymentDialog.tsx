@@ -6,12 +6,14 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarIcon, Plus } from "lucide-react";
 import { format } from "date-fns";
-import { cn } from "@/lib/utils";
+import { cn, getUserLocale } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import ReactCalendar from "react-calendar";
+import "react-calendar/dist/Calendar.css";
+import "@/components/react-calendar.css";
 
 interface AddPaymentDialogProps {
   projectId: string;
@@ -27,6 +29,7 @@ export function AddPaymentDialog({ projectId, onPaymentAdded }: AddPaymentDialog
   const [isLoading, setIsLoading] = useState(false);
   
   const { toast } = useToast();
+  const browserLocale = getUserLocale();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -184,14 +187,24 @@ export function AddPaymentDialog({ projectId, onPaymentAdded }: AddPaymentDialog
                     {datePaid ? format(datePaid, "PPP") : <span>Pick a date</span>}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={datePaid}
-                    onSelect={setDatePaid}
-                    initialFocus
-                    className="pointer-events-auto"
-                  />
+                <PopoverContent className="w-auto min-w-[18rem] p-0 rounded-xl border border-border shadow-md" align="start">
+                  <div className="p-2">
+                    <ReactCalendar
+                      className="react-calendar w-full p-2 pointer-events-auto"
+                      locale={browserLocale}
+                      view="month"
+                      minDetail="month"
+                      next2Label={null}
+                      prev2Label={null}
+                      onChange={(value) => {
+                        const d = Array.isArray(value) ? value[0] : value;
+                        const date = d instanceof Date ? d : undefined;
+                        setDatePaid(date);
+                      }}
+                      value={datePaid ?? null}
+                      formatShortWeekday={(_, date) => new Intl.DateTimeFormat(browserLocale, { weekday: 'short' }).format(date)}
+                    />
+                  </div>
                 </PopoverContent>
               </Popover>
             </div>

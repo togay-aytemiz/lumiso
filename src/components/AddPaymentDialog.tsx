@@ -190,7 +190,7 @@ export function AddPaymentDialog({ projectId, onPaymentAdded }: AddPaymentDialog
                     selected={datePaid}
                     onSelect={setDatePaid}
                     initialFocus
-                    className={cn("p-3 pointer-events-auto")}
+                    className="pointer-events-auto"
                   />
                 </PopoverContent>
               </Popover>

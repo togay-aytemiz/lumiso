@@ -160,8 +160,10 @@ const AllLeads = () => {
         subtitle="Track and manage your potential clients"
       >
         <PageHeaderSearch>
-          <div className="flex items-center gap-2">
-            <GlobalSearch />
+          <div className="flex items-center gap-2 w-full">
+            <div className="flex-1 min-w-0">
+              <GlobalSearch />
+            </div>
             <Button 
               size="sm"
               onClick={() => setAddLeadDialogOpen(true)}

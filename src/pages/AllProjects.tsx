@@ -412,8 +412,10 @@ const AllProjects = () => {
           subtitle="Manage all your projects in one place"
         >
           <PageHeaderSearch>
-            <div className="flex items-center gap-2">
-              <GlobalSearch />
+            <div className="flex items-center gap-2 w-full">
+              <div className="flex-1 min-w-0">
+                <GlobalSearch />
+              </div>
               <EnhancedProjectDialog
                 onProjectCreated={() => {
                   fetchProjects();

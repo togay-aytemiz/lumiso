@@ -11,7 +11,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (isMobile) {
-      window.scrollTo(0, 0);
+      // Use setTimeout to ensure DOM is ready
+      setTimeout(() => {
+        window.scrollTo(0, 0);
+      }, 0);
     }
   }, [location.pathname, isMobile]);
 

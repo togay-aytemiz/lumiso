@@ -276,17 +276,24 @@ export default function Calendar() {
       .filter(session => session.session_date === dateStr)
       .sort((a, b) => a.session_time.localeCompare(b.session_time));
       
-    const dayActivities = activities
-      .filter(activity => {
+  const dayActivities = activities
+    .filter(activity => {
+      if (!activity.reminder_date) return false;
+      try {
         const activityDate = format(new Date(activity.reminder_date), "yyyy-MM-dd");
+        console.log('Activity date:', activityDate, 'Target date:', dateStr, 'Match:', activityDate === dateStr);
         return activityDate === dateStr;
-      })
-      .sort((a, b) => {
-        if (!a.reminder_time && !b.reminder_time) return 0;
-        if (!a.reminder_time) return 1;
-        if (!b.reminder_time) return -1;
-        return a.reminder_time.localeCompare(b.reminder_time);
-      });
+      } catch (error) {
+        console.error('Error parsing activity date:', activity.reminder_date, error);
+        return false;
+      }
+    })
+    .sort((a, b) => {
+      if (!a.reminder_time && !b.reminder_time) return 0;
+      if (!a.reminder_time) return 1;
+      if (!b.reminder_time) return -1;
+      return a.reminder_time.localeCompare(b.reminder_time);
+    });
     
     return { sessions: daySessions, activities: dayActivities };
   };

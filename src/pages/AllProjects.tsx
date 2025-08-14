@@ -458,7 +458,7 @@ const AllProjects = () => {
   }
 
   return (
-    <div className="flex flex-col h-screen">
+    <div className="flex flex-col h-screen max-w-full overflow-hidden">
       {/* Fixed header section */}
       <div className="flex-none p-4 sm:p-8 pb-0 w-full max-w-full overflow-x-hidden">
         <div className="mb-6">
@@ -533,14 +533,12 @@ const AllProjects = () => {
       </div>
 
       {/* Content area - Scrollable */}
-      <div className="flex-1">
+      <div className="flex-1 min-h-0">
         {viewMode === 'board' ? (
-          <div className="h-full">
-            <ProjectKanbanBoard 
-              projects={projects} 
-              onProjectsChange={fetchProjects}
-            />
-          </div>
+          <ProjectKanbanBoard 
+            projects={projects} 
+            onProjectsChange={fetchProjects}
+          />
         ) : (
           <div className="h-full overflow-y-auto p-4 sm:p-8 pt-6">
             <Card className="min-w-0">

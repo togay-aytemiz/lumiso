@@ -613,14 +613,11 @@ const AllProjects = () => {
                                )}
                                {viewMode !== 'archived' ? (
                                  <>
-                                   <TableCell>
-                                     <div className="text-sm">
-                                       <div>{project.session_count || 0} total</div>
-                                       <div className="text-xs text-muted-foreground">
-                                         {project.upcoming_session_count || 0} upcoming
-                                       </div>
-                                     </div>
-                                   </TableCell>
+                                    <TableCell>
+                                      <div className="text-sm">
+                                        <div>{project.session_count || 0} planned</div>
+                                      </div>
+                                    </TableCell>
                                    <TableCell>
                                      {getProgressBadge(project.completed_todo_count || 0, project.todo_count || 0)}
                                    </TableCell>

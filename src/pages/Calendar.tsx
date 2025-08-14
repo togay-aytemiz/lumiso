@@ -132,6 +132,16 @@ export default function Calendar() {
         .ilike('name', 'archived')
         .maybeSingle();
 
+      // Get all projects with their statuses to check for archived ones
+      const { data: projects } = await supabase
+        .from('projects')
+        .select('id, status_id')
+        .eq('user_id', userId);
+      
+      const archivedProjectIds = projects?.filter(project => 
+        project.status_id === archivedStatus?.id
+      ).map(project => project.id) || [];
+
       const filteredActivities = (data || []).filter(activity => {
         // Must have reminder_date and belong to user's leads
         if (!activity.reminder_date || !userLeadIds.includes(activity.lead_id)) {
@@ -139,9 +149,8 @@ export default function Calendar() {
         }
         
         // If activity has a project, check if it's archived
-        if (activity.project_id && archivedStatus?.id) {
-          // We'd need to check the project's status, but for now just include all
-          // This could be enhanced later with a proper project status check
+        if (activity.project_id && archivedProjectIds.includes(activity.project_id)) {
+          return false; // Filter out activities from archived projects
         }
         
         return true;

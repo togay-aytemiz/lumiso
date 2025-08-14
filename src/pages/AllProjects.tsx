@@ -75,12 +75,7 @@ const AllProjects = () => {
 
       const { data: projectsData, error } = await supabase
         .from('projects')
-        .select(`
-          *,
-          lead:leads(id, name, status, email, phone),
-          project_status:project_statuses(id, name, color),
-          project_type:project_types(id, name)
-        `)
+        .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
@@ -89,10 +84,11 @@ const AllProjects = () => {
         throw error;
       }
 
-      // Fetch counts separately to avoid complex joins
+      // Fetch all related data separately
       const projectIds = (projectsData || []).map(p => p.id);
+      const leadIds = (projectsData || []).map(p => p.lead_id).filter(Boolean);
       
-      const [sessionsData, todosData, servicesData] = await Promise.all([
+      const [sessionsData, todosData, servicesData, leadsData, projectStatusesData, projectTypesData] = await Promise.all([
         // Get session counts
         projectIds.length > 0 ? supabase
           .from('sessions')
@@ -112,7 +108,25 @@ const AllProjects = () => {
             project_id,
             service:services(id, name)
           `)
-          .in('project_id', projectIds) : Promise.resolve({ data: [] })
+          .in('project_id', projectIds) : Promise.resolve({ data: [] }),
+          
+        // Get leads
+        leadIds.length > 0 ? supabase
+          .from('leads')
+          .select('id, name, status, email, phone')
+          .in('id', leadIds) : Promise.resolve({ data: [] }),
+          
+        // Get project statuses
+        supabase
+          .from('project_statuses')
+          .select('id, name, color')
+          .eq('user_id', user.id),
+          
+        // Get project types
+        supabase
+          .from('project_types')
+          .select('id, name')
+          .eq('user_id', user.id)
       ]);
 
       // Process the data to handle archived projects
@@ -145,11 +159,27 @@ const AllProjects = () => {
         return acc;
       }, {});
 
+      // Create lookup maps
+      const leadsMap = (leadsData.data || []).reduce((acc, lead) => {
+        acc[lead.id] = lead;
+        return acc;
+      }, {});
+      
+      const statusesMap = (projectStatusesData.data || []).reduce((acc, status) => {
+        acc[status.id] = status;
+        return acc;
+      }, {});
+      
+      const typesMap = (projectTypesData.data || []).reduce((acc, type) => {
+        acc[type.id] = type;
+        return acc;
+      }, {});
+
       setProjects(activeProjects.map(project => ({
         ...project,
-        lead: Array.isArray(project.lead) ? project.lead[0] || null : project.lead,
-        project_status: Array.isArray(project.project_status) ? project.project_status[0] || null : project.project_status,
-        project_type: Array.isArray(project.project_type) ? project.project_type[0] || null : project.project_type,
+        lead: leadsMap[project.lead_id] || null,
+        project_status: statusesMap[project.status_id] || null,
+        project_type: typesMap[project.project_type_id] || null,
         session_count: sessionCounts[project.id]?.total || 0,
         upcoming_session_count: sessionCounts[project.id]?.upcoming || 0,
         planned_session_count: sessionCounts[project.id]?.planned || 0,
@@ -160,9 +190,9 @@ const AllProjects = () => {
 
       setArchivedProjects(archived.map(project => ({
         ...project,
-        lead: Array.isArray(project.lead) ? project.lead[0] || null : project.lead,
-        project_status: Array.isArray(project.project_status) ? project.project_status[0] || null : project.project_status,
-        project_type: Array.isArray(project.project_type) ? project.project_type[0] || null : project.project_type,
+        lead: leadsMap[project.lead_id] || null,
+        project_status: statusesMap[project.status_id] || null,
+        project_type: typesMap[project.project_type_id] || null,
         session_count: sessionCounts[project.id]?.total || 0,
         upcoming_session_count: sessionCounts[project.id]?.upcoming || 0,
         planned_session_count: sessionCounts[project.id]?.planned || 0,

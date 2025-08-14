@@ -924,7 +924,7 @@ export default function Calendar() {
         </PageHeaderActions>
       </PageHeader>
 
-      <div className="px-4 pb-4 pt-0 sm:px-6 sm:pb-6 sm:pt-0 lg:p-6 space-y-2 lg:space-y-6">
+      <div className="px-4 pb-4 pt-0 sm:px-6 sm:pb-6 sm:pt-0 lg:px-6 lg:pb-6 lg:pt-0 space-y-2 lg:space-y-6">
         {/* Mobile/Tablet: Reorganized controls with reduced spacing */}
         <div className="lg:hidden space-y-1.5">
           {/* Row 1: Session/reminder switches */}

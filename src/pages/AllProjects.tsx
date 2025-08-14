@@ -435,7 +435,7 @@ const AllProjects = () => {
                     <Table style={{ minWidth: '800px' }}>
                       <TableHeader>
                         <TableRow>
-                          <TableHead 
+                           <TableHead 
                             className="cursor-pointer hover:bg-muted/50 whitespace-nowrap"
                             onClick={() => handleSort('lead_name')}
                           >
@@ -489,28 +489,23 @@ const AllProjects = () => {
                         {sortedProjects.length > 0 ? (
                           sortedProjects.map((project) => (
                             <TableRow key={project.id} className="hover:bg-muted/50">
-                              <TableCell>
-                                <button
-                                  onClick={() => project.lead?.id && handleLeadClick(project.lead.id)}
-                                  className="font-medium text-left hover:underline text-blue-600 dark:text-blue-400 cursor-pointer"
-                                  disabled={!project.lead?.id}
-                                >
-                                  {project.lead?.name || 'No Lead'}
-                                </button>
-                              </TableCell>
-                              <TableCell>
-                                <button
-                                  onClick={() => handleProjectClick(project)}
-                                  className="font-medium text-left hover:underline cursor-pointer text-blue-600 dark:text-blue-400"
-                                >
-                                  {project.name}
-                                </button>
-                                {project.description && (
-                                  <div className="text-xs text-muted-foreground mt-1 line-clamp-1">
-                                    {project.description}
-                                  </div>
-                                )}
-                              </TableCell>
+                               <TableCell>
+                                 <button
+                                   onClick={() => project.lead?.id && handleLeadClick(project.lead.id)}
+                                   className="font-medium text-left hover:underline cursor-pointer"
+                                   disabled={!project.lead?.id}
+                                 >
+                                   {project.lead?.name || 'No Lead'}
+                                 </button>
+                               </TableCell>
+                               <TableCell>
+                                 <button
+                                   onClick={() => handleProjectClick(project)}
+                                   className="font-medium text-left hover:underline cursor-pointer"
+                                 >
+                                   {project.name}
+                                 </button>
+                               </TableCell>
                               <TableCell>
                                 {project.project_type ? (
                                   <Badge variant="outline" className="text-xs">

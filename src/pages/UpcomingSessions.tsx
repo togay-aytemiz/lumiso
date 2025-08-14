@@ -50,59 +50,55 @@ const AllSessions = () => {
 
   const fetchSessions = async () => {
     try {
-      // Get ALL sessions (not just upcoming or planned)
+      // Get sessions with proper validation using inner joins
       const { data: sessionsData, error: sessionsError } = await supabase
         .from('sessions')
-        .select('*')
+        .select(`
+          *,
+          leads!inner(id, name, status),
+          projects(id, name, status_id, project_statuses!inner(name))
+        `)
         .order('session_date', { ascending: false })
         .order('session_time', { ascending: false });
 
       if (sessionsError) throw sessionsError;
 
-      // Filter out sessions linked to archived projects
+      // Filter out sessions with invalid references or archived projects
       const { data: userData } = await supabase.auth.getUser();
       const userId = userData.user?.id;
       let filteredSessions = sessionsData || [];
+      
       if (userId) {
+        // Get archived status for filtering
         const { data: archivedStatus } = await supabase
           .from('project_statuses')
           .select('id, name')
           .eq('user_id', userId)
           .ilike('name', 'archived')
           .maybeSingle();
-        if (archivedStatus?.id) {
-          const { data: archivedProjects } = await supabase
-            .from('projects')
-            .select('id')
-            .eq('status_id', archivedStatus.id);
-          const archivedIds = new Set((archivedProjects || []).map(p => p.id));
-          filteredSessions = filteredSessions.filter(s => !s.project_id || !archivedIds.has(s.project_id));
-        }
+          
+        filteredSessions = filteredSessions.filter(session => {
+          // Must have valid lead (inner join ensures this)
+          if (!session.leads) return false;
+          
+          // If session has a project, check if it's archived
+          if (session.project_id && session.projects) {
+            if (archivedStatus?.id && session.projects.status_id === archivedStatus.id) {
+              return false;
+            }
+          }
+          
+          return true;
+        });
       }
 
-      // Enrich with lead and project info
+      // Process sessions with enhanced data validation
       if (filteredSessions.length > 0) {
-        const leadIds = [...new Set(filteredSessions.map(s => s.lead_id))];
-        const projectIds = [...new Set(filteredSessions.map(s => s.project_id).filter(Boolean))] as string[];
-
-        const [leadsRes, projectsRes] = await Promise.all([
-          supabase.from('leads').select('id, name, status').in('id', leadIds),
-          projectIds.length
-            ? supabase.from('projects').select('id, name').in('id', projectIds)
-            : Promise.resolve({ data: [] as any[], error: null } as any)
-        ]);
-
-        if (leadsRes.error) throw leadsRes.error;
-        if (projectsRes && 'error' in projectsRes && (projectsRes as any).error) throw (projectsRes as any).error;
-
-        const leadsData = leadsRes.data || [];
-        const projectsData = (projectsRes as any).data || [];
-
         const sessionsWithInfo = filteredSessions.map(session => ({
           ...session,
-          lead_name: leadsData.find((l: any) => l.id === session.lead_id)?.name || 'Unknown',
-          lead_status: leadsData.find((l: any) => l.id === session.lead_id)?.status || 'unknown',
-          project_name: session.project_id ? (projectsData.find((p: any) => p.id === session.project_id)?.name || 'Unknown project') : undefined
+          lead_name: session.leads?.name || 'Unknown Lead',
+          lead_status: session.leads?.status || 'unknown',
+          project_name: session.projects?.name || undefined
         }));
         setSessions(sessionsWithInfo);
       } else {

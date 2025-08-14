@@ -114,28 +114,50 @@ export default function Calendar() {
           type,
           lead_id,
           project_id,
-          completed
+          completed,
+          leads!inner(id, name),
+          projects(id, name, status_id)
         `)
         .order("reminder_date", { ascending: true });
       if (error) throw error;
 
-      // Filter out reminders belonging to archived projects
+      // Filter out activities with invalid lead references or archived projects
       const { data: userData } = await supabase.auth.getUser();
       const userId = userData.user?.id;
-      if (!userId) return data as Activity[];
+      if (!userId) return [];
+      
+      // Get archived status
       const { data: archivedStatus } = await supabase
         .from('project_statuses')
         .select('id, name')
         .eq('user_id', userId)
         .ilike('name', 'archived')
         .maybeSingle();
-      if (!archivedStatus?.id) return data as Activity[];
-      const { data: archivedProjects } = await supabase
-        .from('projects')
-        .select('id')
-        .eq('status_id', archivedStatus.id);
-      const archivedIds = new Set((archivedProjects || []).map(p => p.id));
-      return (data as Activity[]).filter(a => !a.project_id || !archivedIds.has(a.project_id!));
+      
+      const filteredActivities = (data || []).filter(activity => {
+        // Must have a valid lead reference (inner join ensures this)
+        if (!activity.leads) return false;
+        
+        // If activity has a project, check if it's archived
+        if (activity.project_id && activity.projects) {
+          if (archivedStatus?.id && activity.projects.status_id === archivedStatus.id) {
+            return false;
+          }
+        }
+        
+        return true;
+      });
+
+      return filteredActivities.map(a => ({
+        id: a.id,
+        content: a.content,
+        reminder_date: a.reminder_date,
+        reminder_time: a.reminder_time,
+        type: a.type,
+        lead_id: a.lead_id,
+        project_id: a.project_id,
+        completed: a.completed
+      })) as Activity[];
     },
   });
 

@@ -384,13 +384,14 @@ export default function Calendar() {
                   }
                 }}
                 className={`
-                  min-h-16 md:min-h-24 p-1 md:p-2 bg-card hover:bg-accent/50 transition-colors text-left
+                  min-h-16 md:min-h-24 p-1 md:p-2 bg-card hover:bg-accent/50 transition-colors relative
                   ${!isCurrentMonth ? "text-muted-foreground" : ""}
                   ${isDayToday ? "bg-primary/10 ring-1 ring-primary/20" : ""}
                   ${window.innerWidth <= 768 ? "min-h-11 cursor-pointer" : ""}
                 `}
               >
-                <div className={`text-xs md:text-sm font-medium mb-1 ${isDayToday ? "text-primary" : ""}`}>
+                {/* Day number in top right corner */}
+                <div className={`absolute top-1 right-1 md:top-2 md:right-2 text-xs md:text-sm font-medium ${isDayToday ? "text-primary" : ""}`}>
                   {format(day, "d")}
                 </div>
                 
@@ -915,24 +916,22 @@ export default function Calendar() {
 
       <div className="p-4 md:p-6 space-y-3 md:space-y-6">
         {/* Mobile/Tablet: Navigation and filters */}
-        <div className="lg:hidden space-y-3">
+        <div className="lg:hidden space-y-2">
           {/* Navigation controls */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={goToToday} className="h-8 px-3 text-xs">
-                Today
-              </Button>
-              <Button variant="outline" size="sm" onClick={navigatePrevious} className="h-8 w-8 p-0">
-                <ChevronLeft className="h-3 w-3" />
-              </Button>
-              <Button variant="outline" size="sm" onClick={navigateNext} className="h-8 w-8 p-0">
-                <ChevronRight className="h-3 w-3" />
-              </Button>
-            </div>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={goToToday} className="h-8 px-3 text-xs">
+              Today
+            </Button>
+            <Button variant="outline" size="sm" onClick={navigatePrevious} className="h-8 w-8 p-0">
+              <ChevronLeft className="h-3 w-3" />
+            </Button>
+            <Button variant="outline" size="sm" onClick={navigateNext} className="h-8 w-8 p-0">
+              <ChevronRight className="h-3 w-3" />
+            </Button>
           </div>
           
-          {/* Filter chips on separate row */}
-          <div className="flex items-center justify-center gap-2" aria-label="Filter calendar items">
+          {/* Filter chips aligned left */}
+          <div className="flex items-center gap-2" aria-label="Filter calendar items">
             <button
               type="button"
               aria-pressed={showSessions}

@@ -84,7 +84,7 @@ export function AppSheetModal({
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto pb-6 px-1">
-          <div className="space-y-4 [&_input]:border-0 [&_input]:bg-muted/30 [&_textarea]:border-0 [&_textarea]:bg-muted/30 [&_[role=combobox]]:border-0 [&_[role=combobox]]:bg-muted/30">
+          <div className="space-y-4 [&_input]:border [&_input]:border-border [&_input]:bg-muted/50 [&_textarea]:border [&_textarea]:border-border [&_textarea]:bg-muted/50 [&_[role=combobox]]:border [&_[role=combobox]]:border-border [&_[role=combobox]]:bg-muted/50">
             {children}
           </div>
         </div>

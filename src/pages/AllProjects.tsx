@@ -79,39 +79,83 @@ const AllProjects = () => {
           *,
           lead:leads(id, name, status, email, phone),
           project_status:project_statuses(id, name, color),
-          project_type:project_types(id, name),
-          session_count:sessions(count),
-          upcoming_session_count:sessions!inner(count),
-          planned_session_count:sessions!inner(count),
-          todo_count:todos(count),
-          completed_todo_count:todos!inner(count),
-          services:project_services(
-            service:services(id, name)
-          )
+          project_type:project_types(id, name)
         `)
         .eq('user_id', user.id)
-        .eq('upcoming_session_count.status', 'upcoming')
-        .eq('planned_session_count.status', 'planned')
-        .eq('completed_todo_count.completed', true)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
+
+      // Fetch counts separately to avoid complex joins
+      const projectIds = (projectsData || []).map(p => p.id);
+      
+      const [sessionsData, todosData, servicesData] = await Promise.all([
+        // Get session counts
+        projectIds.length > 0 ? supabase
+          .from('sessions')
+          .select('project_id, status')
+          .in('project_id', projectIds) : Promise.resolve({ data: [] }),
+        
+        // Get todo counts  
+        projectIds.length > 0 ? supabase
+          .from('todos')
+          .select('project_id, is_completed')
+          .in('project_id', projectIds) : Promise.resolve({ data: [] }),
+          
+        // Get services
+        projectIds.length > 0 ? supabase
+          .from('project_services')
+          .select(`
+            project_id,
+            service:services(id, name)
+          `)
+          .in('project_id', projectIds) : Promise.resolve({ data: [] })
+      ]);
 
       // Process the data to handle archived projects
       const activeProjects = (projectsData || []).filter(project => project.status_id !== 'archived');
       const archived = (projectsData || []).filter(project => project.status_id === 'archived');
+
+      // Create count maps for efficient lookup
+      const sessionCounts = (sessionsData.data || []).reduce((acc, session) => {
+        if (!acc[session.project_id]) {
+          acc[session.project_id] = { total: 0, upcoming: 0, planned: 0 };
+        }
+        acc[session.project_id].total++;
+        if (session.status === 'upcoming') acc[session.project_id].upcoming++;
+        if (session.status === 'planned') acc[session.project_id].planned++;
+        return acc;
+      }, {});
+
+      const todoCounts = (todosData.data || []).reduce((acc, todo) => {
+        if (!acc[todo.project_id]) {
+          acc[todo.project_id] = { total: 0, completed: 0 };
+        }
+        acc[todo.project_id].total++;
+        if (todo.is_completed) acc[todo.project_id].completed++;
+        return acc;
+      }, {});
+
+      const projectServices = (servicesData.data || []).reduce((acc, ps) => {
+        if (!acc[ps.project_id]) acc[ps.project_id] = [];
+        if (ps.service) acc[ps.project_id].push(ps.service);
+        return acc;
+      }, {});
 
       setProjects(activeProjects.map(project => ({
         ...project,
         lead: Array.isArray(project.lead) ? project.lead[0] || null : project.lead,
         project_status: Array.isArray(project.project_status) ? project.project_status[0] || null : project.project_status,
         project_type: Array.isArray(project.project_type) ? project.project_type[0] || null : project.project_type,
-        session_count: Array.isArray(project.session_count) ? project.session_count[0]?.count || 0 : 0,
-        upcoming_session_count: Array.isArray(project.upcoming_session_count) ? project.upcoming_session_count[0]?.count || 0 : 0,
-        planned_session_count: Array.isArray(project.planned_session_count) ? project.planned_session_count[0]?.count || 0 : 0,
-        todo_count: Array.isArray(project.todo_count) ? project.todo_count[0]?.count || 0 : 0,
-        completed_todo_count: Array.isArray(project.completed_todo_count) ? project.completed_todo_count[0]?.count || 0 : 0,
-        services: Array.isArray(project.services) ? project.services.map(ps => ps.service).filter(Boolean) || [] : []
+        session_count: sessionCounts[project.id]?.total || 0,
+        upcoming_session_count: sessionCounts[project.id]?.upcoming || 0,
+        planned_session_count: sessionCounts[project.id]?.planned || 0,
+        todo_count: todoCounts[project.id]?.total || 0,
+        completed_todo_count: todoCounts[project.id]?.completed || 0,
+        services: projectServices[project.id] || []
       })) as Project[]);
 
       setArchivedProjects(archived.map(project => ({
@@ -119,12 +163,12 @@ const AllProjects = () => {
         lead: Array.isArray(project.lead) ? project.lead[0] || null : project.lead,
         project_status: Array.isArray(project.project_status) ? project.project_status[0] || null : project.project_status,
         project_type: Array.isArray(project.project_type) ? project.project_type[0] || null : project.project_type,
-        session_count: Array.isArray(project.session_count) ? project.session_count[0]?.count || 0 : 0,
-        upcoming_session_count: Array.isArray(project.upcoming_session_count) ? project.upcoming_session_count[0]?.count || 0 : 0,
-        planned_session_count: Array.isArray(project.planned_session_count) ? project.planned_session_count[0]?.count || 0 : 0,
-        todo_count: Array.isArray(project.todo_count) ? project.todo_count[0]?.count || 0 : 0,
-        completed_todo_count: Array.isArray(project.completed_todo_count) ? project.completed_todo_count[0]?.count || 0 : 0,
-        services: Array.isArray(project.services) ? project.services.map(ps => ps.service).filter(Boolean) || [] : []
+        session_count: sessionCounts[project.id]?.total || 0,
+        upcoming_session_count: sessionCounts[project.id]?.upcoming || 0,
+        planned_session_count: sessionCounts[project.id]?.planned || 0,
+        todo_count: todoCounts[project.id]?.total || 0,
+        completed_todo_count: todoCounts[project.id]?.completed || 0,
+        services: projectServices[project.id] || []
       })) as Project[]);
 
     } catch (error) {

@@ -458,18 +458,18 @@ const AllProjects = () => {
   }
 
   return (
-    <div className="flex flex-col h-screen">
-      {/* Fixed header section */}
-      <div className="flex-shrink-0 p-4 sm:p-6 pb-0">
-        <div className="mb-6">
+    <div className="flex flex-col h-screen max-w-full overflow-x-hidden">
+      {/* A) Header/Toolbar - Constrained to viewport */}
+      <div className="flex-shrink-0 w-full max-w-full overflow-x-hidden p-4 sm:p-6 pb-0">
+        <div className="mb-6 max-w-full">
           <div className="flex flex-col gap-4">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div className="flex-shrink-0 min-w-0">
-                <h1 className="text-2xl sm:text-3xl font-bold">Projects</h1>
-                <p className="text-muted-foreground">Manage all your projects in one place</p>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4 min-w-0">
+              <div className="flex-1 min-w-0">
+                <h1 className="text-2xl sm:text-3xl font-bold truncate">Projects</h1>
+                <p className="text-muted-foreground truncate">Manage all your projects in one place</p>
               </div>
               <div className="flex items-center gap-3 flex-shrink-0">
-                <div className="w-full sm:w-auto max-w-md">
+                <div className="w-full sm:w-auto sm:max-w-xs max-w-full">
                   <GlobalSearch />
                 </div>
                 <EnhancedProjectDialog
@@ -488,16 +488,16 @@ const AllProjects = () => {
         </div>
       </div>
 
-      {/* View Toggle - Mobile friendly */}
-      <div className="flex-shrink-0 px-4 sm:px-6 pb-2">
-        <div className="w-full overflow-x-auto scrollbar-thin">
+      {/* D) View Toggle - Prevent page overflow */}
+      <div className="flex-shrink-0 w-full max-w-full overflow-x-hidden px-4 sm:px-6 pb-2">
+        <div className="w-full">
           <div className="border-b border-border">
-            <div className="flex items-center gap-1 min-w-max pb-2">
+            <div className="flex flex-wrap items-center gap-1 pb-2 sm:flex-nowrap sm:overflow-x-auto">
               <Button
                 variant={viewMode === 'board' ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => setViewMode('board')}
-                className="flex items-center gap-2 whitespace-nowrap"
+                className="flex items-center gap-2 whitespace-nowrap flex-shrink-0"
               >
                 <LayoutGrid className="h-4 w-4" />
                 Board View
@@ -506,7 +506,7 @@ const AllProjects = () => {
                 variant={viewMode === 'list' ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => setViewMode('list')}
-                className="flex items-center gap-2 whitespace-nowrap"
+                className="flex items-center gap-2 whitespace-nowrap flex-shrink-0"
               >
                 <List className="h-4 w-4" />
                 List View
@@ -515,7 +515,7 @@ const AllProjects = () => {
                 variant={viewMode === 'archived' ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => setViewMode('archived')}
-                className="flex items-center gap-2 whitespace-nowrap"
+                className="flex items-center gap-2 whitespace-nowrap flex-shrink-0"
               >
                 <Archive className="h-4 w-4" />
                 Archived ({archivedProjects.length})
@@ -525,26 +525,33 @@ const AllProjects = () => {
         </div>
       </div>
 
-      {/* Content area - Allow horizontal scrolling */}
-      <div className="flex-1 min-h-0">
+      {/* Content area - Horizontal scroll behavior varies by view */}
+      <div className="flex-1 min-h-0 w-full max-w-full">
         {viewMode === 'board' ? (
           <ProjectKanbanBoard 
             projects={projects} 
             onProjectsChange={fetchProjects}
           />
         ) : (
-          <div className="h-full overflow-y-auto p-4 sm:p-8 pt-6">
-            <Card className="min-w-0">
-              <CardContent className="pt-6 p-0">
-                <div className="w-full overflow-x-auto overflow-y-hidden" style={{ maxWidth: '100vw' }}>
+          <div className="h-full overflow-y-auto w-full max-w-full p-4 sm:p-6">
+            <Card className="w-full max-w-full">
+              <CardContent className="pt-6 p-0 w-full max-w-full">
+                {/* Table wrapper with horizontal scroll - headers stay outside */}
+                <div
+                  className="w-full overflow-x-auto overflow-y-hidden"
+                  style={{ 
+                    WebkitOverflowScrolling: 'touch',
+                    scrollbarWidth: 'thin'
+                  }}
+                >
                   <div className="min-w-max">
-                    <Table style={{ minWidth: '1000px' }}>
+                    <Table className="w-full" style={{ minWidth: '1000px' }}>
                       <TableHeader>
-                    <TableRow>
-                      {viewMode === 'archived' ? (
+                        <TableRow>
+                       {viewMode === 'archived' ? (
                         <>
                           <TableHead 
-                            className="cursor-pointer hover:bg-muted/50"
+                            className="cursor-pointer hover:bg-muted/50 whitespace-nowrap"
                             onClick={() => handleSort('name')}
                           >
                             <div className="flex items-center gap-2">
@@ -553,7 +560,7 @@ const AllProjects = () => {
                             </div>
                           </TableHead>
                           <TableHead 
-                            className="cursor-pointer hover:bg-muted/50"
+                            className="cursor-pointer hover:bg-muted/50 whitespace-nowrap"
                             onClick={() => handleSort('lead_name')}
                           >
                             <div className="flex items-center gap-2">
@@ -561,17 +568,17 @@ const AllProjects = () => {
                               {getSortIcon('lead_name')}
                             </div>
                           </TableHead>
-                          <TableHead>
+                          <TableHead className="whitespace-nowrap">
                             Type
                           </TableHead>
-                          <TableHead>
+                          <TableHead className="whitespace-nowrap">
                             Paid
                           </TableHead>
-                          <TableHead>
+                          <TableHead className="whitespace-nowrap">
                             Remaining
                           </TableHead>
                           <TableHead 
-                            className="cursor-pointer hover:bg-muted/50"
+                            className="cursor-pointer hover:bg-muted/50 whitespace-nowrap"
                             onClick={() => handleSort('updated_at')}
                           >
                             <div className="flex items-center gap-2">
@@ -583,16 +590,16 @@ const AllProjects = () => {
                       ) : (
                         <>
                           <TableHead 
-                            className="cursor-pointer hover:bg-muted/50"
+                            className="cursor-pointer hover:bg-muted/50 whitespace-nowrap"
                             onClick={() => handleSort('name')}
                           >
-                    <div className="flex items-center gap-2">
-                      Project
-                      {getSortIcon('name')}
-                    </div>
+                            <div className="flex items-center gap-2">
+                              Project
+                              {getSortIcon('name')}
+                            </div>
                           </TableHead>
                           <TableHead 
-                            className="cursor-pointer hover:bg-muted/50"
+                            className="cursor-pointer hover:bg-muted/50 whitespace-nowrap"
                             onClick={() => handleSort('lead_name')}
                           >
                             <div className="flex items-center gap-2">
@@ -600,9 +607,9 @@ const AllProjects = () => {
                               {getSortIcon('lead_name')}
                             </div>
                           </TableHead>
-                          <TableHead>Stage</TableHead>
+                          <TableHead className="whitespace-nowrap">Stage</TableHead>
                           <TableHead 
-                            className="cursor-pointer hover:bg-muted/50"
+                            className="cursor-pointer hover:bg-muted/50 whitespace-nowrap"
                             onClick={() => handleSort('project_type')}
                           >
                             <div className="flex items-center gap-2">
@@ -611,7 +618,7 @@ const AllProjects = () => {
                             </div>
                           </TableHead>
                           <TableHead 
-                            className="cursor-pointer hover:bg-muted/50 text-center"
+                            className="cursor-pointer hover:bg-muted/50 text-center whitespace-nowrap"
                             onClick={() => handleSort('session_count')}
                           >
                             <div className="flex items-center justify-center gap-2">
@@ -619,10 +626,10 @@ const AllProjects = () => {
                               {getSortIcon('session_count')}
                             </div>
                           </TableHead>
-                          <TableHead className="text-center">Todos</TableHead>
-                          <TableHead>Services</TableHead>
+                          <TableHead className="text-center whitespace-nowrap">Todos</TableHead>
+                          <TableHead className="whitespace-nowrap">Services</TableHead>
                           <TableHead 
-                            className="cursor-pointer hover:bg-muted/50"
+                            className="cursor-pointer hover:bg-muted/50 whitespace-nowrap"
                             onClick={() => handleSort('updated_at')}
                           >
                             <div className="flex items-center gap-2">
@@ -632,9 +639,9 @@ const AllProjects = () => {
                           </TableHead>
                         </>
                       )}
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
                     {displayedProjects.length > 0 ? (
                       displayedProjects.map((project) => (
                         <TableRow 
@@ -642,27 +649,27 @@ const AllProjects = () => {
                           className="cursor-pointer hover:bg-muted/50"
                           onClick={() => handleProjectClick(project)}
                         >
-                          <TableCell className="font-medium">
+                          <TableCell className="font-medium whitespace-nowrap">
                             <Button
                               variant="link"
-                              className="p-0 h-auto text-left justify-start font-medium text-foreground hover:text-foreground hover:underline"
+                              className="p-0 h-auto text-left justify-start font-medium text-foreground hover:text-foreground hover:underline max-w-xs truncate"
                               onClick={() => handleProjectClick(project)}
                             >
                               {project.name}
                             </Button>
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="whitespace-nowrap">
                             {project.lead ? (
                               <>
                                 <Button
                                   variant="link"
-                                  className="p-0 h-auto text-left justify-start text-foreground hover:text-foreground hover:underline"
+                                  className="p-0 h-auto text-left justify-start text-foreground hover:text-foreground hover:underline max-w-xs truncate"
                                   onClick={(e) => handleLeadClick(e, project.lead.id)}
                                 >
                                   {project.lead.name}
                                 </Button>
                                 {project.lead.email && (
-                                  <div className="text-xs text-muted-foreground">{project.lead.email}</div>
+                                  <div className="text-xs text-muted-foreground truncate max-w-xs">{project.lead.email}</div>
                                 )}
                               </>
                             ) : (
@@ -671,7 +678,7 @@ const AllProjects = () => {
                           </TableCell>
                           {viewMode === 'archived' ? (
                             <>
-                              <TableCell>
+                              <TableCell className="whitespace-nowrap">
                                 {project.project_type ? (
                                   <Badge variant="outline" className="text-xs">
                                     {project.project_type.name.toUpperCase()}
@@ -680,19 +687,19 @@ const AllProjects = () => {
                                   <span className="text-muted-foreground text-xs">-</span>
                                 )}
                               </TableCell>
-                              <TableCell className="text-sm font-medium text-green-600">
+                              <TableCell className="text-sm font-medium text-green-600 whitespace-nowrap">
                                 {formatCurrency(project.total_paid || 0)}
                               </TableCell>
-                              <TableCell className="text-sm text-muted-foreground">
+                              <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
                                 {formatCurrency(project.remaining_amount || 0)}
                               </TableCell>
-                              <TableCell className="text-sm text-muted-foreground">
+                              <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
                                 {formatDate(project.updated_at)}
                               </TableCell>
                             </>
                           ) : (
                             <>
-                              <TableCell>
+                              <TableCell className="whitespace-nowrap">
                                 <ProjectStatusBadge 
                                   projectId={project.id}
                                   currentStatusId={project.status_id}
@@ -702,7 +709,7 @@ const AllProjects = () => {
                                   onStatusChange={() => fetchProjects()}
                                 />
                               </TableCell>
-                              <TableCell>
+                              <TableCell className="whitespace-nowrap">
                                 {project.project_type ? (
                                   <Badge variant="outline" className="text-xs">
                                     {project.project_type.name.toUpperCase()}
@@ -711,16 +718,16 @@ const AllProjects = () => {
                                   <span className="text-muted-foreground text-xs">-</span>
                                 )}
                               </TableCell>
-                              <TableCell className="text-center">
+                              <TableCell className="text-center whitespace-nowrap">
                                 {getProgressBadge(project.completed_session_count || 0, project.session_count || 0)}
                               </TableCell>
-                              <TableCell className="text-center">
+                              <TableCell className="text-center whitespace-nowrap">
                                 {getProgressBadge(project.completed_todo_count || 0, project.todo_count || 0)}
                               </TableCell>
-                              <TableCell>
+                              <TableCell className="whitespace-nowrap">
                                 {renderServicesChips(project.services || [])}
                               </TableCell>
-                              <TableCell className="text-sm text-muted-foreground">
+                              <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
                                 {formatDate(project.updated_at)}
                               </TableCell>
                             </>
@@ -734,8 +741,8 @@ const AllProjects = () => {
                         </TableCell>
                       </TableRow>
                     )}
-                  </TableBody>
-                  </Table>
+                      </TableBody>
+                    </Table>
                   </div>
                 </div>
               </CardContent>

@@ -30,7 +30,7 @@ export function PageHeader({
           <div className="flex-shrink-0 min-w-0">
             <h1 className="text-2xl font-bold truncate">{title}</h1>
             {subtitle && (
-              <p className="text-muted-foreground text-sm truncate md:hidden">{subtitle}</p>
+              <p className="text-muted-foreground text-sm truncate">{subtitle}</p>
             )}
           </div>
           

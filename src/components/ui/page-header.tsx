@@ -42,7 +42,7 @@ export function PageHeader({
         </div>
 
         {/* Desktop Layout: Title + subtitle on left, search + actions on right, same row */}
-        <div className="hidden lg:flex items-center justify-end gap-6">
+        <div className="hidden lg:flex items-center justify-between gap-6">
           <div className="flex-shrink-0 min-w-0 lg:max-w-md">
             <h1 className="text-3xl font-bold truncate">{title}</h1>
             {subtitle && (

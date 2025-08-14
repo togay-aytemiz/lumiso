@@ -59,6 +59,7 @@ const CrmDashboard = () => {
   const [upcomingSessions, setUpcomingSessions] = useState<Session[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
+  const [addLeadDialogOpen, setAddLeadDialogOpen] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -426,7 +427,14 @@ const CrmDashboard = () => {
                   <CardTitle className="text-slate-800 dark:text-slate-200">Recent Leads</CardTitle>
                   <CardDescription className="text-slate-600 dark:text-slate-400">Your latest potential clients</CardDescription>
                 </div>
-                <AddLeadDialog onLeadAdded={fetchData} />
+                <Button 
+                  size="sm"
+                  onClick={() => setAddLeadDialogOpen(true)}
+                  className="flex items-center gap-2 whitespace-nowrap"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add Lead
+                </Button>
               </div>
               {leads.length > 0 && (
                 <Button 
@@ -520,6 +528,12 @@ const CrmDashboard = () => {
           </Card>
         </div>
       </main>
+      
+      <AddLeadDialog 
+        onLeadAdded={fetchData} 
+        open={addLeadDialogOpen}
+        onOpenChange={setAddLeadDialogOpen}
+      />
     </div>
   );
 };

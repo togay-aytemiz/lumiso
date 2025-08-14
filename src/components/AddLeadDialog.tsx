@@ -14,10 +14,11 @@ import { useUserSettings } from "@/hooks/useUserSettings";
 
 interface AddLeadDialogProps {
   onLeadAdded: () => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
-const AddLeadDialog = ({ onLeadAdded }: AddLeadDialogProps) => {
-  const [open, setOpen] = useState(false);
+const AddLeadDialog = ({ onLeadAdded, open, onOpenChange }: AddLeadDialogProps) => {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [leadStatuses, setLeadStatuses] = useState<any[]>([]);
@@ -124,7 +125,7 @@ const AddLeadDialog = ({ onLeadAdded }: AddLeadDialogProps) => {
         status: defaultStatus,
       });
       setErrors({});
-      setOpen(false);
+      onOpenChange(false);
       onLeadAdded();
     } catch (error: any) {
       toast({
@@ -159,14 +160,14 @@ const AddLeadDialog = ({ onLeadAdded }: AddLeadDialogProps) => {
         status: defaultStatus,
       });
       setErrors({});
-      setOpen(false);
+      onOpenChange(false);
     }
   };
 
   const footerActions = [
     {
       label: "Cancel",
-      onClick: () => setOpen(false),
+      onClick: () => onOpenChange(false),
       variant: "outline" as const,
       disabled: loading
     },
@@ -180,15 +181,10 @@ const AddLeadDialog = ({ onLeadAdded }: AddLeadDialogProps) => {
 
   return (
     <>
-      <Button size="sm" onClick={() => setOpen(true)}>
-        <Plus className="h-4 w-4 mr-2" />
-        Add Lead
-      </Button>
-
       <AppSheetModal
         title="Add New Lead"
         isOpen={open}
-        onOpenChange={setOpen}
+        onOpenChange={onOpenChange}
         size="default"
         dirty={isDirty}
         onDirtyClose={handleDirtyClose}

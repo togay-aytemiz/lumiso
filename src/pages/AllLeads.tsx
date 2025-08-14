@@ -36,6 +36,7 @@ const AllLeads = () => {
   const [sortField, setSortField] = useState<SortField>("created_at");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [leadStatuses, setLeadStatuses] = useState<any[]>([]);
+  const [addLeadDialogOpen, setAddLeadDialogOpen] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -160,8 +161,18 @@ const AllLeads = () => {
               <h1 className="text-2xl sm:text-3xl font-bold">Leads</h1>
               <p className="text-muted-foreground">Track and manage your potential clients</p>
             </div>
-            <div className="w-full sm:max-w-lg min-w-0 flex-1">
-              <GlobalSearch />
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <div className="w-full sm:max-w-lg min-w-0">
+                <GlobalSearch />
+              </div>
+              <Button 
+                size="sm"
+                onClick={() => setAddLeadDialogOpen(true)}
+                className="h-10 flex items-center gap-2 whitespace-nowrap flex-shrink-0 sm:px-4 px-3"
+              >
+                <Plus className="h-4 w-4" />
+                <span className="hidden sm:inline">Add Lead</span>
+              </Button>
             </div>
           </div>
         </div>
@@ -169,23 +180,20 @@ const AllLeads = () => {
       <Card className="min-w-0">
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-              <AddLeadDialog onLeadAdded={fetchLeads} />
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                <span className="text-sm text-muted-foreground whitespace-nowrap">Filter by status:</span>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-full sm:w-48 min-w-0">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {statusOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+              <span className="text-sm text-muted-foreground whitespace-nowrap">Filter by status:</span>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-full sm:w-48 min-w-0">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {statusOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </CardHeader>
@@ -298,6 +306,12 @@ const AllLeads = () => {
           </div>
         </CardContent>
       </Card>
+      
+      <AddLeadDialog 
+        onLeadAdded={fetchLeads} 
+        open={addLeadDialogOpen}
+        onOpenChange={setAddLeadDialogOpen}
+      />
     </div>
   );
 };

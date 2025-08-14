@@ -19,7 +19,7 @@ export function PageHeader({
   return (
     <div 
       className={cn(
-        "max-w-full overflow-x-hidden",
+        "max-w-full",
         sticky && "lg:sticky lg:top-0 lg:z-10 lg:bg-background/95 lg:backdrop-blur-sm lg:border-b",
         className
       )}
@@ -70,9 +70,11 @@ export function PageHeaderSearch({ children, className }: PageHeaderSearchProps)
   return (
     <div className={cn(
       // Mobile/Tablet: flexible width that grows
-      "flex-1 min-w-0 w-full sm:max-w-lg",
-      // Desktop: constrained width
+      "flex-1 w-full sm:max-w-lg",
+      // Desktop: constrained width  
       "lg:max-w-xl",
+      // Allow overflow for search dropdown
+      "overflow-visible",
       className
     )}>
       {children}

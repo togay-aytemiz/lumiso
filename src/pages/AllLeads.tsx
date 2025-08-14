@@ -154,7 +154,7 @@ const AllLeads = () => {
   }
 
   return (
-    <div className="min-h-screen overflow-x-hidden">
+    <div className="min-h-screen">
       <PageHeader
         title="Leads"
         subtitle="Track and manage your potential clients"

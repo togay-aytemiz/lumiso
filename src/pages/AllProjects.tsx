@@ -299,7 +299,7 @@ const AllProjects = () => {
                 <p className="text-muted-foreground truncate">Manage all your projects in one place</p>
               </div>
               <div className="flex items-center gap-2 w-full sm:w-auto">
-                <div className="w-full sm:max-w-lg min-w-0 flex-1">
+                <div className="w-full sm:max-w-lg min-w-0">
                   <GlobalSearch />
                 </div>
                 <EnhancedProjectDialog

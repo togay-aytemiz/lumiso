@@ -103,23 +103,29 @@ const AllProjects = () => {
 
       setProjects(activeProjects.map(project => ({
         ...project,
+        lead: Array.isArray(project.lead) ? project.lead[0] || null : project.lead,
+        project_status: Array.isArray(project.project_status) ? project.project_status[0] || null : project.project_status,
+        project_type: Array.isArray(project.project_type) ? project.project_type[0] || null : project.project_type,
         session_count: Array.isArray(project.session_count) ? project.session_count[0]?.count || 0 : 0,
         upcoming_session_count: Array.isArray(project.upcoming_session_count) ? project.upcoming_session_count[0]?.count || 0 : 0,
         planned_session_count: Array.isArray(project.planned_session_count) ? project.planned_session_count[0]?.count || 0 : 0,
         todo_count: Array.isArray(project.todo_count) ? project.todo_count[0]?.count || 0 : 0,
         completed_todo_count: Array.isArray(project.completed_todo_count) ? project.completed_todo_count[0]?.count || 0 : 0,
         services: Array.isArray(project.services) ? project.services.map(ps => ps.service).filter(Boolean) || [] : []
-      })));
+      })) as Project[]);
 
       setArchivedProjects(archived.map(project => ({
         ...project,
+        lead: Array.isArray(project.lead) ? project.lead[0] || null : project.lead,
+        project_status: Array.isArray(project.project_status) ? project.project_status[0] || null : project.project_status,
+        project_type: Array.isArray(project.project_type) ? project.project_type[0] || null : project.project_type,
         session_count: Array.isArray(project.session_count) ? project.session_count[0]?.count || 0 : 0,
         upcoming_session_count: Array.isArray(project.upcoming_session_count) ? project.upcoming_session_count[0]?.count || 0 : 0,
         planned_session_count: Array.isArray(project.planned_session_count) ? project.planned_session_count[0]?.count || 0 : 0,
         todo_count: Array.isArray(project.todo_count) ? project.todo_count[0]?.count || 0 : 0,
         completed_todo_count: Array.isArray(project.completed_todo_count) ? project.completed_todo_count[0]?.count || 0 : 0,
         services: Array.isArray(project.services) ? project.services.map(ps => ps.service).filter(Boolean) || [] : []
-      })));
+      })) as Project[]);
 
     } catch (error) {
       console.error('Error fetching projects:', error);

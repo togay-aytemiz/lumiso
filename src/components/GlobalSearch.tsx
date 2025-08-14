@@ -414,7 +414,7 @@ const GlobalSearch = () => {
       </div>
 
       {isOpen && (
-        <div className="absolute top-full mt-2 left-0 right-0 sm:left-0 sm:right-0 lg:right-0 lg:w-[500px] bg-background border border-slate-200 dark:border-slate-700 rounded-lg shadow-xl backdrop-blur-sm z-[9999] max-h-96 overflow-y-auto">
+        <div className="absolute top-full mt-2 left-0 right-0 bg-background border border-slate-200 dark:border-slate-700 rounded-lg shadow-xl backdrop-blur-sm z-[9999] max-h-96 overflow-y-auto">
           {loading ? (
             <div className="p-6 text-center text-muted-foreground">
               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto"></div>

@@ -570,7 +570,7 @@ export default function Calendar() {
     if (window.innerWidth <= 768) {
       return (
         <div className="bg-card rounded-xl border border-border shadow-sm">
-          <div className="space-y-3 p-4">
+          <div className="space-y-3 lg:space-y-0 lg:space-x-3 lg:flex lg:overflow-x-auto p-4">
             {weekDays.map((day, index) => {
               const { sessions: daySessions, activities: dayActivities } = getEventsForDate(day);
               const isDayToday = isToday(day);

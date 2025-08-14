@@ -375,7 +375,7 @@ const GlobalSearch = () => {
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground z-10 pointer-events-none" />
         <Input
           ref={inputRef}
-          placeholder="Search leads, projects, reminders, notes..."
+          placeholder="Search everything..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={handleKeyDown}

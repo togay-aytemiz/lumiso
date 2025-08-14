@@ -321,7 +321,7 @@ const ProjectKanbanBoard = ({ projects, onProjectsChange }: ProjectKanbanBoardPr
 
   return (
     <>
-      {/* B) Dedicated horizontal scroll container for kanban board */}
+      {/* Dedicated kanban horizontal scroll container */}
       <div 
         className="h-full w-full overflow-x-auto overflow-y-hidden" 
         style={{ 
@@ -329,12 +329,12 @@ const ProjectKanbanBoard = ({ projects, onProjectsChange }: ProjectKanbanBoardPr
           scrollbarWidth: 'thin'
         }}
       >
-        <div className="p-4 sm:p-6 h-full min-w-max">
+        <div className="p-4 sm:p-6 h-full">
           <DragDropContext onDragEnd={handleDragEnd}>
-            {/* Board lanes with proper width */}
+            {/* Board lanes - force horizontal scroll with max-content */}
             <div 
               className="flex gap-4 sm:gap-6 pb-4 h-full" 
-              style={{ minWidth: 'max-content' }}
+              style={{ width: 'max-content', minWidth: '100%' }}
             >
             {/* Render columns for each status */}
             {statuses.map(status => 

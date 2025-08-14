@@ -458,18 +458,18 @@ const AllProjects = () => {
   }
 
   return (
-    <div className="flex flex-col h-screen max-w-full overflow-x-hidden">
-      {/* A) Header/Toolbar - Constrained to viewport */}
-      <div className="flex-shrink-0 w-full max-w-full overflow-x-hidden p-4 sm:p-6 pb-0">
-        <div className="mb-6 max-w-full">
+    <div className="flex flex-col h-screen w-full">
+      {/* Fixed header - prevent viewport overflow */}
+      <div className="flex-shrink-0 w-full overflow-x-hidden p-4 sm:p-6 pb-0">
+        <div className="mb-6 w-full">
           <div className="flex flex-col gap-4">
-            <div className="flex flex-col sm:flex-row sm:items-center gap-4 min-w-0">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4 w-full">
               <div className="flex-1 min-w-0">
                 <h1 className="text-2xl sm:text-3xl font-bold truncate">Projects</h1>
                 <p className="text-muted-foreground truncate">Manage all your projects in one place</p>
               </div>
-              <div className="flex items-center gap-3 flex-shrink-0">
-                <div className="w-full sm:w-auto sm:max-w-xs max-w-full">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-shrink-0 min-w-0">
+                <div className="w-full sm:w-auto sm:max-w-[200px] min-w-0">
                   <GlobalSearch />
                 </div>
                 <EnhancedProjectDialog
@@ -477,7 +477,7 @@ const AllProjects = () => {
                     fetchProjects();
                   }}
                 >
-                  <Button className="flex items-center gap-2 whitespace-nowrap">
+                  <Button className="flex items-center gap-2 whitespace-nowrap flex-shrink-0">
                     <Plus className="h-4 w-4" />
                     Add Project
                   </Button>
@@ -488,16 +488,16 @@ const AllProjects = () => {
         </div>
       </div>
 
-      {/* D) View Toggle - Prevent page overflow */}
-      <div className="flex-shrink-0 w-full max-w-full overflow-x-hidden px-4 sm:px-6 pb-2">
+      {/* View Toggle - Allow wrapping, prevent overflow */}
+      <div className="flex-shrink-0 w-full overflow-x-hidden px-4 sm:px-6 pb-2">
         <div className="w-full">
           <div className="border-b border-border">
-            <div className="flex flex-wrap items-center gap-1 pb-2 sm:flex-nowrap sm:overflow-x-auto">
+            <div className="flex flex-wrap items-center gap-1 pb-2">
               <Button
                 variant={viewMode === 'board' ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => setViewMode('board')}
-                className="flex items-center gap-2 whitespace-nowrap flex-shrink-0"
+                className="flex items-center gap-2 whitespace-nowrap"
               >
                 <LayoutGrid className="h-4 w-4" />
                 Board View
@@ -506,7 +506,7 @@ const AllProjects = () => {
                 variant={viewMode === 'list' ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => setViewMode('list')}
-                className="flex items-center gap-2 whitespace-nowrap flex-shrink-0"
+                className="flex items-center gap-2 whitespace-nowrap"
               >
                 <List className="h-4 w-4" />
                 List View
@@ -515,7 +515,7 @@ const AllProjects = () => {
                 variant={viewMode === 'archived' ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => setViewMode('archived')}
-                className="flex items-center gap-2 whitespace-nowrap flex-shrink-0"
+                className="flex items-center gap-2 whitespace-nowrap"
               >
                 <Archive className="h-4 w-4" />
                 Archived ({archivedProjects.length})
@@ -525,15 +525,15 @@ const AllProjects = () => {
         </div>
       </div>
 
-      {/* Content area - Horizontal scroll behavior varies by view */}
-      <div className="flex-1 min-h-0 w-full max-w-full">
+      {/* Content area - Allow kanban horizontal scroll, constrain list view */}
+      <div className="flex-1 min-h-0 w-full">
         {viewMode === 'board' ? (
           <ProjectKanbanBoard 
             projects={projects} 
             onProjectsChange={fetchProjects}
           />
         ) : (
-          <div className="h-full overflow-y-auto w-full max-w-full p-4 sm:p-6">
+          <div className="h-full overflow-y-auto w-full max-w-full overflow-x-hidden p-4 sm:p-6">
             <Card className="w-full max-w-full">
               <CardContent className="pt-6 p-0 w-full max-w-full">
                 {/* Table wrapper with horizontal scroll - headers stay outside */}

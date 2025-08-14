@@ -412,23 +412,23 @@ const AllProjects = () => {
           subtitle="Manage all your projects in one place"
         >
           <PageHeaderSearch>
-            <GlobalSearch />
-          </PageHeaderSearch>
-          <PageHeaderActions>
-            <EnhancedProjectDialog
-              onProjectCreated={() => {
-                fetchProjects();
-              }}
-            >
-              <Button 
-                size="sm"
-                className="h-10 flex items-center gap-2 whitespace-nowrap flex-shrink-0 px-3 sm:px-4"
+            <div className="flex items-center gap-2">
+              <GlobalSearch />
+              <EnhancedProjectDialog
+                onProjectCreated={() => {
+                  fetchProjects();
+                }}
               >
-                <Plus className="h-4 w-4" />
-                <span className="hidden sm:inline">Add Project</span>
-              </Button>
-            </EnhancedProjectDialog>
-          </PageHeaderActions>
+                <Button 
+                  size="sm"
+                  className="h-10 flex items-center gap-2 whitespace-nowrap flex-shrink-0 px-3 sm:px-4"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span className="hidden sm:inline">Add Project</span>
+                </Button>
+              </EnhancedProjectDialog>
+            </div>
+          </PageHeaderSearch>
         </PageHeader>
       </div>
 

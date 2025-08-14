@@ -160,18 +160,18 @@ const AllLeads = () => {
         subtitle="Track and manage your potential clients"
       >
         <PageHeaderSearch>
-          <GlobalSearch />
+          <div className="flex items-center gap-2">
+            <GlobalSearch />
+            <Button 
+              size="sm"
+              onClick={() => setAddLeadDialogOpen(true)}
+              className="h-10 flex items-center gap-2 whitespace-nowrap flex-shrink-0 px-3 sm:px-4"
+            >
+              <Plus className="h-4 w-4" />
+              <span className="hidden sm:inline">Add Lead</span>
+            </Button>
+          </div>
         </PageHeaderSearch>
-        <PageHeaderActions>
-          <Button 
-            size="sm"
-            onClick={() => setAddLeadDialogOpen(true)}
-            className="h-10 flex items-center gap-2 whitespace-nowrap flex-shrink-0 px-3 sm:px-4"
-          >
-            <Plus className="h-4 w-4" />
-            <span className="hidden sm:inline">Add Lead</span>
-          </Button>
-        </PageHeaderActions>
       </PageHeader>
       
       <div className="p-4 sm:p-6">

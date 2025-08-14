@@ -54,28 +54,49 @@ export default function Calendar() {
           status,
           notes,
           lead_id,
-          project_id
+          project_id,
+          leads!inner(id, name),
+          projects(id, name, status_id)
         `)
         .order("session_date", { ascending: true });
       if (error) throw error;
 
-      // Filter out sessions belonging to archived projects
+      // Filter out sessions with invalid lead references or archived projects
       const { data: userData } = await supabase.auth.getUser();
       const userId = userData.user?.id;
-      if (!userId) return data as Session[];
+      if (!userId) return [];
+      
+      // Get archived status
       const { data: archivedStatus } = await supabase
         .from('project_statuses')
         .select('id, name')
         .eq('user_id', userId)
         .ilike('name', 'archived')
         .maybeSingle();
-      if (!archivedStatus?.id) return data as Session[];
-      const { data: archivedProjects } = await supabase
-        .from('projects')
-        .select('id')
-        .eq('status_id', archivedStatus.id);
-      const archivedIds = new Set((archivedProjects || []).map(p => p.id));
-      return (data as Session[]).filter(s => !s.project_id || !archivedIds.has(s.project_id));
+      
+      const filteredSessions = (data || []).filter(session => {
+        // Must have a valid lead reference (inner join ensures this)
+        if (!session.leads) return false;
+        
+        // If session has a project, check if it's archived
+        if (session.project_id && session.projects) {
+          if (archivedStatus?.id && session.projects.status_id === archivedStatus.id) {
+            return false;
+          }
+        }
+        
+        return true;
+      });
+
+      return filteredSessions.map(s => ({
+        id: s.id,
+        session_date: s.session_date,
+        session_time: s.session_time,
+        status: s.status,
+        notes: s.notes,
+        lead_id: s.lead_id,
+        project_id: s.project_id
+      })) as Session[];
     },
   });
 

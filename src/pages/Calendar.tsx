@@ -857,20 +857,10 @@ export default function Calendar() {
         subtitle="Manage your sessions and reminders"
       >
         <PageHeaderActions>
-          {/* Desktop: Navigation controls on far left */}
-          <div className="hidden lg:flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={goToToday}>
-              Today
-            </Button>
-            <Button variant="outline" size="sm" onClick={navigatePrevious}>
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" size="sm" onClick={navigateNext}>
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-            
-            {/* Desktop: Filter chips */}
-            <div className="flex items-center gap-2 ml-4" aria-label="Filter calendar items">
+          {/* Desktop: All controls in one row with dividers */}
+          <div className="hidden lg:flex items-center gap-4">
+            {/* Filter chips */}
+            <div className="flex items-center gap-2">
               <button
                 type="button"
                 aria-pressed={showSessions}
@@ -892,47 +882,53 @@ export default function Calendar() {
                 <span>Reminders</span>
               </button>
             </div>
-          </div>
-          
-          {/* View switcher - desktop only */}
-          <div className="hidden lg:flex bg-muted rounded-lg p-1">
-            {( ["day", "week", "month"] as ViewMode[] ).map((mode) => (
-              <button
-                key={mode}
-                onClick={() => setViewMode(mode)}
-                className={`
-                  px-3 py-2 rounded-md text-sm font-medium transition-colors capitalize
-                  ${viewMode === mode 
-                    ? "bg-primary text-primary-foreground" 
-                    : "hover:bg-accent text-muted-foreground"
-                  }
-                `}
-              >
-                {mode}
-              </button>
-            ))}
+            
+            {/* Divider */}
+            <div className="w-px h-6 bg-border"></div>
+            
+            {/* Navigation controls */}
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={goToToday}>
+                Today
+              </Button>
+              <Button variant="outline" size="sm" onClick={navigatePrevious} className="w-9 h-9 p-0">
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Button variant="outline" size="sm" onClick={navigateNext} className="w-9 h-9 p-0">
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+            
+            {/* Divider */}
+            <div className="w-px h-6 bg-border"></div>
+            
+            {/* View switcher */}
+            <div className="flex bg-muted rounded-lg p-1">
+              {( ["day", "week", "month"] as ViewMode[] ).map((mode) => (
+                <button
+                  key={mode}
+                  onClick={() => setViewMode(mode)}
+                  className={`
+                    px-3 py-2 rounded-md text-sm font-medium transition-colors capitalize
+                    ${viewMode === mode 
+                      ? "bg-primary text-primary-foreground" 
+                      : "hover:bg-accent text-muted-foreground"
+                    }
+                  `}
+                >
+                  {mode}
+                </button>
+              ))}
+            </div>
           </div>
         </PageHeaderActions>
       </PageHeader>
 
-      <div className="p-4 md:p-6 space-y-3 md:space-y-6">
-        {/* Mobile/Tablet: Navigation and filters */}
-        <div className="lg:hidden space-y-2">
-          {/* Navigation controls */}
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={goToToday} className="h-8 px-3 text-xs">
-              Today
-            </Button>
-            <Button variant="outline" size="sm" onClick={navigatePrevious} className="h-8 w-8 p-0">
-              <ChevronLeft className="h-3 w-3" />
-            </Button>
-            <Button variant="outline" size="sm" onClick={navigateNext} className="h-8 w-8 p-0">
-              <ChevronRight className="h-3 w-3" />
-            </Button>
-          </div>
-          
-          {/* Filter chips and view switcher aligned left */}
-          <div className="flex items-center gap-2 flex-wrap" aria-label="Filter calendar items">
+      <div className="p-3 lg:p-6 space-y-2 lg:space-y-6">
+        {/* Mobile/Tablet: Reorganized controls with reduced spacing */}
+        <div className="lg:hidden space-y-1.5">
+          {/* Row 1: Session/reminder switches */}
+          <div className="flex items-center gap-2" aria-label="Filter calendar items">
             <button
               type="button"
               aria-pressed={showSessions}
@@ -953,25 +949,38 @@ export default function Calendar() {
               <span className={`h-2 w-2 rounded-full ${showReminders ? 'bg-muted-foreground/80' : 'bg-muted-foreground/40'}`} />
               <span>Reminders</span>
             </button>
-            
-            {/* View switcher for mobile/tablet */}
-            <div className="flex bg-muted rounded-lg p-0.5">
-              {( ["day", "week", "month"] as ViewMode[] ).map((mode) => (
-                <button
-                  key={mode}
-                  onClick={() => setViewMode(mode)}
-                  className={`
-                    px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors capitalize
-                    ${viewMode === mode 
-                      ? "bg-primary text-primary-foreground" 
-                      : "hover:bg-accent text-muted-foreground"
-                    }
-                  `}
-                >
-                  {mode}
-                </button>
-              ))}
-            </div>
+          </div>
+          
+          {/* Row 2: Today and arrows */}
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={goToToday} className="h-8 px-3 text-xs">
+              Today
+            </Button>
+            <Button variant="outline" size="sm" onClick={navigatePrevious} className="h-8 w-8 p-0">
+              <ChevronLeft className="h-3 w-3" />
+            </Button>
+            <Button variant="outline" size="sm" onClick={navigateNext} className="h-8 w-8 p-0">
+              <ChevronRight className="h-3 w-3" />
+            </Button>
+          </div>
+          
+          {/* Row 3: Day/week/Month view switcher */}
+          <div className="flex bg-muted rounded-lg p-0.5">
+            {( ["day", "week", "month"] as ViewMode[] ).map((mode) => (
+              <button
+                key={mode}
+                onClick={() => setViewMode(mode)}
+                className={`
+                  px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors capitalize
+                  ${viewMode === mode 
+                    ? "bg-primary text-primary-foreground" 
+                    : "hover:bg-accent text-muted-foreground"
+                  }
+                `}
+              >
+                {mode}
+              </button>
+            ))}
           </div>
           
           {/* Date display for mobile/tablet */}

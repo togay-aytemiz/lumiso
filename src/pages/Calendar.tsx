@@ -856,135 +856,131 @@ export default function Calendar() {
 
   return (
     <>
-      <div className="p-4 md:p-6 space-y-4 md:space-y-6 w-full">
-        {/* Use exact same PageHeader structure as Projects/Leads pages */}
-        <PageHeader 
-          title="Calendar"
-          subtitle="Manage your sessions and reminders"
-        >
-          <PageHeaderSearch>
-            <div className="flex items-center gap-2 w-full">
-              {/* Desktop: Navigation controls on far left */}
-              <div className="hidden lg:flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={goToToday}>
-                  Today
-                </Button>
-                <Button variant="outline" size="sm" onClick={navigatePrevious}>
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <Button variant="outline" size="sm" onClick={navigateNext}>
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-                
-                {/* Desktop: Filter chips */}
-                <div className="flex items-center gap-2 ml-4" aria-label="Filter calendar items">
-                  <button
-                    type="button"
-                    aria-pressed={showSessions}
-                    onClick={() => setShowSessions((v) => !v)}
-                    className={`inline-flex items-center gap-2 px-3 py-2 rounded-md border text-sm font-medium transition-colors
-                      ${showSessions ? 'bg-primary/10 border-primary/30 text-foreground' : 'bg-muted border-border text-muted-foreground hover:bg-accent'}`}
-                  >
-                    <span className={`h-2.5 w-2.5 rounded-full ${showSessions ? 'bg-primary' : 'bg-muted-foreground/40'}`} />
-                    <span>Sessions</span>
-                  </button>
-                  <button
-                    type="button"
-                    aria-pressed={showReminders}
-                    onClick={() => setShowReminders((v) => !v)}
-                    className={`inline-flex items-center gap-2 px-3 py-2 rounded-md border text-sm font-medium transition-colors
-                      ${showReminders ? 'bg-primary/10 border-primary/30 text-foreground' : 'bg-muted border-border text-muted-foreground hover:bg-accent'}`}
-                  >
-                    <span className={`h-2.5 w-2.5 rounded-full ${showReminders ? 'bg-muted-foreground/80' : 'bg-muted-foreground/40'}`} />
-                    <span>Reminders</span>
-                  </button>
-                </div>
-              </div>
-              
-              {/* Mobile: Navigation and filters in compact form */}
-              <div className="flex lg:hidden items-center gap-2 w-full">
-                <Button variant="outline" size="sm" onClick={goToToday} className="h-8 px-3 text-xs">
-                  Today
-                </Button>
-                <Button variant="outline" size="sm" onClick={navigatePrevious} className="h-8 w-8 p-0">
-                  <ChevronLeft className="h-3 w-3" />
-                </Button>
-                <Button variant="outline" size="sm" onClick={navigateNext} className="h-8 w-8 p-0">
-                  <ChevronRight className="h-3 w-3" />
-                </Button>
-                
-                {/* Mobile: Filter chips */}
-                <ScrollArea className="flex-1">
-                  <div className="flex items-center gap-2" aria-label="Filter calendar items">
-                    <button
-                      type="button"
-                      aria-pressed={showSessions}
-                      onClick={() => setShowSessions((v) => !v)}
-                      className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border text-xs font-medium transition-colors whitespace-nowrap
-                        ${showSessions ? 'bg-primary/10 border-primary/30 text-foreground' : 'bg-muted border-border text-muted-foreground hover:bg-accent'}`}
-                    >
-                      <span className={`h-2 w-2 rounded-full ${showSessions ? 'bg-primary' : 'bg-muted-foreground/40'}`} />
-                      <span>Sessions</span>
-                    </button>
-                    <button
-                      type="button"
-                      aria-pressed={showReminders}
-                      onClick={() => setShowReminders((v) => !v)}
-                      className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border text-xs font-medium transition-colors whitespace-nowrap
-                        ${showReminders ? 'bg-primary/10 border-primary/30 text-foreground' : 'bg-muted border-border text-muted-foreground hover:bg-accent'}`}
-                    >
-                      <span className={`h-2 w-2 rounded-full ${showReminders ? 'bg-muted-foreground/80' : 'bg-muted-foreground/40'}`} />
-                      <span>Reminders</span>
-                    </button>
-                  </div>
-                </ScrollArea>
-              </div>
+      <PageHeader 
+        title="Calendar"
+        subtitle="Manage your sessions and reminders"
+      >
+        <PageHeaderActions>
+          {/* Desktop: Navigation controls on far left */}
+          <div className="hidden lg:flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={goToToday}>
+              Today
+            </Button>
+            <Button variant="outline" size="sm" onClick={navigatePrevious}>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="sm" onClick={navigateNext}>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+            
+            {/* Desktop: Filter chips */}
+            <div className="flex items-center gap-2 ml-4" aria-label="Filter calendar items">
+              <button
+                type="button"
+                aria-pressed={showSessions}
+                onClick={() => setShowSessions((v) => !v)}
+                className={`inline-flex items-center gap-2 px-3 py-2 rounded-md border text-sm font-medium transition-colors
+                  ${showSessions ? 'bg-primary/10 border-primary/30 text-foreground' : 'bg-muted border-border text-muted-foreground hover:bg-accent'}`}
+              >
+                <span className={`h-2.5 w-2.5 rounded-full ${showSessions ? 'bg-primary' : 'bg-muted-foreground/40'}`} />
+                <span>Sessions</span>
+              </button>
+              <button
+                type="button"
+                aria-pressed={showReminders}
+                onClick={() => setShowReminders((v) => !v)}
+                className={`inline-flex items-center gap-2 px-3 py-2 rounded-md border text-sm font-medium transition-colors
+                  ${showReminders ? 'bg-primary/10 border-primary/30 text-foreground' : 'bg-muted border-border text-muted-foreground hover:bg-accent'}`}
+              >
+                <span className={`h-2.5 w-2.5 rounded-full ${showReminders ? 'bg-muted-foreground/80' : 'bg-muted-foreground/40'}`} />
+                <span>Reminders</span>
+              </button>
             </div>
-          </PageHeaderSearch>
+          </div>
           
-          <PageHeaderActions>
-            {/* View switcher */}
-            <div className="flex bg-muted rounded-lg p-1">
-              {( ["day", "week", "month"] as ViewMode[] ).map((mode) => (
-                <button
-                  key={mode}
-                  onClick={() => setViewMode(mode)}
-                  className={`
-                    px-3 py-2 rounded-md text-sm font-medium transition-colors capitalize
-                    ${viewMode === mode 
-                      ? "bg-primary text-primary-foreground" 
-                      : "hover:bg-accent text-muted-foreground"
-                    }
-                  `}
-                >
-                  {mode}
-                </button>
-              ))}
-            </div>
-          </PageHeaderActions>
-        </PageHeader>
+          {/* View switcher */}
+          <div className="flex bg-muted rounded-lg p-1">
+            {( ["day", "week", "month"] as ViewMode[] ).map((mode) => (
+              <button
+                key={mode}
+                onClick={() => setViewMode(mode)}
+                className={`
+                  px-3 py-2 rounded-md text-sm font-medium transition-colors capitalize
+                  ${viewMode === mode 
+                    ? "bg-primary text-primary-foreground" 
+                    : "hover:bg-accent text-muted-foreground"
+                  }
+                `}
+              >
+                {mode}
+              </button>
+            ))}
+          </div>
+        </PageHeaderActions>
+      </PageHeader>
 
-        {/* Mobile/Tablet: Date title above calendar */}
-        <div className="lg:hidden">
+      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
+        {/* Mobile/Tablet: Navigation and filters */}
+        <div className="lg:hidden space-y-4">
+          {/* Navigation controls */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={goToToday} className="h-8 px-3 text-xs">
+                Today
+              </Button>
+              <Button variant="outline" size="sm" onClick={navigatePrevious} className="h-8 w-8 p-0">
+                <ChevronLeft className="h-3 w-3" />
+              </Button>
+              <Button variant="outline" size="sm" onClick={navigateNext} className="h-8 w-8 p-0">
+                <ChevronRight className="h-3 w-3" />
+              </Button>
+            </div>
+            
+            {/* Filter chips */}
+            <div className="flex items-center gap-2" aria-label="Filter calendar items">
+              <button
+                type="button"
+                aria-pressed={showSessions}
+                onClick={() => setShowSessions((v) => !v)}
+                className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border text-xs font-medium transition-colors whitespace-nowrap
+                  ${showSessions ? 'bg-primary/10 border-primary/30 text-foreground' : 'bg-muted border-border text-muted-foreground hover:bg-accent'}`}
+              >
+                <span className={`h-2 w-2 rounded-full ${showSessions ? 'bg-primary' : 'bg-muted-foreground/40'}`} />
+                <span>Sessions</span>
+              </button>
+              <button
+                type="button"
+                aria-pressed={showReminders}
+                onClick={() => setShowReminders((v) => !v)}
+                className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border text-xs font-medium transition-colors whitespace-nowrap
+                  ${showReminders ? 'bg-primary/10 border-primary/30 text-foreground' : 'bg-muted border-border text-muted-foreground hover:bg-accent'}`}
+              >
+                <span className={`h-2 w-2 rounded-full ${showReminders ? 'bg-muted-foreground/80' : 'bg-muted-foreground/40'}`} />
+                <span>Reminders</span>
+              </button>
+            </div>
+          </div>
+          
+          {/* Month/Week range display for mobile/tablet */}
           {(viewMode === "month" || viewMode === "week") && (
-            <div className="text-center mb-4">
-              <h2 className="text-xl font-semibold">{getViewTitle()}</h2>
+            <div className="bg-card rounded-xl border border-border p-4 text-center">
+              <h2 className="text-lg font-semibold">{getViewTitle()}</h2>
             </div>
           )}
         </div>
 
         {/* Calendar content */}
-          <div 
-            className="min-h-96"
-            onTouchStart={viewMode !== 'month' ? handleTouchStart : undefined}
-            onTouchMove={viewMode !== 'month' ? handleTouchMove : undefined}
-            onTouchEnd={viewMode !== 'month' ? handleTouchEnd : undefined}
-          >
-            {viewMode === "month" && renderMonthView()}
-            {viewMode === "week" && renderWeekView()}
-            {viewMode === "day" && renderDayView()}
-          </div>
+        <div 
+          className="min-h-96"
+          onTouchStart={viewMode !== 'month' ? handleTouchStart : undefined}
+          onTouchMove={viewMode !== 'month' ? handleTouchMove : undefined}
+          onTouchEnd={viewMode !== 'month' ? handleTouchEnd : undefined}
+        >
+          {viewMode === "month" && renderMonthView()}
+          {viewMode === "week" && renderWeekView()}
+          {viewMode === "day" && renderDayView()}
         </div>
+      </div>
 
         {selectedProject && (
           <ViewProjectDialog

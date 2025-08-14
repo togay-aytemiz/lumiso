@@ -320,13 +320,14 @@ const ProjectKanbanBoard = ({ projects, onProjectsChange }: ProjectKanbanBoardPr
   }
 
   return (
-    <div className="h-full w-full p-8 pt-6">
-      <DragDropContext onDragEnd={handleDragEnd}>
-        {/* Board with horizontal scrolling */}
-        <div 
-          className="flex gap-6 pb-4 h-full overflow-x-auto overflow-y-hidden" 
-          style={{ minWidth: 'max-content', width: 'max-content' }}
-        >
+    <div className="w-full h-full overflow-x-auto overflow-y-hidden">
+      <div className="p-8 pt-6 h-full">
+        <DragDropContext onDragEnd={handleDragEnd}>
+          {/* Board with horizontal scrolling */}
+          <div 
+            className="flex gap-6 pb-4 h-full" 
+            style={{ minWidth: 'max-content' }}
+          >
           {/* Render columns for each status */}
           {statuses.map(status => 
             renderColumn(status, getProjectsByStatus(status.id))
@@ -334,8 +335,9 @@ const ProjectKanbanBoard = ({ projects, onProjectsChange }: ProjectKanbanBoardPr
           
           {/* Column for projects without status */}
           {getProjectsWithoutStatus().length > 0 && renderColumn(null, getProjectsWithoutStatus())}
-        </div>
-      </DragDropContext>
+          </div>
+        </DragDropContext>
+      </div>
 
       {/* Add Project Dialog */}
       <EnhancedProjectDialog

@@ -25,6 +25,7 @@ interface Project {
   updated_at: string;
   status_id?: string | null;
   project_type_id?: string | null;
+  base_price?: number | null;
   lead: {
     id: string;
     name: string;
@@ -48,13 +49,15 @@ interface Project {
   todo_count?: number;
   completed_todo_count?: number;
   total_payment_amount?: number;
+  paid_amount?: number;
+  remaining_amount?: number;
   services?: Array<{
     id: string;
     name: string;
   }>;
 }
 
-type SortField = 'name' | 'lead_name' | 'project_type' | 'status' | 'created_at';
+type SortField = 'name' | 'lead_name' | 'project_type' | 'status' | 'created_at' | 'updated_at';
 type SortDirection = 'asc' | 'desc';
 
 const AllProjects = () => {
@@ -112,6 +115,10 @@ const AllProjects = () => {
         aValue = new Date(a.created_at).getTime();
         bValue = new Date(b.created_at).getTime();
         break;
+      case 'updated_at':
+        aValue = new Date(a.updated_at).getTime();
+        bValue = new Date(b.updated_at).getTime();
+        break;
       default:
         return 0;
     }
@@ -146,7 +153,7 @@ const AllProjects = () => {
       const projectIds = (projectsData || []).map(p => p.id);
       const leadIds = (projectsData || []).map(p => p.lead_id).filter(Boolean);
       
-      const [sessionsData, todosData, servicesData, leadsData, projectStatusesData, projectTypesData] = await Promise.all([
+      const [sessionsData, todosData, servicesData, paymentsData, leadsData, projectStatusesData, projectTypesData] = await Promise.all([
         // Get session counts
         projectIds.length > 0 ? supabase
           .from('sessions')
@@ -166,6 +173,12 @@ const AllProjects = () => {
             project_id,
             service:services(id, name)
           `)
+          .in('project_id', projectIds) : Promise.resolve({ data: [] }),
+          
+        // Get payments
+        projectIds.length > 0 ? supabase
+          .from('payments')
+          .select('project_id, amount, status')
           .in('project_id', projectIds) : Promise.resolve({ data: [] }),
           
         // Get leads
@@ -221,6 +234,16 @@ const AllProjects = () => {
         return acc;
       }, {});
 
+      const paymentTotals = (paymentsData.data || []).reduce((acc, payment) => {
+        if (!acc[payment.project_id]) {
+          acc[payment.project_id] = { paid: 0 };
+        }
+        if (payment.status === 'paid') {
+          acc[payment.project_id].paid += Number(payment.amount || 0);
+        }
+        return acc;
+      }, {});
+
       // Create lookup maps
       const leadsMap = (leadsData.data || []).reduce((acc, lead) => {
         acc[lead.id] = lead;
@@ -247,6 +270,8 @@ const AllProjects = () => {
         planned_session_count: sessionCounts[project.id]?.planned || 0,
         todo_count: todoCounts[project.id]?.total || 0,
         completed_todo_count: todoCounts[project.id]?.completed || 0,
+        paid_amount: paymentTotals[project.id]?.paid || 0,
+        remaining_amount: (Number(project.base_price || 0)) - (paymentTotals[project.id]?.paid || 0),
         services: projectServices[project.id] || []
       })) as Project[]);
 
@@ -260,6 +285,8 @@ const AllProjects = () => {
         planned_session_count: sessionCounts[project.id]?.planned || 0,
         todo_count: todoCounts[project.id]?.total || 0,
         completed_todo_count: todoCounts[project.id]?.completed || 0,
+        paid_amount: paymentTotals[project.id]?.paid || 0,
+        remaining_amount: (Number(project.base_price || 0)) - (paymentTotals[project.id]?.paid || 0),
         services: projectServices[project.id] || []
       })) as Project[]);
 
@@ -439,7 +466,7 @@ const AllProjects = () => {
                     <Table style={{ minWidth: '800px' }}>
                       <TableHeader>
                         <TableRow>
-                           <TableHead 
+                          <TableHead 
                             className="cursor-pointer hover:bg-muted/50 whitespace-nowrap"
                             onClick={() => handleSort('lead_name')}
                           >
@@ -466,29 +493,47 @@ const AllProjects = () => {
                               {getSortIcon('project_type')}
                             </div>
                           </TableHead>
-                          {viewMode !== 'archived' && (
-                            <TableHead 
-                              className="cursor-pointer hover:bg-muted/50"
-                              onClick={() => handleSort('status')}
-                            >
-                              <div className="flex items-center gap-2">
-                                Status
-                                {getSortIcon('status')}
-                              </div>
-                            </TableHead>
-                          )}
-                          <TableHead className="whitespace-nowrap">Sessions</TableHead>
-                          <TableHead className="whitespace-nowrap">Progress</TableHead>
-                          <TableHead className="whitespace-nowrap">Services</TableHead>
-                          <TableHead 
-                            className="cursor-pointer hover:bg-muted/50 whitespace-nowrap"
-                            onClick={() => handleSort('created_at')}
-                          >
-                            <div className="flex items-center gap-2">
-                              Created
-                              {getSortIcon('created_at')}
-                            </div>
-                          </TableHead>
+                          {viewMode !== 'archived' ? (
+                            <>
+                              <TableHead 
+                                className="cursor-pointer hover:bg-muted/50"
+                                onClick={() => handleSort('status')}
+                              >
+                                <div className="flex items-center gap-2">
+                                  Status
+                                  {getSortIcon('status')}
+                                </div>
+                              </TableHead>
+                              <TableHead className="whitespace-nowrap">Sessions</TableHead>
+                              <TableHead className="whitespace-nowrap">Progress</TableHead>
+                              <TableHead className="whitespace-nowrap">Services</TableHead>
+                            </>
+                          ) : (
+                            <>
+                              <TableHead className="whitespace-nowrap">Paid</TableHead>
+                              <TableHead className="whitespace-nowrap">Remaining</TableHead>
+                               <TableHead 
+                                 className="cursor-pointer hover:bg-muted/50 whitespace-nowrap"
+                                 onClick={() => handleSort('updated_at')}
+                               >
+                                 <div className="flex items-center gap-2">
+                                   Last Update
+                                   {getSortIcon('updated_at')}
+                                 </div>
+                               </TableHead>
+                             </>
+                           )}
+                           {viewMode !== 'archived' && (
+                             <TableHead 
+                               className="cursor-pointer hover:bg-muted/50 whitespace-nowrap"
+                               onClick={() => handleSort('created_at')}
+                             >
+                               <div className="flex items-center gap-2">
+                                 Created
+                                 {getSortIcon('created_at')}
+                               </div>
+                             </TableHead>
+                           )}
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -532,23 +577,45 @@ const AllProjects = () => {
                                    />
                                  </TableCell>
                                )}
-                              <TableCell>
-                                <div className="text-sm">
-                                  <div>{project.session_count || 0} total</div>
-                                  <div className="text-xs text-muted-foreground">
-                                    {project.upcoming_session_count || 0} upcoming
-                                  </div>
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                {getProgressBadge(project.completed_todo_count || 0, project.todo_count || 0)}
-                              </TableCell>
-                              <TableCell>
-                                {renderServicesChips(project.services || [])}
-                              </TableCell>
-                              <TableCell>
-                                {formatDate(project.created_at)}
-                              </TableCell>
+                               {viewMode !== 'archived' ? (
+                                 <>
+                                   <TableCell>
+                                     <div className="text-sm">
+                                       <div>{project.session_count || 0} total</div>
+                                       <div className="text-xs text-muted-foreground">
+                                         {project.upcoming_session_count || 0} upcoming
+                                       </div>
+                                     </div>
+                                   </TableCell>
+                                   <TableCell>
+                                     {getProgressBadge(project.completed_todo_count || 0, project.todo_count || 0)}
+                                   </TableCell>
+                                   <TableCell>
+                                     {renderServicesChips(project.services || [])}
+                                   </TableCell>
+                                 </>
+                               ) : (
+                                 <>
+                                   <TableCell>
+                                     <span className="font-medium text-green-600">
+                                       {formatCurrency(project.paid_amount || 0)}
+                                     </span>
+                                   </TableCell>
+                                   <TableCell>
+                                     <span className={project.remaining_amount && project.remaining_amount > 0 ? "font-medium text-orange-600" : "text-muted-foreground"}>
+                                       {formatCurrency(project.remaining_amount || 0)}
+                                     </span>
+                                   </TableCell>
+                                   <TableCell>
+                                     {formatDate(project.updated_at)}
+                                   </TableCell>
+                                 </>
+                                )}
+                                {viewMode !== 'archived' && (
+                                  <TableCell>
+                                    {formatDate(project.created_at)}
+                                  </TableCell>
+                                )}
                             </TableRow>
                           ))
                         ) : (

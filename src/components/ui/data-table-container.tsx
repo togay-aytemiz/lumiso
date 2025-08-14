@@ -20,10 +20,14 @@ export function DataTableContainer({
       className={cn(
         "w-full max-w-full overflow-x-auto overflow-y-hidden",
         "scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border",
+        "data-table-container",
         className
       )}
+      style={{ maxWidth: '100vw' }}
     >
-      {children}
+      <div className="min-w-max">
+        {children}
+      </div>
     </div>
   );
 }

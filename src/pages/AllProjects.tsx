@@ -545,10 +545,10 @@ const AllProjects = () => {
           <div className="h-full overflow-y-auto p-4 sm:p-8 pt-6">
             <Card className="min-w-0">
               <CardContent className="pt-6 p-0">
-                <div className="w-full max-w-full overflow-x-auto overflow-y-hidden">
+                <div className="w-full overflow-x-auto overflow-y-hidden" style={{ maxWidth: '100vw' }}>
                   <div className="min-w-max">
-                    <Table className="min-w-full">
-                  <TableHeader>
+                    <Table style={{ minWidth: '1000px' }}>
+                      <TableHeader>
                     <TableRow>
                       {viewMode === 'archived' ? (
                         <>

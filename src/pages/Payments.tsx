@@ -397,10 +397,10 @@ const Payments = () => {
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="w-full max-w-full overflow-x-auto overflow-y-hidden">
+          <div className="w-full overflow-x-auto overflow-y-hidden" style={{ maxWidth: '100vw' }}>
             <div className="min-w-max">
-              <Table className="min-w-full">
-            <TableHeader>
+              <Table style={{ minWidth: '900px' }}>
+                <TableHeader>
               <TableRow>
                 <TableHead 
                   className="cursor-pointer hover:bg-muted/50"

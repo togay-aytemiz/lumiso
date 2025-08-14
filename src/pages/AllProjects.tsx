@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, LayoutGrid, List, Archive, Calendar, CheckSquare, User, Eye, MessageSquare, CheckCircle2, Phone, Mail, Clock } from "lucide-react";
+import { Plus, LayoutGrid, List, Archive, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { EnhancedProjectDialog } from "@/components/EnhancedProjectDialog";
@@ -54,6 +54,9 @@ interface Project {
   }>;
 }
 
+type SortField = 'name' | 'lead_name' | 'project_type' | 'status' | 'created_at';
+type SortDirection = 'asc' | 'desc';
+
 const AllProjects = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [archivedProjects, setArchivedProjects] = useState<Project[]>([]);
@@ -62,11 +65,66 @@ const AllProjects = () => {
   const [viewMode, setViewMode] = useState<'board' | 'list' | 'archived'>('board');
   const [viewingProject, setViewingProject] = useState<Project | null>(null);
   const [showViewDialog, setShowViewDialog] = useState(false);
+  const [sortField, setSortField] = useState<SortField>('created_at');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchProjects();
   }, []);
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  const getSortIcon = (field: SortField) => {
+    if (sortField !== field) return <ArrowUpDown className="h-4 w-4" />;
+    return sortDirection === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />;
+  };
+
+  const sortedProjects = (viewMode === 'archived' ? archivedProjects : projects).sort((a, b) => {
+    let aValue: any;
+    let bValue: any;
+
+    switch (sortField) {
+      case 'name':
+        aValue = a.name;
+        bValue = b.name;
+        break;
+      case 'lead_name':
+        aValue = a.lead?.name || '';
+        bValue = b.lead?.name || '';
+        break;
+      case 'project_type':
+        aValue = a.project_type?.name || '';
+        bValue = b.project_type?.name || '';
+        break;
+      case 'status':
+        aValue = a.project_status?.name || '';
+        bValue = b.project_status?.name || '';
+        break;
+      case 'created_at':
+        aValue = new Date(a.created_at).getTime();
+        bValue = new Date(b.created_at).getTime();
+        break;
+      default:
+        return 0;
+    }
+
+    if (typeof aValue === 'string' && typeof bValue === 'string') {
+      aValue = aValue.toLowerCase();
+      bValue = bValue.toLowerCase();
+    }
+
+    if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
+    if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
+    return 0;
+  });
 
   const fetchProjects = async () => {
     try {
@@ -219,6 +277,10 @@ const AllProjects = () => {
     setShowViewDialog(true);
   };
 
+  const handleLeadClick = (leadId: string) => {
+    navigate(`/leads/${leadId}`);
+  };
+
   const handleSearchResult = (result: any) => {
     if (result.type === 'project') {
       navigate(`/projects/${result.id}`);
@@ -368,63 +430,86 @@ const AllProjects = () => {
             <Card className="w-full max-w-full">
               <CardContent className="pt-6 p-0 w-full max-w-full">
                 {/* Table wrapper with horizontal scroll - headers stay outside */}
-                <div 
-                  className="overflow-x-auto overflow-y-hidden w-full" 
-                  style={{ 
-                    WebkitOverflowScrolling: 'touch',
-                    scrollbarWidth: 'thin' 
-                  }}
-                >
-                  <div className="min-w-[1000px]">
-                    <Table>
+                <div className="w-full overflow-x-auto overflow-y-hidden" style={{ maxWidth: '100vw' }}>
+                  <div className="min-w-max">
+                    <Table style={{ minWidth: '800px' }}>
                       <TableHeader>
                         <TableRow>
-                          <TableHead className="w-[200px]">Lead Name</TableHead>
-                          <TableHead className="w-[250px]">Project</TableHead>
-                          <TableHead className="w-[120px]">Type</TableHead>
-                          <TableHead className="w-[120px]">Status</TableHead>
-                          <TableHead className="w-[100px]">Sessions</TableHead>
-                          <TableHead className="w-[100px]">Progress</TableHead>
-                          <TableHead className="w-[150px]">Services</TableHead>
-                          <TableHead className="w-[100px]">Actions</TableHead>
+                          <TableHead 
+                            className="cursor-pointer hover:bg-muted/50 whitespace-nowrap"
+                            onClick={() => handleSort('lead_name')}
+                          >
+                            <div className="flex items-center gap-2">
+                              Lead Name
+                              {getSortIcon('lead_name')}
+                            </div>
+                          </TableHead>
+                          <TableHead 
+                            className="cursor-pointer hover:bg-muted/50 whitespace-nowrap"
+                            onClick={() => handleSort('name')}
+                          >
+                            <div className="flex items-center gap-2">
+                              Project Name
+                              {getSortIcon('name')}
+                            </div>
+                          </TableHead>
+                          <TableHead 
+                            className="cursor-pointer hover:bg-muted/50 whitespace-nowrap"
+                            onClick={() => handleSort('project_type')}
+                          >
+                            <div className="flex items-center gap-2">
+                              Type
+                              {getSortIcon('project_type')}
+                            </div>
+                          </TableHead>
+                          <TableHead 
+                            className="cursor-pointer hover:bg-muted/50"
+                            onClick={() => handleSort('status')}
+                          >
+                            <div className="flex items-center gap-2">
+                              Status
+                              {getSortIcon('status')}
+                            </div>
+                          </TableHead>
+                          <TableHead className="whitespace-nowrap">Sessions</TableHead>
+                          <TableHead className="whitespace-nowrap">Progress</TableHead>
+                          <TableHead className="whitespace-nowrap">Services</TableHead>
+                          <TableHead 
+                            className="cursor-pointer hover:bg-muted/50 whitespace-nowrap"
+                            onClick={() => handleSort('created_at')}
+                          >
+                            <div className="flex items-center gap-2">
+                              Created
+                              {getSortIcon('created_at')}
+                            </div>
+                          </TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {(viewMode === 'archived' ? archivedProjects : projects).length > 0 ? (
-                          (viewMode === 'archived' ? archivedProjects : projects).map((project) => (
+                        {sortedProjects.length > 0 ? (
+                          sortedProjects.map((project) => (
                             <TableRow key={project.id} className="hover:bg-muted/50">
                               <TableCell>
-                                <div className="space-y-1">
-                                  <div className="font-medium text-sm">
-                                    {project.lead?.name || 'No Lead'}
-                                  </div>
-                                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                    {project.lead?.email && (
-                                      <div className="flex items-center gap-1">
-                                        <Mail className="h-3 w-3" />
-                                        <span className="truncate max-w-[100px]">{project.lead.email}</span>
-                                      </div>
-                                    )}
-                                    {project.lead?.phone && (
-                                      <div className="flex items-center gap-1">
-                                        <Phone className="h-3 w-3" />
-                                        <span>{project.lead.phone}</span>
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
+                                <button
+                                  onClick={() => project.lead?.id && handleLeadClick(project.lead.id)}
+                                  className="font-medium text-left hover:underline text-blue-600 dark:text-blue-400 cursor-pointer"
+                                  disabled={!project.lead?.id}
+                                >
+                                  {project.lead?.name || 'No Lead'}
+                                </button>
                               </TableCell>
                               <TableCell>
-                                <div className="space-y-1">
-                                  <div className="font-medium text-sm line-clamp-2">
-                                    {project.name}
+                                <button
+                                  onClick={() => handleProjectClick(project)}
+                                  className="font-medium text-left hover:underline cursor-pointer text-blue-600 dark:text-blue-400"
+                                >
+                                  {project.name}
+                                </button>
+                                {project.description && (
+                                  <div className="text-xs text-muted-foreground mt-1 line-clamp-1">
+                                    {project.description}
                                   </div>
-                                  {project.description && (
-                                    <div className="text-xs text-muted-foreground line-clamp-1">
-                                      {project.description}
-                                    </div>
-                                  )}
-                                </div>
+                                )}
                               </TableCell>
                               <TableCell>
                                 {project.project_type ? (
@@ -432,49 +517,34 @@ const AllProjects = () => {
                                     {project.project_type.name}
                                   </Badge>
                                 ) : (
-                                  <span className="text-muted-foreground text-xs">-</span>
+                                  <span className="text-muted-foreground">-</span>
                                 )}
                               </TableCell>
                               <TableCell>
-                                {project.project_status ? (
-                                  <Badge variant="outline" className="text-xs">
-                                    {project.project_status.name}
-                                  </Badge>
-                                ) : (
-                                  <span className="text-muted-foreground text-xs">-</span>
-                                )}
+                                <ProjectStatusBadge
+                                  projectId={project.id}
+                                  currentStatusId={project.status_id ?? undefined}
+                                  editable={true}
+                                  size="sm"
+                                  onStatusChange={fetchProjects}
+                                />
                               </TableCell>
                               <TableCell>
-                                <div className="flex flex-col gap-1">
-                                  <div className="flex items-center gap-1 text-xs">
-                                    <Calendar className="h-3 w-3" />
-                                    <span>{project.upcoming_session_count || 0} upcoming</span>
-                                  </div>
-                                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                    <Clock className="h-3 w-3" />
-                                    <span>{project.planned_session_count || 0} planned</span>
+                                <div className="text-sm">
+                                  <div>{project.session_count || 0} total</div>
+                                  <div className="text-xs text-muted-foreground">
+                                    {project.upcoming_session_count || 0} upcoming
                                   </div>
                                 </div>
                               </TableCell>
                               <TableCell>
-                                <div className="flex items-center gap-2">
-                                  <CheckSquare className="h-3 w-3 text-muted-foreground" />
-                                  {getProgressBadge(project.completed_todo_count || 0, project.todo_count || 0)}
-                                </div>
+                                {getProgressBadge(project.completed_todo_count || 0, project.todo_count || 0)}
                               </TableCell>
                               <TableCell>
                                 {renderServicesChips(project.services || [])}
                               </TableCell>
                               <TableCell>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleProjectClick(project)}
-                                  className="flex items-center gap-1 text-xs"
-                                >
-                                  <Eye className="h-3 w-3" />
-                                  View
-                                </Button>
+                                {formatDate(project.created_at)}
                               </TableCell>
                             </TableRow>
                           ))
@@ -486,9 +556,9 @@ const AllProjects = () => {
                           </TableRow>
                         )}
                       </TableBody>
-                    </Table>
-                  </div>
-                </div>
+                     </Table>
+                   </div>
+                 </div>
               </CardContent>
             </Card>
           </div>

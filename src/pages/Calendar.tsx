@@ -395,50 +395,166 @@ export default function Calendar() {
                   {format(day, "d")}
                 </div>
                 
-                {/* Events in bottom left corner */}
-                <div className="absolute bottom-1 left-1 md:bottom-2 md:left-2">
-                  <div className="flex items-center gap-1">
-                    {(() => {
-                      const sessionsList = showSessions ? daySessions : [];
-                      const remindersList = showReminders ? dayActivities : [];
+                {/* Events */}
+                <div className="space-y-0.5">
+                  {(() => {
+                    const sessionsList = showSessions ? daySessions : [];
+                    const remindersList = showReminders ? dayActivities : [];
 
-                      // Defensive sorting
-                      const sortedSessions = [...sessionsList].sort((a, b) => a.session_time.localeCompare(b.session_time));
-                      const sortedActivities = [...remindersList].sort((a, b) => {
+                    // Defensive sorting
+                    const sortedSessions = [...sessionsList].sort((a, b) => a.session_time.localeCompare(b.session_time));
+                    const sortedActivities = [...remindersList].sort((a, b) => {
+                      if (!a.reminder_time && !b.reminder_time) return 0;
+                      if (!a.reminder_time) return 1;
+                      if (!b.reminder_time) return -1;
+                      return a.reminder_time.localeCompare(b.reminder_time);
+                    });
+
+                    const combined = [
+                      ...sortedSessions.map((s) => ({ kind: 'session' as const, item: s })),
+                      ...sortedActivities.map((a) => ({ kind: 'activity' as const, item: a })),
+                    ];
+
+                    // Mobile: max 2 dots, desktop: max 3 items
+                    const maxVisible = window.innerWidth <= 768 ? 2 : 3;
+                    const shown = combined.slice(0, maxVisible);
+                    const extras = combined.slice(maxVisible);
+
+                    const sessionExtras = extras
+                      .filter((e) => e.kind === 'session')
+                      .map((e) => e.item as Session)
+                      .sort((a, b) => a.session_time.localeCompare(b.session_time));
+                    const activityExtras = extras
+                      .filter((e) => e.kind === 'activity')
+                      .map((e) => e.item as Activity)
+                      .sort((a, b) => {
                         if (!a.reminder_time && !b.reminder_time) return 0;
                         if (!a.reminder_time) return 1;
                         if (!b.reminder_time) return -1;
-                        return a.reminder_time.localeCompare(b.reminder_time);
+                        return a.reminder_time!.localeCompare(b.reminder_time!);
                       });
 
-                      const combined = [
-                        ...sortedSessions.map((s) => ({ kind: 'session' as const, item: s })),
-                        ...sortedActivities.map((a) => ({ kind: 'activity' as const, item: a })),
-                      ];
+                    return (
+                      <>
+                        {/* Mobile: Show dots, Desktop: Show items */}
+                        {window.innerWidth <= 768 ? (
+                          <div className="flex gap-1">
+                            {shown.map((entry, idx) => (
+                              <div
+                                key={idx}
+                                className={`w-2 h-2 rounded-full ${
+                                  entry.kind === 'session' ? 'bg-primary' : 'bg-muted-foreground/60'
+                                }`}
+                              />
+                            ))}
+                            {extras.length > 0 && (
+                              <div className="text-xs text-muted-foreground">+{extras.length}</div>
+                            )}
+                          </div>
+                        ) : (
+                          shown.map((entry) => {
+                            if (entry.kind === 'session') {
+                              const session = entry.item as Session;
+                              const leadName = leadsMap[session.lead_id]?.name || "Lead";
+                              const projectName = session.project_id ? projectsMap[session.project_id]?.name : undefined;
+                              const line = `${formatTime(session.session_time, userLocale)} ${leadName}${projectName ? " • " + projectName : ""}`;
+                              return (
+                                <Tooltip key={`s-${session.id}`}>
+                                  <TooltipTrigger asChild>
+                                    <button
+                                      className={`w-full text-left text-xs px-1.5 py-0.5 rounded truncate border hover:bg-primary/15 ${isDayToday ? 'bg-primary/15 border-primary/30' : 'bg-primary/10 border-primary/20'} text-primary`}
+                                      onClick={() => handleSessionClick(session)}
+                                    >
+                                      {line}
+                                    </button>
+                                  </TooltipTrigger>
+                                  <TooltipContent className="max-w-xs">
+                                    <div className="text-sm font-medium">{projectName || "Session"}</div>
+                                    <div className="text-xs text-muted-foreground">{leadName}</div>
+                                    <div className="text-xs text-muted-foreground">{formatDate(session.session_date)} • {formatTime(session.session_time, userLocale)}</div>
+                                    {session.notes && <div className="mt-1 text-xs">{session.notes}</div>}
+                                    <div className="text-xs">Status: <span className="capitalize">{session.status}</span></div>
+                                  </TooltipContent>
+                                </Tooltip>
+                              );
+                            } else {
+                              const activity = entry.item as Activity;
+                              const leadName = leadsMap[activity.lead_id]?.name || "Lead";
+                              const projectName = activity.project_id ? projectsMap[activity.project_id!]?.name : undefined;
+                              const timeText = activity.reminder_time ? formatTime(activity.reminder_time, userLocale) : "All day";
+                              const line = `${timeText} ${leadName}${projectName ? " • " + projectName : ""}`;
+                              return (
+                                <Tooltip key={`a-${activity.id}`}>
+                                  <TooltipTrigger asChild>
+                                    <button
+                                      className={`w-full text-left text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground truncate border border-border hover:bg-accent ${activity.completed ? "line-through opacity-60" : ""}`}
+                                      onClick={() => handleActivityClick(activity)}
+                                    >
+                                      {line}
+                                    </button>
+                                  </TooltipTrigger>
+                                  <TooltipContent className="max-w-xs">
+                                    <div className="text-sm font-medium">{activity.content}</div>
+                                    <div className="text-xs text-muted-foreground">{formatDate(activity.reminder_date)} • {timeText}</div>
+                                    <div className="text-xs text-muted-foreground">{projectName ? `Project: ${projectName}` : `Lead: ${leadName}`}</div>
+                                  </TooltipContent>
+                                </Tooltip>
+                              );
+                            }
+                          })
+                        )}
 
-                      // Show dots for all devices in month view
-                      const maxVisible = 3;
-                      const shown = combined.slice(0, maxVisible);
-                      const extras = combined.slice(maxVisible);
+                        {/* Desktop overflow tooltip */}
+                        {window.innerWidth > 768 && extras.length > 0 && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="text-xs text-muted-foreground cursor-help">
+                                +{extras.length} more
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-xs">
+                              {sessionExtras.length > 0 && (
+                                <div className="mb-1">
+                                  <div className="text-xs font-medium mb-1">Sessions</div>
+                                  <ul className="space-y-0.5">
+                                    {sessionExtras.map((session) => {
+                                      const leadName = leadsMap[session.lead_id]?.name || "Lead";
+                                      const projectName = session.project_id ? projectsMap[session.project_id]?.name : undefined;
+                                      const timeText = formatTime(session.session_time, userLocale);
+                                      return (
+                                        <li key={session.id} className="text-xs">
+                                          <span className="font-semibold">{timeText}</span> {leadName}{projectName ? ` • ${projectName}` : ""}
+                                        </li>
+                                      );
+                                    })}
+                                  </ul>
+                                </div>
+                              )}
+                              {activityExtras.length > 0 && (
+                                <div>
+                                  <div className="text-xs font-medium mb-1">Reminders</div>
+                                  <ul className="space-y-0.5">
+                                    {activityExtras.map((activity) => {
+                                      const leadName = leadsMap[activity.lead_id]?.name || "Lead";
+                                      const projectName = activity.project_id ? projectsMap[activity.project_id]?.name : undefined;
+                                      const timeText = activity.reminder_time ? formatTime(activity.reminder_time, userLocale) : "All day";
+                                      return (
+                                        <li key={activity.id} className={`text-xs ${activity.completed ? "line-through opacity-60" : ""}`}>
+                                          <span className="font-semibold">{timeText}</span> {leadName}{projectName ? ` • ${projectName}` : ""}
+                                        </li>
+                                      );
+                                    })}
+                                  </ul>
+                                </div>
+                              )}
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
+                      </>
+                    );
+                  })()}
 
-                      return (
-                        <>
-                          {/* Show dots for all devices */}
-                          {shown.map((entry, idx) => (
-                            <div
-                              key={idx}
-                              className={`w-2 h-2 rounded-full ${
-                                entry.kind === 'session' ? 'bg-primary' : 'bg-muted-foreground/60'
-                              }`}
-                            />
-                          ))}
-                          {extras.length > 0 && (
-                            <div className="text-xs text-muted-foreground ml-1">+{extras.length}</div>
-                          )}
-                        </>
-                      );
-                    })()}
-                  </div>
+                
                 </div>
               </button>
             );

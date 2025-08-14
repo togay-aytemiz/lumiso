@@ -370,7 +370,7 @@ const GlobalSearch = () => {
   let resultIndex = 0;
 
   return (
-    <div className="relative w-full" ref={searchRef}>
+    <div className="relative w-full min-w-0" ref={searchRef}>
       <div className="relative">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground z-10 pointer-events-none" />
         <Input
@@ -382,7 +382,7 @@ const GlobalSearch = () => {
           onFocus={() => {
             if (results.length > 0) setIsOpen(true);
           }}
-          className="pl-10 pr-10"
+          className="pl-10 pr-10 w-full truncate"
         />
         {query && (
           <button

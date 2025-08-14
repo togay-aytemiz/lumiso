@@ -11,6 +11,7 @@ import { useNavigate } from "react-router-dom";
 import NewSessionDialog from "@/components/NewSessionDialog";
 import { formatDate, formatTime, formatLongDate, getWeekRange } from "@/lib/utils";
 import GlobalSearch from "@/components/GlobalSearch";
+import { PageHeader, PageHeaderSearch, PageHeaderActions } from "@/components/ui/page-header";
 import SessionStatusBadge from "@/components/SessionStatusBadge";
 import { ViewProjectDialog } from "@/components/ViewProjectDialog";
 import { FilterBar } from "@/components/FilterBar";
@@ -349,19 +350,18 @@ const AllSessions = () => {
   }));
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="p-4 sm:p-6 border-b">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex-shrink-0">
-            <h1 className="text-2xl sm:text-3xl font-bold">Sessions</h1>
-            <p className="text-muted-foreground">Manage your photo sessions and appointments</p>
-          </div>
-          <div className="w-full sm:max-w-lg min-w-0 flex-1">
-            <GlobalSearch />
-          </div>
-        </div>
-      </div>
+    <div className="min-h-screen bg-background overflow-x-hidden">
+      <PageHeader
+        title="Sessions"
+        subtitle="Manage your photo sessions and appointments"
+      >
+        <PageHeaderSearch>
+          <GlobalSearch />
+        </PageHeaderSearch>
+        <PageHeaderActions>
+          <NewSessionDialog onSessionScheduled={fetchSessions} />
+        </PageHeaderActions>
+      </PageHeader>
 
       {/* Mobile Filter Bar (≤767px only) */}
       <div className="md:hidden">

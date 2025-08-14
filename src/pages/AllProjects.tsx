@@ -12,6 +12,7 @@ import { EnhancedProjectDialog } from "@/components/EnhancedProjectDialog";
 import { ViewProjectDialog } from "@/components/ViewProjectDialog";
 import ProjectKanbanBoard from "@/components/ProjectKanbanBoard";
 import GlobalSearch from "@/components/GlobalSearch";
+import { PageHeader, PageHeaderSearch, PageHeaderActions } from "@/components/ui/page-header";
 import { ProjectStatusBadge } from "@/components/ProjectStatusBadge";
 import { formatDate } from "@/lib/utils";
 
@@ -403,37 +404,32 @@ const AllProjects = () => {
   }
 
   return (
-    <div className="flex flex-col h-screen">
+    <div className="flex flex-col h-screen overflow-x-hidden">
       {/* Header */}
-      <div className="flex-shrink-0 p-4 sm:p-6 pb-0">
-        <div className="mb-6">
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div className="flex-shrink-0 min-w-0">
-                <h1 className="text-2xl sm:text-3xl font-bold truncate">Projects</h1>
-                <p className="text-muted-foreground truncate">Manage all your projects in one place</p>
-              </div>
-              <div className="flex items-center gap-2 w-full sm:w-auto">
-                <div className="w-full sm:max-w-lg min-w-0">
-                  <GlobalSearch />
-                </div>
-                <EnhancedProjectDialog
-                  onProjectCreated={() => {
-                    fetchProjects();
-                  }}
-                >
-                  <Button 
-                    size="sm"
-                    className="h-10 flex items-center gap-2 whitespace-nowrap flex-shrink-0 sm:px-4 px-3"
-                  >
-                    <Plus className="h-4 w-4" />
-                    <span className="hidden sm:inline">Add Project</span>
-                  </Button>
-                </EnhancedProjectDialog>
-              </div>
-            </div>
-          </div>
-        </div>
+      <div className="flex-shrink-0">
+        <PageHeader
+          title="Projects"
+          subtitle="Manage all your projects in one place"
+        >
+          <PageHeaderSearch>
+            <GlobalSearch />
+          </PageHeaderSearch>
+          <PageHeaderActions>
+            <EnhancedProjectDialog
+              onProjectCreated={() => {
+                fetchProjects();
+              }}
+            >
+              <Button 
+                size="sm"
+                className="h-10 flex items-center gap-2 whitespace-nowrap flex-shrink-0 sm:px-4 px-3"
+              >
+                <Plus className="h-4 w-4" />
+                <span className="hidden sm:inline">Add Project</span>
+              </Button>
+            </EnhancedProjectDialog>
+          </PageHeaderActions>
+        </PageHeader>
       </div>
 
       {/* View Toggle - mobile friendly tabs */}

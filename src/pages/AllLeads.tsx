@@ -13,6 +13,7 @@ import { getLeadStatusStyles, formatStatusText } from "@/lib/leadStatusColors";
 import { LeadStatusBadge } from "@/components/LeadStatusBadge";
 import { formatDate } from "@/lib/utils";
 import GlobalSearch from "@/components/GlobalSearch";
+import { PageHeader, PageHeaderSearch, PageHeaderActions } from "@/components/ui/page-header";
 
 interface Lead {
   id: string;
@@ -153,50 +154,47 @@ const AllLeads = () => {
   }
 
   return (
-    <div className="p-4 sm:p-8 max-w-full overflow-x-hidden">
-      <div className="mb-6">
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex-shrink-0 min-w-0">
-              <h1 className="text-2xl sm:text-3xl font-bold">Leads</h1>
-              <p className="text-muted-foreground">Track and manage your potential clients</p>
-            </div>
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              <div className="w-full sm:max-w-lg min-w-0">
-                <GlobalSearch />
+    <div className="min-h-screen overflow-x-hidden">
+      <PageHeader
+        title="Leads"
+        subtitle="Track and manage your potential clients"
+      >
+        <PageHeaderSearch>
+          <GlobalSearch />
+        </PageHeaderSearch>
+        <PageHeaderActions>
+          <Button 
+            size="sm"
+            onClick={() => setAddLeadDialogOpen(true)}
+            className="h-10 flex items-center gap-2 whitespace-nowrap flex-shrink-0 sm:px-4 px-3"
+          >
+            <Plus className="h-4 w-4" />
+            <span className="hidden sm:inline">Add Lead</span>
+          </Button>
+        </PageHeaderActions>
+      </PageHeader>
+      
+      <div className="p-4 sm:p-6">
+        <Card className="min-w-0">
+          <CardHeader>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                <span className="text-sm text-muted-foreground whitespace-nowrap">Filter by status:</span>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-full sm:w-48 min-w-0">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {statusOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              <Button 
-                size="sm"
-                onClick={() => setAddLeadDialogOpen(true)}
-                className="h-10 flex items-center gap-2 whitespace-nowrap flex-shrink-0 sm:px-4 px-3"
-              >
-                <Plus className="h-4 w-4" />
-                <span className="hidden sm:inline">Add Lead</span>
-              </Button>
             </div>
-          </div>
-        </div>
-      </div>
-      <Card className="min-w-0">
-        <CardHeader>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-              <span className="text-sm text-muted-foreground whitespace-nowrap">Filter by status:</span>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full sm:w-48 min-w-0">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {statusOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardHeader>
+          </CardHeader>
         <CardContent className="p-0">
           <div className="w-full overflow-x-auto overflow-y-hidden" style={{ maxWidth: '100vw' }}>
             <div className="min-w-max">
@@ -304,8 +302,9 @@ const AllLeads = () => {
             </Table>
             </div>
           </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
       
       <AddLeadDialog 
         onLeadAdded={fetchLeads} 

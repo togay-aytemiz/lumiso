@@ -70,10 +70,11 @@ const ProjectKanbanBoard = ({ projects, projectStatuses, onProjectsChange }: Pro
 
   useEffect(() => {
     if (projectStatuses && projectStatuses.length > 0) {
-      // Use passed statuses if available
+      // Use passed statuses - they're cached and fresh
       setStatuses(projectStatuses.filter(s => s.name?.toLowerCase?.() !== 'archived'));
       setLoading(false);
     } else {
+      // Fallback to direct fetch only if no statuses provided
       fetchStatuses();
     }
   }, [projectStatuses]);

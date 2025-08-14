@@ -466,15 +466,17 @@ const AllProjects = () => {
                               {getSortIcon('project_type')}
                             </div>
                           </TableHead>
-                          <TableHead 
-                            className="cursor-pointer hover:bg-muted/50"
-                            onClick={() => handleSort('status')}
-                          >
-                            <div className="flex items-center gap-2">
-                              Status
-                              {getSortIcon('status')}
-                            </div>
-                          </TableHead>
+                          {viewMode !== 'archived' && (
+                            <TableHead 
+                              className="cursor-pointer hover:bg-muted/50"
+                              onClick={() => handleSort('status')}
+                            >
+                              <div className="flex items-center gap-2">
+                                Status
+                                {getSortIcon('status')}
+                              </div>
+                            </TableHead>
+                          )}
                           <TableHead className="whitespace-nowrap">Sessions</TableHead>
                           <TableHead className="whitespace-nowrap">Progress</TableHead>
                           <TableHead className="whitespace-nowrap">Services</TableHead>
@@ -518,16 +520,18 @@ const AllProjects = () => {
                                 ) : (
                                   <span className="text-muted-foreground">-</span>
                                 )}
-                              </TableCell>
-                              <TableCell>
-                                <ProjectStatusBadge
-                                  projectId={project.id}
-                                  currentStatusId={project.status_id ?? undefined}
-                                  editable={true}
-                                  size="sm"
-                                  onStatusChange={fetchProjects}
-                                />
-                              </TableCell>
+                               </TableCell>
+                               {viewMode !== 'archived' && (
+                                 <TableCell>
+                                   <ProjectStatusBadge
+                                     projectId={project.id}
+                                     currentStatusId={project.status_id ?? undefined}
+                                     editable={true}
+                                     size="sm"
+                                     onStatusChange={fetchProjects}
+                                   />
+                                 </TableCell>
+                               )}
                               <TableCell>
                                 <div className="text-sm">
                                   <div>{project.session_count || 0} total</div>

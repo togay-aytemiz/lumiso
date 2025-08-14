@@ -330,7 +330,7 @@ const GlobalSearch = () => {
 
       setAllResults(sortedResults);
       setResults(sortedResults.slice(0, displayedCount));
-      setIsOpen(sortedResults.length > 0);
+      setIsOpen(true); // Always show dropdown when searching to display "no results" state
       setActiveIndex(-1);
     } catch (error: any) {
       toast({

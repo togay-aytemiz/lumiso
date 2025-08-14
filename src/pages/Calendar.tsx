@@ -856,9 +856,9 @@ export default function Calendar() {
         title="Calendar"
         subtitle="Manage your sessions and reminders"
       >
-        <PageHeaderActions>
+        <PageHeaderActions className="justify-end">
           {/* Desktop: All controls in one row with dividers */}
-          <div className="hidden lg:flex items-center gap-4 ml-auto">
+          <div className="hidden lg:flex items-center gap-4">
             {/* Filter chips */}
             <div className="flex items-center gap-2">
               <button

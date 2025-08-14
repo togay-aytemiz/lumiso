@@ -415,8 +415,8 @@ export default function Calendar() {
                       ...sortedActivities.map((a) => ({ kind: 'activity' as const, item: a })),
                     ];
 
-                    // Mobile: max 2 dots, desktop: max 3 items
-                    const maxVisible = window.innerWidth <= 768 ? 2 : 3;
+                     // Mobile/Tablet: max 2 dots, desktop: max 3 items
+                     const maxVisible = 2;
                     const shown = combined.slice(0, maxVisible);
                     const extras = combined.slice(maxVisible);
 
@@ -436,23 +436,24 @@ export default function Calendar() {
 
                     return (
                       <>
-                        {/* Mobile: Show dots, Desktop: Show items */}
-                        {window.innerWidth <= 768 ? (
-                          <div className="flex gap-1">
-                            {shown.map((entry, idx) => (
-                              <div
-                                key={idx}
-                                className={`w-2 h-2 rounded-full ${
-                                  entry.kind === 'session' ? 'bg-primary' : 'bg-muted-foreground/60'
-                                }`}
-                              />
-                            ))}
-                            {extras.length > 0 && (
-                              <div className="text-xs text-muted-foreground">+{extras.length}</div>
-                            )}
-                          </div>
-                        ) : (
-                          shown.map((entry) => {
+                        {/* Mobile/Tablet: Show dots in bottom left, Desktop: Show items */}
+                        <div className="md:hidden absolute bottom-1 left-1 flex items-center gap-1">
+                          {shown.map((entry, idx) => (
+                            <div
+                              key={idx}
+                              className={`w-2 h-2 rounded-full ${
+                                entry.kind === 'session' ? 'bg-primary' : 'bg-muted-foreground/60'
+                              }`}
+                            />
+                          ))}
+                          {extras.length > 0 && (
+                            <div className="text-xs text-muted-foreground">+{extras.length}</div>
+                          )}
+                        </div>
+                        
+                         {/* Desktop: Show full items */}
+                         <div className="hidden md:block space-y-0.5">
+                           {shown.map((entry) => {
                             if (entry.kind === 'session') {
                               const session = entry.item as Session;
                               const leadName = leadsMap[session.lead_id]?.name || "Lead";
@@ -501,8 +502,8 @@ export default function Calendar() {
                                 </Tooltip>
                               );
                             }
-                          })
-                        )}
+                           })}
+                         </div>
 
                         {/* Desktop overflow tooltip */}
                         {window.innerWidth > 768 && extras.length > 0 && (

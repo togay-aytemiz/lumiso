@@ -321,12 +321,18 @@ const ProjectKanbanBoard = ({ projects, onProjectsChange }: ProjectKanbanBoardPr
 
   return (
     <>
-      <div className="h-full w-full overflow-x-auto overflow-y-hidden p-8 pt-6" style={{ WebkitOverflowScrolling: 'touch' }}>
+      <div 
+        className="h-full w-full overflow-x-auto overflow-y-hidden p-4 sm:p-6" 
+        style={{ 
+          WebkitOverflowScrolling: 'touch',
+          scrollbarWidth: 'thin'
+        }}
+      >
         <DragDropContext onDragEnd={handleDragEnd}>
           {/* Board with horizontal scrolling */}
           <div 
-            className="flex gap-6 pb-4 h-full" 
-            style={{ minWidth: 'max-content', width: 'max-content' }}
+            className="flex gap-4 sm:gap-6 pb-4 h-full min-w-max" 
+            style={{ minWidth: 'max-content' }}
           >
             {/* Render columns for each status */}
             {statuses.map(status => 

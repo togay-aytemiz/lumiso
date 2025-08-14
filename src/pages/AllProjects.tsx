@@ -459,75 +459,74 @@ const AllProjects = () => {
 
   return (
     <div className="flex flex-col h-screen overflow-hidden">
-      {/* Fixed header section */}
-      <div className="flex-none p-4 sm:p-8 pb-0 w-full max-w-full overflow-x-hidden">
-        <div className="mb-6">
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div className="flex-shrink-0 min-w-0">
-                <h1 className="text-2xl sm:text-3xl font-bold">Projects</h1>
-                <p className="text-muted-foreground">Manage all your projects in one place</p>
+      {/* Fixed header section - mobile optimized */}
+      <div className="flex-shrink-0 p-4 sm:p-6 pb-0">
+        <div className="max-w-full">
+          <div className="mb-6">
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                <div className="flex-shrink-0 min-w-0">
+                  <h1 className="text-2xl sm:text-3xl font-bold">Projects</h1>
+                  <p className="text-muted-foreground">Manage all your projects in one place</p>
+                </div>
+                <div className="flex-shrink-0">
+                  <EnhancedProjectDialog
+                    onProjectCreated={() => {
+                      fetchProjects();
+                    }}
+                  >
+                    <Button className="flex items-center gap-2 whitespace-nowrap">
+                      <Plus className="h-4 w-4" />
+                      Add Project
+                    </Button>
+                  </EnhancedProjectDialog>
+                </div>
               </div>
-              <div className="w-full sm:w-auto max-w-md">
-                <GlobalSearch />
+              
+              {/* Search bar - full width but contained */}
+              <div className="w-full">
+                <div className="max-w-md">
+                  <GlobalSearch />
+                </div>
               </div>
-            </div>
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-              <EnhancedProjectDialog
-                onProjectCreated={() => {
-                  fetchProjects();
-                }}
-              >
-                <Button className="flex items-center gap-2 justify-center sm:w-auto w-fit self-start">
-                  <Plus className="h-4 w-4" />
-                  Add Project
-                </Button>
-              </EnhancedProjectDialog>
             </div>
           </div>
         </div>
       </div>
 
-      {/* View Toggle - Fixed header section */}
-      <div className="flex-shrink-0 px-8 overflow-hidden">
-        <div className="border-b border-border w-full">
-          <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              onClick={() => setViewMode('board')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-none border-b-2 transition-colors ${
-                viewMode === 'board' 
-                  ? 'border-primary text-primary' 
-                  : 'border-transparent text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              <LayoutGrid className="h-4 w-4" />
-              Board View
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={() => setViewMode('list')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-none border-b-2 transition-colors ${
-                viewMode === 'list' 
-                  ? 'border-primary text-primary' 
-                  : 'border-transparent text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              <List className="h-4 w-4" />
-              List View
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={() => setViewMode('archived')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-none border-b-2 transition-colors ${
-                viewMode === 'archived' 
-                  ? 'border-primary text-primary' 
-                  : 'border-transparent text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              <Archive className="h-4 w-4" />
-              Archived
-            </Button>
+      {/* View Toggle - Mobile friendly */}
+      <div className="flex-shrink-0 px-4 sm:px-6 pb-2">
+        <div className="w-full overflow-x-auto scrollbar-thin">
+          <div className="border-b border-border">
+            <div className="flex items-center gap-1 min-w-max pb-2">
+              <Button
+                variant={viewMode === 'board' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('board')}
+                className="flex items-center gap-2 whitespace-nowrap"
+              >
+                <LayoutGrid className="h-4 w-4" />
+                Board View
+              </Button>
+              <Button
+                variant={viewMode === 'list' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('list')}
+                className="flex items-center gap-2 whitespace-nowrap"
+              >
+                <List className="h-4 w-4" />
+                List View
+              </Button>
+              <Button
+                variant={viewMode === 'archived' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('archived')}
+                className="flex items-center gap-2 whitespace-nowrap"
+              >
+                <Archive className="h-4 w-4" />
+                Archived ({archivedProjects.length})
+              </Button>
+            </div>
           </div>
         </div>
       </div>

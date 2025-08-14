@@ -747,12 +747,6 @@ export default function Calendar() {
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        {/* Mobile: Sticky date header */}
-        <div className="md:hidden mb-4 pb-3 border-b border-border sticky top-0 bg-card z-10">
-          <h2 className="text-lg font-semibold">
-            {format(currentDate, "EEEE, MMM d, yyyy", { locale: undefined })}
-          </h2>
-        </div>
         
         <div className="space-y-4">
           {showSessions && (

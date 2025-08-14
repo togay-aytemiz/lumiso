@@ -873,8 +873,13 @@ export default function Calendar() {
               <ChevronRight className="h-4 w-4" />
             </Button>
             
+            {/* Desktop: Current period display */}
+            <div className="mx-4 px-3 py-1 bg-muted rounded-md">
+              <span className="text-sm font-medium">{getViewTitle()}</span>
+            </div>
+            
             {/* Desktop: Filter chips */}
-            <div className="flex items-center gap-2 ml-4" aria-label="Filter calendar items">
+            <div className="flex items-center gap-2" aria-label="Filter calendar items">
               <button
                 type="button"
                 aria-pressed={showSessions}

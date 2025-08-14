@@ -63,44 +63,6 @@ export function AppSheetModal({
         side={sideVariant} 
         className={cn(sheetContentClass, "[&>button]:hidden")}
         onPointerDownOutside={(e) => {
-          console.log('AppSheetModal onPointerDownOutside triggered', e.target);
-          // Completely disable on mobile to prevent conflicts
-          if ('ontouchstart' in window) {
-            console.log('Mobile detected - preventing all outside interactions');
-            e.preventDefault();
-            e.stopPropagation();
-            return false;
-          }
-          // Desktop behavior
-          const target = e.target as HTMLElement;
-          if (target && target.closest('[data-radix-popper-content-wrapper]')) {
-            e.preventDefault();
-            return;
-          }
-          if (dirty && onDirtyClose) {
-            e.preventDefault();
-            onDirtyClose();
-          }
-        }}
-        onInteractOutside={(e) => {
-          console.log('AppSheetModal onInteractOutside triggered', e.target);
-          // Completely disable on mobile
-          if ('ontouchstart' in window) {
-            console.log('Mobile detected - preventing all interact outside events');
-            e.preventDefault();
-            e.stopPropagation();
-            return false;
-          }
-          // Desktop behavior  
-          const target = e.target as HTMLElement;
-          if (target && (
-            target.closest('[data-radix-popper-content-wrapper]') ||
-            target.closest('[data-radix-select-content]') ||
-            target.closest('[data-radix-popover-content]')
-          )) {
-            e.preventDefault();
-            return;
-          }
           if (dirty && onDirtyClose) {
             e.preventDefault();
             onDirtyClose();

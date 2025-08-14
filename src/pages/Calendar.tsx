@@ -913,9 +913,9 @@ export default function Calendar() {
         </PageHeaderActions>
       </PageHeader>
 
-      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
+      <div className="p-4 md:p-6 space-y-3 md:space-y-6">
         {/* Mobile/Tablet: Navigation and filters */}
-        <div className="lg:hidden space-y-4">
+        <div className="lg:hidden space-y-3">
           {/* Navigation controls */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -929,34 +929,34 @@ export default function Calendar() {
                 <ChevronRight className="h-3 w-3" />
               </Button>
             </div>
-            
-            {/* Filter chips */}
-            <div className="flex items-center gap-2" aria-label="Filter calendar items">
-              <button
-                type="button"
-                aria-pressed={showSessions}
-                onClick={() => setShowSessions((v) => !v)}
-                className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border text-xs font-medium transition-colors whitespace-nowrap
-                  ${showSessions ? 'bg-primary/10 border-primary/30 text-foreground' : 'bg-muted border-border text-muted-foreground hover:bg-accent'}`}
-              >
-                <span className={`h-2 w-2 rounded-full ${showSessions ? 'bg-primary' : 'bg-muted-foreground/40'}`} />
-                <span>Sessions</span>
-              </button>
-              <button
-                type="button"
-                aria-pressed={showReminders}
-                onClick={() => setShowReminders((v) => !v)}
-                className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border text-xs font-medium transition-colors whitespace-nowrap
-                  ${showReminders ? 'bg-primary/10 border-primary/30 text-foreground' : 'bg-muted border-border text-muted-foreground hover:bg-accent'}`}
-              >
-                <span className={`h-2 w-2 rounded-full ${showReminders ? 'bg-muted-foreground/80' : 'bg-muted-foreground/40'}`} />
-                <span>Reminders</span>
-              </button>
-            </div>
           </div>
           
-          {/* Month/Week/Day range display for mobile/tablet */}
-          <div className="bg-card rounded-xl border border-border p-4 text-center">
+          {/* Filter chips on separate row */}
+          <div className="flex items-center justify-center gap-2" aria-label="Filter calendar items">
+            <button
+              type="button"
+              aria-pressed={showSessions}
+              onClick={() => setShowSessions((v) => !v)}
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border text-xs font-medium transition-colors whitespace-nowrap
+                ${showSessions ? 'bg-primary/10 border-primary/30 text-foreground' : 'bg-muted border-border text-muted-foreground hover:bg-accent'}`}
+            >
+              <span className={`h-2 w-2 rounded-full ${showSessions ? 'bg-primary' : 'bg-muted-foreground/40'}`} />
+              <span>Sessions</span>
+            </button>
+            <button
+              type="button"
+              aria-pressed={showReminders}
+              onClick={() => setShowReminders((v) => !v)}
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border text-xs font-medium transition-colors whitespace-nowrap
+                ${showReminders ? 'bg-primary/10 border-primary/30 text-foreground' : 'bg-muted border-border text-muted-foreground hover:bg-accent'}`}
+            >
+              <span className={`h-2 w-2 rounded-full ${showReminders ? 'bg-muted-foreground/80' : 'bg-muted-foreground/40'}`} />
+              <span>Reminders</span>
+            </button>
+          </div>
+          
+          {/* Date display for mobile/tablet */}
+          <div className="bg-card rounded-xl border border-border p-3 text-center">
             <h2 className="text-lg font-semibold">{getViewTitle()}</h2>
           </div>
         </div>

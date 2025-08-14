@@ -24,7 +24,7 @@ export function PageHeader({
         className
       )}
     >
-      <div className="px-0 py-0">
+      <div className="p-4 sm:p-6">
         {/* Mobile/Tablet Layout: Stack title, then search + actions */}
         <div className="flex flex-col gap-4 lg:hidden">
           <div className="flex-shrink-0 min-w-0">

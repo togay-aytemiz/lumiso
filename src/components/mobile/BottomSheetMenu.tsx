@@ -32,7 +32,7 @@ export function BottomSheetMenu({
           <SheetTitle className="text-center text-lg font-semibold">{title}</SheetTitle>
         </SheetHeader>
 
-        <div className="space-y-2 pb-6">
+        <div className="space-y-2 pb-6 px-2">
           {items.map((item, index) => {
             const Icon = item.icon;
             return (
@@ -43,7 +43,7 @@ export function BottomSheetMenu({
                   onOpenChange(false);
                 }}
                 className={cn(
-                  "w-full flex items-center gap-3 p-4 rounded-xl transition-colors",
+                  "w-full flex items-center gap-3 py-4 px-3 rounded-xl transition-colors",
                   "hover:bg-muted/50 active:bg-muted",
                   item.variant === 'destructive' 
                     ? "text-destructive hover:bg-destructive/10" 

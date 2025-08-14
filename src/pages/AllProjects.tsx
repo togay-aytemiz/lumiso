@@ -14,7 +14,6 @@ import ProjectKanbanBoard from "@/components/ProjectKanbanBoard";
 import GlobalSearch from "@/components/GlobalSearch";
 import { ProjectStatusBadge } from "@/components/ProjectStatusBadge";
 import { formatDate } from "@/lib/utils";
-import { useProjectStatusCache } from "@/hooks/useProjectStatusCache";
 
 interface ProjectStatus {
   id: string;
@@ -71,6 +70,7 @@ type SortDirection = 'asc' | 'desc';
 const AllProjects = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [archivedProjects, setArchivedProjects] = useState<Project[]>([]);
+  const [projectStatuses, setProjectStatuses] = useState<ProjectStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [viewMode, setViewMode] = useState<'board' | 'list' | 'archived'>('board');
@@ -78,15 +78,6 @@ const AllProjects = () => {
   const [showViewDialog, setShowViewDialog] = useState(false);
   const [sortField, setSortField] = useState<SortField>('created_at');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
-  
-  // Use shared status cache
-  const { 
-    statuses: projectStatuses, 
-    loading: statusesLoading, 
-    getArchivedStatus,
-    isCached 
-  } = useProjectStatusCache();
-  
   const navigate = useNavigate();
 
   // Update sort field when view mode changes
@@ -180,7 +171,7 @@ const AllProjects = () => {
       const projectIds = (projectsData || []).map(p => p.id);
       const leadIds = (projectsData || []).map(p => p.lead_id).filter(Boolean);
       
-      const [sessionsData, todosData, servicesData, paymentsData, leadsData, projectTypesData] = await Promise.all([
+      const [sessionsData, todosData, servicesData, paymentsData, leadsData, projectStatusesData, projectTypesData] = await Promise.all([
         // Get session counts
         projectIds.length > 0 ? supabase
           .from('sessions')
@@ -214,6 +205,13 @@ const AllProjects = () => {
           .select('id, name, status, email, phone')
           .in('id', leadIds) : Promise.resolve({ data: [] }),
           
+        // Get project statuses
+        supabase
+          .from('project_statuses')
+          .select('id, name, color, sort_order')
+          .eq('user_id', user.id)
+          .order('sort_order', { ascending: true }),
+          
         // Get project types
         supabase
           .from('project_types')
@@ -222,8 +220,8 @@ const AllProjects = () => {
       ]);
 
       // Process the data to handle archived projects
-      // Use cached status data
-      const archivedStatus = getArchivedStatus();
+      // Find the archived status ID
+      const archivedStatus = (projectStatusesData.data || []).find(status => status.name.toLowerCase() === 'archived');
       const archivedStatusId = archivedStatus?.id;
       
       const activeProjects = (projectsData || []).filter(project => project.status_id !== archivedStatusId);
@@ -271,7 +269,7 @@ const AllProjects = () => {
         return acc;
       }, {});
       
-      const statusesMap = projectStatuses.reduce((acc, status) => {
+      const statusesMap = (projectStatusesData.data || []).reduce((acc, status) => {
         acc[status.id] = status;
         return acc;
       }, {});
@@ -280,6 +278,9 @@ const AllProjects = () => {
         acc[type.id] = type;
         return acc;
       }, {});
+
+      // Store project statuses for reuse
+      setProjectStatuses(projectStatusesData.data || []);
 
       setProjects(activeProjects.map(project => ({
         ...project,
@@ -390,7 +391,7 @@ const AllProjects = () => {
     }
   };
 
-  if ((loading || statusesLoading) && isInitialLoad) {
+  if (loading && isInitialLoad) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">

@@ -382,7 +382,7 @@ const GlobalSearch = () => {
           onFocus={() => {
             if (results.length > 0) setIsOpen(true);
           }}
-          className="pl-10 pr-10 h-10 border-slate-200 dark:border-slate-700 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
+          className="pl-10 pr-10"
         />
         {query && (
           <button

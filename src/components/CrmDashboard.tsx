@@ -8,7 +8,7 @@ import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import AddLeadDialog from "./AddLeadDialog";
 import NewSessionDialog from "./NewSessionDialog";
-import GlobalSearch from "./GlobalSearch";
+import UnifiedSearch from "./UnifiedSearch";
 import { getLeadStatusStyles, formatStatusText } from "@/lib/leadStatusColors";
 import { getWeekRange, getUserLocale, formatLongDate, formatTime, formatDate } from "@/lib/utils";
 
@@ -222,9 +222,7 @@ const CrmDashboard = () => {
           </p>
         </div>
         <div className="flex items-center justify-end flex-1 ml-8">
-          <div className="w-full max-w-lg min-w-[480px]">
-            <GlobalSearch />
-          </div>
+          <UnifiedSearch variant="dashboard" />
         </div>
       </header>
 

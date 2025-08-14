@@ -9,7 +9,7 @@ import ProjectTypesSection from "@/components/ProjectTypesSection";
 import LeadStatusesSection from "@/components/LeadStatusesSection";
 import SessionStatusesSection from "@/components/SessionStatusesSection";
 
-import GlobalSearch from "@/components/GlobalSearch";
+import UnifiedSearch from "@/components/UnifiedSearch";
 
 const Settings = () => {
   const { connection, loading, connectCalendar, disconnectCalendar } = useGoogleCalendar();
@@ -23,8 +23,8 @@ const Settings = () => {
               <h1 className="text-2xl sm:text-3xl font-bold">Settings</h1>
               <p className="text-muted-foreground">Manage your account and integrations</p>
             </div>
-            <div className="w-full sm:w-auto max-w-md">
-              <GlobalSearch />
+            <div className="w-full sm:w-auto sm:max-w-lg min-w-0 flex-1">
+              <UnifiedSearch />
             </div>
           </div>
         </div>

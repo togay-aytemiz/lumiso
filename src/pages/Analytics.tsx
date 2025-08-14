@@ -24,7 +24,7 @@ import {
 } from "recharts";
 import { format, subDays, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, eachMonthOfInterval, addDays } from "date-fns";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import GlobalSearch from "@/components/GlobalSearch";
+import UnifiedSearch from "@/components/UnifiedSearch";
 
 interface SessionsByDayData {
   date: string;
@@ -240,8 +240,8 @@ const Analytics = () => {
             </div>
           </div>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-            <div className="flex-1 max-w-md">
-              <GlobalSearch />
+            <div className="w-full sm:w-auto sm:max-w-lg min-w-0 flex-1">
+              <UnifiedSearch />
             </div>
           </div>
         </div>

@@ -11,7 +11,7 @@ import { format } from "date-fns";
 import { EnhancedProjectDialog } from "@/components/EnhancedProjectDialog";
 import { ViewProjectDialog } from "@/components/ViewProjectDialog";
 import ProjectKanbanBoard from "@/components/ProjectKanbanBoard";
-import GlobalSearch from "@/components/GlobalSearch";
+import UnifiedSearch from "@/components/UnifiedSearch";
 import { ProjectStatusBadge } from "@/components/ProjectStatusBadge";
 import { formatDate } from "@/lib/utils";
 
@@ -298,10 +298,10 @@ const AllProjects = () => {
                 <h1 className="text-2xl sm:text-3xl font-bold truncate">Projects</h1>
                 <p className="text-muted-foreground truncate">Manage all your projects in one place</p>
               </div>
-              <div className="flex items-center gap-2 w-full sm:w-auto sm:max-w-md">
-                <div className="flex-1 sm:flex-initial">
-                  <GlobalSearch />
-                </div>
+              <div className="w-full sm:w-auto sm:max-w-lg min-w-0 flex-1">
+                <UnifiedSearch />
+              </div>
+              <div className="flex items-center gap-2">
                 <EnhancedProjectDialog
                   onProjectCreated={() => {
                     fetchProjects();

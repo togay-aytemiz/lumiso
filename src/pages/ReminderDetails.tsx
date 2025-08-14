@@ -9,7 +9,7 @@ import { DateRangePicker } from "@/components/DateRangePicker";
 import ReminderCard from "@/components/ReminderCard";
 import type { DateRange } from "react-day-picker";
 import { formatDate, formatTime, formatDateTime, formatGroupDate, getWeekRange } from "@/lib/utils";
-import GlobalSearch from "@/components/GlobalSearch";
+import UnifiedSearch from "@/components/UnifiedSearch";
 import { FilterBar } from "@/components/FilterBar";
 
 interface Activity {
@@ -398,7 +398,7 @@ const ReminderDetails = () => {
             <p className="text-muted-foreground">Manage your task reminders</p>
           </div>
           <div className="w-full sm:max-w-lg min-w-0 flex-1">
-            <GlobalSearch />
+            <UnifiedSearch />
           </div>
         </div>
       </div>

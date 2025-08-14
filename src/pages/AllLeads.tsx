@@ -160,7 +160,7 @@ const AllLeads = () => {
               <h1 className="text-2xl sm:text-3xl font-bold">Leads</h1>
               <p className="text-muted-foreground">Track and manage your potential clients</p>
             </div>
-            <div className="w-full sm:w-auto max-w-md">
+            <div className="w-full sm:max-w-lg min-w-0 flex-1">
               <GlobalSearch />
             </div>
           </div>

@@ -10,6 +10,7 @@ import ReminderCard from "@/components/ReminderCard";
 import type { DateRange } from "react-day-picker";
 import { formatDate, formatTime, formatDateTime, formatGroupDate, getWeekRange } from "@/lib/utils";
 import GlobalSearch from "@/components/GlobalSearch";
+import { PageHeader, PageHeaderSearch } from "@/components/ui/page-header";
 import { FilterBar } from "@/components/FilterBar";
 
 interface Activity {
@@ -389,19 +390,15 @@ const ReminderDetails = () => {
   const activeActivities = filteredActivities.filter(activity => !activity.completed);
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="p-4 sm:p-6 border-b">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex-shrink-0">
-            <h1 className="text-2xl sm:text-3xl font-bold">Reminder Details</h1>
-            <p className="text-muted-foreground">Manage your task reminders</p>
-          </div>
-          <div className="w-full sm:max-w-lg min-w-0 flex-1">
-            <GlobalSearch />
-          </div>
-        </div>
-      </div>
+    <div className="min-h-screen bg-background overflow-x-hidden">
+      <PageHeader
+        title="Reminder Details"
+        subtitle="Manage your task reminders"
+      >
+        <PageHeaderSearch>
+          <GlobalSearch />
+        </PageHeaderSearch>
+      </PageHeader>
 
       {/* Mobile Filter Bar (≤767px only) */}
       <div className="md:hidden">

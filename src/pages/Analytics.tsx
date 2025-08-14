@@ -25,6 +25,7 @@ import {
 import { format, subDays, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, eachMonthOfInterval, addDays } from "date-fns";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import GlobalSearch from "@/components/GlobalSearch";
+import { PageHeader, PageHeaderSearch } from "@/components/ui/page-header";
 
 interface SessionsByDayData {
   date: string;
@@ -230,24 +231,18 @@ const Analytics = () => {
   }
 
   return (
-    <div className="p-8">
-      <div className="mb-6">
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between">
-            <div className="flex-shrink-0">
-              <h1 className="text-3xl font-bold">Analytics</h1>
-              <p className="text-muted-foreground">View insights and performance metrics</p>
-            </div>
-          </div>
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-            <div className="flex-1 max-w-md">
-              <GlobalSearch />
-            </div>
-          </div>
-        </div>
-      </div>
+    <div className="min-h-screen overflow-x-hidden">
+      <PageHeader
+        title="Analytics"
+        subtitle="View insights and performance metrics"
+      >
+        <PageHeaderSearch>
+          <GlobalSearch />
+        </PageHeaderSearch>
+      </PageHeader>
       
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="p-4 sm:p-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Sessions per Day Chart */}
         <Card>
           <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
@@ -349,6 +344,7 @@ const Analytics = () => {
             </ChartContainer>
           </CardContent>
         </Card>
+      </div>
       </div>
     </div>
   );

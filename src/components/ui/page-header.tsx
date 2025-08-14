@@ -25,39 +25,22 @@ export function PageHeader({
       )}
     >
       <div className="p-4 sm:p-6">
-        {/* Mobile Layout (< 768px): Stack title, search, actions vertically */}
-        <div className="flex flex-col gap-4 md:hidden">
+        {/* All Layouts: Stack title, then search + actions in same row */}
+        <div className="flex flex-col gap-4">
+          {/* Title row */}
           <div className="flex-shrink-0 min-w-0">
-            <h1 className="text-2xl font-bold truncate">{title}</h1>
+            <h1 className="text-2xl lg:text-3xl font-bold truncate">{title}</h1>
             {subtitle && (
-              <p className="text-muted-foreground text-sm truncate">{subtitle}</p>
+              <p className="text-muted-foreground text-sm lg:text-base truncate md:hidden lg:block">{subtitle}</p>
             )}
           </div>
-          {children}
-        </div>
-
-        {/* Tablet Layout (768px - 1024px): Two rows, search takes full width on row 2 */}
-        <div className="hidden md:flex lg:hidden flex-col gap-4">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex-shrink-0 min-w-0">
-              <h1 className="text-2xl lg:text-3xl font-bold truncate">{title}</h1>
-              {subtitle && (
-                <p className="text-muted-foreground truncate">{subtitle}</p>
-              )}
+          
+          {/* Search + Actions row - always together */}
+          {children && (
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-center">
+              {children}
             </div>
-          </div>
-          {children}
-        </div>
-
-        {/* Desktop Layout (>= 1024px): Single row with search in center */}
-        <div className="hidden lg:flex items-center justify-between gap-6">
-          <div className="flex-shrink-0 min-w-0">
-            <h1 className="text-3xl font-bold truncate">{title}</h1>
-            {subtitle && (
-              <p className="text-muted-foreground truncate">{subtitle}</p>
-            )}
-          </div>
-          {children}
+          )}
         </div>
       </div>
     </div>
@@ -72,12 +55,8 @@ interface PageHeaderSearchProps {
 export function PageHeaderSearch({ children, className }: PageHeaderSearchProps) {
   return (
     <div className={cn(
-      // Mobile: full width
-      "w-full",
-      // Tablet: full width
-      "md:w-full",
-      // Desktop: flex-1 with constraints
-      "lg:flex-1 lg:max-w-lg lg:min-w-0",
+      // All layouts: flexible width that grows but allows actions to stay visible
+      "flex-1 min-w-0 w-full sm:max-w-lg lg:max-w-xl",
       className
     )}>
       {children}
@@ -93,12 +72,8 @@ interface PageHeaderActionsProps {
 export function PageHeaderActions({ children, className }: PageHeaderActionsProps) {
   return (
     <div className={cn(
-      // Mobile: full width or right-aligned
-      "flex items-center gap-2 w-full sm:w-auto sm:justify-end",
-      // Tablet: right-aligned, wraps under search if needed
-      "md:w-auto md:justify-end md:flex-wrap",
-      // Desktop: right-aligned, no wrap
-      "lg:flex-shrink-0 lg:flex-nowrap",
+      // All layouts: flex-shrink-0 to prevent compression, right-aligned on larger screens
+      "flex items-center gap-2 flex-shrink-0 w-full sm:w-auto sm:justify-end",
       className
     )}>
       {children}

@@ -289,34 +289,32 @@ const AllProjects = () => {
 
   return (
     <div className="flex flex-col h-screen">
-      {/* Header - constrain to viewport width */}
+      {/* Header */}
       <div className="flex-shrink-0 p-4 sm:p-6 pb-0">
         <div className="mb-6">
           <div className="flex flex-col gap-4">
-            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-              <div className="flex-1 min-w-0">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="flex-shrink-0 min-w-0">
                 <h1 className="text-2xl sm:text-3xl font-bold truncate">Projects</h1>
                 <p className="text-muted-foreground truncate">Manage all your projects in one place</p>
               </div>
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-shrink min-w-0">
-                <div className="flex items-center gap-2 w-full sm:w-auto sm:max-w-[200px] min-w-0">
-                  <div className="flex-1">
-                    <GlobalSearch />
-                  </div>
-                  <EnhancedProjectDialog
-                    onProjectCreated={() => {
-                      fetchProjects();
-                    }}
-                  >
-                    <Button 
-                      size="sm"
-                      className="h-10 sm:h-auto flex items-center gap-2 whitespace-nowrap flex-shrink-0 sm:px-4 px-3"
-                    >
-                      <Plus className="h-4 w-4" />
-                      <span className="hidden sm:inline">Add Project</span>
-                    </Button>
-                  </EnhancedProjectDialog>
+              <div className="flex items-center gap-2 w-full sm:w-auto sm:max-w-md">
+                <div className="flex-1 sm:flex-initial">
+                  <GlobalSearch />
                 </div>
+                <EnhancedProjectDialog
+                  onProjectCreated={() => {
+                    fetchProjects();
+                  }}
+                >
+                  <Button 
+                    size="sm"
+                    className="h-10 sm:h-auto flex items-center gap-2 whitespace-nowrap flex-shrink-0 sm:px-4 px-3"
+                  >
+                    <Plus className="h-4 w-4" />
+                    <span className="hidden sm:inline">Add Project</span>
+                  </Button>
+                </EnhancedProjectDialog>
               </div>
             </div>
           </div>

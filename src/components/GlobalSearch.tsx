@@ -423,8 +423,8 @@ const GlobalSearch = () => {
           ) : results.length === 0 ? (
             <div className="p-6 text-center text-muted-foreground">
               <Search className="h-10 w-10 mx-auto mb-3 opacity-50" />
-              <p className="text-sm font-medium">No matches found</p>
-              <p className="text-xs mt-2 opacity-75">Try searching for lead names, emails, or notes</p>
+              <p className="text-sm font-medium">No results found</p>
+              <p className="text-xs mt-2 opacity-75">Try different keywords or check your spelling</p>
             </div>
           ) : (
             <div className="py-3">

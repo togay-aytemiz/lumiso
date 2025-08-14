@@ -43,7 +43,7 @@ export function BottomSheetMenu({
                   onOpenChange(false);
                 }}
                 className={cn(
-                  "w-full flex items-center gap-3 py-4 px-3 rounded-xl transition-colors",
+                  "w-full flex items-center gap-3 py-4 rounded-xl transition-colors",
                   "hover:bg-muted/50 active:bg-muted",
                   item.variant === 'destructive' 
                     ? "text-destructive hover:bg-destructive/10" 

@@ -856,67 +856,73 @@ export default function Calendar() {
   return (
     <>
       <div className="p-4 md:p-6 space-y-4 md:space-y-6 w-full">
-          {/* Mobile Header (4 rows) */}
-          <div className="md:hidden space-y-3">
-            {/* Row 1: Title */}
-            <h1 className="text-2xl font-bold truncate">Calendar</h1>
-            
-            {/* Row 2: Today button + Navigation */}
-            <div className="flex items-center justify-center gap-3">
-              <Button variant="outline" size="sm" onClick={goToToday} className="min-h-11">
-                Today
-              </Button>
-              <Button variant="outline" size="sm" onClick={navigatePrevious} className="min-h-11 min-w-11">
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button variant="outline" size="sm" onClick={navigateNext} className="min-h-11 min-w-11">
-                <ChevronRight className="h-4 w-4" />
-              </Button>
+          {/* Mobile Header (Compact 3 rows) */}
+          <div className="md:hidden space-y-2">
+            {/* Row 1: Title + Today/Navigation */}
+            <div className="flex items-center justify-between">
+              <h1 className="text-xl font-bold truncate">Calendar</h1>
+              <div className="flex items-center gap-1">
+                <Button variant="outline" size="sm" onClick={goToToday} className="h-8 px-3 text-xs">
+                  Today
+                </Button>
+                <Button variant="outline" size="sm" onClick={navigatePrevious} className="h-8 w-8 p-0">
+                  <ChevronLeft className="h-3 w-3" />
+                </Button>
+                <Button variant="outline" size="sm" onClick={navigateNext} className="h-8 w-8 p-0">
+                  <ChevronRight className="h-3 w-3" />
+                </Button>
+              </div>
             </div>
 
-            {/* Row 3: Filter chips */}
-            <ScrollArea className="w-full">
-              <div className="flex items-center gap-2 pb-2" aria-label="Filter calendar items">
-                <button
-                  type="button"
-                  aria-pressed={showSessions}
-                  onClick={() => setShowSessions((v) => !v)}
-                  className={`inline-flex items-center gap-2 px-3 py-2 rounded-md border text-xs font-medium transition-colors min-h-11 whitespace-nowrap
-                    ${showSessions ? 'bg-primary/10 border-primary/30 text-foreground' : 'bg-muted border-border text-muted-foreground hover:bg-accent'}`}
-                >
-                  <span className={`h-2.5 w-2.5 rounded-full ${showSessions ? 'bg-primary' : 'bg-muted-foreground/40'}`} />
-                  <span>Sessions</span>
-                </button>
-                <button
-                  type="button"
-                  aria-pressed={showReminders}
-                  onClick={() => setShowReminders((v) => !v)}
-                  className={`inline-flex items-center gap-2 px-3 py-2 rounded-md border text-xs font-medium transition-colors min-h-11 whitespace-nowrap
-                    ${showReminders ? 'bg-primary/10 border-primary/30 text-foreground' : 'bg-muted border-border text-muted-foreground hover:bg-accent'}`}
-                >
-                  <span className={`h-2.5 w-2.5 rounded-full ${showReminders ? 'bg-muted-foreground/80' : 'bg-muted-foreground/40'}`} />
-                  <span>Reminders</span>
-                </button>
-              </div>
-            </ScrollArea>
-
-            {/* Row 4: View switcher */}
-            <div className="flex bg-muted rounded-lg p-1">
-              {( ["day", "week", "month"] as ViewMode[] ).map((mode) => (
-                <button
-                  key={mode}
-                  onClick={() => setViewMode(mode)}
-                  className={`
-                    flex-1 px-3 py-2 rounded-md text-sm font-medium transition-colors capitalize min-h-11
-                    ${viewMode === mode 
-                      ? "bg-primary text-primary-foreground" 
-                      : "hover:bg-accent text-muted-foreground"
-                    }
-                  `}
-                >
-                  {mode}
-                </button>
-              ))}
+            {/* Row 2: Week range (for week view) + Filter chips */}
+            <div className="space-y-2">
+              {viewMode === "week" && (
+                <div className="text-center">
+                  <h2 className="text-sm font-medium text-muted-foreground">{getViewTitle()}</h2>
+                </div>
+              )}
+              <ScrollArea className="w-full">
+                <div className="flex items-center gap-2 pb-1" aria-label="Filter calendar items">
+                  <button
+                    type="button"
+                    aria-pressed={showSessions}
+                    onClick={() => setShowSessions((v) => !v)}
+                    className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border text-xs font-medium transition-colors whitespace-nowrap
+                      ${showSessions ? 'bg-primary/10 border-primary/30 text-foreground' : 'bg-muted border-border text-muted-foreground hover:bg-accent'}`}
+                  >
+                    <span className={`h-2 w-2 rounded-full ${showSessions ? 'bg-primary' : 'bg-muted-foreground/40'}`} />
+                    <span>Sessions</span>
+                  </button>
+                  <button
+                    type="button"
+                    aria-pressed={showReminders}
+                    onClick={() => setShowReminders((v) => !v)}
+                    className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border text-xs font-medium transition-colors whitespace-nowrap
+                      ${showReminders ? 'bg-primary/10 border-primary/30 text-foreground' : 'bg-muted border-border text-muted-foreground hover:bg-accent'}`}
+                  >
+                    <span className={`h-2 w-2 rounded-full ${showReminders ? 'bg-muted-foreground/80' : 'bg-muted-foreground/40'}`} />
+                    <span>Reminders</span>
+                  </button>
+                  {/* View switcher inline with chips */}
+                  <div className="flex bg-muted rounded-md p-0.5 ml-auto">
+                    {( ["day", "week", "month"] as ViewMode[] ).map((mode) => (
+                      <button
+                        key={mode}
+                        onClick={() => setViewMode(mode)}
+                        className={`
+                          px-2.5 py-1 rounded text-xs font-medium transition-colors capitalize
+                          ${viewMode === mode 
+                            ? "bg-primary text-primary-foreground" 
+                            : "hover:bg-accent text-muted-foreground"
+                          }
+                        `}
+                      >
+                        {mode}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </ScrollArea>
             </div>
           </div>
 

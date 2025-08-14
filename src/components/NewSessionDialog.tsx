@@ -26,9 +26,10 @@ interface Lead {
 
 interface NewSessionDialogProps {
   onSessionScheduled?: () => void;
+  children?: React.ReactNode;
 }
 
-const NewSessionDialog = ({ onSessionScheduled }: NewSessionDialogProps) => {
+const NewSessionDialog = ({ onSessionScheduled, children }: NewSessionDialogProps) => {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -342,10 +343,16 @@ const NewSessionDialog = ({ onSessionScheduled }: NewSessionDialogProps) => {
 
   return (
     <>
-      <Button size="sm" className="gap-2" onClick={() => setOpen(true)}>
-        <Plus className="h-4 w-4" />
-        Add
-      </Button>
+      {children ? (
+        <div onClick={() => setOpen(true)}>
+          {children}
+        </div>
+      ) : (
+        <Button size="sm" className="gap-2" onClick={() => setOpen(true)}>
+          <Plus className="h-4 w-4" />
+          Add
+        </Button>
+      )}
 
       <AppSheetModal
         title="Schedule New Session"

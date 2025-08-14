@@ -356,11 +356,21 @@ const AllSessions = () => {
         subtitle="Manage your photo sessions and appointments"
       >
         <PageHeaderSearch>
-          <GlobalSearch />
+          <div className="flex items-center gap-2 w-full">
+            <div className="flex-1 min-w-0">
+              <GlobalSearch />
+            </div>
+            <NewSessionDialog onSessionScheduled={fetchSessions}>
+              <Button 
+                size="sm"
+                className="h-10 flex items-center gap-2 whitespace-nowrap flex-shrink-0 px-3 sm:px-4"
+              >
+                <Plus className="h-4 w-4" />
+                <span className="hidden sm:inline">Add Session</span>
+              </Button>
+            </NewSessionDialog>
+          </div>
         </PageHeaderSearch>
-        <PageHeaderActions>
-          <NewSessionDialog onSessionScheduled={fetchSessions} />
-        </PageHeaderActions>
       </PageHeader>
 
       {/* Mobile Filter Bar (≤767px only) */}
@@ -384,24 +394,21 @@ const AllSessions = () => {
         <Card className="min-w-0">
           <CardHeader>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                <NewSessionDialog onSessionScheduled={fetchSessions} />
-                {/* Desktop Status Filter (≥768px only) */}
-                <div className="hidden md:flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                  <span className="text-sm text-muted-foreground whitespace-nowrap">Filter by status:</span>
-                  <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-full sm:w-48 min-w-0">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {statusOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+              {/* Desktop Status Filter (≥768px only) */}
+              <div className="hidden md:flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                <span className="text-sm text-muted-foreground whitespace-nowrap">Filter by status:</span>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-full sm:w-48 min-w-0">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {statusOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </CardHeader>

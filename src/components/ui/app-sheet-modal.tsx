@@ -63,6 +63,28 @@ export function AppSheetModal({
         side={sideVariant} 
         className={cn(sheetContentClass, "[&>button]:hidden")}
         onPointerDownOutside={(e) => {
+          // Prevent immediate closure on mobile touch events
+          const target = e.target as HTMLElement;
+          if (target && target.closest('[data-radix-popper-content-wrapper]')) {
+            e.preventDefault();
+            return;
+          }
+          if (dirty && onDirtyClose) {
+            e.preventDefault();
+            onDirtyClose();
+          }
+        }}
+        onInteractOutside={(e) => {
+          // Allow interactions with popover content
+          const target = e.target as HTMLElement;
+          if (target && (
+            target.closest('[data-radix-popper-content-wrapper]') ||
+            target.closest('[data-radix-select-content]') ||
+            target.closest('[data-radix-popover-content]')
+          )) {
+            e.preventDefault();
+            return;
+          }
           if (dirty && onDirtyClose) {
             e.preventDefault();
             onDirtyClose();

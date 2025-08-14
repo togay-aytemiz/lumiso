@@ -321,9 +321,9 @@ const ProjectKanbanBoard = ({ projects, onProjectsChange }: ProjectKanbanBoardPr
 
   return (
     <>
-      {/* SADECE bu container horizontal scroll yapacak */}
+      {/* Kanban board horizontal scroll container */}
       <div 
-        className="h-full w-full overflow-x-auto overflow-y-hidden" 
+        className="h-full w-full max-w-full overflow-x-auto overflow-y-hidden" 
         style={{ 
           WebkitOverflowScrolling: 'touch',
           scrollbarWidth: 'thin',
@@ -332,12 +332,12 @@ const ProjectKanbanBoard = ({ projects, onProjectsChange }: ProjectKanbanBoardPr
       >
         <div className="p-4 sm:p-6 h-full">
           <DragDropContext onDragEnd={handleDragEnd}>
-            {/* Board lanes - zorunlu horizontal scroll için */}
+            {/* Board lanes - intrinsic width forces overflow */}
             <div 
               className="flex gap-4 sm:gap-6 pb-4 h-full" 
               style={{ 
-                width: 'max-content', 
-                minWidth: 'calc(100vw + 200px)' // Zorla horizontal scroll
+                width: 'max-content',
+                minWidth: '100%'
               }}
             >
             {/* Render columns for each status */}

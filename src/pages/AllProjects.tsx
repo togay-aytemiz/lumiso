@@ -1,19 +1,19 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, ArrowUpDown, ArrowUp, ArrowDown, Plus, FolderOpen, User, LayoutGrid, List, Archive } from "lucide-react";
+import { Plus, LayoutGrid, List, Archive, Calendar, CheckSquare, User, Eye, MessageSquare, CheckCircle2, Phone, Mail, Clock } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { format } from "date-fns";
 import { EnhancedProjectDialog } from "@/components/EnhancedProjectDialog";
 import { ViewProjectDialog } from "@/components/ViewProjectDialog";
-import { ProjectStatusBadge } from "@/components/ProjectStatusBadge";
-import { useNavigate } from "react-router-dom";
-import { formatDate } from "@/lib/utils";
-import GlobalSearch from "@/components/GlobalSearch";
 import ProjectKanbanBoard from "@/components/ProjectKanbanBoard";
+import GlobalSearch from "@/components/GlobalSearch";
+import { ProjectStatusBadge } from "@/components/ProjectStatusBadge";
+import { formatDate } from "@/lib/utils";
 
 interface Project {
   id: string;
@@ -32,41 +32,34 @@ interface Project {
     email: string | null;
     phone: string | null;
   } | null;
+  project_status?: {
+    id: string;
+    name: string;
+    color: string;
+  } | null;
   project_type?: {
     id: string;
     name: string;
   } | null;
-  base_price?: number | null;
   session_count?: number;
-  completed_session_count?: number;
   upcoming_session_count?: number;
   planned_session_count?: number;
   next_session_date?: string | null;
   todo_count?: number;
   completed_todo_count?: number;
+  total_payment_amount?: number;
   services?: Array<{
     id: string;
     name: string;
-    price?: number | null;
-    selling_price?: number | null;
   }>;
-  total_paid?: number;
-  remaining_amount?: number;
 }
-
-type SortField = 'name' | 'lead_name' | 'created_at' | 'updated_at' | 'session_count' | 'project_type';
-type SortDirection = 'asc' | 'desc';
 
 const AllProjects = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [archivedProjects, setArchivedProjects] = useState<Project[]>([]);
-  const [projectStatuses, setProjectStatuses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
-  const [sortField, setSortField] = useState<SortField>("updated_at");
-  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [viewMode, setViewMode] = useState<'board' | 'list' | 'archived'>('board');
-  
   const [viewingProject, setViewingProject] = useState<Project | null>(null);
   const [showViewDialog, setShowViewDialog] = useState(false);
   const navigate = useNavigate();
@@ -77,306 +70,67 @@ const AllProjects = () => {
 
   const fetchProjects = async () => {
     try {
-      setLoading(true);
-      
-      // Fetch all data in parallel to avoid sequential loading
-      const [
-        { data: projectsData, error: projectsError },
-        { data: leadsData, error: leadsError },
-        { data: sessionsData, error: sessionsError },
-        { data: todosData, error: todosError },
-        { data: servicesData, error: servicesError },
-        { data: statusesData, error: statusesError },
-        { data: paymentsData, error: paymentsError }
-      ] = await Promise.all([
-        supabase
-          .from('projects')
-          .select(`
-            *, 
-            project_statuses:project_statuses!projects_status_id_fkey(id, name, color),
-            project_types(id, name)
-          `)
-          .order('updated_at', { ascending: false }),
-        
-        supabase
-          .from('leads')
-          .select('id, name, status, email, phone'),
-        
-        supabase
-          .from('sessions')
-          .select('id, status, session_date, session_time, project_id'),
-        
-        supabase
-          .from('todos')
-          .select('id, is_completed, project_id'),
-        
-        supabase
-          .from('project_services')
-          .select(`
-            project_id,
-            services (
-              id,
-              name,
-              price,
-              selling_price
-            )
-           `),
-        
-        supabase
-          .from('project_statuses')
-          .select('*')
-          .order('sort_order', { ascending: true }),
-        
-        supabase
-          .from('payments')
-          .select('project_id, amount, status, type')
-      ]);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
-      if (projectsError) throw projectsError;
-      if (leadsError) throw leadsError;
-      if (sessionsError) throw sessionsError;
-      if (todosError) throw todosError;
-      if (servicesError) throw servicesError;
-      if (statusesError) throw statusesError;
+      const { data: projectsData, error } = await supabase
+        .from('projects')
+        .select(`
+          *,
+          lead:leads(id, name, status, email, phone),
+          project_status:project_statuses(id, name, color),
+          project_type:project_types(id, name),
+          session_count:sessions(count),
+          upcoming_session_count:sessions!inner(count),
+          planned_session_count:sessions!inner(count),
+          todo_count:todos(count),
+          completed_todo_count:todos!inner(count),
+          services:project_services(
+            service:services(id, name)
+          )
+        `)
+        .eq('user_id', user.id)
+        .eq('upcoming_session_count.status', 'upcoming')
+        .eq('planned_session_count.status', 'planned')
+        .eq('completed_todo_count.completed', true)
+        .order('created_at', { ascending: false });
 
-      // Set project statuses for use in components
-      setProjectStatuses(statusesData || []);
+      if (error) throw error;
 
-      // Exclude archived projects by default
-      const filteredProjectsData = (projectsData || []).filter((p: any) => {
-        const statusName = p?.project_statuses?.name?.toLowerCase?.();
-        return statusName !== 'archived';
-      });
+      // Process the data to handle archived projects
+      const activeProjects = (projectsData || []).filter(project => project.status_id !== 'archived');
+      const archived = (projectsData || []).filter(project => project.status_id === 'archived');
 
-      // Create lookup maps for efficient data joining
-      const leadsMap = new Map(leadsData?.map(lead => [lead.id, lead]) || []);
-      const sessionsMap = new Map<string, any[]>();
-      const todosMap = new Map<string, any[]>();
-      const servicesMap = new Map<string, any[]>();
-      const paymentsMap = new Map<string, { paid: number; due: number }>();
+      setProjects(activeProjects.map(project => ({
+        ...project,
+        session_count: Array.isArray(project.session_count) ? project.session_count[0]?.count || 0 : 0,
+        upcoming_session_count: Array.isArray(project.upcoming_session_count) ? project.upcoming_session_count[0]?.count || 0 : 0,
+        planned_session_count: Array.isArray(project.planned_session_count) ? project.planned_session_count[0]?.count || 0 : 0,
+        todo_count: Array.isArray(project.todo_count) ? project.todo_count[0]?.count || 0 : 0,
+        completed_todo_count: Array.isArray(project.completed_todo_count) ? project.completed_todo_count[0]?.count || 0 : 0,
+        services: Array.isArray(project.services) ? project.services.map(ps => ps.service).filter(Boolean) || [] : []
+      })));
 
-      // Group sessions by project_id
-      sessionsData?.forEach(session => {
-        if (!sessionsMap.has(session.project_id)) {
-          sessionsMap.set(session.project_id, []);
-        }
-        sessionsMap.get(session.project_id)!.push(session);
-      });
+      setArchivedProjects(archived.map(project => ({
+        ...project,
+        session_count: Array.isArray(project.session_count) ? project.session_count[0]?.count || 0 : 0,
+        upcoming_session_count: Array.isArray(project.upcoming_session_count) ? project.upcoming_session_count[0]?.count || 0 : 0,
+        planned_session_count: Array.isArray(project.planned_session_count) ? project.planned_session_count[0]?.count || 0 : 0,
+        todo_count: Array.isArray(project.todo_count) ? project.todo_count[0]?.count || 0 : 0,
+        completed_todo_count: Array.isArray(project.completed_todo_count) ? project.completed_todo_count[0]?.count || 0 : 0,
+        services: Array.isArray(project.services) ? project.services.map(ps => ps.service).filter(Boolean) || [] : []
+      })));
 
-      // Group todos by project_id
-      todosData?.forEach(todo => {
-        if (!todosMap.has(todo.project_id)) {
-          todosMap.set(todo.project_id, []);
-        }
-        todosMap.get(todo.project_id)!.push(todo);
-      });
-
-      // Group services by project_id
-      servicesData?.forEach(projectService => {
-        if (!servicesMap.has(projectService.project_id)) {
-          servicesMap.set(projectService.project_id, []);
-        }
-        if (projectService.services) {
-          servicesMap.get(projectService.project_id)!.push(projectService.services);
-        }
-      });
-
-      // Aggregate payments by project_id
-      paymentsData?.forEach((p: any) => {
-        const prev = paymentsMap.get(p.project_id) || { paid: 0, due: 0 };
-        if (p.status === 'paid') prev.paid += Number(p.amount) || 0;
-        if (p.status === 'due') prev.due += Number(p.amount) || 0;
-        paymentsMap.set(p.project_id, prev);
-      });
-
-      // Process all active projects with their statistics
-      const projectsWithStats = filteredProjectsData.map((project: any) => {
-        const sessions = sessionsMap.get(project.id) || [];
-        const todos = todosMap.get(project.id) || [];
-        const services = servicesMap.get(project.id) || [];
-
-        // Calculate upcoming sessions (future sessions)
-        const now = new Date();
-        const upcomingSessions = sessions.filter(session => {
-          const sessionDateTime = new Date(`${session.session_date}T${session.session_time}`);
-          return sessionDateTime > now && session.status !== 'completed';
-        });
-
-        // Payment and remaining calculations
-        const base = Number(project.base_price || 0);
-        const servicesCost = services.reduce((sum: number, s: any) => sum + Number(s?.selling_price ?? s?.price ?? 0), 0);
-        const totalPaid = paymentsMap.get(project.id)?.paid || 0;
-        const remainingAmount = Math.max(0, base + servicesCost - totalPaid);
-
-        return {
-          ...project,
-          lead: leadsMap.get(project.lead_id) || null,
-          project_type: project.project_types || null,
-          session_count: sessions.length,
-          completed_session_count: sessions.filter(s => s.status === 'completed').length,
-          upcoming_session_count: upcomingSessions.length,
-          planned_session_count: sessions.filter(s => s.status === 'planned').length,
-          next_session_date: upcomingSessions.length > 0 ? upcomingSessions[0].session_date : null,
-          todo_count: todos.length,
-          completed_todo_count: todos.filter(t => t.is_completed).length,
-          services: services,
-          total_paid: totalPaid,
-          remaining_amount: remainingAmount,
-        };
-      });
-
-      // Archived projects only
-      const archivedOnly = (projectsData || []).filter((p: any) => {
-        const statusName = p?.project_statuses?.name?.toLowerCase?.();
-        return statusName === 'archived';
-      });
-
-      const archivedWithStats = archivedOnly.map((project: any) => {
-        const sessions = sessionsMap.get(project.id) || [];
-        const todos = todosMap.get(project.id) || [];
-        const services = servicesMap.get(project.id) || [];
-
-        const now = new Date();
-        const upcomingSessions = sessions.filter(session => {
-          const sessionDateTime = new Date(`${session.session_date}T${session.session_time}`);
-          return sessionDateTime > now && session.status !== 'completed';
-        });
-
-        // Payment and remaining calculations
-        const base = Number(project.base_price || 0);
-        const servicesCost = services.reduce((sum: number, s: any) => sum + Number(s?.selling_price ?? s?.price ?? 0), 0);
-        const totalPaid = paymentsMap.get(project.id)?.paid || 0;
-        const remainingAmount = Math.max(0, base + servicesCost - totalPaid);
-
-        return {
-          ...project,
-          lead: leadsMap.get(project.lead_id) || null,
-          project_type: project.project_types || null,
-          session_count: sessions.length,
-          completed_session_count: sessions.filter(s => s.status === 'completed').length,
-          upcoming_session_count: upcomingSessions.length,
-          planned_session_count: sessions.filter(s => s.status === 'planned').length,
-          next_session_date: upcomingSessions.length > 0 ? upcomingSessions[0].session_date : null,
-          todo_count: todos.length,
-          completed_todo_count: todos.filter(t => t.is_completed).length,
-          services: services,
-          total_paid: totalPaid,
-          remaining_amount: remainingAmount,
-        };
-      });
-
-      setProjects(projectsWithStats);
-      setArchivedProjects(archivedWithStats);
-    } catch (error: any) {
+    } catch (error) {
+      console.error('Error fetching projects:', error);
       toast({
-        title: "Error fetching projects",
-        description: error.message,
-        variant: "destructive"
+        title: "Error",
+        description: "Failed to load projects",
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
       setIsInitialLoad(false);
-    }
-  };
-
-  const filteredAndSortedProjects = useMemo(() => {
-    let filtered = projects;
-    
-    // No filtering needed since we removed lead status filter
-
-    // Apply sorting
-    filtered.sort((a, b) => {
-      let aValue: any;
-      let bValue: any;
-
-      switch (sortField) {
-        case 'lead_name':
-          aValue = a.lead?.name?.toLowerCase() || '';
-          bValue = b.lead?.name?.toLowerCase() || '';
-          break;
-        case 'project_type':
-          aValue = a.project_type?.name?.toLowerCase() || '';
-          bValue = b.project_type?.name?.toLowerCase() || '';
-          break;
-        case 'session_count':
-          aValue = a.session_count || 0;
-          bValue = b.session_count || 0;
-          break;
-        case 'created_at':
-        case 'updated_at':
-          aValue = new Date(a[sortField]).getTime();
-          bValue = new Date(b[sortField]).getTime();
-          break;
-        default:
-          aValue = a[sortField];
-          bValue = b[sortField];
-      }
-
-      // Handle string values
-      if (typeof aValue === 'string' && typeof bValue === 'string') {
-        aValue = aValue.toLowerCase();
-        bValue = bValue.toLowerCase();
-      }
-
-      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
-      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
-      return 0;
-    });
-
-    return filtered;
-  }, [projects, sortField, sortDirection]);
-
-  const archivedFilteredAndSortedProjects = useMemo(() => {
-    let filtered = archivedProjects;
-
-    filtered.sort((a, b) => {
-      let aValue: any;
-      let bValue: any;
-
-      switch (sortField) {
-        case 'lead_name':
-          aValue = a.lead?.name?.toLowerCase() || '';
-          bValue = b.lead?.name?.toLowerCase() || '';
-          break;
-        case 'project_type':
-          aValue = a.project_type?.name?.toLowerCase() || '';
-          bValue = b.project_type?.name?.toLowerCase() || '';
-          break;
-        case 'session_count':
-          aValue = a.session_count || 0;
-          bValue = b.session_count || 0;
-          break;
-        case 'created_at':
-        case 'updated_at':
-          aValue = new Date(a[sortField]).getTime();
-          bValue = new Date(b[sortField]).getTime();
-          break;
-        default:
-          aValue = a[sortField];
-          bValue = b[sortField];
-      }
-
-      if (typeof aValue === 'string' && typeof bValue === 'string') {
-        aValue = aValue.toLowerCase();
-        bValue = bValue.toLowerCase();
-      }
-
-      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
-      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
-      return 0;
-    });
-
-    return filtered;
-  }, [archivedProjects, sortField, sortDirection]);
-
-  const displayedProjects = viewMode === 'archived' ? archivedFilteredAndSortedProjects : filteredAndSortedProjects;
-
-  const handleSort = (field: SortField) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortDirection('asc');
     }
   };
 
@@ -385,17 +139,13 @@ const AllProjects = () => {
     setShowViewDialog(true);
   };
 
-  const handleLeadClick = (e: React.MouseEvent, leadId: string) => {
-    e.stopPropagation(); // Prevent project dialog from opening
-    navigate(`/leads/${leadId}`, { state: { from: 'all-projects' } });
+  const handleSearchResult = (result: any) => {
+    if (result.type === 'project') {
+      navigate(`/projects/${result.id}`);
+    } else if (result.type === 'lead') {
+      navigate(`/leads/${result.id}`);
+    }
   };
-
-  const getSortIcon = (field: SortField) => {
-    if (sortField !== field) return <ArrowUpDown className="h-4 w-4" />;
-    return sortDirection === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />;
-  };
-
-  // Removed unused statusOptions since we no longer filter by lead status
 
   const getProgressBadge = (completed: number, total: number) => {
     if (total === 0) return <span className="text-muted-foreground text-xs">0/0</span>;
@@ -437,7 +187,7 @@ const AllProjects = () => {
     );
   };
 
-  const formatCurrency = (amount?: number) => {
+  const formatCurrency = (amount: string | number | null) => {
     const value = Number(amount || 0);
     try {
       return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(value);
@@ -458,17 +208,17 @@ const AllProjects = () => {
   }
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden">
-      {/* FIXED Header - asla scroll olmayacak */}
-      <div className="flex-shrink-0 max-w-full overflow-hidden p-4 sm:p-6 pb-0">
-        <div className="mb-6 w-full">
+    <div className="flex flex-col h-screen">
+      {/* Header - constrain to viewport width */}
+      <div className="flex-shrink-0 p-4 sm:p-6 pb-0">
+        <div className="mb-6">
           <div className="flex flex-col gap-4">
-            <div className="flex flex-col sm:flex-row sm:items-center gap-4 w-full">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
               <div className="flex-1 min-w-0">
                 <h1 className="text-2xl sm:text-3xl font-bold truncate">Projects</h1>
                 <p className="text-muted-foreground truncate">Manage all your projects in one place</p>
               </div>
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-shrink-0 min-w-0">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-shrink min-w-0">
                 <div className="w-full sm:w-auto sm:max-w-[200px] min-w-0">
                   <GlobalSearch />
                 </div>
@@ -488,259 +238,170 @@ const AllProjects = () => {
         </div>
       </div>
 
-      {/* FIXED View Toggle - asla taşmayacak */}
-      <div className="flex-shrink-0 max-w-full overflow-hidden px-4 sm:px-6 pb-2">
-        <div className="w-full">
-          <div className="border-b border-border">
-            <div className="flex flex-wrap items-center gap-1 pb-2">
-              <Button
-                variant={viewMode === 'board' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setViewMode('board')}
-                className="flex items-center gap-2 whitespace-nowrap"
-              >
-                <LayoutGrid className="h-4 w-4" />
-                Board View
-              </Button>
-              <Button
-                variant={viewMode === 'list' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setViewMode('list')}
-                className="flex items-center gap-2 whitespace-nowrap"
-              >
-                <List className="h-4 w-4" />
-                List View
-              </Button>
-              <Button
-                variant={viewMode === 'archived' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setViewMode('archived')}
-                className="flex items-center gap-2 whitespace-nowrap"
-              >
-                <Archive className="h-4 w-4" />
-                Archived ({archivedProjects.length})
-              </Button>
-            </div>
+      {/* View Toggle - allow wrapping */}
+      <div className="flex-shrink-0 px-4 sm:px-6 pb-2">
+        <div className="border-b border-border">
+          <div className="flex flex-wrap items-center gap-1 pb-2">
+            <Button
+              variant={viewMode === 'board' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('board')}
+              className="flex items-center gap-2 whitespace-nowrap"
+            >
+              <LayoutGrid className="h-4 w-4" />
+              Board View
+            </Button>
+            <Button
+              variant={viewMode === 'list' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('list')}
+              className="flex items-center gap-2 whitespace-nowrap"
+            >
+              <List className="h-4 w-4" />
+              List View
+            </Button>
+            <Button
+              variant={viewMode === 'archived' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('archived')}
+              className="flex items-center gap-2 whitespace-nowrap"
+            >
+              <Archive className="h-4 w-4" />
+              Archived ({archivedProjects.length})
+            </Button>
           </div>
         </div>
       </div>
 
-      {/* Content area - SADECE kanban board scroll olacak */}
-      <div className="flex-1 min-h-0 overflow-hidden">
+      {/* Content area - board manages its own scroll, lists get contained scroll */}
+      <div className="flex-1 min-h-0">
         {viewMode === 'board' ? (
           <ProjectKanbanBoard 
             projects={projects} 
             onProjectsChange={fetchProjects}
           />
         ) : (
-          <div className="h-full overflow-y-auto overflow-x-hidden p-4 sm:p-6">
+          <div className="h-full overflow-y-auto p-4 sm:p-6">
             <Card className="w-full max-w-full">
               <CardContent className="pt-6 p-0 w-full max-w-full">
                 {/* Table wrapper with horizontal scroll - headers stay outside */}
-                <div
-                  className="w-full overflow-x-auto overflow-y-hidden"
+                <div 
+                  className="overflow-x-auto overflow-y-hidden w-full" 
                   style={{ 
                     WebkitOverflowScrolling: 'touch',
-                    scrollbarWidth: 'thin'
+                    scrollbarWidth: 'thin' 
                   }}
                 >
-                  <div className="min-w-max">
-                    <Table className="w-full" style={{ minWidth: '1000px' }}>
+                  <div className="min-w-[1000px]">
+                    <Table>
                       <TableHeader>
                         <TableRow>
-                       {viewMode === 'archived' ? (
-                        <>
-                          <TableHead 
-                            className="cursor-pointer hover:bg-muted/50 whitespace-nowrap"
-                            onClick={() => handleSort('name')}
-                          >
-                            <div className="flex items-center gap-2">
-                              Project
-                              {getSortIcon('name')}
-                            </div>
-                          </TableHead>
-                          <TableHead 
-                            className="cursor-pointer hover:bg-muted/50 whitespace-nowrap"
-                            onClick={() => handleSort('lead_name')}
-                          >
-                            <div className="flex items-center gap-2">
-                              Client
-                              {getSortIcon('lead_name')}
-                            </div>
-                          </TableHead>
-                          <TableHead className="whitespace-nowrap">
-                            Type
-                          </TableHead>
-                          <TableHead className="whitespace-nowrap">
-                            Paid
-                          </TableHead>
-                          <TableHead className="whitespace-nowrap">
-                            Remaining
-                          </TableHead>
-                          <TableHead 
-                            className="cursor-pointer hover:bg-muted/50 whitespace-nowrap"
-                            onClick={() => handleSort('updated_at')}
-                          >
-                            <div className="flex items-center gap-2">
-                              Last Updated
-                              {getSortIcon('updated_at')}
-                            </div>
-                          </TableHead>
-                        </>
-                      ) : (
-                        <>
-                          <TableHead 
-                            className="cursor-pointer hover:bg-muted/50 whitespace-nowrap"
-                            onClick={() => handleSort('name')}
-                          >
-                            <div className="flex items-center gap-2">
-                              Project
-                              {getSortIcon('name')}
-                            </div>
-                          </TableHead>
-                          <TableHead 
-                            className="cursor-pointer hover:bg-muted/50 whitespace-nowrap"
-                            onClick={() => handleSort('lead_name')}
-                          >
-                            <div className="flex items-center gap-2">
-                              Client
-                              {getSortIcon('lead_name')}
-                            </div>
-                          </TableHead>
-                          <TableHead className="whitespace-nowrap">Stage</TableHead>
-                          <TableHead 
-                            className="cursor-pointer hover:bg-muted/50 whitespace-nowrap"
-                            onClick={() => handleSort('project_type')}
-                          >
-                            <div className="flex items-center gap-2">
-                              Type
-                              {getSortIcon('project_type')}
-                            </div>
-                          </TableHead>
-                          <TableHead 
-                            className="cursor-pointer hover:bg-muted/50 text-center whitespace-nowrap"
-                            onClick={() => handleSort('session_count')}
-                          >
-                            <div className="flex items-center justify-center gap-2">
-                              Sessions
-                              {getSortIcon('session_count')}
-                            </div>
-                          </TableHead>
-                          <TableHead className="text-center whitespace-nowrap">Todos</TableHead>
-                          <TableHead className="whitespace-nowrap">Services</TableHead>
-                          <TableHead 
-                            className="cursor-pointer hover:bg-muted/50 whitespace-nowrap"
-                            onClick={() => handleSort('updated_at')}
-                          >
-                            <div className="flex items-center gap-2">
-                              Last Updated
-                              {getSortIcon('updated_at')}
-                            </div>
-                          </TableHead>
-                        </>
-                      )}
+                          <TableHead className="w-[200px]">Lead Name</TableHead>
+                          <TableHead className="w-[250px]">Project</TableHead>
+                          <TableHead className="w-[120px]">Type</TableHead>
+                          <TableHead className="w-[120px]">Status</TableHead>
+                          <TableHead className="w-[100px]">Sessions</TableHead>
+                          <TableHead className="w-[100px]">Progress</TableHead>
+                          <TableHead className="w-[150px]">Services</TableHead>
+                          <TableHead className="w-[100px]">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                    {displayedProjects.length > 0 ? (
-                      displayedProjects.map((project) => (
-                        <TableRow 
-                          key={project.id}
-                          className="cursor-pointer hover:bg-muted/50"
-                          onClick={() => handleProjectClick(project)}
-                        >
-                          <TableCell className="font-medium whitespace-nowrap">
-                            <Button
-                              variant="link"
-                              className="p-0 h-auto text-left justify-start font-medium text-foreground hover:text-foreground hover:underline max-w-xs truncate"
-                              onClick={() => handleProjectClick(project)}
-                            >
-                              {project.name}
-                            </Button>
-                          </TableCell>
-                          <TableCell className="whitespace-nowrap">
-                            {project.lead ? (
-                              <>
-                                <Button
-                                  variant="link"
-                                  className="p-0 h-auto text-left justify-start text-foreground hover:text-foreground hover:underline max-w-xs truncate"
-                                  onClick={(e) => handleLeadClick(e, project.lead.id)}
-                                >
-                                  {project.lead.name}
-                                </Button>
-                                {project.lead.email && (
-                                  <div className="text-xs text-muted-foreground truncate max-w-xs">{project.lead.email}</div>
-                                )}
-                              </>
-                            ) : (
-                              <span className="text-muted-foreground">Lead not found</span>
-                            )}
-                          </TableCell>
-                          {viewMode === 'archived' ? (
-                            <>
-                              <TableCell className="whitespace-nowrap">
+                        {(viewMode === 'archived' ? archivedProjects : projects).length > 0 ? (
+                          (viewMode === 'archived' ? archivedProjects : projects).map((project) => (
+                            <TableRow key={project.id} className="hover:bg-muted/50">
+                              <TableCell>
+                                <div className="space-y-1">
+                                  <div className="font-medium text-sm">
+                                    {project.lead?.name || 'No Lead'}
+                                  </div>
+                                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                    {project.lead?.email && (
+                                      <div className="flex items-center gap-1">
+                                        <Mail className="h-3 w-3" />
+                                        <span className="truncate max-w-[100px]">{project.lead.email}</span>
+                                      </div>
+                                    )}
+                                    {project.lead?.phone && (
+                                      <div className="flex items-center gap-1">
+                                        <Phone className="h-3 w-3" />
+                                        <span>{project.lead.phone}</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <div className="space-y-1">
+                                  <div className="font-medium text-sm line-clamp-2">
+                                    {project.name}
+                                  </div>
+                                  {project.description && (
+                                    <div className="text-xs text-muted-foreground line-clamp-1">
+                                      {project.description}
+                                    </div>
+                                  )}
+                                </div>
+                              </TableCell>
+                              <TableCell>
                                 {project.project_type ? (
                                   <Badge variant="outline" className="text-xs">
-                                    {project.project_type.name.toUpperCase()}
+                                    {project.project_type.name}
                                   </Badge>
                                 ) : (
                                   <span className="text-muted-foreground text-xs">-</span>
                                 )}
                               </TableCell>
-                              <TableCell className="text-sm font-medium text-green-600 whitespace-nowrap">
-                                {formatCurrency(project.total_paid || 0)}
-                              </TableCell>
-                              <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
-                                {formatCurrency(project.remaining_amount || 0)}
-                              </TableCell>
-                              <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
-                                {formatDate(project.updated_at)}
-                              </TableCell>
-                            </>
-                          ) : (
-                            <>
-                              <TableCell className="whitespace-nowrap">
-                                <ProjectStatusBadge 
-                                  projectId={project.id}
-                                  currentStatusId={project.status_id}
-                                  editable={false}
-                                  size="sm"
-                                  statuses={projectStatuses}
-                                  onStatusChange={() => fetchProjects()}
-                                />
-                              </TableCell>
-                              <TableCell className="whitespace-nowrap">
-                                {project.project_type ? (
+                              <TableCell>
+                                {project.project_status ? (
                                   <Badge variant="outline" className="text-xs">
-                                    {project.project_type.name.toUpperCase()}
+                                    {project.project_status.name}
                                   </Badge>
                                 ) : (
                                   <span className="text-muted-foreground text-xs">-</span>
                                 )}
                               </TableCell>
-                              <TableCell className="text-center whitespace-nowrap">
-                                {getProgressBadge(project.completed_session_count || 0, project.session_count || 0)}
+                              <TableCell>
+                                <div className="flex flex-col gap-1">
+                                  <div className="flex items-center gap-1 text-xs">
+                                    <Calendar className="h-3 w-3" />
+                                    <span>{project.upcoming_session_count || 0} upcoming</span>
+                                  </div>
+                                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                    <Clock className="h-3 w-3" />
+                                    <span>{project.planned_session_count || 0} planned</span>
+                                  </div>
+                                </div>
                               </TableCell>
-                              <TableCell className="text-center whitespace-nowrap">
-                                {getProgressBadge(project.completed_todo_count || 0, project.todo_count || 0)}
+                              <TableCell>
+                                <div className="flex items-center gap-2">
+                                  <CheckSquare className="h-3 w-3 text-muted-foreground" />
+                                  {getProgressBadge(project.completed_todo_count || 0, project.todo_count || 0)}
+                                </div>
                               </TableCell>
-                              <TableCell className="whitespace-nowrap">
+                              <TableCell>
                                 {renderServicesChips(project.services || [])}
                               </TableCell>
-                              <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
-                                {formatDate(project.updated_at)}
+                              <TableCell>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleProjectClick(project)}
+                                  className="flex items-center gap-1 text-xs"
+                                >
+                                  <Eye className="h-3 w-3" />
+                                  View
+                                </Button>
                               </TableCell>
-                            </>
-                          )}
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
-                          No projects found. Create your first project to get started!
-                        </TableCell>
-                      </TableRow>
-                    )}
+                            </TableRow>
+                          ))
+                        ) : (
+                          <TableRow>
+                            <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                              No projects found. Create your first project to get started!
+                            </TableCell>
+                          </TableRow>
+                        )}
                       </TableBody>
                     </Table>
                   </div>

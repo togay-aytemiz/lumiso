@@ -154,16 +154,21 @@ const GlobalSearch = () => {
 
   const performSearch = async (searchQuery: string) => {
     setLoading(true);
+    console.log('GlobalSearch: Searching for:', searchQuery);
     try {
       const searchResults: SearchResult[] = [];
 
-      // Search leads
+      // Search leads with better special character handling
       const { data: leads, error: leadsError } = await supabase
         .from('leads')
         .select('*')
         .or(`name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%,phone.ilike.%${searchQuery}%`);
 
-      if (leadsError) throw leadsError;
+      console.log('GlobalSearch: Found leads:', leads?.length || 0, leads);
+      if (leadsError) {
+        console.error('GlobalSearch: Leads error:', leadsError);
+        throw leadsError;
+      }
 
       // Add lead results
       leads?.forEach((lead: Lead) => {

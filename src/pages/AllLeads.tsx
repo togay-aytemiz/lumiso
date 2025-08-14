@@ -190,12 +190,13 @@ const AllLeads = () => {
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <Table>
+          <div className="w-full max-w-full overflow-x-auto overflow-y-hidden">
+            <div className="min-w-max">
+              <Table className="min-w-full">
               <TableHeader>
                 <TableRow>
                   <TableHead 
-                    className="cursor-pointer hover:bg-muted/50"
+                    className="cursor-pointer hover:bg-muted/50 whitespace-nowrap"
                     onClick={() => handleSort('name')}
                   >
                     <div className="flex items-center gap-2">
@@ -204,7 +205,7 @@ const AllLeads = () => {
                     </div>
                   </TableHead>
                   <TableHead 
-                    className="cursor-pointer hover:bg-muted/50"
+                    className="cursor-pointer hover:bg-muted/50 whitespace-nowrap"
                     onClick={() => handleSort('email')}
                   >
                     <div className="flex items-center gap-2">
@@ -213,7 +214,7 @@ const AllLeads = () => {
                     </div>
                   </TableHead>
                   <TableHead 
-                    className="cursor-pointer hover:bg-muted/50"
+                    className="cursor-pointer hover:bg-muted/50 whitespace-nowrap"
                     onClick={() => handleSort('phone')}
                   >
                     <div className="flex items-center gap-2">
@@ -231,7 +232,7 @@ const AllLeads = () => {
                     </div>
                   </TableHead>
                   <TableHead 
-                    className="cursor-pointer hover:bg-muted/50"
+                    className="cursor-pointer hover:bg-muted/50 whitespace-nowrap"
                     onClick={() => handleSort('due_date')}
                   >
                     <div className="flex items-center gap-2">
@@ -239,7 +240,7 @@ const AllLeads = () => {
                       {getSortIcon('due_date')}
                     </div>
                   </TableHead>
-                  <TableHead>Notes</TableHead>
+                  <TableHead className="whitespace-nowrap">Notes</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -293,6 +294,7 @@ const AllLeads = () => {
                 )}
               </TableBody>
             </Table>
+            </div>
           </div>
         </CardContent>
       </Card>

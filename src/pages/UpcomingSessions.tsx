@@ -405,9 +405,10 @@ const AllSessions = () => {
               </div>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0">
             {/* Desktop Date Filters (≥768px only) */}
-            <div className="hidden md:block mb-6">
+             <div className="p-6 pb-0">
+               <div className="hidden md:block mb-6">
               <div className="flex flex-wrap gap-2">
                 <Button
                   variant={dateFilter === "all" ? "default" : "outline"}
@@ -465,51 +466,52 @@ const AllSessions = () => {
                 >
                   Next Month ({getSessionCountForDateFilter("nextmonth")})
                 </Button>
-              </div>
-            </div>
-            {filteredAndSortedSessions.length > 0 ? (
-            <div className="overflow-x-auto">
-              <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Project</TableHead>
-                  <TableHead 
-                    className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => handleSort('lead_name')}
-                  >
-                    <div className="flex items-center gap-2">
-                      Client Name
-                      {getSortIcon('lead_name')}
-                    </div>
-                  </TableHead>
-                  <TableHead 
-                    className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => handleSort('session_date')}
-                  >
-                    <div className="flex items-center gap-2">
-                      Date
-                      {getSortIcon('session_date')}
-                    </div>
-                  </TableHead>
-                  <TableHead 
-                    className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => handleSort('session_time')}
-                  >
-                    <div className="flex items-center gap-2">
-                      Time
-                      {getSortIcon('session_time')}
-                    </div>
-                  </TableHead>
-                  <TableHead 
-                    className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => handleSort('status')}
-                  >
-                    <div className="flex items-center gap-2">
-                      Status
-                      {getSortIcon('status')}
-                    </div>
-                  </TableHead>
-                  <TableHead>Notes</TableHead>
+               </div>
+             </div>
+             {filteredAndSortedSessions.length > 0 ? (
+             <div className="w-full max-w-full overflow-x-auto overflow-y-hidden">
+               <div className="min-w-max">
+                 <Table className="min-w-full">
+                   <TableHeader>
+                   <TableRow>
+                     <TableHead className="whitespace-nowrap">Project</TableHead>
+                     <TableHead 
+                       className="cursor-pointer hover:bg-muted/50 whitespace-nowrap"
+                       onClick={() => handleSort('lead_name')}
+                     >
+                       <div className="flex items-center gap-2">
+                         Client Name
+                         {getSortIcon('lead_name')}
+                       </div>
+                     </TableHead>
+                     <TableHead 
+                       className="cursor-pointer hover:bg-muted/50 whitespace-nowrap"
+                       onClick={() => handleSort('session_date')}
+                     >
+                       <div className="flex items-center gap-2">
+                         Date
+                         {getSortIcon('session_date')}
+                       </div>
+                     </TableHead>
+                     <TableHead 
+                       className="cursor-pointer hover:bg-muted/50 whitespace-nowrap"
+                       onClick={() => handleSort('session_time')}
+                     >
+                       <div className="flex items-center gap-2">
+                         Time
+                         {getSortIcon('session_time')}
+                       </div>
+                     </TableHead>
+                     <TableHead 
+                       className="cursor-pointer hover:bg-muted/50 whitespace-nowrap"
+                       onClick={() => handleSort('status')}
+                     >
+                       <div className="flex items-center gap-2">
+                         Status
+                         {getSortIcon('status')}
+                       </div>
+                     </TableHead>
+                     <TableHead className="whitespace-nowrap">Notes</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -519,55 +521,56 @@ const AllSessions = () => {
                     className="cursor-pointer hover:bg-muted/50"
                     onClick={() => handleRowClick(session)}
                   >
-                    <TableCell>
-                      {session.project_id ? (
-                        <Button
-                          variant="link"
-                          className="p-0 h-auto font-normal text-foreground hover:text-foreground hover:underline"
-                          onClick={(e) => handleProjectClick(e, session)}
-                          aria-label="View project details"
-                        >
-                          {session.project_name || 'Project'}
-                        </Button>
-                      ) : (
-                        <span className="text-muted-foreground">-</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      {session.lead_name}
-                    </TableCell>
-                    <TableCell>
-                      {formatLongDate(session.session_date)}
-                    </TableCell>
-                    <TableCell>
-                      {formatTime(session.session_time)}
-                    </TableCell>
-                    <TableCell>
-                      <SessionStatusBadge
-                        sessionId={session.id}
-                        currentStatus={session.status}
-                        editable
-                        size="sm"
-                        onStatusChange={fetchSessions}
-                      />
-                    </TableCell>
-                    <TableCell className="max-w-xs">
-                      {session.notes ? (
-                        <div 
-                          className="truncate hover:whitespace-normal hover:overflow-visible hover:text-wrap cursor-help"
-                          title={session.notes}
-                        >
-                          {session.notes}
-                        </div>
-                      ) : (
-                        '-'
-                      )}
-                    </TableCell>
+                     <TableCell className="whitespace-nowrap">
+                       {session.project_id ? (
+                         <Button
+                           variant="link"
+                           className="p-0 h-auto font-normal text-foreground hover:text-foreground hover:underline"
+                           onClick={(e) => handleProjectClick(e, session)}
+                           aria-label="View project details"
+                         >
+                           {session.project_name || 'Project'}
+                         </Button>
+                       ) : (
+                         <span className="text-muted-foreground">-</span>
+                       )}
+                     </TableCell>
+                     <TableCell className="font-medium whitespace-nowrap">
+                       {session.lead_name}
+                     </TableCell>
+                     <TableCell className="whitespace-nowrap">
+                       {formatLongDate(session.session_date)}
+                     </TableCell>
+                     <TableCell className="whitespace-nowrap">
+                       {formatTime(session.session_time)}
+                     </TableCell>
+                     <TableCell className="whitespace-nowrap">
+                       <SessionStatusBadge
+                         sessionId={session.id}
+                         currentStatus={session.status}
+                         editable
+                         size="sm"
+                         onStatusChange={fetchSessions}
+                       />
+                     </TableCell>
+                     <TableCell className="max-w-xs truncate whitespace-nowrap">
+                       {session.notes ? (
+                         <div 
+                           className="truncate hover:whitespace-normal hover:overflow-visible hover:text-wrap cursor-help"
+                           title={session.notes}
+                         >
+                           {session.notes}
+                         </div>
+                       ) : (
+                         '-'
+                       )}
+                     </TableCell>
                   </TableRow>
                 ))}
-              </TableBody>
-            </Table>
-            </div>
+                 </TableBody>
+                 </Table>
+               </div>
+             </div>
           ) : (
             <div className="text-center py-12 text-muted-foreground">
               <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
@@ -578,10 +581,11 @@ const AllSessions = () => {
                   : `No sessions found with status "${statusFilter}".`
                 }
               </p>
-              <p className="text-sm mt-2">Click "Schedule Session" to add your first session.</p>
-            </div>
-          )}
-          </CardContent>
+               <p className="text-sm mt-2">Click "Schedule Session" to add your first session.</p>
+             </div>
+           )}
+           </div>
+           </CardContent>
         </Card>
       </div>
 

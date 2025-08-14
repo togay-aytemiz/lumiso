@@ -545,8 +545,9 @@ const AllProjects = () => {
           <div className="h-full overflow-y-auto p-4 sm:p-8 pt-6">
             <Card className="min-w-0">
               <CardContent className="pt-6 p-0">
-                <div className="overflow-x-auto">
-                  <Table>
+                <div className="w-full max-w-full overflow-x-auto overflow-y-hidden">
+                  <div className="min-w-max">
+                    <Table className="min-w-full">
                   <TableHeader>
                     <TableRow>
                       {viewMode === 'archived' ? (
@@ -744,6 +745,7 @@ const AllProjects = () => {
                     )}
                   </TableBody>
                   </Table>
+                  </div>
                 </div>
               </CardContent>
             </Card>

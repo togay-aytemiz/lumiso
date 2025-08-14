@@ -18,7 +18,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ArrowUpDown, ArrowUp, ArrowDown, X, Search } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { useDataTable, type Column } from "@/hooks/useDataTable";
+import { DataTableContainer } from "./data-table-container";
 
 export type { Column } from "@/hooks/useDataTable";
 
@@ -108,67 +110,73 @@ export function DataTable<T>({
       )}
 
       {/* Table */}
-      <div className="rounded-md bg-background overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow className="hover:bg-transparent border-b">
-              {columns.map((column) => (
-                <TableHead
-                  key={String(column.key)}
-                  className={
-                    column.sortable
-                      ? "cursor-pointer hover:bg-muted/50 transition-colors"
-                      : ""
-                  }
-                  onClick={
-                    column.sortable
-                      ? () => handleSort(String(column.key))
-                      : undefined
-                  }
-                >
-                  <div className="flex items-center gap-2">
-                    {column.header}
-                    {column.sortable && getSortIcon(String(column.key))}
-                  </div>
-                </TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {paginatedData.length > 0 ? (
-              paginatedData.map((item, index) => (
-                <TableRow
-                  key={index}
-                  className={`
-                    ${index % 2 === 0 ? "bg-background" : "bg-muted/30"}
-                    ${onRowClick ? "cursor-pointer hover:bg-muted/50" : ""}
-                    transition-colors border-0
-                  `}
-                  onClick={onRowClick ? () => onRowClick(item) : undefined}
-                >
-                  {columns.map((column) => (
-                    <TableCell key={String(column.key)}>
-                      {column.render
-                        ? column.render(item, getValue(item, column))
-                        : String(getValue(item, column) || '-')}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="h-24">
-                  {emptyState || (
-                    <div className="text-center text-muted-foreground">
-                      No data available
+      <DataTableContainer>
+        <div className="rounded-md bg-background min-w-max">
+          <Table className="min-w-full">
+            <TableHeader>
+              <TableRow className="hover:bg-transparent border-b">
+                {columns.map((column) => (
+                  <TableHead
+                    key={String(column.key)}
+                    className={cn(
+                      "whitespace-nowrap",
+                      column.sortable
+                        ? "cursor-pointer hover:bg-muted/50 transition-colors"
+                        : ""
+                    )}
+                    onClick={
+                      column.sortable
+                        ? () => handleSort(String(column.key))
+                        : undefined
+                    }
+                  >
+                    <div className="flex items-center gap-2">
+                      {column.header}
+                      {column.sortable && getSortIcon(String(column.key))}
                     </div>
-                  )}
-                </TableCell>
+                  </TableHead>
+                ))}
               </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
+            </TableHeader>
+            <TableBody>
+              {paginatedData.length > 0 ? (
+                paginatedData.map((item, index) => (
+                  <TableRow
+                    key={index}
+                    className={`
+                      ${index % 2 === 0 ? "bg-background" : "bg-muted/30"}
+                      ${onRowClick ? "cursor-pointer hover:bg-muted/50" : ""}
+                      transition-colors border-0
+                    `}
+                    onClick={onRowClick ? () => onRowClick(item) : undefined}
+                  >
+                    {columns.map((column) => (
+                      <TableCell 
+                        key={String(column.key)}
+                        className="whitespace-nowrap"
+                      >
+                        {column.render
+                          ? column.render(item, getValue(item, column))
+                          : String(getValue(item, column) || '-')}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={columns.length} className="h-24">
+                    {emptyState || (
+                      <div className="text-center text-muted-foreground">
+                        No data available
+                      </div>
+                    )}
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </DataTableContainer>
 
       {/* Pagination */}
       {totalPages > 1 && (

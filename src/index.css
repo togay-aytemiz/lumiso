@@ -193,3 +193,21 @@ All colors MUST be HSL.
     @apply bg-background text-foreground font-sans;
   }
 }
+
+/* Data Table Container - prevents page overflow while allowing table scroll */
+.data-table-container {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.data-table-container table {
+  width: max-content;
+  min-width: 100%;
+}
+
+.data-table-container th,
+.data-table-container td {
+  white-space: nowrap;
+}

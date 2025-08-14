@@ -395,8 +395,8 @@ export default function Calendar() {
                   {format(day, "d")}
                 </div>
                 
-                {/* Events */}
-                <div className="space-y-0.5">
+                {/* Events - with top margin to avoid overlap with day number */}
+                <div className="space-y-0.5 mt-6 md:mt-8">
                   {(() => {
                     const sessionsList = showSessions ? daySessions : [];
                     const remindersList = showReminders ? dayActivities : [];
@@ -509,7 +509,7 @@ export default function Calendar() {
                         {window.innerWidth > 768 && extras.length > 0 && (
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <div className="text-xs text-muted-foreground cursor-help">
+                              <div className="text-xs text-muted-foreground cursor-help text-left">
                                 +{extras.length} more
                               </div>
                             </TooltipTrigger>

@@ -965,7 +965,7 @@ export default function Calendar() {
           </div>
           
           {/* Row 3: Day/week/Month view switcher */}
-          <div className="flex bg-muted rounded-lg p-0.5">
+          <div className="inline-flex bg-muted rounded-lg p-0.5">
             {( ["day", "week", "month"] as ViewMode[] ).map((mode) => (
               <button
                 key={mode}

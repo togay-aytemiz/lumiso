@@ -62,8 +62,11 @@ interface Project {
 const GlobalSearch = () => {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
+  const [allResults, setAllResults] = useState<SearchResult[]>([]);
+  const [displayedCount, setDisplayedCount] = useState(10);
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -110,9 +113,12 @@ const GlobalSearch = () => {
   useEffect(() => {
     const delayedSearch = setTimeout(() => {
       if (query.trim().length > 2) {
+        setDisplayedCount(10); // Reset displayed count for new search
         performSearch(query.trim());
       } else {
         setResults([]);
+        setAllResults([]);
+        setDisplayedCount(10);
         setIsOpen(false);
         setActiveIndex(-1);
       }
@@ -310,15 +316,15 @@ const GlobalSearch = () => {
         });
       }
 
-      // Sort results by type and limit to 10
+      // Sort results by type - don't limit initially
       const sortedResults = searchResults
         .sort((a, b) => {
           const typeOrder = { lead: 0, project: 1, note: 2, reminder: 3, session: 4 };
           return typeOrder[a.type] - typeOrder[b.type];
-        })
-        .slice(0, 10);
+        });
 
-      setResults(sortedResults);
+      setAllResults(sortedResults);
+      setResults(sortedResults.slice(0, displayedCount));
       setIsOpen(sortedResults.length > 0);
       setActiveIndex(-1);
     } catch (error: any) {
@@ -336,10 +342,22 @@ const GlobalSearch = () => {
   const handleClearSearch = () => {
     setQuery("");
     setResults([]);
+    setAllResults([]);
+    setDisplayedCount(10);
     setIsOpen(false);
     setActiveIndex(-1);
     // Keep focus in the search bar for continued typing
     setTimeout(() => inputRef.current?.focus(), 0);
+  };
+
+  const handleLoadMore = () => {
+    setLoadingMore(true);
+    setTimeout(() => {
+      const newCount = displayedCount + 10;
+      setDisplayedCount(newCount);
+      setResults(allResults.slice(0, newCount));
+      setLoadingMore(false);
+    }, 300); // Small delay for better UX
   };
 
   const handleResultClick = (result: SearchResult) => {
@@ -396,7 +414,7 @@ const GlobalSearch = () => {
       </div>
 
       {isOpen && (
-        <div className="absolute top-full mt-2 left-0 right-0 sm:left-0 sm:right-0 lg:left-0 lg:w-[600px] bg-background border border-slate-200 dark:border-slate-700 rounded-lg shadow-xl backdrop-blur-sm z-[9999] max-h-96 overflow-y-auto">
+        <div className="absolute top-full mt-2 left-0 right-0 sm:left-0 sm:right-0 lg:left-1/2 lg:-translate-x-1/2 lg:w-[700px] bg-background border border-slate-200 dark:border-slate-700 rounded-lg shadow-xl backdrop-blur-sm z-[9999] max-h-96 overflow-y-auto">
           {loading ? (
             <div className="p-6 text-center text-muted-foreground">
               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto"></div>
@@ -481,17 +499,35 @@ const GlobalSearch = () => {
                       </button>
                     );
                   })}
-                </div>
-              ))}
-              {results.length === 10 && (
-                <div className="border-t border-slate-100 dark:border-slate-800 mx-2">
-                  <div className="px-3 py-2 text-center">
-                    <p className="text-xs text-muted-foreground">
-                      Showing first 10 results
-                    </p>
-                  </div>
-                </div>
-              )}
+                 </div>
+               ))}
+               {allResults.length > results.length && (
+                 <div className="border-t border-slate-100 dark:border-slate-800 mx-2">
+                   <button
+                     onClick={handleLoadMore}
+                     disabled={loadingMore}
+                     className="w-full px-4 py-3 text-center text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-50"
+                   >
+                     {loadingMore ? (
+                       <div className="flex items-center justify-center gap-2">
+                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                         Loading more...
+                       </div>
+                     ) : (
+                       `Load ${Math.min(10, allResults.length - results.length)} more results (${allResults.length - results.length} remaining)`
+                     )}
+                   </button>
+                 </div>
+               )}
+               {allResults.length > 10 && results.length === allResults.length && (
+                 <div className="border-t border-slate-100 dark:border-slate-800 mx-2">
+                   <div className="px-4 py-3 text-center">
+                     <p className="text-xs text-muted-foreground">
+                       Showing all {allResults.length} results
+                     </p>
+                   </div>
+                 </div>
+               )}
             </div>
           )}
         </div>

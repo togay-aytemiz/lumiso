@@ -689,7 +689,6 @@ const LeadDetail = () => {
 
           <div className="border border-destructive/20 bg-destructive/5 rounded-md p-4 max-w-full text-center">
             <div className="space-y-3">
-              <h3 className="text-sm font-medium text-destructive">Danger Zone</h3>
               <Button
                 variant="outline"
                 onClick={() => setShowDeleteDialog(true)}

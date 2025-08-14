@@ -961,12 +961,10 @@ export default function Calendar() {
             </div>
           </div>
           
-          {/* Month/Week range display for mobile/tablet */}
-          {(viewMode === "month" || viewMode === "week") && (
-            <div className="bg-card rounded-xl border border-border p-4 text-center">
-              <h2 className="text-lg font-semibold">{getViewTitle()}</h2>
-            </div>
-          )}
+          {/* Month/Week/Day range display for mobile/tablet */}
+          <div className="bg-card rounded-xl border border-border p-4 text-center">
+            <h2 className="text-lg font-semibold">{getViewTitle()}</h2>
+          </div>
         </div>
 
         {/* Desktop: Period display above calendar */}

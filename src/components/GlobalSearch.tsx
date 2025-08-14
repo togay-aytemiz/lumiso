@@ -396,24 +396,24 @@ const GlobalSearch = () => {
       </div>
 
       {isOpen && (
-        <div className="absolute top-full mt-2 left-0 right-0 bg-background border border-slate-200 dark:border-slate-700 rounded-lg shadow-xl backdrop-blur-sm z-[9999] max-h-96 overflow-y-auto">
+        <div className="absolute top-full mt-2 left-0 right-0 sm:left-0 sm:right-0 lg:left-0 lg:w-[600px] bg-background border border-slate-200 dark:border-slate-700 rounded-lg shadow-xl backdrop-blur-sm z-[9999] max-h-96 overflow-y-auto">
           {loading ? (
-            <div className="p-4 text-center text-muted-foreground">
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary mx-auto"></div>
-              <p className="mt-2 text-sm">Searching...</p>
+            <div className="p-6 text-center text-muted-foreground">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto"></div>
+              <p className="mt-3 text-sm">Searching...</p>
             </div>
           ) : results.length === 0 ? (
-            <div className="p-4 text-center text-muted-foreground">
-              <Search className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">No matches found</p>
-              <p className="text-xs mt-1">Try searching for lead names, emails, or notes</p>
+            <div className="p-6 text-center text-muted-foreground">
+              <Search className="h-10 w-10 mx-auto mb-3 opacity-50" />
+              <p className="text-sm font-medium">No matches found</p>
+              <p className="text-xs mt-2 opacity-75">Try searching for lead names, emails, or notes</p>
             </div>
           ) : (
-            <div className="py-2">
+            <div className="py-3">
               {Object.entries(groupedResults).map(([type, typeResults], groupIndex) => (
                 <div key={type}>
                   {groupIndex > 0 && <div className="border-t border-slate-100 dark:border-slate-800 mx-2" />}
-                  <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  <div className="px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider bg-muted/30">
                     {typeLabels[type as keyof typeof typeLabels]} ({typeResults.length})
                   </div>
                   {typeResults.map((result) => {
@@ -424,7 +424,7 @@ const GlobalSearch = () => {
                       <button
                         key={`${result.type}-${result.id}`}
                         onClick={() => handleResultClick(result)}
-                        className={`w-full text-left px-3 py-2 transition-colors group ${
+                        className={`w-full text-left px-4 py-3 transition-colors group ${
                           isActive ? 'bg-accent text-accent-foreground' : 'hover:bg-accent hover:text-accent-foreground'
                         }`}
                       >

@@ -71,8 +71,8 @@ export function PageHeaderSearch({ children, className }: PageHeaderSearchProps)
     <div className={cn(
       // Mobile/Tablet: flexible width that grows
       "flex-1 w-full sm:max-w-lg",
-      // Desktop: constrained width  
-      "lg:max-w-xl",
+      // Desktop: wider search bar (1.5x increase)
+      "lg:max-w-3xl",
       // Allow overflow for search dropdown
       "overflow-visible",
       className

@@ -321,20 +321,24 @@ const ProjectKanbanBoard = ({ projects, onProjectsChange }: ProjectKanbanBoardPr
 
   return (
     <>
-      {/* Dedicated kanban horizontal scroll container */}
+      {/* SADECE bu container horizontal scroll yapacak */}
       <div 
         className="h-full w-full overflow-x-auto overflow-y-hidden" 
         style={{ 
           WebkitOverflowScrolling: 'touch',
-          scrollbarWidth: 'thin'
+          scrollbarWidth: 'thin',
+          touchAction: 'pan-x pan-y'
         }}
       >
         <div className="p-4 sm:p-6 h-full">
           <DragDropContext onDragEnd={handleDragEnd}>
-            {/* Board lanes - force horizontal scroll with max-content */}
+            {/* Board lanes - zorunlu horizontal scroll için */}
             <div 
               className="flex gap-4 sm:gap-6 pb-4 h-full" 
-              style={{ width: 'max-content', minWidth: '100%' }}
+              style={{ 
+                width: 'max-content', 
+                minWidth: 'calc(100vw + 200px)' // Zorla horizontal scroll
+              }}
             >
             {/* Render columns for each status */}
             {statuses.map(status => 

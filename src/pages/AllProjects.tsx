@@ -458,9 +458,9 @@ const AllProjects = () => {
   }
 
   return (
-    <div className="flex flex-col h-screen w-full">
-      {/* Fixed header - prevent viewport overflow */}
-      <div className="flex-shrink-0 w-full overflow-x-hidden p-4 sm:p-6 pb-0">
+    <div className="flex flex-col h-screen overflow-hidden">
+      {/* FIXED Header - asla scroll olmayacak */}
+      <div className="flex-shrink-0 max-w-full overflow-hidden p-4 sm:p-6 pb-0">
         <div className="mb-6 w-full">
           <div className="flex flex-col gap-4">
             <div className="flex flex-col sm:flex-row sm:items-center gap-4 w-full">
@@ -488,8 +488,8 @@ const AllProjects = () => {
         </div>
       </div>
 
-      {/* View Toggle - Allow wrapping, prevent overflow */}
-      <div className="flex-shrink-0 w-full overflow-x-hidden px-4 sm:px-6 pb-2">
+      {/* FIXED View Toggle - asla taşmayacak */}
+      <div className="flex-shrink-0 max-w-full overflow-hidden px-4 sm:px-6 pb-2">
         <div className="w-full">
           <div className="border-b border-border">
             <div className="flex flex-wrap items-center gap-1 pb-2">
@@ -525,15 +525,15 @@ const AllProjects = () => {
         </div>
       </div>
 
-      {/* Content area - Allow kanban horizontal scroll, constrain list view */}
-      <div className="flex-1 min-h-0 w-full">
+      {/* Content area - SADECE kanban board scroll olacak */}
+      <div className="flex-1 min-h-0 overflow-hidden">
         {viewMode === 'board' ? (
           <ProjectKanbanBoard 
             projects={projects} 
             onProjectsChange={fetchProjects}
           />
         ) : (
-          <div className="h-full overflow-y-auto w-full max-w-full overflow-x-hidden p-4 sm:p-6">
+          <div className="h-full overflow-y-auto overflow-x-hidden p-4 sm:p-6">
             <Card className="w-full max-w-full">
               <CardContent className="pt-6 p-0 w-full max-w-full">
                 {/* Table wrapper with horizontal scroll - headers stay outside */}

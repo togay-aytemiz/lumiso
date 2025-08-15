@@ -115,7 +115,7 @@ export default function SettingsLayout() {
       </div>
 
       {/* Main Content Area */}
-      <div className={`flex-1 min-w-0 ${isMobile ? 'ml-28' : 'mx-1 lg:ml-0'}`}>
+      <div className={`flex-1 min-w-0 ${isMobile ? 'ml-28' : 'mx-[0.1rem] lg:ml-0'}`}>
         <Outlet />
       </div>
     </div>

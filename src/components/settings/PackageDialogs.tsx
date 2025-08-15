@@ -233,21 +233,25 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
         <div className="space-y-2">
           <Label>Applicable Types</Label>
           <p className="text-xs text-muted-foreground mb-3">Select which project types this package applies to (none = all types)</p>
-          <div className="flex flex-wrap gap-2">
-            {mockProjectTypes.map((type) => (
-              <Badge
-                key={type}
-                variant={packageData.applicableTypes.includes(type) ? "default" : "outline"}
-                className="cursor-pointer hover:bg-accent"
-                onClick={() => toggleApplicableType(type)}
-              >
-                {type}
-                {packageData.applicableTypes.includes(type) && (
-                  <X className="ml-1 h-3 w-3" />
-                )}
-              </Badge>
-            ))}
-          </div>
+            <div className="flex flex-wrap gap-2">
+              {mockProjectTypes.map((type) => (
+                <Badge
+                  key={type}
+                  variant={packageData.applicableTypes.includes(type) ? "default" : "outline"}
+                  className={`cursor-pointer transition-colors ${
+                    packageData.applicableTypes.includes(type) 
+                      ? "bg-primary text-primary-foreground hover:bg-primary/90" 
+                      : "hover:bg-accent hover:text-accent-foreground"
+                  }`}
+                  onClick={() => toggleApplicableType(type)}
+                >
+                  {type}
+                  {packageData.applicableTypes.includes(type) && (
+                    <X className="ml-1 h-3 w-3" />
+                  )}
+                </Badge>
+              ))}
+            </div>
         </div>
 
         {/* Default Add-ons */}
@@ -259,7 +263,11 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
               <Badge
                 key={service}
                 variant={packageData.defaultAddons.includes(service) ? "default" : "outline"}
-                className="cursor-pointer hover:bg-accent"
+                className={`cursor-pointer transition-colors ${
+                  packageData.defaultAddons.includes(service) 
+                    ? "bg-primary text-primary-foreground hover:bg-primary/90" 
+                    : "hover:bg-accent hover:text-accent-foreground"
+                }`}
                 onClick={() => toggleDefaultAddon(service)}
               >
                 {service}
@@ -486,7 +494,11 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
               <Badge
                 key={type}
                 variant={packageData.applicableTypes.includes(type) ? "default" : "outline"}
-                className="cursor-pointer hover:bg-accent"
+                className={`cursor-pointer transition-colors ${
+                  packageData.applicableTypes.includes(type) 
+                    ? "bg-primary text-primary-foreground hover:bg-primary/90" 
+                    : "hover:bg-accent hover:text-accent-foreground"
+                }`}
                 onClick={() => toggleApplicableType(type)}
               >
                 {type}
@@ -507,7 +519,11 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
               <Badge
                 key={service}
                 variant={packageData.defaultAddons.includes(service) ? "default" : "outline"}
-                className="cursor-pointer hover:bg-accent"
+                className={`cursor-pointer transition-colors ${
+                  packageData.defaultAddons.includes(service) 
+                    ? "bg-primary text-primary-foreground hover:bg-primary/90" 
+                    : "hover:bg-accent hover:text-accent-foreground"
+                }`}
                 onClick={() => toggleDefaultAddon(service)}
               >
                 {service}

@@ -182,12 +182,12 @@ export default function Account() {
                   </div>
                   
                   {workingHours[day as keyof typeof workingHours].enabled && (
-                    <div className="flex items-center gap-2 ml-4">
+                    <div className="flex items-center gap-2">
                       <Select
                         value={workingHours[day as keyof typeof workingHours].start}
                         onValueChange={(value) => updateWorkingHours(day, "start", value)}
                       >
-                        <SelectTrigger className="w-[70px] text-xs">
+                        <SelectTrigger className="flex-1">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -197,13 +197,11 @@ export default function Account() {
                         </SelectContent>
                       </Select>
                       
-                      <span className="text-xs text-muted-foreground">to</span>
-                      
                       <Select
                         value={workingHours[day as keyof typeof workingHours].end}
                         onValueChange={(value) => updateWorkingHours(day, "end", value)}
                       >
-                        <SelectTrigger className="w-[70px] text-xs">
+                        <SelectTrigger className="flex-1">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>

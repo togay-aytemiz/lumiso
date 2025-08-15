@@ -1,4 +1,4 @@
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { 
   User, 
   Bell, 
@@ -10,6 +10,7 @@ import {
   CreditCard,
   Settings as SettingsIcon
 } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const settingsCategories = [
   {
@@ -60,29 +61,45 @@ const settingsCategories = [
 ];
 
 export default function SettingsLayout() {
+  const location = useLocation();
+  const isMobile = useIsMobile();
+  
+  const isActive = (path: string) => {
+    return location.pathname === path;
+  };
+
   return (
     <div className="flex min-h-screen bg-background">
       {/* Secondary Sidebar */}
-      <div className="w-64 border-r bg-muted/30">
-        <div className="p-6">
-          <h2 className="text-xl font-semibold mb-6">Settings</h2>
-          <nav className="space-y-1">
-            {settingsCategories.map((category) => (
-              <NavLink
-                key={category.path}
-                to={category.path}
-                className={({ isActive }) =>
-                  `flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
-                    isActive
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                  }`
-                }
-              >
-                <category.icon className="h-4 w-4" />
-                {category.label}
-              </NavLink>
-            ))}
+      <div className={`border-r bg-muted/30 ${isMobile ? 'w-16' : 'w-64'}`}>
+        <div className={`p-6 ${isMobile ? 'px-3 py-4' : ''}`}>
+          {!isMobile && (
+            <h2 className="text-xl font-semibold mb-6">Settings</h2>
+          )}
+          <nav className={`space-y-1 ${isMobile ? 'space-y-2' : ''}`}>
+            {settingsCategories.map((category) => {
+              const active = isActive(category.path);
+              return (
+                <NavLink
+                  key={category.path}
+                  to={category.path}
+                  className={`group/item w-full h-10 px-3 py-3 text-left transition-all duration-200 rounded-lg hover:bg-muted/50 flex items-center gap-3 ${
+                    active
+                      ? "bg-muted text-sidebar-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  } ${isMobile ? 'justify-center' : ''}`}
+                >
+                  <category.icon className={`h-4 w-4 transition-colors ${
+                    active 
+                      ? "text-[hsl(var(--sidebar-primary))]" 
+                      : "text-sidebar-foreground group-hover/item:text-[hsl(var(--sidebar-primary))]"
+                  }`} />
+                  {!isMobile && (
+                    <span className="font-medium text-sm">{category.label}</span>
+                  )}
+                </NavLink>
+              );
+            })}
           </nav>
         </div>
       </div>

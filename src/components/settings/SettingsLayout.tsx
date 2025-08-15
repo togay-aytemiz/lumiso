@@ -84,11 +84,9 @@ export default function SettingsLayout() {
 
   return (
     <div className="flex min-h-screen bg-background">
-      {/* Settings Secondary Sidebar - Dynamic positioning based on main sidebar state */}
-      <div className={`fixed top-0 h-screen border-r bg-muted/30 z-20 ${settingsLeft} ${
-        isMobile ? 'w-16' : 'w-64'
-      }`}>
-        <div className={`p-6 ${isMobile ? 'px-3 py-4' : ''} h-full overflow-y-auto`}>
+      {/* Settings Secondary Sidebar - Simple flex layout */}
+      <div className={`border-r bg-muted/30 ${isMobile ? 'w-16' : 'w-64'} flex-shrink-0`}>
+        <div className={`p-6 ${isMobile ? 'px-3 py-4' : ''} h-screen overflow-y-auto`}>
           {!isMobile && (
             <h2 className="text-xl font-semibold mb-6">Settings</h2>
           )}
@@ -120,8 +118,8 @@ export default function SettingsLayout() {
         </div>
       </div>
 
-      {/* Main Content Area with dynamic margin based on sidebar states */}
-      <div className={`flex-1 min-w-0 ${totalMargin}`} style={customMargin ? { marginLeft: customMargin } : undefined}>
+      {/* Main Content Area */}
+      <div className="flex-1 min-w-0">
         <Outlet />
       </div>
     </div>

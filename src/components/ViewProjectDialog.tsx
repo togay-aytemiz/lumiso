@@ -18,11 +18,8 @@ import { ProjectStatusBadge } from "./ProjectStatusBadge";
 import { ProjectTypeSelector } from "./ProjectTypeSelector";
 import { ProjectPaymentsSection } from "./ProjectPaymentsSection";
 import ProjectDetailsLayout from "@/components/project-details/ProjectDetailsLayout";
-
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import ClientCard from "@/components/project-details/Summary/ClientCard";
-
-
 interface Project {
   id: string;
   name: string;
@@ -35,7 +32,6 @@ interface Project {
   previous_status_id?: string | null;
   project_type_id?: string | null;
 }
-
 interface Lead {
   id: string;
   name: string;
@@ -44,7 +40,6 @@ interface Lead {
   status: string;
   notes: string | null;
 }
-
 interface Session {
   id: string;
   session_date: string;
@@ -54,8 +49,6 @@ interface Session {
   project_id?: string;
   lead_id: string;
 }
-
-
 interface ViewProjectDialogProps {
   project: Project | null;
   open: boolean;
@@ -64,48 +57,52 @@ interface ViewProjectDialogProps {
   onActivityUpdated?: () => void;
   leadName: string;
 }
-
-export async function onArchiveToggle(project: { id: string; status_id?: string | null }) {
+export async function onArchiveToggle(project: {
+  id: string;
+  status_id?: string | null;
+}) {
   // Toggle archive/restore for a project using project_statuses
-  const { data: userData, error: userErr } = await supabase.auth.getUser();
+  const {
+    data: userData,
+    error: userErr
+  } = await supabase.auth.getUser();
   if (userErr || !userData.user) throw new Error('User not authenticated');
 
   // Ensure we have an Archived status; create if missing
-  const { data: archivedStatus, error: archivedErr } = await supabase
-    .from('project_statuses')
-    .select('id, name')
-    .eq('user_id', userData.user.id)
-    .ilike('name', 'archived')
-    .maybeSingle();
-
+  const {
+    data: archivedStatus,
+    error: archivedErr
+  } = await supabase.from('project_statuses').select('id, name').eq('user_id', userData.user.id).ilike('name', 'archived').maybeSingle();
   let archivedId = archivedStatus?.id as string | undefined;
   if (!archivedId) {
-    const { data: created, error: createErr } = await supabase
-      .from('project_statuses')
-      .insert({ user_id: userData.user.id, name: 'Archived', color: '#6B7280', sort_order: 9999 })
-      .select('id')
-      .single();
+    const {
+      data: created,
+      error: createErr
+    } = await supabase.from('project_statuses').insert({
+      user_id: userData.user.id,
+      name: 'Archived',
+      color: '#6B7280',
+      sort_order: 9999
+    }).select('id').single();
     if (createErr) throw createErr;
     archivedId = created.id;
   }
 
   // Load current project to get existing status and previous_status_id
-  const { data: proj, error: projErr } = await supabase
-    .from('projects')
-    .select('id, status_id, previous_status_id, lead_id')
-    .eq('id', project.id)
-    .single();
+  const {
+    data: proj,
+    error: projErr
+  } = await supabase.from('projects').select('id, status_id, previous_status_id, lead_id').eq('id', project.id).single();
   if (projErr) throw projErr;
-
   const currentlyArchived = proj.status_id === archivedId;
-
   if (!currentlyArchived) {
     // Archive: remember previous status and set archived
-    const { error: updErr } = await supabase
-      .from('projects')
-      .update({ previous_status_id: proj.status_id, status_id: archivedId })
-      .eq('id', project.id)
-      .eq('user_id', userData.user.id);
+    const {
+      error: updErr
+    } = await supabase.from('projects').update({
+      previous_status_id: proj.status_id,
+      status_id: archivedId
+    }).eq('id', project.id).eq('user_id', userData.user.id);
     if (updErr) throw updErr;
 
     // Log activity
@@ -114,7 +111,7 @@ export async function onArchiveToggle(project: { id: string; status_id?: string 
       content: `Project archived`,
       project_id: project.id,
       lead_id: proj.lead_id,
-      user_id: userData.user.id,
+      user_id: userData.user.id
     });
     // Log to audit history
     await supabase.from('audit_log').insert({
@@ -122,34 +119,43 @@ export async function onArchiveToggle(project: { id: string; status_id?: string 
       entity_type: 'project',
       entity_id: project.id,
       action: 'archived',
-      old_values: { status_id: proj.status_id },
-      new_values: { status_id: archivedId }
+      old_values: {
+        status_id: proj.status_id
+      },
+      new_values: {
+        status_id: archivedId
+      }
     });
-    return { isArchived: true };
+    return {
+      isArchived: true
+    };
   }
 
   // Restore: get target status (previous or default)
   let targetStatusId: string | null = proj.previous_status_id;
   if (!targetStatusId) {
-    const { data: def, error: defErr } = await supabase
-      .rpc('get_default_project_status', { user_uuid: userData.user.id });
+    const {
+      data: def,
+      error: defErr
+    } = await supabase.rpc('get_default_project_status', {
+      user_uuid: userData.user.id
+    });
     if (defErr) throw defErr;
     targetStatusId = def as string | null;
   }
-
-  const { error: restoreErr } = await supabase
-    .from('projects')
-    .update({ status_id: targetStatusId, previous_status_id: null })
-    .eq('id', project.id)
-    .eq('user_id', userData.user.id);
+  const {
+    error: restoreErr
+  } = await supabase.from('projects').update({
+    status_id: targetStatusId,
+    previous_status_id: null
+  }).eq('id', project.id).eq('user_id', userData.user.id);
   if (restoreErr) throw restoreErr;
-
   await supabase.from('activities').insert({
     type: 'status_change',
     content: `Project restored`,
     project_id: project.id,
     lead_id: proj.lead_id,
-    user_id: userData.user.id,
+    user_id: userData.user.id
   });
   // Log to audit history
   await supabase.from('audit_log').insert({
@@ -157,13 +163,25 @@ export async function onArchiveToggle(project: { id: string; status_id?: string 
     entity_type: 'project',
     entity_id: project.id,
     action: 'restored',
-    old_values: { status_id: archivedId },
-    new_values: { status_id: targetStatusId }
+    old_values: {
+      status_id: archivedId
+    },
+    new_values: {
+      status_id: targetStatusId
+    }
   });
-  return { isArchived: false };
+  return {
+    isArchived: false
+  };
 }
-
-export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdated, onActivityUpdated, leadName }: ViewProjectDialogProps) {
+export function ViewProjectDialog({
+  project,
+  open,
+  onOpenChange,
+  onProjectUpdated,
+  onActivityUpdated,
+  leadName
+}: ViewProjectDialogProps) {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [lead, setLead] = useState<Lead | null>(null);
   const [loading, setLoading] = useState(false);
@@ -172,7 +190,10 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
   const [editName, setEditName] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [editProjectTypeId, setEditProjectTypeId] = useState("");
-  const [projectType, setProjectType] = useState<{id: string, name: string} | null>(null);
+  const [projectType, setProjectType] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -180,19 +201,19 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
   const [servicesVersion, setServicesVersion] = useState(0);
   const [isArchived, setIsArchived] = useState(false);
   const [localStatusId, setLocalStatusId] = useState<string | null | undefined>(null);
-  
-  const { toast } = useToast();
+  const {
+    toast
+  } = useToast();
   const fetchProjectSessions = async () => {
     if (!project) return;
-    
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('sessions')
-        .select('*')
-        .eq('project_id', project.id)
-        .order('session_date', { ascending: false });
-
+      const {
+        data,
+        error
+      } = await supabase.from('sessions').select('*').eq('project_id', project.id).order('session_date', {
+        ascending: false
+      });
       if (error) throw error;
       setSessions(data || []);
     } catch (error: any) {
@@ -206,42 +227,32 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
       setLoading(false);
     }
   };
-
-
   const fetchProjectType = async () => {
     if (!project?.project_type_id) return;
-    
     try {
-      const { data, error } = await supabase
-        .from('project_types')
-        .select('id, name')
-        .eq('id', project.project_type_id)
-        .single();
-        
+      const {
+        data,
+        error
+      } = await supabase.from('project_types').select('id, name').eq('id', project.project_type_id).single();
       if (error) throw error;
       setProjectType(data);
     } catch (error: any) {
       console.error('Error fetching project type:', error);
     }
   };
-
   const fetchLead = async () => {
     if (!project?.lead_id) return;
-    
     try {
-      const { data, error } = await supabase
-        .from('leads')
-        .select('id, name, email, phone, status, notes')
-        .eq('id', project.lead_id)
-        .single();
-        
+      const {
+        data,
+        error
+      } = await supabase.from('leads').select('id, name, email, phone, status, notes').eq('id', project.lead_id).single();
       if (error) throw error;
       setLead(data);
     } catch (error: any) {
       console.error('Error fetching lead:', error);
     }
   };
-
   useEffect(() => {
     if (project && open) {
       fetchProjectSessions();
@@ -251,36 +262,32 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
       setEditDescription(project.description || "");
       setEditProjectTypeId(project.project_type_id || "");
       setIsEditing(false);
-      
+
       // Auto-fullscreen on mobile
       const isMobile = window.innerWidth <= 768;
       setIsFullscreen(isMobile);
-      
       setLocalStatusId(project.status_id || null);
     }
   }, [project, open]);
-
   useEffect(() => {
     const fetchStatus = async () => {
-      if (!project?.id) { setIsArchived(false); setLocalStatusId(null); return; }
+      if (!project?.id) {
+        setIsArchived(false);
+        setLocalStatusId(null);
+        return;
+      }
       try {
         // Determine if current status is Archived
-        const { data: statusData } = await supabase
-          .from('project_statuses')
-          .select('id, name')
-          .eq('id', project.status_id!)
-          .maybeSingle();
-
+        const {
+          data: statusData
+        } = await supabase.from('project_statuses').select('id, name').eq('id', project.status_id!).maybeSingle();
         const archived = Boolean(statusData?.name && statusData.name.toLowerCase() === 'archived');
         setIsArchived(archived);
 
         // Always fetch latest previous/current from DB to avoid stale props
-        const { data: projRow } = await supabase
-          .from('projects')
-          .select('status_id, previous_status_id')
-          .eq('id', project.id)
-          .single();
-
+        const {
+          data: projRow
+        } = await supabase.from('projects').select('status_id, previous_status_id').eq('id', project.id).single();
         if (archived) {
           setLocalStatusId(projRow?.previous_status_id || null);
         } else {
@@ -315,7 +322,6 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
       onActivityUpdated?.();
     }
   };
-
   const toggleFullscreen = () => {
     // Don't allow toggle on mobile - it's always fullscreen
     const isMobile = window.innerWidth <= 768;
@@ -323,28 +329,26 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
       setIsFullscreen(!isFullscreen);
     }
   };
-
   const handleSaveProject = async () => {
     if (!project || !editName.trim() || !editProjectTypeId) return;
-    
     setIsSaving(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: {
+          user
+        }
+      } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
       // Update project details
-      const { error: projectError } = await supabase
-        .from('projects')
-        .update({
-          name: editName.trim(),
-          description: editDescription.trim() || null,
-          project_type_id: editProjectTypeId
-        })
-        .eq('id', project.id);
-
+      const {
+        error: projectError
+      } = await supabase.from('projects').update({
+        name: editName.trim(),
+        description: editDescription.trim() || null,
+        project_type_id: editProjectTypeId
+      }).eq('id', project.id);
       if (projectError) throw projectError;
-
-
       toast({
         title: "Success",
         description: "Project updated successfully."
@@ -353,12 +357,10 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
       // Update the project type display immediately with the new data
       if (editProjectTypeId) {
         try {
-          const { data: typeData, error: typeError } = await supabase
-            .from('project_types')
-            .select('id, name')
-            .eq('id', editProjectTypeId)
-            .single();
-            
+          const {
+            data: typeData,
+            error: typeError
+          } = await supabase.from('project_types').select('id, name').eq('id', editProjectTypeId).single();
           if (!typeError) {
             setProjectType(typeData);
           }
@@ -366,7 +368,6 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
           console.error('Error fetching updated project type:', typeError);
         }
       }
-
       setIsEditing(false);
       onProjectUpdated();
     } catch (error: any) {
@@ -379,67 +380,51 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
       setIsSaving(false);
     }
   };
-
   const handleDeleteProject = async () => {
     if (!project) return;
-    
     setIsDeleting(true);
     try {
       // Delete all related data in the correct order to avoid foreign key constraints
-      
+
       // Delete project services
-      const { error: servicesError } = await supabase
-        .from('project_services')
-        .delete()
-        .eq('project_id', project.id);
-      
+      const {
+        error: servicesError
+      } = await supabase.from('project_services').delete().eq('project_id', project.id);
       if (servicesError) throw servicesError;
 
       // Delete todos
-      const { error: todosError } = await supabase
-        .from('todos')
-        .delete()
-        .eq('project_id', project.id);
-      
+      const {
+        error: todosError
+      } = await supabase.from('todos').delete().eq('project_id', project.id);
       if (todosError) throw todosError;
 
       // Delete sessions
-      const { error: sessionsError } = await supabase
-        .from('sessions')
-        .delete()
-        .eq('project_id', project.id);
-      
+      const {
+        error: sessionsError
+      } = await supabase.from('sessions').delete().eq('project_id', project.id);
       if (sessionsError) throw sessionsError;
 
       // Delete activities related to this project
-      const { error: activitiesError } = await supabase
-        .from('activities')
-        .delete()
-        .eq('project_id', project.id);
-      
+      const {
+        error: activitiesError
+      } = await supabase.from('activities').delete().eq('project_id', project.id);
       if (activitiesError) throw activitiesError;
 
       // Delete payments
-      const { error: paymentsError } = await supabase
-        .from('payments')
-        .delete()
-        .eq('project_id', project.id);
-      
+      const {
+        error: paymentsError
+      } = await supabase.from('payments').delete().eq('project_id', project.id);
       if (paymentsError) throw paymentsError;
 
       // Finally, delete the project itself
-      const { error } = await supabase
-        .from('projects')
-        .delete()
-        .eq('id', project.id);
-
+      const {
+        error
+      } = await supabase.from('projects').delete().eq('id', project.id);
       if (error) throw error;
-
       toast({
         title: "Success",
         description: "Project and all related data deleted successfully."
       });
-
       onOpenChange(false);
       onProjectUpdated();
     } catch (error: any) {
@@ -453,27 +438,21 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
       setShowDeleteDialog(false);
     }
   };
-
   const handleSessionUpdated = () => {
     fetchProjectSessions();
     setEditingSessionId(null);
     onProjectUpdated(); // Notify parent component to refresh sessions
   };
-
   const handleDeleteSession = async (sessionId: string) => {
     try {
-      const { error } = await supabase
-        .from('sessions')
-        .delete()
-        .eq('id', sessionId);
-
+      const {
+        error
+      } = await supabase.from('sessions').delete().eq('id', sessionId);
       if (error) throw error;
-
       toast({
         title: "Success",
         description: "Session deleted successfully."
       });
-
       fetchProjectSessions();
       onProjectUpdated(); // Notify parent component to refresh sessions
     } catch (error: any) {
@@ -484,129 +463,84 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
       });
     }
   };
-
   const handleArchiveAction = async () => {
     if (!project) return;
     try {
-      const res = await onArchiveToggle({ id: project.id, status_id: project.status_id });
+      const res = await onArchiveToggle({
+        id: project.id,
+        status_id: project.status_id
+      });
       setIsArchived(res.isArchived);
 
       // Fetch latest status values from DB to avoid stale props
-      const { data: projRow } = await supabase
-        .from('projects')
-        .select('status_id, previous_status_id')
-        .eq('id', project.id)
-        .single();
-
-      setLocalStatusId(res.isArchived ? (projRow?.previous_status_id || null) : (projRow?.status_id || null));
+      const {
+        data: projRow
+      } = await supabase.from('projects').select('status_id, previous_status_id').eq('id', project.id).single();
+      setLocalStatusId(res.isArchived ? projRow?.previous_status_id || null : projRow?.status_id || null);
       onProjectUpdated();
     } catch (e: any) {
-      toast({ title: 'Action failed', description: e.message || 'Could not update archive state', variant: 'destructive' });
+      toast({
+        title: 'Action failed',
+        description: e.message || 'Could not update archive state',
+        variant: 'destructive'
+      });
     }
   };
-
   if (!project) return null;
-
-  return (
-    <>
+  return <>
       <Dialog open={open} onOpenChange={handleDialogOpenChange}>
         <DialogContent className={`${isFullscreen ? 'max-w-none w-[100vw] h-[100vh] m-0 rounded-none overflow-y-auto' : 'sm:max-w-5xl max-h-[85vh] overflow-y-auto'} overscroll-contain pr-2 [&>button]:hidden pt-8 sm:pt-6`}>
           <div className="max-w-full overflow-x-hidden">
           <DialogHeader className="pb-4">
             <div className="flex items-center justify-between gap-2">
               <div className="flex-1 min-w-0 space-y-3">
-                {isEditing ? (
-                    <div className="space-y-3">
-                      <Input
-                        value={editName}
-                        onChange={(e) => setEditName(e.target.value)}
-                        placeholder="Project name"
-                        className="text-2xl font-bold border rounded-md px-3 py-2"
-                      />
-                      <Textarea
-                        value={editDescription}
-                        onChange={(e) => setEditDescription(e.target.value)}
-                        placeholder="Project description (optional)"
-                        className="text-base border rounded-md px-3 py-2 resize-none"
-                        rows={2}
-                      />
-                      <ProjectTypeSelector
-                        value={editProjectTypeId}
-                        onValueChange={setEditProjectTypeId}
-                        disabled={isSaving}
-                        required
-                      />
+                {isEditing ? <div className="space-y-3">
+                      <Input value={editName} onChange={e => setEditName(e.target.value)} placeholder="Project name" className="text-2xl font-bold border rounded-md px-3 py-2" />
+                      <Textarea value={editDescription} onChange={e => setEditDescription(e.target.value)} placeholder="Project description (optional)" className="text-base border rounded-md px-3 py-2 resize-none" rows={2} />
+                      <ProjectTypeSelector value={editProjectTypeId} onValueChange={setEditProjectTypeId} disabled={isSaving} required />
                     <div className="flex gap-2">
-                      <Button 
-                        size="sm" 
-                        onClick={handleSaveProject}
-                        disabled={isSaving || !editName.trim() || !editProjectTypeId}
-                      >
+                      <Button size="sm" onClick={handleSaveProject} disabled={isSaving || !editName.trim() || !editProjectTypeId}>
                         <Save className="h-4 w-4 mr-1" />
                         {isSaving ? "Saving..." : "Save"}
                       </Button>
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
-                        onClick={() => {
-                          setIsEditing(false);
-                          setEditName(project?.name || "");
-                          setEditDescription(project?.description || "");
-                          setEditProjectTypeId(project?.project_type_id || "");
-                        }}
-                        disabled={isSaving}
-                      >
+                      <Button size="sm" variant="outline" onClick={() => {
+                      setIsEditing(false);
+                      setEditName(project?.name || "");
+                      setEditDescription(project?.description || "");
+                      setEditProjectTypeId(project?.project_type_id || "");
+                    }} disabled={isSaving}>
                         <X className="h-4 w-4 mr-1" />
                         Cancel
                       </Button>
                     </div>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
+                  </div> : <div className="space-y-3">
                     <div className="space-y-2">
                       <DialogTitle asChild>
-                        <h1 className="text-xl md:text-2xl font-bold leading-tight break-words text-left">{project?.name}</h1>
+                        <h1 className="text-xl font-bold leading-tight break-words text-left md:text-3xl">{project?.name}</h1>
                       </DialogTitle>
                       
                       {/* Badges row */}
                       <div className="flex items-center gap-2 flex-wrap">
                         {/* Project Status Badge */}
-                        <ProjectStatusBadge 
-                          projectId={project.id}
-                          currentStatusId={localStatusId || undefined}
-                          onStatusChange={() => {
-                            onProjectUpdated();
-                          }}
-                          editable={!isArchived}
-                          className="text-sm"
-                        />
+                        <ProjectStatusBadge projectId={project.id} currentStatusId={localStatusId || undefined} onStatusChange={() => {
+                        onProjectUpdated();
+                      }} editable={!isArchived} className="text-sm" />
                         
                         {/* Project Type Badge */}
-                        {projectType && (
-                          <Badge variant="outline" className="text-xs">
+                        {projectType && <Badge variant="outline" className="text-xs">
                             {projectType.name.toUpperCase()}
-                          </Badge>
-                        )}
+                          </Badge>}
                       </div>
                     </div>
                     
-                    {project?.description && (
-                      <p className="text-muted-foreground text-base">{project.description}</p>
-                    )}
-                  </div>
-                )}
+                    {project?.description && <p className="text-muted-foreground text-base">{project.description}</p>}
+                  </div>}
               </div>
               
               <div className="flex items-center gap-1 shrink-0 self-start">
-                {!isEditing && (
-                  <DropdownMenu>
+                {!isEditing && <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        aria-label="More actions"
-                        className="text-muted-foreground hover:text-foreground h-8 px-2 gap-1 md:h-10 md:px-3"
-                      >
+                      <Button variant="ghost" size="sm" aria-label="More actions" className="text-muted-foreground hover:text-foreground h-8 px-2 gap-1 md:h-10 md:px-3">
                         <span className="text-sm hidden md:inline">More</span>
                         <ChevronDown className="h-4 w-4" />
                       </Button>
@@ -617,44 +551,25 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
                         <span>Edit Project</span>
                       </DropdownMenuItem>
                       <DropdownMenuItem role="menuitem" onSelect={handleArchiveAction}>
-                        {isArchived ? (
-                          <>
+                        {isArchived ? <>
                             <ArchiveRestore className="mr-2 h-4 w-4" />
                             <span>Restore Project</span>
-                          </>
-                        ) : (
-                          <>
+                          </> : <>
                             <Archive className="mr-2 h-4 w-4" />
                             <span>Archive Project</span>
-                          </>
-                        )}
+                          </>}
                       </DropdownMenuItem>
                     </DropdownMenuContent>
-                  </DropdownMenu>
-                )}
+                  </DropdownMenu>}
                 {/* Hide fullscreen toggle on mobile since it's always fullscreen */}
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={toggleFullscreen}
-                  className="text-muted-foreground hover:text-foreground h-8 w-8 p-0 md:h-10 md:w-10 hidden md:flex"
-                >
-                  {isFullscreen ? (
-                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <Button variant="ghost" size="sm" onClick={toggleFullscreen} className="text-muted-foreground hover:text-foreground h-8 w-8 p-0 md:h-10 md:w-10 hidden md:flex">
+                  {isFullscreen ? <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 9h6m-6 0V3m0 6l6-6M15 15v6m0-6H9m6 0l-6 6" />
-                    </svg>
-                  ) : (
-                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    </svg> : <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-                    </svg>
-                  )}
+                    </svg>}
                 </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onOpenChange(false)}
-                  className="text-muted-foreground hover:text-foreground text-sm h-8 px-2 md:h-10 md:px-3"
-                >
+                <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)} className="text-muted-foreground hover:text-foreground text-sm h-8 px-2 md:h-10 md:px-3">
                   <span className="hidden md:inline">Close</span>
                   <X className="h-4 w-4 md:hidden" />
                 </Button>
@@ -662,85 +577,55 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
             </div>
           </DialogHeader>
           
-          {isArchived && (
-            <div className="mb-3 rounded-md border border-border bg-muted/40 text-muted-foreground text-sm px-3 py-2">
+          {isArchived && <div className="mb-3 rounded-md border border-border bg-muted/40 text-muted-foreground text-sm px-3 py-2">
               This project is archived. Most actions are disabled. While archived, its sessions and reminders are hidden from calendars, the Sessions page, and activity lists. Use More → Restore to re-enable editing and visibility.
-            </div>
-          )}
+            </div>}
 
           <div className={isArchived ? 'opacity-60 pointer-events-none select-none' : ''}>
-            <ProjectDetailsLayout
-              header={<></>}
-              left={
-                <div className="space-y-4">
-                  {lead && (
-                    <ClientCard
-                      createdAt={project!.created_at}
-                      name={lead.name}
-                      email={lead.email}
-                      phone={lead.phone}
-                      notes={lead.notes}
-                      leadId={lead.id}
-                    />
-                  )}
-                </div>
-              }
-              sections={[
-                { id: 'payments', title: 'Payments', content: (
-                  <ProjectPaymentsSection
-                    projectId={project!.id}
-                    onPaymentsUpdated={() => { onProjectUpdated(); onActivityUpdated?.(); }}
-                    refreshToken={servicesVersion}
-                  />
-                )},
-                { id: 'services', title: 'Services', content: (
-                  <ProjectServicesSection
-                    projectId={project!.id}
-                    onServicesUpdated={() => { setServicesVersion((v) => v + 1); onProjectUpdated(); onActivityUpdated?.(); }}
-                  />
-                )},
-                { id: 'sessions', title: 'Sessions', content: (
-                  <SessionsSection
-                    sessions={sessions}
-                    loading={loading}
-                    leadId={project!.lead_id}
-                    projectId={project!.id}
-                    leadName={leadName}
-                    projectName={project!.name}
-                    onSessionUpdated={() => { handleSessionUpdated(); onActivityUpdated?.(); }}
-                    onDeleteSession={handleDeleteSession}
-                  />
-                )},
-                { id: 'activities', title: 'Activities', content: (
-                  <ProjectActivitySection
-                    projectId={project!.id}
-                    leadId={project!.lead_id}
-                    leadName={leadName}
-                    projectName={project!.name}
-                    onActivityUpdated={() => { onActivityUpdated?.(); }}
-                  />
-                )},
-                { id: 'todos', title: 'Todos', content: (
-                  <ProjectTodoListEnhanced projectId={project!.id} />
-                )},
-              ]}
-              rightFooter={
-                <div className="border border-destructive/20 bg-destructive/5 rounded-md p-4">
+            <ProjectDetailsLayout header={<></>} left={<div className="space-y-4">
+                  {lead && <ClientCard createdAt={project!.created_at} name={lead.name} email={lead.email} phone={lead.phone} notes={lead.notes} leadId={lead.id} />}
+                </div>} sections={[{
+              id: 'payments',
+              title: 'Payments',
+              content: <ProjectPaymentsSection projectId={project!.id} onPaymentsUpdated={() => {
+                onProjectUpdated();
+                onActivityUpdated?.();
+              }} refreshToken={servicesVersion} />
+            }, {
+              id: 'services',
+              title: 'Services',
+              content: <ProjectServicesSection projectId={project!.id} onServicesUpdated={() => {
+                setServicesVersion(v => v + 1);
+                onProjectUpdated();
+                onActivityUpdated?.();
+              }} />
+            }, {
+              id: 'sessions',
+              title: 'Sessions',
+              content: <SessionsSection sessions={sessions} loading={loading} leadId={project!.lead_id} projectId={project!.id} leadName={leadName} projectName={project!.name} onSessionUpdated={() => {
+                handleSessionUpdated();
+                onActivityUpdated?.();
+              }} onDeleteSession={handleDeleteSession} />
+            }, {
+              id: 'activities',
+              title: 'Activities',
+              content: <ProjectActivitySection projectId={project!.id} leadId={project!.lead_id} leadName={leadName} projectName={project!.name} onActivityUpdated={() => {
+                onActivityUpdated?.();
+              }} />
+            }, {
+              id: 'todos',
+              title: 'Todos',
+              content: <ProjectTodoListEnhanced projectId={project!.id} />
+            }]} rightFooter={<div className="border border-destructive/20 bg-destructive/5 rounded-md p-4">
                   <div className="space-y-3">
-                    <Button
-                      variant="outline"
-                      onClick={() => setShowDeleteDialog(true)}
-                      className="w-full border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
-                    >
+                    <Button variant="outline" onClick={() => setShowDeleteDialog(true)} className="w-full border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground">
                       Delete Project
                     </Button>
                      <p className="text-xs text-muted-foreground text-center">
                        This will permanently delete the project and ALL related data: sessions, payments, todos, services, and activities.
                      </p>
                   </div>
-                </div>
-              }
-            />
+                </div>} />
           </div>
           </div>
         </DialogContent>
@@ -758,17 +643,12 @@ export function ViewProjectDialog({ project, open, onOpenChange, onProjectUpdate
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteProject}
-              disabled={isDeleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
+            <AlertDialogAction onClick={handleDeleteProject} disabled={isDeleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               {isDeleting ? "Deleting..." : "Delete Project"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-    </>
-  );
+    </>;
 }

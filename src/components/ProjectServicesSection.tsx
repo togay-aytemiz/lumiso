@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { Edit2, Save, X, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ServicePicker, type PickerService } from "./ServicePicker";
-
 interface Service {
   id: string;
   name: string;
@@ -15,13 +14,14 @@ interface Service {
   selling_price?: number;
   price?: number;
 }
-
 interface ProjectServicesSectionProps {
   projectId: string;
   onServicesUpdated?: () => void;
 }
-
-export function ProjectServicesSection({ projectId, onServicesUpdated }: ProjectServicesSectionProps) {
+export function ProjectServicesSection({
+  projectId,
+  onServicesUpdated
+}: ProjectServicesSectionProps) {
   const [services, setServices] = useState<Service[]>([]);
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -29,14 +29,16 @@ export function ProjectServicesSection({ projectId, onServicesUpdated }: Project
   const [availableServices, setAvailableServices] = useState<Service[]>([]);
   const [loadingAvailable, setLoadingAvailable] = useState(true);
   const [errorAvailable, setErrorAvailable] = useState<string | null>(null);
-  const { toast } = useToast();
+  const {
+    toast
+  } = useToast();
   const sectionRef = useRef<HTMLDivElement>(null);
-
   const fetchProjectServices = async () => {
     try {
-      const { data, error } = await supabase
-        .from('project_services')
-        .select(`
+      const {
+        data,
+        error
+      } = await supabase.from('project_services').select(`
           services!inner (
             id,
             name,
@@ -44,11 +46,8 @@ export function ProjectServicesSection({ projectId, onServicesUpdated }: Project
             cost_price,
             selling_price
           )
-        `)
-        .eq('project_id', projectId);
-
+        `).eq('project_id', projectId);
       if (error) throw error;
-      
       const fetchedServices = data?.map(ps => ps.services).filter(Boolean) as Service[] || [];
       setServices(fetchedServices);
     } catch (error: any) {
@@ -62,21 +61,24 @@ export function ProjectServicesSection({ projectId, onServicesUpdated }: Project
       setLoading(false);
     }
   };
-
   const fetchAvailableServices = async () => {
     setLoadingAvailable(true);
     setErrorAvailable(null);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: {
+          user
+        }
+      } = await supabase.auth.getUser();
       if (!user) return;
-
-      const { data, error } = await supabase
-        .from("services")
-        .select("id, name, category, cost_price, selling_price, price")
-        .eq("user_id", user.id)
-        .order("category", { ascending: true })
-        .order("name", { ascending: true });
-
+      const {
+        data,
+        error
+      } = await supabase.from("services").select("id, name, category, cost_price, selling_price, price").eq("user_id", user.id).order("category", {
+        ascending: true
+      }).order("name", {
+        ascending: true
+      });
       if (error) throw error;
       setAvailableServices(data || []);
     } catch (err: any) {
@@ -86,31 +88,28 @@ export function ProjectServicesSection({ projectId, onServicesUpdated }: Project
       setLoadingAvailable(false);
     }
   };
-
   useEffect(() => {
     fetchProjectServices();
     fetchAvailableServices();
   }, [projectId]);
-
   const handleServicePickerChange = (serviceIds: string[]) => {
-    const selectedServices = availableServices.filter(service => 
-      serviceIds.includes(service.id)
-    );
+    const selectedServices = availableServices.filter(service => serviceIds.includes(service.id));
     setServices(selectedServices);
   };
-
   const handleSaveServices = async (selectedServices: Service[]) => {
     setSaving(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: {
+          user
+        }
+      } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
       // First, delete existing project services
-      const { error: deleteError } = await supabase
-        .from('project_services')
-        .delete()
-        .eq('project_id', projectId);
-
+      const {
+        error: deleteError
+      } = await supabase.from('project_services').delete().eq('project_id', projectId);
       if (deleteError) throw deleteError;
 
       // Then, insert new project services
@@ -120,23 +119,22 @@ export function ProjectServicesSection({ projectId, onServicesUpdated }: Project
           service_id: service.id,
           user_id: user.id
         }));
-
-        const { error: insertError } = await supabase
-          .from('project_services')
-          .insert(serviceInserts);
-
+        const {
+          error: insertError
+        } = await supabase.from('project_services').insert(serviceInserts);
         if (insertError) throw insertError;
       }
-
       setServices(selectedServices);
       setIsEditing(false);
       onServicesUpdated?.();
 
       // Smoothly scroll back to the top of Services section after saving
       setTimeout(() => {
-        sectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        sectionRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        });
       }, 50);
-      
       toast({
         title: "Success",
         description: "Project services updated successfully."
@@ -151,10 +149,8 @@ export function ProjectServicesSection({ projectId, onServicesUpdated }: Project
       setSaving(false);
     }
   };
-
   if (loading) {
-    return (
-      <Card>
+    return <Card>
         <CardHeader>
           <CardTitle className="flex items-center justify-between text-lg font-medium">
             <div className="flex items-center gap-2">
@@ -172,95 +168,52 @@ export function ProjectServicesSection({ projectId, onServicesUpdated }: Project
             <div className="w-3/4 h-4 bg-muted animate-pulse rounded" />
           </div>
         </CardContent>
-      </Card>
-    );
+      </Card>;
   }
-
-  return (
-    <div ref={sectionRef}>
+  return <div ref={sectionRef}>
       <Card>
         <CardHeader>
-        <CardTitle className="flex items-center justify-between text-lg font-medium">
+        <CardTitle className="flex items-center justify-between text-xl font-semibold">
           <div className="flex items-center gap-2">
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
             </svg>
             Services
           </div>
-          {!isEditing && (
-            services.length === 0 ? (
-              <Button
-                size="sm"
-                onClick={() => setIsEditing(true)}
-                className="gap-2"
-              >
+          {!isEditing && (services.length === 0 ? <Button size="sm" onClick={() => setIsEditing(true)} className="gap-2">
                 <Plus className="h-4 w-4" />
                 Add
-              </Button>
-            ) : (
-              <Button
-                size="sm"
-                onClick={() => setIsEditing(true)}
-                className="gap-2"
-              >
+              </Button> : <Button size="sm" onClick={() => setIsEditing(true)} className="gap-2">
                 <Edit2 className="h-4 w-4" />
                 Edit
-              </Button>
-            )
-          )}
+              </Button>)}
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {isEditing ? (
-          <div className="space-y-4">
-            <ServicePicker
-              services={availableServices.map(s => ({
-                ...s,
-                price: s.selling_price || 0,
-                active: true
-              }))}
-              value={services.map(s => s.id)}
-              onChange={handleServicePickerChange}
-              disabled={saving}
-              isLoading={loadingAvailable}
-              error={errorAvailable}
-              onRetry={fetchAvailableServices}
-            />
+        {isEditing ? <div className="space-y-4">
+            <ServicePicker services={availableServices.map(s => ({
+            ...s,
+            price: s.selling_price || 0,
+            active: true
+          }))} value={services.map(s => s.id)} onChange={handleServicePickerChange} disabled={saving} isLoading={loadingAvailable} error={errorAvailable} onRetry={fetchAvailableServices} />
             <div className="flex gap-2">
-              <Button 
-                size="sm" 
-                onClick={() => handleSaveServices(services)}
-                disabled={saving}
-              >
+              <Button size="sm" onClick={() => handleSaveServices(services)} disabled={saving}>
                 <Save className="h-4 w-4 mr-1" />
                 {saving ? "Saving..." : "Save"}
               </Button>
-              <Button 
-                size="sm" 
-                variant="outline" 
-                onClick={() => {
-                  setIsEditing(false);
-                  fetchProjectServices(); // Reset to original services
-                }}
-                disabled={saving}
-              >
+              <Button size="sm" variant="outline" onClick={() => {
+              setIsEditing(false);
+              fetchProjectServices(); // Reset to original services
+            }} disabled={saving}>
                 <X className="h-4 w-4 mr-1" />
                 Cancel
               </Button>
             </div>
-          </div>
-        ) : (
-          <div>
-            {services.length > 0 ? (
-              <div className="flex flex-wrap gap-2">
-                {services.map((service) => {
-                  const price = service.selling_price || service.cost_price || 0;
-                  return (
-                    <Badge
-                      key={service.id}
-                      variant="secondary"
-                      className="h-7 rounded-full px-3 text-xs"
-                    >
+          </div> : <div>
+            {services.length > 0 ? <div className="flex flex-wrap gap-2">
+                {services.map(service => {
+              const price = service.selling_price || service.cost_price || 0;
+              return <Badge key={service.id} variant="secondary" className="h-7 rounded-full px-3 text-xs">
                       <span>
                         {service.name}
                         <span className="mx-1">·</span>
@@ -268,12 +221,9 @@ export function ProjectServicesSection({ projectId, onServicesUpdated }: Project
                           TRY {price}
                         </span>
                       </span>
-                    </Badge>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="text-center py-6">
+                    </Badge>;
+            })}
+              </div> : <div className="text-center py-6">
                 <svg className="h-8 w-8 text-muted-foreground mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
@@ -281,12 +231,9 @@ export function ProjectServicesSection({ projectId, onServicesUpdated }: Project
                  <p className="text-xs text-muted-foreground mt-1">
                    Click Add Service to add services to this project
                  </p>
-              </div>
-            )}
-          </div>
-        )}
+              </div>}
+          </div>}
       </CardContent>
     </Card>
-    </div>
-  );
+    </div>;
 }

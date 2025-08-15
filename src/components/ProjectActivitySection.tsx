@@ -13,7 +13,6 @@ import ReminderCard from "@/components/ReminderCard";
 import { formatTime } from "@/lib/utils";
 import { useCalendarSync } from "@/hooks/useCalendarSync";
 import DateTimePicker from "@/components/ui/date-time-picker";
-
 interface ProjectActivity {
   id: string;
   type: string;
@@ -24,7 +23,6 @@ interface ProjectActivity {
   completed?: boolean;
   lead_id: string;
 }
-
 interface ProjectActivitySectionProps {
   projectId: string;
   leadId: string;
@@ -32,32 +30,35 @@ interface ProjectActivitySectionProps {
   projectName: string;
   onActivityUpdated?: () => void;
 }
-
-export function ProjectActivitySection({ projectId, leadId, leadName, projectName, onActivityUpdated }: ProjectActivitySectionProps) {
+export function ProjectActivitySection({
+  projectId,
+  leadId,
+  leadName,
+  projectName,
+  onActivityUpdated
+}: ProjectActivitySectionProps) {
   const [activities, setActivities] = useState<ProjectActivity[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  
+
   // Form state
   const [content, setContent] = useState('');
   const [isReminderMode, setIsReminderMode] = useState(false);
   const [reminderDateTime, setReminderDateTime] = useState('');
-  
-  const { createReminderEvent } = useCalendarSync();
-
+  const {
+    createReminderEvent
+  } = useCalendarSync();
   useEffect(() => {
     fetchProjectActivities();
   }, [projectId]);
-
   const fetchProjectActivities = async () => {
     try {
-      const { data, error } = await supabase
-        .from('activities')
-        .select('id, type, content, reminder_date, reminder_time, created_at, completed, lead_id, project_id')
-        .eq('lead_id', leadId)
-        .eq('project_id', projectId)
-        .order('created_at', { ascending: false });
-
+      const {
+        data,
+        error
+      } = await supabase.from('activities').select('id, type, content, reminder_date, reminder_time, created_at, completed, lead_id, project_id').eq('lead_id', leadId).eq('project_id', projectId).order('created_at', {
+        ascending: false
+      });
       if (error) throw error;
       setActivities(data || []);
     } catch (error: any) {
@@ -67,7 +68,6 @@ export function ProjectActivitySection({ projectId, leadId, leadName, projectNam
       setLoading(false);
     }
   };
-
   const handleSaveActivity = async () => {
     if (!content.trim()) {
       toast({
@@ -77,7 +77,6 @@ export function ProjectActivitySection({ projectId, leadId, leadName, projectNam
       });
       return;
     }
-
     if (isReminderMode && !reminderDateTime) {
       toast({
         title: "Validation error",
@@ -86,12 +85,12 @@ export function ProjectActivitySection({ projectId, leadId, leadName, projectNam
       });
       return;
     }
-
     setSaving(true);
     try {
-      const { data: userData } = await supabase.auth.getUser();
+      const {
+        data: userData
+      } = await supabase.auth.getUser();
       if (!userData.user) throw new Error('Not authenticated');
-
       const activityData = {
         user_id: userData.user.id,
         lead_id: leadId,
@@ -103,29 +102,24 @@ export function ProjectActivitySection({ projectId, leadId, leadName, projectNam
           reminder_time: reminderDateTime.split('T')[1]
         })
       };
-
-      const { data: newActivity, error } = await supabase
-        .from('activities')
-        .insert(activityData)
-        .select('id')
-        .single();
-
+      const {
+        data: newActivity,
+        error
+      } = await supabase.from('activities').insert(activityData).select('id').single();
       if (error) throw error;
 
       // Sync reminder to Google Calendar with project context
       if (isReminderMode && newActivity) {
-        createReminderEvent(
-          {
-            id: newActivity.id,
-            lead_id: leadId,
-            content: `${projectName}: ${content.trim()}`,
-            reminder_date: reminderDateTime.split('T')[0],
-            reminder_time: reminderDateTime.split('T')[1]
-          },
-          { name: leadName }
-        );
+        createReminderEvent({
+          id: newActivity.id,
+          lead_id: leadId,
+          content: `${projectName}: ${content.trim()}`,
+          reminder_date: reminderDateTime.split('T')[0],
+          reminder_time: reminderDateTime.split('T')[1]
+        }, {
+          name: leadName
+        });
       }
-
       toast({
         title: "Success",
         description: `${isReminderMode ? 'Reminder' : 'Note'} added to project successfully.`
@@ -135,10 +129,10 @@ export function ProjectActivitySection({ projectId, leadId, leadName, projectNam
       setContent('');
       setReminderDateTime('');
       setIsReminderMode(false);
-      
+
       // Refresh data
       await fetchProjectActivities();
-      
+
       // Notify parent about activity change
       onActivityUpdated?.();
     } catch (error: any) {
@@ -151,34 +145,29 @@ export function ProjectActivitySection({ projectId, leadId, leadName, projectNam
       setSaving(false);
     }
   };
-
   const handleReminderToggle = (checked: boolean) => {
     setIsReminderMode(checked);
     if (!checked) {
       setReminderDateTime('');
     }
   };
-
   const toggleCompletion = async (activityId: string, completed: boolean) => {
     try {
-      const { error } = await supabase
-        .from('activities')
-        .update({ completed })
-        .eq('id', activityId);
-
+      const {
+        error
+      } = await supabase.from('activities').update({
+        completed
+      }).eq('id', activityId);
       if (error) throw error;
-
-      setActivities(prev => 
-        prev.map(activity => 
-          activity.id === activityId ? { ...activity, completed } : activity
-        )
-      );
-      
+      setActivities(prev => prev.map(activity => activity.id === activityId ? {
+        ...activity,
+        completed
+      } : activity));
       toast({
         title: completed ? "Task marked as completed" : "Task marked as incomplete",
         description: "Task status updated successfully."
       });
-      
+
       // Notify parent about activity change
       onActivityUpdated?.();
     } catch (error: any) {
@@ -189,11 +178,9 @@ export function ProjectActivitySection({ projectId, leadId, leadName, projectNam
       });
     }
   };
-
-  return (
-    <Card>
+  return <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-lg font-medium">
+        <CardTitle className="flex items-center gap-2 text-xl font-semibold">
           <FileText className="h-4 w-4" />
           Project specific activities
         </CardTitle>
@@ -208,50 +195,29 @@ export function ProjectActivitySection({ projectId, leadId, leadName, projectNam
                 <Label htmlFor="project-reminder-toggle" className="text-sm font-medium">
                   Set Reminder?
                 </Label>
-                <Switch
-                  id="project-reminder-toggle"
-                  checked={isReminderMode}
-                  onCheckedChange={handleReminderToggle}
-                />
+                <Switch id="project-reminder-toggle" checked={isReminderMode} onCheckedChange={handleReminderToggle} />
               </div>
             </div>
-            <Textarea
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder="Enter your project note..."
-              rows={1}
-              className="resize-none min-h-[40px] max-h-[40px]"
-            />
+            <Textarea value={content} onChange={e => setContent(e.target.value)} placeholder="Enter your project note..." rows={1} className="resize-none min-h-[40px] max-h-[40px]" />
           </div>
 
-          {isReminderMode && (
-            <div className="space-y-2">
+          {isReminderMode && <div className="space-y-2">
               <Label>Date & Time</Label>
-              <DateTimePicker
-                value={reminderDateTime}
-                onChange={setReminderDateTime}
-              />
-            </div>
-          )}
+              <DateTimePicker value={reminderDateTime} onChange={setReminderDateTime} />
+            </div>}
 
           <div className="flex justify-end">
-            <Button 
-              onClick={handleSaveActivity} 
-              disabled={saving || !content.trim() || (isReminderMode && !reminderDateTime)}
-              size="sm"
-            >
+            <Button onClick={handleSaveActivity} disabled={saving || !content.trim() || isReminderMode && !reminderDateTime} size="sm">
               {saving ? "Saving..." : `Add ${isReminderMode ? 'Reminder' : 'Note'}`}
             </Button>
           </div>
         </div>
 
         {/* Project Activities List */}
-        {!loading && activities.length > 0 && (
-          <div className="space-y-3">
+        {!loading && activities.length > 0 && <div className="space-y-3">
             <Label className="text-sm text-muted-foreground">Recent activities</Label>
             <div className="space-y-2">
-              {activities.map((activity) => (
-                <Card key={activity.id}>
+              {activities.map(activity => <Card key={activity.id}>
                   <CardContent className="p-3">
                     {/* Mobile: Stack vertically, Desktop: Keep horizontal */}
                     <div className="flex flex-col md:flex-row md:items-start gap-2 md:gap-3">
@@ -259,11 +225,7 @@ export function ProjectActivitySection({ projectId, leadId, leadName, projectNam
                       <div className="flex items-center gap-2 md:mt-0.5">
                         {/* Remove redundant icons on mobile when badge already indicates type */}
                         <div className="hidden md:block">
-                          {activity.type === 'note' ? (
-                            <MessageSquare className="h-4 w-4 text-blue-500" />
-                          ) : (
-                            <Bell className="h-4 w-4 text-orange-500" />
-                          )}
+                          {activity.type === 'note' ? <MessageSquare className="h-4 w-4 text-blue-500" /> : <Bell className="h-4 w-4 text-orange-500" />}
                         </div>
                         <Badge variant="outline" className="text-xs">
                           {activity.type}
@@ -272,59 +234,39 @@ export function ProjectActivitySection({ projectId, leadId, leadName, projectNam
                       
                       {/* Content and date stack vertically on mobile */}
                       <div className="flex-1 space-y-2">
-                        {activity.type === 'reminder' && activity.reminder_date ? (
-                          <ReminderCard
-                            activity={activity}
-                            leadName={leadName}
-                            onToggleCompletion={toggleCompletion}
-                            showCompletedBadge={false}
-                            hideStatusBadge={activity.completed}
-                          />
-                        ) : activity.type === 'reminder' ? (
-                          // Reminder without date - show with completion button
-                          <div className="flex items-start gap-3">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                toggleCompletion(activity.id, !activity.completed);
-                              }}
-                              className="flex items-center justify-center w-5 h-5 rounded-full border-2 border-muted-foreground/40 hover:border-primary transition-colors mt-0.5 flex-shrink-0"
-                            >
-                              {activity.completed ? (
-                                <CheckCircle className="h-3 w-3 text-green-600 dark:text-green-400" />
-                              ) : (
-                                <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40" />
-                              )}
+                        {activity.type === 'reminder' && activity.reminder_date ? <ReminderCard activity={activity} leadName={leadName} onToggleCompletion={toggleCompletion} showCompletedBadge={false} hideStatusBadge={activity.completed} /> : activity.type === 'reminder' ?
+                  // Reminder without date - show with completion button
+                  <div className="flex items-start gap-3">
+                            <button onClick={e => {
+                      e.stopPropagation();
+                      toggleCompletion(activity.id, !activity.completed);
+                    }} className="flex items-center justify-center w-5 h-5 rounded-full border-2 border-muted-foreground/40 hover:border-primary transition-colors mt-0.5 flex-shrink-0">
+                              {activity.completed ? <CheckCircle className="h-3 w-3 text-green-600 dark:text-green-400" /> : <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40" />}
                             </button>
                             <div className="flex-1">
                               <p className={`text-sm break-words ${activity.completed ? 'line-through opacity-60' : ''}`}>
                                 {activity.content}
                               </p>
                             </div>
-                          </div>
-                        ) : (
-                          // Regular note - no completion button
-                          <div className="flex-1">
+                          </div> :
+                  // Regular note - no completion button
+                  <div className="flex-1">
                             <p className="text-sm break-words">
                               {activity.content}
                             </p>
-                          </div>
-                        )}
+                          </div>}
                         
                         {/* Date/time on bottom for mobile */}
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
                           <Clock className="h-3 w-3" />
-                          {new Date(activity.created_at).toLocaleDateString()} at {formatTime(new Date(activity.created_at).toTimeString().slice(0,5))}
+                          {new Date(activity.created_at).toLocaleDateString()} at {formatTime(new Date(activity.created_at).toTimeString().slice(0, 5))}
                         </div>
                       </div>
                     </div>
                   </CardContent>
-                </Card>
-              ))}
+                </Card>)}
             </div>
-          </div>
-        )}
+          </div>}
       </CardContent>
-    </Card>
-  );
+    </Card>;
 }

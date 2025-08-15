@@ -30,7 +30,8 @@ export default function ClientMessaging() {
 
   const [silentHours, setSilentHours] = useState({
     startTime: "22:00",
-    endTime: "08:00"
+    endTime: "08:00",
+    enabled: true
   });
 
   const messages = [
@@ -285,21 +286,41 @@ export default function ClientMessaging() {
           title="Silent Hours"
           description="Messages will not be sent during this time window. Any messages triggered at night will be delayed until the next morning."
         >
-          <div className="space-y-4">
-            <div className="space-y-4">
-              <Label className="text-base font-medium">Silent Hours</Label>
+          <div className="space-y-6">
+            {/* Enable/Disable Toggle */}
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <Label className="text-base font-medium">Enable Silent Hours</Label>
+                <p className="text-sm text-muted-foreground">
+                  {silentHours.enabled 
+                    ? "Messages triggered during silent hours will be delayed until the next morning"
+                    : "When disabled, messages will be sent immediately regardless of the time of day"
+                  }
+                </p>
+              </div>
+              <Switch
+                checked={silentHours.enabled}
+                onCheckedChange={(checked) => setSilentHours(prev => ({ ...prev, enabled: checked }))}
+              />
+            </div>
+
+            {/* Time Configuration */}
+            <div className={`space-y-4 transition-opacity ${silentHours.enabled ? "opacity-100" : "opacity-50"}`}>
+              <Label className="text-base font-medium">Time Window</Label>
               
-              <div className="flex gap-4 items-end">
+              {/* Mobile-responsive layout: flex on desktop, grid on mobile */}
+              <div className="flex flex-col sm:flex-row gap-4 sm:items-end">
                 {/* Start Time */}
-                <div className="space-y-2">
+                <div className="space-y-2 flex-1">
                   <Label htmlFor="startTime" className="text-sm text-muted-foreground">
                     Start Time
                   </Label>
                   <Select
                     value={silentHours.startTime}
                     onValueChange={(value) => setSilentHours(prev => ({ ...prev, startTime: value }))}
+                    disabled={!silentHours.enabled}
                   >
-                    <SelectTrigger className="w-32">
+                    <SelectTrigger className="w-full sm:w-32">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="max-h-60">
@@ -313,15 +334,16 @@ export default function ClientMessaging() {
                 </div>
 
                 {/* End Time */}
-                <div className="space-y-2">
+                <div className="space-y-2 flex-1">
                   <Label htmlFor="endTime" className="text-sm text-muted-foreground">
                     End Time
                   </Label>
                   <Select
                     value={silentHours.endTime}
                     onValueChange={(value) => setSilentHours(prev => ({ ...prev, endTime: value }))}
+                    disabled={!silentHours.enabled}
                   >
-                    <SelectTrigger className="w-32">
+                    <SelectTrigger className="w-full sm:w-32">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="max-h-60">
@@ -336,9 +358,11 @@ export default function ClientMessaging() {
               </div>
 
               {/* Helper text */}
-              <p className="text-sm text-muted-foreground mt-3">
-                Messages triggered during this period will be sent after silent hours end.
-              </p>
+              {silentHours.enabled && (
+                <p className="text-sm text-muted-foreground">
+                  Messages triggered between {silentHours.startTime} and {silentHours.endTime} will be sent after silent hours end.
+                </p>
+              )}
             </div>
           </div>
         </SettingsSection>

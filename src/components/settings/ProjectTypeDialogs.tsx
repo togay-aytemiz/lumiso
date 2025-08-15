@@ -35,6 +35,14 @@ export function AddProjectTypeDialog({ open, onOpenChange, onTypeAdded }: AddPro
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
+      // If setting this as default, first unset all others
+      if (formData.is_default) {
+        await supabase
+          .from('project_types')
+          .update({ is_default: false })
+          .eq('user_id', user.id);
+      }
+
       // Get the next sort order
       const { data: existingTypes } = await supabase
         .from('project_types')
@@ -177,18 +185,21 @@ export function EditProjectTypeDialog({ type, open, onOpenChange, onTypeUpdated 
       return;
     }
 
-    console.log('=== EDIT PROJECT TYPE SUBMIT ===');
-    console.log('Form data:', formData);
-    console.log('Type being edited:', type);
-    
     setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
       
-      console.log('User authenticated:', user.id);
-      console.log('Updating project type with data:', { name: formData.name.trim(), is_default: formData.is_default });
+      // If setting this as default, first unset all others
+      if (formData.is_default && !type.is_default) {
+        await supabase
+          .from('project_types')
+          .update({ is_default: false })
+          .eq('user_id', user.id)
+          .neq('id', type.id);
+      }
       
+      // Then update this type
       const { error } = await supabase
         .from('project_types')
         .update({
@@ -196,14 +207,9 @@ export function EditProjectTypeDialog({ type, open, onOpenChange, onTypeUpdated 
           is_default: formData.is_default,
         })
         .eq('id', type.id)
-        .eq('user_id', user.id); // IMPORTANT: Security - only update user's own types
+        .eq('user_id', user.id);
 
-      if (error) {
-        console.error('Database error:', error);
-        throw error;
-      }
-      
-      console.log('Project type updated successfully');
+      if (error) throw error;
 
       toast({
         title: "Success",

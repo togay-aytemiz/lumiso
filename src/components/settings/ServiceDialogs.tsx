@@ -6,7 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
-import { Plus } from "lucide-react";
+import { Plus, Check, ChevronDown } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 
 interface AddServiceDialogProps {
   open: boolean;
@@ -16,6 +18,8 @@ interface AddServiceDialogProps {
 
 export function AddServiceDialog({ open, onOpenChange, onServiceAdded }: AddServiceDialogProps) {
   const [loading, setLoading] = useState(false);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [categoryOpen, setCategoryOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -25,6 +29,33 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded }: AddServ
     selling_price: "",
     extra: false,
   });
+
+  // Fetch existing categories
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data, error } = await supabase
+          .from('services')
+          .select('category')
+          .eq('user_id', user.id)
+          .not('category', 'is', null);
+
+        if (error) throw error;
+
+        const uniqueCategories = [...new Set(data.map(item => item.category).filter(Boolean))];
+        setCategories(uniqueCategories);
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      }
+    };
+
+    if (open) {
+      fetchCategories();
+    }
+  }, [open]);
 
   const handleSubmit = async () => {
     if (!formData.name.trim()) {
@@ -138,14 +169,63 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded }: AddServ
         
         <div className="space-y-2">
           <Label htmlFor="category">Category *</Label>
-          <Input
-            id="category"
-            value={formData.category}
-            onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-            placeholder="Select or create a category"
-            maxLength={50}
-            className="rounded-xl"
-          />
+          <Popover open={categoryOpen} onOpenChange={setCategoryOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                role="combobox"
+                aria-expanded={categoryOpen}
+                className="w-full justify-between rounded-xl"
+              >
+                {formData.category || "Select or create a category"}
+                <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-full p-0" align="start">
+              <Command>
+                <CommandInput 
+                  placeholder="Search or create category..." 
+                  value={formData.category}
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
+                />
+                <CommandList>
+                  <CommandEmpty>
+                    <div className="p-2">
+                      <Button
+                        variant="ghost"
+                        className="w-full justify-start"
+                        onClick={() => {
+                          setCategoryOpen(false);
+                        }}
+                      >
+                        <Plus className="mr-2 h-4 w-4" />
+                        Create "{formData.category}"
+                      </Button>
+                    </div>
+                  </CommandEmpty>
+                  <CommandGroup>
+                    {categories.map((category) => (
+                      <CommandItem
+                        key={category}
+                        value={category}
+                        onSelect={() => {
+                          setFormData(prev => ({ ...prev, category }));
+                          setCategoryOpen(false);
+                        }}
+                      >
+                        <Check
+                          className={`mr-2 h-4 w-4 ${
+                            formData.category === category ? "opacity-100" : "opacity-0"
+                          }`}
+                        />
+                        {category}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
         </div>
 
         <div className="space-y-2">
@@ -211,6 +291,8 @@ interface EditServiceDialogProps {
 
 export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdated }: EditServiceDialogProps) {
   const [loading, setLoading] = useState(false);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [categoryOpen, setCategoryOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -220,6 +302,33 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
     selling_price: "",
     extra: false,
   });
+
+  // Fetch existing categories
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data, error } = await supabase
+          .from('services')
+          .select('category')
+          .eq('user_id', user.id)
+          .not('category', 'is', null);
+
+        if (error) throw error;
+
+        const uniqueCategories = [...new Set(data.map(item => item.category).filter(Boolean))];
+        setCategories(uniqueCategories);
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      }
+    };
+
+    if (open) {
+      fetchCategories();
+    }
+  }, [open]);
 
   useEffect(() => {
     if (service && open) {
@@ -326,14 +435,63 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
       <div className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="category">Category</Label>
-          <Input
-            id="category"
-            value={formData.category}
-            onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-            placeholder="e.g., Photography, Editing, Products"
-            maxLength={50}
-            className="rounded-xl"
-          />
+          <Popover open={categoryOpen} onOpenChange={setCategoryOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                role="combobox"
+                aria-expanded={categoryOpen}
+                className="w-full justify-between rounded-xl"
+              >
+                {formData.category || "Select or create a category"}
+                <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-full p-0" align="start">
+              <Command>
+                <CommandInput 
+                  placeholder="Search or create category..." 
+                  value={formData.category}
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
+                />
+                <CommandList>
+                  <CommandEmpty>
+                    <div className="p-2">
+                      <Button
+                        variant="ghost"
+                        className="w-full justify-start"
+                        onClick={() => {
+                          setCategoryOpen(false);
+                        }}
+                      >
+                        <Plus className="mr-2 h-4 w-4" />
+                        Create "{formData.category}"
+                      </Button>
+                    </div>
+                  </CommandEmpty>
+                  <CommandGroup>
+                    {categories.map((category) => (
+                      <CommandItem
+                        key={category}
+                        value={category}
+                        onSelect={() => {
+                          setFormData(prev => ({ ...prev, category }));
+                          setCategoryOpen(false);
+                        }}
+                      >
+                        <Check
+                          className={`mr-2 h-4 w-4 ${
+                            formData.category === category ? "opacity-100" : "opacity-0"
+                          }`}
+                        />
+                        {category}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
         </div>
 
         <div className="space-y-2">

@@ -130,7 +130,7 @@ const ServicesSection = () => {
       <SettingsSection 
         title="Services" 
         description="Define the photography services you offer, like albums, prints, and extras."
-        action={Object.keys(groupedServices).length > 0 ? {
+        action={(Object.keys(groupedServices).length > 0) ? {
           label: "Add Service",
           onClick: () => setShowNewServiceDialog(true),
           icon: <Plus className="h-4 w-4" />
@@ -275,33 +275,33 @@ const ServicesSection = () => {
                               </div>
                             )}
 
-                            {/* Actions row */}
-                            <div className="flex gap-2 pt-2 border-t">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                  setEditingService(service);
-                                  setShowEditServiceDialog(true);
-                                }}
-                                className="flex-1 h-10"
-                                aria-label={`Edit service ${service.name}`}
-                              >
-                                <Edit className="h-4 w-4 mr-2" />
-                                Edit
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleDeleteService(service.id)}
-                                disabled={deleteServiceMutation.isPending}
-                                className="flex-1 h-10 text-destructive hover:text-destructive hover:bg-destructive/10"
-                                aria-label={`Delete service ${service.name}`}
-                              >
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Delete
-                              </Button>
-                            </div>
+                             {/* Actions row */}
+                             <div className="flex gap-2 pt-2 border-t">
+                               <Button
+                                 variant="outline"
+                                 size="sm"
+                                 onClick={() => {
+                                   setEditingService(service);
+                                   setShowEditServiceDialog(true);
+                                 }}
+                                 className="flex-1 h-10 min-w-0"
+                                 aria-label={`Edit service ${service.name}`}
+                               >
+                                 <Edit className="h-4 w-4 mr-1" />
+                                 <span className="truncate">Edit</span>
+                               </Button>
+                               <Button
+                                 variant="outline"
+                                 size="sm"
+                                 onClick={() => handleDeleteService(service.id)}
+                                 disabled={deleteServiceMutation.isPending}
+                                 className="flex-1 h-10 min-w-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                 aria-label={`Delete service ${service.name}`}
+                               >
+                                 <Trash2 className="h-4 w-4 mr-1" />
+                                 <span className="truncate">Delete</span>
+                               </Button>
+                             </div>
                           </div>
                         ))
                       )}

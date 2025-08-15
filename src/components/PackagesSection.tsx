@@ -86,7 +86,7 @@ const PackagesSection = () => {
       <SettingsSection 
         title="Packages" 
         description="Create comprehensive packages that bundle services together for your clients."
-        action={packages.length > 0 ? {
+        action={(packages.length > 0) ? {
           label: "Add Package",
           onClick: () => setShowNewPackageDialog(true),
           icon: <Plus className="h-4 w-4" />
@@ -265,32 +265,32 @@ const PackagesSection = () => {
                     </div>
                   )}
 
-                  {/* Actions row */}
-                  <div className="flex gap-2 pt-2 border-t">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setEditingPackage(pkg);
-                        setShowEditPackageDialog(true);
-                      }}
-                      className="flex-1 h-10"
-                      aria-label={`Edit package ${pkg.name}`}
-                    >
-                      <Edit className="h-4 w-4 mr-2" />
-                      Edit
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDeleteClick(pkg)}
-                      className="flex-1 h-10 text-destructive hover:text-destructive hover:bg-destructive/10"
-                      aria-label={`Delete package ${pkg.name}`}
-                    >
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      Delete
-                    </Button>
-                  </div>
+                   {/* Actions row */}
+                   <div className="flex gap-2 pt-2 border-t">
+                     <Button
+                       variant="outline"
+                       size="sm"
+                       onClick={() => {
+                         setEditingPackage(pkg);
+                         setShowEditPackageDialog(true);
+                       }}
+                       className="flex-1 h-10 min-w-0"
+                       aria-label={`Edit package ${pkg.name}`}
+                     >
+                       <Edit className="h-4 w-4 mr-1" />
+                       <span className="truncate">Edit</span>
+                     </Button>
+                     <Button
+                       variant="outline"
+                       size="sm"
+                       onClick={() => handleDeleteClick(pkg)}
+                       className="flex-1 h-10 min-w-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                       aria-label={`Delete package ${pkg.name}`}
+                     >
+                       <Trash2 className="h-4 w-4 mr-1" />
+                       <span className="truncate">Delete</span>
+                     </Button>
+                   </div>
                 </div>
               ))}
             </div>

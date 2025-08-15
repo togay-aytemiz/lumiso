@@ -23,7 +23,7 @@ const SettingsSection = ({ title, description, action, children }: SettingsSecti
             {description && <CardDescription>{description}</CardDescription>}
           </div>
           {action && (
-            <Button onClick={action.onClick} className="flex items-center gap-2">
+            <Button onClick={action.onClick} className="hidden md:flex items-center gap-2">
               {action.icon}
               {action.label}
             </Button>

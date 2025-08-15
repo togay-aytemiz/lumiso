@@ -194,10 +194,10 @@ const ProjectKanbanBoard = ({ projects, projectStatuses, onProjectsChange }: Pro
             className="cursor-pointer hover:shadow-md transition-shadow duration-200 bg-card border border-border"
             onClick={() => handleProjectClick(project)}
           >
-            <CardContent className="p-4">
+            <CardContent className="p-3 md:p-4">
               {/* Lead name (bold, top) */}
               <div className="flex items-center gap-2 mb-2">
-                <span className="font-bold text-sm md:mt-1">{project.lead?.name || 'No Lead'}</span>
+                <span className="font-bold text-sm">{project.lead?.name || 'No Lead'}</span>
               </div>
               
               {/* Project name (middle) */}

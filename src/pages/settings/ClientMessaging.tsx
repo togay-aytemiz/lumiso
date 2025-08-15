@@ -4,8 +4,8 @@ import SettingsHeader from "@/components/settings/SettingsHeader";
 import SettingsSection from "@/components/SettingsSection";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
+import { AppSheetModal } from "@/components/ui/app-sheet-modal";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,7 +13,9 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Edit, Trash2 } from "lucide-react";
 
 export default function ClientMessaging() {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [editingMessage, setEditingMessage] = useState<number | null>(null);
+  const [deleteMessageId, setDeleteMessageId] = useState<number | null>(null);
   const [newMessage, setNewMessage] = useState({
     trigger: "",
     channels: [] as string[],
@@ -51,7 +53,33 @@ export default function ClientMessaging() {
   const handleSave = () => {
     // Static - no backend integration
     console.log("Saving message:", newMessage);
-    setIsDialogOpen(false);
+    setIsSheetOpen(false);
+    setEditingMessage(null);
+    setNewMessage({ trigger: "", channels: [], content: "" });
+  };
+
+  const handleEdit = (messageId: number) => {
+    const message = messages.find(m => m.id === messageId);
+    if (message) {
+      setNewMessage({
+        trigger: message.trigger,
+        channels: message.channels,
+        content: message.preview
+      });
+      setEditingMessage(messageId);
+      setIsSheetOpen(true);
+    }
+  };
+
+  const handleDelete = () => {
+    // Static - no backend integration
+    console.log("Deleting message:", deleteMessageId);
+    setDeleteMessageId(null);
+  };
+
+  const handleCancel = () => {
+    setIsSheetOpen(false);
+    setEditingMessage(null);
     setNewMessage({ trigger: "", channels: [], content: "" });
   };
 
@@ -70,87 +98,13 @@ export default function ClientMessaging() {
           <div className="space-y-4">
             {/* Add Message Button */}
             <div className="flex justify-end">
-              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button className="flex items-center gap-2">
-                    <Plus className="h-4 w-4" />
-                    Add Message
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[600px]">
-                  <DialogHeader>
-                    <DialogTitle>Create Automated Message</DialogTitle>
-                  </DialogHeader>
-                  
-                  <div className="space-y-6">
-                    {/* Trigger Selection */}
-                    <div className="space-y-2">
-                      <Label htmlFor="trigger">Trigger</Label>
-                      <Select
-                        value={newMessage.trigger}
-                        onValueChange={(value) => setNewMessage(prev => ({ ...prev, trigger: value }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select when to send this message" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {triggerOptions.map((trigger) => (
-                            <SelectItem key={trigger} value={trigger}>
-                              {trigger}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    {/* Channels Selection */}
-                    <div className="space-y-2">
-                      <Label>Channels</Label>
-                      <div className="flex gap-2">
-                        {channelOptions.map((channel) => (
-                          <Button
-                            key={channel}
-                            variant={newMessage.channels.includes(channel) ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => toggleChannel(channel)}
-                            type="button"
-                          >
-                            {channel}
-                          </Button>
-                        ))}
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        Select one or more channels to send this message
-                      </p>
-                    </div>
-
-                    {/* Message Content */}
-                    <div className="space-y-2">
-                      <Label htmlFor="content">Message Content</Label>
-                      <Textarea
-                        id="content"
-                        placeholder="Enter your message template here..."
-                        value={newMessage.content}
-                        onChange={(e) => setNewMessage(prev => ({ ...prev, content: e.target.value }))}
-                        rows={4}
-                      />
-                      <p className="text-sm text-muted-foreground">
-                        Use variables like {"{client_name}"}, {"{session_date}"}, {"{payment_link}"} for dynamic content
-                      </p>
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div className="flex justify-end gap-2">
-                      <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-                        Cancel
-                      </Button>
-                      <Button onClick={handleSave}>
-                        Save Message
-                      </Button>
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
+              <Button 
+                className="flex items-center gap-2"
+                onClick={() => setIsSheetOpen(true)}
+              >
+                <Plus className="h-4 w-4" />
+                Add Message
+              </Button>
             </div>
 
             {/* Messages Table */}
@@ -187,12 +141,33 @@ export default function ClientMessaging() {
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-1">
-                            <Button variant="ghost" size="sm">
+                            <Button variant="ghost" size="sm" onClick={() => handleEdit(message.id)}>
                               <Edit className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="sm">
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="ghost" size="sm" onClick={() => setDeleteMessageId(message.id)}>
+                                  <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Delete Message</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Are you sure you want to delete this automated message? This action cannot be undone.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel onClick={() => setDeleteMessageId(null)}>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction 
+                                    onClick={handleDelete}
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  >
+                                    Delete
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -210,6 +185,76 @@ export default function ClientMessaging() {
             )}
           </div>
         </SettingsSection>
+
+        {/* App Sheet Modal for Add/Edit */}
+        <AppSheetModal
+          title={editingMessage ? "Edit Automated Message" : "Create Automated Message"}
+          isOpen={isSheetOpen}
+          onOpenChange={setIsSheetOpen}
+          size="lg"
+          footerActions={[
+            { label: "Cancel", onClick: handleCancel, variant: "outline" },
+            { label: editingMessage ? "Update Message" : "Save Message", onClick: handleSave }
+          ]}
+        >
+          <div className="space-y-6 pt-4">
+            {/* Trigger Selection */}
+            <div className="space-y-2">
+              <Label htmlFor="trigger">Trigger</Label>
+              <Select
+                value={newMessage.trigger}
+                onValueChange={(value) => setNewMessage(prev => ({ ...prev, trigger: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select when to send this message" />
+                </SelectTrigger>
+                <SelectContent>
+                  {triggerOptions.map((trigger) => (
+                    <SelectItem key={trigger} value={trigger}>
+                      {trigger}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Channels Selection */}
+            <div className="space-y-2">
+              <Label>Channels</Label>
+              <div className="flex gap-2 flex-wrap">
+                {channelOptions.map((channel) => (
+                  <Button
+                    key={channel}
+                    variant={newMessage.channels.includes(channel) ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => toggleChannel(channel)}
+                    type="button"
+                  >
+                    {channel}
+                  </Button>
+                ))}
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Select one or more channels to send this message
+              </p>
+            </div>
+
+            {/* Message Content */}
+            <div className="space-y-2">
+              <Label htmlFor="content">Message Content</Label>
+              <Textarea
+                id="content"
+                placeholder="Enter your message template here..."
+                value={newMessage.content}
+                onChange={(e) => setNewMessage(prev => ({ ...prev, content: e.target.value }))}
+                rows={4}
+              />
+              <p className="text-sm text-muted-foreground">
+                Use variables like {"{client_name}"}, {"{session_date}"}, {"{payment_link}"} for dynamic content
+              </p>
+            </div>
+          </div>
+        </AppSheetModal>
       </div>
     </SettingsPageWrapper>
   );

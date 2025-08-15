@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import SettingsPageWrapper from "@/components/settings/SettingsPageWrapper";
 import SettingsHeader from "@/components/settings/SettingsHeader";
 import SettingsSection from "@/components/SettingsSection";
@@ -10,9 +10,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Trash2 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Plus, Edit, Trash2, ChevronDown } from "lucide-react";
 
 export default function ClientMessaging() {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [editingMessage, setEditingMessage] = useState<number | null>(null);
   const [deleteMessageId, setDeleteMessageId] = useState<number | null>(null);
@@ -28,6 +30,7 @@ export default function ClientMessaging() {
       trigger: "1 day before session",
       channels: ["WhatsApp", "Email"],
       preview: "Hi {client_name}, just a reminder that your session is tomorrow at...",
+      isActive: true,
     }
   ];
 
@@ -40,6 +43,12 @@ export default function ClientMessaging() {
   ];
 
   const channelOptions = ["WhatsApp", "Email", "SMS"];
+
+  const variableOptions = [
+    { label: "Client Name", value: "{client_name}" },
+    { label: "Session Date", value: "{session_date}" },
+    { label: "Payment Link", value: "{payment_link}" },
+  ];
 
   const toggleChannel = (channel: string) => {
     setNewMessage(prev => ({
@@ -83,6 +92,29 @@ export default function ClientMessaging() {
     setNewMessage({ trigger: "", channels: [], content: "" });
   };
 
+  const insertVariable = (variable: string) => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const currentContent = newMessage.content;
+    const newContent = currentContent.substring(0, start) + variable + currentContent.substring(end);
+    
+    setNewMessage(prev => ({ ...prev, content: newContent }));
+    
+    // Focus back to textarea and set cursor position
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start + variable.length, start + variable.length);
+    }, 0);
+  };
+
+  const toggleMessageActive = (messageId: number) => {
+    // Static - no backend integration
+    console.log("Toggling message active state:", messageId);
+  };
+
   return (
     <SettingsPageWrapper>
       <SettingsHeader
@@ -113,6 +145,7 @@ export default function ClientMessaging() {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead>Active</TableHead>
                       <TableHead>Trigger</TableHead>
                       <TableHead>Channels</TableHead>
                       <TableHead>Message Preview</TableHead>
@@ -121,9 +154,22 @@ export default function ClientMessaging() {
                   </TableHeader>
                   <TableBody>
                     {messages.map((message) => (
-                      <TableRow key={message.id}>
+                      <TableRow key={message.id} className={!message.isActive ? "opacity-60" : ""}>
+                        <TableCell>
+                          <Switch
+                            checked={message.isActive}
+                            onCheckedChange={() => toggleMessageActive(message.id)}
+                          />
+                        </TableCell>
                         <TableCell className="font-medium">
-                          {message.trigger}
+                          <div className="flex items-center gap-2">
+                            {message.trigger}
+                            {!message.isActive && (
+                              <Badge variant="outline" className="text-xs text-muted-foreground">
+                                Inactive
+                              </Badge>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-1 flex-wrap">
@@ -197,61 +243,92 @@ export default function ClientMessaging() {
             { label: editingMessage ? "Update Message" : "Save Message", onClick: handleSave }
           ]}
         >
-          <div className="space-y-6 pt-4">
-            {/* Trigger Selection */}
-            <div className="space-y-2">
-              <Label htmlFor="trigger">Trigger</Label>
-              <Select
-                value={newMessage.trigger}
-                onValueChange={(value) => setNewMessage(prev => ({ ...prev, trigger: value }))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select when to send this message" />
-                </SelectTrigger>
-                <SelectContent>
-                  {triggerOptions.map((trigger) => (
-                    <SelectItem key={trigger} value={trigger}>
-                      {trigger}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Channels Selection */}
-            <div className="space-y-2">
-              <Label>Channels</Label>
-              <div className="flex gap-2 flex-wrap">
-                {channelOptions.map((channel) => (
-                  <Button
-                    key={channel}
-                    variant={newMessage.channels.includes(channel) ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => toggleChannel(channel)}
-                    type="button"
-                  >
-                    {channel}
-                  </Button>
-                ))}
+          <div className="space-y-8 pt-4">
+            {/* Basic Settings */}
+            <div className="space-y-6">
+              <h3 className="text-lg font-medium">Message Settings</h3>
+              
+              {/* Trigger Selection */}
+              <div className="space-y-2">
+                <Label htmlFor="trigger">Trigger</Label>
+                <Select
+                  value={newMessage.trigger}
+                  onValueChange={(value) => setNewMessage(prev => ({ ...prev, trigger: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select when to send this message" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {triggerOptions.map((trigger) => (
+                      <SelectItem key={trigger} value={trigger}>
+                        {trigger}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              <p className="text-sm text-muted-foreground">
-                Select one or more channels to send this message
-              </p>
+
+              {/* Channels Selection */}
+              <div className="space-y-2">
+                <Label>Channels</Label>
+                <div className="flex gap-2 flex-wrap">
+                  {channelOptions.map((channel) => (
+                    <Button
+                      key={channel}
+                      variant={newMessage.channels.includes(channel) ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => toggleChannel(channel)}
+                      type="button"
+                    >
+                      {channel}
+                    </Button>
+                  ))}
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Select one or more channels to send this message
+                </p>
+              </div>
             </div>
 
-            {/* Message Content */}
-            <div className="space-y-2">
-              <Label htmlFor="content">Message Content</Label>
-              <Textarea
-                id="content"
-                placeholder="Enter your message template here..."
-                value={newMessage.content}
-                onChange={(e) => setNewMessage(prev => ({ ...prev, content: e.target.value }))}
-                rows={4}
-              />
-              <p className="text-sm text-muted-foreground">
-                Use variables like {"{client_name}"}, {"{session_date}"}, {"{payment_link}"} for dynamic content
-              </p>
+            {/* Message Content Section */}
+            <div className="space-y-6">
+              <h3 className="text-lg font-medium">Message Content</h3>
+              
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="content">Message Template</Label>
+                  <Select onValueChange={insertVariable}>
+                    <SelectTrigger className="w-40">
+                      <SelectValue placeholder="Insert Variable" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {variableOptions.map((variable) => (
+                        <SelectItem key={variable.value} value={variable.value}>
+                          {variable.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Textarea
+                  ref={textareaRef}
+                  id="content"
+                  placeholder="Enter your message template here..."
+                  value={newMessage.content}
+                  onChange={(e) => setNewMessage(prev => ({ ...prev, content: e.target.value }))}
+                  rows={6}
+                />
+                <p className="text-sm text-muted-foreground">
+                  Variables will be replaced with real values when the message is sent. Use the dropdown above to insert variables at your cursor position.
+                </p>
+              </div>
+            </div>
+
+            {/* Future Sections Placeholder */}
+            <div className="space-y-4 pt-4 border-t border-border/50">
+              <div className="text-sm text-muted-foreground">
+                <p>Advanced settings like timing and conditional logic will be available in future updates.</p>
+              </div>
             </div>
           </div>
         </AppSheetModal>

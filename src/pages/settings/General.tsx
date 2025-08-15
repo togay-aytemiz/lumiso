@@ -30,8 +30,8 @@ export default function General() {
             {/* Logo Upload */}
             <div className="space-y-2">
               <Label htmlFor="logo-upload">Upload Logo</Label>
-              <div className="flex items-center gap-4">
-                <Button variant="outline" className="flex items-center gap-2">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                <Button variant="outline" className="flex items-center gap-2 w-full sm:w-fit">
                   <Upload className="h-4 w-4" />
                   Choose File
                 </Button>

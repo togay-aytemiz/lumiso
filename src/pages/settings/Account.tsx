@@ -205,25 +205,30 @@ export default function Account() {
                       </TableCell>
                       <TableCell>{member.email}</TableCell>
                       <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="h-auto p-1 bg-secondary/50 hover:bg-secondary rounded-full"
-                              disabled={member.isCurrentUser}
-                            >
-                              <Badge variant={member.role === "Owner" ? "default" : "secondary"} className="border-0 bg-transparent hover:bg-transparent">
-                                {member.role}
-                              </Badge>
-                              {!member.isCurrentUser && <ChevronDown className="h-3 w-3 ml-1" />}
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="start">
-                            <DropdownMenuItem onClick={() => {}}>Owner</DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => {}}>Member</DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                        {member.isCurrentUser ? (
+                          <Badge variant={member.role === "Owner" ? "default" : "secondary"}>
+                            {member.role}
+                          </Badge>
+                        ) : (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="h-auto p-1 bg-secondary/50 hover:bg-secondary rounded-full"
+                              >
+                                <Badge variant={member.role === "Owner" ? "default" : "secondary"} className="border-0 bg-transparent hover:bg-transparent">
+                                  {member.role}
+                                </Badge>
+                                <ChevronDown className="h-3 w-3 ml-1" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start">
+                              <DropdownMenuItem onClick={() => {}}>Owner</DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => {}}>Member</DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        )}
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
                         {member.lastActive}

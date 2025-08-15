@@ -308,10 +308,10 @@ export default function ClientMessaging() {
             <div className={`space-y-4 transition-opacity ${silentHours.enabled ? "opacity-100" : "opacity-50"}`}>
               <Label className="text-base font-medium">Time Window</Label>
               
-              {/* Mobile-responsive layout: flex on desktop, grid on mobile */}
-              <div className="flex flex-col sm:flex-row gap-4 sm:items-end">
+              {/* Mobile-responsive layout: compact inline layout */}
+              <div className="flex items-center gap-3 flex-wrap">
                 {/* Start Time */}
-                <div className="space-y-2 flex-1">
+                <div className="space-y-2">
                   <Label htmlFor="startTime" className="text-sm text-muted-foreground">
                     Start Time
                   </Label>
@@ -320,7 +320,7 @@ export default function ClientMessaging() {
                     onValueChange={(value) => setSilentHours(prev => ({ ...prev, startTime: value }))}
                     disabled={!silentHours.enabled}
                   >
-                    <SelectTrigger className="w-full sm:w-32">
+                    <SelectTrigger className="w-32">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="max-h-60">
@@ -333,8 +333,13 @@ export default function ClientMessaging() {
                   </Select>
                 </div>
 
+                {/* "to" connector */}
+                <div className="pt-6">
+                  <span className="text-muted-foreground">to</span>
+                </div>
+
                 {/* End Time */}
-                <div className="space-y-2 flex-1">
+                <div className="space-y-2">
                   <Label htmlFor="endTime" className="text-sm text-muted-foreground">
                     End Time
                   </Label>
@@ -343,7 +348,7 @@ export default function ClientMessaging() {
                     onValueChange={(value) => setSilentHours(prev => ({ ...prev, endTime: value }))}
                     disabled={!silentHours.enabled}
                   >
-                    <SelectTrigger className="w-full sm:w-32">
+                    <SelectTrigger className="w-32">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="max-h-60">

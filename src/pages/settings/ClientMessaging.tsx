@@ -11,7 +11,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Edit, Trash2, ChevronDown } from "lucide-react";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Input } from "@/components/ui/input";
+import { Plus, Edit, Trash2, ChevronDown, Clock, Zap, Info } from "lucide-react";
 
 export default function ClientMessaging() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -21,7 +23,9 @@ export default function ClientMessaging() {
   const [newMessage, setNewMessage] = useState({
     trigger: "",
     channels: [] as string[],
-    content: ""
+    content: "",
+    deliveryTiming: "scheduled" as "scheduled" | "immediate",
+    scheduledTime: "09:00"
   });
 
   const messages = [
@@ -64,7 +68,7 @@ export default function ClientMessaging() {
     console.log("Saving message:", newMessage);
     setIsSheetOpen(false);
     setEditingMessage(null);
-    setNewMessage({ trigger: "", channels: [], content: "" });
+    setNewMessage({ trigger: "", channels: [], content: "", deliveryTiming: "scheduled", scheduledTime: "09:00" });
   };
 
   const handleEdit = (messageId: number) => {
@@ -73,7 +77,9 @@ export default function ClientMessaging() {
       setNewMessage({
         trigger: message.trigger,
         channels: message.channels,
-        content: message.preview
+        content: message.preview,
+        deliveryTiming: "scheduled",
+        scheduledTime: "09:00"
       });
       setEditingMessage(messageId);
       setIsSheetOpen(true);
@@ -89,7 +95,7 @@ export default function ClientMessaging() {
   const handleCancel = () => {
     setIsSheetOpen(false);
     setEditingMessage(null);
-    setNewMessage({ trigger: "", channels: [], content: "" });
+    setNewMessage({ trigger: "", channels: [], content: "", deliveryTiming: "scheduled", scheduledTime: "09:00" });
   };
 
   const insertVariable = (variable: string) => {
@@ -113,6 +119,29 @@ export default function ClientMessaging() {
   const toggleMessageActive = (messageId: number) => {
     // Static - no backend integration
     console.log("Toggling message active state:", messageId);
+  };
+
+  // Helper functions for conditional delivery options
+  const isSessionRelativeTrigger = (trigger: string) => {
+    return trigger.includes("before session") || trigger.includes("session date") || trigger.includes("day before");
+  };
+
+  const isEventBasedTrigger = (trigger: string) => {
+    return trigger.includes("album") || trigger.includes("ready") || trigger.includes("booked") || trigger.includes("Custom");
+  };
+
+  const showImmediateOption = (trigger: string) => {
+    return isEventBasedTrigger(trigger);
+  };
+
+  // Update delivery timing when trigger changes
+  const handleTriggerChange = (value: string) => {
+    setNewMessage(prev => ({
+      ...prev,
+      trigger: value,
+      // Reset to scheduled for session-relative triggers, keep current for others
+      deliveryTiming: isSessionRelativeTrigger(value) ? "scheduled" : prev.deliveryTiming
+    }));
   };
 
   return (
@@ -248,25 +277,90 @@ export default function ClientMessaging() {
             <div className="space-y-6">
               <h3 className="text-lg font-medium">Message Settings</h3>
               
-              {/* Trigger Selection */}
-              <div className="space-y-2">
-                <Label htmlFor="trigger">Trigger</Label>
-                <Select
-                  value={newMessage.trigger}
-                  onValueChange={(value) => setNewMessage(prev => ({ ...prev, trigger: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select when to send this message" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {triggerOptions.map((trigger) => (
-                      <SelectItem key={trigger} value={trigger}>
-                        {trigger}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+               {/* Trigger Selection */}
+               <div className="space-y-2">
+                 <Label htmlFor="trigger">Trigger</Label>
+                 <Select
+                   value={newMessage.trigger}
+                   onValueChange={handleTriggerChange}
+                 >
+                   <SelectTrigger>
+                     <SelectValue placeholder="Select when to send this message" />
+                   </SelectTrigger>
+                   <SelectContent>
+                     {triggerOptions.map((trigger) => (
+                       <SelectItem key={trigger} value={trigger}>
+                         {trigger}
+                       </SelectItem>
+                     ))}
+                   </SelectContent>
+                 </Select>
+               </div>
+
+               {/* Message Delivery Timing Section */}
+               {newMessage.trigger && (
+                 <div className="space-y-4">
+                   <div className="space-y-3">
+                     <Label className="text-base font-medium">When should this message be sent?</Label>
+                     
+                     <RadioGroup
+                       value={newMessage.deliveryTiming}
+                       onValueChange={(value: "scheduled" | "immediate") => 
+                         setNewMessage(prev => ({ ...prev, deliveryTiming: value }))
+                       }
+                       className="space-y-3"
+                     >
+                       {/* Scheduled option - always available */}
+                       <div className="flex items-center space-x-3">
+                         <RadioGroupItem value="scheduled" id="scheduled" />
+                         <div className="flex items-center space-x-2">
+                           <Clock className="h-4 w-4 text-muted-foreground" />
+                           <Label htmlFor="scheduled" className="font-normal">
+                             At a specific time of day
+                           </Label>
+                         </div>
+                       </div>
+                       
+                       {/* Time picker for scheduled option */}
+                       {newMessage.deliveryTiming === "scheduled" && (
+                         <div className="ml-7 space-y-2">
+                           <Label htmlFor="scheduledTime" className="text-sm text-muted-foreground">
+                             Send this message at
+                           </Label>
+                           <Input
+                             id="scheduledTime"
+                             type="time"
+                             value={newMessage.scheduledTime}
+                             onChange={(e) => setNewMessage(prev => ({ ...prev, scheduledTime: e.target.value }))}
+                             className="w-32"
+                           />
+                         </div>
+                       )}
+
+                       {/* Immediate option - conditional visibility */}
+                       {showImmediateOption(newMessage.trigger) && (
+                         <div className="flex items-center space-x-3">
+                           <RadioGroupItem value="immediate" id="immediate" />
+                           <div className="flex items-center space-x-2">
+                             <Zap className="h-4 w-4 text-muted-foreground" />
+                             <Label htmlFor="immediate" className="font-normal">
+                               Immediately after the event occurs
+                             </Label>
+                           </div>
+                         </div>
+                       )}
+                     </RadioGroup>
+
+                     {/* Silent hours explanation */}
+                     <div className="flex items-start space-x-2 mt-4 p-3 bg-muted/50 rounded-lg">
+                       <Info className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                       <p className="text-sm text-muted-foreground leading-relaxed">
+                         Messages won't be sent during silent hours (e.g. 22:00–08:00). Scheduled messages will be deferred to the next morning.
+                       </p>
+                     </div>
+                   </div>
+                 </div>
+               )}
 
               {/* Channels Selection */}
               <div className="space-y-2">

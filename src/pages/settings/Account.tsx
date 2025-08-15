@@ -67,7 +67,7 @@ export default function Account() {
                   <AvatarFallback>JD</AvatarFallback>
                 </Avatar>
                 <div className="flex flex-col gap-2 min-w-0 flex-1">
-                  <Button variant="outline" className="flex items-center gap-2 w-full sm:w-auto">
+                  <Button variant="outline" className="flex items-center gap-2 w-full sm:w-fit">
                     <Upload className="h-4 w-4" />
                     Choose File
                   </Button>

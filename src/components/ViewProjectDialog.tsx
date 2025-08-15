@@ -494,7 +494,7 @@ export function ViewProjectDialog({
           <DialogHeader className="pb-4">
             <div className="flex items-center justify-between gap-2">
               <div className="flex-1 min-w-0 space-y-3">
-                {isEditing ? <div className="space-y-3">
+                {isEditing ? <div className="space-y-3 text-2xl font-bold text-left">
                       <Input value={editName} onChange={e => setEditName(e.target.value)} placeholder="Project name" className="text-2xl font-bold border rounded-md px-3 py-2" />
                       <Textarea value={editDescription} onChange={e => setEditDescription(e.target.value)} placeholder="Project description (optional)" className="text-base border rounded-md px-3 py-2 resize-none" rows={2} />
                       <ProjectTypeSelector value={editProjectTypeId} onValueChange={setEditProjectTypeId} disabled={isSaving} required />

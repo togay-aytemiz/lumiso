@@ -127,22 +127,22 @@ export default function Account() {
         >
           <div className="space-y-4">
             {days.map((day, index) => (
-              <div key={day} className="flex flex-col sm:flex-row sm:items-center gap-3 py-2">
-                <div className="flex items-center justify-between sm:justify-start sm:w-32">
-                  <Label className="text-sm font-medium">{dayLabels[index]}</Label>
+              <div key={day} className="space-y-2 sm:space-y-0">
+                {/* Desktop layout: single row */}
+                <div className="hidden sm:flex sm:items-center sm:gap-4 py-2">
                   <Switch
                     checked={workingHours[day as keyof typeof workingHours].enabled}
                     onCheckedChange={(enabled) => updateWorkingHours(day, "enabled", enabled)}
                   />
-                </div>
-
-                {workingHours[day as keyof typeof workingHours].enabled && (
-                  <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                  <Label className="text-sm font-medium min-w-[80px]">{dayLabels[index]}</Label>
+                  
+                  <div className="flex items-center gap-3">
                     <Select
                       value={workingHours[day as keyof typeof workingHours].start}
                       onValueChange={(value) => updateWorkingHours(day, "start", value)}
+                      disabled={!workingHours[day as keyof typeof workingHours].enabled}
                     >
-                      <SelectTrigger className="w-20 sm:w-24">
+                      <SelectTrigger className="w-24">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -157,8 +157,9 @@ export default function Account() {
                     <Select
                       value={workingHours[day as keyof typeof workingHours].end}
                       onValueChange={(value) => updateWorkingHours(day, "end", value)}
+                      disabled={!workingHours[day as keyof typeof workingHours].enabled}
                     >
-                      <SelectTrigger className="w-20 sm:w-24">
+                      <SelectTrigger className="w-24">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -168,7 +169,52 @@ export default function Account() {
                       </SelectContent>
                     </Select>
                   </div>
-                )}
+                </div>
+
+                {/* Mobile layout: stacked */}
+                <div className="sm:hidden space-y-2 py-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm font-medium">{dayLabels[index]}</Label>
+                    <Switch
+                      checked={workingHours[day as keyof typeof workingHours].enabled}
+                      onCheckedChange={(enabled) => updateWorkingHours(day, "enabled", enabled)}
+                    />
+                  </div>
+                  
+                  {workingHours[day as keyof typeof workingHours].enabled && (
+                    <div className="flex items-center gap-3 ml-4">
+                      <Select
+                        value={workingHours[day as keyof typeof workingHours].start}
+                        onValueChange={(value) => updateWorkingHours(day, "start", value)}
+                      >
+                        <SelectTrigger className="w-20">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="08:00">08:00</SelectItem>
+                          <SelectItem value="09:00">09:00</SelectItem>
+                          <SelectItem value="10:00">10:00</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      
+                      <span className="text-sm text-muted-foreground">to</span>
+                      
+                      <Select
+                        value={workingHours[day as keyof typeof workingHours].end}
+                        onValueChange={(value) => updateWorkingHours(day, "end", value)}
+                      >
+                        <SelectTrigger className="w-20">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="16:00">16:00</SelectItem>
+                          <SelectItem value="17:00">17:00</SelectItem>
+                          <SelectItem value="18:00">18:00</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                </div>
               </div>
             ))}
           </div>

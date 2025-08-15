@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 
 interface SettingsSectionProps {
   title: string;
-  description: string;
+  description?: string;
   action?: {
     label: string;
     onClick: () => void;
@@ -20,7 +20,7 @@ const SettingsSection = ({ title, description, action, children }: SettingsSecti
         <div className="flex items-center justify-between">
           <div>
             <CardTitle>{title}</CardTitle>
-            <CardDescription>{description}</CardDescription>
+            {description && <CardDescription>{description}</CardDescription>}
           </div>
           {action && (
             <Button onClick={action.onClick} className="flex items-center gap-2">

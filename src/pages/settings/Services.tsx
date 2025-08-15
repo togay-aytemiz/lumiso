@@ -7,8 +7,8 @@ export default function Services() {
   return (
     <SettingsPageWrapper>
       <SettingsHeader
-        title="Services & Pricing"
-        description="Manage your service offerings and pricing structure"
+        title="Packages & Services"
+        description="Create service packages and manage individual services for your business"
       />
       
       <div className="space-y-8">

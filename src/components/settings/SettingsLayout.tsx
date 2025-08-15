@@ -46,7 +46,7 @@ const settingsCategories = [
     icon: Users
   },
   {
-    label: "Services & Pricing",
+    label: "Packages & Services",
     path: "/settings/services",
     icon: Package
   },

@@ -6,7 +6,7 @@ interface SettingsPageWrapperProps {
 
 export default function SettingsPageWrapper({ children }: SettingsPageWrapperProps) {
   return (
-    <div className="p-6 sm:p-8 max-w-4xl">
+    <div className="p-6 sm:p-8 w-full">
       {children}
     </div>
   );

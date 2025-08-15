@@ -8,10 +8,10 @@ interface SettingsHeaderProps {
 
 export default function SettingsHeader({ title, description, children }: SettingsHeaderProps) {
   return (
-    <div className="mb-8">
+    <div className="mb-6 md:mb-8">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-3xl font-bold">{title}</h1>
+          <h1 className="text-2xl md:text-3xl font-bold">{title}</h1>
           {description && (
             <p className="text-muted-foreground mt-2">{description}</p>
           )}

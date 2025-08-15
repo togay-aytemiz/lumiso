@@ -76,9 +76,6 @@ export default function SettingsLayout() {
     return location.pathname === path;
   };
 
-  // Check for tablet view (768px - 1024px)
-  const isTablet = window.innerWidth >= 768 && window.innerWidth < 1024;
-
   // Calculate positions based on main sidebar state
   const mainSidebarWidth = isMobile ? '3rem' : (state === 'collapsed' ? '3rem' : '16rem');
   const settingsLeft = isMobile ? 'left-12' : (state === 'collapsed' ? 'left-12' : 'left-64');
@@ -88,12 +85,10 @@ export default function SettingsLayout() {
   return (
     <div className="flex min-h-screen bg-background">
       {/* Settings Secondary Sidebar - Fixed positioning for mobile, sticky for desktop */}
-      <div className={`${isMobile ? 'fixed top-0 left-12 z-20' : 'sticky top-0'} h-screen border-r bg-muted/30 ${isMobile || isTablet ? 'w-16' : 'w-64'} flex-shrink-0`}>
-        <div className={`p-6 ${isMobile || isTablet ? 'px-3 py-4' : ''} h-full overflow-y-auto`}>
-          {!isMobile && !isTablet && (
-            <h2 className="text-xl font-semibold mb-6">Settings</h2>
-          )}
-          <nav className={`space-y-1 ${isMobile || isTablet ? 'space-y-2' : ''}`}>
+      <div className={`${isMobile ? 'fixed top-0 left-12 z-20' : 'sticky top-0'} h-screen border-r bg-muted/30 ${isMobile ? 'w-16' : 'w-16 md:w-16 lg:w-64'} flex-shrink-0`}>
+        <div className={`p-6 ${isMobile ? 'px-3 py-4' : 'px-3 py-4 lg:px-6 lg:py-6'} h-full overflow-y-auto`}>
+          <h2 className="text-xl font-semibold mb-6 hidden lg:block">Settings</h2>
+          <nav className={`space-y-1 ${isMobile ? 'space-y-2' : 'space-y-2 lg:space-y-1'}`}>
             {settingsCategories.map((category) => {
               const active = isActive(category.path);
               return (
@@ -104,16 +99,14 @@ export default function SettingsLayout() {
                     active
                       ? "bg-muted text-sidebar-foreground"
                       : "text-muted-foreground hover:text-foreground"
-                  } ${isMobile || isTablet ? 'justify-center' : ''}`}
+                  } ${isMobile ? 'justify-center' : 'justify-center lg:justify-start'}`}
                 >
                   <category.icon className={`h-4 w-4 transition-colors ${
                     active 
                       ? "text-[hsl(var(--sidebar-primary))]" 
                       : "text-sidebar-foreground group-hover/item:text-[hsl(var(--sidebar-primary))]"
                   }`} />
-                  {!isMobile && !isTablet && (
-                    <span className="font-medium text-sm">{category.label}</span>
-                  )}
+                  <span className="font-medium text-sm hidden lg:block">{category.label}</span>
                 </NavLink>
               );
             })}
@@ -122,7 +115,7 @@ export default function SettingsLayout() {
       </div>
 
       {/* Main Content Area */}
-      <div className={`flex-1 min-w-0 ${isMobile || isTablet ? 'ml-28' : ''}`}>
+      <div className={`flex-1 min-w-0 ${isMobile ? 'ml-28' : 'ml-28 lg:ml-0'}`}>
         <Outlet />
       </div>
     </div>

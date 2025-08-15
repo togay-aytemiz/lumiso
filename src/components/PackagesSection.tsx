@@ -277,8 +277,7 @@ const PackagesSection = () => {
                        className="flex-1 h-10 min-w-0"
                        aria-label={`Edit package ${pkg.name}`}
                      >
-                       <Edit className="h-4 w-4 mr-1" />
-                       <span className="truncate">Edit</span>
+                       <Edit className="h-4 w-4" />
                      </Button>
                      <Button
                        variant="outline"
@@ -287,8 +286,7 @@ const PackagesSection = () => {
                        className="flex-1 h-10 min-w-0 text-destructive hover:text-destructive hover:bg-destructive/10"
                        aria-label={`Delete package ${pkg.name}`}
                      >
-                       <Trash2 className="h-4 w-4 mr-1" />
-                       <span className="truncate">Delete</span>
+                       <Trash2 className="h-4 w-4" />
                      </Button>
                    </div>
                 </div>

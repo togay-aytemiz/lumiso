@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import { Plus } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectSeparator } from "@/components/ui/select";
 
 interface AddServiceDialogProps {
   open: boolean;
@@ -205,6 +205,7 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded }: AddServ
                 size="sm"
                 onClick={handleCreateNewCategory}
                 disabled={!newCategoryName.trim()}
+                className="w-16"
               >
                 Add
               </Button>
@@ -216,6 +217,7 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded }: AddServ
                   setShowNewCategoryInput(false);
                   setNewCategoryName("");
                 }}
+                className="w-16"
               >
                 Cancel
               </Button>
@@ -233,16 +235,18 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded }: AddServ
               </SelectTrigger>
               <SelectContent>
                 {predefinedCategories.map((category) => (
-                  <SelectItem key={category} value={category}>
+                  <SelectItem key={category} value={category} className="hover:bg-accent hover:text-accent-foreground">
                     {category}
                   </SelectItem>
                 ))}
+                {categories.length > 0 && <SelectSeparator />}
                 {categories.map((category) => (
-                  <SelectItem key={category} value={category}>
+                  <SelectItem key={category} value={category} className="hover:bg-accent hover:text-accent-foreground">
                     {category}
                   </SelectItem>
                 ))}
-                <SelectItem value="create-new" className="text-primary">
+                <SelectSeparator />
+                <SelectItem value="create-new" className="text-primary hover:bg-accent hover:text-accent-foreground">
                   <div className="flex items-center">
                     <Plus className="mr-2 h-4 w-4" />
                     Create new category
@@ -497,6 +501,7 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
                 size="sm"
                 onClick={handleCreateNewCategory}
                 disabled={!newCategoryName.trim()}
+                className="w-16"
               >
                 Add
               </Button>
@@ -508,6 +513,7 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
                   setShowNewCategoryInput(false);
                   setNewCategoryName("");
                 }}
+                className="w-16"
               >
                 Cancel
               </Button>
@@ -525,16 +531,18 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
               </SelectTrigger>
               <SelectContent>
                 {predefinedCategories.map((category) => (
-                  <SelectItem key={category} value={category}>
+                  <SelectItem key={category} value={category} className="hover:bg-accent hover:text-accent-foreground">
                     {category}
                   </SelectItem>
                 ))}
+                {categories.length > 0 && <SelectSeparator />}
                 {categories.map((category) => (
-                  <SelectItem key={category} value={category}>
+                  <SelectItem key={category} value={category} className="hover:bg-accent hover:text-accent-foreground">
                     {category}
                   </SelectItem>
                 ))}
-                <SelectItem value="create-new" className="text-primary">
+                <SelectSeparator />
+                <SelectItem value="create-new" className="text-primary hover:bg-accent hover:text-accent-foreground">
                   <div className="flex items-center">
                     <Plus className="mr-2 h-4 w-4" />
                     Create new category

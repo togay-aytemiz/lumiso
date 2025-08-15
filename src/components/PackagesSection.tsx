@@ -106,8 +106,7 @@ const PackagesSection = () => {
             <div className="md:hidden mb-4">
               <Button 
                 onClick={() => setShowNewPackageDialog(true)} 
-                className="w-full h-12"
-                size="lg"
+                className="w-full"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Add Package

@@ -47,6 +47,8 @@ const ServiceAddOnsPicker = ({ services, value, onChange, navigate }: {
   onChange: (addons: string[]) => void;
   navigate: (path: string) => void;
 }) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [tempValue, setTempValue] = useState<string[]>([]);
   const [openItems, setOpenItems] = useState<string[]>([]);
 
   const groupedServices = useMemo(() => {
@@ -63,20 +65,33 @@ const ServiceAddOnsPicker = ({ services, value, onChange, navigate }: {
 
   const categories = useMemo(() => Object.keys(groupedServices).sort(), [groupedServices]);
 
-  const toggleService = (serviceName: string) => {
-    if (value.includes(serviceName)) {
-      onChange(value.filter(v => v !== serviceName));
-    } else {
-      onChange([...value, serviceName]);
-    }
-  };
-
-  const clearAll = () => onChange([]);
-
   const selectedServices = useMemo(
     () => services.filter((s) => value.includes(s.name)),
     [services, value]
   );
+
+  const handleEdit = () => {
+    setTempValue([...value]);
+    setIsEditing(true);
+  };
+
+  const handleSave = () => {
+    onChange(tempValue);
+    setIsEditing(false);
+  };
+
+  const handleCancel = () => {
+    setTempValue([]);
+    setIsEditing(false);
+  };
+
+  const toggleService = (serviceName: string) => {
+    if (tempValue.includes(serviceName)) {
+      setTempValue(prev => prev.filter(v => v !== serviceName));
+    } else {
+      setTempValue(prev => [...prev, serviceName]);
+    }
+  };
 
   if (services.length === 0) {
     return (
@@ -93,87 +108,123 @@ const ServiceAddOnsPicker = ({ services, value, onChange, navigate }: {
     );
   }
 
-  return (
-    <div className="space-y-3">
-      <Accordion
-        type="multiple"
-        value={openItems}
-        onValueChange={(v) => setOpenItems(v as string[])}
-        className="w-full"
-      >
-        {categories.map((category) => {
-          const items = groupedServices[category] || [];
-          const selectedCount = items.filter((s) => value.includes(s.name)).length;
-          return (
-            <AccordionItem key={category} value={category} className="border rounded-md mb-3">
-              <AccordionTrigger className="px-3 py-2 text-sm">
-                <div className="flex w-full items-center justify-between">
-                  <span className="font-medium">{category}</span>
-                  <span className="text-xs text-muted-foreground">
-                    {selectedCount}/{items.length}
-                  </span>
-                </div>
-              </AccordionTrigger>
-              <AccordionContent>
-                <div className="px-3 pb-3">
-                  <div className="flex flex-wrap gap-2">
-                    {items.map((service) => {
-                      const selected = value.includes(service.name);
-                      const price = service.selling_price ?? service.price ?? 0;
-                      return (
-                        <Button
-                          key={service.id}
-                          type="button"
-                          variant={selected ? "default" : "secondary"}
-                          onClick={() => toggleService(service.name)}
-                          className={cn(
-                            "h-8 rounded-full px-3 text-xs justify-start whitespace-nowrap",
-                            "overflow-hidden text-ellipsis",
-                            selected ? "" : "border",
-                          )}
-                          title={`${service.name}${price > 0 ? ` · ₺${price}` : ''}`}
-                        >
-                          <div className="flex items-center gap-2">
-                            {selected && <Check className="h-3 w-3" aria-hidden />}
-                            <span>
-                              {service.name}
-                              {price > 0 && (
-                                <>
-                                  <span className="mx-1">·</span>
-                                  <span className={selected ? "text-primary-foreground/80" : "text-muted-foreground"}>
-                                    ₺{price}
-                                  </span>
-                                </>
-                              )}
-                            </span>
-                          </div>
-                        </Button>
-                      );
-                    })}
+  // Edit mode - show accordion
+  if (isEditing) {
+    return (
+      <div className="space-y-3">
+        <Accordion
+          type="multiple"
+          value={openItems}
+          onValueChange={(v) => setOpenItems(v as string[])}
+          className="w-full"
+        >
+          {categories.map((category) => {
+            const items = groupedServices[category] || [];
+            const selectedCount = items.filter((s) => tempValue.includes(s.name)).length;
+            return (
+              <AccordionItem key={category} value={category} className="border rounded-md mb-3">
+                <AccordionTrigger className="px-3 py-2 text-sm">
+                  <div className="flex w-full items-center justify-between">
+                    <span className="font-medium">{category}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {selectedCount}/{items.length}
+                    </span>
                   </div>
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-          );
-        })}
-      </Accordion>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <div className="px-3 pb-3">
+                    <div className="flex flex-wrap gap-2">
+                      {items.map((service) => {
+                        const selected = tempValue.includes(service.name);
+                        const price = service.selling_price ?? service.price ?? 0;
+                        return (
+                          <Button
+                            key={service.id}
+                            type="button"
+                            variant={selected ? "default" : "secondary"}
+                            onClick={() => toggleService(service.name)}
+                            className={cn(
+                              "h-8 rounded-full px-3 text-xs justify-start whitespace-nowrap",
+                              "overflow-hidden text-ellipsis",
+                              selected ? "" : "border",
+                            )}
+                            title={`${service.name}${price > 0 ? ` · ₺${price}` : ''}`}
+                          >
+                            <div className="flex items-center gap-2">
+                              {selected && <Check className="h-3 w-3" aria-hidden />}
+                              <span>
+                                {service.name}
+                                {price > 0 && (
+                                  <>
+                                    <span className="mx-1">·</span>
+                                    <span className={selected ? "text-primary-foreground/80" : "text-muted-foreground"}>
+                                      ₺{price}
+                                    </span>
+                                  </>
+                                )}
+                              </span>
+                            </div>
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            );
+          })}
+        </Accordion>
 
-      <div className="rounded-md border p-2">
-        <div className="mb-2 flex items-center justify-between">
-          <span className="text-xs text-muted-foreground">Selected Add-ons</span>
+        {/* Save/Cancel buttons */}
+        <div className="flex gap-2 justify-end">
           <Button
-            variant="ghost"
-            size="sm"
-            onClick={clearAll}
-            disabled={value.length === 0}
-            className="h-7"
+            type="button"
+            variant="outline"
+            onClick={handleCancel}
+            className="h-8"
           >
-            Clear all
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            onClick={handleSave}
+            className="h-8"
+          >
+            Save
           </Button>
         </div>
-        {selectedServices.length === 0 ? (
-          <div className="text-xs text-muted-foreground">No add-ons selected</div>
-        ) : (
+      </div>
+    );
+  }
+
+  // View mode - show selected services or empty state
+  return (
+    <div className="space-y-3">
+      {selectedServices.length === 0 ? (
+        <div className="rounded-md border border-dashed p-4 text-center">
+          <p className="text-sm text-muted-foreground mb-2">No add-ons selected</p>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleEdit}
+            className="h-8"
+          >
+            Add Services
+          </Button>
+        </div>
+      ) : (
+        <div className="rounded-md border p-3">
+          <div className="mb-2 flex items-center justify-between">
+            <span className="text-sm font-medium">Selected Add-ons ({selectedServices.length})</span>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleEdit}
+              className="h-8"
+            >
+              Edit
+            </Button>
+          </div>
           <div className="flex flex-wrap gap-2">
             {selectedServices.map((service) => {
               const price = service.selling_price ?? service.price ?? 0;
@@ -192,23 +243,12 @@ const ServiceAddOnsPicker = ({ services, value, onChange, navigate }: {
                       </>
                     )}
                   </span>
-                  <button
-                    className="ml-2 inline-flex rounded-full p-0.5 hover:text-foreground"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      toggleService(service.name);
-                    }}
-                    aria-label={`Remove ${service.name}`}
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
                 </Badge>
               );
             })}
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };

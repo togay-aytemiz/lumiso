@@ -56,20 +56,20 @@ export default function DangerZone() {
         description="These actions are destructive and cannot be undone. Proceed with caution."
       />
       
-      <div className="space-y-8">
+      <div className="space-y-6">
         <SettingsSection
           title="Delete All Data"
           description="Permanently remove all your data from our servers"
         >
-          <div className="space-y-6">
-            <div className="rounded-lg border border-destructive/20 bg-destructive/10 p-6">
-              <div className="flex items-start gap-4">
-                <AlertTriangle className="h-6 w-6 text-destructive flex-shrink-0 mt-0.5" />
-                <div className="space-y-3 flex-1">
-                  <h3 className="font-semibold text-destructive">
+          <div className="space-y-4">
+            <div className="rounded-lg border border-destructive/20 bg-destructive/10 p-4 md:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-4">
+                <AlertTriangle className="h-5 w-5 md:h-6 md:w-6 text-destructive flex-shrink-0" />
+                <div className="space-y-3 flex-1 min-w-0">
+                  <h3 className="font-semibold text-destructive text-sm md:text-base">
                     Permanently Delete All Data
                   </h3>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-xs md:text-sm text-muted-foreground leading-relaxed">
                     This action will permanently delete all of your leads, projects, sessions, 
                     reminders, payments, and associated data. This action cannot be undone and 
                     all data will be lost forever.
@@ -79,24 +79,25 @@ export default function DangerZone() {
                     <AlertDialogTrigger asChild>
                       <Button 
                         variant="destructive" 
-                        className="w-full sm:w-auto"
+                        className="w-full mt-4"
                         disabled={isDeleting}
+                        size="default"
                       >
                         <Trash2 className="h-4 w-4 mr-2" />
                         Delete All Data
                       </Button>
                     </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+                    <AlertDialogContent className="mx-4 max-w-md">
+                      <AlertDialogHeader className="space-y-3">
+                        <AlertDialogTitle className="flex items-center gap-2 text-destructive text-base">
                           <AlertTriangle className="h-5 w-5" />
                           Confirm Data Deletion
                         </AlertDialogTitle>
-                        <AlertDialogDescription className="space-y-3">
+                        <AlertDialogDescription className="space-y-3 text-sm">
                           <p>
                             This action will permanently delete all of your data including:
                           </p>
-                          <ul className="list-disc list-inside space-y-1 text-sm">
+                          <ul className="list-disc list-inside space-y-1 text-xs">
                             <li>All leads and their information</li>
                             <li>All projects and their details</li>
                             <li>All sessions and appointments</li>
@@ -104,35 +105,35 @@ export default function DangerZone() {
                             <li>All payment records</li>
                             <li>All custom settings and configurations</li>
                           </ul>
-                          <p className="text-destructive font-medium">
+                          <p className="text-destructive font-medium text-sm">
                             This action cannot be undone. Please enter your account password to confirm.
                           </p>
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       
                       <div className="space-y-2">
-                        <Label htmlFor="confirm-password">Account Password</Label>
+                        <Label htmlFor="confirm-password" className="text-sm">Account Password</Label>
                         <Input
                           id="confirm-password"
                           type="password"
                           placeholder="Enter your password"
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
-                          className="border-destructive/30 focus:border-destructive"
+                          className="border-destructive/30 focus:border-destructive h-10"
                         />
                       </div>
                       
-                      <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+                      <AlertDialogFooter className="flex-col gap-2 sm:flex-row">
                         <AlertDialogCancel 
                           onClick={() => setPassword("")}
-                          className="w-full sm:w-auto"
+                          className="w-full order-2 sm:order-1 sm:w-auto"
                         >
                           Cancel
                         </AlertDialogCancel>
                         <AlertDialogAction
                           onClick={handleDeleteAllData}
                           disabled={!password || isDeleting}
-                          className="w-full sm:w-auto bg-destructive hover:bg-destructive/90"
+                          className="w-full order-1 sm:order-2 sm:w-auto bg-destructive hover:bg-destructive/90"
                         >
                           {isDeleting ? (
                             <>

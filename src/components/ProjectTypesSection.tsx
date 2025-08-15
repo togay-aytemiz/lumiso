@@ -113,10 +113,14 @@ const ProjectTypesSection = () => {
   };
 
   const onSubmit = async (data: ProjectTypeForm) => {
+    console.log('=== PROJECT TYPE SUBMIT START ===');
+    console.log('Form data:', data);
+    console.log('Editing type:', editingType);
     setSubmitting(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
+      console.log('User authenticated:', user.id);
 
       if (editingType) {
         // Update existing type - let the database trigger handle default switching

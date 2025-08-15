@@ -177,17 +177,33 @@ export function EditProjectTypeDialog({ type, open, onOpenChange, onTypeUpdated 
       return;
     }
 
+    console.log('=== EDIT PROJECT TYPE SUBMIT ===');
+    console.log('Form data:', formData);
+    console.log('Type being edited:', type);
+    
     setLoading(true);
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+      
+      console.log('User authenticated:', user.id);
+      console.log('Updating project type with data:', { name: formData.name.trim(), is_default: formData.is_default });
+      
       const { error } = await supabase
         .from('project_types')
         .update({
           name: formData.name.trim(),
           is_default: formData.is_default,
         })
-        .eq('id', type.id);
+        .eq('id', type.id)
+        .eq('user_id', user.id); // IMPORTANT: Security - only update user's own types
 
-      if (error) throw error;
+      if (error) {
+        console.error('Database error:', error);
+        throw error;
+      }
+      
+      console.log('Project type updated successfully');
 
       toast({
         title: "Success",

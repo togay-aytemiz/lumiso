@@ -24,6 +24,7 @@ import IntegrationsSettings from "./pages/settings/Integrations";
 import ClientMessagingSettings from "./pages/settings/ClientMessaging";
 import ContractsSettings from "./pages/settings/Contracts";
 import BillingSettings from "./pages/settings/Billing";
+import DangerZoneSettings from "./pages/settings/DangerZone";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -61,6 +62,7 @@ const App = () => (
                 <Route path="client-messaging" element={<ClientMessagingSettings />} />
                 <Route path="contracts" element={<ContractsSettings />} />
                 <Route path="billing" element={<BillingSettings />} />
+                <Route path="danger-zone" element={<DangerZoneSettings />} />
               </Route>
             </Route>
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

@@ -9,7 +9,8 @@ import {
   Plug, 
   FileText, 
   CreditCard,
-  Settings as SettingsIcon
+  Settings as SettingsIcon,
+  AlertTriangle
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useSidebar } from "@/components/ui/sidebar";
@@ -64,6 +65,12 @@ const settingsCategories = [
     label: "Billing & Payments",
     path: "/settings/billing",
     icon: CreditCard
+  },
+  {
+    label: "Danger Zone",
+    path: "/settings/danger-zone",
+    icon: AlertTriangle,
+    isDanger: true
   }
 ];
 
@@ -91,20 +98,23 @@ export default function SettingsLayout() {
           <nav className={`space-y-1 ${isMobile ? 'space-y-2' : 'space-y-2 lg:space-y-1'}`}>
             {settingsCategories.map((category) => {
               const active = isActive(category.path);
+              const isDanger = 'isDanger' in category && category.isDanger;
               return (
                 <NavLink
                   key={category.path}
                   to={category.path}
                   className={`group/item w-full h-10 px-3 py-3 text-left transition-all duration-200 rounded-lg hover:bg-muted/50 flex items-center gap-3 ${
                     active
-                      ? "bg-muted text-sidebar-foreground"
-                      : "text-muted-foreground hover:text-foreground"
+                      ? `${isDanger ? 'bg-destructive/10 text-destructive' : 'bg-muted text-sidebar-foreground'}`
+                      : `${isDanger ? 'text-destructive hover:text-destructive' : 'text-muted-foreground hover:text-foreground'}`
                   } ${isMobile ? 'justify-center' : 'justify-center lg:justify-start'}`}
                 >
                   <category.icon className={`h-4 w-4 transition-colors ${
-                    active 
-                      ? "text-[hsl(var(--sidebar-primary))]" 
-                      : "text-sidebar-foreground group-hover/item:text-[hsl(var(--sidebar-primary))]"
+                    isDanger
+                      ? (active ? "text-destructive" : "text-destructive group-hover/item:text-destructive")
+                      : (active 
+                          ? "text-[hsl(var(--sidebar-primary))]" 
+                          : "text-sidebar-foreground group-hover/item:text-[hsl(var(--sidebar-primary))]")
                   }`} />
                   <span className="font-medium text-sm hidden lg:block">{category.label}</span>
                 </NavLink>

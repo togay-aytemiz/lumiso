@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Plus, Edit, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import SettingsSection from "./SettingsSection";
@@ -22,6 +23,8 @@ const PackagesSection = () => {
   const [showNewPackageDialog, setShowNewPackageDialog] = useState(false);
   const [editingPackage, setEditingPackage] = useState<Package | null>(null);
   const [showEditPackageDialog, setShowEditPackageDialog] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [packageToDelete, setPackageToDelete] = useState<Package | null>(null);
   const { toast } = useToast();
 
   // Mock data for now since no backend is required yet
@@ -50,11 +53,20 @@ const PackagesSection = () => {
     }
   ]);
 
-  const handleDeletePackage = (packageId: string) => {
-    toast({
-      title: "Package deleted",
-      description: "The package has been removed successfully.",
-    });
+  const handleDeleteClick = (pkg: Package) => {
+    setPackageToDelete(pkg);
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleDeletePackage = () => {
+    if (packageToDelete) {
+      toast({
+        title: "Package deleted",
+        description: `Package "${packageToDelete.name}" has been removed successfully.`,
+      });
+      setDeleteConfirmOpen(false);
+      setPackageToDelete(null);
+    }
   };
 
   const formatDuration = (duration: string) => {
@@ -170,7 +182,7 @@ const PackagesSection = () => {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => handleDeletePackage(pkg.id)}
+                              onClick={() => handleDeleteClick(pkg)}
                               className="text-destructive hover:text-destructive hover:bg-destructive/10"
                             >
                               <Trash2 className="h-4 w-4" />
@@ -203,6 +215,23 @@ const PackagesSection = () => {
           setShowEditPackageDialog(false);
         }}
       />
+
+      <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Package</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{packageToDelete?.name}"? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeletePackage} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete Package
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };

@@ -119,23 +119,7 @@ const ProjectTypesSection = () => {
       if (!user) throw new Error('Not authenticated');
 
       if (editingType) {
-        // If setting this as default, first unset all other defaults
-        if (data.is_default) {
-          console.log('Unsetting other defaults for user:', user.id);
-          const { error: unsetError } = await supabase
-            .from('project_types')
-            .update({ is_default: false })
-            .eq('user_id', user.id)
-            .neq('id', editingType.id);
-
-          if (unsetError) {
-            console.error('Error unsetting defaults:', unsetError);
-            throw unsetError;
-          }
-          console.log('Successfully unset other defaults');
-        }
-
-        // Update existing type
+        // Update existing type - let the database trigger handle default switching
         console.log('Updating type:', editingType.id, 'with data:', data);
         const { error } = await supabase
           .from('project_types')
@@ -163,17 +147,7 @@ const ProjectTypesSection = () => {
         }
         setIsEditDialogOpen(false);
       } else {
-        // If setting this new type as default, first unset all other defaults
-        if (data.is_default) {
-          const { error: unsetError } = await supabase
-            .from('project_types')
-            .update({ is_default: false })
-            .eq('user_id', user.id);
-
-          if (unsetError) throw unsetError;
-        }
-
-        // Create new type
+        // Create new type - let the database trigger handle default switching
         const { error } = await supabase
           .from('project_types')
           .insert({

@@ -21,6 +21,7 @@ import ProjectsSettings from "./pages/settings/Projects";
 import LeadsSettings from "./pages/settings/Leads";
 import ServicesSettings from "./pages/settings/Services";
 import IntegrationsSettings from "./pages/settings/Integrations";
+import ClientMessagingSettings from "./pages/settings/ClientMessaging";
 import ContractsSettings from "./pages/settings/Contracts";
 import BillingSettings from "./pages/settings/Billing";
 import NotFound from "./pages/NotFound";
@@ -57,6 +58,7 @@ const App = () => (
                 <Route path="leads" element={<LeadsSettings />} />
                 <Route path="services" element={<ServicesSettings />} />
                 <Route path="integrations" element={<IntegrationsSettings />} />
+                <Route path="client-messaging" element={<ClientMessagingSettings />} />
                 <Route path="contracts" element={<ContractsSettings />} />
                 <Route path="billing" element={<BillingSettings />} />
               </Route>

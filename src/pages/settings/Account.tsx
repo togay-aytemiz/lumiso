@@ -61,13 +61,13 @@ export default function Account() {
             {/* Avatar Upload */}
             <div className="space-y-2">
               <Label htmlFor="avatar-upload">Profile Photo</Label>
-              <div className="flex items-center gap-4">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                 <Avatar className="h-16 w-16">
                   <AvatarImage src="" />
                   <AvatarFallback>JD</AvatarFallback>
                 </Avatar>
-                <div className="flex flex-col gap-2">
-                  <Button variant="outline" className="flex items-center gap-2">
+                <div className="flex flex-col gap-2 min-w-0 flex-1">
+                  <Button variant="outline" className="flex items-center gap-2 w-full sm:w-auto">
                     <Upload className="h-4 w-4" />
                     Choose File
                   </Button>
@@ -182,12 +182,12 @@ export default function Account() {
                   </div>
                   
                   {workingHours[day as keyof typeof workingHours].enabled && (
-                    <div className="flex items-center gap-3 ml-4">
+                    <div className="flex items-center gap-2 ml-4">
                       <Select
                         value={workingHours[day as keyof typeof workingHours].start}
                         onValueChange={(value) => updateWorkingHours(day, "start", value)}
                       >
-                        <SelectTrigger className="w-20">
+                        <SelectTrigger className="w-[70px] text-xs">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -197,13 +197,13 @@ export default function Account() {
                         </SelectContent>
                       </Select>
                       
-                      <span className="text-sm text-muted-foreground">to</span>
+                      <span className="text-xs text-muted-foreground">to</span>
                       
                       <Select
                         value={workingHours[day as keyof typeof workingHours].end}
                         onValueChange={(value) => updateWorkingHours(day, "end", value)}
                       >
-                        <SelectTrigger className="w-20">
+                        <SelectTrigger className="w-[70px] text-xs">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>

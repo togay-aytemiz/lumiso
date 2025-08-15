@@ -12,6 +12,7 @@ import {
   Settings as SettingsIcon
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useSidebar } from "@/components/ui/sidebar";
 
 const settingsCategories = [
   {
@@ -69,18 +70,23 @@ const settingsCategories = [
 export default function SettingsLayout() {
   const location = useLocation();
   const isMobile = useIsMobile();
+  const { state } = useSidebar(); // Get main sidebar state
   
   const isActive = (path: string) => {
     return location.pathname === path;
   };
 
+  // Calculate positions based on main sidebar state
+  const mainSidebarWidth = isMobile ? '3rem' : (state === 'collapsed' ? '3rem' : '16rem');
+  const settingsLeft = isMobile ? 'left-12' : (state === 'collapsed' ? 'left-12' : 'left-64');
+  const totalMargin = isMobile ? 'ml-28' : (state === 'collapsed' ? 'ml-28' : '');
+  const customMargin = !isMobile && state === 'expanded' ? '32rem' : undefined;
+
   return (
     <div className="flex min-h-screen bg-background">
-      {/* Settings Secondary Sidebar - Fixed position accounting for main sidebar */}
-      <div className={`fixed top-0 h-screen border-r bg-muted/30 z-20 ${
-        isMobile 
-          ? 'left-12 w-16' // Account for collapsed main sidebar on mobile (3rem = 48px)
-          : 'left-64 w-64' // Account for expanded main sidebar on desktop (16rem = 256px)
+      {/* Settings Secondary Sidebar - Dynamic positioning based on main sidebar state */}
+      <div className={`fixed top-0 h-screen border-r bg-muted/30 z-20 ${settingsLeft} ${
+        isMobile ? 'w-16' : 'w-64'
       }`}>
         <div className={`p-6 ${isMobile ? 'px-3 py-4' : ''} h-full overflow-y-auto`}>
           {!isMobile && (
@@ -114,12 +120,8 @@ export default function SettingsLayout() {
         </div>
       </div>
 
-      {/* Main Content Area with left margin to account for both sidebars */}
-      <div className={`flex-1 min-w-0 ${
-        isMobile 
-          ? 'ml-28' // 3rem (main) + 4rem (settings) = 7rem = 112px
-          : '' // Use inline style for custom value
-      }`} style={!isMobile ? { marginLeft: '32rem' } : undefined}>
+      {/* Main Content Area with dynamic margin based on sidebar states */}
+      <div className={`flex-1 min-w-0 ${totalMargin}`} style={customMargin ? { marginLeft: customMargin } : undefined}>
         <Outlet />
       </div>
     </div>

@@ -127,12 +127,9 @@ export default function Account() {
         >
           <div className="space-y-4">
             {days.map((day, index) => (
-              <div key={day} className="flex items-center gap-4 py-2">
-                <div className="w-24">
+              <div key={day} className="flex flex-col sm:flex-row sm:items-center gap-3 py-2">
+                <div className="flex items-center justify-between sm:justify-start sm:w-32">
                   <Label className="text-sm font-medium">{dayLabels[index]}</Label>
-                </div>
-                
-                <div className="flex items-center gap-2">
                   <Switch
                     checked={workingHours[day as keyof typeof workingHours].enabled}
                     onCheckedChange={(enabled) => updateWorkingHours(day, "enabled", enabled)}
@@ -140,12 +137,12 @@ export default function Account() {
                 </div>
 
                 {workingHours[day as keyof typeof workingHours].enabled && (
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
                     <Select
                       value={workingHours[day as keyof typeof workingHours].start}
                       onValueChange={(value) => updateWorkingHours(day, "start", value)}
                     >
-                      <SelectTrigger className="w-24">
+                      <SelectTrigger className="w-20 sm:w-24">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -161,7 +158,7 @@ export default function Account() {
                       value={workingHours[day as keyof typeof workingHours].end}
                       onValueChange={(value) => updateWorkingHours(day, "end", value)}
                     >
-                      <SelectTrigger className="w-24">
+                      <SelectTrigger className="w-20 sm:w-24">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -183,7 +180,7 @@ export default function Account() {
         >
           <div className="space-y-6">
             {/* User List */}
-            <div>
+            <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -271,16 +268,16 @@ export default function Account() {
             <div className="space-y-4 pt-4 border-t">
               <div>
                 <Label htmlFor="invite-email">Invite New Member</Label>
-                <div className="flex gap-2 mt-2">
+                <div className="flex flex-col sm:flex-row gap-2 mt-2">
                   <Input
                     id="invite-email"
                     type="email"
                     placeholder="Enter email address"
                     value={inviteEmail}
                     onChange={(e) => setInviteEmail(e.target.value)}
-                    className="max-w-md"
+                    className="flex-1 min-w-0"
                   />
-                  <Button>Send Invite</Button>
+                  <Button className="shrink-0 sm:w-auto">Send Invite</Button>
                 </div>
               </div>
               

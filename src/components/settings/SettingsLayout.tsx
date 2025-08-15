@@ -2,6 +2,7 @@ import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { 
   User, 
   Bell, 
+  MessageSquare,
   FolderOpen, 
   Users, 
   DollarSign, 
@@ -27,6 +28,11 @@ const settingsCategories = [
     label: "Notifications",
     path: "/settings/notifications",
     icon: Bell
+  },
+  {
+    label: "Client Messaging",
+    path: "/settings/client-messaging",
+    icon: MessageSquare
   },
   {
     label: "Projects & Sessions",

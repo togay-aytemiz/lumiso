@@ -76,8 +76,12 @@ export default function SettingsLayout() {
 
   return (
     <div className="flex min-h-screen bg-background">
-      {/* Settings Secondary Sidebar - Fixed position */}
-      <div className={`fixed left-0 top-0 h-screen border-r bg-muted/30 ${isMobile ? 'w-16' : 'w-64'} z-30`}>
+      {/* Settings Secondary Sidebar - Fixed position accounting for main sidebar */}
+      <div className={`fixed top-0 h-screen border-r bg-muted/30 z-20 ${
+        isMobile 
+          ? 'left-12 w-16' // Account for collapsed main sidebar on mobile (3rem = 48px)
+          : 'left-64 w-64' // Account for expanded main sidebar on desktop (16rem = 256px)
+      }`}>
         <div className={`p-6 ${isMobile ? 'px-3 py-4' : ''} h-full overflow-y-auto`}>
           {!isMobile && (
             <h2 className="text-xl font-semibold mb-6">Settings</h2>
@@ -110,8 +114,12 @@ export default function SettingsLayout() {
         </div>
       </div>
 
-      {/* Main Content Area with left margin to account for fixed sidebar */}
-      <div className={`flex-1 min-w-0 ${isMobile ? 'ml-16' : 'ml-64'}`}>
+      {/* Main Content Area with left margin to account for both sidebars */}
+      <div className={`flex-1 min-w-0 ${
+        isMobile 
+          ? 'ml-28' // 3rem (main) + 4rem (settings) = 7rem = 112px
+          : '' // Use inline style for custom value
+      }`} style={!isMobile ? { marginLeft: '32rem' } : undefined}>
         <Outlet />
       </div>
     </div>

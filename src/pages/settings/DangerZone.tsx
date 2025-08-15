@@ -79,7 +79,7 @@ export default function DangerZone() {
                     <AlertDialogTrigger asChild>
                       <Button 
                         variant="destructive" 
-                        className="w-full mt-4"
+                        className="w-full sm:w-fit mt-4"
                         disabled={isDeleting}
                         size="default"
                       >

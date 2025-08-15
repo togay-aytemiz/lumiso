@@ -14,7 +14,6 @@ import ReminderCard from "@/components/ReminderCard";
 import { formatLongDate, formatTime } from "@/lib/utils";
 import { useCalendarSync } from "@/hooks/useCalendarSync";
 import DateTimePicker from "@/components/ui/date-time-picker";
-
 interface Activity {
   id: string;
   type: string;
@@ -25,9 +24,10 @@ interface Activity {
   completed?: boolean;
   lead_id: string;
   project_id?: string;
-  projects?: { name: string }; // Add projects relation for project name
+  projects?: {
+    name: string;
+  }; // Add projects relation for project name
 }
-
 interface AuditLog {
   id: string;
   entity_type: string;
@@ -38,7 +38,6 @@ interface AuditLog {
   session_project_id?: string;
   project_name?: string;
 }
-
 interface Session {
   id: string;
   session_date: string;
@@ -51,68 +50,63 @@ interface Session {
     name: string;
   };
 }
-
 interface ActivitySectionProps {
   leadId: string;
   leadName?: string;
 }
-
-const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
+const ActivitySection = ({
+  leadId,
+  leadName
+}: ActivitySectionProps) => {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  
+
   // Form state
   const [content, setContent] = useState('');
   const [isReminderMode, setIsReminderMode] = useState(false);
   const [reminderDateTime, setReminderDateTime] = useState('');
-  
-  const { createReminderEvent } = useCalendarSync();
-
+  const {
+    createReminderEvent
+  } = useCalendarSync();
   useEffect(() => {
     fetchActivities();
     fetchAuditLogs();
     fetchSessions();
   }, [leadId]);
-
   const fetchActivities = async () => {
     try {
-      const { data, error } = await supabase
-        .from('activities')
-        .select(`
+      const {
+        data,
+        error
+      } = await supabase.from('activities').select(`
           id, type, content, reminder_date, reminder_time, created_at, completed, lead_id, project_id,
           projects:project_id (name)
-        `)
-        .eq('lead_id', leadId)
-        .order('created_at', { ascending: false });
-
+        `).eq('lead_id', leadId).order('created_at', {
+        ascending: false
+      });
       if (error) throw error;
 
       // Exclude reminders/notes belonging to archived projects
-      const { data: userData } = await supabase.auth.getUser();
+      const {
+        data: userData
+      } = await supabase.auth.getUser();
       const userId = userData.user?.id;
       let filtered = data || [];
       if (userId) {
-        const { data: archivedStatus } = await supabase
-          .from('project_statuses')
-          .select('id, name')
-          .eq('user_id', userId)
-          .ilike('name', 'archived')
-          .maybeSingle();
-
+        const {
+          data: archivedStatus
+        } = await supabase.from('project_statuses').select('id, name').eq('user_id', userId).ilike('name', 'archived').maybeSingle();
         if (archivedStatus?.id) {
-          const { data: archivedProjects } = await supabase
-            .from('projects')
-            .select('id')
-            .eq('lead_id', leadId)
-            .eq('status_id', archivedStatus.id);
+          const {
+            data: archivedProjects
+          } = await supabase.from('projects').select('id').eq('lead_id', leadId).eq('status_id', archivedStatus.id);
           const archivedIds = new Set((archivedProjects || []).map(p => p.id));
           filtered = filtered.filter(a => !a.project_id || !archivedIds.has(a.project_id));
         }
       }
-
       setActivities(filtered);
     } catch (error: any) {
       console.error('Error fetching activities:', error);
@@ -120,94 +114,78 @@ const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
   };
   const fetchSessions = async () => {
     try {
-      const { data, error } = await supabase
-        .from('sessions')
-        .select(`
+      const {
+        data,
+        error
+      } = await supabase.from('sessions').select(`
           id, session_date, session_time, notes, status, created_at, project_id,
           projects:project_id (name)
-        `)
-        .eq('lead_id', leadId)
-        .order('created_at', { ascending: false });
-
+        `).eq('lead_id', leadId).order('created_at', {
+        ascending: false
+      });
       if (error) throw error;
 
       // Exclude sessions belonging to archived projects
-      const { data: userData } = await supabase.auth.getUser();
+      const {
+        data: userData
+      } = await supabase.auth.getUser();
       const userId = userData.user?.id;
       let filtered = data || [];
       if (userId) {
-        const { data: archivedStatus } = await supabase
-          .from('project_statuses')
-          .select('id, name')
-          .eq('user_id', userId)
-          .ilike('name', 'archived')
-          .maybeSingle();
+        const {
+          data: archivedStatus
+        } = await supabase.from('project_statuses').select('id, name').eq('user_id', userId).ilike('name', 'archived').maybeSingle();
         if (archivedStatus?.id) {
-          const { data: archivedProjects } = await supabase
-            .from('projects')
-            .select('id')
-            .eq('lead_id', leadId)
-            .eq('status_id', archivedStatus.id);
+          const {
+            data: archivedProjects
+          } = await supabase.from('projects').select('id').eq('lead_id', leadId).eq('status_id', archivedStatus.id);
           const archivedIds = new Set((archivedProjects || []).map(p => p.id));
           filtered = filtered.filter(s => !s.project_id || !archivedIds.has(s.project_id));
         }
       }
-
       setSessions(filtered || []);
     } catch (error: any) {
       console.error('Error fetching sessions:', error);
     }
   };
-
   const fetchAuditLogs = async () => {
     try {
       // Get sessions to help enrich with project names
-      const { data: sessionsData } = await supabase
-        .from('sessions')
-        .select('id, project_id')
-        .eq('lead_id', leadId);
+      const {
+        data: sessionsData
+      } = await supabase.from('sessions').select('id, project_id').eq('lead_id', leadId);
 
       // Get projects for this lead for names and filtering project logs
-      const { data: projectsForLead } = await supabase
-        .from('projects')
-        .select('id, name')
-        .eq('lead_id', leadId);
+      const {
+        data: projectsForLead
+      } = await supabase.from('projects').select('id, name').eq('lead_id', leadId);
       const projectIds = [...new Set((projectsForLead || []).map(p => p.id))];
 
       // Session audit logs for this lead (via session new/old values)
-      const { data: allSessionAuditLogs } = await supabase
-        .from('audit_log')
-        .select('*')
-        .eq('entity_type', 'session');
+      const {
+        data: allSessionAuditLogs
+      } = await supabase.from('audit_log').select('*').eq('entity_type', 'session');
       const sessionAuditLogs = (allSessionAuditLogs || []).filter(log => {
         const sessionData = log.new_values || log.old_values;
-        return sessionData && typeof sessionData === 'object' && sessionData !== null &&
-               'lead_id' in sessionData && sessionData.lead_id === leadId;
+        return sessionData && typeof sessionData === 'object' && sessionData !== null && 'lead_id' in sessionData && sessionData.lead_id === leadId;
       });
 
       // Lead audit logs
-      const { data: leadAuditLogs } = await supabase
-        .from('audit_log')
-        .select('*')
-        .eq('entity_id', leadId);
+      const {
+        data: leadAuditLogs
+      } = await supabase.from('audit_log').select('*').eq('entity_id', leadId);
 
       // Project audit logs (archived/restored)
       let projectAuditLogs: any[] = [];
       if (projectIds.length > 0) {
-        const { data: projLogs } = await supabase
-          .from('audit_log')
-          .select('*')
-          .eq('entity_type', 'project')
-          .in('entity_id', projectIds);
+        const {
+          data: projLogs
+        } = await supabase.from('audit_log').select('*').eq('entity_type', 'project').in('entity_id', projectIds);
         projectAuditLogs = projLogs || [];
       }
 
       // Combine and sort
-      const data = [
-        ...(leadAuditLogs || []),
-        ...sessionAuditLogs,
-        ...projectAuditLogs,
-      ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      const data = [...(leadAuditLogs || []), ...sessionAuditLogs, ...projectAuditLogs].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
       // Enrich logs with project names
       const projectsMap = new Map((projectsForLead || []).map(p => [p.id, p.name]));
@@ -215,15 +193,21 @@ const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
         if (log.entity_type === 'session') {
           const sessionData = log.new_values || log.old_values;
           const pid = (sessionData as any)?.project_id;
-          return pid ? { ...log, session_project_id: pid, project_name: projectsMap.get(pid) } : log;
+          return pid ? {
+            ...log,
+            session_project_id: pid,
+            project_name: projectsMap.get(pid)
+          } : log;
         }
         if (log.entity_type === 'project') {
           const pid = log.entity_id as string;
-          return { ...log, project_name: projectsMap.get(pid) };
+          return {
+            ...log,
+            project_name: projectsMap.get(pid)
+          };
         }
         return log;
       });
-
       setAuditLogs(enrichedLogs);
     } catch (error: any) {
       console.error('Error fetching audit logs:', error);
@@ -231,7 +215,6 @@ const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
       setLoading(false);
     }
   };
-
   const handleSaveActivity = async () => {
     if (!content.trim()) {
       toast({
@@ -241,7 +224,6 @@ const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
       });
       return;
     }
-
     if (isReminderMode && !reminderDateTime) {
       toast({
         title: "Validation error",
@@ -250,12 +232,12 @@ const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
       });
       return;
     }
-
     setSaving(true);
     try {
-      const { data: userData } = await supabase.auth.getUser();
+      const {
+        data: userData
+      } = await supabase.auth.getUser();
       if (!userData.user) throw new Error('Not authenticated');
-
       const activityData = {
         user_id: userData.user.id,
         lead_id: leadId,
@@ -266,29 +248,24 @@ const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
           reminder_time: reminderDateTime.split('T')[1]
         })
       };
-
-      const { data: newActivity, error } = await supabase
-        .from('activities')
-        .insert(activityData)
-        .select('id')
-        .single();
-
+      const {
+        data: newActivity,
+        error
+      } = await supabase.from('activities').insert(activityData).select('id').single();
       if (error) throw error;
 
       // Sync reminder to Google Calendar
       if (isReminderMode && newActivity && leadName) {
-        createReminderEvent(
-          {
-            id: newActivity.id,
-            lead_id: leadId,
-            content: content.trim(),
-            reminder_date: reminderDateTime.split('T')[0],
-            reminder_time: reminderDateTime.split('T')[1]
-          },
-          { name: leadName }
-        );
+        createReminderEvent({
+          id: newActivity.id,
+          lead_id: leadId,
+          content: content.trim(),
+          reminder_date: reminderDateTime.split('T')[0],
+          reminder_time: reminderDateTime.split('T')[1]
+        }, {
+          name: leadName
+        });
       }
-
       toast({
         title: "Success",
         description: `${isReminderMode ? 'Reminder' : 'Note'} added successfully.`
@@ -298,7 +275,7 @@ const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
       setContent('');
       setReminderDateTime('');
       setIsReminderMode(false);
-      
+
       // Refresh data
       await fetchActivities();
       await fetchAuditLogs();
@@ -312,31 +289,27 @@ const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
       setSaving(false);
     }
   };
-
   const handleReminderToggle = (checked: boolean) => {
     setIsReminderMode(checked);
     if (!checked) {
       setReminderDateTime('');
     }
   };
-
   const toggleCompletion = async (activityId: string, completed: boolean) => {
     try {
       // Update the completion status in the database
-      const { error } = await supabase
-        .from('activities')
-        .update({ completed })
-        .eq('id', activityId);
-
+      const {
+        error
+      } = await supabase.from('activities').update({
+        completed
+      }).eq('id', activityId);
       if (error) throw error;
 
       // Update local state to reflect the change immediately
-      setActivities(prev => 
-        prev.map(activity => 
-          activity.id === activityId ? { ...activity, completed } : activity
-        )
-      );
-      
+      setActivities(prev => prev.map(activity => activity.id === activityId ? {
+        ...activity,
+        completed
+      } : activity));
       toast({
         title: completed ? "Task marked as completed" : "Task marked as incomplete",
         description: "Task status updated successfully."
@@ -349,13 +322,11 @@ const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
       });
     }
   };
-
   const shouldShowStatusBadge = (activity: Activity) => {
     // Never show overdue badge for completed reminders
     if (activity.completed) return false;
     return true;
   };
-
   const formatAuditAction = (log: AuditLog) => {
     if (log.entity_type === 'lead') {
       if (log.action === 'created') {
@@ -394,19 +365,15 @@ const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
     return `${log.entity_type} ${log.action}`;
   };
   // Separate activities+sessions from audit logs for tabs
-  const activitiesAndSessions = [
-    ...activities.map(activity => ({
-      type: 'activity' as const,
-      data: activity,
-      date: activity.created_at
-    })),
-    ...sessions.map(session => ({
-      type: 'session' as const,
-      data: session,
-      date: session.created_at
-    }))
-  ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-
+  const activitiesAndSessions = [...activities.map(activity => ({
+    type: 'activity' as const,
+    data: activity,
+    date: activity.created_at
+  })), ...sessions.map(session => ({
+    type: 'session' as const,
+    data: session,
+    date: session.created_at
+  }))].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   const auditLogsOnly = auditLogs.map(log => ({
     type: 'audit' as const,
     data: log,
@@ -432,21 +399,16 @@ const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
     groups[date].push(item);
     return groups;
   }, {} as Record<string, typeof auditLogsOnly>);
-
   if (loading) {
-    return (
-      <div className="flex items-center justify-center p-8">
+    return <div className="flex items-center justify-center p-8">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <div className="space-y-6">
+  return <div className="space-y-6">
       {/* Add Activity Section */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-xl font-semibold flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 text-xl font-semibold">
             <Plus className="h-5 w-5" />
             Add Activity
           </CardTitle>
@@ -460,39 +422,19 @@ const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
                   <Label htmlFor="reminder-toggle" className="text-sm font-medium">
                     Set Reminder?
                   </Label>
-                  <Switch
-                    id="reminder-toggle"
-                    checked={isReminderMode}
-                    onCheckedChange={handleReminderToggle}
-                  />
+                  <Switch id="reminder-toggle" checked={isReminderMode} onCheckedChange={handleReminderToggle} />
                 </div>
               </div>
-              <Textarea
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                placeholder="Enter your note..."
-                rows={1}
-                className="resize-none min-h-[40px] max-h-[40px] w-full"
-              />
+              <Textarea value={content} onChange={e => setContent(e.target.value)} placeholder="Enter your note..." rows={1} className="resize-none min-h-[40px] max-h-[40px] w-full" />
             </div>
 
-            {isReminderMode && (
-              <div className="space-y-2">
+            {isReminderMode && <div className="space-y-2">
                 <Label>Date & Time</Label>
-                <DateTimePicker
-                  value={reminderDateTime}
-                  onChange={setReminderDateTime}
-                />
-              </div>
-            )}
+                <DateTimePicker value={reminderDateTime} onChange={setReminderDateTime} />
+              </div>}
 
             <div className="flex justify-end">
-              <Button 
-                onClick={handleSaveActivity} 
-                disabled={saving || !content.trim() || (isReminderMode && !reminderDateTime)}
-                size="sm"
-                className="animate-fade-in w-full sm:w-auto"
-              >
+              <Button onClick={handleSaveActivity} disabled={saving || !content.trim() || isReminderMode && !reminderDateTime} size="sm" className="animate-fade-in w-full sm:w-auto">
                 {saving ? "Saving..." : `Add ${isReminderMode ? 'Reminder' : 'Note'}`}
               </Button>
             </div>
@@ -503,38 +445,27 @@ const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
       {/* Timeline with Tabs */}
       <Card>
         <CardHeader>
-          <CardTitle>Activity Timeline</CardTitle>
+          <CardTitle className="text-xl font-semibold">Activity Timeline</CardTitle>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="activities" className="w-full">
             <TabsList className="bg-transparent border-b border-border p-0 h-auto w-full justify-start">
-              <TabsTrigger 
-                value="activities" 
-                className="bg-transparent border-0 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:shadow-none px-4 py-3 md:px-4 md:py-3 px-6 py-4 font-medium text-muted-foreground hover:text-foreground transition-colors flex-1 md:flex-initial"
-              >
+              <TabsTrigger value="activities" className="bg-transparent border-0 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:shadow-none px-4 py-3 md:px-4 md:py-3 px-6 py-4 font-medium text-muted-foreground hover:text-foreground transition-colors flex-1 md:flex-initial">
                 Activities
               </TabsTrigger>
-              <TabsTrigger 
-                value="history" 
-                className="bg-transparent border-0 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:shadow-none px-4 py-3 md:px-4 md:py-3 px-6 py-4 font-medium text-muted-foreground hover:text-foreground transition-colors flex-1 md:flex-initial"
-              >
+              <TabsTrigger value="history" className="bg-transparent border-0 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:shadow-none px-4 py-3 md:px-4 md:py-3 px-6 py-4 font-medium text-muted-foreground hover:text-foreground transition-colors flex-1 md:flex-initial">
                 History
               </TabsTrigger>
             </TabsList>
             
             <TabsContent value="activities" className="mt-4">
-              {Object.keys(groupedActivities).length === 0 ? (
-                <p className="text-muted-foreground text-center py-8">No activities yet</p>
-              ) : (
-                <div className="space-y-6">
-                  {Object.entries(groupedActivities).map(([date, items]) => (
-                    <div key={date}>
+              {Object.keys(groupedActivities).length === 0 ? <p className="text-muted-foreground text-center py-8">No activities yet</p> : <div className="space-y-6">
+                  {Object.entries(groupedActivities).map(([date, items]) => <div key={date}>
                        <h4 className="font-medium text-sm text-muted-foreground mb-3 sticky top-0">
                         {formatLongDate(date)}
                       </h4>
                        <div className="space-y-3 pl-2 md:pl-4 border-l-2 border-muted">
-                         {items.map((item, index) => (
-                           <div key={`${item.type}-${item.data.id}-${index}`} className="relative">
+                         {items.map((item, index) => <div key={`${item.type}-${item.data.id}-${index}`} className="relative">
                              <div className="absolute -left-4 md:-left-6 top-3 w-3 h-3 bg-background border-2 border-muted-foreground/40 rounded-full"></div>
                              <div className="bg-muted/50 rounded-lg p-3 space-y-2">
                                {/* Mobile: Stack vertically, Desktop: Keep horizontal */}
@@ -542,121 +473,73 @@ const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
                                  <div className="flex items-center gap-2 flex-wrap">
                                    {/* Remove redundant icons on mobile when badge already indicates type */}
                                    <div className="hidden md:block">
-                                     {item.type === 'activity' ? (
-                                       item.data.type === 'note' ? (
-                                         <MessageSquare className="h-4 w-4 text-blue-500" />
-                                       ) : (
-                                         <Bell className="h-4 w-4 text-orange-500" />
-                                       )
-                                     ) : (
-                                       <Clock className="h-4 w-4 text-green-500" />
-                                     )}
+                                     {item.type === 'activity' ? item.data.type === 'note' ? <MessageSquare className="h-4 w-4 text-blue-500" /> : <Bell className="h-4 w-4 text-orange-500" /> : <Clock className="h-4 w-4 text-green-500" />}
                                    </div>
                                    <Badge variant="outline" className="text-xs">
                                      {item.type === 'activity' ? item.data.type : 'session'}
                                    </Badge>
                                    {/* Show project/lead badge */}
-                                   <Badge 
-                                     variant="secondary" 
-                                     className={`text-xs max-w-[120px] md:max-w-[120px] max-w-full truncate ${
-                                       item.data.project_id 
-                                         ? 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300' 
-                                         : 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
-                                      }`}
-                                    >
-                                      {item.data.project_id 
-                                        ? item.data.projects?.name || 'Project' 
-                                        : 'Lead'}
+                                   <Badge variant="secondary" className={`text-xs max-w-[120px] md:max-w-[120px] max-w-full truncate ${item.data.project_id ? 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'}`}>
+                                      {item.data.project_id ? item.data.projects?.name || 'Project' : 'Lead'}
                                     </Badge>
                                  </div>
                                  <span className="text-xs text-muted-foreground flex-shrink-0 md:block block order-last">
-                                   {formatTime(new Date(item.date).toTimeString().slice(0,5))}
+                                   {formatTime(new Date(item.date).toTimeString().slice(0, 5))}
                                  </span>
                                </div>
                               
-                              {item.type === 'activity' && (
-                                <>
-                                  {(item.data as Activity).type === 'reminder' ? (
-                                    <div className="mt-2">
-                                      <ReminderCard
-                                        activity={item.data as Activity}
-                                        leadName={leadName}
-                                        onToggleCompletion={toggleCompletion}
-                                        showCompletedBadge={false}
-                                        hideStatusBadge={!shouldShowStatusBadge(item.data as Activity)}
-                                      />
-                                    </div>
-                                  ) : (item.data as Activity).type === 'note' ? (
-                                    // Regular note - no completion button
-                                    <div className="mt-2">
+                              {item.type === 'activity' && <>
+                                  {(item.data as Activity).type === 'reminder' ? <div className="mt-2">
+                                      <ReminderCard activity={item.data as Activity} leadName={leadName} onToggleCompletion={toggleCompletion} showCompletedBadge={false} hideStatusBadge={!shouldShowStatusBadge(item.data as Activity)} />
+                                    </div> : (item.data as Activity).type === 'note' ?
+                        // Regular note - no completion button
+                        <div className="mt-2">
                                       <p className="text-sm">
                                         {(item.data as Activity).content}
                                       </p>
-                                    </div>
-                                  ) : (
-                                    // Other activity types that might need completion
-                                    <div className="flex items-start gap-3">
-                                      <button
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          toggleCompletion((item.data as Activity).id, !(item.data as Activity).completed);
-                                        }}
-                                        className="flex items-center justify-center w-5 h-5 rounded-full border-2 border-muted-foreground/40 hover:border-primary transition-colors mt-0.5 flex-shrink-0"
-                                      >
-                                        {(item.data as Activity).completed ? (
-                                          <CheckCircle className="h-3 w-3 text-green-600 dark:text-green-400" />
-                                        ) : (
-                                          <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40" />
-                                        )}
+                                    </div> :
+                        // Other activity types that might need completion
+                        <div className="flex items-start gap-3">
+                                      <button onClick={e => {
+                            e.stopPropagation();
+                            toggleCompletion((item.data as Activity).id, !(item.data as Activity).completed);
+                          }} className="flex items-center justify-center w-5 h-5 rounded-full border-2 border-muted-foreground/40 hover:border-primary transition-colors mt-0.5 flex-shrink-0">
+                                        {(item.data as Activity).completed ? <CheckCircle className="h-3 w-3 text-green-600 dark:text-green-400" /> : <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40" />}
                                       </button>
                                       <div className="flex-1">
                                         <p className={`text-sm ${(item.data as Activity).completed ? 'line-through opacity-60' : ''}`}>
                                           {(item.data as Activity).content}
                                         </p>
                                       </div>
-                                    </div>
-                                  )}
-                                </>
-                              )}
+                                    </div>}
+                                </>}
                               
-                              {item.type === 'session' && (
-                                <div className="mt-2">
+                              {item.type === 'session' && <div className="mt-2">
                                   <p className="text-sm font-medium">
                                     Session scheduled for {formatLongDate((item.data as Session).session_date)} at {formatTime((item.data as Session).session_time)}
                                   </p>
                                   <p className="text-xs text-muted-foreground">
                                     Status: {(item.data as Session).status}
                                   </p>
-                                  {(item.data as Session).notes && (
-                                    <p className="text-sm text-muted-foreground mt-1 italic">
+                                  {(item.data as Session).notes && <p className="text-sm text-muted-foreground mt-1 italic">
                                       "{(item.data as Session).notes}"
-                                    </p>
-                                  )}
-                                </div>
-                              )}
+                                    </p>}
+                                </div>}
                             </div>
-                          </div>
-                        ))}
+                          </div>)}
                       </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+                    </div>)}
+                </div>}
             </TabsContent>
             
             <TabsContent value="history" className="mt-4">
-              {Object.keys(groupedAuditLogs).length === 0 ? (
-                <p className="text-muted-foreground text-center py-8">No history yet</p>
-              ) : (
-                <div className="space-y-6">
-                  {Object.entries(groupedAuditLogs).map(([date, items]) => (
-                    <div key={date}>
+              {Object.keys(groupedAuditLogs).length === 0 ? <p className="text-muted-foreground text-center py-8">No history yet</p> : <div className="space-y-6">
+                  {Object.entries(groupedAuditLogs).map(([date, items]) => <div key={date}>
                       <h4 className="font-medium text-sm text-muted-foreground mb-3 sticky top-0">
                         {formatLongDate(date)}
                       </h4>
                        <div className="space-y-3 pl-2 md:pl-4 border-l-2 border-muted">
-                         {items.map((item, index) => (
-                           <div key={`${item.type}-${item.data.id}-${index}`} className="relative">
+                         {items.map((item, index) => <div key={`${item.type}-${item.data.id}-${index}`} className="relative">
                              <div className="absolute -left-4 md:-left-6 top-3 w-3 h-3 bg-background border-2 border-muted-foreground/40 rounded-full"></div>
                              <div className="bg-muted/50 rounded-lg p-2 md:p-3 space-y-1 md:space-y-2">
                                 <div className="flex flex-col gap-1 md:gap-2">
@@ -670,34 +553,24 @@ const ActivitySection = ({ leadId, leadName }: ActivitySectionProps) => {
                                         {formatAuditAction(item.data as AuditLog)}
                                       </span>
                                       {/* Show project badge for session audit logs */}
-                                      {(item.data as AuditLog).entity_type === 'session' && (item.data as AuditLog).project_name && (
-                                        <Badge 
-                                          variant="secondary" 
-                                          className="text-xs bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300 max-w-[120px] md:max-w-[120px] max-w-full truncate"
-                                        >
+                                      {(item.data as AuditLog).entity_type === 'session' && (item.data as AuditLog).project_name && <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300 max-w-[120px] md:max-w-[120px] max-w-full truncate">
                                           {(item.data as AuditLog).project_name}
-                                        </Badge>
-                                      )}
+                                        </Badge>}
                                     </div>
                                     <span className="text-xs text-muted-foreground flex-shrink-0">
-                                      {formatTime(new Date(item.date).toTimeString().slice(0,5))}
+                                      {formatTime(new Date(item.date).toTimeString().slice(0, 5))}
                                     </span>
                                   </div>
                                 </div>
                             </div>
-                          </div>
-                        ))}
+                          </div>)}
                       </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+                    </div>)}
+                </div>}
             </TabsContent>
           </Tabs>
         </CardContent>
       </Card>
-    </div>
-  );
+    </div>;
 };
-
 export default ActivitySection;

@@ -25,7 +25,6 @@ import { LeadStatusBadge } from "@/components/LeadStatusBadge";
 import { formatDate, cn } from "@/lib/utils";
 import { useUserSettings } from "@/hooks/useUserSettings";
 import { useLeadStatusActions } from "@/hooks/useLeadStatusActions";
-
 interface Lead {
   id: string;
   name: string;
@@ -36,9 +35,7 @@ interface Lead {
   status_id?: string;
   created_at: string;
 }
-
 type SessionStatus = 'planned' | 'completed' | 'in_post_processing' | 'delivered' | 'cancelled';
-
 interface Session {
   id: string;
   session_date: string;
@@ -51,8 +48,10 @@ interface Session {
 
 // Helpers: validation and phone normalization (TR defaults)
 const isValidEmail = (email?: string | null) => !!email && /[^\s@]+@[^\s@]+\.[^\s@]+/.test(email);
-
-function normalizeTRPhone(phone?: string | null): null | { e164: string; e164NoPlus: string } {
+function normalizeTRPhone(phone?: string | null): null | {
+  e164: string;
+  e164NoPlus: string;
+} {
   if (!phone) return null;
   const digits = phone.replace(/\D/g, "");
   let e164 = "";
@@ -72,11 +71,17 @@ function normalizeTRPhone(phone?: string | null): null | { e164: string; e164NoP
   } else {
     return null;
   }
-  return { e164, e164NoPlus: e164.slice(1) };
+  return {
+    e164,
+    e164NoPlus: e164.slice(1)
+  };
 }
-
 const LeadDetail = () => {
-  const { id } = useParams<{ id: string }>();
+  const {
+    id
+  } = useParams<{
+    id: string;
+  }>();
   const navigate = useNavigate();
   const location = useLocation();
   const [lead, setLead] = useState<Lead | null>(null);
@@ -88,10 +93,17 @@ const LeadDetail = () => {
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
   const [activityRefreshKey, setActivityRefreshKey] = useState(0);
   const [leadStatuses, setLeadStatuses] = useState<any[]>([]);
-  
+
   // User settings and status actions
-  const { settings: userSettings, loading: settingsLoading } = useUserSettings();
-  const { markAsCompleted, markAsLost, isUpdating } = useLeadStatusActions({
+  const {
+    settings: userSettings,
+    loading: settingsLoading
+  } = useUserSettings();
+  const {
+    markAsCompleted,
+    markAsLost,
+    isUpdating
+  } = useLeadStatusActions({
     leadId: lead?.id || '',
     onStatusChange: () => {
       fetchLead();
@@ -108,13 +120,10 @@ const LeadDetail = () => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [confirmDeleteText, setConfirmDeleteText] = useState("");
 
-
   // Get system status labels for buttons (refresh when leadStatuses changes)
-  const completedStatus = leadStatuses.find(s => s.is_system_final && (s.name.toLowerCase().includes('completed') || s.name.toLowerCase().includes('delivered'))) || 
-                          leadStatuses.find(s => s.name === 'Completed');
-  const lostStatus = leadStatuses.find(s => s.is_system_final && (s.name.toLowerCase().includes('lost') || s.name.toLowerCase().includes('not interested'))) || 
-                     leadStatuses.find(s => s.name === 'Lost');
-  
+  const completedStatus = leadStatuses.find(s => s.is_system_final && (s.name.toLowerCase().includes('completed') || s.name.toLowerCase().includes('delivered'))) || leadStatuses.find(s => s.name === 'Completed');
+  const lostStatus = leadStatuses.find(s => s.is_system_final && (s.name.toLowerCase().includes('lost') || s.name.toLowerCase().includes('not interested'))) || leadStatuses.find(s => s.name === 'Lost');
+
   // Form state
   const [formData, setFormData] = useState({
     name: "",
@@ -137,7 +146,6 @@ const LeadDetail = () => {
   const hasChanges = useMemo(() => {
     return JSON.stringify(formData) !== JSON.stringify(initialFormData);
   }, [formData, initialFormData]);
-
   useEffect(() => {
     if (id) {
       fetchLead();
@@ -148,20 +156,16 @@ const LeadDetail = () => {
       navigate('/leads');
     }
   }, [id, navigate]);
-
   const fetchLead = async () => {
     try {
-      const { data, error } = await supabase
-        .from('leads')
-        .select(`
+      const {
+        data,
+        error
+      } = await supabase.from('leads').select(`
           *,
           lead_statuses(id, name, color, is_system_final)
-        `)
-        .eq('id', id)
-        .maybeSingle();
-
+        `).eq('id', id).maybeSingle();
       if (error) throw error;
-      
       if (!data) {
         toast({
           title: "Lead not found",
@@ -171,7 +175,6 @@ const LeadDetail = () => {
         navigate("/leads");
         return;
       }
-
       setLead(data);
       const newFormData = {
         name: data.name || "",
@@ -193,41 +196,37 @@ const LeadDetail = () => {
       setLoading(false);
     }
   };
-
   const fetchSessions = async () => {
     if (!id) return;
     try {
       // Get all sessions for this lead with project information
-      const { data, error } = await supabase
-        .from('sessions')
-        .select(`
+      const {
+        data,
+        error
+      } = await supabase.from('sessions').select(`
           *,
           projects:project_id (
             name
           )
-        `)
-        .eq('lead_id', id)
-        .order('created_at', { ascending: false });
-
+        `).eq('lead_id', id).order('created_at', {
+        ascending: false
+      });
       if (error) throw error;
 
       // Determine archived projects for this lead
-      const { data: userData } = await supabase.auth.getUser();
+      const {
+        data: userData
+      } = await supabase.auth.getUser();
       const userId = userData.user?.id;
       let filteredSessions = data || [];
       if (userId) {
-        const { data: archivedStatus } = await supabase
-          .from('project_statuses')
-          .select('id')
-          .eq('user_id', userId)
-          .ilike('name', 'archived')
-          .maybeSingle();
+        const {
+          data: archivedStatus
+        } = await supabase.from('project_statuses').select('id').eq('user_id', userId).ilike('name', 'archived').maybeSingle();
         if (archivedStatus?.id) {
-          const { data: archivedProjects } = await supabase
-            .from('projects')
-            .select('id')
-            .eq('lead_id', id)
-            .eq('status_id', archivedStatus.id);
+          const {
+            data: archivedProjects
+          } = await supabase.from('projects').select('id').eq('lead_id', id).eq('status_id', archivedStatus.id);
           const archivedIds = new Set((archivedProjects || []).map(p => p.id));
           filteredSessions = filteredSessions.filter(s => !s.project_id || !archivedIds.has(s.project_id));
         }
@@ -248,20 +247,19 @@ const LeadDetail = () => {
         }
         return 0;
       });
-
       setSessions(sortedSessions);
     } catch (error: any) {
       console.error('Error fetching sessions:', error);
     }
   };
-
   const fetchLeadStatuses = async () => {
     try {
-      const { data, error } = await supabase
-        .from('lead_statuses')
-        .select('*')
-        .order('sort_order', { ascending: true });
-
+      const {
+        data,
+        error
+      } = await supabase.from('lead_statuses').select('*').order('sort_order', {
+        ascending: true
+      });
       if (error) throw error;
       setLeadStatuses(data || []);
     } catch (error: any) {
@@ -271,14 +269,16 @@ const LeadDetail = () => {
 
   // Detect if notes content is truncatable to 2 lines
   useEffect(() => {
-    if (!notesRef.current || !lead?.notes) { setIsNotesTruncatable(false); return; }
+    if (!notesRef.current || !lead?.notes) {
+      setIsNotesTruncatable(false);
+      return;
+    }
     const el = notesRef.current;
     requestAnimationFrame(() => {
       if (!el) return;
       setIsNotesTruncatable(el.scrollHeight > el.clientHeight + 1);
     });
   }, [lead?.notes, notesExpanded]);
-
   const handleSave = async () => {
     if (!lead || !formData.name.trim()) {
       toast({
@@ -288,35 +288,30 @@ const LeadDetail = () => {
       });
       return;
     }
-
     setSaving(true);
     try {
       // Find the status ID for the selected status
       const selectedStatus = leadStatuses.find(s => s.name === formData.status);
-      
-      const { error } = await supabase
-        .from('leads')
-        .update({
-          name: formData.name.trim(),
-          email: formData.email.trim() || null,
-          phone: formData.phone.trim() || null,
-          notes: formData.notes.trim() || null,
-          status: formData.status,
-          status_id: selectedStatus?.id || null
-        })
-        .eq('id', lead.id);
-
+      const {
+        error
+      } = await supabase.from('leads').update({
+        name: formData.name.trim(),
+        email: formData.email.trim() || null,
+        phone: formData.phone.trim() || null,
+        notes: formData.notes.trim() || null,
+        status: formData.status,
+        status_id: selectedStatus?.id || null
+      }).eq('id', lead.id);
       if (error) throw error;
-
       toast({
         title: "Success",
-        description: "Lead updated successfully.",
+        description: "Lead updated successfully."
       });
 
       // Refresh lead data
       await fetchLead();
       await fetchSessions();
-      
+
       // Refresh activity timeline to show lead changes
       setActivityRefreshKey(prev => prev + 1);
     } catch (error: any) {
@@ -329,92 +324,74 @@ const LeadDetail = () => {
       setSaving(false);
     }
   };
-
   const handleDelete = async () => {
     if (!lead) return;
-
     setDeleting(true);
     try {
       // 1) Fetch all project IDs for this lead
-      const { data: leadProjects, error: projectsFetchError } = await supabase
-        .from('projects')
-        .select('id')
-        .eq('lead_id', lead.id);
+      const {
+        data: leadProjects,
+        error: projectsFetchError
+      } = await supabase.from('projects').select('id').eq('lead_id', lead.id);
       if (projectsFetchError) throw projectsFetchError;
-      const projectIds = (leadProjects || []).map((p) => p.id);
-
+      const projectIds = (leadProjects || []).map(p => p.id);
       if (projectIds.length > 0) {
         // Delete related project data in safe order
-        const { error: servicesError } = await supabase
-          .from('project_services')
-          .delete()
-          .in('project_id', projectIds);
+        const {
+          error: servicesError
+        } = await supabase.from('project_services').delete().in('project_id', projectIds);
         if (servicesError) throw servicesError;
-
-        const { error: todosError } = await supabase
-          .from('todos')
-          .delete()
-          .in('project_id', projectIds);
+        const {
+          error: todosError
+        } = await supabase.from('todos').delete().in('project_id', projectIds);
         if (todosError) throw todosError;
-
-        const { error: projSessionsError } = await supabase
-          .from('sessions')
-          .delete()
-          .in('project_id', projectIds);
+        const {
+          error: projSessionsError
+        } = await supabase.from('sessions').delete().in('project_id', projectIds);
         if (projSessionsError) throw projSessionsError;
-
-        const { error: projActivitiesError } = await supabase
-          .from('activities')
-          .delete()
-          .in('project_id', projectIds);
+        const {
+          error: projActivitiesError
+        } = await supabase.from('activities').delete().in('project_id', projectIds);
         if (projActivitiesError) throw projActivitiesError;
-
-        const { error: paymentsError } = await supabase
-          .from('payments')
-          .delete()
-          .in('project_id', projectIds);
+        const {
+          error: paymentsError
+        } = await supabase.from('payments').delete().in('project_id', projectIds);
         if (paymentsError) throw paymentsError;
 
         // Finally delete projects
-        const { error: deleteProjectsError } = await supabase
-          .from('projects')
-          .delete()
-          .in('id', projectIds);
+        const {
+          error: deleteProjectsError
+        } = await supabase.from('projects').delete().in('id', projectIds);
         if (deleteProjectsError) throw deleteProjectsError;
       }
 
       // 2) Delete sessions associated directly with this lead (not tied to a project)
-      const { error: leadSessionsError } = await supabase
-        .from('sessions')
-        .delete()
-        .eq('lead_id', lead.id);
+      const {
+        error: leadSessionsError
+      } = await supabase.from('sessions').delete().eq('lead_id', lead.id);
       if (leadSessionsError) throw leadSessionsError;
 
       // 3) Delete activities/reminders/notes for this lead
-      const { error: leadActivitiesError } = await supabase
-        .from('activities')
-        .delete()
-        .eq('lead_id', lead.id);
+      const {
+        error: leadActivitiesError
+      } = await supabase.from('activities').delete().eq('lead_id', lead.id);
       if (leadActivitiesError) throw leadActivitiesError;
 
       // 4) Finally delete the lead
-      const { error: deleteLeadError } = await supabase
-        .from('leads')
-        .delete()
-        .eq('id', lead.id);
+      const {
+        error: deleteLeadError
+      } = await supabase.from('leads').delete().eq('id', lead.id);
       if (deleteLeadError) throw deleteLeadError;
-
       toast({
         title: 'Success',
-        description: 'Lead and all related data deleted successfully.',
+        description: 'Lead and all related data deleted successfully.'
       });
-
       navigate('/leads');
     } catch (error: any) {
       toast({
         title: 'Error deleting lead',
         description: error.message,
-        variant: 'destructive',
+        variant: 'destructive'
       });
     } finally {
       setDeleting(false);
@@ -422,21 +399,16 @@ const LeadDetail = () => {
       setConfirmDeleteText('');
     }
   };
-
   const handleDeleteSession = async (sessionId: string) => {
     try {
-      const { error } = await supabase
-        .from('sessions')
-        .delete()
-        .eq('id', sessionId);
-
+      const {
+        error
+      } = await supabase.from('sessions').delete().eq('id', sessionId);
       if (error) throw error;
-
       toast({
         title: "Success",
         description: "Session deleted successfully."
       });
-
       fetchSessions();
     } catch (error: any) {
       toast({
@@ -446,26 +418,21 @@ const LeadDetail = () => {
       });
     }
   };
-
   const handleSessionScheduled = () => {
     fetchSessions();
   };
-
   const handleSessionUpdated = () => {
     fetchSessions();
   };
-
   const handleProjectUpdated = () => {
     // Refresh sessions and activities when project changes (archive/restore should affect visibility)
     fetchSessions();
     setActivityRefreshKey(prev => prev + 1);
   };
-
   const handleActivityUpdated = () => {
     // Force ActivitySection to refresh when activities are updated in project modal
     setActivityRefreshKey(prev => prev + 1);
   };
-
   const handleBack = () => {
     const from = location.state?.from;
     if (from === 'dashboard') {
@@ -483,64 +450,46 @@ const LeadDetail = () => {
       }
     }
   };
-
   const handleMarkAsCompleted = () => {
     if (!lead || !completedStatus) return;
     markAsCompleted(lead.status, completedStatus.name);
   };
-
   const handleMarkAsLost = () => {
     if (!lead || !lostStatus) return;
     markAsLost(lead.status, lostStatus.name);
   };
-
   const handleInputChange = (field: keyof typeof formData, value: string) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }));
   };
-
   const statusOptions = leadStatuses.map(status => ({
     value: status.name,
     label: status.name
   }));
-
-
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
+    return <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
           <p className="mt-4 text-muted-foreground">Loading lead details...</p>
         </div>
-      </div>
-    );
+      </div>;
   }
-
   if (!lead) {
     return null;
   }
-
-  return (
-    <div className="p-4 md:p-8 max-w-full overflow-x-hidden">
+  return <div className="p-4 md:p-8 max-w-full overflow-x-hidden">
       <div className="mb-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="min-w-0 flex-1">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
               <h1 className="text-xl sm:text-2xl font-bold truncate min-w-0">{lead.name || 'Lead Details'}</h1>
               <div className="flex-shrink-0">
-                <LeadStatusBadge
-                  leadId={lead.id}
-                  currentStatusId={lead.status_id}
-                  currentStatus={lead.status}
-                  onStatusChange={() => {
-                    fetchLead();
-                    setActivityRefreshKey(prev => prev + 1);
-                  }}
-                  editable={true}
-                  statuses={leadStatuses}
-                />
+                <LeadStatusBadge leadId={lead.id} currentStatusId={lead.status_id} currentStatus={lead.status} onStatusChange={() => {
+                fetchLead();
+                setActivityRefreshKey(prev => prev + 1);
+              }} editable={true} statuses={leadStatuses} />
               </div>
             </div>
           </div>
@@ -548,62 +497,30 @@ const LeadDetail = () => {
           <div className="lg:flex-shrink-0">
             {/* Header Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-              <ScheduleSessionDialog 
-                leadId={lead.id} 
-                leadName={lead.name}
-                onSessionScheduled={handleSessionScheduled}
-                disabled={sessions.some(s => s.status === 'planned')}
-                disabledTooltip="A planned session already exists."
-              />
+              <ScheduleSessionDialog leadId={lead.id} leadName={lead.name} onSessionScheduled={handleSessionScheduled} disabled={sessions.some(s => s.status === 'planned')} disabledTooltip="A planned session already exists." />
 
-              {!settingsLoading && userSettings.show_quick_status_buttons && completedStatus && formData.status !== completedStatus.name && (
-                <Button 
-                  onClick={handleMarkAsCompleted}
-                  disabled={isUpdating}
-                  className="bg-green-600 hover:bg-green-700 text-white h-10 w-full sm:w-auto"
-                  size="sm"
-                >
+              {!settingsLoading && userSettings.show_quick_status_buttons && completedStatus && formData.status !== completedStatus.name && <Button onClick={handleMarkAsCompleted} disabled={isUpdating} className="bg-green-600 hover:bg-green-700 text-white h-10 w-full sm:w-auto" size="sm">
                   <CheckCircle className="h-4 w-4 mr-2" />
                   {isUpdating ? "Updating..." : completedStatus.name}
-                </Button>
-              )}
+                </Button>}
 
-              {!settingsLoading && userSettings.show_quick_status_buttons && lostStatus && formData.status !== lostStatus.name && (
-                <Button 
-                  onClick={handleMarkAsLost}
-                  disabled={isUpdating}
-                  variant="destructive"
-                  size="sm"
-                  className="h-10 w-full sm:w-auto"
-                >
+              {!settingsLoading && userSettings.show_quick_status_buttons && lostStatus && formData.status !== lostStatus.name && <Button onClick={handleMarkAsLost} disabled={isUpdating} variant="destructive" size="sm" className="h-10 w-full sm:w-auto">
                   {isUpdating ? "Updating..." : lostStatus.name}
-                </Button>
-              )}
+                </Button>}
             </div>
           </div>
         </div>
       </div>
 
       {/* Sessions Section */}
-      {sessions.length > 0 && (
-        <div className="mb-6">
+      {sessions.length > 0 && <div className="mb-6">
           <div className="space-y-4">
-            {sessions.map((session) => (
-              <div key={session.id}>
-                <SessionBanner 
-                  session={session} 
-                  leadName={lead.name}
-                  projectName={session.project_name}
-                  onStatusUpdate={handleSessionUpdated}
-                  onEdit={() => setEditingSessionId(session.id)}
-                  onDelete={() => setDeletingSessionId(session.id)}
-                />
+            {sessions.map(session => <div key={session.id}>
+                <SessionBanner session={session} leadName={lead.name} projectName={session.project_name} onStatusUpdate={handleSessionUpdated} onEdit={() => setEditingSessionId(session.id)} onDelete={() => setDeletingSessionId(session.id)} />
                 
-              </div>
-            ))}
+              </div>)}
           </div>
-        </div>
-      )}
+        </div>}
 
       {/* Two-column layout */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 md:gap-8 max-w-full">
@@ -612,88 +529,57 @@ const LeadDetail = () => {
           <Card className="relative">
             <CardHeader className="flex flex-row items-start justify-between">
               <div>
-                <CardTitle>Client Details</CardTitle>
+                <CardTitle className="text-xl font-semibold text-left">Client Details</CardTitle>
                 <CardDescription className="text-xs">
                   Created on {new Date(lead.created_at).toLocaleDateString('tr-TR')}
                 </CardDescription>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setFormData({
-                    name: lead.name || "",
-                    email: lead.email || "",
-                    phone: lead.phone || "",
-                    notes: lead.notes || "",
-                    status: lead.status || formData.status,
-                  });
-                  setInitialFormData({
-                    name: lead.name || "",
-                    email: lead.email || "",
-                    phone: lead.phone || "",
-                    notes: lead.notes || "",
-                    status: lead.status || formData.status,
-                  });
-                  setEditOpen(true);
-                }}
-                aria-label="Edit lead information"
-                className="absolute top-2 right-2 text-muted-foreground hover:text-foreground text-sm h-8 px-2"
-              >
+              <Button variant="ghost" size="sm" onClick={() => {
+              setFormData({
+                name: lead.name || "",
+                email: lead.email || "",
+                phone: lead.phone || "",
+                notes: lead.notes || "",
+                status: lead.status || formData.status
+              });
+              setInitialFormData({
+                name: lead.name || "",
+                email: lead.email || "",
+                phone: lead.phone || "",
+                notes: lead.notes || "",
+                status: lead.status || formData.status
+              });
+              setEditOpen(true);
+            }} aria-label="Edit lead information" className="absolute top-2 right-2 text-muted-foreground hover:text-foreground text-sm h-8 px-2">
                 Edit
               </Button>
             </CardHeader>
             <CardContent className="space-y-3">
-              <ClientDetailsList
-                name={lead.name}
-                email={lead.email}
-                phone={lead.phone}
-                notes={lead.notes}
-                showQuickActions
-              />
+              <ClientDetailsList name={lead.name} email={lead.email} phone={lead.phone} notes={lead.notes} showQuickActions />
             </CardContent>
           </Card>
 
           {/* Edit Lead Dialog */}
-          <EditLeadDialog
-            lead={lead}
-            open={editOpen}
-            onOpenChange={setEditOpen}
-            onLeadUpdated={() => {
-              fetchLead();
-              setActivityRefreshKey(prev => prev + 1);
-            }}
-          />
+          <EditLeadDialog lead={lead} open={editOpen} onOpenChange={setEditOpen} onLeadUpdated={() => {
+          fetchLead();
+          setActivityRefreshKey(prev => prev + 1);
+        }} />
         </div>
 
         {/* Right column - Projects and Activity Section (75%) */}
         <div className="lg:col-span-3 space-y-6 min-w-0">
-          <ProjectsSection 
-            leadId={lead.id} 
-            leadName={lead.name} 
-            onProjectUpdated={handleProjectUpdated}
-            onActivityUpdated={handleActivityUpdated}
-          />
+          <ProjectsSection leadId={lead.id} leadName={lead.name} onProjectUpdated={handleProjectUpdated} onActivityUpdated={handleActivityUpdated} />
           <ActivitySection key={activityRefreshKey} leadId={lead.id} leadName={lead.name} />
 
           {/* Add Project Dialog */}
-          <ProjectDialog
-            open={showAddProjectDialog}
-            onOpenChange={setShowAddProjectDialog}
-            leadId={lead.id}
-            onProjectCreated={() => {
-              handleProjectUpdated();
-              setShowAddProjectDialog(false);
-            }}
-          />
+          <ProjectDialog open={showAddProjectDialog} onOpenChange={setShowAddProjectDialog} leadId={lead.id} onProjectCreated={() => {
+          handleProjectUpdated();
+          setShowAddProjectDialog(false);
+        }} />
 
           <div className="border border-destructive/20 bg-destructive/5 rounded-md p-4 max-w-full text-center">
             <div className="space-y-3">
-              <Button
-                variant="outline"
-                onClick={() => setShowDeleteDialog(true)}
-                className="w-full max-w-xs border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
-              >
+              <Button variant="outline" onClick={() => setShowDeleteDialog(true)} className="w-full max-w-xs border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground">
                 Delete Lead
               </Button>
               <p className="text-xs text-muted-foreground break-words">
@@ -706,32 +592,19 @@ const LeadDetail = () => {
 
       {/* Edit Session Dialog */}
       {editingSessionId && (() => {
-        const session = sessions.find(s => s.id === editingSessionId);
-        return session ? (
-          <EditSessionDialog
-            sessionId={session.id}
-            leadId={lead.id}
-            currentDate={session.session_date}
-            currentTime={session.session_time}
-            currentNotes={session.notes}
-            currentProjectId={session.project_id}
-            leadName={lead.name}
-            open={!!editingSessionId}
-            onOpenChange={(open) => {
-              if (!open) {
-                setEditingSessionId(null);
-              }
-            }}
-            onSessionUpdated={() => {
-              handleSessionUpdated();
-              setEditingSessionId(null);
-            }}
-          />
-        ) : null;
-      })()}
+      const session = sessions.find(s => s.id === editingSessionId);
+      return session ? <EditSessionDialog sessionId={session.id} leadId={lead.id} currentDate={session.session_date} currentTime={session.session_time} currentNotes={session.notes} currentProjectId={session.project_id} leadName={lead.name} open={!!editingSessionId} onOpenChange={open => {
+        if (!open) {
+          setEditingSessionId(null);
+        }
+      }} onSessionUpdated={() => {
+        handleSessionUpdated();
+        setEditingSessionId(null);
+      }} /> : null;
+    })()}
 
       {/* Delete Session Dialog */}
-      <AlertDialog open={!!deletingSessionId} onOpenChange={(open) => !open && setDeletingSessionId(null)}>
+      <AlertDialog open={!!deletingSessionId} onOpenChange={open => !open && setDeletingSessionId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Session?</AlertDialogTitle>
@@ -741,15 +614,12 @@ const LeadDetail = () => {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={() => {
-                if (deletingSessionId) {
-                  handleDeleteSession(deletingSessionId);
-                  setDeletingSessionId(null);
-                }
-              }}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
+            <AlertDialogAction onClick={() => {
+            if (deletingSessionId) {
+              handleDeleteSession(deletingSessionId);
+              setDeletingSessionId(null);
+            }
+          }} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               Delete Session
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -757,7 +627,10 @@ const LeadDetail = () => {
       </AlertDialog>
 
       {/* Delete Lead Confirmation Dialog */}
-      <AlertDialog open={showDeleteDialog} onOpenChange={(open) => { setShowDeleteDialog(open); if (!open) setConfirmDeleteText(''); }}>
+      <AlertDialog open={showDeleteDialog} onOpenChange={open => {
+      setShowDeleteDialog(open);
+      if (!open) setConfirmDeleteText('');
+    }}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Lead</AlertDialogTitle>
@@ -767,28 +640,17 @@ const LeadDetail = () => {
           </AlertDialogHeader>
           <div className="py-2">
             <Label htmlFor="confirm-delete" className="sr-only">Confirmation</Label>
-            <Input
-              id="confirm-delete"
-              placeholder={`Type "${lead.name}" or "DELETE"`}
-              value={confirmDeleteText}
-              onChange={(e) => setConfirmDeleteText(e.target.value)}
-            />
+            <Input id="confirm-delete" placeholder={`Type "${lead.name}" or "DELETE"`} value={confirmDeleteText} onChange={e => setConfirmDeleteText(e.target.value)} />
             <p className="text-xs text-muted-foreground mt-2">This action cannot be undone.</p>
           </div>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              disabled={deleting || ![lead.name, 'DELETE'].includes(confirmDeleteText.trim())}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
+            <AlertDialogAction onClick={handleDelete} disabled={deleting || ![lead.name, 'DELETE'].includes(confirmDeleteText.trim())} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               {deleting ? 'Deleting...' : 'Delete Lead'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
-  );
+    </div>;
 };
-
 export default LeadDetail;

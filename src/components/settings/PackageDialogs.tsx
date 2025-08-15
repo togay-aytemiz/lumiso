@@ -9,6 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 
 interface Package {
   id: string;
@@ -45,10 +48,6 @@ const durationOptions = [
   { value: "Custom", label: "Custom" }
 ];
 
-// Mock data for project types and services
-const mockProjectTypes = ["Wedding", "Portrait", "Family", "Event", "Commercial", "Engagement"];
-const mockServices = ["Print Package", "Extra Hour", "Second Photographer", "USB Delivery", "Album", "Canvas Print"];
-
 export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPackageDialogProps) {
   const [packageData, setPackageData] = useState({
     name: "",
@@ -63,6 +62,43 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const { toast } = useToast();
+  const navigate = useNavigate();
+
+  // Fetch project types
+  const { data: projectTypes = [] } = useQuery({
+    queryKey: ['project_types'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
+
+      const { data, error } = await supabase
+        .from('project_types')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('name', { ascending: true });
+      
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  // Fetch services
+  const { data: services = [] } = useQuery({
+    queryKey: ['services'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
+
+      const { data, error } = await supabase
+        .from('services')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('name', { ascending: true });
+      
+      if (error) throw error;
+      return data || [];
+    },
+  });
 
   const resetForm = () => {
     setPackageData({
@@ -172,6 +208,7 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
         {/* Base Price */}
         <div className="space-y-2">
           <Label htmlFor="basePrice">Base Price (TRY) *</Label>
+          <p className="text-xs text-muted-foreground">Client-facing base price. You can override per project.</p>
           <Input
             id="basePrice"
             type="number"
@@ -187,6 +224,7 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
         {/* Duration */}
         <div className="space-y-2">
           <Label htmlFor="duration">Duration *</Label>
+          <p className="text-xs text-muted-foreground">Used for scheduling availability and calendar blocking.</p>
           <Select value={packageData.duration} onValueChange={(value) => setPackageData(prev => ({ ...prev, duration: value }))}>
             <SelectTrigger>
               <SelectValue placeholder="Select duration" />
@@ -219,6 +257,7 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
         {/* Includes */}
         <div className="space-y-2">
           <Label htmlFor="includes">Includes</Label>
+          <p className="text-xs text-muted-foreground">List what's included; shown to clients.</p>
           <Textarea
             id="includes"
             value={packageData.includes}
@@ -226,57 +265,92 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
             placeholder="e.g., 20 retouched photos, online gallery"
             rows={3}
           />
-          <p className="text-xs text-muted-foreground">List what's included in this package</p>
         </div>
 
         {/* Applicable Types */}
         <div className="space-y-2">
           <Label>Applicable Types</Label>
-          <p className="text-xs text-muted-foreground mb-3">Select which project types this package applies to (none = all types)</p>
+          <p className="text-xs text-muted-foreground mb-3">
+            Select which{" "}
+            <button
+              type="button"
+              onClick={() => navigate("/settings/projects")}
+              className="text-primary hover:underline"
+            >
+              Project Types
+            </button>
+            {" "}this package applies to (none = all types)
+          </p>
+          {projectTypes.length === 0 ? (
+            <div className="text-center py-4 text-muted-foreground">
+              <p className="text-sm">No project types exist yet.</p>
+              <button
+                type="button"
+                onClick={() => navigate("/settings/projects")}
+                className="text-sm text-primary hover:underline mt-1"
+              >
+                Create Project Types
+              </button>
+            </div>
+          ) : (
             <div className="flex flex-wrap gap-2">
-              {mockProjectTypes.map((type) => (
+              {projectTypes.map((type: any) => (
                 <Badge
-                  key={type}
-                  variant={packageData.applicableTypes.includes(type) ? "default" : "outline"}
+                  key={type.id}
+                  variant={packageData.applicableTypes.includes(type.name) ? "default" : "outline"}
                   className={`cursor-pointer transition-colors ${
-                    packageData.applicableTypes.includes(type) 
+                    packageData.applicableTypes.includes(type.name) 
                       ? "bg-primary text-primary-foreground hover:bg-primary/90" 
                       : "hover:bg-accent hover:text-accent-foreground"
                   }`}
-                  onClick={() => toggleApplicableType(type)}
+                  onClick={() => toggleApplicableType(type.name)}
                 >
-                  {type}
-                  {packageData.applicableTypes.includes(type) && (
+                  {type.name}
+                  {packageData.applicableTypes.includes(type.name) && (
                     <X className="ml-1 h-3 w-3" />
                   )}
                 </Badge>
               ))}
             </div>
+          )}
         </div>
 
         {/* Default Add-ons */}
         <div className="space-y-2">
           <Label>Default Add-ons</Label>
           <p className="text-xs text-muted-foreground mb-3">Select services that are commonly added with this package</p>
-          <div className="flex flex-wrap gap-2">
-            {mockServices.map((service) => (
-              <Badge
-                key={service}
-                variant={packageData.defaultAddons.includes(service) ? "default" : "outline"}
-                className={`cursor-pointer transition-colors ${
-                  packageData.defaultAddons.includes(service) 
-                    ? "bg-primary text-primary-foreground hover:bg-primary/90" 
-                    : "hover:bg-accent hover:text-accent-foreground"
-                }`}
-                onClick={() => toggleDefaultAddon(service)}
+          {services.length === 0 ? (
+            <div className="text-center py-4 text-muted-foreground">
+              <p className="text-sm">No services yet. Create services to use as add-ons.</p>
+              <button
+                type="button"
+                onClick={() => navigate("/settings/services")}
+                className="text-sm text-primary hover:underline mt-1"
               >
-                {service}
-                {packageData.defaultAddons.includes(service) && (
-                  <X className="ml-1 h-3 w-3" />
-                )}
-              </Badge>
-            ))}
-          </div>
+                Create a Service
+              </button>
+            </div>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {services.map((service: any) => (
+                <Badge
+                  key={service.id}
+                  variant={packageData.defaultAddons.includes(service.name) ? "default" : "outline"}
+                  className={`cursor-pointer transition-colors ${
+                    packageData.defaultAddons.includes(service.name) 
+                      ? "bg-primary text-primary-foreground hover:bg-primary/90" 
+                      : "hover:bg-accent hover:text-accent-foreground"
+                  }`}
+                  onClick={() => toggleDefaultAddon(service.name)}
+                >
+                  {service.name}
+                  {packageData.defaultAddons.includes(service.name) && (
+                    <X className="ml-1 h-3 w-3" />
+                  )}
+                </Badge>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Visibility */}
@@ -321,6 +395,43 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const { toast } = useToast();
+  const navigate = useNavigate();
+
+  // Fetch project types
+  const { data: projectTypes = [] } = useQuery({
+    queryKey: ['project_types'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
+
+      const { data, error } = await supabase
+        .from('project_types')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('name', { ascending: true });
+      
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  // Fetch services
+  const { data: services = [] } = useQuery({
+    queryKey: ['services'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
+
+      const { data, error } = await supabase
+        .from('services')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('name', { ascending: true });
+      
+      if (error) throw error;
+      return data || [];
+    },
+  });
 
   useEffect(() => {
     if (pkg && open) {
@@ -428,6 +539,7 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
         {/* Base Price */}
         <div className="space-y-2">
           <Label htmlFor="basePrice">Base Price (TRY) *</Label>
+          <p className="text-xs text-muted-foreground">Client-facing base price. You can override per project.</p>
           <Input
             id="basePrice"
             type="number"
@@ -443,6 +555,7 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
         {/* Duration */}
         <div className="space-y-2">
           <Label htmlFor="duration">Duration *</Label>
+          <p className="text-xs text-muted-foreground">Used for scheduling availability and calendar blocking.</p>
           <Select value={packageData.duration} onValueChange={(value) => setPackageData(prev => ({ ...prev, duration: value }))}>
             <SelectTrigger>
               <SelectValue placeholder="Select duration" />
@@ -475,6 +588,7 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
         {/* Includes */}
         <div className="space-y-2">
           <Label htmlFor="includes">Includes</Label>
+          <p className="text-xs text-muted-foreground">List what's included; shown to clients.</p>
           <Textarea
             id="includes"
             value={packageData.includes}
@@ -482,57 +596,92 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
             placeholder="e.g., 20 retouched photos, online gallery"
             rows={3}
           />
-          <p className="text-xs text-muted-foreground">List what's included in this package</p>
         </div>
 
         {/* Applicable Types */}
         <div className="space-y-2">
           <Label>Applicable Types</Label>
-          <p className="text-xs text-muted-foreground mb-3">Select which project types this package applies to (none = all types)</p>
-          <div className="flex flex-wrap gap-2">
-            {mockProjectTypes.map((type) => (
-              <Badge
-                key={type}
-                variant={packageData.applicableTypes.includes(type) ? "default" : "outline"}
-                className={`cursor-pointer transition-colors ${
-                  packageData.applicableTypes.includes(type) 
-                    ? "bg-primary text-primary-foreground hover:bg-primary/90" 
-                    : "hover:bg-accent hover:text-accent-foreground"
-                }`}
-                onClick={() => toggleApplicableType(type)}
+          <p className="text-xs text-muted-foreground mb-3">
+            Select which{" "}
+            <button
+              type="button"
+              onClick={() => navigate("/settings/projects")}
+              className="text-primary hover:underline"
+            >
+              Project Types
+            </button>
+            {" "}this package applies to (none = all types)
+          </p>
+          {projectTypes.length === 0 ? (
+            <div className="text-center py-4 text-muted-foreground">
+              <p className="text-sm">No project types exist yet.</p>
+              <button
+                type="button"
+                onClick={() => navigate("/settings/projects")}
+                className="text-sm text-primary hover:underline mt-1"
               >
-                {type}
-                {packageData.applicableTypes.includes(type) && (
-                  <X className="ml-1 h-3 w-3" />
-                )}
-              </Badge>
-            ))}
-          </div>
+                Create Project Types
+              </button>
+            </div>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {projectTypes.map((type: any) => (
+                <Badge
+                  key={type.id}
+                  variant={packageData.applicableTypes.includes(type.name) ? "default" : "outline"}
+                  className={`cursor-pointer transition-colors ${
+                    packageData.applicableTypes.includes(type.name) 
+                      ? "bg-primary text-primary-foreground hover:bg-primary/90" 
+                      : "hover:bg-accent hover:text-accent-foreground"
+                  }`}
+                  onClick={() => toggleApplicableType(type.name)}
+                >
+                  {type.name}
+                  {packageData.applicableTypes.includes(type.name) && (
+                    <X className="ml-1 h-3 w-3" />
+                  )}
+                </Badge>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Default Add-ons */}
         <div className="space-y-2">
           <Label>Default Add-ons</Label>
           <p className="text-xs text-muted-foreground mb-3">Select services that are commonly added with this package</p>
-          <div className="flex flex-wrap gap-2">
-            {mockServices.map((service) => (
-              <Badge
-                key={service}
-                variant={packageData.defaultAddons.includes(service) ? "default" : "outline"}
-                className={`cursor-pointer transition-colors ${
-                  packageData.defaultAddons.includes(service) 
-                    ? "bg-primary text-primary-foreground hover:bg-primary/90" 
-                    : "hover:bg-accent hover:text-accent-foreground"
-                }`}
-                onClick={() => toggleDefaultAddon(service)}
+          {services.length === 0 ? (
+            <div className="text-center py-4 text-muted-foreground">
+              <p className="text-sm">No services yet. Create services to use as add-ons.</p>
+              <button
+                type="button"
+                onClick={() => navigate("/settings/services")}
+                className="text-sm text-primary hover:underline mt-1"
               >
-                {service}
-                {packageData.defaultAddons.includes(service) && (
-                  <X className="ml-1 h-3 w-3" />
-                )}
-              </Badge>
-            ))}
-          </div>
+                Create a Service
+              </button>
+            </div>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {services.map((service: any) => (
+                <Badge
+                  key={service.id}
+                  variant={packageData.defaultAddons.includes(service.name) ? "default" : "outline"}
+                  className={`cursor-pointer transition-colors ${
+                    packageData.defaultAddons.includes(service.name) 
+                      ? "bg-primary text-primary-foreground hover:bg-primary/90" 
+                      : "hover:bg-accent hover:text-accent-foreground"
+                  }`}
+                  onClick={() => toggleDefaultAddon(service.name)}
+                >
+                  {service.name}
+                  {packageData.defaultAddons.includes(service.name) && (
+                    <X className="ml-1 h-3 w-3" />
+                  )}
+                </Badge>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Visibility */}

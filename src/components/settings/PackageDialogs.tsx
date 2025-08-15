@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { AppSheetModal } from "@/components/ui/app-sheet-modal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,11 +7,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { X } from "lucide-react";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { X, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
+import { cn } from "@/lib/utils";
 
 interface Package {
   id: string;
@@ -37,6 +39,179 @@ interface EditPackageDialogProps {
   onOpenChange: (open: boolean) => void;
   onPackageUpdated: () => void;
 }
+
+// Service picker component for default add-ons
+const ServiceAddOnsPicker = ({ services, value, onChange, navigate }: {
+  services: any[];
+  value: string[];
+  onChange: (addons: string[]) => void;
+  navigate: (path: string) => void;
+}) => {
+  const [openItems, setOpenItems] = useState<string[]>([]);
+
+  const groupedServices = useMemo(() => {
+    const groups: Record<string, any[]> = {};
+    services.forEach((service) => {
+      const key = service.category || "Uncategorized";
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(service);
+    });
+    // Sort services by name inside each group
+    Object.keys(groups).forEach((k) => groups[k].sort((a, b) => a.name.localeCompare(b.name)));
+    return groups;
+  }, [services]);
+
+  const categories = useMemo(() => Object.keys(groupedServices).sort(), [groupedServices]);
+
+  const toggleService = (serviceName: string) => {
+    if (value.includes(serviceName)) {
+      onChange(value.filter(v => v !== serviceName));
+    } else {
+      onChange([...value, serviceName]);
+    }
+  };
+
+  const clearAll = () => onChange([]);
+
+  const selectedServices = useMemo(
+    () => services.filter((s) => value.includes(s.name)),
+    [services, value]
+  );
+
+  if (services.length === 0) {
+    return (
+      <div className="text-center py-4 text-muted-foreground">
+        <p className="text-sm">No services yet. Create services to use as add-ons.</p>
+        <button
+          type="button"
+          onClick={() => navigate("/settings/services")}
+          className="text-sm text-primary hover:underline mt-1"
+        >
+          Create a Service
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      <Accordion
+        type="multiple"
+        value={openItems}
+        onValueChange={(v) => setOpenItems(v as string[])}
+        className="w-full"
+      >
+        {categories.map((category) => {
+          const items = groupedServices[category] || [];
+          const selectedCount = items.filter((s) => value.includes(s.name)).length;
+          return (
+            <AccordionItem key={category} value={category} className="border rounded-md mb-3">
+              <AccordionTrigger className="px-3 py-2 text-sm">
+                <div className="flex w-full items-center justify-between">
+                  <span className="font-medium">{category}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {selectedCount}/{items.length}
+                  </span>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="px-3 pb-3">
+                  <div className="flex flex-wrap gap-2">
+                    {items.map((service) => {
+                      const selected = value.includes(service.name);
+                      const price = service.selling_price ?? service.price ?? 0;
+                      return (
+                        <Button
+                          key={service.id}
+                          type="button"
+                          variant={selected ? "default" : "secondary"}
+                          onClick={() => toggleService(service.name)}
+                          className={cn(
+                            "h-8 rounded-full px-3 text-xs justify-start whitespace-nowrap",
+                            "overflow-hidden text-ellipsis",
+                            selected ? "" : "border",
+                          )}
+                          title={`${service.name}${price > 0 ? ` · ₺${price}` : ''}`}
+                        >
+                          <div className="flex items-center gap-2">
+                            {selected && <Check className="h-3 w-3" aria-hidden />}
+                            <span>
+                              {service.name}
+                              {price > 0 && (
+                                <>
+                                  <span className="mx-1">·</span>
+                                  <span className={selected ? "text-primary-foreground/80" : "text-muted-foreground"}>
+                                    ₺{price}
+                                  </span>
+                                </>
+                              )}
+                            </span>
+                          </div>
+                        </Button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          );
+        })}
+      </Accordion>
+
+      <div className="rounded-md border p-2">
+        <div className="mb-2 flex items-center justify-between">
+          <span className="text-xs text-muted-foreground">Selected Add-ons</span>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={clearAll}
+            disabled={value.length === 0}
+            className="h-7"
+          >
+            Clear all
+          </Button>
+        </div>
+        {selectedServices.length === 0 ? (
+          <div className="text-xs text-muted-foreground">No add-ons selected</div>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {selectedServices.map((service) => {
+              const price = service.selling_price ?? service.price ?? 0;
+              return (
+                <Badge
+                  key={service.id}
+                  variant="secondary"
+                  className="h-7 rounded-full px-3 text-xs"
+                >
+                  <span>
+                    {service.name}
+                    {price > 0 && (
+                      <>
+                        <span className="mx-1">·</span>
+                        <span className="text-foreground/70">₺{price}</span>
+                      </>
+                    )}
+                  </span>
+                  <button
+                    className="ml-2 inline-flex rounded-full p-0.5 hover:text-foreground"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      toggleService(service.name);
+                    }}
+                    aria-label={`Remove ${service.name}`}
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </Badge>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
 
 const durationOptions = [
   { value: "30m", label: "30 minutes" },
@@ -165,14 +340,6 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
     }));
   };
 
-  const toggleDefaultAddon = (addon: string) => {
-    setPackageData(prev => ({
-      ...prev,
-      defaultAddons: prev.defaultAddons.includes(addon)
-        ? prev.defaultAddons.filter(a => a !== addon)
-        : [...prev.defaultAddons, addon]
-    }));
-  };
 
   return (
     <AppSheetModal
@@ -318,39 +485,23 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
         {/* Default Add-ons */}
         <div className="space-y-2">
           <Label>Default Add-ons</Label>
-          <p className="text-xs text-muted-foreground mb-3">Select services that are commonly added with this package</p>
-          {services.length === 0 ? (
-            <div className="text-center py-4 text-muted-foreground">
-              <p className="text-sm">No services yet. Create services to use as add-ons.</p>
-              <button
-                type="button"
-                onClick={() => navigate("/settings/services")}
-                className="text-sm text-primary hover:underline mt-1"
-              >
-                Create a Service
-              </button>
-            </div>
-          ) : (
-            <div className="flex flex-wrap gap-2">
-              {services.map((service: any) => (
-                <Badge
-                  key={service.id}
-                  variant={packageData.defaultAddons.includes(service.name) ? "default" : "outline"}
-                  className={`cursor-pointer transition-colors ${
-                    packageData.defaultAddons.includes(service.name) 
-                      ? "bg-primary text-primary-foreground hover:bg-primary/90" 
-                      : "hover:bg-accent hover:text-accent-foreground"
-                  }`}
-                  onClick={() => toggleDefaultAddon(service.name)}
-                >
-                  {service.name}
-                  {packageData.defaultAddons.includes(service.name) && (
-                    <X className="ml-1 h-3 w-3" />
-                  )}
-                </Badge>
-              ))}
-            </div>
-          )}
+          <p className="text-xs text-muted-foreground mb-3">
+            These are services from your{" "}
+            <button
+              type="button"
+              onClick={() => navigate("/settings/services")}
+              className="text-primary hover:underline"
+            >
+              Services section
+            </button>
+            {" "}that can be customized while creating a project
+          </p>
+          <ServiceAddOnsPicker
+            services={services}
+            value={packageData.defaultAddons}
+            onChange={(addons) => setPackageData(prev => ({ ...prev, defaultAddons: addons }))}
+            navigate={navigate}
+          />
         </div>
 
         {/* Visibility */}
@@ -494,14 +645,6 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
     }));
   };
 
-  const toggleDefaultAddon = (addon: string) => {
-    setPackageData(prev => ({
-      ...prev,
-      defaultAddons: prev.defaultAddons.includes(addon)
-        ? prev.defaultAddons.filter(a => a !== addon)
-        : [...prev.defaultAddons, addon]
-    }));
-  };
 
   if (!pkg) return null;
 
@@ -649,39 +792,23 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
         {/* Default Add-ons */}
         <div className="space-y-2">
           <Label>Default Add-ons</Label>
-          <p className="text-xs text-muted-foreground mb-3">Select services that are commonly added with this package</p>
-          {services.length === 0 ? (
-            <div className="text-center py-4 text-muted-foreground">
-              <p className="text-sm">No services yet. Create services to use as add-ons.</p>
-              <button
-                type="button"
-                onClick={() => navigate("/settings/services")}
-                className="text-sm text-primary hover:underline mt-1"
-              >
-                Create a Service
-              </button>
-            </div>
-          ) : (
-            <div className="flex flex-wrap gap-2">
-              {services.map((service: any) => (
-                <Badge
-                  key={service.id}
-                  variant={packageData.defaultAddons.includes(service.name) ? "default" : "outline"}
-                  className={`cursor-pointer transition-colors ${
-                    packageData.defaultAddons.includes(service.name) 
-                      ? "bg-primary text-primary-foreground hover:bg-primary/90" 
-                      : "hover:bg-accent hover:text-accent-foreground"
-                  }`}
-                  onClick={() => toggleDefaultAddon(service.name)}
-                >
-                  {service.name}
-                  {packageData.defaultAddons.includes(service.name) && (
-                    <X className="ml-1 h-3 w-3" />
-                  )}
-                </Badge>
-              ))}
-            </div>
-          )}
+          <p className="text-xs text-muted-foreground mb-3">
+            These are services from your{" "}
+            <button
+              type="button"
+              onClick={() => navigate("/settings/services")}
+              className="text-primary hover:underline"
+            >
+              Services section
+            </button>
+            {" "}that can be customized while creating a project
+          </p>
+          <ServiceAddOnsPicker
+            services={services}
+            value={packageData.defaultAddons}
+            onChange={(addons) => setPackageData(prev => ({ ...prev, defaultAddons: addons }))}
+            navigate={navigate}
+          />
         </div>
 
         {/* Visibility */}

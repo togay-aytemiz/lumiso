@@ -84,8 +84,8 @@ export default function SettingsLayout() {
 
   return (
     <div className="flex min-h-screen bg-background">
-      {/* Settings Secondary Sidebar - Fixed vertically, natural horizontal flow */}
-      <div className={`sticky top-0 h-screen border-r bg-muted/30 ${isMobile ? 'w-16' : 'w-64'} flex-shrink-0`}>
+      {/* Settings Secondary Sidebar - Fixed positioning for mobile, sticky for desktop */}
+      <div className={`${isMobile ? 'fixed top-0 left-12 z-20' : 'sticky top-0'} h-screen border-r bg-muted/30 ${isMobile ? 'w-16' : 'w-64'} flex-shrink-0`}>
         <div className={`p-6 ${isMobile ? 'px-3 py-4' : ''} h-full overflow-y-auto`}>
           {!isMobile && (
             <h2 className="text-xl font-semibold mb-6">Settings</h2>
@@ -119,7 +119,7 @@ export default function SettingsLayout() {
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 min-w-0">
+      <div className={`flex-1 min-w-0 ${isMobile ? 'ml-16' : ''}`}>
         <Outlet />
       </div>
     </div>

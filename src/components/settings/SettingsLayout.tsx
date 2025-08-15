@@ -5,7 +5,7 @@ import {
   MessageSquare,
   FolderOpen, 
   Users, 
-  DollarSign, 
+  Package, 
   Plug, 
   FileText, 
   CreditCard,
@@ -48,7 +48,7 @@ const settingsCategories = [
   {
     label: "Services & Pricing",
     path: "/settings/services",
-    icon: DollarSign
+    icon: Package
   },
   {
     label: "Integrations",

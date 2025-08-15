@@ -84,9 +84,9 @@ export default function SettingsLayout() {
 
   return (
     <div className="flex min-h-screen bg-background">
-      {/* Settings Secondary Sidebar - Simple flex layout */}
-      <div className={`border-r bg-muted/30 ${isMobile ? 'w-16' : 'w-64'} flex-shrink-0`}>
-        <div className={`p-6 ${isMobile ? 'px-3 py-4' : ''} h-screen overflow-y-auto`}>
+      {/* Settings Secondary Sidebar - Fixed vertically, natural horizontal flow */}
+      <div className={`sticky top-0 h-screen border-r bg-muted/30 ${isMobile ? 'w-16' : 'w-64'} flex-shrink-0`}>
+        <div className={`p-6 ${isMobile ? 'px-3 py-4' : ''} h-full overflow-y-auto`}>
           {!isMobile && (
             <h2 className="text-xl font-semibold mb-6">Settings</h2>
           )}

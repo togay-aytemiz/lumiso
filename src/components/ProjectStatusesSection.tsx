@@ -465,6 +465,14 @@ const ProjectStatusesSection = () => {
         icon: <Plus className="h-4 w-4" />
       }}
     >
+      {/* Mobile CTA */}
+      <div className="mb-4 md:hidden">
+        <Button onClick={handleAdd} className="w-full">
+          <Plus className="h-4 w-4 mr-2" />
+          Add Stage
+        </Button>
+      </div>
+
       <div className="mb-4 p-3 bg-muted/30 rounded-lg border border-dashed border-muted-foreground/20">
         <p className="text-sm text-muted-foreground leading-relaxed">
           Drag (⋮⋮) to reorder • Click to edit stage names and colors.

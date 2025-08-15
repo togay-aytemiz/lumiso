@@ -10,7 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Upload, MoreHorizontal } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Upload, ChevronDown } from "lucide-react";
 
 export default function Account() {
   const [workingHours, setWorkingHours] = useState({
@@ -26,8 +27,12 @@ export default function Account() {
   const [inviteEmail, setInviteEmail] = useState("");
 
   const teamMembers = [
-    { id: 1, name: "John Doe", email: "john@example.com", role: "Owner", isCurrentUser: true },
-    { id: 2, name: "Jane Smith", email: "jane@example.com", role: "Member", isCurrentUser: false },
+    { id: 1, name: "John Doe", email: "john@example.com", role: "Owner", isCurrentUser: true, lastActive: "Currently active", status: "active" },
+    { id: 2, name: "Jane Smith", email: "jane@example.com", role: "Member", isCurrentUser: false, lastActive: "2 days ago", status: "active" },
+  ];
+
+  const pendingInvites = [
+    { id: 3, email: "mike@example.com", status: "pending" },
   ];
 
   const days = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
@@ -185,7 +190,8 @@ export default function Account() {
                     <TableHead>Name</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Role</TableHead>
-                    <TableHead className="w-12"></TableHead>
+                    <TableHead>Last Active</TableHead>
+                    <TableHead className="w-24"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -199,13 +205,55 @@ export default function Account() {
                       </TableCell>
                       <TableCell>{member.email}</TableCell>
                       <TableCell>
-                        <Badge variant={member.role === "Owner" ? "default" : "secondary"}>
-                          {member.role}
-                        </Badge>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="h-auto p-1 bg-secondary/50 hover:bg-secondary rounded-full"
+                              disabled={member.isCurrentUser}
+                            >
+                              <Badge variant={member.role === "Owner" ? "default" : "secondary"} className="border-0 bg-transparent hover:bg-transparent">
+                                {member.role}
+                              </Badge>
+                              {!member.isCurrentUser && <ChevronDown className="h-3 w-3 ml-1" />}
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="start">
+                            <DropdownMenuItem onClick={() => {}}>Owner</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => {}}>Member</DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {member.lastActive}
                       </TableCell>
                       <TableCell>
-                        <Button variant="ghost" size="sm">
-                          <MoreHorizontal className="h-4 w-4" />
+                        {!member.isCurrentUser && (
+                          <Button variant="outline" size="sm" className="text-destructive border-destructive/20 hover:bg-destructive/10">
+                            Remove
+                          </Button>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {pendingInvites.map((invite) => (
+                    <TableRow key={invite.id}>
+                      <TableCell className="font-medium text-muted-foreground">
+                        Pending invite
+                      </TableCell>
+                      <TableCell>{invite.email}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="text-muted-foreground">
+                          Pending
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        —
+                      </TableCell>
+                      <TableCell>
+                        <Button variant="outline" size="sm" className="text-muted-foreground">
+                          Cancel Invite
                         </Button>
                       </TableCell>
                     </TableRow>

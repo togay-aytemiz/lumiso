@@ -240,6 +240,16 @@ export function EditProjectTypeDialog({ type, open, onOpenChange, onTypeUpdated 
   };
 
   const handleDelete = async () => {
+    // Prevent deleting the default type
+    if (type.is_default) {
+      toast({
+        title: "Cannot delete default type",
+        description: "Set another project type as default first, then you can delete this one.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     if (!window.confirm("Are you sure you want to delete this project type?")) return;
     
     setLoading(true);

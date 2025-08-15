@@ -28,6 +28,11 @@ export default function ClientMessaging() {
     scheduledTime: "09:00"
   });
 
+  const [silentHours, setSilentHours] = useState({
+    startTime: "22:00",
+    endTime: "08:00"
+  });
+
   const messages = [
     {
       id: 1,
@@ -53,6 +58,20 @@ export default function ClientMessaging() {
     { label: "Session Date", value: "{session_date}" },
     { label: "Payment Link", value: "{payment_link}" },
   ];
+
+  // Generate time options every 30 minutes in 24h format
+  const generateTimeOptions = () => {
+    const options = [];
+    for (let hour = 0; hour < 24; hour++) {
+      for (let minute = 0; minute < 60; minute += 30) {
+        const timeValue = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+        options.push(timeValue);
+      }
+    }
+    return options;
+  };
+
+  const timeOptions = generateTimeOptions();
 
   const toggleChannel = (channel: string) => {
     setNewMessage(prev => ({
@@ -258,6 +277,69 @@ export default function ClientMessaging() {
                 </p>
               </div>
             )}
+          </div>
+        </SettingsSection>
+
+        {/* Silent Hours Section */}
+        <SettingsSection
+          title="Silent Hours"
+          description="Messages will not be sent during this time window. Any messages triggered at night will be delayed until the next morning."
+        >
+          <div className="space-y-4">
+            <div className="space-y-4">
+              <Label className="text-base font-medium">Silent Hours</Label>
+              
+              <div className="flex gap-4 items-end">
+                {/* Start Time */}
+                <div className="space-y-2">
+                  <Label htmlFor="startTime" className="text-sm text-muted-foreground">
+                    Start Time
+                  </Label>
+                  <Select
+                    value={silentHours.startTime}
+                    onValueChange={(value) => setSilentHours(prev => ({ ...prev, startTime: value }))}
+                  >
+                    <SelectTrigger className="w-32">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-60">
+                      {timeOptions.map((time) => (
+                        <SelectItem key={time} value={time}>
+                          {time}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* End Time */}
+                <div className="space-y-2">
+                  <Label htmlFor="endTime" className="text-sm text-muted-foreground">
+                    End Time
+                  </Label>
+                  <Select
+                    value={silentHours.endTime}
+                    onValueChange={(value) => setSilentHours(prev => ({ ...prev, endTime: value }))}
+                  >
+                    <SelectTrigger className="w-32">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-60">
+                      {timeOptions.map((time) => (
+                        <SelectItem key={time} value={time}>
+                          {time}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Helper text */}
+              <p className="text-sm text-muted-foreground mt-3">
+                Messages triggered during this period will be sent after silent hours end.
+              </p>
+            </div>
           </div>
         </SettingsSection>
 

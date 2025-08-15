@@ -70,7 +70,7 @@ export default function SettingsLayout() {
 
   return (
     <div className="flex min-h-screen bg-background">
-      {/* Secondary Sidebar */}
+      {/* Settings Secondary Sidebar - Updated styling */}
       <div className={`border-r bg-muted/30 ${isMobile ? 'w-16' : 'w-64'}`}>
         <div className={`p-6 ${isMobile ? 'px-3 py-4' : ''}`}>
           {!isMobile && (

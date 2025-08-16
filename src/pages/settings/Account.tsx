@@ -315,7 +315,7 @@ export default function Account() {
                   ) : (
                     <Upload className="h-4 w-4" />
                   )}
-                  {uploading ? "Uploading..." : "Choose File"}
+                  {uploading ? "Uploading..." : profile?.profile_photo_url ? "Choose New File" : "Choose File"}
                 </Button>
               </div>
 

@@ -19,6 +19,7 @@ import { useWorkingHours } from "@/hooks/useWorkingHours";
 import { useTeamManagement } from "@/hooks/useTeamManagement";
 import { useToast } from "@/hooks/use-toast";
 import { useSettingsCategorySection } from "@/hooks/useSettingsCategorySection";
+import { trimAndNormalizeSpaces, createTrimmedBlurHandler } from "@/lib/inputUtils";
 
 export default function Account() {
   const [inviteEmail, setInviteEmail] = useState("");
@@ -49,8 +50,8 @@ export default function Account() {
     },
     onSave: async (values) => {
       const result = await updateProfile({
-        full_name: values.fullName,
-        phone_number: values.phoneNumber,
+        full_name: trimAndNormalizeSpaces(values.fullName),
+        phone_number: trimAndNormalizeSpaces(values.phoneNumber),
       });
       
       if (!result.success) {
@@ -226,6 +227,7 @@ export default function Account() {
                 placeholder="Enter your full name"
                 value={profileSection.values.fullName}
                 onChange={(e) => profileSection.updateValue("fullName", e.target.value)}
+                onBlur={createTrimmedBlurHandler(profileSection.values.fullName, (value) => profileSection.updateValue("fullName", value))}
                 className="max-w-md"
               />
             </div>
@@ -239,6 +241,7 @@ export default function Account() {
                 placeholder="Enter your phone number"
                 value={profileSection.values.phoneNumber}
                 onChange={(e) => profileSection.updateValue("phoneNumber", e.target.value)}
+                onBlur={createTrimmedBlurHandler(profileSection.values.phoneNumber, (value) => profileSection.updateValue("phoneNumber", value))}
                 className="max-w-md"
               />
             </div>

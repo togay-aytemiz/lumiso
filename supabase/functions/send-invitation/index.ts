@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { Resend } from "npm:resend@2.0.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -21,6 +22,8 @@ serve(async (req: Request) => {
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
     );
+
+    const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
     // Get the user from the request
     const authHeader = req.headers.get("Authorization");
@@ -75,7 +78,7 @@ serve(async (req: Request) => {
         email,
         role,
         invited_by: user.id,
-        expires_at: new Date(Date.now() + 60 * 60 * 1000).toISOString(), // 1 hour
+        expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days
       })
       .select()
       .single();
@@ -84,20 +87,77 @@ serve(async (req: Request) => {
       throw inviteError;
     }
 
-    // For development, we'll just log the invitation link instead of sending email
+    // Get inviter's profile information
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("full_name")
+      .eq("user_id", user.id)
+      .single();
+
+    const inviterName = profile?.full_name || user.email || "Team member";
+    
+    // Create invitation link
     const inviteLink = `${Deno.env.get("SUPABASE_URL")}/auth?invitation_id=${invitation.id}`;
     
-    console.log(`Invitation created for ${email}`);
-    console.log(`Invitation link: ${inviteLink}`);
-    console.log(`Role: ${role}`);
-    console.log(`Expires at: ${invitation.expires_at}`);
+    // Send invitation email using Resend
+    const emailResponse = await resend.emails.send({
+      from: "Team Invitations <onboarding@resend.dev>", // Replace with your verified domain
+      to: [email],
+      subject: "You're invited to join our team!",
+      html: `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h1 style="color: #1EB29F; margin-bottom: 24px;">Team Invitation</h1>
+          
+          <p style="font-size: 16px; line-height: 1.5; margin-bottom: 16px;">
+            Hello! 👋
+          </p>
+          
+          <p style="font-size: 16px; line-height: 1.5; margin-bottom: 16px;">
+            <strong>${inviterName}</strong> has invited you to join their team as a <strong>${role}</strong>.
+          </p>
+          
+          <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin: 24px 0;">
+            <p style="margin: 0; font-size: 14px; color: #6b7280;">
+              Role: <strong style="color: #1f2937;">${role}</strong><br>
+              Invited by: <strong style="color: #1f2937;">${inviterName}</strong><br>
+              Expires: <strong style="color: #1f2937;">${new Date(invitation.expires_at).toLocaleDateString()}</strong>
+            </p>
+          </div>
+          
+          <div style="text-align: center; margin: 32px 0;">
+            <a href="${inviteLink}" 
+               style="background: linear-gradient(135deg, #D946EF, #9333EA); 
+                      color: white; 
+                      text-decoration: none; 
+                      padding: 12px 24px; 
+                      border-radius: 8px; 
+                      font-weight: 600; 
+                      display: inline-block;">
+              Accept Invitation
+            </a>
+          </div>
+          
+          <p style="font-size: 14px; color: #6b7280; line-height: 1.5;">
+            This invitation will expire in 7 days. If you didn't expect this invitation, you can safely ignore this email.
+          </p>
+          
+          <hr style="margin: 32px 0; border: none; border-top: 1px solid #e5e7eb;">
+          
+          <p style="font-size: 12px; color: #9ca3af; text-align: center;">
+            If the button doesn't work, copy and paste this link into your browser:<br>
+            <a href="${inviteLink}" style="color: #1EB29F; word-break: break-all;">${inviteLink}</a>
+          </p>
+        </div>
+      `,
+    });
+
+    console.log("Email sent successfully:", emailResponse);
 
     return new Response(
       JSON.stringify({ 
         success: true, 
         invitation,
-        // In development, return the link so it can be displayed
-        inviteLink 
+        emailSent: true
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

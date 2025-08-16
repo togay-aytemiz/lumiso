@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Upload, Loader2 } from "lucide-react";
+import { Upload, Loader2, X, AlertTriangle, Eye } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useSettingsCategorySection } from "@/hooks/useSettingsCategorySection";
 import { useUserSettings } from "@/hooks/useUserSettings";
 
@@ -115,6 +116,16 @@ export default function General() {
     brandingSection.updateValue("brandColor", value);
   };
 
+  const handleDeleteLogo = async () => {
+    try {
+      // Clear the logo URL in settings
+      await updateSettings({ logo_url: null });
+      brandingSection.updateValue("logoFile", null);
+    } catch (error) {
+      console.error("Failed to delete logo:", error);
+    }
+  };
+
   if (loading) {
     return (
       <SettingsPageWrapper>
@@ -160,8 +171,71 @@ export default function General() {
 
             {/* Logo Upload */}
             <div className="space-y-2">
-              <Label htmlFor="logo-upload">Upload Logo</Label>
-              <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+              <Label htmlFor="logo-upload">Logo Upload</Label>
+              
+              {/* Current Logo Preview */}
+              {settings?.logo_url && (
+                <div className="flex items-center gap-4 p-4 border rounded-lg bg-muted/30">
+                  <div className="relative">
+                    <img 
+                      src={settings.logo_url} 
+                      alt="Current logo" 
+                      className="w-16 h-16 object-contain bg-white border rounded"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">Current Logo</p>
+                    <p className="text-xs text-muted-foreground">Logo is currently set</p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleDeleteLogo}
+                    className="flex items-center gap-2 text-destructive hover:text-destructive"
+                  >
+                    <X className="h-4 w-4" />
+                    Delete
+                  </Button>
+                </div>
+              )}
+
+              {/* File Selection */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleFileButtonClick}
+                    disabled={uploading}
+                    className="flex items-center gap-2"
+                  >
+                    {uploading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Upload className="h-4 w-4" />
+                    )}
+                    {uploading ? "Uploading..." : "Choose New Logo"}
+                  </Button>
+                  
+                  {brandingSection.values.logoFile && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Eye className="h-4 w-4" />
+                      {brandingSection.values.logoFile.name}
+                    </div>
+                  )}
+                </div>
+
+                {/* Warning for unsaved file */}
+                {brandingSection.values.logoFile && (
+                  <Alert className="border-orange-200 bg-orange-50">
+                    <AlertTriangle className="h-4 w-4 text-orange-600" />
+                    <AlertDescription className="text-orange-800">
+                      <strong>File selected but not saved yet.</strong> Click "Save Changes" at the bottom to upload and apply your new logo.
+                    </AlertDescription>
+                  </Alert>
+                )}
+
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -169,39 +243,10 @@ export default function General() {
                   onChange={handleLogoUpload}
                   className="hidden"
                 />
-                <Button 
-                  variant="outline" 
-                  onClick={handleFileButtonClick}
-                  disabled={uploading}
-                  className="flex items-center gap-2 w-full sm:w-fit"
-                >
-                  {uploading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Upload className="h-4 w-4" />
-                  )}
-                  {uploading ? "Uploading..." : "Choose File"}
-                </Button>
-                <span className="text-sm text-muted-foreground">
-                  {brandingSection.values.logoFile 
-                    ? brandingSection.values.logoFile.name
-                    : settings?.logo_url 
-                      ? "Logo uploaded" 
-                      : "No file selected"
-                  }
-                </span>
               </div>
-              {settings?.logo_url && (
-                <div className="mt-2">
-                  <img 
-                    src={settings.logo_url} 
-                    alt="Current logo" 
-                    className="h-16 w-auto border rounded"
-                  />
-                </div>
-              )}
+              
               <p className="text-sm text-muted-foreground">
-                Displayed on your client portal and emails. Accepts JPG, PNG, or SVG. Max file size: 2 MB
+                Recommended size: 200x200px or larger. Supported formats: PNG, JPG, SVG
               </p>
             </div>
 

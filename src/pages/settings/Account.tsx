@@ -274,38 +274,28 @@ export default function Account() {
                 </div>
               )}
 
-              <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                <Avatar className="h-16 w-16">
-                  <AvatarImage src={profile?.profile_photo_url || ""} />
-                  <AvatarFallback>
-                    {profile?.full_name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'U'}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex flex-col gap-2 min-w-0 flex-1">
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileUpload}
-                    className="hidden"
-                  />
-                  <Button 
-                    variant="outline" 
-                    className="flex items-center gap-2 w-full sm:w-fit"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={uploading}
-                  >
-                    {uploading ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Upload className="h-4 w-4" />
-                    )}
-                    {uploading ? "Uploading..." : "Choose File"}
-                  </Button>
-                  <span className="text-sm text-muted-foreground">
-                    {profile?.profile_photo_url ? "Photo uploaded" : "No file selected"}
-                  </span>
-                </div>
+              {/* File Upload Button */}
+              <div className="flex flex-col gap-2">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
+                <Button 
+                  variant="outline" 
+                  className="flex items-center gap-2 w-full sm:w-fit"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                >
+                  {uploading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Upload className="h-4 w-4" />
+                  )}
+                  {uploading ? "Uploading..." : "Choose File"}
+                </Button>
               </div>
 
               <p className="text-sm text-muted-foreground">

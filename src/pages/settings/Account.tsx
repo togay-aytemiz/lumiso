@@ -289,9 +289,39 @@ export default function Account() {
                     </div>
                   </>
                 ) : (
-                  <div className="flex items-center justify-center">
-                    <p className="text-sm text-muted-foreground">No profile photo set</p>
-                  </div>
+                  <>
+                    {/* Mobile Layout - Placeholder */}
+                    <div className="flex items-center gap-3 sm:hidden">
+                      <Avatar className="w-12 h-12">
+                        <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+                          {profileSection.values.fullName 
+                            ? profileSection.values.fullName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
+                            : 'U'
+                          }
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">Default Avatar</p>
+                        <p className="text-xs text-muted-foreground">Used in admin views and client messages</p>
+                      </div>
+                    </div>
+                    
+                    {/* Desktop/Tablet Layout - Placeholder */}
+                    <div className="hidden sm:flex sm:items-center sm:gap-4 sm:flex-1">
+                      <Avatar className="w-16 h-16">
+                        <AvatarFallback className="bg-primary/10 text-primary font-semibold text-lg">
+                          {profileSection.values.fullName 
+                            ? profileSection.values.fullName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
+                            : 'U'
+                          }
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">Default Avatar</p>
+                        <p className="text-xs text-muted-foreground">Used in admin views and client messages when no photo is uploaded</p>
+                      </div>
+                    </div>
+                  </>
                 )}
               </div>
 

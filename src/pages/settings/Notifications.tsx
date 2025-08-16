@@ -5,6 +5,7 @@ import { CategorySettingsSection } from "@/components/settings/CategorySettingsS
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -160,7 +161,7 @@ export default function Notifications() {
           description="Configure your notification preferences and delivery times"
         />
         <div className="flex items-center justify-center h-48">
-          <div className="text-sm text-muted-foreground">Loading...</div>
+          <Loader2 className="h-8 w-8 animate-spin" />
         </div>
       </SettingsPageWrapper>
     );

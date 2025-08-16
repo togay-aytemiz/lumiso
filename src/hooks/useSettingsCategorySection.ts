@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useCallback, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import { useSettingsSection } from "./useSettingsSection";
 import { useSettingsContext } from "@/contexts/SettingsContext";
@@ -27,28 +27,34 @@ export function useSettingsCategorySection<T extends Record<string, any>>(
     throttleMs: options.throttleMs
   });
 
-  // Register this section with the category context
+  // Use refs to avoid recreating functions
+  const handlersRef = useRef({
+    handleSave: section.handleSave,
+    handleCancel: section.handleCancel
+  });
+
+  // Update refs when handlers change
+  useEffect(() => {
+    handlersRef.current = {
+      handleSave: section.handleSave,
+      handleCancel: section.handleCancel
+    };
+  }, [section.handleSave, section.handleCancel]);
+
+  // Register this section with the category context - only when path/id changes
   useEffect(() => {
     registerSectionHandler(
       categoryPath,
       options.sectionId,
       options.sectionName,
-      section.handleSave,
-      section.handleCancel
+      () => handlersRef.current.handleSave(),
+      () => handlersRef.current.handleCancel()
     );
 
     return () => {
       unregisterSectionHandler(categoryPath, options.sectionId);
     };
-  }, [
-    categoryPath,
-    options.sectionId,
-    options.sectionName,
-    section.handleSave,
-    section.handleCancel,
-    registerSectionHandler,
-    unregisterSectionHandler
-  ]);
+  }, [categoryPath, options.sectionId, options.sectionName]); // Removed handler deps
 
   // Update dirty state in context
   useEffect(() => {

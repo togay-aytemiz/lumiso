@@ -56,7 +56,7 @@ export default function Account() {
 
   // Update form fields when profile loads
   useState(() => {
-    if (profile) {
+    if (profile && !profileLoading) {
       setFullName(profile.full_name || "");
       setPhoneNumber(profile.phone_number || "");
     }

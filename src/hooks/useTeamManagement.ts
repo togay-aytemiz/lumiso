@@ -35,9 +35,12 @@ export function useTeamManagement() {
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
+        console.log('No user found for team data fetch');
         setLoading(false);
         return;
       }
+
+      console.log('Fetching team data for user:', user.id);
 
       // Fetch team members
       const { data: membersData, error: membersError } = await supabase
@@ -45,6 +48,8 @@ export function useTeamManagement() {
         .select('*')
         .eq('organization_id', user.id)
         .order('joined_at');
+
+      console.log('Members query result:', { membersData, membersError });
 
       if (membersError) throw membersError;
 
@@ -62,6 +67,8 @@ export function useTeamManagement() {
         .is('accepted_at', null)
         .gt('expires_at', new Date().toISOString())
         .order('created_at', { ascending: false });
+
+      console.log('Invitations query result:', { invitesData, invitesError });
 
       if (invitesError) throw invitesError;
 

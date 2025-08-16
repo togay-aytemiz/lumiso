@@ -283,13 +283,8 @@ export function useTeamManagement() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const channel = supabase.channel(`org_${user.id}_presence`, {
-        config: {
-          presence: {
-            key: user.id,
-          },
-        },
-      });
+      const channelName = `organization_${user.id}_presence`;
+      const channel = supabase.channel(channelName);
 
       // Track presence events
       channel
@@ -298,18 +293,15 @@ export function useTeamManagement() {
           const online = new Set<string>();
           
           Object.values(presenceState).forEach((users: any) => {
-            users.forEach((user: any) => {
-              online.add(user.user_id);
+            users.forEach((userPresence: any) => {
+              if (userPresence.user_id) {
+                online.add(userPresence.user_id);
+              }
             });
           });
           
+          console.log('Online users:', Array.from(online));
           setOnlineUsers(online);
-          
-          // Update team members with online status
-          setTeamMembers(prev => prev.map(member => ({
-            ...member,
-            is_online: online.has(member.user_id)
-          })));
         })
         .on('presence', { event: 'join' }, ({ newPresences }) => {
           console.log('User joined:', newPresences);
@@ -319,23 +311,39 @@ export function useTeamManagement() {
         })
         .subscribe(async (status) => {
           if (status === 'SUBSCRIBED') {
+            console.log('Presence channel subscribed, tracking user:', user.id);
             // Track current user's presence
             await channel.track({
               user_id: user.id,
               online_at: new Date().toISOString(),
             });
+          } else if (status === 'CHANNEL_ERROR') {
+            console.error('Presence channel error');
+          } else if (status === 'TIMED_OUT') {
+            console.error('Presence channel timed out');
           }
         });
 
       // Update last_active timestamp periodically
       const interval = setInterval(async () => {
-        await supabase
-          .from('organization_members')
-          .update({ last_active: new Date().toISOString() })
-          .eq('user_id', user.id);
+        try {
+          await supabase
+            .from('organization_members')
+            .update({ last_active: new Date().toISOString() })
+            .eq('user_id', user.id);
+          
+          // Re-track presence to keep connection alive
+          await channel.track({
+            user_id: user.id,
+            online_at: new Date().toISOString(),
+          });
+        } catch (error) {
+          console.warn('Failed to update presence:', error);
+        }
       }, 30000); // Update every 30 seconds
 
       return () => {
+        console.log('Cleaning up presence channel');
         channel.unsubscribe();
         clearInterval(interval);
       };
@@ -347,9 +355,20 @@ export function useTeamManagement() {
     };
   }, []);
 
+  // Refresh team data when online users change
+  useEffect(() => {
+    if (onlineUsers.size > 0) {
+      // Update existing team members with online status
+      setTeamMembers(prev => prev.map(member => ({
+        ...member,
+        is_online: onlineUsers.has(member.user_id)
+      })));
+    }
+  }, [onlineUsers]);
+
   useEffect(() => {
     fetchTeamData();
-  }, [onlineUsers]);
+  }, []);
 
   return {
     teamMembers,

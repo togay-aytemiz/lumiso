@@ -554,13 +554,13 @@ export default function Account() {
                       ? profile.full_name
                       : member.full_name
                       ? member.full_name
-                      : `User ${member.user_id.slice(0, 8)}...`;
+                      : "(Name not set)";
                     
                     const displayEmail = currentUser && emailAddress 
                       ? emailAddress 
                       : member.email 
                       ? member.email
-                      : `${member.user_id.slice(0, 8)}...@example.com`;
+                      : "(Email not available)";
                     
                     return (
                       <TableRow key={member.id}>
@@ -568,7 +568,7 @@ export default function Account() {
                           <div className="flex items-center gap-2">
                             {displayName}
                             {member.is_online && (
-                              <div className="w-2 h-2 bg-green-500 rounded-full" title="Online"></div>
+                              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" title="Online"></div>
                             )}
                             {currentUser && (
                               <span className="text-sm text-muted-foreground ml-2">(You)</span>

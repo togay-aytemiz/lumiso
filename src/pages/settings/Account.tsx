@@ -1,8 +1,9 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import SettingsPageWrapper from "@/components/settings/SettingsPageWrapper";
 import SettingsHeader from "@/components/settings/SettingsHeader";
-import SettingsSection from "@/components/SettingsSection";
+import EnhancedSettingsSection from "@/components/settings/EnhancedSettingsSection";
+import { CategorySettingsSection } from "@/components/settings/CategorySettingsSection";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,11 +18,10 @@ import { useProfile } from "@/hooks/useProfile";
 import { useWorkingHours } from "@/hooks/useWorkingHours";
 import { useTeamManagement } from "@/hooks/useTeamManagement";
 import { useToast } from "@/hooks/use-toast";
+import { useSettingsCategorySection } from "@/hooks/useSettingsCategorySection";
 
 export default function Account() {
   const [inviteEmail, setInviteEmail] = useState("");
-  const [fullName, setFullName] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
   const [emailAddress, setEmailAddress] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   
@@ -39,6 +39,39 @@ export default function Account() {
   } = useTeamManagement();
   const { toast } = useToast();
 
+  // Profile section state
+  const profileSection = useSettingsCategorySection({
+    sectionId: "profile",
+    sectionName: "Profile",
+    initialValues: {
+      fullName: profile?.full_name || "",
+      phoneNumber: profile?.phone_number || "",
+    },
+    onSave: async (values) => {
+      const result = await updateProfile({
+        full_name: values.fullName,
+        phone_number: values.phoneNumber,
+      });
+      
+      if (!result.success) {
+        throw new Error("Failed to save profile");
+      }
+    }
+  });
+
+  // Working hours section state
+  const workingHoursSection = useSettingsCategorySection({
+    sectionId: "working-hours",
+    sectionName: "Working Hours",
+    initialValues: {
+      workingHours: workingHours
+    },
+    onSave: async (values) => {
+      // Working hours are saved immediately on change, so nothing to do here
+      return values;
+    }
+  });
+
   const days = [1, 2, 3, 4, 5, 6, 0]; // Monday=1, Sunday=0
   const dayLabels = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
@@ -50,17 +83,28 @@ export default function Account() {
   };
 
   // Load profile data when component mounts
-  useState(() => {
+  useEffect(() => {
     getCurrentUser();
-  });
+  }, []);
 
   // Update form fields when profile loads
-  useState(() => {
+  useEffect(() => {
     if (profile && !profileLoading) {
-      setFullName(profile.full_name || "");
-      setPhoneNumber(profile.phone_number || "");
+      profileSection.setValues({
+        fullName: profile.full_name || "",
+        phoneNumber: profile.phone_number || "",
+      });
     }
-  });
+  }, [profile, profileLoading]);
+
+  // Update working hours form when data loads
+  useEffect(() => {
+    if (workingHours.length > 0) {
+      workingHoursSection.setValues({
+        workingHours: workingHours
+      });
+    }
+  }, [workingHours]);
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -69,24 +113,12 @@ export default function Account() {
     }
   };
 
-  const handleProfileSave = async () => {
-    const result = await updateProfile({
-      full_name: fullName,
-      phone_number: phoneNumber,
-    });
-    
-    if (result.success) {
-      toast({
-        title: "Success",
-        description: "Profile updated successfully",
-      });
-    }
-  };
-
   const handleWorkingHourUpdate = async (dayOfWeek: number, field: string, value: any) => {
     const workingHour = workingHours.find(wh => wh.day_of_week === dayOfWeek);
     if (workingHour) {
       await updateWorkingHour(dayOfWeek, { [field]: value });
+      // Mark working hours section as dirty to show save button
+      workingHoursSection.updateValue("workingHours", workingHours);
     }
   };
 
@@ -107,6 +139,24 @@ export default function Account() {
     };
   };
 
+  // Get current user ID for comparison
+  const getCurrentUserId = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    return user?.id;
+  };
+
+  // Generate time options from 09:00 to 17:00
+  const generateTimeOptions = () => {
+    const times = [];
+    for (let hour = 9; hour <= 17; hour++) {
+      const timeString = `${hour.toString().padStart(2, '0')}:00`;
+      times.push(timeString);
+    }
+    return times;
+  };
+
+  const timeOptions = generateTimeOptions();
+
   return (
     <SettingsPageWrapper>
       <SettingsHeader
@@ -115,9 +165,10 @@ export default function Account() {
       />
       
       <div className="space-y-8">
-        <SettingsSection
+        <CategorySettingsSection
           title="Profile"
           description="Update your personal information and photo."
+          sectionId="profile"
         >
           <div className="space-y-6">
             {/* Avatar Upload */}
@@ -167,9 +218,8 @@ export default function Account() {
               <Input
                 id="full-name"
                 placeholder="Enter your full name"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                onBlur={handleProfileSave}
+                value={profileSection.values.fullName}
+                onChange={(e) => profileSection.updateValue("fullName", e.target.value)}
                 className="max-w-md"
               />
             </div>
@@ -181,9 +231,8 @@ export default function Account() {
                 id="phone"
                 type="tel"
                 placeholder="Enter your phone number"
-                value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
-                onBlur={handleProfileSave}
+                value={profileSection.values.phoneNumber}
+                onChange={(e) => profileSection.updateValue("phoneNumber", e.target.value)}
                 className="max-w-md"
               />
             </div>
@@ -203,11 +252,12 @@ export default function Account() {
               </p>
             </div>
           </div>
-        </SettingsSection>
+        </CategorySettingsSection>
 
-        <SettingsSection
+        <CategorySettingsSection
           title="Working Hours"
           description="Define your available times for bookings and scheduling."
+          sectionId="working-hours"
         >
           <div className="space-y-4">
             {days.map((dayOfWeek, index) => {
@@ -232,11 +282,9 @@ export default function Account() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="08:00">08:00</SelectItem>
-                          <SelectItem value="09:00">09:00</SelectItem>
-                          <SelectItem value="10:00">10:00</SelectItem>
-                          <SelectItem value="11:00">11:00</SelectItem>
-                          <SelectItem value="12:00">12:00</SelectItem>
+                          {timeOptions.map(time => (
+                            <SelectItem key={time} value={time}>{time}</SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                       
@@ -251,11 +299,9 @@ export default function Account() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="16:00">16:00</SelectItem>
-                          <SelectItem value="17:00">17:00</SelectItem>
-                          <SelectItem value="18:00">18:00</SelectItem>
-                          <SelectItem value="19:00">19:00</SelectItem>
-                          <SelectItem value="20:00">20:00</SelectItem>
+                          {timeOptions.map(time => (
+                            <SelectItem key={time} value={time}>{time}</SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
@@ -281,11 +327,9 @@ export default function Account() {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="08:00">08:00</SelectItem>
-                            <SelectItem value="09:00">09:00</SelectItem>
-                            <SelectItem value="10:00">10:00</SelectItem>
-                            <SelectItem value="11:00">11:00</SelectItem>
-                            <SelectItem value="12:00">12:00</SelectItem>
+                            {timeOptions.map(time => (
+                              <SelectItem key={time} value={time}>{time}</SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                         
@@ -297,11 +341,9 @@ export default function Account() {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="16:00">16:00</SelectItem>
-                            <SelectItem value="17:00">17:00</SelectItem>
-                            <SelectItem value="18:00">18:00</SelectItem>
-                            <SelectItem value="19:00">19:00</SelectItem>
-                            <SelectItem value="20:00">20:00</SelectItem>
+                            {timeOptions.map(time => (
+                              <SelectItem key={time} value={time}>{time}</SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       </div>
@@ -311,9 +353,9 @@ export default function Account() {
               );
             })}
           </div>
-        </SettingsSection>
+        </CategorySettingsSection>
 
-        <SettingsSection
+        <EnhancedSettingsSection
           title="Team Management"
           description="Manage your team members and their roles."
         >
@@ -336,12 +378,12 @@ export default function Account() {
                     return (
                       <TableRow key={member.id}>
                         <TableCell className="font-medium">
-                          User ID: {member.user_id.slice(0, 8)}...
+                          {emailAddress && currentUser ? emailAddress : `User ${member.user_id.slice(0, 8)}...`}
                           {currentUser && (
                             <span className="text-sm text-muted-foreground ml-2">(You)</span>
                           )}
                         </TableCell>
-                        <TableCell>{member.user_id}</TableCell>
+                        <TableCell>{emailAddress && currentUser ? emailAddress : `${member.user_id.slice(0, 8)}...@example.com`}</TableCell>
                         <TableCell>
                           {currentUser || currentUserRole !== "Owner" ? (
                             <Badge variant={member.role === "Owner" ? "default" : "secondary"}>
@@ -373,7 +415,7 @@ export default function Account() {
                           )}
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
-                          {member.last_active ? new Date(member.last_active).toLocaleDateString() : "Never"}
+                          {currentUser ? "Online" : member.last_active ? new Date(member.last_active).toLocaleDateString() : "Never"}
                         </TableCell>
                         <TableCell>
                           {!currentUser && currentUserRole === "Owner" && (
@@ -450,7 +492,7 @@ export default function Account() {
               )}
             </div>
           </div>
-        </SettingsSection>
+        </EnhancedSettingsSection>
       </div>
     </SettingsPageWrapper>
   );

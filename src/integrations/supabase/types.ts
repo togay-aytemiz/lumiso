@@ -744,6 +744,16 @@ export type Database = {
           date_format: string | null
           id: string
           logo_url: string | null
+          notification_daily_summary_enabled: boolean | null
+          notification_daily_summary_send_at: string | null
+          notification_delivery_reminder_enabled: boolean | null
+          notification_delivery_reminder_send_at: string | null
+          notification_integration_failure_alert_enabled: boolean | null
+          notification_overdue_reminder_enabled: boolean | null
+          notification_session_reminder_enabled: boolean | null
+          notification_session_reminder_send_at: string | null
+          notification_task_nudge_enabled: boolean | null
+          notification_team_invite_accepted_alert_enabled: boolean | null
           photography_business_name: string | null
           primary_brand_color: string | null
           show_quick_status_buttons: boolean
@@ -756,6 +766,16 @@ export type Database = {
           date_format?: string | null
           id?: string
           logo_url?: string | null
+          notification_daily_summary_enabled?: boolean | null
+          notification_daily_summary_send_at?: string | null
+          notification_delivery_reminder_enabled?: boolean | null
+          notification_delivery_reminder_send_at?: string | null
+          notification_integration_failure_alert_enabled?: boolean | null
+          notification_overdue_reminder_enabled?: boolean | null
+          notification_session_reminder_enabled?: boolean | null
+          notification_session_reminder_send_at?: string | null
+          notification_task_nudge_enabled?: boolean | null
+          notification_team_invite_accepted_alert_enabled?: boolean | null
           photography_business_name?: string | null
           primary_brand_color?: string | null
           show_quick_status_buttons?: boolean
@@ -768,6 +788,16 @@ export type Database = {
           date_format?: string | null
           id?: string
           logo_url?: string | null
+          notification_daily_summary_enabled?: boolean | null
+          notification_daily_summary_send_at?: string | null
+          notification_delivery_reminder_enabled?: boolean | null
+          notification_delivery_reminder_send_at?: string | null
+          notification_integration_failure_alert_enabled?: boolean | null
+          notification_overdue_reminder_enabled?: boolean | null
+          notification_session_reminder_enabled?: boolean | null
+          notification_session_reminder_send_at?: string | null
+          notification_task_nudge_enabled?: boolean | null
+          notification_team_invite_accepted_alert_enabled?: boolean | null
           photography_business_name?: string | null
           primary_brand_color?: string | null
           show_quick_status_buttons?: boolean

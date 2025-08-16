@@ -9,12 +9,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Upload, Loader2, X, AlertTriangle, Eye } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useState } from "react";
 import { useSettingsCategorySection } from "@/hooks/useSettingsCategorySection";
 import { useUserSettings } from "@/hooks/useUserSettings";
 
 export default function General() {
   const { settings, loading, uploading, updateSettings, uploadLogo } = useUserSettings();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isLogoModalOpen, setIsLogoModalOpen] = useState(false);
 
   // Branding section state
   const brandingSection = useSettingsCategorySection({
@@ -175,12 +178,13 @@ export default function General() {
               
               {/* Current Logo Preview */}
               {settings?.logo_url && (
-                <div className="flex items-center gap-4 p-4 border rounded-lg bg-muted/30">
-                  <div className="relative">
+                <div className="flex items-center gap-4 p-4 border rounded-lg bg-muted/30 max-w-md">
+                  <div className="relative cursor-pointer" onClick={() => setIsLogoModalOpen(true)}>
                     <img 
                       src={settings.logo_url} 
-                      alt="Current logo" 
-                      className="w-16 h-16 object-contain bg-white border rounded"
+                      alt="Current logo - click to enlarge" 
+                      className="w-16 h-16 object-contain bg-white border rounded hover:opacity-80 transition-opacity"
+                      title="Click to view full size"
                     />
                   </div>
                   <div className="flex-1">
@@ -246,7 +250,7 @@ export default function General() {
               </div>
               
               <p className="text-sm text-muted-foreground">
-                Recommended size: 200x200px or larger. Supported formats: PNG, JPG, SVG
+                Supported formats: PNG, JPG, SVG
               </p>
             </div>
 
@@ -320,6 +324,24 @@ export default function General() {
           </div>
         </CategorySettingsSection>
       </div>
+
+      {/* Logo Preview Modal */}
+      <Dialog open={isLogoModalOpen} onOpenChange={setIsLogoModalOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Logo Preview</DialogTitle>
+          </DialogHeader>
+          <div className="flex justify-center p-6">
+            {settings?.logo_url && (
+              <img 
+                src={settings.logo_url} 
+                alt="Logo full size preview" 
+                className="max-w-full max-h-96 object-contain bg-white border rounded shadow-sm"
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </SettingsPageWrapper>
   );
 }

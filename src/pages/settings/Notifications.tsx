@@ -44,6 +44,8 @@ export default function Notifications() {
   });
 
   const [autoSaveStates, setAutoSaveStates] = useState<{[key: string]: 'idle' | 'saving' | 'success'}>({});
+  const [hasChanges, setHasChanges] = useState(false);
+  const [originalSettings, setOriginalSettings] = useState<NotificationSettings>(settings);
 
   // Load settings from database
   useEffect(() => {
@@ -80,6 +82,7 @@ export default function Notifications() {
           teamInviteAcceptedAlertEnabled: data.notification_team_invite_accepted_alert_enabled ?? false,
         };
         setSettings(loadedSettings);
+        setOriginalSettings(loadedSettings);
       }
     } catch (error) {
       console.error('Error loading notification settings:', error);
@@ -88,18 +91,12 @@ export default function Notifications() {
     }
   };
 
-  // Auto-save function for all settings
-  const handleAutoSave = async (field: keyof NotificationSettings, value: boolean | string) => {
+  // Auto-save function for pure toggles
+  const handleAutoSaveToggle = async (field: keyof NotificationSettings, value: boolean) => {
     setAutoSaveStates(prev => ({ ...prev, [field]: 'saving' }));
     
     const fieldMap: {[key in keyof NotificationSettings]?: string} = {
       overdueReminderEnabled: 'notification_overdue_reminder_enabled',
-      deliveryReminderEnabled: 'notification_delivery_reminder_enabled',
-      deliveryReminderSendAt: 'notification_delivery_reminder_send_at',
-      sessionReminderEnabled: 'notification_session_reminder_enabled',
-      sessionReminderSendAt: 'notification_session_reminder_send_at',
-      dailySummaryEnabled: 'notification_daily_summary_enabled',
-      dailySummarySendAt: 'notification_daily_summary_send_at',
       taskNudgeEnabled: 'notification_task_nudge_enabled',
       integrationFailureAlertEnabled: 'notification_integration_failure_alert_enabled',
       teamInviteAcceptedAlertEnabled: 'notification_team_invite_accepted_alert_enabled',
@@ -120,6 +117,7 @@ export default function Notifications() {
       if (error) throw error;
 
       setSettings(prev => ({ ...prev, [field]: value }));
+      setOriginalSettings(prev => ({ ...prev, [field]: value }));
       setAutoSaveStates(prev => ({ ...prev, [field]: 'success' }));
       
       toast({
@@ -140,6 +138,61 @@ export default function Notifications() {
         variant: "destructive",
       });
     }
+  };
+
+  // Handle changes for time groups
+  const handleTimeGroupChange = (field: keyof NotificationSettings, value: boolean | string) => {
+    const newSettings = { ...settings, [field]: value };
+    setSettings(newSettings);
+    
+    // Check if there are changes from original
+    const hasChanges = JSON.stringify(newSettings) !== JSON.stringify(originalSettings);
+    setHasChanges(hasChanges);
+  };
+
+  // Save time group changes
+  const saveTimeGroupChanges = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('No user found');
+
+      const updates = {
+        notification_delivery_reminder_enabled: settings.deliveryReminderEnabled,
+        notification_delivery_reminder_send_at: settings.deliveryReminderEnabled ? settings.deliveryReminderSendAt : "09:00",
+        notification_session_reminder_enabled: settings.sessionReminderEnabled,
+        notification_session_reminder_send_at: settings.sessionReminderEnabled ? settings.sessionReminderSendAt : "09:00",
+        notification_daily_summary_enabled: settings.dailySummaryEnabled,
+        notification_daily_summary_send_at: settings.dailySummaryEnabled ? settings.dailySummarySendAt : "07:00",
+      };
+
+      const { error } = await supabase
+        .from('user_settings')
+        .update(updates)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      setOriginalSettings(settings);
+      setHasChanges(false);
+      
+      toast({
+        title: "Success",
+        description: "Notification settings saved successfully",
+      });
+    } catch (error) {
+      console.error('Error saving settings:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save notification settings",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Cancel changes
+  const cancelChanges = () => {
+    setSettings(originalSettings);
+    setHasChanges(false);
   };
 
   // Show loading state until all data is loaded
@@ -191,13 +244,13 @@ export default function Notifications() {
                 <Switch
                   id="overdue-reminder"
                   checked={settings.overdueReminderEnabled}
-                  onCheckedChange={(checked) => handleAutoSave('overdueReminderEnabled', checked)}
+                  onCheckedChange={(checked) => handleAutoSaveToggle('overdueReminderEnabled', checked)}
                   disabled={autoSaveStates.overdueReminderEnabled === 'saving'}
                 />
               </div>
             </div>
 
-            {/* Delivery Reminder - Auto-save group */}
+            {/* Delivery Reminder - Time group */}
             <div className="space-y-4 p-4 border rounded-lg">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
@@ -208,45 +261,28 @@ export default function Notifications() {
                     Daily reminder to check on delivery status
                   </p>
                 </div>
-                <div className="flex items-center gap-2">
-                  {autoSaveStates.deliveryReminderEnabled === 'saving' && (
-                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                  )}
-                  {autoSaveStates.deliveryReminderEnabled === 'success' && (
-                    <Check className="h-4 w-4 text-green-600" />
-                  )}
-                  <Switch
-                    id="delivery-reminder"
-                    checked={settings.deliveryReminderEnabled}
-                    onCheckedChange={(checked) => handleAutoSave('deliveryReminderEnabled', checked)}
-                    disabled={autoSaveStates.deliveryReminderEnabled === 'saving'}
-                  />
-                </div>
+                <Switch
+                  id="delivery-reminder"
+                  checked={settings.deliveryReminderEnabled}
+                  onCheckedChange={(checked) => handleTimeGroupChange('deliveryReminderEnabled', checked)}
+                />
               </div>
               
               {settings.deliveryReminderEnabled && (
                 <div className="flex items-center gap-3 pt-2 border-t">
                   <Label htmlFor="delivery-time" className="text-sm">Send at:</Label>
-                  <div className="flex items-center gap-2">
-                    {autoSaveStates.deliveryReminderSendAt === 'saving' && (
-                      <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                    )}
-                    {autoSaveStates.deliveryReminderSendAt === 'success' && (
-                      <Check className="h-4 w-4 text-green-600" />
-                    )}
-                    <Input
-                      id="delivery-time"
-                      type="time"
-                      value={settings.deliveryReminderSendAt}
-                      onChange={(e) => handleAutoSave('deliveryReminderSendAt', e.target.value)}
-                      className="w-32"
-                    />
-                  </div>
+                  <Input
+                    id="delivery-time"
+                    type="time"
+                    value={settings.deliveryReminderSendAt}
+                    onChange={(e) => handleTimeGroupChange('deliveryReminderSendAt', e.target.value)}
+                    className="w-32"
+                  />
                 </div>
               )}
             </div>
 
-            {/* Session Reminder - Auto-save group */}
+            {/* Session Reminder - Time group */}
             <div className="space-y-4 p-4 border rounded-lg">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
@@ -257,40 +293,23 @@ export default function Notifications() {
                     Daily reminder about upcoming sessions
                   </p>
                 </div>
-                <div className="flex items-center gap-2">
-                  {autoSaveStates.sessionReminderEnabled === 'saving' && (
-                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                  )}
-                  {autoSaveStates.sessionReminderEnabled === 'success' && (
-                    <Check className="h-4 w-4 text-green-600" />
-                  )}
-                  <Switch
-                    id="session-reminder"
-                    checked={settings.sessionReminderEnabled}
-                    onCheckedChange={(checked) => handleAutoSave('sessionReminderEnabled', checked)}
-                    disabled={autoSaveStates.sessionReminderEnabled === 'saving'}
-                  />
-                </div>
+                <Switch
+                  id="session-reminder"
+                  checked={settings.sessionReminderEnabled}
+                  onCheckedChange={(checked) => handleTimeGroupChange('sessionReminderEnabled', checked)}
+                />
               </div>
               
               {settings.sessionReminderEnabled && (
                 <div className="flex items-center gap-3 pt-2 border-t">
                   <Label htmlFor="session-time" className="text-sm">Send at:</Label>
-                  <div className="flex items-center gap-2">
-                    {autoSaveStates.sessionReminderSendAt === 'saving' && (
-                      <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                    )}
-                    {autoSaveStates.sessionReminderSendAt === 'success' && (
-                      <Check className="h-4 w-4 text-green-600" />
-                    )}
-                    <Input
-                      id="session-time"
-                      type="time"
-                      value={settings.sessionReminderSendAt}
-                      onChange={(e) => handleAutoSave('sessionReminderSendAt', e.target.value)}
-                      className="w-32"
-                    />
-                  </div>
+                  <Input
+                    id="session-time"
+                    type="time"
+                    value={settings.sessionReminderSendAt}
+                    onChange={(e) => handleTimeGroupChange('sessionReminderSendAt', e.target.value)}
+                    className="w-32"
+                  />
                 </div>
               )}
             </div>
@@ -303,7 +322,7 @@ export default function Notifications() {
           sectionId="tasks"
         >
           <div className="space-y-6">
-            {/* Daily Summary - Auto-save group */}
+            {/* Daily Summary - Time group */}
             <div className="space-y-4 p-4 border rounded-lg">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
@@ -314,40 +333,23 @@ export default function Notifications() {
                     Morning digest of your schedule and pending tasks
                   </p>
                 </div>
-                <div className="flex items-center gap-2">
-                  {autoSaveStates.dailySummaryEnabled === 'saving' && (
-                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                  )}
-                  {autoSaveStates.dailySummaryEnabled === 'success' && (
-                    <Check className="h-4 w-4 text-green-600" />
-                  )}
-                  <Switch
-                    id="daily-summary"
-                    checked={settings.dailySummaryEnabled}
-                    onCheckedChange={(checked) => handleAutoSave('dailySummaryEnabled', checked)}
-                    disabled={autoSaveStates.dailySummaryEnabled === 'saving'}
-                  />
-                </div>
+                <Switch
+                  id="daily-summary"
+                  checked={settings.dailySummaryEnabled}
+                  onCheckedChange={(checked) => handleTimeGroupChange('dailySummaryEnabled', checked)}
+                />
               </div>
               
               {settings.dailySummaryEnabled && (
                 <div className="flex items-center gap-3 pt-2 border-t">
                   <Label htmlFor="summary-time" className="text-sm">Send at:</Label>
-                  <div className="flex items-center gap-2">
-                    {autoSaveStates.dailySummarySendAt === 'saving' && (
-                      <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                    )}
-                    {autoSaveStates.dailySummarySendAt === 'success' && (
-                      <Check className="h-4 w-4 text-green-600" />
-                    )}
-                    <Input
-                      id="summary-time"
-                      type="time"
-                      value={settings.dailySummarySendAt}
-                      onChange={(e) => handleAutoSave('dailySummarySendAt', e.target.value)}
-                      className="w-32"
-                    />
-                  </div>
+                  <Input
+                    id="summary-time"
+                    type="time"
+                    value={settings.dailySummarySendAt}
+                    onChange={(e) => handleTimeGroupChange('dailySummarySendAt', e.target.value)}
+                    className="w-32"
+                  />
                 </div>
               )}
             </div>
@@ -372,7 +374,7 @@ export default function Notifications() {
                 <Switch
                   id="task-nudge"
                   checked={settings.taskNudgeEnabled}
-                  onCheckedChange={(checked) => handleAutoSave('taskNudgeEnabled', checked)}
+                  onCheckedChange={(checked) => handleAutoSaveToggle('taskNudgeEnabled', checked)}
                   disabled={autoSaveStates.taskNudgeEnabled === 'saving'}
                 />
               </div>
@@ -406,7 +408,7 @@ export default function Notifications() {
                 <Switch
                   id="integration-failure"
                   checked={settings.integrationFailureAlertEnabled}
-                  onCheckedChange={(checked) => handleAutoSave('integrationFailureAlertEnabled', checked)}
+                  onCheckedChange={(checked) => handleAutoSaveToggle('integrationFailureAlertEnabled', checked)}
                   disabled={autoSaveStates.integrationFailureAlertEnabled === 'saving'}
                 />
               </div>
@@ -432,7 +434,7 @@ export default function Notifications() {
                 <Switch
                   id="team-invite-accepted"
                   checked={settings.teamInviteAcceptedAlertEnabled}
-                  onCheckedChange={(checked) => handleAutoSave('teamInviteAcceptedAlertEnabled', checked)}
+                  onCheckedChange={(checked) => handleAutoSaveToggle('teamInviteAcceptedAlertEnabled', checked)}
                   disabled={autoSaveStates.teamInviteAcceptedAlertEnabled === 'saving'}
                 />
               </div>
@@ -440,6 +442,27 @@ export default function Notifications() {
           </div>
         </CategorySettingsSection>
       </div>
+
+      {/* Global Save/Cancel Bar for Time Groups */}
+      {hasChanges && (
+        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-background border border-border rounded-lg shadow-lg p-4 flex items-center gap-4 z-50">
+          <p className="text-sm text-muted-foreground">You have unsaved changes</p>
+          <div className="flex gap-2">
+            <button
+              onClick={cancelChanges}
+              className="px-3 py-1 text-sm border border-border rounded hover:bg-muted transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={saveTimeGroupChanges}
+              className="px-3 py-1 text-sm bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors"
+            >
+              Save Changes
+            </button>
+          </div>
+        </div>
+      )}
     </SettingsPageWrapper>
   );
 }

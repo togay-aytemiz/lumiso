@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Upload, Loader2, X, Check } from "lucide-react";
+import { Upload, Loader2, X } from "lucide-react";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -19,7 +19,6 @@ export default function General() {
   const { settings, loading, uploading, updateSettings, uploadLogo } = useUserSettings();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isLogoModalOpen, setIsLogoModalOpen] = useState(false);
-  const [autoSaveStates, setAutoSaveStates] = useState<{[key: string]: 'idle' | 'saving' | 'success'}>({});
 
   // Branding section state
   const brandingSection = useSettingsCategorySection({
@@ -114,20 +113,6 @@ export default function General() {
     brandingSection.updateValue("brandColor", value);
   };
 
-  // Auto-save function with success indicator
-  const handleAutoSaveChange = async (field: string, value: any, updateFunction: (field: string, value: any) => void) => {
-    setAutoSaveStates(prev => ({ ...prev, [field]: 'saving' }));
-    updateFunction(field, value);
-    
-    // Simulate success after a brief delay (the actual save happens through the section's onSave)
-    setTimeout(() => {
-      setAutoSaveStates(prev => ({ ...prev, [field]: 'success' }));
-      setTimeout(() => {
-        setAutoSaveStates(prev => ({ ...prev, [field]: 'idle' }));
-      }, 2000);
-    }, 200);
-  };
-
   const handleDeleteLogo = async () => {
     try {
       // Clear the logo URL in settings
@@ -172,21 +157,13 @@ export default function General() {
             {/* Company Name */}
             <div className="space-y-2">
               <Label htmlFor="company-name">Photography Business Name</Label>
-              <div className="flex items-center gap-2">
-                {autoSaveStates.companyName === 'saving' && (
-                  <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                )}
-                {autoSaveStates.companyName === 'success' && (
-                  <Check className="h-4 w-4 text-green-600" />
-                )}
-                <Input
-                  id="company-name"
-                  value={brandingSection.values.companyName}
-                  onChange={(e) => handleAutoSaveChange("companyName", e.target.value, brandingSection.updateValue)}
-                  placeholder="Enter your photography business name"
-                  className="max-w-md"
-                />
-              </div>
+              <Input
+                id="company-name"
+                value={brandingSection.values.companyName}
+                onChange={(e) => brandingSection.updateValue("companyName", e.target.value)}
+                placeholder="Enter your photography business name"
+                className="max-w-md"
+              />
               <p className="text-sm text-muted-foreground">
                 This will appear on invoices, contracts, and client communications
               </p>
@@ -310,21 +287,13 @@ export default function General() {
             <div className="space-y-2">
               <Label htmlFor="brand-color">Primary Brand Color</Label>
               <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                  {autoSaveStates.brandColor === 'saving' && (
-                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                  )}
-                  {autoSaveStates.brandColor === 'success' && (
-                    <Check className="h-4 w-4 text-green-600" />
-                  )}
-                  <Input
-                    id="brand-color"
-                    type="color"
-                    value={brandingSection.values.brandColor}
-                    onChange={(e) => handleAutoSaveChange("brandColor", e.target.value, brandingSection.updateValue)}
-                    className="w-16 h-10 p-1 border rounded"
-                  />
-                </div>
+                <Input
+                  id="brand-color"
+                  type="color"
+                  value={brandingSection.values.brandColor}
+                  onChange={(e) => brandingSection.updateValue("brandColor", e.target.value)}
+                  className="w-16 h-10 p-1 border rounded"
+                />
                 <Input
                   value={brandingSection.values.brandColor}
                   onChange={(e) => handleBrandColorChange(e.target.value)}
@@ -349,53 +318,37 @@ export default function General() {
             {/* Date Format */}
             <div className="space-y-2">
               <Label>Date Format</Label>
-              <div className="flex items-center gap-2">
-                {autoSaveStates.dateFormat === 'saving' && (
-                  <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                )}
-                {autoSaveStates.dateFormat === 'success' && (
-                  <Check className="h-4 w-4 text-green-600" />
-                )}
-                <Select 
-                  value={regionalSection.values.dateFormat} 
-                  onValueChange={(value) => handleAutoSaveChange("dateFormat", value, regionalSection.updateValue)}
-                >
-                  <SelectTrigger className="w-48">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="DD/MM/YYYY">DD/MM/YYYY</SelectItem>
-                    <SelectItem value="MM/DD/YYYY">MM/DD/YYYY</SelectItem>
-                    <SelectItem value="YYYY-MM-DD">YYYY-MM-DD</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <Select 
+                value={regionalSection.values.dateFormat} 
+                onValueChange={(value) => regionalSection.updateValue("dateFormat", value)}
+              >
+                <SelectTrigger className="w-48">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="DD/MM/YYYY">DD/MM/YYYY</SelectItem>
+                  <SelectItem value="MM/DD/YYYY">MM/DD/YYYY</SelectItem>
+                  <SelectItem value="YYYY-MM-DD">YYYY-MM-DD</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Time Format */}
             <div className="space-y-3">
               <Label>Time Format</Label>
-              <div className="flex items-center gap-2">
-                {autoSaveStates.timeFormat === 'saving' && (
-                  <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                )}
-                {autoSaveStates.timeFormat === 'success' && (
-                  <Check className="h-4 w-4 text-green-600" />
-                )}
-                <RadioGroup 
-                  value={regionalSection.values.timeFormat} 
-                  onValueChange={(value) => handleAutoSaveChange("timeFormat", value, regionalSection.updateValue)}
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="12-hour" id="12-hour" />
-                    <Label htmlFor="12-hour">12-hour (e.g. 2:00 PM)</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="24-hour" id="24-hour" />
-                    <Label htmlFor="24-hour">24-hour (e.g. 14:00)</Label>
-                  </div>
-                </RadioGroup>
-              </div>
+              <RadioGroup 
+                value={regionalSection.values.timeFormat} 
+                onValueChange={(value) => regionalSection.updateValue("timeFormat", value)}
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="12-hour" id="12-hour" />
+                  <Label htmlFor="12-hour">12-hour (e.g. 2:00 PM)</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="24-hour" id="24-hour" />
+                  <Label htmlFor="24-hour">24-hour (e.g. 14:00)</Label>
+                </div>
+              </RadioGroup>
             </div>
           </div>
         </CategorySettingsSection>

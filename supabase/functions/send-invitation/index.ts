@@ -101,7 +101,7 @@ serve(async (req: Request) => {
     
     // Send invitation email using Resend
     const emailResponse = await resend.emails.send({
-      from: "Team Invitations <onboarding@resend.dev>", // Replace with your verified domain
+      from: "Team Invitations <noreply@yourdomain.com>", // Replace with your verified domain
       to: [email],
       subject: "You're invited to join our team!",
       html: `

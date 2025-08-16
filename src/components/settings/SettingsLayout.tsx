@@ -1,4 +1,5 @@
-import { NavLink, Outlet, useLocation } from "react-router-dom";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 import { 
   User, 
   Bell, 
@@ -14,6 +15,9 @@ import {
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useSidebar } from "@/components/ui/sidebar";
+import { SettingsProvider, useSettingsContext } from "@/contexts/SettingsContext";
+import { NavigationGuardDialog } from "./NavigationGuardDialog";
+import { useSettingsNavigation } from "@/hooks/useSettingsNavigation";
 
 const settingsCategories = [
   {
@@ -74,13 +78,32 @@ const settingsCategories = [
   }
 ];
 
-export default function SettingsLayout() {
+function SettingsLayoutContent() {
   const location = useLocation();
+  const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { state } = useSidebar(); // Get main sidebar state
+  const { hasDirtySections, clearAllDirtySections } = useSettingsContext();
   
   const isActive = (path: string) => {
     return location.pathname === path;
+  };
+
+  const {
+    showGuard,
+    handleNavigationAttempt,
+    handleDiscardChanges,
+    handleStayOnPage
+  } = useSettingsNavigation({
+    isDirty: hasDirtySections,
+    onDiscard: clearAllDirtySections
+  });
+
+  // Intercept navigation attempts
+  const handleNavClick = (e: React.MouseEvent, path: string) => {
+    if (!handleNavigationAttempt(path)) {
+      e.preventDefault();
+    }
   };
 
   // Calculate positions based on main sidebar state
@@ -103,7 +126,8 @@ export default function SettingsLayout() {
                 <NavLink
                   key={category.path}
                   to={category.path}
-                  className={`group/item w-full h-10 px-3 py-3 text-left transition-all duration-200 rounded-lg hover:bg-muted/50 flex items-center gap-3 ${
+                  onClick={(e) => handleNavClick(e, category.path)}
+                  className={`group/item w-full h-10 px-3 py-3 text-left transition-all duration-200 rounded-lg hover:bg-muted/50 flex items-center gap-3 relative ${
                     active
                       ? `${isDanger ? 'bg-destructive/10 text-destructive' : 'bg-muted text-sidebar-foreground'}`
                       : `${isDanger ? 'text-destructive hover:text-destructive' : 'text-muted-foreground hover:text-foreground'}`
@@ -117,6 +141,10 @@ export default function SettingsLayout() {
                           : "text-sidebar-foreground group-hover/item:text-[hsl(var(--sidebar-primary))]")
                   }`} />
                   <span className="font-medium text-sm hidden lg:block">{category.label}</span>
+                  {/* Dirty indicator for current page */}
+                  {active && hasDirtySections && (
+                    <div className="absolute -top-1 -right-1 w-2 h-2 bg-orange-500 rounded-full animate-pulse" />
+                  )}
                 </NavLink>
               );
             })}
@@ -128,6 +156,21 @@ export default function SettingsLayout() {
       <div className={`flex-1 min-w-0 ${isMobile ? 'ml-16' : 'lg:ml-0'}`}>
         <Outlet />
       </div>
+
+      {/* Navigation Guard Dialog */}
+      <NavigationGuardDialog
+        open={showGuard}
+        onDiscard={handleDiscardChanges}
+        onStay={handleStayOnPage}
+      />
     </div>
+  );
+}
+
+export default function SettingsLayout() {
+  return (
+    <SettingsProvider>
+      <SettingsLayoutContent />
+    </SettingsProvider>
   );
 }

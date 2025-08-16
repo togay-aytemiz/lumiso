@@ -1,19 +1,45 @@
-import { useState } from "react";
 import SettingsPageWrapper from "@/components/settings/SettingsPageWrapper";
 import SettingsHeader from "@/components/settings/SettingsHeader";
-import SettingsSection from "@/components/SettingsSection";
+import EnhancedSettingsSection from "@/components/settings/EnhancedSettingsSection";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Upload } from "lucide-react";
+import { useSettingsSectionWithContext } from "@/hooks/useSettingsSectionWithContext";
 
 export default function General() {
-  const [dateFormat, setDateFormat] = useState("DD/MM/YYYY");
-  const [timeFormat, setTimeFormat] = useState("12-hour");
-  const [brandColor, setBrandColor] = useState("#1EB29F");
-  const [companyName, setCompanyName] = useState("");
+  // Branding section state
+  const brandingSection = useSettingsSectionWithContext({
+    sectionId: "branding",
+    sectionName: "Branding",
+    initialValues: {
+      companyName: "",
+      brandColor: "#1EB29F",
+      logoFile: null as File | null
+    },
+    onSave: async (values) => {
+      // TODO: Implement actual save logic to backend
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+      console.log("Saving branding:", values);
+    }
+  });
+
+  // Regional settings section state
+  const regionalSection = useSettingsSectionWithContext({
+    sectionId: "regional",
+    sectionName: "Regional Settings", 
+    initialValues: {
+      dateFormat: "DD/MM/YYYY",
+      timeFormat: "12-hour"
+    },
+    onSave: async (values) => {
+      // TODO: Implement actual save logic to backend
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+      console.log("Saving regional settings:", values);
+    }
+  });
 
   return (
     <SettingsPageWrapper>
@@ -23,9 +49,14 @@ export default function General() {
       />
       
       <div className="space-y-8">
-        <SettingsSection
+        <EnhancedSettingsSection
           title="Branding"
           description="Customize your brand appearance across client-facing materials"
+          isDirty={brandingSection.isDirty}
+          isSaving={brandingSection.isSaving}
+          showSuccess={brandingSection.showSuccess}
+          onSave={brandingSection.handleSave}
+          onCancel={brandingSection.handleCancel}
         >
           <div className="space-y-6">
             {/* Company Name */}
@@ -33,8 +64,8 @@ export default function General() {
               <Label htmlFor="company-name">Photography Business Name</Label>
               <Input
                 id="company-name"
-                value={companyName}
-                onChange={(e) => setCompanyName(e.target.value)}
+                value={brandingSection.values.companyName}
+                onChange={(e) => brandingSection.updateValue("companyName", e.target.value)}
                 placeholder="Enter your photography business name"
                 className="max-w-md"
               />
@@ -67,13 +98,13 @@ export default function General() {
                 <Input
                   id="brand-color"
                   type="color"
-                  value={brandColor}
-                  onChange={(e) => setBrandColor(e.target.value)}
+                  value={brandingSection.values.brandColor}
+                  onChange={(e) => brandingSection.updateValue("brandColor", e.target.value)}
                   className="w-16 h-10 p-1 border rounded"
                 />
                 <Input
-                  value={brandColor}
-                  onChange={(e) => setBrandColor(e.target.value)}
+                  value={brandingSection.values.brandColor}
+                  onChange={(e) => brandingSection.updateValue("brandColor", e.target.value)}
                   className="flex-1 max-w-xs"
                   placeholder="#1EB29F"
                 />
@@ -83,17 +114,25 @@ export default function General() {
               </p>
             </div>
           </div>
-        </SettingsSection>
+        </EnhancedSettingsSection>
 
-        <SettingsSection
+        <EnhancedSettingsSection
           title="Regional Settings"
           description="Configure date and time display preferences"
+          isDirty={regionalSection.isDirty}
+          isSaving={regionalSection.isSaving}
+          showSuccess={regionalSection.showSuccess}
+          onSave={regionalSection.handleSave}
+          onCancel={regionalSection.handleCancel}
         >
           <div className="space-y-6">
             {/* Date Format */}
             <div className="space-y-2">
               <Label>Date Format</Label>
-              <Select value={dateFormat} onValueChange={setDateFormat}>
+              <Select 
+                value={regionalSection.values.dateFormat} 
+                onValueChange={(value) => regionalSection.updateValue("dateFormat", value)}
+              >
                 <SelectTrigger className="w-48">
                   <SelectValue />
                 </SelectTrigger>
@@ -108,7 +147,10 @@ export default function General() {
             {/* Time Format */}
             <div className="space-y-3">
               <Label>Time Format</Label>
-              <RadioGroup value={timeFormat} onValueChange={setTimeFormat}>
+              <RadioGroup 
+                value={regionalSection.values.timeFormat} 
+                onValueChange={(value) => regionalSection.updateValue("timeFormat", value)}
+              >
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="12-hour" id="12-hour" />
                   <Label htmlFor="12-hour">12-hour (e.g. 2:00 PM)</Label>
@@ -120,7 +162,7 @@ export default function General() {
               </RadioGroup>
             </div>
           </div>
-        </SettingsSection>
+        </EnhancedSettingsSection>
       </div>
     </SettingsPageWrapper>
   );

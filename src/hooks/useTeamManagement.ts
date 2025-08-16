@@ -45,21 +45,10 @@ export function useTeamManagement() {
 
       console.log('Fetching team data for user:', user.id);
 
-      // Fetch team members for current user's organization with profile data
+      // First, fetch basic team members data
       const { data: membersData, error: membersError } = await supabase
         .from('organization_members')
-        .select(`
-          id,
-          user_id,
-          organization_id,
-          role,
-          joined_at,
-          last_active,
-          profiles!inner(
-            full_name,
-            profile_photo_url
-          )
-        `)
+        .select('*')
         .eq('organization_id', user.id)
         .order('joined_at');
 
@@ -68,30 +57,58 @@ export function useTeamManagement() {
         throw membersError;
       }
 
-      // Get user emails from auth.users using the admin endpoint via edge function
-      const { data: usersEmailData, error: emailError } = await supabase.functions.invoke('get-users-email', {
-        body: { userIds: membersData?.map(m => m.user_id) || [] }
-      });
+      console.log('Basic team members data:', membersData);
 
-      if (emailError) {
-        console.warn('Could not fetch user emails:', emailError);
+      // Try to enrich with profile data
+      let enrichedMembers = membersData || [];
+      try {
+        // Fetch profiles for all users
+        const userIds = membersData?.map(m => m.user_id) || [];
+        if (userIds.length > 0) {
+          const { data: profilesData, error: profilesError } = await supabase
+            .from('profiles')
+            .select('user_id, full_name, profile_photo_url')
+            .in('user_id', userIds);
+
+          if (!profilesError && profilesData) {
+            // Merge profile data with member data
+            enrichedMembers = (membersData || []).map(member => {
+              const profile = profilesData.find(p => p.user_id === member.user_id);
+              return {
+                ...member,
+                full_name: profile?.full_name,
+                profile_photo_url: profile?.profile_photo_url,
+                is_online: onlineUsers.has(member.user_id)
+              };
+            });
+          }
+        }
+
+        // Try to get user emails via edge function (optional)
+        try {
+          const { data: usersEmailData, error: emailError } = await supabase.functions.invoke('get-users-email', {
+            body: { userIds: userIds }
+          });
+
+          if (!emailError && usersEmailData?.users) {
+            enrichedMembers = enrichedMembers.map(member => {
+              const userEmail = usersEmailData.users.find((u: any) => u.id === member.user_id)?.email;
+              return {
+                ...member,
+                email: userEmail
+              };
+            });
+          }
+        } catch (emailError) {
+          console.warn('Could not fetch user emails:', emailError);
+          // Continue without emails - not critical
+        }
+      } catch (profileError) {
+        console.warn('Could not fetch profile data:', profileError);
+        // Continue with basic member data
       }
 
-      // Combine member data with profile and email data
-      const enrichedMembers = (membersData || []).map((member: any) => {
-        const profile = member.profiles;
-        const userEmail = usersEmailData?.users?.find((u: any) => u.id === member.user_id)?.email;
-        
-        return {
-          ...member,
-          full_name: profile?.full_name,
-          profile_photo_url: profile?.profile_photo_url,
-          email: userEmail,
-          is_online: onlineUsers.has(member.user_id)
-        };
-      });
-
-      console.log('Team members data:', enrichedMembers);
+      console.log('Final team members data:', enrichedMembers);
       setTeamMembers(enrichedMembers);
 
       // Set current user role - they should be the organization owner

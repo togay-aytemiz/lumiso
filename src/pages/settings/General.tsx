@@ -13,6 +13,7 @@ export default function General() {
   const [dateFormat, setDateFormat] = useState("DD/MM/YYYY");
   const [timeFormat, setTimeFormat] = useState("12-hour");
   const [brandColor, setBrandColor] = useState("#1EB29F");
+  const [companyName, setCompanyName] = useState("");
 
   return (
     <SettingsPageWrapper>
@@ -27,6 +28,21 @@ export default function General() {
           description="Customize your brand appearance across client-facing materials"
         >
           <div className="space-y-6">
+            {/* Company Name */}
+            <div className="space-y-2">
+              <Label htmlFor="company-name">Photography Business Name</Label>
+              <Input
+                id="company-name"
+                value={companyName}
+                onChange={(e) => setCompanyName(e.target.value)}
+                placeholder="Enter your photography business name"
+                className="max-w-md"
+              />
+              <p className="text-sm text-muted-foreground">
+                This will appear on invoices, contracts, and client communications
+              </p>
+            </div>
+
             {/* Logo Upload */}
             <div className="space-y-2">
               <Label htmlFor="logo-upload">Upload Logo</Label>

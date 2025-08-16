@@ -20,11 +20,14 @@ export function CategoryFloatingActionBar() {
   if (!hasChanges) return null;
 
   const handleSave = async () => {
+    console.log("💾 Floating bar save clicked for category:", categoryPath);
+    console.log("📋 Dirty sections:", dirtySections);
     setIsSaving(true);
     try {
+      console.log("🚀 Calling saveCategoryChanges...");
       await saveCategoryChanges(categoryPath);
+      console.log("✅ saveCategoryChanges completed");
       setShowSuccess(true);
-      
       // Get category name from path
       const categoryName = categoryPath.split('/').pop()?.replace('-', ' ') || 'settings';
       

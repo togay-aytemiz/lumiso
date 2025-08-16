@@ -37,18 +37,27 @@ export function useSettingsCategorySection<T extends Record<string, any>>(
   useEffect(() => {
     handlersRef.current = {
       handleSave: async () => {
+        console.log("🎯 Category section handleSave called");
+        console.log("📊 Current values before save:", section.values);
+        
         await section.handleSave();
-        // Clear file selection after successful save to reset the state
-        setTimeout(() => {
-          if (section.values.logoFile) {
-            section.updateValue("logoFile", null);
-          }
-        }, 100);
+        
+        console.log("📊 Values after save, before clearing:", section.values);
+        
+        // Immediately clear file selection after successful save
+        if (section.values.logoFile) {
+          console.log("🧹 Clearing logoFile from section state");
+          section.updateValue("logoFile", null);
+        }
+        
+        console.log("✅ Section save completed");
       },
       handleCancel: () => {
+        console.log("❌ Section cancel called");
         section.handleCancel();
         // Also clear file selection on cancel
         if (section.values.logoFile) {
+          console.log("🧹 Clearing logoFile on cancel");
           section.updateValue("logoFile", null);
         }
       }
@@ -72,6 +81,7 @@ export function useSettingsCategorySection<T extends Record<string, any>>(
 
   // Update dirty state in context
   useEffect(() => {
+    console.log(`🔍 Dirty state check for ${options.sectionId}:`, section.isDirty, "logoFile:", !!section.values.logoFile);
     setSectionDirty(categoryPath, options.sectionId, section.isDirty);
   }, [section.isDirty, categoryPath, options.sectionId, setSectionDirty]);
 

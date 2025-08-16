@@ -30,12 +30,17 @@ export default function General() {
       logoFile: null as File | null
     },
     onSave: async (values) => {
+      console.log("🔄 Branding save started, values:", values);
+      
       // Handle logo upload first if there's a new file
       if (values.logoFile) {
+        console.log("📤 Uploading logo file:", values.logoFile.name);
         const uploadResult = await uploadLogo(values.logoFile);
         if (!uploadResult.success) {
+          console.error("❌ Logo upload failed");
           throw new Error("Failed to upload logo");
         }
+        console.log("✅ Logo uploaded successfully");
       }
 
       // Then save other branding settings
@@ -44,13 +49,14 @@ export default function General() {
         primary_brand_color: values.brandColor
       };
 
+      console.log("💾 Saving branding settings:", updates);
       const result = await updateSettings(updates);
       if (!result.success) {
+        console.error("❌ Settings save failed");
         throw new Error("Failed to save branding settings");
       }
-
-      // Clear file selection after successful save
-      clearFileSelection();
+      
+      console.log("✅ All branding settings saved successfully");
     }
   });
 

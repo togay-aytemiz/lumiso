@@ -336,7 +336,7 @@ export default function Account() {
                     return (
                       <TableRow key={member.id}>
                         <TableCell className="font-medium">
-                          {member.user_id}
+                          User ID: {member.user_id.slice(0, 8)}...
                           {currentUser && (
                             <span className="text-sm text-muted-foreground ml-2">(You)</span>
                           )}

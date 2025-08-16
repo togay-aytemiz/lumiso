@@ -9,9 +9,6 @@ interface TeamMember {
   role: string;
   joined_at: string;
   last_active: string | null;
-  profiles?: {
-    full_name: string | null;
-  } | null;
 }
 
 interface Invitation {
@@ -35,29 +32,29 @@ export function useTeamManagement() {
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
-        console.log('No user found for team data fetch');
         setLoading(false);
         return;
       }
 
       console.log('Fetching team data for user:', user.id);
 
-      // Fetch team members
+      // Fetch team members for current user's organization
       const { data: membersData, error: membersError } = await supabase
         .from('organization_members')
         .select('*')
         .eq('organization_id', user.id)
         .order('joined_at');
 
-      console.log('Members query result:', { membersData, membersError });
+      if (membersError) {
+        console.error('Error fetching members:', membersError);
+        throw membersError;
+      }
 
-      if (membersError) throw membersError;
-
+      console.log('Team members data:', membersData);
       setTeamMembers(membersData || []);
 
-      // Set current user role
-      const currentMember = membersData?.find(m => m.user_id === user.id);
-      setCurrentUserRole(currentMember?.role || null);
+      // Set current user role - they should be the organization owner
+      setCurrentUserRole('Owner');
 
       // Fetch pending invitations
       const { data: invitesData, error: invitesError } = await supabase
@@ -68,10 +65,12 @@ export function useTeamManagement() {
         .gt('expires_at', new Date().toISOString())
         .order('created_at', { ascending: false });
 
-      console.log('Invitations query result:', { invitesData, invitesError });
+      if (invitesError) {
+        console.error('Error fetching invitations:', invitesError);
+        throw invitesError;
+      }
 
-      if (invitesError) throw invitesError;
-
+      console.log('Invitations data:', invitesData);
       setInvitations(invitesData || []);
     } catch (error) {
       console.error('Error fetching team data:', error);
@@ -91,6 +90,8 @@ export function useTeamManagement() {
       
       if (!session) throw new Error("No session found");
 
+      console.log('Sending invitation to:', email);
+
       const { data, error } = await supabase.functions.invoke('send-invitation', {
         body: { email, role },
         headers: {
@@ -99,6 +100,8 @@ export function useTeamManagement() {
       });
 
       if (error) throw error;
+
+      console.log('Invitation response:', data);
 
       toast({
         title: "Success",

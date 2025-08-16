@@ -127,22 +127,28 @@ function SettingsLayoutContent() {
                   key={category.path}
                   to={category.path}
                   onClick={(e) => handleNavClick(e, category.path)}
-                  className={`group/item w-full h-10 px-3 py-3 text-left transition-all duration-200 rounded-lg hover:bg-muted/50 flex items-center gap-3 ${
+                  className={`group/item w-full h-10 px-3 py-3 text-left transition-all duration-200 rounded-lg hover:bg-muted/50 flex items-center gap-3 relative ${
                     active
                       ? `${isDanger ? 'bg-destructive/10 text-destructive' : 'bg-muted text-sidebar-foreground'}`
                       : `${isDanger ? 'text-destructive hover:text-destructive' : 'text-muted-foreground hover:text-foreground'}`
                   } ${isMobile ? 'justify-center' : 'justify-center lg:justify-start'}`}
                 >
-                  <category.icon className={`h-4 w-4 transition-colors ${
-                    isDanger
-                      ? (active ? "text-destructive" : "text-destructive group-hover/item:text-destructive")
-                      : (active 
-                          ? "text-[hsl(var(--sidebar-primary))]" 
-                          : "text-sidebar-foreground group-hover/item:text-[hsl(var(--sidebar-primary))]")
-                  }`} />
+                  <div className="relative flex items-center">
+                    <category.icon className={`h-4 w-4 transition-colors ${
+                      isDanger
+                        ? (active ? "text-destructive" : "text-destructive group-hover/item:text-destructive")
+                        : (active 
+                            ? "text-[hsl(var(--sidebar-primary))]" 
+                            : "text-sidebar-foreground group-hover/item:text-[hsl(var(--sidebar-primary))]")
+                    }`} />
+                    {/* Dirty indicator for mobile/tablet (icon only view) */}
+                    {active && hasDirtySections && (
+                      <div className="absolute -top-1 -right-1 w-2 h-2 bg-orange-500 rounded-full animate-pulse lg:hidden" />
+                    )}
+                  </div>
                   <span className="font-medium text-sm hidden lg:flex lg:items-center lg:gap-2">
                     {category.label}
-                    {/* Dirty indicator inline with text */}
+                    {/* Dirty indicator for desktop (text + icon view) */}
                     {active && hasDirtySections && (
                       <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse" />
                     )}

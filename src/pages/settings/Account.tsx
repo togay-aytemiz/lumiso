@@ -15,7 +15,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Upload, ChevronDown, Loader2, X } from "lucide-react";
+import { Upload, ChevronDown, Loader2, X, Copy, Check } from "lucide-react";
 import { useProfile } from "@/hooks/useProfile";
 import { useWorkingHours } from "@/hooks/useWorkingHours";
 import { useTeamManagement } from "@/hooks/useTeamManagement";
@@ -27,6 +27,7 @@ export default function Account() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [emailAddress, setEmailAddress] = useState("");
   const [isProfilePhotoModalOpen, setIsProfilePhotoModalOpen] = useState(false);
+  const [copiedStates, setCopiedStates] = useState<{ [key: string]: boolean }>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const { profile, loading: profileLoading, uploading, updateProfile, uploadProfilePhoto, deleteProfilePhoto } = useProfile();
@@ -147,6 +148,34 @@ export default function Account() {
     const result = await sendInvitation(inviteEmail, "Member");
     if (result.success) {
       setInviteEmail("");
+    }
+  };
+
+  const handleCopyInvitationLink = async (invitationId: string) => {
+    try {
+      // Generate invitation link
+      const invitationLink = `${window.location.origin}/accept-invitation?id=${invitationId}`;
+      
+      await navigator.clipboard.writeText(invitationLink);
+      
+      // Set copied state for this specific invitation
+      setCopiedStates(prev => ({ ...prev, [invitationId]: true }));
+      
+      toast({
+        title: "Invitation link copied!",
+        description: "You can now share this link with your team member.",
+      });
+      
+      // Reset copied state after 2 seconds
+      setTimeout(() => {
+        setCopiedStates(prev => ({ ...prev, [invitationId]: false }));
+      }, 2000);
+    } catch (error) {
+      toast({
+        title: "Copy failed",
+        description: "Could not copy invitation link to clipboard.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -597,14 +626,29 @@ export default function Account() {
                         {new Date(invite.expires_at).toLocaleDateString()}
                       </TableCell>
                       <TableCell>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="text-muted-foreground"
-                          onClick={() => cancelInvitation(invite.id)}
-                        >
-                          Cancel Invite
-                        </Button>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleCopyInvitationLink(invite.id)}
+                            className="flex items-center gap-1"
+                          >
+                            {copiedStates[invite.id] ? (
+                              <Check className="h-3 w-3" />
+                            ) : (
+                              <Copy className="h-3 w-3" />
+                            )}
+                            {copiedStates[invite.id] ? "Copied!" : "Copy Link"}
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="text-muted-foreground"
+                            onClick={() => cancelInvitation(invite.id)}
+                          >
+                            Cancel
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}

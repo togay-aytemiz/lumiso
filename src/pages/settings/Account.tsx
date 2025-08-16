@@ -185,6 +185,21 @@ export default function Account() {
 
   const timeOptions = generateTimeOptions();
 
+  // Show loading state until all data is loaded
+  if (profileLoading || workingHoursLoading || teamLoading) {
+    return (
+      <SettingsPageWrapper>
+        <SettingsHeader
+          title="Account & Users"
+          description="Manage your account settings and user permissions"
+        />
+        <div className="flex items-center justify-center h-48">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      </SettingsPageWrapper>
+    );
+  }
+
   return (
     <SettingsPageWrapper>
       <SettingsHeader
@@ -203,76 +218,82 @@ export default function Account() {
             <div className="space-y-2">
               <Label htmlFor="avatar-upload">Profile Photo</Label>
               
-              {/* Current Photo Preview */}
-              {profile?.profile_photo_url && (
-                <div className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 border rounded-lg bg-muted/30 max-w-md">
-                  {/* Mobile Layout */}
-                  <div className="flex items-center gap-3 sm:hidden">
-                    <div className="relative cursor-pointer" onClick={() => setIsProfilePhotoModalOpen(true)}>
-                      <img 
-                        src={profile.profile_photo_url} 
-                        alt="Current profile photo - click to enlarge" 
-                        className="w-12 h-12 object-cover bg-white border rounded-full hover:opacity-80 transition-opacity"
-                        title="Click to view full size"
-                      />
+              {/* Current Photo Preview - Always show container to prevent layout shift */}
+              <div className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 border rounded-lg bg-muted/30 max-w-md min-h-[80px]">
+                {profile?.profile_photo_url ? (
+                  <>
+                    {/* Mobile Layout */}
+                    <div className="flex items-center gap-3 sm:hidden">
+                      <div className="relative cursor-pointer" onClick={() => setIsProfilePhotoModalOpen(true)}>
+                        <img 
+                          src={profile.profile_photo_url} 
+                          alt="Current profile photo - click to enlarge" 
+                          className="w-12 h-12 object-cover bg-white border rounded-full hover:opacity-80 transition-opacity"
+                          title="Click to view full size"
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">Current Photo</p>
+                        <p className="text-xs text-muted-foreground">Photo is currently set</p>
+                      </div>
                     </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">Current Photo</p>
-                      <p className="text-xs text-muted-foreground">Photo is currently set</p>
+                    
+                    {/* Desktop/Tablet Layout */}
+                    <div className="hidden sm:flex sm:items-center sm:gap-4 sm:flex-1">
+                      <div className="relative cursor-pointer" onClick={() => setIsProfilePhotoModalOpen(true)}>
+                        <img 
+                          src={profile.profile_photo_url} 
+                          alt="Current profile photo - click to enlarge" 
+                          className="w-16 h-16 object-cover bg-white border rounded-full hover:opacity-80 transition-opacity"
+                          title="Click to view full size"
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">Current Photo</p>
+                        <p className="text-xs text-muted-foreground">Photo is currently set</p>
+                      </div>
                     </div>
-                  </div>
-                  
-                  {/* Desktop/Tablet Layout */}
-                  <div className="hidden sm:flex sm:items-center sm:gap-4 sm:flex-1">
-                    <div className="relative cursor-pointer" onClick={() => setIsProfilePhotoModalOpen(true)}>
-                      <img 
-                        src={profile.profile_photo_url} 
-                        alt="Current profile photo - click to enlarge" 
-                        className="w-16 h-16 object-cover bg-white border rounded-full hover:opacity-80 transition-opacity"
-                        title="Click to view full size"
-                      />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">Current Photo</p>
-                      <p className="text-xs text-muted-foreground">Photo is currently set</p>
-                    </div>
-                  </div>
 
-                  {/* Delete Button - Full width on mobile, inline on larger screens */}
-                  <div className="w-full sm:w-auto">
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className="w-full sm:w-auto flex items-center justify-center gap-2 text-destructive hover:text-destructive"
-                        >
-                          <X className="h-4 w-4" />
-                          Delete
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Delete Profile Photo</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Are you sure you want to delete your profile photo? This action cannot be undone.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={handleDeleteProfilePhoto}
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    {/* Delete Button - Full width on mobile, inline on larger screens */}
+                    <div className="w-full sm:w-auto">
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="w-full sm:w-auto flex items-center justify-center gap-2 text-destructive hover:text-destructive"
                           >
-                            Delete Photo
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+                            <X className="h-4 w-4" />
+                            Delete
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Profile Photo</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to delete your profile photo? This action cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={handleDeleteProfilePhoto}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              Delete Photo
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex items-center justify-center">
+                    <p className="text-sm text-muted-foreground">No profile photo set</p>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
 
               {/* File Upload Button */}
               <div className="flex flex-col gap-2">

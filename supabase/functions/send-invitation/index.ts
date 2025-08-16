@@ -54,13 +54,7 @@ serve(async (req: Request) => {
       throw new Error("Only organization owners can send invitations");
     }
 
-    // Check if user already exists or has pending invitation
-    const { data: existingMember } = await supabase
-      .from("organization_members")
-      .select("id")
-      .eq("organization_id", user.id)
-      .eq("user_id", user.id);
-
+    // Check if there's already a pending invitation for this email
     const { data: existingInvite } = await supabase
       .from("invitations")
       .select("id")
@@ -69,8 +63,8 @@ serve(async (req: Request) => {
       .is("accepted_at", null)
       .gt("expires_at", new Date().toISOString());
 
-    if (existingMember?.length || existingInvite?.length) {
-      throw new Error("User already exists or has a pending invitation");
+    if (existingInvite?.length) {
+      throw new Error("There is already a pending invitation for this email address");
     }
 
     // Create invitation

@@ -109,12 +109,16 @@ export default function InvitationSignup() {
       const inviteEmail = decodeURIComponent(email || "");
       console.log("Creating account with email:", inviteEmail);
       
-      // Create the account
+      // Create the account with email confirmation disabled for invitations
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: sanitizeInput(inviteEmail),
         password: sanitizeInput(password),
         options: {
-          emailRedirectTo: `${window.location.origin}/`
+          emailRedirectTo: `${window.location.origin}/`,
+          data: {
+            invited: true, // Mark as invited user
+            invitation_id: invitationId
+          }
         }
       });
 
@@ -137,9 +141,36 @@ export default function InvitationSignup() {
         return;
       }
 
-      // Wait a moment for the user to be properly created
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // For invited users, we need to check if email confirmation is required
+      if (!authData.user.email_confirmed_at) {
+        // Show confirmation message and redirect to a waiting page
+        toast({
+          title: "Check your email",
+          description: "We've sent you a confirmation link. Please check your email and click the link to complete your account setup.",
+        });
+        
+        // Redirect to a confirmation waiting page
+        navigate(`/auth?email=${encodeURIComponent(inviteEmail)}&invitation=${invitationId}&awaiting_confirmation=true`);
+        return;
+      }
 
+      // User is confirmed, proceed with invitation acceptance
+      await completeInvitationProcess(authData.user.id);
+
+    } catch (error) {
+      console.error("Signup error:", error);
+      toast({
+        title: "Sign up failed",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const completeInvitationProcess = async (userId: string) => {
+    try {
       // Accept the invitation
       const { error: acceptError } = await supabase
         .from("invitations")
@@ -157,7 +188,7 @@ export default function InvitationSignup() {
         .from("organization_members")
         .insert({
           organization_id: invitation.organization_id,
-          user_id: authData.user.id,
+          user_id: userId,
           role: invitation.role,
           invited_by: invitation.invited_by
         });
@@ -170,13 +201,13 @@ export default function InvitationSignup() {
       
       toast({
         title: "Welcome to the team!",
-        description: "Your account has been created and you've joined the organization. Please check your email to confirm your account.",
+        description: "Your account has been created and you've joined the organization successfully!",
       });
 
       // Redirect after a moment
       setTimeout(() => {
         navigate("/");
-      }, 3000);
+      }, 2000);
 
     } catch (error) {
       console.error("Signup error:", error);

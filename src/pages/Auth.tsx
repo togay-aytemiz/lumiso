@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,39 +18,78 @@ const Auth = () => {
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [invitationId, setInvitationId] = useState<string | null>(null);
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const awaitingConfirmation = searchParams.get("awaiting_confirmation") === "true";
+  const invitationFromParams = searchParams.get("invitation");
 
   useEffect(() => {
-    // Check URL params for invitation signup
-    const urlParams = new URLSearchParams(window.location.search);
-    const mode = urlParams.get('mode');
-    const invitation = urlParams.get('invitation');
-    const inviteEmail = urlParams.get('email');
-    
-    if (mode === 'signup' && invitation) {
-      setInvitationId(invitation);
-      if (inviteEmail) {
-        setEmail(decodeURIComponent(inviteEmail));
-      }
-      // Force signup tab for invitations
-      setTimeout(() => {
-        const signupTab = document.querySelector('[value="signup"]') as HTMLElement;
-        signupTab?.click();
-      }, 100);
-    }
-
-  
-    // Check if user is already logged in (but not for invitation signups)
-    if (!invitationId) {
-      const checkUser = async () => {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session) {
+        // If user is confirmed and has invitation, complete the process
+        if (awaitingConfirmation && invitationFromParams) {
+          await completeInvitationAfterConfirmation(session.user.id);
+        } else {
           navigate("/");
         }
-      };
-      checkUser();
+      } else {
+        // Handle invitation parameters
+        const mode = searchParams.get('mode');
+        const invitation = searchParams.get('invitation');
+        const inviteEmail = searchParams.get('email');
+        
+        if (mode === 'signup' && invitation) {
+          setInvitationId(invitation);
+          if (inviteEmail) {
+            setEmail(decodeURIComponent(inviteEmail));
+          }
+        }
+      }
+    };
+    
+    checkSession();
+  }, [navigate, awaitingConfirmation, invitationFromParams, searchParams]);
+
+  const completeInvitationAfterConfirmation = async (userId: string) => {
+    try {
+      // Get invitation details
+      const { data: invitation } = await supabase
+        .from("invitations")
+        .select("*")
+        .eq("id", invitationFromParams)
+        .single();
+
+      if (!invitation) return;
+
+      // Accept the invitation
+      await supabase
+        .from("invitations")
+        .update({ accepted_at: new Date().toISOString() })
+        .eq("id", invitationFromParams);
+
+      // Add user to organization
+      await supabase
+        .from("organization_members")
+        .insert({
+          organization_id: invitation.organization_id,
+          user_id: userId,
+          role: invitation.role,
+          invited_by: invitation.invited_by
+        });
+
+      toast({
+        title: "Welcome to the team!",
+        description: "Your email has been confirmed and you've joined the organization!",
+      });
+
+      navigate("/");
+    } catch (error) {
+      console.error("Failed to complete invitation:", error);
+      navigate("/");
     }
-  }, [navigate, invitationId]);
+  };
 
   const validateForm = (isSignUp: boolean = false) => {
     setEmailError("");
@@ -167,10 +206,13 @@ const Auth = () => {
         <Card className="backdrop-blur-md bg-white/80 dark:bg-slate-800/80 border-white/20 shadow-2xl shadow-pink-200/50 dark:shadow-purple-900/50 animate-scale-in">
           <CardHeader className="text-center pb-4">
             <CardTitle className="text-2xl font-semibold text-slate-800 dark:text-slate-200">
-              Welcome Back
+              {awaitingConfirmation ? "Check Your Email" : "Welcome Back"}
             </CardTitle>
             <CardDescription className="text-slate-600 dark:text-slate-400">
-              Access your photography dashboard
+              {awaitingConfirmation 
+                ? "Please check your email and click the confirmation link to complete your account setup" 
+                : "Access your photography dashboard"
+              }
             </CardDescription>
           </CardHeader>
           <CardContent>

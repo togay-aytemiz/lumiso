@@ -100,6 +100,7 @@ export default function Account() {
 
   // Update working hours form when data loads
   useEffect(() => {
+    console.log("Working hours data:", workingHours);
     if (workingHours.length > 0) {
       workingHoursSection.setValues({
         workingHours: workingHours
@@ -107,14 +108,8 @@ export default function Account() {
     }
   }, [workingHours]);
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      await uploadProfilePhoto(file);
-    }
-  };
-
   const handleWorkingHourUpdate = async (dayOfWeek: number, field: string, value: any) => {
+    console.log(`Updating working hour for day ${dayOfWeek}, field ${field}, value ${value}`);
     const workingHour = workingHours.find(wh => wh.day_of_week === dayOfWeek);
     if (workingHour) {
       const result = await updateWorkingHour(dayOfWeek, { [field]: value });
@@ -129,6 +124,13 @@ export default function Account() {
     }
   };
 
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      await uploadProfilePhoto(file);
+    }
+  };
+
   const handleSendInvitation = async () => {
     if (!inviteEmail.trim()) return;
     
@@ -139,7 +141,9 @@ export default function Account() {
   };
 
   const getWorkingHourByDay = (dayOfWeek: number) => {
-    return workingHours.find(wh => wh.day_of_week === dayOfWeek) || {
+    const workingHour = workingHours.find(wh => wh.day_of_week === dayOfWeek);
+    console.log(`Working hour for day ${dayOfWeek}:`, workingHour);
+    return workingHour || {
       enabled: false,
       start_time: "09:00",
       end_time: "17:00"
@@ -488,6 +492,13 @@ export default function Account() {
                     placeholder="Enter email address"
                     value={inviteEmail}
                     onChange={(e) => setInviteEmail(e.target.value)}
+                    onBlur={createTrimmedBlurHandler(inviteEmail, setInviteEmail)}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleSendInvitation();
+                      }
+                    }}
                     className="flex-1 min-w-0"
                   />
                   <Button 

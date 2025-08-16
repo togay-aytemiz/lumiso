@@ -62,7 +62,9 @@ export default function InvitationSignup() {
       }
 
       // Check if email matches
-      if (data.email !== decodeURIComponent(email || "")) {
+      const inviteEmail = decodeURIComponent(email || "");
+      if (data.email !== inviteEmail) {
+        console.log("Email mismatch:", { invitationEmail: data.email, urlEmail: inviteEmail });
         setInvitationError("Email mismatch with invitation");
         return;
       }
@@ -76,9 +78,12 @@ export default function InvitationSignup() {
   const validatePassword = () => {
     setPasswordError("");
     
+    const inviteEmail = decodeURIComponent(email || "");
+    console.log("Validating with email:", inviteEmail);
+    
     try {
       signUpSchema.parse({
-        email: decodeURIComponent(email || ""),
+        email: inviteEmail,
         password: sanitizeInput(password)
       });
       return true;
@@ -101,9 +106,12 @@ export default function InvitationSignup() {
     setLoading(true);
 
     try {
+      const inviteEmail = decodeURIComponent(email || "");
+      console.log("Creating account with email:", inviteEmail);
+      
       // Create the account
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: sanitizeInput(decodeURIComponent(email || "")),
+        email: sanitizeInput(inviteEmail),
         password: sanitizeInput(password),
         options: {
           emailRedirectTo: `${window.location.origin}/`
@@ -111,9 +119,10 @@ export default function InvitationSignup() {
       });
 
       if (authError) {
+        console.error("Auth error:", authError);
         toast({
           title: "Account creation failed",
-          description: authError.message,
+          description: `${authError.message}. Please check if the email address is valid.`,
           variant: "destructive"
         });
         return;
@@ -306,7 +315,7 @@ export default function InvitationSignup() {
           <CardContent className="text-center">
             <div className="bg-slate-50 dark:bg-slate-700 rounded-lg p-3 mb-4">
               <p className="text-sm text-slate-600 dark:text-slate-400">Email</p>
-              <p className="font-medium">{decodeURIComponent(email || "")}</p>
+              <p className="font-medium">{email ? decodeURIComponent(email) : ""}</p>
             </div>
             <p className="text-xs text-slate-500">
               Expires: {new Date(invitation.expires_at).toLocaleDateString()}
@@ -333,7 +342,7 @@ export default function InvitationSignup() {
                 <Input
                   id="email"
                   type="email"
-                  value={decodeURIComponent(email || "")}
+                  value={email ? decodeURIComponent(email) : ""}
                   disabled
                   className="mt-1 bg-slate-100 dark:bg-slate-700 border-slate-200/50 rounded-xl h-12"
                 />

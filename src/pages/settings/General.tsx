@@ -7,8 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Upload, Loader2, X, AlertTriangle, Eye } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Upload, Loader2, X } from "lucide-react";
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useState } from "react";
@@ -26,44 +26,19 @@ export default function General() {
     sectionName: "Branding",
     initialValues: {
       companyName: settings?.photography_business_name || "",
-      brandColor: settings?.primary_brand_color || "#1EB29F",
-      logoFile: null as File | null
+      brandColor: settings?.primary_brand_color || "#1EB29F"
     },
     onSave: async (values) => {
-      console.log("🔄 Branding save started, values:", values);
-      
-      // Handle logo upload first if there's a new file
-      if (values.logoFile) {
-        console.log("📤 Uploading logo file:", values.logoFile.name);
-        const uploadResult = await uploadLogo(values.logoFile);
-        if (!uploadResult.success) {
-          console.error("❌ Logo upload failed");
-          throw new Error("Failed to upload logo");
-        }
-        console.log("✅ Logo uploaded successfully");
-      }
-
-      // Then save other branding settings
+      // Save branding settings (logo uploads automatically on selection)
       const updates: any = {
         photography_business_name: values.companyName,
         primary_brand_color: values.brandColor
       };
 
-      console.log("💾 Saving branding settings:", updates);
       const result = await updateSettings(updates);
       if (!result.success) {
-        console.error("❌ Settings save failed");
         throw new Error("Failed to save branding settings");
       }
-      
-      console.log("✅ All branding settings saved successfully");
-      
-      // Return cleaned values without logoFile to reset the form properly
-      return {
-        companyName: values.companyName,
-        brandColor: values.brandColor,
-        logoFile: null
-      };
     }
   });
 
@@ -93,8 +68,7 @@ export default function General() {
     if (settings) {
       brandingSection.setValues({
         companyName: settings.photography_business_name || "",
-        brandColor: settings.primary_brand_color || "#1EB29F",
-        logoFile: null
+        brandColor: settings.primary_brand_color || "#1EB29F"
       });
 
       regionalSection.setValues({
@@ -108,7 +82,7 @@ export default function General() {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Validate file before setting it
+    // Validate file before uploading
     if (!file.type.startsWith('image/')) {
       alert('Please select an image file');
       return;
@@ -119,8 +93,8 @@ export default function General() {
       return;
     }
 
-    // Update the form state to show a file is selected
-    brandingSection.updateValue("logoFile", file);
+    // Upload immediately like profile photo
+    await uploadLogo(file);
     
     // Reset input value to allow selecting the same file again
     event.target.value = '';
@@ -143,8 +117,6 @@ export default function General() {
     try {
       // Clear the logo URL in settings
       await updateSettings({ logo_url: null });
-      // Clear any pending file selection
-      brandingSection.updateValue("logoFile", null);
       // Reset file input
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
@@ -152,16 +124,6 @@ export default function General() {
     } catch (error) {
       console.error("Failed to delete logo:", error);
     }
-  };
-
-  // Clear file selection after successful save to prevent floating bar from reappearing
-  const clearFileSelection = () => {
-    setTimeout(() => {
-      brandingSection.updateValue("logoFile", null);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-    }, 200);
   };
 
   if (loading) {
@@ -299,24 +261,7 @@ export default function General() {
                     )}
                     {uploading ? "Uploading..." : "Choose New Logo"}
                   </Button>
-                  
-                  {brandingSection.values.logoFile && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Eye className="h-4 w-4" />
-                      {brandingSection.values.logoFile.name}
-                    </div>
-                  )}
                 </div>
-
-                {/* Warning for unsaved file */}
-                {brandingSection.values.logoFile && (
-                  <Alert className="border-orange-200 bg-orange-50">
-                    <AlertTriangle className="h-4 w-4 text-orange-600" />
-                    <AlertDescription className="text-orange-800">
-                      <strong>File selected but not saved yet.</strong> Click "Save Changes" at the bottom to upload and apply your new logo.
-                    </AlertDescription>
-                  </Alert>
-                )}
 
                 <input
                   ref={fileInputRef}

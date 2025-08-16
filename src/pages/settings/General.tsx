@@ -1,14 +1,14 @@
 import { useEffect, useRef } from "react";
 import SettingsPageWrapper from "@/components/settings/SettingsPageWrapper";
 import SettingsHeader from "@/components/settings/SettingsHeader";
-import EnhancedSettingsSection from "@/components/settings/EnhancedSettingsSection";
+import { CategorySettingsSection } from "@/components/settings/CategorySettingsSection";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Upload, Loader2 } from "lucide-react";
-import { useSettingsSectionWithContext } from "@/hooks/useSettingsSectionWithContext";
+import { useSettingsCategorySection } from "@/hooks/useSettingsCategorySection";
 import { useUserSettings } from "@/hooks/useUserSettings";
 
 export default function General() {
@@ -16,7 +16,7 @@ export default function General() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Branding section state
-  const brandingSection = useSettingsSectionWithContext({
+  const brandingSection = useSettingsCategorySection({
     sectionId: "branding",
     sectionName: "Branding",
     initialValues: {
@@ -47,7 +47,7 @@ export default function General() {
   });
 
   // Regional settings section state
-  const regionalSection = useSettingsSectionWithContext({
+  const regionalSection = useSettingsCategorySection({
     sectionId: "regional",
     sectionName: "Regional Settings", 
     initialValues: {
@@ -138,14 +138,10 @@ export default function General() {
       />
       
       <div className="space-y-8">
-        <EnhancedSettingsSection
+        <CategorySettingsSection
           title="Branding"
           description="Customize your brand appearance across client-facing materials"
-          isDirty={brandingSection.isDirty}
-          isSaving={brandingSection.isSaving}
-          showSuccess={brandingSection.showSuccess}
-          onSave={brandingSection.handleSave}
-          onCancel={brandingSection.handleCancel}
+          sectionId="branding"
         >
           <div className="space-y-6">
             {/* Company Name */}
@@ -234,16 +230,12 @@ export default function General() {
               </p>
             </div>
           </div>
-        </EnhancedSettingsSection>
+        </CategorySettingsSection>
 
-        <EnhancedSettingsSection
+        <CategorySettingsSection
           title="Regional Settings"
           description="Configure date and time display preferences"
-          isDirty={regionalSection.isDirty}
-          isSaving={regionalSection.isSaving}
-          showSuccess={regionalSection.showSuccess}
-          onSave={regionalSection.handleSave}
-          onCancel={regionalSection.handleCancel}
+          sectionId="regional"
         >
           <div className="space-y-6">
             {/* Date Format */}
@@ -282,7 +274,7 @@ export default function General() {
               </RadioGroup>
             </div>
           </div>
-        </EnhancedSettingsSection>
+        </CategorySettingsSection>
       </div>
     </SettingsPageWrapper>
   );

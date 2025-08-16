@@ -18,6 +18,7 @@ import { useSidebar } from "@/components/ui/sidebar";
 import { SettingsProvider, useSettingsContext } from "@/contexts/SettingsContext";
 import { NavigationGuardDialog } from "./NavigationGuardDialog";
 import { useSettingsNavigation } from "@/hooks/useSettingsNavigation";
+import { CategoryFloatingActionBar } from "./CategoryFloatingActionBar";
 
 const settingsCategories = [
   {
@@ -83,20 +84,24 @@ function SettingsLayoutContent() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { state } = useSidebar(); // Get main sidebar state
-  const { hasDirtySections, clearAllDirtySections } = useSettingsContext();
+  const { hasDirtySections, hasCategoryChanges, clearAllDirtySections, cancelCategoryChanges, saveCategoryChanges } = useSettingsContext();
   
   const isActive = (path: string) => {
     return location.pathname === path;
   };
 
+  const currentCategoryHasChanges = hasCategoryChanges(location.pathname);
+
   const {
     showGuard,
     handleNavigationAttempt,
     handleDiscardChanges,
-    handleStayOnPage
+    handleStayOnPage,
+    handleSaveAndExit
   } = useSettingsNavigation({
-    isDirty: hasDirtySections,
-    onDiscard: clearAllDirtySections
+    isDirty: currentCategoryHasChanges,
+    onDiscard: () => cancelCategoryChanges(location.pathname),
+    onSaveAndExit: async () => await saveCategoryChanges(location.pathname)
   });
 
   // Intercept navigation attempts
@@ -142,14 +147,14 @@ function SettingsLayoutContent() {
                             : "text-sidebar-foreground group-hover/item:text-[hsl(var(--sidebar-primary))]")
                     }`} />
                     {/* Dirty indicator for mobile/tablet (icon only view) */}
-                    {active && hasDirtySections && (
+                    {active && currentCategoryHasChanges && (
                       <div className="absolute -top-1 -right-1 w-2 h-2 bg-orange-500 rounded-full animate-pulse lg:hidden" />
                     )}
                   </div>
                   <span className="font-medium text-sm hidden lg:flex lg:items-center lg:gap-2">
                     {category.label}
                     {/* Dirty indicator for desktop (text + icon view) */}
-                    {active && hasDirtySections && (
+                    {active && currentCategoryHasChanges && (
                       <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse" />
                     )}
                   </span>
@@ -161,15 +166,19 @@ function SettingsLayoutContent() {
       </div>
 
       {/* Main Content Area */}
-      <div className={`flex-1 min-w-0 ${isMobile ? 'ml-16' : 'lg:ml-0'}`}>
+      <div className={`flex-1 min-w-0 ${isMobile ? 'ml-16' : 'lg:ml-0'} pb-20`}>
         <Outlet />
       </div>
+
+      {/* Category Floating Action Bar */}
+      <CategoryFloatingActionBar />
 
       {/* Navigation Guard Dialog */}
       <NavigationGuardDialog
         open={showGuard}
         onDiscard={handleDiscardChanges}
         onStay={handleStayOnPage}
+        onSaveAndExit={handleSaveAndExit}
       />
     </div>
   );

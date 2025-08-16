@@ -4,12 +4,14 @@ import { useLocation, useNavigate } from "react-router-dom";
 interface NavigationGuardOptions {
   isDirty: boolean;
   onDiscard: () => void;
+  onSaveAndExit?: () => Promise<void>;
   message?: string;
 }
 
 export function useSettingsNavigation({ 
   isDirty, 
   onDiscard, 
+  onSaveAndExit,
   message = "You have unsaved changes. Do you want to discard them?" 
 }: NavigationGuardOptions) {
   const [showGuard, setShowGuard] = useState(false);
@@ -63,11 +65,23 @@ export function useSettingsNavigation({
     setPendingNavigation(null);
   };
 
+  const handleSaveAndExit = async () => {
+    if (onSaveAndExit) {
+      await onSaveAndExit();
+    }
+    setShowGuard(false);
+    if (pendingNavigation) {
+      navigate(pendingNavigation);
+      setPendingNavigation(null);
+    }
+  };
+
   return {
     showGuard,
     message,
     handleNavigationAttempt,
     handleDiscardChanges,
-    handleStayOnPage
+    handleStayOnPage,
+    handleSaveAndExit
   };
 }

@@ -109,94 +109,32 @@ export default function InvitationSignup() {
       const inviteEmail = decodeURIComponent(email || "");
       console.log("Creating account with email:", inviteEmail);
       
-      // Create the account with email confirmation disabled for invitations
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: sanitizeInput(inviteEmail),
-        password: sanitizeInput(password),
-        options: {
-          emailRedirectTo: `${window.location.origin}/`,
-          data: {
-            invited: true, // Mark as invited user
-            invitation_id: invitationId
-          }
-        }
-      });
-
-      if (authError) {
-        console.error("Auth error:", authError);
-        toast({
-          title: "Account creation failed",
-          description: `${authError.message}. Please check if the email address is valid.`,
-          variant: "destructive"
-        });
-        return;
-      }
-
-      if (!authData.user) {
-        toast({
-          title: "Account creation failed",
-          description: "Failed to create user account",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      // For invited users, we need to check if email confirmation is required
-      if (!authData.user.email_confirmed_at) {
-        // Show confirmation message and redirect to a waiting page
-        toast({
-          title: "Check your email",
-          description: "We've sent you a confirmation link. Please check your email and click the link to complete your account setup.",
-        });
-        
-        // Redirect to a confirmation waiting page
-        navigate(`/auth?email=${encodeURIComponent(inviteEmail)}&invitation=${invitationId}&awaiting_confirmation=true`);
-        return;
-      }
-
-      // User is confirmed, proceed with invitation acceptance
-      await completeInvitationProcess(authData.user.id);
-
-    } catch (error) {
-      console.error("Signup error:", error);
-      toast({
-        title: "Sign up failed",
-        description: "An unexpected error occurred. Please try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const completeInvitationProcess = async (userId: string) => {
-    try {
-      // Accept the invitation
-      const { error: acceptError } = await supabase
-        .from("invitations")
-        .update({ 
-          accepted_at: new Date().toISOString()
+      const response = await fetch('https://rifdykpdubrowzbylffe.supabase.co/functions/v1/invitation-signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJpZmR5a3BkdWJyb3d6YnlsZmZlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM3OTc5NDMsImV4cCI6MjA2OTM3Mzk0M30.lhSbTbVWckd9zsT0hRCAO06nPKszZpKNi_sq6-WPmV8`,
+        },
+        body: JSON.stringify({
+          email: sanitizeInput(inviteEmail),
+          password: sanitizeInput(password),
+          invitationId: invitationId
         })
-        .eq("id", invitationId);
+      });
 
-      if (acceptError) {
-        console.error("Failed to accept invitation:", acceptError);
-      }
+      const result = await response.json();
 
-      // Add user to organization
-      const { error: memberError } = await supabase
-        .from("organization_members")
-        .insert({
-          organization_id: invitation.organization_id,
-          user_id: userId,
-          role: invitation.role,
-          invited_by: invitation.invited_by
+      if (!response.ok) {
+        console.error("Edge function error:", result);
+        toast({
+          title: "Account creation failed",
+          description: result.error || "Failed to create account",
+          variant: "destructive"
         });
-
-      if (memberError) {
-        console.error("Failed to join organization:", memberError);
+        return;
       }
 
+      // Success - user is created and confirmed automatically
       setSuccess(true);
       
       toast({
@@ -204,10 +142,20 @@ export default function InvitationSignup() {
         description: "Your account has been created and you've joined the organization successfully!",
       });
 
-      // Redirect after a moment
-      setTimeout(() => {
-        navigate("/");
-      }, 2000);
+      // Sign in the user with their new credentials
+      setTimeout(async () => {
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: sanitizeInput(inviteEmail),
+          password: sanitizeInput(password)
+        });
+
+        if (signInError) {
+          console.error("Sign in error:", signInError);
+          navigate("/auth");
+        } else {
+          navigate("/");
+        }
+      }, 1500);
 
     } catch (error) {
       console.error("Signup error:", error);
@@ -220,6 +168,7 @@ export default function InvitationSignup() {
       setLoading(false);
     }
   };
+
 
   if (invitationError) {
     return (

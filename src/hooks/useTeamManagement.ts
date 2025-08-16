@@ -93,13 +93,17 @@ export function useTeamManagement() {
       console.log('Sending invitation to:', email);
 
       const { data, error } = await supabase.functions.invoke('send-invitation', {
-        body: { email, role },
+        body: { email: email.trim(), role },
         headers: {
           Authorization: `Bearer ${session.access_token}`,
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        // Extract the specific error message from the response
+        const errorMessage = data?.error || error.message || "Failed to send invitation";
+        throw new Error(errorMessage);
+      }
 
       console.log('Invitation response:', data);
 
@@ -114,9 +118,20 @@ export function useTeamManagement() {
       return { success: true, data };
     } catch (error: any) {
       console.error('Error sending invitation:', error);
+      
+      // Handle specific error messages
+      let errorMessage = "Failed to send invitation";
+      if (error.message) {
+        if (error.message.includes("already exists") || error.message.includes("pending invitation")) {
+          errorMessage = "This user already exists in your organization or has a pending invitation";
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
       toast({
         title: "Error",
-        description: error.message || "Failed to send invitation",
+        description: errorMessage,
         variant: "destructive",
       });
       return { success: false, error };

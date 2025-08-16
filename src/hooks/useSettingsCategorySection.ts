@@ -39,13 +39,21 @@ export function useSettingsCategorySection<T extends Record<string, any>>(
       handleSave: async () => {
         await section.handleSave();
         // Clear file selection after successful save to reset the state
+        setTimeout(() => {
+          if (section.values.logoFile) {
+            section.updateValue("logoFile", null);
+          }
+        }, 100);
+      },
+      handleCancel: () => {
+        section.handleCancel();
+        // Also clear file selection on cancel
         if (section.values.logoFile) {
           section.updateValue("logoFile", null);
         }
-      },
-      handleCancel: section.handleCancel
+      }
     };
-  }, [section.handleSave, section.handleCancel, section.values.logoFile, section.updateValue]);
+  }, [section.handleSave, section.handleCancel, section.values, section.updateValue]);
 
   // Register this section with the category context - only when path/id changes
   useEffect(() => {

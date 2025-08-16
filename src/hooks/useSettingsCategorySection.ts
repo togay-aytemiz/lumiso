@@ -24,7 +24,8 @@ export function useSettingsCategorySection<T extends Record<string, any>>(
     initialValues: options.initialValues,
     onSave: options.onSave,
     autoSave: options.autoSave,
-    throttleMs: options.throttleMs
+    throttleMs: options.throttleMs,
+    disableToast: true // Disable section-level toasts in favor of category-level toasts
   });
 
   // Use refs to avoid recreating functions

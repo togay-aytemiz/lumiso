@@ -7,6 +7,7 @@ interface SettingsSectionOptions<T> {
   onSave: (values: T) => Promise<T | void>;
   autoSave?: boolean;
   throttleMs?: number;
+  disableToast?: boolean; // New option to disable section-level toasts
 }
 
 export function useSettingsSection<T extends Record<string, any>>({
@@ -14,7 +15,8 @@ export function useSettingsSection<T extends Record<string, any>>({
   initialValues,
   onSave,
   autoSave = false,
-  throttleMs = 1000
+  throttleMs = 1000,
+  disableToast = false
 }: SettingsSectionOptions<T>) {
   const [values, setValues] = useState<T>(initialValues);
   const [savedValues, setSavedValues] = useState<T>(initialValues);
@@ -59,29 +61,33 @@ export function useSettingsSection<T extends Record<string, any>>({
       setSavedValues(finalValues);
       setValues(finalValues); // CRITICAL: Update current values to clear file selections
       
-      if (autoSave) {
-        // Show inline success indicator for auto-save
-        setShowSuccess(true);
-        if (saveTimeoutRef.current) {
-          clearTimeout(saveTimeoutRef.current);
+      // Only show toasts if not disabled (for category-based systems)
+      if (!disableToast) {
+        if (autoSave) {
+          // Show inline success indicator for auto-save
+          setShowSuccess(true);
+          if (saveTimeoutRef.current) {
+            clearTimeout(saveTimeoutRef.current);
+          }
+          saveTimeoutRef.current = setTimeout(() => {
+            setShowSuccess(false);
+          }, 1000);
+          
+          // Throttled toast for auto-save to avoid spam
+          toast({
+            title: `Updated ${sectionName}`,
+            duration: 2000,
+          });
+        } else {
+          // Regular toast for manual save
+          toast({
+            title: `Saved ${sectionName}`,
+            duration: 3000,
+          });
         }
-        saveTimeoutRef.current = setTimeout(() => {
-          setShowSuccess(false);
-        }, 1000);
-        
-        // Throttled toast for auto-save to avoid spam
-        toast({
-          title: `Updated ${sectionName}`,
-          duration: 2000,
-        });
-      } else {
-        // Regular toast for manual save
-        toast({
-          title: `Saved ${sectionName}`,
-          duration: 3000,
-        });
       }
     } catch (error) {
+      // Always show error toasts
       toast({
         title: "Error",
         description: `Failed to save ${sectionName}. Please try again.`,
@@ -91,7 +97,7 @@ export function useSettingsSection<T extends Record<string, any>>({
     } finally {
       setIsSaving(false);
     }
-  }, [values, onSave, sectionName, autoSave, toast]);
+  }, [values, onSave, sectionName, autoSave, toast, disableToast]);
 
   const handleCancel = useCallback(() => {
     setValues(savedValues);

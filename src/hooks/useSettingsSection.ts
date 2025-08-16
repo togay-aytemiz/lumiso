@@ -4,7 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 interface SettingsSectionOptions<T> {
   sectionName: string;
   initialValues: T;
-  onSave: (values: T) => Promise<void>;
+  onSave: (values: T) => Promise<T | void>;
   autoSave?: boolean;
   throttleMs?: number;
 }
@@ -52,8 +52,12 @@ export function useSettingsSection<T extends Record<string, any>>({
     setIsSaving(true);
     
     try {
-      await onSave(dataToSave);
-      setSavedValues(dataToSave);
+      const result = await onSave(dataToSave);
+      
+      // If onSave returns cleaned values, use those; otherwise use original
+      const finalValues = result && typeof result === 'object' ? result : dataToSave;
+      setSavedValues(finalValues);
+      setValues(finalValues); // CRITICAL: Update current values to clear file selections
       
       if (autoSave) {
         // Show inline success indicator for auto-save

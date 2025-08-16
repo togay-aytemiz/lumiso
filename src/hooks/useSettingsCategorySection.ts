@@ -7,7 +7,7 @@ interface SettingsCategorySectionOptions<T> {
   sectionId: string;
   sectionName: string;
   initialValues: T;
-  onSave: (values: T) => Promise<void>;
+  onSave: (values: T) => Promise<T | void>;
   autoSave?: boolean;
   throttleMs?: number;
 }

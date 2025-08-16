@@ -57,6 +57,13 @@ export default function General() {
       }
       
       console.log("✅ All branding settings saved successfully");
+      
+      // Return cleaned values without logoFile to reset the form properly
+      return {
+        companyName: values.companyName,
+        brandColor: values.brandColor,
+        logoFile: null
+      };
     }
   });
 

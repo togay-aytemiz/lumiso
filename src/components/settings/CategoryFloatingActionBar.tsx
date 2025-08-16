@@ -55,8 +55,9 @@ export function CategoryFloatingActionBar() {
   return (
     <div 
       className={cn(
-        "fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t border-border p-4 z-50 transition-all duration-200 ease-in-out shadow-lg",
-        "animate-in slide-in-from-bottom-2"
+        "fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t border-border p-4 shadow-xl",
+        "z-[200] transition-all duration-300 ease-in-out",
+        "animate-slide-in-bottom"
       )}
     >
       <div className="flex items-center justify-between max-w-7xl mx-auto">

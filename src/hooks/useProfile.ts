@@ -155,6 +155,49 @@ export function useProfile() {
     }
   };
 
+  const deleteProfilePhoto = async () => {
+    try {
+      if (!profile?.profile_photo_url) {
+        return { success: true };
+      }
+
+      // Extract file path from URL
+      const url = new URL(profile.profile_photo_url);
+      const pathParts = url.pathname.split('/');
+      const fileName = pathParts[pathParts.length - 1];
+
+      // Delete the file from storage
+      const { error: deleteError } = await supabase.storage
+        .from('profile-photos')
+        .remove([fileName]);
+
+      if (deleteError) {
+        console.error('Error deleting photo file:', deleteError);
+        // Continue anyway to clear the URL from profile
+      }
+
+      // Update profile to remove photo URL
+      const result = await updateProfile({ profile_photo_url: null });
+      
+      if (result.success) {
+        toast({
+          title: "Success",
+          description: "Profile photo deleted successfully",
+        });
+      }
+
+      return result;
+    } catch (error: any) {
+      console.error('Error deleting profile photo:', error);
+      toast({
+        title: "Error", 
+        description: error.message || "Failed to delete profile photo",
+        variant: "destructive",
+      });
+      return { success: false, error };
+    }
+  };
+
   useEffect(() => {
     fetchProfile();
   }, []);
@@ -165,6 +208,7 @@ export function useProfile() {
     uploading,
     updateProfile,
     uploadProfilePhoto,
+    deleteProfilePhoto,
     refetch: fetchProfile
   };
 }

@@ -4,6 +4,7 @@ import SettingsPageWrapper from "@/components/settings/SettingsPageWrapper";
 import SettingsHeader from "@/components/settings/SettingsHeader";
 import EnhancedSettingsSection from "@/components/settings/EnhancedSettingsSection";
 import { CategorySettingsSection } from "@/components/settings/CategorySettingsSection";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,7 +14,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Upload, ChevronDown, Loader2 } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Upload, ChevronDown, Loader2, X } from "lucide-react";
 import { useProfile } from "@/hooks/useProfile";
 import { useWorkingHours } from "@/hooks/useWorkingHours";
 import { useTeamManagement } from "@/hooks/useTeamManagement";
@@ -24,9 +26,10 @@ import { trimAndNormalizeSpaces, createTrimmedBlurHandler } from "@/lib/inputUti
 export default function Account() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [emailAddress, setEmailAddress] = useState("");
+  const [isProfilePhotoModalOpen, setIsProfilePhotoModalOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
-  const { profile, loading: profileLoading, uploading, updateProfile, uploadProfilePhoto } = useProfile();
+  const { profile, loading: profileLoading, uploading, updateProfile, uploadProfilePhoto, deleteProfilePhoto } = useProfile();
   const { workingHours, loading: workingHoursLoading, updateWorkingHour } = useWorkingHours();
   const { 
     teamMembers, 
@@ -131,6 +134,13 @@ export default function Account() {
     }
   };
 
+  const handleDeleteProfilePhoto = async () => {
+    const result = await deleteProfilePhoto();
+    if (result.success) {
+      // The toast is handled in the hook
+    }
+  };
+
   const handleSendInvitation = async () => {
     if (!inviteEmail.trim()) return;
     
@@ -192,6 +202,78 @@ export default function Account() {
             {/* Avatar Upload */}
             <div className="space-y-2">
               <Label htmlFor="avatar-upload">Profile Photo</Label>
+              
+              {/* Current Photo Preview */}
+              {profile?.profile_photo_url && (
+                <div className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 border rounded-lg bg-muted/30 max-w-md">
+                  {/* Mobile Layout */}
+                  <div className="flex items-center gap-3 sm:hidden">
+                    <div className="relative cursor-pointer" onClick={() => setIsProfilePhotoModalOpen(true)}>
+                      <img 
+                        src={profile.profile_photo_url} 
+                        alt="Current profile photo - click to enlarge" 
+                        className="w-12 h-12 object-cover bg-white border rounded-full hover:opacity-80 transition-opacity"
+                        title="Click to view full size"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">Current Photo</p>
+                      <p className="text-xs text-muted-foreground">Photo is currently set</p>
+                    </div>
+                  </div>
+                  
+                  {/* Desktop/Tablet Layout */}
+                  <div className="hidden sm:flex sm:items-center sm:gap-4 sm:flex-1">
+                    <div className="relative cursor-pointer" onClick={() => setIsProfilePhotoModalOpen(true)}>
+                      <img 
+                        src={profile.profile_photo_url} 
+                        alt="Current profile photo - click to enlarge" 
+                        className="w-16 h-16 object-cover bg-white border rounded-full hover:opacity-80 transition-opacity"
+                        title="Click to view full size"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">Current Photo</p>
+                      <p className="text-xs text-muted-foreground">Photo is currently set</p>
+                    </div>
+                  </div>
+
+                  {/* Delete Button - Full width on mobile, inline on larger screens */}
+                  <div className="w-full sm:w-auto">
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="w-full sm:w-auto flex items-center justify-center gap-2 text-destructive hover:text-destructive"
+                        >
+                          <X className="h-4 w-4" />
+                          Delete
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete Profile Photo</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to delete your profile photo? This action cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={handleDeleteProfilePhoto}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            Delete Photo
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                </div>
+              )}
+
               <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                 <Avatar className="h-16 w-16">
                   <AvatarImage src={profile?.profile_photo_url || ""} />
@@ -527,6 +609,24 @@ export default function Account() {
           </div>
         </EnhancedSettingsSection>
       </div>
+
+      {/* Profile Photo Preview Modal */}
+      <Dialog open={isProfilePhotoModalOpen} onOpenChange={setIsProfilePhotoModalOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Profile Photo Preview</DialogTitle>
+          </DialogHeader>
+          <div className="flex justify-center p-6">
+            {profile?.profile_photo_url && (
+              <img 
+                src={profile.profile_photo_url} 
+                alt="Profile photo full size preview" 
+                className="max-w-full max-h-96 object-contain bg-white border rounded shadow-sm"
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </SettingsPageWrapper>
   );
 }

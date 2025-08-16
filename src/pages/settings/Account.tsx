@@ -142,8 +142,15 @@ export default function Account() {
 
   const getWorkingHourByDay = (dayOfWeek: number) => {
     const workingHour = workingHours.find(wh => wh.day_of_week === dayOfWeek);
-    console.log(`Working hour for day ${dayOfWeek}:`, workingHour);
-    return workingHour || {
+    if (workingHour) {
+      return {
+        ...workingHour,
+        // Convert "09:00:00" to "09:00"
+        start_time: workingHour.start_time ? workingHour.start_time.substring(0, 5) : "09:00",
+        end_time: workingHour.end_time ? workingHour.end_time.substring(0, 5) : "17:00"
+      };
+    }
+    return {
       enabled: false,
       start_time: "09:00",
       end_time: "17:00"

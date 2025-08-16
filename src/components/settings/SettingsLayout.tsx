@@ -127,7 +127,7 @@ function SettingsLayoutContent() {
                   key={category.path}
                   to={category.path}
                   onClick={(e) => handleNavClick(e, category.path)}
-                  className={`group/item w-full h-10 px-3 py-3 text-left transition-all duration-200 rounded-lg hover:bg-muted/50 flex items-center gap-3 relative ${
+                  className={`group/item w-full h-10 px-3 py-3 text-left transition-all duration-200 rounded-lg hover:bg-muted/50 flex items-center gap-3 ${
                     active
                       ? `${isDanger ? 'bg-destructive/10 text-destructive' : 'bg-muted text-sidebar-foreground'}`
                       : `${isDanger ? 'text-destructive hover:text-destructive' : 'text-muted-foreground hover:text-foreground'}`
@@ -140,11 +140,13 @@ function SettingsLayoutContent() {
                           ? "text-[hsl(var(--sidebar-primary))]" 
                           : "text-sidebar-foreground group-hover/item:text-[hsl(var(--sidebar-primary))]")
                   }`} />
-                  <span className="font-medium text-sm hidden lg:block">{category.label}</span>
-                  {/* Dirty indicator for current page */}
-                  {active && hasDirtySections && (
-                    <div className="absolute -top-1 -right-1 w-2 h-2 bg-orange-500 rounded-full animate-pulse" />
-                  )}
+                  <span className="font-medium text-sm hidden lg:flex lg:items-center lg:gap-2">
+                    {category.label}
+                    {/* Dirty indicator inline with text */}
+                    {active && hasDirtySections && (
+                      <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse" />
+                    )}
+                  </span>
                 </NavLink>
               );
             })}

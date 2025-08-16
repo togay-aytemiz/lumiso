@@ -111,9 +111,8 @@ export default function General() {
   };
 
   const handleBrandColorChange = (value: string) => {
-    if (validateBrandColor(value) || value === '') {
-      brandingSection.updateValue("brandColor", value);
-    }
+    // Allow any input while typing, validate only for final color picker sync
+    brandingSection.updateValue("brandColor", value);
   };
 
   if (loading) {

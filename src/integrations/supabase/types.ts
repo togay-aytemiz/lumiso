@@ -639,22 +639,37 @@ export type Database = {
       user_settings: {
         Row: {
           created_at: string
+          date_format: string | null
           id: string
+          logo_url: string | null
+          photography_business_name: string | null
+          primary_brand_color: string | null
           show_quick_status_buttons: boolean
+          time_format: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           created_at?: string
+          date_format?: string | null
           id?: string
+          logo_url?: string | null
+          photography_business_name?: string | null
+          primary_brand_color?: string | null
           show_quick_status_buttons?: boolean
+          time_format?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           created_at?: string
+          date_format?: string | null
           id?: string
+          logo_url?: string | null
+          photography_business_name?: string | null
+          primary_brand_color?: string | null
           show_quick_status_buttons?: boolean
+          time_format?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -672,6 +687,10 @@ export type Database = {
       ensure_system_lead_statuses: {
         Args: { user_uuid: string }
         Returns: undefined
+      }
+      ensure_user_settings: {
+        Args: { user_uuid: string }
+        Returns: string
       }
       get_default_lead_status: {
         Args: { user_uuid: string }

@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import SettingsPageWrapper from "@/components/settings/SettingsPageWrapper";
 import SettingsHeader from "@/components/settings/SettingsHeader";
 import EnhancedSettingsSection from "@/components/settings/EnhancedSettingsSection";
@@ -6,23 +7,42 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Upload } from "lucide-react";
+import { Upload, Loader2 } from "lucide-react";
 import { useSettingsSectionWithContext } from "@/hooks/useSettingsSectionWithContext";
+import { useUserSettings } from "@/hooks/useUserSettings";
 
 export default function General() {
+  const { settings, loading, uploading, updateSettings, uploadLogo } = useUserSettings();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   // Branding section state
   const brandingSection = useSettingsSectionWithContext({
     sectionId: "branding",
     sectionName: "Branding",
     initialValues: {
-      companyName: "",
-      brandColor: "#1EB29F",
+      companyName: settings?.photography_business_name || "",
+      brandColor: settings?.primary_brand_color || "#1EB29F",
       logoFile: null as File | null
     },
     onSave: async (values) => {
-      // TODO: Implement actual save logic to backend
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
-      console.log("Saving branding:", values);
+      // Handle logo upload first if there's a new file
+      if (values.logoFile) {
+        const uploadResult = await uploadLogo(values.logoFile);
+        if (!uploadResult.success) {
+          throw new Error("Failed to upload logo");
+        }
+      }
+
+      // Then save other branding settings
+      const updates: any = {
+        photography_business_name: values.companyName,
+        primary_brand_color: values.brandColor
+      };
+
+      const result = await updateSettings(updates);
+      if (!result.success) {
+        throw new Error("Failed to save branding settings");
+      }
     }
   });
 
@@ -31,15 +51,84 @@ export default function General() {
     sectionId: "regional",
     sectionName: "Regional Settings", 
     initialValues: {
-      dateFormat: "DD/MM/YYYY",
-      timeFormat: "12-hour"
+      dateFormat: settings?.date_format || "DD/MM/YYYY",
+      timeFormat: settings?.time_format || "12-hour"
     },
     onSave: async (values) => {
-      // TODO: Implement actual save logic to backend
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
-      console.log("Saving regional settings:", values);
+      const updates = {
+        date_format: values.dateFormat,
+        time_format: values.timeFormat
+      };
+
+      const result = await updateSettings(updates);
+      if (!result.success) {
+        throw new Error("Failed to save regional settings");
+      }
     }
   });
+
+  // Update form values when settings load
+  useEffect(() => {
+    if (settings) {
+      brandingSection.setValues({
+        companyName: settings.photography_business_name || "",
+        brandColor: settings.primary_brand_color || "#1EB29F",
+        logoFile: null
+      });
+
+      regionalSection.setValues({
+        dateFormat: settings.date_format || "DD/MM/YYYY",
+        timeFormat: settings.time_format || "12-hour"
+      });
+    }
+  }, [settings]);
+
+  const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file before setting it
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file');
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      alert('File size must be less than 2MB');
+      return;
+    }
+
+    // Update the form state to show a file is selected
+    brandingSection.updateValue("logoFile", file);
+  };
+
+  const handleFileButtonClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const validateBrandColor = (color: string) => {
+    return /^#[0-9A-F]{6}$/i.test(color);
+  };
+
+  const handleBrandColorChange = (value: string) => {
+    if (validateBrandColor(value) || value === '') {
+      brandingSection.updateValue("brandColor", value);
+    }
+  };
+
+  if (loading) {
+    return (
+      <SettingsPageWrapper>
+        <SettingsHeader
+          title="General"
+          description="Manage your general application preferences"
+        />
+        <div className="flex items-center justify-center h-48">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      </SettingsPageWrapper>
+    );
+  }
 
   return (
     <SettingsPageWrapper>
@@ -78,14 +167,44 @@ export default function General() {
             <div className="space-y-2">
               <Label htmlFor="logo-upload">Upload Logo</Label>
               <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                <Button variant="outline" className="flex items-center gap-2 w-full sm:w-fit">
-                  <Upload className="h-4 w-4" />
-                  Choose File
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleLogoUpload}
+                  className="hidden"
+                />
+                <Button 
+                  variant="outline" 
+                  onClick={handleFileButtonClick}
+                  disabled={uploading}
+                  className="flex items-center gap-2 w-full sm:w-fit"
+                >
+                  {uploading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Upload className="h-4 w-4" />
+                  )}
+                  {uploading ? "Uploading..." : "Choose File"}
                 </Button>
                 <span className="text-sm text-muted-foreground">
-                  No file selected
+                  {brandingSection.values.logoFile 
+                    ? brandingSection.values.logoFile.name
+                    : settings?.logo_url 
+                      ? "Logo uploaded" 
+                      : "No file selected"
+                  }
                 </span>
               </div>
+              {settings?.logo_url && (
+                <div className="mt-2">
+                  <img 
+                    src={settings.logo_url} 
+                    alt="Current logo" 
+                    className="h-16 w-auto border rounded"
+                  />
+                </div>
+              )}
               <p className="text-sm text-muted-foreground">
                 Displayed on your client portal and emails. Accepts JPG, PNG, or SVG. Max file size: 2 MB
               </p>
@@ -104,13 +223,14 @@ export default function General() {
                 />
                 <Input
                   value={brandingSection.values.brandColor}
-                  onChange={(e) => brandingSection.updateValue("brandColor", e.target.value)}
+                  onChange={(e) => handleBrandColorChange(e.target.value)}
                   className="flex-1 max-w-xs"
                   placeholder="#1EB29F"
+                  pattern="^#[0-9A-Fa-f]{6}$"
                 />
               </div>
               <p className="text-sm text-muted-foreground">
-                Used in client-facing UI and outgoing messages
+                Used in client-facing UI and outgoing messages. Must be a valid hex color (e.g., #1EB29F)
               </p>
             </div>
           </div>

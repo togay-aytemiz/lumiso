@@ -173,10 +173,10 @@ export default function Account() {
     return user?.id;
   };
 
-  // Generate time options from 09:00 to 17:00
+  // Generate time options from 06:00 to 22:00
   const generateTimeOptions = () => {
     const times = [];
-    for (let hour = 9; hour <= 17; hour++) {
+    for (let hour = 6; hour <= 22; hour++) {
       const timeString = `${hour.toString().padStart(2, '0')}:00`;
       times.push(timeString);
     }
@@ -307,6 +307,7 @@ export default function Account() {
                   </span>
                 </div>
               </div>
+
               <p className="text-sm text-muted-foreground">
                 Used in admin views and client messages. Accepts JPG, PNG, SVG. Max file size: 2 MB
               </p>

@@ -5,7 +5,6 @@ import { CategorySettingsSection } from "@/components/settings/CategorySettingsS
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -161,7 +160,7 @@ export default function Notifications() {
           description="Configure your notification preferences and delivery times"
         />
         <div className="flex items-center justify-center h-48">
-          <Loader2 className="h-8 w-8 animate-spin" />
+          <div className="text-sm text-muted-foreground">Loading...</div>
         </div>
       </SettingsPageWrapper>
     );
@@ -191,17 +190,12 @@ export default function Notifications() {
                   Get notified when tasks or deadlines become overdue
                 </p>
               </div>
-              <div className="flex items-center gap-2">
-                {autoSaveStates.overdueReminderEnabled === 'saving' && (
-                  <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                )}
-                <Switch
-                  id="overdue-reminder"
-                  checked={settings.overdueReminderEnabled}
-                  onCheckedChange={(checked) => handleAutoSave('overdueReminderEnabled', checked)}
-                  disabled={autoSaveStates.overdueReminderEnabled === 'saving'}
-                />
-              </div>
+              <Switch
+                id="overdue-reminder"
+                checked={settings.overdueReminderEnabled}
+                onCheckedChange={(checked) => handleAutoSave('overdueReminderEnabled', checked)}
+                disabled={autoSaveStates.overdueReminderEnabled === 'saving'}
+              />
             </div>
 
             {/* Delivery Reminder - Auto-save group */}
@@ -215,43 +209,33 @@ export default function Notifications() {
                     Daily reminder to check on delivery status
                   </p>
                 </div>
-                <div className="flex items-center gap-2">
-                  {autoSaveStates.deliveryReminderEnabled === 'saving' && (
-                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                  )}
-                  <Switch
-                    id="delivery-reminder"
-                    checked={settings.deliveryReminderEnabled}
-                    onCheckedChange={(checked) => handleAutoSave('deliveryReminderEnabled', checked)}
-                    disabled={autoSaveStates.deliveryReminderEnabled === 'saving'}
-                  />
-                </div>
+                <Switch
+                  id="delivery-reminder"
+                  checked={settings.deliveryReminderEnabled}
+                  onCheckedChange={(checked) => handleAutoSave('deliveryReminderEnabled', checked)}
+                  disabled={autoSaveStates.deliveryReminderEnabled === 'saving'}
+                />
               </div>
               
               {settings.deliveryReminderEnabled && (
                 <div className="flex items-center gap-3 pt-2 border-t">
                   <Label htmlFor="delivery-time" className="text-sm">Send at:</Label>
-                  <div className="flex items-center gap-2">
-                    {autoSaveStates.deliveryReminderSendAt === 'saving' && (
-                      <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                    )}
-                    <Select
-                      value={settings.deliveryReminderSendAt}
-                      onValueChange={(value) => handleAutoSave('deliveryReminderSendAt', value)}
-                      disabled={autoSaveStates.deliveryReminderSendAt === 'saving'}
-                    >
-                      <SelectTrigger className="w-32">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="max-h-60">
-                        {timeOptions.map((time) => (
-                          <SelectItem key={time} value={time}>
-                            {time}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  <Select
+                    value={settings.deliveryReminderSendAt}
+                    onValueChange={(value) => handleAutoSave('deliveryReminderSendAt', value)}
+                    disabled={autoSaveStates.deliveryReminderSendAt === 'saving'}
+                  >
+                    <SelectTrigger className="w-32">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-60">
+                      {timeOptions.map((time) => (
+                        <SelectItem key={time} value={time}>
+                          {time}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               )}
             </div>
@@ -267,43 +251,33 @@ export default function Notifications() {
                     Daily reminder about upcoming sessions
                   </p>
                 </div>
-                <div className="flex items-center gap-2">
-                  {autoSaveStates.sessionReminderEnabled === 'saving' && (
-                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                  )}
-                  <Switch
-                    id="session-reminder"
-                    checked={settings.sessionReminderEnabled}
-                    onCheckedChange={(checked) => handleAutoSave('sessionReminderEnabled', checked)}
-                    disabled={autoSaveStates.sessionReminderEnabled === 'saving'}
-                  />
-                </div>
+                <Switch
+                  id="session-reminder"
+                  checked={settings.sessionReminderEnabled}
+                  onCheckedChange={(checked) => handleAutoSave('sessionReminderEnabled', checked)}
+                  disabled={autoSaveStates.sessionReminderEnabled === 'saving'}
+                />
               </div>
               
               {settings.sessionReminderEnabled && (
                 <div className="flex items-center gap-3 pt-2 border-t">
                   <Label htmlFor="session-time" className="text-sm">Send at:</Label>
-                  <div className="flex items-center gap-2">
-                    {autoSaveStates.sessionReminderSendAt === 'saving' && (
-                      <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                    )}
-                    <Select
-                      value={settings.sessionReminderSendAt}
-                      onValueChange={(value) => handleAutoSave('sessionReminderSendAt', value)}
-                      disabled={autoSaveStates.sessionReminderSendAt === 'saving'}
-                    >
-                      <SelectTrigger className="w-32">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="max-h-60">
-                        {timeOptions.map((time) => (
-                          <SelectItem key={time} value={time}>
-                            {time}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  <Select
+                    value={settings.sessionReminderSendAt}
+                    onValueChange={(value) => handleAutoSave('sessionReminderSendAt', value)}
+                    disabled={autoSaveStates.sessionReminderSendAt === 'saving'}
+                  >
+                    <SelectTrigger className="w-32">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-60">
+                      {timeOptions.map((time) => (
+                        <SelectItem key={time} value={time}>
+                          {time}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               )}
             </div>
@@ -327,43 +301,33 @@ export default function Notifications() {
                     Morning digest of your schedule and pending tasks
                   </p>
                 </div>
-                <div className="flex items-center gap-2">
-                  {autoSaveStates.dailySummaryEnabled === 'saving' && (
-                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                  )}
-                  <Switch
-                    id="daily-summary"
-                    checked={settings.dailySummaryEnabled}
-                    onCheckedChange={(checked) => handleAutoSave('dailySummaryEnabled', checked)}
-                    disabled={autoSaveStates.dailySummaryEnabled === 'saving'}
-                  />
-                </div>
+                <Switch
+                  id="daily-summary"
+                  checked={settings.dailySummaryEnabled}
+                  onCheckedChange={(checked) => handleAutoSave('dailySummaryEnabled', checked)}
+                  disabled={autoSaveStates.dailySummaryEnabled === 'saving'}
+                />
               </div>
               
               {settings.dailySummaryEnabled && (
                 <div className="flex items-center gap-3 pt-2 border-t">
                   <Label htmlFor="summary-time" className="text-sm">Send at:</Label>
-                  <div className="flex items-center gap-2">
-                    {autoSaveStates.dailySummarySendAt === 'saving' && (
-                      <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                    )}
-                    <Select
-                      value={settings.dailySummarySendAt}
-                      onValueChange={(value) => handleAutoSave('dailySummarySendAt', value)}
-                      disabled={autoSaveStates.dailySummarySendAt === 'saving'}
-                    >
-                      <SelectTrigger className="w-32">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="max-h-60">
-                        {timeOptions.map((time) => (
-                          <SelectItem key={time} value={time}>
-                            {time}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  <Select
+                    value={settings.dailySummarySendAt}
+                    onValueChange={(value) => handleAutoSave('dailySummarySendAt', value)}
+                    disabled={autoSaveStates.dailySummarySendAt === 'saving'}
+                  >
+                    <SelectTrigger className="w-32">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-60">
+                      {timeOptions.map((time) => (
+                        <SelectItem key={time} value={time}>
+                          {time}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               )}
             </div>
@@ -378,17 +342,12 @@ export default function Notifications() {
                   Gentle reminders to complete pending tasks
                 </p>
               </div>
-              <div className="flex items-center gap-2">
-                {autoSaveStates.taskNudgeEnabled === 'saving' && (
-                  <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                )}
-                <Switch
-                  id="task-nudge"
-                  checked={settings.taskNudgeEnabled}
-                  onCheckedChange={(checked) => handleAutoSave('taskNudgeEnabled', checked)}
-                  disabled={autoSaveStates.taskNudgeEnabled === 'saving'}
-                />
-              </div>
+              <Switch
+                id="task-nudge"
+                checked={settings.taskNudgeEnabled}
+                onCheckedChange={(checked) => handleAutoSave('taskNudgeEnabled', checked)}
+                disabled={autoSaveStates.taskNudgeEnabled === 'saving'}
+              />
             </div>
           </div>
         </CategorySettingsSection>
@@ -409,17 +368,12 @@ export default function Notifications() {
                   Get notified when integrations fail or experience issues
                 </p>
               </div>
-              <div className="flex items-center gap-2">
-                {autoSaveStates.integrationFailureAlertEnabled === 'saving' && (
-                  <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                )}
-                <Switch
-                  id="integration-failure"
-                  checked={settings.integrationFailureAlertEnabled}
-                  onCheckedChange={(checked) => handleAutoSave('integrationFailureAlertEnabled', checked)}
-                  disabled={autoSaveStates.integrationFailureAlertEnabled === 'saving'}
-                />
-              </div>
+              <Switch
+                id="integration-failure"
+                checked={settings.integrationFailureAlertEnabled}
+                onCheckedChange={(checked) => handleAutoSave('integrationFailureAlertEnabled', checked)}
+                disabled={autoSaveStates.integrationFailureAlertEnabled === 'saving'}
+              />
             </div>
 
             {/* Team Invite Accepted Alert - Pure toggle (auto-save) */}
@@ -432,17 +386,12 @@ export default function Notifications() {
                   Get notified when team members accept invitations
                 </p>
               </div>
-              <div className="flex items-center gap-2">
-                {autoSaveStates.teamInviteAcceptedAlertEnabled === 'saving' && (
-                  <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                )}
-                <Switch
-                  id="team-invite-accepted"
-                  checked={settings.teamInviteAcceptedAlertEnabled}
-                  onCheckedChange={(checked) => handleAutoSave('teamInviteAcceptedAlertEnabled', checked)}
-                  disabled={autoSaveStates.teamInviteAcceptedAlertEnabled === 'saving'}
-                />
-              </div>
+              <Switch
+                id="team-invite-accepted"
+                checked={settings.teamInviteAcceptedAlertEnabled}
+                onCheckedChange={(checked) => handleAutoSave('teamInviteAcceptedAlertEnabled', checked)}
+                disabled={autoSaveStates.teamInviteAcceptedAlertEnabled === 'saving'}
+              />
             </div>
           </div>
         </CategorySettingsSection>

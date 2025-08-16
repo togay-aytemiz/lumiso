@@ -69,8 +69,8 @@ export default function AcceptInvitation() {
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
-        // Redirect to auth with invitation context for signup
-        const redirectUrl = `/auth?mode=signup&invitation=${invitationId}&email=${encodeURIComponent(invitation.email)}`;
+        // Redirect to dedicated invitation signup page
+        const redirectUrl = `/invitation-signup?invitation=${invitationId}&email=${encodeURIComponent(invitation.email)}`;
         window.location.href = redirectUrl;
         return;
       }

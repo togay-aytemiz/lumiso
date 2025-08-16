@@ -27,6 +27,7 @@ import BillingSettings from "./pages/settings/Billing";
 import DangerZoneSettings from "./pages/settings/DangerZone";
 import NotFound from "./pages/NotFound";
 import AcceptInvitation from "./pages/AcceptInvitation";
+import InvitationSignup from "./pages/InvitationSignup";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ErrorBoundary from "./components/ErrorBoundary";
 
@@ -42,6 +43,7 @@ const App = () => (
           <Routes>
             <Route path="/auth" element={<Auth />} />
             <Route path="/accept-invitation" element={<AcceptInvitation />} />
+            <Route path="/invitation-signup" element={<InvitationSignup />} />
             <Route path="/" element={<ProtectedRoute />}>
               <Route index element={<Index />} />
               <Route path="leads" element={<AllLeads />} />

@@ -552,17 +552,30 @@ export default function Account() {
                       ? profileSection.values.fullName 
                       : currentUser && profile?.full_name 
                       ? profile.full_name
+                      : member.full_name
+                      ? member.full_name
                       : `User ${member.user_id.slice(0, 8)}...`;
+                    
+                    const displayEmail = currentUser && emailAddress 
+                      ? emailAddress 
+                      : member.email 
+                      ? member.email
+                      : `${member.user_id.slice(0, 8)}...@example.com`;
                     
                     return (
                       <TableRow key={member.id}>
                         <TableCell className="font-medium">
-                          {displayName}
-                          {currentUser && (
-                            <span className="text-sm text-muted-foreground ml-2">(You)</span>
-                          )}
+                          <div className="flex items-center gap-2">
+                            {displayName}
+                            {member.is_online && (
+                              <div className="w-2 h-2 bg-green-500 rounded-full" title="Online"></div>
+                            )}
+                            {currentUser && (
+                              <span className="text-sm text-muted-foreground ml-2">(You)</span>
+                            )}
+                          </div>
                         </TableCell>
-                        <TableCell>{emailAddress && currentUser ? emailAddress : `${member.user_id.slice(0, 8)}...@example.com`}</TableCell>
+                        <TableCell>{displayEmail}</TableCell>
                         <TableCell>
                           {currentUser || currentUserRole !== "Owner" ? (
                             <Badge variant={member.role === "Owner" ? "default" : "secondary"}>
@@ -593,9 +606,22 @@ export default function Account() {
                             </DropdownMenu>
                           )}
                         </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          {currentUser ? "Online" : member.last_active ? new Date(member.last_active).toLocaleDateString() : "Never"}
-                        </TableCell>
+                         <TableCell className="text-sm">
+                           <div className="flex items-center gap-2">
+                             {member.is_online ? (
+                               <>
+                                 <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                                 <span className="text-green-600 font-medium">Online</span>
+                               </>
+                             ) : member.last_active ? (
+                               <span className="text-muted-foreground">
+                                 {new Date(member.last_active).toLocaleDateString()}
+                               </span>
+                             ) : (
+                               <span className="text-muted-foreground">Never</span>
+                             )}
+                           </div>
+                         </TableCell>
                         <TableCell>
                           {!currentUser && currentUserRole === "Owner" && (
                             <Button 

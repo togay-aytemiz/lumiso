@@ -9,6 +9,12 @@ interface TeamMember {
   role: string;
   joined_at: string;
   last_active: string | null;
+  // User profile data
+  email?: string;
+  full_name?: string;
+  profile_photo_url?: string;
+  // Online status
+  is_online?: boolean;
 }
 
 interface Invitation {
@@ -24,6 +30,7 @@ export function useTeamManagement() {
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentUserRole, setCurrentUserRole] = useState<string | null>(null);
+  const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
   const { toast } = useToast();
 
   const fetchTeamData = async () => {
@@ -38,10 +45,21 @@ export function useTeamManagement() {
 
       console.log('Fetching team data for user:', user.id);
 
-      // Fetch team members for current user's organization
+      // Fetch team members for current user's organization with profile data
       const { data: membersData, error: membersError } = await supabase
         .from('organization_members')
-        .select('*')
+        .select(`
+          id,
+          user_id,
+          organization_id,
+          role,
+          joined_at,
+          last_active,
+          profiles!inner(
+            full_name,
+            profile_photo_url
+          )
+        `)
         .eq('organization_id', user.id)
         .order('joined_at');
 
@@ -50,8 +68,31 @@ export function useTeamManagement() {
         throw membersError;
       }
 
-      console.log('Team members data:', membersData);
-      setTeamMembers(membersData || []);
+      // Get user emails from auth.users using the admin endpoint via edge function
+      const { data: usersEmailData, error: emailError } = await supabase.functions.invoke('get-users-email', {
+        body: { userIds: membersData?.map(m => m.user_id) || [] }
+      });
+
+      if (emailError) {
+        console.warn('Could not fetch user emails:', emailError);
+      }
+
+      // Combine member data with profile and email data
+      const enrichedMembers = (membersData || []).map((member: any) => {
+        const profile = member.profiles;
+        const userEmail = usersEmailData?.users?.find((u: any) => u.id === member.user_id)?.email;
+        
+        return {
+          ...member,
+          full_name: profile?.full_name,
+          profile_photo_url: profile?.profile_photo_url,
+          email: userEmail,
+          is_online: onlineUsers.has(member.user_id)
+        };
+      });
+
+      console.log('Team members data:', enrichedMembers);
+      setTeamMembers(enrichedMembers);
 
       // Set current user role - they should be the organization owner
       setCurrentUserRole('Owner');
@@ -219,9 +260,79 @@ export function useTeamManagement() {
     }
   };
 
+  // Set up real-time presence tracking
+  useEffect(() => {
+    const setupPresence = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const channel = supabase.channel(`org_${user.id}_presence`, {
+        config: {
+          presence: {
+            key: user.id,
+          },
+        },
+      });
+
+      // Track presence events
+      channel
+        .on('presence', { event: 'sync' }, () => {
+          const presenceState = channel.presenceState();
+          const online = new Set<string>();
+          
+          Object.values(presenceState).forEach((users: any) => {
+            users.forEach((user: any) => {
+              online.add(user.user_id);
+            });
+          });
+          
+          setOnlineUsers(online);
+          
+          // Update team members with online status
+          setTeamMembers(prev => prev.map(member => ({
+            ...member,
+            is_online: online.has(member.user_id)
+          })));
+        })
+        .on('presence', { event: 'join' }, ({ newPresences }) => {
+          console.log('User joined:', newPresences);
+        })
+        .on('presence', { event: 'leave' }, ({ leftPresences }) => {
+          console.log('User left:', leftPresences);
+        })
+        .subscribe(async (status) => {
+          if (status === 'SUBSCRIBED') {
+            // Track current user's presence
+            await channel.track({
+              user_id: user.id,
+              online_at: new Date().toISOString(),
+            });
+          }
+        });
+
+      // Update last_active timestamp periodically
+      const interval = setInterval(async () => {
+        await supabase
+          .from('organization_members')
+          .update({ last_active: new Date().toISOString() })
+          .eq('user_id', user.id);
+      }, 30000); // Update every 30 seconds
+
+      return () => {
+        channel.unsubscribe();
+        clearInterval(interval);
+      };
+    };
+
+    const cleanup = setupPresence();
+    return () => {
+      cleanup.then(fn => fn && fn());
+    };
+  }, []);
+
   useEffect(() => {
     fetchTeamData();
-  }, []);
+  }, [onlineUsers]);
 
   return {
     teamMembers,

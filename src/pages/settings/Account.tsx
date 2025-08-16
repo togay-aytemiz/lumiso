@@ -116,7 +116,13 @@ export default function Account() {
   const handleWorkingHourUpdate = async (dayOfWeek: number, field: string, value: any) => {
     const workingHour = workingHours.find(wh => wh.day_of_week === dayOfWeek);
     if (workingHour) {
-      await updateWorkingHour(dayOfWeek, { [field]: value });
+      const result = await updateWorkingHour(dayOfWeek, { [field]: value });
+      if (result.success) {
+        toast({
+          title: "Success",
+          description: "Working hours updated successfully",
+        });
+      }
       // Mark working hours section as dirty to show save button
       workingHoursSection.updateValue("workingHours", workingHours);
     }
@@ -375,10 +381,16 @@ export default function Account() {
                 <TableBody>
                   {teamMembers.map((member) => {
                     const currentUser = member.user_id === member.organization_id;
+                    const displayName = currentUser && profileSection.values.fullName 
+                      ? profileSection.values.fullName 
+                      : currentUser && profile?.full_name 
+                      ? profile.full_name
+                      : `User ${member.user_id.slice(0, 8)}...`;
+                    
                     return (
                       <TableRow key={member.id}>
                         <TableCell className="font-medium">
-                          {emailAddress && currentUser ? emailAddress : `User ${member.user_id.slice(0, 8)}...`}
+                          {displayName}
                           {currentUser && (
                             <span className="text-sm text-muted-foreground ml-2">(You)</span>
                           )}

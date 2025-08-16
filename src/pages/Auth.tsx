@@ -17,18 +17,40 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
+  const [invitationId, setInvitationId] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check if user is already logged in
-    const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        navigate("/");
+    // Check URL params for invitation signup
+    const urlParams = new URLSearchParams(window.location.search);
+    const mode = urlParams.get('mode');
+    const invitation = urlParams.get('invitation');
+    const inviteEmail = urlParams.get('email');
+    
+    if (mode === 'signup' && invitation) {
+      setInvitationId(invitation);
+      if (inviteEmail) {
+        setEmail(decodeURIComponent(inviteEmail));
       }
-    };
-    checkUser();
-  }, [navigate]);
+      // Force signup tab for invitations
+      setTimeout(() => {
+        const signupTab = document.querySelector('[value="signup"]') as HTMLElement;
+        signupTab?.click();
+      }, 100);
+    }
+
+  
+    // Check if user is already logged in (but not for invitation signups)
+    if (!invitationId) {
+      const checkUser = async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          navigate("/");
+        }
+      };
+      checkUser();
+    }
+  }, [navigate, invitationId]);
 
   const validateForm = (isSignUp: boolean = false) => {
     setEmailError("");
@@ -62,29 +84,97 @@ const Auth = () => {
     
     setLoading(true);
 
-    const redirectUrl = `${window.location.origin}/`;
-    
-    const { error } = await supabase.auth.signUp({
-      email: sanitizeInput(email),
-      password: sanitizeInput(password),
-      options: {
-        emailRedirectTo: redirectUrl
-      }
-    });
+    try {
+      const redirectUrl = `${window.location.origin}/`;
+      
+      const { data, error } = await supabase.auth.signUp({
+        email: sanitizeInput(email),
+        password: sanitizeInput(password),
+        options: {
+          emailRedirectTo: redirectUrl
+        }
+      });
 
-    if (error) {
+      if (error) {
+        toast({
+          title: "Sign up failed",
+          description: error.message,
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // If this is an invitation signup and we have a user
+      if (invitationId && data.user) {
+        try {
+          // Accept the invitation automatically
+          await acceptInvitation(invitationId, data.user.id);
+          
+          toast({
+            title: "Account created and invitation accepted!",
+            description: "Welcome to the organization. Please check your email to confirm your account."
+          });
+        } catch (inviteError) {
+          console.error("Failed to accept invitation:", inviteError);
+          toast({
+            title: "Account created",
+            description: "Account created successfully, but there was an issue accepting the invitation. Please contact support."
+          });
+        }
+      } else {
+        toast({
+          title: "Check your email",
+          description: "We've sent you a confirmation link to complete your registration."
+        });
+      }
+    } catch (error) {
       toast({
         title: "Sign up failed",
-        description: error.message,
+        description: "An unexpected error occurred. Please try again.",
         variant: "destructive"
       });
-    } else {
-      toast({
-        title: "Check your email",
-        description: "We've sent you a confirmation link to complete your registration."
-      });
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
+  };
+
+  const acceptInvitation = async (invitationId: string, userId: string) => {
+    // Get invitation details
+    const { data: invitation, error: fetchError } = await supabase
+      .from("invitations")
+      .select("*")
+      .eq("id", invitationId)
+      .single();
+
+    if (fetchError || !invitation) {
+      throw new Error("Failed to fetch invitation details");
+    }
+
+    // Accept the invitation
+    const { error: acceptError } = await supabase
+      .from("invitations")
+      .update({ 
+        accepted_at: new Date().toISOString()
+      })
+      .eq("id", invitationId);
+
+    if (acceptError) {
+      throw new Error("Failed to accept invitation");
+    }
+
+    // Add user to organization
+    const { error: memberError } = await supabase
+      .from("organization_members")
+      .insert({
+        organization_id: invitation.organization_id,
+        user_id: userId,
+        role: invitation.role,
+        invited_by: invitation.invited_by
+      });
+
+    if (memberError) {
+      throw new Error("Failed to join organization");
+    }
   };
 
   const handleSignIn = async (e: React.FormEvent) => {
@@ -145,18 +235,19 @@ const Auth = () => {
         <Card className="backdrop-blur-md bg-white/80 dark:bg-slate-800/80 border-white/20 shadow-2xl shadow-pink-200/50 dark:shadow-purple-900/50 animate-scale-in">
           <CardHeader className="text-center pb-4">
             <CardTitle className="text-2xl font-semibold text-slate-800 dark:text-slate-200">
-              Welcome Back
+              {invitationId ? "Create Your Account" : "Welcome Back"}
             </CardTitle>
             <CardDescription className="text-slate-600 dark:text-slate-400">
-              Access your photography dashboard
+              {invitationId ? "Complete your invitation by creating an account" : "Access your photography dashboard"}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="signin" className="w-full">
+            <Tabs defaultValue={invitationId ? "signup" : "signin"} className="w-full">
               <TabsList className="grid w-full grid-cols-2 bg-slate-100/70 dark:bg-slate-700/70">
                 <TabsTrigger 
                   value="signin" 
                   className="data-[state=active]:bg-white data-[state=active]:shadow-md transition-all duration-200"
+                  disabled={!!invitationId}
                 >
                   Sign In
                 </TabsTrigger>
@@ -164,7 +255,7 @@ const Auth = () => {
                   value="signup"
                   className="data-[state=active]:bg-white data-[state=active]:shadow-md transition-all duration-200"
                 >
-                  Sign Up
+                  {invitationId ? "Complete Invitation" : "Sign Up"}
                 </TabsTrigger>
               </TabsList>
               
@@ -232,6 +323,7 @@ const Auth = () => {
                       onChange={(e) => setEmail(e.target.value)}
                       maxLength={254}
                       required
+                      disabled={!!invitationId}
                       className="mt-1 bg-white/70 dark:bg-slate-800/70 border-slate-200/50 focus:border-pink-300 focus:ring-pink-200 rounded-xl h-12"
                       placeholder="your@email.com"
                     />
@@ -264,9 +356,9 @@ const Auth = () => {
                         <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
                         Creating account...
                       </div>
-                    ) : (
-                      "Join Sweet Dreams"
-                    )}
+                     ) : (
+                       invitationId ? "Create Account & Join Team" : "Join Sweet Dreams"
+                     )}
                   </Button>
                 </form>
               </TabsContent>

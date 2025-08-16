@@ -69,11 +69,23 @@ export default function AcceptInvitation() {
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
-        // Redirect to auth with return URL
-        window.location.href = `/auth?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`;
+        // Redirect to auth with invitation context for signup
+        const redirectUrl = `/auth?mode=signup&invitation=${invitationId}&email=${encodeURIComponent(invitation.email)}`;
+        window.location.href = redirectUrl;
         return;
       }
 
+      // User is already authenticated, proceed with accepting invitation
+      await acceptInvitationForUser(user.id);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "Failed to process invitation");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const acceptInvitationForUser = async (userId: string) => {
+    try {
       // Accept the invitation
       const { error: acceptError } = await supabase
         .from("invitations")
@@ -91,7 +103,7 @@ export default function AcceptInvitation() {
         .from("organization_members")
         .insert({
           organization_id: invitation.organization_id,
-          user_id: user.id,
+          user_id: userId,
           role: invitation.role,
           invited_by: invitation.invited_by
         });
@@ -112,14 +124,7 @@ export default function AcceptInvitation() {
       }, 2000);
 
     } catch (error) {
-      setError(error instanceof Error ? error.message : "Failed to accept invitation");
-      toast({
-        title: "Error",
-        description: "Failed to accept invitation. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
+      throw error;
     }
   };
 

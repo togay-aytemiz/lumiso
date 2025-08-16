@@ -36,10 +36,16 @@ export function useSettingsCategorySection<T extends Record<string, any>>(
   // Update refs when handlers change
   useEffect(() => {
     handlersRef.current = {
-      handleSave: section.handleSave,
+      handleSave: async () => {
+        await section.handleSave();
+        // Clear file selection after successful save to reset the state
+        if (section.values.logoFile) {
+          section.updateValue("logoFile", null);
+        }
+      },
       handleCancel: section.handleCancel
     };
-  }, [section.handleSave, section.handleCancel]);
+  }, [section.handleSave, section.handleCancel, section.values.logoFile, section.updateValue]);
 
   // Register this section with the category context - only when path/id changes
   useEffect(() => {

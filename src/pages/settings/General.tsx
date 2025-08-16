@@ -10,6 +10,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Upload, Loader2, X, AlertTriangle, Eye } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useState } from "react";
 import { useSettingsCategorySection } from "@/hooks/useSettingsCategorySection";
 import { useUserSettings } from "@/hooks/useUserSettings";
@@ -104,6 +105,9 @@ export default function General() {
 
     // Update the form state to show a file is selected
     brandingSection.updateValue("logoFile", file);
+    
+    // Reset input value to allow selecting the same file again
+    event.target.value = '';
   };
 
   const handleFileButtonClick = () => {
@@ -123,7 +127,12 @@ export default function General() {
     try {
       // Clear the logo URL in settings
       await updateSettings({ logo_url: null });
+      // Clear any pending file selection
       brandingSection.updateValue("logoFile", null);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     } catch (error) {
       console.error("Failed to delete logo:", error);
     }
@@ -191,16 +200,36 @@ export default function General() {
                     <p className="text-sm font-medium">Current Logo</p>
                     <p className="text-xs text-muted-foreground">Logo is currently set</p>
                   </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={handleDeleteLogo}
-                    className="flex items-center gap-2 text-destructive hover:text-destructive"
-                  >
-                    <X className="h-4 w-4" />
-                    Delete
-                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="flex items-center gap-2 text-destructive hover:text-destructive"
+                      >
+                        <X className="h-4 w-4" />
+                        Delete
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Logo</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to delete your logo? This action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={handleDeleteLogo}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          Delete Logo
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
               )}
 

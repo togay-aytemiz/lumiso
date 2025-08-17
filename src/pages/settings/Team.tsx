@@ -683,7 +683,7 @@ export default function Team() {
                         </div>
                         
                         {/* Actions */}
-                        <div className="flex items-center self-start">
+                        <div className="flex items-center">
                           {role.isEditable && (
                             <>
                               {isMobile ? (
@@ -765,7 +765,7 @@ export default function Team() {
                           </div>
                           
                           {/* Actions */}
-                          <div className="flex items-center self-start">
+                          <div className="flex items-center">
                             {isMobile ? (
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>

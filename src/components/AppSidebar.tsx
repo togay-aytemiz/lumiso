@@ -193,7 +193,7 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="p-4 mt-auto shrink-0">
-        <Separator className="mb-3 bg-[hsl(var(--sidebar-border)/0.5)]" />
+        <Separator className="mb-3 bg-[hsl(var(--sidebar-border)/0.5)] hidden md:block pt-2" />
         <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton

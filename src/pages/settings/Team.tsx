@@ -502,27 +502,13 @@ export default function Team() {
                           )}
                           {copiedStates[invitation.id] ? "Copied!" : "Copy Link"}
                         </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="outline" size="sm">
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Cancel Invitation</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Are you sure you want to cancel this invitation? The recipient will no longer be able to join using this invitation.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => cancelInvitation(invitation.id)}>
-                                Cancel Invitation
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => cancelInvitation(invitation.id)}
+                        >
+                          Cancel
+                        </Button>
                       </div>
                     </div>
                   ))}
@@ -537,86 +523,83 @@ export default function Team() {
           description="Manage existing team members and their roles."
           sectionId="team-members"
         >
-          <div className="border rounded-lg overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Member</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Last Active</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {teamMembers.map((member) => {
-                  const displayName = member.full_name || "(Name not set)";
-                  const displayEmail = member.email || "(Email not available)";
-                  const isOwner = member.role === "Owner";
-                  
-                  return (
-                    <TableRow key={member.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <div className="relative">
+          <div className="space-y-4">
+            {teamMembers.length === 0 ? (
+              <p className="text-muted-foreground">No team members found.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Member</TableHead>
+                      <TableHead>Role</TableHead>
+                      <TableHead>Last Active</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {teamMembers.map((member) => (
+                      <TableRow key={member.id}>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
                             <Avatar className="h-8 w-8">
-                              <AvatarImage src={member.profile_photo_url} />
+                              <AvatarImage src={member.avatar_url || ''} alt={member.full_name || ''} />
                               <AvatarFallback>
-                                {displayName === "(Name not set)" ? "U" : displayName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
+                                {member.full_name?.split(' ').map(n => n[0]).join('') || member.email[0].toUpperCase()}
                               </AvatarFallback>
                             </Avatar>
-                            {member.is_online && (
-                              <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 border-2 border-background rounded-full animate-pulse" />
-                            )}
+                            <div>
+                              <p className="font-medium">{member.full_name || 'No name'}</p>
+                              <p className="text-sm text-muted-foreground">{member.email}</p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="font-medium">{displayName}</p>
-                            {/* Show (You) indicator - will be implemented with proper user comparison */}
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">{displayEmail}</TableCell>
-                      <TableCell>
-                        <Badge variant={isOwner ? "default" : "secondary"}>
-                          {member.role}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {formatLastActive(member.last_active)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {!isOwner && currentUserRole === "Owner" && (
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem
-                                onClick={() => {
-                                  // Handle role change - you would implement a role selection dialog here
-                                }}
-                              >
-                                <Edit2 className="h-4 w-4 mr-2" />
-                                Change Role
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => removeMember(member.id)}
-                                className="text-destructive"
-                              >
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Remove Member
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{member.role}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-sm text-muted-foreground">
+                            {formatLastActive(member.last_active_at)}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={member.is_active ? "default" : "secondary"}>
+                            {member.is_active ? "Active" : "Inactive"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {member.role !== "Owner" && (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem
+                                  onClick={() => {
+                                    // Handle role change dialog
+                                  }}
+                                >
+                                  Change Role
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => removeMember(member.id)}
+                                  className="text-destructive"
+                                >
+                                  Remove Member
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    )))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
           </div>
         </CategorySettingsSection>
 
@@ -636,19 +619,25 @@ export default function Team() {
             </div>
 
             {/* System Roles */}
-            <div className="space-y-3">
+            <div className="space-y-4">
               <h5 className="text-sm font-medium text-muted-foreground">System Roles</h5>
               <div className="grid gap-4">
                 {systemRoles.map((role) => (
-                  <Card key={role.id} className="relative">
+                  <Card key={role.id} className="border">
                     <CardContent className="p-6">
-                      <div className="flex items-center justify-between gap-4">
-                        <div className="flex-1 min-w-0">
-                          <CardTitle className="text-base">{role.name}</CardTitle>
-                          <CardDescription className="mt-1">{role.description}</CardDescription>
-                          <div className="flex flex-wrap gap-1 mt-3">
+                      <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-4 items-start">
+                        {/* Role Info & Permissions */}
+                        <div className="space-y-3">
+                          {/* Title & Description */}
+                          <div>
+                            <CardTitle className="text-base font-semibold">{role.name}</CardTitle>
+                            <CardDescription className="mt-1 text-sm">{role.description}</CardDescription>
+                          </div>
+                          
+                          {/* Permissions */}
+                          <div className="flex flex-wrap gap-2">
                             {role.id === 'owner' ? (
-                              <Badge variant="outline" className="text-xs">All Permissions</Badge>
+                              <Badge variant="outline" className="text-xs font-medium">All Permissions</Badge>
                             ) : (
                               <>
                                 {role.permissions.slice(0, 3).map((permission) => (
@@ -682,8 +671,8 @@ export default function Team() {
                           </div>
                         </div>
                         
-                        {/* Actions */}
-                        <div className="flex items-center">
+                        {/* Actions - Right Aligned */}
+                        <div className="flex items-center justify-end lg:justify-center">
                           {role.isEditable && (
                             <>
                               {isMobile ? (
@@ -705,6 +694,7 @@ export default function Team() {
                                   variant="outline" 
                                   size="sm"
                                   onClick={() => openEditRole(role, true)}
+                                  className="shrink-0"
                                 >
                                   <Edit2 className="h-4 w-4 mr-2" />
                                   Edit
@@ -722,19 +712,25 @@ export default function Team() {
 
             {/* Custom Roles */}
             {customRoles.length > 0 && (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <h5 className="text-sm font-medium text-muted-foreground">Custom Roles</h5>
                 <div className="grid gap-4">
                   {customRoles.map((role) => (
-                    <Card key={role.id} className="relative">
+                    <Card key={role.id} className="border">
                       <CardContent className="p-6">
-                        <div className="flex items-center justify-between gap-4">
-                          <div className="flex-1 min-w-0">
-                            <CardTitle className="text-base">{role.name}</CardTitle>
-                            {role.description && (
-                              <CardDescription className="mt-1">{role.description}</CardDescription>
-                            )}
-                            <div className="flex flex-wrap gap-1 mt-3">
+                        <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-4 items-start">
+                          {/* Role Info & Permissions */}
+                          <div className="space-y-3">
+                            {/* Title & Description */}
+                            <div>
+                              <CardTitle className="text-base font-semibold">{role.name}</CardTitle>
+                              {role.description && (
+                                <CardDescription className="mt-1 text-sm">{role.description}</CardDescription>
+                              )}
+                            </div>
+                            
+                            {/* Permissions */}
+                            <div className="flex flex-wrap gap-2">
                               {role.permissions.slice(0, 3).map((permission) => (
                                 <Badge key={permission.id} variant="outline" className="text-xs">
                                   {permission.name.replace(/_/g, ' ')}
@@ -764,8 +760,8 @@ export default function Team() {
                             </div>
                           </div>
                           
-                          {/* Actions */}
-                          <div className="flex items-center">
+                          {/* Actions - Right Aligned */}
+                          <div className="flex items-center justify-end lg:justify-center">
                             {isMobile ? (
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
@@ -779,8 +775,8 @@ export default function Team() {
                                     Edit Role
                                   </DropdownMenuItem>
                                   <DropdownMenuItem 
-                                    className="text-destructive"
                                     onClick={() => setRoleToDelete(role.id)}
+                                    className="text-destructive"
                                   >
                                     <Trash2 className="h-4 w-4 mr-2" />
                                     Delete Role
@@ -788,7 +784,7 @@ export default function Team() {
                                 </DropdownMenuContent>
                               </DropdownMenu>
                             ) : (
-                              <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-2 shrink-0">
                                 <Button 
                                   variant="outline" 
                                   size="sm"
@@ -817,54 +813,52 @@ export default function Team() {
               </div>
             )}
           </div>
+        </CategorySettingsSection>
 
-          {/* Create/Edit Role Modal */}
-          <AppSheetModal
-            title={editingRole ? `Edit ${editingRole.name}` : "Create Role"}
-            isOpen={isCreateRoleOpen}
-            onOpenChange={(open) => {
-              if (!open) resetRoleForm();
-            }}
-            size="lg"
-            footerActions={[
-              {
-                label: "Cancel",
-                onClick: () => resetRoleForm(),
-                variant: "outline"
-              },
-              {
-                label: editingRole ? "Save Changes" : "Create Role",
-                onClick: editingRole ? handleEditRole : handleCreateRole,
-                disabled: !newRoleName.trim()
-              }
-            ]}
-          >
-            <div className="flex flex-col h-full space-y-6">
-              <div className="space-y-4 flex-shrink-0">
-                <div className="space-y-2">
-                  <Label htmlFor="role-name">Role Name</Label>
-                  <Input
-                    id="role-name"
-                    placeholder="Enter role name"
-                    value={newRoleName}
-                    onChange={(e) => setNewRoleName(e.target.value)}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="role-description">Description (optional)</Label>
-                  <Textarea
-                    id="role-description"
-                    placeholder="Enter role description"
-                    value={newRoleDescription}
-                    onChange={(e) => setNewRoleDescription(e.target.value)}
-                    rows={3}
-                  />
-                </div>
+        
+        
+        {/* Create/Edit Role Dialog */}
+        <Dialog open={isCreateRoleOpen} onOpenChange={setIsCreateRoleOpen}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>
+                {editingRole ? 'Edit Role' : 'Create New Role'}
+              </DialogTitle>
+              <DialogDescription>
+                {editingRole 
+                  ? 'Modify the role details and permissions.' 
+                  : 'Create a custom role with specific permissions for your team members.'
+                }
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4">
+              {/* Role Name */}
+              <div className="space-y-2">
+                <Label htmlFor="role-name">Role Name</Label>
+                <Input
+                  id="role-name"
+                  placeholder="e.g., Editor, Viewer, Admin"
+                  value={newRoleName}
+                  onChange={(e) => setNewRoleName(e.target.value)}
+                />
               </div>
-              
-              <div className="flex flex-col flex-1 min-h-0 space-y-4">
-                <div className="flex items-center justify-between flex-shrink-0">
+
+              {/* Role Description */}
+              <div className="space-y-2">
+                <Label htmlFor="role-description">Description (Optional)</Label>
+                <Textarea
+                  id="role-description"
+                  placeholder="Describe what this role can do..."
+                  value={newRoleDescription}
+                  onChange={(e) => setNewRoleDescription(e.target.value)}
+                  rows={3}
+                />
+              </div>
+
+              {/* Permissions */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
                   <Label>Permissions</Label>
                   <Button
                     type="button"
@@ -872,19 +866,21 @@ export default function Team() {
                     size="sm"
                     onClick={handleSelectAllPermissions}
                   >
-                    {selectedPermissions.length === permissions.length ? "Deselect All" : "Select All"}
+                    {selectedPermissions.length === permissions.length ? 'Deselect All' : 'Select All'}
                   </Button>
                 </div>
                 
-                <div className="flex-1 overflow-y-auto space-y-4 pr-2">
+                <div className="border rounded-lg p-4 max-h-64 overflow-y-auto">
                   {Object.entries(permissionsByCategory).map(([category, categoryPermissions]) => (
-                    <div key={category} className="space-y-3">
-                      <h5 className="font-medium text-sm sticky top-0 bg-background py-2 border-b">{category}</h5>
-                      <div className="space-y-3 pl-4">
+                    <div key={category} className="mb-4 last:mb-0">
+                      <h4 className="font-medium text-sm mb-2 capitalize">
+                        {category.replace(/_/g, ' ')}
+                      </h4>
+                      <div className="space-y-2 ml-2">
                         {categoryPermissions.map((permission) => (
-                          <div key={permission.id} className="flex items-start space-x-3">
+                          <div key={permission.id} className="flex items-start space-x-2">
                             <Checkbox
-                              id={`permission-${permission.id}`}
+                              id={permission.id}
                               checked={selectedPermissions.includes(permission.id)}
                               onCheckedChange={(checked) => {
                                 if (checked) {
@@ -893,49 +889,63 @@ export default function Team() {
                                   setSelectedPermissions(prev => prev.filter(id => id !== permission.id));
                                 }
                               }}
-                              className="mt-0.5"
                             />
-                            <div className="flex-1 space-y-1">
-                              <Label 
-                                htmlFor={`permission-${permission.id}`} 
-                                className="text-sm font-medium cursor-pointer"
+                            <div className="grid gap-1.5 leading-none">
+                              <Label
+                                htmlFor={permission.id}
+                                className="text-sm font-normal cursor-pointer"
                               >
-                                {permission.name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                {permission.name.replace(/_/g, ' ')}
                               </Label>
-                              <p className="text-xs text-muted-foreground">{permission.description}</p>
+                              {permission.description && (
+                                <p className="text-xs text-muted-foreground">
+                                  {permission.description}
+                                </p>
+                              )}
                             </div>
                           </div>
-                        ))}
+                        )))}
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
             </div>
-          </AppSheetModal>
 
-          {/* Delete Confirmation Dialog */}
-          <AlertDialog open={!!roleToDelete} onOpenChange={() => setRoleToDelete(null)}>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Delete Role</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Are you sure you want to delete this role? This action cannot be undone.
-                  Any team members with this role will need to be assigned a new role.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction 
-                  onClick={() => roleToDelete && handleDeleteRole(roleToDelete)}
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                >
-                  Delete Role
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </CategorySettingsSection>
+            <DialogFooter>
+              <Button variant="outline" onClick={resetRoleForm}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={editingRole ? handleEditRole : handleCreateRole}
+                disabled={!newRoleName.trim()}
+              >
+                {editingRole ? 'Update Role' : 'Create Role'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Role Confirmation */}
+        <AlertDialog open={!!roleToDelete} onOpenChange={() => setRoleToDelete(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Role</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete this role? This action cannot be undone and any team members with this role will need to be assigned a new role.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => roleToDelete && handleDeleteRole(roleToDelete)}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Delete Role
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </SettingsPageWrapper>
   );

@@ -162,7 +162,7 @@ function SettingsLayoutContent() {
                     {category.group === 'Organization Settings' && (
                       <div className="border-t border-border/30 mx-3 mb-4" />
                     )}
-                    <div className={`text-xs font-medium text-muted-foreground uppercase tracking-wider px-3 py-2 pt-4 mt-4 first:mt-0 ${category.group === 'Organization Settings' ? 'mt-0' : ''}`}>
+                    <div className={`text-xs font-medium text-muted-foreground uppercase tracking-wider px-3 py-2 pt-6 mt-4 first:mt-0 ${category.group === 'Organization Settings' ? 'mt-0' : ''}`}>
                       {category.group}
                     </div>
                   </div>

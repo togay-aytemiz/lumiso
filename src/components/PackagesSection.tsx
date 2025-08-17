@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Plus, Edit, Trash2, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,6 +22,7 @@ interface Package {
 
 const PackagesSection = () => {
   const [packages, setPackages] = useState<Package[]>([]);
+  const [services, setServices] = useState<{id: string, name: string}[]>([]);
   const [loading, setLoading] = useState(true);
   const [showNewPackageDialog, setShowNewPackageDialog] = useState(false);
   const [editingPackage, setEditingPackage] = useState<Package | null>(null);
@@ -47,15 +49,25 @@ const PackagesSection = () => {
       // Ensure default packages exist for the user
       await supabase.rpc('ensure_default_packages', { user_uuid: user.id });
 
-      // Load packages
-      const { data, error } = await supabase
-        .from('packages')
-        .select('*')
-        .order('created_at', { ascending: true });
+      // Load packages and services in parallel
+      const [packagesResult, servicesResult] = await Promise.all([
+        supabase
+          .from('packages')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('services')
+          .select('id, name')
+          .eq('user_id', user.id)
+          .order('name')
+      ]);
 
-      if (error) throw error;
+      if (packagesResult.error) throw packagesResult.error;
+      if (servicesResult.error) console.error('Error loading services:', servicesResult.error);
 
-      setPackages(data || []);
+      setPackages(packagesResult.data || []);
+      setServices(servicesResult.data || []);
     } catch (error) {
       console.error('Error loading packages:', error);
       toast({
@@ -225,24 +237,42 @@ const PackagesSection = () => {
                                )}
                              </div>
                            </td>
-                           <td className="px-4 py-3">
-                             <div className="flex flex-wrap gap-1">
-                               {pkg.default_add_ons.length === 0 ? (
-                                 <span className="text-sm text-muted-foreground">None</span>
-                               ) : (
-                                 <>
-                                   <div 
-                                     className="cursor-help"
-                                     title={pkg.default_add_ons.length > 0 ? `Services: ${pkg.default_add_ons.join(', ')}` : 'No add-on services'}
-                                   >
-                                     <Badge variant="outline" className="text-xs">
-                                       {pkg.default_add_ons.length} add-on{pkg.default_add_ons.length !== 1 ? 's' : ''}
-                                     </Badge>
-                                   </div>
-                                 </>
-                               )}
-                             </div>
-                           </td>
+                            <td className="px-4 py-3">
+                              <div className="flex flex-wrap gap-1">
+                                {pkg.default_add_ons.length === 0 ? (
+                                  <span className="text-sm text-muted-foreground">None</span>
+                                ) : (
+                                  <>
+                                    <TooltipProvider>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <div className="cursor-help">
+                                            <Badge variant="outline" className="text-xs">
+                                              {pkg.default_add_ons.length} add-on{pkg.default_add_ons.length !== 1 ? 's' : ''}
+                                            </Badge>
+                                          </div>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                          <div className="max-w-xs">
+                                            <p className="font-medium">Default Add-ons:</p>
+                                            <ul className="mt-1 text-sm">
+                                              {pkg.default_add_ons.map(serviceId => {
+                                                const service = services.find(s => s.id === serviceId);
+                                                return (
+                                                  <li key={serviceId}>
+                                                    • {service?.name || 'Unknown Service'}
+                                                  </li>
+                                                );
+                                              })}
+                                            </ul>
+                                          </div>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
+                                  </>
+                                )}
+                              </div>
+                            </td>
                            <td className="px-4 py-3">
                              <Badge variant={pkg.is_active ? "default" : "secondary"}>
                                {pkg.is_active ? "Active" : "Inactive"}

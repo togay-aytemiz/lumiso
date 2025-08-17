@@ -328,6 +328,15 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
     setErrors({});
   };
 
+  const isDirty = Boolean(
+    packageData.name.trim() ||
+    packageData.description.trim() ||
+    packageData.price.trim() ||
+    packageData.duration ||
+    packageData.applicable_types.length > 0 ||
+    packageData.default_add_ons.length > 0
+  );
+
   useEffect(() => {
     if (!open) {
       resetForm();
@@ -400,6 +409,28 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
     }
   };
 
+  const handleDirtyClose = () => {
+    if (window.confirm("Are you sure you want to discard your changes? Any unsaved information will be lost.")) {
+      resetForm();
+      onOpenChange(false);
+    }
+  };
+
+  const footerActions = [
+    {
+      label: "Cancel",
+      onClick: () => onOpenChange(false),
+      variant: "outline" as const,
+      disabled: loading
+    },
+    {
+      label: loading ? "Creating..." : "Save Package",
+      onClick: handleSubmit,
+      disabled: loading || !packageData.name.trim(),
+      loading: loading
+    }
+  ];
+
   const toggleApplicableType = (type: string) => {
     setPackageData(prev => ({
       ...prev,
@@ -415,6 +446,10 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
       title="Add Package"
       isOpen={open}
       onOpenChange={onOpenChange}
+      size="default"
+      dirty={isDirty}
+      onDirtyClose={handleDirtyClose}
+      footerActions={footerActions}
     >
       <div className="space-y-6">
         {/* Package Name */}
@@ -576,14 +611,6 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
         </div>
       </div>
 
-      <div className="flex gap-3 pt-6">
-        <Button variant="outline" onClick={() => onOpenChange(false)} className="flex-1">
-          Cancel
-        </Button>
-        <Button onClick={handleSubmit} className="flex-1" disabled={loading}>
-          {loading ? "Creating..." : "Save Package"}
-        </Button>
-      </div>
     </AppSheetModal>
   );
 }
@@ -730,6 +757,39 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
     }));
   };
 
+  const isDirtyEdit = Boolean(
+    pkg && (
+      packageData.name !== pkg.name ||
+      packageData.description !== (pkg.description || "") ||
+      packageData.price !== pkg.price.toString() ||
+      packageData.duration !== pkg.duration ||
+      JSON.stringify(packageData.applicable_types.sort()) !== JSON.stringify(pkg.applicable_types.sort()) ||
+      JSON.stringify(packageData.default_add_ons.sort()) !== JSON.stringify(pkg.default_add_ons.sort()) ||
+      packageData.is_active !== pkg.is_active
+    )
+  );
+
+  const handleDirtyCloseEdit = () => {
+    if (window.confirm("Are you sure you want to discard your changes? Any unsaved information will be lost.")) {
+      onOpenChange(false);
+    }
+  };
+
+  const footerActionsEdit = [
+    {
+      label: "Cancel",
+      onClick: () => onOpenChange(false),
+      variant: "outline" as const,
+      disabled: loading
+    },
+    {
+      label: loading ? "Updating..." : "Update Package",
+      onClick: handleSubmit,
+      disabled: loading || !packageData.name.trim(),
+      loading: loading
+    }
+  ];
+
 
   if (!pkg) return null;
 
@@ -738,6 +798,10 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
       title="Edit Package"
       isOpen={open}
       onOpenChange={onOpenChange}
+      size="default"
+      dirty={isDirtyEdit}
+      onDirtyClose={handleDirtyCloseEdit}
+      footerActions={footerActionsEdit}
     >
       <div className="space-y-6">
         {/* Package Name */}
@@ -899,14 +963,6 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
         </div>
       </div>
 
-      <div className="flex gap-3 pt-6">
-        <Button variant="outline" onClick={() => onOpenChange(false)} className="flex-1">
-          Cancel
-        </Button>
-        <Button onClick={handleSubmit} className="flex-1" disabled={loading}>
-          {loading ? "Updating..." : "Update Package"}
-        </Button>
-      </div>
     </AppSheetModal>
   );
 }

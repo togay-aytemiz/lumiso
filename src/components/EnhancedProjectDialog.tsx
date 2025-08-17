@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { ProjectTypeSelector } from "./ProjectTypeSelector";
 import { AssigneesPicker } from "./AssigneesPicker";
+import { InlineAssigneesPicker } from "./InlineAssigneesPicker";
 import { useProfile } from "@/hooks/useProfile";
 
 interface Lead {
@@ -543,7 +544,7 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
             </div>
 
             <div className="pt-4 border-t">
-              <AssigneesPicker
+              <InlineAssigneesPicker
                 value={projectData.assignees}
                 onChange={(assignees) => handleProjectDataChange("assignees", assignees)}
                 disabled={loading}

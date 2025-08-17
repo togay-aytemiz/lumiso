@@ -12,6 +12,7 @@ import { leadSchema, sanitizeInput, sanitizeHtml } from "@/lib/validation";
 import { ZodError } from "zod";
 import { useUserSettings } from "@/hooks/useUserSettings";
 import { AssigneesPicker } from "./AssigneesPicker";
+import { InlineAssigneesPicker } from "./InlineAssigneesPicker";
 import { useProfile } from "@/hooks/useProfile";
 
 interface AddLeadDialogProps {
@@ -284,7 +285,7 @@ const AddLeadDialog = ({ onLeadAdded, open, onOpenChange }: AddLeadDialogProps) 
           </div>
           
           <div className="pt-4 border-t">
-            <AssigneesPicker
+            <InlineAssigneesPicker
               value={formData.assignees}
               onChange={(assignees) => handleInputChange("assignees", assignees)}
               disabled={loading}

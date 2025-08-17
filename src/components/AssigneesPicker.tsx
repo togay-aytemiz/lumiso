@@ -9,7 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Search, X } from "lucide-react";
 import { useTeamManagement } from "@/hooks/useTeamManagement";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useProfile } from "@/hooks/useProfile";
+import { useProfile } from "@/contexts/ProfileContext";
 
 interface AssigneesPickerProps {
   value: string[];

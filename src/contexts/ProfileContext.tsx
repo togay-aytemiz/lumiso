@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from './AuthContext';
 
 interface Profile {
   id?: string;
@@ -10,47 +11,50 @@ interface Profile {
   profile_photo_url?: string;
 }
 
-// Create a global cache to prevent duplicate requests
-let profileCache: { data: Profile | null; timestamp: number } | null = null;
-let ongoingFetch: Promise<void> | null = null;
-const CACHE_DURATION = 30000; // 30 seconds
+interface ProfileContextType {
+  profile: Profile | null;
+  loading: boolean;
+  uploading: boolean;
+  updateProfile: (updates: Partial<Profile>) => Promise<{ success: boolean; error?: any }>;
+  uploadProfilePhoto: (file: File) => Promise<{ success: boolean; url?: string; error?: any }>;
+  deleteProfilePhoto: () => Promise<{ success: boolean; error?: any }>;
+  refreshProfile: () => Promise<void>;
+}
 
-export function useProfile() {
+const ProfileContext = createContext<ProfileContextType | undefined>(undefined);
+
+// Global cache to prevent duplicate requests
+let profileCache: { profile: Profile | null; timestamp: number; userId: string } | null = null;
+let ongoingProfileFetch: Promise<Profile | null> | null = null;
+const PROFILE_CACHE_DURATION = 30000; // 30 seconds
+
+export function ProfileProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
-  const fetchProfile = useCallback(async () => {
-    // Return cached data if it's still fresh
-    if (profileCache && Date.now() - profileCache.timestamp < CACHE_DURATION) {
-      setProfile(profileCache.data);
-      setLoading(false);
-      return;
+  const fetchProfile = useCallback(async (): Promise<Profile | null> => {
+    if (!user?.id) return null;
+
+    // Return cached profile if still fresh and for the same user
+    if (
+      profileCache && 
+      profileCache.userId === user.id &&
+      Date.now() - profileCache.timestamp < PROFILE_CACHE_DURATION
+    ) {
+      return profileCache.profile;
     }
 
-    // If there's already an ongoing fetch, wait for it
-    if (ongoingFetch) {
-      await ongoingFetch;
-      if (profileCache) {
-        setProfile(profileCache.data);
-        setLoading(false);
-      }
-      return;
+    // If there's already an ongoing fetch for this user, wait for it
+    if (ongoingProfileFetch) {
+      return await ongoingProfileFetch;
     }
 
     try {
-      setLoading(true);
-      
       // Create the fetch promise and store it
-      ongoingFetch = (async () => {
-        const { data: { user } } = await supabase.auth.getUser();
-        
-        if (!user) {
-          profileCache = { data: null, timestamp: Date.now() };
-          return;
-        }
-
+      ongoingProfileFetch = (async () => {
         const { data, error } = await supabase
           .from('profiles')
           .select('*')
@@ -62,11 +66,15 @@ export function useProfile() {
         }
 
         const profileData = data || { user_id: user.id };
-        profileCache = { data: profileData, timestamp: Date.now() };
+        profileCache = { 
+          profile: profileData, 
+          timestamp: Date.now(), 
+          userId: user.id 
+        };
+        return profileData;
       })();
 
-      await ongoingFetch;
-      setProfile(profileCache?.data || null);
+      return await ongoingProfileFetch;
     } catch (error) {
       console.error('Error fetching profile:', error);
       toast({
@@ -74,18 +82,27 @@ export function useProfile() {
         description: "Failed to load profile",
         variant: "destructive",
       });
+      return null;
     } finally {
-      setLoading(false);
-      ongoingFetch = null;
+      ongoingProfileFetch = null;
     }
-  }, [toast]);
+  }, [user?.id, toast]);
 
-  const updateProfile = async (updates: Partial<Profile>) => {
+  const refreshProfile = useCallback(async () => {
+    if (!user?.id) return;
+    
+    setLoading(true);
+    // Clear cache to force fresh fetch
+    profileCache = null;
+    const fetchedProfile = await fetchProfile();
+    setProfile(fetchedProfile);
+    setLoading(false);
+  }, [fetchProfile, user?.id]);
+
+  const updateProfile = useCallback(async (updates: Partial<Profile>) => {
+    if (!user?.id) return { success: false, error: 'No user found' };
+
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) throw new Error("No user found");
-
       let data, error;
 
       if (profile?.id) {
@@ -112,21 +129,24 @@ export function useProfile() {
       if (error) throw error;
 
       setProfile(data);
-      // Update cache when profile is updated
-      profileCache = { data, timestamp: Date.now() };
+      // Update cache
+      profileCache = { 
+        profile: data, 
+        timestamp: Date.now(), 
+        userId: user.id 
+      };
       return { success: true };
     } catch (error) {
       console.error('Error updating profile:', error);
       return { success: false, error };
     }
-  };
+  }, [profile?.id, user?.id]);
 
-  const uploadProfilePhoto = async (file: File) => {
+  const uploadProfilePhoto = useCallback(async (file: File) => {
+    if (!user?.id) return { success: false, error: 'No user found' };
+
     try {
       setUploading(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) throw new Error("No user found");
 
       // Validate file type
       if (!file.type.startsWith('image/')) {
@@ -153,7 +173,7 @@ export function useProfile() {
       }
 
       // Upload new file
-      const { data: uploadData, error: uploadError } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('profile-photos')
         .upload(fileName, file);
 
@@ -186,14 +206,14 @@ export function useProfile() {
     } finally {
       setUploading(false);
     }
-  };
+  }, [user?.id, profile?.profile_photo_url, updateProfile, toast]);
 
-  const deleteProfilePhoto = async () => {
+  const deleteProfilePhoto = useCallback(async () => {
+    if (!profile?.profile_photo_url) {
+      return { success: true };
+    }
+
     try {
-      if (!profile?.profile_photo_url) {
-        return { success: true };
-      }
-
       // Extract file path from URL
       const url = new URL(profile.profile_photo_url);
       const pathParts = url.pathname.split('/');
@@ -229,19 +249,43 @@ export function useProfile() {
       });
       return { success: false, error };
     }
-  };
+  }, [profile?.profile_photo_url, updateProfile, toast]);
 
+  // Fetch profile when user changes
   useEffect(() => {
-    fetchProfile();
-  }, [fetchProfile]);
+    if (user?.id) {
+      const initializeProfile = async () => {
+        const fetchedProfile = await fetchProfile();
+        setProfile(fetchedProfile);
+        setLoading(false);
+      };
+      initializeProfile();
+    } else {
+      setProfile(null);
+      setLoading(false);
+      profileCache = null; // Clear cache when user signs out
+    }
+  }, [user?.id, fetchProfile]);
 
-  return {
-    profile,
-    loading,
-    uploading,
-    updateProfile,
-    uploadProfilePhoto,
-    deleteProfilePhoto,
-    refetch: fetchProfile
-  };
+  return (
+    <ProfileContext.Provider value={{
+      profile,
+      loading,
+      uploading,
+      updateProfile,
+      uploadProfilePhoto,
+      deleteProfilePhoto,
+      refreshProfile
+    }}>
+      {children}
+    </ProfileContext.Provider>
+  );
+}
+
+export function useProfile() {
+  const context = useContext(ProfileContext);
+  if (context === undefined) {
+    throw new Error('useProfile must be used within a ProfileProvider');
+  }
+  return context;
 }

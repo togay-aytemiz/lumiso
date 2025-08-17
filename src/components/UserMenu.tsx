@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Settings, LogOut, User, ChevronUp } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { useProfile } from "@/hooks/useProfile";
+import { Settings, LogOut, ChevronUp } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useProfile } from "@/contexts/ProfileContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -15,25 +15,13 @@ interface UserMenuProps {
 export function UserMenu({ mode }: UserMenuProps) {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const { profile, loading, refetch } = useProfile();
-  const [userEmail, setUserEmail] = useState<string>("");
+  const { user, signOut } = useAuth();
+  const { profile } = useProfile();
   const [isOpen, setIsOpen] = useState(false);
-  
-  // Get user email from auth only once
-  useEffect(() => {
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user?.email) {
-        setUserEmail(user.email);
-      }
-    };
-    getUser();
-  }, []);
 
   const handleSignOut = async () => {
     try {
-      await supabase.auth.signOut();
-      localStorage.clear();
+      await signOut();
       navigate("/auth");
       setIsOpen(false);
     } catch (error) {
@@ -49,7 +37,7 @@ export function UserMenu({ mode }: UserMenuProps) {
   // Get display values with fallbacks
   const getDisplayName = () => {
     if (profile?.full_name) return profile.full_name;
-    if (userEmail) return userEmail.split('@')[0];
+    if (user?.email) return user.email.split('@')[0];
     return "User";
   };
 
@@ -62,8 +50,8 @@ export function UserMenu({ mode }: UserMenuProps) {
         .toUpperCase()
         .slice(0, 2);
     }
-    if (userEmail) {
-      return userEmail.slice(0, 2).toUpperCase();
+    if (user?.email) {
+      return user.email.slice(0, 2).toUpperCase();
     }
     return "U";
   };

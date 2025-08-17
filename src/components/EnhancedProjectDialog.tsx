@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 import { ProjectTypeSelector } from "./ProjectTypeSelector";
 import { AssigneesPicker } from "./AssigneesPicker";
 import { InlineAssigneesPicker } from "./InlineAssigneesPicker";
-import { useProfile } from "@/hooks/useProfile";
+import { useProfile } from "@/contexts/ProfileContext";
 
 interface Lead {
   id: string;

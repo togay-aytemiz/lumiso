@@ -13,7 +13,7 @@ import { ZodError } from "zod";
 import { useUserSettings } from "@/hooks/useUserSettings";
 import { AssigneesPicker } from "./AssigneesPicker";
 import { InlineAssigneesPicker } from "./InlineAssigneesPicker";
-import { useProfile } from "@/hooks/useProfile";
+import { useProfile } from "@/contexts/ProfileContext";
 
 interface AddLeadDialogProps {
   onLeadAdded: () => void;

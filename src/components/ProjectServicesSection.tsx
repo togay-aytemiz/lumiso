@@ -212,24 +212,26 @@ export function ProjectServicesSection({
           </div> : <div>
             {services.length > 0 ? <div className="flex flex-wrap gap-2">
                 {services.map(service => {
+              console.log('Service data:', service); // Debug log
               const costPrice = service.cost_price ?? 0;
               const sellingPrice = service.selling_price ?? service.price ?? 0;
               const hasPrices = costPrice > 0 || sellingPrice > 0;
+              console.log('Prices:', { costPrice, sellingPrice, hasPrices }); // Debug log
               return <Badge 
                       key={service.id} 
                       variant="secondary" 
-                      className="h-auto min-h-7 rounded-lg px-3 py-1.5 text-xs whitespace-normal break-words"
+                      className="h-auto min-h-7 rounded-lg px-3 py-1.5 text-xs whitespace-normal break-words max-w-full"
                       title={`${service.name}${hasPrices ? ` - Cost: ₺${costPrice}, Selling: ₺${sellingPrice}` : ''}`}
                     >
-                      <div className="flex flex-col gap-0.5">
-                        <span className="font-medium">{service.name}</span>
-                        {hasPrices && (
-                          <span className="text-xs text-foreground/60">
-                            Cost: ₺{costPrice} · Selling: ₺{sellingPrice}
-                          </span>
-                        )}
-                      </div>
-                    </Badge>;
+                       <div className="flex flex-col gap-0.5 w-full">
+                         <span className="font-medium leading-tight">{service.name}</span>
+                         {hasPrices && (
+                           <span className="text-xs text-foreground/60 leading-tight">
+                             Cost: ₺{costPrice} · Selling: ₺{sellingPrice}
+                           </span>
+                         )}
+                       </div>
+                     </Badge>;
             })}
               </div> : <div className="text-center py-6">
                 <svg className="h-8 w-8 text-muted-foreground mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">

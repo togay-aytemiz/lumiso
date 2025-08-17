@@ -44,7 +44,8 @@ export function ProjectServicesSection({
             name,
             category,
             cost_price,
-            selling_price
+            selling_price,
+            price
           )
         `).eq('project_id', projectId);
       if (error) throw error;

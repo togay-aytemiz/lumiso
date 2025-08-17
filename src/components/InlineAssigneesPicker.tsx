@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Search, X, Users } from "lucide-react";
 import { useTeamManagement } from "@/hooks/useTeamManagement";
 import { useProfile } from "@/hooks/useProfile";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
 interface InlineAssigneesPickerProps {
@@ -18,19 +19,22 @@ interface InlineAssigneesPickerProps {
 export function InlineAssigneesPicker({ value, onChange, disabled }: InlineAssigneesPickerProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [showTeamList, setShowTeamList] = useState(false);
-  const { teamMembers, loading } = useTeamManagement();
-  const { profile } = useProfile();
+  const { teamMembers, loading: teamLoading } = useTeamManagement();
+  const { profile, loading: profileLoading } = useProfile();
   
   // Get current user info
   const currentUserId = profile?.user_id;
   const currentUserName = profile?.full_name || "You";
   
+  // Check if we're still loading critical data
+  const isLoading = profileLoading || (teamLoading && teamMembers.length === 0);
+  
   // Auto-add current user as first assignee if not already added
   useEffect(() => {
-    if (currentUserId && !value.includes(currentUserId)) {
+    if (currentUserId && !value.includes(currentUserId) && !profileLoading) {
       onChange([currentUserId, ...value]);
     }
-  }, [currentUserId, value, onChange]);
+  }, [currentUserId, value, onChange, profileLoading]);
   
   // Filter team members based on search and exclude already selected
   const filteredMembers = teamMembers.filter(member => {
@@ -87,7 +91,12 @@ export function InlineAssigneesPicker({ value, onChange, disabled }: InlineAssig
         
         {/* Current Assignees */}
         <div className="flex flex-wrap gap-2 min-h-[40px] p-3 border rounded-lg bg-muted/30">
-          {value.length === 0 ? (
+          {isLoading ? (
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-6 w-6 rounded-full" />
+              <Skeleton className="h-4 w-20" />
+            </div>
+          ) : value.length === 0 ? (
             <div className="text-sm text-muted-foreground">No assignees selected</div>
           ) : (
             value.map((userId) => {
@@ -121,7 +130,7 @@ export function InlineAssigneesPicker({ value, onChange, disabled }: InlineAssig
       </div>
 
       {/* Add Team Members Section */}
-      {!loading && teamMembers.length > 1 && (
+      {!isLoading && !teamLoading && teamMembers.length > 1 && (
         <div className="space-y-3">
           <Button
             type="button"
@@ -190,8 +199,11 @@ export function InlineAssigneesPicker({ value, onChange, disabled }: InlineAssig
         </div>
       )}
 
-      {loading && (
-        <div className="text-sm text-muted-foreground">Loading team members...</div>
+      {isLoading && (
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-10 w-full" />
+        </div>
       )}
     </div>
   );

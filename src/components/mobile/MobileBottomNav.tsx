@@ -258,9 +258,9 @@ export function MobileBottomNav() {
                 alt={profile?.full_name || userEmail?.split('@')[0] || "User"}
                 className="h-10 w-10 rounded-full object-cover shrink-0"
               />
-              <div className="flex-1 min-w-0 max-w-[160px]">
-                <div className="font-medium text-sm truncate text-foreground">
-                  {profile?.full_name || userEmail?.split('@')[0] || "User"}
+              <div className="flex-1 min-w-0">
+                <div className="font-medium text-sm text-foreground leading-tight line-clamp-2">
+                  {profile?.full_name || userEmail?.split("@")[0] || "User"}
                 </div>
               </div>
             </div>

@@ -109,8 +109,8 @@ export function UserMenu({ mode }: UserMenuProps) {
                 {initials}
               </AvatarFallback>
             </Avatar>
-            <div className="flex-1 min-w-0 max-w-[120px]">
-              <div className="font-medium text-sm truncate text-foreground">
+            <div className="flex-1 min-w-0">
+              <div className="font-medium text-sm text-foreground leading-tight line-clamp-2">
                 {displayName}
               </div>
             </div>

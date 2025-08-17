@@ -1,7 +1,6 @@
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { LayoutDashboard, Users, Calendar, Bell, BarChart3, Settings, LogOut, FolderOpen, CreditCard, CalendarDays, CalendarRange } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { LayoutDashboard, Users, Calendar, Bell, BarChart3, FolderOpen, CreditCard, CalendarDays, CalendarRange } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -12,8 +11,8 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { Separator } from "@/components/ui/separator";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { UserMenu } from "@/components/UserMenu";
 
 const navigationItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
@@ -57,11 +56,6 @@ export function AppSidebar() {
     setBookingsOpen(isBookingsChildActive);
   }, [isBookingsChildActive]);
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    localStorage.clear();
-    navigate("/auth");
-  };
 
   const handleNavClick = () => {
     if (isMobile) {
@@ -193,35 +187,9 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="p-4 mt-auto shrink-0">
-        <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                asChild
-                isActive={isActive("/settings")}
-                className="group/item w-full h-10 px-3 py-2 rounded-lg transition-all duration-200 hover:bg-muted/50 data-[active=true]:bg-muted"
-              >
-                <NavLink
-                  to="/settings/profile"
-                  className="flex items-center gap-3 w-full"
-                  onClick={handleNavClick}
-                >
-                  <Settings className="h-4 w-4 text-sidebar-foreground group-hover/item:text-[hsl(var(--sidebar-primary))] group-data-[active=true]/item:text-[hsl(var(--sidebar-primary))]" />
-                  <span className="font-medium">Settings</span>
-                </NavLink>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              onClick={handleSignOut}
-              className="group/item w-full h-10 px-3 py-2 rounded-lg transition-all duration-200 hover:bg-destructive/10 text-destructive hover:text-destructive focus:text-destructive active:text-destructive"
-            >
-              <div className="flex items-center gap-3 w-full">
-                <LogOut className="h-4 w-4 text-destructive group-hover/item:text-destructive" />
-                <span className="font-medium">Sign Out</span>
-              </div>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+        <div className="flex justify-start">
+          <UserMenu mode={isMobile ? "mobile" : "desktop"} />
+        </div>
       </SidebarFooter>
     </Sidebar>
   );

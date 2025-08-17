@@ -385,6 +385,48 @@ export type Database = {
           },
         ]
       }
+      packages: {
+        Row: {
+          applicable_types: string[] | null
+          created_at: string
+          default_add_ons: number | null
+          description: string | null
+          duration: string | null
+          id: string
+          is_active: boolean
+          name: string
+          price: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          applicable_types?: string[] | null
+          created_at?: string
+          default_add_ons?: number | null
+          description?: string | null
+          duration?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          price?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          applicable_types?: string[] | null
+          created_at?: string
+          default_add_ons?: number | null
+          description?: string | null
+          duration?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          price?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       payments: {
         Row: {
           amount: number
@@ -946,6 +988,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      ensure_default_packages: {
+        Args: { user_uuid: string }
+        Returns: undefined
+      }
       ensure_default_session_statuses: {
         Args: { user_uuid: string }
         Returns: undefined

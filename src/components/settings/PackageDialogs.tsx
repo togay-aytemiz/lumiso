@@ -19,12 +19,11 @@ interface Package {
   id: string;
   name: string;
   description?: string;
-  basePrice: number;
+  price: number;
   duration: string;
-  includes?: string;
-  applicableTypes: string[];
-  defaultAddons: string[];
-  isActive: boolean;
+  applicable_types: string[];
+  default_add_ons: number;
+  is_active: boolean;
 }
 
 interface AddPackageDialogProps {
@@ -267,15 +266,15 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
   const [packageData, setPackageData] = useState({
     name: "",
     description: "",
-    basePrice: "",
+    price: "",
     duration: "",
     customDuration: "",
-    includes: "",
-    applicableTypes: [] as string[],
-    defaultAddons: [] as string[],
-    isActive: true
+    applicable_types: [] as string[],
+    default_add_ons: 0,
+    is_active: true
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -319,13 +318,12 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
     setPackageData({
       name: "",
       description: "",
-      basePrice: "",
+      price: "",
       duration: "",
       customDuration: "",
-      includes: "",
-      applicableTypes: [],
-      defaultAddons: [],
-      isActive: true
+      applicable_types: [],
+      default_add_ons: 0,
+      is_active: true
     });
     setErrors({});
   };
@@ -343,8 +341,8 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
       newErrors.name = "Package name is required";
     }
 
-    if (!packageData.basePrice || isNaN(Number(packageData.basePrice)) || Number(packageData.basePrice) <= 0) {
-      newErrors.basePrice = "Valid base price is required";
+    if (!packageData.price || isNaN(Number(packageData.price)) || Number(packageData.price) <= 0) {
+      newErrors.price = "Valid price is required";
     }
 
     if (!packageData.duration) {
@@ -359,24 +357,55 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!validateForm()) return;
 
-    // Mock submission - in real app this would save to backend
-    toast({
-      title: "Package created",
-      description: `Package "${packageData.name}" has been created successfully.`,
-    });
+    try {
+      setLoading(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
 
-    onPackageAdded();
+      const finalDuration = packageData.duration === "Custom" ? packageData.customDuration : packageData.duration;
+
+      const { error } = await supabase
+        .from('packages')
+        .insert({
+          user_id: user.id,
+          name: packageData.name.trim(),
+          description: packageData.description.trim() || null,
+          price: Number(packageData.price),
+          duration: finalDuration,
+          applicable_types: packageData.applicable_types,
+          default_add_ons: packageData.default_add_ons,
+          is_active: packageData.is_active
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Package created",
+        description: `Package "${packageData.name}" has been created successfully.`,
+      });
+
+      onPackageAdded();
+    } catch (error) {
+      console.error('Error creating package:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create package",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const toggleApplicableType = (type: string) => {
     setPackageData(prev => ({
       ...prev,
-      applicableTypes: prev.applicableTypes.includes(type)
-        ? prev.applicableTypes.filter(t => t !== type)
-        : [...prev.applicableTypes, type]
+      applicable_types: prev.applicable_types.includes(type)
+        ? prev.applicable_types.filter(t => t !== type)
+        : [...prev.applicable_types, type]
     }));
   };
 
@@ -412,20 +441,20 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
           />
         </div>
 
-        {/* Base Price */}
+        {/* Price */}
         <div className="space-y-2">
-          <Label htmlFor="basePrice">Base Price (TRY) *</Label>
-          <p className="text-xs text-muted-foreground">Client-facing base price. You can override per project.</p>
+          <Label htmlFor="price">Price (TRY) *</Label>
+          <p className="text-xs text-muted-foreground">Client-facing price. You can override per project.</p>
           <Input
-            id="basePrice"
+            id="price"
             type="number"
-            value={packageData.basePrice}
-            onChange={(e) => setPackageData(prev => ({ ...prev, basePrice: e.target.value }))}
+            value={packageData.price}
+            onChange={(e) => setPackageData(prev => ({ ...prev, price: e.target.value }))}
             placeholder="0"
             min="0"
             step="100"
           />
-          {errors.basePrice && <p className="text-sm text-destructive">{errors.basePrice}</p>}
+          {errors.price && <p className="text-sm text-destructive">{errors.price}</p>}
         </div>
 
         {/* Duration */}
@@ -461,16 +490,18 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
           </div>
         )}
 
-        {/* Includes */}
+        {/* Default Add-ons Count */}
         <div className="space-y-2">
-          <Label htmlFor="includes">Includes</Label>
-          <p className="text-xs text-muted-foreground">List what's included; shown to clients.</p>
-          <Textarea
-            id="includes"
-            value={packageData.includes}
-            onChange={(e) => setPackageData(prev => ({ ...prev, includes: e.target.value }))}
-            placeholder="e.g., 20 retouched photos, online gallery"
-            rows={3}
+          <Label htmlFor="defaultAddons">Default Add-ons Count</Label>
+          <p className="text-xs text-muted-foreground">Number of add-on services included by default.</p>
+          <Input
+            id="defaultAddons"
+            type="number"
+            value={packageData.default_add_ons}
+            onChange={(e) => setPackageData(prev => ({ ...prev, default_add_ons: Number(e.target.value) || 0 }))}
+            placeholder="0"
+            min="0"
+            step="1"
           />
         </div>
 
@@ -504,44 +535,22 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
               {projectTypes.map((type: any) => (
                 <Badge
                   key={type.id}
-                  variant={packageData.applicableTypes.includes(type.name) ? "default" : "outline"}
+                  variant={packageData.applicable_types.includes(type.name) ? "default" : "outline"}
                   className={`cursor-pointer transition-colors ${
-                    packageData.applicableTypes.includes(type.name) 
+                    packageData.applicable_types.includes(type.name) 
                       ? "bg-primary text-primary-foreground hover:bg-primary/90" 
                       : "hover:bg-accent hover:text-accent-foreground"
                   }`}
                   onClick={() => toggleApplicableType(type.name)}
                 >
                   {type.name}
-                  {packageData.applicableTypes.includes(type.name) && (
+                  {packageData.applicable_types.includes(type.name) && (
                     <X className="ml-1 h-3 w-3" />
                   )}
                 </Badge>
               ))}
             </div>
           )}
-        </div>
-
-        {/* Default Add-ons */}
-        <div className="space-y-2">
-          <Label>Default Add-ons</Label>
-          <p className="text-xs text-muted-foreground mb-3">
-            These are services from your{" "}
-            <button
-              type="button"
-              onClick={() => navigate("/settings/services")}
-              className="text-primary hover:underline"
-            >
-              Services section
-            </button>
-            {" "}that can be customized while creating a project
-          </p>
-          <ServiceAddOnsPicker
-            services={services}
-            value={packageData.defaultAddons}
-            onChange={(addons) => setPackageData(prev => ({ ...prev, defaultAddons: addons }))}
-            navigate={navigate}
-          />
         </div>
 
         {/* Visibility */}
@@ -554,8 +563,8 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
           </div>
           <Switch
             id="isActive"
-            checked={packageData.isActive}
-            onCheckedChange={(checked) => setPackageData(prev => ({ ...prev, isActive: checked }))}
+            checked={packageData.is_active}
+            onCheckedChange={(checked) => setPackageData(prev => ({ ...prev, is_active: checked }))}
           />
         </div>
       </div>
@@ -564,8 +573,8 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
         <Button variant="outline" onClick={() => onOpenChange(false)} className="flex-1">
           Cancel
         </Button>
-        <Button onClick={handleSubmit} className="flex-1">
-          Save Package
+        <Button onClick={handleSubmit} className="flex-1" disabled={loading}>
+          {loading ? "Creating..." : "Save Package"}
         </Button>
       </div>
     </AppSheetModal>
@@ -576,15 +585,15 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
   const [packageData, setPackageData] = useState({
     name: "",
     description: "",
-    basePrice: "",
+    price: "",
     duration: "",
     customDuration: "",
-    includes: "",
-    applicableTypes: [] as string[],
-    defaultAddons: [] as string[],
-    isActive: true
+    applicable_types: [] as string[],
+    default_add_ons: 0,
+    is_active: true
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -629,13 +638,12 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
       setPackageData({
         name: pkg.name,
         description: pkg.description || "",
-        basePrice: pkg.basePrice.toString(),
+        price: pkg.price.toString(),
         duration: pkg.duration,
         customDuration: pkg.duration === "Custom" ? pkg.duration : "",
-        includes: pkg.includes || "",
-        applicableTypes: [...pkg.applicableTypes],
-        defaultAddons: [...pkg.defaultAddons],
-        isActive: pkg.isActive
+        applicable_types: [...pkg.applicable_types],
+        default_add_ons: pkg.default_add_ons,
+        is_active: pkg.is_active
       });
       setErrors({});
     }
@@ -648,8 +656,8 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
       newErrors.name = "Package name is required";
     }
 
-    if (!packageData.basePrice || isNaN(Number(packageData.basePrice)) || Number(packageData.basePrice) <= 0) {
-      newErrors.basePrice = "Valid base price is required";
+    if (!packageData.price || isNaN(Number(packageData.price)) || Number(packageData.price) <= 0) {
+      newErrors.price = "Valid price is required";
     }
 
     if (!packageData.duration) {
@@ -664,24 +672,54 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!validateForm()) return;
 
-    // Mock submission - in real app this would update backend
-    toast({
-      title: "Package updated",
-      description: `Package "${packageData.name}" has been updated successfully.`,
-    });
+    try {
+      setLoading(true);
+      if (!pkg) return;
 
-    onPackageUpdated();
+      const finalDuration = packageData.duration === "Custom" ? packageData.customDuration : packageData.duration;
+
+      const { error } = await supabase
+        .from('packages')
+        .update({
+          name: packageData.name.trim(),
+          description: packageData.description.trim() || null,
+          price: Number(packageData.price),
+          duration: finalDuration,
+          applicable_types: packageData.applicable_types,
+          default_add_ons: packageData.default_add_ons,
+          is_active: packageData.is_active
+        })
+        .eq('id', pkg.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Package updated",
+        description: `Package "${packageData.name}" has been updated successfully.`,
+      });
+
+      onPackageUpdated();
+    } catch (error) {
+      console.error('Error updating package:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update package",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const toggleApplicableType = (type: string) => {
     setPackageData(prev => ({
       ...prev,
-      applicableTypes: prev.applicableTypes.includes(type)
-        ? prev.applicableTypes.filter(t => t !== type)
-        : [...prev.applicableTypes, type]
+      applicable_types: prev.applicable_types.includes(type)
+        ? prev.applicable_types.filter(t => t !== type)
+        : [...prev.applicable_types, type]
     }));
   };
 
@@ -719,20 +757,20 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
           />
         </div>
 
-        {/* Base Price */}
+        {/* Price */}
         <div className="space-y-2">
-          <Label htmlFor="basePrice">Base Price (TRY) *</Label>
-          <p className="text-xs text-muted-foreground">Client-facing base price. You can override per project.</p>
+          <Label htmlFor="price">Price (TRY) *</Label>
+          <p className="text-xs text-muted-foreground">Client-facing price. You can override per project.</p>
           <Input
-            id="basePrice"
+            id="price"
             type="number"
-            value={packageData.basePrice}
-            onChange={(e) => setPackageData(prev => ({ ...prev, basePrice: e.target.value }))}
+            value={packageData.price}
+            onChange={(e) => setPackageData(prev => ({ ...prev, price: e.target.value }))}
             placeholder="0"
             min="0"
             step="100"
           />
-          {errors.basePrice && <p className="text-sm text-destructive">{errors.basePrice}</p>}
+          {errors.price && <p className="text-sm text-destructive">{errors.price}</p>}
         </div>
 
         {/* Duration */}
@@ -768,16 +806,18 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
           </div>
         )}
 
-        {/* Includes */}
+        {/* Default Add-ons Count */}
         <div className="space-y-2">
-          <Label htmlFor="includes">Includes</Label>
-          <p className="text-xs text-muted-foreground">List what's included; shown to clients.</p>
-          <Textarea
-            id="includes"
-            value={packageData.includes}
-            onChange={(e) => setPackageData(prev => ({ ...prev, includes: e.target.value }))}
-            placeholder="e.g., 20 retouched photos, online gallery"
-            rows={3}
+          <Label htmlFor="defaultAddons">Default Add-ons Count</Label>
+          <p className="text-xs text-muted-foreground">Number of add-on services included by default.</p>
+          <Input
+            id="defaultAddons"
+            type="number"
+            value={packageData.default_add_ons}
+            onChange={(e) => setPackageData(prev => ({ ...prev, default_add_ons: Number(e.target.value) || 0 }))}
+            placeholder="0"
+            min="0"
+            step="1"
           />
         </div>
 
@@ -811,44 +851,22 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
               {projectTypes.map((type: any) => (
                 <Badge
                   key={type.id}
-                  variant={packageData.applicableTypes.includes(type.name) ? "default" : "outline"}
+                  variant={packageData.applicable_types.includes(type.name) ? "default" : "outline"}
                   className={`cursor-pointer transition-colors ${
-                    packageData.applicableTypes.includes(type.name) 
+                    packageData.applicable_types.includes(type.name) 
                       ? "bg-primary text-primary-foreground hover:bg-primary/90" 
                       : "hover:bg-accent hover:text-accent-foreground"
                   }`}
                   onClick={() => toggleApplicableType(type.name)}
                 >
                   {type.name}
-                  {packageData.applicableTypes.includes(type.name) && (
+                  {packageData.applicable_types.includes(type.name) && (
                     <X className="ml-1 h-3 w-3" />
                   )}
                 </Badge>
               ))}
             </div>
           )}
-        </div>
-
-        {/* Default Add-ons */}
-        <div className="space-y-2">
-          <Label>Default Add-ons</Label>
-          <p className="text-xs text-muted-foreground mb-3">
-            These are services from your{" "}
-            <button
-              type="button"
-              onClick={() => navigate("/settings/services")}
-              className="text-primary hover:underline"
-            >
-              Services section
-            </button>
-            {" "}that can be customized while creating a project
-          </p>
-          <ServiceAddOnsPicker
-            services={services}
-            value={packageData.defaultAddons}
-            onChange={(addons) => setPackageData(prev => ({ ...prev, defaultAddons: addons }))}
-            navigate={navigate}
-          />
         </div>
 
         {/* Visibility */}
@@ -861,8 +879,8 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
           </div>
           <Switch
             id="isActive"
-            checked={packageData.isActive}
-            onCheckedChange={(checked) => setPackageData(prev => ({ ...prev, isActive: checked }))}
+            checked={packageData.is_active}
+            onCheckedChange={(checked) => setPackageData(prev => ({ ...prev, is_active: checked }))}
           />
         </div>
       </div>
@@ -871,8 +889,8 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
         <Button variant="outline" onClick={() => onOpenChange(false)} className="flex-1">
           Cancel
         </Button>
-        <Button onClick={handleSubmit} className="flex-1">
-          Update Package
+        <Button onClick={handleSubmit} className="flex-1" disabled={loading}>
+          {loading ? "Updating..." : "Update Package"}
         </Button>
       </div>
     </AppSheetModal>

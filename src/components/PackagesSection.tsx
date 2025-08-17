@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Plus, Edit, Trash2 } from "lucide-react";
+import { Plus, Edit, Trash2, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import SettingsSection from "./SettingsSection";
 import { AddPackageDialog, EditPackageDialog } from "./settings/PackageDialogs";
 
@@ -11,15 +12,16 @@ interface Package {
   id: string;
   name: string;
   description?: string;
-  basePrice: number;
+  price: number;
   duration: string;
-  includes?: string;
-  applicableTypes: string[];
-  defaultAddons: string[];
-  isActive: boolean;
+  applicable_types: string[];
+  default_add_ons: number;
+  is_active: boolean;
 }
 
 const PackagesSection = () => {
+  const [packages, setPackages] = useState<Package[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showNewPackageDialog, setShowNewPackageDialog] = useState(false);
   const [editingPackage, setEditingPackage] = useState<Package | null>(null);
   const [showEditPackageDialog, setShowEditPackageDialog] = useState(false);
@@ -27,59 +29,121 @@ const PackagesSection = () => {
   const [packageToDelete, setPackageToDelete] = useState<Package | null>(null);
   const { toast } = useToast();
 
-  // Mock data for now since no backend is required yet
-  const [packages] = useState<Package[]>([
-    {
-      id: "1",
-      name: "Wedding Standard",
-      description: "Complete wedding coverage with essentials",
-      basePrice: 15000,
-      duration: "Full-day",
-      includes: "300 edited photos\nOnline gallery\n1 photographer\nUSB delivery",
-      applicableTypes: ["Wedding", "Engagement"],
-      defaultAddons: ["Extra Hour", "Second Photographer"],
-      isActive: true
-    },
-    {
-      id: "2", 
-      name: "Portrait Session",
-      description: "Professional portrait photography",
-      basePrice: 2500,
-      duration: "1h",
-      includes: "20 retouched photos\nOnline gallery",
-      applicableTypes: ["Portrait", "Family"],
-      defaultAddons: ["Print Package"],
-      isActive: true
+  // Load packages from database
+  useEffect(() => {
+    loadPackages();
+  }, []);
+
+  const loadPackages = async () => {
+    try {
+      setLoading(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+
+      // Ensure default packages exist for the user
+      await supabase.rpc('ensure_default_packages', { user_uuid: user.id });
+
+      // Load packages
+      const { data, error } = await supabase
+        .from('packages')
+        .select('*')
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+
+      setPackages(data || []);
+    } catch (error) {
+      console.error('Error loading packages:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load packages",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
-  ]);
+  };
 
   const handleDeleteClick = (pkg: Package) => {
     setPackageToDelete(pkg);
     setDeleteConfirmOpen(true);
   };
 
-  const handleDeletePackage = () => {
-    if (packageToDelete) {
+  const handleDeletePackage = async () => {
+    if (!packageToDelete) return;
+
+    try {
+      const { error } = await supabase
+        .from('packages')
+        .delete()
+        .eq('id', packageToDelete.id);
+
+      if (error) throw error;
+
+      setPackages(prev => prev.filter(p => p.id !== packageToDelete.id));
+      
       toast({
         title: "Package deleted",
         description: `Package "${packageToDelete.name}" has been removed successfully.`,
       });
+      
       setDeleteConfirmOpen(false);
       setPackageToDelete(null);
+    } catch (error) {
+      console.error('Error deleting package:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete package",
+        variant: "destructive",
+      });
     }
+  };
+
+  const handlePackageAdded = () => {
+    setShowNewPackageDialog(false);
+    loadPackages(); // Refresh the list
+  };
+
+  const handlePackageUpdated = () => {
+    setShowEditPackageDialog(false);
+    setEditingPackage(null);
+    loadPackages(); // Refresh the list
   };
 
   const formatDuration = (duration: string) => {
     switch (duration) {
       case "30m": return "30 minutes";
       case "1h": return "1 hour";
+      case "1 hour": return "1 hour";
       case "2h": return "2 hours";
+      case "2 hours": return "2 hours";
       case "3h": return "3 hours";
+      case "3 hours": return "3 hours";
+      case "6 hours": return "6 hours";
       case "Half-day": return "Half day";
       case "Full-day": return "Full day";
+      case "Full day": return "Full day";
+      case "multi-session": return "Multi-session";
       default: return duration;
     }
   };
+
+  if (loading) {
+    return (
+      <SettingsSection 
+        title="Packages" 
+        description="Create comprehensive packages that bundle services together for your clients."
+      >
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="h-6 w-6 animate-spin" />
+        </div>
+      </SettingsSection>
+    );
+  }
 
   return (
     <>
@@ -142,43 +206,43 @@ const PackagesSection = () => {
                               )}
                             </div>
                           </td>
-                          <td className="px-4 py-3">
-                            <span className="font-medium">TRY {pkg.basePrice.toLocaleString()}</span>
-                          </td>
+                           <td className="px-4 py-3">
+                             <span className="font-medium">TRY {pkg.price.toLocaleString()}</span>
+                           </td>
                           <td className="px-4 py-3">
                             <span className="text-sm">{formatDuration(pkg.duration)}</span>
                           </td>
-                          <td className="px-4 py-3">
-                            <div className="flex flex-wrap gap-1">
-                              {pkg.applicableTypes.length === 0 ? (
-                                <Badge variant="outline" className="text-xs">All types</Badge>
-                              ) : (
-                                pkg.applicableTypes.map((type) => (
-                                  <Badge key={type} variant="secondary" className="text-xs">
-                                    {type}
-                                  </Badge>
-                                ))
-                              )}
-                            </div>
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="flex flex-wrap gap-1">
-                              {pkg.defaultAddons.length === 0 ? (
-                                <span className="text-sm text-muted-foreground">None</span>
-                              ) : (
-                                <>
-                                  <Badge variant="outline" className="text-xs">
-                                    {pkg.defaultAddons.length} add-on{pkg.defaultAddons.length !== 1 ? 's' : ''}
-                                  </Badge>
-                                </>
-                              )}
-                            </div>
-                          </td>
-                          <td className="px-4 py-3">
-                            <Badge variant={pkg.isActive ? "default" : "secondary"}>
-                              {pkg.isActive ? "Active" : "Inactive"}
-                            </Badge>
-                          </td>
+                           <td className="px-4 py-3">
+                             <div className="flex flex-wrap gap-1">
+                               {pkg.applicable_types.length === 0 ? (
+                                 <Badge variant="outline" className="text-xs">All types</Badge>
+                               ) : (
+                                 pkg.applicable_types.map((type) => (
+                                   <Badge key={type} variant="secondary" className="text-xs">
+                                     {type}
+                                   </Badge>
+                                 ))
+                               )}
+                             </div>
+                           </td>
+                           <td className="px-4 py-3">
+                             <div className="flex flex-wrap gap-1">
+                               {pkg.default_add_ons === 0 ? (
+                                 <span className="text-sm text-muted-foreground">None</span>
+                               ) : (
+                                 <>
+                                   <Badge variant="outline" className="text-xs">
+                                     {pkg.default_add_ons} add-on{pkg.default_add_ons !== 1 ? 's' : ''}
+                                   </Badge>
+                                 </>
+                               )}
+                             </div>
+                           </td>
+                           <td className="px-4 py-3">
+                             <Badge variant={pkg.is_active ? "default" : "secondary"}>
+                               {pkg.is_active ? "Active" : "Inactive"}
+                             </Badge>
+                           </td>
                           <td className="px-4 py-3">
                             <div className="flex gap-2">
                               <Button
@@ -226,9 +290,9 @@ const PackagesSection = () => {
 
                   {/* Key facts row */}
                   <div className="flex flex-wrap gap-2">
-                    {/* Price badge */}
-                    <Badge variant="default" className="text-xs font-medium">
-                      TRY {pkg.basePrice.toLocaleString()}
+                     {/* Price badge */}
+                     <Badge variant="default" className="text-xs font-medium">
+                       TRY {pkg.price.toLocaleString()}
                     </Badge>
 
                     {/* Duration badge */}
@@ -236,33 +300,33 @@ const PackagesSection = () => {
                       {formatDuration(pkg.duration)}
                     </Badge>
 
-                    {/* Add-ons count badge */}
-                    <Badge variant="outline" className="text-xs">
-                      {pkg.defaultAddons.length === 0 
-                        ? "No add-ons" 
-                        : `${pkg.defaultAddons.length} add-on${pkg.defaultAddons.length !== 1 ? 's' : ''}`
-                      }
-                    </Badge>
+                     {/* Add-ons count badge */}
+                     <Badge variant="outline" className="text-xs">
+                       {pkg.default_add_ons === 0 
+                         ? "No add-ons" 
+                         : `${pkg.default_add_ons} add-on${pkg.default_add_ons !== 1 ? 's' : ''}`
+                       }
+                     </Badge>
 
-                    {/* Visibility pill */}
-                    <Badge variant={pkg.isActive ? "default" : "secondary"} className="text-xs">
-                      {pkg.isActive ? "Active" : "Inactive"}
-                    </Badge>
+                     {/* Visibility pill */}
+                     <Badge variant={pkg.is_active ? "default" : "secondary"} className="text-xs">
+                       {pkg.is_active ? "Active" : "Inactive"}
+                     </Badge>
                   </div>
 
-                  {/* Applicable Types (separate row for better wrapping) */}
-                  {pkg.applicableTypes.length > 0 && (
-                    <div className="space-y-1">
-                      <span className="text-xs text-muted-foreground">Applicable Types:</span>
-                      <div className="flex flex-wrap gap-1">
-                        {pkg.applicableTypes.map((type) => (
-                          <Badge key={type} variant="secondary" className="text-xs">
-                            {type}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                   {/* Applicable Types (separate row for better wrapping) */}
+                   {pkg.applicable_types.length > 0 && (
+                     <div className="space-y-1">
+                       <span className="text-xs text-muted-foreground">Applicable Types:</span>
+                       <div className="flex flex-wrap gap-1">
+                         {pkg.applicable_types.map((type) => (
+                           <Badge key={type} variant="secondary" className="text-xs">
+                             {type}
+                           </Badge>
+                         ))}
+                       </div>
+                     </div>
+                   )}
 
                    {/* Actions row */}
                    <div className="flex gap-2 pt-2 border-t">
@@ -298,18 +362,14 @@ const PackagesSection = () => {
       <AddPackageDialog
         open={showNewPackageDialog}
         onOpenChange={setShowNewPackageDialog}
-        onPackageAdded={() => {
-          setShowNewPackageDialog(false);
-        }}
+        onPackageAdded={handlePackageAdded}
       />
 
       <EditPackageDialog
         package={editingPackage}
         open={showEditPackageDialog}
         onOpenChange={setShowEditPackageDialog}
-        onPackageUpdated={() => {
-          setShowEditPackageDialog(false);
-        }}
+        onPackageUpdated={handlePackageUpdated}
       />
 
       <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>

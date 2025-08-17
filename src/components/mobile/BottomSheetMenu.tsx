@@ -14,13 +14,15 @@ interface BottomSheetMenuProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   items: MenuItem[];
+  customContent?: React.ReactNode;
 }
 
 export function BottomSheetMenu({
   title,
   isOpen,
   onOpenChange,
-  items
+  items,
+  customContent
 }: BottomSheetMenuProps) {
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
@@ -56,6 +58,8 @@ export function BottomSheetMenu({
             );
           })}
         </div>
+        
+        {customContent && customContent}
       </SheetContent>
     </Sheet>
   );

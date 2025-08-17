@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Settings, LogOut, User } from "lucide-react";
+import { Settings, LogOut, User, ChevronUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -76,7 +76,7 @@ export function UserMenu({ mode }: UserMenuProps) {
     return (
       <div 
         onClick={handleSettings}
-        className="flex items-center gap-3 p-3 hover:bg-muted/50 cursor-pointer transition-colors"
+        className="flex items-center gap-3 p-3 mx-3 mb-3 border border-border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
       >
         <Avatar className="h-8 w-8 shrink-0">
           {profile?.profile_photo_url && (
@@ -104,67 +104,65 @@ export function UserMenu({ mode }: UserMenuProps) {
 
   // Desktop/Tablet mode - fixed profile section with popover menu
   return (
-    <Popover open={isOpen} onOpenChange={setIsOpen}>
-      <PopoverTrigger asChild>
-        <div className="flex items-center gap-3 p-3 hover:bg-muted/50 cursor-pointer transition-colors">
-          <Avatar className="h-8 w-8 shrink-0">
-            {profile?.profile_photo_url && (
-              <AvatarImage 
-                src={profile.profile_photo_url} 
-                alt={displayName}
-                className="object-cover"
-              />
-            )}
-            <AvatarFallback className="bg-primary/10 text-primary font-medium text-sm">
-              {initials}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex-1 min-w-0">
-            <div className="font-medium text-sm truncate text-foreground">
-              {displayName}
+    <div className="p-3">
+      <Popover open={isOpen} onOpenChange={setIsOpen}>
+        <PopoverTrigger asChild>
+          <div className="flex items-center gap-3 p-3 border border-border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
+            <Avatar className="h-8 w-8 shrink-0">
+              {profile?.profile_photo_url && (
+                <AvatarImage 
+                  src={profile.profile_photo_url} 
+                  alt={displayName}
+                  className="object-cover"
+                />
+              )}
+              <AvatarFallback className="bg-primary/10 text-primary font-medium text-sm">
+                {initials}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <div className="font-medium text-sm truncate text-foreground">
+                {displayName}
+              </div>
+              <div className="text-xs text-muted-foreground truncate">
+                {userEmail || "No email"}
+              </div>
             </div>
-            <div className="text-xs text-muted-foreground truncate">
-              {userEmail || "No email"}
-            </div>
+            <ChevronUp 
+              className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${
+                isOpen ? 'rotate-0' : 'rotate-180'
+              }`} 
+            />
           </div>
-        </div>
-      </PopoverTrigger>
-      
-      <PopoverContent 
-        side="top" 
-        align="start"
-        className="w-64 p-2"
-        sideOffset={8}
-      >
-        <div className="flex flex-col gap-1">
-          <Button
-            variant="ghost"
-            onClick={handleSettings}
-            className="justify-start h-9 gap-3 px-3 hover:bg-muted/50"
-          >
-            <User className="h-4 w-4" />
-            <span>View profile</span>
-          </Button>
-          
-          <Button
-            variant="ghost"
-            onClick={handleSettings}
-            className="justify-start h-9 gap-3 px-3 hover:bg-muted/50"
-          >
-            <Settings className="h-4 w-4" />
-            <span>Account settings</span>
-          </Button>
-          
-          <Button
-            variant="ghost"
-            onClick={handleSignOut}
-            className="justify-start h-9 gap-3 px-3 text-destructive hover:text-destructive hover:bg-destructive/10"
-          >
-            <LogOut className="h-4 w-4" />
-            <span>Log out</span>
-          </Button>
-        </div>
-      </PopoverContent>
-    </Popover>
+        </PopoverTrigger>
+        
+        <PopoverContent 
+          side="top" 
+          align="start"
+          className="w-[calc(100%-24px)] p-2 animate-in slide-in-from-bottom-2 duration-200"
+          sideOffset={8}
+        >
+          <div className="flex flex-col gap-1">
+            <Button
+              variant="ghost"
+              onClick={handleSettings}
+              className="justify-start h-9 gap-3 px-3 hover:bg-muted/50"
+            >
+              <Settings className="h-4 w-4" />
+              <span>Settings</span>
+            </Button>
+            
+            <Button
+              variant="ghost"
+              onClick={handleSignOut}
+              className="justify-start h-9 gap-3 px-3 text-destructive hover:text-destructive hover:bg-destructive/10"
+            >
+              <LogOut className="h-4 w-4" />
+              <span>Sign out</span>
+            </Button>
+          </div>
+        </PopoverContent>
+      </Popover>
+    </div>
   );
 }

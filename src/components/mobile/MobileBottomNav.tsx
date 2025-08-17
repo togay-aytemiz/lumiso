@@ -12,12 +12,14 @@ import {
   BarChart3,
   CreditCard,
   Settings,
-  LogOut
+  LogOut,
+  User
 } from 'lucide-react';
 import { BottomSheetMenu } from './BottomSheetMenu';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { UserMenu } from '@/components/UserMenu';
 
 interface NavTab {
   title: string;
@@ -229,6 +231,11 @@ export function MobileBottomNav() {
         isOpen={moreOpen}
         onOpenChange={setMoreOpen}
         items={moreItems}
+        customContent={
+          <div className="mt-4 border-t pt-4">
+            <UserMenu mode="mobile" />
+          </div>
+        }
       />
     </>
   );

@@ -15,11 +15,11 @@ interface UserMenuProps {
 export function UserMenu({ mode }: UserMenuProps) {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const { profile, loading } = useProfile();
+  const { profile, loading, refetch } = useProfile();
   const [userEmail, setUserEmail] = useState<string>("");
   const [isOpen, setIsOpen] = useState(false);
   
-  // Get user email from auth
+  // Get user email from auth and refetch profile when component mounts
   useEffect(() => {
     const getUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -28,7 +28,9 @@ export function UserMenu({ mode }: UserMenuProps) {
       }
     };
     getUser();
-  }, []);
+    // Refetch profile data to ensure latest changes are shown
+    refetch();
+  }, [refetch]);
 
   const handleSignOut = async () => {
     try {
@@ -91,11 +93,11 @@ export function UserMenu({ mode }: UserMenuProps) {
 
   // Desktop/Tablet mode - fixed profile section with popover menu
   return (
-    <div className="p-3">
+    <div className="px-2 pb-3">
       <Popover open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger asChild>
-          <div className="flex items-center gap-3 p-3 border border-border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
-            <Avatar className="h-8 w-8 shrink-0">
+          <div className="flex items-center gap-3 p-2 border border-border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors w-full">
+            <Avatar className="h-10 w-10 shrink-0">
               {profile?.profile_photo_url && (
                 <AvatarImage 
                   src={profile.profile_photo_url} 
@@ -107,13 +109,13 @@ export function UserMenu({ mode }: UserMenuProps) {
                 {initials}
               </AvatarFallback>
             </Avatar>
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 max-w-[120px]">
               <div className="font-medium text-sm truncate text-foreground">
                 {displayName}
               </div>
             </div>
             <ChevronUp 
-              className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${
+              className={`h-4 w-4 text-muted-foreground transition-transform duration-200 shrink-0 ${
                 isOpen ? 'rotate-0' : 'rotate-180'
               }`} 
             />

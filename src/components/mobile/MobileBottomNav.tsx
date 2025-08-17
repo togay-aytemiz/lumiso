@@ -251,14 +251,14 @@ export function MobileBottomNav() {
                 navigate('/settings/profile');
                 setMoreOpen(false);
               }}
-              className="flex items-center gap-3 p-3 mx-3 mb-3 border border-border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
+              className="flex items-center gap-3 p-3 mx-3 mb-3 border border-border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors w-[calc(100%-24px)]"
             >
               <img 
                 src={profile?.profile_photo_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userEmail}`}
                 alt={profile?.full_name || userEmail?.split('@')[0] || "User"}
-                className="h-8 w-8 rounded-full object-cover shrink-0"
+                className="h-10 w-10 rounded-full object-cover shrink-0"
               />
-              <div className="flex-1 min-w-0">
+              <div className="flex-1 min-w-0 max-w-[160px]">
                 <div className="font-medium text-sm truncate text-foreground">
                   {profile?.full_name || userEmail?.split('@')[0] || "User"}
                 </div>

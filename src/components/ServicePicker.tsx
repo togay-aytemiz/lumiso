@@ -10,6 +10,7 @@ export type PickerService = {
   id: string;
   name: string;
   category?: string | null;
+  cost_price?: number | null;
   selling_price?: number | null;
   price?: number | null;
   salesCurrency?: string | null; // optional, defaults to TRY
@@ -132,7 +133,10 @@ export function ServicePicker({
                   >
                     {items.map((s) => {
                       const selected = value.includes(s.id);
-                      const price = s.selling_price ?? s.price ?? 0;
+                      const costPrice = s.cost_price ?? 0;
+                      const sellingPrice = s.selling_price ?? s.price ?? 0;
+                      const hasPrices = costPrice > 0 || sellingPrice > 0;
+                      console.log('Service picker data:', s); // Debug log
                       return (
                         <Button
                           key={s.id}
@@ -141,22 +145,25 @@ export function ServicePicker({
                           onClick={() => toggle(s.id)}
                           disabled={disabled || s.isActive === false}
                           className={cn(
-                            "justify-start whitespace-nowrap",
-                            "overflow-hidden text-ellipsis",
-                            "px-3",
+                            "justify-start whitespace-normal break-words",
+                            "px-3 py-2 h-auto min-h-8",
                             selected ? "" : "border",
                           )}
-                          title={`${s.name} · ${formatCurrency(price, s.salesCurrency)}`}
+                          title={`${s.name}${hasPrices ? ` - Cost: ₺${costPrice}, Selling: ₺${sellingPrice}` : ''}`}
                         >
-                          <div className="flex items-center gap-2">
-                            {selected && <Check className="h-4 w-4" aria-hidden />}
-                            <span className="text-sm">
-                              {s.name}
-                              <span className="mx-1">·</span>
-                              <span className={selected ? "text-primary-foreground/80" : "text-muted-foreground"}>
-                                {formatCurrency(price, s.salesCurrency)}
-                              </span>
-                            </span>
+                          <div className="flex items-start gap-2 w-full">
+                            {selected && <Check className="h-4 w-4 mt-0.5 flex-shrink-0" aria-hidden />}
+                            <div className="flex flex-col gap-0.5 min-w-0 flex-1">
+                              <span className="text-sm font-medium leading-tight">{s.name}</span>
+                              {hasPrices && (
+                                <span className={cn(
+                                  "text-xs leading-tight",
+                                  selected ? "text-primary-foreground/70" : "text-muted-foreground"
+                                )}>
+                                  Cost: ₺{costPrice} · Selling: ₺{sellingPrice}
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </Button>
                       );
@@ -187,31 +194,36 @@ export function ServicePicker({
         ) : (
           <div className="flex flex-wrap gap-2">
             {selectedServices.map((s) => {
-              const price = s.selling_price ?? s.price ?? 0;
+              const costPrice = s.cost_price ?? 0;
+              const sellingPrice = s.selling_price ?? s.price ?? 0;
+              const hasPrices = costPrice > 0 || sellingPrice > 0;
               return (
                 <Badge
                   key={s.id}
                   variant="secondary"
-                  className="h-7 rounded-full px-3 text-xs"
+                  className="h-auto min-h-7 rounded-lg px-3 py-1.5 text-xs whitespace-normal break-words max-w-full"
                 >
-                  <span>
-                    {s.name}
-                    <span className="mx-1">·</span>
-                    <span className="text-foreground/70">
-                      {formatCurrency(price, s.salesCurrency)}
-                    </span>
-                  </span>
-                  <button
-                    className="ml-2 inline-flex rounded-full p-0.5 hover:text-foreground"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      toggle(s.id);
-                    }}
-                    aria-label={`Remove ${s.name}`}
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
+                  <div className="flex items-center gap-2 w-full">
+                    <div className="flex flex-col gap-0.5 min-w-0 flex-1">
+                      <span className="font-medium leading-tight">{s.name}</span>
+                      {hasPrices && (
+                        <span className="text-xs text-foreground/60 leading-tight">
+                          Cost: ₺{costPrice} · Selling: ₺{sellingPrice}
+                        </span>
+                      )}
+                    </div>
+                    <button
+                      className="ml-1 inline-flex rounded-full p-0.5 hover:text-foreground flex-shrink-0"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        toggle(s.id);
+                      }}
+                      aria-label={`Remove ${s.name}`}
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 </Badge>
               );
             })}

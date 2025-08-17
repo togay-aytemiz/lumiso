@@ -194,7 +194,9 @@ export function ProjectServicesSection({
         {isEditing ? <div className="space-y-4">
             <ServicePicker services={availableServices.map(s => ({
             ...s,
-            price: s.selling_price || 0,
+            cost_price: s.cost_price,
+            selling_price: s.selling_price,
+            price: s.price,
             active: true
           }))} value={services.map(s => s.id)} onChange={handleServicePickerChange} disabled={saving} isLoading={loadingAvailable} error={errorAvailable} onRetry={fetchAvailableServices} />
             <div className="flex gap-2">

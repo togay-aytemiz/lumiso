@@ -31,7 +31,7 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded }: AddServ
   });
 
   // Predefined categories and fetch existing ones
-  const predefinedCategories = ["Albums", "Prints", "Extras", "Digital", "Packages"];
+  const predefinedCategories = ["Albums", "Prints", "Extras", "Digital", "Packages", "Retouching", "Frames"];
   
   useEffect(() => {
     const fetchCategories = async () => {
@@ -233,18 +233,33 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded }: AddServ
               <SelectTrigger className="rounded-xl">
                 <SelectValue placeholder="Select or create a category" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-popover border border-border shadow-lg z-50">
+                {/* Default Categories */}
+                <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  Default Categories
+                </div>
                 {predefinedCategories.map((category) => (
                   <SelectItem key={category} value={category} className="hover:bg-accent hover:text-accent-foreground">
                     {category}
                   </SelectItem>
                 ))}
-                {categories.length > 0 && <SelectSeparator />}
-                {categories.map((category) => (
-                  <SelectItem key={category} value={category} className="hover:bg-accent hover:text-accent-foreground">
-                    {category}
-                  </SelectItem>
-                ))}
+                
+                {/* Custom Categories */}
+                {categories.length > 0 && (
+                  <>
+                    <SelectSeparator />
+                    <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                      Custom Categories
+                    </div>
+                    {categories.map((category) => (
+                      <SelectItem key={category} value={category} className="hover:bg-accent hover:text-accent-foreground">
+                        {category}
+                      </SelectItem>
+                    ))}
+                  </>
+                )}
+                
+                {/* Create New */}
                 <SelectSeparator />
                 <SelectItem value="create-new" className="text-primary hover:bg-accent hover:text-accent-foreground">
                   <div className="flex items-center">
@@ -334,7 +349,7 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
   });
 
   // Predefined categories and fetch existing ones
-  const predefinedCategories = ["Albums", "Prints", "Extras", "Digital", "Packages"];
+  const predefinedCategories = ["Albums", "Prints", "Extras", "Digital", "Packages", "Retouching", "Frames"];
   
   useEffect(() => {
     const fetchCategories = async () => {
@@ -529,18 +544,33 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
               <SelectTrigger className="rounded-xl">
                 <SelectValue placeholder="Select or create a category" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-popover border border-border shadow-lg z-50">
+                {/* Default Categories */}
+                <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  Default Categories
+                </div>
                 {predefinedCategories.map((category) => (
                   <SelectItem key={category} value={category} className="hover:bg-accent hover:text-accent-foreground">
                     {category}
                   </SelectItem>
                 ))}
-                {categories.length > 0 && <SelectSeparator />}
-                {categories.map((category) => (
-                  <SelectItem key={category} value={category} className="hover:bg-accent hover:text-accent-foreground">
-                    {category}
-                  </SelectItem>
-                ))}
+                
+                {/* Custom Categories */}
+                {categories.length > 0 && (
+                  <>
+                    <SelectSeparator />
+                    <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                      Custom Categories
+                    </div>
+                    {categories.map((category) => (
+                      <SelectItem key={category} value={category} className="hover:bg-accent hover:text-accent-foreground">
+                        {category}
+                      </SelectItem>
+                    ))}
+                  </>
+                )}
+                
+                {/* Create New */}
                 <SelectSeparator />
                 <SelectItem value="create-new" className="text-primary hover:bg-accent hover:text-accent-foreground">
                   <div className="flex items-center">

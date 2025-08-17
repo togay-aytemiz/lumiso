@@ -375,7 +375,8 @@ export default function Profile() {
               const workingHour = getWorkingHourByDay(dayOfWeek);
               return (
                 <div key={dayOfWeek} className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 border rounded-lg">
-                  <div className="flex items-center justify-between sm:justify-start sm:w-32 gap-3">
+                  {/* Mobile/Tablet - keep original order */}
+                  <div className="flex items-center justify-between sm:hidden gap-3">
                     <Label className="font-medium text-sm">
                       {dayLabels[index]}
                     </Label>
@@ -383,6 +384,17 @@ export default function Profile() {
                       checked={workingHour.enabled}
                       onCheckedChange={(checked) => handleWorkingHourUpdate(dayOfWeek, 'enabled', checked)}
                     />
+                  </div>
+                  
+                  {/* Desktop - LTR layout: Switch first, then day name */}
+                  <div className="hidden sm:flex sm:items-center sm:w-32 gap-3">
+                    <Switch
+                      checked={workingHour.enabled}
+                      onCheckedChange={(checked) => handleWorkingHourUpdate(dayOfWeek, 'enabled', checked)}
+                    />
+                    <Label className="font-medium text-sm">
+                      {dayLabels[index]}
+                    </Label>
                   </div>
                   
                   {workingHour.enabled && (

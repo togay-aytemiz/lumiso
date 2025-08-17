@@ -11,7 +11,6 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
@@ -19,7 +18,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { AppSheetModal } from "@/components/ui/app-sheet-modal";
-import { ChevronDown, Loader2, X, Copy, Check, MoreHorizontal, Plus, Trash2, Edit2 } from "lucide-react";
+import { ChevronDown, Loader2, X, Copy, Check, Plus, Trash2, Edit2 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useTeamManagement } from "@/hooks/useTeamManagement";
 import { useToast } from "@/hooks/use-toast";
@@ -545,7 +544,7 @@ export default function Team() {
                             <Avatar className="h-8 w-8">
                               <AvatarImage src={member.profile_photo_url || ''} alt={member.full_name || ''} />
                               <AvatarFallback>
-                                {member.full_name?.split(' ').map(n => n[0]).join('') || member.email[0].toUpperCase()}
+                                {member.full_name?.split(' ').map(n => n[0]).join('') || (member.email ? member.email[0].toUpperCase() : '?')}
                               </AvatarFallback>
                             </Avatar>
                             <div>
@@ -555,7 +554,22 @@ export default function Team() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline">{member.role}</Badge>
+                          {member.role === "Owner" ? (
+                            <Badge variant="outline">{member.role}</Badge>
+                          ) : (
+                            <Select value={member.role} onValueChange={(newRole) => updateMemberRole(member.id, newRole)}>
+                              <SelectTrigger className="w-auto min-w-[100px] h-8 px-3 py-1 text-sm">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {getAvailableRoles().filter(role => role !== "Owner").map((role) => (
+                                  <SelectItem key={role} value={role}>
+                                    {role}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          )}
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
@@ -573,28 +587,15 @@ export default function Team() {
                         </TableCell>
                         <TableCell className="text-right">
                           {member.role !== "Owner" && (
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="sm">
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem
-                                  onClick={() => {
-                                    // Handle role change dialog
-                                  }}
-                                >
-                                  Change Role
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  onClick={() => removeMember(member.id)}
-                                  className="text-destructive"
-                                >
-                                  Remove Member
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => removeMember(member.id)}
+                              className="text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground"
+                            >
+                              <Trash2 className="h-4 w-4 mr-1" />
+                              Remove
+                            </Button>
                           )}
                         </TableCell>
                       </TableRow>
@@ -679,33 +680,15 @@ export default function Team() {
                         {/* Right Side - Actions Vertically Centered */}
                         <div className="flex items-center justify-center">
                           {role.isEditable && (
-                            <>
-                              {isMobile ? (
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="sm">
-                                      <MoreHorizontal className="h-4 w-4" />
-                                    </Button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent align="end">
-                                    <DropdownMenuItem onClick={() => openEditRole(role, true)}>
-                                      <Edit2 className="h-4 w-4 mr-2" />
-                                      Edit Role
-                                    </DropdownMenuItem>
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
-                              ) : (
-                                <Button 
-                                  variant="outline" 
-                                  size="sm"
-                                  onClick={() => openEditRole(role, true)}
-                                  className="whitespace-nowrap"
-                                >
-                                  <Edit2 className="h-4 w-4 mr-2" />
-                                  Edit
-                                </Button>
-                              )}
-                            </>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => openEditRole(role, true)}
+                              className="whitespace-nowrap"
+                            >
+                              <Edit2 className="h-4 w-4 mr-2" />
+                              Edit
+                            </Button>
                           )}
                         </div>
                       </div>
@@ -769,49 +752,26 @@ export default function Team() {
                           
                           {/* Right Side - Actions Vertically Centered */}
                           <div className="flex items-center justify-center">
-                            {isMobile ? (
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" size="sm">
-                                    <MoreHorizontal className="h-4 w-4" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  <DropdownMenuItem onClick={() => openEditRole(role)}>
-                                    <Edit2 className="h-4 w-4 mr-2" />
-                                    Edit Role
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem 
-                                    onClick={() => setRoleToDelete(role.id)}
-                                    className="text-destructive"
-                                  >
-                                    <Trash2 className="h-4 w-4 mr-2" />
-                                    Delete Role
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            ) : (
-                              <div className="flex items-center gap-2">
-                                <Button 
-                                  variant="outline" 
-                                  size="sm"
-                                  onClick={() => openEditRole(role)}
-                                  className="whitespace-nowrap"
-                                >
-                                  <Edit2 className="h-4 w-4 mr-2" />
-                                  Edit
-                                </Button>
-                                <Button 
-                                  variant="outline" 
-                                  size="sm"
-                                  onClick={() => setRoleToDelete(role.id)}
-                                  className="text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground whitespace-nowrap"
-                                >
-                                  <Trash2 className="h-4 w-4 mr-2" />
-                                  Delete
-                                </Button>
-                              </div>
-                            )}
+                            <div className="flex items-center gap-2">
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => openEditRole(role)}
+                                className="whitespace-nowrap"
+                              >
+                                <Edit2 className="h-4 w-4 mr-2" />
+                                Edit
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => setRoleToDelete(role.id)}
+                                className="text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground whitespace-nowrap"
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete
+                              </Button>
+                            </div>
                           </div>
                         </div>
                       </CardContent>

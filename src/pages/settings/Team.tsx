@@ -17,6 +17,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { AppSheetModal } from "@/components/ui/app-sheet-modal";
 import { ChevronDown, Loader2, X, Copy, Check, MoreHorizontal, Plus, Trash2, Edit2 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -641,30 +642,48 @@ export default function Team() {
                 {systemRoles.map((role) => (
                   <Card key={role.id} className="relative">
                     <CardContent className="p-4">
-                      <div className="flex items-center justify-between min-h-[60px]">
-                        <div className="flex-1">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1 min-w-0">
                           <CardTitle className="text-base">{role.name}</CardTitle>
                           <CardDescription className="mt-1">{role.description}</CardDescription>
                           <div className="flex flex-wrap gap-1 mt-3">
                             {role.id === 'owner' ? (
                               <Badge variant="outline" className="text-xs">All Permissions</Badge>
                             ) : (
-                              role.permissions.slice(0, 3).map((permission) => (
-                                <Badge key={permission.id} variant="outline" className="text-xs">
-                                  {permission.name.replace(/_/g, ' ')}
-                                </Badge>
-                              ))
-                            )}
-                            {role.permissions.length > 3 && role.id !== 'owner' && (
-                              <Badge variant="outline" className="text-xs">
-                                +{role.permissions.length - 3} more
-                              </Badge>
+                              <>
+                                {role.permissions.slice(0, 3).map((permission) => (
+                                  <Badge key={permission.id} variant="outline" className="text-xs">
+                                    {permission.name.replace(/_/g, ' ')}
+                                  </Badge>
+                                ))}
+                                {role.permissions.length > 3 && (
+                                  <Popover>
+                                    <PopoverTrigger asChild>
+                                      <Badge variant="outline" className="text-xs cursor-pointer hover:bg-muted">
+                                        +{role.permissions.length - 3} more
+                                      </Badge>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-80">
+                                      <div className="space-y-2">
+                                        <h4 className="font-medium text-sm">All Permissions</h4>
+                                        <div className="flex flex-wrap gap-1">
+                                          {role.permissions.map((permission) => (
+                                            <Badge key={permission.id} variant="outline" className="text-xs">
+                                              {permission.name.replace(/_/g, ' ')}
+                                            </Badge>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    </PopoverContent>
+                                  </Popover>
+                                )}
+                              </>
                             )}
                           </div>
                         </div>
                         
                         {/* Actions */}
-                        <div className="ml-4 flex items-center">
+                        <div className="flex items-center self-start">
                           {role.isEditable && (
                             <>
                               {isMobile ? (
@@ -709,8 +728,8 @@ export default function Team() {
                   {customRoles.map((role) => (
                     <Card key={role.id} className="relative">
                       <CardContent className="p-4">
-                        <div className="flex items-center justify-between min-h-[60px]">
-                          <div className="flex-1">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1 min-w-0">
                             <CardTitle className="text-base">{role.name}</CardTitle>
                             {role.description && (
                               <CardDescription className="mt-1">{role.description}</CardDescription>
@@ -722,15 +741,31 @@ export default function Team() {
                                 </Badge>
                               ))}
                               {role.permissions.length > 3 && (
-                                <Badge variant="outline" className="text-xs">
-                                  +{role.permissions.length - 3} more
-                                </Badge>
+                                <Popover>
+                                  <PopoverTrigger asChild>
+                                    <Badge variant="outline" className="text-xs cursor-pointer hover:bg-muted">
+                                      +{role.permissions.length - 3} more
+                                    </Badge>
+                                  </PopoverTrigger>
+                                  <PopoverContent className="w-80">
+                                    <div className="space-y-2">
+                                      <h4 className="font-medium text-sm">All Permissions</h4>
+                                      <div className="flex flex-wrap gap-1">
+                                        {role.permissions.map((permission) => (
+                                          <Badge key={permission.id} variant="outline" className="text-xs">
+                                            {permission.name.replace(/_/g, ' ')}
+                                          </Badge>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  </PopoverContent>
+                                </Popover>
                               )}
                             </div>
                           </div>
                           
                           {/* Actions */}
-                          <div className="ml-4 flex items-center">
+                          <div className="flex items-center self-start">
                             {isMobile ? (
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>

@@ -260,7 +260,7 @@ const PackagesSection = () => {
                                                 const service = services.find(s => s.id === serviceId);
                                                 return (
                                                   <li key={serviceId}>
-                                                    • {service?.name || `Service ID: ${serviceId}`}
+                                                    • {service?.name || 'Unknown Service'}
                                                   </li>
                                                 );
                                               })}

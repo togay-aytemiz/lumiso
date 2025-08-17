@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, forwardRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -142,17 +142,22 @@ export function AssigneesPicker({ value, onChange, disabled }: AssigneesPickerPr
     </div>
   );
 
-  const Trigger = () => (
+  // Use forwardRef for the trigger to avoid ref warnings
+  const Trigger = forwardRef<HTMLButtonElement>((props, ref) => (
     <Button
+      ref={ref}
       variant="outline"
       size="sm"
       disabled={disabled}
       className="h-8 gap-1 text-xs"
+      {...props}
     >
       <Plus className="h-3 w-3" />
       Add
     </Button>
-  );
+  ));
+  
+  Trigger.displayName = "Trigger";
 
   return (
     <div className="space-y-3">

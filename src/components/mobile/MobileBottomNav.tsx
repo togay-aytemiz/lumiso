@@ -19,7 +19,7 @@ import { BottomSheetMenu } from './BottomSheetMenu';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { UserMenu } from '@/components/UserMenu';
+import { useProfile } from '@/hooks/useProfile';
 
 interface NavTab {
   title: string;
@@ -33,8 +33,21 @@ export function MobileBottomNav() {
   const [bookingsOpen, setBookingsOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
+  const [userEmail, setUserEmail] = useState<string>("");
   const location = useLocation();
   const navigate = useNavigate();
+  const { profile } = useProfile();
+
+  // Get user email from auth
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user?.email) {
+        setUserEmail(user.email);
+      }
+    };
+    getUser();
+  }, []);
 
   // Hide on auth routes and keyboard open
   useEffect(() => {
@@ -233,7 +246,27 @@ export function MobileBottomNav() {
         items={moreItems}
         customContent={
           <div className="mt-4 border-t pt-4">
-            <UserMenu mode="mobile" />
+            <div 
+              onClick={() => {
+                navigate('/settings/profile');
+                setMoreOpen(false);
+              }}
+              className="flex items-center gap-3 p-3 mx-3 mb-3 border border-border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
+            >
+              <img 
+                src={profile?.profile_photo_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userEmail}`}
+                alt={profile?.full_name || userEmail?.split('@')[0] || "User"}
+                className="h-8 w-8 rounded-full object-cover shrink-0"
+              />
+              <div className="flex-1 min-w-0">
+                <div className="font-medium text-sm truncate text-foreground">
+                  {profile?.full_name || userEmail?.split('@')[0] || "User"}
+                </div>
+                <div className="text-xs text-muted-foreground truncate">
+                  {userEmail || "No email"}
+                </div>
+              </div>
+            </div>
           </div>
         }
       />

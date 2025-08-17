@@ -74,31 +74,18 @@ export function UserMenu({ mode }: UserMenuProps) {
   // Mobile mode - direct navigation to profile (read-only design)
   if (isMobile) {
     return (
-      <div 
-        onClick={handleSettings}
-        className="flex items-center gap-3 p-3 mx-3 mb-3 border border-border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
-      >
-        <Avatar className="h-8 w-8 shrink-0">
-          {profile?.profile_photo_url && (
-            <AvatarImage 
-              src={profile.profile_photo_url} 
-              alt={displayName}
-              className="object-cover"
-            />
-          )}
-          <AvatarFallback className="bg-primary/10 text-primary font-medium text-sm">
-            {initials}
-          </AvatarFallback>
-        </Avatar>
-        <div className="flex-1 min-w-0">
-          <div className="font-medium text-sm truncate text-foreground">
-            {displayName}
-          </div>
-          <div className="text-xs text-muted-foreground truncate">
-            {userEmail || "No email"}
-          </div>
-        </div>
-      </div>
+      <Avatar className="h-8 w-8 shrink-0">
+        {profile?.profile_photo_url && (
+          <AvatarImage 
+            src={profile.profile_photo_url} 
+            alt={displayName}
+            className="object-cover"
+          />
+        )}
+        <AvatarFallback className="bg-primary/10 text-primary font-medium text-sm">
+          {initials}
+        </AvatarFallback>
+      </Avatar>
     );
   }
 
@@ -138,10 +125,12 @@ export function UserMenu({ mode }: UserMenuProps) {
         
         <PopoverContent 
           side="top" 
-          align="start"
-          className="w-[var(--radix-popover-trigger-width)] p-2 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:slide-out-to-bottom-2 data-[state=open]:slide-in-from-bottom-2 data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"
+          align="end"
+          className="w-[200px] p-2 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:slide-out-to-bottom-2 data-[state=open]:slide-in-from-bottom-2 data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"
           sideOffset={8}
-          avoidCollisions={false}
+          alignOffset={-8}
+          avoidCollisions={true}
+          collisionPadding={16}
         >
           <div className="flex flex-col gap-1">
             <Button

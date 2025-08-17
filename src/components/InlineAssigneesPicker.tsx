@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,8 @@ export function InlineAssigneesPicker({ value, onChange, disabled }: InlineAssig
   const [showTeamList, setShowTeamList] = useState(false);
   const { teamMembers, loading: teamLoading } = useTeamManagement();
   const { profile, loading: profileLoading } = useProfile();
+  const teamSectionRef = useRef<HTMLDivElement>(null);
+  const expandedSectionRef = useRef<HTMLDivElement>(null);
   
   // Get current user info
   const currentUserId = profile?.user_id;
@@ -80,8 +82,22 @@ export function InlineAssigneesPicker({ value, onChange, disabled }: InlineAssig
   };
 
   const toggleTeamList = () => {
-    setShowTeamList(!showTeamList);
+    const newState = !showTeamList;
+    setShowTeamList(newState);
     setSearchTerm("");
+    
+    if (newState) {
+      // Expanding - scroll to show the section
+      setTimeout(() => {
+        if (expandedSectionRef.current) {
+          expandedSectionRef.current.scrollIntoView({
+            behavior: 'smooth',
+            block: 'nearest',
+            inline: 'nearest'
+          });
+        }
+      }, 150); // Small delay to let animation start
+    }
   };
 
   return (
@@ -131,21 +147,30 @@ export function InlineAssigneesPicker({ value, onChange, disabled }: InlineAssig
 
       {/* Add Team Members Section */}
       {!isLoading && !teamLoading && teamMembers.length > 1 && (
-        <div className="space-y-3">
+        <div className="space-y-3" ref={teamSectionRef}>
           <Button
             type="button"
             variant="outline"
             size="sm"
             onClick={toggleTeamList}
             disabled={disabled}
-            className="w-full"
+            className="w-full transition-all duration-200 hover:scale-[1.02]"
           >
             <Users className="h-4 w-4 mr-2" />
             {showTeamList ? "Hide Team Members" : "Add Team Members"}
           </Button>
 
-          {showTeamList && (
-            <div className="space-y-3 p-4 border rounded-lg bg-muted/30">
+          {/* Animated Expandable Section */}
+          <div
+            ref={expandedSectionRef}
+            className={cn(
+              "overflow-hidden transition-all duration-300 ease-out",
+              showTeamList 
+                ? "max-h-96 opacity-100 animate-accordion-down" 
+                : "max-h-0 opacity-0 animate-accordion-up"
+            )}
+          >
+            <div className="space-y-3 p-4 border rounded-lg bg-muted/30 animate-fade-in">
               {/* Search */}
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
@@ -153,27 +178,31 @@ export function InlineAssigneesPicker({ value, onChange, disabled }: InlineAssig
                   placeholder="Search team members..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 transition-all duration-200 focus:scale-[1.01]"
                 />
               </div>
 
               {/* Team Members List */}
               <div className="space-y-2 max-h-48 overflow-y-auto">
                 {filteredMembers.length === 0 ? (
-                  <div className="text-sm text-muted-foreground text-center py-4">
+                  <div className="text-sm text-muted-foreground text-center py-4 animate-fade-in">
                     {teamMembers.length <= 1
                       ? "No other team members to add"
                       : "No members match your search"
                     }
                   </div>
                 ) : (
-                  filteredMembers.map((member) => (
+                  filteredMembers.map((member, index) => (
                     <div
                       key={member.user_id}
                       className={cn(
-                        "flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors",
-                        "hover:bg-background border hover:shadow-sm"
+                        "flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all duration-200",
+                        "hover:bg-background border hover:shadow-sm hover:scale-[1.02] hover-scale",
+                        "animate-fade-in"
                       )}
+                      style={{ 
+                        animationDelay: `${index * 50}ms` // Stagger animation
+                      }}
                       onClick={() => handleAddMember(member.user_id)}
                     >
                       <Avatar className="h-8 w-8">
@@ -195,7 +224,7 @@ export function InlineAssigneesPicker({ value, onChange, disabled }: InlineAssig
                 )}
               </div>
             </div>
-          )}
+          </div>
         </div>
       )}
 

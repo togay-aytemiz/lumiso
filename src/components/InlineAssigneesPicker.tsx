@@ -59,11 +59,17 @@ export function InlineAssigneesPicker({ value, onChange, disabled }: InlineAssig
     }
     
     const member = teamMembers.find(m => m.user_id === userId);
+    
+    // Don't render if we don't have member data yet - prevents "Unknown" flash
+    if (!member && teamLoading) {
+      return null;
+    }
+    
     return {
-      name: member?.full_name || "Unknown",
+      name: member?.full_name || "Team Member",
       email: member?.email || "",
       avatar: member?.profile_photo_url || "",
-      initials: (member?.full_name || "U").split(' ').map(n => n[0]).join('').toUpperCase()
+      initials: (member?.full_name || "T").split(' ').map(n => n[0]).join('').toUpperCase()
     };
   };
 
@@ -110,6 +116,16 @@ export function InlineAssigneesPicker({ value, onChange, disabled }: InlineAssig
             value.map((userId) => {
               const assignee = getAssigneeDetails(userId);
               const isCreator = userId === currentUserId;
+              
+              // Don't render if we don't have assignee data yet (prevents "Unknown" flash)
+              if (!assignee) {
+                return (
+                  <div key={userId} className="flex items-center gap-2 px-3 py-2">
+                    <div className="h-6 w-6 bg-muted animate-pulse rounded-full" />
+                    <div className="h-4 w-16 bg-muted animate-pulse rounded" />
+                  </div>
+                );
+              }
               
               return (
                 <Badge
@@ -175,7 +191,7 @@ export function InlineAssigneesPicker({ value, onChange, disabled }: InlineAssig
               </div>
 
               {/* Team Members List */}
-              <div className="space-y-2 max-h-48 overflow-y-auto">
+              <div className="space-y-2 max-h-48 overflow-y-auto overflow-x-hidden">
                 {filteredMembers.length === 0 ? (
                   <div className="text-sm text-muted-foreground text-center py-4 animate-fade-in">
                     {teamMembers.length <= 1

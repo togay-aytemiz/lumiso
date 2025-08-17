@@ -28,15 +28,12 @@ export function InlineAssigneesPicker({ value, onChange, disabled }: InlineAssig
   const currentUserId = profile?.user_id;
   const currentUserName = profile?.full_name || "You";
   
-  // Check if we're still loading critical data
-  const isLoading = profileLoading || (teamLoading && teamMembers.length === 0);
-  
   // Auto-add current user as first assignee if not already added
   useEffect(() => {
-    if (currentUserId && !value.includes(currentUserId) && !profileLoading) {
+    if (currentUserId && !value.includes(currentUserId)) {
       onChange([currentUserId, ...value]);
     }
-  }, [currentUserId, value, onChange, profileLoading]);
+  }, [currentUserId]);
   
   // Filter team members based on search and exclude already selected
   const filteredMembers = teamMembers.filter(member => {
@@ -107,12 +104,7 @@ export function InlineAssigneesPicker({ value, onChange, disabled }: InlineAssig
         
         {/* Current Assignees */}
         <div className="flex flex-wrap gap-2 min-h-[40px] p-3 border rounded-lg bg-muted/30">
-          {isLoading ? (
-            <div className="flex items-center gap-2">
-              <Skeleton className="h-6 w-6 rounded-full" />
-              <Skeleton className="h-4 w-20" />
-            </div>
-          ) : value.length === 0 ? (
+          {value.length === 0 ? (
             <div className="text-sm text-muted-foreground">No assignees selected</div>
           ) : (
             value.map((userId) => {
@@ -123,7 +115,7 @@ export function InlineAssigneesPicker({ value, onChange, disabled }: InlineAssig
                 <Badge
                   key={userId}
                   variant="secondary"
-                  className="flex items-center gap-2 px-3 py-2 h-auto bg-background border"
+                  className="flex items-center gap-2 px-3 py-2 h-auto bg-background border animate-fade-in"
                 >
                   <Avatar className="h-6 w-6">
                     <AvatarImage src={assignee.avatar} />
@@ -146,7 +138,7 @@ export function InlineAssigneesPicker({ value, onChange, disabled }: InlineAssig
       </div>
 
       {/* Add Team Members Section */}
-      {!isLoading && !teamLoading && teamMembers.length > 1 && (
+      {teamMembers.length > 1 && (
         <div className="space-y-3" ref={teamSectionRef}>
           <Button
             type="button"
@@ -225,13 +217,6 @@ export function InlineAssigneesPicker({ value, onChange, disabled }: InlineAssig
               </div>
             </div>
           </div>
-        </div>
-      )}
-
-      {isLoading && (
-        <div className="space-y-2">
-          <Skeleton className="h-4 w-24" />
-          <Skeleton className="h-10 w-full" />
         </div>
       )}
     </div>

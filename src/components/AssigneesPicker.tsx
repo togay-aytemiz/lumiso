@@ -88,14 +88,15 @@ export function AssigneesPicker({ value, onChange, disabled }: AssigneesPickerPr
   };
 
   const AssigneesList = () => (
-    <div className="space-y-2">
-      <div className="flex items-center gap-2 p-3 border-b">
+    <div className="space-y-2" onClick={(e) => e.stopPropagation()}>
+      <div className="flex items-center gap-2 p-3 border-b" onClick={(e) => e.stopPropagation()}>
         <Search className="h-4 w-4 text-muted-foreground" />
         <Input
           placeholder="Search by name or email..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="border-none p-0 h-auto focus-visible:ring-0"
+          onClick={(e) => e.stopPropagation()}
         />
       </div>
       
@@ -124,7 +125,8 @@ export function AssigneesPicker({ value, onChange, disabled }: AssigneesPickerPr
                 <div
                   key={member.user_id}
                   className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 cursor-pointer"
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation();
                     console.log('Member clicked:', member.user_id, 'disabled:', isDisabled);
                     if (!isDisabled) {
                       handleToggleAssignee(member.user_id);
@@ -134,12 +136,13 @@ export function AssigneesPicker({ value, onChange, disabled }: AssigneesPickerPr
                   <Checkbox
                     checked={isSelected}
                     disabled={isDisabled}
-                    onCheckedChange={() => {
-                      console.log('Checkbox changed for:', member.user_id);
+                    onCheckedChange={(checked) => {
+                      console.log('Checkbox changed for:', member.user_id, 'checked:', checked);
                       if (!isDisabled) {
                         handleToggleAssignee(member.user_id);
                       }
                     }}
+                    onClick={(e) => e.stopPropagation()}
                   />
                   <Avatar className="h-8 w-8">
                     <AvatarImage src={member.profile_photo_url || ""} />
@@ -163,7 +166,7 @@ export function AssigneesPicker({ value, onChange, disabled }: AssigneesPickerPr
         )}
       </div>
       
-      <div className="p-3 border-t">
+      <div className="p-3 border-t" onClick={(e) => e.stopPropagation()}>
         <Button onClick={handleConfirmSelection} className="w-full">
           Add Selected
         </Button>
@@ -190,34 +193,41 @@ export function AssigneesPicker({ value, onChange, disabled }: AssigneesPickerPr
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between min-h-[24px]">
         <h4 className="text-sm font-medium">Assignees</h4>
-        {teamMembers.length > 0 && (
-          <>
-            {isMobile ? (
-              <Drawer open={open} onOpenChange={setOpen}>
-                <DrawerTrigger asChild>
-                  <Trigger />
-                </DrawerTrigger>
-                <DrawerContent className="h-[80vh]">
-                  <DrawerHeader>
-                    <DrawerTitle>Select Team Members</DrawerTitle>
-                  </DrawerHeader>
-                  <AssigneesList />
-                </DrawerContent>
-              </Drawer>
-            ) : (
-              <Popover open={open} onOpenChange={setOpen}>
-                <PopoverTrigger asChild>
-                  <Trigger />
-                </PopoverTrigger>
-                <PopoverContent className="w-80 p-0" align="end">
-                  <AssigneesList />
-                </PopoverContent>
-              </Popover>
-            )}
-          </>
-        )}
+        <div className="w-[60px] flex justify-end">
+          {loading ? (
+            <div className="h-8 w-12 bg-muted animate-pulse rounded" />
+          ) : teamMembers.length > 0 ? (
+            <>
+              {isMobile ? (
+                <Drawer open={open} onOpenChange={setOpen}>
+                  <DrawerTrigger asChild>
+                    <Trigger />
+                  </DrawerTrigger>
+                  <DrawerContent className="h-[80vh]">
+                    <DrawerHeader>
+                      <DrawerTitle>Select Team Members</DrawerTitle>
+                    </DrawerHeader>
+                    <AssigneesList />
+                  </DrawerContent>
+                </Drawer>
+              ) : (
+                <Popover open={open} onOpenChange={setOpen}>
+                  <PopoverTrigger asChild>
+                    <Trigger />
+                  </PopoverTrigger>
+                  <PopoverContent 
+                    className="w-80 p-0" 
+                    align="end"
+                  >
+                    <AssigneesList />
+                  </PopoverContent>
+                </Popover>
+              )}
+            </>
+          ) : null}
+        </div>
       </div>
       
       <div className="flex flex-wrap gap-2">

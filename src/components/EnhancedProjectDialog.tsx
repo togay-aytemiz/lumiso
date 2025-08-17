@@ -12,6 +12,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { ProjectTypeSelector } from "./ProjectTypeSelector";
+import { AssigneesPicker } from "./AssigneesPicker";
+import { useProfile } from "@/hooks/useProfile";
 
 interface Lead {
   id: string;
@@ -39,8 +41,10 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
     name: "",
     description: "",
     projectTypeId: "",
-    basePrice: ""
+    basePrice: "",
+    assignees: [] as string[]
   });
+  const { profile } = useProfile();
 
   const [newLeadData, setNewLeadData] = useState({
     name: "",
@@ -58,6 +62,16 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
       fetchLeads();
     }
   }, [open]);
+
+  // Auto-add current user as first assignee
+  useEffect(() => {
+    if (profile?.user_id && projectData.assignees.length === 0) {
+      setProjectData(prev => ({
+        ...prev,
+        assignees: [profile.user_id]
+      }));
+    }
+  }, [profile?.user_id, projectData.assignees.length]);
 
   const fetchLeads = async () => {
     setLoadingLeads(true);
@@ -85,7 +99,13 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
   };
 
   const resetForm = () => {
-    setProjectData({ name: "", description: "", projectTypeId: "", basePrice: "" });
+    setProjectData({ 
+      name: "", 
+      description: "", 
+      projectTypeId: "", 
+      basePrice: "",
+      assignees: profile?.user_id ? [profile.user_id] : []
+    });
     setNewLeadData({ name: "", email: "", phone: "", notes: "" });
     setSelectedLeadId("");
     setSearchTerm("");
@@ -176,7 +196,8 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
           description: projectData.description.trim() || null,
           status_id: statusId,
           project_type_id: projectData.projectTypeId,
-          base_price: basePrice
+          base_price: basePrice,
+          assignees: projectData.assignees.length > 0 ? projectData.assignees : [user.id]
         })
         .select('id')
         .single();
@@ -221,7 +242,7 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
     }
   };
 
-  const handleProjectDataChange = (field: keyof typeof projectData, value: string) => {
+  const handleProjectDataChange = (field: keyof typeof projectData, value: string | string[]) => {
     setProjectData(prev => ({
       ...prev,
       [field]: value
@@ -254,6 +275,7 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
     projectData.name.trim() ||
     projectData.description.trim() ||
     projectData.basePrice.trim() ||
+    projectData.assignees.length > 1 || // More than just the default creator
     (isNewLead && (newLeadData.name.trim() || newLeadData.email.trim() || newLeadData.phone.trim() || newLeadData.notes.trim())) ||
     (!isNewLead && selectedLeadId)
   );
@@ -517,6 +539,14 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
                 rows={3}
                 disabled={loading}
                 className="resize-none"
+              />
+            </div>
+
+            <div className="pt-4 border-t">
+              <AssigneesPicker
+                value={projectData.assignees}
+                onChange={(assignees) => handleProjectDataChange("assignees", assignees)}
+                disabled={loading}
               />
             </div>
           </div>

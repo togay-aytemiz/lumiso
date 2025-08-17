@@ -1,0 +1,228 @@
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Plus, Search, X } from "lucide-react";
+import { useTeamManagement } from "@/hooks/useTeamManagement";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useProfile } from "@/hooks/useProfile";
+
+interface AssigneesPickerProps {
+  value: string[];
+  onChange: (assignees: string[]) => void;
+  disabled?: boolean;
+}
+
+export function AssigneesPicker({ value, onChange, disabled }: AssigneesPickerProps) {
+  const [open, setOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const { teamMembers } = useTeamManagement();
+  const { profile } = useProfile();
+  const isMobile = useIsMobile();
+  
+  // Get current user info to auto-add as first assignee
+  const currentUserId = profile?.user_id;
+  const currentUserName = profile?.full_name || "You";
+  
+  // Filter team members based on search
+  const filteredMembers = teamMembers.filter(member => {
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      member.full_name?.toLowerCase().includes(searchLower) ||
+      member.email?.toLowerCase().includes(searchLower)
+    );
+  });
+
+  // Get assignee details for display
+  const getAssigneeDetails = (userId: string) => {
+    if (userId === currentUserId) {
+      return {
+        name: currentUserName,
+        email: "",
+        avatar: profile?.profile_photo_url || "",
+        initials: currentUserName.split(' ').map(n => n[0]).join('').toUpperCase()
+      };
+    }
+    
+    const member = teamMembers.find(m => m.user_id === userId);
+    return {
+      name: member?.full_name || "Unknown",
+      email: member?.email || "",
+      avatar: member?.profile_photo_url || "",
+      initials: (member?.full_name || "U").split(' ').map(n => n[0]).join('').toUpperCase()
+    };
+  };
+
+  const handleToggleAssignee = (userId: string) => {
+    if (value.includes(userId)) {
+      // Don't allow removing the creator (first assignee)
+      if (userId === currentUserId && value[0] === currentUserId) {
+        return;
+      }
+      onChange(value.filter(id => id !== userId));
+    } else {
+      onChange([...value, userId]);
+    }
+  };
+
+  const handleConfirmSelection = () => {
+    setOpen(false);
+    setSearchTerm("");
+  };
+
+  const AssigneesList = () => (
+    <div className="space-y-2">
+      <div className="flex items-center gap-2 p-3 border-b">
+        <Search className="h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Search by name or email..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="border-none p-0 h-auto focus-visible:ring-0"
+        />
+      </div>
+      
+      <div className="max-h-64 overflow-y-auto">
+        {filteredMembers.length === 0 ? (
+          <div className="p-4 text-center text-sm text-muted-foreground">
+            {teamMembers.length === 0 
+              ? "No team members yet. Invite from Team Management."
+              : "No members match your search."
+            }
+          </div>
+        ) : (
+          <div className="space-y-1 p-2">
+            {filteredMembers.map((member) => {
+              const isSelected = value.includes(member.user_id);
+              const isCreator = member.user_id === currentUserId;
+              const isDisabled = isCreator && value[0] === currentUserId; // Can't uncheck creator
+              
+              return (
+                <div
+                  key={member.user_id}
+                  className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 cursor-pointer"
+                  onClick={() => !isDisabled && handleToggleAssignee(member.user_id)}
+                >
+                  <Checkbox
+                    checked={isSelected}
+                    disabled={isDisabled}
+                    onChange={() => !isDisabled && handleToggleAssignee(member.user_id)}
+                  />
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={member.profile_photo_url || ""} />
+                    <AvatarFallback className="text-xs">
+                      {(member.full_name || "U").split(' ').map(n => n[0]).join('').toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-sm truncate">
+                      {member.full_name || "Unknown"}
+                      {isCreator && " (You)"}
+                    </div>
+                    <div className="text-xs text-muted-foreground truncate">
+                      {member.email}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+      
+      <div className="p-3 border-t">
+        <Button onClick={handleConfirmSelection} className="w-full">
+          Add Selected
+        </Button>
+      </div>
+    </div>
+  );
+
+  const Trigger = () => (
+    <Button
+      variant="outline"
+      size="sm"
+      disabled={disabled}
+      className="h-8 gap-1 text-xs"
+    >
+      <Plus className="h-3 w-3" />
+      Add
+    </Button>
+  );
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <h4 className="text-sm font-medium">Assignees</h4>
+        {teamMembers.length > 0 && (
+          <>
+            {isMobile ? (
+              <Drawer open={open} onOpenChange={setOpen}>
+                <DrawerTrigger asChild>
+                  <Trigger />
+                </DrawerTrigger>
+                <DrawerContent className="h-[80vh]">
+                  <DrawerHeader>
+                    <DrawerTitle>Select Team Members</DrawerTitle>
+                  </DrawerHeader>
+                  <AssigneesList />
+                </DrawerContent>
+              </Drawer>
+            ) : (
+              <Popover open={open} onOpenChange={setOpen}>
+                <PopoverTrigger asChild>
+                  <Trigger />
+                </PopoverTrigger>
+                <PopoverContent className="w-80 p-0" align="end">
+                  <AssigneesList />
+                </PopoverContent>
+              </Popover>
+            )}
+          </>
+        )}
+      </div>
+      
+      <div className="flex flex-wrap gap-2">
+        {value.map((userId, index) => {
+          const assignee = getAssigneeDetails(userId);
+          const isCreator = userId === currentUserId && index === 0;
+          
+          return (
+            <Badge
+              key={userId}
+              variant="secondary"
+              className="flex items-center gap-2 px-2 py-1 h-auto"
+            >
+              <Avatar className="h-4 w-4">
+                <AvatarImage src={assignee.avatar} />
+                <AvatarFallback className="text-xs">
+                  {assignee.initials}
+                </AvatarFallback>
+              </Avatar>
+              <span className="text-xs font-medium">{assignee.name}</span>
+              {!isCreator && !disabled && (
+                <X
+                  className="h-3 w-3 cursor-pointer hover:text-destructive"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onChange(value.filter(id => id !== userId));
+                  }}
+                />
+              )}
+            </Badge>
+          );
+        })}
+        
+        {value.length === 0 && (
+          <div className="text-xs text-muted-foreground">
+            No assignees selected
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

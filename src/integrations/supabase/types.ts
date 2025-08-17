@@ -290,6 +290,7 @@ export type Database = {
       }
       leads: {
         Row: {
+          assignees: string[] | null
           created_at: string
           due_date: string | null
           email: string | null
@@ -303,6 +304,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          assignees?: string[] | null
           created_at?: string
           due_date?: string | null
           email?: string | null
@@ -316,6 +318,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          assignees?: string[] | null
           created_at?: string
           due_date?: string | null
           email?: string | null
@@ -621,6 +624,7 @@ export type Database = {
       }
       projects: {
         Row: {
+          assignees: string[] | null
           base_price: number | null
           created_at: string
           description: string | null
@@ -634,6 +638,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          assignees?: string[] | null
           base_price?: number | null
           created_at?: string
           description?: string | null
@@ -647,6 +652,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          assignees?: string[] | null
           base_price?: number | null
           created_at?: string
           description?: string | null

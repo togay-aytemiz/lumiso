@@ -11,6 +11,8 @@ import { Plus } from "lucide-react";
 import { leadSchema, sanitizeInput, sanitizeHtml } from "@/lib/validation";
 import { ZodError } from "zod";
 import { useUserSettings } from "@/hooks/useUserSettings";
+import { AssigneesPicker } from "./AssigneesPicker";
+import { useProfile } from "@/hooks/useProfile";
 
 interface AddLeadDialogProps {
   onLeadAdded: () => void;
@@ -29,11 +31,23 @@ const AddLeadDialog = ({ onLeadAdded, open, onOpenChange }: AddLeadDialogProps) 
     phone: "",
     notes: "",
     status: "",
+    assignees: [] as string[],
   });
+  const { profile } = useProfile();
 
   useEffect(() => {
     fetchLeadStatuses();
   }, []);
+
+  // Auto-add current user as first assignee
+  useEffect(() => {
+    if (profile?.user_id && formData.assignees.length === 0) {
+      setFormData(prev => ({
+        ...prev,
+        assignees: [profile.user_id]
+      }));
+    }
+  }, [profile?.user_id, formData.assignees.length]);
 
   const fetchLeadStatuses = async () => {
     try {
@@ -102,6 +116,7 @@ const AddLeadDialog = ({ onLeadAdded, open, onOpenChange }: AddLeadDialogProps) 
         phone: formData.phone ? sanitizeInput(formData.phone) : null,
         notes: formData.notes ? await sanitizeHtml(formData.notes) : null,
         status: formData.status,
+        assignees: formData.assignees.length > 0 ? formData.assignees : [user.id],
       };
 
       const { error } = await supabase
@@ -123,6 +138,7 @@ const AddLeadDialog = ({ onLeadAdded, open, onOpenChange }: AddLeadDialogProps) 
         phone: "",
         notes: "",
         status: defaultStatus,
+        assignees: profile?.user_id ? [profile.user_id] : [],
       });
       setErrors({});
       onOpenChange(false);
@@ -138,7 +154,7 @@ const AddLeadDialog = ({ onLeadAdded, open, onOpenChange }: AddLeadDialogProps) 
     }
   };
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (field: string, value: string | string[]) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -158,6 +174,7 @@ const AddLeadDialog = ({ onLeadAdded, open, onOpenChange }: AddLeadDialogProps) 
         phone: "",
         notes: "",
         status: defaultStatus,
+        assignees: profile?.user_id ? [profile.user_id] : [],
       });
       setErrors({});
       onOpenChange(false);
@@ -264,6 +281,14 @@ const AddLeadDialog = ({ onLeadAdded, open, onOpenChange }: AddLeadDialogProps) 
               rows={3}
             />
             {errors.notes && <p className="text-sm text-destructive">{errors.notes}</p>}
+          </div>
+          
+          <div className="pt-4 border-t">
+            <AssigneesPicker
+              value={formData.assignees}
+              onChange={(assignees) => handleInputChange("assignees", assignees)}
+              disabled={loading}
+            />
           </div>
         </div>
       </AppSheetModal>

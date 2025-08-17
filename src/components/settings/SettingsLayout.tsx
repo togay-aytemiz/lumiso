@@ -21,61 +21,80 @@ import { useSettingsNavigation } from "@/hooks/useSettingsNavigation";
 import { CategoryFloatingActionBar } from "./CategoryFloatingActionBar";
 
 const settingsCategories = [
+  // Personal Settings
   {
-    label: "General",
-    path: "/settings/general",
-    icon: SettingsIcon
-  },
-  {
-    label: "Account & Users",
-    path: "/settings/account",
-    icon: User
+    label: "Profile",
+    path: "/settings/profile",
+    icon: User,
+    group: "Personal Settings"
   },
   {
     label: "Notifications",
     path: "/settings/notifications",
-    icon: Bell
+    icon: Bell,
+    group: "Personal Settings"
+  },
+  // Organization Settings
+  {
+    label: "Team Management",
+    path: "/settings/team",
+    icon: Users,
+    group: "Organization Settings"
   },
   {
     label: "Client Messaging",
     path: "/settings/client-messaging",
-    icon: MessageSquare
+    icon: MessageSquare,
+    group: "Organization Settings"
   },
   {
     label: "Projects & Sessions",
     path: "/settings/projects",
-    icon: FolderOpen
+    icon: FolderOpen,
+    group: "Organization Settings"
   },
   {
     label: "Lead Management",
     path: "/settings/leads",
-    icon: Users
+    icon: Users,
+    group: "Organization Settings"
   },
   {
     label: "Packages & Services",
     path: "/settings/services",
-    icon: Package
+    icon: Package,
+    group: "Organization Settings"
   },
   {
     label: "Integrations",
     path: "/settings/integrations",
-    icon: Plug
+    icon: Plug,
+    group: "Organization Settings"
   },
   {
     label: "Contracts",
     path: "/settings/contracts",
-    icon: FileText
+    icon: FileText,
+    group: "Organization Settings"
   },
   {
     label: "Billing & Payments",
     path: "/settings/billing",
-    icon: CreditCard
+    icon: CreditCard,
+    group: "Organization Settings"
+  },
+  {
+    label: "General",
+    path: "/settings/general",
+    icon: SettingsIcon,
+    group: "Organization Settings"
   },
   {
     label: "Danger Zone",
     path: "/settings/danger-zone",
     icon: AlertTriangle,
-    isDanger: true
+    isDanger: true,
+    group: "Organization Settings"
   }
 ];
 
@@ -124,10 +143,30 @@ function SettingsLayoutContent() {
         <div className={`p-6 ${isMobile ? 'px-3 py-4' : 'px-3 py-4 lg:px-6 lg:py-6'} h-full overflow-y-auto`}>
           <h2 className="text-xl font-semibold mb-6 hidden lg:block">Settings</h2>
           <nav className={`space-y-1 ${isMobile ? 'space-y-2' : 'space-y-2 lg:space-y-1'}`}>
-            {settingsCategories.map((category) => {
+            {settingsCategories.reduce((acc, category, index) => {
               const active = isActive(category.path);
               const isDanger = 'isDanger' in category && category.isDanger;
-              return (
+              const isFirstInGroup = index === 0 || settingsCategories[index - 1].group !== category.group;
+              
+              // Add group divider on mobile/tablet (icon only view)
+              if (isFirstInGroup && index > 0 && isMobile) {
+                acc.push(
+                  <div key={`divider-${category.group}`} className="border-t border-border/50 mx-2 lg:hidden" />
+                );
+              }
+              
+              // Add group label on desktop
+              if (isFirstInGroup && !isMobile) {
+                acc.push(
+                  <div key={`label-${category.group}`} className="hidden lg:block">
+                    <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider px-3 py-2 mt-4 first:mt-0">
+                      {category.group}
+                    </div>
+                  </div>
+                );
+              }
+              
+              acc.push(
                 <NavLink
                   key={category.path}
                   to={category.path}
@@ -160,7 +199,9 @@ function SettingsLayoutContent() {
                   </span>
                 </NavLink>
               );
-            })}
+              
+              return acc;
+            }, [] as React.ReactNode[])}
           </nav>
         </div>
       </div>

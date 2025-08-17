@@ -15,7 +15,8 @@ import Analytics from "./pages/Analytics";
 import Payments from "./pages/Payments";
 import SettingsLayout from "./components/settings/SettingsLayout";
 import GeneralSettings from "./pages/settings/General";
-import AccountSettings from "./pages/settings/Account";
+import ProfileSettings from "./pages/settings/Profile";
+import TeamSettings from "./pages/settings/Team";
 import NotificationsSettings from "./pages/settings/Notifications";
 import ProjectsSettings from "./pages/settings/Projects";
 import LeadsSettings from "./pages/settings/Leads";
@@ -57,7 +58,8 @@ const App = () => (
               <Route path="settings" element={<SettingsLayout />}>
                 <Route index element={<Navigate to="/settings/general" replace />} />
                 <Route path="general" element={<GeneralSettings />} />
-                <Route path="account" element={<AccountSettings />} />
+                <Route path="profile" element={<ProfileSettings />} />
+                <Route path="team" element={<TeamSettings />} />
                 <Route path="notifications" element={<NotificationsSettings />} />
                 <Route path="projects" element={<ProjectsSettings />} />
                 <Route path="leads" element={<LeadsSettings />} />

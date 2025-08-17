@@ -159,7 +159,7 @@ function SettingsLayoutContent() {
               if (isFirstInGroup && !isMobile) {
                 acc.push(
                   <div key={`label-${category.group}`} className="hidden lg:block">
-                    <div className={`text-xs font-medium text-muted-foreground uppercase tracking-wider px-3 py-2 pt-4 mt-4 first:mt-0 ${category.group === 'Organization Settings' ? 'mt-8 pb-4' : ''}`}>
+                    <div className={`text-xs font-medium text-muted-foreground uppercase tracking-wider px-3 py-2 pt-4 mt-4 first:mt-0 ${category.group === 'Organization Settings' ? 'mt-8' : ''}`}>
                       {category.group}
                     </div>
                   </div>

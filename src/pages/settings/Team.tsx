@@ -544,7 +544,7 @@ export default function Team() {
                         <TableCell>
                           <div className="flex items-center gap-3">
                             <Avatar className="h-8 w-8">
-                              <AvatarImage src={member.avatar_url || ''} alt={member.full_name || ''} />
+                              <AvatarImage src={member.profile_photo_url || ''} alt={member.full_name || ''} />
                               <AvatarFallback>
                                 {member.full_name?.split(' ').map(n => n[0]).join('') || member.email[0].toUpperCase()}
                               </AvatarFallback>
@@ -560,12 +560,12 @@ export default function Team() {
                         </TableCell>
                         <TableCell>
                           <span className="text-sm text-muted-foreground">
-                            {formatLastActive(member.last_active_at)}
+                            {formatLastActive(member.last_active)}
                           </span>
                         </TableCell>
                         <TableCell>
-                          <Badge variant={member.is_active ? "default" : "secondary"}>
-                            {member.is_active ? "Active" : "Inactive"}
+                          <Badge variant={member.is_online ? "default" : "secondary"}>
+                            {member.is_online ? "Active" : "Inactive"}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right">
@@ -595,7 +595,7 @@ export default function Team() {
                           )}
                         </TableCell>
                       </TableRow>
-                    )))}
+                     ))}
                   </TableBody>
                 </Table>
               </div>
@@ -621,25 +621,119 @@ export default function Team() {
             {/* System Roles */}
             <div className="space-y-4">
               <h5 className="text-sm font-medium text-muted-foreground">System Roles</h5>
-              <div className="grid gap-4">
+              <div className="space-y-4">
                 {systemRoles.map((role) => (
                   <Card key={role.id} className="border">
                     <CardContent className="p-6">
-                      <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-4 items-start">
-                        {/* Role Info & Permissions */}
-                        <div className="space-y-3">
-                          {/* Title & Description */}
-                          <div>
-                            <CardTitle className="text-base font-semibold">{role.name}</CardTitle>
-                            <CardDescription className="mt-1 text-sm">{role.description}</CardDescription>
+                      <div className="flex items-center justify-between min-h-[80px]">
+                        {/* Left Side - Role Info & Permissions */}
+                        <div className="flex-1 min-w-0 pr-4">
+                          <div className="flex flex-col justify-center h-full space-y-2">
+                            {/* Title & Description Row */}
+                            <div>
+                              <h3 className="text-base font-semibold text-foreground">{role.name}</h3>
+                              <p className="text-sm text-muted-foreground mt-1">{role.description}</p>
+                            </div>
+                            
+                            {/* Permissions Row */}
+                            <div className="flex flex-wrap gap-2 mt-2">
+                              {role.id === 'owner' ? (
+                                <Badge variant="outline" className="text-xs font-medium">All Permissions</Badge>
+                              ) : (
+                                <>
+                                  {role.permissions.slice(0, 3).map((permission) => (
+                                    <Badge key={permission.id} variant="outline" className="text-xs">
+                                      {permission.name.replace(/_/g, ' ')}
+                                    </Badge>
+                                  ))}
+                                  {role.permissions.length > 3 && (
+                                    <Popover>
+                                      <PopoverTrigger asChild>
+                                        <Badge variant="outline" className="text-xs cursor-pointer hover:bg-muted">
+                                          +{role.permissions.length - 3} more
+                                        </Badge>
+                                      </PopoverTrigger>
+                                      <PopoverContent className="w-80">
+                                        <div className="space-y-2">
+                                          <h4 className="font-medium text-sm">All Permissions</h4>
+                                          <div className="flex flex-wrap gap-1">
+                                            {role.permissions.map((permission) => (
+                                              <Badge key={permission.id} variant="outline" className="text-xs">
+                                                {permission.name.replace(/_/g, ' ')}
+                                              </Badge>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      </PopoverContent>
+                                    </Popover>
+                                  )}
+                                </>
+                              )}
+                            </div>
                           </div>
-                          
-                          {/* Permissions */}
-                          <div className="flex flex-wrap gap-2">
-                            {role.id === 'owner' ? (
-                              <Badge variant="outline" className="text-xs font-medium">All Permissions</Badge>
-                            ) : (
-                              <>
+                        </div>
+                        
+                        {/* Right Side - Actions Vertically Centered */}
+                        <div className="flex items-center justify-center">
+                          {role.isEditable && (
+                            <>
+                              {isMobile ? (
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="sm">
+                                      <MoreHorizontal className="h-4 w-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onClick={() => openEditRole(role, true)}>
+                                      <Edit2 className="h-4 w-4 mr-2" />
+                                      Edit Role
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              ) : (
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => openEditRole(role, true)}
+                                  className="whitespace-nowrap"
+                                >
+                                  <Edit2 className="h-4 w-4 mr-2" />
+                                  Edit
+                                </Button>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+
+            {/* Custom Roles */}
+            {customRoles.length > 0 && (
+              <div className="space-y-4">
+                <h5 className="text-sm font-medium text-muted-foreground">Custom Roles</h5>
+                <div className="space-y-4">
+                  {customRoles.map((role) => (
+                    <Card key={role.id} className="border">
+                      <CardContent className="p-6">
+                        <div className="flex items-center justify-between min-h-[80px]">
+                          {/* Left Side - Role Info & Permissions */}
+                          <div className="flex-1 min-w-0 pr-4">
+                            <div className="flex flex-col justify-center h-full space-y-2">
+                              {/* Title & Description Row */}
+                              <div>
+                                <h3 className="text-base font-semibold text-foreground">{role.name}</h3>
+                                {role.description && (
+                                  <p className="text-sm text-muted-foreground mt-1">{role.description}</p>
+                                )}
+                              </div>
+                              
+                              {/* Permissions Row */}
+                              <div className="flex flex-wrap gap-2 mt-2">
                                 {role.permissions.slice(0, 3).map((permission) => (
                                   <Badge key={permission.id} variant="outline" className="text-xs">
                                     {permission.name.replace(/_/g, ' ')}
@@ -666,102 +760,12 @@ export default function Team() {
                                     </PopoverContent>
                                   </Popover>
                                 )}
-                              </>
-                            )}
-                          </div>
-                        </div>
-                        
-                        {/* Actions - Right Aligned */}
-                        <div className="flex items-center justify-end lg:justify-center">
-                          {role.isEditable && (
-                            <>
-                              {isMobile ? (
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="sm">
-                                      <MoreHorizontal className="h-4 w-4" />
-                                    </Button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent align="end">
-                                    <DropdownMenuItem onClick={() => openEditRole(role, true)}>
-                                      <Edit2 className="h-4 w-4 mr-2" />
-                                      Edit Role
-                                    </DropdownMenuItem>
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
-                              ) : (
-                                <Button 
-                                  variant="outline" 
-                                  size="sm"
-                                  onClick={() => openEditRole(role, true)}
-                                  className="shrink-0"
-                                >
-                                  <Edit2 className="h-4 w-4 mr-2" />
-                                  Edit
-                                </Button>
-                              )}
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
-
-            {/* Custom Roles */}
-            {customRoles.length > 0 && (
-              <div className="space-y-4">
-                <h5 className="text-sm font-medium text-muted-foreground">Custom Roles</h5>
-                <div className="grid gap-4">
-                  {customRoles.map((role) => (
-                    <Card key={role.id} className="border">
-                      <CardContent className="p-6">
-                        <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-4 items-start">
-                          {/* Role Info & Permissions */}
-                          <div className="space-y-3">
-                            {/* Title & Description */}
-                            <div>
-                              <CardTitle className="text-base font-semibold">{role.name}</CardTitle>
-                              {role.description && (
-                                <CardDescription className="mt-1 text-sm">{role.description}</CardDescription>
-                              )}
-                            </div>
-                            
-                            {/* Permissions */}
-                            <div className="flex flex-wrap gap-2">
-                              {role.permissions.slice(0, 3).map((permission) => (
-                                <Badge key={permission.id} variant="outline" className="text-xs">
-                                  {permission.name.replace(/_/g, ' ')}
-                                </Badge>
-                              ))}
-                              {role.permissions.length > 3 && (
-                                <Popover>
-                                  <PopoverTrigger asChild>
-                                    <Badge variant="outline" className="text-xs cursor-pointer hover:bg-muted">
-                                      +{role.permissions.length - 3} more
-                                    </Badge>
-                                  </PopoverTrigger>
-                                  <PopoverContent className="w-80">
-                                    <div className="space-y-2">
-                                      <h4 className="font-medium text-sm">All Permissions</h4>
-                                      <div className="flex flex-wrap gap-1">
-                                        {role.permissions.map((permission) => (
-                                          <Badge key={permission.id} variant="outline" className="text-xs">
-                                            {permission.name.replace(/_/g, ' ')}
-                                          </Badge>
-                                        ))}
-                                      </div>
-                                    </div>
-                                  </PopoverContent>
-                                </Popover>
-                              )}
+                              </div>
                             </div>
                           </div>
                           
-                          {/* Actions - Right Aligned */}
-                          <div className="flex items-center justify-end lg:justify-center">
+                          {/* Right Side - Actions Vertically Centered */}
+                          <div className="flex items-center justify-center">
                             {isMobile ? (
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
@@ -784,11 +788,12 @@ export default function Team() {
                                 </DropdownMenuContent>
                               </DropdownMenu>
                             ) : (
-                              <div className="flex items-center gap-2 shrink-0">
+                              <div className="flex items-center gap-2">
                                 <Button 
                                   variant="outline" 
                                   size="sm"
                                   onClick={() => openEditRole(role)}
+                                  className="whitespace-nowrap"
                                 >
                                   <Edit2 className="h-4 w-4 mr-2" />
                                   Edit
@@ -797,7 +802,7 @@ export default function Team() {
                                   variant="outline" 
                                   size="sm"
                                   onClick={() => setRoleToDelete(role.id)}
-                                  className="text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground"
+                                  className="text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground whitespace-nowrap"
                                 >
                                   <Trash2 className="h-4 w-4 mr-2" />
                                   Delete
@@ -904,7 +909,7 @@ export default function Team() {
                               )}
                             </div>
                           </div>
-                        )))}
+                        ))}
                       </div>
                     </div>
                   ))}

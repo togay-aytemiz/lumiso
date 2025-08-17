@@ -14,7 +14,12 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { AppSheetModal } from "@/components/ui/app-sheet-modal";
 import { ChevronDown, Loader2, X, Copy, Check, MoreHorizontal, Plus, Trash2, Edit2 } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useTeamManagement } from "@/hooks/useTeamManagement";
 import { useToast } from "@/hooks/use-toast";
 import { useSettingsCategorySection } from "@/hooks/useSettingsCategorySection";
@@ -34,18 +39,30 @@ interface CustomRole {
   permissions: Permission[];
 }
 
+interface SystemRole {
+  id: string;
+  name: string;
+  description: string;
+  permissions: Permission[];
+  isEditable: boolean;
+}
+
 export default function Team() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("Member");
   const [copiedStates, setCopiedStates] = useState<{ [key: string]: boolean }>({});
   const [permissions, setPermissions] = useState<Permission[]>([]);
   const [customRoles, setCustomRoles] = useState<CustomRole[]>([]);
+  const [systemRoles, setSystemRoles] = useState<SystemRole[]>([]);
   const [isCreateRoleOpen, setIsCreateRoleOpen] = useState(false);
-  const [editingRole, setEditingRole] = useState<CustomRole | null>(null);
+  const [editingRole, setEditingRole] = useState<CustomRole | SystemRole | null>(null);
+  const [isEditingSystem, setIsEditingSystem] = useState(false);
   const [newRoleName, setNewRoleName] = useState("");
   const [newRoleDescription, setNewRoleDescription] = useState("");
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [roleToDelete, setRoleToDelete] = useState<string | null>(null);
+  const isMobile = useIsMobile();
   
   const { 
     teamMembers, 
@@ -67,7 +84,7 @@ export default function Team() {
     onSave: async () => ({})
   });
 
-  // Load permissions and custom roles
+  // Load permissions and roles
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -108,6 +125,26 @@ export default function Team() {
           }));
           
           setCustomRoles(transformedRoles);
+
+          // Set up system roles (Owner and Member)
+          setSystemRoles([
+            {
+              id: 'owner',
+              name: 'Owner',
+              description: 'Full access to all features and settings',
+              permissions: permissionsData || [],
+              isEditable: false
+            },
+            {
+              id: 'member',
+              name: 'Member', 
+              description: 'Basic team member access',
+              permissions: (permissionsData || []).filter(p => 
+                ['view_projects', 'view_sessions', 'view_clients'].includes(p.name)
+              ),
+              isEditable: true
+            }
+          ]);
         }
       } catch (error) {
         console.error('Error loading team data:', error);
@@ -204,23 +241,123 @@ export default function Team() {
       setCustomRoles(prev => [...prev, newRole]);
       
       // Reset form
-      setNewRoleName("");
-      setNewRoleDescription("");
-      setSelectedPermissions([]);
-      setIsCreateRoleOpen(false);
+      resetRoleForm();
       
       toast({
         title: "Success",
-        description: "Custom role created successfully",
+        description: "Role created successfully",
       });
     } catch (error) {
       console.error('Error creating role:', error);
       toast({
         title: "Error",
-        description: "Failed to create custom role",
+        description: "Failed to create role",
         variant: "destructive",
       });
     }
+  };
+
+  const handleEditRole = async () => {
+    if (!editingRole || !newRoleName.trim()) return;
+    
+    try {
+      if (isEditingSystem) {
+        // For system roles, just update local state (Member role)
+        setSystemRoles(prev => prev.map(role => 
+          role.id === editingRole.id 
+            ? {
+                ...role,
+                name: newRoleName.trim(),
+                description: newRoleDescription.trim(),
+                permissions: permissions.filter(p => selectedPermissions.includes(p.id))
+              }
+            : role
+        ));
+        
+        toast({
+          title: "Success",
+          description: "Role updated successfully",
+        });
+      } else {
+        // Update custom role in database
+        const { error: roleError } = await supabase
+          .from('custom_roles')
+          .update({
+            name: newRoleName.trim(),
+            description: newRoleDescription.trim(),
+          })
+          .eq('id', editingRole.id);
+
+        if (roleError) throw roleError;
+
+        // Delete existing permissions
+        const { error: deleteError } = await supabase
+          .from('role_permissions')
+          .delete()
+          .eq('role_id', editingRole.id);
+
+        if (deleteError) throw deleteError;
+
+        // Add new permissions
+        if (selectedPermissions.length > 0) {
+          const { error: permissionsError } = await supabase
+            .from('role_permissions')
+            .insert(
+              selectedPermissions.map(permissionId => ({
+                role_id: editingRole.id,
+                permission_id: permissionId
+              }))
+            );
+
+          if (permissionsError) throw permissionsError;
+        }
+
+        // Update local state
+        setCustomRoles(prev => prev.map(role => 
+          role.id === editingRole.id 
+            ? {
+                ...role,
+                name: newRoleName.trim(),
+                description: newRoleDescription.trim(),
+                permissions: permissions.filter(p => selectedPermissions.includes(p.id))
+              }
+            : role
+        ));
+        
+        toast({
+          title: "Success",
+          description: "Role updated successfully",
+        });
+      }
+      
+      // Reset form
+      resetRoleForm();
+    } catch (error) {
+      console.error('Error updating role:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update role",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const resetRoleForm = () => {
+    setNewRoleName("");
+    setNewRoleDescription("");
+    setSelectedPermissions([]);
+    setIsCreateRoleOpen(false);
+    setEditingRole(null);
+    setIsEditingSystem(false);
+  };
+
+  const openEditRole = (role: CustomRole | SystemRole, isSystem: boolean = false) => {
+    setEditingRole(role);
+    setIsEditingSystem(isSystem);
+    setNewRoleName(role.name);
+    setNewRoleDescription(role.description);
+    setSelectedPermissions(role.permissions.map(p => p.id));
+    setIsCreateRoleOpen(true);
   };
 
   const handleDeleteRole = async (roleId: string) => {
@@ -233,18 +370,27 @@ export default function Team() {
       if (error) throw error;
 
       setCustomRoles(prev => prev.filter(role => role.id !== roleId));
+      setRoleToDelete(null);
       
       toast({
         title: "Success",
-        description: "Custom role deleted successfully",
+        description: "Role deleted successfully",
       });
     } catch (error) {
       console.error('Error deleting role:', error);
       toast({
         title: "Error",
-        description: "Failed to delete custom role",
+        description: "Failed to delete role",
         variant: "destructive",
       });
+    }
+  };
+
+  const handleSelectAllPermissions = () => {
+    if (selectedPermissions.length === permissions.length) {
+      setSelectedPermissions([]);
+    } else {
+      setSelectedPermissions(permissions.map(p => p.id));
     }
   };
 
@@ -475,164 +621,285 @@ export default function Team() {
 
         <CategorySettingsSection
           title="Roles & Permissions"
-          description="Manage custom roles and their permissions."
+          description="Create and manage custom roles with specific permissions."
           sectionId="roles-permissions"
         >
-          <div className="space-y-4">
+          <div className="space-y-6">
+            {/* Create Role Button */}
             <div className="flex justify-between items-center">
-              <div>
-                <h4 className="font-medium">Custom Roles</h4>
-                <p className="text-sm text-muted-foreground">
-                  Create custom roles with specific permissions for your team
-                </p>
-              </div>
-              <Dialog open={isCreateRoleOpen} onOpenChange={setIsCreateRoleOpen}>
-                <DialogTrigger asChild>
-                  <Button>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Create Role
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-2xl">
-                  <DialogHeader>
-                    <DialogTitle>Create Custom Role</DialogTitle>
-                    <DialogDescription>
-                      Define a new role and assign permissions to control what team members can access.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="role-name">Role Name</Label>
-                        <Input
-                          id="role-name"
-                          placeholder="e.g., Editor, Viewer, Manager"
-                          value={newRoleName}
-                          onChange={(e) => setNewRoleName(e.target.value)}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="role-description">Description (Optional)</Label>
-                        <Input
-                          id="role-description"
-                          placeholder="Brief description of this role"
-                          value={newRoleDescription}
-                          onChange={(e) => setNewRoleDescription(e.target.value)}
-                        />
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-4">
-                      <Label>Permissions</Label>
-                      {Object.entries(permissionsByCategory).map(([category, categoryPermissions]) => (
-                        <div key={category} className="space-y-2">
-                          <h5 className="font-medium text-sm">{category}</h5>
-                          <div className="grid grid-cols-1 gap-2 pl-4">
-                            {categoryPermissions.map((permission) => (
-                              <div key={permission.id} className="flex items-center space-x-2">
-                                <Switch
-                                  id={`permission-${permission.id}`}
-                                  checked={selectedPermissions.includes(permission.id)}
-                                  onCheckedChange={(checked) => {
-                                    if (checked) {
-                                      setSelectedPermissions(prev => [...prev, permission.id]);
-                                    } else {
-                                      setSelectedPermissions(prev => prev.filter(id => id !== permission.id));
-                                    }
-                                  }}
-                                />
-                                <Label htmlFor={`permission-${permission.id}`} className="text-sm">
-                                  {permission.description}
-                                </Label>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <DialogFooter>
-                    <Button variant="outline" onClick={() => setIsCreateRoleOpen(false)}>
-                      Cancel
-                    </Button>
-                    <Button onClick={handleCreateRole} disabled={!newRoleName.trim()}>
-                      Create Role
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
+              <h4 className="text-sm font-medium">Available Roles</h4>
+              <Button onClick={() => setIsCreateRoleOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Create Role
+              </Button>
             </div>
 
-            {/* Default Roles */}
+            {/* System Roles */}
             <div className="space-y-3">
-              <h5 className="font-medium text-sm">Default Roles</h5>
-              <div className="grid gap-3">
-                <div className="flex items-center justify-between p-3 border rounded-lg">
-                  <div>
-                    <h6 className="font-medium">Owner</h6>
-                    <p className="text-sm text-muted-foreground">Full access to all features and settings</p>
-                  </div>
-                  <Badge>System Role</Badge>
-                </div>
-                <div className="flex items-center justify-between p-3 border rounded-lg">
-                  <div>
-                    <h6 className="font-medium">Member</h6>
-                    <p className="text-sm text-muted-foreground">Basic access with limited permissions</p>
-                  </div>
-                  <Badge variant="secondary">System Role</Badge>
-                </div>
+              <h5 className="text-sm font-medium text-muted-foreground">System Roles</h5>
+              <div className="grid gap-4">
+                {systemRoles.map((role) => (
+                  <Card key={role.id} className="relative">
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <CardTitle className="text-base">{role.name}</CardTitle>
+                          <CardDescription className="mt-1">{role.description}</CardDescription>
+                          <div className="flex flex-wrap gap-1 mt-3">
+                            {role.id === 'owner' ? (
+                              <Badge variant="outline" className="text-xs">All Permissions</Badge>
+                            ) : (
+                              role.permissions.slice(0, 3).map((permission) => (
+                                <Badge key={permission.id} variant="outline" className="text-xs">
+                                  {permission.name.replace(/_/g, ' ')}
+                                </Badge>
+                              ))
+                            )}
+                            {role.permissions.length > 3 && role.id !== 'owner' && (
+                              <Badge variant="outline" className="text-xs">
+                                +{role.permissions.length - 3} more
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                        
+                        {/* Actions */}
+                        <div className="ml-4">
+                          {role.isEditable && (
+                            <>
+                              {isMobile ? (
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="sm">
+                                      <MoreHorizontal className="h-4 w-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onClick={() => openEditRole(role, true)}>
+                                      <Edit2 className="h-4 w-4 mr-2" />
+                                      Edit Role
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              ) : (
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => openEditRole(role, true)}
+                                >
+                                  <Edit2 className="h-4 w-4 mr-2" />
+                                  Edit
+                                </Button>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
             </div>
 
             {/* Custom Roles */}
             {customRoles.length > 0 && (
               <div className="space-y-3">
-                <h5 className="font-medium text-sm">Custom Roles</h5>
-                <div className="grid gap-3">
+                <h5 className="text-sm font-medium text-muted-foreground">Custom Roles</h5>
+                <div className="grid gap-4">
                   {customRoles.map((role) => (
-                    <div key={role.id} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <h6 className="font-medium">{role.name}</h6>
-                          <Badge variant="outline">Custom</Badge>
+                    <Card key={role.id} className="relative">
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <CardTitle className="text-base">{role.name}</CardTitle>
+                            {role.description && (
+                              <CardDescription className="mt-1">{role.description}</CardDescription>
+                            )}
+                            <div className="flex flex-wrap gap-1 mt-3">
+                              {role.permissions.slice(0, 3).map((permission) => (
+                                <Badge key={permission.id} variant="outline" className="text-xs">
+                                  {permission.name.replace(/_/g, ' ')}
+                                </Badge>
+                              ))}
+                              {role.permissions.length > 3 && (
+                                <Badge variant="outline" className="text-xs">
+                                  +{role.permissions.length - 3} more
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                          
+                          {/* Actions */}
+                          <div className="ml-4">
+                            {isMobile ? (
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="sm">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={() => openEditRole(role)}>
+                                    <Edit2 className="h-4 w-4 mr-2" />
+                                    Edit Role
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem 
+                                    className="text-destructive"
+                                    onClick={() => setRoleToDelete(role.id)}
+                                  >
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    Delete Role
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            ) : (
+                              <div className="flex items-center gap-2">
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => openEditRole(role)}
+                                >
+                                  <Edit2 className="h-4 w-4 mr-2" />
+                                  Edit
+                                </Button>
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => setRoleToDelete(role.id)}
+                                  className="text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground"
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Delete
+                                </Button>
+                              </div>
+                            )}
+                          </div>
                         </div>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {role.description || "No description"}
-                        </p>
-                        <div className="flex flex-wrap gap-1 mt-2">
-                          {role.permissions.map((permission) => (
-                            <Badge key={permission.id} variant="secondary" className="text-xs">
-                              {permission.name.replace('_', ' ')}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => setEditingRole(role)}>
-                            <Edit2 className="h-4 w-4 mr-2" />
-                            Edit Role
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => handleDeleteRole(role.id)}
-                            className="text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Delete Role
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
+                      </CardContent>
+                    </Card>
                   ))}
                 </div>
               </div>
             )}
           </div>
+
+          {/* Create/Edit Role Modal */}
+          <AppSheetModal
+            title={editingRole ? `Edit ${editingRole.name}` : "Create Role"}
+            isOpen={isCreateRoleOpen}
+            onOpenChange={(open) => {
+              if (!open) resetRoleForm();
+            }}
+            size="lg"
+            footerActions={[
+              {
+                label: "Cancel",
+                onClick: () => resetRoleForm(),
+                variant: "outline"
+              },
+              {
+                label: editingRole ? "Save Changes" : "Create Role",
+                onClick: editingRole ? handleEditRole : handleCreateRole,
+                disabled: !newRoleName.trim()
+              }
+            ]}
+          >
+            <div className="space-y-6">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="role-name">Role Name</Label>
+                  <Input
+                    id="role-name"
+                    placeholder="Enter role name"
+                    value={newRoleName}
+                    onChange={(e) => setNewRoleName(e.target.value)}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="role-description">Description (optional)</Label>
+                  <Textarea
+                    id="role-description"
+                    placeholder="Enter role description"
+                    value={newRoleDescription}
+                    onChange={(e) => setNewRoleDescription(e.target.value)}
+                    rows={3}
+                  />
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <Label>Permissions</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleSelectAllPermissions}
+                  >
+                    {selectedPermissions.length === permissions.length ? "Deselect All" : "Select All"}
+                  </Button>
+                </div>
+                
+                <div className="space-y-4 max-h-96 overflow-y-auto">
+                  {Object.entries(permissionsByCategory).map(([category, categoryPermissions]) => (
+                    <div key={category} className="space-y-3">
+                      <h5 className="font-medium text-sm sticky top-0 bg-background py-2">{category}</h5>
+                      <div className="space-y-3 pl-4">
+                        {categoryPermissions.map((permission) => (
+                          <div key={permission.id} className="flex items-start space-x-3">
+                            <Checkbox
+                              id={`permission-${permission.id}`}
+                              checked={selectedPermissions.includes(permission.id)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setSelectedPermissions(prev => [...prev, permission.id]);
+                                } else {
+                                  setSelectedPermissions(prev => prev.filter(id => id !== permission.id));
+                                }
+                              }}
+                              className="mt-0.5"
+                            />
+                            <div className="flex-1 space-y-1">
+                              <Label 
+                                htmlFor={`permission-${permission.id}`} 
+                                className="text-sm font-medium cursor-pointer"
+                              >
+                                {permission.name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                              </Label>
+                              <p className="text-xs text-muted-foreground">{permission.description}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </AppSheetModal>
+
+          {/* Delete Confirmation Dialog */}
+          <AlertDialog open={!!roleToDelete} onOpenChange={() => setRoleToDelete(null)}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete Role</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to delete this role? This action cannot be undone.
+                  Any team members with this role will need to be assigned a new role.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction 
+                  onClick={() => roleToDelete && handleDeleteRole(roleToDelete)}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  Delete Role
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </CategorySettingsSection>
       </div>
     </SettingsPageWrapper>

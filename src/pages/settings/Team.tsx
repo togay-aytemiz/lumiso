@@ -533,7 +533,6 @@ export default function Team() {
                     <TableRow>
                       <TableHead>Member</TableHead>
                       <TableHead>Role</TableHead>
-                      <TableHead>Last Active</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
@@ -559,14 +558,18 @@ export default function Team() {
                           <Badge variant="outline">{member.role}</Badge>
                         </TableCell>
                         <TableCell>
-                          <span className="text-sm text-muted-foreground">
-                            {formatLastActive(member.last_active)}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={member.is_online ? "default" : "secondary"}>
-                            {member.is_online ? "Active" : "Inactive"}
-                          </Badge>
+                          <div className="flex items-center gap-2">
+                            {member.is_online ? (
+                              <>
+                                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                                <span className="text-sm font-medium text-green-600">Online</span>
+                              </>
+                            ) : (
+                              <span className="text-sm text-muted-foreground">
+                                {formatLastActive(member.last_active)}
+                              </span>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell className="text-right">
                           {member.role !== "Owner" && (
@@ -822,114 +825,110 @@ export default function Team() {
 
         
         
-        {/* Create/Edit Role Dialog */}
-        <Dialog open={isCreateRoleOpen} onOpenChange={setIsCreateRoleOpen}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>
-                {editingRole ? 'Edit Role' : 'Create New Role'}
-              </DialogTitle>
-              <DialogDescription>
-                {editingRole 
-                  ? 'Modify the role details and permissions.' 
-                  : 'Create a custom role with specific permissions for your team members.'
-                }
-              </DialogDescription>
-            </DialogHeader>
+        {/* Create/Edit Role Sheet */}
+        <AppSheetModal
+          title={editingRole ? 'Edit Role' : 'Create New Role'}
+          isOpen={isCreateRoleOpen}
+          onOpenChange={setIsCreateRoleOpen}
+          size="lg"
+          footerActions={[
+            {
+              label: "Cancel",
+              onClick: resetRoleForm,
+              variant: "outline"
+            },
+            {
+              label: editingRole ? 'Update Role' : 'Create Role',
+              onClick: editingRole ? handleEditRole : handleCreateRole,
+              disabled: !newRoleName.trim()
+            }
+          ]}
+        >
+          <div className="space-y-6">
+            <div className="text-sm text-muted-foreground">
+              {editingRole 
+                ? 'Modify the role details and permissions.' 
+                : 'Create a custom role with specific permissions for your team members.'
+              }
+            </div>
             
-            <div className="space-y-4">
-              {/* Role Name */}
-              <div className="space-y-2">
-                <Label htmlFor="role-name">Role Name</Label>
-                <Input
-                  id="role-name"
-                  placeholder="e.g., Editor, Viewer, Admin"
-                  value={newRoleName}
-                  onChange={(e) => setNewRoleName(e.target.value)}
-                />
-              </div>
-
-              {/* Role Description */}
-              <div className="space-y-2">
-                <Label htmlFor="role-description">Description (Optional)</Label>
-                <Textarea
-                  id="role-description"
-                  placeholder="Describe what this role can do..."
-                  value={newRoleDescription}
-                  onChange={(e) => setNewRoleDescription(e.target.value)}
-                  rows={3}
-                />
-              </div>
-
-              {/* Permissions */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <Label>Permissions</Label>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={handleSelectAllPermissions}
-                  >
-                    {selectedPermissions.length === permissions.length ? 'Deselect All' : 'Select All'}
-                  </Button>
-                </div>
-                
-                <div className="border rounded-lg p-4 max-h-64 overflow-y-auto">
-                  {Object.entries(permissionsByCategory).map(([category, categoryPermissions]) => (
-                    <div key={category} className="mb-4 last:mb-0">
-                      <h4 className="font-medium text-sm mb-2 capitalize">
-                        {category.replace(/_/g, ' ')}
-                      </h4>
-                      <div className="space-y-2 ml-2">
-                        {categoryPermissions.map((permission) => (
-                          <div key={permission.id} className="flex items-start space-x-2">
-                            <Checkbox
-                              id={permission.id}
-                              checked={selectedPermissions.includes(permission.id)}
-                              onCheckedChange={(checked) => {
-                                if (checked) {
-                                  setSelectedPermissions(prev => [...prev, permission.id]);
-                                } else {
-                                  setSelectedPermissions(prev => prev.filter(id => id !== permission.id));
-                                }
-                              }}
-                            />
-                            <div className="grid gap-1.5 leading-none">
-                              <Label
-                                htmlFor={permission.id}
-                                className="text-sm font-normal cursor-pointer"
-                              >
-                                {permission.name.replace(/_/g, ' ')}
-                              </Label>
-                              {permission.description && (
-                                <p className="text-xs text-muted-foreground">
-                                  {permission.description}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+            {/* Role Name */}
+            <div className="space-y-2">
+              <Label htmlFor="role-name">Role Name</Label>
+              <Input
+                id="role-name"
+                placeholder="e.g., Editor, Viewer, Admin"
+                value={newRoleName}
+                onChange={(e) => setNewRoleName(e.target.value)}
+              />
             </div>
 
-            <DialogFooter>
-              <Button variant="outline" onClick={resetRoleForm}>
-                Cancel
-              </Button>
-              <Button 
-                onClick={editingRole ? handleEditRole : handleCreateRole}
-                disabled={!newRoleName.trim()}
-              >
-                {editingRole ? 'Update Role' : 'Create Role'}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+            {/* Role Description */}
+            <div className="space-y-2">
+              <Label htmlFor="role-description">Description (Optional)</Label>
+              <Textarea
+                id="role-description"
+                placeholder="Describe what this role can do..."
+                value={newRoleDescription}
+                onChange={(e) => setNewRoleDescription(e.target.value)}
+                rows={3}
+              />
+            </div>
+
+            {/* Permissions Section */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <Label>Permissions</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleSelectAllPermissions}
+                >
+                  {selectedPermissions.length === permissions.length ? 'Deselect All' : 'Select All'}
+                </Button>
+              </div>
+              
+              <div className="space-y-4">
+                {Object.entries(permissionsByCategory).map(([category, categoryPermissions]) => (
+                  <div key={category} className="space-y-3">
+                    <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+                      {category}
+                    </h4>
+                    <div className="space-y-3">
+                      {categoryPermissions.map((permission) => (
+                        <div key={permission.id} className="flex items-start space-x-3">
+                          <Checkbox
+                            id={`permission-${permission.id}`}
+                            checked={selectedPermissions.includes(permission.id)}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setSelectedPermissions(prev => [...prev, permission.id]);
+                              } else {
+                                setSelectedPermissions(prev => prev.filter(id => id !== permission.id));
+                              }
+                            }}
+                          />
+                          <div className="space-y-1 leading-none">
+                            <Label 
+                              htmlFor={`permission-${permission.id}`}
+                              className="text-sm font-medium cursor-pointer"
+                            >
+                              {permission.name.replace(/_/g, ' ')}
+                            </Label>
+                            <p className="text-xs text-muted-foreground">
+                              {permission.description}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </AppSheetModal>
 
         {/* Delete Role Confirmation */}
         <AlertDialog open={!!roleToDelete} onOpenChange={() => setRoleToDelete(null)}>

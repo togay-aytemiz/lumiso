@@ -36,6 +36,12 @@ const settingsCategories = [
   },
   // Organization Settings
   {
+    label: "General",
+    path: "/settings/general",
+    icon: SettingsIcon,
+    group: "Organization Settings"
+  },
+  {
     label: "Team Management",
     path: "/settings/team",
     icon: Users,
@@ -81,12 +87,6 @@ const settingsCategories = [
     label: "Billing & Payments",
     path: "/settings/billing",
     icon: CreditCard,
-    group: "Organization Settings"
-  },
-  {
-    label: "General",
-    path: "/settings/general",
-    icon: SettingsIcon,
     group: "Organization Settings"
   },
   {

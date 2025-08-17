@@ -65,7 +65,7 @@ const ServiceAddOnsPicker = ({ services, value, onChange, navigate }: {
   const categories = useMemo(() => Object.keys(groupedServices).sort(), [groupedServices]);
 
   const selectedServices = useMemo(
-    () => services.filter((s) => value.includes(s.name)),
+    () => services.filter((s) => value.includes(s.id)),
     [services, value]
   );
 
@@ -84,11 +84,11 @@ const ServiceAddOnsPicker = ({ services, value, onChange, navigate }: {
     setIsEditing(false);
   };
 
-  const toggleService = (serviceName: string) => {
-    if (tempValue.includes(serviceName)) {
-      setTempValue(prev => prev.filter(v => v !== serviceName));
+  const toggleService = (serviceId: string) => {
+    if (tempValue.includes(serviceId)) {
+      setTempValue(prev => prev.filter(v => v !== serviceId));
     } else {
-      setTempValue(prev => [...prev, serviceName]);
+      setTempValue(prev => [...prev, serviceId]);
     }
   };
 
@@ -119,7 +119,7 @@ const ServiceAddOnsPicker = ({ services, value, onChange, navigate }: {
         >
           {categories.map((category) => {
             const items = groupedServices[category] || [];
-            const selectedCount = items.filter((s) => tempValue.includes(s.name)).length;
+            const selectedCount = items.filter((s) => tempValue.includes(s.id)).length;
             return (
               <AccordionItem key={category} value={category} className="border rounded-md mb-3">
                 <AccordionTrigger className="px-3 py-2 text-sm">
@@ -134,14 +134,14 @@ const ServiceAddOnsPicker = ({ services, value, onChange, navigate }: {
                   <div className="px-3 pb-3">
                     <div className="flex flex-wrap gap-2">
                       {items.map((service) => {
-                        const selected = tempValue.includes(service.name);
+                        const selected = tempValue.includes(service.id);
                         const price = service.selling_price ?? service.price ?? 0;
                         return (
                           <Button
                             key={service.id}
                             type="button"
                             variant={selected ? "default" : "secondary"}
-                            onClick={() => toggleService(service.name)}
+                            onClick={() => toggleService(service.id)}
                             className={cn(
                               "h-8 rounded-full px-3 text-xs justify-start whitespace-nowrap",
                               "overflow-hidden text-ellipsis",

@@ -641,8 +641,8 @@ export default function Team() {
               <div className="grid gap-4">
                 {systemRoles.map((role) => (
                   <Card key={role.id} className="relative">
-                    <CardContent className="p-4">
-                      <div className="flex items-start justify-between gap-4">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between gap-4">
                         <div className="flex-1 min-w-0">
                           <CardTitle className="text-base">{role.name}</CardTitle>
                           <CardDescription className="mt-1">{role.description}</CardDescription>
@@ -727,8 +727,8 @@ export default function Team() {
                 <div className="grid gap-4">
                   {customRoles.map((role) => (
                     <Card key={role.id} className="relative">
-                      <CardContent className="p-4">
-                        <div className="flex items-start justify-between gap-4">
+                      <CardContent className="p-6">
+                        <div className="flex items-center justify-between gap-4">
                           <div className="flex-1 min-w-0">
                             <CardTitle className="text-base">{role.name}</CardTitle>
                             {role.description && (

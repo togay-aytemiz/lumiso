@@ -212,14 +212,20 @@ export function ProjectServicesSection({
           </div> : <div>
             {services.length > 0 ? <div className="flex flex-wrap gap-2">
                 {services.map(service => {
-              const price = service.selling_price || service.cost_price || 0;
+              const costPrice = service.cost_price ?? 0;
+              const sellingPrice = service.selling_price ?? service.price ?? 0;
+              const hasPrices = costPrice > 0 || sellingPrice > 0;
               return <Badge key={service.id} variant="secondary" className="h-7 rounded-full px-3 text-xs">
                       <span>
                         {service.name}
-                        <span className="mx-1">·</span>
-                        <span className="text-foreground/70">
-                          TRY {price}
-                        </span>
+                        {hasPrices && (
+                          <>
+                            <span className="mx-1">·</span>
+                            <span className="text-foreground/70">
+                              TRY {costPrice}/{sellingPrice}
+                            </span>
+                          </>
+                        )}
                       </span>
                     </Badge>;
             })}

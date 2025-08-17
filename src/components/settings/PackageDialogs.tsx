@@ -135,7 +135,9 @@ const ServiceAddOnsPicker = ({ services, value, onChange, navigate }: {
                     <div className="flex flex-wrap gap-2">
                       {items.map((service) => {
                         const selected = tempValue.includes(service.id);
-                        const price = service.selling_price ?? service.price ?? 0;
+                        const costPrice = service.cost_price ?? 0;
+                        const sellingPrice = service.selling_price ?? service.price ?? 0;
+                        const hasPrices = costPrice > 0 || sellingPrice > 0;
                         return (
                           <Button
                             key={service.id}
@@ -147,17 +149,17 @@ const ServiceAddOnsPicker = ({ services, value, onChange, navigate }: {
                               "overflow-hidden text-ellipsis",
                               selected ? "" : "border",
                             )}
-                            title={`${service.name}${price > 0 ? ` · ₺${price}` : ''}`}
+                            title={`${service.name}${hasPrices ? ` · Cost: ₺${costPrice} · Selling: ₺${sellingPrice}` : ''}`}
                           >
                             <div className="flex items-center gap-2">
                               {selected && <Check className="h-3 w-3" aria-hidden />}
                               <span>
                                 {service.name}
-                                {price > 0 && (
+                                {hasPrices && (
                                   <>
                                     <span className="mx-1">·</span>
                                     <span className={selected ? "text-primary-foreground/80" : "text-muted-foreground"}>
-                                      ₺{price}
+                                      ₺{costPrice}/₺{sellingPrice}
                                     </span>
                                   </>
                                 )}
@@ -226,7 +228,9 @@ const ServiceAddOnsPicker = ({ services, value, onChange, navigate }: {
           </div>
           <div className="flex flex-wrap gap-2">
             {selectedServices.map((service) => {
-              const price = service.selling_price ?? service.price ?? 0;
+              const costPrice = service.cost_price ?? 0;
+              const sellingPrice = service.selling_price ?? service.price ?? 0;
+              const hasPrices = costPrice > 0 || sellingPrice > 0;
               return (
                 <Badge
                   key={service.id}
@@ -235,10 +239,10 @@ const ServiceAddOnsPicker = ({ services, value, onChange, navigate }: {
                 >
                   <span>
                     {service.name}
-                    {price > 0 && (
+                    {hasPrices && (
                       <>
                         <span className="mx-1">·</span>
-                        <span className="text-foreground/70">₺{price}</span>
+                        <span className="text-foreground/70">₺{costPrice}/₺{sellingPrice}</span>
                       </>
                     )}
                   </span>

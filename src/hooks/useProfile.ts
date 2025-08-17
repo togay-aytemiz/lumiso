@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -10,33 +10,63 @@ interface Profile {
   profile_photo_url?: string;
 }
 
+// Create a global cache to prevent duplicate requests
+let profileCache: { data: Profile | null; timestamp: number } | null = null;
+let ongoingFetch: Promise<void> | null = null;
+const CACHE_DURATION = 30000; // 30 seconds
+
 export function useProfile() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
 
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
+    // Return cached data if it's still fresh
+    if (profileCache && Date.now() - profileCache.timestamp < CACHE_DURATION) {
+      setProfile(profileCache.data);
+      setLoading(false);
+      return;
+    }
+
+    // If there's already an ongoing fetch, wait for it
+    if (ongoingFetch) {
+      await ongoingFetch;
+      if (profileCache) {
+        setProfile(profileCache.data);
+        setLoading(false);
+      }
+      return;
+    }
+
     try {
       setLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
       
-      if (!user) {
-        setLoading(false);
-        return;
-      }
+      // Create the fetch promise and store it
+      ongoingFetch = (async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user) {
+          profileCache = { data: null, timestamp: Date.now() };
+          return;
+        }
 
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle();
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('user_id', user.id)
+          .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') {
-        throw error;
-      }
+        if (error && error.code !== 'PGRST116') {
+          throw error;
+        }
 
-      setProfile(data || { user_id: user.id });
+        const profileData = data || { user_id: user.id };
+        profileCache = { data: profileData, timestamp: Date.now() };
+      })();
+
+      await ongoingFetch;
+      setProfile(profileCache?.data || null);
     } catch (error) {
       console.error('Error fetching profile:', error);
       toast({
@@ -46,8 +76,9 @@ export function useProfile() {
       });
     } finally {
       setLoading(false);
+      ongoingFetch = null;
     }
-  };
+  }, [toast]);
 
   const updateProfile = async (updates: Partial<Profile>) => {
     try {
@@ -81,6 +112,8 @@ export function useProfile() {
       if (error) throw error;
 
       setProfile(data);
+      // Update cache when profile is updated
+      profileCache = { data, timestamp: Date.now() };
       return { success: true };
     } catch (error) {
       console.error('Error updating profile:', error);
@@ -200,7 +233,7 @@ export function useProfile() {
 
   useEffect(() => {
     fetchProfile();
-  }, []);
+  }, [fetchProfile]);
 
   return {
     profile,

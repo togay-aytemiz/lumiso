@@ -19,7 +19,7 @@ export function UserMenu({ mode }: UserMenuProps) {
   const [userEmail, setUserEmail] = useState<string>("");
   const [isOpen, setIsOpen] = useState(false);
   
-  // Get user email from auth and refetch profile when component mounts
+  // Get user email from auth only once
   useEffect(() => {
     const getUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -28,9 +28,7 @@ export function UserMenu({ mode }: UserMenuProps) {
       }
     };
     getUser();
-    // Refetch profile data to ensure latest changes are shown
-    refetch();
-  }, [refetch]);
+  }, []);
 
   const handleSignOut = async () => {
     try {

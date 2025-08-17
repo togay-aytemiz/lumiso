@@ -15,7 +15,7 @@ interface Package {
   price: number;
   duration: string;
   applicable_types: string[];
-  default_add_ons: number;
+  default_add_ons: string[];
   is_active: boolean;
 }
 
@@ -227,13 +227,18 @@ const PackagesSection = () => {
                            </td>
                            <td className="px-4 py-3">
                              <div className="flex flex-wrap gap-1">
-                               {pkg.default_add_ons === 0 ? (
+                               {pkg.default_add_ons.length === 0 ? (
                                  <span className="text-sm text-muted-foreground">None</span>
                                ) : (
                                  <>
-                                   <Badge variant="outline" className="text-xs">
-                                     {pkg.default_add_ons} add-on{pkg.default_add_ons !== 1 ? 's' : ''}
-                                   </Badge>
+                                   <div 
+                                     className="cursor-help"
+                                     title={pkg.default_add_ons.length > 0 ? `Services: ${pkg.default_add_ons.join(', ')}` : 'No add-on services'}
+                                   >
+                                     <Badge variant="outline" className="text-xs">
+                                       {pkg.default_add_ons.length} add-on{pkg.default_add_ons.length !== 1 ? 's' : ''}
+                                     </Badge>
+                                   </div>
                                  </>
                                )}
                              </div>
@@ -301,12 +306,17 @@ const PackagesSection = () => {
                     </Badge>
 
                      {/* Add-ons count badge */}
-                     <Badge variant="outline" className="text-xs">
-                       {pkg.default_add_ons === 0 
-                         ? "No add-ons" 
-                         : `${pkg.default_add_ons} add-on${pkg.default_add_ons !== 1 ? 's' : ''}`
-                       }
-                     </Badge>
+                     <div 
+                       className="cursor-help inline-block"
+                       title={pkg.default_add_ons.length > 0 ? `Services: ${pkg.default_add_ons.join(', ')}` : 'No add-on services'}
+                     >
+                       <Badge variant="outline" className="text-xs">
+                         {pkg.default_add_ons.length === 0 
+                           ? "No add-ons" 
+                           : `${pkg.default_add_ons.length} add-on${pkg.default_add_ons.length !== 1 ? 's' : ''}`
+                         }
+                       </Badge>
+                     </div>
 
                      {/* Visibility pill */}
                      <Badge variant={pkg.is_active ? "default" : "secondary"} className="text-xs">

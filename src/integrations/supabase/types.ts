@@ -389,7 +389,7 @@ export type Database = {
         Row: {
           applicable_types: string[] | null
           created_at: string
-          default_add_ons: number | null
+          default_add_ons: string[] | null
           description: string | null
           duration: string | null
           id: string
@@ -402,7 +402,7 @@ export type Database = {
         Insert: {
           applicable_types?: string[] | null
           created_at?: string
-          default_add_ons?: number | null
+          default_add_ons?: string[] | null
           description?: string | null
           duration?: string | null
           id?: string
@@ -415,7 +415,7 @@ export type Database = {
         Update: {
           applicable_types?: string[] | null
           created_at?: string
-          default_add_ons?: number | null
+          default_add_ons?: string[] | null
           description?: string | null
           duration?: string | null
           id?: string

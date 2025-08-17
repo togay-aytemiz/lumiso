@@ -22,7 +22,7 @@ interface Package {
   price: number;
   duration: string;
   applicable_types: string[];
-  default_add_ons: number;
+  default_add_ons: string[];
   is_active: boolean;
 }
 
@@ -270,7 +270,7 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
     duration: "",
     customDuration: "",
     applicable_types: [] as string[],
-    default_add_ons: 0,
+    default_add_ons: [] as string[],
     is_active: true
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -322,7 +322,7 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
       duration: "",
       customDuration: "",
       applicable_types: [],
-      default_add_ons: 0,
+      default_add_ons: [],
       is_active: true
     });
     setErrors({});
@@ -490,18 +490,25 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
           </div>
         )}
 
-        {/* Default Add-ons Count */}
+        {/* Default Add-ons */}
         <div className="space-y-2">
-          <Label htmlFor="defaultAddons">Default Add-ons Count</Label>
-          <p className="text-xs text-muted-foreground">Number of add-on services included by default.</p>
-          <Input
-            id="defaultAddons"
-            type="number"
+          <Label>Default Add-ons</Label>
+          <p className="text-xs text-muted-foreground mb-3">
+            These are services from your{" "}
+            <button
+              type="button"
+              onClick={() => navigate("/settings/services")}
+              className="text-primary hover:underline"
+            >
+              Services section
+            </button>
+            {" "}that can be customized while creating a project
+          </p>
+          <ServiceAddOnsPicker
+            services={services}
             value={packageData.default_add_ons}
-            onChange={(e) => setPackageData(prev => ({ ...prev, default_add_ons: Number(e.target.value) || 0 }))}
-            placeholder="0"
-            min="0"
-            step="1"
+            onChange={(addons) => setPackageData(prev => ({ ...prev, default_add_ons: addons }))}
+            navigate={navigate}
           />
         </div>
 
@@ -589,7 +596,7 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
     duration: "",
     customDuration: "",
     applicable_types: [] as string[],
-    default_add_ons: 0,
+    default_add_ons: [] as string[],
     is_active: true
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -642,7 +649,7 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
         duration: pkg.duration,
         customDuration: pkg.duration === "Custom" ? pkg.duration : "",
         applicable_types: [...pkg.applicable_types],
-        default_add_ons: pkg.default_add_ons,
+        default_add_ons: [...pkg.default_add_ons],
         is_active: pkg.is_active
       });
       setErrors({});
@@ -806,18 +813,25 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
           </div>
         )}
 
-        {/* Default Add-ons Count */}
+        {/* Default Add-ons */}
         <div className="space-y-2">
-          <Label htmlFor="defaultAddons">Default Add-ons Count</Label>
-          <p className="text-xs text-muted-foreground">Number of add-on services included by default.</p>
-          <Input
-            id="defaultAddons"
-            type="number"
+          <Label>Default Add-ons</Label>
+          <p className="text-xs text-muted-foreground mb-3">
+            These are services from your{" "}
+            <button
+              type="button"
+              onClick={() => navigate("/settings/services")}
+              className="text-primary hover:underline"
+            >
+              Services section
+            </button>
+            {" "}that can be customized while creating a project
+          </p>
+          <ServiceAddOnsPicker
+            services={services}
             value={packageData.default_add_ons}
-            onChange={(e) => setPackageData(prev => ({ ...prev, default_add_ons: Number(e.target.value) || 0 }))}
-            placeholder="0"
-            min="0"
-            step="1"
+            onChange={(addons) => setPackageData(prev => ({ ...prev, default_add_ons: addons }))}
+            navigate={navigate}
           />
         </div>
 

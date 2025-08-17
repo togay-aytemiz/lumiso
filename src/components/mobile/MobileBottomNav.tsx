@@ -262,9 +262,6 @@ export function MobileBottomNav() {
                 <div className="font-medium text-sm truncate text-foreground">
                   {profile?.full_name || userEmail?.split('@')[0] || "User"}
                 </div>
-                <div className="text-xs text-muted-foreground truncate">
-                  {userEmail || "No email"}
-                </div>
               </div>
             </div>
           </div>

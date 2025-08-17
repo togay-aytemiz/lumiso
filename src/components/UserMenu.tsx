@@ -139,8 +139,9 @@ export function UserMenu({ mode }: UserMenuProps) {
         <PopoverContent 
           side="top" 
           align="start"
-          className="w-[calc(100%-24px)] p-2 animate-in slide-in-from-bottom-2 duration-200"
+          className="w-[var(--radix-popover-trigger-width)] p-2 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:slide-out-to-bottom-2 data-[state=open]:slide-in-from-bottom-2 data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"
           sideOffset={8}
+          avoidCollisions={false}
         >
           <div className="flex flex-col gap-1">
             <Button

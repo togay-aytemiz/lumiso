@@ -215,18 +215,20 @@ export function ProjectServicesSection({
               const costPrice = service.cost_price ?? 0;
               const sellingPrice = service.selling_price ?? service.price ?? 0;
               const hasPrices = costPrice > 0 || sellingPrice > 0;
-              return <Badge key={service.id} variant="secondary" className="h-7 rounded-full px-3 text-xs">
-                      <span>
-                        {service.name}
+              return <Badge 
+                      key={service.id} 
+                      variant="secondary" 
+                      className="h-auto min-h-7 rounded-lg px-3 py-1.5 text-xs whitespace-normal break-words"
+                      title={`${service.name}${hasPrices ? ` - Cost: ₺${costPrice}, Selling: ₺${sellingPrice}` : ''}`}
+                    >
+                      <div className="flex flex-col gap-0.5">
+                        <span className="font-medium">{service.name}</span>
                         {hasPrices && (
-                          <>
-                            <span className="mx-1">·</span>
-                            <span className="text-foreground/70">
-                              TRY {costPrice}/{sellingPrice}
-                            </span>
-                          </>
+                          <span className="text-xs text-foreground/60">
+                            Cost: ₺{costPrice} · Selling: ₺{sellingPrice}
+                          </span>
                         )}
-                      </span>
+                      </div>
                     </Badge>;
             })}
               </div> : <div className="text-center py-6">

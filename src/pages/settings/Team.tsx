@@ -641,7 +641,7 @@ export default function Team() {
                 {systemRoles.map((role) => (
                   <Card key={role.id} className="relative">
                     <CardContent className="p-4">
-                      <div className="flex items-start justify-between">
+                      <div className="flex items-center justify-between min-h-[60px]">
                         <div className="flex-1">
                           <CardTitle className="text-base">{role.name}</CardTitle>
                           <CardDescription className="mt-1">{role.description}</CardDescription>
@@ -664,7 +664,7 @@ export default function Team() {
                         </div>
                         
                         {/* Actions */}
-                        <div className="ml-4">
+                        <div className="ml-4 flex items-center">
                           {role.isEditable && (
                             <>
                               {isMobile ? (
@@ -709,7 +709,7 @@ export default function Team() {
                   {customRoles.map((role) => (
                     <Card key={role.id} className="relative">
                       <CardContent className="p-4">
-                        <div className="flex items-start justify-between">
+                        <div className="flex items-center justify-between min-h-[60px]">
                           <div className="flex-1">
                             <CardTitle className="text-base">{role.name}</CardTitle>
                             {role.description && (
@@ -730,7 +730,7 @@ export default function Team() {
                           </div>
                           
                           {/* Actions */}
-                          <div className="ml-4">
+                          <div className="ml-4 flex items-center">
                             {isMobile ? (
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
@@ -804,8 +804,8 @@ export default function Team() {
               }
             ]}
           >
-            <div className="space-y-6">
-              <div className="space-y-4">
+            <div className="flex flex-col h-full space-y-6">
+              <div className="space-y-4 flex-shrink-0">
                 <div className="space-y-2">
                   <Label htmlFor="role-name">Role Name</Label>
                   <Input
@@ -828,8 +828,8 @@ export default function Team() {
                 </div>
               </div>
               
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
+              <div className="flex flex-col flex-1 min-h-0 space-y-4">
+                <div className="flex items-center justify-between flex-shrink-0">
                   <Label>Permissions</Label>
                   <Button
                     type="button"
@@ -841,10 +841,10 @@ export default function Team() {
                   </Button>
                 </div>
                 
-                <div className="space-y-4 max-h-96 overflow-y-auto">
+                <div className="flex-1 overflow-y-auto space-y-4 pr-2">
                   {Object.entries(permissionsByCategory).map(([category, categoryPermissions]) => (
                     <div key={category} className="space-y-3">
-                      <h5 className="font-medium text-sm sticky top-0 bg-background py-2">{category}</h5>
+                      <h5 className="font-medium text-sm sticky top-0 bg-background py-2 border-b">{category}</h5>
                       <div className="space-y-3 pl-4">
                         {categoryPermissions.map((permission) => (
                           <div key={permission.id} className="flex items-start space-x-3">

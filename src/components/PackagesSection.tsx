@@ -242,34 +242,36 @@ const PackagesSection = () => {
                                 {pkg.default_add_ons.length === 0 ? (
                                   <span className="text-sm text-muted-foreground">None</span>
                                 ) : (
-                                  <>
-                                    <TooltipProvider>
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <div className="cursor-help">
-                                            <Badge variant="outline" className="text-xs">
-                                              {pkg.default_add_ons.length} add-on{pkg.default_add_ons.length !== 1 ? 's' : ''}
-                                            </Badge>
-                                          </div>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                          <div className="max-w-xs">
-                                            <p className="font-medium">Default Add-ons:</p>
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <div className="cursor-help">
+                                          <Badge variant="outline" className="text-xs">
+                                            {pkg.default_add_ons.length} add-on{pkg.default_add_ons.length !== 1 ? 's' : ''}
+                                          </Badge>
+                                        </div>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <div className="max-w-xs">
+                                          <p className="font-medium">Default Add-ons:</p>
+                                          {pkg.default_add_ons.length > 0 ? (
                                             <ul className="mt-1 text-sm">
                                               {pkg.default_add_ons.map(serviceId => {
                                                 const service = services.find(s => s.id === serviceId);
                                                 return (
                                                   <li key={serviceId}>
-                                                    • {service?.name || 'Unknown Service'}
+                                                    • {service?.name || `Service ID: ${serviceId}`}
                                                   </li>
                                                 );
                                               })}
                                             </ul>
-                                          </div>
-                                        </TooltipContent>
-                                      </Tooltip>
-                                    </TooltipProvider>
-                                  </>
+                                          ) : (
+                                            <p className="text-sm text-muted-foreground">No services selected</p>
+                                          )}
+                                        </div>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
                                 )}
                               </div>
                             </td>

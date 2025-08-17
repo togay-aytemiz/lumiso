@@ -727,6 +727,7 @@ export type Database = {
           description: string | null
           extra: boolean | null
           id: string
+          is_sample: boolean | null
           name: string
           price: number | null
           selling_price: number | null
@@ -740,6 +741,7 @@ export type Database = {
           description?: string | null
           extra?: boolean | null
           id?: string
+          is_sample?: boolean | null
           name: string
           price?: number | null
           selling_price?: number | null
@@ -753,6 +755,7 @@ export type Database = {
           description?: string | null
           extra?: boolean | null
           id?: string
+          is_sample?: boolean | null
           name?: string
           price?: number | null
           selling_price?: number | null
@@ -989,6 +992,10 @@ export type Database = {
     }
     Functions: {
       ensure_default_packages: {
+        Args: { user_uuid: string }
+        Returns: undefined
+      }
+      ensure_default_services: {
         Args: { user_uuid: string }
         Returns: undefined
       }

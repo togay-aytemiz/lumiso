@@ -20,9 +20,14 @@ interface AssigneesPickerProps {
 export function AssigneesPicker({ value, onChange, disabled }: AssigneesPickerProps) {
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const { teamMembers } = useTeamManagement();
+  const { teamMembers, loading } = useTeamManagement();
   const { profile } = useProfile();
   const isMobile = useIsMobile();
+  
+  // Debug logs
+  console.log('AssigneesPicker - teamMembers:', teamMembers);
+  console.log('AssigneesPicker - profile:', profile);
+  console.log('AssigneesPicker - value:', value);
   
   // Get current user info to auto-add as first assignee
   const currentUserId = profile?.user_id;
@@ -58,14 +63,22 @@ export function AssigneesPicker({ value, onChange, disabled }: AssigneesPickerPr
   };
 
   const handleToggleAssignee = (userId: string) => {
+    console.log('handleToggleAssignee called with:', userId);
+    console.log('Current value:', value);
+    
     if (value.includes(userId)) {
       // Don't allow removing the creator (first assignee)
       if (userId === currentUserId && value[0] === currentUserId) {
+        console.log('Cannot remove creator');
         return;
       }
-      onChange(value.filter(id => id !== userId));
+      const newValue = value.filter(id => id !== userId);
+      console.log('Removing user, new value:', newValue);
+      onChange(newValue);
     } else {
-      onChange([...value, userId]);
+      const newValue = [...value, userId];
+      console.log('Adding user, new value:', newValue);
+      onChange(newValue);
     }
   };
 
@@ -87,7 +100,11 @@ export function AssigneesPicker({ value, onChange, disabled }: AssigneesPickerPr
       </div>
       
       <div className="max-h-64 overflow-y-auto">
-        {filteredMembers.length === 0 ? (
+        {loading ? (
+          <div className="p-4 text-center text-sm text-muted-foreground">
+            Loading team members...
+          </div>
+        ) : filteredMembers.length === 0 ? (
           <div className="p-4 text-center text-sm text-muted-foreground">
             {teamMembers.length === 0 
               ? "No team members yet. Invite from Team Management."
@@ -101,16 +118,28 @@ export function AssigneesPicker({ value, onChange, disabled }: AssigneesPickerPr
               const isCreator = member.user_id === currentUserId;
               const isDisabled = isCreator && value[0] === currentUserId; // Can't uncheck creator
               
+              console.log('Rendering member:', member, 'isSelected:', isSelected);
+              
               return (
                 <div
                   key={member.user_id}
                   className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 cursor-pointer"
-                  onClick={() => !isDisabled && handleToggleAssignee(member.user_id)}
+                  onClick={() => {
+                    console.log('Member clicked:', member.user_id, 'disabled:', isDisabled);
+                    if (!isDisabled) {
+                      handleToggleAssignee(member.user_id);
+                    }
+                  }}
                 >
                   <Checkbox
                     checked={isSelected}
                     disabled={isDisabled}
-                    onChange={() => !isDisabled && handleToggleAssignee(member.user_id)}
+                    onCheckedChange={() => {
+                      console.log('Checkbox changed for:', member.user_id);
+                      if (!isDisabled) {
+                        handleToggleAssignee(member.user_id);
+                      }
+                    }}
                   />
                   <Avatar className="h-8 w-8">
                     <AvatarImage src={member.profile_photo_url || ""} />
@@ -124,7 +153,7 @@ export function AssigneesPicker({ value, onChange, disabled }: AssigneesPickerPr
                       {isCreator && " (You)"}
                     </div>
                     <div className="text-xs text-muted-foreground truncate">
-                      {member.email}
+                      {member.email || "No email"}
                     </div>
                   </div>
                 </div>

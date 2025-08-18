@@ -81,9 +81,10 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
   const [projectTypeDropdownOpen, setProjectTypeDropdownOpen] = useState(false);
   const [packageDropdownOpen, setPackageDropdownOpen] = useState(false);
   const [packages, setPackages] = useState<Package[]>([]);
-  const [projectTypes, setProjectTypes] = useState<{id: string, name: string}[]>([]);
+  const [projectTypes, setProjectTypes] = useState<{id: string, name: string, is_default?: boolean}[]>([]);
   const [allServices, setAllServices] = useState<Service[]>([]);
   const [loadingPackages, setLoadingPackages] = useState(false);
+  const [showServicesEditor, setShowServicesEditor] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -112,6 +113,13 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
   }, [dropdownOpen, projectTypeDropdownOpen, packageDropdownOpen]);
+
+  // Reset services editor when modal closes
+  useEffect(() => {
+    if (!open) {
+      setShowServicesEditor(false);
+    }
+  }, [open]);
 
   // Auto-add current user as first assignee
   useEffect(() => {
@@ -164,9 +172,9 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
           .order('name'),
         supabase
           .from('project_types')
-          .select('id, name')
+          .select('id, name, is_default')
           .eq('user_id', user.id)
-          .order('name'),
+          .order('sort_order', { ascending: true }),
         supabase
           .from('services')
           .select('*')
@@ -182,6 +190,15 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
       setPackages(packagesResult.data || []);
       setProjectTypes(typesResult.data || []);
       setAllServices(servicesResult.data || []);
+
+      // Auto-select default project type
+      const defaultType = typesResult.data?.find(type => type.is_default);
+      if (defaultType && !projectData.projectTypeId) {
+        setProjectData(prev => ({
+          ...prev,
+          projectTypeId: defaultType.id
+        }));
+      }
     } catch (error: any) {
       toast({
         title: "Error fetching data",
@@ -194,10 +211,11 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
   };
 
   const resetForm = () => {
+    const defaultType = projectTypes.find(type => type.is_default);
     setProjectData({ 
       name: "", 
       description: "", 
-      projectTypeId: "", 
+      projectTypeId: defaultType?.id || "",
       basePrice: "",
       packageId: "",
       selectedServices: [],
@@ -900,14 +918,90 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
 
             {/* Services Selection */}
             <div className="space-y-2">
-              <Label>Services & Add-ons</Label>
-              <ServicePicker
-                services={allServices}
-                value={projectData.selectedServiceIds}
-                onChange={(serviceIds) => handleProjectDataChange("selectedServiceIds", serviceIds)}
-                disabled={loading}
-                isLoading={loadingPackages}
-              />
+              <div className="flex items-center justify-between">
+                <Label>Services & Add-ons</Label>
+                {projectData.selectedServiceIds.length > 0 && (
+                  <span className="text-xs text-muted-foreground">
+                    {projectData.selectedServiceIds.length} selected
+                  </span>
+                )}
+              </div>
+              
+              {/* Show selected services */}
+              {projectData.selectedServiceIds.length > 0 && (
+                <div className="space-y-2 p-3 bg-muted/20 rounded-lg border">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Selected Services</span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowServicesEditor(true)}
+                      className="h-auto py-1 px-2 text-xs"
+                    >
+                      Edit Services
+                    </Button>
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    {projectData.selectedServices.map((service) => (
+                      <div
+                        key={service.id}
+                        className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-primary/10 text-primary rounded-md"
+                      >
+                        <span>{service.name}</span>
+                        {service.selling_price && (
+                          <span className="text-muted-foreground">
+                            TRY {service.selling_price.toLocaleString()}
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updatedServices = projectData.selectedServices.filter(s => s.id !== service.id);
+                            const updatedServiceIds = projectData.selectedServiceIds.filter(id => id !== service.id);
+                            handleProjectDataChange("selectedServices", updatedServices);
+                            handleProjectDataChange("selectedServiceIds", updatedServiceIds);
+                          }}
+                          className="ml-1 hover:text-destructive"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Services editor */}
+              {(projectData.selectedServiceIds.length === 0 || showServicesEditor) && (
+                <div className="space-y-2">
+                  {projectData.selectedServiceIds.length > 0 && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Add or remove services:</span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowServicesEditor(false)}
+                        className="h-auto py-1 px-2 text-xs"
+                      >
+                        Done
+                      </Button>
+                    </div>
+                  )}
+                  <ServicePicker
+                    services={allServices}
+                    value={projectData.selectedServiceIds}
+                    onChange={(serviceIds) => {
+                      const selectedServices = allServices.filter(service => serviceIds.includes(service.id));
+                      handleProjectDataChange("selectedServiceIds", serviceIds);
+                      handleProjectDataChange("selectedServices", selectedServices);
+                    }}
+                    disabled={loading}
+                    isLoading={loadingPackages}
+                  />
+                </div>
+              )}
             </div>
 
             {/* Project Summary */}

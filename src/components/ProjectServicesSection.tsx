@@ -199,6 +199,61 @@ export function ProjectServicesSection({
             price: s.price,
             active: true
           }))} value={services.map(s => s.id)} onChange={handleServicePickerChange} disabled={saving} isLoading={loadingAvailable} error={errorAvailable} onRetry={fetchAvailableServices} />
+            
+            {/* Selected services display in edit mode */}
+            {services.length > 0 && (
+              <div className="rounded-md border p-3">
+                <div className="mb-2 flex items-center justify-between">
+                  <span className="text-sm font-medium">Selected Services ({services.length})</span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setServices([])}
+                    disabled={saving}
+                    className="h-8"
+                  >
+                    Clear All
+                  </Button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {services.map((service) => {
+                    const costPrice = service.cost_price ?? 0;
+                    const sellingPrice = service.selling_price ?? service.price ?? 0;
+                    const hasPrices = costPrice > 0 || sellingPrice > 0;
+                    return (
+                      <Badge
+                        key={service.id}
+                        variant="secondary"
+                        className="h-7 rounded-full px-3 text-xs"
+                      >
+                        <span>
+                          {service.name}
+                          {hasPrices && (
+                            <>
+                              <span className="mx-1">·</span>
+                              <span className="text-foreground/70">₺{costPrice}/₺{sellingPrice}</span>
+                            </>
+                          )}
+                        </span>
+                        <button
+                          className="ml-2 inline-flex rounded-full p-0.5 hover:text-foreground"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            const newServices = services.filter(s => s.id !== service.id);
+                            setServices(newServices);
+                          }}
+                          aria-label={`Remove ${service.name}`}
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </Badge>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             <div className="flex gap-2">
               <Button size="sm" onClick={() => handleSaveServices(services)} disabled={saving}>
                 <Save className="h-4 w-4 mr-1" />

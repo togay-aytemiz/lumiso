@@ -917,74 +917,64 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
             </div>
 
             {/* Services Selection */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label>Services & Add-ons</Label>
-                {projectData.selectedServiceIds.length > 0 && (
-                  <span className="text-xs text-muted-foreground">
-                    {projectData.selectedServiceIds.length} selected
-                  </span>
-                )}
-              </div>
-              
-              {/* Show selected services */}
-              {projectData.selectedServiceIds.length > 0 && (
-                <div className="space-y-3 p-4 bg-muted/20 rounded-lg border">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Selected Services ({projectData.selectedServiceIds.length})</span>
-                    <div className="flex gap-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          handleProjectDataChange("selectedServices", []);
-                          handleProjectDataChange("selectedServiceIds", []);
-                        }}
-                        className="h-auto py-1 px-3 text-xs"
-                      >
-                        Clear All
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setShowServicesEditor(!showServicesEditor)}
-                        className="h-auto py-1 px-2 text-xs"
-                      >
-                        {showServicesEditor ? "Done" : "Edit Services"}
-                      </Button>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    {projectData.selectedServices.map((service) => (
-                      <div
-                        key={service.id}
-                        className="flex items-center justify-between p-3 bg-background border rounded-lg"
-                      >
-                        <div className="flex items-center gap-3 flex-1">
-                          <span className="font-medium text-sm">{service.name}</span>
-                          <span className="text-muted-foreground text-sm">
-                            TRY {(service.cost_price || 0).toLocaleString()}/TRY {(service.selling_price || 0).toLocaleString()}
-                          </span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const updatedServices = projectData.selectedServices.filter(s => s.id !== service.id);
-                            const updatedServiceIds = projectData.selectedServiceIds.filter(id => id !== service.id);
-                            handleProjectDataChange("selectedServices", updatedServices);
-                            handleProjectDataChange("selectedServiceIds", updatedServiceIds);
-                          }}
-                          className="p-1 hover:text-destructive rounded"
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+             <div className="space-y-2">
+               <div className="flex items-center justify-between">
+                 <Label>Services & Add-ons {projectData.selectedServiceIds.length > 0 && `(${projectData.selectedServiceIds.length})`}</Label>
+                 {projectData.selectedServiceIds.length > 0 && (
+                   <div className="flex gap-2">
+                     <Button
+                       type="button"
+                       variant="outline"
+                       size="sm"
+                       onClick={() => {
+                         handleProjectDataChange("selectedServices", []);
+                         handleProjectDataChange("selectedServiceIds", []);
+                       }}
+                       className="h-auto py-1 px-3 text-xs"
+                     >
+                       Clear All
+                     </Button>
+                     <Button
+                       type="button"
+                       variant="ghost"
+                       size="sm"
+                       onClick={() => setShowServicesEditor(!showServicesEditor)}
+                       className="h-auto py-1 px-2 text-xs"
+                     >
+                       {showServicesEditor ? "Done" : "Edit Services"}
+                     </Button>
+                   </div>
+                 )}
+               </div>
+               
+               {/* Show selected services as chips */}
+               {projectData.selectedServiceIds.length > 0 && (
+                 <div className="flex flex-wrap gap-2 p-3 bg-muted/20 rounded-lg border">
+                   {projectData.selectedServices.map((service) => (
+                     <div
+                       key={service.id}
+                       className="inline-flex items-center gap-2 px-3 py-2 text-sm bg-background border rounded-lg"
+                     >
+                       <span className="font-medium">{service.name}</span>
+                       <span className="text-muted-foreground">
+                         TRY {(service.cost_price || 0).toLocaleString()}/TRY {(service.selling_price || 0).toLocaleString()}
+                       </span>
+                       <button
+                         type="button"
+                         onClick={() => {
+                           const updatedServices = projectData.selectedServices.filter(s => s.id !== service.id);
+                           const updatedServiceIds = projectData.selectedServiceIds.filter(id => id !== service.id);
+                           handleProjectDataChange("selectedServices", updatedServices);
+                           handleProjectDataChange("selectedServiceIds", updatedServiceIds);
+                         }}
+                         className="hover:text-destructive"
+                       >
+                         <X className="h-4 w-4" />
+                       </button>
+                     </div>
+                   ))}
+                 </div>
+               )}
 
               {/* Add Services button when no services selected */}
               {projectData.selectedServiceIds.length === 0 && !showServicesEditor && (

@@ -936,24 +936,26 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
                       type="button"
                       variant="ghost"
                       size="sm"
-                      onClick={() => setShowServicesEditor(true)}
+                      onClick={() => setShowServicesEditor(!showServicesEditor)}
                       className="h-auto py-1 px-2 text-xs"
                     >
-                      Edit Services
+                      {showServicesEditor ? "Done" : "Edit Services"}
                     </Button>
                   </div>
-                  <div className="flex flex-wrap gap-1">
+                  <div className="flex flex-wrap gap-2">
                     {projectData.selectedServices.map((service) => (
                       <div
                         key={service.id}
-                        className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-primary/10 text-primary rounded-md"
+                        className="inline-flex items-center gap-2 px-3 py-2 text-xs bg-background border rounded-lg"
                       >
-                        <span>{service.name}</span>
-                        {service.selling_price && (
-                          <span className="text-muted-foreground">
-                            TRY {service.selling_price.toLocaleString()}
-                          </span>
-                        )}
+                        <div className="flex flex-col">
+                          <span className="font-medium">{service.name}</span>
+                          {service.selling_price && (
+                            <span className="text-muted-foreground">
+                              TRY {service.selling_price.toLocaleString()}
+                            </span>
+                          )}
+                        </div>
                         <button
                           type="button"
                           onClick={() => {
@@ -962,7 +964,7 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
                             handleProjectDataChange("selectedServices", updatedServices);
                             handleProjectDataChange("selectedServiceIds", updatedServiceIds);
                           }}
-                          className="ml-1 hover:text-destructive"
+                          className="hover:text-destructive"
                         >
                           <X className="h-3 w-3" />
                         </button>
@@ -972,23 +974,37 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
                 </div>
               )}
 
+              {/* Add Services button when no services selected */}
+              {projectData.selectedServiceIds.length === 0 && !showServicesEditor && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowServicesEditor(true)}
+                  className="w-full"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Services
+                </Button>
+              )}
+
               {/* Services editor */}
-              {(projectData.selectedServiceIds.length === 0 || showServicesEditor) && (
+              {showServicesEditor && (
                 <div className="space-y-2">
-                  {projectData.selectedServiceIds.length > 0 && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground">Add or remove services:</span>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setShowServicesEditor(false)}
-                        className="h-auto py-1 px-2 text-xs"
-                      >
-                        Done
-                      </Button>
-                    </div>
-                  )}
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">
+                      {projectData.selectedServiceIds.length === 0 ? "Select services to add:" : "Add or remove services:"}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowServicesEditor(false)}
+                      className="h-auto py-1 px-2 text-xs"
+                    >
+                      Done
+                    </Button>
+                  </div>
                   <ServicePicker
                     services={allServices}
                     value={projectData.selectedServiceIds}

@@ -929,32 +929,44 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
               
               {/* Show selected services */}
               {projectData.selectedServiceIds.length > 0 && (
-                <div className="space-y-2 p-3 bg-muted/20 rounded-lg border">
+                <div className="space-y-3 p-4 bg-muted/20 rounded-lg border">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Selected Services</span>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setShowServicesEditor(!showServicesEditor)}
-                      className="h-auto py-1 px-2 text-xs"
-                    >
-                      {showServicesEditor ? "Done" : "Edit Services"}
-                    </Button>
+                    <span className="text-sm font-medium">Selected Services ({projectData.selectedServiceIds.length})</span>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          handleProjectDataChange("selectedServices", []);
+                          handleProjectDataChange("selectedServiceIds", []);
+                        }}
+                        className="h-auto py-1 px-3 text-xs"
+                      >
+                        Clear All
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowServicesEditor(!showServicesEditor)}
+                        className="h-auto py-1 px-2 text-xs"
+                      >
+                        {showServicesEditor ? "Done" : "Edit Services"}
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="space-y-2">
                     {projectData.selectedServices.map((service) => (
                       <div
                         key={service.id}
-                        className="inline-flex items-center gap-2 px-3 py-2 text-xs bg-background border rounded-lg"
+                        className="flex items-center justify-between p-3 bg-background border rounded-lg"
                       >
-                        <div className="flex flex-col">
-                          <span className="font-medium">{service.name}</span>
-                          {service.selling_price && (
-                            <span className="text-muted-foreground">
-                              TRY {service.selling_price.toLocaleString()}
-                            </span>
-                          )}
+                        <div className="flex items-center gap-3 flex-1">
+                          <span className="font-medium text-sm">{service.name}</span>
+                          <span className="text-muted-foreground text-sm">
+                            TRY {(service.cost_price || 0).toLocaleString()}/TRY {(service.selling_price || 0).toLocaleString()}
+                          </span>
                         </div>
                         <button
                           type="button"
@@ -964,9 +976,9 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
                             handleProjectDataChange("selectedServices", updatedServices);
                             handleProjectDataChange("selectedServiceIds", updatedServiceIds);
                           }}
-                          className="hover:text-destructive"
+                          className="p-1 hover:text-destructive rounded"
                         >
-                          <X className="h-3 w-3" />
+                          <X className="h-4 w-4" />
                         </button>
                       </div>
                     ))}

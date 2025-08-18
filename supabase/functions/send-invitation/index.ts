@@ -48,12 +48,13 @@ serve(async (req: Request) => {
     // Check if user is owner of the organization
     const { data: orgMember, error: orgError } = await supabase
       .from("organization_members")
-      .select("role")
+      .select("system_role, organization_id")
       .eq("organization_id", user.id)
       .eq("user_id", user.id)
+      .eq("status", "active")
       .single();
 
-    if (orgError || orgMember?.role !== "Owner") {
+    if (orgError || orgMember?.system_role !== "Owner") {
       throw new Error("Only organization owners can send invitations");
     }
 
@@ -85,6 +86,22 @@ serve(async (req: Request) => {
 
     if (inviteError) {
       throw inviteError;
+    }
+
+    // Create pending membership for the invitation
+    const { error: membershipError } = await supabase
+      .from("organization_members")
+      .insert({
+        organization_id: orgMember.organization_id,
+        user_id: null, // Will be filled when user accepts
+        system_role: role === 'Owner' ? 'Owner' : 'Member',
+        status: 'pending',
+        invited_by: user.id
+      });
+
+    if (membershipError) {
+      console.error("Failed to create pending membership:", membershipError);
+      // Don't fail the entire process if membership creation fails
     }
 
     // Get inviter's profile information

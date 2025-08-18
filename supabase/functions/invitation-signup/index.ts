@@ -102,22 +102,36 @@ const handler = async (req: Request): Promise<Response> => {
       console.error("Failed to accept invitation:", acceptError);
     }
 
-    // Add user to organization
+    // Activate the pending membership that should already exist
     const { error: memberError } = await supabaseAdmin
       .from("organization_members")
-      .insert({
-        organization_id: invitation.organization_id,
-        user_id: authData.user.id,
-        role: invitation.role,
-        invited_by: invitation.invited_by
-      });
+      .update({ 
+        status: 'active',
+        user_id: authData.user.id  // Update user_id in case it was null
+      })
+      .eq('organization_id', invitation.organization_id)
+      .eq('status', 'pending')
+      .or(`user_id.is.null,user_id.eq.${authData.user.id}`);
 
     if (memberError) {
-      console.error("Failed to join organization:", memberError);
+      console.error("Failed to activate membership:", memberError);
       return new Response(
         JSON.stringify({ error: "Failed to join organization" }),
         { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
+    }
+
+    // Set this as the user's active organization
+    const { error: settingsError } = await supabaseAdmin
+      .from("user_settings")
+      .upsert({
+        user_id: authData.user.id,
+        active_organization_id: invitation.organization_id
+      });
+
+    if (settingsError) {
+      console.error("Failed to set active organization:", settingsError);
+      // Don't fail the process for this
     }
 
     // Generate session for the new user

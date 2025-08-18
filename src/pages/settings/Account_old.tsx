@@ -578,8 +578,8 @@ export default function Account() {
                         <TableCell>{displayEmail}</TableCell>
                         <TableCell>
                           {currentUser || currentUserRole !== "Owner" ? (
-                            <Badge variant={member.role === "Owner" ? "default" : "secondary"}>
-                              {member.role}
+                            <Badge variant={member.system_role === "Owner" ? "default" : "secondary"}>
+                              {member.system_role}
                             </Badge>
                           ) : (
                             <DropdownMenu>
@@ -589,8 +589,8 @@ export default function Account() {
                                   size="sm" 
                                   className="h-auto p-1 bg-secondary/50 hover:bg-secondary rounded-full"
                                 >
-                                  <Badge variant={member.role === "Owner" ? "default" : "secondary"} className="border-0 bg-transparent hover:bg-transparent">
-                                    {member.role}
+                                  <Badge variant={member.system_role === "Owner" ? "default" : "secondary"} className="border-0 bg-transparent hover:bg-transparent">
+                                    {member.system_role}
                                   </Badge>
                                   <ChevronDown className="h-3 w-3 ml-1" />
                                 </Button>

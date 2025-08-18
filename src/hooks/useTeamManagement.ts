@@ -6,7 +6,8 @@ interface TeamMember {
   id: string;
   user_id: string;
   organization_id: string;
-  role: string;
+  system_role: string;
+  status: string;
   joined_at: string;
   last_active: string | null;
   // User profile data
@@ -254,7 +255,7 @@ export function useTeamManagement() {
     try {
       const { error } = await supabase
         .from('organization_members')
-        .update({ role: newRole })
+        .update({ system_role: newRole as 'Owner' | 'Member' })
         .eq('id', memberId);
 
       if (error) throw error;

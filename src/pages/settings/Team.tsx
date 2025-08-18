@@ -554,10 +554,10 @@ export default function Team() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          {member.role === "Owner" ? (
-                            <Badge variant="outline">{member.role}</Badge>
+                          {member.system_role === "Owner" ? (
+                            <Badge variant="outline">{member.system_role}</Badge>
                           ) : (
-                            <Select value={member.role} onValueChange={(newRole) => updateMemberRole(member.id, newRole)}>
+                            <Select value={member.system_role} onValueChange={(newRole) => updateMemberRole(member.id, newRole)}>
                               <SelectTrigger className="w-auto min-w-[100px] h-8 px-3 py-1 text-sm">
                                 <SelectValue />
                               </SelectTrigger>
@@ -586,7 +586,7 @@ export default function Team() {
                           </div>
                         </TableCell>
                         <TableCell className="text-right">
-                          {member.role !== "Owner" && (
+                          {member.system_role !== "Owner" && (
                             <Button
                               variant="outline"
                               size="sm"

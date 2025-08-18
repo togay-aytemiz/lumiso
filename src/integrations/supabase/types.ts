@@ -351,6 +351,8 @@ export type Database = {
           last_active: string | null
           organization_id: string
           role: string
+          status: string
+          system_role: Database["public"]["Enums"]["system_role"]
           updated_at: string
           user_id: string
         }
@@ -363,6 +365,8 @@ export type Database = {
           last_active?: string | null
           organization_id: string
           role: string
+          status?: string
+          system_role?: Database["public"]["Enums"]["system_role"]
           updated_at?: string
           user_id: string
         }
@@ -375,6 +379,8 @@ export type Database = {
           last_active?: string | null
           organization_id?: string
           role?: string
+          status?: string
+          system_role?: Database["public"]["Enums"]["system_role"]
           updated_at?: string
           user_id?: string
         }
@@ -892,6 +898,7 @@ export type Database = {
       }
       user_settings: {
         Row: {
+          active_organization_id: string | null
           created_at: string
           date_format: string | null
           id: string
@@ -914,6 +921,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          active_organization_id?: string | null
           created_at?: string
           date_format?: string | null
           id?: string
@@ -936,6 +944,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          active_organization_id?: string | null
           created_at?: string
           date_format?: string | null
           id?: string
@@ -1001,8 +1010,16 @@ export type Database = {
         Args: { user_uuid: string }
         Returns: undefined
       }
+      ensure_default_packages_for_org: {
+        Args: { org_id: string; user_uuid: string }
+        Returns: undefined
+      }
       ensure_default_services: {
         Args: { user_uuid: string }
+        Returns: undefined
+      }
+      ensure_default_services_for_org: {
+        Args: { org_id: string; user_uuid: string }
         Returns: undefined
       }
       ensure_default_session_statuses: {
@@ -1033,6 +1050,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      user_has_pending_membership: {
+        Args: { user_uuid: string }
+        Returns: boolean
+      }
     }
     Enums: {
       appointment_status:
@@ -1055,6 +1076,7 @@ export type Database = {
         | "in_post_processing"
         | "delivered"
         | "cancelled"
+      system_role: "Owner" | "Member"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1205,6 +1227,7 @@ export const Constants = {
         "delivered",
         "cancelled",
       ],
+      system_role: ["Owner", "Member"],
     },
   },
 } as const

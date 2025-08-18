@@ -59,6 +59,22 @@ export function ProjectDialog({ open, onOpenChange, leadId, onProjectCreated }: 
         return;
       }
 
+      // Get user's active organization
+      const { data: userSettings } = await supabase
+        .from('user_settings')
+        .select('active_organization_id')
+        .eq('user_id', userData.user.id)
+        .single();
+
+      if (!userSettings?.active_organization_id) {
+        toast({
+          title: "Organization required",
+          description: "Please ensure you're part of an organization",
+          variant: "destructive"
+        });
+        return;
+      }
+
       // Get default project status
       const { data: defaultStatusId } = await supabase
         .rpc('get_default_project_status', { user_uuid: userData.user.id });
@@ -72,6 +88,7 @@ export function ProjectDialog({ open, onOpenChange, leadId, onProjectCreated }: 
           description: description.trim() || null,
           lead_id: leadId,
           user_id: userData.user.id,
+          organization_id: userSettings.active_organization_id,
           status_id: defaultStatusId,
           project_type_id: projectTypeId,
           base_price: basePriceValue

@@ -297,6 +297,7 @@ export type Database = {
           id: string
           name: string
           notes: string | null
+          organization_id: string
           phone: string | null
           status: string
           status_id: string | null
@@ -311,6 +312,7 @@ export type Database = {
           id?: string
           name: string
           notes?: string | null
+          organization_id: string
           phone?: string | null
           status?: string
           status_id?: string | null
@@ -325,6 +327,7 @@ export type Database = {
           id?: string
           name?: string
           notes?: string | null
+          organization_id?: string
           phone?: string | null
           status?: string
           status_id?: string | null
@@ -667,6 +670,7 @@ export type Database = {
           id: string
           lead_id: string
           name: string
+          organization_id: string
           previous_status_id: string | null
           project_type_id: string | null
           status_id: string | null
@@ -681,6 +685,7 @@ export type Database = {
           id?: string
           lead_id: string
           name: string
+          organization_id: string
           previous_status_id?: string | null
           project_type_id?: string | null
           status_id?: string | null
@@ -695,6 +700,7 @@ export type Database = {
           id?: string
           lead_id?: string
           name?: string
+          organization_id?: string
           previous_status_id?: string | null
           project_type_id?: string | null
           status_id?: string | null

@@ -282,6 +282,17 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("User not authenticated");
 
+      // Get user's active organization
+      const { data: userSettings } = await supabase
+        .from('user_settings')
+        .select('active_organization_id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!userSettings?.active_organization_id) {
+        throw new Error("Organization required");
+      }
+
       let leadId = selectedLeadId;
 
       // Create new lead if needed
@@ -290,6 +301,7 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
           .from('leads')
           .insert({
             user_id: user.id,
+            organization_id: userSettings.active_organization_id,
             name: newLeadData.name.trim(),
             email: newLeadData.email.trim() || null,
             phone: newLeadData.phone.trim() || null,
@@ -318,6 +330,7 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
         .from('projects')
         .insert({
           user_id: user.id,
+          organization_id: userSettings.active_organization_id,
           lead_id: leadId,
           name: projectData.name.trim(),
           description: projectData.description.trim() || null,

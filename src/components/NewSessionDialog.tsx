@@ -179,6 +179,17 @@ const NewSessionDialog = ({ onSessionScheduled, children }: NewSessionDialogProp
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("User not authenticated");
 
+      // Get user's active organization
+      const { data: userSettings } = await supabase
+        .from('user_settings')
+        .select('active_organization_id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!userSettings?.active_organization_id) {
+        throw new Error("Organization required");
+      }
+
       let leadId = selectedLeadId;
 
       // Create new lead if needed
@@ -187,6 +198,7 @@ const NewSessionDialog = ({ onSessionScheduled, children }: NewSessionDialogProp
           .from('leads')
           .insert({
             user_id: user.id,
+            organization_id: userSettings.active_organization_id,
             name: newLeadData.name.trim(),
             email: newLeadData.email.trim() || null,
             phone: newLeadData.phone.trim() || null,

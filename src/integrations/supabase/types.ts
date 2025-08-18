@@ -22,6 +22,7 @@ export type Database = {
           google_event_id: string | null
           id: string
           lead_id: string
+          organization_id: string | null
           project_id: string | null
           reminder_date: string | null
           reminder_time: string | null
@@ -36,6 +37,7 @@ export type Database = {
           google_event_id?: string | null
           id?: string
           lead_id: string
+          organization_id?: string | null
           project_id?: string | null
           reminder_date?: string | null
           reminder_time?: string | null
@@ -50,6 +52,7 @@ export type Database = {
           google_event_id?: string | null
           id?: string
           lead_id?: string
+          organization_id?: string | null
           project_id?: string | null
           reminder_date?: string | null
           reminder_time?: string | null
@@ -397,6 +400,42 @@ export type Database = {
           },
         ]
       }
+      organization_settings: {
+        Row: {
+          created_at: string
+          date_format: string | null
+          id: string
+          logo_url: string | null
+          organization_id: string
+          photography_business_name: string | null
+          primary_brand_color: string | null
+          time_format: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          date_format?: string | null
+          id?: string
+          logo_url?: string | null
+          organization_id: string
+          photography_business_name?: string | null
+          primary_brand_color?: string | null
+          time_format?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          date_format?: string | null
+          id?: string
+          logo_url?: string | null
+          organization_id?: string
+          photography_business_name?: string | null
+          primary_brand_color?: string | null
+          time_format?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       organizations: {
         Row: {
           created_at: string
@@ -476,6 +515,7 @@ export type Database = {
           date_paid: string | null
           description: string | null
           id: string
+          organization_id: string | null
           project_id: string
           status: string
           type: string
@@ -488,6 +528,7 @@ export type Database = {
           date_paid?: string | null
           description?: string | null
           id?: string
+          organization_id?: string | null
           project_id: string
           status: string
           type?: string
@@ -500,6 +541,7 @@ export type Database = {
           date_paid?: string | null
           description?: string | null
           id?: string
+          organization_id?: string | null
           project_id?: string
           status?: string
           type?: string

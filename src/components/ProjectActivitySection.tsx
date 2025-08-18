@@ -102,10 +102,26 @@ export function ProjectActivitySection({
           reminder_time: reminderDateTime.split('T')[1]
         })
       };
+      // Get user's active organization
+      const { data: userSettings } = await supabase
+        .from('user_settings')
+        .select('active_organization_id')
+        .eq('user_id', userData.user.id)
+        .single();
+
+      if (!userSettings?.active_organization_id) {
+        throw new Error("Organization required");
+      }
+
+      const activityDataWithOrg = {
+        ...activityData,
+        organization_id: userSettings.active_organization_id
+      };
+
       const {
         data: newActivity,
         error
-      } = await supabase.from('activities').insert(activityData).select('id').single();
+      } = await supabase.from('activities').insert(activityDataWithOrg).select('id').single();
       if (error) throw error;
 
       // Sync reminder to Google Calendar with project context

@@ -136,11 +136,23 @@ export function ProjectPaymentsSection({
             }
           } = await supabase.auth.getUser();
           if (!user) return;
+          // Get user's active organization
+          const { data: userSettings } = await supabase
+            .from('user_settings')
+            .select('active_organization_id')
+            .eq('user_id', user.id)
+            .single();
+
+          if (!userSettings?.active_organization_id) {
+            throw new Error("Organization required");
+          }
+
           const {
             error
           } = await supabase.from('payments').insert({
             project_id: projectId,
             user_id: user.id,
+            organization_id: userSettings.active_organization_id,
             amount: project.base_price || 0,
             description: 'Base Price',
             status: 'due',

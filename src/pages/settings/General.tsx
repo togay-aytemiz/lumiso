@@ -13,10 +13,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useState } from "react";
 import { useSettingsCategorySection } from "@/hooks/useSettingsCategorySection";
-import { useUserSettings } from "@/hooks/useUserSettings";
+import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 
 export default function General() {
-  const { settings, loading, uploading, updateSettings, uploadLogo } = useUserSettings();
+  const { settings, loading, uploading, updateSettings, uploadLogo, deleteLogo } = useOrganizationSettings();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isLogoModalOpen, setIsLogoModalOpen] = useState(false);
 

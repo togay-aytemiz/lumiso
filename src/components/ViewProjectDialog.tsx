@@ -134,7 +134,8 @@ export async function onArchiveToggle(project: {
       content: `Project archived`,
       project_id: project.id,
       lead_id: proj.lead_id,
-      user_id: userData.user.id
+      user_id: userData.user.id,
+      organization_id: userSettings.active_organization_id
     });
     // Log to audit history
     await supabase.from('audit_log').insert({
@@ -178,7 +179,8 @@ export async function onArchiveToggle(project: {
     content: `Project restored`,
     project_id: project.id,
     lead_id: proj.lead_id,
-    user_id: userData.user.id
+    user_id: userData.user.id,
+    organization_id: userSettings.active_organization_id
   });
   // Log to audit history
   await supabase.from('audit_log').insert({

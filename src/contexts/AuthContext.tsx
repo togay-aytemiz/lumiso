@@ -38,8 +38,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let mounted = true;
 
+    // Simple auth state listener without complex caching
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('Auth event:', event, session?.user?.id);
+        
+        if (!mounted) return;
+        
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
+
+        // If signed in, wait a moment for the session to fully establish
+        if (event === 'SIGNED_IN' && session) {
+          setTimeout(() => {
+            console.log('Session established, forcing refresh to ensure auth propagation');
+            window.location.reload();
+          }, 500);
+        }
+      }
+    );
+
     // Get initial session
-    const initAuth = async () => {
+    const initSession = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
         
@@ -52,7 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUser(session?.user ?? null);
           setLoading(false);
           
-          console.log('Auth initialized:', session?.user?.id);
+          console.log('Initial session loaded:', session?.user?.id);
         }
       } catch (error) {
         console.error('Auth init error:', error);
@@ -62,20 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     };
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        console.log('Auth event:', event, session?.user?.id);
-        
-        if (mounted) {
-          setSession(session);
-          setUser(session?.user ?? null);
-          setLoading(false);
-        }
-      }
-    );
-
-    initAuth();
+    initSession();
 
     return () => {
       mounted = false;

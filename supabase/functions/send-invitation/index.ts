@@ -45,16 +45,27 @@ serve(async (req: Request) => {
       throw new Error("Email and role are required");
     }
 
-    // Check if user is owner of the organization
-    const { data: orgMember, error: orgError } = await supabase
+    // Get user's active organization using the helper function
+    const { data: orgData, error: orgError } = await supabase
+      .rpc('get_user_organization_id');
+
+    if (orgError || !orgData) {
+      throw new Error("No active organization found. Please contact support.");
+    }
+
+    const organizationId = orgData;
+
+    // Check if user is owner of this organization
+    const { data: orgMember, error: memberError } = await supabase
       .from("organization_members")
-      .select("system_role, organization_id")
+      .select("system_role")
       .eq("user_id", user.id)
+      .eq("organization_id", organizationId)
       .eq("status", "active")
       .eq("system_role", "Owner")
       .maybeSingle();
 
-    if (orgError || !orgMember) {
+    if (memberError || !orgMember) {
       throw new Error("Only organization owners can send invitations");
     }
 
@@ -62,10 +73,14 @@ serve(async (req: Request) => {
     const { data: existingInvite } = await supabase
       .from("invitations")
       .select("id")
-      .eq("organization_id", orgMember.organization_id)
+      .eq("organization_id", organizationId)
       .eq("email", email)
       .is("accepted_at", null)
       .gt("expires_at", new Date().toISOString());
+
+    if (existingInvite?.length) {
+      throw new Error("There is already a pending invitation for this email address");
+    }
 
     if (existingInvite?.length) {
       throw new Error("There is already a pending invitation for this email address");
@@ -75,7 +90,7 @@ serve(async (req: Request) => {
     const { data: invitation, error: inviteError } = await supabase
       .from("invitations")
       .insert({
-        organization_id: orgMember.organization_id,
+        organization_id: organizationId,
         email,
         role,
         invited_by: user.id,

@@ -49,12 +49,12 @@ serve(async (req: Request) => {
     const { data: orgMember, error: orgError } = await supabase
       .from("organization_members")
       .select("system_role, organization_id")
-      .eq("organization_id", user.id)
       .eq("user_id", user.id)
       .eq("status", "active")
-      .single();
+      .eq("system_role", "Owner")
+      .maybeSingle();
 
-    if (orgError || orgMember?.system_role !== "Owner") {
+    if (orgError || !orgMember) {
       throw new Error("Only organization owners can send invitations");
     }
 
@@ -62,7 +62,7 @@ serve(async (req: Request) => {
     const { data: existingInvite } = await supabase
       .from("invitations")
       .select("id")
-      .eq("organization_id", user.id)
+      .eq("organization_id", orgMember.organization_id)
       .eq("email", email)
       .is("accepted_at", null)
       .gt("expires_at", new Date().toISOString());
@@ -75,7 +75,7 @@ serve(async (req: Request) => {
     const { data: invitation, error: inviteError } = await supabase
       .from("invitations")
       .insert({
-        organization_id: user.id,
+        organization_id: orgMember.organization_id,
         email,
         role,
         invited_by: user.id,

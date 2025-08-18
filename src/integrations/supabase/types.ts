@@ -394,6 +394,33 @@ export type Database = {
           },
         ]
       }
+      organizations: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          owner_id: string
+          settings: Json | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name?: string
+          owner_id: string
+          settings?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          owner_id?: string
+          settings?: Json | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       packages: {
         Row: {
           applicable_types: string[] | null
@@ -404,6 +431,7 @@ export type Database = {
           id: string
           is_active: boolean
           name: string
+          organization_id: string | null
           price: number
           updated_at: string
           user_id: string
@@ -417,6 +445,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           name: string
+          organization_id?: string | null
           price?: number
           updated_at?: string
           user_id: string
@@ -430,6 +459,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           name?: string
+          organization_id?: string | null
           price?: number
           updated_at?: string
           user_id?: string
@@ -741,6 +771,7 @@ export type Database = {
           id: string
           is_sample: boolean | null
           name: string
+          organization_id: string | null
           price: number | null
           selling_price: number | null
           updated_at: string
@@ -755,6 +786,7 @@ export type Database = {
           id?: string
           is_sample?: boolean | null
           name: string
+          organization_id?: string | null
           price?: number | null
           selling_price?: number | null
           updated_at?: string
@@ -769,6 +801,7 @@ export type Database = {
           id?: string
           is_sample?: boolean | null
           name?: string
+          organization_id?: string | null
           price?: number | null
           selling_price?: number | null
           updated_at?: string

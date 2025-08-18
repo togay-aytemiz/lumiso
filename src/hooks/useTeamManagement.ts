@@ -46,11 +46,27 @@ export function useTeamManagement() {
 
       console.log('Fetching team data for user:', user.id);
 
-      // First, fetch basic team members data
+      // First, get the user's active organization
+      const { data: userSettings } = await supabase
+        .from('user_settings')
+        .select('active_organization_id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (!userSettings?.active_organization_id) {
+        console.warn('No active organization found for user');
+        setLoading(false);
+        return;
+      }
+
+      const organizationId = userSettings.active_organization_id;
+
+      // Fetch team members data for the active organization
       const { data: membersData, error: membersError } = await supabase
         .from('organization_members')
         .select('*')
-        .eq('organization_id', user.id)
+        .eq('organization_id', organizationId)
+        .eq('status', 'active')
         .order('joined_at');
 
       if (membersError) {
@@ -115,11 +131,11 @@ export function useTeamManagement() {
       // Set current user role - they should be the organization owner
       setCurrentUserRole('Owner');
 
-      // Fetch pending invitations
+      // Fetch pending invitations for the active organization
       const { data: invitesData, error: invitesError } = await supabase
         .from('invitations')
         .select('*')
-        .eq('organization_id', user.id)
+        .eq('organization_id', organizationId)
         .is('accepted_at', null)
         .gt('expires_at', new Date().toISOString())
         .order('created_at', { ascending: false });

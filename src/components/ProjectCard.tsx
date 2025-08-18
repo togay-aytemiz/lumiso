@@ -64,10 +64,10 @@ export function ProjectCard({ project, onView, refreshTrigger }: ProjectCardProp
     <Card className="w-full hover:shadow-md transition-shadow cursor-pointer">
       <CardContent className="p-4">
         <div 
-          className="flex flex-col md:flex-row md:items-start md:justify-between gap-4"
+          className="flex flex-col md:flex-row md:items-center md:justify-between gap-4"
           onClick={() => onView(project)}
         >
-          <div className="flex-1 min-w-0 space-y-3 md:self-center">
+          <div className="flex-1 min-w-0 space-y-3">
             {/* Title and Archived Badge */}
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -157,7 +157,7 @@ export function ProjectCard({ project, onView, refreshTrigger }: ProjectCardProp
           </div>
 
           {/* Desktop Chevron */}
-          <div className="hidden md:flex items-center ml-4 flex-shrink-0">
+          <div className="hidden md:flex items-center flex-shrink-0">
             <ChevronRight className="h-5 w-5 text-muted-foreground" />
           </div>
         </div>

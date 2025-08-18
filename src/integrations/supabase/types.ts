@@ -855,6 +855,7 @@ export type Database = {
           id: string
           lead_id: string
           notes: string | null
+          organization_id: string
           project_id: string | null
           session_date: string
           session_time: string
@@ -868,6 +869,7 @@ export type Database = {
           id?: string
           lead_id: string
           notes?: string | null
+          organization_id: string
           project_id?: string | null
           session_date: string
           session_time: string
@@ -881,6 +883,7 @@ export type Database = {
           id?: string
           lead_id?: string
           notes?: string | null
+          organization_id?: string
           project_id?: string | null
           session_date?: string
           session_time?: string

@@ -109,6 +109,8 @@ const handler = async (req: Request): Promise<Response> => {
       .eq("user_id", user.id)
       .maybeSingle();
 
+    console.log("Existing member check:", existingMember);
+
     if (existingMember) {
       if (existingMember.status === 'active') {
         return new Response(
@@ -125,6 +127,8 @@ const handler = async (req: Request): Promise<Response> => {
           system_role: invitation.role === 'Owner' ? 'Owner' : 'Member'
         })
         .eq("id", existingMember.id);
+
+      console.log("Updated existing membership:", updateError);
 
       if (updateError) {
         console.error("Failed to activate membership:", updateError);
@@ -144,6 +148,8 @@ const handler = async (req: Request): Promise<Response> => {
           status: 'active',
           invited_by: invitation.invited_by
         });
+
+      console.log("Created new membership:", memberError);
 
       if (memberError) {
         console.error("Failed to create membership:", memberError);

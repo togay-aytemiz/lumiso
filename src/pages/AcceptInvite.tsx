@@ -24,17 +24,23 @@ const AcceptInvite = () => {
       return;
     }
 
+    console.log('Starting invitation acceptance for ID:', invitationId);
+
     try {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
+        console.log('No session found, redirecting to auth');
         // Redirect to auth with return URL
         const returnUrl = `/accept-invite?invitation_id=${invitationId}`;
         navigate(`/auth?returnUrl=${encodeURIComponent(returnUrl)}`);
         return;
       }
 
-      console.log('Accepting invitation:', invitationId);
+      console.log('Session found, calling accept-invitation function with:', {
+        invitationId,
+        accessToken: session.access_token ? 'present' : 'missing'
+      });
 
       const { data, error } = await supabase.functions.invoke('accept-invitation', {
         body: { invitationId },
@@ -44,7 +50,13 @@ const AcceptInvite = () => {
       });
 
       if (error) {
-        console.error('Error accepting invitation:', error);
+        console.error('Error from supabase.functions.invoke:', error);
+        console.error('Error details:', {
+          message: error.message,
+          name: error.name,
+          cause: error.cause
+        });
+        
         if (error.message?.includes('expired')) {
           setState('expired');
         } else if (error.message?.includes('already')) {
@@ -56,8 +68,10 @@ const AcceptInvite = () => {
         return;
       }
 
+      console.log('Response from accept-invitation:', data);
+
       if (data?.error) {
-        console.error('Error in response:', data.error);
+        console.error('Error in response data:', data.error);
         if (data.error.includes('expired')) {
           setState('expired');
         } else if (data.error.includes('already')) {

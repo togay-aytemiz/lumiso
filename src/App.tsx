@@ -29,6 +29,7 @@ import ContractsSettings from "./pages/settings/Contracts";
 import BillingSettings from "./pages/settings/Billing";
 import DangerZoneSettings from "./pages/settings/DangerZone";
 import NotFound from "./pages/NotFound";
+import AcceptInvite from "./pages/AcceptInvite";
 import AcceptInvitation from "./pages/AcceptInvitation";
 import InvitationSignup from "./pages/InvitationSignup";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -47,6 +48,7 @@ const App = () => (
             <BrowserRouter>
           <Routes>
             <Route path="/auth" element={<Auth />} />
+            <Route path="/accept-invite" element={<AcceptInvite />} />
             <Route path="/accept-invitation" element={<AcceptInvitation />} />
             <Route path="/invitation-signup" element={<InvitationSignup />} />
             <Route path="/" element={<ProtectedRoute />}>

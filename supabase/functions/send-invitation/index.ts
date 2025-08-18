@@ -88,21 +88,6 @@ serve(async (req: Request) => {
       throw inviteError;
     }
 
-    // Create pending membership for the invitation
-    const { error: membershipError } = await supabase
-      .from("organization_members")
-      .insert({
-        organization_id: orgMember.organization_id,
-        user_id: null, // Will be filled when user accepts
-        system_role: role === 'Owner' ? 'Owner' : 'Member',
-        status: 'pending',
-        invited_by: user.id
-      });
-
-    if (membershipError) {
-      console.error("Failed to create pending membership:", membershipError);
-      // Don't fail the entire process if membership creation fails
-    }
 
     // Get inviter's profile information
     const { data: profile } = await supabase
@@ -114,7 +99,7 @@ serve(async (req: Request) => {
     const inviterName = profile?.full_name || user.email || "Team member";
     
     // Create invitation link
-    const inviteLink = `${Deno.env.get("SUPABASE_URL")}/auth?invitation_id=${invitation.id}`;
+    const inviteLink = `${req.headers.get('origin') || 'http://localhost:5173'}/accept-invite?invitation_id=${invitation.id}`;
     
     // Send invitation email using Resend
     const emailResponse = await resend.emails.send({

@@ -128,8 +128,9 @@ export function useTeamManagement() {
       console.log('Final team members data:', enrichedMembers);
       setTeamMembers(enrichedMembers);
 
-      // Set current user role - they should be the organization owner
-      setCurrentUserRole('Owner');
+      // Set current user role from their membership in the active organization
+      const currentUserMember = enrichedMembers.find(member => member.user_id === user.id);
+      setCurrentUserRole(currentUserMember?.system_role || null);
 
       // Fetch pending invitations for the active organization
       const { data: invitesData, error: invitesError } = await supabase
@@ -300,7 +301,16 @@ export function useTeamManagement() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const channelName = `organization_${user.id}_presence`;
+      // Get the user's active organization for org-scoped presence
+      const { data: userSettings } = await supabase
+        .from('user_settings')
+        .select('active_organization_id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (!userSettings?.active_organization_id) return;
+
+      const channelName = `organization_${userSettings.active_organization_id}_presence`;
       const channel = supabase.channel(channelName);
 
       // Track presence events

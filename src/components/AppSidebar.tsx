@@ -74,7 +74,7 @@ export function AppSidebar() {
           <img 
             src={logo} 
             alt="Lumiso CRM" 
-            className="h-8 w-auto object-contain"
+            className="h-10 w-auto object-contain"
           />
         </div>
       </SidebarHeader>

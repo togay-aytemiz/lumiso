@@ -67,7 +67,7 @@ export function ProjectCard({ project, onView, refreshTrigger }: ProjectCardProp
           className="flex flex-col md:flex-row md:items-start md:justify-between gap-4"
           onClick={() => onView(project)}
         >
-          <div className="flex-1 min-w-0 space-y-3">
+          <div className="flex-1 min-w-0 space-y-3 md:self-center">
             {/* Title and Archived Badge */}
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 min-w-0 flex-1">

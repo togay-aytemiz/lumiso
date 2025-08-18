@@ -139,7 +139,6 @@ const handler = async (req: Request): Promise<Response> => {
       }
     }
 
-
     // Mark invitation as accepted
     const { error: acceptError } = await supabaseAdmin
       .from("invitations")

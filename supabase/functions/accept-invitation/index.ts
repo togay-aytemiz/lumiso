@@ -16,7 +16,17 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { invitationId }: AcceptInvitationRequest = await req.json();
+    // Get invitation ID from URL path or request body
+    const url = new URL(req.url);
+    const pathInvitationId = url.pathname.split('/').pop();
+    
+    let invitationId: string;
+    if (pathInvitationId && pathInvitationId !== 'accept-invitation') {
+      invitationId = pathInvitationId;
+    } else {
+      const { invitationId: bodyInvitationId }: AcceptInvitationRequest = await req.json();
+      invitationId = bodyInvitationId;
+    }
 
     // Create admin client with service role key
     const supabaseAdmin = createClient(
@@ -79,36 +89,56 @@ const handler = async (req: Request): Promise<Response> => {
     // Check if user is already a member of this organization
     const { data: existingMember } = await supabaseAdmin
       .from("organization_members")
-      .select("id")
+      .select("id, status, system_role")
       .eq("organization_id", invitation.organization_id)
       .eq("user_id", user.id)
       .maybeSingle();
 
     if (existingMember) {
-      return new Response(
-        JSON.stringify({ error: "User is already a member of this organization" }),
-        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
+      if (existingMember.status === 'active') {
+        return new Response(
+          JSON.stringify({ error: "User is already an active member of this organization" }),
+          { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+      
+      // Update existing pending membership to active
+      const { error: updateError } = await supabaseAdmin
+        .from("organization_members")
+        .update({
+          status: 'active',
+          system_role: invitation.role === 'Owner' ? 'Owner' : 'Member'
+        })
+        .eq("id", existingMember.id);
+
+      if (updateError) {
+        console.error("Failed to activate membership:", updateError);
+        return new Response(
+          JSON.stringify({ error: "Failed to activate membership" }),
+          { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+    } else {
+      // Create new organization membership
+      const { error: memberError } = await supabaseAdmin
+        .from("organization_members")
+        .insert({
+          organization_id: invitation.organization_id,
+          user_id: user.id,
+          system_role: invitation.role === 'Owner' ? 'Owner' : 'Member',
+          status: 'active',
+          invited_by: invitation.invited_by
+        });
+
+      if (memberError) {
+        console.error("Failed to create membership:", memberError);
+        return new Response(
+          JSON.stringify({ error: "Failed to join organization" }),
+          { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
     }
 
-    // Create organization membership
-    const { error: memberError } = await supabaseAdmin
-      .from("organization_members")
-      .insert({
-        organization_id: invitation.organization_id,
-        user_id: user.id,
-        system_role: invitation.role === 'Owner' ? 'Owner' : 'Member',
-        status: 'active',
-        invited_by: invitation.invited_by
-      });
-
-    if (memberError) {
-      console.error("Failed to create membership:", memberError);
-      return new Response(
-        JSON.stringify({ error: "Failed to join organization" }),
-        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
-    }
 
     // Mark invitation as accepted
     const { error: acceptError } = await supabaseAdmin

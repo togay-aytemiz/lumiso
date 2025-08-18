@@ -1,9 +1,10 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { User } from '@supabase/supabase-js';
+import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
 interface AuthContextType {
   user: User | null;
+  session: Session | null;
   loading: boolean;
   signOut: () => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -18,6 +19,7 @@ const USER_CACHE_DURATION = 60000; // 1 minute
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchUser = async (): Promise<User | null> => {
@@ -65,6 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await supabase.auth.signOut();
       userCache = null; // Clear cache
       setUser(null);
+      setSession(null);
       localStorage.clear();
     } catch (error) {
       console.error('Sign out error:', error);
@@ -72,34 +75,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    // Initial user fetch
-    const initializeUser = async () => {
-      const fetchedUser = await fetchUser();
-      setUser(fetchedUser);
-      setLoading(false);
-    };
-
-    initializeUser();
-
-    // Listen for auth changes
+    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-          userCache = { user: session?.user || null, timestamp: Date.now() };
-          setUser(session?.user || null);
-        } else if (event === 'SIGNED_OUT') {
+      (event, session) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+        
+        // Update cache
+        if (session?.user) {
+          userCache = { user: session.user, timestamp: Date.now() };
+        } else {
           userCache = null;
-          setUser(null);
         }
+        
         setLoading(false);
       }
     );
+
+    // THEN check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      
+      if (session?.user) {
+        userCache = { user: session.user, timestamp: Date.now() };
+      }
+      
+      setLoading(false);
+    });
 
     return () => subscription.unsubscribe();
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, signOut, refreshUser }}>
+    <AuthContext.Provider value={{ user, session, loading, signOut, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

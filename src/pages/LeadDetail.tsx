@@ -220,9 +220,16 @@ const LeadDetail = () => {
       const userId = userData.user?.id;
       let filteredSessions = data || [];
       if (userId) {
+        // Get user's active organization
+        const { data: userSettings } = await supabase
+          .from('user_settings')
+          .select('active_organization_id')
+          .eq('user_id', userId)
+          .single();
+
         const {
           data: archivedStatus
-        } = await supabase.from('project_statuses').select('id').eq('user_id', userId).ilike('name', 'archived').maybeSingle();
+        } = await supabase.from('project_statuses').select('id').eq('organization_id', userSettings?.active_organization_id).ilike('name', 'archived').maybeSingle();
         if (archivedStatus?.id) {
           const {
             data: archivedProjects

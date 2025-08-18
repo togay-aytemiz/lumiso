@@ -380,10 +380,22 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
 
       const finalDuration = packageData.duration === "Custom" ? packageData.customDuration : packageData.duration;
 
+      // Get user's active organization
+      const { data: userSettings } = await supabase
+        .from('user_settings')
+        .select('active_organization_id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!userSettings?.active_organization_id) {
+        throw new Error("Organization required");
+      }
+
       const { error } = await supabase
         .from('packages')
         .insert({
           user_id: user.id,
+          organization_id: userSettings.active_organization_id,
           name: packageData.name.trim(),
           description: packageData.description.trim() || null,
           price: Number(packageData.price),

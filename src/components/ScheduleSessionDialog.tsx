@@ -93,10 +93,22 @@ const ScheduleSessionDialog = ({ leadId, leadName, onSessionScheduled, disabled 
         if (updateError) throw updateError;
       }
 
+      // Get user's active organization
+      const { data: userSettings } = await supabase
+        .from('user_settings')
+        .select('active_organization_id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!userSettings?.active_organization_id) {
+        throw new Error("Organization required");
+      }
+
       const { error } = await supabase
         .from('sessions')
         .insert({
           user_id: user.id,
+          organization_id: userSettings.active_organization_id,
           lead_id: leadId,
           session_date: formData.session_date,
           session_time: formData.session_time,

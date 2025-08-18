@@ -45,10 +45,22 @@ export function AddProjectStageDialog({ open, onOpenChange, onStageAdded }: AddP
 
       const nextSortOrder = (existingStages?.[0]?.sort_order || 0) + 1;
 
+      // Get user's active organization
+      const { data: userSettings } = await supabase
+        .from('user_settings')
+        .select('active_organization_id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!userSettings?.active_organization_id) {
+        throw new Error("Organization required");
+      }
+
       const { error } = await supabase
         .from('project_statuses')
         .insert({
           user_id: user.id,
+          organization_id: userSettings.active_organization_id,
           name: formData.name.trim(),
           color: formData.color,
           sort_order: nextSortOrder

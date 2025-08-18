@@ -141,9 +141,27 @@ const SessionStatusesSection = () => {
         setIsEditDialogOpen(false);
       } else {
         const maxSortOrder = Math.max(...statuses.map(s => s.sort_order), 0);
+        // Get user's active organization
+        const { data: userSettings } = await supabase
+          .from('user_settings')
+          .select('active_organization_id')
+          .eq('user_id', user.id)
+          .single();
+
+        if (!userSettings?.active_organization_id) {
+          throw new Error("Organization required");
+        }
+
         const { error } = await supabase
           .from('session_statuses')
-          .insert({ name: data.name, color: data.color, user_id: user.id, sort_order: maxSortOrder + 1, is_system_initial: false });
+          .insert({ 
+            name: data.name, 
+            color: data.color, 
+            user_id: user.id, 
+            organization_id: userSettings.active_organization_id,
+            sort_order: maxSortOrder + 1, 
+            is_system_initial: false 
+          });
         if (error) throw error;
         toast({ title: "Success", description: "Session stage created" });
         setIsAddDialogOpen(false);

@@ -68,11 +68,25 @@ export async function onArchiveToggle(project: {
   } = await supabase.auth.getUser();
   if (userErr || !userData.user) throw new Error('User not authenticated');
 
+  // Get user's active organization
+  const { data: userSettings } = await supabase
+    .from('user_settings')
+    .select('active_organization_id')
+    .eq('user_id', userData.user.id)
+    .single();
+
+  if (!userSettings?.active_organization_id) {
+    throw new Error("Organization required");
+  }
+
   // Ensure we have an Archived status; create if missing
-  const {
-    data: archivedStatus,
-    error: archivedErr
-  } = await supabase.from('project_statuses').select('id, name').eq('user_id', userData.user.id).ilike('name', 'archived').maybeSingle();
+  const { data: archivedStatus, error: archivedErr } = await supabase
+    .from('project_statuses')
+    .select('id, name')
+    .eq('organization_id', userSettings.active_organization_id)
+    .ilike('name', 'archived')
+    .limit(1)
+    .maybeSingle();
   let archivedId = archivedStatus?.id as string | undefined;
   if (!archivedId) {
     const {
@@ -80,6 +94,7 @@ export async function onArchiveToggle(project: {
       error: createErr
     } = await supabase.from('project_statuses').insert({
       user_id: userData.user.id,
+      organization_id: userSettings.active_organization_id,
       name: 'Archived',
       color: '#6B7280',
       sort_order: 9999

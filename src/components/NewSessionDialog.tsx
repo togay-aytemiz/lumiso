@@ -225,6 +225,7 @@ const NewSessionDialog = ({ onSessionScheduled, children }: NewSessionDialogProp
         .from('sessions')
         .insert({
           user_id: user.id,
+          organization_id: userSettings.active_organization_id,
           lead_id: leadId,
           session_date: sessionData.session_date,
           session_time: sessionData.session_time,

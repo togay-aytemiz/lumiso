@@ -96,9 +96,16 @@ const ActivitySection = ({
       const userId = userData.user?.id;
       let filtered = data || [];
       if (userId) {
+        // Get user's active organization
+        const { data: userSettings } = await supabase
+          .from('user_settings')
+          .select('active_organization_id')
+          .eq('user_id', userId)
+          .single();
+
         const {
           data: archivedStatus
-        } = await supabase.from('project_statuses').select('id, name').eq('user_id', userId).ilike('name', 'archived').maybeSingle();
+        } = await supabase.from('project_statuses').select('id, name').eq('organization_id', userSettings?.active_organization_id).ilike('name', 'archived').maybeSingle();
         if (archivedStatus?.id) {
           const {
             data: archivedProjects
@@ -132,9 +139,16 @@ const ActivitySection = ({
       const userId = userData.user?.id;
       let filtered = data || [];
       if (userId) {
+        // Get user's active organization
+        const { data: userSettings } = await supabase
+          .from('user_settings')
+          .select('active_organization_id')
+          .eq('user_id', userId)
+          .single();
+
         const {
           data: archivedStatus
-        } = await supabase.from('project_statuses').select('id, name').eq('user_id', userId).ilike('name', 'archived').maybeSingle();
+        } = await supabase.from('project_statuses').select('id, name').eq('organization_id', userSettings?.active_organization_id).ilike('name', 'archived').maybeSingle();
         if (archivedStatus?.id) {
           const {
             data: archivedProjects

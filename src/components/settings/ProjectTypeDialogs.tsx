@@ -53,10 +53,22 @@ export function AddProjectTypeDialog({ open, onOpenChange, onTypeAdded }: AddPro
 
       const nextSortOrder = (existingTypes?.[0]?.sort_order || 0) + 1;
 
+      // Get user's active organization
+      const { data: userSettings } = await supabase
+        .from('user_settings')
+        .select('active_organization_id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!userSettings?.active_organization_id) {
+        throw new Error("Organization required");
+      }
+
       const { error } = await supabase
         .from('project_types')
         .insert({
           user_id: user.id,
+          organization_id: userSettings.active_organization_id,
           name: formData.name.trim(),
           sort_order: nextSortOrder,
           is_default: formData.is_default

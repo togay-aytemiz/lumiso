@@ -4,10 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Badge } from "@/components/ui/badge";
 import { Plus, Search, ChevronDown, Check, X, Save } from "lucide-react";
-import { getLeadStatusStyles, formatStatusText } from "@/lib/leadStatusColors";
+import { LeadStatusBadge } from "./LeadStatusBadge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -63,6 +61,20 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
       fetchLeads();
     }
   }, [open]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownOpen) {
+        setDropdownOpen(false);
+      }
+    };
+
+    if (dropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [dropdownOpen]);
 
   // Auto-add current user as first assignee
   useEffect(() => {
@@ -263,14 +275,6 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
     (lead.email && lead.email.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  const getStatusBadge = (status: string) => {
-    const styles = getLeadStatusStyles(status);
-    return (
-      <Badge className={`text-xs ${styles.className}`}>
-        {formatStatusText(status)}
-      </Badge>
-    );
-  };
 
   const isDirty = Boolean(
     projectData.name.trim() ||
@@ -346,50 +350,53 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
             {!isNewLead && (
               <div className="space-y-2">
                 <Label htmlFor="lead-search">Select client</Label>
-                <Popover open={dropdownOpen} onOpenChange={setDropdownOpen}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      role="combobox"
-                      aria-expanded={dropdownOpen}
-                      className="w-full justify-between text-left h-auto min-h-[40px]"
-                      disabled={loadingLeads}
-                    >
-                      {selectedLeadId ? (
-                        <div className="flex items-center justify-between w-full">
-                          <div className="flex flex-col">
-                            <span className="font-medium">{leads.find(lead => lead.id === selectedLeadId)?.name}</span>
-                            {leads.find(lead => lead.id === selectedLeadId)?.email && (
-                              <span className="text-xs text-muted-foreground">{leads.find(lead => lead.id === selectedLeadId)?.email}</span>
-                            )}
-                          </div>
-                          {leads.find(lead => lead.id === selectedLeadId) && 
-                            getStatusBadge(leads.find(lead => lead.id === selectedLeadId)?.status || '')
-                          }
+                <div className="relative">
+                  <Button
+                    variant="outline"
+                    className="w-full justify-between text-left h-auto min-h-[40px]"
+                    disabled={loadingLeads}
+                    onClick={() => setDropdownOpen(!dropdownOpen)}
+                  >
+                    {selectedLeadId ? (
+                      <div className="flex items-center justify-between w-full">
+                        <div className="flex flex-col">
+                          <span className="font-medium">{leads.find(lead => lead.id === selectedLeadId)?.name}</span>
+                          {leads.find(lead => lead.id === selectedLeadId)?.email && (
+                            <span className="text-xs text-muted-foreground">{leads.find(lead => lead.id === selectedLeadId)?.email}</span>
+                          )}
                         </div>
-                      ) : loadingLeads ? (
-                        "Loading clients..."
-                      ) : (
-                        "Search and select a client..."
-                      )}
-                      <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-full p-0 z-50 bg-popover" align="start">
-                    <div className="p-3 border-b">
-                      <div className="relative">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                        <Input
-                          placeholder="Search by name or email..."
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
-                          className="pl-10"
-                          autoFocus
-                        />
+                        {leads.find(lead => lead.id === selectedLeadId) && 
+                          <LeadStatusBadge 
+                            leadId={leads.find(lead => lead.id === selectedLeadId)?.id || ''}
+                            currentStatus={leads.find(lead => lead.id === selectedLeadId)?.status || ''}
+                            size="sm"
+                            editable={false}
+                          />
+                        }
                       </div>
-                    </div>
-                    <div className="max-h-64 overflow-y-auto">
-                      <div className="py-1">
+                    ) : loadingLeads ? (
+                      "Loading clients..."
+                    ) : (
+                      "Search and select a client..."
+                    )}
+                    <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                  
+                  {dropdownOpen && (
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-background border rounded-lg shadow-lg z-50 max-h-64 overflow-hidden">
+                      <div className="p-3 border-b">
+                        <div className="relative">
+                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                          <Input
+                            placeholder="Search by name or email..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="pl-10"
+                            autoFocus
+                          />
+                        </div>
+                      </div>
+                      <div className="overflow-y-auto max-h-48">
                         {loadingLeads ? (
                           <div className="p-4 text-center text-sm text-muted-foreground">
                             Loading clients...
@@ -426,14 +433,19 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
                                   )}
                                 </div>
                               </div>
-                              {getStatusBadge(lead.status)}
+                              <LeadStatusBadge 
+                                leadId={lead.id}
+                                currentStatus={lead.status}
+                                size="sm"
+                                editable={false}
+                              />
                             </div>
                           ))
                         )}
                       </div>
                     </div>
-                  </PopoverContent>
-                </Popover>
+                  )}
+                </div>
               </div>
             )}
 

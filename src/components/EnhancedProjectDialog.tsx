@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { ProjectTypeSelector } from "./ProjectTypeSelector";
 import { AssigneesPicker } from "./AssigneesPicker";
 import { InlineAssigneesPicker } from "./InlineAssigneesPicker";
+import { ServiceSelector } from "./ServiceSelector";
 import { useProfile } from "@/contexts/ProfileContext";
 
 interface Lead {
@@ -20,6 +21,25 @@ interface Lead {
   email: string | null;
   phone: string | null;
   status: string;
+}
+
+interface Package {
+  id: string;
+  name: string;
+  description?: string;
+  price: number;
+  duration: string;
+  applicable_types: string[];
+  default_add_ons: string[];
+  is_active: boolean;
+}
+
+interface Service {
+  id: string;
+  name: string;
+  category: string | null;
+  cost_price?: number;
+  selling_price?: number;
 }
 
 interface EnhancedProjectDialogProps {
@@ -41,7 +61,9 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
     description: "",
     projectTypeId: "",
     basePrice: "",
-    assignees: [] as string[]
+    packageId: "",
+    assignees: [] as string[],
+    selectedServices: [] as Service[]
   });
   const { profile } = useProfile();
 
@@ -55,10 +77,14 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
   const [selectedLeadId, setSelectedLeadId] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [packages, setPackages] = useState<Package[]>([]);
+  const [projectTypes, setProjectTypes] = useState<{id: string, name: string}[]>([]);
+  const [loadingPackages, setLoadingPackages] = useState(false);
 
   useEffect(() => {
     if (open) {
       fetchLeads();
+      fetchPackagesAndTypes();
     }
   }, [open]);
 
@@ -113,12 +139,50 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
     }
   };
 
+  const fetchPackagesAndTypes = async () => {
+    setLoadingPackages(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const [packagesResult, typesResult] = await Promise.all([
+        supabase
+          .from('packages')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('is_active', true)
+          .order('name'),
+        supabase
+          .from('project_types')
+          .select('id, name')
+          .eq('user_id', user.id)
+          .order('name')
+      ]);
+
+      if (packagesResult.error) throw packagesResult.error;
+      if (typesResult.error) throw typesResult.error;
+
+      setPackages(packagesResult.data || []);
+      setProjectTypes(typesResult.data || []);
+    } catch (error: any) {
+      toast({
+        title: "Error fetching packages",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setLoadingPackages(false);
+    }
+  };
+
   const resetForm = () => {
     setProjectData({ 
       name: "", 
       description: "", 
       projectTypeId: "", 
       basePrice: "",
+      packageId: "",
+      selectedServices: [],
       assignees: profile?.user_id ? [profile.user_id] : []
     });
     setNewLeadData({ name: "", email: "", phone: "", notes: "" });
@@ -235,6 +299,21 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
         if (paymentError) throw paymentError;
       }
 
+      // Add selected services to project
+      if (projectData.selectedServices.length > 0) {
+        const serviceInserts = projectData.selectedServices.map(service => ({
+          project_id: newProject.id,
+          service_id: service.id,
+          user_id: user.id
+        }));
+
+        const { error: servicesError } = await supabase
+          .from('project_services')
+          .insert(serviceInserts);
+
+        if (servicesError) throw servicesError;
+      }
+
       toast({
         title: "Success",
         description: "Project created successfully."
@@ -257,11 +336,50 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
     }
   };
 
-  const handleProjectDataChange = (field: keyof typeof projectData, value: string | string[]) => {
+  const handleProjectDataChange = (field: keyof typeof projectData, value: string | string[] | Service[]) => {
     setProjectData(prev => ({
       ...prev,
       [field]: value
     }));
+  };
+
+  const handlePackageSelection = async (packageId: string) => {
+    if (!packageId) {
+      setProjectData(prev => ({
+        ...prev,
+        packageId: "",
+        basePrice: "",
+        selectedServices: []
+      }));
+      return;
+    }
+
+    const selectedPackage = packages.find(p => p.id === packageId);
+    if (!selectedPackage) return;
+
+    // Fetch services for default add-ons
+    try {
+      const { data: services, error } = await supabase
+        .from('services')
+        .select('*')
+        .in('id', selectedPackage.default_add_ons);
+
+      if (error) throw error;
+
+      setProjectData(prev => ({
+        ...prev,
+        packageId,
+        basePrice: selectedPackage.price.toString(),
+        description: selectedPackage.description || prev.description,
+        selectedServices: services || []
+      }));
+    } catch (error: any) {
+      toast({
+        title: "Error loading package services",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
   };
 
   const handleNewLeadDataChange = (field: keyof typeof newLeadData, value: string) => {
@@ -276,11 +394,29 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
     lead.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Filter packages based on selected project type
+  const selectedProjectType = projectTypes.find(pt => pt.id === projectData.projectTypeId);
+  const availablePackages = packages.filter(pkg => 
+    pkg.applicable_types.length === 0 || 
+    (selectedProjectType && pkg.applicable_types.includes(selectedProjectType.name))
+  );
+
+  const selectedPackage = packages.find(p => p.id === projectData.packageId);
+
+  // Calculate total estimated cost
+  const basePrice = parseFloat(projectData.basePrice) || 0;
+  const servicesTotal = projectData.selectedServices.reduce((total, service) => 
+    total + (service.selling_price || service.cost_price || 0), 0
+  );
+  const totalEstimatedCost = basePrice + servicesTotal;
+
 
   const isDirty = Boolean(
     projectData.name.trim() ||
     projectData.description.trim() ||
     projectData.basePrice.trim() ||
+    projectData.packageId ||
+    projectData.selectedServices.length > 0 ||
     projectData.assignees.length > 1 || // More than just the default creator
     (isNewLead && (newLeadData.name.trim() || newLeadData.email.trim() || newLeadData.phone.trim() || newLeadData.notes.trim())) ||
     (!isNewLead && selectedLeadId)
@@ -520,11 +656,49 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
               <Label htmlFor="project-type">Project Type *</Label>
               <ProjectTypeSelector
                 value={projectData.projectTypeId}
-                onValueChange={(value) => handleProjectDataChange("projectTypeId", value)}
+                onValueChange={(value) => {
+                  handleProjectDataChange("projectTypeId", value);
+                  // Clear package selection when project type changes
+                  if (projectData.packageId) {
+                    handlePackageSelection("");
+                  }
+                }}
                 disabled={loading}
                 required
               />
             </div>
+
+            {/* Package Selection */}
+            {projectData.projectTypeId && (
+              <div className="space-y-2">
+                <Label htmlFor="package">Package (Optional)</Label>
+                <select
+                  id="package"
+                  value={projectData.packageId}
+                  onChange={(e) => handlePackageSelection(e.target.value)}
+                  disabled={loading || loadingPackages}
+                  className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
+                >
+                  <option value="">Select a package...</option>
+                  {availablePackages.map((pkg) => (
+                    <option key={pkg.id} value={pkg.id}>
+                      {pkg.name} - TRY {pkg.price.toLocaleString()}
+                    </option>
+                  ))}
+                </select>
+                {selectedPackage && (
+                  <div className="text-sm text-muted-foreground space-y-1">
+                    <p><strong>Duration:</strong> {selectedPackage.duration}</p>
+                    {selectedPackage.description && (
+                      <p><strong>Description:</strong> {selectedPackage.description}</p>
+                    )}
+                    {selectedPackage.default_add_ons.length > 0 && (
+                      <p><strong>Includes:</strong> {selectedPackage.default_add_ons.length} default services</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
             
             <div className="space-y-2">
               <Label htmlFor="base-price">Base Price (TRY)</Label>
@@ -538,6 +712,11 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
                 placeholder="0"
                 disabled={loading}
               />
+              {selectedPackage && (
+                <p className="text-xs text-muted-foreground">
+                  Package base price: TRY {selectedPackage.price.toLocaleString()} (you can customize this)
+                </p>
+              )}
             </div>
             
             <div className="space-y-2">
@@ -552,6 +731,52 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
                 className="resize-none"
               />
             </div>
+
+            {/* Services Selection */}
+            <ServiceSelector
+              selectedServices={projectData.selectedServices}
+              onServicesChange={(services) => handleProjectDataChange("selectedServices", services)}
+              disabled={loading}
+            />
+
+            {/* Project Summary */}
+            {(projectData.name || projectData.basePrice || projectData.selectedServices.length > 0) && (
+              <div className="space-y-3 p-4 bg-muted/20 rounded-lg border">
+                <h4 className="font-medium text-primary">Project Summary</h4>
+                
+                {selectedPackage && (
+                  <div className="space-y-1 text-sm">
+                    <p><strong>Base Package:</strong> {selectedPackage.name}</p>
+                    <p><strong>Duration:</strong> {selectedPackage.duration}</p>
+                  </div>
+                )}
+                
+                <div className="space-y-1 text-sm">
+                  <div className="flex justify-between">
+                    <span>Base Price:</span>
+                    <span className="font-medium">TRY {(parseFloat(projectData.basePrice) || 0).toLocaleString()}</span>
+                  </div>
+                  
+                  {projectData.selectedServices.length > 0 && (
+                    <>
+                      <div className="flex justify-between">
+                        <span>Add-ons:</span>
+                        <span>{projectData.selectedServices.length} items</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Services Total:</span>
+                        <span className="font-medium">TRY {servicesTotal.toLocaleString()}</span>
+                      </div>
+                    </>
+                  )}
+                  
+                  <div className="flex justify-between pt-2 border-t border-border font-medium text-primary">
+                    <span>Final Price:</span>
+                    <span>TRY {totalEstimatedCost.toLocaleString()}</span>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="pt-4 border-t">
               <InlineAssigneesPicker

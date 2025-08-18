@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 import { ProjectTypeSelector } from "./ProjectTypeSelector";
 import { AssigneesPicker } from "./AssigneesPicker";
 import { InlineAssigneesPicker } from "./InlineAssigneesPicker";
-import { ServiceSelector } from "./ServiceSelector";
+import { ServicePicker } from "./ServicePicker";
 import { useProfile } from "@/contexts/ProfileContext";
 
 interface Lead {
@@ -63,7 +63,8 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
     basePrice: "",
     packageId: "",
     assignees: [] as string[],
-    selectedServices: [] as Service[]
+    selectedServices: [] as Service[],
+    selectedServiceIds: [] as string[]
   });
   const { profile } = useProfile();
 
@@ -77,8 +78,11 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
   const [selectedLeadId, setSelectedLeadId] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [projectTypeDropdownOpen, setProjectTypeDropdownOpen] = useState(false);
+  const [packageDropdownOpen, setPackageDropdownOpen] = useState(false);
   const [packages, setPackages] = useState<Package[]>([]);
   const [projectTypes, setProjectTypes] = useState<{id: string, name: string}[]>([]);
+  const [allServices, setAllServices] = useState<Service[]>([]);
   const [loadingPackages, setLoadingPackages] = useState(false);
 
   useEffect(() => {
@@ -88,20 +92,26 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
     }
   }, [open]);
 
-  // Close dropdown when clicking outside
+  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
       if (dropdownOpen && !target.closest('[data-dropdown-container]')) {
         setDropdownOpen(false);
       }
+      if (projectTypeDropdownOpen && !target.closest('[data-projecttype-dropdown]')) {
+        setProjectTypeDropdownOpen(false);
+      }
+      if (packageDropdownOpen && !target.closest('[data-package-dropdown]')) {
+        setPackageDropdownOpen(false);
+      }
     };
 
-    if (dropdownOpen) {
+    if (dropdownOpen || projectTypeDropdownOpen || packageDropdownOpen) {
       document.addEventListener('mousedown', handleClickOutside);
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
-  }, [dropdownOpen]);
+  }, [dropdownOpen, projectTypeDropdownOpen, packageDropdownOpen]);
 
   // Auto-add current user as first assignee
   useEffect(() => {
@@ -145,7 +155,7 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const [packagesResult, typesResult] = await Promise.all([
+      const [packagesResult, typesResult, servicesResult] = await Promise.all([
         supabase
           .from('packages')
           .select('*')
@@ -156,17 +166,25 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
           .from('project_types')
           .select('id, name')
           .eq('user_id', user.id)
-          .order('name')
+          .order('name'),
+        supabase
+          .from('services')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('category', { ascending: true })
+          .order('name', { ascending: true })
       ]);
 
       if (packagesResult.error) throw packagesResult.error;
       if (typesResult.error) throw typesResult.error;
+      if (servicesResult.error) throw servicesResult.error;
 
       setPackages(packagesResult.data || []);
       setProjectTypes(typesResult.data || []);
+      setAllServices(servicesResult.data || []);
     } catch (error: any) {
       toast({
-        title: "Error fetching packages",
+        title: "Error fetching data",
         description: error.message,
         variant: "destructive"
       });
@@ -183,6 +201,7 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
       basePrice: "",
       packageId: "",
       selectedServices: [],
+      selectedServiceIds: [],
       assignees: profile?.user_id ? [profile.user_id] : []
     });
     setNewLeadData({ name: "", email: "", phone: "", notes: "" });
@@ -300,10 +319,10 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
       }
 
       // Add selected services to project
-      if (projectData.selectedServices.length > 0) {
-        const serviceInserts = projectData.selectedServices.map(service => ({
+      if (projectData.selectedServiceIds.length > 0) {
+        const serviceInserts = projectData.selectedServiceIds.map(serviceId => ({
           project_id: newProject.id,
-          service_id: service.id,
+          service_id: serviceId,
           user_id: user.id
         }));
 
@@ -349,7 +368,8 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
         ...prev,
         packageId: "",
         basePrice: "",
-        selectedServices: []
+        selectedServices: [],
+        selectedServiceIds: []
       }));
       return;
     }
@@ -357,29 +377,19 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
     const selectedPackage = packages.find(p => p.id === packageId);
     if (!selectedPackage) return;
 
-    // Fetch services for default add-ons
-    try {
-      const { data: services, error } = await supabase
-        .from('services')
-        .select('*')
-        .in('id', selectedPackage.default_add_ons);
+    // Get services for default add-ons
+    const packageServices = allServices.filter(service => 
+      selectedPackage.default_add_ons.includes(service.id)
+    );
 
-      if (error) throw error;
-
-      setProjectData(prev => ({
-        ...prev,
-        packageId,
-        basePrice: selectedPackage.price.toString(),
-        description: selectedPackage.description || prev.description,
-        selectedServices: services || []
-      }));
-    } catch (error: any) {
-      toast({
-        title: "Error loading package services",
-        description: error.message,
-        variant: "destructive"
-      });
-    }
+    setProjectData(prev => ({
+      ...prev,
+      packageId,
+      basePrice: selectedPackage.price.toString(),
+      description: selectedPackage.description || prev.description,
+      selectedServices: packageServices,
+      selectedServiceIds: selectedPackage.default_add_ons
+    }));
   };
 
   const handleNewLeadDataChange = (field: keyof typeof newLeadData, value: string) => {
@@ -405,7 +415,10 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
 
   // Calculate total estimated cost
   const basePrice = parseFloat(projectData.basePrice) || 0;
-  const servicesTotal = projectData.selectedServices.reduce((total, service) => 
+  const selectedServicesForCalculation = allServices.filter(service => 
+    projectData.selectedServiceIds.includes(service.id)
+  );
+  const servicesTotal = selectedServicesForCalculation.reduce((total, service) => 
     total + (service.selling_price || service.cost_price || 0), 0
   );
   const totalEstimatedCost = basePrice + servicesTotal;
@@ -416,7 +429,7 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
     projectData.description.trim() ||
     projectData.basePrice.trim() ||
     projectData.packageId ||
-    projectData.selectedServices.length > 0 ||
+    projectData.selectedServiceIds.length > 0 ||
     projectData.assignees.length > 1 || // More than just the default creator
     (isNewLead && (newLeadData.name.trim() || newLeadData.email.trim() || newLeadData.phone.trim() || newLeadData.notes.trim())) ||
     (!isNewLead && selectedLeadId)
@@ -654,38 +667,191 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
             
             <div className="space-y-2">
               <Label htmlFor="project-type">Project Type *</Label>
-              <ProjectTypeSelector
-                value={projectData.projectTypeId}
-                onValueChange={(value) => {
-                  handleProjectDataChange("projectTypeId", value);
-                  // Clear package selection when project type changes
-                  if (projectData.packageId) {
-                    handlePackageSelection("");
-                  }
-                }}
-                disabled={loading}
-                required
-              />
+              <div className="relative" data-projecttype-dropdown>
+                <Button
+                  variant="outline"
+                  className="w-full justify-between text-left h-auto min-h-[40px]"
+                  disabled={loading || loadingPackages}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setProjectTypeDropdownOpen(!projectTypeDropdownOpen);
+                  }}
+                >
+                  {projectData.projectTypeId ? (
+                    <span className="font-medium">
+                      {projectTypes.find(type => type.id === projectData.projectTypeId)?.name}
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground">Select project type...</span>
+                  )}
+                  <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+                
+                {projectTypeDropdownOpen && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-background border rounded-lg shadow-lg z-50 max-h-64 overflow-hidden">
+                    <div className="p-3 border-b">
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                        <Input
+                          placeholder="Search project types..."
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          className="pl-10"
+                          autoFocus
+                        />
+                      </div>
+                    </div>
+                    <div className="overflow-y-auto max-h-48">
+                      {projectTypes.filter(type =>
+                        type.name.toLowerCase().includes(searchTerm.toLowerCase())
+                      ).length === 0 ? (
+                        <div className="p-4 text-center text-sm text-muted-foreground">
+                          {searchTerm ? 'No types match your search' : 'No project types found'}
+                        </div>
+                      ) : (
+                        projectTypes
+                          .filter(type => type.name.toLowerCase().includes(searchTerm.toLowerCase()))
+                          .map((type) => (
+                            <button
+                              key={type.id}
+                              type="button"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleProjectDataChange("projectTypeId", type.id);
+                                if (projectData.packageId) {
+                                  handlePackageSelection("");
+                                }
+                                setProjectTypeDropdownOpen(false);
+                                setSearchTerm("");
+                              }}
+                              className={cn(
+                                "flex items-center justify-between p-3 hover:bg-muted/50 cursor-pointer border-b last:border-b-0 w-full text-left",
+                                projectData.projectTypeId === type.id && "bg-muted"
+                              )}
+                            >
+                              <div className="flex items-center space-x-3">
+                                <Check
+                                  className={cn(
+                                    "h-4 w-4",
+                                    projectData.projectTypeId === type.id ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                <span className="font-medium">{type.name}</span>
+                              </div>
+                            </button>
+                          ))
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Package Selection */}
             {projectData.projectTypeId && (
               <div className="space-y-2">
                 <Label htmlFor="package">Package (Optional)</Label>
-                <select
-                  id="package"
-                  value={projectData.packageId}
-                  onChange={(e) => handlePackageSelection(e.target.value)}
-                  disabled={loading || loadingPackages}
-                  className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
-                >
-                  <option value="">Select a package...</option>
-                  {availablePackages.map((pkg) => (
-                    <option key={pkg.id} value={pkg.id}>
-                      {pkg.name} - TRY {pkg.price.toLocaleString()}
-                    </option>
-                  ))}
-                </select>
+                <div className="relative" data-package-dropdown>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-between text-left h-auto min-h-[40px]"
+                    disabled={loading || loadingPackages}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setPackageDropdownOpen(!packageDropdownOpen);
+                    }}
+                  >
+                    {projectData.packageId ? (
+                      <div className="flex items-center justify-between w-full">
+                        <span className="font-medium">
+                          {selectedPackage?.name}
+                        </span>
+                        <span className="text-sm text-muted-foreground">
+                          TRY {selectedPackage?.price.toLocaleString()}
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground">Select a package...</span>
+                    )}
+                    <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                  
+                  {packageDropdownOpen && (
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-background border rounded-lg shadow-lg z-50 max-h-64 overflow-hidden">
+                      <div className="overflow-y-auto max-h-64">
+                        <div className="p-2">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handlePackageSelection("");
+                              setPackageDropdownOpen(false);
+                            }}
+                            className={cn(
+                              "flex items-center justify-between p-3 hover:bg-muted/50 cursor-pointer border-b w-full text-left rounded-md mb-1",
+                              !projectData.packageId && "bg-muted"
+                            )}
+                          >
+                            <div className="flex items-center space-x-3">
+                              <Check
+                                className={cn(
+                                  "h-4 w-4",
+                                  !projectData.packageId ? "opacity-100" : "opacity-0"
+                                )}
+                              />
+                              <span className="text-muted-foreground">No package</span>
+                            </div>
+                          </button>
+                          {availablePackages.map((pkg) => (
+                            <button
+                              key={pkg.id}
+                              type="button"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handlePackageSelection(pkg.id);
+                                setPackageDropdownOpen(false);
+                              }}
+                              className={cn(
+                                "flex items-center justify-between p-3 hover:bg-muted/50 cursor-pointer border-b last:border-b-0 w-full text-left rounded-md mb-1",
+                                projectData.packageId === pkg.id && "bg-muted"
+                              )}
+                            >
+                              <div className="flex items-center space-x-3 flex-1">
+                                <Check
+                                  className={cn(
+                                    "h-4 w-4",
+                                    projectData.packageId === pkg.id ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                <div className="flex-1">
+                                  <div className="flex items-center justify-between">
+                                    <span className="font-medium">{pkg.name}</span>
+                                    <span className="text-sm font-medium text-primary">
+                                      TRY {pkg.price.toLocaleString()}
+                                    </span>
+                                  </div>
+                                  {pkg.description && (
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                      {pkg.description}
+                                    </p>
+                                  )}
+                                  <p className="text-xs text-muted-foreground">
+                                    {pkg.duration} • {pkg.default_add_ons.length} services
+                                  </p>
+                                </div>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
                 {selectedPackage && (
                   <div className="text-sm text-muted-foreground space-y-1">
                     <p><strong>Duration:</strong> {selectedPackage.duration}</p>
@@ -733,14 +899,19 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
             </div>
 
             {/* Services Selection */}
-            <ServiceSelector
-              selectedServices={projectData.selectedServices}
-              onServicesChange={(services) => handleProjectDataChange("selectedServices", services)}
-              disabled={loading}
-            />
+            <div className="space-y-2">
+              <Label>Services & Add-ons</Label>
+              <ServicePicker
+                services={allServices}
+                value={projectData.selectedServiceIds}
+                onChange={(serviceIds) => handleProjectDataChange("selectedServiceIds", serviceIds)}
+                disabled={loading}
+                isLoading={loadingPackages}
+              />
+            </div>
 
             {/* Project Summary */}
-            {(projectData.name || projectData.basePrice || projectData.selectedServices.length > 0) && (
+            {(projectData.name || projectData.basePrice || projectData.selectedServiceIds.length > 0) && (
               <div className="space-y-3 p-4 bg-muted/20 rounded-lg border">
                 <h4 className="font-medium text-primary">Project Summary</h4>
                 
@@ -757,11 +928,11 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
                     <span className="font-medium">TRY {(parseFloat(projectData.basePrice) || 0).toLocaleString()}</span>
                   </div>
                   
-                  {projectData.selectedServices.length > 0 && (
+                  {projectData.selectedServiceIds.length > 0 && (
                     <>
                       <div className="flex justify-between">
                         <span>Add-ons:</span>
-                        <span>{projectData.selectedServices.length} items</span>
+                        <span>{projectData.selectedServiceIds.length} items</span>
                       </div>
                       <div className="flex justify-between">
                         <span>Services Total:</span>

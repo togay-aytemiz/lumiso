@@ -65,7 +65,8 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownOpen) {
+      const target = event.target as HTMLElement;
+      if (dropdownOpen && !target.closest('[data-dropdown-container]')) {
         setDropdownOpen(false);
       }
     };
@@ -350,12 +351,16 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
             {!isNewLead && (
               <div className="space-y-2">
                 <Label htmlFor="lead-search">Select client</Label>
-                <div className="relative">
+                <div className="relative" data-dropdown-container>
                   <Button
                     variant="outline"
                     className="w-full justify-between text-left h-auto min-h-[40px]"
                     disabled={loadingLeads}
-                    onClick={() => setDropdownOpen(!dropdownOpen)}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setDropdownOpen(!dropdownOpen);
+                    }}
                   >
                     {selectedLeadId ? (
                       <div className="flex items-center justify-between w-full">
@@ -407,15 +412,18 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
                           </div>
                         ) : (
                           filteredLeads.map((lead) => (
-                            <div
+                            <button
                               key={lead.id}
-                              onClick={() => {
+                              type="button"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
                                 setSelectedLeadId(lead.id);
                                 setDropdownOpen(false);
                                 setSearchTerm("");
                               }}
                               className={cn(
-                                "flex items-center justify-between p-3 hover:bg-muted/50 cursor-pointer border-b last:border-b-0",
+                                "flex items-center justify-between p-3 hover:bg-muted/50 cursor-pointer border-b last:border-b-0 w-full text-left",
                                 selectedLeadId === lead.id && "bg-muted"
                               )}
                             >
@@ -439,7 +447,7 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
                                 size="sm"
                                 editable={false}
                               />
-                            </div>
+                            </button>
                           ))
                         )}
                       </div>

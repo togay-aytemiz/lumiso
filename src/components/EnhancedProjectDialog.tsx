@@ -43,12 +43,13 @@ interface Service {
 }
 
 interface EnhancedProjectDialogProps {
+  defaultLeadId?: string;
   onProjectCreated?: () => void;
   children?: React.ReactNode;
   defaultStatusId?: string | null;
 }
 
-export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatusId }: EnhancedProjectDialogProps) {
+export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, children, defaultStatusId }: EnhancedProjectDialogProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -92,6 +93,14 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
       fetchPackagesAndTypes();
     }
   }, [open]);
+
+  // Auto-select lead if defaultLeadId is provided
+  useEffect(() => {
+    if (defaultLeadId && open) {
+      setSelectedLeadId(defaultLeadId);
+      setIsNewLead(false);
+    }
+  }, [defaultLeadId, open]);
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -501,174 +510,176 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
         footerActions={footerActions}
       >
         <div className="grid gap-4">
-          {/* Lead Selection */}
-          <div className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <input
-                type="radio"
-                id="existing-lead"
-                name="lead-type"
-                checked={!isNewLead}
-                onChange={() => setIsNewLead(false)}
-                className="h-4 w-4"
-              />
-              <Label htmlFor="existing-lead">Select existing client</Label>
-            </div>
-            
-            {!isNewLead && (
-              <div className="space-y-2">
-                <Label htmlFor="lead-search">Select client</Label>
-                <div className="relative" data-dropdown-container>
-                  <Button
-                    variant="outline"
-                    className="w-full justify-between text-left h-auto min-h-[40px]"
-                    disabled={loadingLeads}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setDropdownOpen(!dropdownOpen);
-                    }}
-                  >
-                    {selectedLeadId ? (
-                      <div className="flex items-center justify-between w-full">
-                        <span className="font-medium">{leads.find(lead => lead.id === selectedLeadId)?.name}</span>
-                        {leads.find(lead => lead.id === selectedLeadId) && 
-                          <LeadStatusBadge 
-                            leadId={leads.find(lead => lead.id === selectedLeadId)?.id || ''}
-                            currentStatus={leads.find(lead => lead.id === selectedLeadId)?.status || ''}
-                            size="sm"
-                            editable={false}
-                          />
-                        }
-                      </div>
-                    ) : loadingLeads ? (
-                      "Loading clients..."
-                    ) : (
-                      "Search and select a client..."
-                    )}
-                    <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                  
-                  {dropdownOpen && (
-                    <div className="absolute top-full left-0 right-0 mt-1 bg-background border rounded-lg shadow-lg z-50 max-h-64 overflow-hidden">
-                      <div className="p-3 border-b">
-                        <div className="relative">
-                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                          <Input
-                            placeholder="Search by name..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="pl-10"
-                            autoFocus
-                          />
+          {/* Lead Selection - Only show if no default lead is provided */}
+          {!defaultLeadId && (
+            <div className="space-y-4">
+              <div className="flex items-center space-x-2">
+                <input
+                  type="radio"
+                  id="existing-lead"
+                  name="lead-type"
+                  checked={!isNewLead}
+                  onChange={() => setIsNewLead(false)}
+                  className="h-4 w-4"
+                />
+                <Label htmlFor="existing-lead">Select existing client</Label>
+              </div>
+              
+              {!isNewLead && (
+                <div className="space-y-2">
+                  <Label htmlFor="lead-search">Select client</Label>
+                  <div className="relative" data-dropdown-container>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-between text-left h-auto min-h-[40px]"
+                      disabled={loadingLeads}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setDropdownOpen(!dropdownOpen);
+                      }}
+                    >
+                      {selectedLeadId ? (
+                        <div className="flex items-center justify-between w-full">
+                          <span className="font-medium">{leads.find(lead => lead.id === selectedLeadId)?.name}</span>
+                          {leads.find(lead => lead.id === selectedLeadId) && 
+                            <LeadStatusBadge 
+                              leadId={leads.find(lead => lead.id === selectedLeadId)?.id || ''}
+                              currentStatus={leads.find(lead => lead.id === selectedLeadId)?.status || ''}
+                              size="sm"
+                              editable={false}
+                            />
+                          }
+                        </div>
+                      ) : loadingLeads ? (
+                        "Loading clients..."
+                      ) : (
+                        "Search and select a client..."
+                      )}
+                      <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                    
+                    {dropdownOpen && (
+                      <div className="absolute top-full left-0 right-0 mt-1 bg-background border rounded-lg shadow-lg z-50 max-h-64 overflow-hidden">
+                        <div className="p-3 border-b">
+                          <div className="relative">
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                            <Input
+                              placeholder="Search by name..."
+                              value={searchTerm}
+                              onChange={(e) => setSearchTerm(e.target.value)}
+                              className="pl-10"
+                              autoFocus
+                            />
+                          </div>
+                        </div>
+                        <div className="overflow-y-auto max-h-48">
+                          {loadingLeads ? (
+                            <div className="p-4 text-center text-sm text-muted-foreground">
+                              Loading clients...
+                            </div>
+                          ) : filteredLeads.length === 0 ? (
+                            <div className="p-4 text-center text-sm text-muted-foreground">
+                              {searchTerm ? 'No clients match your search' : 'No active clients found'}
+                            </div>
+                          ) : (
+                            filteredLeads.map((lead) => (
+                              <button
+                                key={lead.id}
+                                type="button"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  setSelectedLeadId(lead.id);
+                                  setDropdownOpen(false);
+                                  setSearchTerm("");
+                                }}
+                                className={cn(
+                                  "flex items-center justify-between p-3 hover:bg-muted/50 cursor-pointer border-b last:border-b-0 w-full text-left",
+                                  selectedLeadId === lead.id && "bg-muted"
+                                )}
+                              >
+                                <div className="flex items-center space-x-3">
+                                  <Check
+                                    className={cn(
+                                      "h-4 w-4",
+                                      selectedLeadId === lead.id ? "opacity-100" : "opacity-0"
+                                    )}
+                                  />
+                                  <span className="font-medium">{lead.name}</span>
+                                </div>
+                                <LeadStatusBadge 
+                                  leadId={lead.id}
+                                  currentStatus={lead.status}
+                                  size="sm"
+                                  editable={false}
+                                />
+                              </button>
+                            ))
+                          )}
                         </div>
                       </div>
-                      <div className="overflow-y-auto max-h-48">
-                        {loadingLeads ? (
-                          <div className="p-4 text-center text-sm text-muted-foreground">
-                            Loading clients...
-                          </div>
-                        ) : filteredLeads.length === 0 ? (
-                          <div className="p-4 text-center text-sm text-muted-foreground">
-                            {searchTerm ? 'No clients match your search' : 'No active clients found'}
-                          </div>
-                        ) : (
-                          filteredLeads.map((lead) => (
-                            <button
-                              key={lead.id}
-                              type="button"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                setSelectedLeadId(lead.id);
-                                setDropdownOpen(false);
-                                setSearchTerm("");
-                              }}
-                              className={cn(
-                                "flex items-center justify-between p-3 hover:bg-muted/50 cursor-pointer border-b last:border-b-0 w-full text-left",
-                                selectedLeadId === lead.id && "bg-muted"
-                              )}
-                            >
-                              <div className="flex items-center space-x-3">
-                                <Check
-                                  className={cn(
-                                    "h-4 w-4",
-                                    selectedLeadId === lead.id ? "opacity-100" : "opacity-0"
-                                  )}
-                                />
-                                <span className="font-medium">{lead.name}</span>
-                              </div>
-                              <LeadStatusBadge 
-                                leadId={lead.id}
-                                currentStatus={lead.status}
-                                size="sm"
-                                editable={false}
-                              />
-                            </button>
-                          ))
-                        )}
-                      </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            <div className="flex items-center space-x-2">
-              <input
-                type="radio"
-                id="new-lead"
-                name="lead-type"
-                checked={isNewLead}
-                onChange={() => setIsNewLead(true)}
-                className="h-4 w-4"
-              />
-              <Label htmlFor="new-lead">Create new client</Label>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="radio"
+                  id="new-lead"
+                  name="lead-type"
+                  checked={isNewLead}
+                  onChange={() => setIsNewLead(true)}
+                  className="h-4 w-4"
+                />
+                <Label htmlFor="new-lead">Create new client</Label>
+              </div>
+
+              {isNewLead && (
+                <div className="space-y-3 pl-6 border-l-2 border-muted">
+                  <div className="space-y-2">
+                    <Label htmlFor="new-name">Name *</Label>
+                    <Input
+                      id="new-name"
+                      value={newLeadData.name}
+                      onChange={(e) => handleNewLeadDataChange("name", e.target.value)}
+                      placeholder="Enter client name"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="new-email">Email</Label>
+                    <Input
+                      id="new-email"
+                      type="email"
+                      value={newLeadData.email}
+                      onChange={(e) => handleNewLeadDataChange("email", e.target.value)}
+                      placeholder="Enter email address"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="new-phone">Phone</Label>
+                    <Input
+                      id="new-phone"
+                      value={newLeadData.phone}
+                      onChange={(e) => handleNewLeadDataChange("phone", e.target.value)}
+                      placeholder="Enter phone number"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="new-notes">Notes</Label>
+                    <Textarea
+                      id="new-notes"
+                      value={newLeadData.notes}
+                      onChange={(e) => handleNewLeadDataChange("notes", e.target.value)}
+                      placeholder="Any additional notes..."
+                      rows={2}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
-
-            {isNewLead && (
-              <div className="space-y-3 pl-6 border-l-2 border-muted">
-                <div className="space-y-2">
-                  <Label htmlFor="new-name">Name *</Label>
-                  <Input
-                    id="new-name"
-                    value={newLeadData.name}
-                    onChange={(e) => handleNewLeadDataChange("name", e.target.value)}
-                    placeholder="Enter client name"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="new-email">Email</Label>
-                  <Input
-                    id="new-email"
-                    type="email"
-                    value={newLeadData.email}
-                    onChange={(e) => handleNewLeadDataChange("email", e.target.value)}
-                    placeholder="Enter email address"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="new-phone">Phone</Label>
-                  <Input
-                    id="new-phone"
-                    value={newLeadData.phone}
-                    onChange={(e) => handleNewLeadDataChange("phone", e.target.value)}
-                    placeholder="Enter phone number"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="new-notes">Notes</Label>
-                  <Textarea
-                    id="new-notes"
-                    value={newLeadData.notes}
-                    onChange={(e) => handleNewLeadDataChange("notes", e.target.value)}
-                    placeholder="Any additional notes..."
-                    rows={2}
-                  />
-                </div>
-              </div>
-            )}
-          </div>
+          )}
 
           {/* Project Details */}
           <div className="space-y-4 pt-4 border-t">

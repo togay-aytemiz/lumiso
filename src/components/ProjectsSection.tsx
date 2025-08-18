@@ -5,7 +5,7 @@ import { Switch } from "@/components/ui/switch";
 import { Plus } from "lucide-react";
 import { ProjectCard } from "./ProjectCard";
 import { ViewProjectDialog } from "./ViewProjectDialog";
-import { ProjectDialog } from "./ProjectDialog";
+import { EnhancedProjectDialog } from "./EnhancedProjectDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -226,16 +226,25 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
       </CardContent>
 
 
-      <ProjectDialog
-        open={showAddDialog}
-        onOpenChange={setShowAddDialog}
-        leadId={leadId}
+      <EnhancedProjectDialog
+        defaultLeadId={leadId}
         onProjectCreated={() => {
           fetchProjects();
           setRefreshTrigger(prev => prev + 1);
           onProjectUpdated?.();
+          setShowAddDialog(false);
         }}
-      />
+      >
+        <Button 
+          onClick={() => setShowAddDialog(true)}
+          style={{ display: showAddDialog ? 'none' : 'inline-flex' }}
+          size="sm" 
+          className="w-full md:w-auto"
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Add Project
+        </Button>
+      </EnhancedProjectDialog>
 
       <ViewProjectDialog
         project={viewingProject}

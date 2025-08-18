@@ -16,7 +16,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import ScheduleSessionDialog from "@/components/ScheduleSessionDialog";
 import EditSessionDialog from "@/components/EditSessionDialog";
 import { EditLeadDialog } from "@/components/EditLeadDialog";
-import { ProjectDialog } from "@/components/ProjectDialog";
+import { EnhancedProjectDialog } from "@/components/EnhancedProjectDialog";
 import ActivitySection from "@/components/ActivitySection";
 import SessionBanner from "@/components/SessionBanner";
 import { ProjectsSection } from "@/components/ProjectsSection";
@@ -572,10 +572,20 @@ const LeadDetail = () => {
           <ActivitySection key={activityRefreshKey} leadId={lead.id} leadName={lead.name} />
 
           {/* Add Project Dialog */}
-          <ProjectDialog open={showAddProjectDialog} onOpenChange={setShowAddProjectDialog} leadId={lead.id} onProjectCreated={() => {
-          handleProjectUpdated();
-          setShowAddProjectDialog(false);
-        }} />
+          <EnhancedProjectDialog 
+            defaultLeadId={lead.id}
+            onProjectCreated={() => {
+              handleProjectUpdated();
+              setShowAddProjectDialog(false);
+            }}
+          >
+            <Button 
+              onClick={() => setShowAddProjectDialog(true)}
+              style={{ display: showAddProjectDialog ? 'none' : 'inline-flex' }}
+            >
+              Add Project
+            </Button>
+          </EnhancedProjectDialog>
 
           <div className="border border-destructive/20 bg-destructive/5 rounded-md p-4 max-w-full text-center">
             <div className="space-y-3">

@@ -62,9 +62,9 @@ export function ProjectCard({ project, onView, refreshTrigger }: ProjectCardProp
 
   return (
     <Card className="w-full hover:shadow-md transition-shadow cursor-pointer">
-      <CardContent className="p-4">
+      <CardContent className="p-4 md:p-6">
         <div 
-          className="flex flex-col md:flex-row md:items-center md:justify-between gap-4"
+          className="flex flex-col md:flex-row md:items-center md:justify-between md:gap-6 gap-4"
           onClick={() => onView(project)}
         >
           <div className="flex-1 min-w-0 space-y-3">

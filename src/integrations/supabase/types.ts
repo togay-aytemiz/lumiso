@@ -1029,6 +1029,10 @@ export type Database = {
         Args: { user_uuid: string }
         Returns: string
       }
+      get_user_organization_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
     }
     Enums: {
       appointment_status:

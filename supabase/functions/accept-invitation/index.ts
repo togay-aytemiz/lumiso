@@ -11,6 +11,12 @@ interface AcceptInvitationRequest {
 }
 
 const handler = async (req: Request): Promise<Response> => {
+  console.log("Accept invitation function called:", {
+    method: req.method,
+    url: req.url,
+    headers: Object.fromEntries(req.headers.entries())
+  });
+
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -23,9 +29,18 @@ const handler = async (req: Request): Promise<Response> => {
     let invitationId: string;
     if (pathInvitationId && pathInvitationId !== 'accept-invitation') {
       invitationId = pathInvitationId;
+      console.log("Got invitation ID from path:", invitationId);
     } else {
-      const { invitationId: bodyInvitationId }: AcceptInvitationRequest = await req.json();
+      const requestBody = await req.json();
+      console.log("Request body:", requestBody);
+      const { invitationId: bodyInvitationId }: AcceptInvitationRequest = requestBody;
       invitationId = bodyInvitationId;
+      console.log("Got invitation ID from body:", invitationId);
+    }
+
+    if (!invitationId) {
+      console.error("No invitation ID provided");
+      throw new Error("No invitation ID provided");
     }
 
     // Create admin client with service role key

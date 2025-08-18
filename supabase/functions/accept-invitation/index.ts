@@ -129,7 +129,8 @@ const handler = async (req: Request): Promise<Response> => {
         .from("organization_members")
         .update({
           status: 'active',
-          system_role: invitation.role === 'Owner' ? 'Owner' : 'Member'
+          system_role: invitation.role === 'Owner' ? 'Owner' : 'Member',
+          role: invitation.role
         })
         .eq("id", existingMember.id);
 
@@ -143,6 +144,25 @@ const handler = async (req: Request): Promise<Response> => {
         );
       }
     } else {
+      // Double-check by trying to find any existing membership (including active ones)
+      // This handles race conditions where membership might exist but maybeSingle didn't find it
+      const { data: anyExistingMember } = await supabaseAdmin
+        .from("organization_members")
+        .select("id, status, role")
+        .eq("organization_id", invitation.organization_id)
+        .eq("user_id", user.id)
+        .limit(1);
+
+      if (anyExistingMember && anyExistingMember.length > 0) {
+        console.log("Found existing membership on second check:", anyExistingMember[0]);
+        if (anyExistingMember[0].status === 'active') {
+          return new Response(
+            JSON.stringify({ error: "User is already an active member of this organization" }),
+            { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+          );
+        }
+      }
+
       // Create new organization membership
       console.log("Creating new organization membership");
       const { error: memberError } = await supabaseAdmin
@@ -151,6 +171,7 @@ const handler = async (req: Request): Promise<Response> => {
           organization_id: invitation.organization_id,
           user_id: user.id,
           system_role: invitation.role === 'Owner' ? 'Owner' : 'Member',
+          role: invitation.role,
           status: 'active',
           invited_by: invitation.invited_by
         });
@@ -160,18 +181,30 @@ const handler = async (req: Request): Promise<Response> => {
       if (memberError) {
         console.error("Failed to create membership:", memberError);
         
-        // If it's a unique constraint violation, it means the user is already a member
+        // If it's a unique constraint violation, check if user is now active
         if (memberError.code === '23505') {
+          console.log("Unique constraint violation - checking if user is now active");
+          const { data: finalCheck } = await supabaseAdmin
+            .from("organization_members")
+            .select("status")
+            .eq("organization_id", invitation.organization_id)
+            .eq("user_id", user.id)
+            .single();
+          
+          if (finalCheck?.status === 'active') {
+            console.log("User is actually already active - continuing with success");
+          } else {
+            return new Response(
+              JSON.stringify({ error: "User is already a member of this organization" }),
+              { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+            );
+          }
+        } else {
           return new Response(
-            JSON.stringify({ error: "User is already a member of this organization" }),
-            { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+            JSON.stringify({ error: "Failed to join organization" }),
+            { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
           );
         }
-        
-        return new Response(
-          JSON.stringify({ error: "Failed to join organization" }),
-          { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
-        );
       }
     }
 

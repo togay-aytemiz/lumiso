@@ -95,9 +95,10 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
 
       const { data: leadsData, error } = await supabase
         .from('leads')
-        .select('id, name, email, phone, status')
+        .select('id, name, email, phone, status, updated_at')
         .eq('user_id', user.id)
-        .order('name', { ascending: true });
+        .neq('status', 'lost')
+        .order('updated_at', { ascending: false });
 
       if (error) throw error;
       setLeads(leadsData || []);
@@ -272,8 +273,7 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
 
   // Filter leads based on search term
   const filteredLeads = leads.filter(lead =>
-    lead.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (lead.email && lead.email.toLowerCase().includes(searchTerm.toLowerCase()))
+    lead.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
 
@@ -364,12 +364,7 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
                   >
                     {selectedLeadId ? (
                       <div className="flex items-center justify-between w-full">
-                        <div className="flex flex-col">
-                          <span className="font-medium">{leads.find(lead => lead.id === selectedLeadId)?.name}</span>
-                          {leads.find(lead => lead.id === selectedLeadId)?.email && (
-                            <span className="text-xs text-muted-foreground">{leads.find(lead => lead.id === selectedLeadId)?.email}</span>
-                          )}
-                        </div>
+                        <span className="font-medium">{leads.find(lead => lead.id === selectedLeadId)?.name}</span>
                         {leads.find(lead => lead.id === selectedLeadId) && 
                           <LeadStatusBadge 
                             leadId={leads.find(lead => lead.id === selectedLeadId)?.id || ''}
@@ -393,7 +388,7 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
                         <div className="relative">
                           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                           <Input
-                            placeholder="Search by name or email..."
+                            placeholder="Search by name..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="pl-10"
@@ -408,7 +403,7 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
                           </div>
                         ) : filteredLeads.length === 0 ? (
                           <div className="p-4 text-center text-sm text-muted-foreground">
-                            {searchTerm ? 'No clients match your search' : 'No clients found'}
+                            {searchTerm ? 'No clients match your search' : 'No active clients found'}
                           </div>
                         ) : (
                           filteredLeads.map((lead) => (
@@ -434,12 +429,7 @@ export function EnhancedProjectDialog({ onProjectCreated, children, defaultStatu
                                     selectedLeadId === lead.id ? "opacity-100" : "opacity-0"
                                   )}
                                 />
-                                <div className="flex flex-col">
-                                  <span className="font-medium">{lead.name}</span>
-                                  {lead.email && (
-                                    <span className="text-xs text-muted-foreground">{lead.email}</span>
-                                  )}
-                                </div>
+                                <span className="font-medium">{lead.name}</span>
                               </div>
                               <LeadStatusBadge 
                                 leadId={lead.id}

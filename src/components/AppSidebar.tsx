@@ -1,7 +1,7 @@
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { LayoutDashboard, Users, Calendar, Bell, BarChart3, FolderOpen, CreditCard, CalendarDays, CalendarRange } from "lucide-react";
-import lumisoLogo from "@/assets/lumiso-logo.png";
+import logo from "@/assets/Logo.png";
 import {
   Sidebar,
   SidebarContent,
@@ -72,7 +72,7 @@ export function AppSidebar() {
       <SidebarHeader className="p-6">
         <div className="flex items-center">
           <img 
-            src={lumisoLogo} 
+            src={logo} 
             alt="Lumiso CRM" 
             className="h-8 w-auto object-contain"
           />

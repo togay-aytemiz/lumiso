@@ -86,6 +86,7 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
   const [allServices, setAllServices] = useState<Service[]>([]);
   const [loadingPackages, setLoadingPackages] = useState(false);
   const [showServicesEditor, setShowServicesEditor] = useState(false);
+  const [showCustomSetup, setShowCustomSetup] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -127,6 +128,7 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
   useEffect(() => {
     if (!open) {
       setShowServicesEditor(false);
+      setShowCustomSetup(false);
     }
   }, [open]);
 
@@ -850,7 +852,17 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
                                 onClick={(e) => {
                                   e.preventDefault();
                                   e.stopPropagation();
-                                  window.open('/settings/services', '_blank');
+                                  const newWindow = window.open('/settings/services', '_blank');
+                                  if (newWindow) {
+                                    // Listen for when the settings window is closed and refresh packages
+                                    const checkClosed = setInterval(() => {
+                                      if (newWindow.closed) {
+                                        clearInterval(checkClosed);
+                                        // Refresh packages after settings window is closed
+                                        fetchPackagesAndTypes();
+                                      }
+                                    }, 1000);
+                                  }
                                 }}
                               >
                                 <Plus className="h-4 w-4 mr-2" />
@@ -919,39 +931,67 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
               </div>
             )}
             
-            <div className="space-y-2">
-              <Label htmlFor="base-price">Base Price (TRY)</Label>
-              <Input
-                id="base-price"
-                type="number"
-                step="1"
-                min="0"
-                value={projectData.basePrice}
-                onChange={(e) => handleProjectDataChange("basePrice", e.target.value)}
-                placeholder="0"
-                disabled={loading}
-              />
-              {selectedPackage && (
-                <p className="text-xs text-muted-foreground">
-                  Package base price: TRY {selectedPackage.price.toLocaleString()} (you can customize this)
-                </p>
-              )}
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="project-description">Description</Label>
-              <Textarea
-                id="project-description"
-                value={projectData.description}
-                onChange={(e) => handleProjectDataChange("description", e.target.value)}
-                placeholder="Enter project description (optional)"
-                rows={3}
-                disabled={loading}
-                className="resize-none"
-              />
-            </div>
+            {/* Custom Setup Toggle - Only show when no package is selected */}
+            {!projectData.packageId && !showCustomSetup && (
+              <div className="space-y-3 p-4 bg-muted/10 rounded-lg border border-dashed">
+                <div className="text-center space-y-2">
+                  <p className="text-sm text-muted-foreground">
+                    No package selected. You can add custom pricing and services.
+                  </p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowCustomSetup(true)}
+                    className="w-full"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Set Custom Details
+                  </Button>
+                </div>
+              </div>
+            )}
 
-            {/* Services Selection */}
+            {/* Base Price - Show if package selected or custom setup enabled */}
+            {(projectData.packageId || showCustomSetup) && (
+              <div className="space-y-2">
+                <Label htmlFor="base-price">Base Price (TRY)</Label>
+                <Input
+                  id="base-price"
+                  type="number"
+                  step="1"
+                  min="0"
+                  value={projectData.basePrice}
+                  onChange={(e) => handleProjectDataChange("basePrice", e.target.value)}
+                  placeholder="0"
+                  disabled={loading}
+                />
+                {selectedPackage && (
+                  <p className="text-xs text-muted-foreground">
+                    Package base price: TRY {selectedPackage.price.toLocaleString()} (you can customize this)
+                  </p>
+                )}
+              </div>
+            )}
+            
+            {/* Description - Show if package selected or custom setup enabled */}
+            {(projectData.packageId || showCustomSetup) && (
+              <div className="space-y-2">
+                <Label htmlFor="project-description">Description</Label>
+                <Textarea
+                  id="project-description"
+                  value={projectData.description}
+                  onChange={(e) => handleProjectDataChange("description", e.target.value)}
+                  placeholder="Enter project description (optional)"
+                  rows={3}
+                  disabled={loading}
+                  className="resize-none"
+                />
+              </div>
+            )}
+
+            {/* Services Selection - Show if package selected or custom setup enabled */}
+            {(projectData.packageId || showCustomSetup) && (
              <div className="space-y-2">
                <div className="flex items-center justify-between">
                  <Label>Services & Add-ons {projectData.selectedServiceIds.length > 0 && `(${projectData.selectedServiceIds.length})`}</Label>
@@ -1054,8 +1094,9 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
                     isLoading={loadingPackages}
                   />
                 </div>
-              )}
-            </div>
+               )}
+             </div>
+            )}
 
             {/* Project Summary */}
             {(projectData.name || projectData.basePrice || projectData.selectedServiceIds.length > 0) && (
@@ -1084,11 +1125,11 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
                       <div className="flex justify-between">
                         <span>Services Total:</span>
                         <span className="font-medium">TRY {servicesTotal.toLocaleString()}</span>
-                      </div>
-                    </>
-                  )}
-                  
-                  <div className="flex justify-between pt-2 border-t border-border font-medium text-primary">
+                       </div>
+                     </>
+                   )}
+                   
+                   <div className="flex justify-between pt-2 border-t border-border font-medium text-primary">
                     <span>Final Price:</span>
                     <span>TRY {totalEstimatedCost.toLocaleString()}</span>
                   </div>

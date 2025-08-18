@@ -46,7 +46,7 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
   const [showViewDialog, setShowViewDialog] = useState(false);
   const [viewingProject, setViewingProject] = useState<Project | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [showAddDialog, setShowAddDialog] = useState(false);
+  
   const [showArchived, setShowArchived] = useState(false);
   const [hasArchived, setHasArchived] = useState(false);
   const [archivedStatusId, setArchivedStatusId] = useState<string | null>(null);
@@ -113,9 +113,6 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
     localStorage.setItem(`crm:showArchivedProjects:${userId}`, String(showArchived));
   }, [showArchived, userId]);
 
-  const handleAddProject = () => {
-    setShowAddDialog(true);
-  };
 
   const handleViewProject = (project: Project) => {
     setViewingProject(project);
@@ -174,10 +171,19 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
             </div>
           )}
           {projects.length > 0 && (
-            <Button onClick={handleAddProject} size="sm" className="w-full md:w-auto">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Project
-            </Button>
+            <EnhancedProjectDialog
+              defaultLeadId={leadId}
+              onProjectCreated={() => {
+                fetchProjects();
+                setRefreshTrigger(prev => prev + 1);
+                onProjectUpdated?.();
+              }}
+            >
+              <Button size="sm" className="w-full md:w-auto">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Project
+              </Button>
+            </EnhancedProjectDialog>
           )}
         </div>
       </CardHeader>
@@ -189,10 +195,19 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
         ) : projects.length === 0 ? (
           <div className="text-center text-muted-foreground py-8">
             <p className="mb-4">No projects created yet.</p>
-            <Button onClick={handleAddProject} variant="outline">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Project
-            </Button>
+            <EnhancedProjectDialog
+              defaultLeadId={leadId}
+              onProjectCreated={() => {
+                fetchProjects();
+                setRefreshTrigger(prev => prev + 1);
+                onProjectUpdated?.();
+              }}
+            >
+              <Button variant="outline">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Project
+              </Button>
+            </EnhancedProjectDialog>
           </div>
         ) : (
           <div className="space-y-6">
@@ -226,25 +241,6 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
       </CardContent>
 
 
-      <EnhancedProjectDialog
-        defaultLeadId={leadId}
-        onProjectCreated={() => {
-          fetchProjects();
-          setRefreshTrigger(prev => prev + 1);
-          onProjectUpdated?.();
-          setShowAddDialog(false);
-        }}
-      >
-        <Button 
-          onClick={() => setShowAddDialog(true)}
-          style={{ display: showAddDialog ? 'none' : 'inline-flex' }}
-          size="sm" 
-          className="w-full md:w-auto"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Add Project
-        </Button>
-      </EnhancedProjectDialog>
 
       <ViewProjectDialog
         project={viewingProject}

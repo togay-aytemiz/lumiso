@@ -107,7 +107,8 @@ const handler = async (req: Request): Promise<Response> => {
       .from("organization_members")
       .update({ 
         status: 'active',
-        user_id: authData.user.id  // Update user_id in case it was null
+        user_id: authData.user.id,  // Update user_id in case it was null
+        role: invitation.role       // Set the role from invitation
       })
       .eq('organization_id', invitation.organization_id)
       .eq('status', 'pending')

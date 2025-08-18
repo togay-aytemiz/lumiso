@@ -90,6 +90,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Update cache
         if (session?.user) {
           userCache = { user: session.user, timestamp: Date.now() };
+          
+          // Force a small delay to ensure the session is properly set in Supabase
+          if (event === 'SIGNED_IN') {
+            setTimeout(() => {
+              console.log('Session fully initialized');
+            }, 100);
+          }
         } else {
           userCache = null;
         }

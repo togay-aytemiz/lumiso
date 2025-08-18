@@ -166,10 +166,11 @@ const Auth = () => {
         description: error.message,
         variant: "destructive"
       });
+      setLoading(false);
     } else {
-      navigate("/");
+      // Force a page reload to ensure proper session initialization
+      window.location.href = "/";
     }
-    setLoading(false);
   };
 
   return (

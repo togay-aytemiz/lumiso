@@ -168,8 +168,10 @@ const Auth = () => {
       });
       setLoading(false);
     } else {
-      // Force a page reload to ensure proper session initialization
-      window.location.href = "/";
+      // Wait for session to be fully established before redirecting
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 500);
     }
   };
 

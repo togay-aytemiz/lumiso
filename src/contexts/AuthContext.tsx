@@ -93,9 +93,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           
           // Force a small delay to ensure the session is properly set in Supabase
           if (event === 'SIGNED_IN') {
-            setTimeout(() => {
+            setTimeout(async () => {
+              // Force session refresh to ensure it's properly set
+              await supabase.auth.getSession();
               console.log('Session fully initialized');
-            }, 100);
+            }, 200);
           }
         } else {
           userCache = null;

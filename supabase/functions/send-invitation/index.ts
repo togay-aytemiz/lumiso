@@ -85,10 +85,6 @@ serve(async (req: Request) => {
       throw new Error("There is already a pending invitation for this email address");
     }
 
-    if (existingInvite?.length) {
-      throw new Error("There is already a pending invitation for this email address");
-    }
-
     // Create invitation
     const { data: invitation, error: inviteError } = await supabase
       .from("invitations")

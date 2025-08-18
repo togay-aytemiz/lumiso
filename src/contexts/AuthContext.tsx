@@ -7,145 +7,84 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   signOut: () => Promise<void>;
-  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-// Global cache to prevent duplicate requests
-let userCache: { user: User | null; timestamp: number } | null = null;
-let ongoingUserFetch: Promise<User | null> | null = null;
-const USER_CACHE_DURATION = 60000; // 1 minute
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchUser = async (): Promise<User | null> => {
-    // Return cached user if still fresh
-    if (userCache && Date.now() - userCache.timestamp < USER_CACHE_DURATION) {
-      return userCache.user;
-    }
-
-    // If there's already an ongoing fetch, wait for it
-    if (ongoingUserFetch) {
-      return await ongoingUserFetch;
-    }
-
-    try {
-      // Create the fetch promise and store it
-      ongoingUserFetch = (async () => {
-        const { data: { user: fetchedUser }, error } = await supabase.auth.getUser();
-        
-        if (error) {
-          console.error('Error fetching user:', error);
-          return null;
-        }
-
-        userCache = { user: fetchedUser, timestamp: Date.now() };
-        return fetchedUser;
-      })();
-
-      return await ongoingUserFetch;
-    } finally {
-      ongoingUserFetch = null;
-    }
-  };
-
-  const refreshUser = async () => {
-    setLoading(true);
-    // Clear cache to force fresh fetch
-    userCache = null;
-    const fetchedUser = await fetchUser();
-    setUser(fetchedUser);
-    setLoading(false);
-  };
-
   const signOut = async () => {
     try {
-      await supabase.auth.signOut();
-      userCache = null; // Clear cache
+      // Clear everything first
+      localStorage.clear();
       setUser(null);
       setSession(null);
-      localStorage.clear();
+      
+      // Then sign out
+      await supabase.auth.signOut({ scope: 'global' });
+      
+      // Force page reload
+      window.location.href = '/auth';
     } catch (error) {
       console.error('Sign out error:', error);
+      // Force reload anyway
+      window.location.href = '/auth';
     }
   };
 
   useEffect(() => {
-    let isMounted = true;
+    let mounted = true;
 
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('Auth state change:', event, session?.user?.id);
-        
-        if (!isMounted) return;
-        
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        // Update cache
-        if (session?.user) {
-          userCache = { user: session.user, timestamp: Date.now() };
-          
-          // Force a small delay to ensure the session is properly set in Supabase
-          if (event === 'SIGNED_IN') {
-            setTimeout(async () => {
-              // Force session refresh to ensure it's properly set
-              await supabase.auth.getSession();
-              console.log('Session fully initialized');
-            }, 200);
-          }
-        } else {
-          userCache = null;
-        }
-        
-        setLoading(false);
-      }
-    );
-
-    // THEN check for existing session
-    const getInitialSession = async () => {
+    // Get initial session
+    const initAuth = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
-          console.error('Error getting session:', error);
-          setLoading(false);
-          return;
+          console.error('Session error:', error);
         }
 
-        console.log('Initial session:', session?.user?.id);
-        
-        if (!isMounted) return;
-        
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          userCache = { user: session.user, timestamp: Date.now() };
+        if (mounted) {
+          setSession(session);
+          setUser(session?.user ?? null);
+          setLoading(false);
+          
+          console.log('Auth initialized:', session?.user?.id);
         }
-        
-        setLoading(false);
       } catch (error) {
-        console.error('Session check error:', error);
-        setLoading(false);
+        console.error('Auth init error:', error);
+        if (mounted) {
+          setLoading(false);
+        }
       }
     };
 
-    getInitialSession();
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        console.log('Auth event:', event, session?.user?.id);
+        
+        if (mounted) {
+          setSession(session);
+          setUser(session?.user ?? null);
+          setLoading(false);
+        }
+      }
+    );
+
+    initAuth();
 
     return () => {
-      isMounted = false;
+      mounted = false;
       subscription.unsubscribe();
     };
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signOut, refreshUser }}>
+    <AuthContext.Provider value={{ user, session, loading, signOut }}>
       {children}
     </AuthContext.Provider>
   );

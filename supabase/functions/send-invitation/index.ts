@@ -45,15 +45,18 @@ serve(async (req: Request) => {
       throw new Error("Email and role are required");
     }
 
-    // Get user's active organization using the helper function
-    const { data: orgData, error: orgError } = await supabase
-      .rpc('get_user_organization_id');
+    // Get user's active organization from user_settings
+    const { data: userSettings, error: settingsError } = await supabase
+      .from("user_settings")
+      .select("active_organization_id")
+      .eq("user_id", user.id)
+      .single();
 
-    if (orgError || !orgData) {
+    if (settingsError || !userSettings?.active_organization_id) {
       throw new Error("No active organization found. Please contact support.");
     }
 
-    const organizationId = orgData;
+    const organizationId = userSettings.active_organization_id;
 
     // Check if user is owner of this organization
     const { data: orgMember, error: memberError } = await supabase

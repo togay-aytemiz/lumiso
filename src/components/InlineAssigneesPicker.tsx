@@ -154,87 +154,85 @@ export function InlineAssigneesPicker({ value, onChange, disabled }: InlineAssig
       </div>
 
       {/* Add Team Members Section */}
-      {teamMembers.length > 1 && (
-        <div className="space-y-3" ref={teamSectionRef}>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={toggleTeamList}
-            disabled={disabled}
-            className="w-full transition-all duration-200 hover:scale-[1.02]"
-          >
-            <Users className="h-4 w-4 mr-2" />
-            {showTeamList ? "Hide Team Members" : "Add Team Members"}
-          </Button>
+      <div className="space-y-3" ref={teamSectionRef}>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={toggleTeamList}
+          disabled={disabled || teamMembers.length <= 1}
+          className="w-full transition-colors duration-200"
+        >
+          <Users className="h-4 w-4 mr-2" />
+          {showTeamList ? "Hide Team Members" : "Add Team Members"}
+        </Button>
 
-          {/* Animated Expandable Section */}
-          <div
-            ref={expandedSectionRef}
-            className={cn(
-              "overflow-hidden transition-all duration-300 ease-out",
-              showTeamList 
-                ? "max-h-96 opacity-100 animate-accordion-down" 
-                : "max-h-0 opacity-0 animate-accordion-up"
-            )}
-          >
-            <div className="space-y-3 p-4 border rounded-lg bg-muted/30 animate-fade-in">
-              {/* Search */}
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                <Input
-                  placeholder="Search team members..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 transition-all duration-200 focus:scale-[1.01]"
-                />
-              </div>
+        {/* Animated Expandable Section */}
+        <div
+          ref={expandedSectionRef}
+          className={cn(
+            "overflow-hidden transition-all duration-300 ease-out",
+            showTeamList 
+              ? "max-h-96 opacity-100 animate-accordion-down" 
+              : "max-h-0 opacity-0 animate-accordion-up"
+          )}
+        >
+          <div className="space-y-3 p-4 border rounded-lg bg-muted/30 animate-fade-in">
+            {/* Search */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+              <Input
+                placeholder="Search team members..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 transition-colors duration-200"
+              />
+            </div>
 
-              {/* Team Members List */}
-              <div className="space-y-2 max-h-48 overflow-y-auto overflow-x-hidden">
-                {filteredMembers.length === 0 ? (
-                  <div className="text-sm text-muted-foreground text-center py-4 animate-fade-in">
-                    {teamMembers.length <= 1
-                      ? "No other team members to add"
-                      : "No members match your search"
-                    }
-                  </div>
-                ) : (
-                  filteredMembers.map((member, index) => (
-                    <div
-                      key={member.user_id}
-                      className={cn(
-                        "flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all duration-200",
-                        "hover:bg-background border hover:shadow-sm hover:scale-[1.02] hover-scale",
-                        "animate-fade-in"
-                      )}
-                      style={{ 
-                        animationDelay: `${index * 50}ms` // Stagger animation
-                      }}
-                      onClick={() => handleAddMember(member.user_id)}
-                    >
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src={member.profile_photo_url || ""} />
-                        <AvatarFallback className="text-sm">
-                          {(member.full_name || "U").split(' ').map(n => n[0]).join('').toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <div className="font-medium text-sm truncate">
-                          {member.full_name || "Unknown"}
-                        </div>
-                        <div className="text-xs text-muted-foreground truncate">
-                          {member.email || "No email"}
-                        </div>
+            {/* Team Members List */}
+            <div className="space-y-2 max-h-48 overflow-y-auto overflow-x-hidden">
+              {filteredMembers.length === 0 ? (
+                <div className="text-sm text-muted-foreground text-center py-4 animate-fade-in">
+                  {teamMembers.length <= 1
+                    ? "No other team members to add"
+                    : "No members match your search"
+                  }
+                </div>
+              ) : (
+                filteredMembers.map((member, index) => (
+                  <div
+                    key={member.user_id}
+                    className={cn(
+                      "flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors duration-200",
+                      "hover:bg-background border hover:shadow-sm",
+                      "animate-fade-in"
+                    )}
+                    style={{ 
+                      animationDelay: `${index * 50}ms` // Stagger animation
+                    }}
+                    onClick={() => handleAddMember(member.user_id)}
+                  >
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={member.profile_photo_url || ""} />
+                      <AvatarFallback className="text-sm">
+                        {(member.full_name || "U").split(' ').map(n => n[0]).join('').toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-sm truncate">
+                        {member.full_name || "Unknown"}
+                      </div>
+                      <div className="text-xs text-muted-foreground truncate">
+                        {member.email || "No email"}
                       </div>
                     </div>
-                  ))
-                )}
-              </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }

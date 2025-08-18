@@ -70,7 +70,10 @@ const handler = async (req: Request): Promise<Response> => {
       .eq("id", invitationId)
       .single();
 
+    console.log("Invitation lookup result:", { invitation, invitationError });
+
     if (invitationError || !invitation) {
+      console.error("Invitation not found:", invitationError);
       return new Response(
         JSON.stringify({ error: "Invalid invitation" }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
@@ -102,17 +105,18 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Check if user is already a member of this organization
-    const { data: existingMember } = await supabaseAdmin
+    const { data: existingMember, error: memberCheckError } = await supabaseAdmin
       .from("organization_members")
       .select("id, status, system_role")
       .eq("organization_id", invitation.organization_id)
       .eq("user_id", user.id)
       .maybeSingle();
 
-    console.log("Existing member check:", existingMember);
+    console.log("Existing member check:", { existingMember, memberCheckError });
 
     if (existingMember) {
       if (existingMember.status === 'active') {
+        console.log("User is already an active member");
         return new Response(
           JSON.stringify({ error: "User is already an active member of this organization" }),
           { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
@@ -120,6 +124,7 @@ const handler = async (req: Request): Promise<Response> => {
       }
       
       // Update existing pending membership to active
+      console.log("Updating existing membership to active");
       const { error: updateError } = await supabaseAdmin
         .from("organization_members")
         .update({
@@ -139,6 +144,7 @@ const handler = async (req: Request): Promise<Response> => {
       }
     } else {
       // Create new organization membership
+      console.log("Creating new organization membership");
       const { error: memberError } = await supabaseAdmin
         .from("organization_members")
         .insert({
@@ -153,6 +159,15 @@ const handler = async (req: Request): Promise<Response> => {
 
       if (memberError) {
         console.error("Failed to create membership:", memberError);
+        
+        // If it's a unique constraint violation, it means the user is already a member
+        if (memberError.code === '23505') {
+          return new Response(
+            JSON.stringify({ error: "User is already a member of this organization" }),
+            { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+          );
+        }
+        
         return new Response(
           JSON.stringify({ error: "Failed to join organization" }),
           { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }

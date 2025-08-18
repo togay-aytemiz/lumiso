@@ -15,6 +15,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [initialized, setInitialized] = useState(false);
 
   const signOut = async () => {
     try {
@@ -36,60 +37,62 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    let mounted = true;
+    console.log('AuthProvider initializing...');
+    
+    let isMounted = true;
 
-    // Simple auth state listener without complex caching
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('Auth event:', event, session?.user?.id);
-        
-        if (!mounted) return;
-        
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
-
-        // If signed in, wait a moment for the session to fully establish
-        if (event === 'SIGNED_IN' && session) {
-          setTimeout(() => {
-            console.log('Session established, forcing refresh to ensure auth propagation');
-            window.location.reload();
-          }, 500);
-        }
-      }
-    );
-
-    // Get initial session
-    const initSession = async () => {
+    const initializeAuth = async () => {
       try {
+        // Get current session
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
           console.error('Session error:', error);
         }
 
-        if (mounted) {
+        if (isMounted && !initialized) {
+          console.log('Setting initial auth state:', session?.user?.id || 'no user');
           setSession(session);
           setUser(session?.user ?? null);
           setLoading(false);
-          
-          console.log('Initial session loaded:', session?.user?.id);
+          setInitialized(true);
         }
       } catch (error) {
-        console.error('Auth init error:', error);
-        if (mounted) {
+        console.error('Auth initialization error:', error);
+        if (isMounted) {
           setLoading(false);
+          setInitialized(true);
         }
       }
     };
 
-    initSession();
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('Auth state change:', event, session?.user?.id || 'no user');
+        
+        if (isMounted) {
+          setSession(session);
+          setUser(session?.user ?? null);
+          
+          // Only set loading to false if we haven't initialized yet
+          if (!initialized) {
+            setLoading(false);
+            setInitialized(true);
+          }
+        }
+      }
+    );
+
+    // Initialize auth state
+    initializeAuth();
 
     return () => {
-      mounted = false;
+      console.log('AuthProvider cleanup...');
+      isMounted = false;
       subscription.unsubscribe();
     };
-  }, []);
+  }, [initialized]);
 
   return (
     <AuthContext.Provider value={{ user, session, loading, signOut }}>

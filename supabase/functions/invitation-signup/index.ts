@@ -102,24 +102,63 @@ const handler = async (req: Request): Promise<Response> => {
       console.error("Failed to accept invitation:", acceptError);
     }
 
-    // Activate the pending membership that should already exist
-    const { error: memberError } = await supabaseAdmin
+    // Look for existing pending membership (created by invitation trigger)
+    const { data: existingMember, error: findError } = await supabaseAdmin
       .from("organization_members")
-      .update({ 
-        status: 'active',
-        user_id: authData.user.id,  // Update user_id in case it was null
-        role: invitation.role       // Set the role from invitation
-      })
+      .select("*")
       .eq('organization_id', invitation.organization_id)
       .eq('status', 'pending')
-      .or(`user_id.is.null,user_id.eq.${authData.user.id}`);
+      .is('user_id', null)
+      .eq('invited_by', invitation.invited_by)
+      .single();
 
-    if (memberError) {
-      console.error("Failed to activate membership:", memberError);
+    if (findError && findError.code !== 'PGRST116') {
+      console.error("Error finding pending membership:", findError);
       return new Response(
-        JSON.stringify({ error: "Failed to join organization" }),
+        JSON.stringify({ error: "Failed to find membership record" }),
         { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
+    }
+
+    if (existingMember) {
+      // Update the existing pending membership
+      const { error: memberError } = await supabaseAdmin
+        .from("organization_members")
+        .update({ 
+          status: 'active',
+          user_id: authData.user.id,
+          role: invitation.role || 'Member',
+          system_role: 'Member'
+        })
+        .eq('id', existingMember.id);
+
+      if (memberError) {
+        console.error("Failed to activate existing membership:", memberError);
+        return new Response(
+          JSON.stringify({ error: "Failed to join organization" }),
+          { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+    } else {
+      // Create new membership if none exists
+      const { error: memberError } = await supabaseAdmin
+        .from("organization_members")
+        .insert({
+          organization_id: invitation.organization_id,
+          user_id: authData.user.id,
+          system_role: 'Member',
+          role: invitation.role || 'Member',
+          status: 'active',
+          invited_by: invitation.invited_by
+        });
+
+      if (memberError) {
+        console.error("Failed to create membership:", memberError);
+        return new Response(
+          JSON.stringify({ error: "Failed to join organization" }),
+          { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
     }
 
     // Set this as the user's active organization

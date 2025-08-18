@@ -80,13 +80,15 @@ export async function onArchiveToggle(project: {
   }
 
   // Ensure we have an Archived status; create if missing
-  const { data: archivedStatus, error: archivedErr } = await supabase
+  const archivedStatusQuery = await supabase
     .from('project_statuses')
     .select('id, name')
     .eq('organization_id', userSettings.active_organization_id)
     .ilike('name', 'archived')
-    .limit(1)
-    .maybeSingle();
+    .limit(1);
+  
+  const archivedStatus = archivedStatusQuery.data?.[0];
+  const archivedErr = archivedStatusQuery.error;
   let archivedId = archivedStatus?.id as string | undefined;
   if (!archivedId) {
     const {

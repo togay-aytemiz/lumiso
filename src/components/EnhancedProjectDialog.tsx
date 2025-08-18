@@ -835,47 +835,71 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
                               <span className="text-muted-foreground">No package</span>
                             </div>
                           </button>
-                          {availablePackages.map((pkg) => (
-                            <button
-                              key={pkg.id}
-                              type="button"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                handlePackageSelection(pkg.id);
-                                setPackageDropdownOpen(false);
-                              }}
-                              className={cn(
-                                "flex items-center justify-between p-3 hover:bg-muted/50 cursor-pointer border-b last:border-b-0 w-full text-left rounded-md mb-1",
-                                projectData.packageId === pkg.id && "bg-muted"
-                              )}
-                            >
-                              <div className="flex items-center space-x-3 flex-1">
-                                <Check
-                                  className={cn(
-                                    "h-4 w-4",
-                                    projectData.packageId === pkg.id ? "opacity-100" : "opacity-0"
-                                  )}
-                                />
-                                <div className="flex-1">
-                                  <div className="flex items-center justify-between">
-                                    <span className="font-medium">{pkg.name}</span>
-                                    <span className="text-sm font-medium text-primary">
-                                      TRY {pkg.price.toLocaleString()}
-                                    </span>
-                                  </div>
-                                  {pkg.description && (
-                                    <p className="text-xs text-muted-foreground mt-1">
-                                      {pkg.description}
-                                    </p>
-                                  )}
-                                  <p className="text-xs text-muted-foreground">
-                                    {pkg.duration} • {pkg.default_add_ons.length} services
-                                  </p>
-                                </div>
+                          {availablePackages.length === 0 ? (
+                            <div className="p-4 text-center space-y-3">
+                              <div className="text-sm text-muted-foreground">
+                                No packages available for this project type.
                               </div>
-                            </button>
-                          ))}
+                              <div className="text-xs text-muted-foreground">
+                                Create packages to offer predefined service bundles with pricing.
+                              </div>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="w-full"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  window.open('/settings/services', '_blank');
+                                }}
+                              >
+                                <Plus className="h-4 w-4 mr-2" />
+                                Create Package
+                              </Button>
+                            </div>
+                          ) : (
+                            availablePackages.map((pkg) => (
+                              <button
+                                key={pkg.id}
+                                type="button"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  handlePackageSelection(pkg.id);
+                                  setPackageDropdownOpen(false);
+                                }}
+                                className={cn(
+                                  "flex items-center justify-between p-3 hover:bg-muted/50 cursor-pointer border-b last:border-b-0 w-full text-left rounded-md mb-1",
+                                  projectData.packageId === pkg.id && "bg-muted"
+                                )}
+                              >
+                                <div className="flex items-center space-x-3 flex-1">
+                                  <Check
+                                    className={cn(
+                                      "h-4 w-4",
+                                      projectData.packageId === pkg.id ? "opacity-100" : "opacity-0"
+                                    )}
+                                  />
+                                  <div className="flex-1">
+                                    <div className="flex items-center justify-between">
+                                      <span className="font-medium">{pkg.name}</span>
+                                      <span className="text-sm font-medium text-primary">
+                                        TRY {pkg.price.toLocaleString()}
+                                      </span>
+                                    </div>
+                                    {pkg.description && (
+                                      <p className="text-xs text-muted-foreground mt-1">
+                                        {pkg.description}
+                                      </p>
+                                    )}
+                                    <p className="text-xs text-muted-foreground">
+                                      {pkg.duration} • {pkg.default_add_ons.length} services
+                                    </p>
+                                  </div>
+                                </div>
+                              </button>
+                            ))
+                          )}
                         </div>
                       </div>
                     </div>

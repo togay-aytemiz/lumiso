@@ -133,23 +133,19 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // First delete any existing membership to avoid constraint issues
-    const { error: deleteError } = await supabaseAdmin
-      .from("organization_members")
-      .delete()
-      .eq("organization_id", invitation.organization_id)
-      .eq("user_id", user.id);
-
-    // Then insert the new membership
+    // Use UPSERT with ON CONFLICT DO UPDATE to handle existing records
     const { error: memberError } = await supabaseAdmin
       .from("organization_members")
-      .insert({
+      .upsert({
         organization_id: invitation.organization_id,
         user_id: user.id,
         system_role: invitation.role === 'Owner' ? 'Owner' : 'Member',
         role: invitation.role,
         status: 'active',
         invited_by: invitation.invited_by
+      }, {
+        onConflict: 'organization_id,user_id',
+        ignoreDuplicates: false
       });
 
     if (memberError) {

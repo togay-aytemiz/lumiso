@@ -221,19 +221,15 @@ const LeadDetail = () => {
       let filteredSessions = data || [];
       if (userId) {
         // Get user's active organization
-        const { data: userSettings } = await supabase
-          .from('user_settings')
-          .select('active_organization_id')
-          .eq('user_id', userId)
-          .single();
+        const { data: organizationId } = await supabase.rpc('get_user_active_organization_id');
 
         let archivedStatus = null;
-        if (userSettings?.active_organization_id) {
+        if (organizationId) {
           try {
             const statusQuery = await supabase
               .from('project_statuses')
               .select('id')
-              .eq('user_id', userId)
+              .eq('organization_id', organizationId)
               .ilike('name', 'archived')
               .limit(1);
             archivedStatus = statusQuery.data?.[0] || null;

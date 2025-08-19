@@ -497,7 +497,8 @@ const LeadDetail = () => {
   }
   return <div className="p-4 md:p-8 max-w-full overflow-x-hidden">
       <div className="mb-6">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        {/* Mobile/Tablet Layout */}
+        <div className="flex flex-col gap-4 lg:hidden">
           <div className="min-w-0 flex-1">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
               <h1 className="text-xl sm:text-2xl font-bold truncate min-w-0">{lead.name || 'Lead Details'}</h1>
@@ -509,7 +510,7 @@ const LeadDetail = () => {
               </div>
             </div>
             
-            {/* Assignees List - Desktop: same row, Mobile: separate row */}
+            {/* Assignees List - Mobile: separate row */}
             <div className="mt-3">
               <AssigneesList
                 assignees={lead.assignees || []}
@@ -523,7 +524,7 @@ const LeadDetail = () => {
             </div>
           </div>
           
-          <div className="lg:flex-shrink-0">
+          <div className="flex-shrink-0">
             {/* Header Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
               <ScheduleSessionDialog leadId={lead.id} leadName={lead.name} onSessionScheduled={handleSessionScheduled} disabled={sessions.some(s => s.status === 'planned')} disabledTooltip="A planned session already exists." />
@@ -534,6 +535,48 @@ const LeadDetail = () => {
                 </Button>}
 
               {!settingsLoading && userSettings.show_quick_status_buttons && lostStatus && formData.status !== lostStatus.name && <Button onClick={handleMarkAsLost} disabled={isUpdating} variant="destructive" size="sm" className="h-10 w-full sm:w-auto">
+                  {isUpdating ? "Updating..." : lostStatus.name}
+                </Button>}
+            </div>
+          </div>
+        </div>
+
+        {/* Desktop Layout */}
+        <div className="hidden lg:flex lg:items-center lg:justify-between lg:gap-6">
+          <div className="min-w-0 flex-1 flex items-center gap-4">
+            <h1 className="text-2xl font-bold truncate min-w-0">{lead.name || 'Lead Details'}</h1>
+            <div className="flex-shrink-0">
+              <LeadStatusBadge leadId={lead.id} currentStatusId={lead.status_id} currentStatus={lead.status} onStatusChange={() => {
+              fetchLead();
+              setActivityRefreshKey(prev => prev + 1);
+            }} editable={true} statuses={leadStatuses} />
+            </div>
+            
+            {/* Assignees List - Desktop: same row, with smooth transition */}
+            <div className="transition-all duration-300 ease-out">
+              <AssigneesList
+                assignees={lead.assignees || []}
+                entityType="lead"
+                entityId={lead.id}
+                onUpdate={() => {
+                  fetchLead();
+                  setActivityRefreshKey(prev => prev + 1);
+                }}
+              />
+            </div>
+          </div>
+          
+          <div className="flex-shrink-0">
+            {/* Header Action Buttons - Desktop: stays in place */}
+            <div className="flex items-center gap-3">
+              <ScheduleSessionDialog leadId={lead.id} leadName={lead.name} onSessionScheduled={handleSessionScheduled} disabled={sessions.some(s => s.status === 'planned')} disabledTooltip="A planned session already exists." />
+
+              {!settingsLoading && userSettings.show_quick_status_buttons && completedStatus && formData.status !== completedStatus.name && <Button onClick={handleMarkAsCompleted} disabled={isUpdating} className="bg-green-600 hover:bg-green-700 text-white h-10" size="sm">
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  {isUpdating ? "Updating..." : completedStatus.name}
+                </Button>}
+
+              {!settingsLoading && userSettings.show_quick_status_buttons && lostStatus && formData.status !== lostStatus.name && <Button onClick={handleMarkAsLost} disabled={isUpdating} variant="destructive" size="sm" className="h-10">
                   {isUpdating ? "Updating..." : lostStatus.name}
                 </Button>}
             </div>

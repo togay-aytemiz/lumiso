@@ -545,55 +545,47 @@ export function ViewProjectDialog({
                     <div className="space-y-2">
                       <DialogTitle asChild>
                         <div className="space-y-2">
-                          <div className="flex items-center gap-3 flex-wrap">
+                          {/* Desktop: Name + Badges on same line */}
+                          <div className="hidden md:flex items-center gap-3 flex-wrap">
                             <h1 className="text-xl font-bold leading-tight break-words text-left md:text-3xl">{project?.name}</h1>
                             
-                            {/* Project Status and Type Badges next to name */}
+                            {/* Project Status and Type Badges next to name - Desktop only */}
                             <div className="flex items-center gap-2 flex-wrap">
-                              {/* Project Status Badge */}
                               <ProjectStatusBadge projectId={project.id} currentStatusId={localStatusId || undefined} onStatusChange={() => {
                               onProjectUpdated();
                             }} editable={!isArchived} className="text-sm" />
                               
-                              {/* Project Type Badge */}
                               {projectType && <Badge variant="outline" className="text-xs">
                                   {projectType.name.toUpperCase()}
                                 </Badge>}
                             </div>
                           </div>
                           
-                          {/* Project Description directly under name */}
-                          {project?.description && <p className="text-muted-foreground text-base text-left">{project.description}</p>}
+                          {/* Mobile: Name only */}
+                          <div className="md:hidden">
+                            <h1 className="text-xl font-bold leading-tight break-words text-left">{project?.name}</h1>
+                          </div>
+                          
+                          {/* Project Description - All screens */}
+                          {project?.description && <p className="text-muted-foreground text-sm font-normal text-left">{project.description}</p>}
                         </div>
                       </DialogTitle>
                       
-                      {/* Assignees row - Desktop */}
-                      <div className="hidden md:flex items-center gap-4">
-                        <AssigneesList
-                          assignees={project.assignees || []}
-                          entityType="project"
-                          entityId={project.id}
-                          onUpdate={onProjectUpdated}
-                        />
-                      </div>
-                      
-                      {/* Mobile/Tablet Layout */}
+                      {/* Mobile Layout: Badges then Assignees */}
                       <div className="md:hidden space-y-3">
-                        {/* Badges row - duplicated for mobile only if not showing badges next to name above */}
-                        <div className="flex items-center gap-2 flex-wrap md:hidden">
-                          {/* Project Status Badge */}
+                        {/* Stage and Type badges for mobile */}
+                        <div className="flex items-center gap-2 flex-wrap">
                           <ProjectStatusBadge projectId={project.id} currentStatusId={localStatusId || undefined} onStatusChange={() => {
                           onProjectUpdated();
                         }} editable={!isArchived} className="text-sm" />
                           
-                          {/* Project Type Badge */}
                           {projectType && <Badge variant="outline" className="text-xs">
                               {projectType.name.toUpperCase()}
                             </Badge>}
                         </div>
                         
-                        {/* Assignees List with padding */}
-                        <div className="pt-2">
+                        {/* Assignees List for mobile */}
+                        <div>
                           <AssigneesList
                             assignees={project.assignees || []}
                             entityType="project"
@@ -601,6 +593,16 @@ export function ViewProjectDialog({
                             onUpdate={onProjectUpdated}
                           />
                         </div>
+                      </div>
+                      
+                      {/* Desktop Assignees row */}
+                      <div className="hidden md:flex items-center gap-4">
+                        <AssigneesList
+                          assignees={project.assignees || []}
+                          entityType="project"
+                          entityId={project.id}
+                          onUpdate={onProjectUpdated}
+                        />
                       </div>
                     </div>
                   </div>}

@@ -546,15 +546,8 @@ export function ViewProjectDialog({
                         <h1 className="text-xl font-bold leading-tight break-words text-left md:text-3xl">{project?.name}</h1>
                       </DialogTitle>
                       
-                      {/* Assignees and Status row - Desktop */}
-                      <div className="hidden md:flex items-center justify-between gap-4">
-                        <AssigneesList
-                          assignees={project.assignees || []}
-                          entityType="project"
-                          entityId={project.id}
-                          onUpdate={onProjectUpdated}
-                        />
-                        
+                      {/* Status/Type and Assignees row - Desktop */}
+                      <div className="hidden md:flex items-center justify-between gap-4 w-full">
                         <div className="flex items-center gap-2 flex-wrap">
                           {/* Project Status Badge */}
                           <ProjectStatusBadge projectId={project.id} currentStatusId={localStatusId || undefined} onStatusChange={() => {
@@ -566,6 +559,13 @@ export function ViewProjectDialog({
                               {projectType.name.toUpperCase()}
                             </Badge>}
                         </div>
+                        
+                        <AssigneesList
+                          assignees={project.assignees || []}
+                          entityType="project"
+                          entityId={project.id}
+                          onUpdate={onProjectUpdated}
+                        />
                       </div>
                       
                       {/* Mobile/Tablet Layout */}

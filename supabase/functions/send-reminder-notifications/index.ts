@@ -50,12 +50,16 @@ async function getEnabledUsersForNotification(type: string, sendTime?: string, i
       user_id,
       ${notificationFieldMap[type]},
       ${timeFieldMap[type] || 'user_id'}
-    `)
-    .eq(notificationFieldMap[type], true);
+    `);
 
-  // Only add time filter if NOT testing and applicable
-  if (!isTest && sendTime && timeFieldMap[type]) {
-    query = query.eq(timeFieldMap[type], sendTime);
+  // Only filter by enabled status if NOT testing
+  if (!isTest) {
+    query = query.eq(notificationFieldMap[type], true);
+    
+    // Only add time filter if applicable
+    if (sendTime && timeFieldMap[type]) {
+      query = query.eq(timeFieldMap[type], sendTime);
+    }
   }
 
   const { data: enabledUsers, error } = await query;

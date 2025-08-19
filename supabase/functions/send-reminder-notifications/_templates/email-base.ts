@@ -99,18 +99,20 @@ export const getEmailBaseStyles = (brandColor = '#1EB29F') => `
     
     .item-action {
       display: inline-block;
-      background-color: ${brandColor};
-      color: #FFFFFF;
+      background-color: ${adjustBrightness(brandColor, 80)};
+      color: ${brandColor};
       text-decoration: none;
       padding: 8px 16px;
       border-radius: 6px;
       font-size: 14px;
       font-weight: 500;
-      transition: background-color 0.2s ease;
+      transition: all 0.2s ease;
+      border: 1px solid ${adjustBrightness(brandColor, 60)};
     }
     
     .item-action:hover {
-      background-color: ${adjustBrightness(brandColor, -10)};
+      background-color: ${adjustBrightness(brandColor, 70)};
+      border-color: ${adjustBrightness(brandColor, 50)};
     }
     
     .summary-stats {
@@ -136,14 +138,21 @@ export const getEmailBaseStyles = (brandColor = '#1EB29F') => `
     
     .cta-button {
       display: inline-block;
-      background-color: ${brandColor};
-      color: #FFFFFF;
+      background-color: ${adjustBrightness(brandColor, 80)};
+      color: ${brandColor};
       text-decoration: none;
       padding: 12px 24px;
       border-radius: 8px;
       font-weight: 600;
       margin: 16px 0;
       text-align: center;
+      border: 1px solid ${adjustBrightness(brandColor, 60)};
+      transition: all 0.2s ease;
+    }
+    
+    .cta-button:hover {
+      background-color: ${adjustBrightness(brandColor, 70)};
+      border-color: ${adjustBrightness(brandColor, 50)};
     }
     
     .email-footer {

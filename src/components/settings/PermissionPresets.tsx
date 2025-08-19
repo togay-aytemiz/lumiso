@@ -70,6 +70,7 @@ export function PermissionPresets({
         "delete_leads",
         "view_sessions",
         "create_sessions",
+        "manage_sessions",
         "manage_team"
       ],
       color: "bg-purple-50 border-purple-200 text-purple-800"
@@ -77,10 +78,8 @@ export function PermissionPresets({
     {
       id: "admin",
       name: "Administrator",
-      description: "Full access except organization settings",
-      permissions: permissions
-        .filter(p => !p.name.includes('organization_settings'))
-        .map(p => p.name),
+      description: "Full access to all features",
+      permissions: permissions.map(p => p.name),
       color: "bg-orange-50 border-orange-200 text-orange-800"
     }
   ];

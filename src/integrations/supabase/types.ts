@@ -1090,6 +1090,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_email_not_in_any_organization: {
+        Args: { email_to_check: string }
+        Returns: boolean
+      }
       ensure_default_packages: {
         Args: { user_uuid: string }
         Returns: undefined

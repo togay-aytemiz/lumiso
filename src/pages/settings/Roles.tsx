@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useRoleManagement, Permission, CustomRole } from '@/hooks/useRoleManagement';
+import { SimpleRoleDialog } from '@/components/settings/SimpleRoleDialog';
 import { Plus, Edit, Trash2, Users, Shield } from 'lucide-react';
 
 export default function Roles() {
@@ -41,27 +42,19 @@ export default function Roles() {
     return acc;
   }, {} as Record<string, Permission[]>);
 
-  const handleCreateRole = async () => {
-    if (!newRoleName.trim()) return;
-    
-    await createCustomRole(newRoleName, newRoleDescription, selectedPermissions);
-    setShowCreateRoleDialog(false);
-    setNewRoleName('');
-    setNewRoleDescription('');
-    setSelectedPermissions([]);
+  const handleCreateRole = async (name: string, description: string, permissionIds: string[]) => {
+    await createCustomRole(name, description, permissionIds);
   };
 
   const handleEditRole = (role: CustomRole) => {
     setEditingRole(role);
-    setSelectedPermissions(role.permissions.map(p => p.id));
+    setShowCreateRoleDialog(true);
   };
 
-  const handleUpdateRole = async () => {
+  const handleUpdateRole = async (name: string, description: string, permissionIds: string[]) => {
     if (!editingRole) return;
-    
-    await updateRolePermissions(editingRole.id, selectedPermissions);
+    await updateRolePermissions(editingRole.id, permissionIds);
     setEditingRole(null);
-    setSelectedPermissions([]);
   };
 
   const handleDeleteRole = async (roleId: string) => {
@@ -87,89 +80,10 @@ export default function Roles() {
           </p>
         </div>
         
-        <Dialog open={showCreateRoleDialog} onOpenChange={setShowCreateRoleDialog}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Create Role
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Create New Role</DialogTitle>
-              <DialogDescription>
-                Define a new role with specific permissions for your team members.
-              </DialogDescription>
-            </DialogHeader>
-            
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="roleName">Role Name</Label>
-                <Input
-                  id="roleName"
-                  value={newRoleName}
-                  onChange={(e) => setNewRoleName(e.target.value)}
-                  placeholder="e.g., Project Manager"
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="roleDescription">Description</Label>
-                <Textarea
-                  id="roleDescription"
-                  value={newRoleDescription}
-                  onChange={(e) => setNewRoleDescription(e.target.value)}
-                  placeholder="Describe the role's responsibilities..."
-                />
-              </div>
-
-              <div>
-                <Label>Permissions</Label>
-                <div className="mt-2 max-h-64 overflow-y-auto space-y-4">
-                  {Object.entries(permissionsByCategory).map(([category, categoryPermissions]) => (
-                    <div key={category}>
-                      <h4 className="font-medium text-sm text-muted-foreground capitalize mb-2">
-                        {category}
-                      </h4>
-                      <div className="space-y-2 ml-4">
-                        {categoryPermissions.map((permission) => (
-                          <div key={permission.id} className="flex items-center space-x-2">
-                            <Checkbox
-                              id={permission.id}
-                              checked={selectedPermissions.includes(permission.id)}
-                              onCheckedChange={(checked) => {
-                                if (checked) {
-                                  setSelectedPermissions([...selectedPermissions, permission.id]);
-                                } else {
-                                  setSelectedPermissions(selectedPermissions.filter(id => id !== permission.id));
-                                }
-                              }}
-                            />
-                            <Label htmlFor={permission.id} className="text-sm">
-                              <div>
-                                <span className="font-medium">{permission.name}</span>
-                                <p className="text-xs text-muted-foreground">{permission.description}</p>
-                              </div>
-                            </Label>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="flex justify-end space-x-2">
-              <Button variant="outline" onClick={() => setShowCreateRoleDialog(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleCreateRole} disabled={!newRoleName.trim() || loading}>
-                Create Role
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+        <Button onClick={() => setShowCreateRoleDialog(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          Create Role
+        </Button>
       </div>
 
       {/* Custom Roles */}
@@ -349,64 +263,15 @@ export default function Roles() {
         </div>
       </div>
 
-      {/* Edit Role Dialog */}
-      <Dialog open={!!editingRole} onOpenChange={() => setEditingRole(null)}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Edit Role: {editingRole?.name}</DialogTitle>
-            <DialogDescription>
-              Update permissions for this role.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-4">
-            <div>
-              <Label>Permissions</Label>
-              <div className="mt-2 max-h-64 overflow-y-auto space-y-4">
-                {Object.entries(permissionsByCategory).map(([category, categoryPermissions]) => (
-                  <div key={category}>
-                    <h4 className="font-medium text-sm text-muted-foreground capitalize mb-2">
-                      {category}
-                    </h4>
-                    <div className="space-y-2 ml-4">
-                      {categoryPermissions.map((permission) => (
-                        <div key={permission.id} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`edit-${permission.id}`}
-                            checked={selectedPermissions.includes(permission.id)}
-                            onCheckedChange={(checked) => {
-                              if (checked) {
-                                setSelectedPermissions([...selectedPermissions, permission.id]);
-                              } else {
-                                setSelectedPermissions(selectedPermissions.filter(id => id !== permission.id));
-                              }
-                            }}
-                          />
-                          <Label htmlFor={`edit-${permission.id}`} className="text-sm">
-                            <div>
-                              <span className="font-medium">{permission.name}</span>
-                              <p className="text-xs text-muted-foreground">{permission.description}</p>
-                            </div>
-                          </Label>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className="flex justify-end space-x-2">
-            <Button variant="outline" onClick={() => setEditingRole(null)}>
-              Cancel
-            </Button>
-            <Button onClick={handleUpdateRole} disabled={loading}>
-              Update Role
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* Role Dialog */}
+      <SimpleRoleDialog
+        open={showCreateRoleDialog}
+        onOpenChange={setShowCreateRoleDialog}
+        permissions={permissions}
+        editingRole={editingRole}
+        onSave={editingRole ? handleUpdateRole : handleCreateRole}
+        loading={loading}
+      />
     </div>
   );
 }

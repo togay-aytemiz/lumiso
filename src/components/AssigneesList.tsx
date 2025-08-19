@@ -78,7 +78,7 @@ export function AssigneesList({
       const details = data?.map(profile => ({
         id: profile.user_id,
         name: profile.full_name || 'Unknown User',
-        role: 'Member', // Default role, could be enhanced later
+        role: 'Member', // Will be updated with actual role from organization_members
         profile_photo_url: profile.profile_photo_url
       })) || [];
 
@@ -114,7 +114,7 @@ export function AssigneesList({
 
       if (error) throw error;
 
-      // Fetch profile data separately
+      // Fetch profile data
       if (data && data.length > 0) {
         const userIds = data.map(member => member.user_id);
         const { data: profiles } = await supabase
@@ -129,6 +129,15 @@ export function AssigneesList({
         }));
 
         setOrganizationMembers(membersWithProfiles || []);
+        
+        // Update assignee details with actual roles
+        setAssigneeDetails(prev => prev.map(assignee => {
+          const memberWithRole = membersWithProfiles.find(m => m.user_id === assignee.id);
+          return memberWithRole ? {
+            ...assignee,
+            role: memberWithRole.role
+          } : assignee;
+        }));
       } else {
         setOrganizationMembers([]);
       }

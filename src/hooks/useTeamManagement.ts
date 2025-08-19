@@ -351,7 +351,7 @@ export function useTeamManagement() {
           }
         });
 
-      // Update last_active timestamp periodically
+      // Update last_active timestamp every 5 minutes (less frequent)
       const interval = setInterval(async () => {
         try {
           await supabase
@@ -367,7 +367,7 @@ export function useTeamManagement() {
         } catch (error) {
           console.warn('Failed to update presence:', error);
         }
-      }, 30000); // Update every 30 seconds
+      }, 300000); // Update every 5 minutes instead of 30 seconds
 
       return () => {
         console.log('Cleaning up presence channel');

@@ -22,7 +22,7 @@ import SessionBanner from "@/components/SessionBanner";
 import { ProjectsSection } from "@/components/ProjectsSection";
 import { getLeadStatusStyles, formatStatusText } from "@/lib/leadStatusColors";
 import { LeadStatusBadge } from "@/components/LeadStatusBadge";
-import { StableAssigneesList } from "@/components/StableAssigneesList";
+import { AssigneesList } from "@/components/AssigneesList";
 import { formatDate, cn } from "@/lib/utils";
 import { useOrganizationQuickSettings } from "@/hooks/useOrganizationQuickSettings";
 import { useLeadStatusActions } from "@/hooks/useLeadStatusActions";
@@ -512,7 +512,7 @@ const LeadDetail = () => {
             
             {/* Assignees List - Mobile: separate row */}
             <div className="mt-3">
-              <StableAssigneesList
+              <AssigneesList
                 assignees={lead.assignees || []}
                 entityType="lead"
                 entityId={lead.id}
@@ -556,7 +556,7 @@ const LeadDetail = () => {
           <div className="flex items-center gap-4 flex-shrink-0">
             {/* Assignees List - Desktop: far right with stable container */}
             <div className="min-w-0 transition-all duration-300 ease-out transform">
-              <StableAssigneesList
+              <AssigneesList
                 assignees={lead.assignees || []}
                 entityType="lead"
                 entityId={lead.id}

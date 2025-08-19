@@ -295,7 +295,7 @@ export function useTeamManagement() {
     }
   };
 
-  // Set up real-time presence tracking
+  // Set up real-time presence tracking for team page
   useEffect(() => {
     const setupPresence = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -313,7 +313,7 @@ export function useTeamManagement() {
       const channelName = `organization_${userSettings.active_organization_id}_presence`;
       const channel = supabase.channel(channelName);
 
-      // Track presence events
+      // Track presence events for team page
       channel
         .on('presence', { event: 'sync' }, () => {
           const presenceState = channel.presenceState();
@@ -327,52 +327,20 @@ export function useTeamManagement() {
             });
           });
           
-          console.log('Online users:', Array.from(online));
+          console.log('Online users on team page:', Array.from(online));
           setOnlineUsers(online);
         })
         .on('presence', { event: 'join' }, ({ newPresences }) => {
-          console.log('User joined:', newPresences);
+          console.log('User joined team page:', newPresences);
         })
         .on('presence', { event: 'leave' }, ({ leftPresences }) => {
-          console.log('User left:', leftPresences);
+          console.log('User left team page:', leftPresences);
         })
-        .subscribe(async (status) => {
-          if (status === 'SUBSCRIBED') {
-            console.log('Presence channel subscribed, tracking user:', user.id);
-            // Track current user's presence
-            await channel.track({
-              user_id: user.id,
-              online_at: new Date().toISOString(),
-            });
-          } else if (status === 'CHANNEL_ERROR') {
-            console.error('Presence channel error');
-          } else if (status === 'TIMED_OUT') {
-            console.error('Presence channel timed out');
-          }
-        });
-
-      // Update last_active timestamp every 5 minutes (less frequent)
-      const interval = setInterval(async () => {
-        try {
-          await supabase
-            .from('organization_members')
-            .update({ last_active: new Date().toISOString() })
-            .eq('user_id', user.id);
-          
-          // Re-track presence to keep connection alive
-          await channel.track({
-            user_id: user.id,
-            online_at: new Date().toISOString(),
-          });
-        } catch (error) {
-          console.warn('Failed to update presence:', error);
-        }
-      }, 300000); // Update every 5 minutes instead of 30 seconds
+        .subscribe();
 
       return () => {
-        console.log('Cleaning up presence channel');
+        console.log('Cleaning up team page presence channel');
         channel.unsubscribe();
-        clearInterval(interval);
       };
     };
 

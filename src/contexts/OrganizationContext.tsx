@@ -117,6 +117,77 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
     }
   };
 
+  // Set up global presence tracking
+  useEffect(() => {
+    let presenceChannel: any = null;
+    let presenceInterval: any = null;
+
+    const setupPresence = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user || !activeOrganizationId) return;
+
+      const channelName = `organization_${activeOrganizationId}_presence`;
+      presenceChannel = supabase.channel(channelName);
+
+      // Track presence events
+      presenceChannel
+        .on('presence', { event: 'sync' }, () => {
+          console.log('Presence synced for organization:', activeOrganizationId);
+        })
+        .on('presence', { event: 'join' }, ({ newPresences }) => {
+          console.log('User joined:', newPresences);
+        })
+        .on('presence', { event: 'leave' }, ({ leftPresences }) => {
+          console.log('User left:', leftPresences);
+        })
+        .subscribe(async (status) => {
+          if (status === 'SUBSCRIBED') {
+            console.log('Global presence channel subscribed, tracking user:', user.id);
+            // Track current user's presence
+            await presenceChannel.track({
+              user_id: user.id,
+              online_at: new Date().toISOString(),
+            });
+          }
+        });
+
+      // Update last_active timestamp every 5 minutes
+      presenceInterval = setInterval(async () => {
+        try {
+          await supabase
+            .from('organization_members')
+            .update({ last_active: new Date().toISOString() })
+            .eq('user_id', user.id)
+            .eq('organization_id', activeOrganizationId);
+          
+          // Re-track presence to keep connection alive
+          if (presenceChannel) {
+            await presenceChannel.track({
+              user_id: user.id,
+              online_at: new Date().toISOString(),
+            });
+          }
+        } catch (error) {
+          console.warn('Failed to update global presence:', error);
+        }
+      }, 300000); // Update every 5 minutes
+    };
+
+    if (activeOrganizationId) {
+      setupPresence();
+    }
+
+    return () => {
+      if (presenceChannel) {
+        console.log('Cleaning up global presence channel');
+        presenceChannel.unsubscribe();
+      }
+      if (presenceInterval) {
+        clearInterval(presenceInterval);
+      }
+    };
+  }, [activeOrganizationId]);
+
   // Initialize on mount and when auth state changes
   useEffect(() => {
     const initializeOrganization = async () => {

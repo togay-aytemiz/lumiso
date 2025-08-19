@@ -1147,8 +1147,16 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_user_organization_ids: {
+        Args: Record<PropertyKey, never>
+        Returns: string[]
+      }
       user_has_pending_membership: {
         Args: { user_uuid: string }
+        Returns: boolean
+      }
+      user_is_organization_owner: {
+        Args: { org_id: string }
         Returns: boolean
       }
     }

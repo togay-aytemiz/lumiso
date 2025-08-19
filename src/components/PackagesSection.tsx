@@ -46,20 +46,30 @@ const PackagesSection = () => {
         return;
       }
 
-      // Ensure default packages exist for the user
-      await supabase.rpc('ensure_default_packages', { user_uuid: user.id });
+      // Get current organization ID
+      const { data: organizationId, error: orgError } = await supabase.rpc('get_user_organization_id');
+      if (orgError || !organizationId) {
+        setLoading(false);
+        return;
+      }
+
+      // Ensure default packages exist for the organization
+      await supabase.rpc('ensure_default_packages_for_org', { 
+        user_uuid: user.id, 
+        org_id: organizationId 
+      });
 
       // Load packages and services in parallel
       const [packagesResult, servicesResult] = await Promise.all([
         supabase
           .from('packages')
           .select('*')
-          .eq('user_id', user.id)
+          .eq('organization_id', organizationId)
           .order('created_at', { ascending: false }),
         supabase
           .from('services')
           .select('id, name')
-          .eq('user_id', user.id)
+          .eq('organization_id', organizationId)
           .order('name')
       ]);
 

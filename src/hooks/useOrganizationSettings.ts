@@ -27,24 +27,22 @@ export const useOrganizationSettings = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
-      // Get user's active organization
-      const { data: userSettings } = await supabase
-        .from('user_settings')
-        .select('active_organization_id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (!userSettings?.active_organization_id) {
+      // Get user's active organization ID using the function
+      const { data: organizationId, error: orgError } = await supabase.rpc('get_user_organization_id');
+      if (orgError || !organizationId) {
         setSettings(null);
         return;
       }
+
+      // Ensure organization settings exist first
+      await supabase.rpc('ensure_organization_settings', { org_id: organizationId });
 
       // Get organization settings
       const { data: orgSettings, error } = await supabase
         .from('organization_settings')
         .select('*')
-        .eq('organization_id', userSettings.active_organization_id)
-        .maybeSingle();
+        .eq('organization_id', organizationId)
+        .single();
 
       if (error) throw error;
 
@@ -63,14 +61,9 @@ export const useOrganizationSettings = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
-      // Get user's active organization
-      const { data: userSettings } = await supabase
-        .from('user_settings')
-        .select('active_organization_id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (!userSettings?.active_organization_id) {
+      // Get user's active organization ID using the function
+      const { data: organizationId, error: orgError } = await supabase.rpc('get_user_organization_id');
+      if (orgError || !organizationId) {
         throw new Error('No active organization found');
       }
 
@@ -88,7 +81,7 @@ export const useOrganizationSettings = () => {
         result = await supabase
           .from('organization_settings')
           .insert({
-            organization_id: userSettings.active_organization_id,
+            organization_id: organizationId,
             ...updates
           })
           .select()
@@ -117,14 +110,9 @@ export const useOrganizationSettings = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
-      // Get user's active organization
-      const { data: userSettings } = await supabase
-        .from('user_settings')
-        .select('active_organization_id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (!userSettings?.active_organization_id) {
+      // Get user's active organization ID using the function
+      const { data: organizationId, error: orgError } = await supabase.rpc('get_user_organization_id');
+      if (orgError || !organizationId) {
         throw new Error('No active organization found');
       }
 
@@ -138,7 +126,7 @@ export const useOrganizationSettings = () => {
 
       // Upload new logo
       const fileExt = file.name.split('.').pop();
-      const fileName = `${userSettings.active_organization_id}-${Date.now()}.${fileExt}`;
+      const fileName = `${organizationId}-${Date.now()}.${fileExt}`;
       
       const { error: uploadError } = await supabase.storage
         .from('logos')

@@ -30,9 +30,17 @@ const ServicesSection = () => {
   const { data: services = [], isLoading } = useQuery({
     queryKey: ['services'],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      // Get current organization ID
+      const { data: organizationId, error: orgError } = await supabase.rpc('get_user_organization_id');
+      if (orgError || !organizationId) throw new Error('No organization found');
+
       const { data, error } = await supabase
         .from('services')
         .select('*')
+        .eq('organization_id', organizationId)
         .order('category', { ascending: true })
         .order('name', { ascending: true });
       

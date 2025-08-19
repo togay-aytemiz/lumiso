@@ -594,20 +594,22 @@ export function ViewProjectDialog({
                           />
                         </div>
                       </div>
-                      
-                      {/* Desktop Assignees row */}
-                      <div className="hidden md:flex items-center gap-4 mt-16 pt-4">
-                        <AssigneesList
-                          assignees={project.assignees || []}
-                          entityType="project"
-                          entityId={project.id}
-                          onUpdate={onProjectUpdated}
-                        />
-                      </div>
                     </div>
                   </div>}
                 
               </div>
+              
+              {/* Desktop: Assignees between title and action buttons */}
+              {!isEditing && (
+                <div className="hidden md:flex items-center gap-4 ml-auto mr-4 transition-all duration-300 ease-in-out">
+                  <AssigneesList
+                    assignees={project.assignees || []}
+                    entityType="project"
+                    entityId={project.id}
+                    onUpdate={onProjectUpdated}
+                  />
+                </div>
+              )}
               
               <div className="flex items-center gap-1 shrink-0 self-start">
                 {!isEditing && <DropdownMenu>

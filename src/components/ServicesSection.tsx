@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AddServiceDialog, EditServiceDialog } from "./settings/ServiceDialogs";
 import SettingsSection from "./SettingsSection";
+import { usePermissions } from "@/hooks/usePermissions";
 
 interface Service {
   id: string;
@@ -25,6 +26,7 @@ const ServicesSection = () => {
   const [newCategoriesAdded, setNewCategoriesAdded] = useState<string[]>([]);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { hasPermission } = usePermissions();
 
   // Fetch services
   const { data: services = [], isLoading } = useQuery({
@@ -133,12 +135,19 @@ const ServicesSection = () => {
     );
   }
 
+  // Don't render if user doesn't have view permission
+  if (!hasPermission('view_services')) {
+    return null;
+  }
+
+  const canManageServices = hasPermission('manage_services');
+
   return (
     <>
       <SettingsSection 
         title="Services" 
         description="Define the photography services you offer, like albums, prints, and extras."
-        action={(Object.keys(groupedServices).length > 0) ? {
+        action={(Object.keys(groupedServices).length > 0 && canManageServices) ? {
           label: "Add Service",
           onClick: () => setShowNewServiceDialog(true),
           icon: <Plus className="h-4 w-4" />
@@ -147,23 +156,27 @@ const ServicesSection = () => {
         {Object.keys(groupedServices).length === 0 ? (
           <div className="text-center py-8">
             <p className="text-muted-foreground mb-4">No services defined yet.</p>
-            <Button onClick={() => setShowNewServiceDialog(true)} variant="outline">
-              <Plus className="h-4 w-4 mr-2" />
-              Add your first service
-            </Button>
+            {canManageServices && (
+              <Button onClick={() => setShowNewServiceDialog(true)} variant="outline">
+                <Plus className="h-4 w-4 mr-2" />
+                Add your first service
+              </Button>
+            )}
           </div>
         ) : (
           <>
             {/* Mobile Add Button */}
-            <div className="md:hidden mb-4">
-              <Button 
-                onClick={() => setShowNewServiceDialog(true)} 
-                className="w-full"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Service
-              </Button>
-            </div>
+            {canManageServices && (
+              <div className="md:hidden mb-4">
+                <Button 
+                  onClick={() => setShowNewServiceDialog(true)} 
+                  className="w-full"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Service
+                </Button>
+              </div>
+            )}
 
             <div className="space-y-4">
               {Object.entries(groupedServices).map(([category, categoryServices]) => (
@@ -216,30 +229,34 @@ const ServicesSection = () => {
                             </div>
                            </div>
                            
-                           <div className="flex gap-2">
-                             <Button
-                               variant="ghost"
-                               size="sm"
-                               onClick={() => {
-                                 setEditingService(service);
-                                 setShowEditServiceDialog(true);
-                               }}
-                               className="text-muted-foreground hover:text-foreground"
-                               aria-label={`Edit service ${service.name}`}
-                             >
-                               <Edit className="h-4 w-4" />
-                             </Button>
-                             <Button
-                               variant="ghost"
-                               size="sm"
-                               onClick={() => handleDeleteService(service.id)}
-                               disabled={deleteServiceMutation.isPending}
-                               className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                               aria-label={`Delete service ${service.name}`}
-                             >
-                               <Trash2 className="h-4 w-4" />
-                             </Button>
-                           </div>
+                           {canManageServices ? (
+                             <div className="flex gap-2">
+                               <Button
+                                 variant="ghost"
+                                 size="sm"
+                                 onClick={() => {
+                                   setEditingService(service);
+                                   setShowEditServiceDialog(true);
+                                 }}
+                                 className="text-muted-foreground hover:text-foreground"
+                                 aria-label={`Edit service ${service.name}`}
+                               >
+                                 <Edit className="h-4 w-4" />
+                               </Button>
+                               <Button
+                                 variant="ghost"
+                                 size="sm"
+                                 onClick={() => handleDeleteService(service.id)}
+                                 disabled={deleteServiceMutation.isPending}
+                                 className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                 aria-label={`Delete service ${service.name}`}
+                               >
+                                 <Trash2 className="h-4 w-4" />
+                               </Button>
+                             </div>
+                           ) : (
+                             <span className="text-sm text-muted-foreground">View only</span>
+                           )}
                         </div>
                       ))}
                     </div>
@@ -283,30 +300,32 @@ const ServicesSection = () => {
                             )}
 
                              {/* Actions row */}
-                             <div className="flex gap-2 pt-2 border-t">
-                               <Button
-                                 variant="outline"
-                                 size="sm"
-                                 onClick={() => {
-                                   setEditingService(service);
-                                   setShowEditServiceDialog(true);
-                                 }}
-                                 className="flex-1 h-10 min-w-0"
-                                 aria-label={`Edit service ${service.name}`}
-                               >
-                                 <Edit className="h-4 w-4" />
-                               </Button>
-                               <Button
-                                 variant="outline"
-                                 size="sm"
-                                 onClick={() => handleDeleteService(service.id)}
-                                 disabled={deleteServiceMutation.isPending}
-                                 className="flex-1 h-10 min-w-0 text-destructive hover:text-destructive hover:bg-destructive/10"
-                                 aria-label={`Delete service ${service.name}`}
-                               >
-                                 <Trash2 className="h-4 w-4" />
-                               </Button>
-                             </div>
+                             {canManageServices && (
+                               <div className="flex gap-2 pt-2 border-t">
+                                 <Button
+                                   variant="outline"
+                                   size="sm"
+                                   onClick={() => {
+                                     setEditingService(service);
+                                     setShowEditServiceDialog(true);
+                                   }}
+                                   className="flex-1 h-10 min-w-0"
+                                   aria-label={`Edit service ${service.name}`}
+                                 >
+                                   <Edit className="h-4 w-4" />
+                                 </Button>
+                                 <Button
+                                   variant="outline"
+                                   size="sm"
+                                   onClick={() => handleDeleteService(service.id)}
+                                   disabled={deleteServiceMutation.isPending}
+                                   className="flex-1 h-10 min-w-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                   aria-label={`Delete service ${service.name}`}
+                                 >
+                                   <Trash2 className="h-4 w-4" />
+                                 </Button>
+                               </div>
+                             )}
                           </div>
                         ))
                       )}
@@ -319,24 +338,28 @@ const ServicesSection = () => {
         )}
       </SettingsSection>
 
-      <AddServiceDialog
-        open={showNewServiceDialog}
-        onOpenChange={handleDialogChange}
-        onServiceAdded={() => {
-          queryClient.invalidateQueries({ queryKey: ['services'] });
-          handleDialogChange(false);
-        }}
-      />
+      {canManageServices && (
+        <>
+          <AddServiceDialog
+            open={showNewServiceDialog}
+            onOpenChange={handleDialogChange}
+            onServiceAdded={() => {
+              queryClient.invalidateQueries({ queryKey: ['services'] });
+              handleDialogChange(false);
+            }}
+          />
 
-      <EditServiceDialog
-        service={editingService}
-        open={showEditServiceDialog}
-        onOpenChange={setShowEditServiceDialog}
-        onServiceUpdated={() => {
-          queryClient.invalidateQueries({ queryKey: ['services'] });
-          setShowEditServiceDialog(false);
-        }}
-      />
+          <EditServiceDialog
+            service={editingService}
+            open={showEditServiceDialog}
+            onOpenChange={setShowEditServiceDialog}
+            onServiceUpdated={() => {
+              queryClient.invalidateQueries({ queryKey: ['services'] });
+              setShowEditServiceDialog(false);
+            }}
+          />
+        </>
+      )}
     </>
   );
 };

@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import SettingsSection from "./SettingsSection";
 import { AddPackageDialog, EditPackageDialog } from "./settings/PackageDialogs";
+import { usePermissions } from "@/hooks/usePermissions";
 
 interface Package {
   id: string;
@@ -30,6 +31,7 @@ const PackagesSection = () => {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [packageToDelete, setPackageToDelete] = useState<Package | null>(null);
   const { toast } = useToast();
+  const { hasPermission } = usePermissions();
 
   // Load packages from database
   useEffect(() => {
@@ -167,12 +169,19 @@ const PackagesSection = () => {
     );
   }
 
+  // Don't render if user doesn't have view permission
+  if (!hasPermission('view_packages')) {
+    return null;
+  }
+
+  const canManagePackages = hasPermission('manage_packages');
+
   return (
     <>
       <SettingsSection 
         title="Packages" 
         description="Create comprehensive packages that bundle services together for your clients."
-        action={(packages.length > 0) ? {
+        action={(packages.length > 0 && canManagePackages) ? {
           label: "Add Package",
           onClick: () => setShowNewPackageDialog(true),
           icon: <Plus className="h-4 w-4" />
@@ -181,23 +190,27 @@ const PackagesSection = () => {
         {packages.length === 0 ? (
           <div className="text-center py-8">
             <p className="text-muted-foreground mb-4">No packages yet</p>
-            <Button onClick={() => setShowNewPackageDialog(true)} variant="outline">
-              <Plus className="h-4 w-4 mr-2" />
-              Create your first package
-            </Button>
+            {canManagePackages && (
+              <Button onClick={() => setShowNewPackageDialog(true)} variant="outline">
+                <Plus className="h-4 w-4 mr-2" />
+                Create your first package
+              </Button>
+            )}
           </div>
         ) : (
           <>
             {/* Mobile Add Button */}
-            <div className="md:hidden mb-4">
-              <Button 
-                onClick={() => setShowNewPackageDialog(true)} 
-                className="w-full"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Package
-              </Button>
-            </div>
+            {canManagePackages && (
+              <div className="md:hidden mb-4">
+                <Button 
+                  onClick={() => setShowNewPackageDialog(true)} 
+                  className="w-full"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Package
+                </Button>
+              </div>
+            )}
 
             {/* Desktop Table */}
             <div className="hidden md:block space-y-4">
@@ -290,29 +303,33 @@ const PackagesSection = () => {
                                {pkg.is_active ? "Active" : "Inactive"}
                              </Badge>
                            </td>
-                          <td className="px-4 py-3">
-                            <div className="flex gap-2">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => {
-                                  setEditingPackage(pkg);
-                                  setShowEditPackageDialog(true);
-                                }}
-                                className="text-muted-foreground hover:text-foreground"
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleDeleteClick(pkg)}
-                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </td>
+                           <td className="px-4 py-3">
+                             {canManagePackages ? (
+                               <div className="flex gap-2">
+                                 <Button
+                                   variant="ghost"
+                                   size="sm"
+                                   onClick={() => {
+                                     setEditingPackage(pkg);
+                                     setShowEditPackageDialog(true);
+                                   }}
+                                   className="text-muted-foreground hover:text-foreground"
+                                 >
+                                   <Edit className="h-4 w-4" />
+                                 </Button>
+                                 <Button
+                                   variant="ghost"
+                                   size="sm"
+                                   onClick={() => handleDeleteClick(pkg)}
+                                   className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                 >
+                                   <Trash2 className="h-4 w-4" />
+                                 </Button>
+                               </div>
+                             ) : (
+                               <span className="text-sm text-muted-foreground">View only</span>
+                             )}
+                           </td>
                         </tr>
                       ))}
                     </tbody>
@@ -380,30 +397,32 @@ const PackagesSection = () => {
                      </div>
                    )}
 
-                   {/* Actions row */}
-                   <div className="flex gap-2 pt-2 border-t">
-                     <Button
-                       variant="outline"
-                       size="sm"
-                       onClick={() => {
-                         setEditingPackage(pkg);
-                         setShowEditPackageDialog(true);
-                       }}
-                       className="flex-1 h-10 min-w-0"
-                       aria-label={`Edit package ${pkg.name}`}
-                     >
-                       <Edit className="h-4 w-4" />
-                     </Button>
-                     <Button
-                       variant="outline"
-                       size="sm"
-                       onClick={() => handleDeleteClick(pkg)}
-                       className="flex-1 h-10 min-w-0 text-destructive hover:text-destructive hover:bg-destructive/10"
-                       aria-label={`Delete package ${pkg.name}`}
-                     >
-                       <Trash2 className="h-4 w-4" />
-                     </Button>
-                   </div>
+                    {/* Actions row */}
+                    {canManagePackages && (
+                      <div className="flex gap-2 pt-2 border-t">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setEditingPackage(pkg);
+                            setShowEditPackageDialog(true);
+                          }}
+                          className="flex-1 h-10 min-w-0"
+                          aria-label={`Edit package ${pkg.name}`}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDeleteClick(pkg)}
+                          className="flex-1 h-10 min-w-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                          aria-label={`Delete package ${pkg.name}`}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    )}
                 </div>
               ))}
             </div>
@@ -411,18 +430,22 @@ const PackagesSection = () => {
         )}
       </SettingsSection>
 
-      <AddPackageDialog
-        open={showNewPackageDialog}
-        onOpenChange={setShowNewPackageDialog}
-        onPackageAdded={handlePackageAdded}
-      />
+      {canManagePackages && (
+        <>
+          <AddPackageDialog
+            open={showNewPackageDialog}
+            onOpenChange={setShowNewPackageDialog}
+            onPackageAdded={handlePackageAdded}
+          />
 
-      <EditPackageDialog
-        package={editingPackage}
-        open={showEditPackageDialog}
-        onOpenChange={setShowEditPackageDialog}
-        onPackageUpdated={handlePackageUpdated}
-      />
+          <EditPackageDialog
+            package={editingPackage}
+            open={showEditPackageDialog}
+            onOpenChange={setShowEditPackageDialog}
+            onPackageUpdated={handlePackageUpdated}
+          />
+        </>
+      )}
 
       <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
         <AlertDialogContent>

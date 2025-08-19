@@ -15,6 +15,7 @@ import { AddProjectStageDialog, EditProjectStageDialog } from "./settings/Projec
 import { getUserOrganizationId } from "@/lib/organizationUtils";
 import { cn } from "@/lib/utils";
 import SettingsSection from "./SettingsSection";
+import { usePermissions } from "@/hooks/usePermissions";
 
 const projectStatusSchema = z.object({
   name: z.string().min(1, "Status name is required").max(50, "Status name must be less than 50 characters"),
@@ -56,6 +57,7 @@ const ProjectStatusesSection = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const { toast } = useToast();
+  const { hasPermission } = usePermissions();
 
   const form = useForm<ProjectStatusForm>({
     resolver: zodResolver(projectStatusSchema),
@@ -473,24 +475,33 @@ const ProjectStatusesSection = () => {
     );
   }
 
+  // Don't render if user doesn't have view permission
+  if (!hasPermission('view_project_statuses')) {
+    return null;
+  }
+
+  const canManageProjectStatuses = hasPermission('manage_project_statuses');
+
   return (
     <>
     <SettingsSection 
       title="Project Stages" 
       description="Add, rename and reorder stages to customize your workflow."
-      action={{
+      action={canManageProjectStatuses ? {
         label: "Add Stage",
         onClick: handleAdd,
         icon: <Plus className="h-4 w-4" />
-      }}
+      } : undefined}
     >
       {/* Mobile CTA */}
-      <div className="mb-4 md:hidden">
-        <Button onClick={handleAdd} className="w-full">
-          <Plus className="h-4 w-4 mr-2" />
-          Add Stage
-        </Button>
-      </div>
+      {canManageProjectStatuses && (
+        <div className="mb-4 md:hidden">
+          <Button onClick={handleAdd} className="w-full">
+            <Plus className="h-4 w-4 mr-2" />
+            Add Stage
+          </Button>
+        </div>
+      )}
 
       <div className="mb-4 p-3 bg-muted/30 rounded-lg border border-dashed border-muted-foreground/20">
         <p className="text-sm text-muted-foreground leading-relaxed">
@@ -539,11 +550,11 @@ const ProjectStatusesSection = () => {
                           style={{ backgroundColor: status.color }}
                         />
                         <span 
-                          className="uppercase tracking-wide font-semibold cursor-pointer"
-                          onClick={(e) => {
+                          className={`uppercase tracking-wide font-semibold ${canManageProjectStatuses ? 'cursor-pointer' : 'cursor-default'}`}
+                          onClick={canManageProjectStatuses ? (e) => {
                             e.stopPropagation();
                             handleEdit(status);
-                          }}
+                          } : undefined}
                         >
                           {status.name}
                         </span>
@@ -558,19 +569,23 @@ const ProjectStatusesSection = () => {
         </DragDropContext>
 
         {/* Add Dialog */}
-        <AddProjectStageDialog
-          open={isAddDialogOpen}
-          onOpenChange={setIsAddDialogOpen}
-          onStageAdded={fetchStatuses}
-        />
+        {canManageProjectStatuses && (
+          <>
+            <AddProjectStageDialog
+              open={isAddDialogOpen}
+              onOpenChange={setIsAddDialogOpen}
+              onStageAdded={fetchStatuses}
+            />
 
-        {/* Edit Dialog */}
-        <EditProjectStageDialog
-          stage={editingStatus}
-          open={isEditDialogOpen}
-          onOpenChange={setIsEditDialogOpen}
-          onStageUpdated={fetchStatuses}
-        />
+            {/* Edit Dialog */}
+            <EditProjectStageDialog
+              stage={editingStatus}
+              open={isEditDialogOpen}
+              onOpenChange={setIsEditDialogOpen}
+              onStageUpdated={fetchStatuses}
+            />
+          </>
+        )}
       </SettingsSection>
     </>
   );

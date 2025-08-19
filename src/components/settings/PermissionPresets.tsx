@@ -33,47 +33,91 @@ export function PermissionPresets({
 }: PermissionPresetsProps) {
   const presets: PermissionPreset[] = [
     {
-      id: "basic",
-      name: "Basic Access",
-      description: "View-only access to assigned projects and leads",
+      id: "viewer",
+      name: "Viewer",
+      description: "Read-only access to assigned work",
+      permissions: [],
+      color: "bg-gray-50 border-gray-200 text-gray-800"
+    },
+    {
+      id: "assistant",
+      name: "Assistant",
+      description: "Basic editing of assigned work with view-only settings",
       permissions: [
-        "view_assigned_projects",
-        "view_assigned_leads", 
-        "view_sessions"
+        "edit_assigned_leads",
+        "edit_assigned_projects", 
+        "edit_assigned_sessions",
+        "view_packages",
+        "view_services"
       ],
       color: "bg-blue-50 border-blue-200 text-blue-800"
     },
     {
-      id: "contributor",
-      name: "Contributor",
-      description: "Can edit assigned projects and create basic content",
+      id: "photographer",
+      name: "Photographer",
+      description: "Manage assigned work and sessions with view-only settings",
       permissions: [
-        "view_assigned_projects",
-        "edit_assigned_projects",
-        "view_assigned_leads",
         "edit_assigned_leads",
-        "view_sessions",
-        "create_sessions"
+        "edit_assigned_projects",
+        "create_sessions",
+        "edit_assigned_sessions",
+        "manage_all_sessions",
+        "view_packages",
+        "view_services",
+        "view_project_statuses",
+        "view_session_statuses"
       ],
       color: "bg-green-50 border-green-200 text-green-800"
     },
     {
-      id: "manager",
-      name: "Project Manager",
-      description: "Full project management with team oversight",
+      id: "lead_manager",
+      name: "Lead Manager",
+      description: "Manage leads and create projects with view-only settings",
       permissions: [
-        "manage_all_projects",
-        "create_projects",
-        "delete_projects",
-        "manage_all_leads",
         "create_leads",
-        "delete_leads",
-        "view_sessions",
+        "edit_assigned_leads",
+        "manage_all_leads",
+        "create_projects",
+        "edit_assigned_projects",
         "create_sessions",
-        "manage_sessions",
-        "manage_team"
+        "edit_assigned_sessions",
+        "view_packages",
+        "view_services",
+        "view_lead_statuses",
+        "view_project_statuses",
+        "view_session_statuses",
+        "view_project_types"
       ],
       color: "bg-purple-50 border-purple-200 text-purple-800"
+    },
+    {
+      id: "project_manager",
+      name: "Project Manager",
+      description: "Manage projects and assigned leads with settings access",
+      permissions: [
+        "create_leads",
+        "edit_assigned_leads",
+        "manage_all_leads",
+        "create_projects",
+        "edit_assigned_projects",
+        "manage_all_projects",
+        "create_sessions",
+        "edit_assigned_sessions",
+        "manage_all_sessions",
+        "view_financial_data",
+        "view_organization_settings",
+        "view_packages",
+        "manage_packages",
+        "view_services",
+        "manage_services",
+        "view_project_statuses",
+        "manage_project_statuses",
+        "view_session_statuses",
+        "manage_session_statuses",
+        "view_project_types",
+        "manage_project_types"
+      ],
+      color: "bg-indigo-50 border-indigo-200 text-indigo-800"
     },
     {
       id: "admin",
@@ -162,17 +206,17 @@ export function PermissionPresets({
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm font-medium">
-                Custom Permissions
+                Custom Role
               </CardTitle>
               <Check className="h-4 w-4 text-primary" />
             </div>
             <CardDescription className="text-xs">
-              You have selected custom permissions that don't match a preset
+              Custom permissions that don't match a preset
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-0">
             <Badge variant="secondary" className="text-xs">
-              {selectedPermissions.length} permissions selected
+              {selectedPermissions.length} permissions
             </Badge>
           </CardContent>
         </Card>

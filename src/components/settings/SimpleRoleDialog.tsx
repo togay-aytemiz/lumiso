@@ -7,8 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ChevronDown, ChevronRight } from "lucide-react";
-import { PermissionPresets } from "./PermissionPresets";
 
 interface Permission {
   id: string;
@@ -44,7 +44,35 @@ export function SimpleRoleDialog({
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
-  const [showCustomPermissions, setShowCustomPermissions] = useState(false);
+  const [selectedPreset, setSelectedPreset] = useState<string>('');
+
+  // Define presets
+  const presets = [
+    {
+      id: 'viewer',
+      name: 'Viewer',
+      description: 'Can only view projects and leads',
+      permissions: ['view_projects', 'view_leads']
+    },
+    {
+      id: 'assistant',
+      name: 'Assistant',
+      description: 'Can view and edit assigned items',
+      permissions: ['view_projects', 'view_leads', 'edit_assigned_projects', 'edit_assigned_leads']
+    },
+    {
+      id: 'photographer',
+      name: 'Photographer',
+      description: 'Can manage sessions and view projects',
+      permissions: ['view_projects', 'view_leads', 'manage_sessions', 'edit_assigned_projects']
+    },
+    {
+      id: 'manager',
+      name: 'Project Manager',
+      description: 'Can manage all projects and leads',
+      permissions: ['view_projects', 'view_leads', 'manage_all_projects', 'manage_all_leads', 'manage_sessions']
+    }
+  ];
 
   // Group permissions by category
   const permissionsByCategory = permissions.reduce((acc, permission) => {
@@ -62,14 +90,12 @@ export function SimpleRoleDialog({
         setName(editingRole.name);
         setDescription(editingRole.description);
         setSelectedPermissions(editingRole.permissions.map(p => p.id));
-        // For editing, show custom permissions if it doesn't match any preset
-        setShowCustomPermissions(true);
+        setSelectedPreset('');
       } else {
         setName('');
         setDescription('');
         setSelectedPermissions([]);
-        // For new roles, always start with presets
-        setShowCustomPermissions(false);
+        setSelectedPreset('');
       }
     }
   }, [open, editingRole]);
@@ -81,14 +107,23 @@ export function SimpleRoleDialog({
     onOpenChange(false);
   };
 
-  const handlePresetSelect = (permissionIds: string[]) => {
-    setSelectedPermissions(permissionIds);
-    setShowCustomPermissions(false);
-  };
-
-  const handleCustomPermissions = (permissionIds: string[]) => {
-    setSelectedPermissions(permissionIds);
-    setShowCustomPermissions(true);
+  const handlePresetChange = (presetId: string) => {
+    setSelectedPreset(presetId);
+    if (presetId === 'custom') {
+      // Keep current permissions for custom
+      return;
+    }
+    
+    const preset = presets.find(p => p.id === presetId);
+    if (preset) {
+      // Filter to only include permissions that exist in the system
+      const validPermissions = preset.permissions.filter(permId => 
+        permissions.some(p => p.id === permId)
+      );
+      setSelectedPermissions(validPermissions);
+      setName(preset.name);
+      setDescription(preset.description);
+    }
   };
 
   const togglePermission = (permissionId: string) => {
@@ -152,81 +187,81 @@ export function SimpleRoleDialog({
 
           <Separator />
 
-          {/* Permission Presets */}
-          {!showCustomPermissions && (
-            <PermissionPresets
-              permissions={permissions}
-              selectedPermissions={selectedPermissions}
-              onSelectPreset={handlePresetSelect}
-              onSelectPermissions={handleCustomPermissions}
-            />
-          )}
-
-          {/* Custom Permissions */}
-          {showCustomPermissions && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="font-medium">Custom Permissions</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Select individual permissions for this role
-                  </p>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowCustomPermissions(false)}
-                >
-                  Back to Presets
-                </Button>
-              </div>
-
-              <div className="max-h-64 overflow-y-auto space-y-3 border rounded-lg p-4">
-                {Object.entries(permissionsByCategory).map(([category, categoryPermissions]) => {
-                  const allSelected = categoryPermissions.every(p => selectedPermissions.includes(p.id));
-                  const someSelected = categoryPermissions.some(p => selectedPermissions.includes(p.id));
-
-                  return (
-                    <Collapsible key={category} defaultOpen>
-                      <CollapsibleTrigger className="flex items-center justify-between w-full text-left hover:bg-muted/50 p-2 rounded">
-                        <div className="flex items-center space-x-2">
-                          <Checkbox
-                            checked={allSelected}
-                            onCheckedChange={() => toggleCategory(categoryPermissions)}
-                          />
-                          <span className="font-medium text-sm capitalize">
-                            {category.replace('_', ' ')}
-                          </span>
-                          <span className="text-xs text-muted-foreground">
-                            ({categoryPermissions.filter(p => selectedPermissions.includes(p.id)).length}/{categoryPermissions.length})
-                          </span>
-                        </div>
-                        <ChevronDown className="h-4 w-4" />
-                      </CollapsibleTrigger>
-                      
-                      <CollapsibleContent className="space-y-2 ml-6 mt-2">
-                        {categoryPermissions.map((permission) => (
-                          <div key={permission.id} className="flex items-start space-x-2">
-                            <Checkbox
-                              id={permission.id}
-                              checked={selectedPermissions.includes(permission.id)}
-                              onCheckedChange={() => togglePermission(permission.id)}
-                            />
-                            <Label htmlFor={permission.id} className="text-sm cursor-pointer">
-                              <div>
-                                <span className="font-medium">{permission.name.replace(/_/g, ' ')}</span>
-                                <p className="text-xs text-muted-foreground">{permission.description}</p>
-                              </div>
-                            </Label>
-                          </div>
-                        ))}
-                      </CollapsibleContent>
-                    </Collapsible>
-                  );
-                })}
-              </div>
+          {/* Role Template Selection */}
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="roleTemplate">Role Template (Optional)</Label>
+              <Select value={selectedPreset} onValueChange={handlePresetChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose a template or create custom" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="custom">Custom Role</SelectItem>
+                  {presets.map((preset) => (
+                    <SelectItem key={preset.id} value={preset.id}>
+                      {preset.name} - {preset.description}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-          )}
+          </div>
+
+          <Separator />
+
+          {/* Permissions */}
+          <div className="space-y-4">
+            <div>
+              <h4 className="font-medium">Permissions</h4>
+              <p className="text-sm text-muted-foreground">
+                Select the permissions for this role
+              </p>
+            </div>
+
+            <div className="max-h-64 overflow-y-auto space-y-3 border rounded-lg p-4">
+              {Object.entries(permissionsByCategory).map(([category, categoryPermissions]) => {
+                const allSelected = categoryPermissions.every(p => selectedPermissions.includes(p.id));
+
+                return (
+                  <Collapsible key={category} defaultOpen>
+                    <CollapsibleTrigger className="flex items-center justify-between w-full text-left hover:bg-muted/50 p-2 rounded">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          checked={allSelected}
+                          onCheckedChange={() => toggleCategory(categoryPermissions)}
+                        />
+                        <span className="font-medium text-sm capitalize">
+                          {category.replace('_', ' ')}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          ({categoryPermissions.filter(p => selectedPermissions.includes(p.id)).length}/{categoryPermissions.length})
+                        </span>
+                      </div>
+                      <ChevronDown className="h-4 w-4" />
+                    </CollapsibleTrigger>
+                    
+                    <CollapsibleContent className="space-y-2 ml-6 mt-2">
+                      {categoryPermissions.map((permission) => (
+                        <div key={permission.id} className="flex items-start space-x-2">
+                          <Checkbox
+                            id={permission.id}
+                            checked={selectedPermissions.includes(permission.id)}
+                            onCheckedChange={() => togglePermission(permission.id)}
+                          />
+                          <Label htmlFor={permission.id} className="text-sm cursor-pointer">
+                            <div>
+                              <span className="font-medium">{permission.name.replace(/_/g, ' ')}</span>
+                              <p className="text-xs text-muted-foreground">{permission.description}</p>
+                            </div>
+                          </Label>
+                        </div>
+                      ))}
+                    </CollapsibleContent>
+                  </Collapsible>
+                );
+              })}
+            </div>
+          </div>
         </div>
 
         <div className="flex justify-end space-x-2 pt-4">

@@ -60,6 +60,35 @@ export default function Team() {
   const [newRoleName, setNewRoleName] = useState("");
   const [newRoleDescription, setNewRoleDescription] = useState("");
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
+  const [selectedPreset, setSelectedPreset] = useState<string>('');
+
+  // Define presets
+  const presets = [
+    {
+      id: 'viewer',
+      name: 'Viewer',
+      description: 'Can only view projects and leads',
+      permissions: ['view_projects', 'view_leads']
+    },
+    {
+      id: 'assistant',
+      name: 'Assistant', 
+      description: 'Can view and edit assigned items',
+      permissions: ['view_projects', 'view_leads', 'edit_assigned_projects', 'edit_assigned_leads']
+    },
+    {
+      id: 'photographer',
+      name: 'Photographer',
+      description: 'Can manage sessions and view projects',
+      permissions: ['view_projects', 'view_leads', 'manage_sessions', 'edit_assigned_projects']
+    },
+    {
+      id: 'manager',
+      name: 'Project Manager',
+      description: 'Can manage all projects and leads',
+      permissions: ['view_projects', 'view_leads', 'manage_all_projects', 'manage_all_leads', 'manage_sessions']
+    }
+  ];
   const [isLoading, setIsLoading] = useState(true);
   const [roleToDelete, setRoleToDelete] = useState<string | null>(null);
   const isMobile = useIsMobile();
@@ -349,9 +378,29 @@ export default function Team() {
     setNewRoleName("");
     setNewRoleDescription("");
     setSelectedPermissions([]);
+    setSelectedPreset('');
     setIsCreateRoleOpen(false);
     setEditingRole(null);
     setIsEditingSystem(false);
+  };
+
+  const handlePresetChange = (presetId: string) => {
+    setSelectedPreset(presetId);
+    if (presetId === 'custom' || !presetId) {
+      // Keep current form values for custom
+      return;
+    }
+    
+    const preset = presets.find(p => p.id === presetId);
+    if (preset) {
+      // Filter to only include permissions that exist in the system
+      const validPermissions = preset.permissions.filter(permId => 
+        permissions.some(p => p.id === permId)
+      );
+      setSelectedPermissions(validPermissions);
+      setNewRoleName(preset.name);
+      setNewRoleDescription(preset.description);
+    }
   };
 
   const openEditRole = (role: CustomRole | SystemRole, isSystem: boolean = false) => {
@@ -837,6 +886,26 @@ export default function Team() {
                 rows={3}
               />
             </div>
+
+            {/* Role Template Selection */}
+            {!editingRole && (
+              <div className="space-y-2">
+                <Label htmlFor="role-template">Role Template (Optional)</Label>
+                <Select value={selectedPreset} onValueChange={handlePresetChange}>
+                  <SelectTrigger className="bg-background">
+                    <SelectValue placeholder="Choose a template or create custom" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background border z-50">
+                    <SelectItem value="custom">Custom Role</SelectItem>
+                    {presets.map((preset) => (
+                      <SelectItem key={preset.id} value={preset.id}>
+                        {preset.name} - {preset.description}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             {/* Permissions Section */}
             <div className="space-y-4">

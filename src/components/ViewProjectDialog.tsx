@@ -543,29 +543,32 @@ export function ViewProjectDialog({
                   </div> : <div className="space-y-3">
                     <div className="space-y-2">
                       <DialogTitle asChild>
-                        <h1 className="text-xl font-bold leading-tight break-words text-left md:text-3xl">{project?.name}</h1>
+                        <div className="flex items-center gap-3 flex-wrap">
+                          <h1 className="text-xl font-bold leading-tight break-words text-left md:text-3xl">{project?.name}</h1>
+                          
+                          {/* Project Status and Type Badges next to name */}
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {/* Project Status Badge */}
+                            <ProjectStatusBadge projectId={project.id} currentStatusId={localStatusId || undefined} onStatusChange={() => {
+                            onProjectUpdated();
+                          }} editable={!isArchived} className="text-sm" />
+                            
+                            {/* Project Type Badge */}
+                            {projectType && <Badge variant="outline" className="text-xs">
+                                {projectType.name.toUpperCase()}
+                              </Badge>}
+                          </div>
+                        </div>
                       </DialogTitle>
                       
-                      {/* Assignees and Status row - Desktop */}
-                      <div className="hidden md:flex items-center justify-between gap-4">
+                      {/* Assignees row - Desktop */}
+                      <div className="hidden md:flex items-center gap-4">
                         <AssigneesList
                           assignees={project.assignees || []}
                           entityType="project"
                           entityId={project.id}
                           onUpdate={onProjectUpdated}
                         />
-                        
-                        <div className="flex items-center gap-2 flex-wrap">
-                          {/* Project Status Badge */}
-                          <ProjectStatusBadge projectId={project.id} currentStatusId={localStatusId || undefined} onStatusChange={() => {
-                          onProjectUpdated();
-                        }} editable={!isArchived} className="text-sm" />
-                          
-                          {/* Project Type Badge */}
-                          {projectType && <Badge variant="outline" className="text-xs">
-                              {projectType.name.toUpperCase()}
-                            </Badge>}
-                        </div>
                       </div>
                       
                       {/* Mobile/Tablet Layout */}

@@ -147,37 +147,56 @@ export function AssigneesList({
   };
 
   const addAssignee = async (userId: string) => {
+    console.log('=== ASSIGNMENT DEBUG START ===');
     console.log('addAssignee called with userId:', userId);
     console.log('current assignees:', assignees);
+    console.log('entityType:', entityType);
+    console.log('entityId:', entityId);
     
     if (assignees.includes(userId)) {
-      console.log('User already assigned');
+      console.log('User already assigned, stopping');
       return;
     }
 
     setLoading(true);
     try {
       const newAssignees = [...assignees, userId];
-      console.log('newAssignees:', newAssignees);
+      console.log('newAssignees array:', newAssignees);
       
-      const { error } = await supabase
-        .from(entityType === 'lead' ? 'leads' : 'projects')
+      const tableName = entityType === 'lead' ? 'leads' : 'projects';
+      console.log('Updating table:', tableName);
+      
+      const { data, error } = await supabase
+        .from(tableName)
         .update({ assignees: newAssignees })
-        .eq('id', entityId);
+        .eq('id', entityId)
+        .select();
 
-      console.log('Supabase update result:', { error });
+      console.log('Supabase update result:', { data, error });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error details:', error);
+        throw error;
+      }
 
+      console.log('Assignment successful, showing toast');
       toast({
         title: "Success",
         description: "Assignee added successfully"
       });
 
+      console.log('Calling onUpdate callback:', typeof onUpdate);
       onUpdate?.();
       setIsAddingAssignee(false);
+      console.log('=== ASSIGNMENT DEBUG END ===');
     } catch (error: any) {
-      console.error('Error adding assignee:', error);
+      console.error('Error in addAssignee:', error);
+      console.error('Error details:', {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint
+      });
       toast({
         title: "Error",
         description: error.message,

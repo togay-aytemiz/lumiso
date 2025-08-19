@@ -364,11 +364,83 @@ const ActivitySection = ({
       if (log.action === 'created') {
         return 'Lead created';
       } else if (log.action === 'updated') {
+        const changes = [];
+        
+        // Check for status changes
         const oldStatus = log.old_values?.status;
         const newStatus = log.new_values?.status;
         if (oldStatus !== newStatus) {
-          return `Status changed from "${oldStatus}" to "${newStatus}"`;
+          changes.push(`status changed from "${oldStatus}" to "${newStatus}"`);
         }
+        
+        // Check for assignee changes
+        const oldAssignees = log.old_values?.assignees || [];
+        const newAssignees = log.new_values?.assignees || [];
+        
+        if (JSON.stringify(oldAssignees.sort()) !== JSON.stringify(newAssignees.sort())) {
+          const added = newAssignees.filter(id => !oldAssignees.includes(id));
+          const removed = oldAssignees.filter(id => !newAssignees.includes(id));
+          
+          if (added.length > 0 && removed.length > 0) {
+            changes.push(`assignees updated (${added.length} added, ${removed.length} removed)`);
+          } else if (added.length > 0) {
+            changes.push(`${added.length} assignee${added.length > 1 ? 's' : ''} added`);
+          } else if (removed.length > 0) {
+            changes.push(`${removed.length} assignee${removed.length > 1 ? 's' : ''} removed`);
+          }
+        }
+        
+        // Check for name changes
+        const oldName = log.old_values?.name;
+        const newName = log.new_values?.name;
+        if (oldName !== newName) {
+          changes.push(`name changed from "${oldName}" to "${newName}"`);
+        }
+        
+        // Check for email changes
+        const oldEmail = log.old_values?.email;
+        const newEmail = log.new_values?.email;
+        if (oldEmail !== newEmail) {
+          changes.push(`email changed from "${oldEmail || 'empty'}" to "${newEmail || 'empty'}"`);
+        }
+        
+        // Check for phone changes
+        const oldPhone = log.old_values?.phone;
+        const newPhone = log.new_values?.phone;
+        if (oldPhone !== newPhone) {
+          changes.push(`phone changed from "${oldPhone || 'empty'}" to "${newPhone || 'empty'}"`);
+        }
+        
+        // Check for notes changes
+        const oldNotes = log.old_values?.notes;
+        const newNotes = log.new_values?.notes;
+        if (oldNotes !== newNotes) {
+          if (!oldNotes && newNotes) {
+            changes.push('notes added');
+          } else if (oldNotes && !newNotes) {
+            changes.push('notes removed');
+          } else if (oldNotes !== newNotes) {
+            changes.push('notes updated');
+          }
+        }
+        
+        // Check for due date changes
+        const oldDueDate = log.old_values?.due_date;
+        const newDueDate = log.new_values?.due_date;
+        if (oldDueDate !== newDueDate) {
+          if (!oldDueDate && newDueDate) {
+            changes.push(`due date set to ${new Date(newDueDate).toLocaleDateString()}`);
+          } else if (oldDueDate && !newDueDate) {
+            changes.push('due date removed');
+          } else {
+            changes.push(`due date changed from ${new Date(oldDueDate).toLocaleDateString()} to ${new Date(newDueDate).toLocaleDateString()}`);
+          }
+        }
+        
+        if (changes.length > 0) {
+          return `Lead updated: ${changes.join(', ')}`;
+        }
+        
         return 'Lead updated';
       }
     } else if (log.entity_type === 'session') {

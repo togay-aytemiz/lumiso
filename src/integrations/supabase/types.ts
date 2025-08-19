@@ -1199,8 +1199,24 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string[]
       }
+      user_can_access_project: {
+        Args: { project_uuid: string; user_uuid: string }
+        Returns: boolean
+      }
       user_has_pending_membership: {
         Args: { user_uuid: string }
+        Returns: boolean
+      }
+      user_has_permission: {
+        Args: { permission_name: string; user_uuid: string }
+        Returns: boolean
+      }
+      user_is_assigned_to_lead: {
+        Args: { lead_uuid: string; user_uuid: string }
+        Returns: boolean
+      }
+      user_is_assigned_to_project: {
+        Args: { project_uuid: string; user_uuid: string }
         Returns: boolean
       }
       user_is_organization_member: {

@@ -572,7 +572,7 @@ export function ViewProjectDialog({
                       </DialogTitle>
                       
                       {/* Mobile Layout: Badges then Assignees */}
-                      <div className="md:hidden space-y-3">
+                      <div className="md:hidden space-y-4 mt-6">
                         {/* Stage and Type badges for mobile */}
                         <div className="flex items-center gap-2 flex-wrap">
                           <ProjectStatusBadge projectId={project.id} currentStatusId={localStatusId || undefined} onStatusChange={() => {
@@ -585,7 +585,7 @@ export function ViewProjectDialog({
                         </div>
                         
                         {/* Assignees List for mobile */}
-                        <div>
+                        <div className="pt-2">
                           <AssigneesList
                             assignees={project.assignees || []}
                             entityType="project"
@@ -596,7 +596,7 @@ export function ViewProjectDialog({
                       </div>
                       
                       {/* Desktop Assignees row */}
-                      <div className="hidden md:flex items-center gap-4 mt-10">
+                      <div className="hidden md:flex items-center gap-4 mt-16 pt-4">
                         <AssigneesList
                           assignees={project.assignees || []}
                           entityType="project"

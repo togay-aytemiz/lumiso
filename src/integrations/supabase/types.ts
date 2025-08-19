@@ -263,6 +263,7 @@ export type Database = {
           is_default: boolean
           is_system_final: boolean
           name: string
+          organization_id: string | null
           sort_order: number
           updated_at: string
           user_id: string
@@ -274,6 +275,7 @@ export type Database = {
           is_default?: boolean
           is_system_final?: boolean
           name: string
+          organization_id?: string | null
           sort_order?: number
           updated_at?: string
           user_id: string
@@ -285,6 +287,7 @@ export type Database = {
           is_default?: boolean
           is_system_final?: boolean
           name?: string
+          organization_id?: string | null
           sort_order?: number
           updated_at?: string
           user_id?: string
@@ -649,6 +652,7 @@ export type Database = {
           created_at: string
           id: string
           name: string
+          organization_id: string | null
           sort_order: number
           updated_at: string
           user_id: string
@@ -658,6 +662,7 @@ export type Database = {
           created_at?: string
           id?: string
           name: string
+          organization_id?: string | null
           sort_order?: number
           updated_at?: string
           user_id: string
@@ -667,6 +672,7 @@ export type Database = {
           created_at?: string
           id?: string
           name?: string
+          organization_id?: string | null
           sort_order?: number
           updated_at?: string
           user_id?: string
@@ -864,6 +870,7 @@ export type Database = {
           id: string
           is_system_initial: boolean
           name: string
+          organization_id: string | null
           sort_order: number
           updated_at: string
           user_id: string
@@ -874,6 +881,7 @@ export type Database = {
           id?: string
           is_system_initial?: boolean
           name: string
+          organization_id?: string | null
           sort_order?: number
           updated_at?: string
           user_id: string
@@ -884,6 +892,7 @@ export type Database = {
           id?: string
           is_system_initial?: boolean
           name?: string
+          organization_id?: string | null
           sort_order?: number
           updated_at?: string
           user_id?: string

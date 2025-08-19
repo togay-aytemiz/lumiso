@@ -62,12 +62,15 @@ export function SimpleRoleDialog({
         setName(editingRole.name);
         setDescription(editingRole.description);
         setSelectedPermissions(editingRole.permissions.map(p => p.id));
+        // For editing, show custom permissions if it doesn't match any preset
+        setShowCustomPermissions(true);
       } else {
         setName('');
         setDescription('');
         setSelectedPermissions([]);
+        // For new roles, always start with presets
+        setShowCustomPermissions(false);
       }
-      setShowCustomPermissions(false);
     }
   }, [open, editingRole]);
 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Users, Plus, X } from "lucide-react";
+import { Users, Plus, X, Loader2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -7,6 +7,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -44,6 +45,7 @@ export function AssigneesList({
   const [organizationMembers, setOrganizationMembers] = useState<OrganizationMember[]>([]);
   const [isAddingAssignee, setIsAddingAssignee] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [loadingAssignees, setLoadingAssignees] = useState(true);
   const [showRemoveDialog, setShowRemoveDialog] = useState(false);
   const [userToRemove, setUserToRemove] = useState<{ id: string; name: string } | null>(null);
   const { toast } = useToast();
@@ -58,8 +60,10 @@ export function AssigneesList({
   }, [assignees]);
 
   const fetchAssigneeDetails = async () => {
+    setLoadingAssignees(true);
     if (!assignees.length) {
       setAssigneeDetails([]);
+      setLoadingAssignees(false);
       return;
     }
 
@@ -81,6 +85,8 @@ export function AssigneesList({
       setAssigneeDetails(details);
     } catch (error) {
       console.error('Error fetching assignee details:', error);
+    } finally {
+      setLoadingAssignees(false);
     }
   };
 
@@ -216,7 +222,7 @@ export function AssigneesList({
 
   return (
     <TooltipProvider>
-      <div className={`flex items-center gap-2 ${className}`}>
+      <div className={`flex items-center gap-2 ${className} relative`}>
         <div className="flex items-center gap-1 text-sm text-muted-foreground">
           <Users className="h-4 w-4" />
           <span className="hidden sm:inline">Assigned to:</span>
@@ -224,11 +230,29 @@ export function AssigneesList({
         </div>
         
         <div className="flex items-center gap-1">
+          {/* Loading state */}
+          {loadingAssignees && assignees.length > 0 && (
+            <>
+              {assignees.slice(0, maxVisible).map((_, index) => (
+                <div key={`skeleton-${index}`} className="animate-fade-in">
+                  <Skeleton className="h-8 w-8 rounded-full" />
+                </div>
+              ))}
+            </>
+          )}
+          
+          {/* Loading overlay during updates */}
+          {loading && (
+            <div className="absolute inset-0 bg-background/50 backdrop-blur-sm rounded-lg flex items-center justify-center z-10">
+              <Loader2 className="h-4 w-4 animate-spin" />
+            </div>
+          )}
+          
           {/* Visible assignees */}
-          {visibleAssignees.map((assignee) => (
+          {!loadingAssignees && visibleAssignees.map((assignee) => (
             <Tooltip key={assignee.id}>
               <TooltipTrigger asChild>
-                <div className="relative group">
+                <div className="relative group animate-fade-in">
                   <Avatar className="h-8 w-8 border-2 border-background">
                     {assignee.profile_photo_url ? (
                       <AvatarImage src={assignee.profile_photo_url} alt={assignee.name} />
@@ -240,6 +264,7 @@ export function AssigneesList({
                   <button
                     onClick={() => handleRemoveClick(assignee.id, assignee.name)}
                     className="absolute -top-1 -right-1 h-4 w-4 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                    disabled={loading}
                   >
                     <X className="h-2 w-2" />
                   </button>
@@ -253,10 +278,10 @@ export function AssigneesList({
           ))}
 
           {/* Overflow indicator */}
-          {overflowCount > 0 && (
+          {!loadingAssignees && overflowCount > 0 && (
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="h-8 w-8 rounded-full bg-muted border-2 border-background flex items-center justify-center">
+                <div className="h-8 w-8 rounded-full bg-muted border-2 border-background flex items-center justify-center animate-fade-in">
                   <span className="text-xs font-medium">+{overflowCount}</span>
                 </div>
               </TooltipTrigger>

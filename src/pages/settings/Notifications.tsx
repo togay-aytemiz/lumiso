@@ -4,8 +4,9 @@ import SettingsHeader from "@/components/settings/SettingsHeader";
 import { CategorySettingsSection } from "@/components/settings/CategorySettingsSection";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2 } from "lucide-react";
+import { Loader2, Send, TestTube } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -148,6 +149,34 @@ export default function Notifications() {
         description: "Failed to save notification setting",
         variant: "destructive",
       });
+    }
+  };
+
+  // Test notification function
+  const [testingNotification, setTestingNotification] = useState<string | null>(null);
+  
+  const testNotification = async (type: string) => {
+    setTestingNotification(type);
+    try {
+      const { data, error } = await supabase.functions.invoke('send-reminder-notifications', {
+        body: { type }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Test Email Sent",
+        description: `${type} notification test email has been sent!`,
+      });
+    } catch (error) {
+      console.error('Error testing notification:', error);
+      toast({
+        title: "Test Failed",
+        description: "Failed to send test notification. Please check your settings.",
+        variant: "destructive",
+      });
+    } finally {
+      setTestingNotification(null);
     }
   };
 
@@ -393,6 +422,90 @@ export default function Notifications() {
                 onCheckedChange={(checked) => handleAutoSave('teamInviteAcceptedAlertEnabled', checked)}
                 disabled={autoSaveStates.teamInviteAcceptedAlertEnabled === 'saving'}
               />
+            </div>
+          </div>
+        </CategorySettingsSection>
+
+        <CategorySettingsSection
+          title="Test Notifications"
+          description="Send test emails to verify your notification setup is working"
+          sectionId="test-notifications"
+        >
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Button
+                variant="outline"
+                onClick={() => testNotification('overdue')}
+                disabled={testingNotification === 'overdue' || !settings.overdueReminderEnabled}
+                className="justify-start"
+              >
+                {testingNotification === 'overdue' ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <TestTube className="h-4 w-4 mr-2" />
+                )}
+                Test Overdue Reminder
+              </Button>
+
+              <Button
+                variant="outline"
+                onClick={() => testNotification('delivery')}
+                disabled={testingNotification === 'delivery' || !settings.deliveryReminderEnabled}
+                className="justify-start"
+              >
+                {testingNotification === 'delivery' ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <TestTube className="h-4 w-4 mr-2" />
+                )}
+                Test Delivery Reminder
+              </Button>
+
+              <Button
+                variant="outline"
+                onClick={() => testNotification('session')}
+                disabled={testingNotification === 'session' || !settings.sessionReminderEnabled}
+                className="justify-start"
+              >
+                {testingNotification === 'session' ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <TestTube className="h-4 w-4 mr-2" />
+                )}
+                Test Session Reminder
+              </Button>
+
+              <Button
+                variant="outline"
+                onClick={() => testNotification('daily_summary')}
+                disabled={testingNotification === 'daily_summary' || !settings.dailySummaryEnabled}
+                className="justify-start"
+              >
+                {testingNotification === 'daily_summary' ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <TestTube className="h-4 w-4 mr-2" />
+                )}
+                Test Daily Summary
+              </Button>
+
+              <Button
+                variant="outline"
+                onClick={() => testNotification('task_nudge')}
+                disabled={testingNotification === 'task_nudge' || !settings.taskNudgeEnabled}
+                className="justify-start"
+              >
+                {testingNotification === 'task_nudge' ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <TestTube className="h-4 w-4 mr-2" />
+                )}
+                Test Task Nudge
+              </Button>
+            </div>
+            
+            <div className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg">
+              <p><strong>Note:</strong> Test buttons are only enabled when the corresponding notification is turned on. The test will send an email based on your current data (leads, sessions, todos, etc.).</p>
             </div>
           </div>
         </CategorySettingsSection>

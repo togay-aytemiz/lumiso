@@ -10,17 +10,31 @@ interface InvitationSignupRequest {
   email: string;
   password: string;
   invitationId: string;
+  fullName?: string;
 }
 
 const handler = async (req: Request): Promise<Response> => {
+  console.log("Invitation signup function called:", {
+    method: req.method,
+    url: req.url
+  });
+
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { email, password, invitationId }: InvitationSignupRequest = await req.json();
+    const { email, password, invitationId, fullName }: InvitationSignupRequest = await req.json();
+    console.log("Signup request:", { email, invitationId, fullName });
 
-    // Create admin client with service role key
+    if (!email || !password || !invitationId) {
+      return new Response(
+        JSON.stringify({ error: "Email, password, and invitation ID are required" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Create admin client
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
@@ -31,9 +45,11 @@ const handler = async (req: Request): Promise<Response> => {
       .from("invitations")
       .select("*")
       .eq("id", invitationId)
+      .eq("email", email)
       .single();
 
     if (invitationError || !invitation) {
+      console.error("Invalid invitation:", invitationError);
       return new Response(
         JSON.stringify({ error: "Invalid invitation" }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
@@ -51,46 +67,53 @@ const handler = async (req: Request): Promise<Response> => {
     // Check if already accepted
     if (invitation.accepted_at) {
       return new Response(
-        JSON.stringify({ error: "Invitation has already been accepted" }),
+        JSON.stringify({ error: "Invitation has already been used" }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
-    // Check if email matches
-    if (invitation.email !== email) {
-      return new Response(
-        JSON.stringify({ error: "Email mismatch with invitation" }),
-        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
-    }
-
-    // Create user with admin client (bypasses email confirmation)
-    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
-      email: email,
-      password: password,
-      email_confirm: true, // Auto-confirm email
+    // Create the user account
+    const { data: authData, error: signUpError } = await supabaseAdmin.auth.admin.createUser({
+      email,
+      password,
       user_metadata: {
-        invited: true,
+        full_name: fullName || '',
         invitation_id: invitationId
-      }
+      },
+      email_confirm: true // Auto-confirm email for invited users
     });
 
-    if (authError) {
-      console.error("Auth error:", authError);
-      return new Response(
-        JSON.stringify({ error: authError.message }),
-        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
-    }
-
-    if (!authData.user) {
+    if (signUpError || !authData.user) {
+      console.error("Failed to create user:", signUpError);
       return new Response(
         JSON.stringify({ error: "Failed to create user account" }),
-        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
-    // Accept the invitation
+    console.log("User created successfully:", authData.user.id);
+
+    // Add user to organization 
+    const { error: memberError } = await supabaseAdmin
+      .from("organization_members")
+      .insert({
+        organization_id: invitation.organization_id,
+        user_id: authData.user.id,
+        system_role: invitation.role === 'Owner' ? 'Owner' : 'Member',
+        role: invitation.role,
+        status: 'active',
+        invited_by: invitation.invited_by
+      });
+
+    if (memberError) {
+      console.error("Failed to add user to organization:", memberError);
+      return new Response(
+        JSON.stringify({ error: "Failed to join organization" }),
+        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Mark invitation as accepted
     const { error: acceptError } = await supabaseAdmin
       .from("invitations")
       .update({ 
@@ -99,66 +122,7 @@ const handler = async (req: Request): Promise<Response> => {
       .eq("id", invitationId);
 
     if (acceptError) {
-      console.error("Failed to accept invitation:", acceptError);
-    }
-
-    // Look for existing pending membership (created by invitation trigger)
-    const { data: existingMember, error: findError } = await supabaseAdmin
-      .from("organization_members")
-      .select("*")
-      .eq('organization_id', invitation.organization_id)
-      .eq('status', 'pending')
-      .is('user_id', null)
-      .eq('invited_by', invitation.invited_by)
-      .single();
-
-    if (findError && findError.code !== 'PGRST116') {
-      console.error("Error finding pending membership:", findError);
-      return new Response(
-        JSON.stringify({ error: "Failed to find membership record" }),
-        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
-    }
-
-    if (existingMember) {
-      // Update the existing pending membership
-      const { error: memberError } = await supabaseAdmin
-        .from("organization_members")
-        .update({ 
-          status: 'active',
-          user_id: authData.user.id,
-          role: invitation.role || 'Member',
-          system_role: 'Member'
-        })
-        .eq('id', existingMember.id);
-
-      if (memberError) {
-        console.error("Failed to activate existing membership:", memberError);
-        return new Response(
-          JSON.stringify({ error: "Failed to join organization" }),
-          { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
-        );
-      }
-    } else {
-      // Create new membership if none exists
-      const { error: memberError } = await supabaseAdmin
-        .from("organization_members")
-        .insert({
-          organization_id: invitation.organization_id,
-          user_id: authData.user.id,
-          system_role: 'Member',
-          role: invitation.role || 'Member',
-          status: 'active',
-          invited_by: invitation.invited_by
-        });
-
-      if (memberError) {
-        console.error("Failed to create membership:", memberError);
-        return new Response(
-          JSON.stringify({ error: "Failed to join organization" }),
-          { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
-        );
-      }
+      console.error("Failed to mark invitation as accepted:", acceptError);
     }
 
     // Set this as the user's active organization
@@ -171,23 +135,13 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (settingsError) {
       console.error("Failed to set active organization:", settingsError);
-      // Don't fail the process for this
-    }
-
-    // Generate session for the new user
-    const { data: sessionData, error: sessionError } = await supabaseAdmin.auth.admin.generateLink({
-      type: 'magiclink',
-      email: email,
-    });
-
-    if (sessionError) {
-      console.error("Failed to generate session:", sessionError);
     }
 
     return new Response(
       JSON.stringify({ 
-        success: true, 
+        success: true,
         user: authData.user,
+        organizationId: invitation.organization_id,
         message: "Account created and invitation accepted successfully"
       }),
       {
@@ -197,7 +151,7 @@ const handler = async (req: Request): Promise<Response> => {
     );
 
   } catch (error: any) {
-    console.error("Error in invitation-signup function:", error);
+    console.error("Error in invitation signup:", error);
     return new Response(
       JSON.stringify({ error: error.message }),
       {

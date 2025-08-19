@@ -109,26 +109,29 @@ export default function InvitationSignup() {
       const inviteEmail = decodeURIComponent(email || "");
       console.log("Creating account with email:", inviteEmail);
       
-      const response = await fetch('https://rifdykpdubrowzbylffe.supabase.co/functions/v1/invitation-signup', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJpZmR5a3BkdWJyb3d6YnlsZmZlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM3OTc5NDMsImV4cCI6MjA2OTM3Mzk0M30.lhSbTbVWckd9zsT0hRCAO06nPKszZpKNi_sq6-WPmV8`,
-        },
-        body: JSON.stringify({
+      const { data, error } = await supabase.functions.invoke('invitation-signup', {
+        body: {
           email: sanitizeInput(inviteEmail),
           password: sanitizeInput(password),
           invitationId: invitationId
-        })
+        }
       });
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        console.error("Edge function error:", result);
+      if (error) {
+        console.error("Function invoke error:", error);
         toast({
           title: "Account creation failed",
-          description: result.error || "Failed to create account",
+          description: error.message || "Failed to create account",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      if (data.error) {
+        console.error("Edge function error:", data.error);
+        toast({
+          title: "Account creation failed",
+          description: data.error || "Failed to create account",
           variant: "destructive"
         });
         return;

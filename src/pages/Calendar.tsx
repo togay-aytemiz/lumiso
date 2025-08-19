@@ -52,6 +52,13 @@ export default function Calendar() {
   const { data: sessions = [] } = useQuery({
     queryKey: ["sessions"],
     queryFn: async () => {
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) return [];
+
+      // Get user's active organization ID
+      const { data: organizationId } = await supabase.rpc('get_user_active_organization_id');
+      if (!organizationId) return [];
+
       const { data, error } = await supabase
         .from("sessions")
         .select(`
@@ -65,19 +72,15 @@ export default function Calendar() {
           leads!inner(id, name),
           projects(id, name, status_id)
         `)
+        .eq('organization_id', organizationId)
         .order("session_date", { ascending: true });
       if (error) throw error;
-
-      // Filter out sessions with invalid lead references or archived projects
-      const { data: userData } = await supabase.auth.getUser();
-      const userId = userData.user?.id;
-      if (!userId) return [];
       
       // Get archived status
       const { data: archivedStatus } = await supabase
         .from('project_statuses')
         .select('id, name')
-        .eq('user_id', userId)
+        .eq('organization_id', organizationId)
         .ilike('name', 'archived')
         .maybeSingle();
       
@@ -111,31 +114,26 @@ export default function Calendar() {
   const { data: activities = [] } = useQuery({
     queryKey: ["activities"],
     queryFn: async () => {
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) return [];
+
+      // Get user's active organization ID
+      const { data: organizationId } = await supabase.rpc('get_user_active_organization_id');
+      if (!organizationId) return [];
+
       const { data, error } = await supabase
         .from("activities")
         .select("*")
+        .eq('organization_id', organizationId)
         .order("reminder_date", { ascending: true });
       
       if (error) throw error;
-
-      // Filter activities with valid reminder dates and user's leads
-      const { data: userData } = await supabase.auth.getUser();
-      const userId = userData.user?.id;
-      if (!userId) return [];
-      
-      // Get user's leads to filter activities
-      const { data: userLeads } = await supabase
-        .from("leads")
-        .select("id")
-        .eq("user_id", userId);
-      
-      const userLeadIds = userLeads?.map(lead => lead.id) || [];
       
       // Get archived project status
       const { data: archivedStatus } = await supabase
         .from('project_statuses')
         .select('id, name')
-        .eq('user_id', userId)
+        .eq('organization_id', organizationId)
         .ilike('name', 'archived')
         .maybeSingle();
 
@@ -143,15 +141,15 @@ export default function Calendar() {
       const { data: projects } = await supabase
         .from('projects')
         .select('id, status_id')
-        .eq('user_id', userId);
+        .eq('organization_id', organizationId);
       
       const archivedProjectIds = projects?.filter(project => 
         project.status_id === archivedStatus?.id
       ).map(project => project.id) || [];
 
       const filteredActivities = (data || []).filter(activity => {
-        // Must have reminder_date and belong to user's leads
-        if (!activity.reminder_date || !userLeadIds.includes(activity.lead_id)) {
+        // Must have reminder_date
+        if (!activity.reminder_date) {
           return false;
         }
         
@@ -180,9 +178,17 @@ export default function Calendar() {
   const { data: projects = [] } = useQuery({
     queryKey: ["projects-min"],
     queryFn: async () => {
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) return [];
+
+      // Get user's active organization ID
+      const { data: organizationId } = await supabase.rpc('get_user_active_organization_id');
+      if (!organizationId) return [];
+
       const { data, error } = await supabase
         .from("projects")
-        .select("id,name,lead_id");
+        .select("id,name,lead_id")
+        .eq('organization_id', organizationId);
       if (error) throw error;
       return data as { id: string; name: string; lead_id: string }[];
     },
@@ -191,9 +197,17 @@ export default function Calendar() {
   const { data: leads = [] } = useQuery({
     queryKey: ["leads-min"],
     queryFn: async () => {
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) return [];
+
+      // Get user's active organization ID
+      const { data: organizationId } = await supabase.rpc('get_user_active_organization_id');
+      if (!organizationId) return [];
+
       const { data, error } = await supabase
         .from("leads")
-        .select("id,name");
+        .select("id,name")
+        .eq('organization_id', organizationId);
       if (error) throw error;
       return data as { id: string; name: string }[];
     },

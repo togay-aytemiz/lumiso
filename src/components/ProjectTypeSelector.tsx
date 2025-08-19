@@ -7,6 +7,7 @@ import { Check, ChevronDown, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { getUserOrganizationId } from "@/lib/organizationUtils";
 
 interface ProjectType {
   id: string;
@@ -43,10 +44,13 @@ export function ProjectTypeSelector({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      const organizationId = await getUserOrganizationId();
+      if (!organizationId) return;
+
       const { data, error } = await supabase
         .from('project_types')
         .select('id, name, is_default')
-        .eq('user_id', user.id)
+        .eq('organization_id', organizationId)
         .order('is_default', { ascending: false }) // Default types first
         .order('name', { ascending: true });
 

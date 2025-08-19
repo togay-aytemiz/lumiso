@@ -252,6 +252,9 @@ const LeadStatusesSection = () => {
 
       if (editingStatus) {
         // Update existing status
+        const organizationId = await getUserOrganizationId();
+        if (!organizationId) throw new Error('No organization found');
+
         const updateData: any = {
           name: data.name,
         };
@@ -268,7 +271,7 @@ const LeadStatusesSection = () => {
           .from("lead_statuses")
           .update(updateData)
           .eq("id", editingStatus.id)
-          .eq("user_id", user.id);
+          .eq("organization_id", organizationId);
 
         if (error) throw error;
 
@@ -348,11 +351,14 @@ const LeadStatusesSection = () => {
         throw new Error('Cannot delete system statuses (Completed/Lost). These are required for lead management.');
       }
 
+      const organizationId = await getUserOrganizationId();
+      if (!organizationId) throw new Error('No organization found');
+
       const { error } = await supabase
         .from('lead_statuses')
         .delete()
         .eq('id', statusId)
-        .eq('user_id', user.id);
+        .eq('organization_id', organizationId);
 
       if (error) {
         if (error.code === '23503') { // Foreign key constraint violation
@@ -398,11 +404,14 @@ const LeadStatusesSection = () => {
 
       // Execute all updates
       for (const update of updates) {
+        const organizationId = await getUserOrganizationId();
+        if (!organizationId) throw new Error('No organization found');
+
         const { error } = await supabase
           .from('lead_statuses')
           .update({ sort_order: update.sort_order })
           .eq('id', update.id)
-          .eq('user_id', user.id);
+          .eq('organization_id', organizationId);
 
         if (error) throw error;
       }

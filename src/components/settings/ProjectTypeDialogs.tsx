@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { Plus } from "lucide-react";
+import { getUserOrganizationId } from "@/lib/organizationUtils";
 
 interface AddProjectTypeDialogProps {
   open: boolean;
@@ -35,40 +36,32 @@ export function AddProjectTypeDialog({ open, onOpenChange, onTypeAdded }: AddPro
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
+      const organizationId = await getUserOrganizationId();
+      if (!organizationId) throw new Error('No organization found');
+
       // If setting this as default, first unset all others
       if (formData.is_default) {
         await supabase
           .from('project_types')
           .update({ is_default: false })
-          .eq('user_id', user.id);
+          .eq('organization_id', organizationId);
       }
 
       // Get the next sort order
       const { data: existingTypes } = await supabase
         .from('project_types')
         .select('sort_order')
-        .eq('user_id', user.id)
+        .eq('organization_id', organizationId)
         .order('sort_order', { ascending: false })
         .limit(1);
 
       const nextSortOrder = (existingTypes?.[0]?.sort_order || 0) + 1;
 
-      // Get user's active organization
-      const { data: userSettings } = await supabase
-        .from('user_settings')
-        .select('active_organization_id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (!userSettings?.active_organization_id) {
-        throw new Error("Organization required");
-      }
-
       const { error } = await supabase
         .from('project_types')
         .insert({
           user_id: user.id,
-          organization_id: userSettings.active_organization_id,
+          organization_id: organizationId,
           name: formData.name.trim(),
           sort_order: nextSortOrder,
           is_default: formData.is_default
@@ -202,12 +195,15 @@ export function EditProjectTypeDialog({ type, open, onOpenChange, onTypeUpdated 
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
       
+      const organizationId = await getUserOrganizationId();
+      if (!organizationId) throw new Error('No organization found');
+      
       // If setting this as default, first unset all others
       if (formData.is_default && !type.is_default) {
         await supabase
           .from('project_types')
           .update({ is_default: false })
-          .eq('user_id', user.id)
+          .eq('organization_id', organizationId)
           .neq('id', type.id);
       }
       
@@ -219,7 +215,7 @@ export function EditProjectTypeDialog({ type, open, onOpenChange, onTypeUpdated 
           is_default: formData.is_default,
         })
         .eq('id', type.id)
-        .eq('user_id', user.id);
+        .eq('organization_id', organizationId);
 
       if (error) throw error;
 
@@ -266,10 +262,14 @@ export function EditProjectTypeDialog({ type, open, onOpenChange, onTypeUpdated 
     
     setLoading(true);
     try {
+      const organizationId = await getUserOrganizationId();
+      if (!organizationId) throw new Error('No organization found');
+
       const { error } = await supabase
         .from('project_types')
         .delete()
-        .eq('id', type.id);
+        .eq('id', type.id)
+        .eq('organization_id', organizationId);
 
       if (error) throw error;
 

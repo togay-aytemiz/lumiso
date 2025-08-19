@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { AddProjectTypeDialog, EditProjectTypeDialog } from "./settings/ProjectTypeDialogs";
 import { cn } from "@/lib/utils";
 import SettingsSection from "./SettingsSection";
+import { getUserOrganizationId } from "@/lib/organizationUtils";
 
 const projectTypeSchema = z.object({
   name: z.string().min(1, "Type name is required").max(50, "Type name must be less than 50 characters"),
@@ -52,17 +53,22 @@ const ProjectTypesSection = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      const organizationId = await getUserOrganizationId();
+      if (!organizationId) {
+        throw new Error('No organization found');
+      }
+
       const { data, error } = await supabase
         .from('project_types')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('organization_id', organizationId)
         .order('created_at', { ascending: true }); // Order by creation time so new ones go to end
 
       if (error) throw error;
 
       // If no types exist, create default ones
       if (!data || data.length === 0) {
-        await createDefaultTypes();
+        await createDefaultTypes(user.id, organizationId);
         return;
       }
 
@@ -79,29 +85,22 @@ const ProjectTypesSection = () => {
     }
   };
 
-  const createDefaultTypes = async () => {
+  const createDefaultTypes = async (userId: string, organizationId: string) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      await supabase.rpc('ensure_default_project_types_for_org', {
+        user_uuid: userId,
+        org_id: organizationId
+      });
 
-      const defaultTypes = [
-        { name: 'Corporate', is_default: false },
-        { name: 'Event', is_default: false },
-        { name: 'Family', is_default: false },
-        { name: 'Maternity', is_default: false },
-        { name: 'Newborn', is_default: true },
-        { name: 'Portrait', is_default: false },
-        { name: 'Wedding', is_default: false },
-        { name: 'Other', is_default: false }
-      ];
-
+      // Fetch the created types
       const { data, error } = await supabase
         .from('project_types')
-        .insert(defaultTypes.map(type => ({ ...type, user_id: user.id })))
-        .select();
+        .select('*')
+        .eq('organization_id', organizationId)
+        .order('created_at', { ascending: true });
 
       if (error) throw error;
-      setTypes(data);
+      setTypes(data || []);
     } catch (error) {
       console.error('Error creating default types:', error);
       toast({
@@ -125,11 +124,14 @@ const ProjectTypesSection = () => {
       if (editingType) {
         // Update existing type - let the database trigger handle default switching
         console.log('Updating type:', editingType.id, 'with data:', data);
+        const organizationId = await getUserOrganizationId();
+        if (!organizationId) throw new Error('No organization found');
+
         const { error } = await supabase
           .from('project_types')
           .update({ name: data.name, is_default: data.is_default })
           .eq('id', editingType.id)
-          .eq('user_id', user.id);
+          .eq('organization_id', organizationId);
 
         if (error) {
           console.error('Error updating type:', error);
@@ -152,12 +154,16 @@ const ProjectTypesSection = () => {
         setIsEditDialogOpen(false);
       } else {
         // Create new type - let the database trigger handle default switching
+        const organizationId = await getUserOrganizationId();
+        if (!organizationId) throw new Error('No organization found');
+
         const { error } = await supabase
           .from('project_types')
           .insert({
             name: data.name,
             is_default: data.is_default,
             user_id: user.id,
+            organization_id: organizationId,
           });
 
         if (error) {
@@ -206,11 +212,14 @@ const ProjectTypesSection = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
+      const organizationId = await getUserOrganizationId();
+      if (!organizationId) throw new Error('No organization found');
+
       const { error } = await supabase
         .from('project_types')
         .delete()
         .eq('id', typeId)
-        .eq('user_id', user.id);
+        .eq('organization_id', organizationId);
 
       if (error) {
         if (error.code === '23503') { // Foreign key constraint violation

@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { Plus } from "lucide-react";
+import { getUserOrganizationId } from "@/lib/organizationUtils";
 
 interface AddLeadStatusDialogProps {
   open: boolean;
@@ -35,32 +36,24 @@ export function AddLeadStatusDialog({ open, onOpenChange, onStatusAdded }: AddLe
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
+      const organizationId = await getUserOrganizationId();
+      if (!organizationId) throw new Error('No organization found');
+
       // Get the next sort order
       const { data: existingStatuses } = await supabase
         .from('lead_statuses')
         .select('sort_order')
-        .eq('user_id', user.id)
+        .eq('organization_id', organizationId)
         .order('sort_order', { ascending: false })
         .limit(1);
 
       const nextSortOrder = (existingStatuses?.[0]?.sort_order || 0) + 1;
 
-      // Get user's active organization
-      const { data: userSettings } = await supabase
-        .from('user_settings')
-        .select('active_organization_id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (!userSettings?.active_organization_id) {
-        throw new Error("Organization required");
-      }
-
       const { error } = await supabase
         .from('lead_statuses')
         .insert({
           user_id: user.id,
-          organization_id: userSettings.active_organization_id,
+          organization_id: organizationId,
           name: formData.name.trim(),
           color: formData.color,
           sort_order: nextSortOrder,
@@ -200,13 +193,17 @@ export function EditLeadStatusDialog({ status, open, onOpenChange, onStatusUpdat
 
     setLoading(true);
     try {
+      const organizationId = await getUserOrganizationId();
+      if (!organizationId) throw new Error('No organization found');
+
       const { error } = await supabase
         .from('lead_statuses')
         .update({
           name: formData.name.trim(),
           color: formData.color,
         })
-        .eq('id', status.id);
+        .eq('id', status.id)
+        .eq('organization_id', organizationId);
 
       if (error) throw error;
 
@@ -246,10 +243,14 @@ export function EditLeadStatusDialog({ status, open, onOpenChange, onStatusUpdat
     
     setLoading(true);
     try {
+      const organizationId = await getUserOrganizationId();
+      if (!organizationId) throw new Error('No organization found');
+
       const { error } = await supabase
         .from('lead_statuses')
         .delete()
-        .eq('id', status.id);
+        .eq('id', status.id)
+        .eq('organization_id', organizationId);
 
       if (error) throw error;
 

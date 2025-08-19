@@ -222,6 +222,8 @@ async function sendOverdueReminder(user: UserProfile) {
 async function sendSessionReminder(user: UserProfile) {
   const upcomingSessions = await getUpcomingSessions(user.user_id);
   
+  console.log(`Found ${upcomingSessions.length} upcoming sessions for user ${user.email}`);
+  
   if (upcomingSessions.length === 0) {
     console.log(`No upcoming sessions for user ${user.email}`);
     return;
@@ -268,6 +270,8 @@ async function sendSessionReminder(user: UserProfile) {
 
 async function sendDeliveryReminder(user: UserProfile) {
   const pendingDeliveries = await getPendingDeliveries(user.user_id);
+  
+  console.log(`Found ${pendingDeliveries.length} pending deliveries for user ${user.email}`);
   
   if (pendingDeliveries.length === 0) {
     console.log(`No pending deliveries for user ${user.email}`);
@@ -363,6 +367,8 @@ async function sendDailySummary(user: UserProfile) {
 
 async function sendTaskNudge(user: UserProfile) {
   const pendingTodos = await getPendingTodos(user.user_id);
+  
+  console.log(`Found ${pendingTodos.length} pending todos for user ${user.email}`);
   
   if (pendingTodos.length === 0) {
     console.log(`No pending todos for user ${user.email}`);

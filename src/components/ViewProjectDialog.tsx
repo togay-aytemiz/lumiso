@@ -540,24 +540,30 @@ export function ViewProjectDialog({
                         Cancel
                       </Button>
                     </div>
-                  </div> : <div className="space-y-3">
+                  </div> : 
+                  <div className="space-y-3">
                     <div className="space-y-2">
                       <DialogTitle asChild>
-                        <div className="flex items-center gap-3 flex-wrap">
-                          <h1 className="text-xl font-bold leading-tight break-words text-left md:text-3xl">{project?.name}</h1>
-                          
-                          {/* Project Status and Type Badges next to name */}
-                          <div className="flex items-center gap-2 flex-wrap">
-                            {/* Project Status Badge */}
-                            <ProjectStatusBadge projectId={project.id} currentStatusId={localStatusId || undefined} onStatusChange={() => {
-                            onProjectUpdated();
-                          }} editable={!isArchived} className="text-sm" />
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-3 flex-wrap">
+                            <h1 className="text-xl font-bold leading-tight break-words text-left md:text-3xl">{project?.name}</h1>
                             
-                            {/* Project Type Badge */}
-                            {projectType && <Badge variant="outline" className="text-xs">
-                                {projectType.name.toUpperCase()}
-                              </Badge>}
+                            {/* Project Status and Type Badges next to name */}
+                            <div className="flex items-center gap-2 flex-wrap">
+                              {/* Project Status Badge */}
+                              <ProjectStatusBadge projectId={project.id} currentStatusId={localStatusId || undefined} onStatusChange={() => {
+                              onProjectUpdated();
+                            }} editable={!isArchived} className="text-sm" />
+                              
+                              {/* Project Type Badge */}
+                              {projectType && <Badge variant="outline" className="text-xs">
+                                  {projectType.name.toUpperCase()}
+                                </Badge>}
+                            </div>
                           </div>
+                          
+                          {/* Project Description directly under name */}
+                          {project?.description && <p className="text-muted-foreground text-base text-left">{project.description}</p>}
                         </div>
                       </DialogTitle>
                       
@@ -573,8 +579,8 @@ export function ViewProjectDialog({
                       
                       {/* Mobile/Tablet Layout */}
                       <div className="md:hidden space-y-3">
-                        {/* Badges row */}
-                        <div className="flex items-center gap-2 flex-wrap">
+                        {/* Badges row - duplicated for mobile only if not showing badges next to name above */}
+                        <div className="flex items-center gap-2 flex-wrap md:hidden">
                           {/* Project Status Badge */}
                           <ProjectStatusBadge projectId={project.id} currentStatusId={localStatusId || undefined} onStatusChange={() => {
                           onProjectUpdated();
@@ -597,9 +603,8 @@ export function ViewProjectDialog({
                         </div>
                       </div>
                     </div>
-                    
-                    {project?.description && <p className="text-muted-foreground text-base">{project.description}</p>}
                   </div>}
+                
               </div>
               
               <div className="flex items-center gap-1 shrink-0 self-start">

@@ -59,11 +59,15 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
       if (!user) return;
       setUserId(user.id);
 
+      // Get user's active organization ID
+      const { data: organizationId } = await supabase.rpc('get_user_active_organization_id');
+      if (!organizationId) return;
+
       // Find archived status id (if any)
       const { data: archived, error: archErr } = await supabase
         .from('project_statuses')
         .select('id')
-        .eq('user_id', user.id)
+        .eq('organization_id', organizationId)
         .ilike('name', 'archived')
         .maybeSingle();
       if (archErr) throw archErr;
@@ -74,7 +78,7 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
         .from("projects")
         .select("*")
         .eq("lead_id", leadId)
-        .eq("user_id", user.id)
+        .eq("organization_id", organizationId)
         .order("created_at", { ascending: false });
 
       if (error) throw error;

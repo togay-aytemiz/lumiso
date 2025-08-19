@@ -157,10 +157,14 @@ const AllProjects = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      // Get user's active organization ID
+      const { data: organizationId } = await supabase.rpc('get_user_active_organization_id');
+      if (!organizationId) return;
+
       const { data: projectsData, error } = await supabase
         .from('projects')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('organization_id', organizationId)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -210,14 +214,14 @@ const AllProjects = () => {
         supabase
           .from('project_statuses')
           .select('id, name, color, sort_order')
-          .eq('user_id', user.id)
+          .eq('organization_id', organizationId)
           .order('sort_order', { ascending: true }),
           
         // Get project types
         supabase
           .from('project_types')
           .select('id, name')
-          .eq('user_id', user.id)
+          .eq('organization_id', organizationId)
       ]);
 
       // Process the data to handle archived projects

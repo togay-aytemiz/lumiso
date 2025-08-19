@@ -335,16 +335,22 @@ export function AssigneesList({
                 <CommandList>
                   <CommandEmpty>No team members found.</CommandEmpty>
                   <CommandGroup>
-                     {availableMembers.map((member) => (
-                       <CommandItem
-                         key={member.user_id}
-                         value={member.full_name || member.user_id}
-                         onSelect={() => {
-                           console.log('CommandItem onSelect triggered for:', member.user_id);
-                           addAssignee(member.user_id);
-                         }}
-                         className="cursor-pointer"
-                       >
+                    {availableMembers.map((member) => (
+                      <CommandItem
+                        key={member.user_id}
+                        value={member.full_name || member.user_id}
+                        onSelect={() => {
+                          console.log('CommandItem onSelect triggered for:', member.user_id);
+                          addAssignee(member.user_id);
+                        }}
+                        className="cursor-pointer"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          console.log('CommandItem onClick triggered for:', member.user_id);
+                          addAssignee(member.user_id);
+                        }}
+                      >
                         <div className="flex items-center gap-2 w-full">
                           <Avatar className="h-6 w-6">
                             {member.profile_photo_url ? (

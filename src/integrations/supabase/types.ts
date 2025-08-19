@@ -1184,6 +1184,10 @@ export type Database = {
         Args: { user_uuid: string }
         Returns: string
       }
+      get_user_active_organization_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_user_organization_id: {
         Args: Record<PropertyKey, never>
         Returns: string

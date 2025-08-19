@@ -233,7 +233,7 @@ const LeadDetail = () => {
             const statusQuery = await supabase
               .from('project_statuses')
               .select('id')
-              .eq('organization_id', userSettings.active_organization_id)
+              .eq('user_id', userId)
               .ilike('name', 'archived')
               .limit(1);
             archivedStatus = statusQuery.data?.[0] || null;

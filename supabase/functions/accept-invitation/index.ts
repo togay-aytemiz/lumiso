@@ -133,18 +133,23 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Use UPSERT to handle any race conditions or existing records
+    // First delete any existing membership to avoid constraint issues
+    const { error: deleteError } = await supabaseAdmin
+      .from("organization_members")
+      .delete()
+      .eq("organization_id", invitation.organization_id)
+      .eq("user_id", user.id);
+
+    // Then insert the new membership
     const { error: memberError } = await supabaseAdmin
       .from("organization_members")
-      .upsert({
+      .insert({
         organization_id: invitation.organization_id,
         user_id: user.id,
         system_role: invitation.role === 'Owner' ? 'Owner' : 'Member',
         role: invitation.role,
         status: 'active',
         invited_by: invitation.invited_by
-      }, {
-        onConflict: 'organization_id,user_id'
       });
 
     if (memberError) {

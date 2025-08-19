@@ -20,7 +20,7 @@ import { ProjectPaymentsSection } from "./ProjectPaymentsSection";
 import ProjectDetailsLayout from "@/components/project-details/ProjectDetailsLayout";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import ClientCard from "@/components/project-details/Summary/ClientCard";
-import { AssigneesList } from "@/components/AssigneesList";
+import { StableAssigneesList } from "@/components/StableAssigneesList";
 interface Project {
   id: string;
   name: string;
@@ -591,7 +591,7 @@ export function ViewProjectDialog({
                         
                         {/* Assignees List for mobile */}
                         <div className="pt-2">
-                          <AssigneesList
+                          <StableAssigneesList
                             assignees={project.assignees || []}
                             entityType="project"
                             entityId={project.id}
@@ -602,7 +602,7 @@ export function ViewProjectDialog({
                       
                       {/* Desktop Assignees row */}
                       <div className="hidden md:flex items-center gap-4 mt-16 pt-4">
-                        <AssigneesList
+                        <StableAssigneesList
                           assignees={project.assignees || []}
                           entityType="project"
                           entityId={project.id}

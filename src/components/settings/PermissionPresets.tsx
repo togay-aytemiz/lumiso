@@ -158,43 +158,61 @@ export function PermissionPresets({
   };
 
   return (
-    <div className="space-y-4">
-      <div>
-        <h4 className="font-medium mb-2">Permission Templates</h4>
-        <p className="text-sm text-muted-foreground mb-4">
-          Choose a preset or customize individual permissions below
+    <div className="space-y-6">
+      <div className="text-center">
+        <h4 className="text-lg font-semibold text-foreground mb-2">Choose a Role Template</h4>
+        <p className="text-sm text-muted-foreground max-w-2xl mx-auto">
+          Select a predefined role template to quickly assign appropriate permissions, or customize individual permissions for more granular control
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {presets.map((preset) => {
           const isSelected = matchingPreset?.id === preset.id;
           
           return (
             <Card 
               key={preset.id}
-              className={`cursor-pointer transition-all hover:shadow-md ${
-                isSelected ? 'ring-2 ring-primary' : ''
+              className={`group cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-1 ${
+                isSelected 
+                  ? 'ring-2 ring-primary shadow-lg bg-primary/5 border-primary/20' 
+                  : 'hover:border-primary/30 bg-background'
               }`}
               onClick={() => handlePresetSelect(preset)}
             >
-              <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm font-medium">
-                    {preset.name}
-                  </CardTitle>
+              <CardHeader className="pb-3">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <CardTitle className="text-base font-semibold text-foreground group-hover:text-primary transition-colors">
+                      {preset.name}
+                    </CardTitle>
+                    <CardDescription className="text-sm mt-1 leading-relaxed">
+                      {preset.description}
+                    </CardDescription>
+                  </div>
                   {isSelected && (
-                    <Check className="h-4 w-4 text-primary" />
+                    <div className="flex-shrink-0 ml-3">
+                      <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
+                        <Check className="h-3.5 w-3.5 text-primary-foreground" />
+                      </div>
+                    </div>
                   )}
                 </div>
-                <CardDescription className="text-xs">
-                  {preset.description}
-                </CardDescription>
               </CardHeader>
               <CardContent className="pt-0">
-                <Badge variant="secondary" className="text-xs">
-                  {preset.permissions.length} permissions
-                </Badge>
+                <div className="flex items-center justify-between">
+                  <Badge 
+                    variant={isSelected ? "default" : "secondary"} 
+                    className="text-xs font-medium"
+                  >
+                    {preset.permissions.length} {preset.permissions.length === 1 ? 'permission' : 'permissions'}
+                  </Badge>
+                  {!isSelected && (
+                    <div className="text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
+                      Click to select
+                    </div>
+                  )}
+                </div>
               </CardContent>
             </Card>
           );
@@ -202,34 +220,37 @@ export function PermissionPresets({
       </div>
 
       {!matchingPreset && selectedPermissions.length > 0 && (
-        <Card className="border-dashed">
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium">
-                Custom Role
-              </CardTitle>
-              <Check className="h-4 w-4 text-primary" />
+        <Card className="border-dashed border-2 border-muted-foreground/30 bg-muted/20">
+          <CardHeader className="pb-3">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
+                  Custom Role
+                  <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+                    <Check className="h-3 w-3 text-primary-foreground" />
+                  </div>
+                </CardTitle>
+                <CardDescription className="text-sm mt-1">
+                  Custom permissions configuration that doesn't match any preset template
+                </CardDescription>
+              </div>
             </div>
-            <CardDescription className="text-xs">
-              Custom permissions that don't match a preset
-            </CardDescription>
           </CardHeader>
           <CardContent className="pt-0">
-            <Badge variant="secondary" className="text-xs">
-              {selectedPermissions.length} permissions
+            <Badge variant="outline" className="text-xs font-medium border-primary/50 text-primary">
+              {selectedPermissions.length} custom {selectedPermissions.length === 1 ? 'permission' : 'permissions'}
             </Badge>
           </CardContent>
         </Card>
       )}
 
-      <div className="pt-2">
+      <div className="flex justify-center pt-4 border-t border-border">
         <Button 
           variant="outline" 
-          size="sm"
           onClick={handleCustomPermissions}
-          className="text-xs"
+          className="px-6 py-2 text-sm font-medium hover:bg-primary/5 hover:border-primary/30 hover:text-primary transition-all"
         >
-          Customize Individual Permissions
+          <span>Customize Individual Permissions</span>
         </Button>
       </div>
     </div>

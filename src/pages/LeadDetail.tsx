@@ -554,18 +554,16 @@ const LeadDetail = () => {
           </div>
           
           <div className="flex items-center gap-4 flex-shrink-0">
-            {/* Assignees List - Desktop: far right with stable container */}
-            <div className="min-w-0 transition-all duration-300 ease-out transform">
-              <AssigneesList
-                assignees={lead.assignees || []}
-                entityType="lead"
-                entityId={lead.id}
-                onUpdate={() => {
-                  fetchLead();
-                  setActivityRefreshKey(prev => prev + 1);
-                }}
-              />
-            </div>
+            {/* Assignees List - Desktop: clean layout */}
+            <AssigneesList
+              assignees={lead.assignees || []}
+              entityType="lead"
+              entityId={lead.id}
+              onUpdate={() => {
+                fetchLead();
+                setActivityRefreshKey(prev => prev + 1);
+              }}
+            />
             
             {/* Header Action Buttons - Desktop: stays in place */}
             <div className="flex items-center gap-3 flex-shrink-0">

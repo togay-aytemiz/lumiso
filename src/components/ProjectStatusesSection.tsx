@@ -12,6 +12,7 @@ import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { AddProjectStageDialog, EditProjectStageDialog } from "./settings/ProjectStageDialogs";
+import { getUserOrganizationId } from "@/lib/organizationUtils";
 import { cn } from "@/lib/utils";
 import SettingsSection from "./SettingsSection";
 
@@ -76,10 +77,13 @@ const ProjectStatusesSection = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      const organizationId = await getUserOrganizationId();
+      if (!organizationId) throw new Error('No organization found');
+
       const { data, error } = await supabase
         .from('project_statuses')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('organization_id', organizationId)
         .not('name', 'ilike', 'archived')
         .order('sort_order', { ascending: true });
 
@@ -109,6 +113,9 @@ const ProjectStatusesSection = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      const organizationId = await getUserOrganizationId();
+      if (!organizationId) throw new Error('No organization found');
+
       // Updated default statuses as requested
       const defaultStatuses = [
         { name: 'Planned', color: '#A0AEC0', sort_order: 1 },
@@ -120,7 +127,7 @@ const ProjectStatusesSection = () => {
 
       const { data, error } = await supabase
         .from('project_statuses')
-        .insert(defaultStatuses.map(status => ({ ...status, user_id: user.id })))
+        .insert(defaultStatuses.map(status => ({ ...status, user_id: user.id, organization_id: organizationId })))
         .select();
 
       if (error) throw error;
@@ -169,6 +176,8 @@ const ProjectStatusesSection = () => {
       } else {
         // Create new status with the next sort order
         const maxSortOrder = Math.max(...statuses.map(s => s.sort_order), 0);
+        const organizationId = await getUserOrganizationId();
+        if (!organizationId) throw new Error('No organization found');
         
         const { error } = await supabase
           .from('project_statuses')
@@ -176,6 +185,7 @@ const ProjectStatusesSection = () => {
             name: data.name,
             color: data.color,
             user_id: user.id,
+            organization_id: organizationId,
             sort_order: maxSortOrder + 1,
           });
 

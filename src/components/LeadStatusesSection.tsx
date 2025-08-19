@@ -16,6 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import SettingsSection from "./SettingsSection";
 import { AddLeadStatusDialog, EditLeadStatusDialog } from "./settings/LeadStatusDialogs";
+import { getUserOrganizationId } from "@/lib/organizationUtils";
 
 const leadStatusSchema = z.object({
   name: z.string().min(1, "Status name is required").max(50, "Status name must be less than 50 characters"),
@@ -87,17 +88,22 @@ const LeadStatusesSection = () => {
         user_uuid: user.id
       });
 
-      // Fetch all statuses
+      // Fetch all statuses for the organization
+      const organizationId = await getUserOrganizationId();
+      if (!organizationId) {
+        throw new Error('No organization found');
+      }
+
       const { data: existingStatuses } = await supabase
         .from("lead_statuses")
         .select("*")
-        .eq("user_id", user.id)
+        .eq("organization_id", organizationId)
         .order("sort_order");
 
-      if (existingStatuses) {
+      if (existingStatuses && existingStatuses.length > 0) {
         setStatuses(existingStatuses);
       } else {
-        await createDefaultStatuses(user.id);
+        await createDefaultStatuses(user.id, organizationId);
       }
     } catch (error) {
       console.error("Error fetching lead statuses:", error);
@@ -178,7 +184,7 @@ const LeadStatusesSection = () => {
     }
   };
 
-  const createDefaultStatuses = async (userId: string) => {
+  const createDefaultStatuses = async (userId: string, organizationId: string) => {
     const defaultStatuses = [
       { name: "New", color: "#A0AEC0", sort_order: 1, is_default: true },
       { name: "Contacted", color: "#4299E1", sort_order: 2, is_default: false },
@@ -194,6 +200,7 @@ const LeadStatusesSection = () => {
           defaultStatuses.map(status => ({
             ...status,
             user_id: userId,
+            organization_id: organizationId,
           }))
         )
         .select();
@@ -273,6 +280,8 @@ const LeadStatusesSection = () => {
       } else {
         // Create new status
         const maxSortOrder = Math.max(...statuses.map(s => s.sort_order), 0);
+        const organizationId = await getUserOrganizationId();
+        if (!organizationId) throw new Error('No organization found');
         
         const { error } = await supabase
           .from("lead_statuses")
@@ -280,6 +289,7 @@ const LeadStatusesSection = () => {
             name: data.name,
             color: data.color,
             user_id: user.id,
+            organization_id: organizationId,
             sort_order: maxSortOrder + 1,
             is_default: false,
           });

@@ -12,6 +12,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { AddSessionStatusDialog, EditSessionStatusDialog } from "./settings/SessionStatusDialogs";
+import { getUserOrganizationId } from "@/lib/organizationUtils";
 import { cn } from "@/lib/utils";
 import SettingsSection from "./SettingsSection";
 
@@ -75,10 +76,13 @@ const SessionStatusesSection = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      const organizationId = await getUserOrganizationId();
+      if (!organizationId) throw new Error('No organization found');
+
       const { data, error } = await supabase
         .from('session_statuses')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('organization_id', organizationId)
         .order('sort_order', { ascending: true });
 
       if (error) throw error;
@@ -102,6 +106,9 @@ const SessionStatusesSection = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      const organizationId = await getUserOrganizationId();
+      if (!organizationId) throw new Error('No organization found');
+
       const defaults = [
         { name: 'Planned', color: '#A0AEC0', sort_order: 1, is_system_initial: true },
         { name: 'Confirmed', color: '#9F7AEA', sort_order: 2, is_system_initial: false },
@@ -112,7 +119,7 @@ const SessionStatusesSection = () => {
 
       const { data, error } = await supabase
         .from('session_statuses')
-        .insert(defaults.map((d) => ({ ...d, user_id: user.id })))
+        .insert(defaults.map((d) => ({ ...d, user_id: user.id, organization_id: organizationId })))
         .select('*')
         .order('sort_order', { ascending: true });
 
@@ -141,16 +148,8 @@ const SessionStatusesSection = () => {
         setIsEditDialogOpen(false);
       } else {
         const maxSortOrder = Math.max(...statuses.map(s => s.sort_order), 0);
-        // Get user's active organization
-        const { data: userSettings } = await supabase
-          .from('user_settings')
-          .select('active_organization_id')
-          .eq('user_id', user.id)
-          .single();
-
-        if (!userSettings?.active_organization_id) {
-          throw new Error("Organization required");
-        }
+        const organizationId = await getUserOrganizationId();
+        if (!organizationId) throw new Error('No organization found');
 
         const { error } = await supabase
           .from('session_statuses')
@@ -158,7 +157,7 @@ const SessionStatusesSection = () => {
             name: data.name, 
             color: data.color, 
             user_id: user.id, 
-            organization_id: userSettings.active_organization_id,
+            organization_id: organizationId,
             sort_order: maxSortOrder + 1, 
             is_system_initial: false 
           });

@@ -409,6 +409,16 @@ export type Database = {
           date_format: string | null
           id: string
           logo_url: string | null
+          notification_daily_summary_enabled: boolean | null
+          notification_daily_summary_send_at: string | null
+          notification_delivery_reminder_enabled: boolean | null
+          notification_delivery_reminder_send_at: string | null
+          notification_integration_failure_alert_enabled: boolean | null
+          notification_overdue_reminder_enabled: boolean | null
+          notification_session_reminder_enabled: boolean | null
+          notification_session_reminder_send_at: string | null
+          notification_task_nudge_enabled: boolean | null
+          notification_team_invite_accepted_alert_enabled: boolean | null
           organization_id: string
           photography_business_name: string | null
           primary_brand_color: string | null
@@ -420,6 +430,16 @@ export type Database = {
           date_format?: string | null
           id?: string
           logo_url?: string | null
+          notification_daily_summary_enabled?: boolean | null
+          notification_daily_summary_send_at?: string | null
+          notification_delivery_reminder_enabled?: boolean | null
+          notification_delivery_reminder_send_at?: string | null
+          notification_integration_failure_alert_enabled?: boolean | null
+          notification_overdue_reminder_enabled?: boolean | null
+          notification_session_reminder_enabled?: boolean | null
+          notification_session_reminder_send_at?: string | null
+          notification_task_nudge_enabled?: boolean | null
+          notification_team_invite_accepted_alert_enabled?: boolean | null
           organization_id: string
           photography_business_name?: string | null
           primary_brand_color?: string | null
@@ -431,6 +451,16 @@ export type Database = {
           date_format?: string | null
           id?: string
           logo_url?: string | null
+          notification_daily_summary_enabled?: boolean | null
+          notification_daily_summary_send_at?: string | null
+          notification_delivery_reminder_enabled?: boolean | null
+          notification_delivery_reminder_send_at?: string | null
+          notification_integration_failure_alert_enabled?: boolean | null
+          notification_overdue_reminder_enabled?: boolean | null
+          notification_session_reminder_enabled?: boolean | null
+          notification_session_reminder_send_at?: string | null
+          notification_task_nudge_enabled?: boolean | null
+          notification_team_invite_accepted_alert_enabled?: boolean | null
           organization_id?: string
           photography_business_name?: string | null
           primary_brand_color?: string | null
@@ -1122,6 +1152,10 @@ export type Database = {
       ensure_default_session_statuses: {
         Args: { user_uuid: string }
         Returns: undefined
+      }
+      ensure_organization_settings: {
+        Args: { org_id: string }
+        Returns: string
       }
       ensure_system_lead_statuses: {
         Args: { user_uuid: string }

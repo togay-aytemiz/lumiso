@@ -2,6 +2,14 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { Resend } from "npm:resend@2.0.0";
 
+// Import email templates
+import { generateOverdueEmail } from './_templates/overdue-template.ts';
+import { generateSessionEmail } from './_templates/session-template.ts';
+import { generateDeliveryEmail } from './_templates/delivery-template.ts';
+import { generateDailySummaryEmail } from './_templates/daily-summary-template.ts';
+import { generateTaskNudgeEmail } from './_templates/task-nudge-template.ts';
+import { EmailTemplateData } from './_templates/email-base.ts';
+
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 const corsHeaders = {
@@ -201,6 +209,42 @@ async function getPendingTodos(userId: string) {
   return todos || [];
 }
 
+async function getUserBrandingSettings(userId: string): Promise<EmailTemplateData> {
+  // Get user settings and organization settings
+  const { data: userSettings } = await supabase
+    .from('user_settings')
+    .select('active_organization_id, photography_business_name, logo_url, primary_brand_color')
+    .eq('user_id', userId)
+    .single();
+
+  let orgSettings = null;
+  if (userSettings?.active_organization_id) {
+    const { data } = await supabase
+      .from('organization_settings')
+      .select('photography_business_name, logo_url, primary_brand_color')
+      .eq('organization_id', userSettings.active_organization_id)
+      .single();
+    orgSettings = data;
+  }
+
+  // Get user profile for full name
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('full_name')
+    .eq('user_id', userId)
+    .single();
+
+  const baseUrl = Deno.env.get('SITE_URL') || Deno.env.get('SUPABASE_URL')?.replace('/auth/v1', '');
+
+  return {
+    userFullName: profile?.full_name || 'User',
+    businessName: orgSettings?.photography_business_name || userSettings?.photography_business_name || 'Photography CRM',
+    logoUrl: orgSettings?.logo_url || userSettings?.logo_url,
+    brandColor: orgSettings?.primary_brand_color || userSettings?.primary_brand_color || '#1EB29F',
+    baseUrl: baseUrl
+  };
+}
+
 async function sendOverdueReminder(user: UserProfile) {
   const overdueItems = await getOverdueItems(user.user_id);
   
@@ -209,41 +253,14 @@ async function sendOverdueReminder(user: UserProfile) {
     return;
   }
 
-  const leadsList = overdueItems.leads.map(lead => 
-    `• ${lead.name} (Due: ${lead.due_date})`
-  ).join('\n');
-  
-  const activitiesList = overdueItems.activities.map(activity => 
-    `• ${activity.content} (Due: ${activity.reminder_date})`
-  ).join('\n');
-
-  const emailContent = `
-    <h2>Overdue Items Reminder</h2>
-    <p>Hi ${user.full_name},</p>
-    <p>You have the following overdue items that need your attention:</p>
-    
-    ${overdueItems.leads.length > 0 ? `
-    <h3>Overdue Leads:</h3>
-    <ul>
-      ${overdueItems.leads.map(lead => `<li>${lead.name} (Due: ${lead.due_date})</li>`).join('')}
-    </ul>
-    ` : ''}
-    
-    ${overdueItems.activities.length > 0 ? `
-    <h3>Overdue Activities:</h3>
-    <ul>
-      ${overdueItems.activities.map(activity => `<li>${activity.content} (Due: ${activity.reminder_date})</li>`).join('')}
-    </ul>
-    ` : ''}
-    
-    <p>Please review and update these items when you have a chance.</p>
-    <p>Best regards,<br>Your Photography CRM</p>
-  `;
+  const templateData = await getUserBrandingSettings(user.user_id);
+  const emailContent = generateOverdueEmail(overdueItems, templateData);
+  const subject = `Overdue Items - ${overdueItems.leads.length + overdueItems.activities.length} item(s) need attention`;
 
   const { error } = await resend.emails.send({
-    from: "Photography CRM <notifications@resend.dev>",
+    from: `${templateData.businessName} <notifications@resend.dev>`,
     to: [user.email],
-    subject: `Overdue Items - ${overdueItems.leads.length + overdueItems.activities.length} item(s) need attention`,
+    subject: subject,
     html: emailContent,
   });
 
@@ -265,34 +282,14 @@ async function sendSessionReminder(user: UserProfile, isTest?: boolean) {
     return;
   }
 
-  const sessionsList = upcomingSessions.map(session => 
-    `• ${session.leads?.name || 'Session'} on ${session.session_date} at ${session.session_time}`
-  ).join('\n');
-
-  const emailContent = `
-    <h2>Upcoming Sessions Reminder</h2>
-    <p>Hi ${user.full_name},</p>
-    <p>You have the following sessions coming up:</p>
-    
-    <ul>
-      ${upcomingSessions.map(session => `
-        <li>
-          <strong>${session.leads?.name || 'Session'}</strong><br>
-          Date: ${session.session_date}<br>
-          Time: ${session.session_time}<br>
-          ${session.notes ? `Notes: ${session.notes}` : ''}
-        </li>
-      `).join('')}
-    </ul>
-    
-    <p>Make sure you're prepared for these sessions!</p>
-    <p>Best regards,<br>Your Photography CRM</p>
-  `;
+  const templateData = await getUserBrandingSettings(user.user_id);
+  const emailContent = generateSessionEmail(upcomingSessions, templateData);
+  const subject = `Upcoming Sessions - ${upcomingSessions.length} session(s) scheduled`;
 
   const { error } = await resend.emails.send({
-    from: "Photography CRM <notifications@resend.dev>",
+    from: `${templateData.businessName} <notifications@resend.dev>`,
     to: [user.email],
-    subject: `Upcoming Sessions - ${upcomingSessions.length} session(s) scheduled`,
+    subject: subject,
     html: emailContent,
   });
 
@@ -314,29 +311,14 @@ async function sendDeliveryReminder(user: UserProfile, isTest?: boolean) {
     return;
   }
 
-  const emailContent = `
-    <h2>Delivery Follow-up Reminder</h2>
-    <p>Hi ${user.full_name},</p>
-    <p>The following projects might need delivery follow-up:</p>
-    
-    <ul>
-      ${pendingDeliveries.map(project => `
-        <li>
-          <strong>${project.name}</strong><br>
-          Client: ${project.leads?.name || 'N/A'}<br>
-          Created: ${new Date(project.created_at).toLocaleDateString()}
-        </li>
-      `).join('')}
-    </ul>
-    
-    <p>Consider following up on the delivery status of these projects.</p>
-    <p>Best regards,<br>Your Photography CRM</p>
-  `;
+  const templateData = await getUserBrandingSettings(user.user_id);
+  const emailContent = generateDeliveryEmail(pendingDeliveries, templateData);
+  const subject = `Delivery Follow-up - ${pendingDeliveries.length} project(s) to review`;
 
   const { error } = await resend.emails.send({
-    from: "Photography CRM <notifications@resend.dev>",
+    from: `${templateData.businessName} <notifications@resend.dev>`,
     to: [user.email],
-    subject: `Delivery Follow-up - ${pendingDeliveries.length} project(s) to review`,
+    subject: subject,
     html: emailContent,
   });
 
@@ -355,41 +337,15 @@ async function sendDailySummary(user: UserProfile) {
     getOverdueItems(user.user_id)
   ]);
 
-  const emailContent = `
-    <h2>Daily Summary</h2>
-    <p>Hi ${user.full_name},</p>
-    <p>Here's your daily summary for ${new Date().toLocaleDateString()}:</p>
-    
-    <h3>Today's Sessions (${upcomingSessions.length})</h3>
-    ${upcomingSessions.length > 0 ? `
-      <ul>
-        ${upcomingSessions.map(session => `
-          <li>${session.leads?.name || 'Session'} at ${session.session_time}</li>
-        `).join('')}
-      </ul>
-    ` : '<p>No sessions scheduled for today.</p>'}
-    
-    <h3>Pending Todos (${pendingTodos.length})</h3>
-    ${pendingTodos.length > 0 ? `
-      <ul>
-        ${pendingTodos.slice(0, 5).map(todo => `<li>${todo.content}</li>`).join('')}
-        ${pendingTodos.length > 5 ? `<li>...and ${pendingTodos.length - 5} more</li>` : ''}
-      </ul>
-    ` : '<p>No pending todos.</p>'}
-    
-    ${(overdueItems.leads.length > 0 || overdueItems.activities.length > 0) ? `
-      <h3>⚠️ Overdue Items (${overdueItems.leads.length + overdueItems.activities.length})</h3>
-      <p style="color: #dc2626;">You have overdue items that need attention!</p>
-    ` : ''}
-    
-    <p>Have a productive day!</p>
-    <p>Best regards,<br>Your Photography CRM</p>
-  `;
+  const templateData = await getUserBrandingSettings(user.user_id);
+  const emailContent = generateDailySummaryEmail(upcomingSessions, pendingTodos, overdueItems, templateData);
+  const today = new Date().toLocaleDateString();
+  const subject = `Daily Summary - ${today}`;
 
   const { error } = await resend.emails.send({
-    from: "Photography CRM <notifications@resend.dev>",
+    from: `${templateData.businessName} <notifications@resend.dev>`,
     to: [user.email],
-    subject: `Daily Summary - ${new Date().toLocaleDateString()}`,
+    subject: subject,
     html: emailContent,
   });
 
@@ -421,24 +377,14 @@ async function sendTaskNudge(user: UserProfile) {
     return;
   }
 
-  const emailContent = `
-    <h2>Task Nudge Reminder</h2>
-    <p>Hi ${user.full_name},</p>
-    <p>You have some pending tasks that have been waiting for a while:</p>
-    
-    <ul>
-      ${oldTodos.slice(0, 5).map(todo => `<li>${todo.content}</li>`).join('')}
-      ${oldTodos.length > 5 ? `<li>...and ${oldTodos.length - 5} more</li>` : ''}
-    </ul>
-    
-    <p>Maybe it's time to tackle some of these? 💪</p>
-    <p>Best regards,<br>Your Photography CRM</p>
-  `;
+  const templateData = await getUserBrandingSettings(user.user_id);
+  const emailContent = generateTaskNudgeEmail(oldTodos, templateData);
+  const subject = `Task Nudge - ${oldTodos.length} pending task(s)`;
 
   const { error } = await resend.emails.send({
-    from: "Photography CRM <notifications@resend.dev>",
+    from: `${templateData.businessName} <notifications@resend.dev>`,
     to: [user.email],
-    subject: `Task Nudge - ${oldTodos.length} pending task(s)`,
+    subject: subject,
     html: emailContent,
   });
 

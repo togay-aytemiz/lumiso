@@ -336,76 +336,78 @@ export function AssigneesList({
             </Tooltip>
           )}
 
-          {/* Add assignee button */}
-          <Popover open={isAddingAssignee} onOpenChange={setIsAddingAssignee}>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 w-8 rounded-full p-0"
-                disabled={loading}
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent 
-              className="w-64 p-0" 
-              align="start"
-              side="bottom"
-              sideOffset={4}
-              onOpenAutoFocus={(e) => e.preventDefault()}
+          {/* Add assignee button - Simple dropdown */}
+          <div className="relative">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 w-8 rounded-full p-0"
+              disabled={loading}
+              onClick={() => {
+                console.log('Add button clicked, current state:', isAddingAssignee);
+                setIsAddingAssignee(!isAddingAssignee);
+              }}
             >
-              <div className="p-2 space-y-1">
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="Search team members..."
-                    className="w-full p-2 text-sm border rounded"
-                    onChange={(e) => {
-                      // Simple search can be added here if needed
-                    }}
-                  />
-                </div>
-                <div className="max-h-48 overflow-y-auto">
-                  {availableMembers.length === 0 ? (
-                    <div className="p-2 text-sm text-muted-foreground">
-                      No team members found.
-                    </div>
-                  ) : (
-                    availableMembers.map((member) => (
-                      <div
-                        key={member.user_id}
-                        className="flex items-center gap-2 w-full p-2 hover:bg-accent cursor-pointer rounded-sm"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          console.log('Direct onClick triggered for:', member.user_id);
-                          addAssignee(member.user_id);
-                        }}
-                      >
-                        <Avatar className="h-6 w-6">
-                          {member.profile_photo_url ? (
-                            <AvatarImage src={member.profile_photo_url} alt={member.full_name || 'User'} />
-                          ) : null}
-                          <AvatarFallback className="text-xs">
-                            {getInitials(member.full_name || 'U')}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex flex-col">
-                          <span className="text-sm">
-                            {member.full_name || 'Unknown User'}
-                          </span>
-                          <Badge variant="secondary" className="text-xs w-fit">
-                            {member.role}
-                          </Badge>
-                        </div>
+              <Plus className="h-4 w-4" />
+            </Button>
+
+            {/* Simple dropdown menu */}
+            {isAddingAssignee && (
+              <div className="absolute top-full left-0 mt-1 w-64 bg-background border border-border rounded-md shadow-lg z-50">
+                <div className="p-2">
+                  <div className="text-sm font-medium mb-2">Add Team Member</div>
+                  <div className="space-y-1 max-h-48 overflow-y-auto">
+                    {availableMembers.length === 0 ? (
+                      <div className="p-2 text-sm text-muted-foreground">
+                        No team members available
                       </div>
-                    ))
-                  )}
+                    ) : (
+                      availableMembers.map((member) => (
+                        <button
+                          key={member.user_id}
+                          className="w-full flex items-center gap-2 p-2 hover:bg-accent rounded-sm text-left"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            console.log('Member clicked:', member.user_id, member.full_name);
+                            addAssignee(member.user_id);
+                          }}
+                        >
+                          <Avatar className="h-6 w-6">
+                            {member.profile_photo_url ? (
+                              <AvatarImage src={member.profile_photo_url} alt={member.full_name || 'User'} />
+                            ) : null}
+                            <AvatarFallback className="text-xs">
+                              {getInitials(member.full_name || 'U')}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex flex-col">
+                            <span className="text-sm">
+                              {member.full_name || 'Unknown User'}
+                            </span>
+                            <Badge variant="secondary" className="text-xs w-fit">
+                              {member.role}
+                            </Badge>
+                          </div>
+                        </button>
+                      ))
+                    )}
+                  </div>
                 </div>
               </div>
-            </PopoverContent>
-          </Popover>
+            )}
+
+            {/* Overlay to close dropdown when clicking outside */}
+            {isAddingAssignee && (
+              <div 
+                className="fixed inset-0 z-40" 
+                onClick={() => {
+                  console.log('Overlay clicked, closing dropdown');
+                  setIsAddingAssignee(false);
+                }}
+              />
+            )}
+          </div>
         </div>
       </div>
 

@@ -83,10 +83,14 @@ const ProjectKanbanBoard = ({ projects, projectStatuses, onProjectsChange }: Pro
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      // Get user's active organization ID
+      const { data: organizationId } = await supabase.rpc('get_user_active_organization_id');
+      if (!organizationId) return;
+
       const { data, error } = await supabase
         .from('project_statuses')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('organization_id', organizationId)
         .order('sort_order', { ascending: true });
 
       if (error) throw error;

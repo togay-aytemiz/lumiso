@@ -40,10 +40,14 @@ export function ServiceSelector({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      // Get user's active organization ID
+      const { data: organizationId } = await supabase.rpc('get_user_active_organization_id');
+      if (!organizationId) return;
+
       const { data, error } = await supabase
         .from("services")
         .select("id, name, category, cost_price, selling_price")
-        .eq("user_id", user.id)
+        .eq("organization_id", organizationId)
         .order("category", { ascending: true })
         .order("name", { ascending: true });
 

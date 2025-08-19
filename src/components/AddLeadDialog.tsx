@@ -110,14 +110,10 @@ const AddLeadDialog = ({ onLeadAdded, open, onOpenChange }: AddLeadDialogProps) 
         return;
       }
 
-      // Get user's active organization
-      const { data: userSettings } = await supabase
-        .from('user_settings')
-        .select('active_organization_id')
-        .eq('user_id', user.id)
-        .single();
+      // Get user's active organization ID
+      const { data: organizationId } = await supabase.rpc('get_user_active_organization_id');
 
-      if (!userSettings?.active_organization_id) {
+      if (!organizationId) {
         toast({
           title: "Organization required",
           description: "Please ensure you're part of an organization",
@@ -128,7 +124,7 @@ const AddLeadDialog = ({ onLeadAdded, open, onOpenChange }: AddLeadDialogProps) 
 
       const leadData = {
         user_id: user.id,
-        organization_id: userSettings.active_organization_id,
+        organization_id: organizationId,
         name: sanitizeInput(formData.name),
         email: formData.email ? sanitizeInput(formData.email) : null,
         phone: formData.phone ? sanitizeInput(formData.phone) : null,

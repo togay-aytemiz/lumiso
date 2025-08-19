@@ -35,11 +35,15 @@ const ScheduleSessionDialog = ({ leadId, leadName, onSessionScheduled, disabled 
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      // Get user's active organization ID
+      const { data: organizationId } = await supabase.rpc('get_user_active_organization_id');
+      if (!organizationId) return;
+
       const { data: projectsData, error } = await supabase
         .from('projects')
         .select('id, name')
         .eq('lead_id', leadId)
-        .eq('user_id', user.id)
+        .eq('organization_id', organizationId)
         .order('name', { ascending: true });
 
       if (error) throw error;
@@ -93,14 +97,10 @@ const ScheduleSessionDialog = ({ leadId, leadName, onSessionScheduled, disabled 
         if (updateError) throw updateError;
       }
 
-      // Get user's active organization
-      const { data: userSettings } = await supabase
-        .from('user_settings')
-        .select('active_organization_id')
-        .eq('user_id', user.id)
-        .single();
+      // Get user's active organization ID
+      const { data: organizationId } = await supabase.rpc('get_user_active_organization_id');
 
-      if (!userSettings?.active_organization_id) {
+      if (!organizationId) {
         throw new Error("Organization required");
       }
 
@@ -108,7 +108,7 @@ const ScheduleSessionDialog = ({ leadId, leadName, onSessionScheduled, disabled 
         .from('sessions')
         .insert({
           user_id: user.id,
-          organization_id: userSettings.active_organization_id,
+          organization_id: organizationId,
           lead_id: leadId,
           session_date: formData.session_date,
           session_time: formData.session_time,

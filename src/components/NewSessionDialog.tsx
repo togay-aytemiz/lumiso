@@ -130,11 +130,15 @@ const NewSessionDialog = ({ onSessionScheduled, children }: NewSessionDialogProp
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      // Get user's active organization ID
+      const { data: organizationId } = await supabase.rpc('get_user_active_organization_id');
+      if (!organizationId) return;
+
       const { data: projectsData, error } = await supabase
         .from('projects')
         .select('id, name')
         .eq('lead_id', leadId)
-        .eq('user_id', user.id)
+        .eq('organization_id', organizationId)
         .order('name', { ascending: true });
 
       if (error) throw error;
@@ -179,14 +183,10 @@ const NewSessionDialog = ({ onSessionScheduled, children }: NewSessionDialogProp
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("User not authenticated");
 
-      // Get user's active organization
-      const { data: userSettings } = await supabase
-        .from('user_settings')
-        .select('active_organization_id')
-        .eq('user_id', user.id)
-        .single();
+      // Get user's active organization ID
+      const { data: organizationId } = await supabase.rpc('get_user_active_organization_id');
 
-      if (!userSettings?.active_organization_id) {
+      if (!organizationId) {
         throw new Error("Organization required");
       }
 
@@ -198,7 +198,7 @@ const NewSessionDialog = ({ onSessionScheduled, children }: NewSessionDialogProp
           .from('leads')
           .insert({
             user_id: user.id,
-            organization_id: userSettings.active_organization_id,
+            organization_id: organizationId,
             name: newLeadData.name.trim(),
             email: newLeadData.email.trim() || null,
             phone: newLeadData.phone.trim() || null,
@@ -225,7 +225,7 @@ const NewSessionDialog = ({ onSessionScheduled, children }: NewSessionDialogProp
         .from('sessions')
         .insert({
           user_id: user.id,
-          organization_id: userSettings.active_organization_id,
+          organization_id: organizationId,
           lead_id: leadId,
           session_date: sessionData.session_date,
           session_time: sessionData.session_time,

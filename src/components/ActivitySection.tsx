@@ -93,27 +93,27 @@ const ActivitySection = ({
       const {
         data: userData
       } = await supabase.auth.getUser();
-      const userId = userData.user?.id;
-      let filtered = data || [];
-      if (userId) {
-        // Get user's active organization
-        const { data: userSettings } = await supabase
-          .from('user_settings')
-          .select('active_organization_id')
-          .eq('user_id', userId)
-          .single();
+      if (!userData.user) return;
 
-        // Skip archived filtering to avoid TypeScript issues - will be fixed in a later version
-        // const archResults = await supabase.from('project_statuses').select('id, name').eq('organization_id', userSettings?.active_organization_id || '');
-        // const archivedStatus = archResults.data?.find(s => s.name.toLowerCase() === 'archived');
-        // Temporarily skip archived project filtering
-        // if (archivedStatus?.id) {
-        //   const {
-        //     data: archivedProjects
-        //   } = await supabase.from('projects').select('id').eq('lead_id', leadId).eq('status_id', archivedStatus.id);
-        //   const archivedIds = new Set((archivedProjects || []).map(p => p.id));
-        //   filtered = filtered.filter(a => !a.project_id || !archivedIds.has(a.project_id));
-        // }
+      // Get user's active organization ID
+      const { data: organizationId } = await supabase.rpc('get_user_active_organization_id');
+      let filtered = data || [];
+      if (organizationId) {
+        // Get archived status
+        const { data: archivedStatus } = await supabase
+          .from('project_statuses')
+          .select('id, name')
+          .eq('organization_id', organizationId)
+          .ilike('name', 'archived')
+          .maybeSingle();
+          
+        if (archivedStatus?.id) {
+          const {
+            data: archivedProjects
+          } = await supabase.from('projects').select('id').eq('lead_id', leadId).eq('status_id', archivedStatus.id);
+          const archivedIds = new Set((archivedProjects || []).map(p => p.id));
+          filtered = filtered.filter(a => !a.project_id || !archivedIds.has(a.project_id));
+        }
       }
       setActivities(filtered);
     } catch (error: any) {

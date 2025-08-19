@@ -148,10 +148,14 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      // Get user's active organization ID
+      const { data: organizationId } = await supabase.rpc('get_user_active_organization_id');
+      if (!organizationId) return;
+
       const { data: leadsData, error } = await supabase
         .from('leads')
         .select('id, name, email, phone, status, updated_at')
-        .eq('user_id', user.id)
+        .eq('organization_id', organizationId)
         .neq('status', 'lost')
         .order('updated_at', { ascending: false });
 
@@ -174,22 +178,26 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      // Get user's active organization ID
+      const { data: organizationId } = await supabase.rpc('get_user_active_organization_id');
+      if (!organizationId) return;
+
       const [packagesResult, typesResult, servicesResult] = await Promise.all([
         supabase
           .from('packages')
           .select('*')
-          .eq('user_id', user.id)
+          .eq('organization_id', organizationId)
           .eq('is_active', true)
           .order('name'),
         supabase
           .from('project_types')
           .select('id, name, is_default')
-          .eq('user_id', user.id)
+          .eq('organization_id', organizationId)
           .order('sort_order', { ascending: true }),
         supabase
           .from('services')
           .select('*')
-          .eq('user_id', user.id)
+          .eq('organization_id', organizationId)
           .order('category', { ascending: true })
           .order('name', { ascending: true })
       ]);

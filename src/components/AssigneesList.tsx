@@ -185,6 +185,9 @@ export function AssigneesList({
         description: "Assignee added successfully"
       });
 
+      // Refresh the assignee details immediately
+      await fetchAssigneeDetails();
+      
       console.log('Calling onUpdate callback:', typeof onUpdate);
       onUpdate?.();
       setIsAddingAssignee(false);

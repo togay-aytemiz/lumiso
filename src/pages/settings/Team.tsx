@@ -173,7 +173,10 @@ export default function Team() {
 
   const handleCopyInvitationLink = async (invitationId: string) => {
     try {
-      const invitationLink = `${window.location.origin}/accept-invitation?id=${invitationId}`;
+      const invitation = invitations.find(inv => inv.id === invitationId);
+      if (!invitation) return;
+      
+      const invitationLink = `${window.location.origin}/accept-invitation?invitation=${invitationId}&email=${encodeURIComponent(invitation.email)}`;
       await navigator.clipboard.writeText(invitationLink);
       
       setCopiedStates(prev => ({ ...prev, [invitationId]: true }));

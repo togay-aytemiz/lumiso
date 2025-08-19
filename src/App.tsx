@@ -49,7 +49,7 @@ const App = () => (
           <Routes>
             <Route path="/auth" element={<Auth />} />
             <Route path="/accept-invite" element={<AcceptInvite />} />
-            <Route path="/accept-invitation" element={<AcceptInvitation />} />
+            <Route path="/accept-invitation" element={<InvitationSignup />} />
             <Route path="/invitation-signup" element={<InvitationSignup />} />
             <Route path="/" element={<ProtectedRoute />}>
               <Route index element={<Index />} />

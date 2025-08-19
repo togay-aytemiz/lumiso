@@ -241,154 +241,153 @@ export function AssigneesList({
 
   return (
     <TooltipProvider>
-      <div className={`flex items-center gap-2 ${className} relative`}>
-        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+      <div className={`flex items-center gap-2 ${className} relative min-h-[2rem]`}>
+        <div className="flex items-center gap-1 text-sm text-muted-foreground flex-shrink-0">
           <Users className="h-4 w-4" />
-          <span className="hidden sm:inline">Assigned to:</span>
-          <span className="sm:hidden">Assigned:</span>
+          <span className="hidden sm:inline whitespace-nowrap">Assigned to:</span>
+          <span className="sm:hidden whitespace-nowrap">Assigned:</span>
         </div>
         
-        <div className="flex items-center gap-1">
-          {/* Loading state */}
-          {loadingAssignees && assignees.length > 0 && (
-            <>
-              {assignees.slice(0, maxVisible).map((_, index) => (
-                <div key={`skeleton-${index}`} className="animate-fade-in">
+        <div className="flex items-center gap-1 flex-grow min-w-0">
+          {/* Reserve space for assignees to prevent layout shift */}
+          <div className="flex items-center gap-1 min-h-[2rem] flex-grow">
+            {/* Loading state with preserved space */}
+            {loadingAssignees && assignees.length > 0 && (
+              <div className="flex items-center gap-1">
+                {assignees.slice(0, maxVisible).map((_, index) => (
+                  <div key={`skeleton-${index}`} className="animate-fade-in">
+                    <Skeleton className="h-8 w-8 rounded-full" />
+                  </div>
+                ))}
+                {assignees.length > maxVisible && (
                   <Skeleton className="h-8 w-8 rounded-full" />
+                )}
+              </div>
+            )}
+            
+            {/* Visible assignees */}
+            {!loadingAssignees && visibleAssignees.map((assignee) => (
+              <Tooltip key={assignee.id}>
+                <TooltipTrigger asChild>
+                  <div className="relative group animate-fade-in">
+                    <Avatar className="h-8 w-8 border-2 border-background">
+                      {assignee.profile_photo_url ? (
+                        <AvatarImage src={assignee.profile_photo_url} alt={assignee.name} />
+                      ) : null}
+                      <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                        {getInitials(assignee.name)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <button
+                      onClick={() => handleRemoveClick(assignee.id, assignee.name)}
+                      className="absolute -top-1 -right-1 h-4 w-4 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                      disabled={loading}
+                    >
+                      <X className="h-2 w-2" />
+                    </button>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{assignee.name}</p>
+                  {assignee.role && <p className="text-xs text-muted-foreground">{assignee.role}</p>}
+                </TooltipContent>
+              </Tooltip>
+            ))}
+
+            {/* Overflow indicator */}
+            {!loadingAssignees && overflowCount > 0 && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="h-8 w-8 rounded-full bg-muted border-2 border-background flex items-center justify-center animate-fade-in">
+                    <span className="text-xs font-medium">+{overflowCount}</span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <div className="space-y-1">
+                    {assigneeDetails.slice(maxVisible).map((assignee) => (
+                      <div key={assignee.id} className="text-sm">
+                        {assignee.name}
+                        {assignee.role && <span className="text-muted-foreground ml-1">({assignee.role})</span>}
+                      </div>
+                    ))}
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            )}
+
+            {/* Add assignee button - Simple dropdown */}
+            <div className="relative flex-shrink-0">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 w-8 rounded-full p-0"
+                disabled={loading}
+                onClick={() => setIsAddingAssignee(!isAddingAssignee)}
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+
+              {/* Simple dropdown menu */}
+              {isAddingAssignee && (
+                <div className="absolute top-full left-0 mt-1 w-64 bg-background border border-border rounded-md shadow-lg z-50">
+                  <div className="p-2">
+                    <div className="text-sm font-medium mb-2">Add Team Member</div>
+                    <div className="space-y-1 max-h-48 overflow-y-auto">
+                      {availableMembers.length === 0 ? (
+                        <div className="p-2 text-sm text-muted-foreground">
+                          No team members available
+                        </div>
+                      ) : (
+                        availableMembers.map((member) => (
+                          <button
+                            key={member.user_id}
+                            className="w-full flex items-center gap-2 p-2 hover:bg-accent rounded-sm text-left"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              addAssignee(member.user_id);
+                            }}
+                          >
+                            <Avatar className="h-6 w-6">
+                              {member.profile_photo_url ? (
+                                <AvatarImage src={member.profile_photo_url} alt={member.full_name || 'User'} />
+                              ) : null}
+                              <AvatarFallback className="text-xs">
+                                {getInitials(member.full_name || 'U')}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex flex-col">
+                              <span className="text-sm">
+                                {member.full_name || 'Unknown User'}
+                              </span>
+                              <Badge variant="secondary" className="text-xs w-fit">
+                                {member.role}
+                              </Badge>
+                            </div>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  </div>
                 </div>
-              ))}
-            </>
-          )}
+              )}
+
+              {/* Overlay to close dropdown when clicking outside */}
+              {isAddingAssignee && (
+                <div 
+                  className="fixed inset-0 z-40" 
+                  onClick={() => setIsAddingAssignee(false)}
+                />
+              )}
+            </div>
+          </div>
           
-          {/* Loading overlay during updates */}
+          {/* Loading overlay during updates - positioned to not affect layout */}
           {loading && (
             <div className="absolute inset-0 bg-background/50 backdrop-blur-sm rounded-lg flex items-center justify-center z-10">
               <Loader2 className="h-4 w-4 animate-spin" />
             </div>
           )}
-          
-          {/* Visible assignees */}
-          {!loadingAssignees && visibleAssignees.map((assignee) => (
-            <Tooltip key={assignee.id}>
-              <TooltipTrigger asChild>
-                <div className="relative group animate-fade-in">
-                  <Avatar className="h-8 w-8 border-2 border-background">
-                    {assignee.profile_photo_url ? (
-                      <AvatarImage src={assignee.profile_photo_url} alt={assignee.name} />
-                    ) : null}
-                    <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-                      {getInitials(assignee.name)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <button
-                    onClick={() => handleRemoveClick(assignee.id, assignee.name)}
-                    className="absolute -top-1 -right-1 h-4 w-4 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
-                    disabled={loading}
-                  >
-                    <X className="h-2 w-2" />
-                  </button>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{assignee.name}</p>
-                {assignee.role && <p className="text-xs text-muted-foreground">{assignee.role}</p>}
-              </TooltipContent>
-            </Tooltip>
-          ))}
-
-          {/* Overflow indicator */}
-          {!loadingAssignees && overflowCount > 0 && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="h-8 w-8 rounded-full bg-muted border-2 border-background flex items-center justify-center animate-fade-in">
-                  <span className="text-xs font-medium">+{overflowCount}</span>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <div className="space-y-1">
-                  {assigneeDetails.slice(maxVisible).map((assignee) => (
-                    <div key={assignee.id} className="text-sm">
-                      {assignee.name}
-                      {assignee.role && <span className="text-muted-foreground ml-1">({assignee.role})</span>}
-                    </div>
-                  ))}
-                </div>
-              </TooltipContent>
-            </Tooltip>
-          )}
-
-          {/* Add assignee button - Simple dropdown */}
-          <div className="relative">
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 w-8 rounded-full p-0"
-              disabled={loading}
-              onClick={() => {
-                console.log('Add button clicked, current state:', isAddingAssignee);
-                setIsAddingAssignee(!isAddingAssignee);
-              }}
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
-
-            {/* Simple dropdown menu */}
-            {isAddingAssignee && (
-              <div className="absolute top-full left-0 mt-1 w-64 bg-background border border-border rounded-md shadow-lg z-50">
-                <div className="p-2">
-                  <div className="text-sm font-medium mb-2">Add Team Member</div>
-                  <div className="space-y-1 max-h-48 overflow-y-auto">
-                    {availableMembers.length === 0 ? (
-                      <div className="p-2 text-sm text-muted-foreground">
-                        No team members available
-                      </div>
-                    ) : (
-                      availableMembers.map((member) => (
-                        <button
-                          key={member.user_id}
-                          className="w-full flex items-center gap-2 p-2 hover:bg-accent rounded-sm text-left"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            console.log('Member clicked:', member.user_id, member.full_name);
-                            addAssignee(member.user_id);
-                          }}
-                        >
-                          <Avatar className="h-6 w-6">
-                            {member.profile_photo_url ? (
-                              <AvatarImage src={member.profile_photo_url} alt={member.full_name || 'User'} />
-                            ) : null}
-                            <AvatarFallback className="text-xs">
-                              {getInitials(member.full_name || 'U')}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex flex-col">
-                            <span className="text-sm">
-                              {member.full_name || 'Unknown User'}
-                            </span>
-                            <Badge variant="secondary" className="text-xs w-fit">
-                              {member.role}
-                            </Badge>
-                          </div>
-                        </button>
-                      ))
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Overlay to close dropdown when clicking outside */}
-            {isAddingAssignee && (
-              <div 
-                className="fixed inset-0 z-40" 
-                onClick={() => {
-                  console.log('Overlay clicked, closing dropdown');
-                  setIsAddingAssignee(false);
-                }}
-              />
-            )}
-          </div>
         </div>
       </div>
 

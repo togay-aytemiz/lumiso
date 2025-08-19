@@ -14,7 +14,8 @@ import { useToast } from "@/hooks/use-toast";
 import { AddProjectTypeDialog, EditProjectTypeDialog } from "./settings/ProjectTypeDialogs";
 import { cn } from "@/lib/utils";
 import SettingsSection from "./SettingsSection";
-import { getUserOrganizationId } from "@/lib/organizationUtils";
+import { useOrganization } from "@/contexts/OrganizationContext";
+import { useProjectTypes } from "@/hooks/useOrganizationData";
 
 const projectTypeSchema = z.object({
   name: z.string().min(1, "Type name is required").max(50, "Type name must be less than 50 characters"),
@@ -32,13 +33,13 @@ interface ProjectType {
 }
 
 const ProjectTypesSection = () => {
-  const [types, setTypes] = useState<ProjectType[]>([]);
-  const [loading, setLoading] = useState(true);
   const [editingType, setEditingType] = useState<ProjectType | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const { toast } = useToast();
+  const { activeOrganizationId, loading: orgLoading } = useOrganization();
+  const { data: types = [], isLoading, refetch } = useProjectTypes();
 
   const form = useForm<ProjectTypeForm>({
     resolver: zodResolver(projectTypeSchema),
@@ -48,59 +49,20 @@ const ProjectTypesSection = () => {
     },
   });
 
-  const fetchTypes = async () => {
+  const createDefaultTypes = async () => {
     try {
+      if (!activeOrganizationId) return;
+      
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const organizationId = await getUserOrganizationId();
-      if (!organizationId) {
-        throw new Error('No organization found');
-      }
-
-      const { data, error } = await supabase
-        .from('project_types')
-        .select('*')
-        .eq('organization_id', organizationId)
-        .order('created_at', { ascending: true }); // Order by creation time so new ones go to end
-
-      if (error) throw error;
-
-      // If no types exist, create default ones
-      if (!data || data.length === 0) {
-        await createDefaultTypes(user.id, organizationId);
-        return;
-      }
-
-      setTypes(data);
-    } catch (error) {
-      console.error('Error fetching project types:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load project types",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const createDefaultTypes = async (userId: string, organizationId: string) => {
-    try {
       await supabase.rpc('ensure_default_project_types_for_org', {
-        user_uuid: userId,
-        org_id: organizationId
+        user_uuid: user.id,
+        org_id: activeOrganizationId
       });
 
-      // Fetch the created types
-      const { data, error } = await supabase
-        .from('project_types')
-        .select('*')
-        .eq('organization_id', organizationId)
-        .order('created_at', { ascending: true });
-
-      if (error) throw error;
-      setTypes(data || []);
+      // Refetch data after creating defaults
+      await refetch();
     } catch (error) {
       console.error('Error creating default types:', error);
       toast({
@@ -111,7 +73,23 @@ const ProjectTypesSection = () => {
     }
   };
 
+  // Create default types if none exist
+  useEffect(() => {
+    if (!isLoading && !orgLoading && activeOrganizationId && types.length === 0) {
+      createDefaultTypes();
+    }
+  }, [isLoading, orgLoading, activeOrganizationId, types.length]);
+
   const onSubmit = async (data: ProjectTypeForm) => {
+    if (!activeOrganizationId) {
+      toast({
+        title: "Error",
+        description: "No active organization found",
+        variant: "destructive",
+      });
+      return;
+    }
+
     console.log('=== PROJECT TYPE SUBMIT START ===');
     console.log('Form data:', data);
     console.log('Editing type:', editingType);
@@ -122,16 +100,13 @@ const ProjectTypesSection = () => {
       console.log('User authenticated:', user.id);
 
       if (editingType) {
-        // Update existing type - let the database trigger handle default switching
+        // Update existing type
         console.log('Updating type:', editingType.id, 'with data:', data);
-        const organizationId = await getUserOrganizationId();
-        if (!organizationId) throw new Error('No organization found');
-
         const { error } = await supabase
           .from('project_types')
           .update({ name: data.name, is_default: data.is_default })
           .eq('id', editingType.id)
-          .eq('organization_id', organizationId);
+          .eq('organization_id', activeOrganizationId);
 
         if (error) {
           console.error('Error updating type:', error);
@@ -153,17 +128,14 @@ const ProjectTypesSection = () => {
         }
         setIsEditDialogOpen(false);
       } else {
-        // Create new type - let the database trigger handle default switching
-        const organizationId = await getUserOrganizationId();
-        if (!organizationId) throw new Error('No organization found');
-
+        // Create new type
         const { error } = await supabase
           .from('project_types')
           .insert({
             name: data.name,
             is_default: data.is_default,
             user_id: user.id,
-            organization_id: organizationId,
+            organization_id: activeOrganizationId,
           });
 
         if (error) {
@@ -182,7 +154,7 @@ const ProjectTypesSection = () => {
 
       form.reset({ name: "", is_default: false });
       setEditingType(null);
-      fetchTypes();
+      await refetch(); // Refetch data after changes
     } catch (error) {
       console.error('Error saving project type:', error);
       toast({
@@ -208,18 +180,17 @@ const ProjectTypesSection = () => {
   };
 
   const handleDelete = async (typeId: string) => {
+    if (!activeOrganizationId) return;
+    
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
-
-      const organizationId = await getUserOrganizationId();
-      if (!organizationId) throw new Error('No organization found');
 
       const { error } = await supabase
         .from('project_types')
         .delete()
         .eq('id', typeId)
-        .eq('organization_id', organizationId);
+        .eq('organization_id', activeOrganizationId);
 
       if (error) {
         if (error.code === '23503') { // Foreign key constraint violation
@@ -232,7 +203,7 @@ const ProjectTypesSection = () => {
         title: "Success",
         description: "Project type deleted successfully",
       });
-      fetchTypes();
+      await refetch(); // Refetch data after deletion
     } catch (error) {
       console.error('Error deleting project type:', error);
       toast({
@@ -363,11 +334,11 @@ const ProjectTypesSection = () => {
     </DialogContent>
   );
 
-  useEffect(() => {
-    fetchTypes();
-  }, []);
+  const handleRefetch = async () => {
+    await refetch();
+  };
 
-  if (loading) {
+  if (orgLoading || isLoading) {
     return (
       <SettingsSection 
         title="Project Types" 
@@ -424,7 +395,7 @@ const ProjectTypesSection = () => {
         <AddProjectTypeDialog
           open={isAddDialogOpen}
           onOpenChange={setIsAddDialogOpen}
-          onTypeAdded={fetchTypes}
+          onTypeAdded={handleRefetch}
         />
 
         {/* Edit Dialog */}
@@ -432,7 +403,7 @@ const ProjectTypesSection = () => {
           type={editingType}
           open={isEditDialogOpen}
           onOpenChange={setIsEditDialogOpen}
-          onTypeUpdated={fetchTypes}
+          onTypeUpdated={handleRefetch}
         />
       </SettingsSection>
     </>

@@ -159,7 +159,10 @@ export default function Notifications() {
     setTestingNotification(type);
     try {
       const { data, error } = await supabase.functions.invoke('send-reminder-notifications', {
-        body: { type }
+        body: { 
+          type,
+          isTest: true // Add test flag
+        }
       });
 
       if (error) throw error;
@@ -436,7 +439,7 @@ export default function Notifications() {
               <Button
                 variant="outline"
                 onClick={() => testNotification('overdue')}
-                disabled={testingNotification === 'overdue' || !settings.overdueReminderEnabled}
+                disabled={testingNotification === 'overdue'}
                 className="justify-start"
               >
                 {testingNotification === 'overdue' ? (
@@ -450,7 +453,7 @@ export default function Notifications() {
               <Button
                 variant="outline"
                 onClick={() => testNotification('delivery')}
-                disabled={testingNotification === 'delivery' || !settings.deliveryReminderEnabled}
+                disabled={testingNotification === 'delivery'}
                 className="justify-start"
               >
                 {testingNotification === 'delivery' ? (
@@ -464,7 +467,7 @@ export default function Notifications() {
               <Button
                 variant="outline"
                 onClick={() => testNotification('session')}
-                disabled={testingNotification === 'session' || !settings.sessionReminderEnabled}
+                disabled={testingNotification === 'session'}
                 className="justify-start"
               >
                 {testingNotification === 'session' ? (
@@ -478,7 +481,7 @@ export default function Notifications() {
               <Button
                 variant="outline"
                 onClick={() => testNotification('daily_summary')}
-                disabled={testingNotification === 'daily_summary' || !settings.dailySummaryEnabled}
+                disabled={testingNotification === 'daily_summary'}
                 className="justify-start"
               >
                 {testingNotification === 'daily_summary' ? (
@@ -492,7 +495,7 @@ export default function Notifications() {
               <Button
                 variant="outline"
                 onClick={() => testNotification('task_nudge')}
-                disabled={testingNotification === 'task_nudge' || !settings.taskNudgeEnabled}
+                disabled={testingNotification === 'task_nudge'}
                 className="justify-start"
               >
                 {testingNotification === 'task_nudge' ? (
@@ -505,7 +508,7 @@ export default function Notifications() {
             </div>
             
             <div className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg">
-              <p><strong>Note:</strong> Test buttons are only enabled when the corresponding notification is turned on. The test will send an email based on your current data (leads, sessions, todos, etc.).</p>
+              <p><strong>Note:</strong> Test buttons work regardless of notification settings and send emails based on your current data (leads, sessions, todos, etc.). This helps you verify the email content before enabling notifications.</p>
             </div>
           </div>
         </CategorySettingsSection>

@@ -13,6 +13,7 @@ interface ReminderRequest {
   type: 'overdue' | 'delivery' | 'session' | 'daily_summary' | 'task_nudge';
   organizationId?: string;
   userId?: string;
+  isTest?: boolean; // Add test flag
 }
 
 interface UserProfile {
@@ -26,8 +27,8 @@ const supabase = createClient(
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 );
 
-async function getEnabledUsersForNotification(type: string, sendTime?: string) {
-  console.log(`Getting enabled users for notification type: ${type}, sendTime: ${sendTime}`);
+async function getEnabledUsersForNotification(type: string, sendTime?: string, isTest?: boolean) {
+  console.log(`Getting enabled users for notification type: ${type}, sendTime: ${sendTime}, isTest: ${isTest}`);
   
   const notificationFieldMap: { [key: string]: string } = {
     'overdue': 'notification_overdue_reminder_enabled',
@@ -52,8 +53,8 @@ async function getEnabledUsersForNotification(type: string, sendTime?: string) {
     `)
     .eq(notificationFieldMap[type], true);
 
-  // Add time filter if applicable
-  if (sendTime && timeFieldMap[type]) {
+  // Only add time filter if NOT testing and applicable
+  if (!isTest && sendTime && timeFieldMap[type]) {
     query = query.eq(timeFieldMap[type], sendTime);
   }
 
@@ -410,15 +411,15 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { type, organizationId, userId }: ReminderRequest = await req.json();
-    console.log(`Processing reminder request: ${type}`);
+    const { type, organizationId, userId, isTest }: ReminderRequest = await req.json();
+    console.log(`Processing reminder request: ${type}, isTest: ${isTest}`);
 
     // Get current time for time-based notifications
     const now = new Date();
     const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
     
     // Get enabled users based on notification type
-    const enabledUsers = await getEnabledUsersForNotification(type, currentTime);
+    const enabledUsers = await getEnabledUsersForNotification(type, currentTime, isTest);
     
     if (enabledUsers.length === 0) {
       return new Response(JSON.stringify({ 

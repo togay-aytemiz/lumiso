@@ -329,51 +329,62 @@ export function AssigneesList({
                 <Plus className="h-4 w-4" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-64 p-0" align="start">
-              <Command>
-                <CommandInput placeholder="Search team members..." />
-                <CommandList>
-                  <CommandEmpty>No team members found.</CommandEmpty>
-                  <CommandGroup>
-                    {availableMembers.map((member) => (
-                      <CommandItem
+            <PopoverContent 
+              className="w-64 p-0" 
+              align="start"
+              side="bottom"
+              sideOffset={4}
+              onOpenAutoFocus={(e) => e.preventDefault()}
+            >
+              <div className="p-2 space-y-1">
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Search team members..."
+                    className="w-full p-2 text-sm border rounded"
+                    onChange={(e) => {
+                      // Simple search can be added here if needed
+                    }}
+                  />
+                </div>
+                <div className="max-h-48 overflow-y-auto">
+                  {availableMembers.length === 0 ? (
+                    <div className="p-2 text-sm text-muted-foreground">
+                      No team members found.
+                    </div>
+                  ) : (
+                    availableMembers.map((member) => (
+                      <div
                         key={member.user_id}
-                        value={member.full_name || member.user_id}
-                        onSelect={() => {
-                          console.log('CommandItem onSelect triggered for:', member.user_id);
-                          addAssignee(member.user_id);
-                        }}
-                        className="cursor-pointer"
+                        className="flex items-center gap-2 w-full p-2 hover:bg-accent cursor-pointer rounded-sm"
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
-                          console.log('CommandItem onClick triggered for:', member.user_id);
+                          console.log('Direct onClick triggered for:', member.user_id);
                           addAssignee(member.user_id);
                         }}
                       >
-                        <div className="flex items-center gap-2 w-full">
-                          <Avatar className="h-6 w-6">
-                            {member.profile_photo_url ? (
-                              <AvatarImage src={member.profile_photo_url} alt={member.full_name || 'User'} />
-                            ) : null}
-                            <AvatarFallback className="text-xs">
-                              {getInitials(member.full_name || 'U')}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex flex-col">
-                            <span className="text-sm">
-                              {member.full_name || 'Unknown User'}
-                            </span>
-                            <Badge variant="secondary" className="text-xs w-fit">
-                              {member.role}
-                            </Badge>
-                          </div>
+                        <Avatar className="h-6 w-6">
+                          {member.profile_photo_url ? (
+                            <AvatarImage src={member.profile_photo_url} alt={member.full_name || 'User'} />
+                          ) : null}
+                          <AvatarFallback className="text-xs">
+                            {getInitials(member.full_name || 'U')}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex flex-col">
+                          <span className="text-sm">
+                            {member.full_name || 'Unknown User'}
+                          </span>
+                          <Badge variant="secondary" className="text-xs w-fit">
+                            {member.role}
+                          </Badge>
                         </div>
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </CommandList>
-              </Command>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
             </PopoverContent>
           </Popover>
         </div>

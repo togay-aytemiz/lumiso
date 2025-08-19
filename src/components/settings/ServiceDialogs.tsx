@@ -39,10 +39,21 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded }: AddServ
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
+        // Get user's active organization
+        const { data: userSettings } = await supabase
+          .from('user_settings')
+          .select('active_organization_id')
+          .eq('user_id', user.id)
+          .single();
+
+        if (!userSettings?.active_organization_id) {
+          return;
+        }
+
         const { data, error } = await supabase
           .from('services')
           .select('category')
-          .eq('user_id', user.id)
+          .eq('organization_id', userSettings.active_organization_id)
           .not('category', 'is', null);
 
         if (error) throw error;
@@ -369,10 +380,21 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
+        // Get user's active organization
+        const { data: userSettings } = await supabase
+          .from('user_settings')
+          .select('active_organization_id')
+          .eq('user_id', user.id)
+          .single();
+
+        if (!userSettings?.active_organization_id) {
+          return;
+        }
+
         const { data, error } = await supabase
           .from('services')
           .select('category')
-          .eq('user_id', user.id)
+          .eq('organization_id', userSettings.active_organization_id)
           .not('category', 'is', null);
 
         if (error) throw error;

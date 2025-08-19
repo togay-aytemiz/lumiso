@@ -160,11 +160,14 @@ const ProjectStatusesSection = () => {
 
       if (editingStatus) {
         // Update existing status
+        const organizationId = await getUserOrganizationId();
+        if (!organizationId) throw new Error('No organization found');
+
         const { error } = await supabase
           .from('project_statuses')
           .update({ name: data.name, color: data.color })
           .eq('id', editingStatus.id)
-          .eq('user_id', user.id);
+          .eq('organization_id', organizationId);
 
         if (error) throw error;
 
@@ -235,6 +238,9 @@ const ProjectStatusesSection = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
+      const organizationId = await getUserOrganizationId();
+      if (!organizationId) throw new Error('No organization found');
+
       const status = statuses.find(s => s.id === statusId);
       if (status && isProtectedName(status.name)) {
         toast({ title: "Not allowed", description: `The "${status.name}" stage cannot be deleted as it's the default stage for new projects.`, variant: "destructive" });
@@ -245,7 +251,7 @@ const ProjectStatusesSection = () => {
         .from('project_statuses')
         .delete()
         .eq('id', statusId)
-        .eq('user_id', user.id);
+        .eq('organization_id', organizationId);
 
       if (error) {
         if (error.code === '23503') { // Foreign key constraint violation
@@ -289,13 +295,16 @@ const ProjectStatusesSection = () => {
         sort_order: index + 1,
       }));
 
+      const organizationId = await getUserOrganizationId();
+      if (!organizationId) throw new Error('No organization found');
+
       // Execute all updates
       for (const update of updates) {
         const { error } = await supabase
           .from('project_statuses')
           .update({ sort_order: update.sort_order })
           .eq('id', update.id)
-          .eq('user_id', user.id);
+          .eq('organization_id', organizationId);
 
         if (error) throw error;
       }

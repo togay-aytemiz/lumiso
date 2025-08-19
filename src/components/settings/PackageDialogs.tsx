@@ -289,10 +289,21 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return [];
 
+      // Get user's active organization
+      const { data: userSettings } = await supabase
+        .from('user_settings')
+        .select('active_organization_id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!userSettings?.active_organization_id) {
+        return [];
+      }
+
       const { data, error } = await supabase
         .from('project_types')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('organization_id', userSettings.active_organization_id)
         .order('name', { ascending: true });
       
       if (error) throw error;
@@ -307,10 +318,21 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return [];
 
+      // Get user's active organization
+      const { data: userSettings } = await supabase
+        .from('user_settings')
+        .select('active_organization_id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!userSettings?.active_organization_id) {
+        return [];
+      }
+
       const { data, error } = await supabase
         .from('services')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('organization_id', userSettings.active_organization_id)
         .order('name', { ascending: true });
       
       if (error) throw error;
@@ -654,10 +676,21 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return [];
 
+      // Get user's active organization
+      const { data: userSettings } = await supabase
+        .from('user_settings')
+        .select('active_organization_id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!userSettings?.active_organization_id) {
+        return [];
+      }
+
       const { data, error } = await supabase
         .from('project_types')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('organization_id', userSettings.active_organization_id)
         .order('name', { ascending: true });
       
       if (error) throw error;
@@ -672,10 +705,21 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return [];
 
+      // Get user's active organization
+      const { data: userSettings } = await supabase
+        .from('user_settings')
+        .select('active_organization_id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!userSettings?.active_organization_id) {
+        return [];
+      }
+
       const { data, error } = await supabase
         .from('services')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('organization_id', userSettings.active_organization_id)
         .order('name', { ascending: true });
       
       if (error) throw error;

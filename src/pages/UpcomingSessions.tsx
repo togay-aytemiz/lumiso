@@ -69,11 +69,22 @@ const AllSessions = () => {
       let filteredSessions = sessionsData || [];
       
       if (userId) {
+        // Get user's active organization
+        const { data: userSettings } = await supabase
+          .from('user_settings')
+          .select('active_organization_id')
+          .eq('user_id', userId)
+          .single();
+
+        if (!userSettings?.active_organization_id) {
+          return sessionsData || [];
+        }
+
         // Get archived status for filtering
         const { data: archivedStatus } = await supabase
           .from('project_statuses')
           .select('id, name')
-          .eq('user_id', userId)
+          .eq('organization_id', userSettings.active_organization_id)
           .ilike('name', 'archived')
           .maybeSingle();
           

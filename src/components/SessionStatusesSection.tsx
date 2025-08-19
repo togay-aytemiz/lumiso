@@ -138,11 +138,14 @@ const SessionStatusesSection = () => {
       if (!user) throw new Error('Not authenticated');
 
       if (editingStatus) {
+        const organizationId = await getUserOrganizationId();
+        if (!organizationId) throw new Error('No organization found');
+
         const { error } = await supabase
           .from('session_statuses')
           .update({ name: data.name, color: data.color })
           .eq('id', editingStatus.id)
-          .eq('user_id', user.id);
+          .eq('organization_id', organizationId);
         if (error) throw error;
         toast({ title: "Success", description: "Session stage updated" });
         setIsEditDialogOpen(false);
@@ -197,11 +200,14 @@ const SessionStatusesSection = () => {
         toast({ title: "Not allowed", description: `The "${status.name}" stage cannot be deleted`, variant: "destructive" });
         return;
       }
+      const organizationId = await getUserOrganizationId();
+      if (!organizationId) throw new Error('No organization found');
+
       const { error } = await supabase
         .from('session_statuses')
         .delete()
         .eq('id', status.id)
-        .eq('user_id', user.id);
+        .eq('organization_id', organizationId);
       if (error) throw error;
       toast({ title: "Success", description: "Session stage deleted" });
       fetchStatuses();
@@ -221,13 +227,17 @@ const SessionStatusesSection = () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
+
+      const organizationId = await getUserOrganizationId();
+      if (!organizationId) throw new Error('No organization found');
+
       for (let i = 0; i < items.length; i++) {
         const s = items[i];
         const { error } = await supabase
           .from('session_statuses')
           .update({ sort_order: i + 1 })
           .eq('id', s.id)
-          .eq('user_id', user.id);
+          .eq('organization_id', organizationId);
         if (error) throw error;
       }
       toast({ title: "Success", description: "Stage order updated" });

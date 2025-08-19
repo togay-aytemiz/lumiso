@@ -33,16 +33,6 @@ export function AddSessionStatusDialog({ open, onOpenChange, onStatusAdded }: Ad
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
-      // Get the next sort order
-      const { data: existingStatuses } = await supabase
-        .from('session_statuses')
-        .select('sort_order')
-        .eq('user_id', user.id)
-        .order('sort_order', { ascending: false })
-        .limit(1);
-
-      const nextSortOrder = (existingStatuses?.[0]?.sort_order || 0) + 1;
-
       // Get user's active organization
       const { data: userSettings } = await supabase
         .from('user_settings')
@@ -53,6 +43,16 @@ export function AddSessionStatusDialog({ open, onOpenChange, onStatusAdded }: Ad
       if (!userSettings?.active_organization_id) {
         throw new Error("Organization required");
       }
+
+      // Get the next sort order
+      const { data: existingStatuses } = await supabase
+        .from('session_statuses')
+        .select('sort_order')
+        .eq('organization_id', userSettings.active_organization_id)
+        .order('sort_order', { ascending: false })
+        .limit(1);
+
+      const nextSortOrder = (existingStatuses?.[0]?.sort_order || 0) + 1;
 
       const { error } = await supabase
         .from('session_statuses')

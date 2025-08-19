@@ -42,11 +42,22 @@ const EditSessionDialog = ({ sessionId, leadId, currentDate, currentTime, curren
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      // Get user's active organization
+      const { data: userSettings } = await supabase
+        .from('user_settings')
+        .select('active_organization_id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!userSettings?.active_organization_id) {
+        throw new Error("Organization required");
+      }
+
       const { data: projectsData, error } = await supabase
         .from('projects')
         .select('id, name')
         .eq('lead_id', leadId)
-        .eq('user_id', user.id)
+        .eq('organization_id', userSettings.active_organization_id)
         .order('name', { ascending: true });
 
       if (error) throw error;

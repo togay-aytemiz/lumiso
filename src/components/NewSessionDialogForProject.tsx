@@ -51,6 +51,17 @@ export function NewSessionDialogForProject({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      // Get user's active organization
+      const { data: userSettings } = await supabase
+        .from('user_settings')
+        .select('active_organization_id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!userSettings?.active_organization_id) {
+        return;
+      }
+
       const start = new Date(month.getFullYear(), month.getMonth(), 1);
       const end = new Date(month.getFullYear(), month.getMonth() + 1, 0);
       const { data, error } = await supabase
@@ -65,7 +76,7 @@ export function NewSessionDialogForProject({
           projects:project_id (name),
           status
         `)
-        .eq('user_id', user.id)
+        .eq('organization_id', userSettings.active_organization_id)
         .eq('status', 'planned')
         .gte('session_date', format(start, 'yyyy-MM-dd'))
         .lte('session_date', format(end, 'yyyy-MM-dd'));

@@ -192,10 +192,10 @@ export function SimpleRoleDialog({
             <div>
               <Label htmlFor="roleTemplate">Role Template (Optional)</Label>
               <Select value={selectedPreset} onValueChange={handlePresetChange}>
-                <SelectTrigger>
+                <SelectTrigger className="bg-background">
                   <SelectValue placeholder="Choose a template or create custom" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-background border z-50">
                   <SelectItem value="custom">Custom Role</SelectItem>
                   {presets.map((preset) => (
                     <SelectItem key={preset.id} value={preset.id}>

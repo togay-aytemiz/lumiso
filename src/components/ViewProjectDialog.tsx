@@ -280,6 +280,11 @@ export function ViewProjectDialog({
       console.error('Error fetching lead:', error);
     }
   };
+  const handleAssigneesUpdate = () => {
+    // Force parent to refetch project data to get updated assignees
+    onProjectUpdated();
+  };
+
   useEffect(() => {
     if (project && open) {
       fetchProjectSessions();
@@ -590,7 +595,7 @@ export function ViewProjectDialog({
                             assignees={project.assignees || []}
                             entityType="project"
                             entityId={project.id}
-                            onUpdate={onProjectUpdated}
+                            onUpdate={handleAssigneesUpdate}
                           />
                         </div>
                       </div>
@@ -601,7 +606,7 @@ export function ViewProjectDialog({
                           assignees={project.assignees || []}
                           entityType="project"
                           entityId={project.id}
-                          onUpdate={onProjectUpdated}
+                          onUpdate={handleAssigneesUpdate}
                         />
                       </div>
                     </div>

@@ -596,7 +596,7 @@ export function ViewProjectDialog({
                       </div>
                       
                       {/* Desktop Assignees row */}
-                      <div className="hidden md:flex items-center gap-4">
+                      <div className="hidden md:flex items-center gap-4 mt-3">
                         <AssigneesList
                           assignees={project.assignees || []}
                           entityType="project"

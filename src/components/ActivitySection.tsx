@@ -61,6 +61,7 @@ const ActivitySection = ({
   const [activities, setActivities] = useState<Activity[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
+  const [userProfiles, setUserProfiles] = useState<Record<string, { full_name: string; profile_photo_url?: string }>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -164,6 +165,31 @@ const ActivitySection = ({
       console.error('Error fetching sessions:', error);
     }
   };
+  const fetchUserProfiles = async (userIds: string[]) => {
+    if (userIds.length === 0) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('user_id, full_name, profile_photo_url')
+        .in('user_id', userIds);
+
+      if (error) throw error;
+
+      const profilesMap = data?.reduce((acc, profile) => {
+        acc[profile.user_id] = {
+          full_name: profile.full_name || 'Unknown User',
+          profile_photo_url: profile.profile_photo_url
+        };
+        return acc;
+      }, {} as Record<string, { full_name: string; profile_photo_url?: string }>) || {};
+
+      setUserProfiles(prev => ({ ...prev, ...profilesMap }));
+    } catch (error) {
+      console.error('Error fetching user profiles:', error);
+    }
+  };
+  
   const fetchAuditLogs = async () => {
     try {
       // Get sessions to help enrich with project names
@@ -224,6 +250,22 @@ const ActivitySection = ({
         }
         return log;
       });
+      
+      // Extract user IDs from assignee changes in audit logs to fetch their profiles
+      const allUserIds = new Set<string>();
+      data.forEach(log => {
+        if (log.entity_type === 'lead' && log.action === 'updated') {
+          const oldAssignees = log.old_values?.assignees || [];
+          const newAssignees = log.new_values?.assignees || [];
+          [...oldAssignees, ...newAssignees].forEach(id => allUserIds.add(id));
+        }
+      });
+      
+      // Fetch user profiles for assignees
+      if (allUserIds.size > 0) {
+        await fetchUserProfiles(Array.from(allUserIds));
+      }
+      
       setAuditLogs(enrichedLogs);
     } catch (error: any) {
       console.error('Error fetching audit logs:', error);
@@ -382,11 +424,15 @@ const ActivitySection = ({
           const removed = oldAssignees.filter(id => !newAssignees.includes(id));
           
           if (added.length > 0 && removed.length > 0) {
-            changes.push(`assignees updated (${added.length} added, ${removed.length} removed)`);
+            const addedNames = added.map(id => userProfiles[id]?.full_name || `User ${id.slice(0, 8)}`).join(', ');
+            const removedNames = removed.map(id => userProfiles[id]?.full_name || `User ${id.slice(0, 8)}`).join(', ');
+            changes.push(`assignees updated (added: ${addedNames}, removed: ${removedNames})`);
           } else if (added.length > 0) {
-            changes.push(`${added.length} assignee${added.length > 1 ? 's' : ''} added`);
+            const addedNames = added.map(id => userProfiles[id]?.full_name || `User ${id.slice(0, 8)}`).join(', ');
+            changes.push(`${addedNames} assigned`);
           } else if (removed.length > 0) {
-            changes.push(`${removed.length} assignee${removed.length > 1 ? 's' : ''} removed`);
+            const removedNames = removed.map(id => userProfiles[id]?.full_name || `User ${id.slice(0, 8)}`).join(', ');
+            changes.push(`${removedNames} unassigned`);
           }
         }
         

@@ -239,55 +239,32 @@ export function AssigneesList({
     member => !assignees.includes(member.user_id)
   );
 
-  // Always show at least 1 skeleton + button during loading to prevent layout shift
-  const skeletonCount = loadingAssignees ? Math.max(1, Math.min(assignees.length || 1, maxVisible)) : 0;
-  const showSkeletonOverflow = loadingAssignees && assignees.length > maxVisible;
-
-  console.log('AssigneesList render state:', { 
-    loadingAssignees, 
-    assigneesLength: assignees.length, 
-    assigneeDetailsLength: assigneeDetails.length,
-    skeletonCount,
-    showSkeletonOverflow
-  });
-
   return (
     <TooltipProvider>
-      <div className={`grid grid-cols-[auto_1fr] gap-3 items-center ${className}`}>
-        {/* Fixed label column - never moves */}
-        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+      <div className={`flex items-center gap-3 ${className}`}>
+        {/* Fixed label - never changes */}
+        <div className="flex items-center gap-1 text-sm text-muted-foreground flex-shrink-0">
           <Users className="h-4 w-4" />
           <span className="hidden sm:inline whitespace-nowrap">Assigned to:</span>
           <span className="sm:hidden whitespace-nowrap">Assigned:</span>
         </div>
         
-        {/* Content column - stable width with preserved spacing */}
-        <div className="flex items-center gap-1 min-h-[2rem] relative">
-          
-          {/* Loading state - shows consistent skeletons */}
-          {loadingAssignees && (
+        {/* Fixed content area - always same width */}
+        <div className="flex items-center gap-1 min-w-[200px]">
+          {/* Show real content OR placeholders - but always same structure */}
+          {loadingAssignees ? (
+            // Loading: show skeleton placeholders
             <div className="flex items-center gap-1">
-              {/* Always show at least skeletonCount avatars */}
-              {Array.from({ length: skeletonCount }).map((_, index) => (
-                <Skeleton key={`skeleton-${index}`} className="h-8 w-8 rounded-full flex-shrink-0" />
-              ))}
-              {/* Show overflow skeleton if needed */}
-              {showSkeletonOverflow && (
-                <Skeleton className="h-8 w-8 rounded-full flex-shrink-0" />
-              )}
-              {/* Always show + button skeleton */}
-              <Skeleton className="h-8 w-8 rounded-full flex-shrink-0" />
+              <Skeleton className="h-8 w-8 rounded-full" />
+              <Skeleton className="h-8 w-8 rounded-full" />
             </div>
-          )}
-          
-          {/* Loaded state - avatars in exact same positions */}
-          {!loadingAssignees && (
+          ) : (
+            // Loaded: show actual avatars
             <div className="flex items-center gap-1">
-              {/* Visible assignees */}
               {visibleAssignees.map((assignee) => (
                 <Tooltip key={assignee.id}>
                   <TooltipTrigger asChild>
-                    <div className="relative group animate-fade-in flex-shrink-0">
+                    <div className="relative group">
                       <Avatar className="h-8 w-8 border-2 border-background">
                         {assignee.profile_photo_url ? (
                           <AvatarImage src={assignee.profile_photo_url} alt={assignee.name} />
@@ -312,11 +289,10 @@ export function AssigneesList({
                 </Tooltip>
               ))}
 
-              {/* Overflow indicator */}
               {overflowCount > 0 && (
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <div className="h-8 w-8 rounded-full bg-muted border-2 border-background flex items-center justify-center animate-fade-in flex-shrink-0">
+                    <div className="h-8 w-8 rounded-full bg-muted border-2 border-background flex items-center justify-center">
                       <span className="text-xs font-medium">+{overflowCount}</span>
                     </div>
                   </TooltipTrigger>
@@ -332,81 +308,72 @@ export function AssigneesList({
                   </TooltipContent>
                 </Tooltip>
               )}
-
-              {/* Add assignee button - always in same position */}
-              <div className="relative flex-shrink-0">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-8 w-8 rounded-full p-0"
-                  disabled={loading}
-                  onClick={() => setIsAddingAssignee(!isAddingAssignee)}
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
-
-                {/* Dropdown menu */}
-                {isAddingAssignee && (
-                  <div className="absolute top-full left-0 mt-1 w-64 bg-background border border-border rounded-md shadow-lg z-50">
-                    <div className="p-2">
-                      <div className="text-sm font-medium mb-2">Add Team Member</div>
-                      <div className="space-y-1 max-h-48 overflow-y-auto">
-                        {availableMembers.length === 0 ? (
-                          <div className="p-2 text-sm text-muted-foreground">
-                            No team members available
-                          </div>
-                        ) : (
-                          availableMembers.map((member) => (
-                            <button
-                              key={member.user_id}
-                              className="w-full flex items-center gap-2 p-2 hover:bg-accent rounded-sm text-left"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                addAssignee(member.user_id);
-                              }}
-                            >
-                              <Avatar className="h-6 w-6">
-                                {member.profile_photo_url ? (
-                                  <AvatarImage src={member.profile_photo_url} alt={member.full_name || 'User'} />
-                                ) : null}
-                                <AvatarFallback className="text-xs">
-                                  {getInitials(member.full_name || 'U')}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div className="flex flex-col">
-                                <span className="text-sm">
-                                  {member.full_name || 'Unknown User'}
-                                </span>
-                                <Badge variant="secondary" className="text-xs w-fit">
-                                  {member.role}
-                                </Badge>
-                              </div>
-                            </button>
-                          ))
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Overlay to close dropdown */}
-                {isAddingAssignee && (
-                  <div 
-                    className="fixed inset-0 z-40" 
-                    onClick={() => setIsAddingAssignee(false)}
-                  />
-                )}
-              </div>
             </div>
           )}
           
-          {/* Loading overlay during updates */}
-          {loading && (
-            <div className="absolute inset-0 bg-background/50 backdrop-blur-sm rounded-lg flex items-center justify-center z-10">
-              <Loader2 className="h-4 w-4 animate-spin" />
-            </div>
-          )}
+          {/* Add button - always in same spot */}
+          <div className="relative ml-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 w-8 rounded-full p-0"
+              disabled={loading || loadingAssignees}
+              onClick={() => setIsAddingAssignee(!isAddingAssignee)}
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+
+            {isAddingAssignee && (
+              <div className="absolute top-full left-0 mt-1 w-64 bg-background border border-border rounded-md shadow-lg z-50">
+                <div className="p-2">
+                  <div className="text-sm font-medium mb-2">Add Team Member</div>
+                  <div className="space-y-1 max-h-48 overflow-y-auto">
+                    {availableMembers.length === 0 ? (
+                      <div className="p-2 text-sm text-muted-foreground">
+                        No team members available
+                      </div>
+                    ) : (
+                      availableMembers.map((member) => (
+                        <button
+                          key={member.user_id}
+                          className="w-full flex items-center gap-2 p-2 hover:bg-accent rounded-sm text-left"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            addAssignee(member.user_id);
+                          }}
+                        >
+                          <Avatar className="h-6 w-6">
+                            {member.profile_photo_url ? (
+                              <AvatarImage src={member.profile_photo_url} alt={member.full_name || 'User'} />
+                            ) : null}
+                            <AvatarFallback className="text-xs">
+                              {getInitials(member.full_name || 'U')}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex flex-col">
+                            <span className="text-sm">
+                              {member.full_name || 'Unknown User'}
+                            </span>
+                            <Badge variant="secondary" className="text-xs w-fit">
+                              {member.role}
+                            </Badge>
+                          </div>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {isAddingAssignee && (
+              <div 
+                className="fixed inset-0 z-40" 
+                onClick={() => setIsAddingAssignee(false)}
+              />
+            )}
+          </div>
         </div>
       </div>
 

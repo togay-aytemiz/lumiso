@@ -126,34 +126,47 @@ const handler = async (req: Request): Promise<Response> => {
       .eq("user_id", user.id)
       .maybeSingle();
 
-    if (existingMember?.status === 'active') {
-      return new Response(
-        JSON.stringify({ error: "User is already an active member of this organization" }),
-        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
-    }
+    console.log("Existing member check:", { existingMember, userId: user.id, orgId: invitation.organization_id });
 
-    // Use UPSERT with ON CONFLICT DO UPDATE to handle existing records
-    const { error: memberError } = await supabaseAdmin
-      .from("organization_members")
-      .upsert({
-        organization_id: invitation.organization_id,
-        user_id: user.id,
-        system_role: invitation.role === 'Owner' ? 'Owner' : 'Member',
-        role: invitation.role,
-        status: 'active',
-        invited_by: invitation.invited_by
-      }, {
-        onConflict: 'organization_id,user_id',
-        ignoreDuplicates: false
-      });
+    if (existingMember) {
+      // Update existing member
+      const { error: updateError } = await supabaseAdmin
+        .from("organization_members")
+        .update({
+          system_role: invitation.role === 'Owner' ? 'Owner' : 'Member',
+          role: invitation.role,
+          status: 'active',
+          invited_by: invitation.invited_by
+        })
+        .eq("id", existingMember.id);
 
-    if (memberError) {
-      console.error("Failed to create/update membership:", memberError);
-      return new Response(
-        JSON.stringify({ error: "Failed to join organization" }),
-        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
+      if (updateError) {
+        console.error("Failed to update membership:", updateError);
+        return new Response(
+          JSON.stringify({ error: "Failed to update membership" }),
+          { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+    } else {
+      // Create new member
+      const { error: insertError } = await supabaseAdmin
+        .from("organization_members")
+        .insert({
+          organization_id: invitation.organization_id,
+          user_id: user.id,
+          system_role: invitation.role === 'Owner' ? 'Owner' : 'Member',
+          role: invitation.role,
+          status: 'active',
+          invited_by: invitation.invited_by
+        });
+
+      if (insertError) {
+        console.error("Failed to create membership:", insertError);
+        return new Response(
+          JSON.stringify({ error: "Failed to create membership" }),
+          { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
     }
 
     // Mark invitation as accepted

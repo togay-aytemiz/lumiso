@@ -15,6 +15,7 @@ import GlobalSearch from "@/components/GlobalSearch";
 import { PageHeader, PageHeaderSearch, PageHeaderActions } from "@/components/ui/page-header";
 import { ProjectStatusBadge } from "@/components/ProjectStatusBadge";
 import { formatDate } from "@/lib/utils";
+import { AssigneeAvatars } from "@/components/AssigneeAvatars";
 
 interface ProjectStatus {
   id: string;
@@ -63,6 +64,7 @@ interface Project {
     id: string;
     name: string;
   }>;
+  assignees?: string[];
 }
 
 type SortField = 'name' | 'lead_name' | 'project_type' | 'status' | 'created_at' | 'updated_at';
@@ -543,8 +545,9 @@ const AllProjects = () => {
                               <TableHead className="whitespace-nowrap">Sessions</TableHead>
                               <TableHead className="whitespace-nowrap">Progress</TableHead>
                               <TableHead className="whitespace-nowrap">Services</TableHead>
+                              <TableHead className="whitespace-nowrap">Assignees</TableHead>
                             </>
-                          ) : (
+                           ) : (
                             <>
                               <TableHead className="whitespace-nowrap">Paid</TableHead>
                               <TableHead className="whitespace-nowrap">Remaining</TableHead>
@@ -623,11 +626,22 @@ const AllProjects = () => {
                                    <TableCell>
                                      {getProgressBadge(project.completed_todo_count || 0, project.todo_count || 0)}
                                    </TableCell>
-                                   <TableCell>
-                                     {renderServicesChips(project.services || [])}
-                                   </TableCell>
-                                 </>
-                               ) : (
+                                    <TableCell>
+                                      {renderServicesChips(project.services || [])}
+                                    </TableCell>
+                                    <TableCell>
+                                      {project.assignees && project.assignees.length > 0 ? (
+                                        <AssigneeAvatars 
+                                          assigneeIds={project.assignees} 
+                                          maxVisible={3}
+                                          size="sm"
+                                        />
+                                      ) : (
+                                        <span className="text-muted-foreground text-sm">-</span>
+                                      )}
+                                    </TableCell>
+                                  </>
+                                ) : (
                                  <>
                                    <TableCell>
                                      <span className="font-medium text-green-600">
@@ -652,8 +666,8 @@ const AllProjects = () => {
                             </TableRow>
                           ))
                         ) : (
-                          <TableRow>
-                            <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                           <TableRow>
+                             <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                               No projects found. Create your first project to get started!
                             </TableCell>
                           </TableRow>

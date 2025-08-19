@@ -14,6 +14,7 @@ import { LeadStatusBadge } from "@/components/LeadStatusBadge";
 import { formatDate } from "@/lib/utils";
 import GlobalSearch from "@/components/GlobalSearch";
 import { PageHeader, PageHeaderSearch, PageHeaderActions } from "@/components/ui/page-header";
+import { AssigneeAvatars } from "@/components/AssigneeAvatars";
 
 interface Lead {
   id: string;
@@ -25,6 +26,7 @@ interface Lead {
   status: string;
   status_id?: string;
   created_at: string;
+  assignees?: string[];
 }
 
 type SortField = keyof Lead;
@@ -248,6 +250,7 @@ const AllLeads = () => {
                       {getSortIcon('due_date')}
                     </div>
                   </TableHead>
+                  <TableHead className="whitespace-nowrap">Assignees</TableHead>
                   <TableHead className="whitespace-nowrap">Notes</TableHead>
                 </TableRow>
               </TableHeader>
@@ -276,6 +279,17 @@ const AllLeads = () => {
                       <TableCell>
                         {lead.due_date ? formatDate(lead.due_date) : '-'}
                       </TableCell>
+                      <TableCell>
+                        {lead.assignees && lead.assignees.length > 0 ? (
+                          <AssigneeAvatars 
+                            assigneeIds={lead.assignees} 
+                            maxVisible={3}
+                            size="sm"
+                          />
+                        ) : (
+                          <span className="text-muted-foreground text-sm">-</span>
+                        )}
+                      </TableCell>
                       <TableCell className="max-w-xs">
                         {lead.notes ? (
                           <div 
@@ -292,7 +306,7 @@ const AllLeads = () => {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                       {statusFilter === "all" 
                         ? "No leads found. Add your first lead to get started!"
                         : `No leads found with status "${statusFilter}".`

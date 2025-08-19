@@ -10,6 +10,7 @@ import { toast } from "@/hooks/use-toast";
 import { EnhancedProjectDialog } from "@/components/EnhancedProjectDialog";
 import { ViewProjectDialog } from "@/components/ViewProjectDialog";
 import { formatDate } from "@/lib/utils";
+import { AssigneeAvatars } from "@/components/AssigneeAvatars";
 
 interface ProjectStatus {
   id: string;
@@ -52,6 +53,7 @@ interface Project {
     id: string;
     name: string;
   }>;
+  assignees?: string[];
 }
 
 interface ProjectKanbanBoardProps {
@@ -199,9 +201,16 @@ const ProjectKanbanBoard = ({ projects, projectStatuses, onProjectsChange }: Pro
             onClick={() => handleProjectClick(project)}
           >
             <CardContent className="p-3 md:p-4">
-              {/* Lead name (bold, top) */}
-              <div className="flex items-center gap-2 mb-2">
-                <span className="font-bold text-sm">{project.lead?.name || 'No Lead'}</span>
+              {/* Lead name and assignees */}
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <span className="font-bold text-sm truncate">{project.lead?.name || 'No Lead'}</span>
+                {project.assignees && project.assignees.length > 0 && (
+                  <AssigneeAvatars 
+                    assigneeIds={project.assignees} 
+                    maxVisible={2}
+                    size="xs"
+                  />
+                )}
               </div>
               
               {/* Project name (middle) */}

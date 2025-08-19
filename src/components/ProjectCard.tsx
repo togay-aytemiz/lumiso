@@ -10,6 +10,7 @@ import { useProjectPayments } from "@/hooks/useProjectPayments";
 import { ProjectStatusBadge } from "@/components/ProjectStatusBadge";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
+import { AssigneeAvatars } from "@/components/AssigneeAvatars";
 
 interface Project {
   id: string;
@@ -20,6 +21,7 @@ interface Project {
   created_at: string;
   updated_at: string;
   status_id?: string | null;
+  assignees?: string[];
 }
 
 interface ProjectCardProps {
@@ -68,14 +70,23 @@ export function ProjectCard({ project, onView, refreshTrigger }: ProjectCardProp
           onClick={() => onView(project)}
         >
           <div className="flex-1 min-w-0 space-y-3">
-            {/* Title and Archived Badge */}
+            {/* Title, Archived Badge, and Assignees */}
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 min-w-0 flex-1">
                 <h3 className="font-bold text-lg truncate">{project.name}</h3>
                 {isArchived && <Badge variant="secondary" className="text-[10px] flex-shrink-0">Archived</Badge>}
               </div>
-              <div className="md:hidden flex-shrink-0">
-                <ChevronRight className="h-5 w-5 text-muted-foreground" />
+              <div className="flex items-center gap-2 flex-shrink-0">
+                {project.assignees && project.assignees.length > 0 && (
+                  <AssigneeAvatars 
+                    assigneeIds={project.assignees} 
+                    maxVisible={3}
+                    size="sm"
+                  />
+                )}
+                <div className="md:hidden">
+                  <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                </div>
               </div>
             </div>
 

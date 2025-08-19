@@ -4,7 +4,7 @@ import { ChevronDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { useUserSettings } from "@/hooks/useUserSettings";
+import { useOrganizationQuickSettings } from "@/hooks/useOrganizationQuickSettings";
 
 interface LeadStatus {
   id: string;
@@ -41,7 +41,7 @@ export function LeadStatusBadge({
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
-  const { settings: userSettings } = useUserSettings();
+  const { settings: userSettings } = useOrganizationQuickSettings();
 
   useEffect(() => {
     if (passedStatuses) {

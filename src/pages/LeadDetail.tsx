@@ -23,7 +23,7 @@ import { ProjectsSection } from "@/components/ProjectsSection";
 import { getLeadStatusStyles, formatStatusText } from "@/lib/leadStatusColors";
 import { LeadStatusBadge } from "@/components/LeadStatusBadge";
 import { formatDate, cn } from "@/lib/utils";
-import { useUserSettings } from "@/hooks/useUserSettings";
+import { useOrganizationQuickSettings } from "@/hooks/useOrganizationQuickSettings";
 import { useLeadStatusActions } from "@/hooks/useLeadStatusActions";
 interface Lead {
   id: string;
@@ -98,7 +98,7 @@ const LeadDetail = () => {
   const {
     settings: userSettings,
     loading: settingsLoading
-  } = useUserSettings();
+  } = useOrganizationQuickSettings();
   const {
     markAsCompleted,
     markAsLost,

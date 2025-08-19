@@ -122,10 +122,17 @@ const LeadStatusesSection = () => {
       const { data: userData } = await supabase.auth.getUser();
       if (!userData.user) return;
 
+      // Get organization settings instead of user settings
+      const organizationId = await getUserOrganizationId();
+      if (!organizationId) return;
+
+      // Ensure organization settings exist
+      await supabase.rpc('ensure_organization_settings', { org_id: organizationId });
+
       const { data, error } = await supabase
-        .from('user_settings')
+        .from('organization_settings')
         .select('show_quick_status_buttons')
-        .eq('user_id', userData.user.id)
+        .eq('organization_id', organizationId)
         .maybeSingle();
 
       if (error && error.code !== 'PGRST116') {
@@ -134,7 +141,7 @@ const LeadStatusesSection = () => {
 
       if (data) {
         setSettings({
-          show_quick_status_buttons: data.show_quick_status_buttons
+          show_quick_status_buttons: data.show_quick_status_buttons ?? true
         });
       }
     } catch (error: any) {
@@ -155,14 +162,14 @@ const LeadStatusesSection = () => {
       const { data: userData } = await supabase.auth.getUser();
       if (!userData.user) throw new Error('User not authenticated');
 
+      // Update organization settings instead of user settings
+      const organizationId = await getUserOrganizationId();
+      if (!organizationId) throw new Error('No organization found');
+
       const { error } = await supabase
-        .from('user_settings')
-        .upsert({
-          user_id: userData.user.id,
-          [key]: value
-        }, {
-          onConflict: 'user_id'
-        });
+        .from('organization_settings')
+        .update({ [key]: value })
+        .eq('organization_id', organizationId);
 
       if (error) throw error;
 

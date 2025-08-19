@@ -10,7 +10,7 @@ import { toast } from "@/hooks/use-toast";
 import { Plus } from "lucide-react";
 import { leadSchema, sanitizeInput, sanitizeHtml } from "@/lib/validation";
 import { ZodError } from "zod";
-import { useUserSettings } from "@/hooks/useUserSettings";
+import { useOrganizationQuickSettings } from "@/hooks/useOrganizationQuickSettings";
 import { AssigneesPicker } from "./AssigneesPicker";
 import { InlineAssigneesPicker } from "./InlineAssigneesPicker";
 import { useProfile } from "@/contexts/ProfileContext";
@@ -25,7 +25,7 @@ const AddLeadDialog = ({ onLeadAdded, open, onOpenChange }: AddLeadDialogProps) 
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [leadStatuses, setLeadStatuses] = useState<any[]>([]);
-  const { settings: userSettings } = useUserSettings();
+  const { settings: userSettings } = useOrganizationQuickSettings();
   const [formData, setFormData] = useState({
     name: "",
     email: "",

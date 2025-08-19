@@ -543,7 +543,7 @@ const LeadDetail = () => {
 
         {/* Desktop Layout */}
         <div className="hidden lg:flex lg:items-center lg:justify-between lg:gap-6">
-          <div className="min-w-0 flex-1 flex items-center gap-4">
+          <div className="min-w-0 flex items-center gap-4">
             <h1 className="text-2xl font-bold truncate min-w-0">{lead.name || 'Lead Details'}</h1>
             <div className="flex-shrink-0">
               <LeadStatusBadge leadId={lead.id} currentStatusId={lead.status_id} currentStatus={lead.status} onStatusChange={() => {
@@ -551,9 +551,11 @@ const LeadDetail = () => {
               setActivityRefreshKey(prev => prev + 1);
             }} editable={true} statuses={leadStatuses} />
             </div>
-            
-            {/* Assignees List - Desktop: same row, with smooth transition */}
-            <div className="transition-all duration-300 ease-out">
+          </div>
+          
+          <div className="flex items-center gap-4 flex-shrink-0">
+            {/* Assignees List - Desktop: far right with stable container */}
+            <div className="min-w-0 transition-all duration-300 ease-out transform">
               <AssigneesList
                 assignees={lead.assignees || []}
                 entityType="lead"
@@ -564,11 +566,9 @@ const LeadDetail = () => {
                 }}
               />
             </div>
-          </div>
-          
-          <div className="flex-shrink-0">
+            
             {/* Header Action Buttons - Desktop: stays in place */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-shrink-0">
               <ScheduleSessionDialog leadId={lead.id} leadName={lead.name} onSessionScheduled={handleSessionScheduled} disabled={sessions.some(s => s.status === 'planned')} disabledTooltip="A planned session already exists." />
 
               {!settingsLoading && userSettings.show_quick_status_buttons && completedStatus && formData.status !== completedStatus.name && <Button onClick={handleMarkAsCompleted} disabled={isUpdating} className="bg-green-600 hover:bg-green-700 text-white h-10" size="sm">

@@ -239,9 +239,17 @@ export function AssigneesList({
     member => !assignees.includes(member.user_id)
   );
 
-  // Calculate how many skeleton avatars to show during loading
-  const skeletonCount = loadingAssignees && assignees.length === 0 ? 1 : Math.min(assignees.length, maxVisible);
+  // Always show at least 1 skeleton + button during loading to prevent layout shift
+  const skeletonCount = loadingAssignees ? Math.max(1, Math.min(assignees.length || 1, maxVisible)) : 0;
   const showSkeletonOverflow = loadingAssignees && assignees.length > maxVisible;
+
+  console.log('AssigneesList render state:', { 
+    loadingAssignees, 
+    assigneesLength: assignees.length, 
+    assigneeDetailsLength: assigneeDetails.length,
+    skeletonCount,
+    showSkeletonOverflow
+  });
 
   return (
     <TooltipProvider>
@@ -256,16 +264,18 @@ export function AssigneesList({
         {/* Content column - stable width with preserved spacing */}
         <div className="flex items-center gap-1 min-h-[2rem] relative">
           
-          {/* Loading state - shows skeletons in exact positions */}
+          {/* Loading state - shows consistent skeletons */}
           {loadingAssignees && (
             <div className="flex items-center gap-1">
+              {/* Always show at least skeletonCount avatars */}
               {Array.from({ length: skeletonCount }).map((_, index) => (
                 <Skeleton key={`skeleton-${index}`} className="h-8 w-8 rounded-full flex-shrink-0" />
               ))}
+              {/* Show overflow skeleton if needed */}
               {showSkeletonOverflow && (
                 <Skeleton className="h-8 w-8 rounded-full flex-shrink-0" />
               )}
-              {/* Skeleton + button in same position */}
+              {/* Always show + button skeleton */}
               <Skeleton className="h-8 w-8 rounded-full flex-shrink-0" />
             </div>
           )}

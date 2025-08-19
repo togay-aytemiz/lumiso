@@ -110,13 +110,29 @@ async function getOverdueItems(userId: string) {
   };
 }
 
-async function getUpcomingSessions(userId: string) {
+async function getUpcomingSessions(userId: string, isTest?: boolean) {
   const today = new Date().toISOString().split('T')[0];
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  const tomorrowStr = tomorrow.toISOString().split('T')[0];
+  
+  // For testing, look for sessions in a wider range (past 30 days to next 30 days)
+  let startDate, endDate;
+  if (isTest) {
+    const pastMonth = new Date();
+    pastMonth.setDate(pastMonth.getDate() - 30);
+    startDate = pastMonth.toISOString().split('T')[0];
+    
+    const nextMonth = new Date();
+    nextMonth.setDate(nextMonth.getDate() + 30);
+    endDate = nextMonth.toISOString().split('T')[0];
+  } else {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    startDate = today;
+    endDate = tomorrow.toISOString().split('T')[0];
+  }
 
-  const { data: sessions } = await supabase
+  console.log(`Querying sessions for user ${userId} between ${startDate} and ${endDate} (test mode: ${isTest})`);
+
+  const { data: sessions, error } = await supabase
     .from('sessions')
     .select(`
       id,
@@ -126,15 +142,22 @@ async function getUpcomingSessions(userId: string) {
       leads (name, email)
     `)
     .eq('user_id', userId)
-    .gte('session_date', today)
-    .lte('session_date', tomorrowStr);
+    .gte('session_date', startDate)
+    .lte('session_date', endDate);
 
+  if (error) {
+    console.error(`Error fetching sessions for user ${userId}:`, error);
+  }
+
+  console.log(`Raw sessions query result for user ${userId}:`, sessions);
   return sessions || [];
 }
 
-async function getPendingDeliveries(userId: string) {
+async function getPendingDeliveries(userId: string, isTest?: boolean) {
+  console.log(`Querying projects for delivery follow-up for user ${userId} (test mode: ${isTest})`);
+  
   // Get projects that might need delivery follow-up
-  const { data: projects } = await supabase
+  const { data: projects, error } = await supabase
     .from('projects')
     .select(`
       id,
@@ -144,13 +167,26 @@ async function getPendingDeliveries(userId: string) {
     `)
     .eq('user_id', userId);
 
-  // Simple logic: projects older than 7 days might need delivery follow-up
-  const weekAgo = new Date();
-  weekAgo.setDate(weekAgo.getDate() - 7);
+  if (error) {
+    console.error(`Error fetching projects for user ${userId}:`, error);
+  }
+
+  console.log(`Raw projects query result for user ${userId}:`, projects);
+
+  // For testing, use a shorter time period (1 day) to find more projects
+  // For production, use 7 days as before
+  const daysAgo = isTest ? 1 : 7;
+  const cutoffDate = new Date();
+  cutoffDate.setDate(cutoffDate.getDate() - daysAgo);
   
-  const pendingDeliveries = projects?.filter(project => 
-    new Date(project.created_at) < weekAgo
-  ) || [];
+  console.log(`Looking for projects older than ${daysAgo} days (before ${cutoffDate.toISOString()})`);
+  
+  const pendingDeliveries = projects?.filter(project => {
+    const projectDate = new Date(project.created_at);
+    const isOld = projectDate < cutoffDate;
+    console.log(`Project ${project.name}: created ${projectDate.toISOString()}, is old: ${isOld}`);
+    return isOld;
+  }) || [];
 
   return pendingDeliveries;
 }
@@ -219,8 +255,8 @@ async function sendOverdueReminder(user: UserProfile) {
   console.log(`Sent overdue reminder to ${user.email}`);
 }
 
-async function sendSessionReminder(user: UserProfile) {
-  const upcomingSessions = await getUpcomingSessions(user.user_id);
+async function sendSessionReminder(user: UserProfile, isTest?: boolean) {
+  const upcomingSessions = await getUpcomingSessions(user.user_id, isTest);
   
   console.log(`Found ${upcomingSessions.length} upcoming sessions for user ${user.email}`);
   
@@ -268,8 +304,8 @@ async function sendSessionReminder(user: UserProfile) {
   console.log(`Sent session reminder to ${user.email}`);
 }
 
-async function sendDeliveryReminder(user: UserProfile) {
-  const pendingDeliveries = await getPendingDeliveries(user.user_id);
+async function sendDeliveryReminder(user: UserProfile, isTest?: boolean) {
+  const pendingDeliveries = await getPendingDeliveries(user.user_id, isTest);
   
   console.log(`Found ${pendingDeliveries.length} pending deliveries for user ${user.email}`);
   
@@ -447,9 +483,9 @@ const handler = async (req: Request): Promise<Response> => {
           case 'overdue':
             return await sendOverdueReminder(user);
           case 'delivery':
-            return await sendDeliveryReminder(user);
+            return await sendDeliveryReminder(user, isTest);
           case 'session':
-            return await sendSessionReminder(user);
+            return await sendSessionReminder(user, isTest);
           case 'daily_summary':
             return await sendDailySummary(user);
           case 'task_nudge':

@@ -22,6 +22,7 @@ import SessionBanner from "@/components/SessionBanner";
 import { ProjectsSection } from "@/components/ProjectsSection";
 import { getLeadStatusStyles, formatStatusText } from "@/lib/leadStatusColors";
 import { LeadStatusBadge } from "@/components/LeadStatusBadge";
+import { AssigneesList } from "@/components/AssigneesList";
 import { formatDate, cn } from "@/lib/utils";
 import { useOrganizationQuickSettings } from "@/hooks/useOrganizationQuickSettings";
 import { useLeadStatusActions } from "@/hooks/useLeadStatusActions";
@@ -34,6 +35,7 @@ interface Lead {
   status: string;
   status_id?: string;
   created_at: string;
+  assignees?: string[];
 }
 type SessionStatus = 'planned' | 'completed' | 'in_post_processing' | 'delivered' | 'cancelled';
 interface Session {
@@ -505,6 +507,19 @@ const LeadDetail = () => {
                 setActivityRefreshKey(prev => prev + 1);
               }} editable={true} statuses={leadStatuses} />
               </div>
+            </div>
+            
+            {/* Assignees List - Desktop: same row, Mobile: separate row */}
+            <div className="mt-3">
+              <AssigneesList
+                assignees={lead.assignees || []}
+                entityType="lead"
+                entityId={lead.id}
+                onUpdate={() => {
+                  fetchLead();
+                  setActivityRefreshKey(prev => prev + 1);
+                }}
+              />
             </div>
           </div>
           

@@ -20,6 +20,7 @@ import { ProjectPaymentsSection } from "./ProjectPaymentsSection";
 import ProjectDetailsLayout from "@/components/project-details/ProjectDetailsLayout";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import ClientCard from "@/components/project-details/Summary/ClientCard";
+import { AssigneesList } from "@/components/AssigneesList";
 interface Project {
   id: string;
   name: string;
@@ -31,6 +32,7 @@ interface Project {
   status_id?: string | null;
   previous_status_id?: string | null;
   project_type_id?: string | null;
+  assignees?: string[];
 }
 interface Lead {
   id: string;
@@ -555,6 +557,16 @@ export function ViewProjectDialog({
                         {projectType && <Badge variant="outline" className="text-xs">
                             {projectType.name.toUpperCase()}
                           </Badge>}
+                      </div>
+                      
+                      {/* Assignees List */}
+                      <div className="mt-2">
+                        <AssigneesList
+                          assignees={project.assignees || []}
+                          entityType="project"
+                          entityId={project.id}
+                          onUpdate={onProjectUpdated}
+                        />
                       </div>
                     </div>
                     

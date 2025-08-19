@@ -147,16 +147,25 @@ export function AssigneesList({
   };
 
   const addAssignee = async (userId: string) => {
-    if (assignees.includes(userId)) return;
+    console.log('addAssignee called with userId:', userId);
+    console.log('current assignees:', assignees);
+    
+    if (assignees.includes(userId)) {
+      console.log('User already assigned');
+      return;
+    }
 
     setLoading(true);
     try {
       const newAssignees = [...assignees, userId];
+      console.log('newAssignees:', newAssignees);
       
       const { error } = await supabase
         .from(entityType === 'lead' ? 'leads' : 'projects')
         .update({ assignees: newAssignees })
         .eq('id', entityId);
+
+      console.log('Supabase update result:', { error });
 
       if (error) throw error;
 
@@ -168,6 +177,7 @@ export function AssigneesList({
       onUpdate?.();
       setIsAddingAssignee(false);
     } catch (error: any) {
+      console.error('Error adding assignee:', error);
       toast({
         title: "Error",
         description: error.message,
@@ -325,13 +335,16 @@ export function AssigneesList({
                 <CommandList>
                   <CommandEmpty>No team members found.</CommandEmpty>
                   <CommandGroup>
-                    {availableMembers.map((member) => (
-                      <CommandItem
-                        key={member.user_id}
-                        value={member.full_name || member.user_id}
-                        onSelect={() => addAssignee(member.user_id)}
-                        className="cursor-pointer"
-                      >
+                     {availableMembers.map((member) => (
+                       <CommandItem
+                         key={member.user_id}
+                         value={member.full_name || member.user_id}
+                         onSelect={() => {
+                           console.log('CommandItem onSelect triggered for:', member.user_id);
+                           addAssignee(member.user_id);
+                         }}
+                         className="cursor-pointer"
+                       >
                         <div className="flex items-center gap-2 w-full">
                           <Avatar className="h-6 w-6">
                             {member.profile_photo_url ? (

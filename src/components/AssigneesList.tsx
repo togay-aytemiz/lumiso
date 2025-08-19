@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { Users, Plus, X } from "lucide-react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Badge } from "@/components/ui/badge";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -14,6 +15,7 @@ interface Assignee {
   name: string;
   email?: string;
   role?: string;
+  profile_photo_url?: string;
 }
 
 interface AssigneesListProps {
@@ -28,6 +30,7 @@ interface OrganizationMember {
   user_id: string;
   role: string;
   full_name?: string;
+  profile_photo_url?: string;
 }
 
 export function AssigneesList({ 
@@ -41,6 +44,8 @@ export function AssigneesList({
   const [organizationMembers, setOrganizationMembers] = useState<OrganizationMember[]>([]);
   const [isAddingAssignee, setIsAddingAssignee] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showRemoveDialog, setShowRemoveDialog] = useState(false);
+  const [userToRemove, setUserToRemove] = useState<{ id: string; name: string } | null>(null);
   const { toast } = useToast();
 
   const maxVisible = 3;
@@ -61,7 +66,7 @@ export function AssigneesList({
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('user_id, full_name')
+        .select('user_id, full_name, profile_photo_url')
         .in('user_id', assignees);
 
       if (error) throw error;
@@ -69,7 +74,8 @@ export function AssigneesList({
       const details = data?.map(profile => ({
         id: profile.user_id,
         name: profile.full_name || 'Unknown User',
-        role: 'Member' // Default role, could be enhanced later
+        role: 'Member', // Default role, could be enhanced later
+        profile_photo_url: profile.profile_photo_url
       })) || [];
 
       setAssigneeDetails(details);
@@ -107,12 +113,13 @@ export function AssigneesList({
         const userIds = data.map(member => member.user_id);
         const { data: profiles } = await supabase
           .from('profiles')
-          .select('user_id, full_name')
+          .select('user_id, full_name, profile_photo_url')
           .in('user_id', userIds);
 
         const membersWithProfiles = data.map(member => ({
           ...member,
-          full_name: profiles?.find(p => p.user_id === member.user_id)?.full_name
+          full_name: profiles?.find(p => p.user_id === member.user_id)?.full_name,
+          profile_photo_url: profiles?.find(p => p.user_id === member.user_id)?.profile_photo_url
         }));
 
         setOrganizationMembers(membersWithProfiles || []);
@@ -156,10 +163,17 @@ export function AssigneesList({
     }
   };
 
-  const removeAssignee = async (userId: string) => {
+  const handleRemoveClick = (userId: string, userName: string) => {
+    setUserToRemove({ id: userId, name: userName });
+    setShowRemoveDialog(true);
+  };
+
+  const confirmRemoveAssignee = async () => {
+    if (!userToRemove) return;
+    
     setLoading(true);
     try {
-      const newAssignees = assignees.filter(id => id !== userId);
+      const newAssignees = assignees.filter(id => id !== userToRemove.id);
       
       const { error } = await supabase
         .from(entityType === 'lead' ? 'leads' : 'projects')
@@ -182,6 +196,8 @@ export function AssigneesList({
       });
     } finally {
       setLoading(false);
+      setShowRemoveDialog(false);
+      setUserToRemove(null);
     }
   };
 
@@ -214,12 +230,15 @@ export function AssigneesList({
               <TooltipTrigger asChild>
                 <div className="relative group">
                   <Avatar className="h-8 w-8 border-2 border-background">
+                    {assignee.profile_photo_url ? (
+                      <AvatarImage src={assignee.profile_photo_url} alt={assignee.name} />
+                    ) : null}
                     <AvatarFallback className="bg-primary text-primary-foreground text-xs">
                       {getInitials(assignee.name)}
                     </AvatarFallback>
                   </Avatar>
                   <button
-                    onClick={() => removeAssignee(assignee.id)}
+                    onClick={() => handleRemoveClick(assignee.id, assignee.name)}
                     className="absolute -top-1 -right-1 h-4 w-4 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
                   >
                     <X className="h-2 w-2" />
@@ -281,6 +300,9 @@ export function AssigneesList({
                       >
                         <div className="flex items-center gap-2 w-full">
                           <Avatar className="h-6 w-6">
+                            {member.profile_photo_url ? (
+                              <AvatarImage src={member.profile_photo_url} alt={member.full_name || 'User'} />
+                            ) : null}
                             <AvatarFallback className="text-xs">
                               {getInitials(member.full_name || 'U')}
                             </AvatarFallback>
@@ -303,6 +325,28 @@ export function AssigneesList({
           </Popover>
         </div>
       </div>
+
+      {/* Remove Confirmation Dialog */}
+      <AlertDialog open={showRemoveDialog} onOpenChange={setShowRemoveDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove Assignee</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove {userToRemove?.name} from this {entityType}?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={loading}>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmRemoveAssignee} 
+              disabled={loading}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {loading ? "Removing..." : "Remove"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </TooltipProvider>
   );
 }

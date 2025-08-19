@@ -52,7 +52,14 @@ const handler = async (req: Request): Promise<Response> => {
     // Get the authenticated user
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
-      throw new Error("Missing authorization header");
+      return new Response(
+        JSON.stringify({ 
+          error: "Authentication required", 
+          redirectToSignup: true,
+          invitationId: invitationId
+        }),
+        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
     }
 
     const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(
@@ -60,7 +67,14 @@ const handler = async (req: Request): Promise<Response> => {
     );
 
     if (authError || !user) {
-      throw new Error("Unauthorized");
+      return new Response(
+        JSON.stringify({ 
+          error: "Authentication required", 
+          redirectToSignup: true,
+          invitationId: invitationId
+        }),
+        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
     }
 
     // Verify invitation exists and is valid

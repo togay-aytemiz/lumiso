@@ -227,9 +227,20 @@ const LeadDetail = () => {
           .eq('user_id', userId)
           .single();
 
-        const {
-          data: archivedStatus
-        } = await supabase.from('project_statuses').select('id').eq('organization_id', userSettings?.active_organization_id).ilike('name', 'archived').maybeSingle();
+        let archivedStatus = null;
+        if (userSettings?.active_organization_id) {
+          try {
+            const statusQuery = await supabase
+              .from('project_statuses')
+              .select('id')
+              .eq('organization_id', userSettings.active_organization_id)
+              .ilike('name', 'archived')
+              .limit(1);
+            archivedStatus = statusQuery.data?.[0] || null;
+          } catch (err) {
+            console.error('Error fetching archived status:', err);
+          }
+        }
         if (archivedStatus?.id) {
           const {
             data: archivedProjects

@@ -106,9 +106,9 @@ const AcceptInvite = () => {
   useEffect(() => {
     if (!authLoading) {
       if (!user) {
-        // Redirect to auth with return URL
-        const returnUrl = `/accept-invite?invitation_id=${invitationId}`;
-        navigate(`/auth?returnUrl=${encodeURIComponent(returnUrl)}`);
+        // Redirect to auth with invitation ID and email
+        const email = searchParams.get('email') || '';
+        navigate(`/auth?invitation_id=${invitationId}&email=${email}`);
       } else {
         acceptInvitation();
       }

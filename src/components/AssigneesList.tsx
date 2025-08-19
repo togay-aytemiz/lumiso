@@ -35,12 +35,13 @@ interface OrganizationMember {
 }
 
 export function AssigneesList({ 
-  assignees = [], 
+  assignees: initialAssignees = [], 
   entityType, 
   entityId, 
   onUpdate,
   className = "" 
 }: AssigneesListProps) {
+  const [assignees, setAssignees] = useState<string[]>(initialAssignees);
   const [assigneeDetails, setAssigneeDetails] = useState<Assignee[]>([]);
   const [organizationMembers, setOrganizationMembers] = useState<OrganizationMember[]>([]);
   const [isAddingAssignee, setIsAddingAssignee] = useState(false);
@@ -53,6 +54,11 @@ export function AssigneesList({
   const maxVisible = 3;
   const visibleAssignees = assigneeDetails.slice(0, maxVisible);
   const overflowCount = Math.max(0, assigneeDetails.length - maxVisible);
+
+  // Sync with parent prop changes
+  useEffect(() => {
+    setAssignees(initialAssignees);
+  }, [initialAssignees]);
 
   useEffect(() => {
     fetchAssigneeDetails();
@@ -147,66 +153,37 @@ export function AssigneesList({
   };
 
   const addAssignee = async (userId: string) => {
-    console.log('=== ASSIGNMENT DEBUG START ===');
-    console.log('addAssignee called with userId:', userId);
-    console.log('current assignees:', assignees);
-    console.log('entityType:', entityType);
-    console.log('entityId:', entityId);
-    
-    if (assignees.includes(userId)) {
-      console.log('User already assigned, stopping');
-      return;
-    }
+    if (assignees.includes(userId)) return;
 
-    setLoading(true);
+    // Update local state immediately for instant UI feedback
+    const newAssignees = [...assignees, userId];
+    setAssignees(newAssignees);
+    setIsAddingAssignee(false);
+
     try {
-      const newAssignees = [...assignees, userId];
-      console.log('newAssignees array:', newAssignees);
-      
       const tableName = entityType === 'lead' ? 'leads' : 'projects';
-      console.log('Updating table:', tableName);
       
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from(tableName)
         .update({ assignees: newAssignees })
-        .eq('id', entityId)
-        .select();
+        .eq('id', entityId);
 
-      console.log('Supabase update result:', { data, error });
+      if (error) throw error;
 
-      if (error) {
-        console.error('Supabase error details:', error);
-        throw error;
-      }
-
-      console.log('Assignment successful, showing toast');
       toast({
         title: "Success",
         description: "Assignee added successfully"
       });
 
-      // Refresh the assignee details immediately
-      await fetchAssigneeDetails();
-      
-      console.log('Calling onUpdate callback:', typeof onUpdate);
       onUpdate?.();
-      setIsAddingAssignee(false);
-      console.log('=== ASSIGNMENT DEBUG END ===');
     } catch (error: any) {
-      console.error('Error in addAssignee:', error);
-      console.error('Error details:', {
-        message: error.message,
-        code: error.code,
-        details: error.details,
-        hint: error.hint
-      });
+      // Revert local state on error
+      setAssignees(assignees);
       toast({
         title: "Error",
         description: error.message,
         variant: "destructive"
       });
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -218,10 +195,13 @@ export function AssigneesList({
   const confirmRemoveAssignee = async () => {
     if (!userToRemove) return;
     
-    setLoading(true);
+    // Update local state immediately for instant UI feedback
+    const newAssignees = assignees.filter(id => id !== userToRemove.id);
+    setAssignees(newAssignees);
+    setShowRemoveDialog(false);
+    setUserToRemove(null);
+
     try {
-      const newAssignees = assignees.filter(id => id !== userToRemove.id);
-      
       const { error } = await supabase
         .from(entityType === 'lead' ? 'leads' : 'projects')
         .update({ assignees: newAssignees })
@@ -236,15 +216,13 @@ export function AssigneesList({
 
       onUpdate?.();
     } catch (error: any) {
+      // Revert local state on error
+      setAssignees([...assignees, userToRemove.id]);
       toast({
         title: "Error",
         description: error.message,
         variant: "destructive"
       });
-    } finally {
-      setLoading(false);
-      setShowRemoveDialog(false);
-      setUserToRemove(null);
     }
   };
 

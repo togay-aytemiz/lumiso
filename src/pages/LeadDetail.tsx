@@ -26,6 +26,7 @@ import { AssigneesList } from "@/components/AssigneesList";
 import { formatDate, cn } from "@/lib/utils";
 import { useOrganizationQuickSettings } from "@/hooks/useOrganizationQuickSettings";
 import { useLeadStatusActions } from "@/hooks/useLeadStatusActions";
+import { usePermissions } from "@/hooks/usePermissions";
 interface Lead {
   id: string;
   name: string;
@@ -36,6 +37,7 @@ interface Lead {
   status_id?: string;
   created_at: string;
   assignees?: string[];
+  user_id: string;
 }
 type SessionStatus = 'planned' | 'completed' | 'in_post_processing' | 'delivered' | 'cancelled';
 interface Session {
@@ -112,6 +114,20 @@ const LeadDetail = () => {
       setActivityRefreshKey(prev => prev + 1);
     }
   });
+
+  const { hasPermission, canEditLead } = usePermissions();
+  const [userCanEdit, setUserCanEdit] = useState(false);
+
+  // Check edit permissions when lead data loads
+  useEffect(() => {
+    const checkEditPermissions = async () => {
+      if (lead) {
+        const canEdit = await canEditLead(lead.user_id, lead.assignees);
+        setUserCanEdit(canEdit);
+      }
+    };
+    checkEditPermissions();
+  }, [lead, canEditLead]);
 
   // UI state for Lead Information card
   const [editOpen, setEditOpen] = useState(false);
@@ -527,7 +543,9 @@ const LeadDetail = () => {
           <div className="flex-shrink-0">
             {/* Header Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-              <ScheduleSessionDialog leadId={lead.id} leadName={lead.name} onSessionScheduled={handleSessionScheduled} disabled={sessions.some(s => s.status === 'planned')} disabledTooltip="A planned session already exists." />
+              {hasPermission('create_sessions') && (
+                <ScheduleSessionDialog leadId={lead.id} leadName={lead.name} onSessionScheduled={handleSessionScheduled} disabled={sessions.some(s => s.status === 'planned')} disabledTooltip="A planned session already exists." />
+              )}
 
               {!settingsLoading && userSettings.show_quick_status_buttons && completedStatus && formData.status !== completedStatus.name && <Button onClick={handleMarkAsCompleted} disabled={isUpdating} className="bg-green-600 hover:bg-green-700 text-white h-10 w-full sm:w-auto" size="sm">
                   <CheckCircle className="h-4 w-4 mr-2" />
@@ -569,7 +587,9 @@ const LeadDetail = () => {
             
             {/* Header Action Buttons - Desktop: stays in place */}
             <div className="flex items-center gap-3 flex-shrink-0">
-              <ScheduleSessionDialog leadId={lead.id} leadName={lead.name} onSessionScheduled={handleSessionScheduled} disabled={sessions.some(s => s.status === 'planned')} disabledTooltip="A planned session already exists." />
+              {hasPermission('create_sessions') && (
+                <ScheduleSessionDialog leadId={lead.id} leadName={lead.name} onSessionScheduled={handleSessionScheduled} disabled={sessions.some(s => s.status === 'planned')} disabledTooltip="A planned session already exists." />
+              )}
 
               {!settingsLoading && userSettings.show_quick_status_buttons && completedStatus && formData.status !== completedStatus.name && <Button onClick={handleMarkAsCompleted} disabled={isUpdating} className="bg-green-600 hover:bg-green-700 text-white h-10" size="sm">
                   <CheckCircle className="h-4 w-4 mr-2" />
@@ -606,25 +626,27 @@ const LeadDetail = () => {
                   Created on {new Date(lead.created_at).toLocaleDateString('tr-TR')}
                 </CardDescription>
               </div>
-              <Button variant="ghost" size="sm" onClick={() => {
-              setFormData({
-                name: lead.name || "",
-                email: lead.email || "",
-                phone: lead.phone || "",
-                notes: lead.notes || "",
-                status: lead.status || formData.status
-              });
-              setInitialFormData({
-                name: lead.name || "",
-                email: lead.email || "",
-                phone: lead.phone || "",
-                notes: lead.notes || "",
-                status: lead.status || formData.status
-              });
-              setEditOpen(true);
-            }} aria-label="Edit lead information" className="absolute top-2 right-2 text-muted-foreground hover:text-foreground text-sm h-8 px-2">
-                Edit
-              </Button>
+              {userCanEdit && (
+                <Button variant="ghost" size="sm" onClick={() => {
+                setFormData({
+                  name: lead.name || "",
+                  email: lead.email || "",
+                  phone: lead.phone || "",
+                  notes: lead.notes || "",
+                  status: lead.status || formData.status
+                });
+                setInitialFormData({
+                  name: lead.name || "",
+                  email: lead.email || "",
+                  phone: lead.phone || "",
+                  notes: lead.notes || "",
+                  status: lead.status || formData.status
+                });
+                setEditOpen(true);
+              }} aria-label="Edit lead information" className="absolute top-2 right-2 text-muted-foreground hover:text-foreground text-sm h-8 px-2">
+                  Edit
+                </Button>
+              )}
             </CardHeader>
             <CardContent className="space-y-3">
               <ClientDetailsList name={lead.name} email={lead.email} phone={lead.phone} notes={lead.notes} showQuickActions />
@@ -644,31 +666,35 @@ const LeadDetail = () => {
           <ActivitySection key={activityRefreshKey} leadId={lead.id} leadName={lead.name} />
 
           {/* Add Project Dialog */}
-          <EnhancedProjectDialog 
-            defaultLeadId={lead.id}
-            onProjectCreated={() => {
-              handleProjectUpdated();
-              setShowAddProjectDialog(false);
-            }}
-          >
-            <Button 
-              onClick={() => setShowAddProjectDialog(true)}
-              style={{ display: showAddProjectDialog ? 'none' : 'inline-flex' }}
+          {hasPermission('create_projects') && (
+            <EnhancedProjectDialog 
+              defaultLeadId={lead.id}
+              onProjectCreated={() => {
+                handleProjectUpdated();
+                setShowAddProjectDialog(false);
+              }}
             >
-              Add Project
-            </Button>
-          </EnhancedProjectDialog>
-
-          <div className="border border-destructive/20 bg-destructive/5 rounded-md p-4 max-w-full text-center">
-            <div className="space-y-3">
-              <Button variant="outline" onClick={() => setShowDeleteDialog(true)} className="w-full max-w-xs border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground">
-                Delete Lead
+              <Button 
+                onClick={() => setShowAddProjectDialog(true)}
+                style={{ display: showAddProjectDialog ? 'none' : 'inline-flex' }}
+              >
+                Add Project
               </Button>
-              <p className="text-xs text-muted-foreground break-words">
-                This will permanently delete the lead and ALL related data: projects, sessions, reminders/notes, payments, services, and activities.
-              </p>
+            </EnhancedProjectDialog>
+          )}
+
+          {hasPermission('delete_leads') && (
+            <div className="border border-destructive/20 bg-destructive/5 rounded-md p-4 max-w-full text-center">
+              <div className="space-y-3">
+                <Button variant="outline" onClick={() => setShowDeleteDialog(true)} className="w-full max-w-xs border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground">
+                  Delete Lead
+                </Button>
+                <p className="text-xs text-muted-foreground break-words">
+                  This will permanently delete the lead and ALL related data: projects, sessions, reminders/notes, payments, services, and activities.
+                </p>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
 

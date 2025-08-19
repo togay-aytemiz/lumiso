@@ -14,6 +14,7 @@ import { useOrganizationQuickSettings } from "@/hooks/useOrganizationQuickSettin
 import { AssigneesPicker } from "./AssigneesPicker";
 import { InlineAssigneesPicker } from "./InlineAssigneesPicker";
 import { useProfile } from "@/contexts/ProfileContext";
+import { usePermissions } from "@/hooks/usePermissions";
 
 interface AddLeadDialogProps {
   onLeadAdded: () => void;
@@ -35,6 +36,7 @@ const AddLeadDialog = ({ onLeadAdded, open, onOpenChange }: AddLeadDialogProps) 
     assignees: [] as string[],
   });
   const { profile } = useProfile();
+  const { hasPermission } = usePermissions();
 
   useEffect(() => {
     fetchLeadStatuses();

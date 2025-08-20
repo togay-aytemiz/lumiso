@@ -83,8 +83,8 @@ async function getUserPermissions(userId: string, organizationId: string): Promi
   }
 }
 
-async function getEnabledUsersForNotification(type: string, sendTime?: string, isTest?: boolean): Promise<UserProfile[]> {
-  console.log(`Getting enabled users for notification type: ${type}, sendTime: ${sendTime}, isTest: ${isTest}`);
+async function getEnabledUsersForNotification(type: string, sendTime?: string, isTest?: boolean, testUserId?: string): Promise<UserProfile[]> {
+  console.log(`Getting enabled users for notification type: ${type}, sendTime: ${sendTime}, isTest: ${isTest}, testUserId: ${testUserId}`);
   
   const notificationFieldMap: { [key: string]: string } = {
     'daily-summary': 'notification_daily_summary_enabled',
@@ -109,16 +109,17 @@ async function getEnabledUsersForNotification(type: string, sendTime?: string, i
       time_format
     `);
 
-  // Always filter by enabled status
-  query = query.eq(notificationFieldMap[type], true);
-  
-  // For testing, limit to first user only to avoid rate limits
-  if (isTest) {
-    query = query.limit(1);
-    console.log('Test mode: limiting to 1 user to avoid rate limits');
-  } else if (sendTime && timeFieldMap[type]) {
-    // Only add time filter for non-test scenarios
-    query = query.eq(timeFieldMap[type], sendTime);
+  // For testing, only get the specific test user
+  if (isTest && testUserId) {
+    query = query.eq('user_id', testUserId);
+    console.log(`Test mode: sending only to user ${testUserId}`);
+  } else {
+    // Normal mode: filter by enabled status and time
+    query = query.eq(notificationFieldMap[type], true);
+    
+    if (sendTime && timeFieldMap[type]) {
+      query = query.eq(timeFieldMap[type], sendTime);
+    }
   }
 
   const { data: enabledUsers, error } = await query;
@@ -558,7 +559,7 @@ const handler = async (req: Request): Promise<Response> => {
     const currentTime = isTest ? undefined : `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
     
     // Get enabled users based on notification type
-    const enabledUsers = await getEnabledUsersForNotification(type, currentTime, isTest);
+    const enabledUsers = await getEnabledUsersForNotification(type, currentTime, isTest, userId);
     
     if (enabledUsers.length === 0) {
       const timeMsg = isTest ? "testing" : `time ${currentTime}`;

@@ -32,7 +32,8 @@ interface ProjectStatus {
   created_at: string;
   updated_at: string;
   sort_order: number;
-  lifecycle?: string;
+  lifecycle?: 'active' | 'completed' | 'cancelled';
+  is_system_required?: boolean;
 }
 
 // Predefined color palette (similar to Pixieset)
@@ -206,8 +207,13 @@ const ProjectStatusesSection = () => {
     }
   };
 
-  const handleEdit = (status: ProjectStatus) => {
-    setEditingStatus(status);
+  const handleEdit = (status: any) => {
+    // Cast to proper type for dialog
+    const typedStatus: ProjectStatus = {
+      ...status,
+      lifecycle: (status.lifecycle as 'active' | 'completed' | 'cancelled') || 'active'
+    };
+    setEditingStatus(typedStatus);
     form.reset({ name: status.name, color: status.color });
     setIsEditDialogOpen(true);
   };

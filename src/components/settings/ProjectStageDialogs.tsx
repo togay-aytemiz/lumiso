@@ -213,8 +213,17 @@ export function AddProjectStageDialog({ open, onOpenChange, onStageAdded }: AddP
   );
 }
 
+// Types for compatibility with ProjectStatusesSection
+interface ProjectStatus {
+  id: string;
+  name: string;
+  color: string;
+  lifecycle?: 'active' | 'completed' | 'cancelled';
+  is_system_required?: boolean;
+}
+
 interface EditProjectStageDialogProps {
-  stage: any;
+  stage: ProjectStatus | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onStageUpdated: () => void;
@@ -280,6 +289,18 @@ export function EditProjectStageDialog({ stage, open, onOpenChange, onStageUpdat
   };
 
   const handleDelete = async () => {
+    if (!stage) return;
+    
+    // Check if it's a system required stage
+    if (stage.is_system_required) {
+      toast({
+        title: "Cannot Delete",
+        description: "This stage is required and cannot be deleted. You may rename it.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     if (!window.confirm("Are you sure you want to delete this stage?")) return;
     
     setLoading(true);
@@ -311,6 +332,7 @@ export function EditProjectStageDialog({ stage, open, onOpenChange, onStageUpdat
 
   if (!stage) return null;
 
+  const isSystemRequired = stage.is_system_required;
   const isDirty = Boolean(
     formData.name !== stage.name ||
     formData.color !== stage.color ||
@@ -324,12 +346,13 @@ export function EditProjectStageDialog({ stage, open, onOpenChange, onStageUpdat
   };
 
   const footerActions = [
-    {
+    // Only show delete for non-system-required stages
+    ...(!isSystemRequired ? [{
       label: "Delete",
       onClick: handleDelete,
       variant: "destructive" as const,
       disabled: loading
-    },
+    }] : []),
     {
       label: "Cancel",
       onClick: () => onOpenChange(false),
@@ -370,13 +393,18 @@ export function EditProjectStageDialog({ stage, open, onOpenChange, onStageUpdat
             maxLength={50}
             className="rounded-xl"
           />
+          {isSystemRequired && (
+            <p className="text-sm text-muted-foreground">
+              This is a system-required stage for new projects.
+            </p>
+          )}
         </div>
 
-          <div className="space-y-3">
-            <Label>Stage Color</Label>
-            <div className="grid grid-cols-6 gap-3 p-2">
-              {colorOptions.map((color) => (
-                <button
+        <div className="space-y-3">
+          <Label>Stage Color</Label>
+          <div className="grid grid-cols-6 gap-3 p-2">
+            {colorOptions.map((color) => (
+              <button
                 key={color}
                 type="button"
                 onClick={() => setFormData(prev => ({ ...prev, color }))}
@@ -391,34 +419,46 @@ export function EditProjectStageDialog({ stage, open, onOpenChange, onStageUpdat
           </div>
         </div>
 
-        <div className="space-y-3">
-          <Label>Lifecycle</Label>
-          <div className="grid grid-cols-3 gap-2 p-1 bg-muted rounded-lg">
-            {(["active", "completed", "cancelled"] as const).map((lifecycle) => (
-              <button
-                key={lifecycle}
-                type="button"
-                onClick={() => setFormData(prev => ({ ...prev, lifecycle }))}
-                className={cn(
-                  "px-3 py-2 text-sm font-medium rounded-md transition-all capitalize",
-                  formData.lifecycle === lifecycle
-                    ? "bg-background shadow-sm text-foreground"
-                    : "text-muted-foreground hover:text-foreground hover:bg-background/50"
-                )}
-              >
-                {lifecycle}
-              </button>
-            ))}
+        {/* Only show lifecycle selector for non-system-required stages */}
+        {!isSystemRequired && (
+          <div className="space-y-3">
+            <Label>Lifecycle</Label>
+            <div className="grid grid-cols-3 gap-2 p-1 bg-muted rounded-lg">
+              {(["active", "completed", "cancelled"] as const).map((lifecycle) => (
+                <button
+                  key={lifecycle}
+                  type="button"
+                  onClick={() => setFormData(prev => ({ ...prev, lifecycle }))}
+                  className={cn(
+                    "px-3 py-2 text-sm font-medium rounded-md transition-all capitalize",
+                    formData.lifecycle === lifecycle
+                      ? "bg-background shadow-sm text-foreground"
+                      : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                  )}
+                >
+                  {lifecycle}
+                </button>
+              ))}
+            </div>
+            <div className="space-y-1 text-sm text-muted-foreground">
+              <p>Lifecycle drives automations and reporting:</p>
+              <ul className="space-y-1 ml-4">
+                <li>• <strong>Active:</strong> Stage is in progress</li>
+                <li>• <strong>Completed:</strong> Project successfully finished</li>
+                <li>• <strong>Cancelled:</strong> Project stopped or cancelled</li>
+              </ul>
+            </div>
           </div>
-          <div className="space-y-1 text-sm text-muted-foreground">
-            <p>Lifecycle drives automations and reporting:</p>
-            <ul className="space-y-1 ml-4">
-              <li>• <strong>Active:</strong> Stage is in progress</li>
-              <li>• <strong>Completed:</strong> Project successfully finished</li>
-              <li>• <strong>Cancelled:</strong> Project stopped or cancelled</li>
-            </ul>
+        )}
+
+        {/* Show info for system required stages */}
+        {isSystemRequired && (
+          <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-sm text-blue-800">
+              <strong>System Required Stage:</strong> This stage is essential for project workflows and must remain Active. You can rename it but cannot delete it or change its lifecycle.
+            </p>
           </div>
-        </div>
+        )}
       </div>
     </AppSheetModal>
   );

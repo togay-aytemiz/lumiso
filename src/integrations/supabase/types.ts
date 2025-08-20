@@ -262,6 +262,7 @@ export type Database = {
           id: string
           is_default: boolean
           is_system_final: boolean
+          is_system_required: boolean | null
           lifecycle: string | null
           name: string
           organization_id: string | null
@@ -275,6 +276,7 @@ export type Database = {
           id?: string
           is_default?: boolean
           is_system_final?: boolean
+          is_system_required?: boolean | null
           lifecycle?: string | null
           name: string
           organization_id?: string | null
@@ -288,6 +290,7 @@ export type Database = {
           id?: string
           is_default?: boolean
           is_system_final?: boolean
+          is_system_required?: boolean | null
           lifecycle?: string | null
           name?: string
           organization_id?: string | null
@@ -699,6 +702,7 @@ export type Database = {
           color: string
           created_at: string
           id: string
+          is_system_required: boolean | null
           lifecycle: string | null
           name: string
           organization_id: string | null
@@ -710,6 +714,7 @@ export type Database = {
           color: string
           created_at?: string
           id?: string
+          is_system_required?: boolean | null
           lifecycle?: string | null
           name: string
           organization_id?: string | null
@@ -721,6 +726,7 @@ export type Database = {
           color?: string
           created_at?: string
           id?: string
+          is_system_required?: boolean | null
           lifecycle?: string | null
           name?: string
           organization_id?: string | null
@@ -923,6 +929,7 @@ export type Database = {
           created_at: string
           id: string
           is_system_initial: boolean
+          is_system_required: boolean | null
           lifecycle: string | null
           name: string
           organization_id: string | null
@@ -935,6 +942,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_system_initial?: boolean
+          is_system_required?: boolean | null
           lifecycle?: string | null
           name: string
           organization_id?: string | null
@@ -947,6 +955,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_system_initial?: boolean
+          is_system_required?: boolean | null
           lifecycle?: string | null
           name?: string
           organization_id?: string | null

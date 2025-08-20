@@ -5,6 +5,7 @@ import { Progress } from "@/components/ui/progress";
 import { HelpCircle, ArrowRight, CheckCircle, Play } from "lucide-react";
 import { SampleDataModal } from "@/components/SampleDataModal";
 import { RestartGuidedModeButton } from "@/components/RestartGuidedModeButton";
+import { ExitGuidanceModeButton } from "@/components/ExitGuidanceModeButton";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 
@@ -69,7 +70,7 @@ const GettingStarted = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Custom Header for Guidance Mode */}
-      <div className="bg-card border-b border-border sticky top-0 z-40">
+      <div className="bg-card border-b border-border">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center py-6 gap-6">
           <div className="text-center sm:text-left">
@@ -300,8 +301,9 @@ const GettingStarted = () => {
         onClose={() => setShowSampleDataModal(false)}
       />
 
-      {/* Developer Override Button */}
+      {/* Developer Override Buttons */}
       <RestartGuidedModeButton />
+      <ExitGuidanceModeButton />
     </div>
   );
 };

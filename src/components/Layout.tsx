@@ -9,7 +9,7 @@ import { useOnboarding } from "@/hooks/useOnboarding";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
-  const { shouldShowOnboarding, loading: onboardingLoading } = useOnboarding();
+  const { shouldShowOnboarding, loading: onboardingLoading, inGuidedSetup } = useOnboarding();
   const [showOnboardingModal, setShowOnboardingModal] = useState(false);
 
   // Simple rule: Don't show modal on getting-started page
@@ -56,7 +56,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </div>
         </main>
       </div>
-      <MobileBottomNav hideForOnboarding={showOnboardingModal} />
+      <MobileBottomNav hideForOnboarding={showOnboardingModal || inGuidedSetup} />
       
       {/* Onboarding Modal */}
       <OnboardingModal 

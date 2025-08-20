@@ -87,61 +87,63 @@ export function SampleDataModal({ open, onClose }: SampleDataModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md mx-auto">
-        <DialogHeader className="px-6 pt-6">
+      <DialogContent className="sm:max-w-lg mx-auto">
+        <DialogHeader className="px-6 pt-6 text-center">
           <DialogTitle className="text-xl">Skip Setup & Use Sample Data?</DialogTitle>
-          <DialogDescription className="text-base">
+          <DialogDescription className="text-base mt-3">
             We'll populate your CRM with realistic sample data so you can explore all features immediately. 
             You can always customize or clear this data later.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-4 px-6">
-          <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
-            What's included:
-          </h4>
-          <div className="grid gap-3">
-            {sampleDataItems.map((item, index) => {
-              const Icon = item.icon;
-              return (
-                <div key={index} className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
-                  <Icon className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-                  <div>
-                    <h5 className="font-medium text-sm">{item.title}</h5>
-                    <p className="text-xs text-muted-foreground">{item.description}</p>
+        <div className="px-6 py-6">
+          <div className="mb-6">
+            <h4 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide mb-4">
+              What's included:
+            </h4>
+            <div className="space-y-4">
+              {sampleDataItems.map((item, index) => {
+                const Icon = item.icon;
+                return (
+                  <div key={index} className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
+                    <Icon className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                    <div className="text-left">
+                      <h5 className="font-medium text-sm">{item.title}</h5>
+                      <p className="text-xs text-muted-foreground mt-1">{item.description}</p>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
-        </div>
 
-        <div className="flex flex-col sm:flex-row gap-3 pt-4 px-6 pb-6">
-          <Button 
-            variant="outline" 
-            onClick={onClose}
-            className="flex-1 min-h-[44px]"
-            disabled={isLoading}
-          >
-            Continue Guided Setup
-          </Button>
-          <Button 
-            onClick={handleSkipWithSampleData}
-            disabled={isLoading}
-            className="flex-1 min-h-[44px]"
-          >
-            {isLoading ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                Setting up...
-              </>
-            ) : (
-              <>
-                <CheckCircle className="w-4 h-4 mr-2" />
-                Start with Sample Data
-              </>
-            )}
-          </Button>
+          <div className="flex flex-col sm:flex-row sm:justify-center gap-4 pt-4 pb-2">
+            <Button 
+              variant="outline" 
+              onClick={onClose}
+              className="min-h-[44px] sm:w-auto"
+              disabled={isLoading}
+            >
+              Continue Guided Setup
+            </Button>
+            <Button 
+              onClick={handleSkipWithSampleData}
+              disabled={isLoading}
+              className="min-h-[44px] sm:w-auto"
+            >
+              {isLoading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                  Setting up...
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  Start with Sample Data
+                </>
+              )}
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

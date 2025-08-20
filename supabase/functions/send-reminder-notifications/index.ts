@@ -16,7 +16,7 @@ const corsHeaders = {
 };
 
 interface ReminderRequest {
-  type: 'daily_summary' | 'weekly_recap' | 'new_assignment' | 'project_milestone';
+  type: 'daily-summary' | 'weekly-recap' | 'new-assignment' | 'project-milestone';
   organizationId?: string;
   userId?: string;
   isTest?: boolean;
@@ -85,17 +85,18 @@ async function getUserPermissions(userId: string, organizationId: string): Promi
 
 async function getEnabledUsersForNotification(type: string, sendTime?: string, isTest?: boolean): Promise<UserProfile[]> {
   console.log(`Getting enabled users for notification type: ${type}, sendTime: ${sendTime}, isTest: ${isTest}`);
+  console.log(`Field to check: ${notificationFieldMap[type]}`);
   
   const notificationFieldMap: { [key: string]: string } = {
-    'daily_summary': 'notification_daily_summary_enabled',
-    'weekly_recap': 'notification_weekly_recap_enabled',
-    'new_assignment': 'notification_new_assignment_enabled',
-    'project_milestone': 'notification_project_milestone_enabled'
+    'daily-summary': 'notification_daily_summary_enabled',
+    'weekly-recap': 'notification_weekly_recap_enabled',
+    'new-assignment': 'notification_new_assignment_enabled',
+    'project-milestone': 'notification_project_milestone_enabled'
   };
 
   const timeFieldMap: { [key: string]: string } = {
-    'daily_summary': 'notification_scheduled_time',
-    'weekly_recap': 'notification_scheduled_time'
+    'daily-summary': 'notification_scheduled_time',
+    'weekly-recap': 'notification_scheduled_time'
   };
 
   let query = supabase
@@ -118,6 +119,8 @@ async function getEnabledUsersForNotification(type: string, sendTime?: string, i
   }
 
   const { data: enabledUsers, error } = await query;
+  
+  console.log(`Query result: ${enabledUsers?.length || 0} users found, error:`, error);
 
   if (error) {
     console.error('Error fetching enabled users:', error);
@@ -568,15 +571,15 @@ const handler = async (req: Request): Promise<Response> => {
     const results = await Promise.allSettled(
       enabledUsers.map(async (user) => {
         switch (type) {
-          case 'daily_summary':
+          case 'daily-summary':
             return await sendDailySummary(user, isTest);
-          case 'weekly_recap':
+          case 'weekly-recap':
             return await sendWeeklyRecap(user, isTest);
-          case 'new_assignment':
+          case 'new-assignment':
             // Immediate notification - handled separately
             console.log(`New assignment notification for ${user.email} - handled by immediate notification system`);
             return;
-          case 'project_milestone':
+          case 'project-milestone':
             // Immediate notification - handled separately  
             console.log(`Project milestone notification for ${user.email} - handled by immediate notification system`);
             return;

@@ -359,6 +359,7 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
           .insert({
             project_id: newProject.id,
             user_id: user.id,
+            organization_id: userSettings.active_organization_id,
             amount: basePrice,
             description: 'Base Price',
             status: 'due',

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +12,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { AddSessionStatusDialog, EditSessionStatusDialog } from "./settings/SessionStatusDialogs";
-import { getUserOrganizationId } from "@/lib/organizationUtils";
+import { useSessionStatuses } from "@/hooks/useOrganizationData";
+import { useOrganization } from "@/contexts/OrganizationContext";
 import { cn } from "@/lib/utils";
 import SettingsSection from "./SettingsSection";
 
@@ -50,13 +51,13 @@ const PREDEFINED_COLORS = [
 ];
 
 const SessionStatusesSection = () => {
-  const [statuses, setStatuses] = useState<SessionStatus[]>([]);
-  const [loading, setLoading] = useState(true);
   const [editingStatus, setEditingStatus] = useState<SessionStatus | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const { toast } = useToast();
+  const { activeOrganizationId } = useOrganization();
+  const { data: statuses = [], isLoading, refetch } = useSessionStatuses();
 
   const form = useForm<SessionStatusForm>({
     resolver: zodResolver(sessionStatusSchema),
@@ -71,60 +72,18 @@ const SessionStatusesSection = () => {
     return status.is_system_initial || n === 'completed' || n === 'cancelled';
   };
 
-  const fetchStatuses = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const organizationId = await getUserOrganizationId();
-      if (!organizationId) throw new Error('No organization found');
-
-      const { data, error } = await supabase
-        .from('session_statuses')
-        .select('*')
-        .eq('organization_id', organizationId)
-        .order('sort_order', { ascending: true });
-
-      if (error) throw error;
-
-      if (!data || data.length === 0) {
-        await createDefaultStatuses();
-        return;
-      }
-
-      setStatuses(data);
-    } catch (error) {
-      console.error('Error fetching session statuses:', error);
-      toast({ title: "Error", description: "Failed to load session statuses", variant: "destructive" });
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const createDefaultStatuses = async () => {
+    if (!activeOrganizationId) return;
+    
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const organizationId = await getUserOrganizationId();
-      if (!organizationId) throw new Error('No organization found');
+      await supabase.rpc('ensure_default_session_statuses', {
+        user_uuid: user.id
+      });
 
-      const defaults = [
-        { name: 'Planned', color: '#A0AEC0', sort_order: 1, is_system_initial: true },
-        { name: 'Confirmed', color: '#9F7AEA', sort_order: 2, is_system_initial: false },
-        { name: 'Completed', color: '#48BB78', sort_order: 3, is_system_initial: false },
-        { name: 'Delivered', color: '#4299E1', sort_order: 4, is_system_initial: false },
-        { name: 'Cancelled', color: '#F56565', sort_order: 5, is_system_initial: false },
-      ];
-
-      const { data, error } = await supabase
-        .from('session_statuses')
-        .insert(defaults.map((d) => ({ ...d, user_id: user.id, organization_id: organizationId })))
-        .select('*')
-        .order('sort_order', { ascending: true });
-
-      if (error) throw error;
-      setStatuses(data as SessionStatus[]);
+      await refetch();
     } catch (error) {
       console.error('Error creating default session statuses:', error);
       toast({ title: "Error", description: "Failed to create default session statuses", variant: "destructive" });
@@ -138,21 +97,19 @@ const SessionStatusesSection = () => {
       if (!user) throw new Error('Not authenticated');
 
       if (editingStatus) {
-        const organizationId = await getUserOrganizationId();
-        if (!organizationId) throw new Error('No organization found');
+        if (!activeOrganizationId) throw new Error('No organization found');
 
         const { error } = await supabase
           .from('session_statuses')
           .update({ name: data.name, color: data.color })
           .eq('id', editingStatus.id)
-          .eq('organization_id', organizationId);
+          .eq('organization_id', activeOrganizationId);
         if (error) throw error;
         toast({ title: "Success", description: "Session stage updated" });
         setIsEditDialogOpen(false);
       } else {
         const maxSortOrder = Math.max(...statuses.map(s => s.sort_order), 0);
-        const organizationId = await getUserOrganizationId();
-        if (!organizationId) throw new Error('No organization found');
+        if (!activeOrganizationId) throw new Error('No organization found');
 
         const { error } = await supabase
           .from('session_statuses')
@@ -160,7 +117,7 @@ const SessionStatusesSection = () => {
             name: data.name, 
             color: data.color, 
             user_id: user.id, 
-            organization_id: organizationId,
+            organization_id: activeOrganizationId,
             sort_order: maxSortOrder + 1, 
             is_system_initial: false 
           });
@@ -171,7 +128,7 @@ const SessionStatusesSection = () => {
 
       form.reset({ name: "", color: PREDEFINED_COLORS[0] });
       setEditingStatus(null);
-      fetchStatuses();
+      await refetch();
     } catch (error: any) {
       console.error('Error saving session status:', error);
       toast({ title: "Error", description: error?.message || 'Failed to save session stage', variant: "destructive" });
@@ -200,17 +157,16 @@ const SessionStatusesSection = () => {
         toast({ title: "Not allowed", description: `The "${status.name}" stage cannot be deleted`, variant: "destructive" });
         return;
       }
-      const organizationId = await getUserOrganizationId();
-      if (!organizationId) throw new Error('No organization found');
+      if (!activeOrganizationId) throw new Error('No organization found');
 
       const { error } = await supabase
         .from('session_statuses')
         .delete()
         .eq('id', status.id)
-        .eq('organization_id', organizationId);
+        .eq('organization_id', activeOrganizationId);
       if (error) throw error;
       toast({ title: "Success", description: "Session stage deleted" });
-      fetchStatuses();
+      await refetch();
     } catch (error: any) {
       console.error('Error deleting session status:', error);
       toast({ title: "Error", description: error?.message || 'Failed to delete session stage', variant: "destructive" });
@@ -219,17 +175,16 @@ const SessionStatusesSection = () => {
 
   const handleDragEnd = async (result: any) => {
     if (!result.destination) return;
-    const items = Array.from(statuses);
-    const [reordered] = items.splice(result.source.index, 1);
-    items.splice(result.destination.index, 0, reordered);
-    setStatuses(items);
-
+    // For drag and drop with cached data, we need to update the server directly
+    // The refetch will update the local state
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
+      if (!activeOrganizationId) throw new Error('No organization found');
 
-      const organizationId = await getUserOrganizationId();
-      if (!organizationId) throw new Error('No organization found');
+      const items = Array.from(statuses);
+      const [reordered] = items.splice(result.source.index, 1);
+      items.splice(result.destination.index, 0, reordered);
 
       for (let i = 0; i < items.length; i++) {
         const s = items[i];
@@ -237,14 +192,14 @@ const SessionStatusesSection = () => {
           .from('session_statuses')
           .update({ sort_order: i + 1 })
           .eq('id', s.id)
-          .eq('organization_id', organizationId);
+          .eq('organization_id', activeOrganizationId);
         if (error) throw error;
       }
       toast({ title: "Success", description: "Stage order updated" });
+      await refetch();
     } catch (error) {
       console.error('Error updating order:', error);
       toast({ title: "Error", description: 'Failed to update order', variant: "destructive" });
-      fetchStatuses();
     }
   };
 
@@ -360,9 +315,12 @@ const SessionStatusesSection = () => {
     </DialogContent>
   );
 
-  useEffect(() => { fetchStatuses(); }, []);
+  // Create default statuses if none exist
+  if (!isLoading && activeOrganizationId && statuses.length === 0) {
+    createDefaultStatuses();
+  }
 
-  if (loading) {
+  if (isLoading) {
     return (
       <SettingsSection title="Session Stages" description="Add, rename and reorder session stages.">
         <div className="flex items-center justify-center py-8">
@@ -447,7 +405,7 @@ const SessionStatusesSection = () => {
       <AddSessionStatusDialog
         open={isAddDialogOpen}
         onOpenChange={setIsAddDialogOpen}
-        onStatusAdded={fetchStatuses}
+        onStatusAdded={refetch}
       />
 
       {/* Edit Dialog */}
@@ -455,7 +413,7 @@ const SessionStatusesSection = () => {
         status={editingStatus}
         open={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
-        onStatusUpdated={fetchStatuses}
+        onStatusUpdated={refetch}
       />
     </SettingsSection>
   );

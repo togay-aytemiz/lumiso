@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +12,8 @@ import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { AddProjectStageDialog, EditProjectStageDialog } from "./settings/ProjectStageDialogs";
-import { getUserOrganizationId } from "@/lib/organizationUtils";
+import { useProjectStatuses } from "@/hooks/useOrganizationData";
+import { useOrganization } from "@/contexts/OrganizationContext";
 import { cn } from "@/lib/utils";
 import SettingsSection from "./SettingsSection";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -50,13 +51,13 @@ const PREDEFINED_COLORS = [
 ];
 
 const ProjectStatusesSection = () => {
-  const [statuses, setStatuses] = useState<ProjectStatus[]>([]);
-  const [loading, setLoading] = useState(true);
   const [editingStatus, setEditingStatus] = useState<ProjectStatus | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const { toast } = useToast();
+  const { activeOrganizationId } = useOrganization();
+  const { data: statuses = [], isLoading, refetch } = useProjectStatuses();
   const { hasPermission } = usePermissions();
 
   const form = useForm<ProjectStatusForm>({
@@ -74,49 +75,12 @@ const ProjectStatusesSection = () => {
     return n === 'planned' || n === 'new' || n === 'archived';
   };
 
-  const fetchStatuses = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const organizationId = await getUserOrganizationId();
-      if (!organizationId) throw new Error('No organization found');
-
-      const { data, error } = await supabase
-        .from('project_statuses')
-        .select('*')
-        .eq('organization_id', organizationId)
-        .not('name', 'ilike', 'archived')
-        .order('sort_order', { ascending: true });
-
-      if (error) throw error;
-
-      // If no statuses exist, create default ones
-      if (!data || data.length === 0) {
-        await createDefaultStatuses();
-        return;
-      }
-
-      setStatuses(data);
-    } catch (error) {
-      console.error('Error fetching project statuses:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load project statuses",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const createDefaultStatuses = async () => {
+    if (!activeOrganizationId) return;
+    
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-
-      const organizationId = await getUserOrganizationId();
-      if (!organizationId) throw new Error('No organization found');
 
       // Updated default statuses as requested
       const defaultStatuses = [
@@ -127,13 +91,12 @@ const ProjectStatusesSection = () => {
         { name: 'Cancelled', color: '#F56565', sort_order: 5 }
       ];
 
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('project_statuses')
-        .insert(defaultStatuses.map(status => ({ ...status, user_id: user.id, organization_id: organizationId })))
-        .select();
+        .insert(defaultStatuses.map(status => ({ ...status, user_id: user.id, organization_id: activeOrganizationId })));
 
       if (error) throw error;
-      setStatuses(data);
+      await refetch();
     } catch (error) {
       console.error('Error creating default statuses:', error);
       toast({
@@ -162,14 +125,13 @@ const ProjectStatusesSection = () => {
 
       if (editingStatus) {
         // Update existing status
-        const organizationId = await getUserOrganizationId();
-        if (!organizationId) throw new Error('No organization found');
+        if (!activeOrganizationId) throw new Error('No organization found');
 
         const { error } = await supabase
           .from('project_statuses')
           .update({ name: data.name, color: data.color })
           .eq('id', editingStatus.id)
-          .eq('organization_id', organizationId);
+          .eq('organization_id', activeOrganizationId);
 
         if (error) throw error;
 
@@ -181,8 +143,7 @@ const ProjectStatusesSection = () => {
       } else {
         // Create new status with the next sort order
         const maxSortOrder = Math.max(...statuses.map(s => s.sort_order), 0);
-        const organizationId = await getUserOrganizationId();
-        if (!organizationId) throw new Error('No organization found');
+        if (!activeOrganizationId) throw new Error('No organization found');
         
         const { error } = await supabase
           .from('project_statuses')
@@ -190,7 +151,7 @@ const ProjectStatusesSection = () => {
             name: data.name,
             color: data.color,
             user_id: user.id,
-            organization_id: organizationId,
+            organization_id: activeOrganizationId,
             sort_order: maxSortOrder + 1,
           });
 
@@ -210,7 +171,7 @@ const ProjectStatusesSection = () => {
 
       form.reset({ name: "", color: PREDEFINED_COLORS[0] });
       setEditingStatus(null);
-      fetchStatuses();
+      await refetch();
     } catch (error) {
       console.error('Error saving project status:', error);
       toast({
@@ -240,8 +201,7 @@ const ProjectStatusesSection = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      const organizationId = await getUserOrganizationId();
-      if (!organizationId) throw new Error('No organization found');
+      if (!activeOrganizationId) throw new Error('No organization found');
 
       const status = statuses.find(s => s.id === statusId);
       if (status && isProtectedName(status.name)) {
@@ -253,7 +213,7 @@ const ProjectStatusesSection = () => {
         .from('project_statuses')
         .delete()
         .eq('id', statusId)
-        .eq('organization_id', organizationId);
+        .eq('organization_id', activeOrganizationId);
 
       if (error) {
         if (error.code === '23503') { // Foreign key constraint violation
@@ -266,7 +226,7 @@ const ProjectStatusesSection = () => {
         title: "Success",
         description: "Project status deleted successfully",
       });
-      fetchStatuses();
+      await refetch();
     } catch (error) {
       console.error('Error deleting project status:', error);
       toast({
@@ -280,16 +240,14 @@ const ProjectStatusesSection = () => {
   const handleDragEnd = async (result: any) => {
     if (!result.destination) return;
 
-    const items = Array.from(statuses);
-    const [reorderedItem] = items.splice(result.source.index, 1);
-    items.splice(result.destination.index, 0, reorderedItem);
-
-    // Update local state immediately for responsive UI
-    setStatuses(items);
-
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
+      if (!activeOrganizationId) throw new Error('No organization found');
+
+      const items = Array.from(statuses);
+      const [reorderedItem] = items.splice(result.source.index, 1);
+      items.splice(result.destination.index, 0, reorderedItem);
 
       // Update sort_order for all items
       const updates = items.map((status, index) => ({
@@ -297,16 +255,13 @@ const ProjectStatusesSection = () => {
         sort_order: index + 1,
       }));
 
-      const organizationId = await getUserOrganizationId();
-      if (!organizationId) throw new Error('No organization found');
-
       // Execute all updates
       for (const update of updates) {
         const { error } = await supabase
           .from('project_statuses')
           .update({ sort_order: update.sort_order })
           .eq('id', update.id)
-          .eq('organization_id', organizationId);
+          .eq('organization_id', activeOrganizationId);
 
         if (error) throw error;
       }
@@ -315,6 +270,7 @@ const ProjectStatusesSection = () => {
         title: "Success",
         description: "Status order updated successfully",
       });
+      await refetch();
     } catch (error) {
       console.error('Error updating status order:', error);
       toast({
@@ -322,8 +278,6 @@ const ProjectStatusesSection = () => {
         description: "Failed to update status order",
         variant: "destructive",
       });
-      // Revert to original order on error
-      fetchStatuses();
     }
   };
 
@@ -458,11 +412,12 @@ const ProjectStatusesSection = () => {
     </DialogContent>
   );
 
-  useEffect(() => {
-    fetchStatuses();
-  }, []);
+  // Create default statuses if none exist
+  if (!isLoading && activeOrganizationId && statuses.length === 0) {
+    createDefaultStatuses();
+  }
 
-  if (loading) {
+  if (isLoading) {
     return (
       <SettingsSection 
         title="Project Stages" 
@@ -574,7 +529,7 @@ const ProjectStatusesSection = () => {
             <AddProjectStageDialog
               open={isAddDialogOpen}
               onOpenChange={setIsAddDialogOpen}
-              onStageAdded={fetchStatuses}
+              onStageAdded={refetch}
             />
 
             {/* Edit Dialog */}
@@ -582,7 +537,7 @@ const ProjectStatusesSection = () => {
               stage={editingStatus}
               open={isEditDialogOpen}
               onOpenChange={setIsEditDialogOpen}
-              onStageUpdated={fetchStatuses}
+              onStageUpdated={refetch}
             />
           </>
         )}

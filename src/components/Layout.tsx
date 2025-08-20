@@ -14,8 +14,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   // Check if we should show onboarding modal after auth state is loaded
   useEffect(() => {
-    if (!onboardingLoading && shouldShowOnboarding()) {
-      setShowOnboardingModal(true);
+    if (!onboardingLoading) {
+      if (shouldShowOnboarding()) {
+        setShowOnboardingModal(true);
+      } else {
+        setShowOnboardingModal(false);
+      }
     }
   }, [onboardingLoading, shouldShowOnboarding]);
 

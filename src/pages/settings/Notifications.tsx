@@ -11,45 +11,29 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 interface NotificationSettings {
-  // Global settings
-  allNotificationsEnabled: boolean;
-  globalNotificationTime: string;
+  // Master Controls
+  globalEnabled: boolean;
+  scheduledTime: string;
   
-  // Reminders & Deadlines (scheduled)
-  overdueReminderEnabled: boolean;
-  deliveryReminderEnabled: boolean;
-  sessionReminderEnabled: boolean;
-  
-  // Tasks & Todos (scheduled)
+  // Scheduled Notifications  
   dailySummaryEnabled: boolean;
-  taskNudgeEnabled: boolean;
-  
-  // Business Insights (scheduled)
   weeklyRecapEnabled: boolean;
   
-  // System Alerts (immediate)
+  // Immediate Notifications
+  newAssignmentEnabled: boolean;
   projectMilestoneEnabled: boolean;
-  leadConversionEnabled: boolean;
-  integrationFailureAlertEnabled: boolean;
-  teamInviteAcceptedAlertEnabled: boolean;
 }
 
 export default function Notifications() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [settings, setSettings] = useState<NotificationSettings>({
-    allNotificationsEnabled: true,
-    globalNotificationTime: "09:00",
-    overdueReminderEnabled: true,
-    deliveryReminderEnabled: true,
-    sessionReminderEnabled: true,
+    globalEnabled: true,
+    scheduledTime: "09:00",
     dailySummaryEnabled: true,
-    taskNudgeEnabled: true,
     weeklyRecapEnabled: true,
+    newAssignmentEnabled: true,
     projectMilestoneEnabled: true,
-    leadConversionEnabled: true,
-    integrationFailureAlertEnabled: true,
-    teamInviteAcceptedAlertEnabled: true,
   });
 
   const [autoSaveStates, setAutoSaveStates] = useState<{[key: string]: 'idle' | 'saving'}>({});
@@ -90,30 +74,13 @@ export default function Notifications() {
       }
 
       if (data) {
-        const hasAnyEnabled = data.notification_overdue_reminder_enabled || 
-                            data.notification_delivery_reminder_enabled || 
-                            data.notification_session_reminder_enabled ||
-                            data.notification_daily_summary_enabled ||
-                            data.notification_task_nudge_enabled ||
-                            data.notification_weekly_recap_enabled ||
-                            data.notification_project_milestone_enabled ||
-                            data.notification_lead_conversion_enabled ||
-                            data.notification_integration_failure_alert_enabled ||
-                            data.notification_team_invite_accepted_alert_enabled;
-        
         const loadedSettings: NotificationSettings = {
-          allNotificationsEnabled: hasAnyEnabled,
-          globalNotificationTime: data.notification_daily_summary_send_at ?? "09:00",
-          overdueReminderEnabled: data.notification_overdue_reminder_enabled ?? false,
-          deliveryReminderEnabled: data.notification_delivery_reminder_enabled ?? false,
-          sessionReminderEnabled: data.notification_session_reminder_enabled ?? false,
-          dailySummaryEnabled: data.notification_daily_summary_enabled ?? false,
-          taskNudgeEnabled: data.notification_task_nudge_enabled ?? false,
-          weeklyRecapEnabled: data.notification_weekly_recap_enabled ?? false,
-          projectMilestoneEnabled: data.notification_project_milestone_enabled ?? false,
-          leadConversionEnabled: data.notification_lead_conversion_enabled ?? false,
-          integrationFailureAlertEnabled: data.notification_integration_failure_alert_enabled ?? true,
-          teamInviteAcceptedAlertEnabled: data.notification_team_invite_accepted_alert_enabled ?? false,
+          globalEnabled: data.notification_global_enabled ?? true,
+          scheduledTime: data.notification_scheduled_time ?? "09:00",
+          dailySummaryEnabled: data.notification_daily_summary_enabled ?? true,
+          weeklyRecapEnabled: data.notification_weekly_recap_enabled ?? true,
+          newAssignmentEnabled: data.notification_new_assignment_enabled ?? true,
+          projectMilestoneEnabled: data.notification_project_milestone_enabled ?? true,
         };
         setSettings(loadedSettings);
       }
@@ -126,24 +93,19 @@ export default function Notifications() {
 
   // Master toggle for all notifications
   const handleToggleAllNotifications = async (enabled: boolean) => {
-    setAutoSaveStates(prev => ({ ...prev, allNotificationsEnabled: 'saving' }));
+    setAutoSaveStates(prev => ({ ...prev, globalEnabled: 'saving' }));
     
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No user found');
 
-      // Update all notification settings at once
+      // Update global setting and all individual settings
       const updates = {
-        notification_overdue_reminder_enabled: enabled,
-        notification_delivery_reminder_enabled: enabled,
-        notification_session_reminder_enabled: enabled,
+        notification_global_enabled: enabled,
         notification_daily_summary_enabled: enabled,
-        notification_task_nudge_enabled: enabled,
         notification_weekly_recap_enabled: enabled,
+        notification_new_assignment_enabled: enabled,
         notification_project_milestone_enabled: enabled,
-        notification_lead_conversion_enabled: enabled,
-        notification_integration_failure_alert_enabled: enabled,
-        notification_team_invite_accepted_alert_enabled: enabled,
       };
 
       const { error } = await supabase
@@ -155,20 +117,14 @@ export default function Notifications() {
 
       setSettings(prev => ({
         ...prev,
-        allNotificationsEnabled: enabled,
-        overdueReminderEnabled: enabled,
-        deliveryReminderEnabled: enabled,
-        sessionReminderEnabled: enabled,
+        globalEnabled: enabled,
         dailySummaryEnabled: enabled,
-        taskNudgeEnabled: enabled,
         weeklyRecapEnabled: enabled,
+        newAssignmentEnabled: enabled,
         projectMilestoneEnabled: enabled,
-        leadConversionEnabled: enabled,
-        integrationFailureAlertEnabled: enabled,
-        teamInviteAcceptedAlertEnabled: enabled,
       }));
       
-      setAutoSaveStates(prev => ({ ...prev, allNotificationsEnabled: 'idle' }));
+      setAutoSaveStates(prev => ({ ...prev, globalEnabled: 'idle' }));
       
       toast({
         title: enabled ? "All Notifications Enabled" : "All Notifications Disabled",
@@ -176,7 +132,7 @@ export default function Notifications() {
       });
     } catch (error) {
       console.error('Error toggling all notifications:', error);
-      setAutoSaveStates(prev => ({ ...prev, allNotificationsEnabled: 'idle' }));
+      setAutoSaveStates(prev => ({ ...prev, globalEnabled: 'idle' }));
       toast({
         title: "Error",
         description: "Failed to update notification settings",
@@ -190,50 +146,27 @@ export default function Notifications() {
     setAutoSaveStates(prev => ({ ...prev, [field]: 'saving' }));
     
     const fieldMap: {[key in keyof NotificationSettings]: string} = {
-      allNotificationsEnabled: 'notification_overdue_reminder_enabled', // dummy, handled separately
-      globalNotificationTime: 'notification_daily_summary_send_at',
-      overdueReminderEnabled: 'notification_overdue_reminder_enabled',
-      deliveryReminderEnabled: 'notification_delivery_reminder_enabled',
-      sessionReminderEnabled: 'notification_session_reminder_enabled',
+      globalEnabled: 'notification_global_enabled',
+      scheduledTime: 'notification_scheduled_time',
       dailySummaryEnabled: 'notification_daily_summary_enabled',
-      taskNudgeEnabled: 'notification_task_nudge_enabled',
       weeklyRecapEnabled: 'notification_weekly_recap_enabled',
+      newAssignmentEnabled: 'notification_new_assignment_enabled',
       projectMilestoneEnabled: 'notification_project_milestone_enabled',
-      leadConversionEnabled: 'notification_lead_conversion_enabled',
-      integrationFailureAlertEnabled: 'notification_integration_failure_alert_enabled',
-      teamInviteAcceptedAlertEnabled: 'notification_team_invite_accepted_alert_enabled',
     };
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No user found');
 
-      // Handle global time setting - update all time-related fields
-      if (field === 'globalNotificationTime') {
-        const timeUpdates = {
-          notification_delivery_reminder_send_at: value as string,
-          notification_session_reminder_send_at: value as string,
-          notification_daily_summary_send_at: value as string,
-          notification_weekly_recap_send_at: value as string,
-        };
-        
-        const { error } = await supabase
-          .from('user_settings')
-          .update(timeUpdates)
-          .eq('user_id', user.id);
+      const dbField = fieldMap[field];
+      if (!dbField) throw new Error('Invalid field');
 
-        if (error) throw error;
-      } else {
-        const dbField = fieldMap[field];
-        if (!dbField) throw new Error('Invalid field');
+      const { error } = await supabase
+        .from('user_settings')
+        .update({ [dbField]: value })
+        .eq('user_id', user.id);
 
-        const { error } = await supabase
-          .from('user_settings')
-          .update({ [dbField]: value })
-          .eq('user_id', user.id);
-
-        if (error) throw error;
-      }
+      if (error) throw error;
 
       setSettings(prev => ({ ...prev, [field]: value }));
       setAutoSaveStates(prev => ({ ...prev, [field]: 'idle' }));
@@ -284,7 +217,6 @@ export default function Notifications() {
     }
   };
 
-
   // Show loading state until all data is loaded
   if (loading) {
     return (
@@ -304,7 +236,7 @@ export default function Notifications() {
     <SettingsPageWrapper>
       <SettingsHeader
         title="Notifications"
-        description="Configure your notification preferences and delivery times"
+        description="Streamlined notification system with 3 core types for your photography business"
       />
       
       <div className="space-y-8">
@@ -318,8 +250,8 @@ export default function Notifications() {
             {/* Master Toggle */}
             <div className="flex items-center justify-between p-4 border-2 border-primary/20 rounded-lg bg-primary/5">
               <div className="flex-1">
-                <Label htmlFor="all-notifications" className="text-base font-medium flex items-center gap-2">
-                  {settings.allNotificationsEnabled ? <Power className="h-4 w-4" /> : <PowerOff className="h-4 w-4" />}
+                <Label htmlFor="global-notifications" className="text-base font-medium flex items-center gap-2">
+                  {settings.globalEnabled ? <Power className="h-4 w-4" /> : <PowerOff className="h-4 w-4" />}
                   All Notifications
                 </Label>
                 <p className="text-sm text-muted-foreground mt-1">
@@ -327,28 +259,28 @@ export default function Notifications() {
                 </p>
               </div>
               <Switch
-                id="all-notifications"
-                checked={settings.allNotificationsEnabled}
+                id="global-notifications"
+                checked={settings.globalEnabled}
                 onCheckedChange={handleToggleAllNotifications}
-                disabled={autoSaveStates.allNotificationsEnabled === 'saving'}
+                disabled={autoSaveStates.globalEnabled === 'saving'}
               />
             </div>
 
-            {/* Global Time Setting */}
+            {/* Scheduled Time Setting */}
             <div className="flex items-center justify-between p-4 border rounded-lg">
               <div className="flex-1">
-                <Label htmlFor="global-time" className="text-base font-medium flex items-center gap-2">
+                <Label htmlFor="scheduled-time" className="text-base font-medium flex items-center gap-2">
                   <Clock className="h-4 w-4" />
                   Scheduled Notification Time
                 </Label>
                 <p className="text-sm text-muted-foreground mt-1">
-                  The time when scheduled notifications (reminders, summaries) will be sent
+                  Time when daily summaries and weekly recaps are sent
                 </p>
               </div>
               <Select
-                value={settings.globalNotificationTime}
-                onValueChange={(value) => handleAutoSave('globalNotificationTime', value)}
-                disabled={autoSaveStates.globalNotificationTime === 'saving'}
+                value={settings.scheduledTime}
+                onValueChange={(value) => handleAutoSave('scheduledTime', value)}
+                disabled={autoSaveStates.scheduledTime === 'saving'}
               >
                 <SelectTrigger className="w-32">
                   <SelectValue />
@@ -368,121 +300,13 @@ export default function Notifications() {
         {/* Scheduled Notifications */}
         <CategorySettingsSection
           title="Scheduled Notifications"
-          description={`Automated reminders sent daily at ${settings.globalNotificationTime}`}
+          description={`Automated summaries sent at ${settings.scheduledTime}`}
           sectionId="scheduled"
         >
           <div className="space-y-6">
             <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
               <Clock className="h-4 w-4" />
-              <span>These notifications are sent at your scheduled time ({settings.globalNotificationTime})</span>
-            </div>
-
-            {/* Overdue Reminder */}
-            <div className="flex items-center justify-between p-4 border rounded-lg">
-              <div className="flex-1">
-                <Label htmlFor="overdue-reminder" className="text-base font-medium">
-                  Overdue Reminder
-                </Label>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Daily reminder when tasks or deadlines become overdue
-                </p>
-              </div>
-              <div className="flex items-center gap-3">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => testNotification('overdue')}
-                  disabled={testingNotification === 'overdue'}
-                  className="text-primary hover:text-primary/80 hover:bg-transparent p-0 h-auto font-medium text-sm"
-                >
-                  {testingNotification === 'overdue' ? (
-                    <>
-                      <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                      Testing...
-                    </>
-                  ) : (
-                    'Test Email'
-                  )}
-                </Button>
-                <Switch
-                  id="overdue-reminder"
-                  checked={settings.overdueReminderEnabled}
-                  onCheckedChange={(checked) => handleAutoSave('overdueReminderEnabled', checked)}
-                  disabled={autoSaveStates.overdueReminderEnabled === 'saving'}
-                />
-              </div>
-            </div>
-
-            {/* Delivery Reminder */}
-            <div className="flex items-center justify-between p-4 border rounded-lg">
-              <div className="flex-1">
-                <Label htmlFor="delivery-reminder" className="text-base font-medium">
-                  Delivery Reminder
-                </Label>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Daily reminder to check on delivery status
-                </p>
-              </div>
-              <div className="flex items-center gap-3">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => testNotification('delivery')}
-                  disabled={testingNotification === 'delivery'}
-                  className="text-primary hover:text-primary/80 hover:bg-transparent p-0 h-auto font-medium text-sm"
-                >
-                  {testingNotification === 'delivery' ? (
-                    <>
-                      <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                      Testing...
-                    </>
-                  ) : (
-                    'Test Email'
-                  )}
-                </Button>
-                <Switch
-                  id="delivery-reminder"
-                  checked={settings.deliveryReminderEnabled}
-                  onCheckedChange={(checked) => handleAutoSave('deliveryReminderEnabled', checked)}
-                  disabled={autoSaveStates.deliveryReminderEnabled === 'saving'}
-                />
-              </div>
-            </div>
-
-            {/* Session Reminder */}
-            <div className="flex items-center justify-between p-4 border rounded-lg">
-              <div className="flex-1">
-                <Label htmlFor="session-reminder" className="text-base font-medium">
-                  Session Reminder
-                </Label>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Daily reminder about upcoming sessions
-                </p>
-              </div>
-              <div className="flex items-center gap-3">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => testNotification('session')}
-                  disabled={testingNotification === 'session'}
-                  className="text-primary hover:text-primary/80 hover:bg-transparent p-0 h-auto font-medium text-sm"
-                >
-                  {testingNotification === 'session' ? (
-                    <>
-                      <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                      Testing...
-                    </>
-                  ) : (
-                    'Test Email'
-                  )}
-                </Button>
-                <Switch
-                  id="session-reminder"
-                  checked={settings.sessionReminderEnabled}
-                  onCheckedChange={(checked) => handleAutoSave('sessionReminderEnabled', checked)}
-                  disabled={autoSaveStates.sessionReminderEnabled === 'saving'}
-                />
-              </div>
+              <span>These notifications are sent at your scheduled time ({settings.scheduledTime})</span>
             </div>
 
             {/* Daily Summary */}
@@ -492,18 +316,18 @@ export default function Notifications() {
                   Daily Summary
                 </Label>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Morning digest of your schedule and pending tasks
+                  Morning digest with today's sessions, overdue items, reminders, and pending tasks
                 </p>
               </div>
               <div className="flex items-center gap-3">
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => testNotification('daily_summary')}
-                  disabled={testingNotification === 'daily_summary'}
+                  onClick={() => testNotification('daily-summary')}
+                  disabled={testingNotification === 'daily-summary'}
                   className="text-primary hover:text-primary/80 hover:bg-transparent p-0 h-auto font-medium text-sm"
                 >
-                  {testingNotification === 'daily_summary' ? (
+                  {testingNotification === 'daily-summary' ? (
                     <>
                       <Loader2 className="h-3 w-3 mr-1 animate-spin" />
                       Testing...
@@ -521,61 +345,25 @@ export default function Notifications() {
               </div>
             </div>
 
-            {/* Task Nudge */}
-            <div className="flex items-center justify-between p-4 border rounded-lg">
-              <div className="flex-1">
-                <Label htmlFor="task-nudge" className="text-base font-medium">
-                  Task Nudge
-                </Label>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Gentle reminders to complete pending tasks
-                </p>
-              </div>
-              <div className="flex items-center gap-3">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => testNotification('task_nudge')}
-                  disabled={testingNotification === 'task_nudge'}
-                  className="text-primary hover:text-primary/80 hover:bg-transparent p-0 h-auto font-medium text-sm"
-                >
-                  {testingNotification === 'task_nudge' ? (
-                    <>
-                      <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                      Testing...
-                    </>
-                  ) : (
-                    'Test Email'
-                  )}
-                </Button>
-                <Switch
-                  id="task-nudge"
-                  checked={settings.taskNudgeEnabled}
-                  onCheckedChange={(checked) => handleAutoSave('taskNudgeEnabled', checked)}
-                  disabled={autoSaveStates.taskNudgeEnabled === 'saving'}
-                />
-              </div>
-            </div>
-
             {/* Weekly Recap */}
             <div className="flex items-center justify-between p-4 border rounded-lg">
               <div className="flex-1">
                 <Label htmlFor="weekly-recap" className="text-base font-medium">
-                  Weekly Business Recap
+                  Weekly Recap (Owner Only)
                 </Label>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Weekly summary of leads, projects, sessions, and revenue
+                  Weekly business insights: leads, projects, sessions, revenue, and aging alerts
                 </p>
               </div>
               <div className="flex items-center gap-3">
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => testNotification('weekly_recap')}
-                  disabled={testingNotification === 'weekly_recap'}
+                  onClick={() => testNotification('weekly-recap')}
+                  disabled={testingNotification === 'weekly-recap'}
                   className="text-primary hover:text-primary/80 hover:bg-transparent p-0 h-auto font-medium text-sm"
                 >
-                  {testingNotification === 'weekly_recap' ? (
+                  {testingNotification === 'weekly-recap' ? (
                     <>
                       <Loader2 className="h-3 w-3 mr-1 animate-spin" />
                       Testing...
@@ -598,34 +386,70 @@ export default function Notifications() {
         {/* Immediate Notifications */}
         <CategorySettingsSection
           title="Immediate Notifications"
-          description="Real-time alerts sent when events occur"
+          description="Real-time alerts sent as events occur"
           sectionId="immediate"
         >
           <div className="space-y-6">
             <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
               <Zap className="h-4 w-4" />
-              <span>These notifications are sent immediately when the event happens</span>
+              <span>These notifications are sent immediately when events occur</span>
             </div>
 
-            {/* Project Milestone */}
+            {/* New Assignment */}
             <div className="flex items-center justify-between p-4 border rounded-lg">
               <div className="flex-1">
-                <Label htmlFor="project-milestone" className="text-base font-medium">
-                  Project Milestone
+                <Label htmlFor="new-assignment" className="text-base font-medium">
+                  New Assignment
                 </Label>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Immediate alerts when projects reach important milestones
+                  Notify when you're assigned to a lead or project (includes entity name and assigner)
                 </p>
               </div>
               <div className="flex items-center gap-3">
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => testNotification('project_milestone')}
-                  disabled={testingNotification === 'project_milestone'}
+                  onClick={() => testNotification('new-assignment')}
+                  disabled={testingNotification === 'new-assignment'}
                   className="text-primary hover:text-primary/80 hover:bg-transparent p-0 h-auto font-medium text-sm"
                 >
-                  {testingNotification === 'project_milestone' ? (
+                  {testingNotification === 'new-assignment' ? (
+                    <>
+                      <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                      Testing...
+                    </>
+                  ) : (
+                    'Test Email'
+                  )}
+                </Button>
+                <Switch
+                  id="new-assignment"
+                  checked={settings.newAssignmentEnabled}
+                  onCheckedChange={(checked) => handleAutoSave('newAssignmentEnabled', checked)}
+                  disabled={autoSaveStates.newAssignmentEnabled === 'saving'}
+                />
+              </div>
+            </div>
+
+            {/* Project Milestone */}
+            <div className="flex items-center justify-between p-4 border rounded-lg">
+              <div className="flex-1">
+                <Label htmlFor="project-milestone" className="text-base font-medium">
+                  Project Milestone Reached
+                </Label>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Notify when a project transitions to Completed or Cancelled lifecycle
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => testNotification('project-milestone')}
+                  disabled={testingNotification === 'project-milestone'}
+                  className="text-primary hover:text-primary/80 hover:bg-transparent p-0 h-auto font-medium text-sm"
+                >
+                  {testingNotification === 'project-milestone' ? (
                     <>
                       <Loader2 className="h-3 w-3 mr-1 animate-spin" />
                       Testing...
@@ -642,82 +466,9 @@ export default function Notifications() {
                 />
               </div>
             </div>
-
-            {/* Lead Conversion */}
-            <div className="flex items-center justify-between p-4 border rounded-lg">
-              <div className="flex-1">
-                <Label htmlFor="lead-conversion" className="text-base font-medium">
-                  Lead Conversion
-                </Label>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Immediate alerts when leads are converted to projects
-                </p>
-              </div>
-              <div className="flex items-center gap-3">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => testNotification('lead_conversion')}
-                  disabled={testingNotification === 'lead_conversion'}
-                  className="text-primary hover:text-primary/80 hover:bg-transparent p-0 h-auto font-medium text-sm"
-                >
-                  {testingNotification === 'lead_conversion' ? (
-                    <>
-                      <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                      Testing...
-                    </>
-                  ) : (
-                    'Test Email'
-                  )}
-                </Button>
-                <Switch
-                  id="lead-conversion"
-                  checked={settings.leadConversionEnabled}
-                  onCheckedChange={(checked) => handleAutoSave('leadConversionEnabled', checked)}
-                  disabled={autoSaveStates.leadConversionEnabled === 'saving'}
-                />
-              </div>
-            </div>
-
-            {/* Integration Failure Alert */}
-            <div className="flex items-center justify-between p-4 border rounded-lg">
-              <div className="flex-1">
-                <Label htmlFor="integration-failure" className="text-base font-medium">
-                  Integration Failure Alert
-                </Label>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Immediate alerts when integrations fail or experience issues
-                </p>
-              </div>
-              <Switch
-                id="integration-failure"
-                checked={settings.integrationFailureAlertEnabled}
-                onCheckedChange={(checked) => handleAutoSave('integrationFailureAlertEnabled', checked)}
-                disabled={autoSaveStates.integrationFailureAlertEnabled === 'saving'}
-              />
-            </div>
-
-            {/* Team Invite Accepted Alert */}
-            <div className="flex items-center justify-between p-4 border rounded-lg">
-              <div className="flex-1">
-                <Label htmlFor="team-invite-accepted" className="text-base font-medium">
-                  Team Invite Accepted
-                </Label>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Immediate alerts when team members accept invitations
-                </p>
-              </div>
-              <Switch
-                id="team-invite-accepted"
-                checked={settings.teamInviteAcceptedAlertEnabled}
-                onCheckedChange={(checked) => handleAutoSave('teamInviteAcceptedAlertEnabled', checked)}
-                disabled={autoSaveStates.teamInviteAcceptedAlertEnabled === 'saving'}
-              />
-            </div>
           </div>
         </CategorySettingsSection>
       </div>
-
     </SettingsPageWrapper>
   );
 }

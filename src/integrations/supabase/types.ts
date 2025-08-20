@@ -417,16 +417,10 @@ export type Database = {
           logo_url: string | null
           notification_daily_summary_enabled: boolean | null
           notification_daily_summary_send_at: string | null
-          notification_delivery_reminder_enabled: boolean | null
-          notification_delivery_reminder_send_at: string | null
-          notification_integration_failure_alert_enabled: boolean | null
-          notification_lead_conversion_enabled: boolean | null
-          notification_overdue_reminder_enabled: boolean | null
+          notification_global_enabled: boolean | null
+          notification_new_assignment_enabled: boolean | null
           notification_project_milestone_enabled: boolean | null
-          notification_session_reminder_enabled: boolean | null
-          notification_session_reminder_send_at: string | null
-          notification_task_nudge_enabled: boolean | null
-          notification_team_invite_accepted_alert_enabled: boolean | null
+          notification_scheduled_time: string | null
           notification_weekly_recap_enabled: boolean | null
           notification_weekly_recap_send_at: string | null
           organization_id: string
@@ -443,16 +437,10 @@ export type Database = {
           logo_url?: string | null
           notification_daily_summary_enabled?: boolean | null
           notification_daily_summary_send_at?: string | null
-          notification_delivery_reminder_enabled?: boolean | null
-          notification_delivery_reminder_send_at?: string | null
-          notification_integration_failure_alert_enabled?: boolean | null
-          notification_lead_conversion_enabled?: boolean | null
-          notification_overdue_reminder_enabled?: boolean | null
+          notification_global_enabled?: boolean | null
+          notification_new_assignment_enabled?: boolean | null
           notification_project_milestone_enabled?: boolean | null
-          notification_session_reminder_enabled?: boolean | null
-          notification_session_reminder_send_at?: string | null
-          notification_task_nudge_enabled?: boolean | null
-          notification_team_invite_accepted_alert_enabled?: boolean | null
+          notification_scheduled_time?: string | null
           notification_weekly_recap_enabled?: boolean | null
           notification_weekly_recap_send_at?: string | null
           organization_id: string
@@ -469,16 +457,10 @@ export type Database = {
           logo_url?: string | null
           notification_daily_summary_enabled?: boolean | null
           notification_daily_summary_send_at?: string | null
-          notification_delivery_reminder_enabled?: boolean | null
-          notification_delivery_reminder_send_at?: string | null
-          notification_integration_failure_alert_enabled?: boolean | null
-          notification_lead_conversion_enabled?: boolean | null
-          notification_overdue_reminder_enabled?: boolean | null
+          notification_global_enabled?: boolean | null
+          notification_new_assignment_enabled?: boolean | null
           notification_project_milestone_enabled?: boolean | null
-          notification_session_reminder_enabled?: boolean | null
-          notification_session_reminder_send_at?: string | null
-          notification_task_nudge_enabled?: boolean | null
-          notification_team_invite_accepted_alert_enabled?: boolean | null
+          notification_scheduled_time?: string | null
           notification_weekly_recap_enabled?: boolean | null
           notification_weekly_recap_send_at?: string | null
           organization_id?: string
@@ -1064,16 +1046,10 @@ export type Database = {
           logo_url: string | null
           notification_daily_summary_enabled: boolean | null
           notification_daily_summary_send_at: string | null
-          notification_delivery_reminder_enabled: boolean | null
-          notification_delivery_reminder_send_at: string | null
-          notification_integration_failure_alert_enabled: boolean | null
-          notification_lead_conversion_enabled: boolean | null
-          notification_overdue_reminder_enabled: boolean | null
+          notification_global_enabled: boolean | null
+          notification_new_assignment_enabled: boolean | null
           notification_project_milestone_enabled: boolean | null
-          notification_session_reminder_enabled: boolean | null
-          notification_session_reminder_send_at: string | null
-          notification_task_nudge_enabled: boolean | null
-          notification_team_invite_accepted_alert_enabled: boolean | null
+          notification_scheduled_time: string | null
           notification_weekly_recap_enabled: boolean | null
           notification_weekly_recap_send_at: string | null
           photography_business_name: string | null
@@ -1091,16 +1067,10 @@ export type Database = {
           logo_url?: string | null
           notification_daily_summary_enabled?: boolean | null
           notification_daily_summary_send_at?: string | null
-          notification_delivery_reminder_enabled?: boolean | null
-          notification_delivery_reminder_send_at?: string | null
-          notification_integration_failure_alert_enabled?: boolean | null
-          notification_lead_conversion_enabled?: boolean | null
-          notification_overdue_reminder_enabled?: boolean | null
+          notification_global_enabled?: boolean | null
+          notification_new_assignment_enabled?: boolean | null
           notification_project_milestone_enabled?: boolean | null
-          notification_session_reminder_enabled?: boolean | null
-          notification_session_reminder_send_at?: string | null
-          notification_task_nudge_enabled?: boolean | null
-          notification_team_invite_accepted_alert_enabled?: boolean | null
+          notification_scheduled_time?: string | null
           notification_weekly_recap_enabled?: boolean | null
           notification_weekly_recap_send_at?: string | null
           photography_business_name?: string | null
@@ -1118,16 +1088,10 @@ export type Database = {
           logo_url?: string | null
           notification_daily_summary_enabled?: boolean | null
           notification_daily_summary_send_at?: string | null
-          notification_delivery_reminder_enabled?: boolean | null
-          notification_delivery_reminder_send_at?: string | null
-          notification_integration_failure_alert_enabled?: boolean | null
-          notification_lead_conversion_enabled?: boolean | null
-          notification_overdue_reminder_enabled?: boolean | null
+          notification_global_enabled?: boolean | null
+          notification_new_assignment_enabled?: boolean | null
           notification_project_milestone_enabled?: boolean | null
-          notification_session_reminder_enabled?: boolean | null
-          notification_session_reminder_send_at?: string | null
-          notification_task_nudge_enabled?: boolean | null
-          notification_team_invite_accepted_alert_enabled?: boolean | null
+          notification_scheduled_time?: string | null
           notification_weekly_recap_enabled?: boolean | null
           notification_weekly_recap_send_at?: string | null
           photography_business_name?: string | null

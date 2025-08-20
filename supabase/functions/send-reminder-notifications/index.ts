@@ -418,9 +418,16 @@ async function sendDailySummary(user: UserProfile, isTest?: boolean) {
   const today = new Date().toISOString().split('T')[0];
   console.log(`Today's date: ${today}`);
   
-  // Get template data first to have date format available
-  const templateData = await getUserBrandingSettings(user.user_id, user.active_organization_id);
-  console.log(`Template data:`, JSON.stringify(templateData, null, 2));
+    // Generate template data with proper logo handling and correct app URL
+    const templateData: EmailTemplateData = {
+      userFullName: user.full_name || 'User',
+      businessName: orgSettings?.photography_business_name || 'Photography CRM',
+      logoUrl: orgSettings?.logo_url || null,
+      brandColor: orgSettings?.primary_brand_color || '#1EB29F',
+      baseUrl: 'https://rifdykpdubrowzbylffe.supabase.co',  // Use the actual app URL
+      dateFormat: orgSettings?.date_format || 'DD/MM/YYYY',
+      timeFormat: orgSettings?.time_format || '12-hour'
+    };
   
   // Get overdue sessions (scheduled in past but still active lifecycle)
   const { data: overdueSessions, error: sessionsError } = await supabase
@@ -439,7 +446,7 @@ async function sendDailySummary(user: UserProfile, isTest?: boolean) {
 
   console.log(`Getting data for user: ${user.email} (${user.user_id}) - active org: ${user.active_organization_id}`);
 
-  // Get overdue reminders - fix organization_id issue
+  // Get overdue reminders - fix query without foreign key relationships
   const { data: overdueReminders, error: remindersError } = await supabase
     .from('activities')
     .select(`
@@ -448,13 +455,46 @@ async function sendDailySummary(user: UserProfile, isTest?: boolean) {
       reminder_date, 
       type,
       organization_id,
-      leads!left(name, email, phone),
-      projects!left(name, id)
+      lead_id,
+      project_id
     `)
-    .eq('user_id', user.user_id)  // Use user_id instead of organization_id
+    .eq('user_id', user.user_id)
     .eq('completed', false)
     .not('reminder_date', 'is', null)
     .lt('reminder_date', today);
+
+  // Get lead and project info separately if reminders exist
+  let enrichedOverdueReminders = [];
+  if (overdueReminders && overdueReminders.length > 0) {
+    for (const reminder of overdueReminders) {
+      let leadInfo = null;
+      let projectInfo = null;
+      
+      if (reminder.lead_id) {
+        const { data: lead } = await supabase
+          .from('leads')
+          .select('name, email, phone')
+          .eq('id', reminder.lead_id)
+          .single();
+        leadInfo = lead;
+      }
+      
+      if (reminder.project_id) {
+        const { data: project } = await supabase
+          .from('projects')
+          .select('name, id')
+          .eq('id', reminder.project_id)
+          .single();
+        projectInfo = project;
+      }
+      
+      enrichedOverdueReminders.push({
+        ...reminder,
+        leads: leadInfo,
+        projects: projectInfo
+      });
+    }
+  }
 
   console.log(`Overdue reminders query result:`, { 
     data: overdueReminders, 
@@ -464,14 +504,14 @@ async function sendDailySummary(user: UserProfile, isTest?: boolean) {
     query_type: 'user_id'
   });
 
-  console.log(`Overdue reminders query result (fixed):`, { data: overdueReminders, error: remindersError });
+  console.log(`Overdue reminders query result (fixed):`, { data: enrichedOverdueReminders, error: remindersError });
 
   // Get upcoming reminders due within next 24 hours
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
   const tomorrowStr = tomorrow.toISOString().split('T')[0];
   
-  // Get today's reminders - fix organization_id issue  
+  // Get today's reminders - fix query without foreign key relationships
   const todayEnd = today + ' 23:59:59';
   
   const { data: upcomingReminders, error: upcomingError } = await supabase
@@ -482,14 +522,47 @@ async function sendDailySummary(user: UserProfile, isTest?: boolean) {
       reminder_date, 
       type,
       organization_id,
-      leads!left(name, email, phone),
-      projects!left(name, id)
+      lead_id,
+      project_id
     `)
-    .eq('user_id', user.user_id)  // Use user_id instead of organization_id
+    .eq('user_id', user.user_id)
     .eq('completed', false)
     .not('reminder_date', 'is', null)
     .gte('reminder_date', today)
     .lte('reminder_date', todayEnd);
+
+  // Get lead and project info separately if reminders exist
+  let enrichedUpcomingReminders = [];
+  if (upcomingReminders && upcomingReminders.length > 0) {
+    for (const reminder of upcomingReminders) {
+      let leadInfo = null;
+      let projectInfo = null;
+      
+      if (reminder.lead_id) {
+        const { data: lead } = await supabase
+          .from('leads')
+          .select('name, email, phone')
+          .eq('id', reminder.lead_id)
+          .single();
+        leadInfo = lead;
+      }
+      
+      if (reminder.project_id) {
+        const { data: project } = await supabase
+          .from('projects')
+          .select('name, id')
+          .eq('id', reminder.project_id)
+          .single();
+        projectInfo = project;
+      }
+      
+      enrichedUpcomingReminders.push({
+        ...reminder,
+        leads: leadInfo,
+        projects: projectInfo
+      });
+    }
+  }
 
   console.log(`Today's reminders query result:`, { data: upcomingReminders, error: upcomingError, today, todayEnd });
 
@@ -506,14 +579,15 @@ async function sendDailySummary(user: UserProfile, isTest?: boolean) {
     activities: overdueReminders || []
   };
 
-  const emailContent = generateDailySummaryEmailSimplified(
-    upcomingSessions, 
-    overdueSessions || [], 
-    overdueReminders || [], 
-    upcomingReminders || [], 
-    pendingTodos, 
-    templateData
-  );
+    // Generate daily summary email with enriched data
+    const emailContent = generateDailySummaryEmailSimplified(
+      upcomingSessions || [],
+      overdueSessions || [],
+      enrichedOverdueReminders || [],
+      enrichedUpcomingReminders || [],
+      pendingTodos || [],
+      templateData
+    );
   const todayFormatted = formatDate(new Date().toISOString(), templateData.dateFormat);
   console.log(`Formatted date: ${todayFormatted} using format: ${templateData.dateFormat}`);
   

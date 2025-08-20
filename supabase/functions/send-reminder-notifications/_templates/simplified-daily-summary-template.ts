@@ -51,7 +51,7 @@ export function generateDailySummaryEmailSimplified(
               Was scheduled: ${formatDate(session.session_date, templateData.dateFormat)} ${session.session_time ? 'at ' + formatTime(session.session_time, templateData.timeFormat) : ''} • ${session.projects?.name || 'Project'}
             </div>
             ${templateData.baseUrl ? `
-              <a href="${templateData.baseUrl}/sessions" style="color: #dc2626; text-decoration: underline; font-size: 14px;">
+              <a href="${templateData.baseUrl}/" style="color: #dc2626; text-decoration: underline; font-size: 14px;">
                 Reschedule this session →
               </a>
             ` : ''}
@@ -77,7 +77,7 @@ export function generateDailySummaryEmailSimplified(
             ${reminder.leads?.email ? `<div style="color: #7f1d1d; font-size: 13px;">📧 ${reminder.leads.email}</div>` : ''}
             ${reminder.leads?.phone ? `<div style="color: #7f1d1d; font-size: 13px;">📞 ${reminder.leads.phone}</div>` : ''}
             ${templateData.baseUrl ? `
-              <a href="${templateData.baseUrl}/reminders" style="color: #dc2626; text-decoration: underline; font-size: 14px;">
+              <a href="${templateData.baseUrl}/" style="color: #dc2626; text-decoration: underline; font-size: 14px;">
                 Mark as complete →
               </a>
             ` : ''}
@@ -103,7 +103,7 @@ export function generateDailySummaryEmailSimplified(
             ${reminder.leads?.email ? `<div style="color: #78350f; font-size: 13px;">📧 ${reminder.leads.email}</div>` : ''}
             ${reminder.leads?.phone ? `<div style="color: #78350f; font-size: 13px;">📞 ${reminder.leads.phone}</div>` : ''}
             ${templateData.baseUrl ? `
-              <a href="${templateData.baseUrl}/reminders" style="color: #92400e; text-decoration: underline; font-size: 14px;">
+              <a href="${templateData.baseUrl}/" style="color: #92400e; text-decoration: underline; font-size: 14px;">
                 View reminder →
               </a>
             ` : ''}

@@ -566,27 +566,44 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
-    // Process each user
-    const results = await Promise.allSettled(
-      enabledUsers.map(async (user) => {
+    // Process each user with rate limiting (max 2 requests per second for Resend)
+    const results = [];
+    for (let i = 0; i < enabledUsers.length; i++) {
+      const user = enabledUsers[i];
+      
+      // Add delay between requests to respect rate limits (500ms = 2 per second)
+      if (i > 0) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+      
+      try {
+        let result;
         switch (type) {
           case 'daily-summary':
-            return await sendDailySummary(user, isTest);
+            result = await sendDailySummary(user, isTest);
+            break;
           case 'weekly-recap':
-            return await sendWeeklyRecap(user, isTest);
+            result = await sendWeeklyRecap(user, isTest);
+            break;
           case 'new-assignment':
             // Immediate notification - handled separately
             console.log(`New assignment notification for ${user.email} - handled by immediate notification system`);
-            return;
+            result = undefined;
+            break;
           case 'project-milestone':
             // Immediate notification - handled separately  
             console.log(`Project milestone notification for ${user.email} - handled by immediate notification system`);
-            return;
+            result = undefined;
+            break;
           default:
             throw new Error(`Unknown notification type: ${type}`);
         }
-      })
-    );
+        results.push({ status: 'fulfilled', value: result });
+      } catch (error) {
+        console.error(`Failed to send notification to user ${user.email}:`, error);
+        results.push({ status: 'rejected', reason: error });
+      }
+    }
 
     const successful = results.filter(result => result.status === 'fulfilled').length;
     const failed = results.filter(result => result.status === 'rejected').length;

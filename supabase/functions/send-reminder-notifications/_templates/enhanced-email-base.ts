@@ -268,10 +268,14 @@ export const getEmailBaseStyles = (brandColor = '#1EB29F') => `
       text-decoration: none !important;
     }
     
-    .inline-buttons {
-      margin: 20px 0;
-      text-align: center;
-    }
+      .inline-buttons {
+        margin: 20px 0;
+        text-align: center;
+      }
+      
+      .inline-buttons .cta-button {
+        margin: 8px 12px 8px 0;
+      }
     
     .email-footer {
       background-color: #F3F4F6;
@@ -379,8 +383,8 @@ export const createEmailTemplate = (
 ) => {
   const { userFullName, businessName = "Lumiso", logoUrl, brandColor = "#1EB29F", baseUrl = "https://rifdykpdubrowzbylffe.supabase.co" } = templateData;
   
-  // Always use the static Lumiso logo - use a working public URL
-  const lumisoLogo = "https://rifdykpdubrowzbylffe.supabase.co/storage/v1/object/public/logos/ac32273e-af95-4de9-abed-ce96e6f68139/logo-1755374515090.png";
+  // Use the static Lumiso logo from assets
+  const lumisoLogo = `${baseUrl}/src/assets/Logo.png`;
   
   console.log(`Using static Lumiso logo: ${lumisoLogo}`);
   

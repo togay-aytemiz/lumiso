@@ -437,19 +437,17 @@ async function sendDailySummary(user: UserProfile, isTest?: boolean) {
 
   console.log(`Overdue sessions query result:`, { data: overdueSessions, error: sessionsError });
 
-  // Get overdue reminders (activities not marked as done) - fix ambiguous column reference
+  // Get overdue reminders (activities not marked as done)
   const { data: overdueReminders, error: remindersError } = await supabase
     .from('activities')
     .select(`
-      activities.id, 
-      activities.content, 
-      activities.reminder_date, 
-      activities.type,
+      id, content, reminder_date, type,
       leads!left(name, email, phone),
       projects!left(name, id)
     `)
-    .eq('user_id', user.user_id)
+    .eq('organization_id', user.organization_id)
     .eq('completed', false)
+    .not('reminder_date', 'is', null)
     .lt('reminder_date', today);
 
   console.log(`Overdue reminders query result (fixed):`, { data: overdueReminders, error: remindersError });
@@ -462,15 +460,13 @@ async function sendDailySummary(user: UserProfile, isTest?: boolean) {
   const { data: upcomingReminders, error: upcomingError } = await supabase
     .from('activities')
     .select(`
-      activities.id, 
-      activities.content, 
-      activities.reminder_date, 
-      activities.type,
+      id, content, reminder_date, type,
       leads!left(name, email, phone),
       projects!left(name, id)
     `)
-    .eq('user_id', user.user_id)
+    .eq('organization_id', user.organization_id)
     .eq('completed', false)
+    .not('reminder_date', 'is', null)
     .gte('reminder_date', today)
     .lte('reminder_date', tomorrowStr);
 

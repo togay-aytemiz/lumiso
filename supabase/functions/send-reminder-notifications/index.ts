@@ -415,49 +415,34 @@ async function getUserBrandingSettings(userId: string, organizationId: string): 
 async function sendOverdueReminder(user: UserProfile, isTest?: boolean) {
   const overdueItems = await getOverdueItemsWithRelationships(user.user_id, user.active_organization_id, user.permissions);
   
-  // For testing, create mock data if no real overdue items exist
-  if (isTest && overdueItems.leads.length === 0 && overdueItems.activities.length === 0) {
-    const mockOverdueItems = {
-      leads: [
-        {
-          id: 'test-lead-1',
-          name: 'Test Lead - Sarah Johnson',
-          reminder_date: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
-          type: 'lead'
-        }
-      ],
-      activities: [
-        {
-          id: 'test-activity-1',
-          content: 'Follow up on wedding quote for upcoming summer event',
-          reminder_date: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString(), // 2 days ago
-          type: 'follow_up',
-          leads: { name: 'Test Lead - Sarah Johnson', email: 'sarah@example.com' }
-        }
-      ]
-    };
-    
-    const templateData = await getUserBrandingSettings(user.user_id, user.active_organization_id);
-    const emailContent = generateOverdueEmail(mockOverdueItems, templateData);
-    const subject = `🚨 TEST: ${mockOverdueItems.leads.length + mockOverdueItems.activities.length} Overdue Items Need Attention`;
-
-    const { error } = await resend.emails.send({
-      from: 'Lumiso <onboarding@resend.dev>',
-      to: [user.email],
-      subject: subject,
-      html: emailContent,
-    });
-
-    if (error) {
-      console.error(`Failed to send test overdue reminder to ${user.email}:`, error);
-      throw error;
-    }
-
-    console.log(`Sent test overdue reminder to ${user.email}`);
-    return;
-  }
-  
   if (overdueItems.leads.length === 0 && overdueItems.activities.length === 0) {
+    // For testing, send a mock email if this is the test owner email
+    if (isTest && user.email === 'togayaytemiz@gmail.com') {
+      const mockData = {
+        leads: [{ id: '1', name: 'Test Lead', reminder_date: new Date().toISOString(), type: 'lead' }],
+        activities: [{ id: '1', content: 'Test activity', reminder_date: new Date().toISOString(), type: 'follow_up' }]
+      };
+      
+      const templateData = await getUserBrandingSettings(user.user_id, user.active_organization_id);
+      const emailContent = generateOverdueEmail(mockData, templateData);
+      const subject = `🚨 TEST: 2 Overdue Items Need Attention`;
+
+      const { error } = await resend.emails.send({
+        from: 'Lumiso <onboarding@resend.dev>',
+        to: [user.email],
+        subject: subject,
+        html: emailContent,
+      });
+
+      if (error) {
+        console.error(`Failed to send test overdue reminder to ${user.email}:`, error);
+        throw error;
+      }
+
+      console.log(`Sent test overdue reminder to ${user.email}`);
+      return;
+    }
+    
     console.log(`No overdue items for user ${user.email}`);
     return;
   }

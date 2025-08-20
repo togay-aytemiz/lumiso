@@ -112,8 +112,12 @@ async function getEnabledUsersForNotification(type: string, sendTime?: string, i
   // Always filter by enabled status
   query = query.eq(notificationFieldMap[type], true);
   
-  // Only add time filter if NOT testing and time is applicable
-  if (!isTest && sendTime && timeFieldMap[type]) {
+  // For testing, limit to first user only to avoid rate limits
+  if (isTest) {
+    query = query.limit(1);
+    console.log('Test mode: limiting to 1 user to avoid rate limits');
+  } else if (sendTime && timeFieldMap[type]) {
+    // Only add time filter for non-test scenarios
     query = query.eq(timeFieldMap[type], sendTime);
   }
 

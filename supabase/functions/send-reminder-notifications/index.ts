@@ -470,37 +470,6 @@ async function sendSessionReminder(user: UserProfile, isTest?: boolean) {
   const upcomingSessions = await getUpcomingSessionsWithRelationships(user.user_id, user.active_organization_id, user.permissions, isTest);
   
   if (upcomingSessions.length === 0) {
-    // For testing, send a mock email if this is the test owner email
-    if (isTest && user.email === 'togayaytemiz@gmail.com') {
-      const mockSessions = [{
-        id: '1',
-        session_date: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Tomorrow
-        session_time: '14:00',
-        notes: 'Test photography session',
-        leads: { name: 'Test Client', email: 'test@client.com', phone: '+1234567890' },
-        projects: { id: '1', name: 'Test Wedding Project' }
-      }];
-      
-      const templateData = await getUserBrandingSettings(user.user_id, user.active_organization_id);
-      const emailContent = generateSessionEmail(mockSessions, templateData);
-      const subject = `📸 TEST: 1 Photography Session Coming Up`;
-
-      const { error } = await resend.emails.send({
-        from: 'Lumiso <onboarding@resend.dev>',
-        to: [user.email],
-        subject: subject,
-        html: emailContent,
-      });
-
-      if (error) {
-        console.error(`Failed to send test session reminder to ${user.email}:`, error);
-        throw error;
-      }
-
-      console.log(`Sent test session reminder to ${user.email}`);
-      return;
-    }
-    
     console.log(`No upcoming sessions for user ${user.email}`);
     return;
   }
@@ -524,45 +493,17 @@ async function sendSessionReminder(user: UserProfile, isTest?: boolean) {
   console.log(`Sent session reminder to ${user.email}`);
 }
 
-async function sendDailySummary(user: UserProfile, isTest?: boolean) {
+async function sendDailySummary(user: UserProfile) {
   const [upcomingSessions, pendingTodos, overdueItems] = await Promise.all([
     getUpcomingSessionsWithRelationships(user.user_id, user.active_organization_id, user.permissions),
     getPendingTodosWithRelationships(user.user_id, user.active_organization_id, user.permissions),
     getOverdueItemsWithRelationships(user.user_id, user.active_organization_id, user.permissions)
   ]);
 
-  // For testing, create mock data if this is the test owner email
-  let finalSessions = upcomingSessions;
-  let finalTodos = pendingTodos;
-  let finalOverdueItems = overdueItems;
-  
-  if (isTest && user.email === 'togayaytemiz@gmail.com') {
-    finalSessions = [{
-      id: '1',
-      session_date: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      session_time: '14:00',
-      notes: 'Test session',
-      leads: { name: 'Test Client', email: 'test@client.com' }
-    }];
-    
-    finalTodos = [{
-      id: '1',
-      content: 'Test todo item',
-      is_completed: false,
-      created_at: new Date().toISOString(),
-      projects: { name: 'Test Project' }
-    }];
-    
-    finalOverdueItems = {
-      leads: [{ id: '1', name: 'Test Lead', reminder_date: new Date().toISOString(), type: 'lead' }],
-      activities: [{ id: '1', content: 'Test activity', reminder_date: new Date().toISOString(), type: 'follow_up' }]
-    };
-  }
-
   const templateData = await getUserBrandingSettings(user.user_id, user.active_organization_id);
-  const emailContent = generateDailySummaryEmail(finalSessions, finalTodos, finalOverdueItems, templateData);
+  const emailContent = generateDailySummaryEmail(upcomingSessions, pendingTodos, overdueItems, templateData);
   const today = new Date().toLocaleDateString();
-  const subject = isTest ? `📊 TEST: Daily Summary - ${today}` : `📊 Daily Summary - ${today}`;
+  const subject = `📊 Daily Summary - ${today}`;
 
   const { error } = await resend.emails.send({
     from: 'Lumiso <onboarding@resend.dev>',
@@ -579,40 +520,10 @@ async function sendDailySummary(user: UserProfile, isTest?: boolean) {
   console.log(`Sent daily summary to ${user.email}`);
 }
 
-async function sendTaskNudge(user: UserProfile, isTest?: boolean) {
+async function sendTaskNudge(user: UserProfile) {
   const pendingTodos = await getPendingTodosWithRelationships(user.user_id, user.active_organization_id, user.permissions);
   
   if (pendingTodos.length === 0) {
-    // For testing, send a mock email if this is the test owner email
-    if (isTest && user.email === 'togayaytemiz@gmail.com') {
-      const mockTodos = [{
-        id: '1',
-        content: 'Test pending task that needs attention',
-        is_completed: false,
-        created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
-        projects: { id: '1', name: 'Test Project' }
-      }];
-      
-      const templateData = await getUserBrandingSettings(user.user_id, user.active_organization_id);
-      const emailContent = generateTaskNudgeEmail(mockTodos, templateData);
-      const subject = `📋 TEST: 1 Pending Task Needs Your Attention`;
-
-      const { error } = await resend.emails.send({
-        from: 'Lumiso <onboarding@resend.dev>',
-        to: [user.email],
-        subject: subject,
-        html: emailContent,
-      });
-
-      if (error) {
-        console.error(`Failed to send test task nudge to ${user.email}:`, error);
-        throw error;
-      }
-
-      console.log(`Sent test task nudge to ${user.email}`);
-      return;
-    }
-    
     console.log(`No pending todos for user ${user.email}`);
     return;
   }
@@ -646,29 +557,12 @@ async function sendTaskNudge(user: UserProfile, isTest?: boolean) {
   console.log(`Sent task nudge to ${user.email}`);
 }
 
-async function sendWeeklyRecap(user: UserProfile, isTest?: boolean) {
-  let weeklyStats = await getWeeklyStats(user.user_id, user.active_organization_id, user.permissions);
-  
-  // For testing, create mock stats if this is the test owner email
-  if (isTest && user.email === 'togayaytemiz@gmail.com') {
-    weeklyStats = {
-      newLeads: 5,
-      activeProjects: 3,
-      completedSessions: 2,
-      upcomingSessions: [
-        {
-          id: '1',
-          session_date: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          session_time: '14:00',
-          leads: { name: 'Test Client' }
-        }
-      ]
-    };
-  }
+async function sendWeeklyRecap(user: UserProfile) {
+  const weeklyStats = await getWeeklyStats(user.user_id, user.active_organization_id, user.permissions);
   
   const templateData = await getUserBrandingSettings(user.user_id, user.active_organization_id);
   const emailContent = generateWeeklyRecapEmail(weeklyStats, templateData);
-  const subject = isTest ? `📈 TEST: Weekly Business Recap - Your Photography Success Story` : `📈 Weekly Business Recap - Your Photography Success Story`;
+  const subject = `📈 Weekly Business Recap - Your Photography Success Story`;
 
   const { error } = await resend.emails.send({
     from: 'Lumiso <onboarding@resend.dev>',
@@ -720,11 +614,11 @@ const handler = async (req: Request): Promise<Response> => {
           case 'session':
             return await sendSessionReminder(user, isTest);
           case 'daily_summary':
-            return await sendDailySummary(user, isTest);
+            return await sendDailySummary(user);
           case 'task_nudge':
-            return await sendTaskNudge(user, isTest);
+            return await sendTaskNudge(user);
           case 'weekly_recap':
-            return await sendWeeklyRecap(user, isTest);
+            return await sendWeeklyRecap(user);
           default:
             throw new Error(`Unknown notification type: ${type}`);
         }

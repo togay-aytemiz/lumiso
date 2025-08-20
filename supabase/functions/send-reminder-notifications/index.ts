@@ -2,12 +2,10 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { Resend } from "npm:resend@2.0.0";
 
-// Import enhanced email templates
-import { generateOverdueEmail } from './_templates/enhanced-overdue-template.ts';
-import { generateSessionEmail } from './_templates/enhanced-session-template.ts';
-import { generateDailySummaryEmail } from './_templates/enhanced-daily-summary-template.ts';
-import { generateTaskNudgeEmail } from './_templates/enhanced-task-nudge-template.ts';
-import { generateWeeklyRecapEmail, WeeklyStats } from './_templates/weekly-recap-template.ts';
+// Import simplified email templates for MVP
+import { generateDailySummaryEmailSimplified } from './_templates/simplified-daily-summary-template.ts';
+import { generateWeeklyRecapEmailSimplified } from './_templates/simplified-weekly-recap-template.ts';
+import { WeeklyStats } from './_templates/weekly-recap-template.ts';
 import { EmailTemplateData, Lead, Project, Session, Todo, Activity } from './_templates/enhanced-email-base.ts';
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
@@ -18,7 +16,7 @@ const corsHeaders = {
 };
 
 interface ReminderRequest {
-  type: 'overdue' | 'delivery' | 'session' | 'daily_summary' | 'task_nudge' | 'weekly_recap' | 'project_milestone' | 'lead_conversion';
+  type: 'daily_summary' | 'weekly_recap' | 'new_assignment' | 'project_milestone';
   organizationId?: string;
   userId?: string;
   isTest?: boolean;
@@ -89,21 +87,15 @@ async function getEnabledUsersForNotification(type: string, sendTime?: string, i
   console.log(`Getting enabled users for notification type: ${type}, sendTime: ${sendTime}, isTest: ${isTest}`);
   
   const notificationFieldMap: { [key: string]: string } = {
-    'overdue': 'notification_overdue_reminder_enabled',
-    'delivery': 'notification_delivery_reminder_enabled',
-    'session': 'notification_session_reminder_enabled',
     'daily_summary': 'notification_daily_summary_enabled',
-    'task_nudge': 'notification_task_nudge_enabled',
     'weekly_recap': 'notification_weekly_recap_enabled',
-    'project_milestone': 'notification_project_milestone_enabled',
-    'lead_conversion': 'notification_lead_conversion_enabled'
+    'new_assignment': 'notification_new_assignment_enabled',
+    'project_milestone': 'notification_project_milestone_enabled'
   };
 
   const timeFieldMap: { [key: string]: string } = {
-    'delivery': 'notification_delivery_reminder_send_at',
-    'session': 'notification_session_reminder_send_at',
-    'daily_summary': 'notification_daily_summary_send_at',
-    'weekly_recap': 'notification_weekly_recap_send_at'
+    'daily_summary': 'notification_scheduled_time',
+    'weekly_recap': 'notification_scheduled_time'
   };
 
   let query = supabase
@@ -411,72 +403,75 @@ async function getUserBrandingSettings(userId: string, organizationId: string): 
   };
 }
 
-// Enhanced notification sending functions
-async function sendOverdueReminder(user: UserProfile, isTest?: boolean) {
-  const overdueItems = await getOverdueItemsWithRelationships(user.user_id, user.active_organization_id, user.permissions);
-  
-  if (overdueItems.leads.length === 0 && overdueItems.activities.length === 0) {
-    console.log(`No overdue items for user ${user.email}`);
-    return;
-  }
-
-  const templateData = await getUserBrandingSettings(user.user_id, user.active_organization_id);
-  const emailContent = generateOverdueEmail(overdueItems, templateData);
-  const subject = isTest ? `🚨 TEST: ${overdueItems.leads.length + overdueItems.activities.length} Overdue Items Need Attention` : `🚨 ${overdueItems.leads.length + overdueItems.activities.length} Overdue Items Need Attention`;
-
-  const { error } = await resend.emails.send({
-    from: 'Lumiso <onboarding@resend.dev>',
-    to: [user.email],
-    subject: subject,
-    html: emailContent,
-  });
-
-  if (error) {
-    console.error(`Failed to send overdue reminder to ${user.email}:`, error);
-    throw error;
-  }
-
-  console.log(`Sent overdue reminder to ${user.email}`);
-}
-
-async function sendSessionReminder(user: UserProfile, isTest?: boolean) {
-  const upcomingSessions = await getUpcomingSessionsWithRelationships(user.user_id, user.active_organization_id, user.permissions, isTest);
-  
-  if (upcomingSessions.length === 0) {
-    console.log(`No upcoming sessions for user ${user.email}`);
-    return;
-  }
-
-  const templateData = await getUserBrandingSettings(user.user_id, user.active_organization_id);
-  const emailContent = generateSessionEmail(upcomingSessions, templateData);
-  const subject = isTest ? `📸 TEST: ${upcomingSessions.length} Photography Session${upcomingSessions.length === 1 ? '' : 's'} Coming Up` : `📸 ${upcomingSessions.length} Photography Session${upcomingSessions.length === 1 ? '' : 's'} Coming Up`;
-
-  const { error } = await resend.emails.send({
-    from: 'Lumiso <onboarding@resend.dev>',
-    to: [user.email],
-    subject: subject,
-    html: emailContent,
-  });
-
-  if (error) {
-    console.error(`Failed to send session reminder to ${user.email}:`, error);
-    throw error;
-  }
-
-  console.log(`Sent session reminder to ${user.email}`);
-}
-
+// Enhanced notification sending functions - simplified for MVP
 async function sendDailySummary(user: UserProfile, isTest?: boolean) {
-  const [upcomingSessions, pendingTodos, overdueItems] = await Promise.all([
+  // Get overdue sessions first (from today's date perspective)
+  const today = new Date().toISOString().split('T')[0];
+  
+  // Get overdue sessions (scheduled in past but still active lifecycle)
+  const { data: overdueSessions } = await supabase
+    .from('sessions')
+    .select(`
+      id, session_date, session_time, notes,
+      leads!inner(name, email, phone),
+      projects!inner(name, id),
+      session_statuses!inner(lifecycle)
+    `)
+    .eq('organization_id', user.active_organization_id)
+    .lt('session_date', today)
+    .eq('session_statuses.lifecycle', 'active');
+
+  // Get overdue reminders (activities not marked as done)
+  const { data: overdueReminders } = await supabase
+    .from('activities')
+    .select(`
+      id, content, reminder_date, type,
+      leads!inner(name, email),
+      projects!inner(name, id)
+    `)
+    .eq('organization_id', user.active_organization_id)
+    .eq('completed', false)
+    .lt('reminder_date', today);
+
+  // Get upcoming reminders due within next 24 hours
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrowStr = tomorrow.toISOString().split('T')[0];
+  
+  const { data: upcomingReminders } = await supabase
+    .from('activities')
+    .select(`
+      id, content, reminder_date, type,
+      leads!inner(name, email),
+      projects!inner(name, id)
+    `)
+    .eq('organization_id', user.active_organization_id)
+    .eq('completed', false)
+    .gte('reminder_date', today)
+    .lte('reminder_date', tomorrowStr);
+
+  const [upcomingSessions, pendingTodos] = await Promise.all([
     getUpcomingSessionsWithRelationships(user.user_id, user.active_organization_id, user.permissions),
-    getPendingTodosWithRelationships(user.user_id, user.active_organization_id, user.permissions),
-    getOverdueItemsWithRelationships(user.user_id, user.active_organization_id, user.permissions)
+    getPendingTodosWithRelationships(user.user_id, user.active_organization_id, user.permissions)
   ]);
 
+  // Structure data for new daily summary format
+  const overdueItems = {
+    leads: [], // No overdue leads in daily summary per requirements
+    activities: overdueReminders || []
+  };
+
   const templateData = await getUserBrandingSettings(user.user_id, user.active_organization_id);
-  const emailContent = generateDailySummaryEmail(upcomingSessions, pendingTodos, overdueItems, templateData);
-  const today = new Date().toLocaleDateString();
-  const subject = isTest ? `📊 TEST: Daily Summary - ${today}` : `📊 Daily Summary - ${today}`;
+  const emailContent = generateDailySummaryEmailSimplified(
+    upcomingSessions, 
+    overdueSessions || [], 
+    overdueReminders || [], 
+    upcomingReminders || [], 
+    pendingTodos, 
+    templateData
+  );
+  const todayFormatted = new Date().toLocaleDateString();
+  const subject = isTest ? `📊 TEST: Daily Summary - ${todayFormatted}` : `📊 Daily Summary - ${todayFormatted}`;
 
   const { error } = await resend.emails.send({
     from: 'Lumiso <onboarding@resend.dev>',
@@ -493,48 +488,40 @@ async function sendDailySummary(user: UserProfile, isTest?: boolean) {
   console.log(`Sent daily summary to ${user.email}`);
 }
 
-async function sendTaskNudge(user: UserProfile, isTest?: boolean) {
-  const pendingTodos = await getPendingTodosWithRelationships(user.user_id, user.active_organization_id, user.permissions);
-  
-  if (pendingTodos.length === 0) {
-    console.log(`No pending todos for user ${user.email}`);
-    return;
-  }
-
-  const oldTodos = pendingTodos.filter(todo => {
-    const daysSinceCreated = (Date.now() - new Date(todo.created_at).getTime()) / (1000 * 60 * 60 * 24);
-    return daysSinceCreated > 2;
-  });
-
-  if (oldTodos.length === 0) {
-    console.log(`No old todos to nudge for user ${user.email}`);
-    return;
-  }
-
-  const templateData = await getUserBrandingSettings(user.user_id, user.active_organization_id);
-  const emailContent = generateTaskNudgeEmail(oldTodos, templateData);
-  const subject = isTest ? `📋 TEST: ${oldTodos.length} Pending Task${oldTodos.length === 1 ? '' : 's'} Need Your Attention` : `📋 ${oldTodos.length} Pending Task${oldTodos.length === 1 ? '' : 's'} Need Your Attention`;
-
-  const { error } = await resend.emails.send({
-    from: 'Lumiso <onboarding@resend.dev>',
-    to: [user.email],
-    subject: subject,
-    html: emailContent,
-  });
-
-  if (error) {
-    console.error(`Failed to send task nudge to ${user.email}:`, error);
-    throw error;
-  }
-
-  console.log(`Sent task nudge to ${user.email}`);
-}
-
 async function sendWeeklyRecap(user: UserProfile, isTest?: boolean) {
+  // Only send to Owners
+  const { data: membership } = await supabase
+    .from('organization_members')
+    .select('system_role')
+    .eq('user_id', user.user_id)
+    .eq('organization_id', user.active_organization_id)
+    .eq('status', 'active')
+    .single();
+
+  if (membership?.system_role !== 'Owner') {
+    console.log(`Weekly recap skipped for ${user.email} - not an Owner`);
+    return;
+  }
+
   const weeklyStats = await getWeeklyStats(user.user_id, user.active_organization_id, user.permissions);
   
+  // Get aging projects (stuck in active lifecycle too long)
+  const monthAgo = new Date();
+  monthAgo.setDate(monthAgo.getDate() - 30);
+  const monthAgoStr = monthAgo.toISOString().split('T')[0];
+  
+  const { data: agingProjects } = await supabase
+    .from('projects')
+    .select(`
+      id, name, created_at,
+      project_statuses!inner(lifecycle)
+    `)
+    .eq('organization_id', user.active_organization_id)
+    .eq('project_statuses.lifecycle', 'active')
+    .lt('created_at', monthAgoStr);
+
   const templateData = await getUserBrandingSettings(user.user_id, user.active_organization_id);
-  const emailContent = generateWeeklyRecapEmail(weeklyStats, templateData);
+  const emailContent = generateWeeklyRecapEmailSimplified(weeklyStats, agingProjects || [], templateData);
   const subject = isTest ? `📈 TEST: Weekly Business Recap - Your Photography Success Story` : `📈 Weekly Business Recap - Your Photography Success Story`;
 
   const { error } = await resend.emails.send({
@@ -582,16 +569,18 @@ const handler = async (req: Request): Promise<Response> => {
     const results = await Promise.allSettled(
       enabledUsers.map(async (user) => {
         switch (type) {
-          case 'overdue':
-            return await sendOverdueReminder(user, isTest);
-          case 'session':
-            return await sendSessionReminder(user, isTest);
           case 'daily_summary':
             return await sendDailySummary(user, isTest);
-          case 'task_nudge':
-            return await sendTaskNudge(user, isTest);
           case 'weekly_recap':
             return await sendWeeklyRecap(user, isTest);
+          case 'new_assignment':
+            // Immediate notification - handled separately
+            console.log(`New assignment notification for ${user.email} - handled by immediate notification system`);
+            return;
+          case 'project_milestone':
+            // Immediate notification - handled separately  
+            console.log(`Project milestone notification for ${user.email} - handled by immediate notification system`);
+            return;
           default:
             throw new Error(`Unknown notification type: ${type}`);
         }

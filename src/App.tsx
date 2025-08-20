@@ -7,6 +7,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ProfileProvider } from "@/contexts/ProfileContext";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
+import GettingStarted from "./pages/GettingStarted";
 import AllLeads from "./pages/AllLeads";
 import AllProjects from "./pages/AllProjects";
 import LeadDetail from "./pages/LeadDetail";
@@ -53,6 +54,7 @@ const App = () => (
             <Route path="/invitation-signup" element={<InvitationSignup />} />
             <Route path="/" element={<ProtectedRoute />}>
               <Route index element={<Index />} />
+              <Route path="getting-started" element={<GettingStarted />} />
               <Route path="leads" element={<AllLeads />} />
               <Route path="projects" element={<AllProjects />} />
               <Route path="leads/:id" element={<LeadDetail />} />

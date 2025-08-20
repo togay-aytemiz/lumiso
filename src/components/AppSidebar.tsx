@@ -1,7 +1,9 @@
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { LayoutDashboard, Users, Calendar, Bell, BarChart3, FolderOpen, CreditCard, CalendarDays, CalendarRange } from "lucide-react";
+import { LayoutDashboard, Users, Calendar, Bell, BarChart3, FolderOpen, CreditCard, CalendarDays, CalendarRange, Lock, BookOpen } from "lucide-react";
 import logo from "@/assets/Logo.png";
+import { useOnboarding } from "@/hooks/useOnboarding";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Sidebar,
   SidebarContent,
@@ -16,11 +18,17 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { UserMenu } from "@/components/UserMenu";
 
 const navigationItems = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard },
-  { title: "Leads", url: "/leads", icon: Users },
-  { title: "Projects", url: "/projects", icon: FolderOpen },
-  { title: "Analytics", url: "/analytics", icon: BarChart3 },
-  { title: "Payments", url: "/payments", icon: CreditCard },
+  { title: "Dashboard", url: "/", icon: LayoutDashboard, requiredStep: 1 },
+  { title: "Leads", url: "/leads", icon: Users, requiredStep: 2 },
+  { title: "Projects", url: "/projects", icon: FolderOpen, requiredStep: 3 },
+  { title: "Analytics", url: "/analytics", icon: BarChart3, requiredStep: 5 },
+  { title: "Payments", url: "/payments", icon: CreditCard, requiredStep: 5 },
+];
+
+const bookingItems = [
+  { title: "Calendar", url: "/calendar", icon: CalendarDays, requiredStep: 4 },
+  { title: "Sessions", url: "/sessions", icon: Calendar, requiredStep: 4 },
+  { title: "Reminders", url: "/reminders", icon: Bell, requiredStep: 4 },
 ];
 
 export function AppSidebar() {
@@ -29,6 +37,10 @@ export function AppSidebar() {
   const navigate = useNavigate();
   const currentPath = location.pathname;
   const isMobile = useIsMobile();
+  const { inGuidedSetup } = useOnboarding();
+  
+  // Mock completed steps - will be managed by backend in next phase
+  const completedSteps = 0;
 
   const isActive = (path: string) => {
     if (path === "/") {
@@ -41,6 +53,16 @@ export function AppSidebar() {
     currentPath.startsWith(path)
   );
   const [bookingsOpen, setBookingsOpen] = useState(isBookingsChildActive);
+  
+  const isItemLocked = (requiredStep: number) => {
+    return inGuidedSetup && completedSteps < requiredStep;
+  };
+
+  const handleLockedItemClick = (e: React.MouseEvent, requiredStep: number) => {
+    if (isItemLocked(requiredStep)) {
+      e.preventDefault();
+    }
+  };
   const handleBookingsClick = () => {
     if (!bookingsOpen) {
       setBookingsOpen(true);
@@ -81,110 +103,206 @@ export function AppSidebar() {
 
       <SidebarContent className="px-3 flex-1 overflow-y-auto">
         <SidebarMenu>
+          {/* Getting Started - Only visible during guided setup */}
+          {inGuidedSetup && (
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                isActive={isActive("/getting-started")}
+                className="group/item w-full h-10 px-3 py-3 mb-2 text-left transition-all duration-200 rounded-lg hover:bg-muted/50 data-[active=true]:bg-muted"
+              >
+                <NavLink
+                  to="/getting-started"
+                  className="flex items-center gap-3 w-full"
+                  onClick={handleNavClick}
+                >
+                  <BookOpen className="h-4 w-4 text-sidebar-foreground group-hover/item:text-[hsl(var(--sidebar-primary))] group-data-[active=true]/item:text-[hsl(var(--sidebar-primary))]" />
+                  <span className="font-medium">Getting Started</span>
+                </NavLink>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          )}
           {navigationItems
             .slice(0, navigationItems.findIndex((i) => i.title === "Analytics"))
             .map((item) => {
               const active = isActive(item.url);
+              const locked = isItemLocked(item.requiredStep);
+              
+              const content = (
+                <div 
+                  className={`flex items-center gap-3 w-full ${locked ? 'opacity-50' : ''}`}
+                  onClick={(e) => handleLockedItemClick(e, item.requiredStep)}
+                >
+                  <item.icon className="h-4 w-4 text-sidebar-foreground group-hover/item:text-[hsl(var(--sidebar-primary))] group-data-[active=true]/item:text-[hsl(var(--sidebar-primary))]" />
+                  <span className="font-medium">{item.title}</span>
+                  {locked && <Lock className="h-3 w-3 ml-auto text-muted-foreground" />}
+                </div>
+              );
+
               return (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={active}
-                    className="group/item w-full h-10 px-3 py-3 mb-2 text-left transition-all duration-200 rounded-lg hover:bg-muted/50 data-[active=true]:bg-muted"
-                  >
-                    <NavLink
-                      to={item.url}
-                      className="flex items-center gap-3 w-full"
-                      onClick={handleNavClick}
+                  {locked ? (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <SidebarMenuButton
+                          className="group/item w-full h-10 px-3 py-3 mb-2 text-left transition-all duration-200 rounded-lg cursor-not-allowed"
+                        >
+                          {content}
+                        </SidebarMenuButton>
+                      </TooltipTrigger>
+                      <TooltipContent side="right">
+                        <p>Unlocks after completing step {item.requiredStep} of setup</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  ) : (
+                    <SidebarMenuButton
+                      asChild
+                      isActive={active}
+                      className="group/item w-full h-10 px-3 py-3 mb-2 text-left transition-all duration-200 rounded-lg hover:bg-muted/50 data-[active=true]:bg-muted"
                     >
-                      <item.icon className="h-4 w-4 text-sidebar-foreground group-hover/item:text-[hsl(var(--sidebar-primary))] group-data-[active=true]/item:text-[hsl(var(--sidebar-primary))]" />
-                      <span className="font-medium">{item.title}</span>
-                    </NavLink>
-                  </SidebarMenuButton>
+                      <NavLink
+                        to={item.url}
+                        className="flex items-center gap-3 w-full"
+                        onClick={handleNavClick}
+                      >
+                        <item.icon className="h-4 w-4 text-sidebar-foreground group-hover/item:text-[hsl(var(--sidebar-primary))] group-data-[active=true]/item:text-[hsl(var(--sidebar-primary))]" />
+                        <span className="font-medium">{item.title}</span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  )}
                 </SidebarMenuItem>
               );
             })}
 
           {/* Bookings parent with submenu */}
           <SidebarMenuItem>
-            <SidebarMenuButton
-              onClick={handleBookingsClick}
-              isActive={isBookingsChildActive}
-              className="group/item w-full h-10 px-3 py-3 mb-2 text-left transition-all duration-200 rounded-lg hover:bg-muted/50 data-[active=true]:bg-muted"
-            >
-              <div className="flex items-center gap-3 w-full">
-                <CalendarRange className="h-4 w-4 text-sidebar-foreground group-hover/item:text-[hsl(var(--sidebar-primary))] group-data-[active=true]/item:text-[hsl(var(--sidebar-primary))]" />
-                <span className="font-medium">Bookings</span>
-              </div>
-            </SidebarMenuButton>
+            {isItemLocked(4) ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <SidebarMenuButton
+                    className="group/item w-full h-10 px-3 py-3 mb-2 text-left transition-all duration-200 rounded-lg cursor-not-allowed opacity-50"
+                  >
+                    <div className="flex items-center gap-3 w-full">
+                      <CalendarRange className="h-4 w-4 text-sidebar-foreground" />
+                      <span className="font-medium">Bookings</span>
+                      <Lock className="h-3 w-3 ml-auto text-muted-foreground" />
+                    </div>
+                  </SidebarMenuButton>
+                </TooltipTrigger>
+                <TooltipContent side="right">
+                  <p>Unlocks after completing step 4 of setup</p>
+                </TooltipContent>
+              </Tooltip>
+            ) : (
+              <>
+                <SidebarMenuButton
+                  onClick={handleBookingsClick}
+                  isActive={isBookingsChildActive}
+                  className="group/item w-full h-10 px-3 py-3 mb-2 text-left transition-all duration-200 rounded-lg hover:bg-muted/50 data-[active=true]:bg-muted"
+                >
+                  <div className="flex items-center gap-3 w-full">
+                    <CalendarRange className="h-4 w-4 text-sidebar-foreground group-hover/item:text-[hsl(var(--sidebar-primary))] group-data-[active=true]/item:text-[hsl(var(--sidebar-primary))]" />
+                    <span className="font-medium">Bookings</span>
+                  </div>
+                </SidebarMenuButton>
 
-            <div
-              className={`ml-6 overflow-hidden transition-all duration-300 ease-out ${bookingsOpen ? 'mt-1 max-h-40 opacity-100 animate-fade-in' : 'max-h-0 opacity-0'}`}
-              aria-hidden={!bookingsOpen}
-            >
-                <SidebarMenu>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={isActive("/calendar")}
-                      className="group/item w-full h-9 px-3 py-2 mb-1 text-left transition-all duration-200 rounded-lg hover:bg-muted/50 data-[active=true]:bg-muted"
-                    >
-                      <NavLink to="/calendar" className="flex items-center gap-3 w-full" onClick={handleNavClick}>
-                        <CalendarDays className="h-4 w-4 text-sidebar-foreground group-hover/item:text-[hsl(var(--sidebar-primary))] group-data-[active=true]/item:text-[hsl(var(--sidebar-primary))]" />
-                        <span className="font-medium">Calendar</span>
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-
-                  <SidebarMenuItem>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={isActive("/sessions")}
-                      className="group/item w-full h-9 px-3 py-2 mb-1 text-left transition-all duration-200 rounded-lg hover:bg-muted/50 data-[active=true]:bg-muted"
-                    >
-                      <NavLink to="/sessions" className="flex items-center gap-3 w-full" onClick={handleNavClick}>
-                        <Calendar className="h-4 w-4 text-sidebar-foreground group-hover/item:text-[hsl(var(--sidebar-primary))] group-data-[active=true]/item:text-[hsl(var(--sidebar-primary))]" />
-                        <span className="font-medium">Sessions</span>
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-
-                  <SidebarMenuItem>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={isActive("/reminders")}
-                      className="group/item w-full h-9 px-3 py-2 mb-1 text-left transition-all duration-200 rounded-lg hover:bg-muted/50 data-[active=true]:bg-muted"
-                    >
-                      <NavLink to="/reminders" className="flex items-center gap-3 w-full" onClick={handleNavClick}>
-                        <Bell className="h-4 w-4 text-sidebar-foreground group-hover/item:text-[hsl(var(--sidebar-primary))] group-data-[active=true]/item:text-[hsl(var(--sidebar-primary))]" />
-                        <span className="font-medium">Reminders</span>
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                </SidebarMenu>
-              </div>
+                <div
+                  className={`ml-6 overflow-hidden transition-all duration-300 ease-out ${bookingsOpen ? 'mt-1 max-h-40 opacity-100 animate-fade-in' : 'max-h-0 opacity-0'}`}
+                  aria-hidden={!bookingsOpen}
+                >
+                    <SidebarMenu>
+                      {bookingItems.map((item) => {
+                        const active = isActive(item.url);
+                        const locked = isItemLocked(item.requiredStep);
+                        
+                        return (
+                          <SidebarMenuItem key={item.title}>
+                            {locked ? (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <SidebarMenuButton
+                                    className="group/item w-full h-9 px-3 py-2 mb-1 text-left transition-all duration-200 rounded-lg cursor-not-allowed opacity-50"
+                                  >
+                                    <div className="flex items-center gap-3 w-full">
+                                      <item.icon className="h-4 w-4 text-sidebar-foreground" />
+                                      <span className="font-medium">{item.title}</span>
+                                      <Lock className="h-3 w-3 ml-auto text-muted-foreground" />
+                                    </div>
+                                  </SidebarMenuButton>
+                                </TooltipTrigger>
+                                <TooltipContent side="right">
+                                  <p>Unlocks after completing step {item.requiredStep} of setup</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            ) : (
+                              <SidebarMenuButton
+                                asChild
+                                isActive={active}
+                                className="group/item w-full h-9 px-3 py-2 mb-1 text-left transition-all duration-200 rounded-lg hover:bg-muted/50 data-[active=true]:bg-muted"
+                              >
+                                <NavLink to={item.url} className="flex items-center gap-3 w-full" onClick={handleNavClick}>
+                                  <item.icon className="h-4 w-4 text-sidebar-foreground group-hover/item:text-[hsl(var(--sidebar-primary))] group-data-[active=true]/item:text-[hsl(var(--sidebar-primary))]" />
+                                  <span className="font-medium">{item.title}</span>
+                                </NavLink>
+                              </SidebarMenuButton>
+                            )}
+                          </SidebarMenuItem>
+                        );
+                      })}
+                    </SidebarMenu>
+                  </div>
+              </>
+            )}
           </SidebarMenuItem>
 
           {navigationItems
             .slice(navigationItems.findIndex((i) => i.title === "Analytics"))
             .map((item) => {
               const active = isActive(item.url);
+              const locked = isItemLocked(item.requiredStep);
+              
+              const content = (
+                <div 
+                  className={`flex items-center gap-3 w-full ${locked ? 'opacity-50' : ''}`}
+                  onClick={(e) => handleLockedItemClick(e, item.requiredStep)}
+                >
+                  <item.icon className="h-4 w-4 text-sidebar-foreground group-hover/item:text-[hsl(var(--sidebar-primary))] group-data-[active=true]/item:text-[hsl(var(--sidebar-primary))]" />
+                  <span className="font-medium">{item.title}</span>
+                  {locked && <Lock className="h-3 w-3 ml-auto text-muted-foreground" />}
+                </div>
+              );
+
               return (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={active}
-                    className="group/item w-full h-10 px-3 py-3 mb-2 text-left transition-all duration-200 rounded-lg hover:bg-muted/50 data-[active=true]:bg-muted"
-                  >
-                    <NavLink
-                      to={item.url}
-                      className="flex items-center gap-3 w-full"
-                      onClick={handleNavClick}
+                  {locked ? (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <SidebarMenuButton
+                          className="group/item w-full h-10 px-3 py-3 mb-2 text-left transition-all duration-200 rounded-lg cursor-not-allowed"
+                        >
+                          {content}
+                        </SidebarMenuButton>
+                      </TooltipTrigger>
+                      <TooltipContent side="right">
+                        <p>Unlocks after completing step {item.requiredStep} of setup</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  ) : (
+                    <SidebarMenuButton
+                      asChild
+                      isActive={active}
+                      className="group/item w-full h-10 px-3 py-3 mb-2 text-left transition-all duration-200 rounded-lg hover:bg-muted/50 data-[active=true]:bg-muted"
                     >
-                      <item.icon className="h-4 w-4 text-sidebar-foreground group-hover/item:text-[hsl(var(--sidebar-primary))] group-data-[active=true]/item:text-[hsl(var(--sidebar-primary))]" />
-                      <span className="font-medium">{item.title}</span>
-                    </NavLink>
-                  </SidebarMenuButton>
+                      <NavLink
+                        to={item.url}
+                        className="flex items-center gap-3 w-full"
+                        onClick={handleNavClick}
+                      >
+                        <item.icon className="h-4 w-4 text-sidebar-foreground group-hover/item:text-[hsl(var(--sidebar-primary))] group-data-[active=true]/item:text-[hsl(var(--sidebar-primary))]" />
+                        <span className="font-medium">{item.title}</span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  )}
                 </SidebarMenuItem>
               );
             })}

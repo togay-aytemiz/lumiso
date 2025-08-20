@@ -1,11 +1,14 @@
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useOnboarding } from "@/hooks/useOnboarding";
 import Layout from "./Layout";
 
 const ProtectedRoute = () => {
   const { user, loading } = useAuth();
+  const { inGuidedSetup, loading: onboardingLoading } = useOnboarding();
+  const location = useLocation();
 
-  if (loading) {
+  if (loading || onboardingLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -18,6 +21,11 @@ const ProtectedRoute = () => {
 
   if (!user) {
     return <Navigate to="/auth" replace />;
+  }
+
+  // Redirect to getting-started if user is in guided setup mode and not already there
+  if (inGuidedSetup && location.pathname !== "/getting-started") {
+    return <Navigate to="/getting-started" replace />;
   }
 
   return (

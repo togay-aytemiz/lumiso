@@ -164,6 +164,40 @@ const GettingStarted = () => {
           </div>
         )}
 
+        {/* Next Step Preview */}
+        {nextStep && (
+          <div className="mb-6 sm:mb-8">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="h-px bg-border flex-1"></div>
+              <span className="text-xs text-muted-foreground uppercase tracking-wide px-3">Coming Next</span>
+              <div className="h-px bg-border flex-1"></div>
+            </div>
+            
+            <Card className="opacity-50 pointer-events-none grayscale-[0.3]">
+              <CardHeader className="pb-4">
+                <div className="flex items-start gap-4">
+                  <div className="flex items-center justify-center w-10 h-10 rounded-full border-2 border-muted-foreground/30 text-muted-foreground text-lg font-bold flex-shrink-0">
+                    {nextStep.id}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <CardTitle className="text-lg sm:text-xl mb-2 text-muted-foreground">
+                      {nextStep.title}
+                    </CardTitle>
+                    <CardDescription className="text-sm sm:text-base text-muted-foreground/80">
+                      {nextStep.description}
+                    </CardDescription>
+                    <div className="mt-3">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted/50 text-muted-foreground/80">
+                        {nextStep.duration}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </CardHeader>
+            </Card>
+          </div>
+        )}
+
         {/* Completion State */}
         {!currentStep && (
           <div className="text-center">

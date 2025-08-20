@@ -310,9 +310,11 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="p-4 mt-auto shrink-0">
-        <div className="flex justify-start">
-          <UserMenu mode={isMobile ? "mobile" : "desktop"} />
-        </div>
+        {!inGuidedSetup && (
+          <div className="flex justify-start">
+            <UserMenu mode={isMobile ? "mobile" : "desktop"} />
+          </div>
+        )}
       </SidebarFooter>
     </Sidebar>
   );

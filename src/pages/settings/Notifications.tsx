@@ -23,6 +23,12 @@ interface NotificationSettings {
   dailySummarySendAt: string;
   taskNudgeEnabled: boolean;
   
+  // Business Insights
+  weeklyRecapEnabled: boolean;
+  weeklyRecapSendAt: string;
+  projectMilestoneEnabled: boolean;
+  leadConversionEnabled: boolean;
+  
   // System Alerts
   integrationFailureAlertEnabled: boolean;
   teamInviteAcceptedAlertEnabled: boolean;
@@ -40,6 +46,10 @@ export default function Notifications() {
     dailySummaryEnabled: false,
     dailySummarySendAt: "07:00",
     taskNudgeEnabled: false,
+    weeklyRecapEnabled: false,
+    weeklyRecapSendAt: "09:00",
+    projectMilestoneEnabled: false,
+    leadConversionEnabled: false,
     integrationFailureAlertEnabled: true,
     teamInviteAcceptedAlertEnabled: false,
   });
@@ -91,6 +101,10 @@ export default function Notifications() {
           dailySummaryEnabled: data.notification_daily_summary_enabled ?? false,
           dailySummarySendAt: data.notification_daily_summary_send_at ?? "07:00",
           taskNudgeEnabled: data.notification_task_nudge_enabled ?? false,
+          weeklyRecapEnabled: data.notification_weekly_recap_enabled ?? false,
+          weeklyRecapSendAt: data.notification_weekly_recap_send_at ?? "09:00",
+          projectMilestoneEnabled: data.notification_project_milestone_enabled ?? false,
+          leadConversionEnabled: data.notification_lead_conversion_enabled ?? false,
           integrationFailureAlertEnabled: data.notification_integration_failure_alert_enabled ?? true,
           teamInviteAcceptedAlertEnabled: data.notification_team_invite_accepted_alert_enabled ?? false,
         };
@@ -116,6 +130,10 @@ export default function Notifications() {
       dailySummaryEnabled: 'notification_daily_summary_enabled',
       dailySummarySendAt: 'notification_daily_summary_send_at',
       taskNudgeEnabled: 'notification_task_nudge_enabled',
+      weeklyRecapEnabled: 'notification_weekly_recap_enabled',
+      weeklyRecapSendAt: 'notification_weekly_recap_send_at',
+      projectMilestoneEnabled: 'notification_project_milestone_enabled',
+      leadConversionEnabled: 'notification_lead_conversion_enabled',
       integrationFailureAlertEnabled: 'notification_integration_failure_alert_enabled',
       teamInviteAcceptedAlertEnabled: 'notification_team_invite_accepted_alert_enabled',
     };
@@ -386,6 +404,92 @@ export default function Notifications() {
         </CategorySettingsSection>
 
         <CategorySettingsSection
+          title="Business Insights"
+          description="Weekly reports and business milestone notifications"
+          sectionId="business-insights"
+        >
+          <div className="space-y-6">
+            {/* Weekly Recap - Auto-save group */}
+            <div className="space-y-4 p-4 border rounded-lg">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <Label htmlFor="weekly-recap" className="text-base font-medium">
+                    Weekly Business Recap
+                  </Label>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Weekly summary of leads, projects, sessions, and revenue
+                  </p>
+                </div>
+                <Switch
+                  id="weekly-recap"
+                  checked={settings.weeklyRecapEnabled}
+                  onCheckedChange={(checked) => handleAutoSave('weeklyRecapEnabled', checked)}
+                  disabled={autoSaveStates.weeklyRecapEnabled === 'saving'}
+                />
+              </div>
+              
+              {settings.weeklyRecapEnabled && (
+                <div className="flex items-center gap-3 pt-2 border-t">
+                  <Label htmlFor="weekly-recap-time" className="text-sm">Send at:</Label>
+                  <Select
+                    value={settings.weeklyRecapSendAt}
+                    onValueChange={(value) => handleAutoSave('weeklyRecapSendAt', value)}
+                    disabled={autoSaveStates.weeklyRecapSendAt === 'saving'}
+                  >
+                    <SelectTrigger className="w-32">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-60">
+                      {timeOptions.map((time) => (
+                        <SelectItem key={time} value={time}>
+                          {time}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
+
+            {/* Project Milestone - Pure toggle (auto-save) */}
+            <div className="flex items-center justify-between p-4 border rounded-lg">
+              <div className="flex-1">
+                <Label htmlFor="project-milestone" className="text-base font-medium">
+                  Project Milestone Notifications
+                </Label>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Get notified when projects reach important milestones
+                </p>
+              </div>
+              <Switch
+                id="project-milestone"
+                checked={settings.projectMilestoneEnabled}
+                onCheckedChange={(checked) => handleAutoSave('projectMilestoneEnabled', checked)}
+                disabled={autoSaveStates.projectMilestoneEnabled === 'saving'}
+              />
+            </div>
+
+            {/* Lead Conversion - Pure toggle (auto-save) */}
+            <div className="flex items-center justify-between p-4 border rounded-lg">
+              <div className="flex-1">
+                <Label htmlFor="lead-conversion" className="text-base font-medium">
+                  Lead Conversion Notifications
+                </Label>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Get notified when leads are converted to projects
+                </p>
+              </div>
+              <Switch
+                id="lead-conversion"
+                checked={settings.leadConversionEnabled}
+                onCheckedChange={(checked) => handleAutoSave('leadConversionEnabled', checked)}
+                disabled={autoSaveStates.leadConversionEnabled === 'saving'}
+              />
+            </div>
+          </div>
+        </CategorySettingsSection>
+
+        <CategorySettingsSection
           title="System Alerts"
           description="Important system notifications and alerts"
           sectionId="system-alerts"
@@ -435,7 +539,7 @@ export default function Notifications() {
           sectionId="test-notifications"
         >
           <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <Button
                 variant="outline"
                 onClick={() => testNotification('overdue')}
@@ -504,6 +608,20 @@ export default function Notifications() {
                   <TestTube className="h-4 w-4 mr-2" />
                 )}
                 Test Task Nudge
+              </Button>
+
+              <Button
+                variant="outline"
+                onClick={() => testNotification('weekly_recap')}
+                disabled={testingNotification === 'weekly_recap'}
+                className="justify-start"
+              >
+                {testingNotification === 'weekly_recap' ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <TestTube className="h-4 w-4 mr-2" />
+                )}
+                Test Weekly Recap
               </Button>
             </div>
             

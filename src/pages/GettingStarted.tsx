@@ -130,35 +130,70 @@ const GettingStarted = () => {
         {currentStep && (
           <div className="mb-6 sm:mb-8">
             <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-accent/5">
-              <CardHeader className="pb-4">
-                <div className="flex items-start gap-4">
-                  <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground text-lg font-bold flex-shrink-0">
-                    {currentStep.id}
+              <CardContent className="p-4 md:p-6">
+                {/* Mobile Layout */}
+                <div className="block md:hidden">
+                  <div className="flex items-start gap-4 mb-4">
+                    <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground text-lg font-bold flex-shrink-0">
+                      {currentStep.id}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <CardTitle className="text-lg mb-2">
+                        {currentStep.title}
+                      </CardTitle>
+                      <CardDescription className="text-sm text-muted-foreground">
+                        {currentStep.description}
+                      </CardDescription>
+                      <div className="mt-3">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground">
+                          {currentStep.duration}
+                        </span>
+                      </div>
+                    </div>
                   </div>
+                  <Button 
+                    size="lg" 
+                    className="w-full min-h-[48px]"
+                    onClick={() => handleStepAction(currentStep.route)}
+                  >
+                    {currentStep.buttonText}
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                </div>
+
+                {/* Desktop Layout */}
+                <div className="hidden md:flex md:items-center md:justify-between">
                   <div className="flex-1 min-w-0">
-                    <CardTitle className="text-lg sm:text-xl mb-2">
-                      {currentStep.title}
-                    </CardTitle>
-                    <CardDescription className="text-sm sm:text-base text-muted-foreground">
-                      {currentStep.description}
-                    </CardDescription>
-                    <div className="mt-3">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground">
+                    {/* Title Row with Circle, Title, and Duration Badge */}
+                    <div className="flex items-center gap-4 mb-3">
+                      <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground text-lg font-bold flex-shrink-0">
+                        {currentStep.id}
+                      </div>
+                      <CardTitle className="text-xl">
+                        {currentStep.title}
+                      </CardTitle>
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground ml-2">
                         {currentStep.duration}
                       </span>
                     </div>
+                    {/* Description */}
+                    <CardDescription className="text-base text-muted-foreground ml-14">
+                      {currentStep.description}
+                    </CardDescription>
+                  </div>
+                  
+                  {/* CTA Button on Right */}
+                  <div className="ml-8 flex-shrink-0">
+                    <Button 
+                      size="lg" 
+                      className="min-h-[48px]"
+                      onClick={() => handleStepAction(currentStep.route)}
+                    >
+                      {currentStep.buttonText}
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </Button>
                   </div>
                 </div>
-              </CardHeader>
-              <CardContent>
-                <Button 
-                  size="lg" 
-                  className="w-full sm:w-auto min-h-[48px]"
-                  onClick={() => handleStepAction(currentStep.route)}
-                >
-                  {currentStep.buttonText}
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
               </CardContent>
             </Card>
           </div>

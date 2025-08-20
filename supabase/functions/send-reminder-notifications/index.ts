@@ -437,7 +437,9 @@ async function sendDailySummary(user: UserProfile, isTest?: boolean) {
 
   console.log(`Overdue sessions query result:`, { data: overdueSessions, error: sessionsError });
 
-  // Get overdue reminders with lead/project relationships
+  console.log(`Getting data for user: ${user.email} (${user.user_id}) in org: ${user.active_organization_id}`);
+
+  // Get overdue reminders with lead/project relationships - debug version
   const { data: overdueReminders, error: remindersError } = await supabase
     .from('activities')
     .select(`
@@ -452,6 +454,8 @@ async function sendDailySummary(user: UserProfile, isTest?: boolean) {
     .eq('completed', false)
     .not('reminder_date', 'is', null)
     .lt('reminder_date', today);
+
+  console.log(`Overdue reminders query result:`, { data: overdueReminders, error: remindersError, today, org_id: user.active_organization_id });
 
   console.log(`Overdue reminders query result (fixed):`, { data: overdueReminders, error: remindersError });
 
@@ -479,7 +483,7 @@ async function sendDailySummary(user: UserProfile, isTest?: boolean) {
     .gte('reminder_date', today)
     .lte('reminder_date', todayEnd);
 
-  console.log(`Upcoming reminders query result:`, { data: upcomingReminders, error: upcomingError });
+  console.log(`Today's reminders query result:`, { data: upcomingReminders, error: upcomingError, today, todayEnd });
 
   const [upcomingSessions, pendingTodos] = await Promise.all([
     getUpcomingSessionsWithRelationships(user.user_id, user.active_organization_id, user.permissions),

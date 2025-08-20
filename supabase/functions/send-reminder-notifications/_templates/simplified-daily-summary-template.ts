@@ -148,15 +148,40 @@ export function generateDailySummaryEmailSimplified(
     `);
   }
 
-  // Quick actions section
+  // Quick actions section with big CTA
   if (templateData.baseUrl) {
     sections.push(`
       <div style="margin-top: 32px; padding: 24px; background: #f3f4f6; border-radius: 12px;">
         <h3 style="color: #374151; font-size: 16px; font-weight: 600; margin-bottom: 16px;">Quick Actions</h3>
-        <div style="display: flex; gap: 16px; flex-wrap: wrap;">
-          <a href="${templateData.baseUrl}/" style="background: ${templateData.brandColor}; color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 14px; font-weight: 500; margin-right: 16px;">📊 Dashboard</a>
+        <div style="display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 24px;">
+          <a href="${templateData.baseUrl}/" style="background: #6b7280; color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 14px; font-weight: 500; margin-right: 16px;">📊 Dashboard</a>
           <a href="${templateData.baseUrl}/sessions" style="background: #6b7280; color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 14px; font-weight: 500; margin-right: 16px;">📸 Sessions</a>
           <a href="${templateData.baseUrl}/projects" style="background: #6b7280; color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 14px; font-weight: 500;">📁 Projects</a>
+        </div>
+        
+        <!-- Big CTA Button like Pipedrive -->
+        <div style="text-align: center; margin-top: 24px;">
+          <a href="${templateData.baseUrl}/" style="
+            display: inline-block;
+            background: ${templateData.brandColor || '#1EB29F'};
+            color: white !important;
+            text-decoration: none !important;
+            padding: 16px 32px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(30, 178, 159, 0.3);
+          ">
+            🚀 Open Lumiso
+          </a>
+        </div>
+        
+        <!-- Manage notifications link -->
+        <div style="text-align: center; margin-top: 16px;">
+          <a href="${templateData.baseUrl}/settings/notifications" style="color: #6b7280; text-decoration: none; font-size: 14px;">
+            ⚙️ Manage email notifications
+          </a>
         </div>
       </div>
     `);

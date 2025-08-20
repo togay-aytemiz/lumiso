@@ -6,6 +6,7 @@ import { HelpCircle, ArrowRight, CheckCircle, Play } from "lucide-react";
 import { SampleDataModal } from "@/components/SampleDataModal";
 import { RestartGuidedModeButton } from "@/components/RestartGuidedModeButton";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const onboardingSteps = [
   {
@@ -47,6 +48,7 @@ const onboardingSteps = [
 
 const GettingStarted = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [showSampleDataModal, setShowSampleDataModal] = useState(false);
   const [completedSteps] = useState<number[]>([]); // Will be managed by backend in next phase
   
@@ -55,17 +57,21 @@ const GettingStarted = () => {
   const nextStep = onboardingSteps[currentStepIndex + 1];
   const progressPercentage = (completedSteps.length / onboardingSteps.length) * 100;
 
+  const handleStepAction = (route: string) => {
+    navigate(route);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Custom Header for Guidance Mode */}
-      <div className="bg-card border-b border-border">
+      <div className="bg-card border-b border-border sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">Welcome to Lumiso! 🎉</h1>
-              <p className="text-sm text-muted-foreground">Let's set up your photography business step by step</p>
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center py-4 gap-4">
+            <div className="text-center sm:text-left">
+              <h1 className="text-xl sm:text-2xl font-bold text-foreground">Welcome to Lumiso! 🎉</h1>
+              <p className="text-sm text-muted-foreground mt-1">Let's set up your photography business step by step</p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center sm:justify-end gap-3">
               <Button variant="outline" size="sm">
                 <HelpCircle className="w-4 h-4 mr-2" />
                 Need Help?
@@ -82,33 +88,32 @@ const GettingStarted = () => {
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 pb-safe">
         {/* Progress Section */}
-        <div className="mb-8">
+        <div className="mb-6 sm:mb-8">
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
                 Setup Progress
                 {completedSteps.length > 0 && (
                   <CheckCircle className="w-5 h-5 text-green-500" />
                 )}
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-base">
                 {completedSteps.length}/5 Tasks Complete
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <Progress value={progressPercentage} className="w-full" />
-                <div className="flex flex-col sm:flex-row gap-2 text-sm text-muted-foreground">
-                  <span className="font-medium">
-                    Now: {currentStep ? currentStep.title : "All tasks complete! 🎉"}
-                  </span>
+                <Progress value={progressPercentage} className="w-full h-2" />
+                <div className="flex flex-col gap-2 text-sm text-muted-foreground">
+                  <div className="font-medium">
+                    <span className="text-foreground">Now:</span> {currentStep ? currentStep.title : "All tasks complete! 🎉"}
+                  </div>
                   {nextStep && (
-                    <>
-                      <span className="hidden sm:inline">→</span>
-                      <span>Next: {nextStep.title}</span>
-                    </>
+                    <div>
+                      <span className="text-foreground">Next:</span> {nextStep.title}
+                    </div>
                   )}
                 </div>
               </div>
@@ -118,26 +123,31 @@ const GettingStarted = () => {
 
         {/* Current Task Display */}
         {currentStep && (
-          <div className="mb-8">
+          <div className="mb-6 sm:mb-8">
             <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-accent/5">
-              <CardHeader>
+              <CardHeader className="pb-4">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-3">
+                  <CardTitle className="flex items-center gap-3 text-lg sm:text-xl">
                     <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground text-sm font-bold">
                       {currentStep.id}
                     </div>
-                    Step {currentStep.id} of 5
+                    <span className="hidden sm:inline">Step {currentStep.id} of 5</span>
+                    <span className="sm:hidden">Step {currentStep.id}/5</span>
                   </CardTitle>
                 </div>
-                <CardDescription className="text-lg font-medium text-foreground mt-2">
+                <CardDescription className="text-base sm:text-lg font-medium text-foreground mt-2">
                   {currentStep.title}
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground mb-6">
+                <p className="text-muted-foreground mb-6 text-sm sm:text-base leading-relaxed">
                   {currentStep.description}
                 </p>
-                <Button size="lg" className="w-full sm:w-auto">
+                <Button 
+                  size="lg" 
+                  className="w-full sm:w-auto min-h-[48px]"
+                  onClick={() => handleStepAction(currentStep.route)}
+                >
                   <Play className="w-4 h-4 mr-2" />
                   {currentStep.buttonText}
                   <ArrowRight className="w-4 h-4 ml-2" />
@@ -155,13 +165,17 @@ const GettingStarted = () => {
                 <div className="mb-4">
                   <CheckCircle className="w-16 h-16 text-green-500 mx-auto" />
                 </div>
-                <h2 className="text-2xl font-bold text-green-700 dark:text-green-400 mb-2">
+                <h2 className="text-xl sm:text-2xl font-bold text-green-700 dark:text-green-400 mb-2">
                   Congratulations! 🎉
                 </h2>
-                <p className="text-green-600 dark:text-green-300 mb-6">
+                <p className="text-green-600 dark:text-green-300 mb-6 text-sm sm:text-base">
                   You've completed the guided setup! Your photography CRM is ready to use.
                 </p>
-                <Button size="lg" className="bg-green-600 hover:bg-green-700">
+                <Button 
+                  size="lg" 
+                  className="bg-green-600 hover:bg-green-700 min-h-[48px]"
+                  onClick={() => navigate('/')}
+                >
                   Go to Dashboard
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>

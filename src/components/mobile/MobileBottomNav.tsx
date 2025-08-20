@@ -20,6 +20,7 @@ import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { useProfile } from '@/contexts/ProfileContext';
+import { useOnboarding } from '@/hooks/useOnboarding';
 
 interface NavTab {
   title: string;
@@ -37,6 +38,7 @@ export function MobileBottomNav({ hideForOnboarding = false }: { hideForOnboardi
   const location = useLocation();
   const navigate = useNavigate();
   const { profile } = useProfile();
+  const { inGuidedSetup } = useOnboarding();
 
   // Get user email from auth
   useEffect(() => {
@@ -59,7 +61,7 @@ export function MobileBottomNav({ hideForOnboarding = false }: { hideForOnboardi
         ? window.visualViewport.height < window.innerHeight * 0.75
         : false;
       
-      setIsVisible(!isAuthRoute && !isKeyboardOpen && !hideForOnboarding);
+      setIsVisible(!isAuthRoute && !isKeyboardOpen && !hideForOnboarding && !inGuidedSetup);
     };
 
     handleResize();
@@ -74,7 +76,7 @@ export function MobileBottomNav({ hideForOnboarding = false }: { hideForOnboardi
         window.visualViewport.removeEventListener('resize', handleResize);
       }
     };
-  }, [location.pathname, hideForOnboarding]);
+  }, [location.pathname, hideForOnboarding, inGuidedSetup]);
 
   const handleSignOut = async () => {
     if (window.confirm('Are you sure you want to sign out?')) {

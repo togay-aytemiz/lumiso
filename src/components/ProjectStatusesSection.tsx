@@ -497,7 +497,7 @@ const ProjectStatusesSection = () => {
                   snapshot.isDraggingOver && "bg-accent/20"
                 )}
               >
-                {statuses.map((status, index) => (
+                {statuses.filter(status => status.lifecycle !== 'archived').map((status, index) => (
                   <Draggable key={status.id} draggableId={status.id} index={index}>
                     {(provided, snapshot) => (
                       <div

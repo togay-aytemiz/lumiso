@@ -383,10 +383,7 @@ export const createEmailTemplate = (
 ) => {
   const { userFullName, businessName = "Lumiso", logoUrl, brandColor = "#1EB29F", baseUrl = "https://rifdykpdubrowzbylffe.supabase.co" } = templateData;
   
-  // Use the static Lumiso logo from assets
-  const lumisoLogo = `${baseUrl}/src/assets/Logo.png`;
-  
-  console.log(`Using static Lumiso logo: ${lumisoLogo}`);
+  console.log(`Using Lumiso text header instead of logo`);
   
   return `
     <!DOCTYPE html>
@@ -400,7 +397,7 @@ export const createEmailTemplate = (
     <body>
       <div class="email-container">
         <div class="email-header">
-          <img src="${lumisoLogo}" alt="Lumiso" class="logo" />
+          <h2 style="color: ${brandColor}; margin: 0; padding: 0; font-size: 24px; font-weight: bold;">Lumiso</h2>
         </div>
         
         <div class="email-body">

@@ -437,15 +437,11 @@ async function sendDailySummary(user: UserProfile, isTest?: boolean) {
 
   console.log(`Overdue sessions query result:`, { data: overdueSessions, error: sessionsError });
 
-  // Get overdue reminders (activities not marked as done)
+  // Get overdue reminders (activities not marked as done) - simplified query
   const { data: overdueReminders, error: remindersError } = await supabase
     .from('activities')
-    .select(`
-      id, content, reminder_date, type,
-      leads!left(name, email, phone),
-      projects!left(name, id)
-    `)
-    .eq('organization_id', user.organization_id)
+    .select('id, content, reminder_date, type')
+    .eq('organization_id', user.active_organization_id)
     .eq('completed', false)
     .not('reminder_date', 'is', null)
     .lt('reminder_date', today);
@@ -459,12 +455,8 @@ async function sendDailySummary(user: UserProfile, isTest?: boolean) {
   
   const { data: upcomingReminders, error: upcomingError } = await supabase
     .from('activities')
-    .select(`
-      id, content, reminder_date, type,
-      leads!left(name, email, phone),
-      projects!left(name, id)
-    `)
-    .eq('organization_id', user.organization_id)
+    .select('id, content, reminder_date, type')
+    .eq('organization_id', user.active_organization_id)
     .eq('completed', false)
     .not('reminder_date', 'is', null)
     .gte('reminder_date', today)

@@ -437,9 +437,9 @@ async function sendDailySummary(user: UserProfile, isTest?: boolean) {
 
   console.log(`Overdue sessions query result:`, { data: overdueSessions, error: sessionsError });
 
-  console.log(`Getting data for user: ${user.email} (${user.user_id}) in org: ${user.active_organization_id}`);
+  console.log(`Getting data for user: ${user.email} (${user.user_id}) - active org: ${user.active_organization_id}`);
 
-  // Get overdue reminders with lead/project relationships - debug version
+  // Get overdue reminders - fix organization_id issue
   const { data: overdueReminders, error: remindersError } = await supabase
     .from('activities')
     .select(`
@@ -447,15 +447,22 @@ async function sendDailySummary(user: UserProfile, isTest?: boolean) {
       content, 
       reminder_date, 
       type,
+      organization_id,
       leads!left(name, email, phone),
       projects!left(name, id)
     `)
-    .eq('organization_id', user.active_organization_id)
+    .eq('user_id', user.user_id)  // Use user_id instead of organization_id
     .eq('completed', false)
     .not('reminder_date', 'is', null)
     .lt('reminder_date', today);
 
-  console.log(`Overdue reminders query result:`, { data: overdueReminders, error: remindersError, today, org_id: user.active_organization_id });
+  console.log(`Overdue reminders query result:`, { 
+    data: overdueReminders, 
+    error: remindersError, 
+    today, 
+    user_org: user.active_organization_id,
+    query_type: 'user_id'
+  });
 
   console.log(`Overdue reminders query result (fixed):`, { data: overdueReminders, error: remindersError });
 
@@ -464,7 +471,7 @@ async function sendDailySummary(user: UserProfile, isTest?: boolean) {
   tomorrow.setDate(tomorrow.getDate() + 1);
   const tomorrowStr = tomorrow.toISOString().split('T')[0];
   
-  // Get today's reminders (not tomorrow's)
+  // Get today's reminders - fix organization_id issue  
   const todayEnd = today + ' 23:59:59';
   
   const { data: upcomingReminders, error: upcomingError } = await supabase
@@ -474,10 +481,11 @@ async function sendDailySummary(user: UserProfile, isTest?: boolean) {
       content, 
       reminder_date, 
       type,
+      organization_id,
       leads!left(name, email, phone),
       projects!left(name, id)
     `)
-    .eq('organization_id', user.active_organization_id)
+    .eq('user_id', user.user_id)  // Use user_id instead of organization_id
     .eq('completed', false)
     .not('reminder_date', 'is', null)
     .gte('reminder_date', today)

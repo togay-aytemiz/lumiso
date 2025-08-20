@@ -159,11 +159,11 @@ export function generateDailySummaryEmailSimplified(
           <a href="${templateData.baseUrl}/projects" style="background: #6b7280; color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 14px; font-weight: 500;">📁 Projects</a>
         </div>
         
-        <!-- Big CTA Button like Pipedrive -->
+        <!-- Big CTA Button like Pipedrive - Using app accent color -->
         <div style="text-align: center; margin-top: 24px;">
           <a href="${templateData.baseUrl}/" style="
             display: inline-block;
-            background: ${templateData.brandColor || '#1EB29F'};
+            background: #1EB29F !important;
             color: white !important;
             text-decoration: none !important;
             padding: 16px 32px;

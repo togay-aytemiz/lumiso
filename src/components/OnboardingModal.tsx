@@ -29,11 +29,9 @@ export function OnboardingModal({ open, onClose }: OnboardingModalProps) {
   const handleStartLearning = async () => {
     if (!user) return;
     
-    console.log('handleStartLearning: Starting...');
     setIsLoading(true);
     try {
       await startGuidedSetup();
-      console.log('handleStartLearning: startGuidedSetup completed, calling onClose...');
       
       onClose();
       navigate('/getting-started');
@@ -41,7 +39,6 @@ export function OnboardingModal({ open, onClose }: OnboardingModalProps) {
         title: "Welcome to Lumiso! 🎉",
         description: "Let's get you set up step by step.",
       });
-      console.log('handleStartLearning: All completed');
     } catch (error) {
       console.error('Error starting guided setup:', error);
       toast({

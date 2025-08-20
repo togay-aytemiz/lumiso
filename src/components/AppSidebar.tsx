@@ -39,6 +39,8 @@ export function AppSidebar() {
   const isMobile = useIsMobile();
   const { inGuidedSetup } = useOnboarding();
   
+  console.log('AppSidebar: inGuidedSetup =', inGuidedSetup);
+  
   // Mock completed steps - will be managed by backend in next phase
   const completedSteps = 0;
 

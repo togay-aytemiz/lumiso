@@ -267,11 +267,13 @@ const ProjectStatusesSection = () => {
       if (!user) throw new Error('Not authenticated');
       if (!activeOrganizationId) throw new Error('No organization found');
 
-      const items = Array.from(statuses);
+      // Filter out archived statuses for reordering
+      const filteredStatuses = statuses.filter(status => status.lifecycle !== 'archived' && status.name.toLowerCase() !== 'archived');
+      const items = Array.from(filteredStatuses);
       const [reorderedItem] = items.splice(result.source.index, 1);
       items.splice(result.destination.index, 0, reorderedItem);
 
-      // Update sort_order for all items
+      // Update sort_order for filtered items only
       const updates = items.map((status, index) => ({
         id: status.id,
         sort_order: index + 1,
@@ -497,7 +499,7 @@ const ProjectStatusesSection = () => {
                   snapshot.isDraggingOver && "bg-accent/20"
                 )}
               >
-                {statuses.filter(status => status.lifecycle !== 'archived').map((status, index) => (
+                {statuses.filter(status => status.lifecycle !== 'archived' && status.name.toLowerCase() !== 'archived').map((status, index) => (
                   <Draggable key={status.id} draggableId={status.id} index={index}>
                     {(provided, snapshot) => (
                       <div

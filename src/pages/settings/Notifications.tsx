@@ -236,7 +236,7 @@ export default function Notifications() {
     <SettingsPageWrapper>
       <SettingsHeader
         title="Notifications"
-        description="Streamlined notification system with 3 core types for your photography business"
+        description="Streamlined notification system for your photography business"
       />
       
       <div className="space-y-8">
@@ -300,14 +300,10 @@ export default function Notifications() {
         {/* Scheduled Notifications */}
         <CategorySettingsSection
           title="Scheduled Notifications"
-          description={`Automated summaries sent at ${settings.scheduledTime}`}
+          description={`Automated summaries sent daily at ${settings.scheduledTime}`}
           sectionId="scheduled"
         >
           <div className="space-y-6">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
-              <Clock className="h-4 w-4" />
-              <span>These notifications are sent at your scheduled time ({settings.scheduledTime})</span>
-            </div>
 
             {/* Daily Summary */}
             <div className="flex items-center justify-between p-4 border rounded-lg">
@@ -333,7 +329,7 @@ export default function Notifications() {
                       Testing...
                     </>
                   ) : (
-                    'Test Email'
+                    'Send test'
                   )}
                 </Button>
                 <Switch
@@ -369,7 +365,7 @@ export default function Notifications() {
                       Testing...
                     </>
                   ) : (
-                    'Test Email'
+                    'Send test'
                   )}
                 </Button>
                 <Switch
@@ -386,14 +382,10 @@ export default function Notifications() {
         {/* Immediate Notifications */}
         <CategorySettingsSection
           title="Immediate Notifications"
-          description="Real-time alerts sent as events occur"
+          description="Real-time alerts sent when events occur"
           sectionId="immediate"
         >
           <div className="space-y-6">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
-              <Zap className="h-4 w-4" />
-              <span>These notifications are sent immediately when events occur</span>
-            </div>
 
             {/* New Assignment */}
             <div className="flex items-center justify-between p-4 border rounded-lg">
@@ -419,7 +411,7 @@ export default function Notifications() {
                       Testing...
                     </>
                   ) : (
-                    'Test Email'
+                    'Send test'
                   )}
                 </Button>
                 <Switch
@@ -455,7 +447,7 @@ export default function Notifications() {
                       Testing...
                     </>
                   ) : (
-                    'Test Email'
+                    'Send test'
                   )}
                 </Button>
                 <Switch

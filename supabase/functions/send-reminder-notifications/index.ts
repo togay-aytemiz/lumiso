@@ -47,19 +47,23 @@ const handler = async (req: Request): Promise<Response> => {
       }
     }
 
+    // Get user's org ID from your specific user
+    const userOrgId = '86b098a8-2fd5-4ad6-9dbf-757d656b307b';
+    const userId = 'ac32273e-af95-4de9-abed-ce96e6f68139';
+
     console.log(`Sending daily summary to: ${userEmail}`);
 
-    // Get today's date
+    // Get today's date and time boundaries
     const today = new Date();
     const todayStr = today.toISOString().split('T')[0];
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const tomorrowStr = tomorrow.toISOString().split('T')[0];
+    const currentTime = today.getHours() + ':' + today.getMinutes().toString().padStart(2, '0');
+    const next3Hours = new Date(today.getTime() + 3 * 60 * 60 * 1000);
+    const next3HoursStr = next3Hours.toISOString();
 
-    console.log(`Dates - Today: ${todayStr}, Tomorrow: ${tomorrowStr}`);
+    console.log(`Dates - Today: ${todayStr}, Current time: ${currentTime}, Next 3h: ${next3HoursStr}`);
 
-    // Get today's sessions
-    const { data: todaySessions } = await supabase
+    // Get TODAY's sessions
+    const { data: todaySessions, error: todaySessionsError } = await supabase
       .from('sessions')
       .select(`
         id,
@@ -73,10 +77,11 @@ const handler = async (req: Request): Promise<Response> => {
         )
       `)
       .eq('session_date', todayStr)
-      .limit(10);
+      .eq('organization_id', userOrgId)
+      .order('session_time');
 
-    // Get tomorrow's sessions  
-    const { data: tomorrowSessions } = await supabase
+    // Get OVERDUE sessions (past dates with active lifecycle)
+    const { data: overdueSessions, error: overdueSessionsError } = await supabase
       .from('sessions')
       .select(`
         id,
@@ -87,13 +92,16 @@ const handler = async (req: Request): Promise<Response> => {
           name,
           email,
           phone
-        )
+        ),
+        session_statuses!inner(lifecycle)
       `)
-      .eq('session_date', tomorrowStr)
-      .limit(10);
+      .lt('session_date', todayStr)
+      .eq('organization_id', userOrgId)
+      .eq('session_statuses.lifecycle', 'active')
+      .order('session_date');
 
-    // Get overdue reminders (from past dates, not completed)
-    const { data: overdueReminders } = await supabase
+    // Get OVERDUE reminders (past dates, not completed)
+    const { data: overdueReminders, error: overdueRemindersError } = await supabase
       .from('activities')
       .select(`
         id,
@@ -106,10 +114,11 @@ const handler = async (req: Request): Promise<Response> => {
       `)
       .lt('reminder_date', todayStr)
       .eq('completed', false)
-      .limit(10);
+      .eq('organization_id', userOrgId)
+      .order('reminder_date');
 
-    // Get today's reminders
-    const { data: todayReminders } = await supabase
+    // Get upcoming reminders (today + next 3 hours)
+    const { data: upcomingReminders, error: upcomingRemindersError } = await supabase
       .from('activities')
       .select(`
         id,
@@ -122,107 +131,106 @@ const handler = async (req: Request): Promise<Response> => {
       `)
       .eq('reminder_date', todayStr)
       .eq('completed', false)
-      .limit(10);
+      .eq('organization_id', userOrgId)
+      .order('reminder_time');
 
-    // Get tomorrow's reminders
-    const { data: tomorrowReminders } = await supabase
-      .from('activities')
-      .select(`
-        id,
-        content,
-        reminder_date,
-        reminder_time,
-        leads:lead_id (
-          name
-        )
-      `)
-      .eq('reminder_date', tomorrowStr)
-      .eq('completed', false)
-      .limit(10);
-
-    // Get pending todos
-    const { data: todos } = await supabase
+    // Get pending todos (first 3 with project/lead context)
+    const { data: todos, error: todosError } = await supabase
       .from('todos')
       .select(`
         id,
         content,
         projects:project_id (
-          name
+          name,
+          leads:lead_id (
+            name
+          )
         )
       `)
       .eq('is_completed', false)
-      .limit(10);
+      .limit(3);
 
-    console.log(`Data counts:`, {
-      todaySessions: todaySessions?.length || 0,
-      tomorrowSessions: tomorrowSessions?.length || 0,
-      overdueReminders: overdueReminders?.length || 0,
-      todayReminders: todayReminders?.length || 0,
-      tomorrowReminders: tomorrowReminders?.length || 0,
-      todos: todos?.length || 0
+    // Get total pending todos count
+    const { count: totalTodos } = await supabase
+      .from('todos')
+      .select('*', { count: 'exact', head: true })
+      .eq('is_completed', false);
+
+    console.log(`Data results:`, {
+      todaySessions: { count: todaySessions?.length || 0, error: todaySessionsError },
+      overdueSessions: { count: overdueSessions?.length || 0, error: overdueSessionsError },
+      overdueReminders: { count: overdueReminders?.length || 0, error: overdueRemindersError, data: overdueReminders },
+      upcomingReminders: { count: upcomingReminders?.length || 0, error: upcomingRemindersError },
+      todos: { count: todos?.length || 0, total: totalTodos, error: todosError }
     });
 
-    // Create HTML sections
+    // Create HTML sections focusing on TODAY and OVERDUE
     const todaySessionsHtml = todaySessions?.length ? todaySessions.map(s => 
-      `<li>🕐 ${s.session_time} - ${s.leads?.name || 'Session'} ${s.notes ? `(${s.notes})` : ''}</li>`
-    ).join('') : '<li>No sessions today</li>';
+      `<li>🕐 ${s.session_time} - <strong>${s.leads?.name || 'Session'}</strong> ${s.notes ? `<br><em>${s.notes}</em>` : ''}</li>`
+    ).join('') : '';
 
-    const tomorrowSessionsHtml = tomorrowSessions?.length ? tomorrowSessions.map(s => 
-      `<li>🕐 ${s.session_time} - ${s.leads?.name || 'Session'} ${s.notes ? `(${s.notes})` : ''}</li>`
+    const overdueSessionsHtml = overdueSessions?.length ? overdueSessions.map(s => 
+      `<li>⚠️ <strong>Overdue Session:</strong> ${s.session_date} ${s.session_time} - ${s.leads?.name || 'Session'} ${s.notes ? `<br><em>${s.notes}</em>` : ''}</li>`
     ).join('') : '';
 
     const overdueRemindersHtml = overdueReminders?.length ? overdueReminders.map(a => 
-      `<li>⚠️ <strong>Overdue:</strong> ${a.content} ${a.leads?.name ? `- ${a.leads.name}` : ''} (${a.reminder_date})</li>`
+      `<li>⚠️ <strong>Overdue Reminder:</strong> ${a.content} ${a.leads?.name ? `- ${a.leads.name}` : ''} <em>(due ${a.reminder_date})</em></li>`
     ).join('') : '';
 
-    const todayRemindersHtml = todayReminders?.length ? todayReminders.map(a => 
-      `<li>📅 ${a.reminder_time} - ${a.content} ${a.leads?.name ? `- ${a.leads.name}` : ''}</li>`
-    ).join('') : '';
-
-    const tomorrowRemindersHtml = tomorrowReminders?.length ? tomorrowReminders.map(a => 
-      `<li>📅 ${a.reminder_time} - ${a.content} ${a.leads?.name ? `- ${a.leads.name}` : ''}</li>`
+    const upcomingRemindersHtml = upcomingReminders?.length ? upcomingReminders.map(a => 
+      `<li>📅 ${a.reminder_time} - ${a.content} ${a.leads?.name ? `- <strong>${a.leads.name}</strong>` : ''}</li>`
     ).join('') : '';
 
     const todosHtml = todos?.length ? todos.map(t => 
-      `<li>✓ ${t.content} ${t.projects?.name ? `(${t.projects.name})` : ''}</li>`
-    ).join('') : '<li>No pending tasks</li>';
+      `<li>✓ ${t.content} ${t.projects?.name ? `<em>(${t.projects.name})</em>` : ''} ${t.projects?.leads?.name ? `- ${t.projects.leads.name}` : ''}</li>`
+    ).join('') : '';
 
-    // Combine overdue items
-    const overdueItemsHtml = overdueRemindersHtml || '<li>No overdue items ✨</li>';
+    // Combine all overdue items
+    const allOverdueHtml = [overdueSessionsHtml, overdueRemindersHtml].filter(h => h).join('') || '<li>No overdue items ✨</li>';
     
-    // Combine today's items
-    const todayItemsHtml = [todaySessionsHtml, todayRemindersHtml].filter(h => h && !h.includes('No sessions')).join('') || '<li>Nothing scheduled for today</li>';
+    // Combine today's items (sessions + reminders)
+    const todayItemsHtml = [todaySessionsHtml, upcomingRemindersHtml].filter(h => h).join('') || '<li>Nothing scheduled for today</li>';
     
-    // Combine tomorrow's/upcoming items
-    const upcomingItemsHtml = [tomorrowSessionsHtml, tomorrowRemindersHtml].filter(h => h).join('') || '<li>Nothing scheduled for tomorrow</li>';
+    // Todos section with count
+    const todosSection = totalTodos > 0 ? 
+      `<p><strong>${totalTodos} pending tasks</strong> ${totalTodos > 3 ? `(showing first 3)` : ''}</p>
+       <ul>${todosHtml}</ul>` : 
+      '<p>No pending tasks ✨</p>';
 
     const emailHtml = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h1 style="color: #1EB29F;">Daily Summary - ${today.toLocaleDateString()}</h1>
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h1 style="color: #1EB29F; border-bottom: 2px solid #1EB29F; padding-bottom: 10px;">
+          📊 Daily Summary - ${today.toLocaleDateString()}
+        </h1>
         
-        <h2 style="color: #333;">⚠️ Overdue Items</h2>
-        <ul style="background: #fef2f2; padding: 15px; border-left: 4px solid #ef4444; margin: 10px 0;">
-          ${overdueItemsHtml}
-        </ul>
+        <div style="margin: 25px 0;">
+          <h2 style="color: #dc2626; margin-bottom: 10px;">⚠️ Overdue Items</h2>
+          <div style="background: #fef2f2; padding: 15px; border-left: 4px solid #ef4444; border-radius: 6px;">
+            <ul style="margin: 0; padding-left: 20px;">
+              ${allOverdueHtml}
+            </ul>
+          </div>
+        </div>
         
-        <h2 style="color: #333;">📅 Today's Schedule</h2>
-        <ul style="background: #f0f9ff; padding: 15px; border-left: 4px solid #3b82f6; margin: 10px 0;">
-          ${todayItemsHtml}
-        </ul>
+        <div style="margin: 25px 0;">
+          <h2 style="color: #2563eb; margin-bottom: 10px;">📅 Today's Schedule</h2>
+          <div style="background: #f0f9ff; padding: 15px; border-left: 4px solid #3b82f6; border-radius: 6px;">
+            <ul style="margin: 0; padding-left: 20px;">
+              ${todayItemsHtml}
+            </ul>
+          </div>
+        </div>
         
-        <h2 style="color: #333;">🔮 Tomorrow's Schedule</h2>
-        <ul style="background: #f0fdf4; padding: 15px; border-left: 4px solid #22c55e; margin: 10px 0;">
-          ${upcomingItemsHtml}
-        </ul>
+        <div style="margin: 25px 0;">
+          <h2 style="color: #ea580c; margin-bottom: 10px;">✅ Pending Tasks</h2>
+          <div style="background: #fefce8; padding: 15px; border-left: 4px solid #eab308; border-radius: 6px;">
+            ${todosSection}
+          </div>
+        </div>
         
-        <h2 style="color: #333;">✅ Pending Tasks</h2>
-        <ul style="background: #fefce8; padding: 15px; border-left: 4px solid #eab308; margin: 10px 0;">
-          ${todosHtml}
-        </ul>
-        
-        <div style="text-align: center; margin: 30px 0;">
+        <div style="text-align: center; margin: 30px 0; padding: 20px; background: #f8fafc; border-radius: 8px;">
           <a href="http://localhost:3000" 
-             style="background: #1EB29F; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold;">
+             style="background: #1EB29F; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; display: inline-block;">
             🚀 Open Lumiso
           </a>
         </div>

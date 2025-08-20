@@ -126,6 +126,16 @@ const GettingStarted = () => {
           </Card>
         </div>
 
+        {/* Learning Path Header */}
+        <div className="mb-6 sm:mb-8 text-center">
+          <h2 className="text-xl sm:text-2xl font-semibold text-foreground mb-2">
+            Your Learning Path
+          </h2>
+          <p className="text-sm sm:text-base text-muted-foreground">
+            Each step teaches you how to use Lumiso naturally.
+          </p>
+        </div>
+
         {/* Current Task Display */}
         {currentStep && (
           <div className="mb-6 sm:mb-8">

@@ -262,6 +262,7 @@ export type Database = {
           id: string
           is_default: boolean
           is_system_final: boolean
+          lifecycle: string | null
           name: string
           organization_id: string | null
           sort_order: number
@@ -274,6 +275,7 @@ export type Database = {
           id?: string
           is_default?: boolean
           is_system_final?: boolean
+          lifecycle?: string | null
           name: string
           organization_id?: string | null
           sort_order?: number
@@ -286,6 +288,7 @@ export type Database = {
           id?: string
           is_default?: boolean
           is_system_final?: boolean
+          lifecycle?: string | null
           name?: string
           organization_id?: string | null
           sort_order?: number
@@ -696,6 +699,7 @@ export type Database = {
           color: string
           created_at: string
           id: string
+          lifecycle: string | null
           name: string
           organization_id: string | null
           sort_order: number
@@ -706,6 +710,7 @@ export type Database = {
           color: string
           created_at?: string
           id?: string
+          lifecycle?: string | null
           name: string
           organization_id?: string | null
           sort_order?: number
@@ -716,6 +721,7 @@ export type Database = {
           color?: string
           created_at?: string
           id?: string
+          lifecycle?: string | null
           name?: string
           organization_id?: string | null
           sort_order?: number
@@ -917,6 +923,7 @@ export type Database = {
           created_at: string
           id: string
           is_system_initial: boolean
+          lifecycle: string | null
           name: string
           organization_id: string | null
           sort_order: number
@@ -928,6 +935,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_system_initial?: boolean
+          lifecycle?: string | null
           name: string
           organization_id?: string | null
           sort_order?: number
@@ -939,6 +947,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_system_initial?: boolean
+          lifecycle?: string | null
           name?: string
           organization_id?: string | null
           sort_order?: number

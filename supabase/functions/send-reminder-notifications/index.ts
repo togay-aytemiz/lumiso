@@ -431,8 +431,8 @@ async function sendDailySummary(user: UserProfile, isTest?: boolean) {
     .from('activities')
     .select(`
       id, content, reminder_date, type,
-      leads!inner(name, email),
-      projects!inner(name, id)
+      leads!left(name, email),
+      projects!left(name, id)
     `)
     .eq('organization_id', user.active_organization_id)
     .eq('completed', false)
@@ -447,8 +447,8 @@ async function sendDailySummary(user: UserProfile, isTest?: boolean) {
     .from('activities')
     .select(`
       id, content, reminder_date, type,
-      leads!inner(name, email),
-      projects!inner(name, id)
+      leads!left(name, email),
+      projects!left(name, id)
     `)
     .eq('organization_id', user.active_organization_id)
     .eq('completed', false)

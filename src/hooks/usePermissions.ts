@@ -2,9 +2,16 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganization } from '@/contexts/OrganizationContext';
 
+// Cache for permissions to prevent re-fetching
+let cachedPermissions: string[] = [];
+let cachedUserId: string | null = null;
+let cachedOrgId: string | null = null;
+let cacheExpiry: number = 0;
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
 export function usePermissions() {
-  const [permissions, setPermissions] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [permissions, setPermissions] = useState<string[]>(cachedPermissions);
+  const [loading, setLoading] = useState(cachedPermissions.length === 0);
   const { activeOrganizationId } = useOrganization();
 
   useEffect(() => {
@@ -16,6 +23,18 @@ export function usePermissions() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user || !activeOrganizationId) {
         setPermissions([]);
+        setLoading(false);
+        return;
+      }
+
+      // Check cache first
+      if (
+        cachedPermissions.length > 0 &&
+        cachedUserId === user.id &&
+        cachedOrgId === activeOrganizationId &&
+        Date.now() < cacheExpiry
+      ) {
+        setPermissions(cachedPermissions);
         setLoading(false);
         return;
       }
@@ -50,8 +69,12 @@ export function usePermissions() {
         userPermissions = rolePermissions?.map(rp => rp.permissions.name) || [];
       }
 
-      console.log('User permissions loaded:', userPermissions);
-      console.log('User system role:', membership?.system_role);
+      // Update cache
+      cachedPermissions = userPermissions;
+      cachedUserId = user.id;
+      cachedOrgId = activeOrganizationId;
+      cacheExpiry = Date.now() + CACHE_DURATION;
+
       setPermissions(userPermissions);
     } catch (error) {
       console.error('Error fetching user permissions:', error);
@@ -110,6 +133,12 @@ export function usePermissions() {
     hasAnyPermission,
     canEditLead,
     canEditProject,
-    refetch: fetchUserPermissions
+    refetch: fetchUserPermissions,
+    clearCache: () => {
+      cachedPermissions = [];
+      cachedUserId = null;
+      cachedOrgId = null;
+      cacheExpiry = 0;
+    }
   };
 }

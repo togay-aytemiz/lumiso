@@ -5,13 +5,25 @@ import ServicesSection from "@/components/ServicesSection";
 import { usePermissions } from "@/hooks/usePermissions";
 
 export default function Services() {
-  const { hasPermission } = usePermissions();
+  const { hasPermission, loading } = usePermissions();
+  
+  if (loading) {
+    return (
+      <SettingsPageWrapper>
+        <div className="flex items-center justify-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      </SettingsPageWrapper>
+    );
+  }
   
   // Show page if user has permission to view packages or services
   const canViewServices = hasPermission('view_services');
   const canViewPackages = hasPermission('view_packages');
   
-  if (!canViewServices && !canViewPackages) {
+  const hasAnyPermission = canViewServices || canViewPackages;
+  
+  if (!hasAnyPermission) {
     return (
       <SettingsPageWrapper>
         <div className="text-center py-8">
@@ -29,8 +41,8 @@ export default function Services() {
       />
       
       <div className="space-y-8">
-        <PackagesSection />
-        <ServicesSection />
+        {canViewPackages && <PackagesSection />}
+        {canViewServices && <ServicesSection />}
       </div>
     </SettingsPageWrapper>
   );

@@ -6,14 +6,27 @@ import SessionStatusesSection from "@/components/SessionStatusesSection";
 import { usePermissions } from "@/hooks/usePermissions";
 
 export default function Projects() {
-  const { hasPermission } = usePermissions();
+  const { hasPermission, loading } = usePermissions();
+  
+  // Show loading while permissions are being fetched
+  if (loading) {
+    return (
+      <SettingsPageWrapper>
+        <div className="flex items-center justify-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      </SettingsPageWrapper>
+    );
+  }
   
   // Show page if user has permission to view any project/session settings
   const canViewProjectStatuses = hasPermission('view_project_statuses');
   const canViewProjectTypes = hasPermission('view_project_types');
   const canViewSessionStatuses = hasPermission('view_session_statuses');
   
-  if (!canViewProjectStatuses && !canViewProjectTypes && !canViewSessionStatuses) {
+  const hasAnyPermission = canViewProjectStatuses || canViewProjectTypes || canViewSessionStatuses;
+  
+  if (!hasAnyPermission) {
     return (
       <SettingsPageWrapper>
         <div className="text-center py-8">
@@ -31,9 +44,9 @@ export default function Projects() {
       />
       
       <div className="space-y-8">
-        <ProjectStatusesSection />
-        <ProjectTypesSection />
-        <SessionStatusesSection />
+        {canViewProjectStatuses && <ProjectStatusesSection />}
+        {canViewProjectTypes && <ProjectTypesSection />}
+        {canViewSessionStatuses && <SessionStatusesSection />}
       </div>
     </SettingsPageWrapper>
   );

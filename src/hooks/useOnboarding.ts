@@ -54,18 +54,30 @@ export function useOnboarding() {
   }, [user]);
 
   const shouldShowOnboarding = () => {
-    if (state.loading || !user) return false;
+    if (state.loading || !user) {
+      console.log('shouldShowOnboarding: false - loading or no user', { loading: state.loading, user: !!user });
+      return false;
+    }
     
     // Don't show if user has completed or skipped guided setup
-    if (state.guidedSetupSkipped || state.guidanceCompleted) return false;
+    if (state.guidedSetupSkipped || state.guidanceCompleted) {
+      console.log('shouldShowOnboarding: false - skipped or completed', { 
+        guidedSetupSkipped: state.guidedSetupSkipped, 
+        guidanceCompleted: state.guidanceCompleted 
+      });
+      return false;
+    }
     
     // Show if user hasn't started guided setup yet
-    return !state.inGuidedSetup;
+    const shouldShow = !state.inGuidedSetup;
+    console.log('shouldShowOnboarding:', shouldShow, 'inGuidedSetup:', state.inGuidedSetup);
+    return shouldShow;
   };
 
   const startGuidedSetup = async () => {
     if (!user) return;
 
+    console.log('startGuidedSetup: Starting...');
     try {
       const { error } = await supabase
         .from('user_settings')
@@ -77,11 +89,17 @@ export function useOnboarding() {
 
       if (error) throw error;
 
-      setState(prev => ({
-        ...prev,
-        inGuidedSetup: true,
-        guidedSetupSkipped: false,
-      }));
+      console.log('startGuidedSetup: Database updated, updating local state...');
+      setState(prev => {
+        const newState = {
+          ...prev,
+          inGuidedSetup: true,
+          guidedSetupSkipped: false,
+        };
+        console.log('startGuidedSetup: New local state:', newState);
+        return newState;
+      });
+      console.log('startGuidedSetup: Completed successfully');
     } catch (error) {
       console.error('Error starting guided setup:', error);
       throw error;

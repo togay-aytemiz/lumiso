@@ -14,14 +14,23 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   // Check if we should show onboarding modal after auth state is loaded
   useEffect(() => {
+    console.log('Layout useEffect triggered', { 
+      onboardingLoading, 
+      shouldShow: shouldShowOnboarding(),
+      currentModalState: showOnboardingModal 
+    });
+    
     if (!onboardingLoading) {
-      if (shouldShowOnboarding()) {
+      const shouldShow = shouldShowOnboarding();
+      if (shouldShow && !showOnboardingModal) {
+        console.log('Opening onboarding modal');
         setShowOnboardingModal(true);
-      } else {
+      } else if (!shouldShow && showOnboardingModal) {
+        console.log('Closing onboarding modal');
         setShowOnboardingModal(false);
       }
     }
-  }, [onboardingLoading, shouldShowOnboarding]);
+  }, [onboardingLoading, shouldShowOnboarding, showOnboardingModal]);
 
   useLayoutEffect(() => {
     // Disable automatic scroll restoration

@@ -70,13 +70,6 @@ export function useOnboarding() {
   const startGuidedSetup = async () => {
     if (!user) return;
 
-    // Update local state first for immediate UI feedback
-    setState(prev => ({
-      ...prev,
-      inGuidedSetup: true,
-      guidedSetupSkipped: false,
-    }));
-
     try {
       const { error } = await supabase
         .from('user_settings')
@@ -86,15 +79,10 @@ export function useOnboarding() {
         })
         .eq('user_id', user.id);
 
-      if (error) {
-        // Revert local state if database update fails
-        setState(prev => ({
-          ...prev,
-          inGuidedSetup: false,
-          guidedSetupSkipped: false,
-        }));
-        throw error;
-      }
+      if (error) throw error;
+
+      // Force page reload for immediate UI update
+      window.location.reload();
     } catch (error) {
       console.error('Error starting guided setup:', error);
       throw error;

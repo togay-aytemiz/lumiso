@@ -379,12 +379,10 @@ export const createEmailTemplate = (
 ) => {
   const { userFullName, businessName = "Lumiso", logoUrl, brandColor = "#1EB29F", baseUrl = "https://rifdykpdubrowzbylffe.supabase.co" } = templateData;
   
-  // Construct proper logo URL - if user has a logo, use the Supabase storage URL
-  const effectiveLogo = logoUrl 
-    ? `https://rifdykpdubrowzbylffe.supabase.co/storage/v1/object/public/logos/${logoUrl}`
-    : "https://rifdykpdubrowzbylffe.supabase.co/lovable-uploads/751ab789-7160-486c-82b6-99696d1e40b4.png"; // Fallback to uploaded logo
+  // Always use the static Lumiso logo from assets, not user's business logo
+  const lumisoLogo = "https://rifdykpdubrowzbylffe.supabase.co/src/assets/Logo.png";
   
-  console.log(`Using logo URL: ${effectiveLogo}`);
+  console.log(`Using static Lumiso logo: ${lumisoLogo}`);
   
   return `
     <!DOCTYPE html>
@@ -398,7 +396,7 @@ export const createEmailTemplate = (
     <body>
       <div class="email-container">
         <div class="email-header">
-          <img src="${effectiveLogo}" alt="${businessName}" class="logo" />
+          <img src="${lumisoLogo}" alt="${businessName}" class="logo" />
         </div>
         
         <div class="email-body">

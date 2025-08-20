@@ -1237,6 +1237,22 @@ export type Database = {
         Args: { user_uuid: string }
         Returns: string
       }
+      get_lead_lifecycle: {
+        Args: { status_id: string }
+        Returns: string
+      }
+      get_project_lifecycle: {
+        Args: { status_id: string }
+        Returns: string
+      }
+      get_session_lifecycle: {
+        Args: { status_id: string }
+        Returns: string
+      }
+      get_status_lifecycle: {
+        Args: { status_id: string; status_table: string }
+        Returns: string
+      }
       get_user_active_organization_id: {
         Args: Record<PropertyKey, never>
         Returns: string

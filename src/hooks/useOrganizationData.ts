@@ -103,14 +103,94 @@ export function usePackages() {
     queryFn: async () => {
       if (!activeOrganizationId) return [];
       
+      const { data: user } = await supabase.auth.getUser();
+      if (!user.user) return [];
+
+      // Ensure default packages exist
+      await supabase.rpc('ensure_default_packages_for_org', { 
+        user_uuid: user.user.id, 
+        org_id: activeOrganizationId 
+      });
+      
       const { data, error } = await supabase
         .from('packages')
         .select('*')
         .eq('organization_id', activeOrganizationId)
-        .order('name');
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
       return data || [];
+    },
+    enabled: !!activeOrganizationId,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+}
+
+export function useProjectStatuses() {
+  const { activeOrganizationId } = useOrganization();
+
+  return useQuery({
+    queryKey: ['project_statuses', activeOrganizationId],
+    queryFn: async () => {
+      if (!activeOrganizationId) return [];
+      
+      const { data, error } = await supabase
+        .from('project_statuses')
+        .select('*')
+        .eq('organization_id', activeOrganizationId)
+        .order('sort_order');
+
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!activeOrganizationId,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+}
+
+export function useSessionStatuses() {
+  const { activeOrganizationId } = useOrganization();
+
+  return useQuery({
+    queryKey: ['session_statuses', activeOrganizationId],
+    queryFn: async () => {
+      if (!activeOrganizationId) return [];
+      
+      const { data, error } = await supabase
+        .from('session_statuses')
+        .select('*')
+        .eq('organization_id', activeOrganizationId)
+        .order('sort_order');
+
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!activeOrganizationId,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+}
+
+export function useOrganizationSettings() {
+  const { activeOrganizationId } = useOrganization();
+
+  return useQuery({
+    queryKey: ['organization_settings', activeOrganizationId],
+    queryFn: async () => {
+      if (!activeOrganizationId) return null;
+      
+      // Ensure settings exist
+      await supabase.rpc('ensure_organization_settings', { 
+        org_id: activeOrganizationId 
+      });
+      
+      const { data, error } = await supabase
+        .from('organization_settings')
+        .select('*')
+        .eq('organization_id', activeOrganizationId)
+        .single();
+
+      if (error) throw error;
+      return data;
     },
     enabled: !!activeOrganizationId,
     staleTime: 5 * 60 * 1000, // 5 minutes

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -9,6 +9,9 @@ import { supabase } from "@/integrations/supabase/client";
 import SettingsSection from "./SettingsSection";
 import { AddPackageDialog, EditPackageDialog } from "./settings/PackageDialogs";
 import { usePermissions } from "@/hooks/usePermissions";
+import { usePackages, useServices } from "@/hooks/useOrganizationData";
+import { useQueryClient } from "@tanstack/react-query";
+import { useOrganization } from "@/contexts/OrganizationContext";
 
 interface Package {
   id: string;
@@ -22,9 +25,6 @@ interface Package {
 }
 
 const PackagesSection = () => {
-  const [packages, setPackages] = useState<Package[]>([]);
-  const [services, setServices] = useState<{id: string, name: string}[]>([]);
-  const [loading, setLoading] = useState(true);
   const [showNewPackageDialog, setShowNewPackageDialog] = useState(false);
   const [editingPackage, setEditingPackage] = useState<Package | null>(null);
   const [showEditPackageDialog, setShowEditPackageDialog] = useState(false);
@@ -32,65 +32,12 @@ const PackagesSection = () => {
   const [packageToDelete, setPackageToDelete] = useState<Package | null>(null);
   const { toast } = useToast();
   const { hasPermission } = usePermissions();
-
-  // Load packages from database
-  useEffect(() => {
-    loadPackages();
-  }, []);
-
-  const loadPackages = async () => {
-    try {
-      setLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        setLoading(false);
-        return;
-      }
-
-      // Get current organization ID
-      const { data: organizationId, error: orgError } = await supabase.rpc('get_user_organization_id');
-      if (orgError || !organizationId) {
-        setLoading(false);
-        return;
-      }
-
-      // Ensure default packages exist for the organization
-      await supabase.rpc('ensure_default_packages_for_org', { 
-        user_uuid: user.id, 
-        org_id: organizationId 
-      });
-
-      // Load packages and services in parallel
-      const [packagesResult, servicesResult] = await Promise.all([
-        supabase
-          .from('packages')
-          .select('*')
-          .eq('organization_id', organizationId)
-          .order('created_at', { ascending: false }),
-        supabase
-          .from('services')
-          .select('id, name')
-          .eq('organization_id', organizationId)
-          .order('name')
-      ]);
-
-      if (packagesResult.error) throw packagesResult.error;
-      if (servicesResult.error) console.error('Error loading services:', servicesResult.error);
-
-      setPackages(packagesResult.data || []);
-      setServices(servicesResult.data || []);
-    } catch (error) {
-      console.error('Error loading packages:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load packages",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { activeOrganizationId } = useOrganization();
+  const queryClient = useQueryClient();
+  
+  // Use cached data
+  const { data: packages = [], isLoading, error } = usePackages();
+  const { data: services = [] } = useServices();
 
   const handleDeleteClick = (pkg: Package) => {
     setPackageToDelete(pkg);
@@ -108,7 +55,8 @@ const PackagesSection = () => {
 
       if (error) throw error;
 
-      setPackages(prev => prev.filter(p => p.id !== packageToDelete.id));
+      // Invalidate cache to refresh data
+      queryClient.invalidateQueries({ queryKey: ['packages', activeOrganizationId] });
       
       toast({
         title: "Package deleted",
@@ -129,13 +77,15 @@ const PackagesSection = () => {
 
   const handlePackageAdded = () => {
     setShowNewPackageDialog(false);
-    loadPackages(); // Refresh the list
+    // Invalidate cache to refresh data
+    queryClient.invalidateQueries({ queryKey: ['packages', activeOrganizationId] });
   };
 
   const handlePackageUpdated = () => {
     setShowEditPackageDialog(false);
     setEditingPackage(null);
-    loadPackages(); // Refresh the list
+    // Invalidate cache to refresh data
+    queryClient.invalidateQueries({ queryKey: ['packages', activeOrganizationId] });
   };
 
   const formatDuration = (duration: string) => {
@@ -156,7 +106,7 @@ const PackagesSection = () => {
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <SettingsSection 
         title="Packages" 
@@ -164,6 +114,19 @@ const PackagesSection = () => {
       >
         <div className="flex items-center justify-center py-8">
           <Loader2 className="h-6 w-6 animate-spin" />
+        </div>
+      </SettingsSection>
+    );
+  }
+
+  if (error) {
+    return (
+      <SettingsSection 
+        title="Packages" 
+        description="Create comprehensive packages that bundle services together for your clients."
+      >
+        <div className="text-center py-8">
+          <p className="text-destructive">Failed to load packages</p>
         </div>
       </SettingsSection>
     );

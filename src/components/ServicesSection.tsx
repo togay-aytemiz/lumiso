@@ -4,10 +4,12 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Plus, Trash2, ChevronDown, ChevronRight, Edit } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AddServiceDialog, EditServiceDialog } from "./settings/ServiceDialogs";
 import SettingsSection from "./SettingsSection";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useServices } from "@/hooks/useOrganizationData";
+import { useOrganization } from "@/contexts/OrganizationContext";
 
 interface Service {
   id: string;
@@ -27,29 +29,10 @@ const ServicesSection = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { hasPermission } = usePermissions();
+  const { activeOrganizationId } = useOrganization();
 
-  // Fetch services
-  const { data: services = [], isLoading } = useQuery({
-    queryKey: ['services'],
-    queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
-
-      // Get current organization ID
-      const { data: organizationId, error: orgError } = await supabase.rpc('get_user_organization_id');
-      if (orgError || !organizationId) throw new Error('No organization found');
-
-      const { data, error } = await supabase
-        .from('services')
-        .select('*')
-        .eq('organization_id', organizationId)
-        .order('category', { ascending: true })
-        .order('name', { ascending: true });
-      
-      if (error) throw error;
-      return data as Service[];
-    },
-  });
+  // Use cached services data
+  const { data: services = [], isLoading } = useServices();
 
   // Delete service mutation
   const deleteServiceMutation = useMutation({
@@ -62,7 +45,7 @@ const ServicesSection = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['services'] });
+      queryClient.invalidateQueries({ queryKey: ['services', activeOrganizationId] });
       toast({
         title: "Service deleted",
         description: "The service has been removed successfully.",
@@ -344,7 +327,7 @@ const ServicesSection = () => {
             open={showNewServiceDialog}
             onOpenChange={handleDialogChange}
             onServiceAdded={() => {
-              queryClient.invalidateQueries({ queryKey: ['services'] });
+              queryClient.invalidateQueries({ queryKey: ['services', activeOrganizationId] });
               handleDialogChange(false);
             }}
           />
@@ -354,7 +337,7 @@ const ServicesSection = () => {
             open={showEditServiceDialog}
             onOpenChange={setShowEditServiceDialog}
             onServiceUpdated={() => {
-              queryClient.invalidateQueries({ queryKey: ['services'] });
+              queryClient.invalidateQueries({ queryKey: ['services', activeOrganizationId] });
               setShowEditServiceDialog(false);
             }}
           />

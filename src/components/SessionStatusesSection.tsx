@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,6 +33,7 @@ interface SessionStatus {
   is_system_initial: boolean;
   created_at: string;
   updated_at: string;
+  lifecycle?: string;
 }
 
 const PREDEFINED_COLORS = [
@@ -58,6 +59,27 @@ const SessionStatusesSection = () => {
   const { toast } = useToast();
   const { activeOrganizationId } = useOrganization();
   const { data: statuses = [], isLoading, refetch } = useSessionStatuses();
+
+  // Check for lifecycle completeness and show warnings
+  useEffect(() => {
+    if (statuses.length > 0 && !isLoading) {
+      const hasCompleted = statuses.some(s => s.lifecycle === 'completed');
+      const hasCancelled = statuses.some(s => s.lifecycle === 'cancelled');
+      
+      if (!hasCompleted || !hasCancelled) {
+        const timeoutId = setTimeout(() => {
+          toast({
+            title: "Tip",
+            description: "Add at least one Completed and one Cancelled stage to unlock full automations.",
+            variant: "default",
+            duration: 8000,
+          });
+        }, 1000);
+        
+        return () => clearTimeout(timeoutId);
+      }
+    }
+  }, [statuses, isLoading, toast]);
 
   const form = useForm<SessionStatusForm>({
     resolver: zodResolver(sessionStatusSchema),
@@ -391,6 +413,11 @@ const SessionStatusesSection = () => {
                       >
                         {status.name}
                       </span>
+                      {status.lifecycle && status.lifecycle !== 'active' && (
+                        <span className="text-xs opacity-60 font-normal capitalize">
+                          · {status.lifecycle}
+                        </span>
+                      )}
                     </div>
                   )}
                 </Draggable>

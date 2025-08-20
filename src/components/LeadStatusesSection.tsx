@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -37,6 +37,7 @@ interface LeadStatus {
   sort_order: number;
   is_default: boolean;
   is_system_final?: boolean;
+  lifecycle?: string;
 }
 
 // Predefined color palette
@@ -70,6 +71,27 @@ const LeadStatusesSection = () => {
   // Use cached data
   const { data: statuses = [], isLoading } = useLeadStatuses();
   const { data: organizationSettings, isLoading: settingsLoading } = useOrganizationSettings();
+
+  // Check for lifecycle completeness and show warnings
+  useEffect(() => {
+    if (statuses.length > 0 && !isLoading) {
+      const hasCompleted = statuses.some(s => s.lifecycle === 'completed');
+      const hasCancelled = statuses.some(s => s.lifecycle === 'cancelled');
+      
+      if (!hasCompleted || !hasCancelled) {
+        const timeoutId = setTimeout(() => {
+          toast({
+            title: "Tip",
+            description: "Add at least one Completed and one Cancelled state to unlock full automations.",
+            variant: "default",
+            duration: 8000,
+          });
+        }, 1000);
+        
+        return () => clearTimeout(timeoutId);
+      }
+    }
+  }, [statuses, isLoading, toast]);
 
   const form = useForm<LeadStatusForm>({
     resolver: zodResolver(leadStatusSchema),
@@ -291,6 +313,11 @@ const LeadStatusesSection = () => {
                     <span className="uppercase tracking-wide font-semibold">
                       {status.name}
                     </span>
+                    {status.lifecycle && status.lifecycle !== 'active' && (
+                      <span className="text-xs opacity-60 font-normal capitalize">
+                        · {status.lifecycle}
+                      </span>
+                    )}
                   </div>
                 ))}
               </div>
@@ -362,6 +389,11 @@ const LeadStatusesSection = () => {
                             >
                               {status.name}
                             </span>
+                            {status.lifecycle && status.lifecycle !== 'active' && (
+                              <span className="text-xs opacity-60 font-normal capitalize">
+                                · {status.lifecycle}
+                              </span>
+                            )}
                           </div>
                         )}
                       </Draggable>

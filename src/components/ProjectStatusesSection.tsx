@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,6 +32,7 @@ interface ProjectStatus {
   created_at: string;
   updated_at: string;
   sort_order: number;
+  lifecycle?: string;
 }
 
 // Predefined color palette (similar to Pixieset)
@@ -59,6 +60,27 @@ const ProjectStatusesSection = () => {
   const { activeOrganizationId } = useOrganization();
   const { data: statuses = [], isLoading, refetch } = useProjectStatuses();
   const { hasPermission } = usePermissions();
+
+  // Check for lifecycle completeness and show warnings
+  useEffect(() => {
+    if (statuses.length > 0 && !isLoading) {
+      const hasCompleted = statuses.some(s => s.lifecycle === 'completed');
+      const hasCancelled = statuses.some(s => s.lifecycle === 'cancelled');
+      
+      if (!hasCompleted || !hasCancelled) {
+        const timeoutId = setTimeout(() => {
+          toast({
+            title: "Tip",
+            description: "Add at least one Completed and one Cancelled stage to unlock full automations.",
+            variant: "default",
+            duration: 8000,
+          });
+        }, 1000);
+        
+        return () => clearTimeout(timeoutId);
+      }
+    }
+  }, [statuses, isLoading, toast]);
 
   const form = useForm<ProjectStatusForm>({
     resolver: zodResolver(projectStatusSchema),
@@ -504,15 +526,20 @@ const ProjectStatusesSection = () => {
                           className="w-2 h-2 rounded-full flex-shrink-0" 
                           style={{ backgroundColor: status.color }}
                         />
-                        <span 
-                          className={`uppercase tracking-wide font-semibold ${canManageProjectStatuses ? 'cursor-pointer' : 'cursor-default'}`}
-                          onClick={canManageProjectStatuses ? (e) => {
-                            e.stopPropagation();
-                            handleEdit(status);
-                          } : undefined}
-                        >
-                          {status.name}
-                        </span>
+                         <span 
+                           className={`uppercase tracking-wide font-semibold ${canManageProjectStatuses ? 'cursor-pointer' : 'cursor-default'}`}
+                           onClick={canManageProjectStatuses ? (e) => {
+                             e.stopPropagation();
+                             handleEdit(status);
+                           } : undefined}
+                         >
+                           {status.name}
+                         </span>
+                         {status.lifecycle && status.lifecycle !== 'active' && (
+                           <span className="text-xs opacity-60 font-normal capitalize">
+                             · {status.lifecycle}
+                           </span>
+                         )}
                       </div>
                     )}
                   </Draggable>

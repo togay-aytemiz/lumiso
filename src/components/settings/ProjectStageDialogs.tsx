@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { Plus } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface AddProjectStageDialogProps {
   open: boolean;
@@ -18,7 +19,26 @@ export function AddProjectStageDialog({ open, onOpenChange, onStageAdded }: AddP
   const [formData, setFormData] = useState({
     name: "",
     color: "#EF4444",
+    lifecycle: "active" as "active" | "completed" | "cancelled", // No "archived" for projects
   });
+
+  // Smart default based on name (no "archived" for projects)
+  const getSmartLifecycleDefault = (name: string): "active" | "completed" | "cancelled" => {
+    const lowerName = name.toLowerCase();
+    if (lowerName.includes("cancel")) return "cancelled";
+    if (lowerName.includes("complete") || lowerName.includes("deliver") || lowerName.includes("done")) return "completed";
+    return "active";
+  };
+
+  // Update lifecycle when name changes
+  useEffect(() => {
+    if (formData.name) {
+      const suggestedLifecycle = getSmartLifecycleDefault(formData.name);
+      if (suggestedLifecycle !== formData.lifecycle) {
+        setFormData(prev => ({ ...prev, lifecycle: suggestedLifecycle }));
+      }
+    }
+  }, [formData.name]);
 
   const handleSubmit = async () => {
     if (!formData.name.trim()) {
@@ -63,6 +83,7 @@ export function AddProjectStageDialog({ open, onOpenChange, onStageAdded }: AddP
           organization_id: userSettings.active_organization_id,
           name: formData.name.trim(),
           color: formData.color,
+          lifecycle: formData.lifecycle,
           sort_order: nextSortOrder
         });
 
@@ -73,7 +94,7 @@ export function AddProjectStageDialog({ open, onOpenChange, onStageAdded }: AddP
         description: "Project stage added successfully"
       });
 
-      setFormData({ name: "", color: "#EF4444" });
+      setFormData({ name: "", color: "#EF4444", lifecycle: "active" });
       onOpenChange(false);
       onStageAdded();
     } catch (error: any) {
@@ -87,11 +108,11 @@ export function AddProjectStageDialog({ open, onOpenChange, onStageAdded }: AddP
     }
   };
 
-  const isDirty = Boolean(formData.name.trim() || formData.color !== "#EF4444");
+  const isDirty = Boolean(formData.name.trim() || formData.color !== "#EF4444" || formData.lifecycle !== "active");
 
   const handleDirtyClose = () => {
     if (window.confirm("Are you sure you want to discard your changes? Any unsaved information will be lost.")) {
-      setFormData({ name: "", color: "#EF4444" });
+      setFormData({ name: "", color: "#EF4444", lifecycle: "active" });
       onOpenChange(false);
     }
   };
@@ -158,6 +179,28 @@ export function AddProjectStageDialog({ open, onOpenChange, onStageAdded }: AddP
             ))}
           </div>
         </div>
+
+        <div className="space-y-3">
+          <Label>Lifecycle</Label>
+          <div className="grid grid-cols-3 gap-2 p-1 bg-muted rounded-lg">
+            {(["active", "completed", "cancelled"] as const).map((lifecycle) => (
+              <button
+                key={lifecycle}
+                type="button"
+                onClick={() => setFormData(prev => ({ ...prev, lifecycle }))}
+                className={cn(
+                  "px-3 py-2 text-sm font-medium rounded-md transition-all capitalize",
+                  formData.lifecycle === lifecycle
+                    ? "bg-background shadow-sm text-foreground"
+                    : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                )}
+              >
+                {lifecycle}
+              </button>
+            ))}
+          </div>
+          <p className="text-sm text-muted-foreground">Lifecycle drives automations and reporting.</p>
+        </div>
       </div>
     </AppSheetModal>
   );
@@ -175,6 +218,7 @@ export function EditProjectStageDialog({ stage, open, onOpenChange, onStageUpdat
   const [formData, setFormData] = useState({
     name: "",
     color: "#EF4444",
+    lifecycle: "active" as "active" | "completed" | "cancelled",
   });
 
   useEffect(() => {
@@ -182,6 +226,7 @@ export function EditProjectStageDialog({ stage, open, onOpenChange, onStageUpdat
       setFormData({
         name: stage.name,
         color: stage.color,
+        lifecycle: stage.lifecycle || "active",
       });
     }
   }, [stage, open]);
@@ -203,6 +248,7 @@ export function EditProjectStageDialog({ stage, open, onOpenChange, onStageUpdat
         .update({
           name: formData.name.trim(),
           color: formData.color,
+          lifecycle: formData.lifecycle,
         })
         .eq('id', stage.id);
 
@@ -260,7 +306,8 @@ export function EditProjectStageDialog({ stage, open, onOpenChange, onStageUpdat
 
   const isDirty = Boolean(
     formData.name !== stage.name ||
-    formData.color !== stage.color
+    formData.color !== stage.color ||
+    formData.lifecycle !== (stage.lifecycle || "active")
   );
 
   const handleDirtyClose = () => {
@@ -335,6 +382,28 @@ export function EditProjectStageDialog({ stage, open, onOpenChange, onStageUpdat
               />
             ))}
           </div>
+        </div>
+
+        <div className="space-y-3">
+          <Label>Lifecycle</Label>
+          <div className="grid grid-cols-3 gap-2 p-1 bg-muted rounded-lg">
+            {(["active", "completed", "cancelled"] as const).map((lifecycle) => (
+              <button
+                key={lifecycle}
+                type="button"
+                onClick={() => setFormData(prev => ({ ...prev, lifecycle }))}
+                className={cn(
+                  "px-3 py-2 text-sm font-medium rounded-md transition-all capitalize",
+                  formData.lifecycle === lifecycle
+                    ? "bg-background shadow-sm text-foreground"
+                    : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                )}
+              >
+                {lifecycle}
+              </button>
+            ))}
+          </div>
+          <p className="text-sm text-muted-foreground">Lifecycle drives automations and reporting.</p>
         </div>
       </div>
     </AppSheetModal>

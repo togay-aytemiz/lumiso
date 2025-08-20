@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { Plus } from "lucide-react";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
+import { cn } from "@/lib/utils";
 
 interface AddLeadStatusDialogProps {
   open: boolean;
@@ -19,7 +20,27 @@ export function AddLeadStatusDialog({ open, onOpenChange, onStatusAdded }: AddLe
   const [formData, setFormData] = useState({
     name: "",
     color: "#3B82F6",
+    lifecycle: "active" as "active" | "completed" | "cancelled" | "archived",
   });
+
+  // Smart default based on name
+  const getSmartLifecycleDefault = (name: string): "active" | "completed" | "cancelled" | "archived" => {
+    const lowerName = name.toLowerCase();
+    if (lowerName.includes("cancel")) return "cancelled";
+    if (lowerName.includes("complete") || lowerName.includes("deliver") || lowerName.includes("done")) return "completed";
+    if (lowerName.includes("archive")) return "archived";
+    return "active";
+  };
+
+  // Update lifecycle when name changes
+  useEffect(() => {
+    if (formData.name) {
+      const suggestedLifecycle = getSmartLifecycleDefault(formData.name);
+      if (suggestedLifecycle !== formData.lifecycle) {
+        setFormData(prev => ({ ...prev, lifecycle: suggestedLifecycle }));
+      }
+    }
+  }, [formData.name]);
 
   const handleSubmit = async () => {
     if (!formData.name.trim()) {
@@ -56,6 +77,7 @@ export function AddLeadStatusDialog({ open, onOpenChange, onStatusAdded }: AddLe
           organization_id: organizationId,
           name: formData.name.trim(),
           color: formData.color,
+          lifecycle: formData.lifecycle,
           sort_order: nextSortOrder,
           is_system_final: false,
           is_default: false
@@ -68,7 +90,7 @@ export function AddLeadStatusDialog({ open, onOpenChange, onStatusAdded }: AddLe
         description: "Lead status added successfully"
       });
 
-      setFormData({ name: "", color: "#3B82F6" });
+      setFormData({ name: "", color: "#3B82F6", lifecycle: "active" });
       onOpenChange(false);
       onStatusAdded();
     } catch (error: any) {
@@ -82,11 +104,11 @@ export function AddLeadStatusDialog({ open, onOpenChange, onStatusAdded }: AddLe
     }
   };
 
-  const isDirty = Boolean(formData.name.trim() || formData.color !== "#3B82F6");
+  const isDirty = Boolean(formData.name.trim() || formData.color !== "#3B82F6" || formData.lifecycle !== "active");
 
   const handleDirtyClose = () => {
     if (window.confirm("Are you sure you want to discard your changes? Any unsaved information will be lost.")) {
-      setFormData({ name: "", color: "#3B82F6" });
+      setFormData({ name: "", color: "#3B82F6", lifecycle: "active" });
       onOpenChange(false);
     }
   };
@@ -153,6 +175,28 @@ export function AddLeadStatusDialog({ open, onOpenChange, onStatusAdded }: AddLe
             ))}
           </div>
         </div>
+
+        <div className="space-y-3">
+          <Label>Lifecycle</Label>
+          <div className="grid grid-cols-4 gap-2 p-1 bg-muted rounded-lg">
+            {(["active", "completed", "cancelled", "archived"] as const).map((lifecycle) => (
+              <button
+                key={lifecycle}
+                type="button"
+                onClick={() => setFormData(prev => ({ ...prev, lifecycle }))}
+                className={cn(
+                  "px-3 py-2 text-sm font-medium rounded-md transition-all capitalize",
+                  formData.lifecycle === lifecycle
+                    ? "bg-background shadow-sm text-foreground"
+                    : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                )}
+              >
+                {lifecycle}
+              </button>
+            ))}
+          </div>
+          <p className="text-sm text-muted-foreground">Lifecycle drives automations and reporting.</p>
+        </div>
       </div>
     </AppSheetModal>
   );
@@ -170,6 +214,7 @@ export function EditLeadStatusDialog({ status, open, onOpenChange, onStatusUpdat
   const [formData, setFormData] = useState({
     name: "",
     color: "#3B82F6",
+    lifecycle: "active" as "active" | "completed" | "cancelled" | "archived",
   });
 
   useEffect(() => {
@@ -177,6 +222,7 @@ export function EditLeadStatusDialog({ status, open, onOpenChange, onStatusUpdat
       setFormData({
         name: status.name,
         color: status.color,
+        lifecycle: status.lifecycle || "active",
       });
     }
   }, [status, open]);
@@ -201,6 +247,7 @@ export function EditLeadStatusDialog({ status, open, onOpenChange, onStatusUpdat
         .update({
           name: formData.name.trim(),
           color: formData.color,
+          lifecycle: formData.lifecycle,
         })
         .eq('id', status.id)
         .eq('organization_id', organizationId);
@@ -229,7 +276,8 @@ export function EditLeadStatusDialog({ status, open, onOpenChange, onStatusUpdat
 
   const isDirty = Boolean(
     formData.name !== status.name ||
-    formData.color !== status.color
+    formData.color !== status.color ||
+    formData.lifecycle !== (status.lifecycle || "active")
   );
 
   const handleDirtyClose = () => {
@@ -351,6 +399,28 @@ export function EditLeadStatusDialog({ status, open, onOpenChange, onStatusUpdat
             </div>
           </div>
         )}
+
+        <div className="space-y-3">
+          <Label>Lifecycle</Label>
+          <div className="grid grid-cols-4 gap-2 p-1 bg-muted rounded-lg">
+            {(["active", "completed", "cancelled", "archived"] as const).map((lifecycle) => (
+              <button
+                key={lifecycle}
+                type="button"
+                onClick={() => setFormData(prev => ({ ...prev, lifecycle }))}
+                className={cn(
+                  "px-3 py-2 text-sm font-medium rounded-md transition-all capitalize",
+                  formData.lifecycle === lifecycle
+                    ? "bg-background shadow-sm text-foreground"
+                    : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                )}
+              >
+                {lifecycle}
+              </button>
+            ))}
+          </div>
+          <p className="text-sm text-muted-foreground">Lifecycle drives automations and reporting.</p>
+        </div>
 
         {status.is_system_final && (
           <div className="text-sm text-muted-foreground">

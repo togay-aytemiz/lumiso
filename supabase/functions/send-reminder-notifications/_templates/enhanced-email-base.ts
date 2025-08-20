@@ -377,10 +377,10 @@ export const createEmailTemplate = (
   content: string,
   templateData: EmailTemplateData
 ) => {
-  const { userFullName, businessName = "Lumiso", logoUrl, brandColor = "#1EB29F", baseUrl = "https://id-preview--392fd27c-d1db-4220-9e4e-7358db293b83.lovable.app" } = templateData;
+  const { userFullName, businessName = "Lumiso", logoUrl, brandColor = "#1EB29F", baseUrl = "https://rifdykpdubrowzbylffe.supabase.co" } = templateData;
   
-  // Use the Logo.png from Lovable uploads
-  const lumisoLogo = "https://id-preview--392fd27c-d1db-4220-9e4e-7358db293b83.lovable.app/lovable-uploads/31c6b73e-90ac-41aa-b4e2-95a94813c3f3.png";
+  // Use the actual logo URL from user settings or fall back to a working logo
+  const effectiveLogo = logoUrl || "https://rifdykpdubrowzbylffe.supabase.co/storage/v1/object/public/logos/lumiso-logo.png";
   
   return `
     <!DOCTYPE html>
@@ -394,7 +394,7 @@ export const createEmailTemplate = (
     <body>
       <div class="email-container">
         <div class="email-header">
-          <img src="${lumisoLogo}" alt="Lumiso" class="logo" />
+          <img src="${effectiveLogo}" alt="${businessName}" class="logo" />
         </div>
         
         <div class="email-body">

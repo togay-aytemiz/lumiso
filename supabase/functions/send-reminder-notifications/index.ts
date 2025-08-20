@@ -395,7 +395,7 @@ async function getUserBrandingSettings(userId: string, organizationId: string): 
     .eq('user_id', userId)
     .single();
 
-  const baseUrl = 'https://392fd27c-d1db-4220-9e4e-7358db293b83.sandbox.lovable.dev';
+  const baseUrl = 'https://rifdykpdubrowzbylffe.supabase.co';
 
   return {
     userFullName: profile?.full_name || 'User',
@@ -409,6 +409,8 @@ async function getUserBrandingSettings(userId: string, organizationId: string): 
 }
 
 // Enhanced notification sending functions - simplified for MVP
+import { formatDate } from './_templates/enhanced-email-base.ts';
+
 async function sendDailySummary(user: UserProfile, isTest?: boolean) {
   // Get overdue sessions first (from today's date perspective)
   const today = new Date().toISOString().split('T')[0];
@@ -475,7 +477,7 @@ async function sendDailySummary(user: UserProfile, isTest?: boolean) {
     pendingTodos, 
     templateData
   );
-  const todayFormatted = new Date().toLocaleDateString();
+  const todayFormatted = formatDate(new Date().toISOString(), templateData.dateFormat);
   const subject = isTest ? `📊 TEST: Daily Summary - ${todayFormatted}` : `📊 Daily Summary - ${todayFormatted}`;
 
   const { error } = await resend.emails.send({

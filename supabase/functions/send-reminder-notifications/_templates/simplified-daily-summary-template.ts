@@ -1,4 +1,4 @@
-import { createEmailTemplate, EmailTemplateData } from './enhanced-email-base.ts';
+import { createEmailTemplate, EmailTemplateData, formatDate, formatTime } from './enhanced-email-base.ts';
 
 export function generateDailySummaryEmailSimplified(
   upcomingSessions: any[],
@@ -8,7 +8,7 @@ export function generateDailySummaryEmailSimplified(
   pendingTodos: any[],  
   templateData: EmailTemplateData
 ): string {
-  const today = new Date().toLocaleDateString();
+  const today = formatDate(new Date().toISOString(), templateData.dateFormat);
   
   // Generate sections
   let sections = [];
@@ -26,7 +26,7 @@ export function generateDailySummaryEmailSimplified(
               <div>
                 <div style="font-weight: 600; color: #1f2937;">${session.leads?.name || 'Session'}</div>
                 <div style="color: #6b7280; font-size: 14px; margin-top: 4px;">
-                  ${session.session_time || 'Time TBD'} • ${session.projects?.name || 'Project'}
+                  ${session.session_time ? formatTime(session.session_time, templateData.timeFormat) : 'Time TBD'} • ${session.projects?.name || 'Project'}
                 </div>
                 ${session.leads?.phone ? `<div style="color: #6b7280; font-size: 14px;">📞 ${session.leads.phone}</div>` : ''}
               </div>
@@ -48,7 +48,7 @@ export function generateDailySummaryEmailSimplified(
           <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 16px; margin-bottom: 12px;">
             <div style="font-weight: 600; color: #dc2626;">${session.leads?.name || 'Session'}</div>
             <div style="color: #7f1d1d; font-size: 14px; margin-top: 4px;">
-              Was scheduled: ${session.session_date} • ${session.projects?.name || 'Project'}
+              Was scheduled: ${formatDate(session.session_date, templateData.dateFormat)} ${session.session_time ? 'at ' + formatTime(session.session_time, templateData.timeFormat) : ''} • ${session.projects?.name || 'Project'}
             </div>
             ${templateData.baseUrl ? `
               <a href="${templateData.baseUrl}/sessions" style="color: #dc2626; text-decoration: underline; font-size: 14px;">
@@ -72,8 +72,10 @@ export function generateDailySummaryEmailSimplified(
           <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 16px; margin-bottom: 12px;">
             <div style="font-weight: 600; color: #dc2626;">${reminder.content}</div>
             <div style="color: #7f1d1d; font-size: 14px; margin-top: 4px;">
-              Due: ${reminder.reminder_date} • ${reminder.leads?.name || reminder.projects?.name || 'Client'}
+              Due: ${formatDate(reminder.reminder_date, templateData.dateFormat)} • ${reminder.leads?.name || reminder.projects?.name || 'No Project/Lead'}
             </div>
+            ${reminder.leads?.email ? `<div style="color: #7f1d1d; font-size: 13px;">📧 ${reminder.leads.email}</div>` : ''}
+            ${reminder.leads?.phone ? `<div style="color: #7f1d1d; font-size: 13px;">📞 ${reminder.leads.phone}</div>` : ''}
             ${templateData.baseUrl ? `
               <a href="${templateData.baseUrl}/reminders" style="color: #dc2626; text-decoration: underline; font-size: 14px;">
                 Mark as complete →
@@ -96,8 +98,10 @@ export function generateDailySummaryEmailSimplified(
           <div style="background: #fffbeb; border: 1px solid #fed7aa; border-radius: 8px; padding: 16px; margin-bottom: 12px;">
             <div style="font-weight: 600; color: #92400e;">${reminder.content}</div>
             <div style="color: #78350f; font-size: 14px; margin-top: 4px;">
-              Due: ${reminder.reminder_date} • ${reminder.leads?.name || reminder.projects?.name || 'Client'}
+              Due: ${formatDate(reminder.reminder_date, templateData.dateFormat)} • ${reminder.leads?.name || reminder.projects?.name || 'No Project/Lead'}
             </div>
+            ${reminder.leads?.email ? `<div style="color: #78350f; font-size: 13px;">📧 ${reminder.leads.email}</div>` : ''}
+            ${reminder.leads?.phone ? `<div style="color: #78350f; font-size: 13px;">📞 ${reminder.leads.phone}</div>` : ''}
           </div>
         `).join('')}
       </div>

@@ -70,6 +70,13 @@ export function useOnboarding() {
   const startGuidedSetup = async () => {
     if (!user) return;
 
+    // Update local state first for immediate UI feedback
+    setState(prev => ({
+      ...prev,
+      inGuidedSetup: true,
+      guidedSetupSkipped: false,
+    }));
+
     try {
       const { error } = await supabase
         .from('user_settings')
@@ -79,13 +86,15 @@ export function useOnboarding() {
         })
         .eq('user_id', user.id);
 
-      if (error) throw error;
-
-      setState(prev => ({
-        ...prev,
-        inGuidedSetup: true,
-        guidedSetupSkipped: false,
-      }));
+      if (error) {
+        // Revert local state if database update fails
+        setState(prev => ({
+          ...prev,
+          inGuidedSetup: false,
+          guidedSetupSkipped: false,
+        }));
+        throw error;
+      }
     } catch (error) {
       console.error('Error starting guided setup:', error);
       throw error;
@@ -94,6 +103,13 @@ export function useOnboarding() {
 
   const skipWithSampleData = async () => {
     if (!user) return;
+
+    // Update local state first for immediate UI feedback
+    setState(prev => ({
+      ...prev,
+      inGuidedSetup: false,
+      guidedSetupSkipped: true,
+    }));
 
     try {
       const { error } = await supabase
@@ -104,13 +120,15 @@ export function useOnboarding() {
         })
         .eq('user_id', user.id);
 
-      if (error) throw error;
-
-      setState(prev => ({
-        ...prev,
-        inGuidedSetup: false,
-        guidedSetupSkipped: true,
-      }));
+      if (error) {
+        // Revert local state if database update fails
+        setState(prev => ({
+          ...prev,
+          inGuidedSetup: false,
+          guidedSetupSkipped: false,
+        }));
+        throw error;
+      }
     } catch (error) {
       console.error('Error skipping setup:', error);
       throw error;

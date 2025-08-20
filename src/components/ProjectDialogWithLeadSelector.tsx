@@ -165,6 +165,7 @@ export function ProjectDialogWithLeadSelector({
           .insert({
             project_id: newProject.id,
             user_id: userData.user.id,
+            organization_id: userSettings.active_organization_id,
             amount: basePriceValue,
             description: 'Base Price',
             status: 'due',

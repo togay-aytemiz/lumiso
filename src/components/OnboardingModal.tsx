@@ -3,8 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useOnboarding } from "@/hooks/useOnboarding";
 import { toast } from "@/hooks/use-toast";
 
 interface OnboardingModalProps {
@@ -24,22 +24,15 @@ export function OnboardingModal({ open, onClose }: OnboardingModalProps) {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { startGuidedSetup, skipWithSampleData } = useOnboarding();
 
   const handleStartLearning = async () => {
     if (!user) return;
     
     setIsLoading(true);
     try {
-      const { error } = await supabase
-        .from('user_settings')
-        .update({ 
-          in_guided_setup: true,
-          guided_setup_skipped: false 
-        })
-        .eq('user_id', user.id);
-
-      if (error) throw error;
-
+      await startGuidedSetup();
+      
       onClose();
       navigate('/getting-started');
       toast({
@@ -63,16 +56,8 @@ export function OnboardingModal({ open, onClose }: OnboardingModalProps) {
     
     setIsLoading(true);
     try {
-      const { error } = await supabase
-        .from('user_settings')
-        .update({ 
-          guided_setup_skipped: true,
-          in_guided_setup: false 
-        })
-        .eq('user_id', user.id);
-
-      if (error) throw error;
-
+      await skipWithSampleData();
+      
       onClose();
       toast({
         title: "Sample data loaded",

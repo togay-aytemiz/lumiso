@@ -63,6 +63,56 @@ export function useOnboarding() {
     return !state.inGuidedSetup;
   };
 
+  const startGuidedSetup = async () => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('user_settings')
+        .update({ 
+          in_guided_setup: true,
+          guided_setup_skipped: false 
+        })
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      setState(prev => ({
+        ...prev,
+        inGuidedSetup: true,
+        guidedSetupSkipped: false,
+      }));
+    } catch (error) {
+      console.error('Error starting guided setup:', error);
+      throw error;
+    }
+  };
+
+  const skipWithSampleData = async () => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('user_settings')
+        .update({ 
+          guided_setup_skipped: true,
+          in_guided_setup: false 
+        })
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      setState(prev => ({
+        ...prev,
+        inGuidedSetup: false,
+        guidedSetupSkipped: true,
+      }));
+    } catch (error) {
+      console.error('Error skipping setup:', error);
+      throw error;
+    }
+  };
+
   const resetOnboardingState = async () => {
     if (!user) return;
 
@@ -92,6 +142,8 @@ export function useOnboarding() {
   return {
     ...state,
     shouldShowOnboarding,
+    startGuidedSetup,
+    skipWithSampleData,
     resetOnboardingState
   };
 }

@@ -85,7 +85,6 @@ async function getUserPermissions(userId: string, organizationId: string): Promi
 
 async function getEnabledUsersForNotification(type: string, sendTime?: string, isTest?: boolean): Promise<UserProfile[]> {
   console.log(`Getting enabled users for notification type: ${type}, sendTime: ${sendTime}, isTest: ${isTest}`);
-  console.log(`Field to check: ${notificationFieldMap[type]}`);
   
   const notificationFieldMap: { [key: string]: string } = {
     'daily-summary': 'notification_daily_summary_enabled',

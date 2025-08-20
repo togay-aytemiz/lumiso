@@ -16,16 +16,15 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     console.log('Layout useEffect triggered', { 
       onboardingLoading, 
-      shouldShow: shouldShowOnboarding(),
+      shouldShow: shouldShowOnboarding,
       currentModalState: showOnboardingModal 
     });
     
     if (!onboardingLoading) {
-      const shouldShow = shouldShowOnboarding();
-      if (shouldShow && !showOnboardingModal) {
+      if (shouldShowOnboarding && !showOnboardingModal) {
         console.log('Opening onboarding modal');
         setShowOnboardingModal(true);
-      } else if (!shouldShow && showOnboardingModal) {
+      } else if (!shouldShowOnboarding && showOnboardingModal) {
         console.log('Closing onboarding modal');
         setShowOnboardingModal(false);
       }

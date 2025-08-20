@@ -54,6 +54,7 @@ export function useOnboarding() {
   }, [user]);
 
   const shouldShowOnboarding = () => {
+    console.log('shouldShowOnboarding called with state:', state);
     if (state.loading || !user) {
       console.log('shouldShowOnboarding: false - loading or no user', { loading: state.loading, user: !!user });
       return false;
@@ -159,7 +160,7 @@ export function useOnboarding() {
 
   return {
     ...state,
-    shouldShowOnboarding,
+    shouldShowOnboarding: shouldShowOnboarding(),
     startGuidedSetup,
     skipWithSampleData,
     resetOnboardingState

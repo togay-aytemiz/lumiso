@@ -38,18 +38,18 @@ export default function Notifications() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [settings, setSettings] = useState<NotificationSettings>({
-    allNotificationsEnabled: false,
+    allNotificationsEnabled: true,
     globalNotificationTime: "09:00",
-    overdueReminderEnabled: false,
-    deliveryReminderEnabled: false,
-    sessionReminderEnabled: false,
-    dailySummaryEnabled: false,
-    taskNudgeEnabled: false,
-    weeklyRecapEnabled: false,
-    projectMilestoneEnabled: false,
-    leadConversionEnabled: false,
+    overdueReminderEnabled: true,
+    deliveryReminderEnabled: true,
+    sessionReminderEnabled: true,
+    dailySummaryEnabled: true,
+    taskNudgeEnabled: true,
+    weeklyRecapEnabled: true,
+    projectMilestoneEnabled: true,
+    leadConversionEnabled: true,
     integrationFailureAlertEnabled: true,
-    teamInviteAcceptedAlertEnabled: false,
+    teamInviteAcceptedAlertEnabled: true,
   });
 
   const [autoSaveStates, setAutoSaveStates] = useState<{[key: string]: 'idle' | 'saving'}>({});
@@ -393,11 +393,15 @@ export default function Notifications() {
                   size="sm"
                   onClick={() => testNotification('overdue')}
                   disabled={testingNotification === 'overdue'}
+                  className="text-primary hover:text-primary/80 hover:bg-transparent p-0 h-auto font-medium text-sm"
                 >
                   {testingNotification === 'overdue' ? (
-                    <Loader2 className="h-3 w-3 animate-spin" />
+                    <>
+                      <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                      Testing...
+                    </>
                   ) : (
-                    <TestTube className="h-3 w-3" />
+                    'Test Email'
                   )}
                 </Button>
                 <Switch
@@ -425,11 +429,15 @@ export default function Notifications() {
                   size="sm"
                   onClick={() => testNotification('delivery')}
                   disabled={testingNotification === 'delivery'}
+                  className="text-primary hover:text-primary/80 hover:bg-transparent p-0 h-auto font-medium text-sm"
                 >
                   {testingNotification === 'delivery' ? (
-                    <Loader2 className="h-3 w-3 animate-spin" />
+                    <>
+                      <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                      Testing...
+                    </>
                   ) : (
-                    <TestTube className="h-3 w-3" />
+                    'Test Email'
                   )}
                 </Button>
                 <Switch
@@ -457,11 +465,15 @@ export default function Notifications() {
                   size="sm"
                   onClick={() => testNotification('session')}
                   disabled={testingNotification === 'session'}
+                  className="text-primary hover:text-primary/80 hover:bg-transparent p-0 h-auto font-medium text-sm"
                 >
                   {testingNotification === 'session' ? (
-                    <Loader2 className="h-3 w-3 animate-spin" />
+                    <>
+                      <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                      Testing...
+                    </>
                   ) : (
-                    <TestTube className="h-3 w-3" />
+                    'Test Email'
                   )}
                 </Button>
                 <Switch
@@ -489,11 +501,15 @@ export default function Notifications() {
                   size="sm"
                   onClick={() => testNotification('daily_summary')}
                   disabled={testingNotification === 'daily_summary'}
+                  className="text-primary hover:text-primary/80 hover:bg-transparent p-0 h-auto font-medium text-sm"
                 >
                   {testingNotification === 'daily_summary' ? (
-                    <Loader2 className="h-3 w-3 animate-spin" />
+                    <>
+                      <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                      Testing...
+                    </>
                   ) : (
-                    <TestTube className="h-3 w-3" />
+                    'Test Email'
                   )}
                 </Button>
                 <Switch
@@ -521,11 +537,15 @@ export default function Notifications() {
                   size="sm"
                   onClick={() => testNotification('task_nudge')}
                   disabled={testingNotification === 'task_nudge'}
+                  className="text-primary hover:text-primary/80 hover:bg-transparent p-0 h-auto font-medium text-sm"
                 >
                   {testingNotification === 'task_nudge' ? (
-                    <Loader2 className="h-3 w-3 animate-spin" />
+                    <>
+                      <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                      Testing...
+                    </>
                   ) : (
-                    <TestTube className="h-3 w-3" />
+                    'Test Email'
                   )}
                 </Button>
                 <Switch
@@ -553,11 +573,15 @@ export default function Notifications() {
                   size="sm"
                   onClick={() => testNotification('weekly_recap')}
                   disabled={testingNotification === 'weekly_recap'}
+                  className="text-primary hover:text-primary/80 hover:bg-transparent p-0 h-auto font-medium text-sm"
                 >
                   {testingNotification === 'weekly_recap' ? (
-                    <Loader2 className="h-3 w-3 animate-spin" />
+                    <>
+                      <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                      Testing...
+                    </>
                   ) : (
-                    <TestTube className="h-3 w-3" />
+                    'Test Email'
                   )}
                 </Button>
                 <Switch
@@ -599,11 +623,15 @@ export default function Notifications() {
                   size="sm"
                   onClick={() => testNotification('project_milestone')}
                   disabled={testingNotification === 'project_milestone'}
+                  className="text-primary hover:text-primary/80 hover:bg-transparent p-0 h-auto font-medium text-sm"
                 >
                   {testingNotification === 'project_milestone' ? (
-                    <Loader2 className="h-3 w-3 animate-spin" />
+                    <>
+                      <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                      Testing...
+                    </>
                   ) : (
-                    <TestTube className="h-3 w-3" />
+                    'Test Email'
                   )}
                 </Button>
                 <Switch
@@ -631,11 +659,15 @@ export default function Notifications() {
                   size="sm"
                   onClick={() => testNotification('lead_conversion')}
                   disabled={testingNotification === 'lead_conversion'}
+                  className="text-primary hover:text-primary/80 hover:bg-transparent p-0 h-auto font-medium text-sm"
                 >
                   {testingNotification === 'lead_conversion' ? (
-                    <Loader2 className="h-3 w-3 animate-spin" />
+                    <>
+                      <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                      Testing...
+                    </>
                   ) : (
-                    <TestTube className="h-3 w-3" />
+                    'Test Email'
                   )}
                 </Button>
                 <Switch

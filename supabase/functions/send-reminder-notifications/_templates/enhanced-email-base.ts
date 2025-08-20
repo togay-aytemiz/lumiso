@@ -127,34 +127,32 @@ export const getEmailBaseStyles = (brandColor = '#1EB29F') => `
     .email-container {
       max-width: 600px;
       margin: 0 auto;
-      background-color: #FFFFFF;
+      background-color: #F3F4F6;
       border-radius: 8px;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
       overflow: hidden;
     }
     
     .email-header {
-      background-color: #F9FAFB;
+      background-color: #F3F4F6;
       padding: 24px;
       text-align: center;
       border-bottom: 1px solid #E5E7EB;
     }
     
     .logo {
-      height: 40px;
-      margin-bottom: 12px;
+      height: 48px;
+      width: auto;
+      margin: 0 auto;
     }
     
     .company-name {
-      color: #374151;
-      font-size: 20px;
-      font-weight: 600;
-      margin: 0;
+      display: none;
     }
     
     .email-body {
       padding: 32px 24px;
-      background-color: #FFFFFF;
+      background-color: #F3F4F6;
     }
     
     .greeting {
@@ -175,7 +173,7 @@ export const getEmailBaseStyles = (brandColor = '#1EB29F') => `
     }
     
     .item-card {
-      background-color: #F9FAFB;
+      background-color: #F3F4F6;
       border: 1px solid #E5E7EB;
       border-radius: 6px;
       padding: 16px;
@@ -206,9 +204,9 @@ export const getEmailBaseStyles = (brandColor = '#1EB29F') => `
     
     .item-action {
       display: inline-block;
-      background-color: ${brandColor};
-      color: #FFFFFF;
-      text-decoration: none;
+      background-color: #1EB29F !important;
+      color: #FFFFFF !important;
+      text-decoration: none !important;
       padding: 8px 16px;
       border-radius: 4px;
       font-size: 14px;
@@ -218,13 +216,13 @@ export const getEmailBaseStyles = (brandColor = '#1EB29F') => `
     }
     
     .item-action:hover {
-      background-color: ${adjustBrightness(brandColor, -10)};
-      color: #FFFFFF;
-      text-decoration: none;
+      background-color: #059669 !important;
+      color: #FFFFFF !important;
+      text-decoration: none !important;
     }
     
     .summary-stats {
-      background-color: #F9FAFB;
+      background-color: #F3F4F6;
       border: 1px solid #E5E7EB;
       border-radius: 6px;
       padding: 20px;
@@ -241,7 +239,7 @@ export const getEmailBaseStyles = (brandColor = '#1EB29F') => `
     .stat-number {
       font-size: 24px;
       font-weight: 700;
-      color: ${brandColor};
+      color: #1EB29F;
       display: block;
     }
     
@@ -253,9 +251,9 @@ export const getEmailBaseStyles = (brandColor = '#1EB29F') => `
     
     .cta-button {
       display: inline-block;
-      background-color: ${brandColor};
-      color: #FFFFFF;
-      text-decoration: none;
+      background-color: #1EB29F !important;
+      color: #FFFFFF !important;
+      text-decoration: none !important;
       padding: 12px 20px;
       border-radius: 4px;
       font-weight: 500;
@@ -265,9 +263,9 @@ export const getEmailBaseStyles = (brandColor = '#1EB29F') => `
     }
     
     .cta-button:hover {
-      background-color: ${adjustBrightness(brandColor, -10)};
-      color: #FFFFFF;
-      text-decoration: none;
+      background-color: #059669 !important;
+      color: #FFFFFF !important;
+      text-decoration: none !important;
     }
     
     .inline-buttons {
@@ -276,7 +274,7 @@ export const getEmailBaseStyles = (brandColor = '#1EB29F') => `
     }
     
     .email-footer {
-      background-color: #F9FAFB;
+      background-color: #F3F4F6;
       padding: 20px 24px;
       text-align: center;
       border-top: 1px solid #E5E7EB;
@@ -290,12 +288,12 @@ export const getEmailBaseStyles = (brandColor = '#1EB29F') => `
     }
     
     .footer-link {
-      color: ${brandColor};
-      text-decoration: none;
+      color: #1EB29F !important;
+      text-decoration: none !important;
     }
     
     .footer-link:hover {
-      text-decoration: underline;
+      text-decoration: underline !important;
     }
     
     .overdue-badge {
@@ -379,7 +377,7 @@ export const createEmailTemplate = (
   content: string,
   templateData: EmailTemplateData
 ) => {
-  const { userFullName, businessName = "Lumiso", logoUrl, brandColor = "#1EB29F", baseUrl = "" } = templateData;
+  const { userFullName, businessName = "Lumiso", logoUrl, brandColor = "#1EB29F", baseUrl = "https://id-preview--392fd27c-d1db-4220-9e4e-7358db293b83.lovable.app" } = templateData;
   
   // Use the Logo.png from assets
   const lumisoLogo = "https://rifdykpdubrowzbylffe.supabase.co/storage/v1/object/public/logos/Logo.png";
@@ -397,7 +395,6 @@ export const createEmailTemplate = (
       <div class="email-container">
         <div class="email-header">
           <img src="${lumisoLogo}" alt="Lumiso" class="logo" />
-          <h1 class="company-name">Lumiso</h1>
         </div>
         
         <div class="email-body">
@@ -408,7 +405,8 @@ export const createEmailTemplate = (
         <div class="email-footer">
           <p class="footer-text">
             This is an automated notification from Lumiso.<br>
-            ${baseUrl ? `<a href="${baseUrl}" class="footer-link">Visit your dashboard</a>` : ''}
+            <a href="${baseUrl}" class="footer-link">Go to Dashboard</a> | 
+            <a href="${baseUrl}/leads" class="footer-link">Manage All Leads</a>
           </p>
         </div>
       </div>

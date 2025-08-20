@@ -398,7 +398,7 @@ async function getUserBrandingSettings(userId: string, organizationId: string): 
     .eq('user_id', userId)
     .single();
 
-  const baseUrl = Deno.env.get('SITE_URL') || Deno.env.get('SUPABASE_URL')?.replace('/auth/v1', '');
+  const baseUrl = 'https://id-preview--392fd27c-d1db-4220-9e4e-7358db293b83.lovable.app';
 
   return {
     userFullName: profile?.full_name || 'User',

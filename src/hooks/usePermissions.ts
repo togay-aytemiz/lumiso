@@ -20,18 +20,10 @@ export function usePermissions() {
         return;
       }
 
-      // Get user's organization membership
+      // Get user's organization membership - simplified query
       const { data: membership } = await supabase
         .from('organization_members')
-        .select(`
-          system_role,
-          custom_role_id,
-          custom_roles!inner(
-            role_permissions!inner(
-              permissions!inner(name)
-            )
-          )
-        `)
+        .select('system_role, custom_role_id')
         .eq('user_id', user.id)
         .eq('organization_id', activeOrganizationId)
         .eq('status', 'active')
@@ -58,6 +50,8 @@ export function usePermissions() {
         userPermissions = rolePermissions?.map(rp => rp.permissions.name) || [];
       }
 
+      console.log('User permissions loaded:', userPermissions);
+      console.log('User system role:', membership?.system_role);
       setPermissions(userPermissions);
     } catch (error) {
       console.error('Error fetching user permissions:', error);

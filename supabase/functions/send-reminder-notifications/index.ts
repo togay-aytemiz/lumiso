@@ -425,7 +425,7 @@ async function sendOverdueReminder(user: UserProfile) {
   const subject = `🚨 ${overdueItems.leads.length + overdueItems.activities.length} Overdue Items Need Attention`;
 
   const { error } = await resend.emails.send({
-    from: 'Lumiso <notifications@resend.dev>',
+    from: 'Lumiso <onboarding@resend.dev>',
     to: [user.email],
     subject: subject,
     html: emailContent,
@@ -452,7 +452,7 @@ async function sendSessionReminder(user: UserProfile, isTest?: boolean) {
   const subject = `📸 ${upcomingSessions.length} Photography Session${upcomingSessions.length === 1 ? '' : 's'} Coming Up`;
 
   const { error } = await resend.emails.send({
-    from: 'Lumiso <notifications@resend.dev>',
+    from: 'Lumiso <onboarding@resend.dev>',
     to: [user.email],
     subject: subject,
     html: emailContent,
@@ -479,7 +479,7 @@ async function sendDailySummary(user: UserProfile) {
   const subject = `📊 Daily Summary - ${today}`;
 
   const { error } = await resend.emails.send({
-    from: 'Lumiso <notifications@resend.dev>',
+    from: 'Lumiso <onboarding@resend.dev>',
     to: [user.email],
     subject: subject,
     html: emailContent,
@@ -516,7 +516,7 @@ async function sendTaskNudge(user: UserProfile) {
   const subject = `📋 ${oldTodos.length} Pending Task${oldTodos.length === 1 ? '' : 's'} Need Your Attention`;
 
   const { error } = await resend.emails.send({
-    from: 'Lumiso <notifications@resend.dev>',
+    from: 'Lumiso <onboarding@resend.dev>',
     to: [user.email],
     subject: subject,
     html: emailContent,
@@ -538,7 +538,7 @@ async function sendWeeklyRecap(user: UserProfile) {
   const subject = `📈 Weekly Business Recap - Your Photography Success Story`;
 
   const { error } = await resend.emails.send({
-    from: 'Lumiso <notifications@resend.dev>',
+    from: 'Lumiso <onboarding@resend.dev>',
     to: [user.email],
     subject: subject,
     html: emailContent,

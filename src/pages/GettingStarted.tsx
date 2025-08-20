@@ -12,37 +12,42 @@ const onboardingSteps = [
   {
     id: 1,
     title: "Complete Your Profile Setup",
-    description: "Add your business details, contact information, and preferences to personalize your CRM experience.",
+    description: "Add your business details and contact information",
     route: "/settings/profile",
-    buttonText: "Set Up Profile"
+    buttonText: "Set Up Profile",
+    duration: "3 min"
   },
   {
     id: 2, 
     title: "Create Your First Lead",
-    description: "Add a potential client to start tracking your photography opportunities and manage your sales pipeline.",
+    description: "Add a potential client to start tracking opportunities",
     route: "/leads",
-    buttonText: "Go to Leads"
+    buttonText: "Go to Leads",
+    duration: "2 min"
   },
   {
     id: 3,
     title: "Set Up a Photography Project", 
-    description: "Create your first project to organize sessions, track progress, and manage client deliverables.",
+    description: "Create your first project to organize sessions and deliverables",
     route: "/projects",
-    buttonText: "Create Project"
+    buttonText: "Create Project",
+    duration: "4 min"
   },
   {
     id: 4,
     title: "Schedule a Photo Session",
-    description: "Book your first session and learn how to manage your photography calendar efficiently.",
+    description: "Book your first session and manage your calendar",
     route: "/calendar", 
-    buttonText: "Schedule Session"
+    buttonText: "Schedule Session",
+    duration: "3 min"
   },
   {
     id: 5,
     title: "Configure Your Packages",
-    description: "Set up your photography packages and pricing to streamline your client booking process.",
+    description: "Set up photography packages and pricing structure",
     route: "/settings/services",
-    buttonText: "Set Up Packages"
+    buttonText: "Set Up Packages",
+    duration: "5 min"
   }
 ];
 
@@ -65,27 +70,27 @@ const GettingStarted = () => {
     <div className="min-h-screen bg-background">
       {/* Custom Header for Guidance Mode */}
       <div className="bg-card border-b border-border sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center py-4 gap-4">
-            <div className="text-center sm:text-left">
-              <h1 className="text-xl sm:text-2xl font-bold text-foreground">Welcome to Lumiso! 🎉</h1>
-              <p className="text-sm text-muted-foreground mt-1">Let's set up your photography business step by step</p>
-            </div>
-            <div className="flex items-center justify-center sm:justify-end gap-3">
-              <Button variant="outline" size="sm">
-                <HelpCircle className="w-4 h-4 mr-2" />
-                Need Help?
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => setShowSampleDataModal(true)}
-              >
-                Skip Setup
-              </Button>
-            </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center py-6 gap-6">
+          <div className="text-center sm:text-left">
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground">Welcome to Lumiso! 🎉</h1>
+            <p className="text-sm text-muted-foreground mt-2">Let's set up your photography business step by step</p>
+          </div>
+          <div className="flex items-center justify-center sm:justify-end gap-3">
+            <Button variant="outline" size="sm">
+              <HelpCircle className="w-4 h-4 mr-2" />
+              Need Help?
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setShowSampleDataModal(true)}
+            >
+              Skip Setup
+            </Button>
           </div>
         </div>
+      </div>
       </div>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 pb-safe">
@@ -126,29 +131,31 @@ const GettingStarted = () => {
           <div className="mb-6 sm:mb-8">
             <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-accent/5">
               <CardHeader className="pb-4">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-3 text-lg sm:text-xl">
-                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground text-sm font-bold">
-                      {currentStep.id}
+                <div className="flex items-start gap-4">
+                  <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground text-lg font-bold flex-shrink-0">
+                    {currentStep.id}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <CardTitle className="text-lg sm:text-xl mb-2">
+                      {currentStep.title}
+                    </CardTitle>
+                    <CardDescription className="text-sm sm:text-base text-muted-foreground">
+                      {currentStep.description}
+                    </CardDescription>
+                    <div className="mt-3">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground">
+                        {currentStep.duration}
+                      </span>
                     </div>
-                    <span className="hidden sm:inline">Step {currentStep.id} of 5</span>
-                    <span className="sm:hidden">Step {currentStep.id}/5</span>
-                  </CardTitle>
+                  </div>
                 </div>
-                <CardDescription className="text-base sm:text-lg font-medium text-foreground mt-2">
-                  {currentStep.title}
-                </CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground mb-6 text-sm sm:text-base leading-relaxed">
-                  {currentStep.description}
-                </p>
                 <Button 
                   size="lg" 
                   className="w-full sm:w-auto min-h-[48px]"
                   onClick={() => handleStepAction(currentStep.route)}
                 >
-                  <Play className="w-4 h-4 mr-2" />
                   {currentStep.buttonText}
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>

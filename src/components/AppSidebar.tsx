@@ -151,7 +151,7 @@ export function AppSidebar() {
                         </SidebarMenuButton>
                       </TooltipTrigger>
                       <TooltipContent side="right">
-                        <p>Unlocks after completing step {item.requiredStep} of setup</p>
+                        <p>Unlocks after setup is complete</p>
                       </TooltipContent>
                     </Tooltip>
                   ) : (
@@ -190,7 +190,7 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </TooltipTrigger>
                 <TooltipContent side="right">
-                  <p>Unlocks after completing step 4 of setup</p>
+                  <p>Unlocks after setup is complete</p>
                 </TooltipContent>
               </Tooltip>
             ) : (
@@ -231,7 +231,7 @@ export function AppSidebar() {
                                   </SidebarMenuButton>
                                 </TooltipTrigger>
                                 <TooltipContent side="right">
-                                  <p>Unlocks after completing step {item.requiredStep} of setup</p>
+                                  <p>Unlocks after setup is complete</p>
                                 </TooltipContent>
                               </Tooltip>
                             ) : (
@@ -284,7 +284,7 @@ export function AppSidebar() {
                         </SidebarMenuButton>
                       </TooltipTrigger>
                       <TooltipContent side="right">
-                        <p>Unlocks after completing step {item.requiredStep} of setup</p>
+                        <p>Unlocks after setup is complete</p>
                       </TooltipContent>
                     </Tooltip>
                   ) : (

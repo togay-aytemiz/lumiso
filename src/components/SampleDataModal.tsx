@@ -87,8 +87,8 @@ export function SampleDataModal({ open, onClose }: SampleDataModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-md mx-auto">
+        <DialogHeader className="px-6 pt-6">
           <DialogTitle className="text-xl">Skip Setup & Use Sample Data?</DialogTitle>
           <DialogDescription className="text-base">
             We'll populate your CRM with realistic sample data so you can explore all features immediately. 
@@ -96,7 +96,7 @@ export function SampleDataModal({ open, onClose }: SampleDataModalProps) {
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
+        <div className="space-y-4 py-4 px-6">
           <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
             What's included:
           </h4>
@@ -116,11 +116,11 @@ export function SampleDataModal({ open, onClose }: SampleDataModalProps) {
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-3 pt-4">
+        <div className="flex flex-col sm:flex-row gap-3 pt-4 px-6 pb-6">
           <Button 
             variant="outline" 
             onClick={onClose}
-            className="flex-1"
+            className="flex-1 min-h-[44px]"
             disabled={isLoading}
           >
             Continue Guided Setup
@@ -128,7 +128,7 @@ export function SampleDataModal({ open, onClose }: SampleDataModalProps) {
           <Button 
             onClick={handleSkipWithSampleData}
             disabled={isLoading}
-            className="flex-1"
+            className="flex-1 min-h-[44px]"
           >
             {isLoading ? (
               <>

@@ -586,7 +586,11 @@ async function sendDailySummary(user: UserProfile, isTest?: boolean) {
   
   const subject = isTest ? `📊 TEST: Daily Summary - ${todayFormatted}` : `📊 Daily Summary - ${todayFormatted}`;
 
-  const { error } = await resend.emails.send({
+  console.log(`Sending email to: ${user.email}`);
+  console.log(`Subject: ${subject}`);
+  console.log(`From: Lumiso <onboarding@resend.dev>`);
+  
+  const { data, error } = await resend.emails.send({
     from: 'Lumiso <onboarding@resend.dev>',
     to: [user.email],
     subject: subject,
@@ -594,11 +598,11 @@ async function sendDailySummary(user: UserProfile, isTest?: boolean) {
   });
 
   if (error) {
-    console.error(`Failed to send daily summary to ${user.email}:`, error);
+    console.error(`Resend API error for ${user.email}:`, JSON.stringify(error, null, 2));
     throw error;
   }
 
-  console.log(`Sent daily summary to ${user.email}`);
+  console.log(`Email sent successfully to ${user.email}:`, JSON.stringify(data, null, 2));
 }
 
 async function sendWeeklyRecap(user: UserProfile, isTest?: boolean) {
@@ -666,13 +670,11 @@ const handler = async (req: Request): Promise<Response> => {
     const now = new Date();
     const currentTime = isTest ? undefined : `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
     
-    // Get enabled users based on notification type
-    let enabledUsers;
     if (isTest) {
       // In test mode, get the current authenticated user
-      const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
-      if (authError || !authUser) {
-        console.error('Auth error in test mode:', authError);
+      const authHeader = req.headers.get('authorization');
+      if (!authHeader) {
+        console.error('No auth header in test mode');
         return new Response(JSON.stringify({ 
           message: 'Authentication required for test mode',
           successful: 0,
@@ -683,6 +685,22 @@ const handler = async (req: Request): Promise<Response> => {
           headers: { "Content-Type": "application/json", ...corsHeaders },
         });
       }
+
+      const { data: { user: authUser }, error: authError } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
+      if (authError || !authUser) {
+        console.error('Auth error in test mode:', authError);
+        return new Response(JSON.stringify({ 
+          message: 'Authentication failed',
+          successful: 0,
+          failed: 1,
+          total: 1
+        }), {
+          status: 401,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        });
+      }
+      
+      console.log(`Test mode: authenticated user is ${authUser.email}`);
       
       // Get user profile and settings
       const { data: profile } = await supabase
@@ -707,7 +725,7 @@ const handler = async (req: Request): Promise<Response> => {
         active_organization_id: userSettings?.active_organization_id || ''
       }];
       
-      console.log(`Test mode: sending to authenticated user ${authUser.email}`);
+      console.log(`Test mode: will send to ${authUser.email} only`);
     } else {
       enabledUsers = await getEnabledUsersForNotification(type, currentTime, isTest, userId);
     }
@@ -736,7 +754,16 @@ const handler = async (req: Request): Promise<Response> => {
         let result;
         switch (type) {
           case 'daily-summary':
+            console.log(`Attempting to send daily summary to ${user.email}`);
+            
+            // Only send if this is the authenticated user in test mode, or if it's production
+            if (isTest && user.email !== 'togayaytemiz@gmail.com') {
+              console.log(`Skipping ${user.email} in test mode - only sending to authenticated user`);
+              continue;
+            }
+            
             result = await sendDailySummary(user, isTest);
+            console.log(`Daily summary sent successfully to ${user.email}`);
             break;
           case 'weekly-recap':
             result = await sendWeeklyRecap(user, isTest);

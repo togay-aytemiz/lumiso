@@ -623,6 +623,34 @@ export default function Notifications() {
                 )}
                 Test Weekly Recap
               </Button>
+
+              <Button
+                variant="outline"
+                onClick={() => testNotification('project_milestone')}
+                disabled={testingNotification === 'project_milestone'}
+                className="justify-start"
+              >
+                {testingNotification === 'project_milestone' ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <TestTube className="h-4 w-4 mr-2" />
+                )}
+                Test Project Milestone
+              </Button>
+
+              <Button
+                variant="outline"
+                onClick={() => testNotification('lead_conversion')}
+                disabled={testingNotification === 'lead_conversion'}
+                className="justify-start"
+              >
+                {testingNotification === 'lead_conversion' ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <TestTube className="h-4 w-4 mr-2" />
+                )}
+                Test Lead Conversion
+              </Button>
             </div>
             
             <div className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg">

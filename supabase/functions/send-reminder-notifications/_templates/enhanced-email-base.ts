@@ -156,14 +156,14 @@ export const getEmailBaseStyles = (brandColor = '#1EB29F') => `
     }
     
     .greeting {
-      font-size: 16px;
+      font-size: 18px;
       font-weight: 500;
       color: #1F2937;
       margin-bottom: 24px;
     }
     
     .section-title {
-      font-size: 16px;
+      font-size: 18px;
       font-weight: 600;
       color: #1F2937;
       margin: 32px 0 16px 0;
@@ -187,17 +187,17 @@ export const getEmailBaseStyles = (brandColor = '#1EB29F') => `
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-size: 15px;
+      font-size: 16px;
     }
     
     .item-meta {
-      font-size: 14px;
+      font-size: 15px;
       color: #6B7280;
       margin-bottom: 6px;
     }
     
     .item-relationship {
-      font-size: 13px;
+      font-size: 14px;
       color: #9CA3AF;
       margin-bottom: 8px;
     }
@@ -207,9 +207,9 @@ export const getEmailBaseStyles = (brandColor = '#1EB29F') => `
       background-color: #1EB29F !important;
       color: #FFFFFF !important;
       text-decoration: none !important;
-      padding: 8px 16px;
+      padding: 10px 18px;
       border-radius: 4px;
-      font-size: 14px;
+      font-size: 15px;
       font-weight: 500;
       margin-right: 8px;
       margin-top: 8px;
@@ -244,7 +244,7 @@ export const getEmailBaseStyles = (brandColor = '#1EB29F') => `
     }
     
     .stat-label {
-      font-size: 13px;
+      font-size: 14px;
       color: #6B7280;
       margin-top: 4px;
     }
@@ -254,12 +254,12 @@ export const getEmailBaseStyles = (brandColor = '#1EB29F') => `
       background-color: #1EB29F !important;
       color: #FFFFFF !important;
       text-decoration: none !important;
-      padding: 12px 20px;
+      padding: 14px 22px;
       border-radius: 4px;
       font-weight: 500;
       margin: 8px 8px 8px 0;
       text-align: center;
-      font-size: 14px;
+      font-size: 15px;
     }
     
     .cta-button:hover {
@@ -281,7 +281,7 @@ export const getEmailBaseStyles = (brandColor = '#1EB29F') => `
     }
     
     .footer-text {
-      font-size: 12px;
+      font-size: 13px;
       color: #6B7280;
       margin: 0;
       line-height: 1.5;
@@ -379,8 +379,8 @@ export const createEmailTemplate = (
 ) => {
   const { userFullName, businessName = "Lumiso", logoUrl, brandColor = "#1EB29F", baseUrl = "https://id-preview--392fd27c-d1db-4220-9e4e-7358db293b83.lovable.app" } = templateData;
   
-  // Use the Logo.png from assets
-  const lumisoLogo = "https://rifdykpdubrowzbylffe.supabase.co/storage/v1/object/public/logos/Logo.png";
+  // Use the Logo.png from Lovable uploads
+  const lumisoLogo = "https://id-preview--392fd27c-d1db-4220-9e4e-7358db293b83.lovable.app/lovable-uploads/31c6b73e-90ac-41aa-b4e2-95a94813c3f3.png";
   
   return `
     <!DOCTYPE html>

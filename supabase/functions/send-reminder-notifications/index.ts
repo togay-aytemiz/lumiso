@@ -470,6 +470,47 @@ async function sendSessionReminder(user: UserProfile, isTest?: boolean) {
   const upcomingSessions = await getUpcomingSessionsWithRelationships(user.user_id, user.active_organization_id, user.permissions, isTest);
   
   if (upcomingSessions.length === 0) {
+    // For testing, send a mock email if this is the test owner email
+    if (isTest && user.email === 'togayaytemiz@gmail.com') {
+      const mockSessions = [
+        { 
+          id: '1', 
+          session_date: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0], 
+          session_time: '14:00',
+          notes: 'Wedding photography session',
+          leads: { name: 'John & Sarah Smith', email: 'john@example.com', phone: '+1234567890' },
+          projects: { name: 'Smith Wedding Photography', id: '1' }
+        },
+        { 
+          id: '2', 
+          session_date: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString().split('T')[0], 
+          session_time: '10:00',
+          notes: 'Family portrait session',
+          leads: { name: 'Johnson Family', email: 'johnson@example.com', phone: '+1987654321' },
+          projects: { name: 'Johnson Family Portraits', id: '2' }
+        }
+      ];
+      
+      const templateData = await getUserBrandingSettings(user.user_id, user.active_organization_id);
+      const emailContent = generateSessionEmail(mockSessions, templateData);
+      const subject = `📸 TEST: 2 Photography Sessions Coming Up`;
+
+      const { error } = await resend.emails.send({
+        from: 'Lumiso <onboarding@resend.dev>',
+        to: [user.email],
+        subject: subject,
+        html: emailContent,
+      });
+
+      if (error) {
+        console.error(`Failed to send test session reminder to ${user.email}:`, error);
+        throw error;
+      }
+
+      console.log(`Sent test session reminder to ${user.email}`);
+      return;
+    }
+    
     console.log(`No upcoming sessions for user ${user.email}`);
     return;
   }
@@ -493,17 +534,63 @@ async function sendSessionReminder(user: UserProfile, isTest?: boolean) {
   console.log(`Sent session reminder to ${user.email}`);
 }
 
-async function sendDailySummary(user: UserProfile) {
-  const [upcomingSessions, pendingTodos, overdueItems] = await Promise.all([
-    getUpcomingSessionsWithRelationships(user.user_id, user.active_organization_id, user.permissions),
-    getPendingTodosWithRelationships(user.user_id, user.active_organization_id, user.permissions),
-    getOverdueItemsWithRelationships(user.user_id, user.active_organization_id, user.permissions)
-  ]);
+async function sendDailySummary(user: UserProfile, isTest?: boolean) {
+  let upcomingSessions, pendingTodos, overdueItems;
+  
+  if (isTest && user.email === 'togayaytemiz@gmail.com') {
+    // Generate mock data for testing
+    upcomingSessions = [
+      { 
+        id: '1', 
+        session_date: new Date().toISOString().split('T')[0], 
+        session_time: '15:00',
+        notes: 'Engagement session in Central Park',
+        leads: { name: 'Mike & Emma', email: 'mike.emma@example.com' },
+        projects: { name: 'Mike & Emma Engagement', id: '1' }
+      }
+    ];
+    
+    pendingTodos = [
+      { 
+        id: '1', 
+        content: 'Edit wedding photos from last weekend', 
+        created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+        projects: { name: 'Johnson Wedding', id: '2' }
+      },
+      { 
+        id: '2', 
+        content: 'Send gallery link to Smith family', 
+        created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+        projects: { name: 'Smith Family Portraits', id: '3' }
+      }
+    ];
+    
+    overdueItems = {
+      leads: [
+        { id: '1', name: 'David Wilson', email: 'david@example.com', due_date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString() }
+      ],
+      activities: [
+        { 
+          id: '1', 
+          content: 'Follow up on wedding inquiry', 
+          reminder_date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+          type: 'follow_up',
+          leads: { name: 'Sarah Brown', email: 'sarah@example.com' }
+        }
+      ]
+    };
+  } else {
+    [upcomingSessions, pendingTodos, overdueItems] = await Promise.all([
+      getUpcomingSessionsWithRelationships(user.user_id, user.active_organization_id, user.permissions),
+      getPendingTodosWithRelationships(user.user_id, user.active_organization_id, user.permissions),
+      getOverdueItemsWithRelationships(user.user_id, user.active_organization_id, user.permissions)
+    ]);
+  }
 
   const templateData = await getUserBrandingSettings(user.user_id, user.active_organization_id);
   const emailContent = generateDailySummaryEmail(upcomingSessions, pendingTodos, overdueItems, templateData);
   const today = new Date().toLocaleDateString();
-  const subject = `📊 Daily Summary - ${today}`;
+  const subject = isTest ? `📊 TEST: Daily Summary - ${today}` : `📊 Daily Summary - ${today}`;
 
   const { error } = await resend.emails.send({
     from: 'Lumiso <onboarding@resend.dev>',
@@ -520,27 +607,53 @@ async function sendDailySummary(user: UserProfile) {
   console.log(`Sent daily summary to ${user.email}`);
 }
 
-async function sendTaskNudge(user: UserProfile) {
-  const pendingTodos = await getPendingTodosWithRelationships(user.user_id, user.active_organization_id, user.permissions);
+async function sendTaskNudge(user: UserProfile, isTest?: boolean) {
+  let oldTodos;
   
-  if (pendingTodos.length === 0) {
-    console.log(`No pending todos for user ${user.email}`);
-    return;
-  }
+  if (isTest && user.email === 'togayaytemiz@gmail.com') {
+    // Generate mock old todos for testing
+    oldTodos = [
+      { 
+        id: '1', 
+        content: 'Backup wedding photos to cloud storage', 
+        created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+        projects: { name: 'Martinez Wedding', id: '1' }
+      },
+      { 
+        id: '2', 
+        content: 'Order prints for family portrait session', 
+        created_at: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
+        projects: { name: 'Roberts Family Session', id: '2' }
+      },
+      { 
+        id: '3', 
+        content: 'Send contract to new client', 
+        created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+        projects: { name: 'Thompson Anniversary', id: '3' }
+      }
+    ];
+  } else {
+    const pendingTodos = await getPendingTodosWithRelationships(user.user_id, user.active_organization_id, user.permissions);
+    
+    if (pendingTodos.length === 0) {
+      console.log(`No pending todos for user ${user.email}`);
+      return;
+    }
 
-  const oldTodos = pendingTodos.filter(todo => {
-    const daysSinceCreated = (Date.now() - new Date(todo.created_at).getTime()) / (1000 * 60 * 60 * 24);
-    return daysSinceCreated > 2;
-  });
+    oldTodos = pendingTodos.filter(todo => {
+      const daysSinceCreated = (Date.now() - new Date(todo.created_at).getTime()) / (1000 * 60 * 60 * 24);
+      return daysSinceCreated > 2;
+    });
 
-  if (oldTodos.length === 0) {
-    console.log(`No old todos to nudge for user ${user.email}`);
-    return;
+    if (oldTodos.length === 0) {
+      console.log(`No old todos to nudge for user ${user.email}`);
+      return;
+    }
   }
 
   const templateData = await getUserBrandingSettings(user.user_id, user.active_organization_id);
   const emailContent = generateTaskNudgeEmail(oldTodos, templateData);
-  const subject = `📋 ${oldTodos.length} Pending Task${oldTodos.length === 1 ? '' : 's'} Need Your Attention`;
+  const subject = isTest ? `📋 TEST: ${oldTodos.length} Pending Task${oldTodos.length === 1 ? '' : 's'} Need Your Attention` : `📋 ${oldTodos.length} Pending Task${oldTodos.length === 1 ? '' : 's'} Need Your Attention`;
 
   const { error } = await resend.emails.send({
     from: 'Lumiso <onboarding@resend.dev>',
@@ -557,12 +670,52 @@ async function sendTaskNudge(user: UserProfile) {
   console.log(`Sent task nudge to ${user.email}`);
 }
 
-async function sendWeeklyRecap(user: UserProfile) {
-  const weeklyStats = await getWeeklyStats(user.user_id, user.active_organization_id, user.permissions);
+async function sendWeeklyRecap(user: UserProfile, isTest?: boolean) {
+  let weeklyStats;
+  
+  if (isTest && user.email === 'togayaytemiz@gmail.com') {
+    // Generate mock weekly stats for testing
+    weeklyStats = {
+      leadsAdded: 8,
+      leadsConverted: 3,
+      leadsLost: 1,
+      projectsCreated: 4,
+      projectsCompleted: 2,
+      sessionsCompleted: 6,
+      sessionsScheduled: 4,
+      totalRevenue: 15000,
+      recentLeads: [
+        { id: '1', name: 'Alex & Jamie Wedding', email: 'alex@example.com', status: 'Qualified', created_at: new Date().toISOString() },
+        { id: '2', name: 'Peterson Family', email: 'peterson@example.com', status: 'Contacted', created_at: new Date().toISOString() }
+      ],
+      recentProjects: [
+        { 
+          id: '1', 
+          name: 'Summer Wedding Collection', 
+          description: 'Full day wedding photography',
+          created_at: new Date().toISOString(),
+          base_price: 8000,
+          leads: { name: 'Miller Wedding', email: 'miller@example.com' },
+          project_types: { name: 'Wedding' }
+        }
+      ],
+      upcomingSessions: [
+        { 
+          id: '1', 
+          session_date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], 
+          session_time: '16:00',
+          leads: { name: 'Davis Engagement', email: 'davis@example.com' },
+          projects: { name: 'Davis Engagement Photos', id: '1' }
+        }
+      ]
+    };
+  } else {
+    weeklyStats = await getWeeklyStats(user.user_id, user.active_organization_id, user.permissions);
+  }
   
   const templateData = await getUserBrandingSettings(user.user_id, user.active_organization_id);
   const emailContent = generateWeeklyRecapEmail(weeklyStats, templateData);
-  const subject = `📈 Weekly Business Recap - Your Photography Success Story`;
+  const subject = isTest ? `📈 TEST: Weekly Business Recap - Your Photography Success Story` : `📈 Weekly Business Recap - Your Photography Success Story`;
 
   const { error } = await resend.emails.send({
     from: 'Lumiso <onboarding@resend.dev>',
@@ -614,11 +767,11 @@ const handler = async (req: Request): Promise<Response> => {
           case 'session':
             return await sendSessionReminder(user, isTest);
           case 'daily_summary':
-            return await sendDailySummary(user);
+            return await sendDailySummary(user, isTest);
           case 'task_nudge':
-            return await sendTaskNudge(user);
+            return await sendTaskNudge(user, isTest);
           case 'weekly_recap':
-            return await sendWeeklyRecap(user);
+            return await sendWeeklyRecap(user, isTest);
           default:
             throw new Error(`Unknown notification type: ${type}`);
         }

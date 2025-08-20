@@ -402,7 +402,7 @@ async function getUserBrandingSettings(userId: string, organizationId: string): 
     businessName: orgSettings?.photography_business_name || userSettings?.photography_business_name || 'Photography CRM',
     logoUrl: orgSettings?.logo_url || userSettings?.logo_url,
     brandColor: orgSettings?.primary_brand_color || userSettings?.primary_brand_color || '#1EB29F',
-    baseUrl: baseUrl,
+    baseUrl: 'https://392fd27c-d1db-4220-9e4e-7358db293b83.sandbox.lovable.dev',
     dateFormat: userSettings?.date_format || 'DD/MM/YYYY',
     timeFormat: userSettings?.time_format || '12-hour'
   };
@@ -414,20 +414,13 @@ import { formatDate } from './_templates/enhanced-email-base.ts';
 async function sendDailySummary(user: UserProfile, isTest?: boolean) {
   console.log(`=== Starting daily summary for user ${user.email} ===`);
   
-  // Get overdue sessions first (from today's date perspective)
   const today = new Date().toISOString().split('T')[0];
   console.log(`Today's date: ${today}`);
   
-    // Generate template data with proper logo handling and correct app URL
-    const templateData: EmailTemplateData = {
-      userFullName: user.full_name || 'User',
-      businessName: orgSettings?.photography_business_name || 'Photography CRM',
-      logoUrl: orgSettings?.logo_url || null,
-      brandColor: orgSettings?.primary_brand_color || '#1EB29F',
-      baseUrl: 'https://rifdykpdubrowzbylffe.supabase.co',  // Use the actual app URL
-      dateFormat: orgSettings?.date_format || 'DD/MM/YYYY',
-      timeFormat: orgSettings?.time_format || '12-hour'
-    };
+  // Get template data first to have date format available
+  const templateData = await getUserBrandingSettings(user.user_id, user.active_organization_id);
+  templateData.baseUrl = 'https://392fd27c-d1db-4220-9e4e-7358db293b83.sandbox.lovable.dev'; // Use correct app URL
+  console.log(`Template data:`, JSON.stringify(templateData, null, 2));
   
   // Get overdue sessions (scheduled in past but still active lifecycle)
   const { data: overdueSessions, error: sessionsError } = await supabase
@@ -674,7 +667,50 @@ const handler = async (req: Request): Promise<Response> => {
     const currentTime = isTest ? undefined : `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
     
     // Get enabled users based on notification type
-    const enabledUsers = await getEnabledUsersForNotification(type, currentTime, isTest, userId);
+    let enabledUsers;
+    if (isTest) {
+      // In test mode, get the current authenticated user
+      const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
+      if (authError || !authUser) {
+        console.error('Auth error in test mode:', authError);
+        return new Response(JSON.stringify({ 
+          message: 'Authentication required for test mode',
+          successful: 0,
+          failed: 1,
+          total: 1
+        }), {
+          status: 401,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        });
+      }
+      
+      // Get user profile and settings
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('user_id', authUser.id)
+        .single();
+        
+      const { data: userSettings } = await supabase
+        .from('user_settings')
+        .select('active_organization_id')
+        .eq('user_id', authUser.id)
+        .single();
+      
+      const permissions = await getUserPermissions(authUser.id, userSettings?.active_organization_id || '');
+      
+      enabledUsers = [{
+        user_id: authUser.id,
+        email: authUser.email || '',
+        full_name: profile?.full_name || authUser.user_metadata?.full_name || 'User',
+        permissions,
+        active_organization_id: userSettings?.active_organization_id || ''
+      }];
+      
+      console.log(`Test mode: sending to authenticated user ${authUser.email}`);
+    } else {
+      enabledUsers = await getEnabledUsersForNotification(type, currentTime, isTest, userId);
+    }
     
     if (enabledUsers.length === 0) {
       const timeMsg = isTest ? "testing" : `time ${currentTime}`;

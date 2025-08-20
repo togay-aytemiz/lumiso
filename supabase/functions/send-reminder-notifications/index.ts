@@ -412,11 +412,18 @@ async function getUserBrandingSettings(userId: string, organizationId: string): 
 import { formatDate } from './_templates/enhanced-email-base.ts';
 
 async function sendDailySummary(user: UserProfile, isTest?: boolean) {
+  console.log(`=== Starting daily summary for user ${user.email} ===`);
+  
   // Get overdue sessions first (from today's date perspective)
   const today = new Date().toISOString().split('T')[0];
+  console.log(`Today's date: ${today}`);
+  
+  // Get template data first to have date format available
+  const templateData = await getUserBrandingSettings(user.user_id, user.active_organization_id);
+  console.log(`Template data:`, JSON.stringify(templateData, null, 2));
   
   // Get overdue sessions (scheduled in past but still active lifecycle)
-  const { data: overdueSessions } = await supabase
+  const { data: overdueSessions, error: sessionsError } = await supabase
     .from('sessions')
     .select(`
       id, session_date, session_time, notes,
@@ -428,28 +435,32 @@ async function sendDailySummary(user: UserProfile, isTest?: boolean) {
     .lt('session_date', today)
     .eq('session_statuses.lifecycle', 'active');
 
+  console.log(`Overdue sessions query result:`, { data: overdueSessions, error: sessionsError });
+
   // Get overdue reminders (activities not marked as done)
-  const { data: overdueReminders } = await supabase
+  const { data: overdueReminders, error: remindersError } = await supabase
     .from('activities')
     .select(`
       id, content, reminder_date, type,
-      leads!left(name, email),
+      leads!left(name, email, phone),
       projects!left(name, id)
     `)
     .eq('organization_id', user.active_organization_id)
     .eq('completed', false)
     .lt('reminder_date', today);
 
+  console.log(`Overdue reminders query result:`, { data: overdueReminders, error: remindersError });
+
   // Get upcoming reminders due within next 24 hours
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
   const tomorrowStr = tomorrow.toISOString().split('T')[0];
   
-  const { data: upcomingReminders } = await supabase
+  const { data: upcomingReminders, error: upcomingError } = await supabase
     .from('activities')
     .select(`
       id, content, reminder_date, type,
-      leads!left(name, email),
+      leads!left(name, email, phone),
       projects!left(name, id)
     `)
     .eq('organization_id', user.active_organization_id)
@@ -457,10 +468,14 @@ async function sendDailySummary(user: UserProfile, isTest?: boolean) {
     .gte('reminder_date', today)
     .lte('reminder_date', tomorrowStr);
 
+  console.log(`Upcoming reminders query result:`, { data: upcomingReminders, error: upcomingError });
+
   const [upcomingSessions, pendingTodos] = await Promise.all([
     getUpcomingSessionsWithRelationships(user.user_id, user.active_organization_id, user.permissions),
     getPendingTodosWithRelationships(user.user_id, user.active_organization_id, user.permissions)
   ]);
+
+  console.log(`Additional data - Sessions: ${upcomingSessions?.length || 0}, Todos: ${pendingTodos?.length || 0}`);
 
   // Structure data for new daily summary format
   const overdueItems = {
@@ -468,7 +483,6 @@ async function sendDailySummary(user: UserProfile, isTest?: boolean) {
     activities: overdueReminders || []
   };
 
-  const templateData = await getUserBrandingSettings(user.user_id, user.active_organization_id);
   const emailContent = generateDailySummaryEmailSimplified(
     upcomingSessions, 
     overdueSessions || [], 
@@ -478,6 +492,8 @@ async function sendDailySummary(user: UserProfile, isTest?: boolean) {
     templateData
   );
   const todayFormatted = formatDate(new Date().toISOString(), templateData.dateFormat);
+  console.log(`Formatted date: ${todayFormatted} using format: ${templateData.dateFormat}`);
+  
   const subject = isTest ? `📊 TEST: Daily Summary - ${todayFormatted}` : `📊 Daily Summary - ${todayFormatted}`;
 
   const { error } = await resend.emails.send({

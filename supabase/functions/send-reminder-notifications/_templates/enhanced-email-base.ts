@@ -379,8 +379,12 @@ export const createEmailTemplate = (
 ) => {
   const { userFullName, businessName = "Lumiso", logoUrl, brandColor = "#1EB29F", baseUrl = "https://rifdykpdubrowzbylffe.supabase.co" } = templateData;
   
-  // Use the actual logo URL from user settings or fall back to a working logo
-  const effectiveLogo = logoUrl || "https://rifdykpdubrowzbylffe.supabase.co/storage/v1/object/public/logos/lumiso-logo.png";
+  // Construct proper logo URL - if user has a logo, use the Supabase storage URL
+  const effectiveLogo = logoUrl 
+    ? `https://rifdykpdubrowzbylffe.supabase.co/storage/v1/object/public/logos/${logoUrl}`
+    : "https://rifdykpdubrowzbylffe.supabase.co/lovable-uploads/751ab789-7160-486c-82b6-99696d1e40b4.png"; // Fallback to uploaded logo
+  
+  console.log(`Using logo URL: ${effectiveLogo}`);
   
   return `
     <!DOCTYPE html>

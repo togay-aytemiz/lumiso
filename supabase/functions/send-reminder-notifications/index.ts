@@ -109,14 +109,12 @@ async function getEnabledUsersForNotification(type: string, sendTime?: string, i
       time_format
     `);
 
-  // Only filter by enabled status if NOT testing
-  if (!isTest) {
-    query = query.eq(notificationFieldMap[type], true);
-    
-    // Only add time filter if applicable
-    if (sendTime && timeFieldMap[type]) {
-      query = query.eq(timeFieldMap[type], sendTime);
-    }
+  // Always filter by enabled status
+  query = query.eq(notificationFieldMap[type], true);
+  
+  // Only add time filter if NOT testing and time is applicable
+  if (!isTest && sendTime && timeFieldMap[type]) {
+    query = query.eq(timeFieldMap[type], sendTime);
   }
 
   const { data: enabledUsers, error } = await query;
@@ -390,7 +388,7 @@ async function getUserBrandingSettings(userId: string, organizationId: string): 
     .eq('user_id', userId)
     .single();
 
-  const baseUrl = 'https://id-preview--392fd27c-d1db-4220-9e4e-7358db293b83.lovable.app';
+  const baseUrl = 'https://392fd27c-d1db-4220-9e4e-7358db293b83.sandbox.lovable.dev';
 
   return {
     userFullName: profile?.full_name || 'User',
@@ -549,16 +547,17 @@ const handler = async (req: Request): Promise<Response> => {
     const { type, organizationId, userId, isTest }: ReminderRequest = await req.json();
     console.log(`Processing reminder request: ${type}, isTest: ${isTest}`);
 
-    // Get current time for time-based notifications
+    // Get current time for time-based notifications (only if not testing)
     const now = new Date();
-    const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+    const currentTime = isTest ? undefined : `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
     
     // Get enabled users based on notification type
     const enabledUsers = await getEnabledUsersForNotification(type, currentTime, isTest);
     
     if (enabledUsers.length === 0) {
+      const timeMsg = isTest ? "testing" : `time ${currentTime}`;
       return new Response(JSON.stringify({ 
-        message: `No users enabled for ${type} notifications at ${currentTime}` 
+        message: `No users enabled for ${type} notifications during ${timeMsg}` 
       }), {
         status: 200,
         headers: { "Content-Type": "application/json", ...corsHeaders },

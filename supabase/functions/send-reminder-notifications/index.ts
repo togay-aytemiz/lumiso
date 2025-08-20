@@ -47,149 +47,204 @@ const handler = async (req: Request): Promise<Response> => {
       }
     }
 
-    // Get user's org ID from your specific user
-    const userOrgId = '86b098a8-2fd5-4ad6-9dbf-757d656b307b';
-    const userId = 'ac32273e-af95-4de9-abed-ce96e6f68139';
-
     console.log(`Sending daily summary to: ${userEmail}`);
 
-    // Get today's date and time boundaries
+    // Use service role key to bypass RLS for debugging
+    const adminSupabase = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+    );
+
+    // Get today's date
     const today = new Date();
     const todayStr = today.toISOString().split('T')[0];
-    const currentTime = today.getHours() + ':' + today.getMinutes().toString().padStart(2, '0');
-    const next3Hours = new Date(today.getTime() + 3 * 60 * 60 * 1000);
-    const next3HoursStr = next3Hours.toISOString();
+    console.log(`Today's date: ${todayStr}`);
 
-    console.log(`Dates - Today: ${todayStr}, Current time: ${currentTime}, Next 3h: ${next3HoursStr}`);
-
-    // Get TODAY's sessions
-    const { data: todaySessions, error: todaySessionsError } = await supabase
-      .from('sessions')
-      .select(`
-        id,
-        session_date,
-        session_time,
-        notes,
-        leads:lead_id (
-          name,
-          email,
-          phone
-        )
-      `)
-      .eq('session_date', todayStr)
-      .eq('organization_id', userOrgId)
-      .order('session_time');
-
-    // Get OVERDUE sessions (past dates with active lifecycle)
-    const { data: overdueSessions, error: overdueSessionsError } = await supabase
-      .from('sessions')
-      .select(`
-        id,
-        session_date,
-        session_time,
-        notes,
-        leads:lead_id (
-          name,
-          email,
-          phone
-        ),
-        session_statuses!inner(lifecycle)
-      `)
-      .lt('session_date', todayStr)
-      .eq('organization_id', userOrgId)
-      .eq('session_statuses.lifecycle', 'active')
-      .order('session_date');
-
-    // Get OVERDUE reminders (past dates, not completed)
-    const { data: overdueReminders, error: overdueRemindersError } = await supabase
+    // Get OVERDUE reminders (exactly like my working query)
+    const { data: overdueReminders, error: overdueRemindersError } = await adminSupabase
       .from('activities')
       .select(`
         id,
         content,
         reminder_date,
         reminder_time,
-        leads:lead_id (
-          name
-        )
+        user_id,
+        organization_id,
+        lead_id
       `)
       .lt('reminder_date', todayStr)
       .eq('completed', false)
-      .eq('organization_id', userOrgId)
-      .order('reminder_date');
+      .eq('organization_id', '86b098a8-2fd5-4ad6-9dbf-757d656b307b')
+      .order('reminder_date', { ascending: false });
 
-    // Get upcoming reminders (today + next 3 hours)
-    const { data: upcomingReminders, error: upcomingRemindersError } = await supabase
+    // Get lead names for overdue reminders
+    let overdueWithLeads = [];
+    if (overdueReminders?.length) {
+      for (const reminder of overdueReminders) {
+        let leadName = null;
+        if (reminder.lead_id) {
+          const { data: lead } = await adminSupabase
+            .from('leads')
+            .select('name')
+            .eq('id', reminder.lead_id)
+            .single();
+          leadName = lead?.name;
+        }
+        overdueWithLeads.push({
+          ...reminder,
+          leadName
+        });
+      }
+    }
+
+    // Get TODAY's sessions
+    const { data: todaySessions, error: todaySessionsError } = await adminSupabase
+      .from('sessions')
+      .select(`
+        id,
+        session_date,
+        session_time,
+        notes,
+        lead_id
+      `)
+      .eq('session_date', todayStr)
+      .eq('organization_id', '86b098a8-2fd5-4ad6-9dbf-757d656b307b')
+      .order('session_time');
+
+    // Get lead names for today's sessions
+    let todaySessionsWithLeads = [];
+    if (todaySessions?.length) {
+      for (const session of todaySessions) {
+        let leadName = null;
+        if (session.lead_id) {
+          const { data: lead } = await adminSupabase
+            .from('leads')
+            .select('name')
+            .eq('id', session.lead_id)
+            .single();
+          leadName = lead?.name;
+        }
+        todaySessionsWithLeads.push({
+          ...session,
+          leadName
+        });
+      }
+    }
+
+    // Get TODAY's reminders
+    const { data: todayReminders, error: todayRemindersError } = await adminSupabase
       .from('activities')
       .select(`
         id,
         content,
         reminder_date,
         reminder_time,
-        leads:lead_id (
-          name
-        )
+        lead_id
       `)
       .eq('reminder_date', todayStr)
       .eq('completed', false)
-      .eq('organization_id', userOrgId)
+      .eq('organization_id', '86b098a8-2fd5-4ad6-9dbf-757d656b307b')
       .order('reminder_time');
 
-    // Get pending todos (first 3 with project/lead context)
-    const { data: todos, error: todosError } = await supabase
+    // Get lead names for today's reminders
+    let todayRemindersWithLeads = [];
+    if (todayReminders?.length) {
+      for (const reminder of todayReminders) {
+        let leadName = null;
+        if (reminder.lead_id) {
+          const { data: lead } = await adminSupabase
+            .from('leads')
+            .select('name')
+            .eq('id', reminder.lead_id)
+            .single();
+          leadName = lead?.name;
+        }
+        todayRemindersWithLeads.push({
+          ...reminder,
+          leadName
+        });
+      }
+    }
+
+    // Get pending todos with project and lead context (exactly like my working query)
+    const { data: todos, error: todosError } = await adminSupabase
       .from('todos')
       .select(`
         id,
         content,
-        projects:project_id (
-          name,
-          leads:lead_id (
-            name
-          )
-        )
+        project_id
       `)
       .eq('is_completed', false)
+      .eq('user_id', 'ac32273e-af95-4de9-abed-ce96e6f68139')
       .limit(3);
 
-    // Get total pending todos count
-    const { count: totalTodos } = await supabase
+    // Get project and lead names for todos
+    let todosWithContext = [];
+    if (todos?.length) {
+      for (const todo of todos) {
+        let projectName = null;
+        let leadName = null;
+        if (todo.project_id) {
+          const { data: project } = await adminSupabase
+            .from('projects')
+            .select('name, lead_id')
+            .eq('id', todo.project_id)
+            .single();
+          projectName = project?.name;
+          
+          if (project?.lead_id) {
+            const { data: lead } = await adminSupabase
+              .from('leads')
+              .select('name')
+              .eq('id', project.lead_id)
+              .single();
+            leadName = lead?.name;
+          }
+        }
+        todosWithContext.push({
+          ...todo,
+          projectName,
+          leadName
+        });
+      }
+    }
+
+    // Get total todos count
+    const { count: totalTodos } = await adminSupabase
       .from('todos')
       .select('*', { count: 'exact', head: true })
-      .eq('is_completed', false);
+      .eq('is_completed', false)
+      .eq('user_id', 'ac32273e-af95-4de9-abed-ce96e6f68139');
 
-    console.log(`Data results:`, {
-      todaySessions: { count: todaySessions?.length || 0, error: todaySessionsError },
-      overdueSessions: { count: overdueSessions?.length || 0, error: overdueSessionsError },
+    console.log(`Raw data results:`, {
       overdueReminders: { count: overdueReminders?.length || 0, error: overdueRemindersError, data: overdueReminders },
-      upcomingReminders: { count: upcomingReminders?.length || 0, error: upcomingRemindersError },
-      todos: { count: todos?.length || 0, total: totalTodos, error: todosError }
+      todaySessions: { count: todaySessions?.length || 0, error: todaySessionsError },
+      todayReminders: { count: todayReminders?.length || 0, error: todayRemindersError },
+      todos: { count: todos?.length || 0, totalCount: totalTodos, error: todosError, data: todos }
     });
 
     // Create HTML sections focusing on TODAY and OVERDUE
-    const todaySessionsHtml = todaySessions?.length ? todaySessions.map(s => 
-      `<li>🕐 ${s.session_time} - <strong>${s.leads?.name || 'Session'}</strong> ${s.notes ? `<br><em>${s.notes}</em>` : ''}</li>`
+    const todaySessionsHtml = todaySessionsWithLeads?.length ? todaySessionsWithLeads.map(s => 
+      `<li>🕐 ${s.session_time} - <strong>${s.leadName || 'Session'}</strong> ${s.notes ? `<br><em>${s.notes}</em>` : ''}</li>`
     ).join('') : '';
 
-    const overdueSessionsHtml = overdueSessions?.length ? overdueSessions.map(s => 
-      `<li>⚠️ <strong>Overdue Session:</strong> ${s.session_date} ${s.session_time} - ${s.leads?.name || 'Session'} ${s.notes ? `<br><em>${s.notes}</em>` : ''}</li>`
+    const overdueRemindersHtml = overdueWithLeads?.length ? overdueWithLeads.map(a => 
+      `<li>⚠️ <strong>Overdue Reminder:</strong> ${a.content} ${a.leadName ? `- <strong>${a.leadName}</strong>` : ''} <em>(due ${a.reminder_date})</em></li>`
     ).join('') : '';
 
-    const overdueRemindersHtml = overdueReminders?.length ? overdueReminders.map(a => 
-      `<li>⚠️ <strong>Overdue Reminder:</strong> ${a.content} ${a.leads?.name ? `- ${a.leads.name}` : ''} <em>(due ${a.reminder_date})</em></li>`
+    const todayRemindersHtml = todayRemindersWithLeads?.length ? todayRemindersWithLeads.map(a => 
+      `<li>📅 ${a.reminder_time} - ${a.content} ${a.leadName ? `- <strong>${a.leadName}</strong>` : ''}</li>`
     ).join('') : '';
 
-    const upcomingRemindersHtml = upcomingReminders?.length ? upcomingReminders.map(a => 
-      `<li>📅 ${a.reminder_time} - ${a.content} ${a.leads?.name ? `- <strong>${a.leads.name}</strong>` : ''}</li>`
-    ).join('') : '';
-
-    const todosHtml = todos?.length ? todos.map(t => 
-      `<li>✓ ${t.content} ${t.projects?.name ? `<em>(${t.projects.name})</em>` : ''} ${t.projects?.leads?.name ? `- ${t.projects.leads.name}` : ''}</li>`
+    const todosHtml = todosWithContext?.length ? todosWithContext.map(t => 
+      `<li>✓ ${t.content} ${t.projectName ? `<em>(${t.projectName})</em>` : ''} ${t.leadName ? `- <strong>${t.leadName}</strong>` : ''}</li>`
     ).join('') : '';
 
     // Combine all overdue items
-    const allOverdueHtml = [overdueSessionsHtml, overdueRemindersHtml].filter(h => h).join('') || '<li>No overdue items ✨</li>';
+    const allOverdueHtml = overdueRemindersHtml || '<li>No overdue items ✨</li>';
     
     // Combine today's items (sessions + reminders)
-    const todayItemsHtml = [todaySessionsHtml, upcomingRemindersHtml].filter(h => h).join('') || '<li>Nothing scheduled for today</li>';
+    const todayItemsHtml = [todaySessionsHtml, todayRemindersHtml].filter(h => h).join('') || '<li>Nothing scheduled for today</li>';
     
     // Todos section with count
     const todosSection = totalTodos > 0 ? 

@@ -412,8 +412,50 @@ async function getUserBrandingSettings(userId: string, organizationId: string): 
 }
 
 // Enhanced notification sending functions
-async function sendOverdueReminder(user: UserProfile) {
+async function sendOverdueReminder(user: UserProfile, isTest?: boolean) {
   const overdueItems = await getOverdueItemsWithRelationships(user.user_id, user.active_organization_id, user.permissions);
+  
+  // For testing, create mock data if no real overdue items exist
+  if (isTest && overdueItems.leads.length === 0 && overdueItems.activities.length === 0) {
+    const mockOverdueItems = {
+      leads: [
+        {
+          id: 'test-lead-1',
+          name: 'Test Lead - Sarah Johnson',
+          reminder_date: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
+          type: 'lead'
+        }
+      ],
+      activities: [
+        {
+          id: 'test-activity-1',
+          content: 'Follow up on wedding quote for upcoming summer event',
+          reminder_date: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString(), // 2 days ago
+          type: 'follow_up',
+          leads: { name: 'Test Lead - Sarah Johnson', email: 'sarah@example.com' }
+        }
+      ]
+    };
+    
+    const templateData = await getUserBrandingSettings(user.user_id, user.active_organization_id);
+    const emailContent = generateOverdueEmail(mockOverdueItems, templateData);
+    const subject = `🚨 TEST: ${mockOverdueItems.leads.length + mockOverdueItems.activities.length} Overdue Items Need Attention`;
+
+    const { error } = await resend.emails.send({
+      from: 'Lumiso <onboarding@resend.dev>',
+      to: [user.email],
+      subject: subject,
+      html: emailContent,
+    });
+
+    if (error) {
+      console.error(`Failed to send test overdue reminder to ${user.email}:`, error);
+      throw error;
+    }
+
+    console.log(`Sent test overdue reminder to ${user.email}`);
+    return;
+  }
   
   if (overdueItems.leads.length === 0 && overdueItems.activities.length === 0) {
     console.log(`No overdue items for user ${user.email}`);
@@ -583,7 +625,7 @@ const handler = async (req: Request): Promise<Response> => {
       enabledUsers.map(async (user) => {
         switch (type) {
           case 'overdue':
-            return await sendOverdueReminder(user);
+            return await sendOverdueReminder(user, isTest);
           case 'session':
             return await sendSessionReminder(user, isTest);
           case 'daily_summary':

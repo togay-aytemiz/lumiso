@@ -414,11 +414,15 @@ export type Database = {
           notification_delivery_reminder_enabled: boolean | null
           notification_delivery_reminder_send_at: string | null
           notification_integration_failure_alert_enabled: boolean | null
+          notification_lead_conversion_enabled: boolean | null
           notification_overdue_reminder_enabled: boolean | null
+          notification_project_milestone_enabled: boolean | null
           notification_session_reminder_enabled: boolean | null
           notification_session_reminder_send_at: string | null
           notification_task_nudge_enabled: boolean | null
           notification_team_invite_accepted_alert_enabled: boolean | null
+          notification_weekly_recap_enabled: boolean | null
+          notification_weekly_recap_send_at: string | null
           organization_id: string
           photography_business_name: string | null
           primary_brand_color: string | null
@@ -436,11 +440,15 @@ export type Database = {
           notification_delivery_reminder_enabled?: boolean | null
           notification_delivery_reminder_send_at?: string | null
           notification_integration_failure_alert_enabled?: boolean | null
+          notification_lead_conversion_enabled?: boolean | null
           notification_overdue_reminder_enabled?: boolean | null
+          notification_project_milestone_enabled?: boolean | null
           notification_session_reminder_enabled?: boolean | null
           notification_session_reminder_send_at?: string | null
           notification_task_nudge_enabled?: boolean | null
           notification_team_invite_accepted_alert_enabled?: boolean | null
+          notification_weekly_recap_enabled?: boolean | null
+          notification_weekly_recap_send_at?: string | null
           organization_id: string
           photography_business_name?: string | null
           primary_brand_color?: string | null
@@ -458,11 +466,15 @@ export type Database = {
           notification_delivery_reminder_enabled?: boolean | null
           notification_delivery_reminder_send_at?: string | null
           notification_integration_failure_alert_enabled?: boolean | null
+          notification_lead_conversion_enabled?: boolean | null
           notification_overdue_reminder_enabled?: boolean | null
+          notification_project_milestone_enabled?: boolean | null
           notification_session_reminder_enabled?: boolean | null
           notification_session_reminder_send_at?: string | null
           notification_task_nudge_enabled?: boolean | null
           notification_team_invite_accepted_alert_enabled?: boolean | null
+          notification_weekly_recap_enabled?: boolean | null
+          notification_weekly_recap_send_at?: string | null
           organization_id?: string
           photography_business_name?: string | null
           primary_brand_color?: string | null
@@ -1037,11 +1049,15 @@ export type Database = {
           notification_delivery_reminder_enabled: boolean | null
           notification_delivery_reminder_send_at: string | null
           notification_integration_failure_alert_enabled: boolean | null
+          notification_lead_conversion_enabled: boolean | null
           notification_overdue_reminder_enabled: boolean | null
+          notification_project_milestone_enabled: boolean | null
           notification_session_reminder_enabled: boolean | null
           notification_session_reminder_send_at: string | null
           notification_task_nudge_enabled: boolean | null
           notification_team_invite_accepted_alert_enabled: boolean | null
+          notification_weekly_recap_enabled: boolean | null
+          notification_weekly_recap_send_at: string | null
           photography_business_name: string | null
           primary_brand_color: string | null
           show_quick_status_buttons: boolean
@@ -1060,11 +1076,15 @@ export type Database = {
           notification_delivery_reminder_enabled?: boolean | null
           notification_delivery_reminder_send_at?: string | null
           notification_integration_failure_alert_enabled?: boolean | null
+          notification_lead_conversion_enabled?: boolean | null
           notification_overdue_reminder_enabled?: boolean | null
+          notification_project_milestone_enabled?: boolean | null
           notification_session_reminder_enabled?: boolean | null
           notification_session_reminder_send_at?: string | null
           notification_task_nudge_enabled?: boolean | null
           notification_team_invite_accepted_alert_enabled?: boolean | null
+          notification_weekly_recap_enabled?: boolean | null
+          notification_weekly_recap_send_at?: string | null
           photography_business_name?: string | null
           primary_brand_color?: string | null
           show_quick_status_buttons?: boolean
@@ -1083,11 +1103,15 @@ export type Database = {
           notification_delivery_reminder_enabled?: boolean | null
           notification_delivery_reminder_send_at?: string | null
           notification_integration_failure_alert_enabled?: boolean | null
+          notification_lead_conversion_enabled?: boolean | null
           notification_overdue_reminder_enabled?: boolean | null
+          notification_project_milestone_enabled?: boolean | null
           notification_session_reminder_enabled?: boolean | null
           notification_session_reminder_send_at?: string | null
           notification_task_nudge_enabled?: boolean | null
           notification_team_invite_accepted_alert_enabled?: boolean | null
+          notification_weekly_recap_enabled?: boolean | null
+          notification_weekly_recap_send_at?: string | null
           photography_business_name?: string | null
           primary_brand_color?: string | null
           show_quick_status_buttons?: boolean

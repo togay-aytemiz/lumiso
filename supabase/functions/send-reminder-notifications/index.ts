@@ -2,13 +2,13 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { Resend } from "npm:resend@2.0.0";
 
-// Import email templates
-import { generateOverdueEmail } from './_templates/overdue-template.ts';
-import { generateSessionEmail } from './_templates/session-template.ts';
-import { generateDeliveryEmail } from './_templates/delivery-template.ts';
-import { generateDailySummaryEmail } from './_templates/daily-summary-template.ts';
-import { generateTaskNudgeEmail } from './_templates/task-nudge-template.ts';
-import { EmailTemplateData } from './_templates/email-base.ts';
+// Import enhanced email templates
+import { generateOverdueEmail } from './_templates/enhanced-overdue-template.ts';
+import { generateSessionEmail } from './_templates/enhanced-session-template.ts';
+import { generateDailySummaryEmail } from './_templates/enhanced-daily-summary-template.ts';
+import { generateTaskNudgeEmail } from './_templates/enhanced-task-nudge-template.ts';
+import { generateWeeklyRecapEmail, WeeklyStats } from './_templates/weekly-recap-template.ts';
+import { EmailTemplateData, Lead, Project, Session, Todo, Activity } from './_templates/enhanced-email-base.ts';
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -18,16 +18,18 @@ const corsHeaders = {
 };
 
 interface ReminderRequest {
-  type: 'overdue' | 'delivery' | 'session' | 'daily_summary' | 'task_nudge';
+  type: 'overdue' | 'delivery' | 'session' | 'daily_summary' | 'task_nudge' | 'weekly_recap' | 'project_milestone' | 'lead_conversion';
   organizationId?: string;
   userId?: string;
-  isTest?: boolean; // Add test flag
+  isTest?: boolean;
 }
 
 interface UserProfile {
   email: string;
   full_name: string;
   user_id: string;
+  permissions: string[];
+  active_organization_id: string;
 }
 
 const supabase = createClient(
@@ -35,7 +37,55 @@ const supabase = createClient(
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 );
 
-async function getEnabledUsersForNotification(type: string, sendTime?: string, isTest?: boolean) {
+// Get user permissions for role-based filtering
+async function getUserPermissions(userId: string, organizationId: string): Promise<string[]> {
+  try {
+    // Get user's organization membership
+    const { data: membership } = await supabase
+      .from('organization_members')
+      .select(`
+        system_role,
+        custom_role_id,
+        custom_roles!inner(
+          role_permissions!inner(
+            permissions!inner(name)
+          )
+        )
+      `)
+      .eq('user_id', userId)
+      .eq('organization_id', organizationId)
+      .eq('status', 'active')
+      .single();
+
+    let userPermissions: string[] = [];
+
+    // If user is Owner, they have all permissions
+    if (membership?.system_role === 'Owner') {
+      const { data: allPermissions } = await supabase
+        .from('permissions')
+        .select('name');
+      
+      userPermissions = allPermissions?.map(p => p.name) || [];
+    } else if (membership?.custom_role_id) {
+      // Get permissions from custom role
+      const { data: rolePermissions } = await supabase
+        .from('role_permissions')
+        .select(`
+          permissions!inner(name)
+        `)
+        .eq('role_id', membership.custom_role_id);
+
+      userPermissions = rolePermissions?.map(rp => rp.permissions.name) || [];
+    }
+
+    return userPermissions;
+  } catch (error) {
+    console.error('Error fetching user permissions:', error);
+    return [];
+  }
+}
+
+async function getEnabledUsersForNotification(type: string, sendTime?: string, isTest?: boolean): Promise<UserProfile[]> {
   console.log(`Getting enabled users for notification type: ${type}, sendTime: ${sendTime}, isTest: ${isTest}`);
   
   const notificationFieldMap: { [key: string]: string } = {
@@ -43,21 +93,28 @@ async function getEnabledUsersForNotification(type: string, sendTime?: string, i
     'delivery': 'notification_delivery_reminder_enabled',
     'session': 'notification_session_reminder_enabled',
     'daily_summary': 'notification_daily_summary_enabled',
-    'task_nudge': 'notification_task_nudge_enabled'
+    'task_nudge': 'notification_task_nudge_enabled',
+    'weekly_recap': 'notification_weekly_recap_enabled',
+    'project_milestone': 'notification_project_milestone_enabled',
+    'lead_conversion': 'notification_lead_conversion_enabled'
   };
 
   const timeFieldMap: { [key: string]: string } = {
     'delivery': 'notification_delivery_reminder_send_at',
     'session': 'notification_session_reminder_send_at',
-    'daily_summary': 'notification_daily_summary_send_at'
+    'daily_summary': 'notification_daily_summary_send_at',
+    'weekly_recap': 'notification_weekly_recap_send_at'
   };
 
   let query = supabase
     .from('user_settings')
     .select(`
       user_id,
+      active_organization_id,
       ${notificationFieldMap[type]},
-      ${timeFieldMap[type] || 'user_id'}
+      ${timeFieldMap[type] || 'user_id'},
+      date_format,
+      time_format
     `);
 
   // Only filter by enabled status if NOT testing
@@ -77,51 +134,78 @@ async function getEnabledUsersForNotification(type: string, sendTime?: string, i
     return [];
   }
 
-  // Get user profiles with email
+  // Get user profiles with email and permissions
   const userIds = enabledUsers?.map(u => u.user_id) || [];
   if (userIds.length === 0) return [];
 
   const { data: users } = await supabase.auth.admin.listUsers();
-  const enabledUserProfiles = users.users
-    .filter(user => userIds.includes(user.id))
-    .map(user => ({
+  const enabledUserProfiles: UserProfile[] = [];
+
+  for (const user of users.users) {
+    if (!userIds.includes(user.id)) continue;
+    
+    const userSetting = enabledUsers.find(u => u.user_id === user.id);
+    if (!userSetting?.active_organization_id) continue;
+
+    const permissions = await getUserPermissions(user.id, userSetting.active_organization_id);
+    
+    enabledUserProfiles.push({
       user_id: user.id,
       email: user.email || '',
-      full_name: user.user_metadata?.full_name || user.email || 'User'
-    }));
+      full_name: user.user_metadata?.full_name || user.email || 'User',
+      permissions,
+      active_organization_id: userSetting.active_organization_id
+    });
+  }
 
   console.log(`Found ${enabledUserProfiles.length} enabled users for ${type}`);
   return enabledUserProfiles;
 }
 
-async function getOverdueItems(userId: string) {
+async function getOverdueItemsWithRelationships(userId: string, organizationId: string, permissions: string[]): Promise<{leads: Lead[], activities: Activity[]}> {
   const today = new Date().toISOString().split('T')[0];
   
-  // Get overdue leads
-  const { data: overdueLeads } = await supabase
-    .from('leads')
-    .select('id, name, due_date')
-    .eq('user_id', userId)
-    .lt('due_date', today);
+  let overdueLeads: Lead[] = [];
+  let overdueActivities: Activity[] = [];
 
-  // Get overdue activities
-  const { data: overdueActivities } = await supabase
+  // Check permissions for leads
+  if (permissions.includes('manage_all_leads') || permissions.includes('view_assigned_leads')) {
+    let leadsQuery = supabase
+      .from('leads')
+      .select('id, name, email, phone, due_date, status, assignees')
+      .eq('organization_id', organizationId)
+      .lt('due_date', today);
+
+    // If user doesn't have manage_all_leads, filter to assigned leads only
+    if (!permissions.includes('manage_all_leads')) {
+      leadsQuery = leadsQuery.or(`user_id.eq.${userId},assignees.cs.{${userId}}`);
+    }
+
+    const { data: leads } = await leadsQuery;
+    overdueLeads = leads || [];
+  }
+
+  // Get overdue activities with relationships
+  const { data: activities } = await supabase
     .from('activities')
-    .select('id, content, reminder_date')
-    .eq('user_id', userId)
+    .select(`
+      id, content, reminder_date, type,
+      leads!inner(name, email),
+      projects!inner(name, id)
+    `)
+    .eq('organization_id', organizationId)
     .eq('completed', false)
     .lt('reminder_date', today);
 
-  return {
-    leads: overdueLeads || [],
-    activities: overdueActivities || []
-  };
+  overdueActivities = activities || [];
+
+  return { leads: overdueLeads, activities: overdueActivities };
 }
 
-async function getUpcomingSessions(userId: string, isTest?: boolean) {
+async function getUpcomingSessionsWithRelationships(userId: string, organizationId: string, permissions: string[], isTest?: boolean): Promise<Session[]> {
   const today = new Date().toISOString().split('T')[0];
   
-  // For testing, look for sessions in a wider range (past 30 days to next 30 days)
+  // For testing, look for sessions in a wider range
   let startDate, endDate;
   if (isTest) {
     const pastMonth = new Date();
@@ -138,94 +222,174 @@ async function getUpcomingSessions(userId: string, isTest?: boolean) {
     endDate = tomorrow.toISOString().split('T')[0];
   }
 
-  console.log(`Querying sessions for user ${userId} between ${startDate} and ${endDate} (test mode: ${isTest})`);
+  // Check if user has session permissions
+  if (!permissions.includes('manage_sessions') && !permissions.includes('view_assigned_projects')) {
+    return [];
+  }
 
   const { data: sessions, error } = await supabase
     .from('sessions')
     .select(`
-      id,
-      session_date,
-      session_time,
-      notes,
-      leads (name, email)
+      id, session_date, session_time, notes,
+      leads!inner(name, email, phone),
+      projects!inner(name, id)
     `)
-    .eq('user_id', userId)
+    .eq('organization_id', organizationId)
     .gte('session_date', startDate)
     .lte('session_date', endDate);
 
   if (error) {
-    console.error(`Error fetching sessions for user ${userId}:`, error);
+    console.error(`Error fetching sessions:`, error);
   }
 
-  console.log(`Raw sessions query result for user ${userId}:`, sessions);
   return sessions || [];
 }
 
-async function getPendingDeliveries(userId: string, isTest?: boolean) {
-  console.log(`Querying projects for delivery follow-up for user ${userId} (test mode: ${isTest})`);
-  
-  // Get projects that might need delivery follow-up
-  const { data: projects, error } = await supabase
-    .from('projects')
-    .select(`
-      id,
-      name,
-      created_at,
-      leads (name, email)
-    `)
-    .eq('user_id', userId);
-
-  if (error) {
-    console.error(`Error fetching projects for user ${userId}:`, error);
+async function getPendingTodosWithRelationships(userId: string, organizationId: string, permissions: string[]): Promise<Todo[]> {
+  // Check if user can view projects
+  if (!permissions.includes('manage_all_projects') && !permissions.includes('view_assigned_projects')) {
+    return [];
   }
 
-  console.log(`Raw projects query result for user ${userId}:`, projects);
-
-  // For testing, use a shorter time period (1 day) to find more projects
-  // For production, use 7 days as before
-  const daysAgo = isTest ? 1 : 7;
-  const cutoffDate = new Date();
-  cutoffDate.setDate(cutoffDate.getDate() - daysAgo);
-  
-  console.log(`Looking for projects older than ${daysAgo} days (before ${cutoffDate.toISOString()})`);
-  
-  const pendingDeliveries = projects?.filter(project => {
-    const projectDate = new Date(project.created_at);
-    const isOld = projectDate < cutoffDate;
-    console.log(`Project ${project.name}: created ${projectDate.toISOString()}, is old: ${isOld}`);
-    return isOld;
-  }) || [];
-
-  return pendingDeliveries;
-}
-
-async function getPendingTodos(userId: string) {
-  const { data: todos } = await supabase
+  let todosQuery = supabase
     .from('todos')
-    .select('id, content, created_at')
-    .eq('user_id', userId)
+    .select(`
+      id, content, created_at,
+      projects!inner(name, id, assignees, user_id)
+    `)
     .eq('is_completed', false);
 
+  // If user doesn't have manage_all_projects, filter to assigned projects only
+  if (!permissions.includes('manage_all_projects')) {
+    todosQuery = todosQuery.or(`projects.user_id.eq.${userId},projects.assignees.cs.{${userId}}`);
+  }
+
+  const { data: todos } = await todosQuery;
   return todos || [];
 }
 
-async function getUserBrandingSettings(userId: string): Promise<EmailTemplateData> {
+async function getWeeklyStats(userId: string, organizationId: string, permissions: string[]): Promise<WeeklyStats> {
+  const weekStart = new Date();
+  weekStart.setDate(weekStart.getDate() - 7);
+  const weekStartStr = weekStart.toISOString().split('T')[0];
+
+  const stats: WeeklyStats = {
+    leadsAdded: 0,
+    leadsConverted: 0,
+    leadsLost: 0,
+    projectsCreated: 0,
+    projectsCompleted: 0,
+    sessionsCompleted: 0,
+    sessionsScheduled: 0,
+    totalRevenue: 0,
+    recentLeads: [],
+    recentProjects: [],
+    upcomingSessions: []
+  };
+
+  // Get leads data if user has permission
+  if (permissions.includes('manage_all_leads') || permissions.includes('view_assigned_leads')) {
+    let leadsQuery = supabase
+      .from('leads')
+      .select('id, name, email, phone, status, created_at')
+      .eq('organization_id', organizationId)
+      .gte('created_at', weekStartStr);
+
+    if (!permissions.includes('manage_all_leads')) {
+      leadsQuery = leadsQuery.or(`user_id.eq.${userId},assignees.cs.{${userId}}`);
+    }
+
+    const { data: weeklyLeads } = await leadsQuery;
+    if (weeklyLeads) {
+      stats.leadsAdded = weeklyLeads.length;
+      stats.leadsConverted = weeklyLeads.filter(l => l.status === 'Completed').length;
+      stats.leadsLost = weeklyLeads.filter(l => l.status === 'Lost').length;
+      stats.recentLeads = weeklyLeads.slice(0, 5);
+    }
+  }
+
+  // Get projects data if user has permission
+  if (permissions.includes('manage_all_projects') || permissions.includes('view_assigned_projects')) {
+    let projectsQuery = supabase
+      .from('projects')
+      .select(`
+        id, name, description, created_at, base_price,
+        leads!inner(name, email, phone),
+        project_types(name)
+      `)
+      .eq('organization_id', organizationId)
+      .gte('created_at', weekStartStr);
+
+    if (!permissions.includes('manage_all_projects')) {
+      projectsQuery = projectsQuery.or(`user_id.eq.${userId},assignees.cs.{${userId}}`);
+    }
+
+    const { data: weeklyProjects } = await projectsQuery;
+    if (weeklyProjects) {
+      stats.projectsCreated = weeklyProjects.length;
+      stats.recentProjects = weeklyProjects.slice(0, 5);
+      stats.totalRevenue = weeklyProjects.reduce((sum, p) => sum + (p.base_price || 0), 0);
+    }
+  }
+
+  // Get sessions data if user has permission
+  if (permissions.includes('manage_sessions')) {
+    const { data: weeklySessions } = await supabase
+      .from('sessions')
+      .select(`
+        id, session_date, session_time, notes,
+        leads!inner(name, email, phone),
+        projects!inner(name, id)
+      `)
+      .eq('organization_id', organizationId)
+      .gte('session_date', weekStartStr);
+
+    if (weeklySessions) {
+      stats.sessionsCompleted = weeklySessions.filter(s => 
+        new Date(s.session_date) < new Date()
+      ).length;
+      
+      stats.sessionsScheduled = weeklySessions.filter(s => 
+        new Date(s.session_date) >= new Date()
+      ).length;
+    }
+
+    // Get next week's sessions
+    const nextWeekStart = new Date();
+    nextWeekStart.setDate(nextWeekStart.getDate() + 1);
+    const nextWeekEnd = new Date();
+    nextWeekEnd.setDate(nextWeekEnd.getDate() + 8);
+
+    const { data: upcomingSessions } = await supabase
+      .from('sessions')
+      .select(`
+        id, session_date, session_time, notes,
+        leads!inner(name, email, phone),
+        projects!inner(name, id)
+      `)
+      .eq('organization_id', organizationId)
+      .gte('session_date', nextWeekStart.toISOString().split('T')[0])
+      .lte('session_date', nextWeekEnd.toISOString().split('T')[0]);
+
+    stats.upcomingSessions = upcomingSessions || [];
+  }
+
+  return stats;
+}
+
+async function getUserBrandingSettings(userId: string, organizationId: string): Promise<EmailTemplateData> {
   // Get user settings and organization settings
   const { data: userSettings } = await supabase
     .from('user_settings')
-    .select('active_organization_id, photography_business_name, logo_url, primary_brand_color')
+    .select('photography_business_name, logo_url, primary_brand_color, date_format, time_format')
     .eq('user_id', userId)
     .single();
 
-  let orgSettings = null;
-  if (userSettings?.active_organization_id) {
-    const { data } = await supabase
-      .from('organization_settings')
-      .select('photography_business_name, logo_url, primary_brand_color')
-      .eq('organization_id', userSettings.active_organization_id)
-      .single();
-    orgSettings = data;
-  }
+  const { data: orgSettings } = await supabase
+    .from('organization_settings')
+    .select('photography_business_name, logo_url, primary_brand_color')
+    .eq('organization_id', organizationId)
+    .single();
 
   // Get user profile for full name
   const { data: profile } = await supabase
@@ -241,21 +405,24 @@ async function getUserBrandingSettings(userId: string): Promise<EmailTemplateDat
     businessName: orgSettings?.photography_business_name || userSettings?.photography_business_name || 'Photography CRM',
     logoUrl: orgSettings?.logo_url || userSettings?.logo_url,
     brandColor: orgSettings?.primary_brand_color || userSettings?.primary_brand_color || '#1EB29F',
-    baseUrl: baseUrl
+    baseUrl: baseUrl,
+    dateFormat: userSettings?.date_format || 'DD/MM/YYYY',
+    timeFormat: userSettings?.time_format || '12-hour'
   };
 }
 
+// Enhanced notification sending functions
 async function sendOverdueReminder(user: UserProfile) {
-  const overdueItems = await getOverdueItems(user.user_id);
+  const overdueItems = await getOverdueItemsWithRelationships(user.user_id, user.active_organization_id, user.permissions);
   
   if (overdueItems.leads.length === 0 && overdueItems.activities.length === 0) {
     console.log(`No overdue items for user ${user.email}`);
     return;
   }
 
-  const templateData = await getUserBrandingSettings(user.user_id);
+  const templateData = await getUserBrandingSettings(user.user_id, user.active_organization_id);
   const emailContent = generateOverdueEmail(overdueItems, templateData);
-  const subject = `Overdue Items - ${overdueItems.leads.length + overdueItems.activities.length} item(s) need attention`;
+  const subject = `🚨 ${overdueItems.leads.length + overdueItems.activities.length} Overdue Items Need Attention`;
 
   const { error } = await resend.emails.send({
     from: `${templateData.businessName} <notifications@resend.dev>`,
@@ -273,18 +440,16 @@ async function sendOverdueReminder(user: UserProfile) {
 }
 
 async function sendSessionReminder(user: UserProfile, isTest?: boolean) {
-  const upcomingSessions = await getUpcomingSessions(user.user_id, isTest);
-  
-  console.log(`Found ${upcomingSessions.length} upcoming sessions for user ${user.email}`);
+  const upcomingSessions = await getUpcomingSessionsWithRelationships(user.user_id, user.active_organization_id, user.permissions, isTest);
   
   if (upcomingSessions.length === 0) {
     console.log(`No upcoming sessions for user ${user.email}`);
     return;
   }
 
-  const templateData = await getUserBrandingSettings(user.user_id);
+  const templateData = await getUserBrandingSettings(user.user_id, user.active_organization_id);
   const emailContent = generateSessionEmail(upcomingSessions, templateData);
-  const subject = `Upcoming Sessions - ${upcomingSessions.length} session(s) scheduled`;
+  const subject = `📸 ${upcomingSessions.length} Photography Session${upcomingSessions.length === 1 ? '' : 's'} Coming Up`;
 
   const { error } = await resend.emails.send({
     from: `${templateData.businessName} <notifications@resend.dev>`,
@@ -301,46 +466,17 @@ async function sendSessionReminder(user: UserProfile, isTest?: boolean) {
   console.log(`Sent session reminder to ${user.email}`);
 }
 
-async function sendDeliveryReminder(user: UserProfile, isTest?: boolean) {
-  const pendingDeliveries = await getPendingDeliveries(user.user_id, isTest);
-  
-  console.log(`Found ${pendingDeliveries.length} pending deliveries for user ${user.email}`);
-  
-  if (pendingDeliveries.length === 0) {
-    console.log(`No pending deliveries for user ${user.email}`);
-    return;
-  }
-
-  const templateData = await getUserBrandingSettings(user.user_id);
-  const emailContent = generateDeliveryEmail(pendingDeliveries, templateData);
-  const subject = `Delivery Follow-up - ${pendingDeliveries.length} project(s) to review`;
-
-  const { error } = await resend.emails.send({
-    from: `${templateData.businessName} <notifications@resend.dev>`,
-    to: [user.email],
-    subject: subject,
-    html: emailContent,
-  });
-
-  if (error) {
-    console.error(`Failed to send delivery reminder to ${user.email}:`, error);
-    throw error;
-  }
-
-  console.log(`Sent delivery reminder to ${user.email}`);
-}
-
 async function sendDailySummary(user: UserProfile) {
   const [upcomingSessions, pendingTodos, overdueItems] = await Promise.all([
-    getUpcomingSessions(user.user_id),
-    getPendingTodos(user.user_id),
-    getOverdueItems(user.user_id)
+    getUpcomingSessionsWithRelationships(user.user_id, user.active_organization_id, user.permissions),
+    getPendingTodosWithRelationships(user.user_id, user.active_organization_id, user.permissions),
+    getOverdueItemsWithRelationships(user.user_id, user.active_organization_id, user.permissions)
   ]);
 
-  const templateData = await getUserBrandingSettings(user.user_id);
+  const templateData = await getUserBrandingSettings(user.user_id, user.active_organization_id);
   const emailContent = generateDailySummaryEmail(upcomingSessions, pendingTodos, overdueItems, templateData);
   const today = new Date().toLocaleDateString();
-  const subject = `Daily Summary - ${today}`;
+  const subject = `📊 Daily Summary - ${today}`;
 
   const { error } = await resend.emails.send({
     from: `${templateData.businessName} <notifications@resend.dev>`,
@@ -358,9 +494,7 @@ async function sendDailySummary(user: UserProfile) {
 }
 
 async function sendTaskNudge(user: UserProfile) {
-  const pendingTodos = await getPendingTodos(user.user_id);
-  
-  console.log(`Found ${pendingTodos.length} pending todos for user ${user.email}`);
+  const pendingTodos = await getPendingTodosWithRelationships(user.user_id, user.active_organization_id, user.permissions);
   
   if (pendingTodos.length === 0) {
     console.log(`No pending todos for user ${user.email}`);
@@ -369,7 +503,7 @@ async function sendTaskNudge(user: UserProfile) {
 
   const oldTodos = pendingTodos.filter(todo => {
     const daysSinceCreated = (Date.now() - new Date(todo.created_at).getTime()) / (1000 * 60 * 60 * 24);
-    return daysSinceCreated > 2; // Nudge for todos older than 2 days
+    return daysSinceCreated > 2;
   });
 
   if (oldTodos.length === 0) {
@@ -377,9 +511,9 @@ async function sendTaskNudge(user: UserProfile) {
     return;
   }
 
-  const templateData = await getUserBrandingSettings(user.user_id);
+  const templateData = await getUserBrandingSettings(user.user_id, user.active_organization_id);
   const emailContent = generateTaskNudgeEmail(oldTodos, templateData);
-  const subject = `Task Nudge - ${oldTodos.length} pending task(s)`;
+  const subject = `📋 ${oldTodos.length} Pending Task${oldTodos.length === 1 ? '' : 's'} Need Your Attention`;
 
   const { error } = await resend.emails.send({
     from: `${templateData.businessName} <notifications@resend.dev>`,
@@ -394,6 +528,28 @@ async function sendTaskNudge(user: UserProfile) {
   }
 
   console.log(`Sent task nudge to ${user.email}`);
+}
+
+async function sendWeeklyRecap(user: UserProfile) {
+  const weeklyStats = await getWeeklyStats(user.user_id, user.active_organization_id, user.permissions);
+  
+  const templateData = await getUserBrandingSettings(user.user_id, user.active_organization_id);
+  const emailContent = generateWeeklyRecapEmail(weeklyStats, templateData);
+  const subject = `📈 Weekly Business Recap - Your Photography Success Story`;
+
+  const { error } = await resend.emails.send({
+    from: `${templateData.businessName} <notifications@resend.dev>`,
+    to: [user.email],
+    subject: subject,
+    html: emailContent,
+  });
+
+  if (error) {
+    console.error(`Failed to send weekly recap to ${user.email}:`, error);
+    throw error;
+  }
+
+  console.log(`Sent weekly recap to ${user.email}`);
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -428,14 +584,14 @@ const handler = async (req: Request): Promise<Response> => {
         switch (type) {
           case 'overdue':
             return await sendOverdueReminder(user);
-          case 'delivery':
-            return await sendDeliveryReminder(user, isTest);
           case 'session':
             return await sendSessionReminder(user, isTest);
           case 'daily_summary':
             return await sendDailySummary(user);
           case 'task_nudge':
             return await sendTaskNudge(user);
+          case 'weekly_recap':
+            return await sendWeeklyRecap(user);
           default:
             throw new Error(`Unknown notification type: ${type}`);
         }

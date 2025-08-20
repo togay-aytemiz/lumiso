@@ -590,6 +590,13 @@ const handler = async (req: Request): Promise<Response> => {
 
     const successful = results.filter(result => result.status === 'fulfilled').length;
     const failed = results.filter(result => result.status === 'rejected').length;
+    
+    // Log failed results for debugging
+    results.forEach((result, index) => {
+      if (result.status === 'rejected') {
+        console.error(`Failed to send notification to user ${enabledUsers[index]?.email}:`, result.reason);
+      }
+    });
 
     console.log(`Notification batch complete: ${successful} successful, ${failed} failed`);
 

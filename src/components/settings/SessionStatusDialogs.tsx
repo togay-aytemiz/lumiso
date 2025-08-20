@@ -293,6 +293,18 @@ export function EditSessionStatusDialog({ status, open, onOpenChange, onStatusUp
   };
 
   const handleDelete = async () => {
+    if (!status) return;
+    
+    // Check if it's a system required status
+    if (status.is_system_required) {
+      toast({
+        title: "Cannot Delete",
+        description: "This stage is required and cannot be deleted. You may rename it.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     if (!window.confirm("Are you sure you want to delete this stage?")) return;
     
     setLoading(true);
@@ -322,17 +334,16 @@ export function EditSessionStatusDialog({ status, open, onOpenChange, onStatusUp
     }
   };
 
-  const isProtectedStatus = status.is_system_initial || 
-    status.name?.toLowerCase().includes('completed') || 
-    status.name?.toLowerCase().includes('cancelled');
+  const isSystemRequired = status.is_system_required;
 
   const footerActions = [
-    {
+    // Only show delete for non-system-required stages
+    ...(!isSystemRequired ? [{
       label: "Delete",
       onClick: handleDelete,
       variant: "destructive" as const,
-      disabled: loading || isProtectedStatus
-    },
+      disabled: loading
+    }] : []),
     {
       label: "Cancel",
       onClick: () => onOpenChange(false),
@@ -371,65 +382,72 @@ export function EditSessionStatusDialog({ status, open, onOpenChange, onStatusUp
             onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
             placeholder="e.g., Confirmed, Completed"
             maxLength={50}
-            disabled={isProtectedStatus}
             className="rounded-xl"
           />
-           {isProtectedStatus && (
-             <p className="text-sm text-muted-foreground">System stages cannot be renamed or change color but can be edited for text changes.</p>
-           )}
+          {isSystemRequired && (
+            <p className="text-sm text-muted-foreground">
+              This is a system-required stage for new sessions.
+            </p>
+          )}
         </div>
 
-          <div className="space-y-3">
-            <Label>Stage Color</Label>
-            <div className="grid grid-cols-6 gap-3 p-4">
+        <div className="space-y-3">
+          <Label>Stage Color</Label>
+          <div className="grid grid-cols-6 gap-3 p-2">
             {colorOptions.map((color) => (
               <button
                 key={color}
                 type="button"
-                 onClick={() => !isProtectedStatus && setFormData(prev => ({ ...prev, color }))}
-                 className={`w-10 h-10 rounded-full border-4 transition-all ${
-                   formData.color === color 
-                     ? 'border-gray-900 scale-110' 
-                     : 'border-transparent hover:scale-105'
-                 } ${isProtectedStatus ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
+                onClick={() => setFormData(prev => ({ ...prev, color }))}
+                className={`w-10 h-10 rounded-full border-4 transition-all ${
+                  formData.color === color 
+                    ? 'border-gray-900 scale-110' 
+                    : 'border-transparent hover:scale-105'
+                }`}
                 style={{ backgroundColor: color }}
               />
             ))}
           </div>
         </div>
 
-        <div className="space-y-3">
-          <Label>Lifecycle</Label>
-          <div className="grid grid-cols-3 gap-2 p-1 bg-muted rounded-lg">
-            {(["active", "completed", "cancelled"] as const).map((lifecycle) => (
-              <button
-                key={lifecycle}
-                type="button"
-                onClick={() => setFormData(prev => ({ ...prev, lifecycle }))}
-                className={cn(
-                  "px-3 py-2 text-sm font-medium rounded-md transition-all capitalize",
-                  formData.lifecycle === lifecycle
-                    ? "bg-background shadow-sm text-foreground"
-                    : "text-muted-foreground hover:text-foreground hover:bg-background/50"
-                )}
-              >
-                {lifecycle}
-              </button>
-            ))}
+        {/* Only show lifecycle selector for non-system-required stages */}
+        {!isSystemRequired && (
+          <div className="space-y-3">
+            <Label>Lifecycle</Label>
+            <div className="grid grid-cols-3 gap-2 p-1 bg-muted rounded-lg">
+              {(["active", "completed", "cancelled"] as const).map((lifecycle) => (
+                <button
+                  key={lifecycle}
+                  type="button"
+                  onClick={() => setFormData(prev => ({ ...prev, lifecycle }))}
+                  className={cn(
+                    "px-3 py-2 text-sm font-medium rounded-md transition-all capitalize",
+                    formData.lifecycle === lifecycle
+                      ? "bg-background shadow-sm text-foreground"
+                      : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                  )}
+                >
+                  {lifecycle}
+                </button>
+              ))}
+            </div>
+            <div className="space-y-1 text-sm text-muted-foreground">
+              <p>Lifecycle drives automations and reporting:</p>
+              <ul className="space-y-1 ml-4">
+                <li>• <strong>Active:</strong> Session is in progress</li>
+                <li>• <strong>Completed:</strong> Session finished and delivered</li>
+                <li>• <strong>Cancelled:</strong> Session cancelled or postponed</li>
+              </ul>
+            </div>
           </div>
-          <div className="space-y-1 text-sm text-muted-foreground">
-            <p>Lifecycle drives automations and reporting:</p>
-            <ul className="space-y-1 ml-4">
-              <li>• <strong>Active:</strong> Session is in progress</li>
-              <li>• <strong>Completed:</strong> Session finished and delivered</li>
-              <li>• <strong>Cancelled:</strong> Session cancelled or postponed</li>
-            </ul>
-          </div>
-        </div>
+        )}
 
-        {isProtectedStatus && (
-          <div className="text-sm text-muted-foreground">
-            System stages cannot be deleted as they are required for session management.
+        {/* Show info for system required stages */}
+        {isSystemRequired && (
+          <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-sm text-blue-800">
+              <strong>System Required Stage:</strong> This stage is essential for session workflows and must remain Active. You can rename it but cannot delete it or change its lifecycle.
+            </p>
           </div>
         )}
       </div>

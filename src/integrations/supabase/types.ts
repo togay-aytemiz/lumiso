@@ -1181,11 +1181,19 @@ export type Database = {
         Args: { email_to_check: string }
         Returns: boolean
       }
+      ensure_default_lead_statuses_for_org: {
+        Args: { org_id: string; user_uuid: string }
+        Returns: undefined
+      }
       ensure_default_packages: {
         Args: { user_uuid: string }
         Returns: undefined
       }
       ensure_default_packages_for_org: {
+        Args: { org_id: string; user_uuid: string }
+        Returns: undefined
+      }
+      ensure_default_project_statuses_for_org: {
         Args: { org_id: string; user_uuid: string }
         Returns: undefined
       }

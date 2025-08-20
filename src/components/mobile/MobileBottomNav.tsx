@@ -29,7 +29,7 @@ interface NavTab {
   badge?: number;
 }
 
-export function MobileBottomNav() {
+export function MobileBottomNav({ hideForOnboarding = false }: { hideForOnboarding?: boolean }) {
   const [bookingsOpen, setBookingsOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
@@ -49,7 +49,7 @@ export function MobileBottomNav() {
     getUser();
   }, []);
 
-  // Hide on auth routes and keyboard open
+  // Hide on auth routes, keyboard open, and during onboarding
   useEffect(() => {
     const isAuthRoute = location.pathname === '/auth';
     
@@ -59,7 +59,7 @@ export function MobileBottomNav() {
         ? window.visualViewport.height < window.innerHeight * 0.75
         : false;
       
-      setIsVisible(!isAuthRoute && !isKeyboardOpen);
+      setIsVisible(!isAuthRoute && !isKeyboardOpen && !hideForOnboarding);
     };
 
     handleResize();
@@ -74,7 +74,7 @@ export function MobileBottomNav() {
         window.visualViewport.removeEventListener('resize', handleResize);
       }
     };
-  }, [location.pathname]);
+  }, [location.pathname, hideForOnboarding]);
 
   const handleSignOut = async () => {
     if (window.confirm('Are you sure you want to sign out?')) {

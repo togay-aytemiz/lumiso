@@ -1042,7 +1042,10 @@ export type Database = {
           active_organization_id: string | null
           created_at: string
           date_format: string | null
+          guidance_completed: boolean | null
+          guided_setup_skipped: boolean | null
           id: string
+          in_guided_setup: boolean | null
           logo_url: string | null
           notification_daily_summary_enabled: boolean | null
           notification_daily_summary_send_at: string | null
@@ -1063,7 +1066,10 @@ export type Database = {
           active_organization_id?: string | null
           created_at?: string
           date_format?: string | null
+          guidance_completed?: boolean | null
+          guided_setup_skipped?: boolean | null
           id?: string
+          in_guided_setup?: boolean | null
           logo_url?: string | null
           notification_daily_summary_enabled?: boolean | null
           notification_daily_summary_send_at?: string | null
@@ -1084,7 +1090,10 @@ export type Database = {
           active_organization_id?: string | null
           created_at?: string
           date_format?: string | null
+          guidance_completed?: boolean | null
+          guided_setup_skipped?: boolean | null
           id?: string
+          in_guided_setup?: boolean | null
           logo_url?: string | null
           notification_daily_summary_enabled?: boolean | null
           notification_daily_summary_send_at?: string | null

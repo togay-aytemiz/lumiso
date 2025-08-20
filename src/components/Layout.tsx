@@ -1,11 +1,23 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { MobileBottomNav } from "@/components/mobile/MobileBottomNav";
-import { useLayoutEffect } from "react";
+import { OnboardingModal } from "@/components/OnboardingModal";
+import { RestartGuidedModeButton } from "@/components/RestartGuidedModeButton";
+import { useLayoutEffect, useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
+import { useOnboarding } from "@/hooks/useOnboarding";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
+  const { shouldShowOnboarding, loading: onboardingLoading } = useOnboarding();
+  const [showOnboardingModal, setShowOnboardingModal] = useState(false);
+
+  // Check if we should show onboarding modal after auth state is loaded
+  useEffect(() => {
+    if (!onboardingLoading && shouldShowOnboarding()) {
+      setShowOnboardingModal(true);
+    }
+  }, [onboardingLoading, shouldShowOnboarding]);
 
   useLayoutEffect(() => {
     // Disable automatic scroll restoration
@@ -34,7 +46,16 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </div>
         </main>
       </div>
-      <MobileBottomNav />
+      <MobileBottomNav hideForOnboarding={showOnboardingModal} />
+      
+      {/* Onboarding Modal */}
+      <OnboardingModal 
+        open={showOnboardingModal} 
+        onClose={() => setShowOnboardingModal(false)} 
+      />
+      
+      {/* Restart Guided Mode Button (only for specific user) */}
+      <RestartGuidedModeButton />
     </SidebarProvider>
   );
 }

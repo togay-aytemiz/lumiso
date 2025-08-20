@@ -87,12 +87,12 @@ export function generateDailySummaryEmailSimplified(
     `);
   }
 
-  // Upcoming Reminders section
+  // Upcoming Reminders section - TODAY's reminders  
   if (upcomingReminders.length > 0) {
     sections.push(`
       <div style="margin-bottom: 32px;">
         <h2 style="color: #f59e0b; font-size: 18px; font-weight: 600; margin-bottom: 16px;">
-          🔔 Upcoming Reminders Today (${upcomingReminders.length})
+          🔔 Today's Reminders (${upcomingReminders.length})
         </h2>
         ${upcomingReminders.slice(0, 5).map(reminder => `
           <div style="background: #fffbeb; border: 1px solid #fed7aa; border-radius: 8px; padding: 16px; margin-bottom: 12px;">
@@ -102,6 +102,11 @@ export function generateDailySummaryEmailSimplified(
             </div>
             ${reminder.leads?.email ? `<div style="color: #78350f; font-size: 13px;">📧 ${reminder.leads.email}</div>` : ''}
             ${reminder.leads?.phone ? `<div style="color: #78350f; font-size: 13px;">📞 ${reminder.leads.phone}</div>` : ''}
+            ${templateData.baseUrl ? `
+              <a href="${templateData.baseUrl}/reminders" style="color: #92400e; text-decoration: underline; font-size: 14px;">
+                View reminder →
+              </a>
+            ` : ''}
           </div>
         `).join('')}
       </div>
@@ -149,8 +154,8 @@ export function generateDailySummaryEmailSimplified(
       <div style="margin-top: 32px; padding: 24px; background: #f3f4f6; border-radius: 12px;">
         <h3 style="color: #374151; font-size: 16px; font-weight: 600; margin-bottom: 16px;">Quick Actions</h3>
         <div style="display: flex; gap: 16px; flex-wrap: wrap;">
-          <a href="${templateData.baseUrl}/dashboard" style="background: ${templateData.brandColor}; color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 14px; font-weight: 500;">📊 Dashboard</a>
-          <a href="${templateData.baseUrl}/sessions" style="background: #6b7280; color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 14px; font-weight: 500;">📸 Sessions</a>
+          <a href="${templateData.baseUrl}/" style="background: ${templateData.brandColor}; color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 14px; font-weight: 500; margin-right: 16px;">📊 Dashboard</a>
+          <a href="${templateData.baseUrl}/sessions" style="background: #6b7280; color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 14px; font-weight: 500; margin-right: 16px;">📸 Sessions</a>
           <a href="${templateData.baseUrl}/projects" style="background: #6b7280; color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 14px; font-weight: 500;">📁 Projects</a>
         </div>
       </div>

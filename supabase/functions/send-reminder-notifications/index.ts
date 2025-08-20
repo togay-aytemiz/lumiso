@@ -437,10 +437,17 @@ async function sendDailySummary(user: UserProfile, isTest?: boolean) {
 
   console.log(`Overdue sessions query result:`, { data: overdueSessions, error: sessionsError });
 
-  // Get overdue reminders (activities not marked as done) - simplified query
+  // Get overdue reminders with lead/project relationships
   const { data: overdueReminders, error: remindersError } = await supabase
     .from('activities')
-    .select('id, content, reminder_date, type')
+    .select(`
+      id, 
+      content, 
+      reminder_date, 
+      type,
+      leads!left(name, email, phone),
+      projects!left(name, id)
+    `)
     .eq('organization_id', user.active_organization_id)
     .eq('completed', false)
     .not('reminder_date', 'is', null)
@@ -453,14 +460,24 @@ async function sendDailySummary(user: UserProfile, isTest?: boolean) {
   tomorrow.setDate(tomorrow.getDate() + 1);
   const tomorrowStr = tomorrow.toISOString().split('T')[0];
   
+  // Get today's reminders (not tomorrow's)
+  const todayEnd = today + ' 23:59:59';
+  
   const { data: upcomingReminders, error: upcomingError } = await supabase
     .from('activities')
-    .select('id, content, reminder_date, type')
+    .select(`
+      id, 
+      content, 
+      reminder_date, 
+      type,
+      leads!left(name, email, phone),
+      projects!left(name, id)
+    `)
     .eq('organization_id', user.active_organization_id)
     .eq('completed', false)
     .not('reminder_date', 'is', null)
     .gte('reminder_date', today)
-    .lte('reminder_date', tomorrowStr);
+    .lte('reminder_date', todayEnd);
 
   console.log(`Upcoming reminders query result:`, { data: upcomingReminders, error: upcomingError });
 

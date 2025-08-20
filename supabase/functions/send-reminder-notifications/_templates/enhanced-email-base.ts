@@ -274,7 +274,7 @@ export const getEmailBaseStyles = (brandColor = '#1EB29F') => `
       }
       
       .inline-buttons .cta-button {
-        margin: 8px 12px 8px 0;
+        margin: 8px 16px 8px 0;
       }
     
     .email-footer {
@@ -383,7 +383,7 @@ export const createEmailTemplate = (
 ) => {
   const { userFullName, businessName = "Lumiso", logoUrl, brandColor = "#1EB29F", baseUrl = "https://rifdykpdubrowzbylffe.supabase.co" } = templateData;
   
-  console.log(`Using Lumiso text header instead of logo`);
+  console.log(`Using Lumiso logo from public folder`);
   
   return `
     <!DOCTYPE html>
@@ -397,7 +397,7 @@ export const createEmailTemplate = (
     <body>
       <div class="email-container">
         <div class="email-header">
-          <h2 style="color: ${brandColor}; margin: 0; padding: 0; font-size: 24px; font-weight: bold;">Lumiso</h2>
+          <img src="${baseUrl}/lumiso-logo.png" alt="Lumiso" class="logo" />
         </div>
         
         <div class="email-body">

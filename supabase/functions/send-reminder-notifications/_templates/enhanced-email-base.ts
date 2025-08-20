@@ -379,8 +379,8 @@ export const createEmailTemplate = (
 ) => {
   const { userFullName, businessName = "Lumiso", logoUrl, brandColor = "#1EB29F", baseUrl = "https://id-preview--392fd27c-d1db-4220-9e4e-7358db293b83.lovable.app" } = templateData;
   
-  // Use the Logo.png from assets
-  const lumisoLogo = "https://rifdykpdubrowzbylffe.supabase.co/storage/v1/object/public/logos/Logo.png";
+  // Use the full absolute URL for the uploaded logo image
+  const lumisoLogo = `${baseUrl}/lovable-uploads/31c6b73e-90ac-41aa-b4e2-95a94813c3f3.png`;
   
   return `
     <!DOCTYPE html>

@@ -190,7 +190,43 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground font-sans;
+    @apply bg-background text-foreground font-sans text-base;
+    font-size: 16px; /* Increase base font size */
+  }
+  
+  /* Increase font sizes across the app */
+  .text-sm {
+    font-size: 15px !important;
+  }
+  
+  .text-base {
+    font-size: 17px !important;
+  }
+  
+  .text-lg {
+    font-size: 19px !important;
+  }
+  
+  .text-xl {
+    font-size: 21px !important;
+  }
+  
+  .text-2xl {
+    font-size: 26px !important;
+  }
+  
+  .text-3xl {
+    font-size: 32px !important;
+  }
+  
+  /* Increase button and input text sizes */
+  button, input, select, textarea {
+    font-size: 16px !important;
+  }
+  
+  /* Increase label and form text */
+  label {
+    font-size: 15px !important;
   }
 }
 

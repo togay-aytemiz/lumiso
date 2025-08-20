@@ -199,7 +199,14 @@ export function AddProjectStageDialog({ open, onOpenChange, onStageAdded }: AddP
               </button>
             ))}
           </div>
-          <p className="text-sm text-muted-foreground">Lifecycle drives automations and reporting.</p>
+          <div className="space-y-1 text-sm text-muted-foreground">
+            <p>Lifecycle drives automations and reporting:</p>
+            <ul className="space-y-1 ml-4">
+              <li>• <strong>Active:</strong> Stage is in progress</li>
+              <li>• <strong>Completed:</strong> Project successfully finished</li>
+              <li>• <strong>Cancelled:</strong> Project stopped or cancelled</li>
+            </ul>
+          </div>
         </div>
       </div>
     </AppSheetModal>
@@ -403,7 +410,14 @@ export function EditProjectStageDialog({ stage, open, onOpenChange, onStageUpdat
               </button>
             ))}
           </div>
-          <p className="text-sm text-muted-foreground">Lifecycle drives automations and reporting.</p>
+          <div className="space-y-1 text-sm text-muted-foreground">
+            <p>Lifecycle drives automations and reporting:</p>
+            <ul className="space-y-1 ml-4">
+              <li>• <strong>Active:</strong> Stage is in progress</li>
+              <li>• <strong>Completed:</strong> Project successfully finished</li>
+              <li>• <strong>Cancelled:</strong> Project stopped or cancelled</li>
+            </ul>
+          </div>
         </div>
       </div>
     </AppSheetModal>

@@ -17,15 +17,14 @@ export function AddSessionStatusDialog({ open, onOpenChange, onStatusAdded }: Ad
   const [formData, setFormData] = useState({
     name: "",
     color: "#3B82F6",
-    lifecycle: "active" as "active" | "completed" | "cancelled" | "archived",
+    lifecycle: "active" as "active" | "completed" | "cancelled", // No "archived" for sessions
   });
 
-  // Smart default based on name
-  const getSmartLifecycleDefault = (name: string): "active" | "completed" | "cancelled" | "archived" => {
+  // Smart default based on name (no "archived" for sessions)
+  const getSmartLifecycleDefault = (name: string): "active" | "completed" | "cancelled" => {
     const lowerName = name.toLowerCase();
     if (lowerName.includes("cancel")) return "cancelled";
     if (lowerName.includes("deliver") || lowerName.includes("complete")) return "completed";
-    if (lowerName.includes("archive")) return "archived";
     return "active";
   };
 
@@ -182,8 +181,8 @@ export function AddSessionStatusDialog({ open, onOpenChange, onStatusAdded }: Ad
 
         <div className="space-y-3">
           <Label>Lifecycle</Label>
-          <div className="grid grid-cols-4 gap-2 p-1 bg-muted rounded-lg">
-            {(["active", "completed", "cancelled", "archived"] as const).map((lifecycle) => (
+          <div className="grid grid-cols-3 gap-2 p-1 bg-muted rounded-lg">
+            {(["active", "completed", "cancelled"] as const).map((lifecycle) => (
               <button
                 key={lifecycle}
                 type="button"
@@ -199,7 +198,14 @@ export function AddSessionStatusDialog({ open, onOpenChange, onStatusAdded }: Ad
               </button>
             ))}
           </div>
-          <p className="text-sm text-muted-foreground">Lifecycle drives automations and reporting.</p>
+          <div className="space-y-1 text-sm text-muted-foreground">
+            <p>Lifecycle drives automations and reporting:</p>
+            <ul className="space-y-1 ml-4">
+              <li>• <strong>Active:</strong> Session is in progress</li>
+              <li>• <strong>Completed:</strong> Session finished and delivered</li>
+              <li>• <strong>Cancelled:</strong> Session cancelled or postponed</li>
+            </ul>
+          </div>
         </div>
       </div>
     </AppSheetModal>
@@ -218,7 +224,7 @@ export function EditSessionStatusDialog({ status, open, onOpenChange, onStatusUp
   const [formData, setFormData] = useState({
     name: "",
     color: "#3B82F6",
-    lifecycle: "active" as "active" | "completed" | "cancelled" | "archived",
+    lifecycle: "active" as "active" | "completed" | "cancelled", // No "archived" for sessions
   });
 
   useEffect(() => {
@@ -394,8 +400,8 @@ export function EditSessionStatusDialog({ status, open, onOpenChange, onStatusUp
 
         <div className="space-y-3">
           <Label>Lifecycle</Label>
-          <div className="grid grid-cols-4 gap-2 p-1 bg-muted rounded-lg">
-            {(["active", "completed", "cancelled", "archived"] as const).map((lifecycle) => (
+          <div className="grid grid-cols-3 gap-2 p-1 bg-muted rounded-lg">
+            {(["active", "completed", "cancelled"] as const).map((lifecycle) => (
               <button
                 key={lifecycle}
                 type="button"
@@ -411,7 +417,14 @@ export function EditSessionStatusDialog({ status, open, onOpenChange, onStatusUp
               </button>
             ))}
           </div>
-          <p className="text-sm text-muted-foreground">Lifecycle drives automations and reporting.</p>
+          <div className="space-y-1 text-sm text-muted-foreground">
+            <p>Lifecycle drives automations and reporting:</p>
+            <ul className="space-y-1 ml-4">
+              <li>• <strong>Active:</strong> Session is in progress</li>
+              <li>• <strong>Completed:</strong> Session finished and delivered</li>
+              <li>• <strong>Cancelled:</strong> Session cancelled or postponed</li>
+            </ul>
+          </div>
         </div>
 
         {isProtectedStatus && (

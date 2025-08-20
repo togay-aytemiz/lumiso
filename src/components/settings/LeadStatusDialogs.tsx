@@ -20,15 +20,14 @@ export function AddLeadStatusDialog({ open, onOpenChange, onStatusAdded }: AddLe
   const [formData, setFormData] = useState({
     name: "",
     color: "#3B82F6",
-    lifecycle: "active" as "active" | "completed" | "cancelled" | "archived",
+    lifecycle: "active" as "active" | "completed" | "cancelled", // No "archived" for leads
   });
 
-  // Smart default based on name
-  const getSmartLifecycleDefault = (name: string): "active" | "completed" | "cancelled" | "archived" => {
+  // Smart default based on name (no "archived" for leads)
+  const getSmartLifecycleDefault = (name: string): "active" | "completed" | "cancelled" => {
     const lowerName = name.toLowerCase();
     if (lowerName.includes("cancel")) return "cancelled";
     if (lowerName.includes("complete") || lowerName.includes("deliver") || lowerName.includes("done")) return "completed";
-    if (lowerName.includes("archive")) return "archived";
     return "active";
   };
 
@@ -178,8 +177,8 @@ export function AddLeadStatusDialog({ open, onOpenChange, onStatusAdded }: AddLe
 
         <div className="space-y-3">
           <Label>Lifecycle</Label>
-          <div className="grid grid-cols-4 gap-2 p-1 bg-muted rounded-lg">
-            {(["active", "completed", "cancelled", "archived"] as const).map((lifecycle) => (
+          <div className="grid grid-cols-3 gap-2 p-1 bg-muted rounded-lg">
+            {(["active", "completed", "cancelled"] as const).map((lifecycle) => (
               <button
                 key={lifecycle}
                 type="button"
@@ -195,7 +194,14 @@ export function AddLeadStatusDialog({ open, onOpenChange, onStatusAdded }: AddLe
               </button>
             ))}
           </div>
-          <p className="text-sm text-muted-foreground">Lifecycle drives automations and reporting.</p>
+          <div className="space-y-1 text-sm text-muted-foreground">
+            <p>Lifecycle drives automations and reporting:</p>
+            <ul className="space-y-1 ml-4">
+              <li>• <strong>Active:</strong> Status is in progress</li>
+              <li>• <strong>Completed:</strong> Lead successfully converted</li>
+              <li>• <strong>Cancelled:</strong> Lead lost or rejected</li>
+            </ul>
+          </div>
         </div>
       </div>
     </AppSheetModal>
@@ -214,7 +220,7 @@ export function EditLeadStatusDialog({ status, open, onOpenChange, onStatusUpdat
   const [formData, setFormData] = useState({
     name: "",
     color: "#3B82F6",
-    lifecycle: "active" as "active" | "completed" | "cancelled" | "archived",
+    lifecycle: "active" as "active" | "completed" | "cancelled", // No "archived" for leads
   });
 
   useEffect(() => {
@@ -402,8 +408,8 @@ export function EditLeadStatusDialog({ status, open, onOpenChange, onStatusUpdat
 
         <div className="space-y-3">
           <Label>Lifecycle</Label>
-          <div className="grid grid-cols-4 gap-2 p-1 bg-muted rounded-lg">
-            {(["active", "completed", "cancelled", "archived"] as const).map((lifecycle) => (
+          <div className="grid grid-cols-3 gap-2 p-1 bg-muted rounded-lg">
+            {(["active", "completed", "cancelled"] as const).map((lifecycle) => (
               <button
                 key={lifecycle}
                 type="button"
@@ -419,7 +425,14 @@ export function EditLeadStatusDialog({ status, open, onOpenChange, onStatusUpdat
               </button>
             ))}
           </div>
-          <p className="text-sm text-muted-foreground">Lifecycle drives automations and reporting.</p>
+          <div className="space-y-1 text-sm text-muted-foreground">
+            <p>Lifecycle drives automations and reporting:</p>
+            <ul className="space-y-1 ml-4">
+              <li>• <strong>Active:</strong> Status is in progress</li>
+              <li>• <strong>Completed:</strong> Lead successfully converted</li>
+              <li>• <strong>Cancelled:</strong> Lead lost or rejected</li>
+            </ul>
+          </div>
         </div>
 
         {status.is_system_final && (

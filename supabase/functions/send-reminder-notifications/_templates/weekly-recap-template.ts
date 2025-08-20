@@ -174,7 +174,7 @@ export function generateWeeklyRecapEmail(stats: WeeklyStats, templateData: Email
 
   // Action Items and Goals
   content += `
-    <div style="margin-top: 32px; text-align: center;">
+    <div class="inline-buttons">
       ${templateData.baseUrl ? `<a href="${templateData.baseUrl}/dashboard" class="cta-button">Dashboard</a>` : ''}
       ${templateData.baseUrl ? `<a href="${templateData.baseUrl}/leads" class="cta-button">Manage Leads</a>` : ''}
       ${templateData.baseUrl ? `<a href="${templateData.baseUrl}/projects" class="cta-button">View Projects</a>` : ''}

@@ -137,15 +137,15 @@ export function generateDailySummaryEmail(
     }
   }
 
-  // Quick Actions
-  content += `
-    <div style="margin-top: 32px; text-align: center;">
-      ${templateData.baseUrl ? `<a href="${templateData.baseUrl}/dashboard" class="cta-button">Dashboard</a>` : ''}
-      ${templateData.baseUrl ? `<a href="${templateData.baseUrl}/leads" class="cta-button">Manage Leads</a>` : ''}
-      ${templateData.baseUrl ? `<a href="${templateData.baseUrl}/projects" class="cta-button">View Projects</a>` : ''}
-      ${templateData.baseUrl ? `<a href="${templateData.baseUrl}/calendar" class="cta-button">Calendar</a>` : ''}
-    </div>
-  `;
+    // Quick Actions
+    content += `
+      <div class="inline-buttons">
+        ${templateData.baseUrl ? `<a href="${templateData.baseUrl}/dashboard" class="cta-button">Dashboard</a>` : ''}
+        ${templateData.baseUrl ? `<a href="${templateData.baseUrl}/leads" class="cta-button">Manage Leads</a>` : ''}
+        ${templateData.baseUrl ? `<a href="${templateData.baseUrl}/projects" class="cta-button">View Projects</a>` : ''}
+        ${templateData.baseUrl ? `<a href="${templateData.baseUrl}/calendar" class="cta-button">Calendar</a>` : ''}
+      </div>
+    `;
 
   // Motivational message
   const messages = [

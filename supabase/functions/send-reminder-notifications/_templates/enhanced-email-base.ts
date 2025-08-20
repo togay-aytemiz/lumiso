@@ -121,43 +121,45 @@ export const getEmailBaseStyles = (brandColor = '#1EB29F') => `
       color: #1F2937;
       margin: 0;
       padding: 0;
-      background-color: #F9FAFB;
+      background-color: #F3F4F6;
     }
     
     .email-container {
       max-width: 600px;
       margin: 0 auto;
       background-color: #FFFFFF;
-      border-radius: 12px;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
       overflow: hidden;
     }
     
     .email-header {
-      background: linear-gradient(135deg, ${brandColor}, ${adjustBrightness(brandColor, -20)});
-      padding: 32px 24px;
+      background-color: #F9FAFB;
+      padding: 24px;
       text-align: center;
+      border-bottom: 1px solid #E5E7EB;
     }
     
     .logo {
-      height: 48px;
-      margin-bottom: 16px;
+      height: 40px;
+      margin-bottom: 12px;
     }
     
     .company-name {
-      color: #FFFFFF;
-      font-size: 24px;
-      font-weight: 700;
+      color: #374151;
+      font-size: 20px;
+      font-weight: 600;
       margin: 0;
     }
     
     .email-body {
       padding: 32px 24px;
+      background-color: #FFFFFF;
     }
     
     .greeting {
-      font-size: 18px;
-      font-weight: 600;
+      font-size: 16px;
+      font-weight: 500;
       color: #1F2937;
       margin-bottom: 24px;
     }
@@ -165,23 +167,19 @@ export const getEmailBaseStyles = (brandColor = '#1EB29F') => `
     .section-title {
       font-size: 16px;
       font-weight: 600;
-      color: #374151;
-      margin: 24px 0 16px 0;
-      border-bottom: 2px solid #E5E7EB;
-      padding-bottom: 8px;
+      color: #1F2937;
+      margin: 32px 0 16px 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
     
     .item-card {
       background-color: #F9FAFB;
       border: 1px solid #E5E7EB;
-      border-radius: 8px;
+      border-radius: 6px;
       padding: 16px;
       margin-bottom: 12px;
-      transition: box-shadow 0.2s ease;
-    }
-    
-    .item-card:hover {
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
     
     .item-title {
@@ -191,49 +189,46 @@ export const getEmailBaseStyles = (brandColor = '#1EB29F') => `
       display: flex;
       justify-content: space-between;
       align-items: center;
+      font-size: 15px;
     }
     
     .item-meta {
       font-size: 14px;
       color: #6B7280;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
     }
     
     .item-relationship {
       font-size: 13px;
       color: #9CA3AF;
-      font-style: italic;
       margin-bottom: 8px;
     }
     
     .item-action {
       display: inline-block;
-      background-color: ${adjustBrightness(brandColor, 90)};
-      color: #1F2937;
+      background-color: ${brandColor};
+      color: #FFFFFF;
       text-decoration: none;
       padding: 8px 16px;
-      border-radius: 6px;
+      border-radius: 4px;
       font-size: 14px;
-      font-weight: 600;
-      transition: all 0.2s ease;
-      border: 1px solid ${adjustBrightness(brandColor, 60)};
+      font-weight: 500;
       margin-right: 8px;
       margin-top: 8px;
     }
     
     .item-action:hover {
-      background-color: ${adjustBrightness(brandColor, 85)};
-      border-color: ${adjustBrightness(brandColor, 50)};
-      color: #111827;
+      background-color: ${adjustBrightness(brandColor, -10)};
+      color: #FFFFFF;
+      text-decoration: none;
     }
     
     .summary-stats {
-      background-color: #EFF6FF;
-      border: 1px solid #DBEAFE;
-      border-radius: 8px;
-      padding: 16px;
+      background-color: #F9FAFB;
+      border: 1px solid #E5E7EB;
+      border-radius: 6px;
+      padding: 20px;
       margin: 24px 0;
-      text-align: center;
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
       gap: 16px;
@@ -251,34 +246,38 @@ export const getEmailBaseStyles = (brandColor = '#1EB29F') => `
     }
     
     .stat-label {
-      font-size: 14px;
+      font-size: 13px;
       color: #6B7280;
       margin-top: 4px;
     }
     
     .cta-button {
       display: inline-block;
-      background-color: ${adjustBrightness(brandColor, 90)};
-      color: #1F2937;
+      background-color: ${brandColor};
+      color: #FFFFFF;
       text-decoration: none;
-      padding: 12px 24px;
-      border-radius: 8px;
-      font-weight: 600;
-      margin: 16px 8px 16px 0;
+      padding: 12px 20px;
+      border-radius: 4px;
+      font-weight: 500;
+      margin: 8px 8px 8px 0;
       text-align: center;
-      border: 1px solid ${adjustBrightness(brandColor, 60)};
-      transition: all 0.2s ease;
+      font-size: 14px;
     }
     
     .cta-button:hover {
-      background-color: ${adjustBrightness(brandColor, 85)};
-      border-color: ${adjustBrightness(brandColor, 50)};
-      color: #111827;
+      background-color: ${adjustBrightness(brandColor, -10)};
+      color: #FFFFFF;
+      text-decoration: none;
+    }
+    
+    .inline-buttons {
+      margin: 20px 0;
+      text-align: center;
     }
     
     .email-footer {
-      background-color: #F3F4F6;
-      padding: 24px;
+      background-color: #F9FAFB;
+      padding: 20px 24px;
       text-align: center;
       border-top: 1px solid #E5E7EB;
     }
@@ -287,6 +286,16 @@ export const getEmailBaseStyles = (brandColor = '#1EB29F') => `
       font-size: 12px;
       color: #6B7280;
       margin: 0;
+      line-height: 1.5;
+    }
+    
+    .footer-link {
+      color: ${brandColor};
+      text-decoration: none;
+    }
+    
+    .footer-link:hover {
+      text-decoration: underline;
     }
     
     .overdue-badge {
@@ -332,6 +341,10 @@ export const getEmailBaseStyles = (brandColor = '#1EB29F') => `
         padding: 24px 16px;
       }
       
+      .email-header {
+        padding: 20px 16px;
+      }
+      
       .summary-stats {
         grid-template-columns: repeat(2, 1fr);
       }
@@ -339,6 +352,11 @@ export const getEmailBaseStyles = (brandColor = '#1EB29F') => `
       .cta-button {
         display: block;
         margin: 8px 0;
+      }
+      
+      .inline-buttons .cta-button {
+        display: inline-block;
+        margin: 4px;
       }
     }
   </style>
@@ -361,7 +379,10 @@ export const createEmailTemplate = (
   content: string,
   templateData: EmailTemplateData
 ) => {
-  const { userFullName, businessName = "Photography CRM", logoUrl, brandColor = "#1EB29F", baseUrl = "" } = templateData;
+  const { userFullName, businessName = "Lumiso", logoUrl, brandColor = "#1EB29F", baseUrl = "" } = templateData;
+  
+  // Use the Logo.png from assets
+  const lumisoLogo = "https://rifdykpdubrowzbylffe.supabase.co/storage/v1/object/public/logos/Logo.png";
   
   return `
     <!DOCTYPE html>
@@ -375,8 +396,8 @@ export const createEmailTemplate = (
     <body>
       <div class="email-container">
         <div class="email-header">
-          ${logoUrl ? `<img src="${logoUrl}" alt="${businessName}" class="logo" />` : ''}
-          <h1 class="company-name">${businessName}</h1>
+          <img src="${lumisoLogo}" alt="Lumiso" class="logo" />
+          <h1 class="company-name">Lumiso</h1>
         </div>
         
         <div class="email-body">
@@ -386,8 +407,8 @@ export const createEmailTemplate = (
         
         <div class="email-footer">
           <p class="footer-text">
-            This is an automated notification from ${businessName}.<br>
-            ${baseUrl ? `<a href="${baseUrl}" style="color: ${brandColor};">Visit your dashboard</a>` : ''}
+            This is an automated notification from Lumiso.<br>
+            ${baseUrl ? `<a href="${baseUrl}" class="footer-link">Visit your dashboard</a>` : ''}
           </p>
         </div>
       </div>

@@ -144,7 +144,7 @@ export function useOnboarding() {
       if (error) throw error;
 
       setState({
-        inGuidedSetup: true,
+        inGuidedSetup: false,  // Changed to false so modal shows
         guidedSetupSkipped: false,
         guidanceCompleted: false,
         currentStep: 1,

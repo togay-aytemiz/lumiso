@@ -66,7 +66,14 @@ const GettingStarted = () => {
   const navigate = useNavigate();
   const [showSampleDataModal, setShowSampleDataModal] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
-  const { completedCount, loading } = useOnboarding();
+  const { completedCount, loading, inGuidedSetup, guidanceCompleted } = useOnboarding();
+
+  // If guided setup is complete, redirect to dashboard
+  useEffect(() => {
+    if (!loading && (!inGuidedSetup || guidanceCompleted)) {
+      navigate('/', { replace: true });
+    }
+  }, [loading, inGuidedSetup, guidanceCompleted, navigate]);
   
   // Simple logic
   const allCompleted = completedCount >= 6;

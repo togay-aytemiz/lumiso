@@ -7,11 +7,11 @@ import { toast } from "@/hooks/use-toast";
 
 export function ExitGuidanceModeButton() {
   const { user } = useAuth();
-  const { completeGuidedMode } = useOnboarding();
+  const { completeGuidedMode, inGuidedSetup } = useOnboarding();
   const [isLoading, setIsLoading] = useState(false);
 
-  // Only show for the specific user
-  if (!user || user.email !== 'togayaytemiz@gmail.com') {
+  // Only show for the specific user AND when in guided setup
+  if (!user || user.email !== 'togayaytemiz@gmail.com' || !inGuidedSetup) {
     return null;
   }
 

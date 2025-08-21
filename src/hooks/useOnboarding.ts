@@ -128,12 +128,13 @@ export function useOnboarding() {
     try {
       console.log('🏁 Completing guided mode');
       
-      // Direct database update until types are refreshed
+      // Set completed_steps_count to 6 to unlock all navigation items
       await supabase
         .from('user_settings')
         .update({ 
           guidance_completed: true,
-          in_guided_setup: false 
+          in_guided_setup: false,
+          completed_steps_count: 6
         })
         .eq('user_id', user.id);
 
@@ -144,6 +145,7 @@ export function useOnboarding() {
         ...prev,
         guidanceCompleted: true,
         inGuidedSetup: false,
+        completedCount: 6,
         loading: false
       }));
       

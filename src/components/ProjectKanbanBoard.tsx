@@ -60,9 +60,10 @@ interface ProjectKanbanBoardProps {
   projects: Project[];
   projectStatuses?: ProjectStatus[];
   onProjectsChange: () => void;
+  onProjectUpdate?: (project: Project) => void;
 }
 
-const ProjectKanbanBoard = ({ projects, projectStatuses, onProjectsChange }: ProjectKanbanBoardProps) => {
+const ProjectKanbanBoard = ({ projects, projectStatuses, onProjectsChange, onProjectUpdate }: ProjectKanbanBoardProps) => {
   const [statuses, setStatuses] = useState<ProjectStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddProjectDialog, setShowAddProjectDialog] = useState(false);
@@ -161,6 +162,12 @@ const ProjectKanbanBoard = ({ projects, projectStatuses, onProjectsChange }: Pro
         title: "Project Updated",
         description: `Project moved to ${newStatus?.name || 'No Status'}`,
       });
+
+      // Notify parent about project update for tutorial tracking
+      if (onProjectUpdate && project) {
+        const updatedProject = { ...project, status_id: newStatusId };
+        onProjectUpdate(updatedProject);
+      }
 
       onProjectsChange();
     } catch (error) {

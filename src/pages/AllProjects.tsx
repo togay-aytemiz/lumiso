@@ -450,28 +450,57 @@ const AllProjects = () => {
     {
       id: 1,
       title: "Welcome to Your Project Management Hub",
-      description: "Let's explore how to manage your photography projects effectively.",
-      content: "In this tutorial, you'll learn about three different ways to view and organize your projects: Board view for visual workflow management, List view for detailed project information, and Archived view for completed projects. Each view serves a different purpose to help you stay organized and efficient.",
+      description: "Let's explore the three powerful ways to view and organize your photography projects.",
+      content: <div className="space-y-4">
+        <p className="text-sm text-muted-foreground">
+          In this tutorial, you'll master the art of project management for photographers:
+        </p>
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 bg-primary rounded-full flex-shrink-0"></div>
+            <span className="text-sm">Board View - Visual workflow management with drag & drop</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 bg-primary rounded-full flex-shrink-0"></div>
+            <span className="text-sm">List View - Detailed project information in tables</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 bg-primary rounded-full flex-shrink-0"></div>
+            <span className="text-sm">Archived View - Completed projects organized separately</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 bg-primary rounded-full flex-shrink-0"></div>
+            <span className="text-sm">Project status management and workflow optimization</span>
+          </div>
+        </div>
+        <div className="p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg mt-4">
+          <p className="text-sm text-blue-700 dark:text-blue-300">
+            💡 Each view serves a different purpose to help you stay organized and efficient with your photography projects.
+          </p>
+        </div>
+      </div>,
       canProceed: true,
       mode: "modal" as const,
     },
     {
       id: 2,
       title: "Board View (Kanban Style)",
-      description: isMobile ? "The board view shows your projects organized by stages in columns." : "Try moving a project between stages by dragging and dropping.",
+      description: isMobile ? "The board view shows your projects organized by stages in columns." : "Try moving a project between stages by dragging and dropping to continue.",
       content: isMobile 
         ? "This visual workflow shows projects in different stages. On mobile devices, tap on a project to change its status instead of dragging."
-        : "You can drag projects between columns to update their status. Try moving at least one project to a different stage to continue.",
+        : "The board view is perfect for visual project management. You can drag projects between columns to update their status. Try moving at least one project to a different stage to continue the tutorial.",
       canProceed: isMobile || hasMovedProject,
-      disabledTooltip: isMobile ? undefined : "Try dragging a project from one column to another to continue",
+      requiresAction: !isMobile,
+      disabledTooltip: isMobile ? undefined : "Drag a project from one column to another to continue",
       mode: "floating" as const,
     },
     {
       id: 3,
       title: "List View",
       description: "Click the 'List' tab above to see detailed project information in a table format.",
-      content: "The list view is perfect when you need to see detailed information about multiple projects at once, with sorting and filtering capabilities.",
+      content: "The list view is perfect when you need to see detailed information about multiple projects at once, with sorting and filtering capabilities. This view is great for analyzing project data and making informed decisions.",
       canProceed: hasClickedListView,
+      requiresAction: true,
       disabledTooltip: "Click on the List tab above to continue",
       mode: "floating" as const,
     },
@@ -479,16 +508,40 @@ const AllProjects = () => {
       id: 4,
       title: "Archived Projects",
       description: "Click the 'Archived' tab above to see how completed projects are organized.",
-      content: "The archived view keeps your workspace clean by separating completed projects. This helps you focus on active work while keeping past projects accessible.",
+      content: "The archived view keeps your workspace clean by separating completed projects from active ones. This helps you focus on current work while keeping past projects accessible for reference and portfolio building.",
       canProceed: hasClickedArchivedView,
+      requiresAction: true,
       disabledTooltip: "Click on the Archived tab above to continue",
       mode: "floating" as const,
     },
     {
       id: 5,
       title: "You're All Set!",
-      description: "You now understand all three project views and how to use them effectively.",
-      content: "Use Board view for visual project management, List view for detailed analysis, and Archived view to review completed work. You're ready to continue setting up your photography business!",
+      description: "Congratulations! You now understand all three project views and how to use them effectively.",
+      content: <div className="space-y-4">
+        <p className="text-sm text-muted-foreground">
+          You've successfully learned how to navigate between different project views:
+        </p>
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0"></div>
+            <span className="text-sm">Board view for visual project management</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0"></div>
+            <span className="text-sm">List view for detailed analysis</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0"></div>
+            <span className="text-sm">Archived view to review completed work</span>
+          </div>
+        </div>
+        <div className="p-3 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg">
+          <p className="text-sm text-green-700 dark:text-green-300">
+            🎉 You're ready to continue setting up your photography business and schedule your first session!
+          </p>
+        </div>
+      </div>,
       canProceed: true,
       mode: "modal" as const,
     }
@@ -615,6 +668,7 @@ const AllProjects = () => {
             projects={projects} 
             projectStatuses={projectStatuses}
             onProjectsChange={fetchProjects}
+            onProjectUpdate={handleProjectUpdate}
           />
         ) : (
           <div className="h-full overflow-y-auto p-4 sm:p-6">

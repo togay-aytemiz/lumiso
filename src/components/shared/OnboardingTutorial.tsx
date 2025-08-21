@@ -40,12 +40,15 @@ export function OnboardingTutorial({
 
   // Update step index when initialStepIndex changes - force update every time
   useEffect(() => {
-    console.log('🔍 OnboardingTutorial: initialStepIndex changed from', currentStepIndex, 'to:', initialStepIndex);
-    if (initialStepIndex !== currentStepIndex) {
-      setCurrentStepIndex(initialStepIndex);
-      console.log('✅ OnboardingTutorial: Updated internal step to:', initialStepIndex);
-    }
-  }, [initialStepIndex, currentStepIndex]);
+    console.log('🔍 OnboardingTutorial: initialStepIndex changed to:', initialStepIndex, 'current internal step:', currentStepIndex);
+    setCurrentStepIndex(initialStepIndex);
+    console.log('✅ OnboardingTutorial: Set internal step to:', initialStepIndex);
+  }, [initialStepIndex]);
+
+  // Debug step changes
+  useEffect(() => {
+    console.log('🎯 OnboardingTutorial: Internal step changed to:', currentStepIndex, 'step data:', steps[currentStepIndex]);
+  }, [currentStepIndex, steps]);
 
   // Navigate to step route if specified and pass tutorial params
   useEffect(() => {
@@ -60,11 +63,18 @@ export function OnboardingTutorial({
   }, [currentStep?.route, currentStepIndex, navigate]);
 
   const handleNext = () => {
-    console.log('🔄 OnboardingTutorial: handleNext called', 'currentStepIndex:', currentStepIndex, 'isLastStep:', isLastStep);
+    console.log('🔄 OnboardingTutorial: handleNext called', 'currentStepIndex:', currentStepIndex, 'isLastStep:', isLastStep, 'steps.length:', steps.length);
+    console.log('🔄 Current step:', steps[currentStepIndex]);
     if (isLastStep) {
+      console.log('🏁 OnboardingTutorial: Completing tutorial');
       onComplete();
     } else {
-      setCurrentStepIndex(prev => prev + 1);
+      console.log('➡️ OnboardingTutorial: Advancing from step', currentStepIndex, 'to', currentStepIndex + 1);
+      setCurrentStepIndex(prev => {
+        const newStep = prev + 1;
+        console.log('✅ OnboardingTutorial: Step updated to', newStep);
+        return newStep;
+      });
     }
   };
 

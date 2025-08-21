@@ -81,7 +81,7 @@ export function OnboardingTutorial({
       <TooltipProvider>
         <div className="fixed z-50 max-w-sm 
                        right-2 top-36 
-                       sm:right-4 sm:top-48 
+                       sm:right-4 sm:top-56 
                        md:right-6 md:top-20">
           <Card className="shadow-2xl border-2">
             <CardHeader className="pb-3">

@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowLeft, ArrowUpDown, ArrowUp, ArrowDown, Plus } from "lucide-react";
+import { ArrowLeft, ArrowUpDown, ArrowUp, ArrowDown, Plus, Users, FileText, Filter } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import AddLeadDialog from "@/components/AddLeadDialog";
 import { useNavigate } from "react-router-dom";
@@ -15,6 +15,8 @@ import { formatDate } from "@/lib/utils";
 import GlobalSearch from "@/components/GlobalSearch";
 import { PageHeader, PageHeaderSearch, PageHeaderActions } from "@/components/ui/page-header";
 import { AssigneeAvatars } from "@/components/AssigneeAvatars";
+import { OnboardingTutorial, TutorialStep } from "@/components/shared/OnboardingTutorial";
+import { useOnboarding } from "@/hooks/useOnboarding";
 
 interface Lead {
   id: string;
@@ -40,7 +42,109 @@ const AllLeads = () => {
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [leadStatuses, setLeadStatuses] = useState<any[]>([]);
   const [addLeadDialogOpen, setAddLeadDialogOpen] = useState(false);
+  const [showTutorial, setShowTutorial] = useState(false);
   const navigate = useNavigate();
+  const { completedCount, completeStep } = useOnboarding();
+
+  const leadsTutorialSteps: TutorialStep[] = [
+    {
+      id: 1,
+      title: "Welcome to Lead Management",
+      description: "This is your leads dashboard where you can track and manage all your potential clients. Here's what you can do:",
+      content: (
+        <div className="space-y-4">
+          <div className="flex items-start gap-3">
+            <Users className="w-5 h-5 text-primary mt-0.5" />
+            <div>
+              <h4 className="font-medium">Track Leads</h4>
+              <p className="text-sm text-muted-foreground">View all your leads in one organized table with contact information and status.</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-3">
+            <Filter className="w-5 h-5 text-primary mt-0.5" />
+            <div>
+              <h4 className="font-medium">Filter & Sort</h4>
+              <p className="text-sm text-muted-foreground">Filter by lead status and sort by any column to find exactly what you need.</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-3">
+            <FileText className="w-5 h-5 text-primary mt-0.5" />
+            <div>
+              <h4 className="font-medium">Manage Details</h4>
+              <p className="text-sm text-muted-foreground">Click on any lead to view detailed information, add notes, and track progress.</p>
+            </div>
+          </div>
+        </div>
+      ),
+      mode: "modal",
+      canProceed: true
+    },
+    {
+      id: 2,
+      title: "Add Your First Lead",
+      description: "Now let's add your first lead! Click the 'Add Lead' button in the top right corner to get started.",
+      content: (
+        <div className="text-center">
+          <p className="text-muted-foreground">Look for the button with the plus icon in the top right area of the page.</p>
+        </div>
+      ),
+      mode: "floating",
+      canProceed: true
+    },
+    {
+      id: 3,
+      title: "Great Job! 🎉",
+      description: "You've successfully learned about lead management! Your leads are now organized and ready to be converted into projects.",
+      content: (
+        <div className="text-center space-y-4">
+          <div className="text-6xl">✅</div>
+          <p className="text-muted-foreground">
+            You now know how to manage leads effectively. Next, we'll show you how to convert leads into projects and manage your workflow.
+          </p>
+        </div>
+      ),
+      mode: "modal",
+      canProceed: true
+    }
+  ];
+
+  // Check if we should show tutorial when component mounts
+  useEffect(() => {
+    if (completedCount === 1) {
+      setShowTutorial(true);
+    }
+  }, [completedCount]);
+
+  // Handle tutorial completion
+  const handleTutorialComplete = async () => {
+    try {
+      await completeStep();
+      setShowTutorial(false);
+      navigate('/getting-started');
+    } catch (error) {
+      console.error('Error completing tutorial:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save progress. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleTutorialExit = () => {
+    setShowTutorial(false);
+  };
+
+  // Handle add lead dialog close - show tutorial step 3
+  const handleAddLeadDialogChange = (open: boolean) => {
+    setAddLeadDialogOpen(open);
+    if (!open && showTutorial) {
+      // Small delay to ensure smooth transition
+      setTimeout(() => {
+        setShowTutorial(true);
+      }, 100);
+    }
+  };
 
   useEffect(() => {
     fetchLeads();
@@ -326,7 +430,14 @@ const AllLeads = () => {
       <AddLeadDialog 
         onLeadAdded={fetchLeads} 
         open={addLeadDialogOpen}
-        onOpenChange={setAddLeadDialogOpen}
+        onOpenChange={handleAddLeadDialogChange}
+      />
+
+      <OnboardingTutorial
+        steps={leadsTutorialSteps}
+        isVisible={showTutorial}
+        onComplete={handleTutorialComplete}
+        onExit={handleTutorialExit}
       />
     </div>
   );

@@ -1,6 +1,6 @@
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { LayoutDashboard, Users, Calendar, Bell, BarChart3, FolderOpen, CreditCard, CalendarDays, CalendarRange, Lock, BookOpen } from "lucide-react";
+import { LayoutDashboard, Users, Calendar, Bell, BarChart3, FolderOpen, CreditCard, CalendarDays, CalendarRange, Lock, BookOpen, Settings } from "lucide-react";
 import logo from "@/assets/Logo.png";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -23,6 +23,7 @@ const navigationItems = [
   { title: "Projects", url: "/projects", icon: FolderOpen, requiredStep: 3 },
   { title: "Analytics", url: "/analytics", icon: BarChart3, requiredStep: 5 },
   { title: "Payments", url: "/payments", icon: CreditCard, requiredStep: 5 },
+  { title: "Settings", url: "/settings", icon: Settings, requiredStep: 5 },
 ];
 
 const bookingItems = [

@@ -23,8 +23,18 @@ const ProtectedRoute = () => {
     return <Navigate to="/auth" replace />;
   }
 
-  // Redirect to getting-started if user is in guided setup mode and not already there
-  if (inGuidedSetup && location.pathname !== "/getting-started") {
+  // Allow access to onboarding step pages when in guided setup
+  const onboardingStepPaths = [
+    "/getting-started",
+    "/settings/profile", 
+    "/leads",
+    "/projects", 
+    "/calendar",
+    "/settings/services"
+  ];
+  
+  // Redirect to getting-started if user is in guided setup mode and not on an allowed page
+  if (inGuidedSetup && !onboardingStepPaths.some(path => location.pathname.startsWith(path))) {
     return <Navigate to="/getting-started" replace />;
   }
 

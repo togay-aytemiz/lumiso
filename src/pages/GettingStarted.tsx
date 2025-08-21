@@ -166,10 +166,7 @@ const GettingStarted = () => {
                     </div>
                   </div>
                   <Button 
-                    onClick={() => {
-                      console.log('Button clicked! Navigating to:', currentStep.route);
-                      window.location.href = currentStep.route;
-                    }}
+                    onClick={() => navigate(currentStep.route)}
                     className="w-full sm:w-auto"
                     size="lg"
                   >
@@ -204,10 +201,7 @@ const GettingStarted = () => {
                     <Button 
                       size="lg" 
                       className="min-h-[48px]"
-                      onClick={() => {
-                        console.log('Button clicked! Navigating to:', currentStep.route);
-                        window.location.href = currentStep.route;
-                      }}
+                      onClick={() => navigate(currentStep.route)}
                     >
                       {currentStep.buttonText}
                       <ArrowRight className="w-4 h-4 ml-2" />

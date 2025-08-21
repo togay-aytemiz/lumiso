@@ -35,6 +35,11 @@ export function OnboardingTutorial({
   const currentStep = steps[currentStepIndex];
   const isLastStep = currentStepIndex === steps.length - 1;
 
+  // Update step index when initialStepIndex changes
+  useEffect(() => {
+    setCurrentStepIndex(initialStepIndex);
+  }, [initialStepIndex]);
+
   // Navigate to step route if specified and pass tutorial params
   useEffect(() => {
     if (currentStep?.route && currentStepIndex > 0) {
@@ -68,9 +73,9 @@ export function OnboardingTutorial({
   const isFloatingMode = currentStep.mode === 'floating';
 
   if (isFloatingMode) {
-    // Floating mode - positioned at top right, non-blocking
+    // Floating mode - positioned at top right, non-blocking, below header
     return (
-      <div className="fixed top-6 right-6 z-50 max-w-sm">
+      <div className="fixed top-20 right-6 z-50 max-w-sm">
         <Card className="shadow-2xl border-2">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
@@ -80,9 +85,9 @@ export function OnboardingTutorial({
                 </div>
                 <div>
                   <CardTitle className="text-sm">{currentStep.title}</CardTitle>
-                  <CardDescription className="text-xs text-muted-foreground">
-                    {currentStep.id <= 2 ? `Step ${currentStep.id} of 2` : `Step ${currentStepIndex + 1} of ${steps.length}`}
-                  </CardDescription>
+                <CardDescription className="text-xs text-muted-foreground">
+                  Step {currentStepIndex + 1} of {steps.length}
+                </CardDescription>
                 </div>
               </div>
               <Button
@@ -116,15 +121,16 @@ export function OnboardingTutorial({
               >
                 Exit Tutorial
               </Button>
-              <Button
-                size="sm"
-                onClick={handleNext}
-                disabled={!currentStep.canProceed}
-                className="flex-1 text-xs"
-              >
-                {isLastStep ? "Complete" : "Next"}
-                <ArrowRight className="ml-1 h-3 w-3" />
-              </Button>
+              {currentStep.canProceed && (
+                <Button
+                  size="sm"
+                  onClick={handleNext}
+                  className="flex-1 text-xs"
+                >
+                  {isLastStep ? "Complete" : "Next"}
+                  <ArrowRight className="ml-1 h-3 w-3" />
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -147,7 +153,7 @@ export function OnboardingTutorial({
                   {typeof currentStep.title === 'string' ? currentStep.title : currentStep.title}
                 </CardTitle>
                 <CardDescription className="text-sm text-muted-foreground">
-                  {currentStep.id <= 2 ? `Step ${currentStep.id} of 2` : `Step ${currentStepIndex + 1} of ${steps.length}`}
+                  Step {currentStepIndex + 1} of {steps.length}
                 </CardDescription>
               </div>
             </div>

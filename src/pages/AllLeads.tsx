@@ -43,6 +43,7 @@ const AllLeads = () => {
   const [leadStatuses, setLeadStatuses] = useState<any[]>([]);
   const [addLeadDialogOpen, setAddLeadDialogOpen] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
+  const [currentTutorialStep, setCurrentTutorialStep] = useState(0);
   const navigate = useNavigate();
   const { completedCount, completeStep } = useOnboarding();
 
@@ -89,20 +90,13 @@ const AllLeads = () => {
         </div>
       ),
       mode: "floating",
-      canProceed: true
+      canProceed: false // No Next button - user must click Add Lead
     },
     {
       id: 3,
-      title: "Great Job! 🎉",
-      description: "You've successfully learned about lead management! Your leads are now organized and ready to be converted into projects.",
-      content: (
-        <div className="text-center space-y-4">
-          <div className="text-6xl">✅</div>
-          <p className="text-muted-foreground">
-            You now know how to manage leads effectively. Next, we'll show you how to convert leads into projects and manage your workflow.
-          </p>
-        </div>
-      ),
+      title: "Excellent! Lead Management Complete 🎉",
+      description: "Congratulations! You've successfully learned about lead management. You're ready to move on to the next step of your photography CRM setup.",
+      content: null,
       mode: "modal",
       canProceed: true
     }
@@ -112,8 +106,17 @@ const AllLeads = () => {
   useEffect(() => {
     if (completedCount === 1) {
       setShowTutorial(true);
+      setCurrentTutorialStep(0); // Start from step 1
     }
   }, [completedCount]);
+
+  // Update tutorial step when needed
+  useEffect(() => {
+    if (showTutorial && !addLeadDialogOpen && currentTutorialStep === 1) {
+      // If we're on step 2 (floating) and dialog closes, move to step 3
+      setCurrentTutorialStep(2);
+    }
+  }, [addLeadDialogOpen, showTutorial, currentTutorialStep]);
 
   // Handle tutorial completion
   const handleTutorialComplete = async () => {
@@ -135,15 +138,10 @@ const AllLeads = () => {
     setShowTutorial(false);
   };
 
-  // Handle add lead dialog close - show tutorial step 3
+  // Handle add lead dialog close - advance to step 3 if we're on step 2
   const handleAddLeadDialogChange = (open: boolean) => {
     setAddLeadDialogOpen(open);
-    if (!open && showTutorial) {
-      // Small delay to ensure smooth transition
-      setTimeout(() => {
-        setShowTutorial(true);
-      }, 100);
-    }
+    // Tutorial step advancement is handled in useEffect
   };
 
   useEffect(() => {
@@ -438,6 +436,7 @@ const AllLeads = () => {
         isVisible={showTutorial}
         onComplete={handleTutorialComplete}
         onExit={handleTutorialExit}
+        initialStepIndex={currentTutorialStep}
       />
     </div>
   );

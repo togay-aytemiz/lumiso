@@ -312,10 +312,13 @@ const LeadDetail = () => {
 
   // Handle project clicked during tutorial
   const handleProjectClicked = () => {
+    console.log('🔍 handleProjectClicked called:', { showTutorial, currentTutorialStep, expectedStep: 2 });
     // If tutorial is active and we're on the project exploration step (Step 6 = index 2), just advance to final step immediately
     if (showTutorial && currentTutorialStep === 2) {
       console.log('🚀 Project modal closed! Showing congratulations modal');
       setCurrentTutorialStep(3); // Move to final congratulations step (Step 7)
+    } else {
+      console.log('❌ Not advancing tutorial - conditions not met');
     }
   };
 

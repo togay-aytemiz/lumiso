@@ -252,6 +252,7 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
         project={viewingProject}
         open={showViewDialog}
         onOpenChange={(open) => {
+          console.log('🔍 ViewProjectDialog onOpenChange:', { open, hasViewingProject: !!viewingProject, hasCallback: !!onProjectClicked });
           setShowViewDialog(open);
           // If tutorial is active and modal is closing (open = false), trigger callback
           if (!open && viewingProject && onProjectClicked) {

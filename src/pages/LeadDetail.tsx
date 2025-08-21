@@ -124,9 +124,40 @@ const LeadDetail = () => {
   const { completedCount, completeStep } = useOnboarding();
   const [showTutorial, setShowTutorial] = useState(false);
   const [currentTutorialStep, setCurrentTutorialStep] = useState(0);
+  const [hasProjects, setHasProjects] = useState(false);
 
-  // Tutorial steps for lead details
-  const leadDetailsTutorialSteps: TutorialStep[] = [
+  // Check if projects exist for this lead
+  useEffect(() => {
+    const checkProjects = async () => {
+      if (!lead?.id) return;
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        // Get user's active organization ID
+        const { data: organizationId } = await supabase.rpc('get_user_active_organization_id');
+        if (!organizationId) return;
+
+        const { data, error } = await supabase
+          .from("projects")
+          .select("id")
+          .eq("lead_id", lead.id)
+          .eq("organization_id", organizationId);
+
+        if (error) throw error;
+        const projectsExist = (data || []).length > 0;
+        setHasProjects(projectsExist);
+        console.log('🔍 Projects check:', { leadId: lead.id, projectsExist, projectCount: (data || []).length });
+      } catch (error) {
+        console.error("Error checking projects:", error);
+      }
+    };
+
+    checkProjects();
+  }, [lead?.id, activityRefreshKey]); // Re-check when activity refreshes (which happens after project creation)
+
+  // Dynamically update tutorial steps based on hasProjects
+  const leadDetailsTutorialSteps: TutorialStep[] = useMemo(() => [
     {
       id: 4,
       title: "Welcome to Lead Details! 📋",
@@ -162,11 +193,12 @@ const LeadDetail = () => {
     {
       id: 5,
       title: "Create Your First Project",
-      description: "Great! Now let's turn this lead into a project! Look for the 'Add Project' button and click it to start creating your first project. Once you've created it, click Next to continue.",
+      description: "Click the 'Add Project' button to convert this lead into a project.",
       content: null,
       mode: "floating",
-      canProceed: true, // Make Next button always work
-      requiresAction: false // Remove the disabled state
+      canProceed: hasProjects, // Dynamic based on projects existence
+      requiresAction: !hasProjects, // Only require action if no projects
+      disabledTooltip: hasProjects ? undefined : "Create a project first to continue"
     },
     {
       id: 6,
@@ -208,7 +240,7 @@ const LeadDetail = () => {
       mode: "modal",
       canProceed: true
     }
-  ];
+  ], [hasProjects]);
 
   // Check if we should show tutorial when component mounts
   useEffect(() => {

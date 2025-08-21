@@ -261,10 +261,10 @@ const LeadDetail = () => {
 
   // Handle project clicked during tutorial
   const handleProjectClicked = () => {
-    // If tutorial is active and we're on the project exploration step, advance to final step
-    if (showTutorial && currentTutorialStep === 1) {
-      console.log('🚀 Project clicked! Advancing tutorial from step', currentTutorialStep, 'to final step');
-      setCurrentTutorialStep(2); // Move to final congratulations step
+    // If tutorial is active and we're on the project exploration step (Step 6 = index 2), advance to final step
+    if (showTutorial && currentTutorialStep === 2) {
+      console.log('🚀 Project clicked! Advancing tutorial from step', currentTutorialStep, 'to final step (Step 7 = index 3)');
+      setCurrentTutorialStep(3); // Move to final congratulations step (Step 7)
     }
   };
 
@@ -619,16 +619,16 @@ const LeadDetail = () => {
     fetchSessions();
     setActivityRefreshKey(prev => prev + 1);
     
-    // If tutorial is active and we're on the project creation step, advance to project exploration step
-    if (showTutorial && currentTutorialStep === 0) {
-      console.log('🚀 Project created! Advancing tutorial from step', currentTutorialStep, 'to step 1');
+    // If tutorial is active and we're on the project creation step (Step 5 = index 1), advance to project exploration step
+    if (showTutorial && currentTutorialStep === 1) {
+      console.log('🚀 Project created! Advancing tutorial from step', currentTutorialStep, 'to step 2 (Step 6)');
       // Use setTimeout to ensure state update happens after component re-render
       setTimeout(() => {
-        setCurrentTutorialStep(1); // Move to "Now Explore Your Project" step
-        console.log('✅ Tutorial step updated to:', 1);
+        setCurrentTutorialStep(2); // Move to "Now Explore Your Project" step (Step 6)
+        console.log('✅ Tutorial step updated to:', 2);
       }, 100);
     } else {
-      console.log('🔍 Not advancing tutorial. showTutorial:', showTutorial, 'currentTutorialStep:', currentTutorialStep);
+      console.log('🔍 Not advancing tutorial. showTutorial:', showTutorial, 'currentTutorialStep:', currentTutorialStep, '(expected: 1 for Step 5)');
     }
   };
   const handleActivityUpdated = () => {

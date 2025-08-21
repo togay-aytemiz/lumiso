@@ -313,11 +313,14 @@ const LeadDetail = () => {
 
   // Handle project clicked during tutorial
   const handleProjectClicked = () => {
-    console.log('🔍 handleProjectClicked called - Project modal closed, enabling Next button');
-    // When project modal closes during tutorial, enable the Next button on Step 6
+    console.log('🔍 handleProjectClicked called - Starting timer for Step 7');
+    // If tutorial is active and we're on Step 6 (index 2), wait a few seconds then advance to Step 7
     if (showTutorial && currentTutorialStep === 2) {
-      setHasViewedProject(true);
-      console.log('✅ hasViewedProject set to true - Next button should now be enabled');
+      console.log('⏱️ Setting 3-second timer to advance to Step 7');
+      setTimeout(() => {
+        console.log('🚀 Timer complete! Advancing to Step 7 (congratulations modal)');
+        setCurrentTutorialStep(3); // Move to final congratulations step (Step 7)
+      }, 3000); // 3 second delay
     }
   };
 

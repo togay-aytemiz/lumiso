@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Upload, Loader2, X, Building, Settings } from "lucide-react";
+import { Upload, Loader2, X, Building, Settings, CheckCircle } from "lucide-react";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -29,6 +29,37 @@ export default function General() {
   const isInTutorial = searchParams.get('tutorial') === 'true';
   const currentStep = parseInt(searchParams.get('step') || '0');
   const [showTutorial, setShowTutorial] = useState(isInTutorial && (currentStep === 3 || currentStep === 4));
+  
+  // Create tutorial steps for General page (steps 3 and 4 from Profile)
+  const tutorialSteps: TutorialStep[] = [
+    {
+      id: 3,
+      title: "Set Up Your Business Information",
+      description: "Add your business name here. This will appear on client communications and invoices.",
+      content: (
+        <div className="space-y-2 text-sm text-muted-foreground">
+          <p>• Business Name: Required for professional communications</p>
+          <p>• Used in client emails, invoices, and contracts</p>
+          <p>• Can be changed later in General settings</p>
+        </div>
+      ),
+      canProceed: !!settings?.photography_business_name?.trim(),
+      mode: 'floating'
+    },
+    {
+      id: 4,
+      title: "Profile Setup Complete!",
+      description: "Congratulations! You've successfully set up your profile and business information. You're ready to move on to the next step of your photography CRM setup.",
+      content: (
+        <div className="flex items-center gap-2 text-green-600">
+          <CheckCircle className="h-5 w-5" />
+          <span className="font-medium">Profile setup completed successfully!</span>
+        </div>
+      ),
+      canProceed: true,
+      mode: 'modal'
+    }
+  ];
 
   // Branding section state
   const brandingSection = useSettingsCategorySection({
@@ -88,47 +119,10 @@ export default function General() {
     }
   }, [settings]);
 
-  // Tutorial steps
-  const tutorialSteps: TutorialStep[] = [
-    {
-      id: 1,
-      title: "Set Up Your Business Information",
-      description: "Let's add your business name and branding. This information will appear on client communications and invoices.",
-      content: (
-        <div className="space-y-3">
-          <div className="flex items-center gap-2 text-sm">
-            <Building className="h-4 w-4 text-primary" />
-            <span>Add your photography business name</span>
-          </div>
-          <div className="flex items-center gap-2 text-sm">
-            <Settings className="h-4 w-4 text-primary" />
-            <span>Upload your logo and set brand colors</span>
-          </div>
-        </div>
-      ),
-      canProceed: true,
-      mode: 'modal'
-    },
-    {
-      id: 2,
-      title: "Enter Your Business Name",
-      description: "Please enter your photography business name below. This is required to continue and will be used in all client communications.",
-      content: (
-        <div className="space-y-2 text-sm text-muted-foreground">
-          <p>• Required for professional communications</p>
-          <p>• Appears on invoices, contracts, and emails</p>
-          <p>• Can be changed later if needed</p>
-        </div>
-      ),
-      canProceed: !!brandingSection.values.companyName?.trim(),
-      mode: 'floating'
-    }
-  ];
-
+  // Remove the old hardcoded tutorial steps - using dynamic ones above
   const handleTutorialComplete = async () => {
     console.log('✅ General tutorial complete - returning to Profile step 4');
-    // Tutorial complete, return to profile tutorial or getting started
-    setShowTutorial(false);
+    // Navigate back to profile with step 4
     navigate('/settings/profile?tutorial=true&step=4');
   };
 
@@ -441,6 +435,7 @@ export default function General() {
         onComplete={handleTutorialComplete}
         onExit={handleTutorialExit}
         isVisible={showTutorial}
+        initialStepIndex={currentStep === 3 ? 0 : 1}
       />
     </SettingsPageWrapper>
   );

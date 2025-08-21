@@ -39,7 +39,11 @@ export function OnboardingTutorial({
   useEffect(() => {
     if (currentStep?.route && currentStepIndex > 0) {
       console.log('🚀 OnboardingTutorial: Navigating to step route:', currentStep.route, 'stepIndex:', currentStepIndex);
-      navigate(currentStep.route);
+      // Pass tutorial state through URL parameters
+      const params = new URLSearchParams();
+      params.set('tutorial', 'true');
+      params.set('step', (currentStepIndex + 1).toString());
+      navigate(`${currentStep.route}?${params.toString()}`);
     }
   }, [currentStep?.route, currentStepIndex, navigate]);
 

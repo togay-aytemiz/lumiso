@@ -28,8 +28,8 @@ All colors MUST be HSL.
     --muted: 220 14% 96%;
     --muted-foreground: 215.4 16.3% 46.9%; /* #6B7280 */
 
-    --accent: 220 14% 96%;
-    --accent-foreground: 217.2 32.6% 17.5%;
+    --accent: 172 71% 41%;          /* Teal/Mint brand #1EB29F */
+    --accent-foreground: 0 0% 100%;  /* white */
 
     --destructive: 0 84% 59%;        /* #EF4444 */
     --destructive-foreground: 0 0% 100%;

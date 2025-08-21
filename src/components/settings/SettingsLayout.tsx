@@ -40,14 +40,14 @@ const organizationSettingsItems = [
 export default function SettingsLayout() {
   const location = useLocation();
   const { hasCategoryChanges } = useSettingsContext();
-  const { inGuidedSetup, completedSteps } = useOnboarding();
+  const { inGuidedSetup, completedCount } = useOnboarding();
   
   const isItemLocked = (requiredStep: number, itemHref: string) => {
     // Don't lock the current active page during onboarding
     if (inGuidedSetup && location.pathname === itemHref) {
       return false;
     }
-    return inGuidedSetup && completedSteps.length < requiredStep;
+    return inGuidedSetup && completedCount < (requiredStep - 1);
   };
 
   const handleLockedItemClick = (e: React.MouseEvent, requiredStep: number, itemHref: string) => {

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";  
 import { HelpCircle, ArrowRight, CheckCircle } from "lucide-react";
 import { SampleDataModal } from "@/components/SampleDataModal";
 import { RestartGuidedModeButton } from "@/components/RestartGuidedModeButton";
@@ -57,26 +57,14 @@ const GettingStarted = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [showSampleDataModal, setShowSampleDataModal] = useState(false);
-  const { currentStep: currentStepNumber, completedSteps, loading } = useOnboarding();
+  const { completedCount, loading } = useOnboarding();
   
-  console.log('🎯 GettingStarted: Current onboarding state:', {
-    currentStepNumber,
-    completedSteps,
-    loading,
-    completedStepsLength: completedSteps.length,
-  });
-  
-  // Completed all steps check
-  const allStepsCompleted = completedSteps.length >= onboardingSteps.length;
-  
-  // Current step to do (if not all completed)
-  const currentStep = allStepsCompleted ? null : onboardingSteps.find(step => step.id === currentStepNumber);
-  
-  // Next step after current
-  const nextStep = currentStep ? onboardingSteps.find(step => step.id === currentStepNumber + 1) : null;
+  // Simple logic
+  const allCompleted = completedCount >= 5;
+  const currentStep = allCompleted ? null : onboardingSteps[completedCount];
+  const nextStep = currentStep ? onboardingSteps[completedCount + 1] : null;
 
   const handleStepAction = (step: any) => {
-    // Add tutorial parameter for step 1 (profile setup)
     if (step.id === 1) {
       navigate(`${step.route}?tutorial=true`);
     } else {
@@ -84,31 +72,34 @@ const GettingStarted = () => {
     }
   };
 
+  if (loading) {
+    return <div className="min-h-screen bg-background flex items-center justify-center">Loading...</div>;
+  }
+
   return (
     <div className="min-h-screen bg-background">
-      {/* Custom Header for Guidance Mode */}
       <div className="bg-card border-b border-border">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center py-6 gap-6">
-          <div className="text-center sm:text-left">
-            <h1 className="text-xl sm:text-2xl font-bold text-foreground">Welcome to Lumiso! 🎉</h1>
-            <p className="text-sm text-muted-foreground mt-2">Let's set up your photography business step by step</p>
-          </div>
-          <div className="flex items-center justify-center sm:justify-end gap-3">
-            <Button variant="outline" size="sm">
-              <HelpCircle className="w-4 h-4 mr-2" />
-              Need Help?
-            </Button>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => setShowSampleDataModal(true)}
-            >
-              Skip Setup
-            </Button>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center py-6 gap-6">
+            <div className="text-center sm:text-left">
+              <h1 className="text-xl sm:text-2xl font-bold text-foreground">Welcome to Lumiso! 🎉</h1>
+              <p className="text-sm text-muted-foreground mt-2">Let's set up your photography business step by step</p>
+            </div>
+            <div className="flex items-center justify-center sm:justify-end gap-3">
+              <Button variant="outline" size="sm">
+                <HelpCircle className="w-4 h-4 mr-2" />
+                Need Help?
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setShowSampleDataModal(true)}
+              >
+                Skip Setup
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
       </div>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 pb-safe">
@@ -118,7 +109,7 @@ const GettingStarted = () => {
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
                 Setup Progress
-                {completedSteps.length > 0 && (
+                {completedCount > 0 && (
                   <CheckCircle className="w-5 h-5 text-green-500" />
                 )}
               </CardTitle>
@@ -126,9 +117,9 @@ const GettingStarted = () => {
             <CardContent>
               <div className="space-y-4">
                 <GuidedStepProgress 
-                  currentValue={completedSteps.length}
-                  targetValue={completedSteps.length}
-                  totalSteps={onboardingSteps.length}
+                  currentValue={completedCount}
+                  targetValue={completedCount}
+                  totalSteps={5}
                   animate={true}
                 />
                 <div className="flex flex-col gap-2 text-sm text-muted-foreground">
@@ -146,77 +137,31 @@ const GettingStarted = () => {
           </Card>
         </div>
 
-        {/* Learning Path Header */}
-        <div className="mb-6 sm:mb-8 text-center">
-          <h2 className="text-xl sm:text-2xl font-semibold text-foreground mb-2">
-            Your Learning Path
-          </h2>
-          <p className="text-sm sm:text-base text-muted-foreground">
-            Each step teaches you how to use Lumiso naturally.
-          </p>
-        </div>
-
-        {/* Current Task Display */}
+        {/* Current Task */}
         {currentStep && (
           <div className="mb-6 sm:mb-8">
             <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-accent/5">
               <CardContent className="p-4 md:p-6">
-                {/* Mobile Layout */}
-                <div className="block md:hidden">
-                  <div className="flex items-start gap-4 mb-4">
-                    <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground text-lg font-bold flex-shrink-0">
-                      {currentStep.id}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <CardTitle className="text-lg mb-2">
-                        {currentStep.title}
-                      </CardTitle>
-                      <CardDescription className="text-sm text-muted-foreground">
-                        {currentStep.description}
-                      </CardDescription>
-                      <div className="mt-3">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground">
-                          {currentStep.duration}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <Button 
-                    onClick={() => handleStepAction(currentStep)}
-                    className="w-full sm:w-auto"
-                    size="lg"
-                  >
-                    {currentStep.buttonText}
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </div>
-
-                {/* Desktop Layout */}
-                <div className="hidden md:flex md:items-center md:justify-between">
-                  <div className="flex-1 min-w-0">
-                    {/* Title Row with Circle, Title, and Duration Badge */}
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
                     <div className="flex items-center gap-4 mb-3">
-                      <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground text-lg font-bold flex-shrink-0">
+                      <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground text-lg font-bold">
                         {currentStep.id}
                       </div>
                       <CardTitle className="text-xl">
                         {currentStep.title}
                       </CardTitle>
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground ml-2">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground">
                         {currentStep.duration}
                       </span>
                     </div>
-                    {/* Description */}
                     <CardDescription className="text-base text-muted-foreground ml-14">
                       {currentStep.description}
                     </CardDescription>
                   </div>
-                  
-                  {/* CTA Button on Right */}
-                  <div className="ml-8 flex-shrink-0">
+                  <div className="ml-8">
                     <Button 
                       size="lg" 
-                      className="min-h-[48px]"
                       onClick={() => handleStepAction(currentStep)}
                     >
                       {currentStep.buttonText}
@@ -229,80 +174,21 @@ const GettingStarted = () => {
           </div>
         )}
 
-        {/* Next Step Preview */}
-        {nextStep && (
-          <div className="mb-6 sm:mb-8">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="h-px bg-border flex-1"></div>
-              <span className="text-xs text-muted-foreground uppercase tracking-wide px-3">Coming Next</span>
-              <div className="h-px bg-border flex-1"></div>
-            </div>
-            
-            <Card className="opacity-50 pointer-events-none grayscale-[0.3]">
-              <CardContent className="p-4 md:p-6">
-                {/* Mobile Layout */}
-                <div className="block md:hidden">
-                  <div className="flex items-start gap-4">
-                    <div className="flex items-center justify-center w-10 h-10 rounded-full border-2 border-muted-foreground/30 text-muted-foreground text-lg font-bold flex-shrink-0">
-                      {nextStep.id}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <CardTitle className="text-lg mb-2 text-muted-foreground">
-                        {nextStep.title}
-                      </CardTitle>
-                      <CardDescription className="text-sm text-muted-foreground/80">
-                        {nextStep.description}
-                      </CardDescription>
-                      <div className="mt-3">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted/50 text-muted-foreground/80">
-                          {nextStep.duration}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Desktop Layout */}
-                <div className="hidden md:block">
-                  {/* Title Row with Circle, Title, and Duration Badge */}
-                  <div className="flex items-center gap-4 mb-3">
-                    <div className="flex items-center justify-center w-10 h-10 rounded-full border-2 border-muted-foreground/30 text-muted-foreground text-lg font-bold flex-shrink-0">
-                      {nextStep.id}
-                    </div>
-                    <CardTitle className="text-xl text-muted-foreground">
-                      {nextStep.title}
-                    </CardTitle>
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted/50 text-muted-foreground/80 ml-2">
-                      {nextStep.duration}
-                    </span>
-                  </div>
-                  {/* Description */}
-                  <CardDescription className="text-base text-muted-foreground/80 ml-14">
-                    {nextStep.description}
-                  </CardDescription>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
-
-        {/* Completion State */}
-        {allStepsCompleted && (
+        {/* Completion */}
+        {allCompleted && (
           <div className="text-center">
             <Card className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950/20">
               <CardContent className="py-12">
-                <div className="mb-4">
-                  <CheckCircle className="w-16 h-16 text-green-500 mx-auto" />
-                </div>
-                <h2 className="text-xl sm:text-2xl font-bold text-green-700 dark:text-green-400 mb-2">
+                <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
+                <h2 className="text-2xl font-bold text-green-700 dark:text-green-400 mb-2">
                   Congratulations! 🎉
                 </h2>
-                <p className="text-green-600 dark:text-green-300 mb-6 text-sm sm:text-base">
-                  You've completed the guided setup! Your photography CRM is ready to use.
+                <p className="text-green-600 dark:text-green-300 mb-6">
+                  You've completed the guided setup!
                 </p>
                 <Button 
                   size="lg" 
-                  className="bg-green-600 hover:bg-green-700 min-h-[48px]"
+                  className="bg-green-600 hover:bg-green-700"
                   onClick={() => navigate('/')}
                 >
                   Go to Dashboard
@@ -314,13 +200,11 @@ const GettingStarted = () => {
         )}
       </div>
 
-      {/* Sample Data Modal */}
       <SampleDataModal 
         open={showSampleDataModal}
         onClose={() => setShowSampleDataModal(false)}
       />
 
-      {/* Developer Override Buttons */}
       <RestartGuidedModeButton />
       <ExitGuidanceModeButton />
     </div>

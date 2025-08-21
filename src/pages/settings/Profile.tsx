@@ -32,7 +32,7 @@ export default function Profile() {
   const { profile, loading: profileLoading, uploading, updateProfile, uploadProfilePhoto, deleteProfilePhoto } = useProfile();
   const { workingHours, loading: workingHoursLoading, updateWorkingHour } = useWorkingHours();
   const { activeOrganization } = useOrganization();
-  const { advanceStep } = useOnboarding();
+  const { completeStep } = useOnboarding();
   const { toast } = useToast();
 
   // Check if we're in tutorial mode
@@ -236,16 +236,15 @@ export default function Profile() {
 
   const handleTutorialComplete = async () => {
     console.log('✅ Profile tutorial complete');
-    // Mark step 1 as completed and advance to step 2
-    await advanceStep(2);
+    // Mark step as completed
+    await completeStep();
     setShowTutorial(false);
     navigate('/getting-started');
   };
 
   const handleTutorialExit = async () => {
     console.log('❌ Profile tutorial exit');
-    // Mark step 1 as completed (skipped) and advance to step 2
-    await advanceStep(2);
+    // Just exit without completing
     setShowTutorial(false);
     navigate('/getting-started');
   };

@@ -38,7 +38,7 @@ export function AppSidebar() {
   const navigate = useNavigate();
   const currentPath = location.pathname;
   const isMobile = useIsMobile();
-  const { inGuidedSetup, completedSteps } = useOnboarding();
+  const { inGuidedSetup, completedCount } = useOnboarding();
 
   const isActive = (path: string) => {
     if (path === "/") {
@@ -53,7 +53,7 @@ export function AppSidebar() {
   const [bookingsOpen, setBookingsOpen] = useState(isBookingsChildActive);
   
   const isItemLocked = (requiredStep: number) => {
-    return inGuidedSetup && completedSteps.length < requiredStep;
+    return inGuidedSetup && completedCount < requiredStep;
   };
 
   const handleLockedItemClick = (e: React.MouseEvent, requiredStep: number) => {

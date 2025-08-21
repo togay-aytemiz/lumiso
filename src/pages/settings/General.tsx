@@ -23,7 +23,7 @@ export default function General() {
   const [isLogoModalOpen, setIsLogoModalOpen] = useState(false);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { advanceStep } = useOnboarding();
+  const { completeStep } = useOnboarding();
 
   // Check if we're in tutorial mode from Profile onboarding
   const isInTutorial = searchParams.get('tutorial') === 'true';
@@ -147,22 +147,20 @@ export default function General() {
 
   // Remove the old hardcoded tutorial steps - using dynamic ones above
   const handleTutorialComplete = async () => {
-    console.log('✅ General tutorial complete - advancing to step 2');
+    console.log('✅ General tutorial complete');
     try {
-      // Mark step 1 as completed and advance to step 2
-      await advanceStep(1);
-      console.log('✅ Step 1 marked as completed, navigating to getting started');
+      await completeStep();
+      console.log('✅ Step completed, navigating to getting started');
       setShowTutorial(false);
       navigate('/getting-started');
     } catch (error) {
-      console.error('❌ Error advancing step:', error);
+      console.error('❌ Error completing step:', error);
     }
   };
 
   const handleTutorialExit = async () => {
     console.log('❌ General tutorial exit - going to getting started');
-    // Exit tutorial, mark step 1 as completed and return to getting started
-    await advanceStep(2);
+    // Exit tutorial, just navigate back without completing
     setShowTutorial(false);
     navigate('/getting-started');
   };

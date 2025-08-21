@@ -1041,6 +1041,7 @@ export type Database = {
         Row: {
           active_organization_id: string | null
           completed_steps: Json | null
+          completed_steps_count: number | null
           created_at: string
           current_step: number | null
           date_format: string | null
@@ -1067,6 +1068,7 @@ export type Database = {
         Insert: {
           active_organization_id?: string | null
           completed_steps?: Json | null
+          completed_steps_count?: number | null
           created_at?: string
           current_step?: number | null
           date_format?: string | null
@@ -1093,6 +1095,7 @@ export type Database = {
         Update: {
           active_organization_id?: string | null
           completed_steps?: Json | null
+          completed_steps_count?: number | null
           created_at?: string
           current_step?: number | null
           date_format?: string | null
@@ -1163,6 +1166,10 @@ export type Database = {
       check_email_not_in_any_organization: {
         Args: { email_to_check: string }
         Returns: boolean
+      }
+      complete_onboarding_step: {
+        Args: { user_uuid: string }
+        Returns: undefined
       }
       ensure_default_lead_statuses_for_org: {
         Args: { org_id: string; user_uuid: string }

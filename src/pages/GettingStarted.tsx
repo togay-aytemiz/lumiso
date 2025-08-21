@@ -200,23 +200,15 @@ const GettingStarted = () => {
                       <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground text-lg font-bold animate-pulse">
                         {currentStep.id}
                       </div>
-                      <div className="flex-1">
+                      <div className="flex items-center gap-3">
                         <CardTitle className="text-xl">
                           {currentStep.title}
                         </CardTitle>
-                        {/* Show final step indicator */}
-                        {currentStep.id === 6 && (
-                          <div className="mt-1">
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                              Final Step
-                            </span>
-                          </div>
-                        )}
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground">
+                          <Clock className="w-3 h-3 mr-1" />
+                          {currentStep.duration}
+                        </span>
                       </div>
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground">
-                        <Clock className="w-3 h-3 mr-1" />
-                        {currentStep.duration}
-                      </span>
                     </div>
                     <CardDescription className="text-base text-muted-foreground ml-14">
                       {currentStep.description}

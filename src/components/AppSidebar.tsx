@@ -71,59 +71,28 @@ export function AppSidebar() {
   const isItemLocked = (requiredStep: number, allowedInStep?: number[], itemUrl?: string) => {
     // During guided setup, handle locking differently
     if (inGuidedSetup && !loading) {
-      const currentRoute = location.pathname;
-      
       console.log('🔍 Checking lock for item:', itemUrl, {
         inGuidedSetup,
-        currentPath: location.pathname
+        currentPath: location.pathname,
+        completedCount
       });
       
-      // When on getting-started page, lock ALL sidebar items
-      if (currentRoute === '/getting-started') {
-        console.log('🔒 Getting started page - locking ALL sidebar items');
-        return true; // Lock everything when on getting-started page
+      // When in guided setup, lock ALL sidebar items except when on specific allowed pages
+      const currentRoute = location.pathname;
+      
+      // If we're NOT on getting-started page, allow specific items based on current step
+      if (currentRoute !== '/getting-started') {
+        const currentStep = completedCount + 1;
+        
+        if (currentStep === 1 && itemUrl?.startsWith('/settings')) return false;
+        if (currentStep === 2 && itemUrl?.startsWith('/leads')) return false;
+        if (currentStep === 3 && itemUrl?.startsWith('/projects')) return false;
+        if (currentStep === 4 && itemUrl?.startsWith('/projects')) return false;
+        if (currentStep === 5 && (itemUrl?.startsWith('/leads') || itemUrl?.startsWith('/calendar'))) return false;
+        if (currentStep === 6 && itemUrl?.startsWith('/settings')) return false;
       }
       
-      // When NOT on getting-started page, check specific step permissions
-      const currentStep = completedCount + 1;
-      
-      if (currentStep === 1) { // Step 1: Profile setup
-        const allowedUrls = ['/settings'];
-        const isAllowed = itemUrl && allowedUrls.some(url => itemUrl.startsWith(url));
-        return !isAllowed;
-      }
-      
-      if (currentStep === 2) { // Step 2: Create lead
-        const allowedUrls = ['/leads'];
-        const isAllowed = itemUrl && allowedUrls.some(url => itemUrl.startsWith(url));
-        return !isAllowed;
-      }
-      
-      if (currentStep === 3) { // Step 3: Create project
-        const allowedUrls = ['/projects'];
-        const isAllowed = itemUrl && allowedUrls.some(url => itemUrl.startsWith(url));
-        return !isAllowed;
-      }
-      
-      if (currentStep === 4) { // Step 4: Explore projects
-        const allowedUrls = ['/projects'];
-        const isAllowed = itemUrl && allowedUrls.some(url => itemUrl.startsWith(url));
-        return !isAllowed;
-      }
-      
-      if (currentStep === 5) { // Step 5: Schedule session
-        const allowedUrls = ['/leads', '/calendar'];
-        const isAllowed = itemUrl && allowedUrls.some(url => itemUrl.startsWith(url));
-        return !isAllowed;
-      }
-      
-      if (currentStep === 6) { // Step 6: Configure packages
-        const allowedUrls = ['/settings'];
-        const isAllowed = itemUrl && allowedUrls.some(url => itemUrl.startsWith(url));
-        return !isAllowed;
-      }
-      
-      // Lock everything else during guided setup
+      // Otherwise, lock everything during guided setup
       console.log('🔒 Item locked during guided setup');
       return true;
     }

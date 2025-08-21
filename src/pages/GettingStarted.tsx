@@ -194,29 +194,41 @@ const GettingStarted = () => {
           <div className={`mb-6 sm:mb-8 ${isAnimating ? 'animate-fade-in' : ''}`}>
             <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-accent/5">
               <CardContent className="p-4 md:p-6">
-                <div className="flex items-center justify-between">
+                {/* Mobile-first responsive layout */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div className="flex-1">
-                    <div className="flex items-center gap-4 mb-3">
-                      <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground text-lg font-bold animate-pulse">
-                        {currentStep.id}
+                    {/* Mobile: Stack step number and title vertically */}
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground text-lg font-bold animate-pulse flex-shrink-0">
+                          {currentStep.id}
+                        </div>
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:gap-3 flex-1">
+                          <CardTitle className="text-lg sm:text-xl leading-tight">
+                            {currentStep.title}
+                          </CardTitle>
+                          {/* Show final step indicator */}
+                          {currentStep.id === 6 && (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 mt-1 sm:mt-0">
+                              Final Step
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      <CardTitle className="text-xl">
-                        {currentStep.title}
-                      </CardTitle>
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground w-fit">
                         <Clock className="w-3 h-3 mr-1" />
                         {currentStep.duration}
                       </span>
                     </div>
-                    <CardDescription className="text-base text-muted-foreground ml-14">
+                    <CardDescription className="text-sm sm:text-base text-muted-foreground pl-0 sm:pl-13">
                       {currentStep.description}
                     </CardDescription>
                   </div>
-                  <div className="ml-8">
+                  <div className="flex-shrink-0">
                     <Button 
                       size="lg" 
                       onClick={() => handleStepAction(currentStep)}
-                      className="hover-scale"
+                      className="hover-scale w-full sm:w-auto"
                     >
                       {currentStep.buttonText}
                       <ArrowRight className="w-4 h-4 ml-2" />
@@ -239,30 +251,33 @@ const GettingStarted = () => {
             
             <Card className="opacity-50 pointer-events-none grayscale-[0.3] hover:opacity-60 transition-opacity">
               <CardContent className="p-4 md:p-6">
-                <div className="flex items-center justify-between">
+                {/* Mobile-first responsive layout for next step preview */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div className="flex-1">
-                    <div className="flex items-center gap-4 mb-3">
-                      <div className="flex items-center justify-center w-10 h-10 rounded-full border-2 border-muted-foreground/30 text-muted-foreground text-lg font-bold">
-                        {nextStep.id}
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center justify-center w-10 h-10 rounded-full border-2 border-muted-foreground/30 text-muted-foreground text-lg font-bold flex-shrink-0">
+                          {nextStep.id}
+                        </div>
+                        <CardTitle className="text-lg sm:text-xl text-muted-foreground leading-tight">
+                          {nextStep.title}
+                        </CardTitle>
                       </div>
-                      <CardTitle className="text-xl text-muted-foreground">
-                        {nextStep.title}
-                      </CardTitle>
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted/50 text-muted-foreground/80">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted/50 text-muted-foreground/80 w-fit">
                         <Clock className="w-3 h-3 mr-1" />
                         {nextStep.duration}
                       </span>
                     </div>
-                    <CardDescription className="text-base text-muted-foreground/80 ml-14">
+                    <CardDescription className="text-sm sm:text-base text-muted-foreground/80 pl-0 sm:pl-13">
                       {nextStep.description}
                     </CardDescription>
                   </div>
-                  <div className="ml-8">
+                  <div className="flex-shrink-0">
                     <Button 
                       size="lg"
                       variant="outline"
                       disabled
-                      className="opacity-50"
+                      className="opacity-50 w-full sm:w-auto"
                     >
                       {nextStep.buttonText}
                       <ArrowRight className="w-4 h-4 ml-2" />

@@ -193,12 +193,6 @@ export function OnboardingTutorial({
             {currentStep.description}
           </p>
 
-          {currentStep.content && (
-            <div className="p-4 bg-muted/30 rounded-lg">
-              {currentStep.content}
-            </div>
-          )}
-
           <div className="flex flex-col sm:flex-row gap-3 pt-4">
             {/* Only show Exit Tutorial button if not the last step */}
             {!isLastStep && (

@@ -1,7 +1,6 @@
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation, Outlet } from "react-router-dom";
 import { User, Building, Bell, CreditCard, Users, Shield, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ReactNode } from "react";
 
 const settingsNavItems = [
   { title: "Profile", href: "/settings/profile", icon: User, testId: "profile-section" },
@@ -13,11 +12,7 @@ const settingsNavItems = [
   { title: "Danger Zone", href: "/settings/danger", icon: Trash2, testId: "danger-section" },
 ];
 
-interface SettingsLayoutProps {
-  children: ReactNode;
-}
-
-export default function SettingsLayout({ children }: SettingsLayoutProps) {
+export default function SettingsLayout() {
   const location = useLocation();
 
   return (
@@ -55,7 +50,7 @@ export default function SettingsLayout({ children }: SettingsLayoutProps) {
 
       {/* Settings Content */}
       <div className="flex-1">
-        {children}
+        <Outlet />
       </div>
     </div>
   );

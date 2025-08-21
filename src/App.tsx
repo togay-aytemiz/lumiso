@@ -64,9 +64,9 @@ const App = () => (
               <Route path="analytics" element={<Analytics />} />
               <Route path="payments" element={<Payments />} />
               <Route path="settings" element={<SettingsLayout />}>
-                <Route index element={<Navigate to="/settings/general" replace />} />
-                <Route path="general" element={<GeneralSettings />} />
+                <Route index element={<Navigate to="/settings/profile" replace />} />
                 <Route path="profile" element={<ProfileSettings />} />
+                <Route path="general" element={<GeneralSettings />} />
                 <Route path="team" element={<TeamSettings />} />
                 <Route path="notifications" element={<NotificationsSettings />} />
                 <Route path="projects" element={<ProjectsSettings />} />

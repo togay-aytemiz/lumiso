@@ -79,7 +79,10 @@ export function OnboardingTutorial({
     // Floating mode - positioned to avoid blocking the add button on mobile/tablet
     return (
       <TooltipProvider>
-        <div className="fixed top-20 right-6 z-50 max-w-sm md:right-6 sm:right-4 right-2 sm:top-24 md:top-20">
+        <div className="fixed z-50 max-w-sm 
+                       right-2 top-32 
+                       sm:right-4 sm:top-36 
+                       md:right-6 md:top-20">
           <Card className="shadow-2xl border-2">
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">

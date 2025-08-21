@@ -194,67 +194,39 @@ const GettingStarted = () => {
           <div className={`mb-6 sm:mb-8 ${isAnimating ? 'animate-fade-in' : ''}`}>
             <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-accent/5">
               <CardContent className="p-4 md:p-6">
-                {/* Desktop: Step number on separate row, mobile unchanged */}
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="flex items-center justify-between">
                   <div className="flex-1">
-                    {/* Desktop: Step number separate row */}
-                    <div className="hidden sm:flex items-center gap-3 mb-4">
-                      <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground text-lg font-bold animate-pulse flex-shrink-0">
+                    <div className="flex items-center gap-4 mb-3">
+                      <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground text-lg font-bold animate-pulse">
                         {currentStep.id}
                       </div>
-                      {/* Show final step indicator */}
-                      {currentStep.id === 6 && (
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                          Final Step
-                        </span>
-                      )}
+                      <div className="flex-1">
+                        <CardTitle className="text-xl">
+                          {currentStep.title}
+                        </CardTitle>
+                        {/* Show final step indicator */}
+                        {currentStep.id === 6 && (
+                          <div className="mt-1">
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                              Final Step
+                            </span>
+                          </div>
+                        )}
+                      </div>
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground">
                         <Clock className="w-3 h-3 mr-1" />
                         {currentStep.duration}
                       </span>
                     </div>
-                    
-                    {/* Desktop: Title and description */}
-                    <div className="hidden sm:block space-y-2">
-                      <CardTitle className="text-xl leading-tight">
-                        {currentStep.title}
-                      </CardTitle>
-                      <CardDescription className="text-base text-muted-foreground">
-                        {currentStep.description}
-                      </CardDescription>
-                    </div>
-
-                    {/* Mobile: Keep original layout */}
-                    <div className="sm:hidden">
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground text-lg font-bold animate-pulse flex-shrink-0">
-                          {currentStep.id}
-                        </div>
-                        <div className="flex flex-col flex-1">
-                          <CardTitle className="text-lg leading-tight">
-                            {currentStep.title}
-                          </CardTitle>
-                          {currentStep.id === 6 && (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 mt-1 w-fit">
-                              Final Step
-                            </span>
-                          )}
-                        </div>
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground">
-                          <Clock className="w-3 h-3 mr-1" />
-                          {currentStep.duration}
-                        </span>
-                      </div>
-                      <CardDescription className="text-sm text-muted-foreground">
-                        {currentStep.description}
-                      </CardDescription>
-                    </div>
+                    <CardDescription className="text-base text-muted-foreground ml-14">
+                      {currentStep.description}
+                    </CardDescription>
                   </div>
-                  <div className="flex-shrink-0">
+                  <div className="ml-8">
                     <Button 
                       size="lg" 
                       onClick={() => handleStepAction(currentStep)}
-                      className="hover-scale w-full sm:w-auto"
+                      className="hover-scale"
                     >
                       {currentStep.buttonText}
                       <ArrowRight className="w-4 h-4 ml-2" />

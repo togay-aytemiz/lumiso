@@ -71,23 +71,22 @@ export function AppSidebar() {
   const isItemLocked = (requiredStep: number, allowedInStep?: number[], itemUrl?: string) => {
     // During guided setup, handle locking differently
     if (inGuidedSetup && !loading) {
-      const currentStep = completedCount + 1; // Current step is completedCount + 1
       const currentRoute = location.pathname;
       
-      console.log('🔍 Checking lock for item:', itemUrl, 'requiredStep:', requiredStep, {
-        allowedInStep,
-        currentStep,
+      console.log('🔍 Checking lock for item:', itemUrl, {
         inGuidedSetup,
         currentPath: location.pathname
       });
       
-      // When on getting-started page, lock ALL sidebar items except Getting Started
+      // When on getting-started page, lock ALL sidebar items
       if (currentRoute === '/getting-started') {
         console.log('🔒 Getting started page - locking ALL sidebar items');
         return true; // Lock everything when on getting-started page
       }
       
       // When NOT on getting-started page, check specific step permissions
+      const currentStep = completedCount + 1;
+      
       if (currentStep === 1) { // Step 1: Profile setup
         const allowedUrls = ['/settings'];
         const isAllowed = itemUrl && allowedUrls.some(url => itemUrl.startsWith(url));
@@ -392,7 +391,7 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="p-4 mt-auto shrink-0">
-        {!inGuidedSetup && (
+        {!inGuidedSetup && !location.pathname.startsWith('/getting-started') && (
           <div className="flex justify-start">
             <UserMenu mode={isMobile ? "mobile" : "desktop"} />
           </div>

@@ -38,11 +38,14 @@ export function OnboardingTutorial({
   const currentStep = steps[currentStepIndex];
   const isLastStep = currentStepIndex === steps.length - 1;
 
-  // Update step index when initialStepIndex changes - use effect with proper dependency
+  // Update step index when initialStepIndex changes - force update every time
   useEffect(() => {
-    console.log('🔍 OnboardingTutorial: initialStepIndex changed to:', initialStepIndex);
-    setCurrentStepIndex(initialStepIndex);
-  }, [initialStepIndex]);
+    console.log('🔍 OnboardingTutorial: initialStepIndex changed from', currentStepIndex, 'to:', initialStepIndex);
+    if (initialStepIndex !== currentStepIndex) {
+      setCurrentStepIndex(initialStepIndex);
+      console.log('✅ OnboardingTutorial: Updated internal step to:', initialStepIndex);
+    }
+  }, [initialStepIndex, currentStepIndex]);
 
   // Navigate to step route if specified and pass tutorial params
   useEffect(() => {

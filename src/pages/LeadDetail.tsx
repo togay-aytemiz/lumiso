@@ -172,7 +172,7 @@ const LeadDetail = () => {
     {
       id: 6,
       title: "Perfect! Now Explore Your Project Features",
-      description: "Excellent! You've created your first project. Click on the project card below to see all the powerful features - manage payments and track billing, schedule and manage photography sessions, create and organize todo tasks, and much more!",
+      description: "Excellent! Click on the project card below to explore all the powerful project management features:",
       content: (
         <div className="text-sm space-y-2">
           <div className="flex items-center gap-2">

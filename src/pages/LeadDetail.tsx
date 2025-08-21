@@ -191,11 +191,28 @@ const LeadDetail = () => {
     const continueTutorial = location.state?.continueTutorial;
     const tutorialStep = location.state?.tutorialStep;
     
-    if (continueTutorial && tutorialStep) {
+    console.log('🔍 LeadDetail tutorial check:', { 
+      continueTutorial, 
+      tutorialStep, 
+      locationState: location.state,
+      completedCount,
+      pathname: location.pathname 
+    });
+    
+    // Check if we should show tutorial either from navigation state OR onboarding progress
+    const shouldShowFromState = continueTutorial && tutorialStep;
+    const shouldShowFromProgress = completedCount === 1; // User completed first step, now on leads
+    
+    if (shouldShowFromState) {
+      console.log('🚀 Starting lead details tutorial from navigation state at step:', tutorialStep);
       setShowTutorial(true);
       setCurrentTutorialStep(tutorialStep - 4); // Convert to 0-based index for our steps array
+    } else if (shouldShowFromProgress) {
+      console.log('🚀 Starting lead details tutorial from onboarding progress');
+      setShowTutorial(true);
+      setCurrentTutorialStep(0); // Start with first lead details step
     }
-  }, [location.state]);
+  }, [location.state?.continueTutorial, location.state?.tutorialStep, completedCount]);
 
   // Handle tutorial completion
   const handleTutorialComplete = async () => {

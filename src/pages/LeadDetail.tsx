@@ -116,12 +116,17 @@ const LeadDetail = () => {
       setActivityRefreshKey(prev => prev + 1);
     }
   });
-
-  const { hasPermission, canEditLead } = usePermissions();
+  const {
+    hasPermission,
+    canEditLead
+  } = usePermissions();
   const [userCanEdit, setUserCanEdit] = useState(false);
 
   // Tutorial state management
-  const { completedCount, completeStep } = useOnboarding();
+  const {
+    completedCount,
+    completeStep
+  } = useOnboarding();
   const [showTutorial, setShowTutorial] = useState(false);
   const [currentTutorialStep, setCurrentTutorialStep] = useState(0);
   const [hasProjects, setHasProjects] = useState(false);
@@ -132,39 +137,43 @@ const LeadDetail = () => {
     const checkProjects = async () => {
       if (!lead?.id) return;
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const {
+          data: {
+            user
+          }
+        } = await supabase.auth.getUser();
         if (!user) return;
 
         // Get user's active organization ID
-        const { data: organizationId } = await supabase.rpc('get_user_active_organization_id');
+        const {
+          data: organizationId
+        } = await supabase.rpc('get_user_active_organization_id');
         if (!organizationId) return;
-
-        const { data, error } = await supabase
-          .from("projects")
-          .select("id")
-          .eq("lead_id", lead.id)
-          .eq("organization_id", organizationId);
-
+        const {
+          data,
+          error
+        } = await supabase.from("projects").select("id").eq("lead_id", lead.id).eq("organization_id", organizationId);
         if (error) throw error;
         const projectsExist = (data || []).length > 0;
         setHasProjects(projectsExist);
-        console.log('🔍 Projects check:', { leadId: lead.id, projectsExist, projectCount: (data || []).length });
+        console.log('🔍 Projects check:', {
+          leadId: lead.id,
+          projectsExist,
+          projectCount: (data || []).length
+        });
       } catch (error) {
         console.error("Error checking projects:", error);
       }
     };
-
     checkProjects();
   }, [lead?.id, activityRefreshKey]); // Re-check when activity refreshes (which happens after project creation)
 
   // Dynamically update tutorial steps based on hasProjects
-  const leadDetailsTutorialSteps: TutorialStep[] = useMemo(() => [
-    {
-      id: 4,
-      title: "Welcome to Lead Details! 📋",
-      description: "This is where you manage all information about a specific lead. Let's explore what you can see and do here:",
-      content: (
-        <div className="space-y-4">
+  const leadDetailsTutorialSteps: TutorialStep[] = useMemo(() => [{
+    id: 4,
+    title: "Welcome to Lead Details! 📋",
+    description: "This is where you manage all information about a specific lead. Let's explore what you can see and do here:",
+    content: <div className="space-y-4">
           <div className="flex items-start gap-3">
             <User className="w-5 h-5 text-primary mt-0.5" />
             <div>
@@ -186,27 +195,25 @@ const LeadDetail = () => {
               <p className="text-sm text-muted-foreground">Track all interactions, changes, and progress over time.</p>
             </div>
           </div>
-        </div>
-      ),
-      mode: "modal",
-      canProceed: true
-    },
-    {
-      id: 5,
-      title: "Create Your First Project",
-      description: "Great! Now let's turn this lead into a project. Click the 'Add Project' button below to get started!",
-      content: null,
-      mode: "floating",
-      canProceed: hasProjects, // Dynamic based on projects existence
-      requiresAction: true, // Always require action for this step
-      disabledTooltip: "Create a project first to continue"
-    },
-    {
-      id: 6,
-      title: "Perfect! Now Explore Your Project Features",
-      description: "Excellent! Click on the project card below to explore all the powerful project management features:",
-      content: (
-        <div className="text-sm space-y-2">
+        </div>,
+    mode: "modal",
+    canProceed: true
+  }, {
+    id: 5,
+    title: "Create Your First Project",
+    description: "Great! Now let's turn this lead into a project. Click the 'Add Project' button below to get started!",
+    content: null,
+    mode: "floating",
+    canProceed: hasProjects,
+    // Dynamic based on projects existence
+    requiresAction: true,
+    // Always require action for this step
+    disabledTooltip: "Create a project first to continue"
+  }, {
+    id: 6,
+    title: "Perfect! Now Explore Your Project Features",
+    description: "Excellent! Click on the project card below to explore all the powerful project management features:",
+    content: <div className="text-sm space-y-2">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 bg-primary rounded-full"></span>
             <span>Track payments and billing</span>
@@ -219,46 +226,40 @@ const LeadDetail = () => {
             <span className="w-2 h-2 bg-primary rounded-full"></span>
             <span>Organize project todos and tasks</span>
           </div>
-        </div>
-      ),
-      mode: "floating",
-      canProceed: hasViewedProject, // Dynamic based on whether user viewed project
-      requiresAction: !hasViewedProject, // Only require action if hasn't viewed project
-      disabledTooltip: hasViewedProject ? undefined : "Click on your project to continue"
-    },
-    {
-      id: 7,
-      title: "🎉 Congratulations! Tutorial Complete!",
-      description: "Amazing work! You've mastered the fundamentals - from creating leads and converting them to projects, to managing client details and tracking progress. You're now equipped with everything you need to grow your photography business efficiently.",
-      content: (
-        <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-sm font-medium text-blue-800">
-            Remember, you can access all your projects anytime from the Projects page in the sidebar!
-          </p>
-        </div>
-      ),
-      mode: "modal",
-      canProceed: true
-    }
-  ], [hasProjects, hasViewedProject]);
+        </div>,
+    mode: "floating",
+    canProceed: hasViewedProject,
+    // Dynamic based on whether user viewed project
+    requiresAction: !hasViewedProject,
+    // Only require action if hasn't viewed project
+    disabledTooltip: hasViewedProject ? undefined : "Click on your project to continue"
+  }, {
+    id: 7,
+    title: "🎉 Congratulations! Tutorial Complete!",
+    description: "Amazing work! You've mastered the fundamentals - from creating leads and converting them to projects, to managing client details and tracking progress. You're now equipped with everything you need to grow your photography business efficiently.",
+    content: <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <p className="text-sm font-medium text-blue-800">You can access all your projects anytime from the Projects page in the sidebar!</p>
+        </div>,
+    mode: "modal",
+    canProceed: true
+  }], [hasProjects, hasViewedProject]);
 
   // Check if we should show tutorial when component mounts
   useEffect(() => {
     const continueTutorial = location.state?.continueTutorial;
     const tutorialStep = location.state?.tutorialStep;
-    
-    console.log('🔍 LeadDetail tutorial check:', { 
-      continueTutorial, 
-      tutorialStep, 
+    console.log('🔍 LeadDetail tutorial check:', {
+      continueTutorial,
+      tutorialStep,
       locationState: location.state,
       completedCount,
-      pathname: location.pathname 
+      pathname: location.pathname
     });
-    
+
     // Check if we should show tutorial either from navigation state OR onboarding progress
     const shouldShowFromState = continueTutorial && tutorialStep;
     const shouldShowFromProgress = completedCount === 1; // User completed first step, now on leads
-    
+
     if (shouldShowFromState) {
       console.log('🚀 Starting lead details tutorial from navigation state at step:', tutorialStep);
       setShowTutorial(true);
@@ -286,7 +287,6 @@ const LeadDetail = () => {
       });
     }
   };
-
   const handleTutorialExit = () => {
     setShowTutorial(false);
   };
@@ -426,17 +426,13 @@ const LeadDetail = () => {
       let filteredSessions = data || [];
       if (userId) {
         // Get user's active organization
-        const { data: organizationId } = await supabase.rpc('get_user_active_organization_id');
-
+        const {
+          data: organizationId
+        } = await supabase.rpc('get_user_active_organization_id');
         let archivedStatus = null;
         if (organizationId) {
           try {
-            const statusQuery = await supabase
-              .from('project_statuses')
-              .select('id')
-              .eq('organization_id', organizationId)
-              .ilike('name', 'archived')
-              .limit(1);
+            const statusQuery = await supabase.from('project_statuses').select('id').eq('organization_id', organizationId).ilike('name', 'archived').limit(1);
             archivedStatus = statusQuery.data?.[0] || null;
           } catch (err) {
             console.error('Error fetching archived status:', err);
@@ -647,7 +643,7 @@ const LeadDetail = () => {
     // Refresh sessions and activities when project changes (archive/restore should affect visibility)
     fetchSessions();
     setActivityRefreshKey(prev => prev + 1);
-    
+
     // If tutorial is active and we're on the project creation step (Step 5 = index 1), advance to project exploration step
     if (showTutorial && currentTutorialStep === 1) {
       console.log('🚀 Project created! Advancing tutorial from step', currentTutorialStep, 'to step 2 (Step 6)');
@@ -727,24 +723,17 @@ const LeadDetail = () => {
             
             {/* Assignees List - Mobile: separate row */}
             <div className="mt-3">
-              <AssigneesList
-                assignees={lead.assignees || []}
-                entityType="lead"
-                entityId={lead.id}
-                onUpdate={() => {
-                  fetchLead();
-                  setActivityRefreshKey(prev => prev + 1);
-                }}
-              />
+              <AssigneesList assignees={lead.assignees || []} entityType="lead" entityId={lead.id} onUpdate={() => {
+              fetchLead();
+              setActivityRefreshKey(prev => prev + 1);
+            }} />
             </div>
           </div>
           
           <div className="flex-shrink-0">
             {/* Header Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-              {hasPermission('create_sessions') && (
-                <ScheduleSessionDialog leadId={lead.id} leadName={lead.name} onSessionScheduled={handleSessionScheduled} disabled={sessions.some(s => s.status === 'planned')} disabledTooltip="A planned session already exists." />
-              )}
+              {hasPermission('create_sessions') && <ScheduleSessionDialog leadId={lead.id} leadName={lead.name} onSessionScheduled={handleSessionScheduled} disabled={sessions.some(s => s.status === 'planned')} disabledTooltip="A planned session already exists." />}
 
               {!settingsLoading && userSettings.show_quick_status_buttons && completedStatus && formData.status !== completedStatus.name && <Button onClick={handleMarkAsCompleted} disabled={isUpdating} className="bg-green-600 hover:bg-green-700 text-white h-10 w-full sm:w-auto" size="sm">
                   <CheckCircle className="h-4 w-4 mr-2" />
@@ -773,22 +762,15 @@ const LeadDetail = () => {
           <div className="flex items-center gap-4 flex-shrink-0">
             {/* Assignees List - Desktop: far right with stable container */}
             <div className="min-w-0 transition-all duration-300 ease-out transform">
-              <AssigneesList
-                assignees={lead.assignees || []}
-                entityType="lead"
-                entityId={lead.id}
-                onUpdate={() => {
-                  fetchLead();
-                  setActivityRefreshKey(prev => prev + 1);
-                }}
-              />
+              <AssigneesList assignees={lead.assignees || []} entityType="lead" entityId={lead.id} onUpdate={() => {
+              fetchLead();
+              setActivityRefreshKey(prev => prev + 1);
+            }} />
             </div>
             
             {/* Header Action Buttons - Desktop: stays in place */}
             <div className="flex items-center gap-3 flex-shrink-0">
-              {hasPermission('create_sessions') && (
-                <ScheduleSessionDialog leadId={lead.id} leadName={lead.name} onSessionScheduled={handleSessionScheduled} disabled={sessions.some(s => s.status === 'planned')} disabledTooltip="A planned session already exists." />
-              )}
+              {hasPermission('create_sessions') && <ScheduleSessionDialog leadId={lead.id} leadName={lead.name} onSessionScheduled={handleSessionScheduled} disabled={sessions.some(s => s.status === 'planned')} disabledTooltip="A planned session already exists." />}
 
               {!settingsLoading && userSettings.show_quick_status_buttons && completedStatus && formData.status !== completedStatus.name && <Button onClick={handleMarkAsCompleted} disabled={isUpdating} className="bg-green-600 hover:bg-green-700 text-white h-10" size="sm">
                   <CheckCircle className="h-4 w-4 mr-2" />
@@ -825,27 +807,25 @@ const LeadDetail = () => {
                   Created on {new Date(lead.created_at).toLocaleDateString('tr-TR')}
                 </CardDescription>
               </div>
-              {userCanEdit && (
-                <Button variant="ghost" size="sm" onClick={() => {
-                setFormData({
-                  name: lead.name || "",
-                  email: lead.email || "",
-                  phone: lead.phone || "",
-                  notes: lead.notes || "",
-                  status: lead.status || formData.status
-                });
-                setInitialFormData({
-                  name: lead.name || "",
-                  email: lead.email || "",
-                  phone: lead.phone || "",
-                  notes: lead.notes || "",
-                  status: lead.status || formData.status
-                });
-                setEditOpen(true);
-              }} aria-label="Edit lead information" className="absolute top-2 right-2 text-muted-foreground hover:text-foreground text-sm h-8 px-2">
+              {userCanEdit && <Button variant="ghost" size="sm" onClick={() => {
+              setFormData({
+                name: lead.name || "",
+                email: lead.email || "",
+                phone: lead.phone || "",
+                notes: lead.notes || "",
+                status: lead.status || formData.status
+              });
+              setInitialFormData({
+                name: lead.name || "",
+                email: lead.email || "",
+                phone: lead.phone || "",
+                notes: lead.notes || "",
+                status: lead.status || formData.status
+              });
+              setEditOpen(true);
+            }} aria-label="Edit lead information" className="absolute top-2 right-2 text-muted-foreground hover:text-foreground text-sm h-8 px-2">
                   Edit
-                </Button>
-              )}
+                </Button>}
             </CardHeader>
             <CardContent className="space-y-3">
               <ClientDetailsList name={lead.name} email={lead.email} phone={lead.phone} notes={lead.notes} showQuickActions />
@@ -861,35 +841,22 @@ const LeadDetail = () => {
 
         {/* Right column - Projects and Activity Section (75%) */}
         <div className="lg:col-span-3 space-y-6 min-w-0">
-          <ProjectsSection 
-            leadId={lead.id} 
-            leadName={lead.name} 
-            onProjectUpdated={handleProjectUpdated} 
-            onActivityUpdated={handleActivityUpdated}
-            onProjectClicked={handleProjectClicked}
-          />
+          <ProjectsSection leadId={lead.id} leadName={lead.name} onProjectUpdated={handleProjectUpdated} onActivityUpdated={handleActivityUpdated} onProjectClicked={handleProjectClicked} />
           <ActivitySection key={activityRefreshKey} leadId={lead.id} leadName={lead.name} />
 
           {/* Add Project Dialog */}
-          {hasPermission('create_projects') && (
-            <EnhancedProjectDialog 
-              defaultLeadId={lead.id}
-              onProjectCreated={() => {
-                handleProjectUpdated();
-                setShowAddProjectDialog(false);
-              }}
-            >
-              <Button 
-                onClick={() => setShowAddProjectDialog(true)}
-                style={{ display: showAddProjectDialog ? 'none' : 'inline-flex' }}
-              >
+          {hasPermission('create_projects') && <EnhancedProjectDialog defaultLeadId={lead.id} onProjectCreated={() => {
+          handleProjectUpdated();
+          setShowAddProjectDialog(false);
+        }}>
+              <Button onClick={() => setShowAddProjectDialog(true)} style={{
+            display: showAddProjectDialog ? 'none' : 'inline-flex'
+          }}>
                 Add Project
               </Button>
-            </EnhancedProjectDialog>
-          )}
+            </EnhancedProjectDialog>}
 
-          {hasPermission('delete_leads') && (
-            <div className="border border-destructive/20 bg-destructive/5 rounded-md p-4 max-w-full text-center">
+          {hasPermission('delete_leads') && <div className="border border-destructive/20 bg-destructive/5 rounded-md p-4 max-w-full text-center">
               <div className="space-y-3">
                 <Button variant="outline" onClick={() => setShowDeleteDialog(true)} className="w-full max-w-xs border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground">
                   Delete Lead
@@ -898,8 +865,7 @@ const LeadDetail = () => {
                   This will permanently delete the lead and ALL related data: projects, sessions, reminders/notes, payments, services, and activities.
                 </p>
               </div>
-            </div>
-          )}
+            </div>}
         </div>
       </div>
 
@@ -965,14 +931,7 @@ const LeadDetail = () => {
         </AlertDialogContent>
       </AlertDialog>
       
-      <OnboardingTutorial
-        key={`tutorial-${currentTutorialStep}`}
-        steps={leadDetailsTutorialSteps}
-        isVisible={showTutorial}
-        onComplete={handleTutorialComplete}
-        onExit={handleTutorialExit}
-        initialStepIndex={currentTutorialStep}
-      />
+      <OnboardingTutorial key={`tutorial-${currentTutorialStep}`} steps={leadDetailsTutorialSteps} isVisible={showTutorial} onComplete={handleTutorialComplete} onExit={handleTutorialExit} initialStepIndex={currentTutorialStep} />
     </div>;
 };
 export default LeadDetail;

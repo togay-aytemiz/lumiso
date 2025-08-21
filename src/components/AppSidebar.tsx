@@ -149,10 +149,6 @@ export function AppSidebar() {
             className="h-10 w-auto object-contain"
           />
         </div>
-        {/* Debug info - remove after fixing */}
-        <div className="text-xs text-muted-foreground mt-2 p-2 bg-muted/20 rounded">
-          Debug: inGuidedSetup={inGuidedSetup?.toString()}, count={completedCount}, step={completedCount + 1}, loading={loading?.toString()}
-        </div>
       </SidebarHeader>
 
       <SidebarContent className="px-3 flex-1 overflow-y-auto">

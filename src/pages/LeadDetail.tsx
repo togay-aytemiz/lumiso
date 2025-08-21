@@ -335,6 +335,16 @@ const LeadDetail = () => {
     }
   }, [location.state?.continueTutorial, location.state?.tutorialStep, location.state?.tutorialType, completedCount]);
 
+  // Auto-start scheduling tutorial when completedCount is 4 (after step 4, now on step 5)
+  useEffect(() => {
+    if (completedCount === 4 && !showTutorial && !location.state?.continueTutorial) {
+      console.log('🚀 Auto-starting scheduling tutorial for step 5');
+      setIsSchedulingTutorial(true);
+      setShowTutorial(true);
+      setCurrentTutorialStep(0); // Start with first scheduling step
+    }
+  }, [completedCount, showTutorial, location.state?.continueTutorial]);
+
   // Handle tutorial completion
   const handleTutorialComplete = async () => {
     try {
@@ -920,18 +930,6 @@ const LeadDetail = () => {
         <div className="lg:col-span-3 space-y-6 min-w-0">
           <ProjectsSection leadId={lead.id} leadName={lead.name} onProjectUpdated={handleProjectUpdated} onActivityUpdated={handleActivityUpdated} onProjectClicked={handleProjectClicked} />
           <ActivitySection key={activityRefreshKey} leadId={lead.id} leadName={lead.name} />
-
-          {/* Add Project Dialog */}
-          {hasPermission('create_projects') && <EnhancedProjectDialog defaultLeadId={lead.id} onProjectCreated={() => {
-          handleProjectUpdated();
-          setShowAddProjectDialog(false);
-        }}>
-              <Button onClick={() => setShowAddProjectDialog(true)} style={{
-            display: showAddProjectDialog ? 'none' : 'inline-flex'
-          }}>
-                Add Project
-              </Button>
-            </EnhancedProjectDialog>}
 
           {hasPermission('delete_leads') && <div className="border border-destructive/20 bg-destructive/5 rounded-md p-4 max-w-full text-center">
               <div className="space-y-3">

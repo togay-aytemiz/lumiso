@@ -28,8 +28,8 @@ export function BaseOnboardingModal({
   actions 
 }: BaseOnboardingModalProps) {
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto md:max-h-none md:h-auto h-full md:rounded-lg rounded-none">
+    <Dialog open={open}>
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto md:max-h-none md:h-auto h-full md:rounded-lg rounded-none" hideClose>
         <DialogHeader className="text-center space-y-4">
           <DialogTitle className="text-2xl font-bold text-primary">
             {title}
@@ -45,14 +45,14 @@ export function BaseOnboardingModal({
           </div>
         )}
 
-        <div className="flex flex-col sm:flex-row gap-4 pt-4 pb-8 sm:justify-center sm:gap-4">
+        <div className="flex flex-col gap-4 pt-4 pb-8">
           {actions.map((action, index) => (
             <Button
               key={index}
               onClick={action.onClick}
               variant={action.variant || "default"}
               disabled={action.disabled}
-              className="flex-1 sm:flex-initial sm:min-w-[140px] min-h-[44px]"
+              className="w-full min-h-[44px]"
             >
               {action.icon && <span className="mr-2">{action.icon}</span>}
               {action.label}

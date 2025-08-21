@@ -88,7 +88,7 @@ export function SampleDataModal({ open, onClose }: SampleDataModalProps) {
     {
       label: isLoading ? "Setting up..." : "Start with Sample Data",
       onClick: handleSkipWithSampleData,
-      variant: "default",
+      variant: "cta",
       disabled: isLoading,
       icon: isLoading ? (
         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />

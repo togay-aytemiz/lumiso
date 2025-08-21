@@ -92,11 +92,13 @@ const AllLeads = () => {
     },
     {
       id: 3,
-      title: "Excellent! Lead Management Complete 🎉",
-      description: "Congratulations! You've successfully learned about lead management. You're ready to move on to the next step of your photography CRM setup.",
+      title: "Great! Now Let's Explore Lead Details",
+      description: "Perfect! Now that you have a lead, let's see what you can do with it. Click on your lead in the table below to view its detailed information.",
       content: null,
-      mode: "modal",
-      canProceed: true
+      mode: "floating",
+      canProceed: false,
+      requiresAction: true,
+      disabledTooltip: "Click on your lead to continue"
     }
   ];
 
@@ -116,20 +118,10 @@ const AllLeads = () => {
     }
   }, [addLeadDialogOpen, showTutorial, currentTutorialStep]);
 
-  // Handle tutorial completion
-  const handleTutorialComplete = async () => {
-    try {
-      await completeStep();
-      setShowTutorial(false);
-      navigate('/getting-started');
-    } catch (error) {
-      console.error('Error completing tutorial:', error);
-      toast({
-        title: "Error",
-        description: "Failed to save progress. Please try again.",
-        variant: "destructive"
-      });
-    }
+  // Handle tutorial completion - don't complete the step yet, continue to lead details
+  const handleTutorialComplete = () => {
+    setShowTutorial(false);
+    // Don't call completeStep() yet - the lead details page will handle it
   };
 
   const handleTutorialExit = () => {
@@ -227,7 +219,13 @@ const AllLeads = () => {
   };
 
   const handleRowClick = (leadId: string) => {
-    navigate(`/leads/${leadId}`, { state: { from: 'all-leads' } });
+    // If we're in tutorial mode on step 3, pass tutorial context
+    const state: any = { from: 'all-leads' };
+    if (showTutorial && currentTutorialStep === 2) {
+      state.continueTutorial = true;
+      state.tutorialStep = 4; // Next step in lead details
+    }
+    navigate(`/leads/${leadId}`, { state });
   };
 
 

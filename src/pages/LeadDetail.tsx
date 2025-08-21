@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { ArrowLeft, Save, Calendar, Clock, FileText, CheckCircle } from "lucide-react";
+import { ArrowLeft, Save, Calendar, Clock, FileText, CheckCircle, FolderPlus, User, Activity } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import ClientDetailsList from "@/components/ClientDetailsList";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -27,6 +27,8 @@ import { formatDate, cn } from "@/lib/utils";
 import { useOrganizationQuickSettings } from "@/hooks/useOrganizationQuickSettings";
 import { useLeadStatusActions } from "@/hooks/useLeadStatusActions";
 import { usePermissions } from "@/hooks/usePermissions";
+import { OnboardingTutorial, TutorialStep } from "@/components/shared/OnboardingTutorial";
+import { useOnboarding } from "@/hooks/useOnboarding";
 interface Lead {
   id: string;
   name: string;
@@ -117,6 +119,103 @@ const LeadDetail = () => {
 
   const { hasPermission, canEditLead } = usePermissions();
   const [userCanEdit, setUserCanEdit] = useState(false);
+
+  // Tutorial state management
+  const { completedCount, completeStep } = useOnboarding();
+  const [showTutorial, setShowTutorial] = useState(false);
+  const [currentTutorialStep, setCurrentTutorialStep] = useState(0);
+
+  // Tutorial steps for lead details
+  const leadDetailsTutorialSteps: TutorialStep[] = [
+    {
+      id: 4,
+      title: "Welcome to Lead Details! 📋",
+      description: "This is where you manage all information about a specific lead. Let's explore what you can see and do here:",
+      content: (
+        <div className="space-y-4">
+          <div className="flex items-start gap-3">
+            <User className="w-5 h-5 text-primary mt-0.5" />
+            <div>
+              <h4 className="font-medium">Client Information</h4>
+              <p className="text-sm text-muted-foreground">View and edit contact details, notes, and lead status on the left side.</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-3">
+            <FolderPlus className="w-5 h-5 text-primary mt-0.5" />
+            <div>
+              <h4 className="font-medium">Projects Section</h4>
+              <p className="text-sm text-muted-foreground">This is where you'll convert leads into actual projects with timelines and deliverables.</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-3">
+            <Activity className="w-5 h-5 text-primary mt-0.5" />
+            <div>
+              <h4 className="font-medium">Activity Timeline</h4>
+              <p className="text-sm text-muted-foreground">Track all interactions, changes, and progress over time.</p>
+            </div>
+          </div>
+        </div>
+      ),
+      mode: "modal",
+      canProceed: true
+    },
+    {
+      id: 5,
+      title: "Create Your First Project",
+      description: "Now let's turn this lead into a project! Look for the 'Add Project' button and click it to start creating your first project.",
+      content: null,
+      mode: "floating",
+      canProceed: false,
+      requiresAction: true,
+      disabledTooltip: "Create a project to continue"
+    },
+    {
+      id: 6,
+      title: "Fantastic! Project Created Successfully 🎉",
+      description: "Excellent work! You've successfully learned how to manage leads and create projects. You're well on your way to mastering your photography CRM!",
+      content: (
+        <div className="text-center space-y-4">
+          <div className="text-lg">🎯</div>
+          <p className="text-sm text-muted-foreground">
+            You can now also access all your projects from the main Projects page in the sidebar. This gives you a complete overview of all your work.
+          </p>
+        </div>
+      ),
+      mode: "modal",
+      canProceed: true
+    }
+  ];
+
+  // Check if we should show tutorial when component mounts
+  useEffect(() => {
+    const continueTutorial = location.state?.continueTutorial;
+    const tutorialStep = location.state?.tutorialStep;
+    
+    if (continueTutorial && tutorialStep) {
+      setShowTutorial(true);
+      setCurrentTutorialStep(tutorialStep - 4); // Convert to 0-based index for our steps array
+    }
+  }, [location.state]);
+
+  // Handle tutorial completion
+  const handleTutorialComplete = async () => {
+    try {
+      await completeStep();
+      setShowTutorial(false);
+      navigate('/getting-started');
+    } catch (error) {
+      console.error('Error completing tutorial:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save progress. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleTutorialExit = () => {
+    setShowTutorial(false);
+  };
 
   // Check edit permissions when lead data loads
   useEffect(() => {
@@ -460,6 +559,11 @@ const LeadDetail = () => {
     // Refresh sessions and activities when project changes (archive/restore should affect visibility)
     fetchSessions();
     setActivityRefreshKey(prev => prev + 1);
+    
+    // If tutorial is active and we're on the project creation step, advance to final step
+    if (showTutorial && currentTutorialStep === 1) {
+      setCurrentTutorialStep(2);
+    }
   };
   const handleActivityUpdated = () => {
     // Force ActivitySection to refresh when activities are updated in project modal
@@ -759,6 +863,14 @@ const LeadDetail = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      
+      <OnboardingTutorial
+        steps={leadDetailsTutorialSteps}
+        isVisible={showTutorial}
+        onComplete={handleTutorialComplete}
+        onExit={handleTutorialExit}
+        initialStepIndex={currentTutorialStep}
+      />
     </div>;
 };
 export default LeadDetail;

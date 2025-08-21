@@ -67,14 +67,7 @@ const packagesSetupSteps: TutorialStep[] = [
     id: 4,
     title: "🎉 Packages Setup Complete!",
     description: "Excellent! You've successfully configured your photography packages and services. Your business is now ready to create professional proposals and manage bookings.",
-    content: (
-      <div className="space-y-3 text-center">
-        <div className="text-2xl">🎯</div>
-        <div className="text-sm text-muted-foreground">
-          You can always return to Settings → Packages & Services to make changes
-        </div>
-      </div>
-    ),
+    content: null, // Remove the content section
     canProceed: true,
     mode: 'modal'
   }
@@ -99,8 +92,8 @@ export default function Services() {
   const handleTutorialComplete = async () => {
     try {
       console.log('🎉 Packages tutorial completed');
-      setShowTutorial(false);
       await completeStep(); // Complete current step (step 6)
+      setShowTutorial(false);
       // Navigate back to getting started page to show completion
       window.location.href = '/getting-started';
     } catch (error) {

@@ -144,8 +144,17 @@ export function ProfileSetupWalkthrough() {
 
   // Start walkthrough when triggered
   useEffect(() => {
+    console.log('ProfileSetupWalkthrough: Checking conditions', {
+      location: location.pathname,
+      search: location.search,
+      inGuidedSetup,
+      currentStep,
+      walkthroughParam: new URLSearchParams(location.search).get('walkthrough')
+    });
+    
     const params = new URLSearchParams(location.search);
     if (params.get('walkthrough') === 'profile-setup' && inGuidedSetup && currentStep === 1) {
+      console.log('ProfileSetupWalkthrough: Starting walkthrough');
       setIsActive(true);
       addHighlights();
       
@@ -156,6 +165,8 @@ export function ProfileSetupWalkthrough() {
           (mobileNav as HTMLElement).style.display = 'block';
         }
       }
+    } else {
+      console.log('ProfileSetupWalkthrough: Conditions not met, not starting walkthrough');
     }
   }, [location.search, inGuidedSetup, currentStep, isMobile]);
 

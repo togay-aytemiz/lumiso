@@ -159,25 +159,41 @@ export function useOnboarding() {
   const advanceStep = async (stepNumber: number) => {
     if (!user) return;
 
+    console.log(`🚀 Advancing step ${stepNumber}...`);
+    
     try {
       const { error } = await supabase.rpc('advance_guided_step', {
         user_uuid: user.id,
         step_number: stepNumber
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ RPC Error:', error);
+        throw error;
+      }
+
+      console.log(`✅ RPC call successful for step ${stepNumber}`);
 
       // Refetch the updated state
-      const { data } = await supabase
+      const { data, error: fetchError } = await supabase
         .from('user_settings')
         .select('in_guided_setup, guided_setup_skipped, guidance_completed, current_step, completed_steps')
         .eq('user_id', user.id)
         .single();
 
+      if (fetchError) {
+        console.error('❌ Fetch Error:', fetchError);
+        throw fetchError;
+      }
+
+      console.log('📊 Updated state from DB:', data);
+
       if (data) {
         const completedStepsArray = Array.isArray(data.completed_steps) 
           ? (data.completed_steps as number[])
           : [];
+
+        console.log('📊 Completed steps array:', completedStepsArray);
 
         setState({
           inGuidedSetup: data.in_guided_setup || false,
@@ -187,9 +203,12 @@ export function useOnboarding() {
           completedSteps: completedStepsArray,
           loading: false
         });
+
+        console.log('✅ State updated successfully');
       }
     } catch (error) {
-      console.error('Error advancing guided step:', error);
+      console.error('❌ Error advancing guided step:', error);
+      throw error;
     }
   };
 

@@ -59,6 +59,14 @@ const GettingStarted = () => {
   const [showSampleDataModal, setShowSampleDataModal] = useState(false);
   const { currentStep: currentStepNumber, completedSteps, loading } = useOnboarding();
   
+  console.log('🎯 GettingStarted: Current onboarding state:', {
+    currentStepNumber,
+    completedSteps,
+    loading,
+    currentStep: onboardingSteps[currentStepNumber - 1]?.title,
+    nextStep: onboardingSteps[currentStepNumber]?.title
+  });
+  
   const currentStepIndex = currentStepNumber - 1; // Convert to 0-based index
   const currentStep = onboardingSteps[currentStepIndex];
   const nextStep = onboardingSteps[currentStepIndex + 1];

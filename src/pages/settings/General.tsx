@@ -148,10 +148,15 @@ export default function General() {
   // Remove the old hardcoded tutorial steps - using dynamic ones above
   const handleTutorialComplete = async () => {
     console.log('✅ General tutorial complete - advancing to step 2');
-    // Mark step 1 as completed and advance to step 2
-    await advanceStep(1); // Complete step 1 first
-    setShowTutorial(false);
-    navigate('/getting-started');
+    try {
+      // Mark step 1 as completed and advance to step 2
+      await advanceStep(1);
+      console.log('✅ Step 1 marked as completed, navigating to getting started');
+      setShowTutorial(false);
+      navigate('/getting-started');
+    } catch (error) {
+      console.error('❌ Error advancing step:', error);
+    }
   };
 
   const handleTutorialExit = async () => {

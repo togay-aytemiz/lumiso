@@ -74,14 +74,14 @@ export default function General() {
     },
     {
       id: 5,
-      title: "Business Setup Complete!",
-      description: "Congratulations! You've successfully set up your business information. You're ready to move on to the next step of your photography CRM setup.",
-      content: (
-        <div className="flex items-center gap-2 text-green-600">
-          <CheckCircle className="h-5 w-5" />
-          <span className="font-medium">Business information setup completed successfully!</span>
+      title: (
+        <div className="flex items-center gap-2">
+          <CheckCircle className="h-5 w-5 text-green-600" />
+          <span>Business Setup Complete!</span>
         </div>
       ),
+      description: "Congratulations! You've successfully set up your business information. You're ready to move on to the next step of your photography CRM setup.",
+      content: null, // No additional content needed
       canProceed: true,
       mode: 'modal'
     }
@@ -147,8 +147,9 @@ export default function General() {
 
   // Remove the old hardcoded tutorial steps - using dynamic ones above
   const handleTutorialComplete = async () => {
-    console.log('✅ General tutorial complete - going to getting started');
-    // Tutorial complete, go to getting started
+    console.log('✅ General tutorial complete - advancing to step 2');
+    // Mark step 1 as completed and advance to step 2
+    await advanceStep(2);
     setShowTutorial(false);
     navigate('/getting-started');
   };

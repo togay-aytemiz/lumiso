@@ -7,7 +7,7 @@ import { useOnboarding } from "@/hooks/useOnboarding";
 
 export interface TutorialStep {
   id: number;
-  title: string;
+  title: string | React.ReactNode;
   description: string;
   content: React.ReactNode;
   canProceed: boolean;
@@ -143,20 +143,25 @@ export function OnboardingTutorial({
                 {currentStep.id}
               </div>
               <div>
-                <CardTitle className="text-lg">{currentStep.title}</CardTitle>
+                <CardTitle className="text-lg">
+                  {typeof currentStep.title === 'string' ? currentStep.title : currentStep.title}
+                </CardTitle>
                 <CardDescription className="text-sm text-muted-foreground">
                   Step {currentStepIndex + 1} of {steps.length}
                 </CardDescription>
               </div>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleExit}
-              className="h-8 w-8 p-0"
-            >
-              <X className="h-4 w-4" />
-            </Button>
+            {/* Only show X button if not the last step */}
+            {!isLastStep && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleExit}
+                className="h-8 w-8 p-0"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
           </div>
         </CardHeader>
 
@@ -172,19 +177,22 @@ export function OnboardingTutorial({
           )}
 
           <div className="flex flex-col sm:flex-row gap-3 pt-4">
-            <Button
-              variant="outline"
-              onClick={handleExit}
-              className="order-2 sm:order-1"
-            >
-              Exit Tutorial
-            </Button>
+            {/* Only show Exit Tutorial button if not the last step */}
+            {!isLastStep && (
+              <Button
+                variant="outline"
+                onClick={handleExit}
+                className="order-2 sm:order-1"
+              >
+                Exit Tutorial
+              </Button>
+            )}
             <Button
               onClick={handleNext}
               disabled={!currentStep.canProceed}
-              className="order-1 sm:order-2 sm:ml-auto"
+              className={`order-1 sm:order-2 ${!isLastStep ? 'sm:ml-auto' : 'w-full'}`}
             >
-              {isLastStep ? "Complete Setup" : "Next"}
+              {isLastStep ? "Continue Setup" : "Next"}
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </div>

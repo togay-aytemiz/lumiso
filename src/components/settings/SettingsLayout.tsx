@@ -20,65 +20,49 @@ import { useOnboarding } from "@/hooks/useOnboarding";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 const personalSettingsItems = [
-  { title: "Profile", href: "/settings/profile", icon: User, testId: "profile-section", requiredStep: 1 },
-  { title: "Notifications", href: "/settings/notifications", icon: Bell, testId: "notifications-section", requiredStep: 5 },
+  { title: "Profile", href: "/settings/profile", icon: User, testId: "profile-section" },
+  { title: "Notifications", href: "/settings/notifications", icon: Bell, testId: "notifications-section" },
 ];
 
 const organizationSettingsItems = [
-  { title: "General", href: "/settings/general", icon: Settings, testId: "general-section", requiredStep: 1 },
-  { title: "Team Management", href: "/settings/team", icon: Users, testId: "team-section", requiredStep: 5 },
-  { title: "Client Messaging", href: "/settings/client-messaging", icon: MessageSquare, testId: "client-messaging-section", requiredStep: 5 },
-  { title: "Projects & Sessions", href: "/settings/projects", icon: FolderOpen, testId: "projects-section", requiredStep: 5 },
-  { title: "Lead Management", href: "/settings/leads", icon: UserCheck, testId: "leads-section", requiredStep: 5 },
-  { title: "Packages & Services", href: "/settings/services", icon: Package, testId: "services-section", requiredStep: 5 },
-  { title: "Integrations", href: "/settings/integrations", icon: Plug, testId: "integrations-section", requiredStep: 5 },
-  { title: "Contracts", href: "/settings/contracts", icon: FileText, testId: "contracts-section", requiredStep: 5 },
-  { title: "Billing & Payments", href: "/settings/billing", icon: CreditCard, testId: "billing-section", requiredStep: 5 },
-  { title: "Danger Zone", href: "/settings/danger-zone", icon: AlertTriangle, testId: "danger-section", requiredStep: 5 },
+  { title: "General", href: "/settings/general", icon: Settings, testId: "general-section" },
+  { title: "Team Management", href: "/settings/team", icon: Users, testId: "team-section" },
+  { title: "Client Messaging", href: "/settings/client-messaging", icon: MessageSquare, testId: "client-messaging-section" },
+  { title: "Projects & Sessions", href: "/settings/projects", icon: FolderOpen, testId: "projects-section" },
+  { title: "Lead Management", href: "/settings/leads", icon: UserCheck, testId: "leads-section" },
+  { title: "Packages & Services", href: "/settings/services", icon: Package, testId: "services-section" },
+  { title: "Integrations", href: "/settings/integrations", icon: Plug, testId: "integrations-section" },
+  { title: "Contracts", href: "/settings/contracts", icon: FileText, testId: "contracts-section" },
+  { title: "Billing & Payments", href: "/settings/billing", icon: CreditCard, testId: "billing-section" },
+  { title: "Danger Zone", href: "/settings/danger-zone", icon: AlertTriangle, testId: "danger-section" },
 ];
 
 export default function SettingsLayout() {
   const location = useLocation();
   const { hasCategoryChanges } = useSettingsContext();
-  const { inGuidedSetup, completedCount } = useOnboarding();
+  const { inGuidedSetup } = useOnboarding();
   
-  const isItemLocked = (requiredStep: number, itemHref: string) => {
+  const isItemLocked = (itemHref: string) => {
     console.log('🔍 Settings item lock check:', {
       itemHref,
-      inGuidedSetup,
-      completedCount,
-      requiredStep
+      inGuidedSetup
     });
 
-    // During guided setup, very specific locking rules
+    // Simple rule: During guided setup, only allow general settings
     if (inGuidedSetup) {
-      // Step 6 (packages setup) - only unlock Packages & Services
-      if (completedCount === 5) {
-        const isUnlocked = itemHref === '/settings/services';
-        console.log(`🔒 Step 6: ${itemHref} - ${isUnlocked ? 'UNLOCKED' : 'LOCKED'}`);
-        return !isUnlocked; // Return true to lock, false to unlock
-      }
-      
-      // Step 1 (profile setup) - only unlock Profile  
-      if (completedCount === 0) {
-        const isUnlocked = itemHref === '/settings/profile';
-        console.log(`🔒 Step 1: ${itemHref} - ${isUnlocked ? 'UNLOCKED' : 'LOCKED'}`);
-        return !isUnlocked;
-      }
-      
-      // All other steps - lock everything in settings
-      console.log(`🔒 Other steps: ${itemHref} - LOCKED`);
-      return true;
+      // Allow general settings during guided setup
+      const isUnlocked = itemHref === '/settings';
+      console.log(`🔒 Guided setup: ${itemHref} - ${isUnlocked ? 'UNLOCKED' : 'LOCKED'}`);
+      return !isUnlocked;
     }
     
-    // Normal mode - unlock based on completion
-    const locked = completedCount < (requiredStep - 1);
-    console.log(`📊 Normal mode: ${itemHref} - ${locked ? 'LOCKED' : 'UNLOCKED'}`);
-    return locked;
+    // Not in guided setup - everything is unlocked
+    console.log(`📊 Normal mode: ${itemHref} - UNLOCKED`);
+    return false;
   };
 
-  const handleLockedItemClick = (e: React.MouseEvent, requiredStep: number, itemHref: string) => {
-    if (isItemLocked(requiredStep, itemHref)) {
+  const handleLockedItemClick = (e: React.MouseEvent, itemHref: string) => {
+    if (isItemLocked(itemHref)) {
       e.preventDefault();
     }
   };
@@ -100,7 +84,7 @@ export default function SettingsLayout() {
                 const Icon = item.icon;
                 const isActive = location.pathname === item.href;
                 const hasChanges = hasCategoryChanges(item.href);
-                const locked = isItemLocked(item.requiredStep, item.href);
+                const locked = isItemLocked(item.href);
                 
                 const linkContent = (
                   <div className={cn(
@@ -111,7 +95,7 @@ export default function SettingsLayout() {
                       : "text-muted-foreground hover:text-foreground",
                     locked && "opacity-50 cursor-not-allowed"
                   )}
-                  onClick={(e) => handleLockedItemClick(e, item.requiredStep, item.href)}
+                  onClick={(e) => handleLockedItemClick(e, item.href)}
                 >
                   <Icon className="h-5 w-5 flex-shrink-0" />
                   <span className="hidden md:flex md:items-center md:gap-2">
@@ -136,7 +120,7 @@ export default function SettingsLayout() {
                       </div>
                     </TooltipTrigger>
                     <TooltipContent side="right">
-                      <p>Unlocks after setup is complete</p>
+                      <p>Complete the guided setup first</p>
                     </TooltipContent>
                   </Tooltip>
                 ) : (
@@ -162,7 +146,7 @@ export default function SettingsLayout() {
                 const Icon = item.icon;
                 const isActive = location.pathname === item.href;
                 const hasChanges = hasCategoryChanges(item.href);
-                const locked = isItemLocked(item.requiredStep, item.href);
+                const locked = isItemLocked(item.href);
                 const isDangerZone = item.title === "Danger Zone";
                 
                 const linkContent = (
@@ -175,7 +159,7 @@ export default function SettingsLayout() {
                     isDangerZone && "text-red-600 hover:text-red-700 hover:bg-red-50",
                     locked && "opacity-50 cursor-not-allowed"
                   )}
-                  onClick={(e) => handleLockedItemClick(e, item.requiredStep, item.href)}
+                  onClick={(e) => handleLockedItemClick(e, item.href)}
                 >
                   <Icon className={cn(
                     "h-5 w-5 flex-shrink-0",
@@ -203,7 +187,7 @@ export default function SettingsLayout() {
                       </div>
                     </TooltipTrigger>
                     <TooltipContent side="right">
-                      <p>Unlocks after setup is complete</p>
+                      <p>Complete the guided setup first</p>
                     </TooltipContent>
                   </Tooltip>
                 ) : (

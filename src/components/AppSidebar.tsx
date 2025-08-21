@@ -18,18 +18,18 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { UserMenu } from "@/components/UserMenu";
 
 const navigationItems = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard, requiredStep: 6 },
-  { title: "Leads", url: "/leads", icon: Users, requiredStep: 2 },
-  { title: "Projects", url: "/projects", icon: FolderOpen, requiredStep: 3 },
-  { title: "Analytics", url: "/analytics", icon: BarChart3, requiredStep: 6 },
-  { title: "Payments", url: "/payments", icon: CreditCard, requiredStep: 6 },
-  { title: "Settings", url: "/settings", icon: Settings, requiredStep: 6 },
+  { title: "Dashboard", url: "/", icon: LayoutDashboard },
+  { title: "Leads", url: "/leads", icon: Users },
+  { title: "Projects", url: "/projects", icon: FolderOpen },
+  { title: "Analytics", url: "/analytics", icon: BarChart3 },
+  { title: "Payments", url: "/payments", icon: CreditCard },
+  { title: "Settings", url: "/settings", icon: Settings },
 ];
 
 const bookingItems = [
-  { title: "Calendar", url: "/calendar", icon: CalendarDays, requiredStep: 4 },
-  { title: "Sessions", url: "/sessions", icon: Calendar, requiredStep: 4 },
-  { title: "Reminders", url: "/reminders", icon: Bell, requiredStep: 4 },
+  { title: "Calendar", url: "/calendar", icon: CalendarDays },
+  { title: "Sessions", url: "/sessions", icon: Calendar },
+  { title: "Reminders", url: "/reminders", icon: Bell },
 ];
 
 export function AppSidebar() {
@@ -38,18 +38,17 @@ export function AppSidebar() {
   const navigate = useNavigate();
   const currentPath = location.pathname;
   const isMobile = useIsMobile();
-  const { inGuidedSetup, completedCount, loading } = useOnboarding();
+  const { inGuidedSetup, loading } = useOnboarding();
 
   // Debug logging - CHECK WHAT'S CHANGING
   useEffect(() => {
     console.log('🚨 SIDEBAR STATE CHANGE:', {
       inGuidedSetup,
-      completedCount,
       loading,
       currentPath: location.pathname,
       timestamp: new Date().toISOString()
     });
-  }, [inGuidedSetup, completedCount, loading, location.pathname]);
+  }, [inGuidedSetup, loading, location.pathname]);
 
   // Show loading state while onboarding data is being fetched
   if (loading) {
@@ -68,26 +67,23 @@ export function AppSidebar() {
   );
   const [bookingsOpen, setBookingsOpen] = useState(isBookingsChildActive);
   
-  const isItemLocked = (requiredStep: number, itemUrl?: string) => {
+  const isItemLocked = (itemUrl?: string) => {
     // If on getting-started page - LOCK EVERYTHING
     if (location.pathname === '/getting-started') {
       return true;
     }
     
-    // During guided setup, use step-based logic
+    // Simple rule: During guided setup, lock everything except settings
     if (inGuidedSetup) {
       // Settings should always be accessible during guided setup
-      // (internal settings pages will handle their own locking)
       if (itemUrl && itemUrl.startsWith('/settings')) {
         return false;
       }
-      
-      // For other pages, lock based on required step vs completed count
-      return completedCount < (requiredStep - 1);
+      return true;
     }
     
-    // Normal mode - unlock based on completion
-    return completedCount < requiredStep;
+    // Not in guided setup - everything is unlocked
+    return false;
   };
 
   const handleLockedItemClick = (e: React.MouseEvent) => {
@@ -158,7 +154,7 @@ export function AppSidebar() {
             .slice(0, navigationItems.findIndex((i) => i.title === "Analytics"))
             .map((item) => {
               const active = isActive(item.url);
-              const locked = isItemLocked(item.requiredStep, item.url);
+              const locked = isItemLocked(item.url);
               
               const content = (
                 <div 
@@ -183,7 +179,7 @@ export function AppSidebar() {
                         </SidebarMenuButton>
                       </TooltipTrigger>
                         <TooltipContent side="right">
-                          <p>{inGuidedSetup ? 'Complete current tutorial step first' : 'Unlocks after setup is complete'}</p>
+                          <p>Complete the guided setup first</p>
                         </TooltipContent>
                     </Tooltip>
                   ) : (
@@ -209,7 +205,7 @@ export function AppSidebar() {
 
           {/* Bookings parent with submenu */}
           <SidebarMenuItem>
-            {isItemLocked(4, '/calendar') ? (
+            {isItemLocked('/calendar') ? (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <SidebarMenuButton
@@ -223,7 +219,7 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </TooltipTrigger>
                 <TooltipContent side="right">
-                  <p>{inGuidedSetup ? 'Complete current tutorial step first' : 'Unlocks after setup is complete'}</p>
+                  <p>Complete the guided setup first</p>
                 </TooltipContent>
               </Tooltip>
             ) : (
@@ -246,7 +242,7 @@ export function AppSidebar() {
                     <SidebarMenu>
                       {bookingItems.map((item) => {
                         const active = isActive(item.url);
-                        const locked = isItemLocked(item.requiredStep, item.url);
+                        const locked = isItemLocked(item.url);
                         
                         return (
                           <SidebarMenuItem key={item.title}>
@@ -264,7 +260,7 @@ export function AppSidebar() {
                                   </SidebarMenuButton>
                                 </TooltipTrigger>
                                 <TooltipContent side="right">
-                                  <p>{inGuidedSetup ? 'Complete current tutorial step first' : 'Unlocks after setup is complete'}</p>
+                                  <p>Complete the guided setup first</p>
                                 </TooltipContent>
                               </Tooltip>
                             ) : (
@@ -292,7 +288,7 @@ export function AppSidebar() {
             .slice(navigationItems.findIndex((i) => i.title === "Analytics"))
             .map((item) => {
               const active = isActive(item.url);
-              const locked = isItemLocked(item.requiredStep, item.url);
+              const locked = isItemLocked(item.url);
               
               const content = (
                 <div 
@@ -317,7 +313,7 @@ export function AppSidebar() {
                         </SidebarMenuButton>
                       </TooltipTrigger>
                       <TooltipContent side="right">
-                        <p>{inGuidedSetup ? 'Complete current tutorial step first' : 'Unlocks after setup is complete'}</p>
+                        <p>Complete the guided setup first</p>
                       </TooltipContent>
                     </Tooltip>
                   ) : (

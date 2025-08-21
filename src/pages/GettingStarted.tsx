@@ -194,35 +194,61 @@ const GettingStarted = () => {
           <div className={`mb-6 sm:mb-8 ${isAnimating ? 'animate-fade-in' : ''}`}>
             <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-accent/5">
               <CardContent className="p-4 md:p-6">
-                {/* Mobile-first responsive layout */}
+                {/* Desktop: Step number on separate row, mobile unchanged */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div className="flex-1">
-                    {/* Mobile: Stack step number and title vertically */}
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-3">
-                      <div className="flex items-center gap-3">
-                        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground text-lg font-bold animate-pulse flex-shrink-0">
-                          {currentStep.id}
-                        </div>
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:gap-3 flex-1">
-                          <CardTitle className="text-lg sm:text-xl leading-tight">
-                            {currentStep.title}
-                          </CardTitle>
-                          {/* Show final step indicator */}
-                          {currentStep.id === 6 && (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 mt-1 sm:mt-0">
-                              Final Step
-                            </span>
-                          )}
-                        </div>
+                    {/* Desktop: Step number separate row */}
+                    <div className="hidden sm:flex items-center gap-3 mb-4">
+                      <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground text-lg font-bold animate-pulse flex-shrink-0">
+                        {currentStep.id}
                       </div>
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground w-fit">
+                      {/* Show final step indicator */}
+                      {currentStep.id === 6 && (
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                          Final Step
+                        </span>
+                      )}
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground">
                         <Clock className="w-3 h-3 mr-1" />
                         {currentStep.duration}
                       </span>
                     </div>
-                    <CardDescription className="text-sm sm:text-base text-muted-foreground pl-0 sm:pl-13">
-                      {currentStep.description}
-                    </CardDescription>
+                    
+                    {/* Desktop: Title and description */}
+                    <div className="hidden sm:block space-y-2">
+                      <CardTitle className="text-xl leading-tight">
+                        {currentStep.title}
+                      </CardTitle>
+                      <CardDescription className="text-base text-muted-foreground">
+                        {currentStep.description}
+                      </CardDescription>
+                    </div>
+
+                    {/* Mobile: Keep original layout */}
+                    <div className="sm:hidden">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground text-lg font-bold animate-pulse flex-shrink-0">
+                          {currentStep.id}
+                        </div>
+                        <div className="flex flex-col flex-1">
+                          <CardTitle className="text-lg leading-tight">
+                            {currentStep.title}
+                          </CardTitle>
+                          {currentStep.id === 6 && (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 mt-1 w-fit">
+                              Final Step
+                            </span>
+                          )}
+                        </div>
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground">
+                          <Clock className="w-3 h-3 mr-1" />
+                          {currentStep.duration}
+                        </span>
+                      </div>
+                      <CardDescription className="text-sm text-muted-foreground">
+                        {currentStep.description}
+                      </CardDescription>
+                    </div>
                   </div>
                   <div className="flex-shrink-0">
                     <Button 

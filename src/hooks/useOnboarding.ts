@@ -74,17 +74,9 @@ export function useOnboarding() {
         timestamp: new Date().toISOString()
       });
 
-      // PROPER LOGIC: Stay in guided setup until ALL 6 steps are complete
-      const shouldStayInGuidedSetup = data.completed_steps_count < 6 && !data.guided_setup_skipped;
-      
-      console.log('🎯 DECISION:', {
-        shouldStayInGuidedSetup,
-        completedSteps: data.completed_steps_count,
-        reason: shouldStayInGuidedSetup ? 'Steps incomplete - staying in guided setup' : 'All steps complete - exiting guided setup'
-      });
-
+      // Simple logic: Use database values directly, no automatic completion based on step count
       setState({
-        inGuidedSetup: shouldStayInGuidedSetup, // TRUE if steps < 6
+        inGuidedSetup: data.in_guided_setup ?? true,
         guidedSetupSkipped: data.guided_setup_skipped ?? false,
         guidanceCompleted: data.guidance_completed ?? false,
         completedCount: data.completed_steps_count ?? 0,
@@ -113,44 +105,51 @@ export function useOnboarding() {
     try {
       console.log('🔄 Completing step, current count:', state.completedCount);
       
-      // First, complete the step (increments count)
+      // Simply complete the step (increments count)
       const result = await supabase.rpc('complete_onboarding_step', {
         user_uuid: user.id
       });
 
       console.log('✅ Step completion result:', result);
 
-      // If this was the final step (going from 5 to 6), mark guidance as complete
-      if (state.completedCount === 5) {
-        console.log('🏁 Final step completed - marking guidance as complete');
-        
-        // Update guidance completion AFTER step increment
-        await supabase
-          .from('user_settings')
-          .update({ 
-            guidance_completed: true,
-            in_guided_setup: false 
-          })
-          .eq('user_id', user.id);
-        
-        console.log('✅ Guidance marked as complete');
-        
-        // Update local state immediately to show completion
-        setState(prev => ({
-          ...prev,
-          completedCount: 6, // Set to 6 to show completion
-          guidanceCompleted: true,
-          inGuidedSetup: false,
-          loading: false
-        }));
-      } else {
-        // For non-final steps, just refresh state
-        await fetchState();
-      }
+      // Just refresh state - no automatic guided mode completion
+      await fetchState();
       
       console.log('🔍 Step completion process finished');
     } catch (error) {
       console.error('Error completing step:', error);
+      throw error;
+    }
+  };
+
+  const completeGuidedMode = async () => {
+    if (!user) return;
+
+    try {
+      console.log('🏁 Completing guided mode');
+      
+      // Direct database update until types are refreshed
+      await supabase
+        .from('user_settings')
+        .update({ 
+          guidance_completed: true,
+          in_guided_setup: false 
+        })
+        .eq('user_id', user.id);
+
+      console.log('✅ Guided mode marked as complete');
+
+      // Update local state immediately
+      setState(prev => ({
+        ...prev,
+        guidanceCompleted: true,
+        inGuidedSetup: false,
+        loading: false
+      }));
+      
+      console.log('🔍 Guided mode completion finished');
+    } catch (error) {
+      console.error('Error completing guided mode:', error);
       throw error;
     }
   };
@@ -227,6 +226,7 @@ export function useOnboarding() {
     ...state,
     shouldShowOnboarding: shouldShowOnboarding(),
     completeStep,
+    completeGuidedMode,
     skipWithSampleData,
     resetOnboardingState,
     startGuidedSetup

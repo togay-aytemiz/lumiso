@@ -27,6 +27,7 @@ const ProtectedRoute = () => {
   const onboardingStepPaths = [
     "/getting-started",
     "/settings/profile", 
+    "/settings/general", // Add this missing path!
     "/leads",
     "/projects", 
     "/calendar",

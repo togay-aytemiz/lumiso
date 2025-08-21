@@ -23,7 +23,7 @@ const navigationItems = [
   { title: "Projects", url: "/projects", icon: FolderOpen, requiredStep: 3 },
   { title: "Analytics", url: "/analytics", icon: BarChart3, requiredStep: 5 },
   { title: "Payments", url: "/payments", icon: CreditCard, requiredStep: 5 },
-  { title: "Settings", url: "/settings", icon: Settings, requiredStep: 5 },
+  { title: "Settings", url: "/settings", icon: Settings, requiredStep: 1 }, // Allow Settings from step 1
 ];
 
 const bookingItems = [

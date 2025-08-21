@@ -166,13 +166,7 @@ const GettingStarted = () => {
                     </div>
                   </div>
                   <Button 
-                    onClick={() => {
-                      if (currentStep.id === 1) {
-                        navigate(`${currentStep.route}?walkthrough=profile-setup`);
-                      } else {
-                        navigate(currentStep.route);
-                      }
-                    }}
+                    onClick={() => navigate(currentStep.route)}
                     className="w-full sm:w-auto"
                     size="lg"
                   >
@@ -207,13 +201,7 @@ const GettingStarted = () => {
                     <Button 
                       size="lg" 
                       className="min-h-[48px]"
-                      onClick={() => {
-                        if (currentStep.id === 1) {
-                          navigate(`${currentStep.route}?walkthrough=profile-setup`);
-                        } else {
-                          navigate(currentStep.route);
-                        }
-                      }}
+                      onClick={() => navigate(currentStep.route)}
                     >
                       {currentStep.buttonText}
                       <ArrowRight className="w-4 h-4 ml-2" />

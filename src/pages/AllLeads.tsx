@@ -84,13 +84,11 @@ const AllLeads = () => {
       id: 2,
       title: "Add Your First Lead",
       description: "Now let's add your first lead! Click the 'Add Lead' button in the top right corner to get started.",
-      content: (
-        <div className="text-center">
-          <p className="text-muted-foreground">Look for the button with the plus icon in the top right area of the page.</p>
-        </div>
-      ),
+      content: null,
       mode: "floating",
-      canProceed: false // No Next button - user must click Add Lead
+      canProceed: leads.length > 0,
+      requiresAction: leads.length === 0,
+      disabledTooltip: "Add at least 1 lead to continue"
     },
     {
       id: 3,

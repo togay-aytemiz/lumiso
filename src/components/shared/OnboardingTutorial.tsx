@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { X, ArrowRight } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useOnboarding } from "@/hooks/useOnboarding";
 
@@ -13,6 +14,8 @@ export interface TutorialStep {
   canProceed: boolean;
   route?: string; // Optional route to navigate to for this step
   mode?: 'modal' | 'floating'; // Display mode - modal (blocking) or floating (non-blocking)
+  requiresAction?: boolean; // If true, shows disabled state with tooltip
+  disabledTooltip?: string; // Tooltip text when button is disabled
 }
 
 interface OnboardingTutorialProps {
@@ -75,66 +78,76 @@ export function OnboardingTutorial({
   if (isFloatingMode) {
     // Floating mode - positioned at top right, non-blocking, below header
     return (
-      <div className="fixed top-20 right-6 z-50 max-w-sm">
-        <Card className="shadow-2xl border-2">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
+      <TooltipProvider>
+        <div className="fixed top-20 right-6 z-50 max-w-sm">
+          <Card className="shadow-2xl border-2">
+            <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
                 <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold">
                   {currentStep.id}
                 </div>
                 <div>
                   <CardTitle className="text-sm">{currentStep.title}</CardTitle>
-                <CardDescription className="text-xs text-muted-foreground">
-                  Step {currentStepIndex + 1} of {steps.length}
-                </CardDescription>
+                  <CardDescription className="text-xs text-muted-foreground">
+                    Step {currentStepIndex + 1} of {steps.length}
+                  </CardDescription>
                 </div>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleExit}
-                className="h-6 w-6 p-0"
-              >
-                <X className="h-3 w-3" />
-              </Button>
-            </div>
-          </CardHeader>
+            </CardHeader>
 
-          <CardContent className="space-y-4 pt-0">
-            <p className="text-sm text-muted-foreground">
-              {currentStep.description}
-            </p>
+            <CardContent className="space-y-4 pt-0">
+              <p className="text-sm text-muted-foreground">
+                {currentStep.description}
+              </p>
 
-            {currentStep.content && (
-              <div className="p-3 bg-muted/30 rounded-lg text-sm">
-                {currentStep.content}
-              </div>
-            )}
+              {currentStep.content && (
+                <div className="p-3 bg-muted/30 rounded-lg text-sm">
+                  {currentStep.content}
+                </div>
+              )}
 
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleExit}
-                className="flex-1 text-xs"
-              >
-                Exit Tutorial
-              </Button>
-              {currentStep.canProceed && (
+              <div className="flex gap-2">
                 <Button
+                  variant="outline"
                   size="sm"
-                  onClick={handleNext}
+                  onClick={handleExit}
                   className="flex-1 text-xs"
                 >
-                  {isLastStep ? "Complete" : "Next"}
-                  <ArrowRight className="ml-1 h-3 w-3" />
+                  Exit Tutorial
                 </Button>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+                {currentStep.requiresAction && !currentStep.canProceed ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex-1">
+                        <Button
+                          size="sm"
+                          disabled
+                          className="w-full text-xs"
+                        >
+                          Next
+                          <ArrowRight className="ml-1 h-3 w-3" />
+                        </Button>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{currentStep.disabledTooltip}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                ) : currentStep.canProceed ? (
+                  <Button
+                    size="sm"
+                    onClick={handleNext}
+                    className="flex-1 text-xs"
+                  >
+                    {isLastStep ? "Complete" : "Next"}
+                    <ArrowRight className="ml-1 h-3 w-3" />
+                  </Button>
+                ) : null}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </TooltipProvider>
     );
   }
 
@@ -143,31 +156,18 @@ export function OnboardingTutorial({
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <CardHeader className="pb-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground text-sm font-bold">
-                {currentStep.id}
-              </div>
-              <div>
-                <CardTitle className="text-lg">
-                  {typeof currentStep.title === 'string' ? currentStep.title : currentStep.title}
-                </CardTitle>
-                <CardDescription className="text-sm text-muted-foreground">
-                  Step {currentStepIndex + 1} of {steps.length}
-                </CardDescription>
-              </div>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground text-sm font-bold">
+              {currentStep.id}
             </div>
-            {/* Only show X button if not the last step */}
-            {!isLastStep && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleExit}
-                className="h-8 w-8 p-0"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            )}
+            <div>
+              <CardTitle className="text-lg">
+                {typeof currentStep.title === 'string' ? currentStep.title : currentStep.title}
+              </CardTitle>
+              <CardDescription className="text-sm text-muted-foreground">
+                Step {currentStepIndex + 1} of {steps.length}
+              </CardDescription>
+            </div>
           </div>
         </CardHeader>
 

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { CheckCircle, Users, FolderOpen, Calendar, Package } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useOnboarding } from "@/hooks/useOnboarding";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
@@ -39,6 +40,7 @@ export function SampleDataModal({ open, onClose, onCloseAll }: SampleDataModalPr
   const { user } = useAuth();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const { startGuidedSetup } = useOnboarding();
 
   const handleSkipWithSampleData = async () => {
     if (!user) return;
@@ -81,18 +83,33 @@ export function SampleDataModal({ open, onClose, onCloseAll }: SampleDataModalPr
     }
   };
 
-  const handleContinueGuidedSetup = () => {
-    if (onCloseAll) {
-      onCloseAll();
-    } else {
-      onClose();
+  const handleContinueGuidedSetup = async () => {
+    if (!user) return;
+    
+    setIsLoading(true);
+    try {
+      await startGuidedSetup();
+      
+      if (onCloseAll) {
+        onCloseAll();
+      } else {
+        onClose();
+      }
+      // Note: startGuidedSetup() includes navigation to /getting-started via window.location.reload()
+    } catch (error) {
+      console.error('Error starting guided setup:', error);
+      toast({
+        title: "Error",
+        description: "Failed to start guided setup. Please try again.",
+        variant: "destructive"
+      });
+      setIsLoading(false);
     }
-    navigate('/getting-started');
   };
 
   const actions: OnboardingAction[] = [
     {
-      label: "Continue Guided Setup",
+      label: isLoading ? "Starting..." : "Continue Guided Setup",
       onClick: handleContinueGuidedSetup,
       variant: "outline",
       disabled: isLoading

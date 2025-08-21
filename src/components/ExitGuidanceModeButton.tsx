@@ -7,7 +7,7 @@ import { toast } from "@/hooks/use-toast";
 
 export function ExitGuidanceModeButton() {
   const { user } = useAuth();
-  const { skipWithSampleData } = useOnboarding();
+  const { completeGuidedMode } = useOnboarding();
   const [isLoading, setIsLoading] = useState(false);
 
   // Only show for the specific user
@@ -18,7 +18,7 @@ export function ExitGuidanceModeButton() {
   const handleExit = async () => {
     setIsLoading(true);
     try {
-      await skipWithSampleData();
+      await completeGuidedMode();
       toast({
         title: "Exited guidance mode",
         description: "You can now access all features.",

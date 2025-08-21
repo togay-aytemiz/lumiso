@@ -229,8 +229,14 @@ const LeadDetail = () => {
     {
       id: 7,
       title: "🎉 Congratulations! Tutorial Complete!",
-      description: "Amazing work! You've mastered the fundamentals - from creating leads and converting them to projects, to managing client details and tracking progress. You're now equipped with everything you need to grow your photography business efficiently. Remember, you can access all your projects anytime from the Projects page in the sidebar!",
-      content: null,
+      description: "Amazing work! You've mastered the fundamentals - from creating leads and converting them to projects, to managing client details and tracking progress. You're now equipped with everything you need to grow your photography business efficiently.",
+      content: (
+        <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <p className="text-sm font-medium text-blue-800">
+            Remember, you can access all your projects anytime from the Projects page in the sidebar!
+          </p>
+        </div>
+      ),
       mode: "modal",
       canProceed: true
     }

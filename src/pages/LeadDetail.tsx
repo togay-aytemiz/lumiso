@@ -597,9 +597,9 @@ const LeadDetail = () => {
     setActivityRefreshKey(prev => prev + 1);
     
     // If tutorial is active and we're on the project creation step, advance to project exploration step
-    if (showTutorial && currentTutorialStep === 1) {
+    if (showTutorial && currentTutorialStep === 0) {
       console.log('🚀 Project created! Advancing tutorial to step 6 (project exploration)');
-      setCurrentTutorialStep(2); // Move to "Now Explore Your Project" step
+      setCurrentTutorialStep(1); // Move to "Now Explore Your Project" step
     }
   };
   const handleActivityUpdated = () => {

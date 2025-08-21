@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowLeft, ArrowUpDown, ArrowUp, ArrowDown, Plus, Users, FileText, Filter } from "lucide-react";
+import { ArrowLeft, ArrowUpDown, ArrowUp, ArrowDown, Plus, Users, FileText, Filter, FolderPlus } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import AddLeadDialog from "@/components/AddLeadDialog";
 import { useNavigate } from "react-router-dom";
@@ -93,8 +93,40 @@ const AllLeads = () => {
     {
       id: 3,
       title: "Excellent! Lead Management Complete 🎉",
-      description: "Congratulations! You've successfully learned about lead management. You're ready to move on to the next step of your photography CRM setup.",
+      description: "Congratulations! You've successfully learned about lead management. Now let's create your first project!",
       content: null,
+      mode: "modal",
+      canProceed: true
+    },
+    {
+      id: 4,
+      title: "Two Ways to Create Projects",
+      description: "You can create projects in two convenient ways. Choose the method that feels most natural to you:",
+      content: (
+        <div className="space-y-4">
+          <div className="p-4 border-2 border-primary/20 rounded-lg bg-primary/5">
+            <div className="flex items-start gap-3">
+              <FolderPlus className="w-6 h-6 text-primary mt-0.5" />
+              <div>
+                <h4 className="font-semibold text-primary">Method 1: From Projects Page</h4>
+                <p className="text-sm text-muted-foreground mt-1">Go to your Projects dashboard and create a new project from scratch. Perfect for when you want to see all your projects at once.</p>
+              </div>
+            </div>
+          </div>
+          <div className="p-4 border-2 border-secondary/30 rounded-lg bg-secondary/5">
+            <div className="flex items-start gap-3">
+              <Users className="w-6 h-6 text-secondary mt-0.5" />
+              <div>
+                <h4 className="font-semibold text-secondary">Method 2: From Lead Details</h4>
+                <p className="text-sm text-muted-foreground mt-1">Click on any lead to view their details, then create a project directly for that client. Great for converting warm leads!</p>
+              </div>
+            </div>
+          </div>
+          <div className="text-center text-sm text-muted-foreground mt-4">
+            <p>💡 <strong>Tip:</strong> Both methods create the same project - choose what works best for your workflow!</p>
+          </div>
+        </div>
+      ),
       mode: "modal",
       canProceed: true
     }

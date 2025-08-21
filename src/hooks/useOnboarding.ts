@@ -29,15 +29,65 @@ export function useOnboarding() {
     }
 
     try {
+      // First try to get existing settings
       const { data, error } = await supabase
         .from('user_settings')
         .select('in_guided_setup, guided_setup_skipped, guidance_completed, current_step, completed_steps')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('Error fetching onboarding state:', error);
         setState(prev => ({ ...prev, loading: false }));
+        return;
+      }
+
+      // If no settings exist, create them
+      if (!data) {
+        console.log('🔧 No user settings found, creating default settings...');
+        const { data: newData, error: insertError } = await supabase
+          .from('user_settings')
+          .insert({
+            user_id: user.id,
+            show_quick_status_buttons: true,
+            photography_business_name: '',
+            primary_brand_color: '#1EB29F',
+            date_format: 'DD/MM/YYYY',
+            time_format: '12-hour',
+            notification_global_enabled: true,
+            notification_daily_summary_enabled: true,
+            notification_weekly_recap_enabled: true,
+            notification_new_assignment_enabled: true,
+            notification_project_milestone_enabled: true,
+            notification_scheduled_time: '09:00',
+            in_guided_setup: true,
+            guided_setup_skipped: false,
+            guidance_completed: false,
+            current_step: 1,
+            completed_steps: []
+          })
+          .select('in_guided_setup, guided_setup_skipped, guidance_completed, current_step, completed_steps')
+          .single();
+
+        if (insertError) {
+          console.error('Error creating user settings:', insertError);
+          setState(prev => ({ ...prev, loading: false }));
+          return;
+        }
+
+        const completedStepsArray = Array.isArray(newData?.completed_steps) 
+          ? (newData.completed_steps as number[])
+          : [];
+
+        setState({
+          inGuidedSetup: newData?.in_guided_setup || true,
+          guidedSetupSkipped: newData?.guided_setup_skipped || false,
+          guidanceCompleted: newData?.guidance_completed || false,
+          currentStep: newData?.current_step || 1,
+          completedSteps: completedStepsArray,
+          loading: false
+        });
+        console.log('✅ Created default user settings');
         return;
       }
 
@@ -173,6 +223,9 @@ export function useOnboarding() {
       }
 
       console.log(`✅ RPC call successful for step ${stepNumber}`);
+
+      // Add a small delay to ensure DB changes are committed
+      await new Promise(resolve => setTimeout(resolve, 100));
 
       // Immediately refetch the state to update UI
       await fetchOnboardingState();

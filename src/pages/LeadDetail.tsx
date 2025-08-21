@@ -313,12 +313,8 @@ const LeadDetail = () => {
 
   // Handle project clicked during tutorial
   const handleProjectClicked = () => {
-    console.log('🔍 handleProjectClicked called - Enabling Next button for Step 6');
-    // If tutorial is active and we're on Step 6 (index 2), enable the Next button immediately
-    if (showTutorial && currentTutorialStep === 2) {
-      console.log('✅ Setting hasViewedProject to true - Next button should now be enabled');
-      setHasViewedProject(true);
-    }
+    console.log('🔍 Project clicked - enabling Next button');
+    setHasViewedProject(true);
   };
 
   // Debug tutorial step changes

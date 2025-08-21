@@ -171,9 +171,24 @@ const LeadDetail = () => {
     },
     {
       id: 6,
-      title: "Great! Now Explore Your Project",
-      description: "Perfect! You've created your first project. Now click on the project card below to see detailed project management features like tasks, timelines, and progress tracking.",
-      content: null,
+      title: "Perfect! Now Explore Your Project Features",
+      description: "Excellent! You've created your first project. Click on the project card below to see all the powerful features - manage payments and track billing, schedule and manage photography sessions, create and organize todo tasks, and much more!",
+      content: (
+        <div className="text-sm space-y-2">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 bg-primary rounded-full"></span>
+            <span>Track payments and billing</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 bg-primary rounded-full"></span>
+            <span>Manage photography sessions</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 bg-primary rounded-full"></span>
+            <span>Organize project todos and tasks</span>
+          </div>
+        </div>
+      ),
       mode: "floating",
       canProceed: false,
       requiresAction: true,
@@ -255,7 +270,10 @@ const LeadDetail = () => {
 
   // Debug tutorial step changes
   useEffect(() => {
-    console.log('🔍 Tutorial step changed to:', currentTutorialStep, 'showTutorial:', showTutorial);
+    console.log('🔍 Tutorial step changed to:', currentTutorialStep, 'showTutorial:', showTutorial, 'step array length:', leadDetailsTutorialSteps.length);
+    if (showTutorial && leadDetailsTutorialSteps[currentTutorialStep]) {
+      console.log('🎯 Current tutorial step details:', leadDetailsTutorialSteps[currentTutorialStep]);
+    }
   }, [currentTutorialStep, showTutorial]);
 
   // Check edit permissions when lead data loads

@@ -38,8 +38,9 @@ export function OnboardingTutorial({
   const currentStep = steps[currentStepIndex];
   const isLastStep = currentStepIndex === steps.length - 1;
 
-  // Update step index when initialStepIndex changes
+  // Update step index when initialStepIndex changes - use effect with proper dependency
   useEffect(() => {
+    console.log('🔍 OnboardingTutorial: initialStepIndex changed to:', initialStepIndex);
     setCurrentStepIndex(initialStepIndex);
   }, [initialStepIndex]);
 

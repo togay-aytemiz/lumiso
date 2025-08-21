@@ -233,28 +233,9 @@ const LeadDetail = () => {
       content: (
         <div className="text-center space-y-6">
           <div className="text-6xl">🎯</div>
-          <div className="space-y-3">
-            <h3 className="text-lg font-semibold">What you've accomplished:</h3>
-            <div className="space-y-2 text-sm text-muted-foreground">
-              <div className="flex items-center gap-2 justify-center">
-                <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                <span>Learned to navigate lead details</span>
-              </div>
-              <div className="flex items-center gap-2 justify-center">
-                <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                <span>Created your first project</span>
-              </div>
-              <div className="flex items-center gap-2 justify-center">
-                <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                <span>Explored project management features</span>
-              </div>
-            </div>
-          </div>
-          <div className="p-4 bg-primary/10 rounded-lg">
-            <p className="text-sm font-medium">
-              You can access all your projects anytime from the Projects page in the sidebar!
-            </p>
-          </div>
+          <p className="text-sm font-medium">
+            You can access all your projects anytime from the Projects page in the sidebar!
+          </p>
         </div>
       ),
       mode: "modal",

@@ -227,14 +227,33 @@ const LeadDetail = () => {
     },
     {
       id: 7,
-      title: "Fantastic! You're Ready to Go! 🎉",
-      description: "Excellent work! You've successfully learned how to manage leads and create projects. You're well on your way to mastering your photography CRM!",
+      title: "🎉 Congratulations! Tutorial Complete!",
+      description: "Fantastic work! You've successfully mastered the basics of your photography CRM. You're now ready to manage leads, create projects, and grow your business!",
       content: (
-        <div className="text-center space-y-4">
-          <div className="text-lg">🎯</div>
-          <p className="text-sm text-muted-foreground">
-            You can now also access all your projects from the main Projects page in the sidebar. This gives you a complete overview of all your work.
-          </p>
+        <div className="text-center space-y-6">
+          <div className="text-6xl">🎯</div>
+          <div className="space-y-3">
+            <h3 className="text-lg font-semibold">What you've accomplished:</h3>
+            <div className="space-y-2 text-sm text-muted-foreground">
+              <div className="flex items-center gap-2 justify-center">
+                <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                <span>Learned to navigate lead details</span>
+              </div>
+              <div className="flex items-center gap-2 justify-center">
+                <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                <span>Created your first project</span>
+              </div>
+              <div className="flex items-center gap-2 justify-center">
+                <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                <span>Explored project management features</span>
+              </div>
+            </div>
+          </div>
+          <div className="p-4 bg-primary/10 rounded-lg">
+            <p className="text-sm font-medium">
+              You can access all your projects anytime from the Projects page in the sidebar!
+            </p>
+          </div>
         </div>
       ),
       mode: "modal",
@@ -275,6 +294,7 @@ const LeadDetail = () => {
     try {
       await completeStep();
       setShowTutorial(false);
+      console.log('🎉 Tutorial completed! Navigating back to getting-started');
       navigate('/getting-started');
     } catch (error) {
       console.error('Error completing tutorial:', error);
@@ -292,9 +312,9 @@ const LeadDetail = () => {
 
   // Handle project clicked during tutorial
   const handleProjectClicked = () => {
-    // If tutorial is active and we're on the project exploration step (Step 6 = index 2), advance to final step
+    // If tutorial is active and we're on the project exploration step (Step 6 = index 2), just advance to final step immediately
     if (showTutorial && currentTutorialStep === 2) {
-      console.log('🚀 Project clicked! Advancing tutorial from step', currentTutorialStep, 'to final step (Step 7 = index 3)');
+      console.log('🚀 Project modal closed! Showing congratulations modal');
       setCurrentTutorialStep(3); // Move to final congratulations step (Step 7)
     }
   };

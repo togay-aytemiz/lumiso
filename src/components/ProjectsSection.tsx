@@ -122,8 +122,7 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
   const handleViewProject = (project: Project) => {
     setViewingProject(project);
     setShowViewDialog(true);
-    // Call the callback to advance tutorial if provided
-    onProjectClicked?.();
+    // Removed tutorial callback from here - it now triggers when modal closes
   };
 
   const handleDeleteProject = (project: Project) => {
@@ -252,7 +251,14 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
       <ViewProjectDialog
         project={viewingProject}
         open={showViewDialog}
-        onOpenChange={setShowViewDialog}
+        onOpenChange={(open) => {
+          setShowViewDialog(open);
+          // If tutorial is active and modal is closing (open = false), trigger callback
+          if (!open && viewingProject && onProjectClicked) {
+            console.log('🚀 Project modal closed, triggering tutorial callback');
+            onProjectClicked();
+          }
+        }}
         onProjectUpdated={() => {
           fetchProjects();
           setRefreshTrigger(prev => prev + 1); // Force refresh progress bars

@@ -90,8 +90,8 @@ export function OnboardingTutorial({
   const isFloatingMode = currentStep.mode === 'floating';
 
   if (isFloatingMode) {
-    // Floating mode - positioned to avoid blocking the archive view for project management step
-    const isProjectManagementStep = currentStep.id === 2; // Board View (Kanban Style) step
+    // Floating mode - positioned to avoid blocking the archive view for project management steps
+    const isProjectManagementStep = [2, 3, 4].includes(currentStep.id); // Board, List, and Archive view steps
     
     return (
       <TooltipProvider>

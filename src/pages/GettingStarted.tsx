@@ -63,13 +63,13 @@ const GettingStarted = () => {
     currentStepNumber,
     completedSteps,
     loading,
-    currentStep: onboardingSteps[currentStepNumber - 1]?.title,
-    nextStep: onboardingSteps[currentStepNumber]?.title
+    completedStepsLength: completedSteps.length,
   });
   
-  const currentStepIndex = currentStepNumber - 1; // Convert to 0-based index
-  const currentStep = onboardingSteps[currentStepIndex];
-  const nextStep = onboardingSteps[currentStepIndex + 1];
+  // Fix: currentStepNumber from DB is the NEXT step to do, not current step being shown  
+  const nextStepIndex = currentStepNumber - 1; // Convert to 0-based index for next step
+  const currentStep = onboardingSteps[nextStepIndex]; // This is actually the next step to do
+  const nextStep = onboardingSteps[nextStepIndex + 1]; // Step after that
   const allStepsCompleted = completedSteps.length >= onboardingSteps.length;
 
   const handleStepAction = (step: any) => {

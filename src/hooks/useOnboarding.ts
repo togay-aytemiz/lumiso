@@ -95,8 +95,9 @@ export function useOnboarding() {
   const shouldShowOnboarding = () => {
     if (state.loading || !user) return false;
     if (state.guidedSetupSkipped || state.guidanceCompleted) return false;
-    // Show onboarding modal when NOT in guided setup and haven't completed onboarding
-    return !state.inGuidedSetup && state.completedCount === 0;
+    // Show onboarding modal when user hasn't started onboarding yet (count = 0)
+    // This includes both fresh users and users who reset their progress
+    return state.completedCount === 0;
   };
 
   const completeStep = async () => {
@@ -185,14 +186,14 @@ export function useOnboarding() {
         .from('user_settings')
         .update({
           completed_steps_count: 0,
-          in_guided_setup: true, // Keep in guided setup when resetting
+          in_guided_setup: false, // Start with modal first, not guided setup
           guidance_completed: false,
           guided_setup_skipped: false
         })
         .eq('user_id', user.id);
 
       setState({
-        inGuidedSetup: true, // Keep in guided setup when resetting  
+        inGuidedSetup: false, // Start with modal first, not guided setup
         guidedSetupSkipped: false,
         guidanceCompleted: false,
         completedCount: 0,

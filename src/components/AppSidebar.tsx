@@ -53,12 +53,35 @@ export function AppSidebar() {
   const [bookingsOpen, setBookingsOpen] = useState(isBookingsChildActive);
   
   const isItemLocked = (requiredStep: number) => {
-    return inGuidedSetup && completedCount < requiredStep;
+    // During guided setup, lock all items except current page and getting-started
+    if (inGuidedSetup) {
+      const currentRoute = location.pathname;
+      const isCurrentItem = navigationItems.some(item => 
+        item.url === currentRoute && item.requiredStep === requiredStep
+      ) || bookingItems.some(item => 
+        item.url === currentRoute && item.requiredStep === requiredStep
+      );
+      
+      // Allow getting-started and current active item
+      if (currentRoute === '/getting-started' || isCurrentItem) {
+        return false;
+      }
+      
+      // Lock everything else during tutorial
+      return completedCount <= requiredStep;
+    }
+    
+    // Original logic for non-guided setup
+    return completedCount < requiredStep;
   };
 
-  const handleLockedItemClick = (e: React.MouseEvent, requiredStep: number) => {
+  const handleLockedItemClick = (e: React.MouseEvent, requiredStep: number, itemUrl?: string) => {
     if (isItemLocked(requiredStep)) {
       e.preventDefault();
+      // Show helpful message during guided setup
+      if (inGuidedSetup) {
+        console.log('Navigation blocked during guided setup. Complete current step first.');
+      }
     }
   };
   const handleBookingsClick = () => {
@@ -129,7 +152,7 @@ export function AppSidebar() {
               const content = (
                 <div 
                   className={`flex items-center gap-3 w-full ${locked ? 'opacity-50' : ''}`}
-                  onClick={(e) => handleLockedItemClick(e, item.requiredStep)}
+                  onClick={(e) => handleLockedItemClick(e, item.requiredStep, item.url)}
                 >
                   <item.icon className="h-4 w-4 text-sidebar-foreground group-hover/item:text-[hsl(var(--sidebar-primary))] group-data-[active=true]/item:text-[hsl(var(--sidebar-primary))]" />
                   <span className="font-medium">{item.title}</span>
@@ -148,9 +171,9 @@ export function AppSidebar() {
                           {content}
                         </SidebarMenuButton>
                       </TooltipTrigger>
-                      <TooltipContent side="right">
-                        <p>Unlocks after setup is complete</p>
-                      </TooltipContent>
+                        <TooltipContent side="right">
+                          <p>{inGuidedSetup ? 'Complete current tutorial step first' : 'Unlocks after setup is complete'}</p>
+                        </TooltipContent>
                     </Tooltip>
                   ) : (
                      <SidebarMenuButton
@@ -189,7 +212,7 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </TooltipTrigger>
                 <TooltipContent side="right">
-                  <p>Unlocks after setup is complete</p>
+                  <p>{inGuidedSetup ? 'Complete current tutorial step first' : 'Unlocks after setup is complete'}</p>
                 </TooltipContent>
               </Tooltip>
             ) : (
@@ -230,7 +253,7 @@ export function AppSidebar() {
                                   </SidebarMenuButton>
                                 </TooltipTrigger>
                                 <TooltipContent side="right">
-                                  <p>Unlocks after setup is complete</p>
+                                  <p>{inGuidedSetup ? 'Complete current tutorial step first' : 'Unlocks after setup is complete'}</p>
                                 </TooltipContent>
                               </Tooltip>
                             ) : (
@@ -263,7 +286,7 @@ export function AppSidebar() {
               const content = (
                 <div 
                   className={`flex items-center gap-3 w-full ${locked ? 'opacity-50' : ''}`}
-                  onClick={(e) => handleLockedItemClick(e, item.requiredStep)}
+                  onClick={(e) => handleLockedItemClick(e, item.requiredStep, item.url)}
                 >
                   <item.icon className="h-4 w-4 text-sidebar-foreground group-hover/item:text-[hsl(var(--sidebar-primary))] group-data-[active=true]/item:text-[hsl(var(--sidebar-primary))]" />
                   <span className="font-medium">{item.title}</span>
@@ -283,7 +306,7 @@ export function AppSidebar() {
                         </SidebarMenuButton>
                       </TooltipTrigger>
                       <TooltipContent side="right">
-                        <p>Unlocks after setup is complete</p>
+                        <p>{inGuidedSetup ? 'Complete current tutorial step first' : 'Unlocks after setup is complete'}</p>
                       </TooltipContent>
                     </Tooltip>
                   ) : (

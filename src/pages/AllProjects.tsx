@@ -115,18 +115,21 @@ const AllProjects = () => {
   // Handle tutorial launch
   useEffect(() => {
     const tutorial = searchParams.get('tutorial');
+    console.log('🔍 Tutorial check:', {
+      tutorial,
+      currentURL: window.location.href,
+      searchParams: searchParams.toString()
+    });
+    
     if (tutorial === 'true') {
+      console.log('✅ Starting tutorial');
       setShowTutorial(true);
-      // Remove tutorial param from URL and clean up any duplicates
-      const newSearchParams = new URLSearchParams();
-      for (const [key, value] of searchParams.entries()) {
-        if (key !== 'tutorial') {
-          newSearchParams.set(key, value);
-        }
-      }
-      setSearchParams(newSearchParams, { replace: true });
+      // Clean up URL completely
+      const url = new URL(window.location.href);
+      url.searchParams.delete('tutorial');
+      window.history.replaceState({}, '', url.toString());
     }
-  }, [searchParams, setSearchParams]);
+  }, [searchParams]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {

@@ -1,13 +1,14 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { HelpCircle, ArrowRight, CheckCircle, Play } from "lucide-react";
+import { HelpCircle, ArrowRight, CheckCircle } from "lucide-react";
 import { SampleDataModal } from "@/components/SampleDataModal";
 import { RestartGuidedModeButton } from "@/components/RestartGuidedModeButton";
 import { ExitGuidanceModeButton } from "@/components/ExitGuidanceModeButton";
+import { GuidedStepProgress } from "@/components/GuidedStepProgress";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { useOnboarding } from "@/hooks/useOnboarding";
 
 const onboardingSteps = [
   {
@@ -56,12 +57,12 @@ const GettingStarted = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [showSampleDataModal, setShowSampleDataModal] = useState(false);
-  const [completedSteps] = useState<number[]>([]); // Will be managed by backend in next phase
+  const { currentStep: currentStepNumber, completedSteps, loading } = useOnboarding();
   
-  const currentStepIndex = completedSteps.length;
+  const currentStepIndex = currentStepNumber - 1; // Convert to 0-based index
   const currentStep = onboardingSteps[currentStepIndex];
   const nextStep = onboardingSteps[currentStepIndex + 1];
-  const progressPercentage = (completedSteps.length / onboardingSteps.length) * 100;
+  const allStepsCompleted = completedSteps.length >= onboardingSteps.length;
 
   const handleStepAction = (route: string) => {
     navigate(route);
@@ -105,13 +106,15 @@ const GettingStarted = () => {
                   <CheckCircle className="w-5 h-5 text-green-500" />
                 )}
               </CardTitle>
-              <CardDescription className="text-base">
-                {completedSteps.length}/5 Tasks Complete
-              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <Progress value={progressPercentage} className="w-full h-2" />
+                <GuidedStepProgress 
+                  currentValue={completedSteps.length}
+                  targetValue={completedSteps.length}
+                  totalSteps={onboardingSteps.length}
+                  animate={true}
+                />
                 <div className="flex flex-col gap-2 text-sm text-muted-foreground">
                   <div className="font-medium">
                     <span className="text-foreground">Now:</span> {currentStep ? currentStep.title : "All tasks complete! 🎉"}
@@ -268,7 +271,7 @@ const GettingStarted = () => {
         )}
 
         {/* Completion State */}
-        {!currentStep && (
+        {allStepsCompleted && (
           <div className="text-center">
             <Card className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950/20">
               <CardContent className="py-12">

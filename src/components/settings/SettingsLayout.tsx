@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSettingsContext } from "@/contexts/SettingsContext";
-import { useOnboarding } from "@/hooks/useOnboarding";
+import { useOnboardingV2 } from "@/hooks/useOnboardingV2";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 const personalSettingsItems = [
@@ -40,16 +40,16 @@ const organizationSettingsItems = [
 export default function SettingsLayout() {
   const location = useLocation();
   const { hasCategoryChanges } = useSettingsContext();
-  const { inGuidedSetup } = useOnboarding();
+  const { shouldLockNavigation } = useOnboardingV2();
   
   const isItemLocked = (itemHref: string) => {
     console.log('🔍 Settings item lock check:', {
       itemHref,
-      inGuidedSetup
+      shouldLockNavigation
     });
 
     // Simple rule: During guided setup, only allow general settings
-    if (inGuidedSetup) {
+    if (shouldLockNavigation) {
       // Allow general settings during guided setup
       const isUnlocked = itemHref === '/settings';
       console.log(`🔒 Guided setup: ${itemHref} - ${isUnlocked ? 'UNLOCKED' : 'LOCKED'}`);

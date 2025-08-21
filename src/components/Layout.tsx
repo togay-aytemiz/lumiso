@@ -5,11 +5,11 @@ import { OnboardingModal } from "@/components/OnboardingModal";
 import { RestartGuidedModeButton } from "@/components/RestartGuidedModeButton";
 import { useLayoutEffect, useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import { useOnboarding } from "@/hooks/useOnboarding";
+import { useOnboardingV2 } from "@/hooks/useOnboardingV2";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
-  const { shouldShowOnboarding, loading: onboardingLoading, inGuidedSetup } = useOnboarding();
+  const { shouldShowWelcomeModal, loading: onboardingLoading, shouldLockNavigation } = useOnboardingV2();
   const [showOnboardingModal, setShowOnboardingModal] = useState(false);
 
   // Simple rule: Don't show modal on getting-started page
@@ -18,7 +18,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   // Check if we should show onboarding modal
   useEffect(() => {
     if (!onboardingLoading && !isOnGettingStartedPage) {
-      if (shouldShowOnboarding) {
+      if (shouldShowWelcomeModal) {
         setShowOnboardingModal(true);
       } else {
         setShowOnboardingModal(false);
@@ -27,7 +27,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       // Always hide modal on getting-started page
       setShowOnboardingModal(false);
     }
-  }, [onboardingLoading, shouldShowOnboarding, isOnGettingStartedPage]);
+  }, [onboardingLoading, shouldShowWelcomeModal, isOnGettingStartedPage]);
 
   useLayoutEffect(() => {
     // Disable automatic scroll restoration
@@ -56,7 +56,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </div>
         </main>
       </div>
-      <MobileBottomNav hideForOnboarding={showOnboardingModal || inGuidedSetup} />
+      <MobileBottomNav hideForOnboarding={showOnboardingModal || shouldLockNavigation} />
       
       {/* Onboarding Modal */}
       <OnboardingModal 

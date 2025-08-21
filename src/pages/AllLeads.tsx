@@ -16,7 +16,7 @@ import GlobalSearch from "@/components/GlobalSearch";
 import { PageHeader, PageHeaderSearch, PageHeaderActions } from "@/components/ui/page-header";
 import { AssigneeAvatars } from "@/components/AssigneeAvatars";
 import { OnboardingTutorial, TutorialStep } from "@/components/shared/OnboardingTutorial";
-import { useOnboarding } from "@/hooks/useOnboarding";
+import { useOnboardingV2 } from "@/hooks/useOnboardingV2";
 import { Calendar, MessageSquare, CheckSquare } from "lucide-react";
 
 interface Lead {
@@ -47,7 +47,7 @@ const AllLeads = () => {
   const [currentTutorialStep, setCurrentTutorialStep] = useState(0);
   const [isSchedulingTutorial, setIsSchedulingTutorial] = useState(false);
   const navigate = useNavigate();
-  const { completedCount, completeStep } = useOnboarding();
+  const { currentStep, completeCurrentStep } = useOnboardingV2();
 
   const leadsTutorialSteps: TutorialStep[] = [
     {
@@ -158,11 +158,11 @@ const AllLeads = () => {
       setIsSchedulingTutorial(true);
       setShowTutorial(true);
       setCurrentTutorialStep(0);
-    } else if (completedCount === 1) {
+    } else if (currentStep === 2) {
       setShowTutorial(true);
       setCurrentTutorialStep(0); // Start from step 1
     }
-  }, [completedCount]);
+  }, [currentStep]);
 
   // Update tutorial step when needed
   useEffect(() => {

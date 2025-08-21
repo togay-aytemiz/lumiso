@@ -2,7 +2,7 @@ import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { LayoutDashboard, Users, Calendar, Bell, BarChart3, FolderOpen, CreditCard, CalendarDays, CalendarRange, Lock, BookOpen, Settings } from "lucide-react";
 import logo from "@/assets/Logo.png";
-import { useOnboarding } from "@/hooks/useOnboarding";
+import { useOnboardingV2 } from "@/hooks/useOnboardingV2";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Sidebar,
@@ -38,17 +38,17 @@ export function AppSidebar() {
   const navigate = useNavigate();
   const currentPath = location.pathname;
   const isMobile = useIsMobile();
-  const { inGuidedSetup, loading } = useOnboarding();
+  const { shouldLockNavigation, loading } = useOnboardingV2();
 
   // Debug logging - CHECK WHAT'S CHANGING
   useEffect(() => {
     console.log('🚨 SIDEBAR STATE CHANGE:', {
-      inGuidedSetup,
+      shouldLockNavigation,
       loading,
       currentPath: location.pathname,
       timestamp: new Date().toISOString()
     });
-  }, [inGuidedSetup, loading, location.pathname]);
+  }, [shouldLockNavigation, loading, location.pathname]);
 
   // Show loading state while onboarding data is being fetched
   if (loading) {
@@ -74,7 +74,7 @@ export function AppSidebar() {
     }
     
     // Simple rule: During guided setup, lock everything except settings
-    if (inGuidedSetup) {
+    if (shouldLockNavigation) {
       // Settings should always be accessible during guided setup
       if (itemUrl && itemUrl.startsWith('/settings')) {
         return false;
@@ -87,7 +87,7 @@ export function AppSidebar() {
   };
 
   const handleLockedItemClick = (e: React.MouseEvent) => {
-    if (inGuidedSetup) {
+    if (shouldLockNavigation) {
       e.preventDefault();
     }
   };
@@ -132,7 +132,7 @@ export function AppSidebar() {
       <SidebarContent className="px-3 flex-1 overflow-y-auto">
         <SidebarMenu>
           {/* Getting Started - Always visible when on getting-started page OR in guided setup */}
-          {(location.pathname === '/getting-started' || inGuidedSetup) && (
+          {(location.pathname === '/getting-started' || shouldLockNavigation) && (
             <SidebarMenuItem>
               <SidebarMenuButton
                 asChild
@@ -339,7 +339,7 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="p-4 mt-auto shrink-0">
-        {!inGuidedSetup && !location.pathname.startsWith('/getting-started') && (
+        {!shouldLockNavigation && !location.pathname.startsWith('/getting-started') && (
           <div className="flex justify-start">
             <UserMenu mode={isMobile ? "mobile" : "desktop"} />
           </div>

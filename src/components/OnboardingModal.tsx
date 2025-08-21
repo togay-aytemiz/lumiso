@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { useOnboarding } from "@/hooks/useOnboarding";
+import { useOnboardingV2, ONBOARDING_STEPS } from "@/hooks/useOnboardingV2";
 import { toast } from "@/hooks/use-toast";
 import { BaseOnboardingModal, type OnboardingAction } from "./shared/BaseOnboardingModal";
 import { SampleDataModal } from "./SampleDataModal";
@@ -11,20 +11,15 @@ interface OnboardingModalProps {
   onClose: () => void;
 }
 
-const onboardingSteps = [
-  "Complete your profile setup",
-  "Create your first client lead",
-  "Set up a photography project", 
-  "Schedule a photo session",
-  "Configure your packages"
-];
+// Use the centralized steps from the hook
+const onboardingStepsDisplay = ONBOARDING_STEPS.map(step => step.title);
 
 export function OnboardingModal({ open, onClose }: OnboardingModalProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [showSampleDataModal, setShowSampleDataModal] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { startGuidedSetup } = useOnboarding();
+  const { startGuidedSetup } = useOnboardingV2();
 
   const handleStartLearning = async () => {
     if (!user) return;
@@ -93,7 +88,7 @@ export function OnboardingModal({ open, onClose }: OnboardingModalProps) {
             What you'll learn:
           </h4>
           <div className="space-y-3">
-            {onboardingSteps.map((step, index) => (
+            {onboardingStepsDisplay.map((step, index) => (
               <div key={index} className="flex items-center gap-3">
                 <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
                   <span className="text-sm font-medium text-primary">{index + 1}</span>

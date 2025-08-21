@@ -8,87 +8,53 @@ import { ExitGuidanceModeButton } from "@/components/ExitGuidanceModeButton";
 import { GuidedStepProgress } from "@/components/GuidedStepProgress";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { useOnboarding } from "@/hooks/useOnboarding";
+import { useOnboardingV2 } from "@/hooks/useOnboardingV2";
 
-const onboardingSteps = [
-  {
-    id: 1,
-    title: "Complete Your Profile Setup",
-    description: "Add your business details and contact information",
-    route: "/settings/profile",
-    buttonText: "Set Up Profile",
-    duration: "3 min"
-  },
-  {
-    id: 2, 
-    title: "Create Your First Lead",
-    description: "Add a potential client to start tracking opportunities",
-    route: "/leads",
-    buttonText: "Go to Leads",
-    duration: "2 min"
-  },
-  {
-    id: 3,
-    title: "Set Up a Photography Project", 
-    description: "Create your first project to organize sessions and deliverables",
-    route: "/projects",
-    buttonText: "Create Project",
-    duration: "4 min"
-  },
-  {
-    id: 4,
-    title: "Explore Projects Page",
-    description: "Learn about different project views: Board, List, and Archived projects",
-    route: "/projects?tutorial=true",
-    buttonText: "Explore Projects",
-    duration: "3 min"
-  },
-  {
-    id: 5,
-    title: "Schedule a Photo Session",
-    description: "Book your first session and manage your calendar",
-    route: "/leads?tutorial=scheduling", 
-    buttonText: "Schedule Session",
-    duration: "3 min"
-  },
-  {
-    id: 6,
-    title: "Configure Your Packages",
-    description: "Set up photography packages and pricing structure",
-    route: "/settings/services",
-    buttonText: "Set Up Packages",
-    duration: "5 min"
-  }
-];
+// Remove duplicate step definitions - now using centralized ones from hook
 
 const GettingStarted = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [showSampleDataModal, setShowSampleDataModal] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
-  const { completedCount, loading, inGuidedSetup, guidanceCompleted } = useOnboarding();
+  const { 
+    loading, 
+    isInGuidedSetup, 
+    isOnboardingComplete,
+    currentStepInfo,
+    nextStepInfo,
+    completedSteps,
+    isAllStepsComplete,
+    totalSteps,
+    currentStep,
+    completeOnboarding
+  } = useOnboardingV2();
 
   // If guided setup is complete, redirect to dashboard
   useEffect(() => {
-    if (!loading && (!inGuidedSetup || guidanceCompleted)) {
+    if (!loading && (!isInGuidedSetup || isOnboardingComplete)) {
       navigate('/', { replace: true });
     }
-  }, [loading, inGuidedSetup, guidanceCompleted, navigate]);
+  }, [loading, isInGuidedSetup, isOnboardingComplete, navigate]);
   
-  // Simple logic
-  const allCompleted = completedCount >= 6;
-  const currentStep = allCompleted ? null : onboardingSteps[completedCount];
-  const nextStep = currentStep ? onboardingSteps[completedCount + 1] : null;
-  const completedSteps = onboardingSteps.slice(0, completedCount);
+  // Handle completion
+  const handleComplete = async () => {
+    try {
+      await completeOnboarding();
+      navigate('/', { replace: true });
+    } catch (error) {
+      console.error('Error completing onboarding:', error);
+    }
+  };
 
-  // Animation on mount and when completedCount changes
+  // Animation on mount and when currentStep changes
   useEffect(() => {
     if (!loading) {
       setIsAnimating(true);
       const timer = setTimeout(() => setIsAnimating(false), 300);
       return () => clearTimeout(timer);
     }
-  }, [completedCount, loading]);
+  }, [currentStep, loading]);
 
   const handleStepAction = (step: any) => {
     if (step.id === 1 || step.id === 4 || step.id === 5) {
@@ -135,7 +101,7 @@ const GettingStarted = () => {
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
                 Setup Progress
-                {completedCount > 0 && (
+                {completedSteps.length > 0 && (
                   <CheckCircle className="w-5 h-5 text-green-500" />
                 )}
               </CardTitle>
@@ -143,18 +109,18 @@ const GettingStarted = () => {
             <CardContent>
               <div className="space-y-4">
                 <GuidedStepProgress 
-                  currentValue={completedCount}
-                  targetValue={completedCount}
-                  totalSteps={6}
+                  currentValue={currentStep - 1}
+                  targetValue={currentStep - 1}
+                  totalSteps={totalSteps}
                   animate={true}
                 />
                 <div className="flex flex-col gap-2 text-sm text-muted-foreground">
                   <div className="font-medium">
-                    <span className="text-foreground">Now:</span> {currentStep ? currentStep.title : "All tasks complete! 🎉"}
+                    <span className="text-foreground">Now:</span> {currentStepInfo ? currentStepInfo.title : "All tasks complete! 🎉"}
                   </div>
-                  {nextStep && (
+                  {nextStepInfo && (
                     <div>
-                      <span className="text-foreground">Next:</span> {nextStep.title}
+                      <span className="text-foreground">Next:</span> {nextStepInfo.title}
                     </div>
                   )}
                 </div>
@@ -197,7 +163,7 @@ const GettingStarted = () => {
         )}
 
         {/* Current Task */}
-        {currentStep && (
+        {currentStepInfo && (
           <div className={`mb-6 sm:mb-8 ${isAnimating ? 'animate-fade-in' : ''}`}>
             <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-accent/5">
               <CardContent className="p-4 md:p-6">
@@ -205,29 +171,29 @@ const GettingStarted = () => {
                   <div className="flex-1">
                     <div className="flex items-center gap-4 mb-3">
                       <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground text-lg font-bold animate-pulse">
-                        {currentStep.id}
+                        {currentStepInfo.id}
                       </div>
                       <div className="flex items-center gap-3">
                         <CardTitle className="text-xl">
-                          {currentStep.title}
+                          {currentStepInfo.title}
                         </CardTitle>
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground">
                           <Clock className="w-3 h-3 mr-1" />
-                          {currentStep.duration}
+                          {currentStepInfo.duration}
                         </span>
                       </div>
                     </div>
                     <CardDescription className="text-base text-muted-foreground ml-14">
-                      {currentStep.description}
+                      {currentStepInfo.description}
                     </CardDescription>
                   </div>
                   <div className="ml-8">
                     <Button 
                       size="lg" 
-                      onClick={() => handleStepAction(currentStep)}
+                      onClick={() => handleStepAction(currentStepInfo)}
                       className="hover-scale"
                     >
-                      {currentStep.buttonText}
+                      {currentStepInfo.buttonText}
                       <ArrowRight className="w-4 h-4 ml-2" />
                     </Button>
                   </div>
@@ -238,7 +204,7 @@ const GettingStarted = () => {
         )}
 
         {/* Next Step Preview */}
-        {nextStep && (
+        {nextStepInfo && (
           <div className="mb-6 sm:mb-8">
             <div className="flex items-center gap-2 mb-4">
               <div className="h-px bg-border flex-1"></div>
@@ -254,19 +220,19 @@ const GettingStarted = () => {
                     <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-3">
                       <div className="flex items-center gap-3">
                         <div className="flex items-center justify-center w-10 h-10 rounded-full border-2 border-muted-foreground/30 text-muted-foreground text-lg font-bold flex-shrink-0">
-                          {nextStep.id}
+                          {nextStepInfo.id}
                         </div>
                         <CardTitle className="text-lg sm:text-xl text-muted-foreground leading-tight">
-                          {nextStep.title}
+                          {nextStepInfo.title}
                         </CardTitle>
                       </div>
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted/50 text-muted-foreground/80 w-fit">
                         <Clock className="w-3 h-3 mr-1" />
-                        {nextStep.duration}
+                        {nextStepInfo.duration}
                       </span>
                     </div>
                     <CardDescription className="text-sm sm:text-base text-muted-foreground/80 pl-0 sm:pl-13">
-                      {nextStep.description}
+                      {nextStepInfo.description}
                     </CardDescription>
                   </div>
                   <div className="flex-shrink-0">
@@ -276,7 +242,7 @@ const GettingStarted = () => {
                       disabled
                       className="opacity-50 w-full sm:w-auto"
                     >
-                      {nextStep.buttonText}
+                      {nextStepInfo.buttonText}
                       <ArrowRight className="w-4 h-4 ml-2" />
                     </Button>
                   </div>
@@ -287,7 +253,7 @@ const GettingStarted = () => {
         )}
 
         {/* Completion */}
-        {allCompleted && (
+        {isAllStepsComplete && (
           <div className={`text-center ${isAnimating ? 'animate-scale-in' : ''}`}>
             <Card className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950/20">
               <CardContent className="py-12">
@@ -301,7 +267,7 @@ const GettingStarted = () => {
                 <Button 
                   size="lg" 
                   className="bg-green-600 hover:bg-green-700 hover-scale"
-                  onClick={() => navigate('/')}
+                  onClick={handleComplete}
                 >
                   Go to Dashboard
                   <ArrowRight className="w-4 h-4 ml-2" />

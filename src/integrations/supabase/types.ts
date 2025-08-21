@@ -1043,6 +1043,7 @@ export type Database = {
           completed_steps: Json | null
           completed_steps_count: number | null
           created_at: string
+          current_onboarding_step: number | null
           current_step: number | null
           date_format: string | null
           guidance_completed: boolean | null
@@ -1058,6 +1059,7 @@ export type Database = {
           notification_scheduled_time: string | null
           notification_weekly_recap_enabled: boolean | null
           notification_weekly_recap_send_at: string | null
+          onboarding_stage: Database["public"]["Enums"]["onboarding_stage"]
           photography_business_name: string | null
           primary_brand_color: string | null
           show_quick_status_buttons: boolean
@@ -1070,6 +1072,7 @@ export type Database = {
           completed_steps?: Json | null
           completed_steps_count?: number | null
           created_at?: string
+          current_onboarding_step?: number | null
           current_step?: number | null
           date_format?: string | null
           guidance_completed?: boolean | null
@@ -1085,6 +1088,7 @@ export type Database = {
           notification_scheduled_time?: string | null
           notification_weekly_recap_enabled?: boolean | null
           notification_weekly_recap_send_at?: string | null
+          onboarding_stage?: Database["public"]["Enums"]["onboarding_stage"]
           photography_business_name?: string | null
           primary_brand_color?: string | null
           show_quick_status_buttons?: boolean
@@ -1097,6 +1101,7 @@ export type Database = {
           completed_steps?: Json | null
           completed_steps_count?: number | null
           created_at?: string
+          current_onboarding_step?: number | null
           current_step?: number | null
           date_format?: string | null
           guidance_completed?: boolean | null
@@ -1112,6 +1117,7 @@ export type Database = {
           notification_scheduled_time?: string | null
           notification_weekly_recap_enabled?: boolean | null
           notification_weekly_recap_send_at?: string | null
+          onboarding_stage?: Database["public"]["Enums"]["onboarding_stage"]
           photography_business_name?: string | null
           primary_brand_color?: string | null
           show_quick_status_buttons?: boolean
@@ -1307,6 +1313,12 @@ export type Database = {
         | "booked"
         | "completed"
         | "lost"
+      onboarding_stage:
+        | "not_started"
+        | "modal_shown"
+        | "in_progress"
+        | "completed"
+        | "skipped"
       session_status:
         | "planned"
         | "completed"
@@ -1456,6 +1468,13 @@ export const Constants = {
         "booked",
         "completed",
         "lost",
+      ],
+      onboarding_stage: [
+        "not_started",
+        "modal_shown",
+        "in_progress",
+        "completed",
+        "skipped",
       ],
       session_status: [
         "planned",

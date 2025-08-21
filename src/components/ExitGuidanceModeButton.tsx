@@ -2,23 +2,23 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useOnboarding } from "@/hooks/useOnboarding";
+import { useOnboardingV2 } from "@/hooks/useOnboardingV2";
 import { toast } from "@/hooks/use-toast";
 
 export function ExitGuidanceModeButton() {
   const { user } = useAuth();
-  const { completeGuidedMode, inGuidedSetup } = useOnboarding();
+  const { completeOnboarding, shouldLockNavigation } = useOnboardingV2();
   const [isLoading, setIsLoading] = useState(false);
 
   // Only show for the specific user AND when in guided setup
-  if (!user || user.email !== 'togayaytemiz@gmail.com' || !inGuidedSetup) {
+  if (!user || user.email !== 'togayaytemiz@gmail.com' || !shouldLockNavigation) {
     return null;
   }
 
   const handleExit = async () => {
     setIsLoading(true);
     try {
-      await completeGuidedMode();
+      await completeOnboarding();
       toast({
         title: "Exited guidance mode",
         description: "You can now access all features.",

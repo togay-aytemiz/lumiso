@@ -2,12 +2,12 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { RotateCcw } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useOnboarding } from "@/hooks/useOnboarding";
+import { useOnboardingV2 } from "@/hooks/useOnboardingV2";
 import { toast } from "@/hooks/use-toast";
 
 export function RestartGuidedModeButton() {
   const { user } = useAuth();
-  const { resetOnboardingState } = useOnboarding();
+  const { resetOnboarding } = useOnboardingV2();
   const [isLoading, setIsLoading] = useState(false);
 
   // Only show for the specific user
@@ -18,7 +18,7 @@ export function RestartGuidedModeButton() {
   const handleRestart = async () => {
     setIsLoading(true);
     try {
-      await resetOnboardingState();
+      await resetOnboarding();
       toast({
         title: "Guided mode reset",
         description: "The onboarding modal will appear on your next page refresh.",

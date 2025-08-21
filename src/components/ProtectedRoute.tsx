@@ -1,11 +1,11 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { useOnboarding } from "@/hooks/useOnboarding";
+import { useOnboardingV2 } from "@/hooks/useOnboardingV2";
 import Layout from "./Layout";
 
 const ProtectedRoute = () => {
   const { user, loading } = useAuth();
-  const { inGuidedSetup, loading: onboardingLoading } = useOnboarding();
+  const { shouldLockNavigation, loading: onboardingLoading } = useOnboardingV2();
   const location = useLocation();
 
   if (loading || onboardingLoading) {
@@ -35,7 +35,7 @@ const ProtectedRoute = () => {
   ];
   
   // Redirect to getting-started if user is in guided setup mode and not on an allowed page
-  if (inGuidedSetup && !onboardingStepPaths.some(path => location.pathname.startsWith(path))) {
+  if (shouldLockNavigation && !onboardingStepPaths.some(path => location.pathname.startsWith(path))) {
     return <Navigate to="/getting-started" replace />;
   }
 

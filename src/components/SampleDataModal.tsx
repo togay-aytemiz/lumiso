@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { CheckCircle, Users, FolderOpen, Calendar, Package } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useOnboarding } from "@/hooks/useOnboarding";
+import { useOnboardingV2 } from "@/hooks/useOnboardingV2";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
@@ -40,24 +40,15 @@ export function SampleDataModal({ open, onClose, onCloseAll }: SampleDataModalPr
   const { user } = useAuth();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
-  const { startGuidedSetup } = useOnboarding();
+  const { startGuidedSetup, skipOnboarding } = useOnboardingV2();
 
   const handleSkipWithSampleData = async () => {
     if (!user) return;
     
     setIsLoading(true);
     try {
-      // Update user settings to mark guided setup as skipped
-      const { error } = await supabase
-        .from('user_settings')
-        .update({ 
-          in_guided_setup: false,
-          guided_setup_skipped: true 
-        })
-        .eq('user_id', user.id);
-
-      if (error) throw error;
-
+      await skipOnboarding();
+      
       toast({
         title: "Setup skipped!",
         description: "You can start exploring Lumiso. Sample data will be added in a future update.",
@@ -95,7 +86,7 @@ export function SampleDataModal({ open, onClose, onCloseAll }: SampleDataModalPr
       } else {
         onClose();
       }
-      // Note: startGuidedSetup() includes navigation to /getting-started via window.location.reload()
+      navigate('/getting-started');
     } catch (error) {
       console.error('Error starting guided setup:', error);
       toast({

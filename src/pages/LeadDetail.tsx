@@ -162,12 +162,11 @@ const LeadDetail = () => {
     {
       id: 5,
       title: "Create Your First Project",
-      description: "Now let's turn this lead into a project! Look for the 'Add Project' button and click it to start creating your first project.",
+      description: "Great! Now let's turn this lead into a project! Look for the 'Add Project' button and click it to start creating your first project. Once you've created it, click Next to continue.",
       content: null,
       mode: "floating",
-      canProceed: false,
-      requiresAction: true,
-      disabledTooltip: "Create a project to continue"
+      canProceed: true, // Make Next button always work
+      requiresAction: false // Remove the disabled state
     },
     {
       id: 6,

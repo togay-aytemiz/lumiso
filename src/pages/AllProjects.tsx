@@ -117,11 +117,13 @@ const AllProjects = () => {
     const tutorial = searchParams.get('tutorial');
     console.log('🔍 Tutorial check:', {
       tutorial,
+      includes_true: tutorial?.includes('true'),
       currentURL: window.location.href,
       searchParams: searchParams.toString()
     });
     
-    if (tutorial === 'true') {
+    // Check if tutorial parameter contains 'true' (handles malformed URLs)
+    if (tutorial?.includes('true')) {
       console.log('✅ Starting tutorial');
       setShowTutorial(true);
       // Clean up URL completely

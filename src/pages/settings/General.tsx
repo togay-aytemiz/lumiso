@@ -27,8 +27,7 @@ export default function General() {
 
   // Check if we're in tutorial mode from Profile onboarding
   const isInTutorial = searchParams.get('tutorial') === 'true';
-  const currentStep = parseInt(searchParams.get('step') || '0');
-  const [showTutorial, setShowTutorial] = useState(isInTutorial && (currentStep === 3 || currentStep === 4 || currentStep === 5));
+  const [showTutorial, setShowTutorial] = useState(isInTutorial);
   
   // Create tutorial steps for General page (steps 3, 4, and 5 from Profile)
   const tutorialSteps: TutorialStep[] = [
@@ -466,7 +465,7 @@ export default function General() {
         onComplete={handleTutorialComplete}
         onExit={handleTutorialExit}
         isVisible={showTutorial}
-        initialStepIndex={currentStep === 3 ? 0 : currentStep === 4 ? 1 : currentStep === 5 ? 2 : 0}
+        initialStepIndex={0}
       />
     </SettingsPageWrapper>
   );

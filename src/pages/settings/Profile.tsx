@@ -235,11 +235,10 @@ export default function Profile() {
   ];
 
   const handleTutorialComplete = async () => {
-    console.log('✅ Profile tutorial complete');
-    // Mark step as completed
-    await completeStep();
+    console.log('✅ Profile tutorial complete - moving to General tutorial');
+    // Navigate to General tutorial instead of completing step
     setShowTutorial(false);
-    navigate('/getting-started');
+    navigate('/settings/general?tutorial=true');
   };
 
   const handleTutorialExit = async () => {

@@ -257,4 +257,21 @@ All colors MUST be HSL.
     -webkit-overflow-scrolling: touch;
     touch-action: pan-y;
   }
+
+  /* Guidance highlight effect */
+  .guidance-highlight {
+    @apply ring-2 ring-primary ring-offset-2 ring-offset-background animate-pulse;
+    animation: guidance-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  @keyframes guidance-pulse {
+    0%, 100% {
+      @apply ring-primary;
+      transform: scale(1);
+    }
+    50% {
+      @apply ring-primary/50;
+      transform: scale(1.02);
+    }
+  }
 }

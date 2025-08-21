@@ -170,6 +170,7 @@ const AllLeads = () => {
               size="sm"
               onClick={() => setAddLeadDialogOpen(true)}
               className="h-10 flex items-center gap-2 whitespace-nowrap flex-shrink-0 px-3 sm:px-4"
+              data-testid="add-lead-button"
             >
               <Plus className="h-4 w-4" />
               <span className="hidden sm:inline">Add Lead</span>

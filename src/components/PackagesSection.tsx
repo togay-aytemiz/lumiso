@@ -154,7 +154,7 @@ const PackagesSection = () => {
           <div className="text-center py-8">
             <p className="text-muted-foreground mb-4">No packages yet</p>
             {canManagePackages && (
-              <Button onClick={() => setShowNewPackageDialog(true)} variant="outline">
+              <Button onClick={() => setShowNewPackageDialog(true)} variant="outline" data-testid="add-package-button">
                 <Plus className="h-4 w-4 mr-2" />
                 Create your first package
               </Button>
@@ -168,6 +168,7 @@ const PackagesSection = () => {
                 <Button 
                   onClick={() => setShowNewPackageDialog(true)} 
                   className="w-full"
+                  data-testid="add-package-button"
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   Add Package

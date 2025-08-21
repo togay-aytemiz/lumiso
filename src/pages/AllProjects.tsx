@@ -430,6 +430,7 @@ const AllProjects = () => {
                 <Button 
                   size="sm"
                   className="h-10 flex items-center gap-2 whitespace-nowrap flex-shrink-0 px-3 sm:px-4"
+                  data-testid="add-project-button"
                 >
                   <Plus className="h-4 w-4" />
                   <span className="hidden sm:inline">Add Project</span>

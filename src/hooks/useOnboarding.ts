@@ -113,15 +113,18 @@ export function useOnboarding() {
     try {
       console.log('🔄 Completing step, current count:', state.completedCount);
       
+      // First, complete the step (increments count)
       const result = await supabase.rpc('complete_onboarding_step', {
         user_uuid: user.id
       });
 
       console.log('✅ Step completion result:', result);
 
-      // If this is the final step (step 6), mark guidance as complete
+      // If this was the final step (going from 5 to 6), mark guidance as complete
       if (state.completedCount === 5) {
         console.log('🏁 Final step completed - marking guidance as complete');
+        
+        // Update guidance completion AFTER step increment
         await supabase
           .from('user_settings')
           .update({ 
@@ -131,12 +134,21 @@ export function useOnboarding() {
           .eq('user_id', user.id);
         
         console.log('✅ Guidance marked as complete');
+        
+        // Update local state immediately to show completion
+        setState(prev => ({
+          ...prev,
+          completedCount: 6, // Set to 6 to show completion
+          guidanceCompleted: true,
+          inGuidedSetup: false,
+          loading: false
+        }));
+      } else {
+        // For non-final steps, just refresh state
+        await fetchState();
       }
-
-      // Refresh state after step completion
-      await fetchState();
       
-      console.log('🔍 State refreshed after step completion');
+      console.log('🔍 Step completion process finished');
     } catch (error) {
       console.error('Error completing step:', error);
       throw error;

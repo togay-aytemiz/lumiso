@@ -19,15 +19,15 @@ import { UserMenu } from "@/components/UserMenu";
 
 const navigationItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard, requiredStep: 6 },
-  { title: "Leads", url: "/leads", icon: Users, requiredStep: 2, allowedInStep: [2, 5] }, // Allow in step 2 (create lead) and step 5 (schedule session)
-  { title: "Projects", url: "/projects", icon: FolderOpen, requiredStep: 3, allowedInStep: [3, 4] }, // Allow in step 3 (create project) and step 4 (explore projects)
+  { title: "Leads", url: "/leads", icon: Users, requiredStep: 2 },
+  { title: "Projects", url: "/projects", icon: FolderOpen, requiredStep: 3 },
   { title: "Analytics", url: "/analytics", icon: BarChart3, requiredStep: 6 },
   { title: "Payments", url: "/payments", icon: CreditCard, requiredStep: 6 },
-  { title: "Settings", url: "/settings", icon: Settings, requiredStep: 6, allowedInStep: [1, 6] }, // Allow in step 1 (profile) and step 6 (packages)
+  { title: "Settings", url: "/settings", icon: Settings, requiredStep: 6 },
 ];
 
 const bookingItems = [
-  { title: "Calendar", url: "/calendar", icon: CalendarDays, requiredStep: 4, allowedInStep: [5] }, // Allow in step 5 (schedule session)
+  { title: "Calendar", url: "/calendar", icon: CalendarDays, requiredStep: 4 },
   { title: "Sessions", url: "/sessions", icon: Calendar, requiredStep: 4 },
   { title: "Reminders", url: "/reminders", icon: Bell, requiredStep: 4 },
 ];
@@ -68,26 +68,19 @@ export function AppSidebar() {
   );
   const [bookingsOpen, setBookingsOpen] = useState(isBookingsChildActive);
   
-  const isItemLocked = (requiredStep: number, allowedInStep?: number[], itemUrl?: string) => {
-    // Simple rule: If in guided setup, lock EVERYTHING
+  const isItemLocked = (requiredStep: number) => {
+    // IF GUIDED SETUP IS ACTIVE - LOCK EVERYTHING
     if (inGuidedSetup) {
-      console.log(`🔒 GUIDED SETUP ACTIVE - Locking ${itemUrl || 'item'}`);
       return true;
     }
     
-    // Normal logic when not in guided setup
-    const locked = completedCount < requiredStep;
-    console.log(`📊 Normal mode - ${itemUrl || 'item'} locked: ${locked} (completed: ${completedCount}, required: ${requiredStep})`);
-    return locked;
+    // Normal mode - unlock based on completion
+    return completedCount < requiredStep;
   };
 
-  const handleLockedItemClick = (e: React.MouseEvent, requiredStep: number, allowedInStep?: number[], itemUrl?: string) => {
-    if (isItemLocked(requiredStep, allowedInStep, itemUrl)) {
+  const handleLockedItemClick = (e: React.MouseEvent) => {
+    if (inGuidedSetup) {
       e.preventDefault();
-      // Show helpful message during guided setup
-      if (inGuidedSetup) {
-        console.log('Navigation blocked during guided setup. Complete current step first.');
-      }
     }
   };
   const handleBookingsClick = () => {
@@ -153,12 +146,12 @@ export function AppSidebar() {
             .slice(0, navigationItems.findIndex((i) => i.title === "Analytics"))
             .map((item) => {
               const active = isActive(item.url);
-              const locked = isItemLocked(item.requiredStep, item.allowedInStep, item.url);
+              const locked = isItemLocked(item.requiredStep);
               
               const content = (
                 <div 
                   className={`flex items-center gap-3 w-full ${locked ? 'opacity-50' : ''}`}
-                  onClick={(e) => handleLockedItemClick(e, item.requiredStep, item.allowedInStep, item.url)}
+                  onClick={locked ? handleLockedItemClick : undefined}
                 >
                   <item.icon className="h-4 w-4 text-sidebar-foreground group-hover/item:text-[hsl(var(--sidebar-primary))] group-data-[active=true]/item:text-[hsl(var(--sidebar-primary))]" />
                   <span className="font-medium">{item.title}</span>
@@ -204,7 +197,7 @@ export function AppSidebar() {
 
           {/* Bookings parent with submenu */}
           <SidebarMenuItem>
-            {isItemLocked(4, undefined, "/bookings") ? (
+            {isItemLocked(4) ? (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <SidebarMenuButton
@@ -241,7 +234,7 @@ export function AppSidebar() {
                     <SidebarMenu>
                       {bookingItems.map((item) => {
                         const active = isActive(item.url);
-                        const locked = isItemLocked(item.requiredStep, item.allowedInStep, item.url);
+                        const locked = isItemLocked(item.requiredStep);
                         
                         return (
                           <SidebarMenuItem key={item.title}>
@@ -287,12 +280,12 @@ export function AppSidebar() {
             .slice(navigationItems.findIndex((i) => i.title === "Analytics"))
             .map((item) => {
               const active = isActive(item.url);
-              const locked = isItemLocked(item.requiredStep, item.allowedInStep, item.url);
+              const locked = isItemLocked(item.requiredStep);
               
               const content = (
                 <div 
                   className={`flex items-center gap-3 w-full ${locked ? 'opacity-50' : ''}`}
-                  onClick={(e) => handleLockedItemClick(e, item.requiredStep, item.allowedInStep, item.url)}
+                  onClick={locked ? handleLockedItemClick : undefined}
                 >
                   <item.icon className="h-4 w-4 text-sidebar-foreground group-hover/item:text-[hsl(var(--sidebar-primary))] group-data-[active=true]/item:text-[hsl(var(--sidebar-primary))]" />
                   <span className="font-medium">{item.title}</span>

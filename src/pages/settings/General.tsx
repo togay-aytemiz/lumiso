@@ -28,32 +28,58 @@ export default function General() {
   // Check if we're in tutorial mode from Profile onboarding
   const isInTutorial = searchParams.get('tutorial') === 'true';
   const currentStep = parseInt(searchParams.get('step') || '0');
-  const [showTutorial, setShowTutorial] = useState(isInTutorial && (currentStep === 3 || currentStep === 4));
+  const [showTutorial, setShowTutorial] = useState(isInTutorial && (currentStep === 3 || currentStep === 4 || currentStep === 5));
   
-  // Create tutorial steps for General page (steps 3 and 4 from Profile)
+  // Create tutorial steps for General page (steps 3, 4, and 5 from Profile)
   const tutorialSteps: TutorialStep[] = [
     {
       id: 3,
-      title: "Set Up Your Business Information",
-      description: "Add your business name here. This will appear on client communications and invoices.",
+      title: "Business Information & Branding",
+      description: "This is where you can customize your business information and branding. Let's explore what you can do here.",
+      content: (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 text-sm">
+            <Building className="h-4 w-4 text-primary" />
+            <span>Set your photography business name</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm">
+            <Upload className="h-4 w-4 text-primary" />
+            <span>Upload your business logo</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm">
+            <Settings className="h-4 w-4 text-primary" />
+            <span>Choose your brand colors</span>
+          </div>
+          <div className="text-xs text-muted-foreground mt-2">
+            All this information will appear on client communications, invoices, and contracts.
+          </div>
+        </div>
+      ),
+      canProceed: true,
+      mode: 'modal'
+    },
+    {
+      id: 4,
+      title: "Add Your Business Name",
+      description: "Please enter your photography business name below. This is required to continue and will be used in all client communications.",
       content: (
         <div className="space-y-2 text-sm text-muted-foreground">
-          <p>• Business Name: Required for professional communications</p>
-          <p>• Used in client emails, invoices, and contracts</p>
-          <p>• Can be changed later in General settings</p>
+          <p>• Required for professional communications</p>
+          <p>• Appears on invoices, contracts, and emails</p>
+          <p>• Can be changed later if needed</p>
         </div>
       ),
       canProceed: !!settings?.photography_business_name?.trim(),
       mode: 'floating'
     },
     {
-      id: 4,
-      title: "Profile Setup Complete!",
-      description: "Congratulations! You've successfully set up your profile and business information. You're ready to move on to the next step of your photography CRM setup.",
+      id: 5,
+      title: "Business Setup Complete!",
+      description: "Congratulations! You've successfully set up your business information. You're ready to move on to the next step of your photography CRM setup.",
       content: (
         <div className="flex items-center gap-2 text-green-600">
           <CheckCircle className="h-5 w-5" />
-          <span className="font-medium">Profile setup completed successfully!</span>
+          <span className="font-medium">Business information setup completed successfully!</span>
         </div>
       ),
       canProceed: true,
@@ -121,9 +147,10 @@ export default function General() {
 
   // Remove the old hardcoded tutorial steps - using dynamic ones above
   const handleTutorialComplete = async () => {
-    console.log('✅ General tutorial complete - returning to Profile step 4');
-    // Navigate back to profile with step 4
-    navigate('/settings/profile?tutorial=true&step=4');
+    console.log('✅ General tutorial complete - going to getting started');
+    // Tutorial complete, go to getting started
+    setShowTutorial(false);
+    navigate('/getting-started');
   };
 
   const handleTutorialExit = async () => {
@@ -435,7 +462,7 @@ export default function General() {
         onComplete={handleTutorialComplete}
         onExit={handleTutorialExit}
         isVisible={showTutorial}
-        initialStepIndex={currentStep === 3 ? 0 : 1}
+        initialStepIndex={currentStep === 3 ? 0 : currentStep === 4 ? 1 : currentStep === 5 ? 2 : 0}
       />
     </SettingsPageWrapper>
   );

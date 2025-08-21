@@ -68,9 +68,9 @@ export function OnboardingTutorial({
   const isFloatingMode = currentStep.mode === 'floating';
 
   if (isFloatingMode) {
-    // Floating mode - positioned at bottom right, non-blocking
+    // Floating mode - positioned at top right, non-blocking
     return (
-      <div className="fixed bottom-6 right-6 z-50 max-w-sm">
+      <div className="fixed top-6 right-6 z-50 max-w-sm">
         <Card className="shadow-2xl border-2">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">

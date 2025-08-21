@@ -39,8 +39,7 @@ export function OnboardingTutorial({
   useEffect(() => {
     if (currentStep?.route && currentStepIndex > 0) {
       console.log('🚀 OnboardingTutorial: Navigating to step route:', currentStep.route, 'stepIndex:', currentStepIndex);
-      const url = currentStep.route + (currentStep.route.includes('?') ? '&' : '?') + 'tutorial=true';
-      navigate(url);
+      navigate(currentStep.route);
     }
   }, [currentStep?.route, currentStepIndex, navigate]);
 

@@ -215,7 +215,7 @@ export default function Profile() {
           <p>• Can be changed later in General settings</p>
         </div>
       ),
-      route: "/settings/general?from=profile",
+      route: "/settings/general",
       canProceed: !!activeOrganization?.name?.trim(),
       mode: 'floating'
     },
@@ -562,14 +562,16 @@ export default function Profile() {
         </DialogContent>
       </Dialog>
 
-      {/* Onboarding Tutorial */}
-      <OnboardingTutorial
-        steps={tutorialSteps}
-        onComplete={handleTutorialComplete}
-        onExit={handleTutorialExit}
-        isVisible={showTutorial}
-        initialStepIndex={tutorialStepIndex}
-      />
+      {/* Onboarding Tutorial - stays visible even when navigating to other pages */}
+      {showTutorial && (
+        <OnboardingTutorial
+          steps={tutorialSteps}
+          onComplete={handleTutorialComplete}
+          onExit={handleTutorialExit}
+          isVisible={showTutorial}
+          initialStepIndex={tutorialStepIndex}
+        />
+      )}
     </SettingsPageWrapper>
   );
 }

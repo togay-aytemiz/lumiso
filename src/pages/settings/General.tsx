@@ -27,8 +27,7 @@ export default function General() {
 
   // Check if we're in tutorial mode
   const isInTutorial = searchParams.get('tutorial') === 'true';
-  const fromProfile = searchParams.get('from') === 'profile'; // Check if coming from Profile tutorial
-  const [showTutorial, setShowTutorial] = useState(isInTutorial && !fromProfile); // Don't show General tutorial if coming from Profile
+  const [showTutorial, setShowTutorial] = useState(false); // Never show General tutorial
 
   // Branding section state
   const brandingSection = useSettingsCategorySection({
@@ -440,7 +439,7 @@ export default function General() {
         steps={tutorialSteps}
         onComplete={handleTutorialComplete}
         onExit={handleTutorialExit}
-        isVisible={showTutorial}
+        isVisible={false}
       />
     </SettingsPageWrapper>
   );

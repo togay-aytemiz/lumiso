@@ -18,12 +18,12 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { UserMenu } from "@/components/UserMenu";
 
 const navigationItems = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard, requiredStep: 1 },
+  { title: "Dashboard", url: "/", icon: LayoutDashboard, requiredStep: 6 },
   { title: "Leads", url: "/leads", icon: Users, requiredStep: 2 },
   { title: "Projects", url: "/projects", icon: FolderOpen, requiredStep: 3 },
-  { title: "Analytics", url: "/analytics", icon: BarChart3, requiredStep: 5 },
-  { title: "Payments", url: "/payments", icon: CreditCard, requiredStep: 5 },
-  { title: "Settings", url: "/settings", icon: Settings, requiredStep: 1 }, // Allow Settings from step 1
+  { title: "Analytics", url: "/analytics", icon: BarChart3, requiredStep: 6 },
+  { title: "Payments", url: "/payments", icon: CreditCard, requiredStep: 6 },
+  { title: "Settings", url: "/settings", icon: Settings, requiredStep: 6 },
 ];
 
 const bookingItems = [

@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { toast } from "@/hooks/use-toast";
 import { BaseOnboardingModal, type OnboardingAction } from "./shared/BaseOnboardingModal";
+import { SampleDataModal } from "./SampleDataModal";
 
 interface OnboardingModalProps {
   open: boolean;
@@ -20,9 +21,10 @@ const onboardingSteps = [
 
 export function OnboardingModal({ open, onClose }: OnboardingModalProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [showSampleDataModal, setShowSampleDataModal] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { startGuidedSetup, skipWithSampleData } = useOnboarding();
+  const { startGuidedSetup } = useOnboarding();
 
   const handleStartLearning = async () => {
     if (!user) return;
@@ -49,34 +51,23 @@ export function OnboardingModal({ open, onClose }: OnboardingModalProps) {
     }
   };
 
-  const handleSkipWithSampleData = async () => {
-    if (!user) return;
-    
-    setIsLoading(true);
-    try {
-      await skipWithSampleData();
-      
-      onClose();
-      toast({
-        title: "Sample data loaded",
-        description: "You can explore Lumiso with sample data and start fresh when ready.",
-      });
-    } catch (error) {
-      console.error('Error skipping with sample data:', error);
-      toast({
-        title: "Error",
-        description: "Failed to skip setup. Please try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
-    }
+  const handleShowSampleDataModal = () => {
+    setShowSampleDataModal(true);
+  };
+
+  const handleCloseSampleDataModal = () => {
+    setShowSampleDataModal(false);
+  };
+
+  const handleCloseAll = () => {
+    setShowSampleDataModal(false);
+    onClose();
   };
 
   const actions: OnboardingAction[] = [
     {
       label: "Skip & Use Sample Data",
-      onClick: handleSkipWithSampleData,
+      onClick: handleShowSampleDataModal,
       variant: "outline",
       disabled: isLoading
     },
@@ -89,28 +80,36 @@ export function OnboardingModal({ open, onClose }: OnboardingModalProps) {
   ];
 
   return (
-    <BaseOnboardingModal
-      open={open}
-      onClose={onClose}
-      title="Welcome to Lumiso! 🎉"
-      description="We'll guide you through setting up your photography CRM step by step. Each task builds on the previous one, so you'll learn naturally."
-      actions={actions}
-    >
-      <div className="space-y-4">
-        <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
-          What you'll learn:
-        </h4>
-        <div className="space-y-3">
-          {onboardingSteps.map((step, index) => (
-            <div key={index} className="flex items-center gap-3">
-              <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
-                <span className="text-sm font-medium text-primary">{index + 1}</span>
+    <>
+      <BaseOnboardingModal
+        open={open && !showSampleDataModal}
+        onClose={onClose}
+        title="Welcome to Lumiso! 🎉"
+        description="We'll guide you through setting up your photography CRM step by step. Each task builds on the previous one, so you'll learn naturally."
+        actions={actions}
+      >
+        <div className="space-y-4">
+          <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
+            What you'll learn:
+          </h4>
+          <div className="space-y-3">
+            {onboardingSteps.map((step, index) => (
+              <div key={index} className="flex items-center gap-3">
+                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
+                  <span className="text-sm font-medium text-primary">{index + 1}</span>
+                </div>
+                <span className="text-sm text-foreground">{step}</span>
               </div>
-              <span className="text-sm text-foreground">{step}</span>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
-    </BaseOnboardingModal>
+      </BaseOnboardingModal>
+
+      <SampleDataModal
+        open={showSampleDataModal}
+        onClose={handleCloseSampleDataModal}
+        onCloseAll={handleCloseAll}
+      />
+    </>
   );
 }

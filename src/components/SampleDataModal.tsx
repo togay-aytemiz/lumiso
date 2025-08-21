@@ -9,6 +9,7 @@ import { BaseOnboardingModal, type OnboardingAction } from "./shared/BaseOnboard
 interface SampleDataModalProps {
   open: boolean;
   onClose: () => void;
+  onCloseAll?: () => void;
 }
 
 const sampleDataItems = [
@@ -34,7 +35,7 @@ const sampleDataItems = [
   }
 ];
 
-export function SampleDataModal({ open, onClose }: SampleDataModalProps) {
+export function SampleDataModal({ open, onClose, onCloseAll }: SampleDataModalProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
@@ -56,15 +57,17 @@ export function SampleDataModal({ open, onClose }: SampleDataModalProps) {
       if (error) throw error;
 
       toast({
-        title: "Sample data activated!",
-        description: "Your CRM is now populated with sample data to explore.",
+        title: "Setup skipped!",
+        description: "You can start exploring Lumiso. Sample data will be added in a future update.",
       });
 
-      // Close modal and redirect to leads page
-      onClose();
+      // Close all modals and redirect to leads page
+      if (onCloseAll) {
+        onCloseAll();
+      } else {
+        onClose();
+      }
       navigate('/leads');
-      
-      // TODO: Trigger sample data seeding in next phase
       
     } catch (error) {
       console.error('Error skipping setup:', error);
@@ -78,10 +81,19 @@ export function SampleDataModal({ open, onClose }: SampleDataModalProps) {
     }
   };
 
+  const handleContinueGuidedSetup = () => {
+    if (onCloseAll) {
+      onCloseAll();
+    } else {
+      onClose();
+    }
+    navigate('/getting-started');
+  };
+
   const actions: OnboardingAction[] = [
     {
       label: "Continue Guided Setup",
-      onClick: onClose,
+      onClick: handleContinueGuidedSetup,
       variant: "outline",
       disabled: isLoading
     },

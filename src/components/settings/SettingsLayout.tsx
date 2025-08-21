@@ -47,6 +47,21 @@ export default function SettingsLayout() {
     if (inGuidedSetup && location.pathname === itemHref) {
       return false;
     }
+    
+    // Special handling for step 6 (packages setup)
+    if (inGuidedSetup && completedCount === 5) {
+      // During step 6, only unlock profile and packages & services
+      const allowedInStep6 = ['/settings/profile', '/settings/services'];
+      return !allowedInStep6.includes(itemHref);
+    }
+    
+    // Special handling for step 1 (profile setup)
+    if (inGuidedSetup && completedCount === 0) {
+      // During step 1, only unlock profile and general
+      const allowedInStep1 = ['/settings/profile', '/settings/general'];
+      return !allowedInStep1.includes(itemHref);
+    }
+    
     return inGuidedSetup && completedCount < (requiredStep - 1);
   };
 

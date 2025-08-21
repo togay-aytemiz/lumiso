@@ -81,10 +81,17 @@ export function AppSidebar() {
         currentPath: location.pathname
       });
       
-      // When on getting-started page, lock ALL sidebar items (they'll be handled by individual item logic)
+      // When on getting-started page, lock ALL sidebar items except Getting Started
       if (currentRoute === '/getting-started') {
         console.log('🔒 Getting started page - locking sidebar item');
         return true; // Lock everything when on getting-started page
+      }
+      
+      // During guided setup, only allow specific items for each step
+      if (currentStep === 6) { // Step 6: Configure packages
+        console.log('📦 Step 6 - Only Settings should be unlocked');
+        const allowedInStep6 = ['/settings'];
+        return !allowedInStep6.some(path => currentRoute.startsWith(path));
       }
       
       // Check if this item is allowed in the current step (when NOT on getting-started page)

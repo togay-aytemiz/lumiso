@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,6 +16,8 @@ import { PageHeader, PageHeaderSearch, PageHeaderActions } from "@/components/ui
 import { ProjectStatusBadge } from "@/components/ProjectStatusBadge";
 import { formatDate } from "@/lib/utils";
 import { AssigneeAvatars } from "@/components/AssigneeAvatars";
+import { OnboardingTutorial } from "@/components/shared/OnboardingTutorial";
+import { useOnboarding } from "@/hooks/useOnboarding";
 
 interface ProjectStatus {
   id: string;
@@ -82,6 +84,12 @@ const AllProjects = () => {
   const [sortField, setSortField] = useState<SortField>('created_at');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { completeStep } = useOnboarding();
+
+  // Tutorial state
+  const [showTutorial, setShowTutorial] = useState(false);
+  const [currentTutorialStep, setCurrentTutorialStep] = useState(0);
 
   // Update sort field when view mode changes
   useEffect(() => {
@@ -96,6 +104,18 @@ const AllProjects = () => {
   useEffect(() => {
     fetchProjects();
   }, []);
+
+  // Handle tutorial launch
+  useEffect(() => {
+    const tutorial = searchParams.get('tutorial');
+    if (tutorial === 'true') {
+      setShowTutorial(true);
+      // Remove tutorial param from URL
+      const newSearchParams = new URLSearchParams(searchParams);
+      newSearchParams.delete('tutorial');
+      setSearchParams(newSearchParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -691,6 +711,74 @@ const AllProjects = () => {
         onProjectUpdated={fetchProjects}
         onActivityUpdated={() => {}} // Not needed in this context
         leadName={viewingProject?.lead?.name || ""}
+      />
+
+      {/* Tutorial Component */}
+      <OnboardingTutorial
+        isVisible={showTutorial}
+        steps={[
+          {
+            id: 1,
+            title: "Welcome to Projects",
+            description: "Here you can manage all your photography projects in one organized place.",
+            content: "This is your project hub where you can track progress, manage sessions, and collaborate with clients.",
+            canProceed: true,
+            mode: "modal"
+          },
+          {
+            id: 2,
+            title: "Board View",
+            description: "The Kanban board shows projects organized by status columns. You can drag and drop projects between columns to update their status.",
+            content: "Perfect for visual project management - just like organizing physical cards on a board!",
+            canProceed: viewMode === 'board',
+            disabledTooltip: "Click on the Board tab above to continue",
+            mode: "floating"
+          },
+          {
+            id: 3,
+            title: "List View",
+            description: "The list view displays detailed project information in a table format with sorting and filtering options.",
+            content: "Great for detailed analysis and when you need to see multiple project details at once.",
+            canProceed: viewMode === 'list',
+            disabledTooltip: "Click on the List tab above to continue",
+            mode: "floating"
+          },
+          {
+            id: 4,
+            title: "Archived Projects",
+            description: "View completed or archived projects separately to keep your active workspace clean.",
+            content: "Perfect for reviewing past work and maintaining a clear focus on current projects.",
+            canProceed: viewMode === 'archived',
+            disabledTooltip: "Click on the Archived tab above to continue",
+            mode: "floating"
+          },
+          {
+            id: 5,
+            title: "You're Ready!",
+            description: "You now know how to navigate between different project views. Each view is designed for different workflows and preferences.",
+            content: <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mt-4">
+              <p className="text-blue-700 dark:text-blue-300 text-sm">
+                💡 Pro tip: Use Board view for quick status updates, List view for detailed analysis, and Archived view to review completed work!
+              </p>
+            </div>,
+            canProceed: true,
+            mode: "modal"
+          }
+        ]}
+        onComplete={async () => {
+          try {
+            await completeStep();
+            setShowTutorial(false);
+            navigate('/getting-started');
+          } catch (error) {
+            console.error('Error completing tutorial:', error);
+            setShowTutorial(false);
+          }
+        }}
+        onExit={() => {
+          setShowTutorial(false);
+          navigate('/getting-started');
+        }}
       />
     </div>
   );

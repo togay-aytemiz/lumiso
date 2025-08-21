@@ -37,6 +37,14 @@ const onboardingSteps = [
   },
   {
     id: 4,
+    title: "Explore Projects Page",
+    description: "Learn about different project views: Board, List, and Archived projects",
+    route: "/projects?tutorial=true",
+    buttonText: "Explore Projects",
+    duration: "3 min"
+  },
+  {
+    id: 5,
     title: "Schedule a Photo Session",
     description: "Book your first session and manage your calendar",
     route: "/calendar", 
@@ -44,7 +52,7 @@ const onboardingSteps = [
     duration: "3 min"
   },
   {
-    id: 5,
+    id: 6,
     title: "Configure Your Packages",
     description: "Set up photography packages and pricing structure",
     route: "/settings/services",
@@ -61,7 +69,7 @@ const GettingStarted = () => {
   const { completedCount, loading } = useOnboarding();
   
   // Simple logic
-  const allCompleted = completedCount >= 5;
+  const allCompleted = completedCount >= 6;
   const currentStep = allCompleted ? null : onboardingSteps[completedCount];
   const nextStep = currentStep ? onboardingSteps[completedCount + 1] : null;
   const completedSteps = onboardingSteps.slice(0, completedCount);
@@ -76,7 +84,7 @@ const GettingStarted = () => {
   }, [completedCount, loading]);
 
   const handleStepAction = (step: any) => {
-    if (step.id === 1) {
+    if (step.id === 1 || step.id === 4) {
       navigate(`${step.route}?tutorial=true`);
     } else {
       navigate(step.route);
@@ -130,7 +138,7 @@ const GettingStarted = () => {
                 <GuidedStepProgress 
                   currentValue={completedCount}
                   targetValue={completedCount}
-                  totalSteps={5}
+                  totalSteps={6}
                   animate={true}
                 />
                 <div className="flex flex-col gap-2 text-sm text-muted-foreground">

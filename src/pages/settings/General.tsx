@@ -439,7 +439,7 @@ export default function General() {
         steps={tutorialSteps}
         onComplete={handleTutorialComplete}
         onExit={handleTutorialExit}
-        isVisible={false}
+        isVisible={showTutorial}
       />
     </SettingsPageWrapper>
   );

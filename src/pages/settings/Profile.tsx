@@ -215,9 +215,9 @@ export default function Profile() {
           <p>• Can be changed later in General settings</p>
         </div>
       ),
-      route: "/settings/general",
+      route: "/settings/general?from=profile",
       canProceed: !!activeOrganization?.name?.trim(),
-      mode: 'modal'
+      mode: 'floating'
     },
     {
       id: 4,

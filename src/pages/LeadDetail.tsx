@@ -919,6 +919,7 @@ const LeadDetail = () => {
       </AlertDialog>
       
       <OnboardingTutorial
+        key={`tutorial-${currentTutorialStep}`}
         steps={leadDetailsTutorialSteps}
         isVisible={showTutorial}
         onComplete={handleTutorialComplete}

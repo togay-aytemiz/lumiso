@@ -93,19 +93,26 @@ export function useOnboarding() {
   const shouldShowOnboarding = () => {
     if (state.loading || !user) return false;
     if (state.guidedSetupSkipped || state.guidanceCompleted) return false;
-    return !state.inGuidedSetup;
+    // Show onboarding modal when NOT in guided setup and haven't completed onboarding
+    return !state.inGuidedSetup && state.completedCount === 0;
   };
 
   const completeStep = async () => {
     if (!user) return;
 
     try {
-      await supabase.rpc('complete_onboarding_step', {
+      console.log('🔄 Completing step, current count:', state.completedCount);
+      
+      const result = await supabase.rpc('complete_onboarding_step', {
         user_uuid: user.id
       });
 
-      // Refresh state
+      console.log('✅ Step completion result:', result);
+
+      // Refresh state after step completion
       await fetchState();
+      
+      console.log('🔍 State refreshed after step completion');
     } catch (error) {
       console.error('Error completing step:', error);
       throw error;

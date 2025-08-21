@@ -69,21 +69,21 @@ export function AppSidebar() {
   const [bookingsOpen, setBookingsOpen] = useState(isBookingsChildActive);
   
   const isItemLocked = (requiredStep: number, allowedInStep?: number[], itemUrl?: string) => {
-    // During guided setup, handle locking differently
+    console.log('🔍 Sidebar lock check:', {
+      itemUrl,
+      inGuidedSetup,
+      loading,
+      currentPath: location.pathname,
+      completedCount
+    });
+
+    // During guided setup, lock everything except Getting Started
     if (inGuidedSetup && !loading) {
-      console.log('🔍 Checking lock for item:', itemUrl, {
-        inGuidedSetup,
-        currentPath: location.pathname,
-        completedCount
-      });
-      
-      // When in guided setup, lock ALL sidebar items except when on specific allowed pages
-      const currentRoute = location.pathname;
-      
-      // If we're NOT on getting-started page, allow specific items based on current step
-      if (currentRoute !== '/getting-started') {
+      // Only allow specific items based on current route (not getting-started page)
+      if (location.pathname !== '/getting-started') {
         const currentStep = completedCount + 1;
         
+        // Allow specific URLs for current step
         if (currentStep === 1 && itemUrl?.startsWith('/settings')) return false;
         if (currentStep === 2 && itemUrl?.startsWith('/leads')) return false;
         if (currentStep === 3 && itemUrl?.startsWith('/projects')) return false;
@@ -92,15 +92,12 @@ export function AppSidebar() {
         if (currentStep === 6 && itemUrl?.startsWith('/settings')) return false;
       }
       
-      // Otherwise, lock everything during guided setup
-      console.log('🔒 Item locked during guided setup');
+      // Lock everything else during guided setup
       return true;
     }
     
-    // Original logic for non-guided setup - unlock when step is completed
-    const isLocked = completedCount < requiredStep;
-    console.log('📊 Non-guided setup - locked:', isLocked, 'completedCount:', completedCount, 'requiredStep:', requiredStep);
-    return isLocked;
+    // Normal locking logic when not in guided setup
+    return completedCount < requiredStep;
   };
 
   const handleLockedItemClick = (e: React.MouseEvent, requiredStep: number, allowedInStep?: number[], itemUrl?: string) => {

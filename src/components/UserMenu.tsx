@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Settings, LogOut, ChevronUp } from "lucide-react";
+import { Settings, LogOut, ChevronUp, User } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -121,8 +121,8 @@ export function UserMenu({ mode }: UserMenuProps) {
               onClick={handleSettings}
               className="justify-start h-9 gap-3 px-3 hover:bg-muted/50"
             >
-              <Settings className="h-4 w-4" />
-              <span>Settings</span>
+              <User className="h-4 w-4" />
+              <span>Profile settings</span>
             </Button>
             
             <Button

@@ -247,11 +247,16 @@ const LeadDetail = () => {
   // Handle project clicked during tutorial
   const handleProjectClicked = () => {
     // If tutorial is active and we're on the project exploration step, advance to final step
-    if (showTutorial && currentTutorialStep === 2) {
-      console.log('🚀 Project clicked! Advancing tutorial to final step');
-      setCurrentTutorialStep(3); // Move to final congratulations step
+    if (showTutorial && currentTutorialStep === 1) {
+      console.log('🚀 Project clicked! Advancing tutorial from step', currentTutorialStep, 'to final step');
+      setCurrentTutorialStep(2); // Move to final congratulations step
     }
   };
+
+  // Debug tutorial step changes
+  useEffect(() => {
+    console.log('🔍 Tutorial step changed to:', currentTutorialStep, 'showTutorial:', showTutorial);
+  }, [currentTutorialStep, showTutorial]);
 
   // Check edit permissions when lead data loads
   useEffect(() => {
@@ -598,8 +603,14 @@ const LeadDetail = () => {
     
     // If tutorial is active and we're on the project creation step, advance to project exploration step
     if (showTutorial && currentTutorialStep === 0) {
-      console.log('🚀 Project created! Advancing tutorial to step 6 (project exploration)');
-      setCurrentTutorialStep(1); // Move to "Now Explore Your Project" step
+      console.log('🚀 Project created! Advancing tutorial from step', currentTutorialStep, 'to step 1');
+      // Use setTimeout to ensure state update happens after component re-render
+      setTimeout(() => {
+        setCurrentTutorialStep(1); // Move to "Now Explore Your Project" step
+        console.log('✅ Tutorial step updated to:', 1);
+      }, 100);
+    } else {
+      console.log('🔍 Not advancing tutorial. showTutorial:', showTutorial, 'currentTutorialStep:', currentTutorialStep);
     }
   };
   const handleActivityUpdated = () => {

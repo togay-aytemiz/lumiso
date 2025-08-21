@@ -122,7 +122,11 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
   const handleViewProject = (project: Project) => {
     setViewingProject(project);
     setShowViewDialog(true);
-    // Removed tutorial callback from here - it now triggers when modal closes
+    // Call tutorial callback immediately when project is clicked
+    if (onProjectClicked) {
+      console.log('🚀 Project clicked, triggering tutorial callback');
+      onProjectClicked();
+    }
   };
 
   const handleDeleteProject = (project: Project) => {
@@ -252,13 +256,7 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
         project={viewingProject}
         open={showViewDialog}
         onOpenChange={(open) => {
-          console.log('🔍 ViewProjectDialog onOpenChange:', { open, hasViewingProject: !!viewingProject, hasCallback: !!onProjectClicked });
           setShowViewDialog(open);
-          // If tutorial is active and modal is closing (open = false), trigger callback
-          if (!open && viewingProject && onProjectClicked) {
-            console.log('🚀 Project modal closed, triggering tutorial callback');
-            onProjectClicked();
-          }
         }}
         onProjectUpdated={() => {
           fetchProjects();

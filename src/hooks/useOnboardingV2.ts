@@ -65,6 +65,9 @@ interface OnboardingState {
   loading: boolean;
 }
 
+// Import and run the bulletproof test in development
+import { runOnboardingBulletproofTest } from "@/hooks/useOnboardingBulletproofTest";
+
 export function useOnboardingV2() {
   const { user } = useAuth();
   const [state, setState] = useState<OnboardingState>({
@@ -72,6 +75,13 @@ export function useOnboardingV2() {
     currentStep: 1,
     loading: true
   });
+
+  // Run bulletproof test in development
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      runOnboardingBulletproofTest();
+    }
+  }, []);
 
   const fetchState = async () => {
     if (!user) {
@@ -114,9 +124,17 @@ export function useOnboardingV2() {
         return;
       }
 
+      // Bulletproof: Validate and sanitize data from database
+      const stage = data.onboarding_stage as OnboardingStage;
+      let currentStep = data.current_onboarding_step || 1;
+      
+      // Ensure step is within valid range
+      if (currentStep < 1) currentStep = 1;
+      if (currentStep > TOTAL_STEPS + 1) currentStep = TOTAL_STEPS + 1;
+
       setState({
-        stage: data.onboarding_stage as OnboardingStage,
-        currentStep: data.current_onboarding_step || 1,
+        stage,
+        currentStep,
         loading: false
       });
 
@@ -205,6 +223,12 @@ export function useOnboardingV2() {
     const nextStep = state.currentStep + 1;
     
     try {
+      // Bulletproof: Prevent completing beyond total steps
+      if (state.currentStep >= TOTAL_STEPS) {
+        console.warn('Attempted to complete step beyond total steps');
+        return;
+      }
+
       await supabase
         .from('user_settings')
         .update({ 

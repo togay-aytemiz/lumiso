@@ -28,7 +28,7 @@ import { useOrganizationQuickSettings } from "@/hooks/useOrganizationQuickSettin
 import { useLeadStatusActions } from "@/hooks/useLeadStatusActions";
 import { usePermissions } from "@/hooks/usePermissions";
 import { OnboardingTutorial, TutorialStep } from "@/components/shared/OnboardingTutorial";
-import { useOnboarding } from "@/hooks/useOnboarding";
+import { useOnboardingV2 } from "@/hooks/useOnboardingV2";
 interface Lead {
   id: string;
   name: string;
@@ -122,11 +122,10 @@ const LeadDetail = () => {
   } = usePermissions();
   const [userCanEdit, setUserCanEdit] = useState(false);
 
-  // Tutorial state management
   const {
-    completedCount,
-    completeStep
-  } = useOnboarding();
+    currentStep,
+    completeCurrentStep
+  } = useOnboardingV2();
   const [showTutorial, setShowTutorial] = useState(false);
   const [currentTutorialStep, setCurrentTutorialStep] = useState(0);
   const [hasProjects, setHasProjects] = useState(false);
@@ -309,13 +308,13 @@ const LeadDetail = () => {
       tutorialStep,
       tutorialType,
       locationState: location.state,
-      completedCount,
+      currentStep,
       pathname: location.pathname
     });
 
     // Check if we should show tutorial either from navigation state OR onboarding progress
     const shouldShowFromState = continueTutorial && tutorialStep;
-    const shouldShowFromProgress = completedCount === 1; // User completed first step, now on leads
+    const shouldShowFromProgress = currentStep === 2; // User completed first step, now on leads
 
     if (shouldShowFromState) {
       if (tutorialType === 'scheduling') {
@@ -333,30 +332,30 @@ const LeadDetail = () => {
       setShowTutorial(true);
       setCurrentTutorialStep(0); // Start with first lead details step
     }
-  }, [location.state?.continueTutorial, location.state?.tutorialStep, location.state?.tutorialType, completedCount]);
+  }, [location.state?.continueTutorial, location.state?.tutorialStep, location.state?.tutorialType, currentStep]);
 
-  // Auto-start scheduling tutorial when completedCount is 4 (after step 4, now on step 5)
+  // Auto-start scheduling tutorial when currentStep is 5 (after step 4, now on step 5)
   useEffect(() => {
-    if (completedCount === 4 && !showTutorial && !location.state?.continueTutorial) {
+    if (currentStep === 5 && !showTutorial && !location.state?.continueTutorial) {
       console.log('🚀 Auto-starting scheduling tutorial for step 5');
       setIsSchedulingTutorial(true);
       setShowTutorial(true);
       setCurrentTutorialStep(0); // Start with first scheduling step
     }
-  }, [completedCount, showTutorial, location.state?.continueTutorial]);
+  }, [currentStep, showTutorial, location.state?.continueTutorial]);
 
   // Handle tutorial completion
   const handleTutorialComplete = async () => {
     try {
       if (isSchedulingTutorial) {
         // For scheduling tutorial, complete step 5 (scheduling step)
-        await completeStep();
+        await completeCurrentStep();
         setShowTutorial(false);
         console.log('🎉 Scheduling tutorial completed! Navigating back to getting-started');
         navigate('/getting-started');
       } else {
         // For regular lead details tutorial
-        await completeStep();
+        await completeCurrentStep();
         setShowTutorial(false);
         console.log('🎉 Tutorial completed! Navigating back to getting-started');
         navigate('/getting-started');

@@ -17,8 +17,9 @@ import { ProjectStatusBadge } from "@/components/ProjectStatusBadge";
 import { formatDate } from "@/lib/utils";
 import { AssigneeAvatars } from "@/components/AssigneeAvatars";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { OnboardingTutorial } from "@/components/shared/OnboardingTutorial";
-import { useOnboarding } from "@/hooks/useOnboarding";
+import { OnboardingTutorial, TutorialStep } from "@/components/shared/OnboardingTutorial";
+import { useOnboardingV2 } from "@/hooks/useOnboardingV2";
+import { Calendar, MessageSquare, CheckSquare } from "lucide-react";
 
 interface ProjectStatus {
   id: string;
@@ -86,7 +87,7 @@ const AllProjects = () => {
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { completeStep } = useOnboarding();
+  const { completeCurrentStep } = useOnboardingV2();
   const isMobile = useIsMobile();
 
   // Tutorial state
@@ -549,7 +550,7 @@ const AllProjects = () => {
 
   const handleTutorialComplete = async () => {
     try {
-      await completeStep();
+      await completeCurrentStep();
       setShowTutorial(false);
       navigate('/getting-started');
     } catch (error) {

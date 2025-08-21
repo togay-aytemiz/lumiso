@@ -4,7 +4,7 @@ import SettingsHeader from "@/components/settings/SettingsHeader";
 import PackagesSection from "@/components/PackagesSection";
 import ServicesSection from "@/components/ServicesSection";
 import { usePermissions } from "@/hooks/usePermissions";
-import { useOnboarding } from "@/hooks/useOnboarding";
+import { useOnboardingV2 } from "@/hooks/useOnboardingV2";
 import { OnboardingTutorial, TutorialStep } from "@/components/shared/OnboardingTutorial";
 import { Package, DollarSign, Target } from "lucide-react";
 
@@ -75,18 +75,18 @@ const packagesSetupSteps: TutorialStep[] = [
 
 export default function Services() {
   const { hasPermission, loading } = usePermissions();
-  const { completedCount, completeStep } = useOnboarding();
+  const { currentStep, completeCurrentStep } = useOnboardingV2();
   const [showTutorial, setShowTutorial] = useState(false);
   const [currentTutorialStep, setCurrentTutorialStep] = useState(0);
 
-  // Auto-start packages tutorial when we're on step 6 (completedCount = 5)
+  // Auto-start packages tutorial when we're on step 6 (currentStep = 6)
   useEffect(() => {
-    if (completedCount === 5 && !showTutorial) {
+    if (currentStep === 6 && !showTutorial) {
       console.log('🎯 Auto-starting packages tutorial for step 6');
       setShowTutorial(true);
       setCurrentTutorialStep(0);
     }
-  }, [completedCount, showTutorial]);
+  }, [currentStep, showTutorial]);
 
   // Handle tutorial completion
   const handleTutorialComplete = async () => {
@@ -95,7 +95,7 @@ export default function Services() {
       setShowTutorial(false);
       
       // Complete step 6 and mark guidance as complete
-      await completeStep();
+      await completeCurrentStep();
       
       console.log('✅ Step 6 completed, navigating to getting-started');
       

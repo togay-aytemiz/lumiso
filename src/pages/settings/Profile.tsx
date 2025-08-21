@@ -17,10 +17,10 @@ import { useProfile } from "@/contexts/ProfileContext";
 import { useWorkingHours } from "@/hooks/useWorkingHours";
 import { useToast } from "@/hooks/use-toast";
 import { useSettingsCategorySection } from "@/hooks/useSettingsCategorySection";
-import { useOnboarding } from "@/hooks/useOnboarding";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { trimAndNormalizeSpaces, createTrimmedBlurHandler } from "@/lib/inputUtils";
 import { OnboardingTutorial, TutorialStep } from "@/components/shared/OnboardingTutorial";
+import { useOnboardingV2 } from "@/hooks/useOnboardingV2";
 
 export default function Profile() {
   const [emailAddress, setEmailAddress] = useState("");
@@ -32,7 +32,7 @@ export default function Profile() {
   const { profile, loading: profileLoading, uploading, updateProfile, uploadProfilePhoto, deleteProfilePhoto } = useProfile();
   const { workingHours, loading: workingHoursLoading, updateWorkingHour } = useWorkingHours();
   const { activeOrganization } = useOrganization();
-  const { completeStep } = useOnboarding();
+  const { completeCurrentStep } = useOnboardingV2();
   const { toast } = useToast();
 
   // Check if we're in tutorial mode

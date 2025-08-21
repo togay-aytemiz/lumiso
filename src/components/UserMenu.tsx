@@ -119,7 +119,7 @@ export function UserMenu({ mode }: UserMenuProps) {
             <Button
               variant="ghost"
               onClick={handleSettings}
-              className="justify-start h-9 gap-3 px-3 hover:bg-muted/50"
+              className="justify-start h-9 gap-3 px-3"
             >
               <User className="h-4 w-4" />
               <span>Profile settings</span>

@@ -1,4 +1,5 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import SettingsPageWrapper from "@/components/settings/SettingsPageWrapper";
 import SettingsHeader from "@/components/settings/SettingsHeader";
 import { CategorySettingsSection } from "@/components/settings/CategorySettingsSection";
@@ -7,18 +8,26 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Upload, Loader2, X } from "lucide-react";
+import { Upload, Loader2, X, Building, Settings } from "lucide-react";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { useState } from "react";
 import { useSettingsCategorySection } from "@/hooks/useSettingsCategorySection";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
+import { useOnboarding } from "@/hooks/useOnboarding";
+import { OnboardingTutorial, TutorialStep } from "@/components/shared/OnboardingTutorial";
 
 export default function General() {
   const { settings, loading, uploading, updateSettings, uploadLogo, deleteLogo } = useOrganizationSettings();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isLogoModalOpen, setIsLogoModalOpen] = useState(false);
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const { advanceStep } = useOnboarding();
+
+  // Check if we're in tutorial mode
+  const isInTutorial = searchParams.get('tutorial') === 'true';
+  const [showTutorial, setShowTutorial] = useState(isInTutorial);
 
   // Branding section state
   const brandingSection = useSettingsCategorySection({
@@ -77,6 +86,56 @@ export default function General() {
       });
     }
   }, [settings]);
+
+  // Tutorial steps
+  const tutorialSteps: TutorialStep[] = [
+    {
+      id: 1,
+      title: "Set Up Your Business Information",
+      description: "Let's add your business name and branding. This information will appear on client communications and invoices.",
+      content: (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 text-sm">
+            <Building className="h-4 w-4 text-primary" />
+            <span>Add your photography business name</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm">
+            <Settings className="h-4 w-4 text-primary" />
+            <span>Upload your logo and set brand colors</span>
+          </div>
+        </div>
+      ),
+      canProceed: true,
+      mode: 'modal'
+    },
+    {
+      id: 2,
+      title: "Enter Your Business Name",
+      description: "Please enter your photography business name below. This is required to continue and will be used in all client communications.",
+      content: (
+        <div className="space-y-2 text-sm text-muted-foreground">
+          <p>• Required for professional communications</p>
+          <p>• Appears on invoices, contracts, and emails</p>
+          <p>• Can be changed later if needed</p>
+        </div>
+      ),
+      canProceed: !!brandingSection.values.companyName?.trim(),
+      mode: 'floating'
+    }
+  ];
+
+  const handleTutorialComplete = async () => {
+    // Tutorial complete, return to profile tutorial or getting started
+    setShowTutorial(false);
+    navigate('/settings/profile?tutorial=true&step=4');
+  };
+
+  const handleTutorialExit = async () => {
+    // Exit tutorial, mark step 1 as completed and return to getting started
+    await advanceStep(2);
+    setShowTutorial(false);
+    navigate('/getting-started');
+  };
 
   const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -372,6 +431,14 @@ export default function General() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Tutorial */}
+      <OnboardingTutorial
+        steps={tutorialSteps}
+        onComplete={handleTutorialComplete}
+        onExit={handleTutorialExit}
+        isVisible={showTutorial}
+      />
     </SettingsPageWrapper>
   );
 }

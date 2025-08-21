@@ -37,7 +37,12 @@ export default function Profile() {
 
   // Check if we're in tutorial mode
   const isInTutorial = searchParams.get('tutorial') === 'true';
+  const stepParam = searchParams.get('step');
   const [showTutorial, setShowTutorial] = useState(isInTutorial);
+  const [tutorialStepIndex, setTutorialStepIndex] = useState(() => {
+    if (stepParam) return parseInt(stepParam) - 1;
+    return 0;
+  });
 
   // Profile section state
   const profileSection = useSettingsCategorySection({
@@ -561,6 +566,7 @@ export default function Profile() {
         onComplete={handleTutorialComplete}
         onExit={handleTutorialExit}
         isVisible={showTutorial}
+        initialStepIndex={tutorialStepIndex}
       />
     </SettingsPageWrapper>
   );

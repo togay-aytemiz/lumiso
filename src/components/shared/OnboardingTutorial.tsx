@@ -20,23 +20,26 @@ interface OnboardingTutorialProps {
   onComplete: () => void;
   onExit: () => void;
   isVisible: boolean;
+  initialStepIndex?: number;
 }
 
 export function OnboardingTutorial({ 
   steps, 
   onComplete, 
   onExit, 
-  isVisible 
+  isVisible,
+  initialStepIndex = 0
 }: OnboardingTutorialProps) {
-  const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const [currentStepIndex, setCurrentStepIndex] = useState(initialStepIndex);
   const navigate = useNavigate();
   const currentStep = steps[currentStepIndex];
   const isLastStep = currentStepIndex === steps.length - 1;
 
-  // Navigate to step route if specified
+  // Navigate to step route if specified and pass tutorial params
   useEffect(() => {
     if (currentStep?.route && currentStepIndex > 0) {
-      navigate(currentStep.route);
+      const url = currentStep.route + (currentStep.route.includes('?') ? '&' : '?') + 'tutorial=true';
+      navigate(url);
     }
   }, [currentStep?.route, currentStepIndex, navigate]);
 

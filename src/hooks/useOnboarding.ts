@@ -55,6 +55,7 @@ export function useOnboarding() {
           console.error('Error creating settings:', insertError);
         }
 
+        console.log('🔧 Created new user settings - inGuidedSetup: true');
         setState({
           inGuidedSetup: true,
           guidedSetupSkipped: false,
@@ -64,6 +65,13 @@ export function useOnboarding() {
         });
         return;
       }
+
+      console.log('🔍 Fetched user settings:', {
+        in_guided_setup: data.in_guided_setup,
+        completed_steps_count: data.completed_steps_count,
+        guidance_completed: data.guidance_completed,
+        guided_setup_skipped: data.guided_setup_skipped
+      });
 
       setState({
         inGuidedSetup: data.in_guided_setup ?? true,
@@ -135,14 +143,14 @@ export function useOnboarding() {
         .from('user_settings')
         .update({
           completed_steps_count: 0,
-          in_guided_setup: false,
+          in_guided_setup: true, // Keep in guided setup when resetting
           guidance_completed: false,
           guided_setup_skipped: false
         })
         .eq('user_id', user.id);
 
       setState({
-        inGuidedSetup: false,
+        inGuidedSetup: true, // Keep in guided setup when resetting  
         guidedSetupSkipped: false,
         guidanceCompleted: false,
         completedCount: 0,

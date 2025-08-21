@@ -38,7 +38,23 @@ export function AppSidebar() {
   const navigate = useNavigate();
   const currentPath = location.pathname;
   const isMobile = useIsMobile();
-  const { inGuidedSetup, completedCount } = useOnboarding();
+  const { inGuidedSetup, completedCount, loading } = useOnboarding();
+
+  // Debug logging
+  useEffect(() => {
+    console.log('🔍 AppSidebar State:', {
+      inGuidedSetup,
+      completedCount,
+      currentStep: completedCount + 1,
+      currentPath: location.pathname,
+      loading
+    });
+  }, [inGuidedSetup, completedCount, location.pathname, loading]);
+
+  // Show loading state while onboarding data is being fetched
+  if (loading) {
+    console.log('⏳ AppSidebar: Still loading onboarding state...');
+  }
 
   const isActive = (path: string) => {
     if (path === "/") {
@@ -54,26 +70,38 @@ export function AppSidebar() {
   
   const isItemLocked = (requiredStep: number, allowedInStep?: number[]) => {
     // During guided setup, only allow specific items for current step
-    if (inGuidedSetup) {
+    if (inGuidedSetup && !loading) {
       const currentStep = completedCount + 1; // Current step is completedCount + 1
+      
+      console.log('🔍 Checking lock for requiredStep:', requiredStep, {
+        allowedInStep,
+        currentStep,
+        inGuidedSetup,
+        currentPath: location.pathname
+      });
       
       // Always allow getting-started page
       const currentRoute = location.pathname;
       if (currentRoute === '/getting-started') {
+        console.log('✅ Getting started page - always unlocked');
         return false;
       }
       
       // Check if this item is allowed in the current step
       if (allowedInStep && allowedInStep.includes(currentStep)) {
+        console.log('✅ Item allowed in current step:', currentStep);
         return false;
       }
       
       // Lock everything else during guided setup
+      console.log('🔒 Item locked during guided setup');
       return true;
     }
     
     // Original logic for non-guided setup - unlock when step is completed
-    return completedCount < requiredStep;
+    const isLocked = completedCount < requiredStep;
+    console.log('📊 Non-guided setup - locked:', isLocked, 'completedCount:', completedCount, 'requiredStep:', requiredStep);
+    return isLocked;
   };
 
   const handleLockedItemClick = (e: React.MouseEvent, requiredStep: number, allowedInStep?: number[], itemUrl?: string) => {
@@ -120,6 +148,10 @@ export function AppSidebar() {
             alt="Lumiso CRM" 
             className="h-10 w-auto object-contain"
           />
+        </div>
+        {/* Debug info - remove after fixing */}
+        <div className="text-xs text-muted-foreground mt-2 p-2 bg-muted/20 rounded">
+          Debug: inGuidedSetup={inGuidedSetup?.toString()}, count={completedCount}, step={completedCount + 1}, loading={loading?.toString()}
         </div>
       </SidebarHeader>
 

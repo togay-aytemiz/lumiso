@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";  
-import { HelpCircle, ArrowRight, CheckCircle } from "lucide-react";
+import { HelpCircle, ArrowRight, CheckCircle, Clock } from "lucide-react";
 import { SampleDataModal } from "@/components/SampleDataModal";
 import { RestartGuidedModeButton } from "@/components/RestartGuidedModeButton";
 import { ExitGuidanceModeButton } from "@/components/ExitGuidanceModeButton";
@@ -57,12 +57,23 @@ const GettingStarted = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [showSampleDataModal, setShowSampleDataModal] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
   const { completedCount, loading } = useOnboarding();
   
   // Simple logic
   const allCompleted = completedCount >= 5;
   const currentStep = allCompleted ? null : onboardingSteps[completedCount];
   const nextStep = currentStep ? onboardingSteps[completedCount + 1] : null;
+  const completedSteps = onboardingSteps.slice(0, completedCount);
+
+  // Animation on mount and when completedCount changes
+  useEffect(() => {
+    if (!loading) {
+      setIsAnimating(true);
+      const timer = setTimeout(() => setIsAnimating(false), 300);
+      return () => clearTimeout(timer);
+    }
+  }, [completedCount, loading]);
 
   const handleStepAction = (step: any) => {
     if (step.id === 1) {
@@ -104,7 +115,7 @@ const GettingStarted = () => {
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 pb-safe">
         {/* Progress Section */}
-        <div className="mb-6 sm:mb-8">
+        <div className={`mb-6 sm:mb-8 ${isAnimating ? 'animate-fade-in' : ''}`}>
           <Card>
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
@@ -137,21 +148,66 @@ const GettingStarted = () => {
           </Card>
         </div>
 
+        {/* Learning Path Header */}
+        <div className="mb-6 sm:mb-8 text-center">
+          <h2 className="text-xl sm:text-2xl font-semibold text-foreground mb-2">
+            Your Learning Path
+          </h2>
+          <p className="text-sm sm:text-base text-muted-foreground">
+            Each step teaches you how to use Lumiso naturally.
+          </p>
+        </div>
+
+        {/* Completed Steps */}
+        {completedSteps.length > 0 && (
+          <div className={`mb-6 sm:mb-8 ${isAnimating ? 'animate-scale-in' : ''}`}>
+            <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+              <CheckCircle className="w-5 h-5 text-green-500" />
+              Completed Steps
+            </h3>
+            <div className="grid gap-3">
+              {completedSteps.map((step, index) => (
+                <Card key={step.id} className="border-green-200 bg-green-50/50 dark:border-green-800 dark:bg-green-950/20">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-green-500 text-white text-sm font-bold flex-shrink-0">
+                        <CheckCircle className="w-4 h-4" />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-green-700 dark:text-green-400">
+                          {step.title}
+                        </h4>
+                        <p className="text-sm text-green-600 dark:text-green-300">
+                          {step.description}
+                        </p>
+                      </div>
+                      <div className="text-xs text-green-600 dark:text-green-300 font-medium">
+                        ✓ Done
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Current Task */}
         {currentStep && (
-          <div className="mb-6 sm:mb-8">
+          <div className={`mb-6 sm:mb-8 ${isAnimating ? 'animate-fade-in' : ''}`}>
             <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-accent/5">
               <CardContent className="p-4 md:p-6">
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-4 mb-3">
-                      <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground text-lg font-bold">
+                      <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground text-lg font-bold animate-pulse">
                         {currentStep.id}
                       </div>
                       <CardTitle className="text-xl">
                         {currentStep.title}
                       </CardTitle>
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground">
+                        <Clock className="w-3 h-3 mr-1" />
                         {currentStep.duration}
                       </span>
                     </div>
@@ -163,6 +219,7 @@ const GettingStarted = () => {
                     <Button 
                       size="lg" 
                       onClick={() => handleStepAction(currentStep)}
+                      className="hover-scale"
                     >
                       {currentStep.buttonText}
                       <ArrowRight className="w-4 h-4 ml-2" />
@@ -174,12 +231,58 @@ const GettingStarted = () => {
           </div>
         )}
 
+        {/* Next Step Preview */}
+        {nextStep && (
+          <div className="mb-6 sm:mb-8">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="h-px bg-border flex-1"></div>
+              <span className="text-xs text-muted-foreground uppercase tracking-wide px-3">Coming Next</span>
+              <div className="h-px bg-border flex-1"></div>
+            </div>
+            
+            <Card className="opacity-50 pointer-events-none grayscale-[0.3] hover:opacity-60 transition-opacity">
+              <CardContent className="p-4 md:p-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-4 mb-3">
+                      <div className="flex items-center justify-center w-10 h-10 rounded-full border-2 border-muted-foreground/30 text-muted-foreground text-lg font-bold">
+                        {nextStep.id}
+                      </div>
+                      <CardTitle className="text-xl text-muted-foreground">
+                        {nextStep.title}
+                      </CardTitle>
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted/50 text-muted-foreground/80">
+                        <Clock className="w-3 h-3 mr-1" />
+                        {nextStep.duration}
+                      </span>
+                    </div>
+                    <CardDescription className="text-base text-muted-foreground/80 ml-14">
+                      {nextStep.description}
+                    </CardDescription>
+                  </div>
+                  <div className="ml-8">
+                    <Button 
+                      size="lg"
+                      variant="outline"
+                      disabled
+                      className="opacity-50"
+                    >
+                      {nextStep.buttonText}
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
         {/* Completion */}
         {allCompleted && (
-          <div className="text-center">
+          <div className={`text-center ${isAnimating ? 'animate-scale-in' : ''}`}>
             <Card className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950/20">
               <CardContent className="py-12">
-                <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
+                <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4 animate-pulse" />
                 <h2 className="text-2xl font-bold text-green-700 dark:text-green-400 mb-2">
                   Congratulations! 🎉
                 </h2>
@@ -188,7 +291,7 @@ const GettingStarted = () => {
                 </p>
                 <Button 
                   size="lg" 
-                  className="bg-green-600 hover:bg-green-700"
+                  className="bg-green-600 hover:bg-green-700 hover-scale"
                   onClick={() => navigate('/')}
                 >
                   Go to Dashboard

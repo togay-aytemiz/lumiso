@@ -68,10 +68,22 @@ export function AppSidebar() {
   );
   const [bookingsOpen, setBookingsOpen] = useState(isBookingsChildActive);
   
-  const isItemLocked = (requiredStep: number) => {
-    // SIMPLE RULE: If on getting-started page OR in guided setup - LOCK EVERYTHING
-    if (location.pathname === '/getting-started' || inGuidedSetup) {
+  const isItemLocked = (requiredStep: number, itemUrl?: string) => {
+    // If on getting-started page - LOCK EVERYTHING
+    if (location.pathname === '/getting-started') {
       return true;
+    }
+    
+    // During guided setup, use step-based logic
+    if (inGuidedSetup) {
+      // Settings should always be accessible during guided setup
+      // (internal settings pages will handle their own locking)
+      if (itemUrl && itemUrl.startsWith('/settings')) {
+        return false;
+      }
+      
+      // For other pages, lock based on required step vs completed count
+      return completedCount < (requiredStep - 1);
     }
     
     // Normal mode - unlock based on completion
@@ -146,7 +158,7 @@ export function AppSidebar() {
             .slice(0, navigationItems.findIndex((i) => i.title === "Analytics"))
             .map((item) => {
               const active = isActive(item.url);
-              const locked = isItemLocked(item.requiredStep);
+              const locked = isItemLocked(item.requiredStep, item.url);
               
               const content = (
                 <div 
@@ -197,7 +209,7 @@ export function AppSidebar() {
 
           {/* Bookings parent with submenu */}
           <SidebarMenuItem>
-            {isItemLocked(4) ? (
+            {isItemLocked(4, '/calendar') ? (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <SidebarMenuButton
@@ -234,7 +246,7 @@ export function AppSidebar() {
                     <SidebarMenu>
                       {bookingItems.map((item) => {
                         const active = isActive(item.url);
-                        const locked = isItemLocked(item.requiredStep);
+                        const locked = isItemLocked(item.requiredStep, item.url);
                         
                         return (
                           <SidebarMenuItem key={item.title}>
@@ -280,7 +292,7 @@ export function AppSidebar() {
             .slice(navigationItems.findIndex((i) => i.title === "Analytics"))
             .map((item) => {
               const active = isActive(item.url);
-              const locked = isItemLocked(item.requiredStep);
+              const locked = isItemLocked(item.requiredStep, item.url);
               
               const content = (
                 <div 

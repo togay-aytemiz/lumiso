@@ -83,7 +83,7 @@ const AllLeads = () => {
     {
       id: 2,
       title: "Add Your First Lead",
-      description: "Now let's add your first lead! Click the 'Add Lead' button in the top right corner to get started.",
+      description: "Now let's add your first lead! Click the 'Add Lead' button (or + icon on mobile) in the top right corner to get started.",
       content: null,
       mode: "floating",
       canProceed: leads.length > 0,

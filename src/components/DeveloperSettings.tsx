@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Settings, RotateCcw, Play, ChevronRight } from "lucide-react";
+import { Settings, RotateCcw, Play, ChevronRight, LogOut } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,7 @@ import { toast } from "@/hooks/use-toast";
 
 export function DeveloperSettings() {
   const { user } = useAuth();
-  const { steps, currentStep, completedSteps, resetGuidedSetup, jumpToStep } = useOnboarding();
+  const { steps, currentStep, completedSteps, resetGuidedSetup, jumpToStep, skipWithSampleData } = useOnboarding();
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -30,6 +30,26 @@ export function DeveloperSettings() {
       toast({
         title: "Error",
         description: "Failed to reset guided setup. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleExitGuidanceMode = async () => {
+    setIsLoading(true);
+    try {
+      await skipWithSampleData();
+      toast({
+        title: "Guidance mode exited",
+        description: "You now have access to all features.",
+      });
+      setIsOpen(false);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to exit guidance mode. Please try again.",
         variant: "destructive"
       });
     } finally {
@@ -123,7 +143,7 @@ export function DeveloperSettings() {
                 </div>
               </div>
 
-              <div className="pt-2 border-t border-border/50">
+              <div className="pt-2 border-t border-border/50 space-y-2">
                 <Button
                   variant="outline"
                   size="sm"
@@ -133,6 +153,17 @@ export function DeveloperSettings() {
                 >
                   <RotateCcw className="h-3 w-3 mr-2" />
                   Reset Guided Setup
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleExitGuidanceMode}
+                  disabled={isLoading}
+                  className="w-full text-xs text-orange-600 hover:text-orange-700 border-orange-200 hover:border-orange-300"
+                >
+                  <LogOut className="h-3 w-3 mr-2" />
+                  Exit Guidance Mode
                 </Button>
               </div>
             </div>

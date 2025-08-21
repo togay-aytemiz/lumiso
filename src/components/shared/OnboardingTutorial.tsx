@@ -90,13 +90,16 @@ export function OnboardingTutorial({
   const isFloatingMode = currentStep.mode === 'floating';
 
   if (isFloatingMode) {
-    // Floating mode - positioned to avoid blocking the add button on mobile/tablet
+    // Floating mode - positioned to avoid blocking the archive view for project management step
+    const isProjectManagementStep = currentStep.id === 4; // Step 4 is managing projects
+    
     return (
       <TooltipProvider>
-        <div className="fixed z-50 max-w-sm 
-                       right-2 top-36 
-                       sm:right-4 sm:top-72 
-                       md:right-6 md:top-20">
+        <div className={`fixed z-50 max-w-sm ${
+          isProjectManagementStep 
+            ? "right-2 bottom-16 sm:right-4 sm:bottom-4 md:right-6 md:bottom-6" // Bottom positioning for project management
+            : "right-2 top-36 sm:right-4 sm:top-72 md:right-6 md:top-20" // Original positioning for other steps
+        }`}>
           <Card className="shadow-2xl border-2">
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">

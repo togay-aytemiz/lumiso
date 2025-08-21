@@ -17,6 +17,7 @@ interface CategorySettingsSectionProps {
     icon?: LucideIcon;
   };
   className?: string;
+  'data-walkthrough'?: string;
 }
 
 export function CategorySettingsSection({
@@ -25,7 +26,8 @@ export function CategorySettingsSection({
   sectionId,
   children,
   action,
-  className
+  className,
+  'data-walkthrough': dataWalkthrough
 }: CategorySettingsSectionProps) {
   const location = useLocation();
   const categoryPath = location.pathname;
@@ -35,7 +37,7 @@ export function CategorySettingsSection({
   const isDirty = section?.isDirty || false;
 
   return (
-    <Card className={cn("", className)}>
+    <Card className={cn("", className)} data-walkthrough={dataWalkthrough}>
       <CardHeader className="pb-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">

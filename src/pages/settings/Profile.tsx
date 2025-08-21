@@ -179,6 +179,7 @@ export default function Profile() {
           title="Profile Information"
           description="Update your personal information and photo."
           sectionId="profile"
+          data-walkthrough="profile-form"
         >
           <div className="space-y-6">
             {/* Avatar Upload */}

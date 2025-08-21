@@ -156,7 +156,7 @@ export function AppSidebar() {
                       </TooltipContent>
                     </Tooltip>
                   ) : (
-                    <SidebarMenuButton
+                     <SidebarMenuButton
                       asChild
                       isActive={active}
                       className="group/item w-full h-10 px-3 py-3 mb-2 text-left transition-all duration-200 rounded-lg hover:bg-muted/50 data-[active=true]:bg-muted"
@@ -165,6 +165,7 @@ export function AppSidebar() {
                         to={item.url}
                         className="flex items-center gap-3 w-full"
                         onClick={handleNavClick}
+                        data-walkthrough={item.title === "Settings" ? "settings-nav" : undefined}
                       >
                         <item.icon className="h-4 w-4 text-sidebar-foreground group-hover/item:text-[hsl(var(--sidebar-primary))] group-data-[active=true]/item:text-[hsl(var(--sidebar-primary))]" />
                         <span className="font-medium">{item.title}</span>

@@ -152,6 +152,7 @@ export default function General() {
           title="Branding"
           description="Customize your brand appearance across client-facing materials"
           sectionId="branding"
+          data-walkthrough="business-form"
         >
           <div className="space-y-6">
             {/* Company Name */}

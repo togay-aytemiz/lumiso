@@ -137,7 +137,8 @@ export function MobileBottomNav({ hideForOnboarding = false }: { hideForOnboardi
     {
       title: 'Settings',
       icon: Settings,
-      onClick: () => navigate('/settings')
+      onClick: () => navigate('/settings'),
+      testId: 'mobile-settings'
     },
     {
       title: 'Sign Out',
@@ -203,6 +204,7 @@ export function MobileBottomNav({ hideForOnboarding = false }: { hideForOnboardi
               <button
                 key={index}
                 onClick={handleTabPress}
+                data-walkthrough={tab.title === 'More' ? 'mobile-more-tab' : undefined}
                 className={cn(
                   "flex flex-col items-center justify-center min-h-[44px] px-2 py-1 rounded-lg transition-colors relative",
                   "hover:bg-muted/50 active:bg-muted"

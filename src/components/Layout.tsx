@@ -3,6 +3,7 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { MobileBottomNav } from "@/components/mobile/MobileBottomNav";
 import { OnboardingModal } from "@/components/OnboardingModal";
 import { ContextualGuidance } from "@/components/ContextualGuidance";
+import { ProfileSetupWalkthrough } from "@/components/ProfileSetupWalkthrough";
 import { RestartGuidedModeButton } from "@/components/RestartGuidedModeButton";
 import { useLayoutEffect, useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
@@ -67,6 +68,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       
       {/* Contextual Guidance */}
       <ContextualGuidance />
+      <ProfileSetupWalkthrough />
       
       {/* Restart Guided Mode Button (only for specific user) */}
       <RestartGuidedModeButton />

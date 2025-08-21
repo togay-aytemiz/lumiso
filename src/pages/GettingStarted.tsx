@@ -64,8 +64,13 @@ const GettingStarted = () => {
   const nextStep = onboardingSteps[currentStepIndex + 1];
   const allStepsCompleted = completedSteps.length >= onboardingSteps.length;
 
-  const handleStepAction = (route: string) => {
-    navigate(route);
+  const handleStepAction = (step: any) => {
+    // Add tutorial parameter for step 1 (profile setup)
+    if (step.id === 1) {
+      navigate(`${step.route}?tutorial=true`);
+    } else {
+      navigate(step.route);
+    }
   };
 
   return (
@@ -166,7 +171,7 @@ const GettingStarted = () => {
                     </div>
                   </div>
                   <Button 
-                    onClick={() => navigate(currentStep.route)}
+                    onClick={() => handleStepAction(currentStep)}
                     className="w-full sm:w-auto"
                     size="lg"
                   >
@@ -201,7 +206,7 @@ const GettingStarted = () => {
                     <Button 
                       size="lg" 
                       className="min-h-[48px]"
-                      onClick={() => navigate(currentStep.route)}
+                      onClick={() => handleStepAction(currentStep)}
                     >
                       {currentStep.buttonText}
                       <ArrowRight className="w-4 h-4 ml-2" />

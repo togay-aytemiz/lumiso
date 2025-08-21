@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import SettingsPageWrapper from "@/components/settings/SettingsPageWrapper";
 import SettingsHeader from "@/components/settings/SettingsHeader";
 import { CategorySettingsSection } from "@/components/settings/CategorySettingsSection";
@@ -11,21 +12,32 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Upload, Loader2, X } from "lucide-react";
+import { Upload, Loader2, X, User, Settings, CheckCircle } from "lucide-react";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useWorkingHours } from "@/hooks/useWorkingHours";
 import { useToast } from "@/hooks/use-toast";
 import { useSettingsCategorySection } from "@/hooks/useSettingsCategorySection";
+import { useOnboarding } from "@/hooks/useOnboarding";
+import { useOrganization } from "@/contexts/OrganizationContext";
 import { trimAndNormalizeSpaces, createTrimmedBlurHandler } from "@/lib/inputUtils";
+import { OnboardingTutorial, TutorialStep } from "@/components/shared/OnboardingTutorial";
 
 export default function Profile() {
   const [emailAddress, setEmailAddress] = useState("");
   const [isProfilePhotoModalOpen, setIsProfilePhotoModalOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   
   const { profile, loading: profileLoading, uploading, updateProfile, uploadProfilePhoto, deleteProfilePhoto } = useProfile();
   const { workingHours, loading: workingHoursLoading, updateWorkingHour } = useWorkingHours();
+  const { activeOrganization } = useOrganization();
+  const { advanceStep } = useOnboarding();
   const { toast } = useToast();
+
+  // Check if we're in tutorial mode
+  const isInTutorial = searchParams.get('tutorial') === 'true';
+  const [showTutorial, setShowTutorial] = useState(isInTutorial);
 
   // Profile section state
   const profileSection = useSettingsCategorySection({
@@ -151,6 +163,81 @@ export default function Profile() {
   };
 
   const timeOptions = generateTimeOptions();
+
+  // Tutorial steps
+  const tutorialSteps: TutorialStep[] = [
+    {
+      id: 1,
+      title: "Welcome to Your Profile Settings",
+      description: "Here you can manage your personal information, upload a profile photo, and set your working hours for scheduling.",
+      content: (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 text-sm">
+            <User className="h-4 w-4 text-primary" />
+            <span>Update your name, phone, and profile photo</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm">
+            <Settings className="h-4 w-4 text-primary" />
+            <span>Configure working hours for scheduling</span>
+          </div>
+        </div>
+      ),
+      canProceed: true
+    },
+    {
+      id: 2,
+      title: "Complete Your Profile Information",
+      description: "Please fill in your full name and phone number, and consider uploading a profile photo. Your full name is required to continue.",
+      content: (
+        <div className="space-y-2 text-sm text-muted-foreground">
+          <p>• Full Name: Required for client communications</p>
+          <p>• Phone Number: Optional but recommended</p>
+          <p>• Profile Photo: Shows in admin views and client messages</p>
+        </div>
+      ),
+      canProceed: !!profileSection.values.fullName?.trim()
+    },
+    {
+      id: 3,
+      title: "Set Up Your Business Information",
+      description: "Let's add your business name in the General settings. This will appear on client communications and invoices.",
+      content: (
+        <div className="space-y-2 text-sm text-muted-foreground">
+          <p>• Business Name: Required for professional communications</p>
+          <p>• Used in client emails, invoices, and contracts</p>
+          <p>• Can be changed later in General settings</p>
+        </div>
+      ),
+      route: "/settings/general",
+      canProceed: !!activeOrganization?.name?.trim()
+    },
+    {
+      id: 4,
+      title: "Profile Setup Complete!",
+      description: "Congratulations! You've successfully set up your profile and business information. You're ready to move on to the next step of your photography CRM setup.",
+      content: (
+        <div className="flex items-center gap-2 text-green-600">
+          <CheckCircle className="h-5 w-5" />
+          <span className="font-medium">Profile setup completed successfully!</span>
+        </div>
+      ),
+      canProceed: true
+    }
+  ];
+
+  const handleTutorialComplete = async () => {
+    // Mark step 1 as completed and advance to step 2
+    await advanceStep(2);
+    setShowTutorial(false);
+    navigate('/getting-started');
+  };
+
+  const handleTutorialExit = async () => {
+    // Mark step 1 as completed (skipped) and advance to step 2
+    await advanceStep(2);
+    setShowTutorial(false);
+    navigate('/getting-started');
+  };
 
   // Show loading state until all data is loaded
   if (profileLoading || workingHoursLoading) {
@@ -448,7 +535,7 @@ export default function Profile() {
 
       {/* Profile Photo Modal */}
       <Dialog open={isProfilePhotoModalOpen} onOpenChange={setIsProfilePhotoModalOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Profile Photo</DialogTitle>
           </DialogHeader>
@@ -463,6 +550,14 @@ export default function Profile() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Onboarding Tutorial */}
+      <OnboardingTutorial
+        steps={tutorialSteps}
+        onComplete={handleTutorialComplete}
+        onExit={handleTutorialExit}
+        isVisible={showTutorial}
+      />
     </SettingsPageWrapper>
   );
 }

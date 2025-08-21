@@ -74,16 +74,17 @@ export function useOnboarding() {
         timestamp: new Date().toISOString()
       });
 
-      // FORCE GUIDED SETUP TO STAY TRUE DURING ONBOARDING
-      const shouldStayInGuidedSetup = data.completed_steps_count < 6 && !data.guided_setup_skipped && !data.guidance_completed;
+      // PROPER LOGIC: Stay in guided setup until ALL 6 steps are complete
+      const shouldStayInGuidedSetup = data.completed_steps_count < 6 && !data.guided_setup_skipped;
       
       console.log('🎯 DECISION:', {
         shouldStayInGuidedSetup,
-        reason: shouldStayInGuidedSetup ? 'Steps incomplete' : 'Should exit guided setup'
+        completedSteps: data.completed_steps_count,
+        reason: shouldStayInGuidedSetup ? 'Steps incomplete - staying in guided setup' : 'All steps complete - exiting guided setup'
       });
 
       setState({
-        inGuidedSetup: shouldStayInGuidedSetup, // FORCE TRUE if steps not complete
+        inGuidedSetup: shouldStayInGuidedSetup, // TRUE if steps < 6
         guidedSetupSkipped: data.guided_setup_skipped ?? false,
         guidanceCompleted: data.guidance_completed ?? false,
         completedCount: data.completed_steps_count ?? 0,

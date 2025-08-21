@@ -69,7 +69,7 @@ export function AppSidebar() {
   const [bookingsOpen, setBookingsOpen] = useState(isBookingsChildActive);
   
   const isItemLocked = (requiredStep: number, allowedInStep?: number[], itemUrl?: string) => {
-    // During guided setup, only allow specific items for current step
+    // During guided setup, handle locking differently
     if (inGuidedSetup && !loading) {
       const currentStep = completedCount + 1; // Current step is completedCount + 1
       const currentRoute = location.pathname;
@@ -83,23 +83,45 @@ export function AppSidebar() {
       
       // When on getting-started page, lock ALL sidebar items except Getting Started
       if (currentRoute === '/getting-started') {
-        console.log('🔒 Getting started page - locking sidebar item');
+        console.log('🔒 Getting started page - locking ALL sidebar items');
         return true; // Lock everything when on getting-started page
       }
       
-      // During guided setup, only allow specific items for each step
-      if (currentStep === 6) { // Step 6: Configure packages
-        console.log('📦 Step 6 - Only Settings should be unlocked');
+      // When NOT on getting-started page, check specific step permissions
+      if (currentStep === 1) { // Step 1: Profile setup
         const allowedUrls = ['/settings'];
         const isAllowed = itemUrl && allowedUrls.some(url => itemUrl.startsWith(url));
-        console.log('Item allowed?', isAllowed, 'for item:', itemUrl);
-        return !isAllowed; // Return true (locked) if NOT allowed
+        return !isAllowed;
       }
       
-      // Check if this item is allowed in the current step (when NOT on getting-started page)
-      if (allowedInStep && allowedInStep.includes(currentStep)) {
-        console.log('✅ Item allowed in current step:', currentStep);
-        return false;
+      if (currentStep === 2) { // Step 2: Create lead
+        const allowedUrls = ['/leads'];
+        const isAllowed = itemUrl && allowedUrls.some(url => itemUrl.startsWith(url));
+        return !isAllowed;
+      }
+      
+      if (currentStep === 3) { // Step 3: Create project
+        const allowedUrls = ['/projects'];
+        const isAllowed = itemUrl && allowedUrls.some(url => itemUrl.startsWith(url));
+        return !isAllowed;
+      }
+      
+      if (currentStep === 4) { // Step 4: Explore projects
+        const allowedUrls = ['/projects'];
+        const isAllowed = itemUrl && allowedUrls.some(url => itemUrl.startsWith(url));
+        return !isAllowed;
+      }
+      
+      if (currentStep === 5) { // Step 5: Schedule session
+        const allowedUrls = ['/leads', '/calendar'];
+        const isAllowed = itemUrl && allowedUrls.some(url => itemUrl.startsWith(url));
+        return !isAllowed;
+      }
+      
+      if (currentStep === 6) { // Step 6: Configure packages
+        const allowedUrls = ['/settings'];
+        const isAllowed = itemUrl && allowedUrls.some(url => itemUrl.startsWith(url));
+        return !isAllowed;
       }
       
       // Lock everything else during guided setup
@@ -162,7 +184,7 @@ export function AppSidebar() {
 
       <SidebarContent className="px-3 flex-1 overflow-y-auto">
         <SidebarMenu>
-          {/* Getting Started - Only visible during guided setup and NEVER locked */}
+          {/* Getting Started - Always visible during guided setup and NEVER locked */}
           {inGuidedSetup && (
             <SidebarMenuItem>
               <SidebarMenuButton

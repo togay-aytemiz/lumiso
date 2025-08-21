@@ -35,9 +35,10 @@ interface ProjectsSectionProps {
   leadName?: string;
   onProjectUpdated?: () => void;
   onActivityUpdated?: () => void;
+  onProjectClicked?: () => void;
 }
 
-export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onActivityUpdated }: ProjectsSectionProps) {
+export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onActivityUpdated, onProjectClicked }: ProjectsSectionProps) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -121,6 +122,8 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
   const handleViewProject = (project: Project) => {
     setViewingProject(project);
     setShowViewDialog(true);
+    // Call the callback to advance tutorial if provided
+    onProjectClicked?.();
   };
 
   const handleDeleteProject = (project: Project) => {

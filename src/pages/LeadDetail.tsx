@@ -171,7 +171,17 @@ const LeadDetail = () => {
     },
     {
       id: 6,
-      title: "Fantastic! Project Created Successfully 🎉",
+      title: "Great! Now Explore Your Project",
+      description: "Perfect! You've created your first project. Now click on the project card below to see detailed project management features like tasks, timelines, and progress tracking.",
+      content: null,
+      mode: "floating",
+      canProceed: false,
+      requiresAction: true,
+      disabledTooltip: "Click on your project to continue"
+    },
+    {
+      id: 7,
+      title: "Fantastic! You're Ready to Go! 🎉",
       description: "Excellent work! You've successfully learned how to manage leads and create projects. You're well on your way to mastering your photography CRM!",
       content: (
         <div className="text-center space-y-4">
@@ -232,6 +242,15 @@ const LeadDetail = () => {
 
   const handleTutorialExit = () => {
     setShowTutorial(false);
+  };
+
+  // Handle project clicked during tutorial
+  const handleProjectClicked = () => {
+    // If tutorial is active and we're on the project exploration step, advance to final step
+    if (showTutorial && currentTutorialStep === 2) {
+      console.log('🚀 Project clicked! Advancing tutorial to final step');
+      setCurrentTutorialStep(3); // Move to final congratulations step
+    }
   };
 
   // Check edit permissions when lead data loads
@@ -577,9 +596,10 @@ const LeadDetail = () => {
     fetchSessions();
     setActivityRefreshKey(prev => prev + 1);
     
-    // If tutorial is active and we're on the project creation step, advance to final step
+    // If tutorial is active and we're on the project creation step, advance to project exploration step
     if (showTutorial && currentTutorialStep === 1) {
-      setCurrentTutorialStep(2);
+      console.log('🚀 Project created! Advancing tutorial to step 6 (project exploration)');
+      setCurrentTutorialStep(2); // Move to "Now Explore Your Project" step
     }
   };
   const handleActivityUpdated = () => {
@@ -783,7 +803,13 @@ const LeadDetail = () => {
 
         {/* Right column - Projects and Activity Section (75%) */}
         <div className="lg:col-span-3 space-y-6 min-w-0">
-          <ProjectsSection leadId={lead.id} leadName={lead.name} onProjectUpdated={handleProjectUpdated} onActivityUpdated={handleActivityUpdated} />
+          <ProjectsSection 
+            leadId={lead.id} 
+            leadName={lead.name} 
+            onProjectUpdated={handleProjectUpdated} 
+            onActivityUpdated={handleActivityUpdated}
+            onProjectClicked={handleProjectClicked}
+          />
           <ActivitySection key={activityRefreshKey} leadId={lead.id} leadName={lead.name} />
 
           {/* Add Project Dialog */}

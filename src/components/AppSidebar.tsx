@@ -72,6 +72,7 @@ export function AppSidebar() {
     // During guided setup, only allow specific items for current step
     if (inGuidedSetup && !loading) {
       const currentStep = completedCount + 1; // Current step is completedCount + 1
+      const currentRoute = location.pathname;
       
       console.log('🔍 Checking lock for requiredStep:', requiredStep, {
         allowedInStep,
@@ -80,14 +81,13 @@ export function AppSidebar() {
         currentPath: location.pathname
       });
       
-      // Always allow getting-started page
-      const currentRoute = location.pathname;
+      // When on getting-started page, lock ALL sidebar items (they'll be handled by individual item logic)
       if (currentRoute === '/getting-started') {
-        console.log('✅ Getting started page - always unlocked');
-        return false;
+        console.log('🔒 Getting started page - locking sidebar item');
+        return true; // Lock everything when on getting-started page
       }
       
-      // Check if this item is allowed in the current step
+      // Check if this item is allowed in the current step (when NOT on getting-started page)
       if (allowedInStep && allowedInStep.includes(currentStep)) {
         console.log('✅ Item allowed in current step:', currentStep);
         return false;
@@ -157,7 +157,7 @@ export function AppSidebar() {
 
       <SidebarContent className="px-3 flex-1 overflow-y-auto">
         <SidebarMenu>
-          {/* Getting Started - Only visible during guided setup */}
+          {/* Getting Started - Only visible during guided setup and NEVER locked */}
           {inGuidedSetup && (
             <SidebarMenuItem>
               <SidebarMenuButton

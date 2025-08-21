@@ -125,6 +125,7 @@ const LeadDetail = () => {
   const [showTutorial, setShowTutorial] = useState(false);
   const [currentTutorialStep, setCurrentTutorialStep] = useState(0);
   const [hasProjects, setHasProjects] = useState(false);
+  const [hasViewedProject, setHasViewedProject] = useState(false);
 
   // Check if projects exist for this lead
   useEffect(() => {
@@ -221,9 +222,9 @@ const LeadDetail = () => {
         </div>
       ),
       mode: "floating",
-      canProceed: false,
-      requiresAction: true,
-      disabledTooltip: "Click on your project to continue"
+      canProceed: hasViewedProject, // Dynamic based on whether user viewed project
+      requiresAction: !hasViewedProject, // Only require action if hasn't viewed project
+      disabledTooltip: hasViewedProject ? undefined : "Click on your project to continue"
     },
     {
       id: 7,
@@ -259,7 +260,7 @@ const LeadDetail = () => {
       mode: "modal",
       canProceed: true
     }
-  ], [hasProjects]);
+  ], [hasProjects, hasViewedProject]);
 
   // Check if we should show tutorial when component mounts
   useEffect(() => {
@@ -312,13 +313,11 @@ const LeadDetail = () => {
 
   // Handle project clicked during tutorial
   const handleProjectClicked = () => {
-    console.log('🔍 handleProjectClicked called:', { showTutorial, currentTutorialStep, expectedStep: 2 });
-    // If tutorial is active and we're on the project exploration step (Step 6 = index 2), just advance to final step immediately
+    console.log('🔍 handleProjectClicked called - Project modal closed, enabling Next button');
+    // When project modal closes during tutorial, enable the Next button on Step 6
     if (showTutorial && currentTutorialStep === 2) {
-      console.log('🚀 Project modal closed! Showing congratulations modal');
-      setCurrentTutorialStep(3); // Move to final congratulations step (Step 7)
-    } else {
-      console.log('❌ Not advancing tutorial - conditions not met');
+      setHasViewedProject(true);
+      console.log('✅ hasViewedProject set to true - Next button should now be enabled');
     }
   };
 

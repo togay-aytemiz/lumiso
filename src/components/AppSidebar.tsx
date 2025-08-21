@@ -69,35 +69,16 @@ export function AppSidebar() {
   const [bookingsOpen, setBookingsOpen] = useState(isBookingsChildActive);
   
   const isItemLocked = (requiredStep: number, allowedInStep?: number[], itemUrl?: string) => {
-    console.log('🔍 Sidebar lock check:', {
-      itemUrl,
-      inGuidedSetup,
-      loading,
-      currentPath: location.pathname,
-      completedCount
-    });
-
-    // During guided setup, lock everything except Getting Started
-    if (inGuidedSetup && !loading) {
-      // Only allow specific items based on current route (not getting-started page)
-      if (location.pathname !== '/getting-started') {
-        const currentStep = completedCount + 1;
-        
-        // Allow specific URLs for current step
-        if (currentStep === 1 && itemUrl?.startsWith('/settings')) return false;
-        if (currentStep === 2 && itemUrl?.startsWith('/leads')) return false;
-        if (currentStep === 3 && itemUrl?.startsWith('/projects')) return false;
-        if (currentStep === 4 && itemUrl?.startsWith('/projects')) return false;
-        if (currentStep === 5 && (itemUrl?.startsWith('/leads') || itemUrl?.startsWith('/calendar'))) return false;
-        if (currentStep === 6 && itemUrl?.startsWith('/settings')) return false;
-      }
-      
-      // Lock everything else during guided setup
+    // Simple rule: If in guided setup, lock EVERYTHING
+    if (inGuidedSetup) {
+      console.log(`🔒 GUIDED SETUP ACTIVE - Locking ${itemUrl || 'item'}`);
       return true;
     }
     
-    // Normal locking logic when not in guided setup
-    return completedCount < requiredStep;
+    // Normal logic when not in guided setup
+    const locked = completedCount < requiredStep;
+    console.log(`📊 Normal mode - ${itemUrl || 'item'} locked: ${locked} (completed: ${completedCount}, required: ${requiredStep})`);
+    return locked;
   };
 
   const handleLockedItemClick = (e: React.MouseEvent, requiredStep: number, allowedInStep?: number[], itemUrl?: string) => {

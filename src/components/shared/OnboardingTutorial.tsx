@@ -38,12 +38,14 @@ export function OnboardingTutorial({
   // Navigate to step route if specified and pass tutorial params
   useEffect(() => {
     if (currentStep?.route && currentStepIndex > 0) {
+      console.log('🚀 OnboardingTutorial: Navigating to step route:', currentStep.route, 'stepIndex:', currentStepIndex);
       const url = currentStep.route + (currentStep.route.includes('?') ? '&' : '?') + 'tutorial=true';
       navigate(url);
     }
   }, [currentStep?.route, currentStepIndex, navigate]);
 
   const handleNext = () => {
+    console.log('🔄 OnboardingTutorial: handleNext called', 'currentStepIndex:', currentStepIndex, 'isLastStep:', isLastStep);
     if (isLastStep) {
       onComplete();
     } else {
@@ -52,6 +54,7 @@ export function OnboardingTutorial({
   };
 
   const handleExit = () => {
+    console.log('❌ OnboardingTutorial: handleExit called');
     onExit();
   };
 

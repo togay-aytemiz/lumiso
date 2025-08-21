@@ -125,12 +125,14 @@ export default function General() {
   ];
 
   const handleTutorialComplete = async () => {
+    console.log('✅ General tutorial complete - returning to Profile step 4');
     // Tutorial complete, return to profile tutorial or getting started
     setShowTutorial(false);
     navigate('/settings/profile?tutorial=true&step=4');
   };
 
   const handleTutorialExit = async () => {
+    console.log('❌ General tutorial exit - going to getting started');
     // Exit tutorial, mark step 1 as completed and return to getting started
     await advanceStep(2);
     setShowTutorial(false);

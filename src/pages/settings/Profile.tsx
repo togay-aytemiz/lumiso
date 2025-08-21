@@ -235,6 +235,7 @@ export default function Profile() {
   ];
 
   const handleTutorialComplete = async () => {
+    console.log('✅ Profile tutorial complete');
     // Mark step 1 as completed and advance to step 2
     await advanceStep(2);
     setShowTutorial(false);
@@ -242,6 +243,7 @@ export default function Profile() {
   };
 
   const handleTutorialExit = async () => {
+    console.log('❌ Profile tutorial exit');
     // Mark step 1 as completed (skipped) and advance to step 2
     await advanceStep(2);
     setShowTutorial(false);

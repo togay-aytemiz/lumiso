@@ -7,7 +7,7 @@ import { toast } from "@/hooks/use-toast";
 
 export function RestartGuidedModeButton() {
   const { user } = useAuth();
-  const { resetGuidedSetup } = useOnboarding();
+  const { resetOnboardingState } = useOnboarding();
   const [isLoading, setIsLoading] = useState(false);
 
   // Only show for the specific user
@@ -18,7 +18,7 @@ export function RestartGuidedModeButton() {
   const handleRestart = async () => {
     setIsLoading(true);
     try {
-      await resetGuidedSetup();
+      await resetOnboardingState();
       toast({
         title: "Guided mode reset",
         description: "The onboarding modal will appear on your next page refresh.",

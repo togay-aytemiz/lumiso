@@ -12,6 +12,7 @@ export interface TutorialStep {
   content: React.ReactNode;
   canProceed: boolean;
   route?: string; // Optional route to navigate to for this step
+  mode?: 'modal' | 'floating'; // Display mode - modal (blocking) or floating (non-blocking)
 }
 
 interface OnboardingTutorialProps {
@@ -55,6 +56,74 @@ export function OnboardingTutorial({
     return null;
   }
 
+  const isFloatingMode = currentStep.mode === 'floating';
+
+  if (isFloatingMode) {
+    // Floating mode - positioned at bottom right, non-blocking
+    return (
+      <div className="fixed bottom-6 right-6 z-50 max-w-sm">
+        <Card className="shadow-2xl border-2">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold">
+                  {currentStep.id}
+                </div>
+                <div>
+                  <CardTitle className="text-sm">{currentStep.title}</CardTitle>
+                  <CardDescription className="text-xs text-muted-foreground">
+                    Step {currentStepIndex + 1} of {steps.length}
+                  </CardDescription>
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleExit}
+                className="h-6 w-6 p-0"
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            </div>
+          </CardHeader>
+
+          <CardContent className="space-y-4 pt-0">
+            <p className="text-sm text-muted-foreground">
+              {currentStep.description}
+            </p>
+
+            {currentStep.content && (
+              <div className="p-3 bg-muted/30 rounded-lg text-sm">
+                {currentStep.content}
+              </div>
+            )}
+
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleExit}
+                className="flex-1 text-xs"
+              >
+                Exit Tutorial
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleNext}
+                disabled={!currentStep.canProceed}
+                className="flex-1 text-xs"
+              >
+                {isLastStep ? "Complete" : "Next"}
+                <ArrowRight className="ml-1 h-3 w-3" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Modal mode - centered, blocking (default)
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">

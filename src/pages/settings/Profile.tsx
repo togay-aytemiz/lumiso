@@ -182,7 +182,8 @@ export default function Profile() {
           </div>
         </div>
       ),
-      canProceed: true
+      canProceed: true,
+      mode: 'modal'
     },
     {
       id: 2,
@@ -195,7 +196,8 @@ export default function Profile() {
           <p>• Profile Photo: Shows in admin views and client messages</p>
         </div>
       ),
-      canProceed: !!profileSection.values.fullName?.trim()
+      canProceed: !!profileSection.values.fullName?.trim(),
+      mode: 'floating'
     },
     {
       id: 3,
@@ -209,7 +211,8 @@ export default function Profile() {
         </div>
       ),
       route: "/settings/general",
-      canProceed: !!activeOrganization?.name?.trim()
+      canProceed: !!activeOrganization?.name?.trim(),
+      mode: 'modal'
     },
     {
       id: 4,
@@ -221,7 +224,8 @@ export default function Profile() {
           <span className="font-medium">Profile setup completed successfully!</span>
         </div>
       ),
-      canProceed: true
+      canProceed: true,
+      mode: 'modal'
     }
   ];
 

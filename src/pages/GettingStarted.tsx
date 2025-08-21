@@ -66,11 +66,14 @@ const GettingStarted = () => {
     completedStepsLength: completedSteps.length,
   });
   
-  // Fix: currentStepNumber from DB is the NEXT step to do, not current step being shown  
-  const nextStepIndex = currentStepNumber - 1; // Convert to 0-based index for next step
-  const currentStep = onboardingSteps[nextStepIndex]; // This is actually the next step to do
-  const nextStep = onboardingSteps[nextStepIndex + 1]; // Step after that
+  // Completed all steps check
   const allStepsCompleted = completedSteps.length >= onboardingSteps.length;
+  
+  // Current step to do (if not all completed)
+  const currentStep = allStepsCompleted ? null : onboardingSteps.find(step => step.id === currentStepNumber);
+  
+  // Next step after current
+  const nextStep = currentStep ? onboardingSteps.find(step => step.id === currentStepNumber + 1) : null;
 
   const handleStepAction = (step: any) => {
     // Add tutorial parameter for step 1 (profile setup)

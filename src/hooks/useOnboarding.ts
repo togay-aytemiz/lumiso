@@ -22,44 +22,44 @@ export function useOnboarding() {
     loading: true
   });
 
-  useEffect(() => {
+  const fetchOnboardingState = async () => {
     if (!user) {
       setState(prev => ({ ...prev, loading: false }));
       return;
     }
 
-    const fetchOnboardingState = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('user_settings')
-          .select('in_guided_setup, guided_setup_skipped, guidance_completed, current_step, completed_steps')
-          .eq('user_id', user.id)
-          .single();
+    try {
+      const { data, error } = await supabase
+        .from('user_settings')
+        .select('in_guided_setup, guided_setup_skipped, guidance_completed, current_step, completed_steps')
+        .eq('user_id', user.id)
+        .single();
 
-        if (error) {
-          console.error('Error fetching onboarding state:', error);
-          setState(prev => ({ ...prev, loading: false }));
-          return;
-        }
-
-        const completedStepsArray = Array.isArray(data?.completed_steps) 
-          ? (data.completed_steps as number[])
-          : [];
-
-        setState({
-          inGuidedSetup: data?.in_guided_setup || false,
-          guidedSetupSkipped: data?.guided_setup_skipped || false,
-          guidanceCompleted: data?.guidance_completed || false,
-          currentStep: data?.current_step || 1,
-          completedSteps: completedStepsArray,
-          loading: false
-        });
-      } catch (error) {
+      if (error) {
         console.error('Error fetching onboarding state:', error);
         setState(prev => ({ ...prev, loading: false }));
+        return;
       }
-    };
 
+      const completedStepsArray = Array.isArray(data?.completed_steps) 
+        ? (data.completed_steps as number[])
+        : [];
+
+      setState({
+        inGuidedSetup: data?.in_guided_setup || false,
+        guidedSetupSkipped: data?.guided_setup_skipped || false,
+        guidanceCompleted: data?.guidance_completed || false,
+        currentStep: data?.current_step || 1,
+        completedSteps: completedStepsArray,
+        loading: false
+      });
+    } catch (error) {
+      console.error('Error fetching onboarding state:', error);
+      setState(prev => ({ ...prev, loading: false }));
+    }
+  };
+
+  useEffect(() => {
     fetchOnboardingState();
   }, [user]);
 
@@ -174,38 +174,10 @@ export function useOnboarding() {
 
       console.log(`✅ RPC call successful for step ${stepNumber}`);
 
-      // Refetch the updated state
-      const { data, error: fetchError } = await supabase
-        .from('user_settings')
-        .select('in_guided_setup, guided_setup_skipped, guidance_completed, current_step, completed_steps')
-        .eq('user_id', user.id)
-        .single();
+      // Immediately refetch the state to update UI
+      await fetchOnboardingState();
 
-      if (fetchError) {
-        console.error('❌ Fetch Error:', fetchError);
-        throw fetchError;
-      }
-
-      console.log('📊 Updated state from DB:', data);
-
-      if (data) {
-        const completedStepsArray = Array.isArray(data.completed_steps) 
-          ? (data.completed_steps as number[])
-          : [];
-
-        console.log('📊 Completed steps array:', completedStepsArray);
-
-        setState({
-          inGuidedSetup: data.in_guided_setup || false,
-          guidedSetupSkipped: data.guided_setup_skipped || false,
-          guidanceCompleted: data.guidance_completed || false,
-          currentStep: data.current_step || 1,
-          completedSteps: completedStepsArray,
-          loading: false
-        });
-
-        console.log('✅ State updated successfully');
-      }
+      console.log('✅ State refreshed after step completion');
     } catch (error) {
       console.error('❌ Error advancing guided step:', error);
       throw error;
@@ -218,6 +190,7 @@ export function useOnboarding() {
     startGuidedSetup,
     skipWithSampleData,
     resetOnboardingState,
-    advanceStep
+    advanceStep,
+    refreshState: fetchOnboardingState
   };
 }

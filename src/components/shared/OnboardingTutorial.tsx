@@ -80,8 +80,8 @@ export function OnboardingTutorial({
     return (
       <TooltipProvider>
         <div className="fixed z-50 max-w-sm 
-                       right-2 top-32 
-                       sm:right-4 sm:top-36 
+                       right-2 top-36 
+                       sm:right-4 sm:top-48 
                        md:right-6 md:top-20">
           <Card className="shadow-2xl border-2">
             <CardHeader className="pb-3">

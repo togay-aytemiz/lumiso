@@ -40,16 +40,16 @@ export function AppSidebar() {
   const isMobile = useIsMobile();
   const { inGuidedSetup, completedCount, loading } = useOnboarding();
 
-  // Debug logging
+  // Debug logging - CHECK WHAT'S CHANGING
   useEffect(() => {
-    console.log('🔍 AppSidebar State:', {
+    console.log('🚨 SIDEBAR STATE CHANGE:', {
       inGuidedSetup,
       completedCount,
-      currentStep: completedCount + 1,
+      loading,
       currentPath: location.pathname,
-      loading
+      timestamp: new Date().toISOString()
     });
-  }, [inGuidedSetup, completedCount, location.pathname, loading]);
+  }, [inGuidedSetup, completedCount, loading, location.pathname]);
 
   // Show loading state while onboarding data is being fetched
   if (loading) {
@@ -69,8 +69,8 @@ export function AppSidebar() {
   const [bookingsOpen, setBookingsOpen] = useState(isBookingsChildActive);
   
   const isItemLocked = (requiredStep: number) => {
-    // IF GUIDED SETUP IS ACTIVE - LOCK EVERYTHING
-    if (inGuidedSetup) {
+    // SIMPLE RULE: If on getting-started page OR in guided setup - LOCK EVERYTHING
+    if (location.pathname === '/getting-started' || inGuidedSetup) {
       return true;
     }
     
@@ -123,8 +123,8 @@ export function AppSidebar() {
 
       <SidebarContent className="px-3 flex-1 overflow-y-auto">
         <SidebarMenu>
-          {/* Getting Started - Always visible during guided setup and NEVER locked */}
-          {inGuidedSetup && (
+          {/* Getting Started - Always visible when on getting-started page OR in guided setup */}
+          {(location.pathname === '/getting-started' || inGuidedSetup) && (
             <SidebarMenuItem>
               <SidebarMenuButton
                 asChild

@@ -193,12 +193,12 @@ const LeadDetail = () => {
     {
       id: 5,
       title: "Create Your First Project",
-      description: "Click the 'Add Project' button to convert this lead into a project.",
+      description: "Great! Now let's turn this lead into a project. Click the 'Add Project' button below to get started!",
       content: null,
       mode: "floating",
       canProceed: hasProjects, // Dynamic based on projects existence
-      requiresAction: !hasProjects, // Only require action if no projects
-      disabledTooltip: hasProjects ? undefined : "Create a project first to continue"
+      requiresAction: true, // Always require action for this step
+      disabledTooltip: "Create a project first to continue"
     },
     {
       id: 6,

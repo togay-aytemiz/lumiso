@@ -91,13 +91,21 @@ export default function Services() {
   // Handle tutorial completion
   const handleTutorialComplete = async () => {
     try {
-      console.log('🎉 Packages tutorial completed');
-      await completeStep(); // Complete current step (step 6)
+      console.log('🎉 Packages tutorial completed - completing step 6');
       setShowTutorial(false);
-      // Navigate back to getting started page to show completion
-      window.location.href = '/getting-started';
+      
+      // Complete step 6 and mark guidance as complete
+      await completeStep();
+      
+      console.log('✅ Step 6 completed, navigating to getting-started');
+      
+      // Small delay to ensure database update, then navigate
+      setTimeout(() => {
+        window.location.href = '/getting-started';
+      }, 500);
+      
     } catch (error) {
-      console.error('Error completing packages tutorial:', error);
+      console.error('❌ Error completing packages tutorial:', error);
     }
   };
 

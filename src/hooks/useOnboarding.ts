@@ -118,6 +118,20 @@ export function useOnboarding() {
 
       console.log('✅ Step completion result:', result);
 
+      // If this is the final step (step 6), mark guidance as complete
+      if (state.completedCount === 5) {
+        console.log('🏁 Final step completed - marking guidance as complete');
+        await supabase
+          .from('user_settings')
+          .update({ 
+            guidance_completed: true,
+            in_guided_setup: false 
+          })
+          .eq('user_id', user.id);
+        
+        console.log('✅ Guidance marked as complete');
+      }
+
       // Refresh state after step completion
       await fetchState();
       

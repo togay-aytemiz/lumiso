@@ -1,10 +1,15 @@
--- Function to advance to next step or mark complete
+-- Fix search_path security issues for the functions
+DROP FUNCTION IF EXISTS public.advance_guided_step(uuid, integer, boolean);
+DROP FUNCTION IF EXISTS public.reset_guided_setup(uuid);
+DROP FUNCTION IF EXISTS public.set_guided_step(uuid, integer);
+
+-- Create function to advance guided setup step with proper search_path
 CREATE OR REPLACE FUNCTION public.advance_guided_step(user_uuid uuid, step_number integer, skip_step boolean DEFAULT false)
 RETURNS void
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path TO ''
-AS $$
+AS $function$
 DECLARE
   current_completed_steps jsonb;
   new_completed_steps jsonb;
@@ -54,15 +59,15 @@ BEGIN
     WHERE user_id = user_uuid;
   END IF;
 END;
-$$;
+$function$;
 
--- Function to reset guided setup
+-- Create function to reset guided setup for developers with proper search_path
 CREATE OR REPLACE FUNCTION public.reset_guided_setup(user_uuid uuid)
 RETURNS void
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path TO ''
-AS $$
+AS $function$
 BEGIN
   UPDATE public.user_settings 
   SET 
@@ -73,15 +78,15 @@ BEGIN
     completed_steps = '[]'::jsonb
   WHERE user_id = user_uuid;
 END;
-$$;
+$function$;
 
--- Function to set specific guided step (for developer)
+-- Create function to jump to specific step for developers with proper search_path
 CREATE OR REPLACE FUNCTION public.set_guided_step(user_uuid uuid, target_step integer)
 RETURNS void
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path TO ''
-AS $$
+AS $function$
 DECLARE
   completed_array jsonb := '[]'::jsonb;
 BEGIN
@@ -99,4 +104,4 @@ BEGIN
     completed_steps = completed_array
   WHERE user_id = user_uuid;
 END;
-$$;
+$function$;

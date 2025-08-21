@@ -68,13 +68,13 @@ export function AppSidebar() {
   );
   const [bookingsOpen, setBookingsOpen] = useState(isBookingsChildActive);
   
-  const isItemLocked = (requiredStep: number, allowedInStep?: number[]) => {
+  const isItemLocked = (requiredStep: number, allowedInStep?: number[], itemUrl?: string) => {
     // During guided setup, only allow specific items for current step
     if (inGuidedSetup && !loading) {
       const currentStep = completedCount + 1; // Current step is completedCount + 1
       const currentRoute = location.pathname;
       
-      console.log('🔍 Checking lock for requiredStep:', requiredStep, {
+      console.log('🔍 Checking lock for item:', itemUrl, 'requiredStep:', requiredStep, {
         allowedInStep,
         currentStep,
         inGuidedSetup,
@@ -90,8 +90,10 @@ export function AppSidebar() {
       // During guided setup, only allow specific items for each step
       if (currentStep === 6) { // Step 6: Configure packages
         console.log('📦 Step 6 - Only Settings should be unlocked');
-        const allowedInStep6 = ['/settings'];
-        return !allowedInStep6.some(path => currentRoute.startsWith(path));
+        const allowedUrls = ['/settings'];
+        const isAllowed = itemUrl && allowedUrls.some(url => itemUrl.startsWith(url));
+        console.log('Item allowed?', isAllowed, 'for item:', itemUrl);
+        return !isAllowed; // Return true (locked) if NOT allowed
       }
       
       // Check if this item is allowed in the current step (when NOT on getting-started page)
@@ -112,7 +114,7 @@ export function AppSidebar() {
   };
 
   const handleLockedItemClick = (e: React.MouseEvent, requiredStep: number, allowedInStep?: number[], itemUrl?: string) => {
-    if (isItemLocked(requiredStep, allowedInStep)) {
+    if (isItemLocked(requiredStep, allowedInStep, itemUrl)) {
       e.preventDefault();
       // Show helpful message during guided setup
       if (inGuidedSetup) {
@@ -183,7 +185,7 @@ export function AppSidebar() {
             .slice(0, navigationItems.findIndex((i) => i.title === "Analytics"))
             .map((item) => {
               const active = isActive(item.url);
-              const locked = isItemLocked(item.requiredStep, item.allowedInStep);
+              const locked = isItemLocked(item.requiredStep, item.allowedInStep, item.url);
               
               const content = (
                 <div 
@@ -234,7 +236,7 @@ export function AppSidebar() {
 
           {/* Bookings parent with submenu */}
           <SidebarMenuItem>
-            {isItemLocked(4) ? (
+            {isItemLocked(4, undefined, "/bookings") ? (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <SidebarMenuButton
@@ -271,7 +273,7 @@ export function AppSidebar() {
                     <SidebarMenu>
                       {bookingItems.map((item) => {
                         const active = isActive(item.url);
-                        const locked = isItemLocked(item.requiredStep, item.allowedInStep);
+                        const locked = isItemLocked(item.requiredStep, item.allowedInStep, item.url);
                         
                         return (
                           <SidebarMenuItem key={item.title}>
@@ -317,7 +319,7 @@ export function AppSidebar() {
             .slice(navigationItems.findIndex((i) => i.title === "Analytics"))
             .map((item) => {
               const active = isActive(item.url);
-              const locked = isItemLocked(item.requiredStep, item.allowedInStep);
+              const locked = isItemLocked(item.requiredStep, item.allowedInStep, item.url);
               
               const content = (
                 <div 

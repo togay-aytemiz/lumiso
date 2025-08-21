@@ -17,6 +17,7 @@ import { PageHeader, PageHeaderSearch, PageHeaderActions } from "@/components/ui
 import { AssigneeAvatars } from "@/components/AssigneeAvatars";
 import { OnboardingTutorial, TutorialStep } from "@/components/shared/OnboardingTutorial";
 import { useOnboarding } from "@/hooks/useOnboarding";
+import { Calendar, MessageSquare, CheckSquare } from "lucide-react";
 
 interface Lead {
   id: string;
@@ -44,6 +45,7 @@ const AllLeads = () => {
   const [addLeadDialogOpen, setAddLeadDialogOpen] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
   const [currentTutorialStep, setCurrentTutorialStep] = useState(0);
+  const [isSchedulingTutorial, setIsSchedulingTutorial] = useState(false);
   const navigate = useNavigate();
   const { completedCount, completeStep } = useOnboarding();
 
@@ -102,9 +104,61 @@ const AllLeads = () => {
     }
   ];
 
+  const schedulingTutorialSteps: TutorialStep[] = [
+    {
+      id: 1,
+      title: "Schedule Your First Photo Session",
+      description: "Let's walk through scheduling a photo session for your client. This process will help you organize your photography workflow.",
+      content: (
+        <div className="space-y-4">
+          <div className="flex items-start gap-3">
+            <Calendar className="w-5 h-5 text-primary mt-0.5" />
+            <div>
+              <h4 className="font-medium">Choose Date & Time</h4>
+              <p className="text-sm text-muted-foreground">Pick a convenient time that works for both you and your client.</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-3">
+            <Users className="w-5 h-5 text-primary mt-0.5" />
+            <div>
+              <h4 className="font-medium">Select Your Client</h4>
+              <p className="text-sm text-muted-foreground">Choose the lead/client you want to photograph from your list.</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-3">
+            <MessageSquare className="w-5 h-5 text-primary mt-0.5" />
+            <div>
+              <h4 className="font-medium">Add Session Details</h4>
+              <p className="text-sm text-muted-foreground">Include notes, special requirements, and optional project association.</p>
+            </div>
+          </div>
+        </div>
+      ),
+      mode: "modal",
+      canProceed: true
+    },
+    {
+      id: 2,
+      title: "Select a Lead to Schedule Session",
+      description: "Great! Now click on one of your leads in the table below to open their details page where you can schedule a session.",
+      content: null,
+      mode: "floating",
+      canProceed: false,
+      requiresAction: true,
+      disabledTooltip: "Click on a lead to continue"
+    }
+  ];
+
   // Check if we should show tutorial when component mounts
   useEffect(() => {
-    if (completedCount === 1) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const isSchedulingTutorialParam = urlParams.get('tutorial') === 'scheduling';
+    
+    if (isSchedulingTutorialParam) {
+      setIsSchedulingTutorial(true);
+      setShowTutorial(true);
+      setCurrentTutorialStep(0);
+    } else if (completedCount === 1) {
       setShowTutorial(true);
       setCurrentTutorialStep(0); // Start from step 1
     }
@@ -219,12 +273,22 @@ const AllLeads = () => {
   };
 
   const handleRowClick = (leadId: string) => {
-    // If we're in tutorial mode on step 3, pass tutorial context
+    // If we're in tutorial mode, pass appropriate tutorial context
     const state: any = { from: 'all-leads' };
-    if (showTutorial && currentTutorialStep === 2) {
-      state.continueTutorial = true;
-      state.tutorialStep = 4; // Next step in lead details
+    
+    if (showTutorial) {
+      if (isSchedulingTutorial && currentTutorialStep === 1) {
+        // Scheduling tutorial - go to lead detail for scheduling
+        state.continueTutorial = true;
+        state.tutorialType = 'scheduling';
+        state.tutorialStep = 3; // Next step in scheduling tutorial
+      } else if (currentTutorialStep === 2) {
+        // Regular leads tutorial
+        state.continueTutorial = true;
+        state.tutorialStep = 4; // Next step in lead details
+      }
     }
+    
     navigate(`/leads/${leadId}`, { state });
   };
 
@@ -428,7 +492,7 @@ const AllLeads = () => {
       />
 
       <OnboardingTutorial
-        steps={leadsTutorialSteps}
+        steps={isSchedulingTutorial ? schedulingTutorialSteps : leadsTutorialSteps}
         isVisible={showTutorial}
         onComplete={handleTutorialComplete}
         onExit={handleTutorialExit}

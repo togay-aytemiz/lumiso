@@ -47,7 +47,7 @@ const onboardingSteps = [
     id: 5,
     title: "Schedule a Photo Session",
     description: "Book your first session and manage your calendar",
-    route: "/calendar", 
+    route: "/leads?tutorial=scheduling", 
     buttonText: "Schedule Session",
     duration: "3 min"
   },
@@ -84,8 +84,8 @@ const GettingStarted = () => {
   }, [completedCount, loading]);
 
   const handleStepAction = (step: any) => {
-    if (step.id === 1 || step.id === 4) {
-      navigate(`${step.route}?tutorial=true`);
+    if (step.id === 1 || step.id === 4 || step.id === 5) {
+      navigate(`${step.route}${step.route.includes('?') ? '' : '?tutorial=true'}`);
     } else {
       navigate(step.route);
     }

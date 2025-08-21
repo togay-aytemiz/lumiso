@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { ArrowLeft, Save, Calendar, Clock, FileText, CheckCircle, FolderPlus, User, Activity } from "lucide-react";
+import { ArrowLeft, Save, Calendar, Clock, FileText, CheckCircle, FolderPlus, User, Activity, CheckSquare } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import ClientDetailsList from "@/components/ClientDetailsList";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -131,6 +131,8 @@ const LeadDetail = () => {
   const [currentTutorialStep, setCurrentTutorialStep] = useState(0);
   const [hasProjects, setHasProjects] = useState(false);
   const [hasViewedProject, setHasViewedProject] = useState(false);
+  const [isSchedulingTutorial, setIsSchedulingTutorial] = useState(false);
+  const [hasScheduledSession, setHasScheduledSession] = useState(false);
 
   // Check if projects exist for this lead
   useEffect(() => {
@@ -244,13 +246,68 @@ const LeadDetail = () => {
     canProceed: true
   }], [hasProjects, hasViewedProject]);
 
+  // Scheduling tutorial steps
+  const schedulingTutorialSteps: TutorialStep[] = useMemo(() => [{
+    id: 3,
+    title: "Schedule Your Photo Session",
+    description: "Perfect! Now let's schedule a photo session for this client. Click the 'Schedule Session' button below to open the scheduling form.",
+    content: <div className="space-y-4">
+          <div className="flex items-start gap-3">
+            <Calendar className="w-5 h-5 text-primary mt-0.5" />
+            <div>
+              <h4 className="font-medium">Session Scheduling</h4>
+              <p className="text-sm text-muted-foreground">Choose date and time that works for both you and your client.</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-3">
+            <CheckSquare className="w-5 h-5 text-primary mt-0.5" />
+            <div>
+              <h4 className="font-medium">Calendar Integration</h4>
+              <p className="text-sm text-muted-foreground">Sessions automatically sync with your calendar for better organization.</p>
+            </div>
+          </div>
+        </div>,
+    mode: "floating",
+    canProceed: hasScheduledSession,
+    requiresAction: !hasScheduledSession,
+    disabledTooltip: "Schedule a session to continue"
+  }, {
+    id: 4,
+    title: "🎉 Session Scheduled Successfully!",
+    description: "Excellent! You've successfully scheduled your first photo session. You can now view and manage all your sessions from the Calendar page, and they'll appear in your session timeline here.",
+    content: <div className="space-y-3">
+          <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+            <p className="text-sm font-medium text-green-800">Your session has been added to your calendar and you can find it in the Calendar page!</p>
+          </div>
+          <div className="text-sm space-y-2">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 bg-primary rounded-full"></span>
+              <span>Sessions appear in your lead's activity timeline</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 bg-primary rounded-full"></span>
+              <span>Update session status as you progress</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 bg-primary rounded-full"></span>
+              <span>Associate sessions with projects for better organization</span>
+            </div>
+          </div>
+        </div>,
+    mode: "modal",
+    canProceed: true
+  }], [hasScheduledSession]);
+
   // Check if we should show tutorial when component mounts
   useEffect(() => {
     const continueTutorial = location.state?.continueTutorial;
     const tutorialStep = location.state?.tutorialStep;
+    const tutorialType = location.state?.tutorialType;
+    
     console.log('🔍 LeadDetail tutorial check:', {
       continueTutorial,
       tutorialStep,
+      tutorialType,
       locationState: location.state,
       completedCount,
       pathname: location.pathname
@@ -261,23 +318,39 @@ const LeadDetail = () => {
     const shouldShowFromProgress = completedCount === 1; // User completed first step, now on leads
 
     if (shouldShowFromState) {
-      console.log('🚀 Starting lead details tutorial from navigation state at step:', tutorialStep);
-      setShowTutorial(true);
-      setCurrentTutorialStep(tutorialStep - 4); // Convert to 0-based index for our steps array
+      if (tutorialType === 'scheduling') {
+        console.log('🚀 Starting scheduling tutorial from navigation state at step:', tutorialStep);
+        setIsSchedulingTutorial(true);
+        setShowTutorial(true);
+        setCurrentTutorialStep(tutorialStep - 3); // Convert to 0-based index for scheduling steps
+      } else {
+        console.log('🚀 Starting lead details tutorial from navigation state at step:', tutorialStep);
+        setShowTutorial(true);
+        setCurrentTutorialStep(tutorialStep - 4); // Convert to 0-based index for our steps array
+      }
     } else if (shouldShowFromProgress) {
       console.log('🚀 Starting lead details tutorial from onboarding progress');
       setShowTutorial(true);
       setCurrentTutorialStep(0); // Start with first lead details step
     }
-  }, [location.state?.continueTutorial, location.state?.tutorialStep, completedCount]);
+  }, [location.state?.continueTutorial, location.state?.tutorialStep, location.state?.tutorialType, completedCount]);
 
   // Handle tutorial completion
   const handleTutorialComplete = async () => {
     try {
-      await completeStep();
-      setShowTutorial(false);
-      console.log('🎉 Tutorial completed! Navigating back to getting-started');
-      navigate('/getting-started');
+      if (isSchedulingTutorial) {
+        // For scheduling tutorial, complete step 5 (scheduling step)
+        await completeStep();
+        setShowTutorial(false);
+        console.log('🎉 Scheduling tutorial completed! Navigating back to getting-started');
+        navigate('/getting-started');
+      } else {
+        // For regular lead details tutorial
+        await completeStep();
+        setShowTutorial(false);
+        console.log('🎉 Tutorial completed! Navigating back to getting-started');
+        navigate('/getting-started');
+      }
     } catch (error) {
       console.error('Error completing tutorial:', error);
       toast({
@@ -295,6 +368,13 @@ const LeadDetail = () => {
   const handleProjectClicked = () => {
     console.log('🔍 Project clicked - enabling Next button');
     setHasViewedProject(true);
+  };
+
+  const handleSessionScheduled = () => {
+    console.log('🔍 Session scheduled - advancing tutorial');
+    setHasScheduledSession(true);
+    setActivityRefreshKey(prev => prev + 1); // Refresh activities to show new session
+    fetchSessions();
   };
 
   // Debug tutorial step changes
@@ -633,9 +713,6 @@ const LeadDetail = () => {
       });
     }
   };
-  const handleSessionScheduled = () => {
-    fetchSessions();
-  };
   const handleSessionUpdated = () => {
     fetchSessions();
   };
@@ -931,7 +1008,14 @@ const LeadDetail = () => {
         </AlertDialogContent>
       </AlertDialog>
       
-      <OnboardingTutorial key={`tutorial-${currentTutorialStep}`} steps={leadDetailsTutorialSteps} isVisible={showTutorial} onComplete={handleTutorialComplete} onExit={handleTutorialExit} initialStepIndex={currentTutorialStep} />
+      <OnboardingTutorial 
+        key={`tutorial-${currentTutorialStep}`} 
+        steps={isSchedulingTutorial ? schedulingTutorialSteps : leadDetailsTutorialSteps} 
+        isVisible={showTutorial} 
+        onComplete={handleTutorialComplete} 
+        onExit={handleTutorialExit} 
+        initialStepIndex={currentTutorialStep} 
+      />
     </div>;
 };
 export default LeadDetail;

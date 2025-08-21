@@ -2,6 +2,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { MobileBottomNav } from "@/components/mobile/MobileBottomNav";
 import { OnboardingModal } from "@/components/OnboardingModal";
+import { DeveloperSettings } from "@/components/DeveloperSettings";
 
 import { useLayoutEffect, useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
@@ -63,6 +64,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         open={showOnboardingModal} 
         onClose={() => setShowOnboardingModal(false)} 
       />
+      
+      {/* Developer Settings - Always available for developer user */}
+      <DeveloperSettings />
       
     </SidebarProvider>
   );

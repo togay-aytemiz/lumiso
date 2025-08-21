@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { HelpCircle, ArrowRight, CheckCircle } from "lucide-react";
 import { SampleDataModal } from "@/components/SampleDataModal";
-import { DeveloperSettings } from "@/components/DeveloperSettings";
+
 import { GuidedStepProgress } from "@/components/GuidedStepProgress";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -305,8 +305,6 @@ const GettingStarted = () => {
         onClose={() => setShowSampleDataModal(false)}
       />
 
-      {/* Developer Settings */}
-      <DeveloperSettings />
     </div>
   );
 };

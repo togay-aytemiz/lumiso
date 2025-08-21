@@ -45,14 +45,14 @@ export function BaseOnboardingModal({
           </div>
         )}
 
-        <div className="flex flex-col gap-4 pt-4 pb-8">
+        <div className="flex flex-col gap-3 pt-6 pb-8">
           {actions.map((action, index) => (
             <Button
               key={index}
               onClick={action.onClick}
-              variant={action.variant || "default"}
+              variant={action.variant || (index === actions.length - 1 ? "default" : "outline")}
               disabled={action.disabled}
-              className="w-full min-h-[44px]"
+              className="w-full h-11"
             >
               {action.icon && <span className="mr-2">{action.icon}</span>}
               {action.label}

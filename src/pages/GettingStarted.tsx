@@ -167,12 +167,9 @@ const GettingStarted = () => {
                   </div>
                   <Button 
                     onClick={() => {
-                      console.log('GetUp Profile button clicked', { currentStep, route: currentStep.route });
                       if (currentStep.id === 1) {
-                        console.log('Navigating to:', `${currentStep.route}?walkthrough=profile-setup`);
                         navigate(`${currentStep.route}?walkthrough=profile-setup`);
                       } else {
-                        console.log('Navigating to:', currentStep.route);
                         navigate(currentStep.route);
                       }
                     }}
@@ -211,12 +208,9 @@ const GettingStarted = () => {
                       size="lg" 
                       className="min-h-[48px]"
                       onClick={() => {
-                        console.log('Desktop Set Up Profile button clicked', { currentStep, route: currentStep.route });
                         if (currentStep.id === 1) {
-                          console.log('Desktop navigating to:', `${currentStep.route}?walkthrough=profile-setup`);
                           navigate(`${currentStep.route}?walkthrough=profile-setup`);
                         } else {
-                          console.log('Desktop navigating to:', currentStep.route);
                           navigate(currentStep.route);
                         }
                       }}

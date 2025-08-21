@@ -64,7 +64,6 @@ const App = () => (
               <Route path="analytics" element={<Analytics />} />
               <Route path="payments" element={<Payments />} />
               <Route path="settings" element={<SettingsLayout />}>
-                <Route index element={<Navigate to="/settings/profile" replace />} />
                 <Route path="profile" element={<ProfileSettings />} />
                 <Route path="general" element={<GeneralSettings />} />
                 <Route path="team" element={<TeamSettings />} />
@@ -77,6 +76,7 @@ const App = () => (
                 <Route path="contracts" element={<ContractsSettings />} />
                 <Route path="billing" element={<BillingSettings />} />
                 <Route path="danger-zone" element={<DangerZoneSettings />} />
+                <Route index element={<Navigate to="/settings/profile" replace />} />
               </Route>
             </Route>
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

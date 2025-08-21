@@ -11,16 +11,16 @@ import { Package, DollarSign, Target } from "lucide-react";
 const packagesSetupSteps: TutorialStep[] = [
   {
     id: 1,
-    title: "Create Your First Package",
-    description: "Photography packages help you organize your services and pricing. Start by creating a package like 'Portrait Session' or 'Wedding Photography'.",
+    title: "Review Your Package Templates",
+    description: "We've created some default photography packages for you. You can modify, delete, or keep them as they are. Click on any package to edit its details.",
     content: (
       <div className="space-y-3">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Package className="w-4 h-4" />
-          <span>Click "+ Add Package" to get started</span>
+          <span>Review and customize the default packages</span>
         </div>
         <div className="text-xs text-muted-foreground">
-          Pro tip: Include what's included in each package (e.g., number of edited photos, hours of coverage)
+          Tip: You can edit package names, descriptions, and what's included
         </div>
       </div>
     ),
@@ -29,8 +29,8 @@ const packagesSetupSteps: TutorialStep[] = [
   },
   {
     id: 2,
-    title: "Set Your Pricing",
-    description: "Add pricing to your packages to streamline your client proposals and booking process.",
+    title: "Set Your Package Pricing",
+    description: "Add or update pricing for your packages to streamline your client proposals and booking process.",
     content: (
       <div className="space-y-3">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -44,6 +44,39 @@ const packagesSetupSteps: TutorialStep[] = [
     ),
     canProceed: true,
     mode: 'floating'
+  },
+  {
+    id: 3,
+    title: "Configure Your Services",
+    description: "Review and customize the individual services that make up your packages. These are the building blocks you'll use when creating packages.",
+    content: (
+      <div className="space-y-3">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Target className="w-4 h-4" />
+          <span>Customize your service offerings</span>
+        </div>
+        <div className="text-xs text-muted-foreground">
+          Services can be reused across multiple packages
+        </div>
+      </div>
+    ),
+    canProceed: true,
+    mode: 'floating'
+  },
+  {
+    id: 4,
+    title: "🎉 Packages Setup Complete!",
+    description: "Excellent! You've successfully configured your photography packages and services. Your business is now ready to create professional proposals and manage bookings.",
+    content: (
+      <div className="space-y-3 text-center">
+        <div className="text-2xl">🎯</div>
+        <div className="text-sm text-muted-foreground">
+          You can always return to Settings → Packages & Services to make changes
+        </div>
+      </div>
+    ),
+    canProceed: true,
+    mode: 'modal'
   }
 ];
 
@@ -68,6 +101,8 @@ export default function Services() {
       console.log('🎉 Packages tutorial completed');
       setShowTutorial(false);
       await completeStep(); // Complete current step (step 6)
+      // Navigate back to getting started page to show completion
+      window.location.href = '/getting-started';
     } catch (error) {
       console.error('Error completing packages tutorial:', error);
     }

@@ -93,15 +93,18 @@ export function OnboardingTutorial({
     // Floating mode positioning logic
     const isProjectManagementStep = [2, 3, 4].includes(currentStep.id); // Board, List, and Archive view steps
     const isSchedulingTutorialStep = [3, 4].includes(currentStep.id); // Scheduling tutorial steps (step 3 and 4 in scheduling flow)
+    const isPackagesSetupStep = [1, 2, 3].includes(currentStep.id); // Packages setup steps (step 1, 2, 3 in packages flow)
     
     return (
       <TooltipProvider>
         <div className={`fixed z-50 max-w-sm ${
           isSchedulingTutorialStep 
             ? "right-2 top-16 sm:right-4 sm:top-20 md:right-6 md:top-24" // Top corner for scheduling tutorial steps
-            : isProjectManagementStep 
-              ? "right-2 bottom-16 sm:right-4 sm:bottom-4 md:right-6 md:bottom-6" // Bottom positioning for project management
-              : "right-2 top-36 sm:right-4 sm:top-72 md:right-6 md:top-20" // Original positioning for other steps
+            : isPackagesSetupStep
+              ? "right-2 bottom-16 sm:right-4 sm:bottom-4 md:right-6 md:bottom-6" // Bottom corner for packages setup
+              : isProjectManagementStep 
+                ? "right-2 bottom-16 sm:right-4 sm:bottom-4 md:right-6 md:bottom-6" // Bottom positioning for project management
+                : "right-2 top-36 sm:right-4 sm:top-72 md:right-6 md:top-20" // Original positioning for other steps
         }`}>
           <Card className="shadow-2xl border-2">
             <CardHeader className="pb-3">

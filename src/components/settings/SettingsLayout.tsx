@@ -14,6 +14,7 @@ import {
   AlertTriangle 
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useSettingsContext } from "@/contexts/SettingsContext";
 
 const personalSettingsItems = [
   { title: "Profile", href: "/settings/profile", icon: User, testId: "profile-section" },
@@ -35,6 +36,7 @@ const organizationSettingsItems = [
 
 export default function SettingsLayout() {
   const location = useLocation();
+  const { hasCategoryChanges } = useSettingsContext();
 
   return (
     <div className="flex min-h-screen">
@@ -52,6 +54,7 @@ export default function SettingsLayout() {
               {personalSettingsItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = location.pathname === item.href;
+                const hasChanges = hasCategoryChanges(item.href);
                 
                 return (
                   <NavLink
@@ -67,7 +70,16 @@ export default function SettingsLayout() {
                     )}
                   >
                     <Icon className="h-5 w-5 flex-shrink-0" />
-                    <span className="hidden md:block">{item.title}</span>
+                    <span className="hidden md:flex md:items-center md:gap-2">
+                      {item.title}
+                      {hasChanges && (
+                        <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse" />
+                      )}
+                    </span>
+                    {/* Show dot on mobile too */}
+                    {hasChanges && (
+                      <div className="md:hidden absolute -top-1 -right-1 w-2 h-2 bg-orange-500 rounded-full animate-pulse" />
+                    )}
                   </NavLink>
                 );
               })}
@@ -83,6 +95,7 @@ export default function SettingsLayout() {
               {organizationSettingsItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = location.pathname === item.href;
+                const hasChanges = hasCategoryChanges(item.href);
                 
                 return (
                   <NavLink
@@ -90,7 +103,7 @@ export default function SettingsLayout() {
                     to={item.href}
                     data-walkthrough={item.testId}
                     className={cn(
-                      "flex items-center gap-4 px-2 md:px-4 py-3 text-sm rounded-lg transition-colors justify-center md:justify-start",
+                      "flex items-center gap-4 px-2 md:px-4 py-3 text-sm rounded-lg transition-colors justify-center md:justify-start relative",
                       "hover:bg-muted/50",
                       isActive 
                         ? "bg-primary/10 text-primary font-medium" 
@@ -102,7 +115,16 @@ export default function SettingsLayout() {
                       "h-5 w-5 flex-shrink-0",
                       item.title === "Danger Zone" && "text-red-600"
                     )} />
-                    <span className="hidden md:block">{item.title}</span>
+                    <span className="hidden md:flex md:items-center md:gap-2">
+                      {item.title}
+                      {hasChanges && (
+                        <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse" />
+                      )}
+                    </span>
+                    {/* Show dot on mobile too */}
+                    {hasChanges && (
+                      <div className="md:hidden absolute -top-1 -right-1 w-2 h-2 bg-orange-500 rounded-full animate-pulse" />
+                    )}
                   </NavLink>
                 );
               })}

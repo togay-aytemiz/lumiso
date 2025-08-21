@@ -88,7 +88,7 @@ const AllProjects = () => {
   const { completeStep } = useOnboarding();
 
   // Tutorial state
-  const [showTutorial, setShowTutorial] = useState(false);
+  const [showTutorial, setShowTutorial] = useState(true); // Force to true for testing
   const [currentTutorialStep, setCurrentTutorialStep] = useState(0);
 
   // Update sort field when view mode changes
@@ -108,14 +108,20 @@ const AllProjects = () => {
   // Handle tutorial launch
   useEffect(() => {
     const tutorial = searchParams.get('tutorial');
+    console.log('🔍 DEBUG: Tutorial check:', {
+      tutorialParam: tutorial,
+      showTutorial: showTutorial,
+      searchParams: searchParams.toString()
+    });
     if (tutorial === 'true') {
+      console.log('✅ Setting showTutorial to true');
       setShowTutorial(true);
       // Remove tutorial param from URL
       const newSearchParams = new URLSearchParams(searchParams);
       newSearchParams.delete('tutorial');
       setSearchParams(newSearchParams, { replace: true });
     }
-  }, [searchParams, setSearchParams]);
+  }, [searchParams, setSearchParams, showTutorial]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {

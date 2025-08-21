@@ -43,7 +43,7 @@ export function useOnboarding() {
         }
 
         const completedStepsArray = Array.isArray(data?.completed_steps) 
-          ? data.completed_steps 
+          ? (data.completed_steps as number[])
           : [];
 
         setState({
@@ -177,7 +177,7 @@ export function useOnboarding() {
 
       if (data) {
         const completedStepsArray = Array.isArray(data.completed_steps) 
-          ? data.completed_steps 
+          ? (data.completed_steps as number[])
           : [];
 
         setState({
@@ -214,7 +214,7 @@ export function useOnboarding() {
 
       if (data) {
         const completedStepsArray = Array.isArray(data.completed_steps) 
-          ? data.completed_steps 
+          ? (data.completed_steps as number[])
           : [];
 
         setState({

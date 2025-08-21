@@ -25,10 +25,10 @@ export function DeveloperSettings() {
       await resetOnboardingState();
       toast({
         title: "Guided mode reset",
-        description: "Guided setup has been reset to step 1.",
+        description: "The onboarding modal will appear on your next page refresh.",
       });
       setOpen(false);
-      window.location.reload();
+      window.location.href = '/';
     } catch (error) {
       console.error('Error restarting guided mode:', error);
       toast({

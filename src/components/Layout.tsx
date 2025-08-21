@@ -2,7 +2,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { MobileBottomNav } from "@/components/mobile/MobileBottomNav";
 import { OnboardingModal } from "@/components/OnboardingModal";
-import { RestartGuidedModeButton } from "@/components/RestartGuidedModeButton";
+
 import { useLayoutEffect, useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { useOnboarding } from "@/hooks/useOnboarding";
@@ -64,8 +64,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         onClose={() => setShowOnboardingModal(false)} 
       />
       
-      {/* Restart Guided Mode Button (only for specific user) */}
-      <RestartGuidedModeButton />
     </SidebarProvider>
   );
 }

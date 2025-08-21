@@ -149,7 +149,7 @@ export default function General() {
   const handleTutorialComplete = async () => {
     console.log('✅ General tutorial complete - advancing to step 2');
     // Mark step 1 as completed and advance to step 2
-    await advanceStep(2);
+    await advanceStep(1); // Complete step 1 first
     setShowTutorial(false);
     navigate('/getting-started');
   };

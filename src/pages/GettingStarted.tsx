@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { HelpCircle, ArrowRight, CheckCircle, Play } from "lucide-react";
+import { HelpCircle, ArrowRight, CheckCircle } from "lucide-react";
 import { SampleDataModal } from "@/components/SampleDataModal";
-import { RestartGuidedModeButton } from "@/components/RestartGuidedModeButton";
-import { ExitGuidanceModeButton } from "@/components/ExitGuidanceModeButton";
+import { DeveloperSettings } from "@/components/DeveloperSettings";
+import { GuidedStepProgress } from "@/components/GuidedStepProgress";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { useOnboarding } from "@/hooks/useOnboarding";
 
 const onboardingSteps = [
   {
@@ -55,10 +55,10 @@ const onboardingSteps = [
 const GettingStarted = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { currentStep: currentStepNumber, completedSteps, guidanceCompleted } = useOnboarding();
   const [showSampleDataModal, setShowSampleDataModal] = useState(false);
-  const [completedSteps] = useState<number[]>([]); // Will be managed by backend in next phase
   
-  const currentStepIndex = completedSteps.length;
+  const currentStepIndex = currentStepNumber - 1; // Convert 1-based to 0-based
   const currentStep = onboardingSteps[currentStepIndex];
   const nextStep = onboardingSteps[currentStepIndex + 1];
   const progressPercentage = (completedSteps.length / onboardingSteps.length) * 100;
@@ -106,12 +106,16 @@ const GettingStarted = () => {
                 )}
               </CardTitle>
               <CardDescription className="text-base">
-                {completedSteps.length}/5 Tasks Complete
+                Track your guided setup progress
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <Progress value={progressPercentage} className="w-full h-2" />
+              <GuidedStepProgress 
+                currentStep={currentStepNumber}
+                completedSteps={completedSteps}
+                totalSteps={onboardingSteps.length}
+              />
+              <div className="mt-4 pt-4 border-t border-border">
                 <div className="flex flex-col gap-2 text-sm text-muted-foreground">
                   <div className="font-medium">
                     <span className="text-foreground">Now:</span> {currentStep ? currentStep.title : "All tasks complete! 🎉"}
@@ -268,12 +272,12 @@ const GettingStarted = () => {
         )}
 
         {/* Completion State */}
-        {!currentStep && (
+        {(guidanceCompleted || !currentStep) && (
           <div className="text-center">
             <Card className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950/20">
               <CardContent className="py-12">
                 <div className="mb-4">
-                  <CheckCircle className="w-16 h-16 text-green-500 mx-auto" />
+                  <CheckCircle className="w-16 h-16 text-green-500 mx-auto animate-scale-in" />
                 </div>
                 <h2 className="text-xl sm:text-2xl font-bold text-green-700 dark:text-green-400 mb-2">
                   Congratulations! 🎉
@@ -301,9 +305,8 @@ const GettingStarted = () => {
         onClose={() => setShowSampleDataModal(false)}
       />
 
-      {/* Developer Override Buttons */}
-      <RestartGuidedModeButton />
-      <ExitGuidanceModeButton />
+      {/* Developer Settings */}
+      <DeveloperSettings />
     </div>
   );
 };

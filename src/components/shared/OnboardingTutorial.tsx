@@ -81,7 +81,7 @@ export function OnboardingTutorial({
                 <div>
                   <CardTitle className="text-sm">{currentStep.title}</CardTitle>
                   <CardDescription className="text-xs text-muted-foreground">
-                    Step {currentStepIndex + 1} of {steps.length}
+                    {currentStep.id <= 2 ? `Step ${currentStep.id} of 2` : `Step ${currentStepIndex + 1} of ${steps.length}`}
                   </CardDescription>
                 </div>
               </div>
@@ -147,7 +147,7 @@ export function OnboardingTutorial({
                   {typeof currentStep.title === 'string' ? currentStep.title : currentStep.title}
                 </CardTitle>
                 <CardDescription className="text-sm text-muted-foreground">
-                  Step {currentStepIndex + 1} of {steps.length}
+                  {currentStep.id <= 2 ? `Step ${currentStep.id} of 2` : `Step ${currentStepIndex + 1} of ${steps.length}`}
                 </CardDescription>
               </div>
             </div>

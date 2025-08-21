@@ -43,19 +43,25 @@ export default function SettingsLayout() {
   const { inGuidedSetup, completedCount } = useOnboarding();
   
   const isItemLocked = (requiredStep: number, itemHref: string) => {
+    // OVERRIDE: If on step 6 (completedCount = 5) and on settings pages, force guided setup behavior
+    const isStillInStep6 = completedCount === 5 && location.pathname.startsWith('/settings');
+    const effectiveInGuidedSetup = inGuidedSetup || isStillInStep6;
+    
     console.log('🔍 Settings item lock check:', {
       itemHref,
       inGuidedSetup,
+      effectiveInGuidedSetup,
       completedCount,
+      isStillInStep6,
       requiredStep
     });
 
-    // During guided setup, very specific locking rules
-    if (inGuidedSetup) {
+    // During guided setup (or overridden step 6), very specific locking rules
+    if (effectiveInGuidedSetup) {
       // Step 6 (packages setup) - only unlock Packages & Services
       if (completedCount === 5) {
         const isUnlocked = itemHref === '/settings/services';
-        console.log(`🔒 Step 6: ${itemHref} - ${isUnlocked ? 'UNLOCKED' : 'LOCKED'}`);
+        console.log(`🔒 STEP 6 OVERRIDE: ${itemHref} - ${isUnlocked ? 'UNLOCKED' : 'LOCKED'}`);
         return !isUnlocked; // Return true to lock, false to unlock
       }
       

@@ -43,24 +43,38 @@ export default function SettingsLayout() {
   const { inGuidedSetup, completedCount } = useOnboarding();
   
   const isItemLocked = (requiredStep: number, itemHref: string) => {
+    console.log('🔍 Settings item lock check:', {
+      itemHref,
+      inGuidedSetup,
+      completedCount,
+      requiredStep
+    });
+
     // During guided setup, very specific locking rules
     if (inGuidedSetup) {
       // Step 6 (packages setup) - only unlock Packages & Services
       if (completedCount === 5) {
-        return itemHref !== '/settings/services';
+        const isUnlocked = itemHref === '/settings/services';
+        console.log(`🔒 Step 6: ${itemHref} - ${isUnlocked ? 'UNLOCKED' : 'LOCKED'}`);
+        return !isUnlocked; // Return true to lock, false to unlock
       }
       
       // Step 1 (profile setup) - only unlock Profile  
       if (completedCount === 0) {
-        return itemHref !== '/settings/profile';
+        const isUnlocked = itemHref === '/settings/profile';
+        console.log(`🔒 Step 1: ${itemHref} - ${isUnlocked ? 'UNLOCKED' : 'LOCKED'}`);
+        return !isUnlocked;
       }
       
       // All other steps - lock everything in settings
+      console.log(`🔒 Other steps: ${itemHref} - LOCKED`);
       return true;
     }
     
     // Normal mode - unlock based on completion
-    return completedCount < (requiredStep - 1);
+    const locked = completedCount < (requiredStep - 1);
+    console.log(`📊 Normal mode: ${itemHref} - ${locked ? 'LOCKED' : 'UNLOCKED'}`);
+    return locked;
   };
 
   const handleLockedItemClick = (e: React.MouseEvent, requiredStep: number, itemHref: string) => {

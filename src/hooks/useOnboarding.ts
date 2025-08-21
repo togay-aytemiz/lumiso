@@ -6,18 +6,8 @@ interface OnboardingState {
   inGuidedSetup: boolean;
   guidedSetupSkipped: boolean;
   guidanceCompleted: boolean;
-  currentStep: number;
-  completedSteps: number[];
   loading: boolean;
 }
-
-const GUIDED_STEPS = [
-  { id: 1, title: "Complete your profile setup", description: "Add your name and contact information" },
-  { id: 2, title: "Create your first client lead", description: "Add a potential client to your CRM" },
-  { id: 3, title: "Set up a photography project", description: "Create your first project" },
-  { id: 4, title: "Schedule a photo session", description: "Add a session to your calendar" },
-  { id: 5, title: "Configure your packages", description: "Set up your service packages" }
-];
 
 export function useOnboarding() {
   const { user } = useAuth();
@@ -25,8 +15,6 @@ export function useOnboarding() {
     inGuidedSetup: false,
     guidedSetupSkipped: false,
     guidanceCompleted: false,
-    currentStep: 1,
-    completedSteps: [],
     loading: true
   });
 
@@ -40,7 +28,7 @@ export function useOnboarding() {
       try {
         const { data, error } = await supabase
           .from('user_settings')
-          .select('in_guided_setup, guided_setup_skipped, guidance_completed, current_step, completed_steps')
+          .select('in_guided_setup, guided_setup_skipped, guidance_completed')
           .eq('user_id', user.id)
           .single();
 
@@ -54,10 +42,6 @@ export function useOnboarding() {
           inGuidedSetup: data?.in_guided_setup || false,
           guidedSetupSkipped: data?.guided_setup_skipped || false,
           guidanceCompleted: data?.guidance_completed || false,
-          currentStep: data?.current_step || 1,
-          completedSteps: Array.isArray(data?.completed_steps) 
-            ? (data.completed_steps as number[]) 
-            : [],
           loading: false
         });
       } catch (error) {
@@ -139,136 +123,37 @@ export function useOnboarding() {
     }
   };
 
-  const completeStep = async (stepNumber: number) => {
+  const resetOnboardingState = async () => {
     if (!user) return;
 
     try {
-      const { error } = await supabase.rpc('advance_guided_step', {
-        user_uuid: user.id,
-        step_number: stepNumber,
-        skip_step: false
-      });
+      const { error } = await supabase
+        .from('user_settings')
+        .update({ 
+          in_guided_setup: false,
+          guided_setup_skipped: false,
+          guidance_completed: false 
+        })
+        .eq('user_id', user.id);
 
       if (error) throw error;
 
-      // Update local state
-      const newCompletedSteps = [...state.completedSteps];
-      if (!newCompletedSteps.includes(stepNumber)) {
-        newCompletedSteps.push(stepNumber);
-      }
-
-      const nextIncompleteStep = GUIDED_STEPS.find(step => 
-        !newCompletedSteps.includes(step.id)
-      );
-
-      setState(prev => ({
-        ...prev,
-        completedSteps: newCompletedSteps,
-        currentStep: nextIncompleteStep ? nextIncompleteStep.id : GUIDED_STEPS.length + 1,
-        guidanceCompleted: newCompletedSteps.length >= GUIDED_STEPS.length,
-        inGuidedSetup: newCompletedSteps.length < GUIDED_STEPS.length
-      }));
-    } catch (error) {
-      console.error('Error completing step:', error);
-      throw error;
-    }
-  };
-
-  const skipStep = async (stepNumber: number) => {
-    if (!user) return;
-
-    try {
-      const { error } = await supabase.rpc('advance_guided_step', {
-        user_uuid: user.id,
-        step_number: stepNumber,
-        skip_step: true
-      });
-
-      if (error) throw error;
-
-      // Update local state (same as complete for now)
-      const newCompletedSteps = [...state.completedSteps];
-      if (!newCompletedSteps.includes(stepNumber)) {
-        newCompletedSteps.push(stepNumber);
-      }
-
-      const nextIncompleteStep = GUIDED_STEPS.find(step => 
-        !newCompletedSteps.includes(step.id)
-      );
-
-      setState(prev => ({
-        ...prev,
-        completedSteps: newCompletedSteps,
-        currentStep: nextIncompleteStep ? nextIncompleteStep.id : GUIDED_STEPS.length + 1,
-        guidanceCompleted: newCompletedSteps.length >= GUIDED_STEPS.length,
-        inGuidedSetup: newCompletedSteps.length < GUIDED_STEPS.length
-      }));
-    } catch (error) {
-      console.error('Error skipping step:', error);
-      throw error;
-    }
-  };
-
-  const resetGuidedSetup = async () => {
-    if (!user) return;
-
-    try {
-      const { error } = await supabase.rpc('reset_guided_setup', {
-        user_uuid: user.id
-      });
-
-      if (error) throw error;
-
-      setState(prev => ({
-        ...prev,
-        inGuidedSetup: true,
+      setState({
+        inGuidedSetup: false,
         guidedSetupSkipped: false,
         guidanceCompleted: false,
-        currentStep: 1,
-        completedSteps: []
-      }));
-    } catch (error) {
-      console.error('Error resetting guided setup:', error);
-      throw error;
-    }
-  };
-
-  const jumpToStep = async (stepNumber: number) => {
-    if (!user) return;
-
-    try {
-      const { error } = await supabase.rpc('set_guided_step', {
-        user_uuid: user.id,
-        target_step: stepNumber
+        loading: false
       });
-
-      if (error) throw error;
-
-      const completedSteps = Array.from({ length: stepNumber - 1 }, (_, i) => i + 1);
-
-      setState(prev => ({
-        ...prev,
-        inGuidedSetup: true,
-        guidedSetupSkipped: false,
-        guidanceCompleted: false,
-        currentStep: stepNumber,
-        completedSteps
-      }));
     } catch (error) {
-      console.error('Error jumping to step:', error);
-      throw error;
+      console.error('Error resetting onboarding state:', error);
     }
   };
 
   return {
     ...state,
-    steps: GUIDED_STEPS,
     shouldShowOnboarding: shouldShowOnboarding(),
     startGuidedSetup,
     skipWithSampleData,
-    completeStep,
-    skipStep,
-    resetGuidedSetup,
-    jumpToStep
+    resetOnboardingState
   };
 }

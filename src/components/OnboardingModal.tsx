@@ -11,12 +11,20 @@ interface OnboardingModalProps {
   onClose: () => void;
 }
 
+const onboardingSteps = [
+  "Complete your profile setup",
+  "Create your first client lead",
+  "Set up a photography project", 
+  "Schedule a photo session",
+  "Configure your packages"
+];
+
 export function OnboardingModal({ open, onClose }: OnboardingModalProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [showSampleDataModal, setShowSampleDataModal] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { startGuidedSetup, steps } = useOnboarding();
+  const { startGuidedSetup } = useOnboarding();
 
   const handleStartLearning = async () => {
     if (!user) return;
@@ -84,16 +92,16 @@ export function OnboardingModal({ open, onClose }: OnboardingModalProps) {
           <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
             What you'll learn:
           </h4>
-        <div className="space-y-3">
-          {steps.map((step, index) => (
-            <div key={step.id} className="flex items-center gap-3">
-              <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
-                <span className="text-sm font-medium text-primary">{step.id}</span>
+          <div className="space-y-3">
+            {onboardingSteps.map((step, index) => (
+              <div key={index} className="flex items-center gap-3">
+                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
+                  <span className="text-sm font-medium text-primary">{index + 1}</span>
+                </div>
+                <span className="text-sm text-foreground">{step}</span>
               </div>
-              <span className="text-sm text-foreground">{step.title}</span>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
         </div>
       </BaseOnboardingModal>
 

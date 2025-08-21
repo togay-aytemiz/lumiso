@@ -1040,7 +1040,9 @@ export type Database = {
       user_settings: {
         Row: {
           active_organization_id: string | null
+          completed_steps: Json | null
           created_at: string
+          current_step: number | null
           date_format: string | null
           guidance_completed: boolean | null
           guided_setup_skipped: boolean | null
@@ -1064,7 +1066,9 @@ export type Database = {
         }
         Insert: {
           active_organization_id?: string | null
+          completed_steps?: Json | null
           created_at?: string
+          current_step?: number | null
           date_format?: string | null
           guidance_completed?: boolean | null
           guided_setup_skipped?: boolean | null
@@ -1088,7 +1092,9 @@ export type Database = {
         }
         Update: {
           active_organization_id?: string | null
+          completed_steps?: Json | null
           created_at?: string
+          current_step?: number | null
           date_format?: string | null
           guidance_completed?: boolean | null
           guided_setup_skipped?: boolean | null
@@ -1150,6 +1156,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      advance_guided_step: {
+        Args: { skip_step?: boolean; step_number: number; user_uuid: string }
+        Returns: undefined
+      }
       check_email_not_in_any_organization: {
         Args: { email_to_check: string }
         Returns: boolean
@@ -1237,6 +1247,14 @@ export type Database = {
       get_user_organization_ids: {
         Args: Record<PropertyKey, never>
         Returns: string[]
+      }
+      reset_guided_setup: {
+        Args: { user_uuid: string }
+        Returns: undefined
+      }
+      set_guided_step: {
+        Args: { target_step: number; user_uuid: string }
+        Returns: undefined
       }
       user_can_access_project: {
         Args: { project_uuid: string; user_uuid: string }

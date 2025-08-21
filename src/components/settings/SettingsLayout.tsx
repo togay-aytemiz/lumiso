@@ -45,12 +45,16 @@ export default function SettingsLayout() {
   // Mock completed steps - will be managed by backend in next phase
   const completedSteps = 0;
   
-  const isItemLocked = (requiredStep: number) => {
+  const isItemLocked = (requiredStep: number, itemHref: string) => {
+    // Don't lock the current active page during onboarding
+    if (inGuidedSetup && location.pathname === itemHref) {
+      return false;
+    }
     return inGuidedSetup && completedSteps < requiredStep;
   };
 
-  const handleLockedItemClick = (e: React.MouseEvent, requiredStep: number) => {
-    if (isItemLocked(requiredStep)) {
+  const handleLockedItemClick = (e: React.MouseEvent, requiredStep: number, itemHref: string) => {
+    if (isItemLocked(requiredStep, itemHref)) {
       e.preventDefault();
     }
   };
@@ -72,7 +76,7 @@ export default function SettingsLayout() {
                 const Icon = item.icon;
                 const isActive = location.pathname === item.href;
                 const hasChanges = hasCategoryChanges(item.href);
-                const locked = isItemLocked(item.requiredStep);
+                const locked = isItemLocked(item.requiredStep, item.href);
                 
                 const linkContent = (
                   <div className={cn(
@@ -83,7 +87,7 @@ export default function SettingsLayout() {
                       : "text-muted-foreground hover:text-foreground",
                     locked && "opacity-50 cursor-not-allowed"
                   )}
-                  onClick={(e) => handleLockedItemClick(e, item.requiredStep)}
+                  onClick={(e) => handleLockedItemClick(e, item.requiredStep, item.href)}
                 >
                   <Icon className="h-5 w-5 flex-shrink-0" />
                   <span className="hidden md:flex md:items-center md:gap-2">
@@ -134,7 +138,7 @@ export default function SettingsLayout() {
                 const Icon = item.icon;
                 const isActive = location.pathname === item.href;
                 const hasChanges = hasCategoryChanges(item.href);
-                const locked = isItemLocked(item.requiredStep);
+                const locked = isItemLocked(item.requiredStep, item.href);
                 const isDangerZone = item.title === "Danger Zone";
                 
                 const linkContent = (
@@ -147,7 +151,7 @@ export default function SettingsLayout() {
                     isDangerZone && "text-red-600 hover:text-red-700 hover:bg-red-50",
                     locked && "opacity-50 cursor-not-allowed"
                   )}
-                  onClick={(e) => handleLockedItemClick(e, item.requiredStep)}
+                  onClick={(e) => handleLockedItemClick(e, item.requiredStep, item.href)}
                 >
                   <Icon className={cn(
                     "h-5 w-5 flex-shrink-0",

@@ -25,9 +25,10 @@ export default function General() {
   const navigate = useNavigate();
   const { advanceStep } = useOnboarding();
 
-  // Check if we're in tutorial mode
+  // Check if we're in tutorial mode from Profile onboarding
   const isInTutorial = searchParams.get('tutorial') === 'true';
-  const [showTutorial, setShowTutorial] = useState(false); // Never show General tutorial
+  const currentStep = parseInt(searchParams.get('step') || '0');
+  const [showTutorial, setShowTutorial] = useState(isInTutorial && (currentStep === 3 || currentStep === 4));
 
   // Branding section state
   const brandingSection = useSettingsCategorySection({

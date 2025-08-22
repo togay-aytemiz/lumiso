@@ -62,12 +62,12 @@ All colors MUST be HSL.
     --radius: 0.75rem; /* 12px */
 
     /* Sidebar (light) */
-    --sidebar-background: 210 20% 98%; /* same as page background */
-    --sidebar-foreground: 222.2 47.4% 11.2%; /* #111827 */
-    --sidebar-primary: 172 71% 41%; /* #1EB29F */
+    --sidebar-background: 0 0% 100%; /* pure white like reference */
+    --sidebar-foreground: 215.4 16.3% 46.9%; /* #6B7280 - muted text */
+    --sidebar-primary: 172 71% 41%; /* #1EB29F - accent color */
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 173 60% 92%; /* light mint hover/active */
-    --sidebar-accent-foreground: 222.2 47.4% 11.2%; /* dark text */
+    --sidebar-accent: 172 50% 95%; /* very light mint for hover/active */
+    --sidebar-accent-foreground: 172 71% 41%; /* use primary color for active text */
     --sidebar-border: 214.3 31.8% 91.4%; /* light divider */
     --sidebar-ring: 172 71% 41%;
 

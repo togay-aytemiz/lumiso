@@ -13,13 +13,16 @@ import {
   CreditCard,
   Settings,
   LogOut,
-  User
+  User,
+  HelpCircle
 } from 'lucide-react';
 import { BottomSheetMenu } from './BottomSheetMenu';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { useProfile } from '@/contexts/ProfileContext';
+import { HelpModal } from '@/components/modals/HelpModal';
+import { UserMenu } from '@/components/UserMenu';
 
 interface NavTab {
   title: string;
@@ -32,6 +35,7 @@ interface NavTab {
 export function MobileBottomNav({ hideForOnboarding = false }: { hideForOnboarding?: boolean }) {
   const [bookingsOpen, setBookingsOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
   const [userEmail, setUserEmail] = useState<string>("");
   const location = useLocation();
@@ -137,6 +141,11 @@ export function MobileBottomNav({ hideForOnboarding = false }: { hideForOnboardi
       icon: Settings,
       onClick: () => navigate('/settings'),
       testId: 'mobile-settings'
+    },
+    {
+      title: 'Help & Support',
+      icon: HelpCircle,
+      onClick: () => setHelpOpen(true)
     },
     {
       title: 'Sign Out',
@@ -248,26 +257,17 @@ export function MobileBottomNav({ hideForOnboarding = false }: { hideForOnboardi
         items={moreItems}
         customContent={
           <div className="mt-4 border-t pt-4">
-            <div 
-              onClick={() => {
-                navigate('/settings/profile');
-                setMoreOpen(false);
-              }}
-              className="flex items-center gap-3 p-3 mx-3 mb-3 border border-border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors w-[calc(100%-24px)]"
-            >
-              <img 
-                src={profile?.profile_photo_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userEmail}`}
-                alt={profile?.full_name || userEmail?.split('@')[0] || "User"}
-                className="h-10 w-10 rounded-full object-cover shrink-0"
-              />
-              <div className="flex-1 min-w-0">
-                <div className="font-medium text-sm text-foreground leading-tight line-clamp-2">
-                  {profile?.full_name || userEmail?.split("@")[0] || "User"}
-                </div>
-              </div>
-            </div>
+            <UserMenu 
+              variant="mobile" 
+              onNavigate={() => setMoreOpen(false)} 
+            />
           </div>
         }
+      />
+
+      <HelpModal 
+        isOpen={helpOpen} 
+        onOpenChange={setHelpOpen} 
       />
     </>
   );

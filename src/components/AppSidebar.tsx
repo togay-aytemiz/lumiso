@@ -1,31 +1,46 @@
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { LayoutDashboard, Users, Calendar, Bell, BarChart3, FolderOpen, CreditCard, CalendarDays, CalendarRange, Lock, BookOpen, Settings } from "lucide-react";
+import { 
+  LayoutDashboard, 
+  Users, 
+  Calendar, 
+  Bell, 
+  BarChart3, 
+  FolderOpen, 
+  CreditCard, 
+  CalendarDays, 
+  CalendarRange, 
+  BookOpen, 
+  Settings,
+  HelpCircle,
+  ChevronRight
+} from "lucide-react";
 import logo from "@/assets/Logo.png";
 import { useOnboardingV2 } from "@/hooks/useOnboardingV2";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
   SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  useSidebar,
 } from "@/components/ui/sidebar";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { UserMenu } from "@/components/UserMenu";
+import { SidebarCategory } from "@/components/sidebar/SidebarCategory";
+import { SidebarNavItem } from "@/components/sidebar/SidebarNavItem";
+import { SidebarSubItem } from "@/components/sidebar/SidebarSubItem";
+import { HelpModal } from "@/components/modals/HelpModal";
 
-const navigationItems = [
+// Module items - main navigation
+const moduleItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Leads", url: "/leads", icon: Users },
   { title: "Projects", url: "/projects", icon: FolderOpen },
   { title: "Analytics", url: "/analytics", icon: BarChart3 },
   { title: "Payments", url: "/payments", icon: CreditCard },
-  { title: "Settings", url: "/settings", icon: Settings },
 ];
 
+// Bookings sub-items
 const bookingItems = [
   { title: "Calendar", url: "/calendar", icon: CalendarDays },
   { title: "Sessions", url: "/sessions", icon: Calendar },
@@ -33,14 +48,14 @@ const bookingItems = [
 ];
 
 export function AppSidebar() {
-  const { open, setOpen, openMobile, setOpenMobile } = useSidebar();
   const location = useLocation();
   const navigate = useNavigate();
   const currentPath = location.pathname;
   const isMobile = useIsMobile();
   const { shouldLockNavigation, loading } = useOnboardingV2();
+  const [helpModalOpen, setHelpModalOpen] = useState(false);
 
-  // Debug logging - CHECK WHAT'S CHANGING
+  // Debug logging
   useEffect(() => {
     console.log('🚨 SIDEBAR STATE CHANGE:', {
       shouldLockNavigation,
@@ -91,6 +106,7 @@ export function AppSidebar() {
       e.preventDefault();
     }
   };
+
   const handleBookingsClick = () => {
     if (!bookingsOpen) {
       setBookingsOpen(true);
@@ -107,244 +123,128 @@ export function AppSidebar() {
     setBookingsOpen(isBookingsChildActive);
   }, [isBookingsChildActive]);
 
-
   const handleNavClick = () => {
     if (isMobile) {
-      setOpenMobile(false);
+      // Will be handled by SidebarProvider
     }
   };
 
   return (
-    <Sidebar
-      className="border-r border-sidebar-border hidden md:flex"
-      collapsible="icon"
-    >
-      <SidebarHeader className="p-6">
-        <div className="flex items-center">
-          <img 
-            src={logo} 
-            alt="Lumiso CRM" 
-            className="h-10 w-auto object-contain"
-          />
-        </div>
-      </SidebarHeader>
+    <>
+      <Sidebar
+        className="border-r border-sidebar-border"
+        collapsible="icon"
+      >
+        <SidebarHeader className="p-6">
+          <div className="flex items-center">
+            <img 
+              src={logo} 
+              alt="Lumiso CRM" 
+              className="h-10 w-auto object-contain"
+            />
+          </div>
+        </SidebarHeader>
 
-      <SidebarContent className="px-3 flex-1 overflow-y-auto">
-        <SidebarMenu>
+        <SidebarContent className="px-3 flex-1 overflow-y-auto">
           {/* Getting Started - Always visible when on getting-started page OR in guided setup */}
           {(location.pathname === '/getting-started' || shouldLockNavigation) && (
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                asChild
-                isActive={isActive("/getting-started")}
-                className="group/item w-full h-10 px-3 py-3 mb-2 text-left transition-all duration-200 rounded-lg hover:bg-muted/50 data-[active=true]:bg-primary/10 data-[active=true]:text-primary data-[active=true]:font-medium"
-              >
-                <NavLink
-                  to="/getting-started"
-                  className="flex items-center gap-3 w-full"
+            <div className="mb-6">
+              <SidebarMenu>
+                <SidebarNavItem
+                  title="Getting Started"
+                  url="/getting-started"
+                  icon={BookOpen}
+                  isActive={isActive("/getting-started")}
                   onClick={handleNavClick}
-                >
-                  <BookOpen className="h-4 w-4 text-sidebar-foreground group-hover/item:text-[hsl(var(--sidebar-primary))] group-data-[active=true]/item:text-[hsl(var(--sidebar-primary))]" />
-                  <span className="font-medium">Getting Started</span>
-                </NavLink>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
+                />
+              </SidebarMenu>
+            </div>
           )}
-          {navigationItems
-            .slice(0, navigationItems.findIndex((i) => i.title === "Analytics"))
-            .map((item) => {
-              const active = isActive(item.url);
-              const locked = isItemLocked(item.url);
-              
-              const content = (
-                <div 
-                  className={`flex items-center gap-3 w-full ${locked ? 'opacity-50' : ''}`}
-                  onClick={locked ? handleLockedItemClick : undefined}
-                >
-                  <item.icon className="h-4 w-4 text-sidebar-foreground group-hover/item:text-[hsl(var(--sidebar-primary))] group-data-[active=true]/item:text-[hsl(var(--sidebar-primary))]" />
-                  <span className="font-medium">{item.title}</span>
-                  {locked && <Lock className="h-3 w-3 ml-auto text-muted-foreground" />}
-                </div>
-              );
 
-              return (
-                <SidebarMenuItem key={item.title}>
-                  {locked ? (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <SidebarMenuButton
-                          className="group/item w-full h-10 px-3 py-3 mb-2 text-left transition-all duration-200 rounded-lg cursor-not-allowed"
-                        >
-                          {content}
-                        </SidebarMenuButton>
-                      </TooltipTrigger>
-                        <TooltipContent side="right">
-                          <p>Complete the guided setup first</p>
-                        </TooltipContent>
-                    </Tooltip>
-                  ) : (
-                     <SidebarMenuButton
-                      asChild
-                      isActive={active}
-                      className="group/item w-full h-10 px-3 py-3 mb-2 text-left transition-all duration-200 rounded-lg hover:bg-muted/50 data-[active=true]:bg-primary/10 data-[active=true]:text-primary data-[active=true]:font-medium"
-                    >
-                      <NavLink
-                        to={item.url}
-                        className="flex items-center gap-3 w-full"
-                        onClick={handleNavClick}
-                        data-walkthrough={item.title === "Settings" ? "settings-nav" : undefined}
-                      >
-                        <item.icon className="h-4 w-4 text-sidebar-foreground group-hover/item:text-[hsl(var(--sidebar-primary))] group-data-[active=true]/item:text-[hsl(var(--sidebar-primary))]" />
-                        <span className="font-medium">{item.title}</span>
-                      </NavLink>
-                    </SidebarMenuButton>
-                  )}
-                </SidebarMenuItem>
-              );
-            })}
+          {/* MODULES Category */}
+          <SidebarCategory title="MODULES">
+            {moduleItems.map((item) => (
+              <SidebarNavItem
+                key={item.title}
+                title={item.title}
+                url={item.url}
+                icon={item.icon}
+                isActive={isActive(item.url)}
+                isLocked={isItemLocked(item.url)}
+                onLockedClick={handleLockedItemClick}
+                onClick={handleNavClick}
+              />
+            ))}
 
-          {/* Bookings parent with submenu */}
-          <SidebarMenuItem>
-            {isItemLocked('/calendar') ? (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <SidebarMenuButton
-                    className="group/item w-full h-10 px-3 py-3 mb-2 text-left transition-all duration-200 rounded-lg cursor-not-allowed opacity-50"
-                  >
-                    <div className="flex items-center gap-3 w-full">
-                      <CalendarRange className="h-4 w-4 text-sidebar-foreground" />
-                      <span className="font-medium">Bookings</span>
-                      <Lock className="h-3 w-3 ml-auto text-muted-foreground" />
-                    </div>
-                  </SidebarMenuButton>
-                </TooltipTrigger>
-                <TooltipContent side="right">
-                  <p>Complete the guided setup first</p>
-                </TooltipContent>
-              </Tooltip>
-            ) : (
-              <>
-                <SidebarMenuButton
-                  onClick={handleBookingsClick}
-                  isActive={isBookingsChildActive}
-                  className="group/item w-full h-10 px-3 py-3 mb-2 text-left transition-all duration-200 rounded-lg hover:bg-muted/50 data-[active=true]:bg-primary/10 data-[active=true]:text-primary data-[active=true]:font-medium"
-                >
-                  <div className="flex items-center gap-3 w-full">
-                    <CalendarRange className="h-4 w-4 text-sidebar-foreground group-hover/item:text-[hsl(var(--sidebar-primary))] group-data-[active=true]/item:text-[hsl(var(--sidebar-primary))]" />
-                    <span className="font-medium">Bookings</span>
-                  </div>
-                </SidebarMenuButton>
+            {/* Bookings with submenu */}
+            <SidebarNavItem
+              title="Bookings"
+              icon={CalendarRange}
+              isActive={isBookingsChildActive}
+              isLocked={isItemLocked('/calendar')}
+              onLockedClick={handleLockedItemClick}
+              onClick={!isItemLocked('/calendar') ? handleBookingsClick : undefined}
+              badge={
+                !isItemLocked('/calendar') ? (
+                  <ChevronRight 
+                    className={`h-4 w-4 transition-transform duration-200 ${
+                      bookingsOpen ? 'rotate-90' : 'rotate-0'
+                    }`} 
+                  />
+                ) : undefined
+              }
+            >
+              {bookingsOpen && !isItemLocked('/calendar') && (
+                <SidebarMenu className="space-y-1">
+                  {bookingItems.map((item) => (
+                    <SidebarSubItem
+                      key={item.title}
+                      title={item.title}
+                      url={item.url}
+                      icon={item.icon}
+                      isActive={isActive(item.url)}
+                      isLocked={isItemLocked(item.url)}
+                      onLockedClick={handleLockedItemClick}
+                      onClick={handleNavClick}
+                    />
+                  ))}
+                </SidebarMenu>
+              )}
+            </SidebarNavItem>
+          </SidebarCategory>
 
-                <div
-                  className={`ml-6 overflow-hidden transition-all duration-300 ease-out ${bookingsOpen ? 'mt-1 max-h-40 opacity-100 animate-fade-in' : 'max-h-0 opacity-0'}`}
-                  aria-hidden={!bookingsOpen}
-                >
-                    <SidebarMenu>
-                      {bookingItems.map((item) => {
-                        const active = isActive(item.url);
-                        const locked = isItemLocked(item.url);
-                        
-                        return (
-                          <SidebarMenuItem key={item.title}>
-                            {locked ? (
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <SidebarMenuButton
-                                    className="group/item w-full h-9 px-3 py-2 mb-1 text-left transition-all duration-200 rounded-lg cursor-not-allowed opacity-50"
-                                  >
-                                    <div className="flex items-center gap-3 w-full">
-                                      <item.icon className="h-4 w-4 text-sidebar-foreground" />
-                                      <span className="font-medium">{item.title}</span>
-                                      <Lock className="h-3 w-3 ml-auto text-muted-foreground" />
-                                    </div>
-                                  </SidebarMenuButton>
-                                </TooltipTrigger>
-                                <TooltipContent side="right">
-                                  <p>Complete the guided setup first</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            ) : (
-                              <SidebarMenuButton
-                                asChild
-                                isActive={active}
-                                className="group/item w-full h-9 px-3 py-2 mb-1 text-left transition-all duration-200 rounded-lg hover:bg-muted/50 data-[active=true]:bg-primary/10 data-[active=true]:text-primary data-[active=true]:font-medium"
-                              >
-                                <NavLink to={item.url} className="flex items-center gap-3 w-full" onClick={handleNavClick}>
-                                  <item.icon className="h-4 w-4 text-sidebar-foreground group-hover/item:text-[hsl(var(--sidebar-primary))] group-data-[active=true]/item:text-[hsl(var(--sidebar-primary))]" />
-                                  <span className="font-medium">{item.title}</span>
-                                </NavLink>
-                              </SidebarMenuButton>
-                            )}
-                          </SidebarMenuItem>
-                        );
-                      })}
-                    </SidebarMenu>
-                  </div>
-              </>
-            )}
-          </SidebarMenuItem>
-
-          {navigationItems
-            .slice(navigationItems.findIndex((i) => i.title === "Analytics"))
-            .map((item) => {
-              const active = isActive(item.url);
-              const locked = isItemLocked(item.url);
-              
-              const content = (
-                <div 
-                  className={`flex items-center gap-3 w-full ${locked ? 'opacity-50' : ''}`}
-                  onClick={locked ? handleLockedItemClick : undefined}
-                >
-                  <item.icon className="h-4 w-4 text-sidebar-foreground group-hover/item:text-[hsl(var(--sidebar-primary))] group-data-[active=true]/item:text-[hsl(var(--sidebar-primary))]" />
-                  <span className="font-medium">{item.title}</span>
-                  {locked && <Lock className="h-3 w-3 ml-auto text-muted-foreground" />}
-                </div>
-              );
-
-              return (
-                <SidebarMenuItem key={item.title}>
-                  {locked ? (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <SidebarMenuButton
-                          className="group/item w-full h-10 px-3 py-3 mb-2 text-left transition-all duration-200 rounded-lg cursor-not-allowed"
-                        >
-                          {content}
-                        </SidebarMenuButton>
-                      </TooltipTrigger>
-                      <TooltipContent side="right">
-                        <p>Complete the guided setup first</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  ) : (
-                    <SidebarMenuButton
-                      asChild
-                      isActive={active}
-                      className="group/item w-full h-10 px-3 py-3 mb-2 text-left transition-all duration-200 rounded-lg hover:bg-muted/50 data-[active=true]:bg-primary/10 data-[active=true]:text-primary data-[active=true]:font-medium"
-                    >
-                      <NavLink
-                        to={item.url}
-                        className="flex items-center gap-3 w-full"
-                        onClick={handleNavClick}
-                      >
-                        <item.icon className="h-4 w-4 text-sidebar-foreground group-hover/item:text-[hsl(var(--sidebar-primary))] group-data-[active=true]/item:text-[hsl(var(--sidebar-primary))]" />
-                        <span className="font-medium">{item.title}</span>
-                      </NavLink>
-                    </SidebarMenuButton>
-                  )}
-                </SidebarMenuItem>
-              );
-            })}
-        </SidebarMenu>
-      </SidebarContent>
-
-      <SidebarFooter className="p-4 mt-auto shrink-0">
-        {!shouldLockNavigation && !location.pathname.startsWith('/getting-started') && (
-          <div className="flex justify-start">
-            <UserMenu mode={isMobile ? "mobile" : "desktop"} />
+          {/* SYSTEM Category */}
+          <div className="mt-8">
+            <SidebarCategory title="SYSTEM">
+              <SidebarNavItem
+                title="Settings"
+                url="/settings"
+                icon={Settings}
+                isActive={isActive("/settings")}
+                isLocked={isItemLocked("/settings")}
+                onLockedClick={handleLockedItemClick}
+                onClick={handleNavClick}
+              />
+              <SidebarNavItem
+                title="Help & Support"
+                icon={HelpCircle}
+                onClick={() => setHelpModalOpen(true)}
+              />
+            </SidebarCategory>
           </div>
-        )}
-      </SidebarFooter>
-    </Sidebar>
+        </SidebarContent>
+
+        <SidebarFooter className="p-4 mt-auto shrink-0">
+          {!shouldLockNavigation && !location.pathname.startsWith('/getting-started') && (
+            <UserMenu variant="sidebar" />
+          )}
+        </SidebarFooter>
+      </Sidebar>
+
+      <HelpModal 
+        isOpen={helpModalOpen} 
+        onOpenChange={setHelpModalOpen} 
+      />
+    </>
   );
 }

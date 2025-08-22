@@ -732,7 +732,7 @@ const ActivitySection = ({
                             <div className="absolute -left-4 md:-left-6 top-3 w-3 h-3 bg-background border-2 border-muted-foreground/40 rounded-full"></div>
                             <div className="bg-muted/50 rounded-lg py-6 px-4 flex items-center">
                               <div className="space-y-4 w-full pt-2">
-                                {/* Row 1: Icon + Type chip + User attribution */}
+                                {/* Row 1: Icon + Type chip + Project/Lead chip + User attribution */}
                                 <div className="flex items-center gap-3">
                                   <div className="flex items-center gap-2">
                                     {item.type === 'activity' ? item.data.type === 'note' ? (
@@ -744,6 +744,9 @@ const ActivitySection = ({
                                     )}
                                     <Badge variant="outline" className="text-xs">
                                       {item.type === 'activity' ? item.data.type : 'session'}
+                                    </Badge>
+                                    <Badge variant="secondary" className={`text-xs max-w-[120px] md:max-w-[120px] max-w-full truncate ${item.data.project_id ? 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'}`}>
+                                      {item.data.project_id ? item.data.projects?.name || 'Project' : 'Lead'}
                                     </Badge>
                                   </div>
                                   <div className="flex-1" />
@@ -814,14 +817,7 @@ const ActivitySection = ({
                                   )}
                                 </div>
 
-                                {/* Row 3: Project/Lead info */}
-                                <div className="pl-1">
-                                  <Badge variant="secondary" className={`text-xs max-w-[120px] md:max-w-[120px] max-w-full truncate ${item.data.project_id ? 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'}`}>
-                                    {item.data.project_id ? item.data.projects?.name || 'Project' : 'Lead'}
-                                  </Badge>
-                                </div>
-
-                                {/* Row 4: Date and time */}
+                                {/* Row 3: Date and time */}
                                 <div className="pl-1">
                                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                     <Clock className="h-3 w-3" />

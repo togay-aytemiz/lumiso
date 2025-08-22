@@ -402,25 +402,13 @@ export default function SessionDetail() {
       {/* Session Summary Details - Above Grid */}
       <div className="max-w-full mx-auto px-6 py-4">
         <div className="bg-muted/30 rounded-lg p-4 mb-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <Calendar className="h-4 w-4 text-muted-foreground" />
                 <label className="font-medium text-muted-foreground">Date & Time</label>
               </div>
               <p>{formatLongDate(session.session_date)} at {formatTime(session.session_time)}</p>
-            </div>
-            
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <User className="h-4 w-4 text-muted-foreground" />
-              </div>
-              <button
-                onClick={handleLeadClick}
-                className="text-primary hover:underline"
-              >
-                {session.leads?.name || 'Unknown Client'}
-              </button>
             </div>
 
             {session.projects && (

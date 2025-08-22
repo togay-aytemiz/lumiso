@@ -1,14 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+import { AppSheetModal } from '@/components/ui/app-sheet-modal';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Settings2, RotateCcw, GripVertical } from 'lucide-react';
@@ -118,40 +110,56 @@ export function LeadTableColumnManager({
 
   const visibleCount = localPreferences.filter(p => p.visible).length;
 
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="flex items-center gap-2">
-          <Settings2 className="h-4 w-4" />
-          <span className="hidden sm:inline">Customize Columns</span>
-          <span className="sm:hidden">Columns</span>
-          <Badge variant="secondary" className="ml-1">
-            {visibleCount}
-          </Badge>
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Customize Table Columns</DialogTitle>
-          <DialogDescription>
-            Choose which columns to display and arrange their order. Drag to reorder columns.
-          </DialogDescription>
-        </DialogHeader>
+  const footerActions = [
+    {
+      label: 'Cancel',
+      onClick: () => setOpen(false),
+      variant: 'outline' as const,
+      disabled: saving,
+    },
+    {
+      label: saving ? 'Saving...' : 'Save Changes',
+      onClick: handleSave,
+      disabled: saving,
+      loading: saving,
+    },
+  ];
 
-        <div className="space-y-4">
+  return (
+    <>
+      <Button variant="outline" size="sm" className="flex items-center gap-2" onClick={() => setOpen(true)}>
+        <Settings2 className="h-4 w-4" />
+        <span className="hidden sm:inline">Customize Columns</span>
+        <span className="sm:hidden">Columns</span>
+        <Badge variant="secondary" className="ml-1">
+          {visibleCount}
+        </Badge>
+      </Button>
+
+      <AppSheetModal
+        isOpen={open}
+        onOpenChange={setOpen}
+        title="Customize Table Columns"
+        footerActions={footerActions}
+      >
+        <div className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            Choose which columns to display and arrange their order. Drag to reorder columns.
+          </p>
+          
           <div className="flex items-center justify-between">
             <p className="text-sm text-muted-foreground">
-              Showing {visibleCount} of {availableColumns.length} available columns
+              {visibleCount} of {availableColumns.length} columns visible
             </p>
             <Button
               variant="ghost"
               size="sm"
               onClick={handleReset}
               disabled={saving}
-              className="text-muted-foreground hover:text-foreground"
+              className="text-muted-foreground hover:text-foreground h-8"
             >
-              <RotateCcw className="h-4 w-4 mr-1" />
-              Reset to Default
+              <RotateCcw className="h-3 w-3 mr-1" />
+              Reset
             </Button>
           </div>
 
@@ -161,7 +169,7 @@ export function LeadTableColumnManager({
                 <div
                   {...provided.droppableProps}
                   ref={provided.innerRef}
-                  className="space-y-2"
+                  className="space-y-1.5"
                 >
                   {orderedColumns.map((column, index) => (
                     <Draggable
@@ -174,31 +182,31 @@ export function LeadTableColumnManager({
                           ref={provided.innerRef}
                           {...provided.draggableProps}
                           className={`
-                            flex items-center justify-between p-3 rounded-lg border bg-background
-                            ${snapshot.isDragging ? 'shadow-lg' : ''}
+                            flex items-center justify-between p-2 rounded-md border text-sm
+                            ${snapshot.isDragging ? 'shadow-md' : ''}
                             ${column.visible ? 'border-primary/20 bg-primary/5' : 'border-border'}
                           `}
                         >
-                          <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-2 min-w-0 flex-1">
                             <div
                               {...provided.dragHandleProps}
-                              className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground"
+                              className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground flex-shrink-0"
                             >
-                              <GripVertical className="h-4 w-4" />
+                              <GripVertical className="h-3 w-3" />
                             </div>
-                            <div className="flex flex-col">
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium">{column.label}</span>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-medium truncate">{column.label}</span>
                                 {column.isCore && (
-                                  <Badge variant="outline" className="text-xs">
+                                  <Badge variant="outline" className="text-[10px] px-1 py-0 h-4">
                                     Core
                                   </Badge>
                                 )}
                               </div>
                               {column.fieldDefinition && (
-                                <span className="text-xs text-muted-foreground">
-                                  {column.fieldDefinition.field_type} field
-                                </span>
+                                <div className="text-[10px] text-muted-foreground">
+                                  {column.fieldDefinition.field_type}
+                                </div>
                               )}
                             </div>
                           </div>
@@ -206,6 +214,7 @@ export function LeadTableColumnManager({
                             checked={column.visible}
                             onCheckedChange={() => handleToggleColumn(column.key)}
                             disabled={column.isCore && column.visible}
+                            className="flex-shrink-0"
                           />
                         </div>
                       )}
@@ -217,20 +226,11 @@ export function LeadTableColumnManager({
             </Droppable>
           </DragDropContext>
 
-          <div className="text-xs text-muted-foreground bg-muted/30 p-3 rounded-lg">
-            <strong>Tip:</strong> Core columns (Status, Assignees, Last Updated) are always visible to ensure essential information is available. You can reorder them but not hide them.
+          <div className="text-[10px] text-muted-foreground bg-muted/30 p-2 rounded text-center">
+            Core columns are always visible and can be reordered but not hidden.
           </div>
         </div>
-
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)} disabled={saving}>
-            Cancel
-          </Button>
-          <Button onClick={handleSave} disabled={saving}>
-            {saving ? 'Saving...' : 'Save Changes'}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      </AppSheetModal>
+    </>
   );
 }

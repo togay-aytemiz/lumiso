@@ -79,19 +79,22 @@ export function useLeadTableColumns() {
   // Generate default column preferences
   const generateDefaultColumnPreferences = (fields: LeadFieldDefinition[]): ColumnConfig[] => {
     const defaultColumns: ColumnConfig[] = [
-      // Core system columns (always visible)
-      { key: 'status', visible: true, order: 1 },
-      { key: 'assignees', visible: true, order: 2 },
-      { key: 'updated_at', visible: true, order: 3 },
+      // Default order: Name, Status, Phone Number, Email address, Assignees, Last Updated
+      { key: 'name', visible: true, order: 1 },
+      { key: 'status', visible: true, order: 2 },
+      { key: 'phone', visible: true, order: 3 },
+      { key: 'email', visible: true, order: 4 },
+      { key: 'assignees', visible: true, order: 5 },
+      { key: 'updated_at', visible: true, order: 6 },
     ];
 
-    // Add visible custom fields
+    // Add other custom fields that are visible in table
     const customFieldColumns = fields
-      .filter(field => field.is_visible_in_table)
+      .filter(field => field.is_visible_in_table && !['name', 'phone', 'email'].includes(field.field_key))
       .map((field, index) => ({
         key: field.field_key,
-        visible: true,
-        order: 4 + index,
+        visible: false, // Default to hidden for additional custom fields
+        order: 7 + index,
       }));
 
     return [...defaultColumns, ...customFieldColumns];
@@ -106,7 +109,58 @@ export function useLeadTableColumns() {
     return visiblePrefs.map(pref => {
       const fieldDef = fieldDefinitions.find(f => f.field_key === pref.key);
 
-      // Core system columns
+      // System columns that map to lead properties
+      if (pref.key === 'name') {
+        const nameFieldDef = fieldDefinitions.find(f => f.field_key === 'name');
+        return {
+          key: 'name',
+          header: nameFieldDef?.label || 'Name',
+          sortable: true,
+          accessor: (lead) => lead.custom_fields['name'] || lead.name,
+          render: (lead) => React.createElement('span', {
+            className: "font-medium"
+          }, lead.custom_fields['name'] || lead.name || '-'),
+        };
+      }
+
+      if (pref.key === 'email') {
+        const emailFieldDef = fieldDefinitions.find(f => f.field_key === 'email');
+        return {
+          key: 'email',
+          header: emailFieldDef?.label || 'Email',
+          sortable: true,
+          accessor: (lead) => lead.custom_fields['email'] || lead.email,
+          render: (lead) => {
+            const value = lead.custom_fields['email'] || lead.email;
+            return emailFieldDef 
+              ? React.createElement(CustomFieldDisplay, {
+                  fieldDefinition: emailFieldDef,
+                  value: value
+                })
+              : React.createElement('span', {}, value || '-');
+          },
+        };
+      }
+
+      if (pref.key === 'phone') {
+        const phoneFieldDef = fieldDefinitions.find(f => f.field_key === 'phone');
+        return {
+          key: 'phone',
+          header: phoneFieldDef?.label || 'Phone',
+          sortable: true,
+          accessor: (lead) => lead.custom_fields['phone'] || lead.phone,
+          render: (lead) => {
+            const value = lead.custom_fields['phone'] || lead.phone;
+            return phoneFieldDef 
+              ? React.createElement(CustomFieldDisplay, {
+                  fieldDefinition: phoneFieldDef,
+                  value: value
+                })
+              : React.createElement('span', {}, value || '-');
+          },
+        };
+      }
+
       if (pref.key === 'status') {
         return {
           key: 'status',
@@ -159,7 +213,6 @@ export function useLeadTableColumns() {
           key: `custom_fields.${fieldDef.field_key}`,
           header: fieldDef.label,
           sortable: true,
-          filterable: true,
           accessor: (lead) => lead.custom_fields[fieldDef.field_key],
           render: (lead) => React.createElement(CustomFieldDisplay, {
             fieldDefinition: fieldDef,
@@ -180,6 +233,7 @@ export function useLeadTableColumns() {
   // Save column preferences
   const saveColumnPreferences = async (newPreferences: ColumnConfig[]) => {
     try {
+      console.log('Saving column preferences:', newPreferences);
       const { data: user } = await supabase.auth.getUser();
       if (!user.user?.id) throw new Error('User not authenticated');
 
@@ -191,7 +245,12 @@ export function useLeadTableColumns() {
           column_config: newPreferences as any,
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
+      
+      console.log('Successfully saved preferences, updating state');
       setColumnPreferences(newPreferences);
     } catch (error) {
       console.error('Error saving column preferences:', error);
@@ -202,17 +261,22 @@ export function useLeadTableColumns() {
   // Get available columns for configuration
   const availableColumns = useMemo(() => {
     const coreColumns = [
+      { key: 'name', label: 'Name', isCore: false },
       { key: 'status', label: 'Status', isCore: true },
+      { key: 'phone', label: 'Phone', isCore: false },
+      { key: 'email', label: 'Email', isCore: false },
       { key: 'assignees', label: 'Assignees', isCore: true },
       { key: 'updated_at', label: 'Last Updated', isCore: true },
     ];
 
-    const customColumns = fieldDefinitions.map(field => ({
-      key: field.field_key,
-      label: field.label,
-      isCore: false,
-      fieldDefinition: field,
-    }));
+    const customColumns = fieldDefinitions
+      .filter(field => !['name', 'phone', 'email'].includes(field.field_key))
+      .map(field => ({
+        key: field.field_key,
+        label: field.label,
+        isCore: false,
+        fieldDefinition: field,
+      }));
 
     return [...coreColumns, ...customColumns];
   }, [fieldDefinitions]);

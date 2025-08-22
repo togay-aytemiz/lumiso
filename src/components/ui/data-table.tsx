@@ -15,9 +15,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { ArrowUpDown, ArrowUp, ArrowDown, X, Search } from "lucide-react";
+import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useDataTable, type Column } from "@/hooks/useDataTable";
 import { DataTableContainer } from "./data-table-container";
@@ -50,11 +48,8 @@ export function DataTable<T>({
     endIndex,
     sortField,
     sortDirection,
-    filters,
     handleSort,
-    handleFilter,
     handlePageChange,
-    resetFilters,
     getValue,
   } = useDataTable({ data, columns, itemsPerPage });
 
@@ -63,45 +58,8 @@ export function DataTable<T>({
     return sortDirection === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />;
   };
 
-  const hasActiveFilters = Object.values(filters).some(filter => filter.trim() !== '');
-
   return (
     <div className={className}>
-      {/* Filters - Only show if there are filterable columns */}
-      {columns.some(col => col.filterable) && (
-        <div className="mb-4 space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-medium text-muted-foreground">Filters</h3>
-            {hasActiveFilters && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={resetFilters}
-                className="text-muted-foreground hover:text-foreground"
-              >
-                <X className="h-4 w-4 mr-1" />
-                Clear all
-              </Button>
-            )}
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-            {columns
-              .filter(col => col.filterable)
-              .map(column => (
-                <div key={String(column.key)} className="relative">
-                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder={`Filter ${column.header}...`}
-                    value={filters[String(column.key)] || ''}
-                    onChange={(e) => handleFilter(String(column.key), e.target.value)}
-                    className="pl-8"
-                  />
-                </div>
-              ))}
-          </div>
-        </div>
-      )}
-
       {/* Results info */}
       {totalItems > 0 && (
         <div className="mb-4 text-sm text-muted-foreground">

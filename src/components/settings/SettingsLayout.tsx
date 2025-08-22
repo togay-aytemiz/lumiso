@@ -97,7 +97,10 @@ export default function SettingsLayout() {
                   )}
                   onClick={(e) => handleLockedItemClick(e, item.href)}
                 >
-                  <Icon className="h-5 w-5 flex-shrink-0 transition-colors group-hover:text-sidebar-primary" />
+                  <Icon className={cn(
+                    "h-5 w-5 flex-shrink-0 transition-colors group-hover:text-sidebar-primary",
+                    isActive && "text-[hsl(var(--sidebar-active-icon))]"
+                  )} />
                   <span className="hidden md:flex md:items-center md:gap-2">
                     {item.title}
                     {hasChanges && (
@@ -164,6 +167,7 @@ export default function SettingsLayout() {
                   <Icon className={cn(
                     "h-5 w-5 flex-shrink-0 transition-colors",
                     !isDangerZone && "group-hover:text-sidebar-primary",
+                    !isDangerZone && isActive && "text-[hsl(var(--sidebar-active-icon))]",
                     isDangerZone && "text-red-600"
                   )} />
                   <span className="hidden md:flex md:items-center md:gap-2">

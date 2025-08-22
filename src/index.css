@@ -69,7 +69,8 @@ All colors MUST be HSL.
     --sidebar-accent: 210 40% 94%; /* slightly darker gray for hover #EEEFF2 */
     --sidebar-accent-foreground: 215.4 16.3% 46.9%; /* keep text color for hover */
     --sidebar-active: 172 50% 95%; /* light teal for active state like reference */
-    --sidebar-active-foreground: 172 71% 41%; /* teal text for active */
+    --sidebar-active-foreground: 215.4 16.3% 46.9%; /* darker text color for active */
+    --sidebar-active-icon: 172 71% 41%; /* accent color for active icons */
     --sidebar-border: 214.3 31.8% 91.4%; /* light divider */
     --sidebar-ring: 172 71% 41%;
 
@@ -151,7 +152,8 @@ All colors MUST be HSL.
     --sidebar-accent: 240 3.7% 15.9%; /* darker gray for hover in dark mode */
     --sidebar-accent-foreground: 240 5% 84%;
     --sidebar-active: 173 70% 15%; /* darker teal for active in dark mode */
-    --sidebar-active-foreground: 172 71% 60%; /* lighter teal text for active */
+    --sidebar-active-foreground: 240 4.8% 95.9%; /* light text for active in dark mode */
+    --sidebar-active-icon: 172 71% 60%; /* lighter teal icon for active in dark mode */
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 172 71% 41%;
 

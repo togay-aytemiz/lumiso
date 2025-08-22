@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, MoreVertical, Edit, Trash2, ExternalLink } from 'lucide-react';
+import { ArrowLeft, MoreVertical, Edit, Trash2, ExternalLink, ChevronDown } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -185,49 +186,69 @@ export default function SessionDetail() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="border-b">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate('/sessions')}
-                className="h-8 w-8 p-0"
-              >
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-              <div>
-                <h1 className="text-xl sm:text-2xl font-semibold">{getSessionName()}</h1>
-                <p className="text-sm text-muted-foreground">
+      <div className="border-b bg-background">
+        <div className="max-w-full mx-auto px-6 py-6">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex-1 min-w-0">
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 flex-wrap">
+                  <ArrowLeft 
+                    className="h-6 w-6 cursor-pointer text-foreground hover:text-[hsl(var(--accent-foreground))] transition-colors" 
+                    strokeWidth={2.5}
+                    onClick={() => navigate('/sessions')}
+                  />
+                  <h1 className="text-xl sm:text-2xl font-bold leading-tight break-words">
+                    {getSessionName()}
+                  </h1>
+                  
+                  {/* Session Status and Project Type Badges */}
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <SessionStatusBadge
+                      sessionId={session.id}
+                      currentStatus={session.status as any}
+                      editable={true}
+                      onStatusChange={handleStatusChange}
+                      className="text-sm"
+                    />
+                    
+                    {session.projects?.project_types && (
+                      <Badge variant="outline" className="text-sm px-3 py-1">
+                        {session.projects.project_types.name.toUpperCase()}
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Session Date & Time */}
+                <p className="text-muted-foreground text-lg">
                   {formatLongDate(session.session_date)} at {formatTime(session.session_time)}
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <SessionStatusBadge
-                sessionId={session.id}
-                currentStatus={session.status as any}
-                editable={true}
-                onStatusChange={handleStatusChange}
-              />
+            
+            <div className="flex items-center gap-2 shrink-0 self-start">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                    <MoreVertical className="h-4 w-4" />
+                  <Button 
+                    variant="outline" 
+                    size="lg"
+                    className="gap-2"
+                  >
+                    <span>More Actions</span>
+                    <ChevronDown className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
+                <DropdownMenuContent align="end" side="bottom">
                   <DropdownMenuItem onClick={handleEdit}>
-                    <Edit className="h-4 w-4 mr-2" />
-                    Edit Session
+                    <Edit className="mr-2 h-4 w-4" />
+                    <span>Edit Session</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem 
                     onClick={() => setIsDeleteDialogOpen(true)}
                     className="text-destructive focus:text-destructive"
                   >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Delete Session
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    <span>Delete Session</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -237,7 +258,7 @@ export default function SessionDetail() {
       </div>
 
       {/* Content */}
-      <div className="container mx-auto px-4 py-6 space-y-6">
+      <div className="max-w-full mx-auto px-6 py-6 space-y-6">
         {/* Session Details */}
         <Card>
           <CardContent className="p-6">

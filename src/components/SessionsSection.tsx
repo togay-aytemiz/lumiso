@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, Calendar } from "lucide-react";
-import SessionBanner from "./SessionBanner";
+import CompactSessionBanner from "./project-details/Summary/CompactSessionBanner";
 import EditSessionDialog from "./EditSessionDialog";
 import { NewSessionDialogForProject } from "./NewSessionDialogForProject";
 interface Session {
@@ -71,7 +71,7 @@ export function SessionsSection({
               {!loading && <p className="text-sm text-muted-foreground mb-3">
                   This project includes {sessions.length} session{sessions.length !== 1 ? 's' : ''}
                 </p>}
-              {sessions.map(session => <SessionBanner key={session.id} session={session} leadName={leadName} projectName={projectName} onStatusUpdate={onSessionUpdated} onEdit={() => setEditingSessionId(session.id)} onDelete={() => onDeleteSession(session.id)} />)}
+              {sessions.map(session => <CompactSessionBanner key={session.id} session={{...session, leads: { name: leadName }, projects: { name: projectName }}} onStatusUpdate={onSessionUpdated} onEdit={() => setEditingSessionId(session.id)} onDelete={() => onDeleteSession(session.id)} />)}
             </div> : <div className="text-center py-4">
               <Calendar className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
               <p className="text-muted-foreground text-sm">No sessions linked to this project</p>

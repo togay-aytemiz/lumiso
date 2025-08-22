@@ -17,7 +17,7 @@ import ScheduleSessionDialog from "@/components/ScheduleSessionDialog";
 import EditSessionDialog from "@/components/EditSessionDialog";
 import { EnhancedProjectDialog } from "@/components/EnhancedProjectDialog";
 import ActivitySection from "@/components/ActivitySection";
-import SessionBanner from "@/components/SessionBanner";
+import CompactSessionBanner from "@/components/project-details/Summary/CompactSessionBanner";
 import { ProjectsSection } from "@/components/ProjectsSection";
 import { getLeadStatusStyles, formatStatusText } from "@/lib/leadStatusColors";
 import { LeadStatusBadge } from "@/components/LeadStatusBadge";
@@ -874,7 +874,16 @@ const LeadDetail = () => {
       {sessions.length > 0 && <div className="mb-6">
           <div className="space-y-4">
             {sessions.map(session => <div key={session.id}>
-                <SessionBanner session={session} leadName={lead.name} projectName={session.project_name} onStatusUpdate={handleSessionUpdated} onEdit={() => setEditingSessionId(session.id)} onDelete={() => setDeletingSessionId(session.id)} />
+                <CompactSessionBanner 
+                  session={{
+                    ...session, 
+                    leads: { name: lead.name }, 
+                    projects: session.project_name ? { name: session.project_name } : undefined
+                  }} 
+                  onStatusUpdate={handleSessionUpdated} 
+                  onEdit={() => setEditingSessionId(session.id)} 
+                  onDelete={() => setDeletingSessionId(session.id)} 
+                />
                 
               </div>)}
           </div>

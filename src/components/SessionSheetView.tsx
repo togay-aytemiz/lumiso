@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, ExternalLink, MoreVertical, Edit, Trash2, ChevronDown, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import {
   Sheet,
@@ -184,62 +185,114 @@ export default function SessionSheetView({
             </div>
           ) : session ? (
             <>
-              <SheetHeader className="flex flex-row items-center justify-between space-y-0 pb-4 border-b">
-                <div className="flex-1 min-w-0">
-                  <SheetTitle className="text-xl sm:text-2xl font-semibold">
-                    {getSessionName()}
-                  </SheetTitle>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {formatLongDate(session.session_date)} at {formatTime(session.session_time)}
-                  </p>
-                </div>
-                
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={onViewFullDetails}
-                    className="text-muted-foreground hover:bg-accent hover:text-accent-foreground h-8 px-2 gap-1 md:h-10 md:px-3"
-                  >
-                    <ExternalLink className="h-4 w-4" />
-                    <span className="text-sm hidden md:inline">Full Details</span>
-                  </Button>
+              <SheetHeader>
+                <div className="flex items-center justify-between">
+                  <div className="flex-1 min-w-0">
+                    <div className="space-y-2">
+                      {/* Desktop: Name + Badges on same line */}
+                      <div className="hidden md:flex items-center gap-3 flex-wrap">
+                        <SheetTitle className="text-xl font-bold leading-tight break-words text-left">
+                          {getSessionName()}
+                        </SheetTitle>
+                        
+                        {/* Session Status and Project Type Badges next to name - Desktop only */}
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <SessionStatusBadge
+                            sessionId={session.id}
+                            currentStatus={session.status as any}
+                            editable={true}
+                            onStatusChange={handleStatusChange}
+                            className="text-sm"
+                          />
+                          
+                          {session.projects?.project_types && (
+                            <Badge variant="outline" className="text-xs">
+                              {session.projects.project_types.name.toUpperCase()}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {/* Mobile: Name only */}
+                      <div className="md:hidden">
+                        <SheetTitle className="text-xl font-bold leading-tight break-words text-left">
+                          {getSessionName()}
+                        </SheetTitle>
+                      </div>
+                      
+                      {/* Session Date & Time - All screens */}
+                      <p className="text-sm text-muted-foreground font-normal text-left">
+                        {formatLongDate(session.session_date)} at {formatTime(session.session_time)}
+                      </p>
+                      
+                      {/* Mobile Layout: Badges */}
+                      <div className="md:hidden space-y-2 mt-4">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <SessionStatusBadge
+                            sessionId={session.id}
+                            currentStatus={session.status as any}
+                            editable={true}
+                            onStatusChange={handleStatusChange}
+                            className="text-sm"
+                          />
+                          
+                          {session.projects?.project_types && (
+                            <Badge variant="outline" className="text-xs">
+                              {session.projects.project_types.name.toUpperCase()}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                   
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="text-muted-foreground hover:bg-accent hover:text-accent-foreground h-8 px-2 gap-1 md:h-10 md:px-3"
-                      >
-                        <span className="text-sm hidden md:inline">More</span>
-                        <ChevronDown className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={handleEdit}>
-                        <Edit className="h-4 w-4 mr-2" />
-                        Edit Session
-                      </DropdownMenuItem>
-                      <DropdownMenuItem 
-                        onClick={() => setIsDeleteDialogOpen(true)}
-                        className="text-destructive focus:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Delete Session
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                  
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={() => onOpenChange(false)} 
-                    className="text-muted-foreground hover:bg-accent hover:text-accent-foreground text-sm h-8 px-2 md:h-10 md:px-3"
-                  >
-                    <span className="hidden md:inline">Close</span>
-                    <X className="h-4 w-4 md:hidden" />
-                  </Button>
+                  <div className="flex items-center gap-2 shrink-0 self-start">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={onViewFullDetails}
+                      className="text-sm h-8 px-2 md:h-10 md:px-3"
+                    >
+                      <span className="hidden md:inline">Full Details</span>
+                      <ExternalLink className="h-4 w-4 md:ml-2" />
+                    </Button>
+                    
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="text-muted-foreground hover:bg-accent hover:text-accent-foreground text-sm h-8 px-2 md:h-10 md:px-3"
+                        >
+                          <span className="hidden md:inline mr-1">More</span>
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={handleEdit}>
+                          <Edit className="h-4 w-4 mr-2" />
+                          Edit Session
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          onClick={() => setIsDeleteDialogOpen(true)}
+                          className="text-destructive focus:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete Session
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                    
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => onOpenChange(false)} 
+                      className="text-muted-foreground hover:bg-accent hover:text-accent-foreground text-sm h-8 px-2 md:h-10 md:px-3"
+                    >
+                      <span className="hidden md:inline">Close</span>
+                      <X className="h-4 w-4 md:hidden" />
+                    </Button>
+                  </div>
                 </div>
               </SheetHeader>
 

@@ -28,9 +28,10 @@ interface ProjectCardProps {
   project: Project;
   onView: (project: Project) => void;
   refreshTrigger?: number;
+  onQuickView?: (project: Project) => void;
 }
 
-export function ProjectCard({ project, onView, refreshTrigger }: ProjectCardProps) {
+export function ProjectCard({ project, onView, refreshTrigger, onQuickView }: ProjectCardProps) {
   const { progress, loading } = useProjectProgress(project.id, refreshTrigger);
   const { paymentSummary, loading: paymentsLoading } = useProjectPayments(project.id, refreshTrigger);
 
@@ -67,7 +68,7 @@ export function ProjectCard({ project, onView, refreshTrigger }: ProjectCardProp
       <CardContent className="p-4 md:p-6">
         <div 
           className="flex flex-col md:flex-row md:items-center md:justify-between md:gap-6 gap-4"
-          onClick={() => onView(project)}
+          onClick={() => onQuickView ? onQuickView(project) : onView(project)}
         >
           <div className="flex-1 min-w-0 space-y-3">
             {/* Title, Archived Badge, and Assignees */}

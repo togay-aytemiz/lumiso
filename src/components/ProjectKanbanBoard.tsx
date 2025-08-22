@@ -61,9 +61,10 @@ interface ProjectKanbanBoardProps {
   projectStatuses?: ProjectStatus[];
   onProjectsChange: () => void;
   onProjectUpdate?: (project: Project) => void;
+  onQuickView?: (project: Project) => void;
 }
 
-const ProjectKanbanBoard = ({ projects, projectStatuses, onProjectsChange, onProjectUpdate }: ProjectKanbanBoardProps) => {
+const ProjectKanbanBoard = ({ projects, projectStatuses, onProjectsChange, onProjectUpdate, onQuickView }: ProjectKanbanBoardProps) => {
   const [statuses, setStatuses] = useState<ProjectStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddProjectDialog, setShowAddProjectDialog] = useState(false);
@@ -190,8 +191,12 @@ const ProjectKanbanBoard = ({ projects, projectStatuses, onProjectsChange, onPro
   };
 
   const handleProjectClick = (project: Project) => {
-    setViewingProject(project);
-    setShowViewDialog(true);
+    if (onQuickView) {
+      onQuickView(project);
+    } else {
+      setViewingProject(project);
+      setShowViewDialog(true);
+    }
   };
 
   const renderProjectCard = (project: Project, index: number) => (

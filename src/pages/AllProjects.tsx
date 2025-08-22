@@ -10,6 +10,7 @@ import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { EnhancedProjectDialog } from "@/components/EnhancedProjectDialog";
 import { ViewProjectDialog } from "@/components/ViewProjectDialog";
+import ProjectSheetPreview from "@/components/ProjectSheetPreview";
 import ProjectKanbanBoard from "@/components/ProjectKanbanBoard";
 import GlobalSearch from "@/components/GlobalSearch";
 import { PageHeader, PageHeaderSearch, PageHeaderActions } from "@/components/ui/page-header";
@@ -83,6 +84,8 @@ const AllProjects = () => {
   const [viewMode, setViewMode] = useState<'board' | 'list' | 'archived'>('board');
   const [viewingProject, setViewingProject] = useState<Project | null>(null);
   const [showViewDialog, setShowViewDialog] = useState(false);
+  const [quickViewProject, setQuickViewProject] = useState<Project | null>(null);
+  const [showQuickView, setShowQuickView] = useState(false);
   const [sortField, setSortField] = useState<SortField>('created_at');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const navigate = useNavigate();
@@ -370,8 +373,13 @@ const AllProjects = () => {
   };
 
   const handleProjectClick = (project: Project) => {
-    setViewingProject(project);
-    setShowViewDialog(true);
+    // Navigate to full project page instead of showing dialog
+    navigate(`/projects/${project.id}`);
+  };
+
+  const handleQuickView = (project: Project) => {
+    setQuickViewProject(project);
+    setShowQuickView(true);
   };
 
   const handleLeadClick = (leadId: string) => {
@@ -624,7 +632,7 @@ const AllProjects = () => {
               <button
                 onClick={() => handleViewChange('board')}
                 className={`flex items-center gap-2 px-3 py-2 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
-                  viewMode === 'board' 
+                  viewMode === 'board'
                     ? 'border-primary text-primary' 
                     : 'border-transparent text-muted-foreground hover:text-foreground'
                 }`}
@@ -670,6 +678,7 @@ const AllProjects = () => {
             projectStatuses={projectStatuses}
             onProjectsChange={fetchProjects}
             onProjectUpdate={handleProjectUpdate}
+            onQuickView={handleQuickView}
           />
         ) : (
           <div className="h-full overflow-y-auto p-4 sm:p-6">
@@ -765,14 +774,14 @@ const AllProjects = () => {
                                    {project.lead?.name || 'No Lead'}
                                  </button>
                                </TableCell>
-                               <TableCell>
-                                 <button
-                                   onClick={() => handleProjectClick(project)}
-                                   className="font-medium text-left hover:underline cursor-pointer"
-                                 >
-                                   {project.name}
-                                 </button>
-                               </TableCell>
+                                <TableCell>
+                                  <button
+                                    onClick={() => handleQuickView(project)}
+                                    className="font-medium text-left hover:underline cursor-pointer"
+                                  >
+                                    {project.name}
+                                  </button>
+                                </TableCell>
                               <TableCell>
                                 {project.project_type ? (
                                   <Badge variant="outline" className="text-xs">
@@ -858,6 +867,14 @@ const AllProjects = () => {
           </div>
         )}
       </div>
+
+      {/* Project Sheet Preview */}
+      <ProjectSheetPreview
+        project={quickViewProject}
+        open={showQuickView}
+        onOpenChange={setShowQuickView}
+        onProjectUpdated={fetchProjects}
+      />
 
       {/* View Project Dialog */}
       <ViewProjectDialog

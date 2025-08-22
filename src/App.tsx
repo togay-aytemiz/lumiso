@@ -11,6 +11,7 @@ import GettingStarted from "./pages/GettingStarted";
 import AllLeads from "./pages/AllLeads";
 import AllProjects from "./pages/AllProjects";
 import LeadDetail from "./pages/LeadDetail";
+import ProjectDetail from "./pages/ProjectDetail";
 import UpcomingSessions from "./pages/UpcomingSessions";
 import Calendar from "./pages/Calendar";
 import ReminderDetails from "./pages/ReminderDetails";
@@ -58,6 +59,7 @@ const App = () => (
               <Route path="leads" element={<AllLeads />} />
               <Route path="projects" element={<AllProjects />} />
               <Route path="leads/:id" element={<LeadDetail />} />
+              <Route path="projects/:id" element={<ProjectDetail />} />
               <Route path="sessions" element={<UpcomingSessions />} />
               <Route path="calendar" element={<Calendar />} />
               <Route path="reminders" element={<ReminderDetails />} />

@@ -89,9 +89,9 @@ export default function SettingsLayout() {
                 const linkContent = (
                   <div className={cn(
                     "flex items-center gap-4 px-2 md:px-4 py-3 text-sm rounded-lg transition-colors justify-center md:justify-start relative",
-                    "hover:bg-muted/50",
+                    "hover:bg-sidebar-accent",
                     isActive 
-                      ? "bg-primary/10 text-primary font-medium" 
+                      ? "bg-sidebar-active text-sidebar-active-foreground font-medium" 
                       : "text-muted-foreground hover:text-foreground",
                     locked && "opacity-50 cursor-not-allowed"
                   )}
@@ -152,9 +152,9 @@ export default function SettingsLayout() {
                 const linkContent = (
                   <div className={cn(
                     "flex items-center gap-4 px-2 md:px-4 py-3 text-sm rounded-lg transition-colors justify-center md:justify-start relative",
-                    "hover:bg-muted/50",
+                    !isDangerZone && "hover:bg-sidebar-accent",
                     isActive 
-                      ? "bg-primary/10 text-primary font-medium" 
+                      ? "bg-sidebar-active text-sidebar-active-foreground font-medium" 
                       : "text-muted-foreground hover:text-foreground",
                     isDangerZone && "text-red-600 hover:text-red-700 hover:bg-red-50",
                     locked && "opacity-50 cursor-not-allowed"

@@ -61,7 +61,7 @@ export function SidebarNavItem({
     <SidebarMenuButton
       asChild
       isActive={isActive}
-      className={`group/item w-full h-10 px-3 py-2 text-left transition-all duration-200 rounded-lg hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground data-[active=true]:font-medium ${className}`}
+      className={`group/item w-full h-10 px-3 py-2 text-left transition-all duration-200 rounded-lg hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[active=true]:bg-sidebar-active data-[active=true]:text-sidebar-active-foreground data-[active=true]:font-medium ${className}`}
     >
       <NavLink to={url} className="flex items-center gap-3 w-full">
         {content}
@@ -71,7 +71,7 @@ export function SidebarNavItem({
     <SidebarMenuButton
       onClick={onClick}
       isActive={isActive}
-      className={`group/item w-full h-10 px-3 py-2 text-left transition-all duration-200 rounded-lg hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground data-[active=true]:font-medium ${className}`}
+      className={`group/item w-full h-10 px-3 py-2 text-left transition-all duration-200 rounded-lg hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[active=true]:bg-sidebar-active data-[active=true]:text-sidebar-active-foreground data-[active=true]:font-medium ${className}`}
     >
       {content}
     </SidebarMenuButton>

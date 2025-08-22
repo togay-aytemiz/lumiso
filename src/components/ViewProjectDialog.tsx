@@ -19,7 +19,7 @@ import { ProjectTypeSelector } from "./ProjectTypeSelector";
 import { ProjectPaymentsSection } from "./ProjectPaymentsSection";
 import ProjectDetailsLayout from "@/components/project-details/ProjectDetailsLayout";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
-import ClientCard from "@/components/project-details/Summary/ClientCard";
+import { UnifiedClientDetails } from "@/components/UnifiedClientDetails";
 import { AssigneesList } from "@/components/AssigneesList";
 interface Project {
   id: string;
@@ -660,7 +660,14 @@ export function ViewProjectDialog({
 
           <div className={isArchived ? 'opacity-60 pointer-events-none select-none' : ''}>
             <ProjectDetailsLayout header={<></>} left={<div className="space-y-4">
-                  {lead && <ClientCard createdAt={project!.created_at} name={lead.name} email={lead.email} phone={lead.phone} notes={lead.notes} leadId={lead.id} />}
+                  {lead && <UnifiedClientDetails 
+                    lead={lead} 
+                    showClickableNames={true}
+                    onLeadUpdated={() => {
+                      fetchLead();
+                      onProjectUpdated();
+                    }} 
+                  />}
                 </div>} sections={[{
               id: 'payments',
               title: 'Payments',

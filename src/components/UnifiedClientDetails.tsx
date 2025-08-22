@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Edit, Phone, Mail, MessageCircle } from "lucide-react";
@@ -23,6 +24,7 @@ interface UnifiedClientDetailsProps {
   showQuickActions?: boolean;
   onLeadUpdated?: () => void;
   className?: string;
+  showClickableNames?: boolean;
 }
 
 // Helper functions for validation and phone normalization
@@ -60,12 +62,14 @@ export function UnifiedClientDetails({
   title = "Client Details",
   showQuickActions = true,
   onLeadUpdated,
-  className 
+  className,
+  showClickableNames = false
 }: UnifiedClientDetailsProps) {
   const { fieldDefinitions, loading: fieldsLoading } = useLeadFieldDefinitions();
   const { fieldValues, loading: valuesLoading } = useLeadFieldValues(lead.id);
   const { hasPermission } = usePermissions();
   const [editOpen, setEditOpen] = useState(false);
+  const navigate = useNavigate();
 
   const loading = fieldsLoading || valuesLoading;
 
@@ -131,13 +135,13 @@ export function UnifiedClientDetails({
     <>
       <Card className={className}>
         <CardHeader className="pb-3 relative">
-          <CardTitle className="text-base">{title}</CardTitle>
+          <h3 className="text-lg font-semibold">{title}</h3>
           {hasPermission('edit_assigned_leads') && (
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setEditOpen(true)}
-              className="absolute top-2 right-2 text-muted-foreground hover:text-foreground h-8 px-2"
+              className="absolute top-2 right-2 text-muted-foreground h-8 px-2"
             >
               <Edit className="h-3 w-3 mr-1" />
               Edit
@@ -154,25 +158,32 @@ export function UnifiedClientDetails({
                   <label className="text-sm font-medium text-muted-foreground">
                     {field.label}
                   </label>
-                  <div className="col-span-2 text-sm">
-                    {field.type === 'core' ? (
-                      field.key === 'notes' && field.value ? (
-                        <div className="whitespace-pre-wrap break-words bg-muted/50 p-2 rounded-md text-sm">
-                          {field.value}
-                        </div>
-                      ) : (
-                        <span className="break-words">{field.value || 'Not provided'}</span>
-                      )
-                    ) : (
-                      <CustomFieldDisplay
-                        fieldDefinition={field.fieldDefinition!}
-                        value={field.value}
-                        showCopyButtons={false}
-                        allowTruncation={true}
-                        maxLines={2}
-                      />
-                    )}
-                  </div>
+                   <div className="col-span-2 text-sm">
+                     {field.type === 'core' ? (
+                       field.key === 'name' && showClickableNames ? (
+                         <button 
+                           onClick={() => navigate(`/leads/${lead.id}`)}
+                           className="text-link hover:underline font-medium break-words text-left"
+                         >
+                           {field.value}
+                         </button>
+                       ) : field.key === 'notes' && field.value ? (
+                         <div className="whitespace-pre-wrap break-words bg-muted/50 p-2 rounded-md text-sm">
+                           {field.value}
+                         </div>
+                       ) : (
+                         <span className="break-words">{field.value || 'Not provided'}</span>
+                       )
+                     ) : (
+                       <CustomFieldDisplay
+                         fieldDefinition={field.fieldDefinition!}
+                         value={field.value}
+                         showCopyButtons={false}
+                         allowTruncation={true}
+                         maxLines={2}
+                       />
+                     )}
+                   </div>
                 </div>
               ))}
             </div>
@@ -180,7 +191,7 @@ export function UnifiedClientDetails({
 
           {/* Quick Actions */}
           {showQuickActions && (normalizedPhone || validEmail) && (
-            <div className="flex flex-wrap gap-2 pt-3 border-t">
+            <div className="flex flex-wrap gap-2 pt-3 border-t sm:flex-row flex-col sm:gap-2 gap-1">
               {normalizedPhone && (
                 <>
                   <Button

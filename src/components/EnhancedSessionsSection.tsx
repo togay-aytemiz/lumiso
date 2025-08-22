@@ -121,49 +121,51 @@ const EnhancedSessionsSection = ({ sessions, loading, onSessionClick }: Enhanced
             <Card
               key={session.id}
               className={cn(
-                "cursor-pointer transition-all duration-200 hover:shadow-md bg-white",
-                timeIndicator.leftBorder,
-                "hover:scale-[1.02]"
+                "cursor-pointer transition-all duration-200 hover:shadow-md bg-white hover:scale-[1.02]",
+                timeIndicator.leftBorder
               )}
               onClick={() => onSessionClick(session.id)}
             >
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between min-h-[4rem] m-0">
-                  {/* Left content - vertically centered */}
-                  <div className="flex flex-col justify-center flex-1">
-                    {/* Session name and time label */}
-                    <div className="flex items-center gap-2">
-                      <h4 className="font-semibold text-sm truncate leading-tight">
+              <CardContent className="p-0">
+                {/* Single flex container with perfect vertical centering */}
+                <div className="flex items-center justify-between h-20 px-4">
+                  
+                  {/* Left content - all info stacked vertically */}
+                  <div className="flex flex-col justify-center space-y-1 flex-1 min-w-0">
+                    
+                    {/* Row 1: Session name + time label + overdue icon */}
+                    <div className="flex items-center gap-2 min-h-0">
+                      <span className="font-semibold text-sm truncate">
                         {getSessionName(session)}
-                      </h4>
+                      </span>
                       {timeIndicator.label && (
-                        <Badge variant="secondary" className={cn("text-xs px-2 py-0", timeIndicator.labelBg)}>
+                        <Badge variant="secondary" className={cn("text-xs px-2 py-0.5 shrink-0", timeIndicator.labelBg)}>
                           {timeIndicator.label}
                         </Badge>
                       )}
                       {isOverdue && (
-                        <AlertTriangle className="h-4 w-4 text-orange-500 flex-shrink-0 self-center" />
+                        <AlertTriangle className="h-4 w-4 text-orange-500 shrink-0" />
                       )}
                     </div>
                     
-                    {/* Project name if available */}
+                    {/* Row 2: Project name (if available) */}
                     {session.projects?.name && (
-                      <p className="text-xs text-muted-foreground truncate leading-tight">
+                      <div className="text-xs text-muted-foreground truncate">
                         {session.projects.name}
-                      </p>
+                      </div>
                     )}
                     
-                    {/* Date and time */}
+                    {/* Row 3: Date and time */}
                     <div className="flex items-center gap-1">
-                      <Clock className="h-3 w-3 text-muted-foreground flex-shrink-0 self-center" />
-                      <span className="text-xs text-muted-foreground leading-tight">
+                      <Clock className="h-3 w-3 text-muted-foreground shrink-0" />
+                      <span className="text-xs text-muted-foreground">
                         {!timeIndicator.label && getRelativeDate(session.session_date)}
                         {session.session_time && ` • ${formatTime(session.session_time)}`}
                       </span>
                     </div>
                     
-                    {/* Status badge */}
-                    <div className="flex items-center">
+                    {/* Row 4: Status badge */}
+                    <div>
                       <SessionStatusBadge
                         sessionId={session.id}
                         currentStatus={session.status as any}
@@ -174,8 +176,8 @@ const EnhancedSessionsSection = ({ sessions, loading, onSessionClick }: Enhanced
                     </div>
                   </div>
 
-                  {/* Right chevron */}
-                  <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0 ml-2 self-center" />
+                  {/* Right arrow - perfectly centered */}
+                  <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0 ml-3" />
                 </div>
               </CardContent>
             </Card>

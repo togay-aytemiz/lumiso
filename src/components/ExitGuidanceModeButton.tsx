@@ -4,11 +4,13 @@ import { X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOnboardingV2 } from "@/hooks/useOnboardingV2";
 import { toast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
 export function ExitGuidanceModeButton() {
   const { user } = useAuth();
   const { completeOnboarding, shouldLockNavigation } = useOnboardingV2();
   const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
   // Only show for the specific user AND when in guided setup
   if (!user || user.email !== 'togayaytemiz@gmail.com' || !shouldLockNavigation) {
@@ -24,7 +26,7 @@ export function ExitGuidanceModeButton() {
         description: "You can now access all features.",
       });
       // Navigate to dashboard
-      window.location.href = '/';
+      navigate('/');
     } catch (error) {
       console.error('Error exiting guidance mode:', error);
       toast({

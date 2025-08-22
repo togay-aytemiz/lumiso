@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { MessageCircle, Phone, Mail } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Link } from "react-router-dom";
 
 interface ClientDetailsListProps {
   name?: string | null;
@@ -13,6 +14,7 @@ interface ClientDetailsListProps {
   clickableNameClasses?: string; // custom classes for clickable name (e.g., blue link)
   showQuickActions?: boolean; // default true
   clampNotes?: boolean; // if false, never truncate notes
+  onNameClick?: () => void; // callback for name clicks
 }
 
 const isValidEmail = (email?: string | null) => !!email && /[^\s@]+@[^\s@]+\.[^\s@]+/.test(email);
@@ -39,7 +41,7 @@ function normalizeTRPhone(phone?: string | null): null | { e164: string; e164NoP
   return { e164, e164NoPlus: e164.slice(1) };
 }
 
-export function ClientDetailsList({ name, email, phone, notes, clickableNameHref, clickableNameClasses, showQuickActions = true, clampNotes = true }: ClientDetailsListProps) {
+export function ClientDetailsList({ name, email, phone, notes, clickableNameHref, clickableNameClasses, showQuickActions = true, clampNotes = true, onNameClick }: ClientDetailsListProps) {
   const [notesExpanded, setNotesExpanded] = useState(false);
   const [isNotesTruncatable, setIsNotesTruncatable] = useState(false);
   const notesRef = useRef<HTMLDivElement>(null);
@@ -70,8 +72,15 @@ export function ClientDetailsList({ name, email, phone, notes, clickableNameHref
                   variant="link"
                   className="ml-1 p-0 h-auto text-left justify-start font-medium text-xs min-w-0"
                 >
-                  <a href={clickableNameHref} className={cn(clickableNameClasses, "truncate")}>{v}</a>
+                  <Link to={clickableNameHref} className={cn(clickableNameClasses, "truncate")}>{v}</Link>
                 </Button>
+              ) : onNameClick ? (
+                <button
+                  onClick={onNameClick}
+                  className={cn("ml-1 text-xs font-medium truncate min-w-0 flex-1 text-left hover:underline", clickableNameClasses)}
+                >
+                  {v}
+                </button>
               ) : (
                 <Tooltip>
                   <TooltipTrigger asChild>

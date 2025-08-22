@@ -8,6 +8,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { useOnboardingV2 } from "@/hooks/useOnboardingV2";
 import { OnboardingTutorial, TutorialStep } from "@/components/shared/OnboardingTutorial";
 import { Package, DollarSign, Target } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const packagesSetupSteps: TutorialStep[] = [
   {
@@ -79,6 +80,7 @@ export default function Services() {
   const { currentStep, completeCurrentStep } = useOnboardingV2();
   const [showTutorial, setShowTutorial] = useState(false);
   const [currentTutorialStep, setCurrentTutorialStep] = useState(0);
+  const navigate = useNavigate();
 
   // Auto-start packages tutorial when we're on step 6 (currentStep = 6)
   useEffect(() => {
@@ -102,7 +104,7 @@ export default function Services() {
       
       // Small delay to ensure database update, then navigate
       setTimeout(() => {
-        window.location.href = '/getting-started';
+        navigate('/getting-started');
       }, 500);
       
     } catch (error) {

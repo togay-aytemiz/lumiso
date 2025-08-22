@@ -12,6 +12,7 @@ interface ClientDetailsCardProps {
   clickableNameClasses?: string;
   showQuickActions?: boolean;
   clampNotes?: boolean;
+  onNameClick?: () => void;
 }
 
 export default function ClientDetailsCard({
@@ -25,6 +26,7 @@ export default function ClientDetailsCard({
   clickableNameClasses,
   showQuickActions = true,
   clampNotes = true,
+  onNameClick,
 }: ClientDetailsCardProps) {
   return (
     <Card className="w-full">
@@ -48,6 +50,7 @@ export default function ClientDetailsCard({
           clickableNameClasses={clickableNameClasses}
           showQuickActions={showQuickActions}
           clampNotes={clampNotes}
+          onNameClick={onNameClick}
         />
       </CardContent>
     </Card>

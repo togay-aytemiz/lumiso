@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { toast } from "sonner";
 import { Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const Auth = () => {
   const [email, setEmail] = useState("");
@@ -15,13 +16,14 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   // Redirect if already logged in
   useEffect(() => {
     if (user) {
-      window.location.href = "/";
+      navigate("/");
     }
-  }, [user]);
+  }, [user, navigate]);
 
   const clearAuthState = () => {
     // Clear all auth related storage
@@ -57,8 +59,8 @@ const Auth = () => {
           setLoading(false);
         } else if (data.user) {
           toast.success("Account created successfully!");
-          // Force page reload for clean state
-          setTimeout(() => window.location.href = "/", 1000);
+          // Navigate to home
+          setTimeout(() => navigate("/"), 1000);
         }
       } else {
         const { data, error } = await supabase.auth.signInWithPassword({
@@ -71,8 +73,8 @@ const Auth = () => {
         console.log("Sign in successful:", data.user?.id);
         toast.success("Signed in successfully!");
         
-        // Force page reload for clean state
-        setTimeout(() => window.location.href = "/", 1000);
+        // Navigate to home
+        setTimeout(() => navigate("/"), 1000);
       }
     } catch (error: any) {
       console.error("Auth error:", error);

@@ -4,11 +4,13 @@ import { RotateCcw } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOnboardingV2 } from "@/hooks/useOnboardingV2";
 import { toast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
 export function RestartGuidedModeButton() {
   const { user } = useAuth();
   const { resetOnboarding } = useOnboardingV2();
   const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
   // Only show for the specific user
   if (!user || user.email !== 'togayaytemiz@gmail.com') {
@@ -21,10 +23,10 @@ export function RestartGuidedModeButton() {
       await resetOnboarding();
       toast({
         title: "Guided mode reset",
-        description: "The onboarding modal will appear on your next page refresh.",
+        description: "Restarting guided mode...",
       });
-      // Refresh the page to trigger the onboarding modal
-      window.location.reload();
+      // Navigate to getting started to trigger the onboarding modal
+      navigate('/getting-started');
     } catch (error) {
       console.error('Error restarting guided mode:', error);
       toast({

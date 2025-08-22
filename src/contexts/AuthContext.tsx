@@ -27,7 +27,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Then sign out
       await supabase.auth.signOut({ scope: 'global' });
       
-      // Force page reload
+      // Use window navigation for auth redirect
       window.location.href = '/auth';
     } catch (error) {
       console.error('Sign out error:', error);

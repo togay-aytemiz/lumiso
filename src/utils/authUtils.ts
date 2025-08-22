@@ -35,12 +35,14 @@ export const signOutSafely = async () => {
       console.warn('Global sign out failed, continuing...', err);
     }
     
-    // Force page reload for clean state
-    window.location.href = '/auth';
+    // Navigate to auth page without refresh
+    window.history.pushState({}, '', '/auth');
+    window.dispatchEvent(new PopStateEvent('popstate'));
   } catch (error) {
     console.error('Sign out error:', error);
-    // Force navigation even if signOut fails
-    window.location.href = '/auth';
+    // Navigate even if signOut fails
+    window.history.pushState({}, '', '/auth');
+    window.dispatchEvent(new PopStateEvent('popstate'));
   }
 };
 
@@ -66,8 +68,9 @@ export const signInSafely = async (email: string, password: string) => {
     if (error) throw error;
     
     if (data.user) {
-      // Force page reload for clean state
-      window.location.href = '/';
+      // Navigate to home without refresh
+      window.history.pushState({}, '', '/');
+      window.dispatchEvent(new PopStateEvent('popstate'));
     }
     
     return { data, error: null };

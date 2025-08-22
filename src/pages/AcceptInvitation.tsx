@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useSearchParams, Navigate } from "react-router-dom";
+import { useSearchParams, Navigate, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,6 +13,7 @@ export default function AcceptInvitation() {
   const [error, setError] = useState<string | null>(null);
   const [accepted, setAccepted] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
   
   const invitationId = searchParams.get("id");
 
@@ -69,9 +70,9 @@ export default function AcceptInvitation() {
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
-        // Redirect to dedicated invitation signup page
+        // Navigate to dedicated invitation signup page
         const redirectUrl = `/invitation-signup?invitation=${invitationId}&email=${encodeURIComponent(invitation.email)}`;
-        window.location.href = redirectUrl;
+        navigate(redirectUrl);
         return;
       }
 
@@ -118,9 +119,9 @@ export default function AcceptInvitation() {
         description: "You have successfully joined the organization.",
       });
 
-      // Redirect to dashboard after 2 seconds
+      // Navigate to dashboard after 2 seconds
       setTimeout(() => {
-        window.location.href = "/";
+        navigate("/");
       }, 2000);
 
     } catch (error) {
@@ -171,7 +172,7 @@ export default function AcceptInvitation() {
           <CardContent className="text-center">
             <Button 
               variant="outline" 
-              onClick={() => window.location.href = "/"}
+              onClick={() => navigate("/")}
             >
               Return to Home
             </Button>
@@ -215,7 +216,7 @@ export default function AcceptInvitation() {
             
             <Button 
               variant="outline" 
-              onClick={() => window.location.href = "/"}
+              onClick={() => navigate("/")}
               className="w-full"
             >
               Decline

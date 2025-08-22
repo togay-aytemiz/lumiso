@@ -98,8 +98,9 @@ export function UnifiedClientDetails({
       }))
   ];
 
-  // Filter out empty fields for display (but show all in edit mode)
-  const fieldsToShow = allFields.filter(field => field.value);
+  // Filter out empty fields for display and separate core from custom
+  const coreFields = allFields.filter(field => field.type === 'core' && field.value);
+  const customFields = allFields.filter(field => field.type === 'custom' && field.value);
 
   // Get phone and email for quick actions (from any field)
   const phoneField = allFields.find(field => 
@@ -151,11 +152,11 @@ export function UnifiedClientDetails({
           </div>
         </CardHeader>
         <CardContent className="space-y-3">
-          {fieldsToShow.length === 0 ? (
+          {coreFields.length === 0 ? (
             <p className="text-sm text-muted-foreground">No client information available.</p>
           ) : (
             <div className="space-y-3">
-              {fieldsToShow.map(field => (
+              {coreFields.map(field => (
                 <div key={field.key} className="grid grid-cols-3 gap-3 items-start">
                   <label className="text-sm font-medium text-muted-foreground">
                     {field.label}
@@ -169,22 +170,22 @@ export function UnifiedClientDetails({
                           >
                            {field.value}
                          </button>
-                        ) : field.key === 'notes' && field.value ? (
-                          <FieldTextareaDisplay 
-                            value={field.value} 
-                            maxLines={2}
-                          />
-                        ) : (
+                       ) : field.key === 'notes' && field.value ? (
+                         <FieldTextareaDisplay 
+                           value={field.value} 
+                           maxLines={2}
+                         />
+                       ) : (
                          <span className="break-words">{field.value || 'Not provided'}</span>
                        )
                      ) : (
-                        <CustomFieldDisplay
-                          fieldDefinition={field.fieldDefinition!}
-                          value={field.value}
-                          showCopyButtons={false}
-                          allowTruncation={true}
-                          maxLines={2}
-                        />
+                       <CustomFieldDisplay
+                         fieldDefinition={field.fieldDefinition!}
+                         value={field.value}
+                         showCopyButtons={false}
+                         allowTruncation={true}
+                         maxLines={2}
+                       />
                      )}
                    </div>
                 </div>
@@ -234,6 +235,30 @@ export function UnifiedClientDetails({
                   </a>
                 </Button>
               )}
+            </div>
+          )}
+
+          {/* Custom Fields Section */}
+          {customFields.length > 0 && (
+            <div className="pt-3 border-t">
+              <div className="space-y-3">
+                {customFields.map(field => (
+                  <div key={field.key} className="grid grid-cols-3 gap-3 items-start">
+                    <label className="text-sm font-medium text-muted-foreground">
+                      {field.label}
+                    </label>
+                    <div className="col-span-2 text-sm">
+                      <CustomFieldDisplay
+                        fieldDefinition={field.fieldDefinition!}
+                        value={field.value}
+                        showCopyButtons={false}
+                        allowTruncation={true}
+                        maxLines={2}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </CardContent>

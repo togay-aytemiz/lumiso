@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLeadFieldDefinitions } from "@/hooks/useLeadFieldDefinitions";
 import { useLeadFieldValues } from "@/hooks/useLeadFieldValues";
 import { Skeleton } from "@/components/ui/skeleton";
-import { format } from "date-fns";
+import { CustomFieldDisplay } from "@/components/fields/CustomFieldDisplay";
 
 interface LeadFieldValuesDisplayProps {
   leadId: string;
@@ -59,60 +59,6 @@ export function LeadFieldValuesDisplay({ leadId, className }: LeadFieldValuesDis
     );
   }
 
-  const renderFieldValue = (fieldDef: any, value: string | null) => {
-    if (!value) {
-      return <span className="text-muted-foreground italic">Not provided</span>;
-    }
-
-    switch (fieldDef.field_type) {
-      case 'email':
-        return (
-          <a 
-            href={`mailto:${value}`} 
-            className="text-blue-600 hover:underline"
-          >
-            {value}
-          </a>
-        );
-      
-      case 'phone':
-        return (
-          <a 
-            href={`tel:${value}`} 
-            className="text-blue-600 hover:underline"
-          >
-            {value}
-          </a>
-        );
-      
-      case 'date':
-        try {
-          return format(new Date(value), 'PPP');
-        } catch {
-          return value;
-        }
-      
-      case 'checkbox':
-        return (
-          <Badge variant={value === 'true' ? 'default' : 'secondary'}>
-            {value === 'true' ? 'Yes' : 'No'}
-          </Badge>
-        );
-      
-      case 'select':
-        return <Badge variant="outline">{value}</Badge>;
-      
-      case 'textarea':
-        return (
-          <div className="whitespace-pre-wrap text-sm bg-muted/50 p-2 rounded">
-            {value}
-          </div>
-        );
-      
-      default:
-        return <span>{value}</span>;
-    }
-  };
 
   return (
     <Card className={className}>
@@ -142,7 +88,13 @@ export function LeadFieldValuesDisplay({ leadId, className }: LeadFieldValuesDis
                   )}
                 </div>
                 <div className="text-sm">
-                  {renderFieldValue(field, fieldValue?.value || null)}
+                  <CustomFieldDisplay 
+                    fieldDefinition={field}
+                    value={fieldValue?.value || null}
+                    showCopyButtons={true}
+                    allowTruncation={true}
+                    maxLines={3}
+                  />
                 </div>
               </div>
             );

@@ -13,6 +13,7 @@ import AllProjects from "./pages/AllProjects";
 import LeadDetail from "./pages/LeadDetail";
 import ProjectDetail from "./pages/ProjectDetail";
 import UpcomingSessions from "./pages/UpcomingSessions";
+import SessionDetail from "./pages/SessionDetail";
 import Calendar from "./pages/Calendar";
 import ReminderDetails from "./pages/ReminderDetails";
 import Analytics from "./pages/Analytics";
@@ -61,6 +62,7 @@ const App = () => (
               <Route path="leads/:id" element={<LeadDetail />} />
               <Route path="projects/:id" element={<ProjectDetail />} />
               <Route path="sessions" element={<UpcomingSessions />} />
+              <Route path="sessions/:id" element={<SessionDetail />} />
               <Route path="calendar" element={<Calendar />} />
               <Route path="reminders" element={<ReminderDetails />} />
               <Route path="analytics" element={<Analytics />} />

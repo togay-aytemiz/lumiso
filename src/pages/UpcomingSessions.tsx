@@ -15,6 +15,7 @@ import { PageHeader, PageHeaderSearch, PageHeaderActions } from "@/components/ui
 import SessionStatusBadge from "@/components/SessionStatusBadge";
 import { ViewProjectDialog } from "@/components/ViewProjectDialog";
 import { FilterBar } from "@/components/FilterBar";
+import SessionSheetView from "@/components/SessionSheetView";
 
 interface Session {
   id: string;
@@ -43,6 +44,8 @@ const AllSessions = () => {
   const navigate = useNavigate();
   const [viewingProject, setViewingProject] = useState<any>(null);
   const [showProjectDialog, setShowProjectDialog] = useState(false);
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
+  const [isSessionSheetOpen, setIsSessionSheetOpen] = useState(false);
 
   useEffect(() => {
     fetchSessions();
@@ -260,7 +263,22 @@ const AllSessions = () => {
   };
 
   const handleRowClick = (session: Session) => {
-    navigate(`/leads/${session.lead_id}`, { state: { from: 'all-sessions' } });
+    setSelectedSessionId(session.id);
+    setIsSessionSheetOpen(true);
+  };
+
+  const handleViewFullSessionDetails = () => {
+    if (selectedSessionId) {
+      navigate(`/sessions/${selectedSessionId}`);
+    }
+  };
+
+  const handleNavigateToLead = (leadId: string) => {
+    navigate(`/leads/${leadId}`);
+  };
+
+  const handleNavigateToProject = (projectId: string) => {
+    navigate(`/projects/${projectId}`);
   };
 
   const handleProjectClick = async (e: React.MouseEvent, session: Session) => {
@@ -610,6 +628,17 @@ const AllSessions = () => {
         onProjectUpdated={fetchSessions}
         leadName={viewingProject?.leads?.name || ''}
       />
+
+      {selectedSessionId && (
+        <SessionSheetView
+          sessionId={selectedSessionId}
+          isOpen={isSessionSheetOpen}
+          onOpenChange={setIsSessionSheetOpen}
+          onViewFullDetails={handleViewFullSessionDetails}
+          onNavigateToLead={handleNavigateToLead}
+          onNavigateToProject={handleNavigateToProject}
+        />
+      )}
     </div>
   );
 };

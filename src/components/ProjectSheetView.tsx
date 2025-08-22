@@ -543,27 +543,28 @@ export function ProjectSheetView({
                 </div>
               </div>
               
-              {/* Desktop Assignees row */}
-              <div className="hidden md:flex items-center gap-4 mt-16 pt-4">
-                <AssigneesList
-                  assignees={project.assignees || []}
-                  entityType="project"
-                  entityId={project.id}
-                  onUpdate={handleAssigneesUpdate}
-                />
-              </div>
             </div>
           </div>
         )}
       </div>
       
       <div className="flex items-center gap-1 shrink-0 self-start">
+        {/* Desktop Assignees - moved here to be left of buttons */}
+        <div className="hidden md:flex items-center mr-4">
+          <AssigneesList
+            assignees={project.assignees || []}
+            entityType="project"
+            entityId={project.id}
+            onUpdate={handleAssigneesUpdate}
+          />
+        </div>
+        
         {mode === 'sheet' && onViewFullDetails && (
           <Button 
             variant="ghost" 
             size="sm" 
             onClick={onViewFullDetails}
-            className="text-muted-foreground hover:text-foreground h-8 px-2 gap-1 md:h-10 md:px-3"
+            className="text-muted-foreground hover:bg-muted h-8 px-2 gap-1 md:h-10 md:px-3"
           >
             <ExternalLink className="h-4 w-4" />
             <span className="text-sm hidden md:inline">Full Details</span>
@@ -576,8 +577,7 @@ export function ProjectSheetView({
               <Button 
                 variant="ghost" 
                 size="sm" 
-                aria-label="More actions" 
-                className="text-muted-foreground hover:text-foreground h-8 px-2 gap-1 md:h-10 md:px-3"
+                className="text-muted-foreground hover:bg-muted h-8 px-2 gap-1 md:h-10 md:px-3"
               >
                 <span className="text-sm hidden md:inline">More</span>
                 <ChevronDown className="h-4 w-4" />
@@ -610,7 +610,7 @@ export function ProjectSheetView({
           variant="ghost" 
           size="sm" 
           onClick={() => onOpenChange(false)} 
-          className="text-muted-foreground hover:text-foreground text-sm h-8 px-2 md:h-10 md:px-3"
+          className="text-muted-foreground hover:bg-muted text-sm h-8 px-2 md:h-10 md:px-3"
         >
           <span className="hidden md:inline">Close</span>
           <X className="h-4 w-4 md:hidden" />

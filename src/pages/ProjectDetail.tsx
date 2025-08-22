@@ -406,7 +406,7 @@ export default function ProjectDetail() {
                   <ArrowLeft 
                     className="h-6 w-6 cursor-pointer text-foreground hover:text-[hsl(var(--accent-foreground))] transition-colors" 
                     strokeWidth={2.5}
-                    onClick={() => navigate('/projects')}
+                    onClick={() => window.history.back()}
                   />
                   <Input 
                     value={editName} 
@@ -459,7 +459,7 @@ export default function ProjectDetail() {
                   <ArrowLeft 
                     className="h-6 w-6 cursor-pointer text-foreground hover:text-[hsl(var(--accent-foreground))] transition-colors" 
                     strokeWidth={2.5}
-                    onClick={() => navigate('/projects')}
+                    onClick={() => window.history.back()}
                   />
                   <h1 className="text-4xl font-bold leading-tight break-words">
                     {project?.name}

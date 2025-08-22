@@ -36,6 +36,42 @@ export const isOverdueSession = (dateString: string, status: string): boolean =>
   return sessionDateOnly < todayOnly && status === 'planned';
 };
 
+export const hasUpcomingPlannedSessions = (sessions: Array<{session_date: string, status: string}>): boolean => {
+  const today = new Date();
+  const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  
+  return sessions.some(session => {
+    if (session.status !== 'planned') return false;
+    
+    const sessionDate = new Date(session.session_date);
+    const sessionDateOnly = new Date(sessionDate.getFullYear(), sessionDate.getMonth(), sessionDate.getDate());
+    
+    return sessionDateOnly >= todayOnly;
+  });
+};
+
+export const getNextPlannedSession = (sessions: Array<{session_date: string, session_time: string, status: string}>): {session_date: string, session_time: string} | null => {
+  const today = new Date();
+  const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  
+  const upcomingSessions = sessions
+    .filter(session => {
+      if (session.status !== 'planned') return false;
+      
+      const sessionDate = new Date(session.session_date);
+      const sessionDateOnly = new Date(sessionDate.getFullYear(), sessionDate.getMonth(), sessionDate.getDate());
+      
+      return sessionDateOnly >= todayOnly;
+    })
+    .sort((a, b) => {
+      const dateComparison = a.session_date.localeCompare(b.session_date);
+      if (dateComparison !== 0) return dateComparison;
+      return a.session_time.localeCompare(b.session_time);
+    });
+  
+  return upcomingSessions.length > 0 ? upcomingSessions[0] : null;
+};
+
 export const getDateDisplayClasses = (dateString: string): string => {
   const relativeDate = getRelativeDate(dateString);
   

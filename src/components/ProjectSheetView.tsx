@@ -564,7 +564,7 @@ export function ProjectSheetView({
             variant="ghost" 
             size="sm" 
             onClick={onViewFullDetails}
-            className="text-muted-foreground hover:bg-muted h-8 px-2 gap-1 md:h-10 md:px-3"
+            className="text-muted-foreground hover:bg-accent hover:text-accent-foreground h-8 px-2 gap-1 md:h-10 md:px-3"
           >
             <ExternalLink className="h-4 w-4" />
             <span className="text-sm hidden md:inline">Full Details</span>
@@ -577,7 +577,7 @@ export function ProjectSheetView({
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className="text-muted-foreground hover:bg-muted h-8 px-2 gap-1 md:h-10 md:px-3"
+            className="text-muted-foreground hover:bg-accent hover:text-accent-foreground h-8 px-2 gap-1 md:h-10 md:px-3"
               >
                 <span className="text-sm hidden md:inline">More</span>
                 <ChevronDown className="h-4 w-4" />
@@ -610,7 +610,7 @@ export function ProjectSheetView({
           variant="ghost" 
           size="sm" 
           onClick={() => onOpenChange(false)} 
-          className="text-muted-foreground hover:bg-muted text-sm h-8 px-2 md:h-10 md:px-3"
+          className="text-muted-foreground hover:bg-accent hover:text-accent-foreground text-sm h-8 px-2 md:h-10 md:px-3"
         >
           <span className="hidden md:inline">Close</span>
           <X className="h-4 w-4 md:hidden" />

@@ -26,6 +26,9 @@ import SessionStatusBadge from '@/components/SessionStatusBadge';
 import { formatLongDate, formatTime } from '@/lib/utils';
 import EditSessionDialog from '@/components/EditSessionDialog';
 import { useSessionActions } from '@/hooks/useSessionActions';
+import ProjectDetailsLayout from '@/components/project-details/ProjectDetailsLayout';
+import { UnifiedClientDetails } from '@/components/UnifiedClientDetails';
+import SessionGallery from '@/components/SessionGallery';
 
 interface Session {
   id: string;
@@ -40,6 +43,9 @@ interface Session {
   leads?: {
     id: string;
     name: string;
+    email?: string | null;
+    phone?: string | null;
+    notes?: string | null;
   };
   projects?: {
     id: string;
@@ -71,7 +77,10 @@ export default function SessionDetail() {
           *,
           leads:lead_id (
             id,
-            name
+            name,
+            email,
+            phone,
+            notes
           ),
           projects:project_id (
             id,
@@ -183,152 +192,187 @@ export default function SessionDetail() {
     );
   }
 
-  return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="border-b bg-background">
-        <div className="max-w-full mx-auto px-6 py-6">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex-1 min-w-0">
-              <div className="space-y-4">
-                <div className="flex items-center gap-3 flex-wrap">
-                  <ArrowLeft 
-                    className="h-6 w-6 cursor-pointer text-foreground hover:text-[hsl(var(--accent-foreground))] transition-colors" 
-                    strokeWidth={2.5}
-                    onClick={() => navigate('/sessions')}
-                  />
-                  <h1 className="text-xl sm:text-2xl font-bold leading-tight break-words">
-                    {getSessionName()}
-                  </h1>
-                  
-                  {/* Session Status and Project Type Badges */}
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <SessionStatusBadge
-                      sessionId={session.id}
-                      currentStatus={session.status as any}
-                      editable={true}
-                      onStatusChange={handleStatusChange}
-                      className="text-sm"
-                    />
-                    
-                    {session.projects?.project_types && (
-                      <Badge variant="outline" className="text-sm px-3 py-1">
-                        {session.projects.project_types.name.toUpperCase()}
-                      </Badge>
-                    )}
-                  </div>
-                </div>
+  const header = (
+    <div className="border-b bg-background">
+      <div className="max-w-full mx-auto px-6 py-6">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 flex-wrap">
+                <ArrowLeft 
+                  className="h-6 w-6 cursor-pointer text-foreground hover:text-[hsl(var(--accent-foreground))] transition-colors" 
+                  strokeWidth={2.5}
+                  onClick={() => navigate('/sessions')}
+                />
+                <h1 className="text-xl sm:text-2xl font-bold leading-tight break-words">
+                  {getSessionName()}
+                </h1>
                 
-                {/* Session Date & Time */}
-                <p className="text-muted-foreground text-lg">
-                  {formatLongDate(session.session_date)} at {formatTime(session.session_time)}
-                </p>
+                {/* Session Status and Project Type Badges */}
+                <div className="flex items-center gap-3 flex-wrap">
+                  <SessionStatusBadge
+                    sessionId={session.id}
+                    currentStatus={session.status as any}
+                    editable={true}
+                    onStatusChange={handleStatusChange}
+                    className="text-sm"
+                  />
+                  
+                  {session.projects?.project_types && (
+                    <Badge variant="outline" className="text-sm px-3 py-1">
+                      {session.projects.project_types.name.toUpperCase()}
+                    </Badge>
+                  )}
+                </div>
               </div>
+              
+              {/* Session Date & Time */}
+              <p className="text-muted-foreground text-lg">
+                {formatLongDate(session.session_date)} at {formatTime(session.session_time)}
+              </p>
             </div>
-            
-            <div className="flex items-center gap-2 shrink-0 self-start">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    size="lg"
-                    className="gap-2"
-                  >
-                    <span>More Actions</span>
-                    <ChevronDown className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" side="bottom">
-                  <DropdownMenuItem onClick={handleEdit}>
-                    <Edit className="mr-2 h-4 w-4" />
-                    <span>Edit Session</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={() => setIsDeleteDialogOpen(true)}
-                    className="text-destructive focus:text-destructive"
-                  >
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    <span>Delete Session</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+          </div>
+          
+          <div className="flex items-center gap-2 shrink-0 self-start">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  size="lg"
+                  className="gap-2"
+                >
+                  <span>More Actions</span>
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" side="bottom">
+                <DropdownMenuItem onClick={handleEdit}>
+                  <Edit className="mr-2 h-4 w-4" />
+                  <span>Edit Session</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => setIsDeleteDialogOpen(true)}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  <span>Delete Session</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>
+    </div>
+  );
 
-      {/* Content */}
-      <div className="max-w-full mx-auto px-6 py-6 space-y-6">
-        {/* Session Details */}
-        <Card>
-          <CardContent className="p-6">
-            <h3 className="text-lg font-semibold mb-4">Session Details</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Date & Time</label>
-                  <p className="text-sm">
-                    {formatLongDate(session.session_date)} at {formatTime(session.session_time)}
-                  </p>
-                </div>
-                
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Client</label>
-                  <p className="text-sm">
-                    <button
-                      onClick={handleLeadClick}
-                      className="text-primary hover:underline"
-                    >
-                      {session.leads?.name || 'Unknown Client'}
-                    </button>
-                  </p>
-                </div>
+  const leftContent = session.leads && (
+    <UnifiedClientDetails
+      lead={{
+        id: session.leads.id,
+        name: session.leads.name,
+        email: session.leads.email,
+        phone: session.leads.phone,
+        notes: session.leads.notes,
+      }}
+      title="Client Details"
+      showQuickActions={true}
+      showClickableNames={true}
+    />
+  );
 
-                {session.projects && (
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">Project</label>
-                    <p className="text-sm">
-                      <button
-                        onClick={handleProjectClick}
-                        className="text-primary hover:underline"
-                      >
-                        {session.projects.name}
-                      </button>
-                    </p>
-                  </div>
-                )}
+  const sessionDetailsCard = (
+    <Card>
+      <CardContent className="p-6">
+        <h3 className="text-lg font-semibold mb-4">Session Details</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Date & Time</label>
+              <p className="text-sm">
+                {formatLongDate(session.session_date)} at {formatTime(session.session_time)}
+              </p>
+            </div>
+            
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Client</label>
+              <p className="text-sm">
+                <button
+                  onClick={handleLeadClick}
+                  className="text-primary hover:underline"
+                >
+                  {session.leads?.name || 'Unknown Client'}
+                </button>
+              </p>
+            </div>
 
-                {session.projects?.project_types && (
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">Project Type</label>
-                    <p className="text-sm">{session.projects.project_types.name}</p>
-                  </div>
-                )}
+            {session.projects && (
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">Project</label>
+                <p className="text-sm">
+                  <button
+                    onClick={handleProjectClick}
+                    className="text-primary hover:underline"
+                  >
+                    {session.projects.name}
+                  </button>
+                </p>
               </div>
+            )}
 
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Status</label>
-                  <div className="mt-1">
-                    <SessionStatusBadge
-                      sessionId={session.id}
-                      currentStatus={session.status as any}
-                      editable={true}
-                      onStatusChange={handleStatusChange}
-                    />
-                  </div>
-                </div>
+            {session.projects?.project_types && (
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">Project Type</label>
+                <p className="text-sm">{session.projects.project_types.name}</p>
+              </div>
+            )}
+          </div>
 
-                {session.notes && (
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">Notes</label>
-                    <p className="text-sm">{session.notes}</p>
-                  </div>
-                )}
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Status</label>
+              <div className="mt-1">
+                <SessionStatusBadge
+                  sessionId={session.id}
+                  currentStatus={session.status as any}
+                  editable={true}
+                  onStatusChange={handleStatusChange}
+                />
               </div>
             </div>
-          </CardContent>
-        </Card>
+
+            {session.notes && (
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">Notes</label>
+                <p className="text-sm">{session.notes}</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  const sections = [
+    {
+      id: 'session-details',
+      title: 'Session Details',
+      content: sessionDetailsCard
+    },
+    {
+      id: 'session-gallery',
+      title: 'Session Gallery',
+      content: <SessionGallery sessionId={session.id} />
+    }
+  ];
+
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="max-w-full mx-auto px-6 py-6">
+        <ProjectDetailsLayout
+          header={header}
+          left={leftContent}
+          sections={sections}
+        />
       </div>
 
       {/* Edit Dialog */}

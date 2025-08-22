@@ -32,6 +32,8 @@ import SessionStatusBadge from '@/components/SessionStatusBadge';
 import { formatLongDate, formatTime } from '@/lib/utils';
 import EditSessionDialog from '@/components/EditSessionDialog';
 import { useSessionActions } from '@/hooks/useSessionActions';
+import { UnifiedClientDetails } from '@/components/UnifiedClientDetails';
+import SessionGallery from '@/components/SessionGallery';
 
 interface Session {
   id: string;
@@ -46,6 +48,9 @@ interface Session {
   leads?: {
     id: string;
     name: string;
+    email?: string | null;
+    phone?: string | null;
+    notes?: string | null;
   };
   projects?: {
     id: string;
@@ -92,7 +97,10 @@ export default function SessionSheetView({
           *,
           leads:lead_id (
             id,
-            name
+            name,
+            email,
+            phone,
+            notes
           ),
           projects:project_id (
             id,
@@ -303,73 +311,100 @@ export default function SessionSheetView({
                 </div>
               </SheetHeader>
 
-              <div className="py-6 space-y-6">
-                {/* Session Details */}
-                <Card>
-                  <CardContent className="p-6">
-                    <h3 className="text-lg font-semibold mb-4">Session Details</h3>
-                    <div className="space-y-4">
-                      <div>
-                        <label className="text-sm font-medium text-muted-foreground">Date & Time</label>
-                        <p className="text-sm">
-                          {formatLongDate(session.session_date)} at {formatTime(session.session_time)}
-                        </p>
-                      </div>
-                      
-                      <div>
-                        <label className="text-sm font-medium text-muted-foreground">Client</label>
-                        <p className="text-sm">
-                          <button
-                            onClick={handleLeadClick}
-                            className="text-primary hover:underline"
-                          >
-                            {session.leads?.name || 'Unknown Client'}
-                          </button>
-                        </p>
-                      </div>
+              <div className="py-6">
+                {/* Mobile: Stack vertically, Desktop: Grid layout */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                  {/* Left Column - Client Details (1/3 on desktop) */}
+                  <div className="lg:col-span-4">
+                    {session.leads && (
+                      <UnifiedClientDetails
+                        lead={{
+                          id: session.leads.id,
+                          name: session.leads.name,
+                          email: session.leads.email,
+                          phone: session.leads.phone,
+                          notes: session.leads.notes,
+                        }}
+                        title="Client Details"
+                        showQuickActions={true}
+                        showClickableNames={true}
+                      />
+                    )}
+                  </div>
 
-                      {session.projects && (
-                        <div>
-                          <label className="text-sm font-medium text-muted-foreground">Project</label>
-                          <p className="text-sm">
-                            <button
-                              onClick={handleProjectClick}
-                              className="text-primary hover:underline"
-                            >
-                              {session.projects.name}
-                            </button>
-                          </p>
-                        </div>
-                      )}
+                  {/* Right Column - Session Details + Gallery (2/3 on desktop) */}
+                  <div className="lg:col-span-8 space-y-6">
+                    {/* Session Details */}
+                    <Card>
+                      <CardContent className="p-6">
+                        <h3 className="text-lg font-semibold mb-4">Session Details</h3>
+                        <div className="space-y-4">
+                          <div>
+                            <label className="text-sm font-medium text-muted-foreground">Date & Time</label>
+                            <p className="text-sm">
+                              {formatLongDate(session.session_date)} at {formatTime(session.session_time)}
+                            </p>
+                          </div>
+                          
+                          <div>
+                            <label className="text-sm font-medium text-muted-foreground">Client</label>
+                            <p className="text-sm">
+                              <button
+                                onClick={handleLeadClick}
+                                className="text-primary hover:underline"
+                              >
+                                {session.leads?.name || 'Unknown Client'}
+                              </button>
+                            </p>
+                          </div>
 
-                      {session.projects?.project_types && (
-                        <div>
-                          <label className="text-sm font-medium text-muted-foreground">Project Type</label>
-                          <p className="text-sm">{session.projects.project_types.name}</p>
-                        </div>
-                      )}
+                          {session.projects && (
+                            <div>
+                              <label className="text-sm font-medium text-muted-foreground">Project</label>
+                              <p className="text-sm">
+                                <button
+                                  onClick={handleProjectClick}
+                                  className="text-primary hover:underline"
+                                >
+                                  {session.projects.name}
+                                </button>
+                              </p>
+                            </div>
+                          )}
 
-                      <div>
-                        <label className="text-sm font-medium text-muted-foreground">Status</label>
-                        <div className="mt-1">
-                          <SessionStatusBadge
-                            sessionId={session.id}
-                            currentStatus={session.status as any}
-                            editable={true}
-                            onStatusChange={handleStatusChange}
-                          />
-                        </div>
-                      </div>
+                          {session.projects?.project_types && (
+                            <div>
+                              <label className="text-sm font-medium text-muted-foreground">Project Type</label>
+                              <p className="text-sm">{session.projects.project_types.name}</p>
+                            </div>
+                          )}
 
-                      {session.notes && (
-                        <div>
-                          <label className="text-sm font-medium text-muted-foreground">Notes</label>
-                          <p className="text-sm">{session.notes}</p>
+                          <div>
+                            <label className="text-sm font-medium text-muted-foreground">Status</label>
+                            <div className="mt-1">
+                              <SessionStatusBadge
+                                sessionId={session.id}
+                                currentStatus={session.status as any}
+                                editable={true}
+                                onStatusChange={handleStatusChange}
+                              />
+                            </div>
+                          </div>
+
+                          {session.notes && (
+                            <div>
+                              <label className="text-sm font-medium text-muted-foreground">Notes</label>
+                              <p className="text-sm">{session.notes}</p>
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
+                      </CardContent>
+                    </Card>
+
+                    {/* Session Gallery */}
+                    <SessionGallery sessionId={session.id} />
+                  </div>
+                </div>
               </div>
             </>
           ) : (

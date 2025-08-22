@@ -605,25 +605,6 @@ export function ProjectSheetView({
           </DropdownMenu>
         )}
         
-        {/* Hide fullscreen toggle on mobile since it's always fullscreen */}
-        {mode === 'sheet' && (
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={toggleFullscreen} 
-            className="text-muted-foreground hover:text-foreground h-8 w-8 p-0 md:h-10 md:w-10 hidden md:flex"
-          >
-            {isFullscreen ? (
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 9h6m-6 0V3m0 6l6-6M15 15v6m0-6H9m6 0l-6 6" />
-              </svg>
-            ) : (
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-              </svg>
-            )}
-          </Button>
-        )}
         
         <Button 
           variant="ghost" 

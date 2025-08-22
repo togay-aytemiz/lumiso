@@ -761,7 +761,7 @@ export function ProjectSheetView({
         <Sheet open={open} onOpenChange={handleDialogOpenChange}>
           <SheetContent 
             side={isMobile ? "bottom" : "right"}
-            className={`${isFullscreen ? 'max-w-none w-[100vw] h-[100vh] m-0 rounded-none overflow-y-auto' : 'sm:max-w-5xl max-h-[85vh] overflow-y-auto'} overscroll-contain pr-2 pt-8 sm:pt-6`}
+            className={`${isFullscreen ? 'max-w-none w-[100vw] h-[100vh] m-0 rounded-none overflow-y-auto' : isMobile ? 'h-[100vh] max-w-none w-full' : 'sm:max-w-5xl h-[100vh] overflow-y-auto'} overscroll-contain pr-2 pt-8 sm:pt-6`}
           >
             <div className="max-w-full overflow-x-hidden">
               <SheetHeader className="pb-4">

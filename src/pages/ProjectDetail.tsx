@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Save, X, Pencil, Archive, ArchiveRestore, ArrowLeft } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Save, X, ChevronDown, Pencil, Archive, ArchiveRestore, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ProjectActivitySection } from "@/components/ProjectActivitySection";
 import { ProjectTodoListEnhanced } from "@/components/ProjectTodoListEnhanced";
@@ -15,11 +16,10 @@ import { ProjectStatusBadge } from "@/components/ProjectStatusBadge";
 import { ProjectTypeSelector } from "@/components/ProjectTypeSelector";
 import { ProjectPaymentsSection } from "@/components/ProjectPaymentsSection";
 import ProjectDetailsLayout from "@/components/project-details/ProjectDetailsLayout";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { UnifiedClientDetails } from "@/components/UnifiedClientDetails";
 import { AssigneesList } from "@/components/AssigneesList";
-import ProjectSummaryCard from "@/components/project-details/Summary/ProjectSummaryCard";
 import { onArchiveToggle } from "@/components/ViewProjectDialog";
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 
 interface Project {
   id: string;
@@ -44,6 +44,16 @@ interface Lead {
   notes: string | null;
 }
 
+interface Session {
+  id: string;
+  session_date: string;
+  session_time: string;
+  notes: string;
+  status: 'planned' | 'completed' | 'in_post_processing' | 'delivered' | 'cancelled';
+  project_id?: string;
+  lead_id: string;
+}
+
 interface ProjectType {
   id: string;
   name: string;
@@ -57,7 +67,9 @@ export default function ProjectDetail() {
   const [project, setProject] = useState<Project | null>(null);
   const [lead, setLead] = useState<Lead | null>(null);
   const [projectType, setProjectType] = useState<ProjectType | null>(null);
+  const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
+  const [sessionLoading, setSessionLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState("");
   const [editDescription, setEditDescription] = useState("");
@@ -67,7 +79,7 @@ export default function ProjectDetail() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isArchived, setIsArchived] = useState(false);
   const [localStatusId, setLocalStatusId] = useState<string | null | undefined>(null);
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [servicesVersion, setServicesVersion] = useState(0);
 
   const fetchProject = async () => {
     if (!id) return;
@@ -92,6 +104,30 @@ export default function ProjectDetail() {
         variant: "destructive"
       });
       navigate('/projects');
+    }
+  };
+
+  const fetchProjectSessions = async () => {
+    if (!project) return;
+    setSessionLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('sessions')
+        .select('*')
+        .eq('project_id', project.id)
+        .order('session_date', { ascending: false });
+      
+      if (error) throw error;
+      setSessions(data || []);
+    } catch (error: any) {
+      console.error('Error fetching project sessions:', error);
+      toast({
+        title: "Error loading sessions",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setSessionLoading(false);
     }
   };
 
@@ -172,6 +208,7 @@ export default function ProjectDetail() {
       fetchLead();
       fetchProjectType();
       checkArchiveStatus();
+      fetchProjectSessions();
       setLoading(false);
     }
   }, [project]);
@@ -218,7 +255,6 @@ export default function ProjectDetail() {
 
       setIsEditing(false);
       await fetchProject();
-      setRefreshTrigger(prev => prev + 1);
     } catch (error: any) {
       toast({
         title: "Error updating project",
@@ -290,6 +326,34 @@ export default function ProjectDetail() {
     }
   };
 
+  const handleSessionUpdated = () => {
+    fetchProjectSessions();
+  };
+
+  const handleDeleteSession = async (sessionId: string) => {
+    try {
+      const { error } = await supabase
+        .from('sessions')
+        .delete()
+        .eq('id', sessionId);
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Success",
+        description: "Session deleted successfully."
+      });
+      
+      fetchProjectSessions();
+    } catch (error: any) {
+      toast({
+        title: "Error deleting session",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  };
+
   const handleArchiveAction = async () => {
     if (!project) return;
     
@@ -303,7 +367,7 @@ export default function ProjectDetail() {
       });
       
       await fetchProject();
-      setRefreshTrigger(prev => prev + 1);
+      checkArchiveStatus();
     } catch (error: any) {
       toast({
         title: "Error",
@@ -315,17 +379,11 @@ export default function ProjectDetail() {
 
   const handleAssigneesUpdate = () => {
     fetchProject();
-    setRefreshTrigger(prev => prev + 1);
-  };
-
-  const handleActivityUpdate = () => {
-    setRefreshTrigger(prev => prev + 1);
   };
 
   const handleStatusChange = () => {
     fetchProject();
     checkArchiveStatus();
-    setRefreshTrigger(prev => prev + 1);
   };
 
   if (loading || !project) {
@@ -336,224 +394,260 @@ export default function ProjectDetail() {
     );
   }
 
-  // Header content
-  const headerContent = (
-    <div className="flex items-center justify-between gap-4">
-      <div className="flex items-center gap-3">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => navigate('/projects')}
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Projects
-        </Button>
-      </div>
-      
-      <div className="flex items-center gap-2">
-        {!isEditing ? (
-          <>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsEditing(true)}
-            >
-              <Pencil className="h-4 w-4 mr-2" />
-              Edit
-            </Button>
-            
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm">
-                  Actions
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={handleArchiveAction}>
-                  {isArchived ? (
-                    <>
-                      <ArchiveRestore className="h-4 w-4 mr-2" />
-                      Restore Project
-                    </>
-                  ) : (
-                    <>
-                      <Archive className="h-4 w-4 mr-2" />
-                      Archive Project
-                    </>
-                  )}
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={() => setShowDeleteDialog(true)}
-                  className="text-destructive"
-                >
-                  <X className="h-4 w-4 mr-2" />
-                  Delete Project
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </>
-        ) : (
-          <>
-            <Button
-              onClick={handleSaveProject}
-              disabled={isSaving || !editName.trim() || !editProjectTypeId}
-              size="sm"
-            >
-              <Save className="h-4 w-4 mr-2" />
-              {isSaving ? "Saving..." : "Save"}
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setIsEditing(false);
-                setEditName(project.name);
-                setEditDescription(project.description || "");
-                setEditProjectTypeId(project.project_type_id || "");
-              }}
-              size="sm"
-            >
-              Cancel
-            </Button>
-          </>
-        )}
-      </div>
-    </div>
-  );
-
-  // Left sidebar content
-  const leftContent = (
-    <div className="space-y-4">
-      <ProjectSummaryCard
-        projectId={project.id}
-        name={isEditing ? editName : project.name}
-        projectTypeName={projectType?.name}
-        statusId={localStatusId}
-        onStatusChange={handleStatusChange}
-      />
-      
-      {lead && (
-        <UnifiedClientDetails
-          lead={lead}
-          showQuickActions={true}
-        />
-      )}
-      
-      <AssigneesList
-        assignees={project.assignees || []}
-        entityType="project"
-        entityId={project.id}
-        onUpdate={handleAssigneesUpdate}
-      />
-    </div>
-  );
-
-  // Main content sections
-  const sections = [
-    {
-      id: "details",
-      title: "Project Details",
-      content: isEditing ? (
-        <div className="space-y-4">
-          <div>
-            <label className="text-sm font-medium mb-1 block">Project Name</label>
-            <Input
-              value={editName}
-              onChange={(e) => setEditName(e.target.value)}
-              placeholder="Enter project name"
-            />
-          </div>
-          <div>
-            <label className="text-sm font-medium mb-1 block">Description</label>
-            <Textarea
-              value={editDescription}
-              onChange={(e) => setEditDescription(e.target.value)}
-              placeholder="Enter project description"
-              rows={3}
-            />
-          </div>
-          <div>
-            <label className="text-sm font-medium mb-1 block">Project Type</label>
-            <ProjectTypeSelector
-              value={editProjectTypeId}
-              onValueChange={setEditProjectTypeId}
-            />
-          </div>
+  return (
+    <div className="w-full min-h-screen p-6 max-w-7xl mx-auto">
+      {/* Header - same as modal but optimized for page */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between gap-4 mb-6">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate('/projects')}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Projects
+          </Button>
         </div>
-      ) : (
-        <div className="space-y-3">
-          <div>
-            <h3 className="font-semibold text-lg">{project.name}</h3>
-            {project.description && (
-              <p className="text-muted-foreground mt-1">{project.description}</p>
+
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex-1 min-w-0 space-y-4">
+            {isEditing ? (
+              <div className="space-y-4">
+                <Input 
+                  value={editName} 
+                  onChange={e => setEditName(e.target.value)} 
+                  placeholder="Project name" 
+                  className="text-3xl font-bold border rounded-md px-4 py-3 h-auto" 
+                />
+                <Textarea 
+                  value={editDescription} 
+                  onChange={e => setEditDescription(e.target.value)} 
+                  placeholder="Project description (optional)" 
+                  className="text-lg border rounded-md px-4 py-3 resize-none" 
+                  rows={3} 
+                />
+                <ProjectTypeSelector 
+                  value={editProjectTypeId} 
+                  onValueChange={setEditProjectTypeId} 
+                  disabled={isSaving} 
+                  required 
+                />
+                <div className="flex gap-3">
+                  <Button 
+                    onClick={handleSaveProject} 
+                    disabled={isSaving || !editName.trim() || !editProjectTypeId}
+                    size="lg"
+                  >
+                    <Save className="h-4 w-4 mr-2" />
+                    {isSaving ? "Saving..." : "Save"}
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      setIsEditing(false);
+                      setEditName(project?.name || "");
+                      setEditDescription(project?.description || "");
+                      setEditProjectTypeId(project?.project_type_id || "");
+                    }} 
+                    disabled={isSaving}
+                    size="lg"
+                  >
+                    <X className="h-4 w-4 mr-2" />
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex items-center gap-4 flex-wrap">
+                  <h1 className="text-4xl font-bold leading-tight break-words">
+                    {project?.name}
+                  </h1>
+                  
+                  {/* Project Status and Type Badges */}
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <ProjectStatusBadge 
+                      projectId={project.id} 
+                      currentStatusId={localStatusId || undefined} 
+                      onStatusChange={handleStatusChange} 
+                      editable={!isArchived} 
+                      className="text-sm" 
+                    />
+                    
+                    {projectType && (
+                      <Badge variant="outline" className="text-sm px-3 py-1">
+                        {projectType.name.toUpperCase()}
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Project Description */}
+                {project?.description && (
+                  <p className="text-muted-foreground text-lg">
+                    {project.description}
+                  </p>
+                )}
+                
+                {/* Assignees */}
+                <div className="pt-4">
+                  <AssigneesList
+                    assignees={project.assignees || []}
+                    entityType="project"
+                    entityId={project.id}
+                    onUpdate={handleAssigneesUpdate}
+                  />
+                </div>
+              </div>
             )}
           </div>
-          {projectType && (
-            <div className="text-sm text-muted-foreground">
-              Type: <span className="font-medium">{projectType.name}</span>
-            </div>
-          )}
+          
+          <div className="flex items-center gap-2 shrink-0 self-start">
+            {!isEditing && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="lg"
+                    className="gap-2"
+                  >
+                    <span>More Actions</span>
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" side="bottom">
+                  <DropdownMenuItem onSelect={() => setIsEditing(true)}>
+                    <Pencil className="mr-2 h-4 w-4" />
+                    <span>Edit Project</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={handleArchiveAction}>
+                    {isArchived ? (
+                      <>
+                        <ArchiveRestore className="mr-2 h-4 w-4" />
+                        <span>Restore Project</span>
+                      </>
+                    ) : (
+                      <>
+                        <Archive className="mr-2 h-4 w-4" />
+                        <span>Archive Project</span>
+                      </>
+                    )}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
         </div>
-      )
-    },
-    {
-      id: "todos",
-      title: "Todo List",
-      content: (
-        <ProjectTodoListEnhanced
-          projectId={project.id}
-        />
-      )
-    },
-    {
-      id: "sessions",
-      title: "Sessions",
-      content: (
-        <div className="space-y-4">
-          {/* TODO: Replace with proper SessionsSection component that handles its own data fetching */}
-          <p className="text-muted-foreground text-sm">Sessions will be loaded here</p>
-        </div>
-      )
-    },
-    {
-      id: "services",
-      title: "Services",
-      content: (
-        <ProjectServicesSection
-          projectId={project.id}
-        />
-      )
-    },
-    {
-      id: "payments",
-      title: "Payments",
-      content: (
-        <ProjectPaymentsSection
-          projectId={project.id}
-        />
-      )
-    },
-    {
-      id: "activity",
-      title: "Activity",
-      content: (
-        <ProjectActivitySection
-          projectId={project.id}
-          leadId={project.lead_id}
-          leadName={lead?.name || ""}
-          projectName={project.name}
-          onActivityUpdated={handleActivityUpdate}
-        />
-      )
-    }
-  ];
+      </div>
 
-  return (
-    <>
-      <ProjectDetailsLayout
-        header={headerContent}
-        left={leftContent}
-        sections={sections}
-      />
+      {/* Archive Warning */}
+      {isArchived && (
+        <div className="mb-6 rounded-lg border border-border bg-muted/40 text-muted-foreground text-sm px-4 py-3">
+          This project is archived. Most actions are disabled. While archived, its sessions and reminders are hidden from calendars, the Sessions page, and activity lists. Use More Actions → Restore to re-enable editing and visibility.
+        </div>
+      )}
+
+      {/* Main Content - same layout but optimized for full page */}
+      <div className={isArchived ? 'opacity-60 pointer-events-none select-none' : ''}>
+        <ProjectDetailsLayout 
+          header={<></>} 
+          left={
+            <div className="space-y-6">
+              {lead && (
+                <UnifiedClientDetails 
+                  lead={lead} 
+                  showClickableNames={true}
+                  onLeadUpdated={() => {
+                    fetchLead();
+                  }} 
+                />
+              )}
+            </div>
+          } 
+          sections={[
+            {
+              id: 'payments',
+              title: 'Payments',
+              content: (
+                <ProjectPaymentsSection 
+                  projectId={project!.id} 
+                  onPaymentsUpdated={() => {
+                    // Refresh project data if needed
+                  }} 
+                  refreshToken={servicesVersion} 
+                />
+              )
+            }, 
+            {
+              id: 'services',
+              title: 'Services',
+              content: (
+                <ProjectServicesSection 
+                  projectId={project!.id} 
+                  onServicesUpdated={() => {
+                    setServicesVersion(v => v + 1);
+                  }} 
+                />
+              )
+            }, 
+            {
+              id: 'sessions',
+              title: 'Sessions',
+              content: (
+                <SessionsSection 
+                  sessions={sessions} 
+                  loading={sessionLoading} 
+                  leadId={project!.lead_id} 
+                  projectId={project!.id} 
+                  leadName={lead?.name || ""} 
+                  projectName={project!.name} 
+                  onSessionUpdated={handleSessionUpdated} 
+                  onDeleteSession={handleDeleteSession} 
+                />
+              )
+            }, 
+            {
+              id: 'activities',
+              title: 'Activities',
+              content: (
+                <ProjectActivitySection 
+                  projectId={project!.id} 
+                  leadId={project!.lead_id} 
+                  leadName={lead?.name || ""} 
+                  projectName={project!.name} 
+                  onActivityUpdated={() => {
+                    // Handle activity updates if needed
+                  }} 
+                />
+              )
+            }, 
+            {
+              id: 'todos',
+              title: 'Todos',
+              content: <ProjectTodoListEnhanced projectId={project!.id} />
+            }
+          ]} 
+          rightFooter={
+            <div className="border border-destructive/20 bg-destructive/5 rounded-lg p-6">
+              <div className="space-y-4">
+                <h3 className="font-medium text-destructive">Danger Zone</h3>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowDeleteDialog(true)} 
+                  className="w-full border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                  size="lg"
+                >
+                  Delete Project
+                </Button>
+                <p className="text-sm text-muted-foreground text-center">
+                  This will permanently delete the project and ALL related data: sessions, payments, todos, services, and activities.
+                </p>
+              </div>
+            </div>
+          } 
+        />
+      </div>
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
@@ -561,13 +655,12 @@ export default function ProjectDetail() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Project</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this project? This will permanently delete
-              the project and all related data including todos, sessions, payments, and activities.
-              This action cannot be undone.
+              Are you sure you want to delete "{project?.name}"? This action cannot be undone.
+              This will permanently delete the project and ALL related data including sessions, payments, todos, services, and activities.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteProject}
               disabled={isDeleting}
@@ -578,6 +671,6 @@ export default function ProjectDetail() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>
+    </div>
   );
 }

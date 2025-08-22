@@ -115,7 +115,7 @@ export function UnifiedClientDetails({
     return (
       <Card className={className}>
         <CardHeader>
-          <CardTitle>{title}</CardTitle>
+          <h3 className="text-lg font-semibold">{title}</h3>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">

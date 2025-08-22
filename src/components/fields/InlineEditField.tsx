@@ -93,7 +93,7 @@ export function InlineEditField({
           {isHovered && !isSaving && (
             <button
               onClick={onStartEdit}
-              className="absolute -top-1 -right-1 p-1 bg-background border border-border rounded-md shadow-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-accent z-20"
+              className="absolute top-0 -right-1 p-1 bg-background border border-border rounded-md shadow-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-20"
               title="Click to edit"
             >
               <Edit2 className="h-3 w-3 text-muted-foreground" />

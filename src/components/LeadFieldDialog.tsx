@@ -3,14 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Plus, Settings } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { AppSheetModal } from "@/components/ui/app-sheet-modal";
 import {
   Form,
   FormControl,
@@ -65,6 +58,7 @@ interface LeadFieldDialogProps {
 export function LeadFieldDialog({ open, onOpenChange, field, onClose }: LeadFieldDialogProps) {
   const { createFieldDefinition, updateFieldDefinition } = useLeadFieldDefinitions();
   const [loading, setLoading] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
   
   const isEdit = !!field;
   const isSystemField = field?.is_system || false;
@@ -79,6 +73,32 @@ export function LeadFieldDialog({ open, onOpenChange, field, onClose }: LeadFiel
       options: "",
     },
   });
+
+  // Track form dirty state
+  const formValues = form.watch();
+  useEffect(() => {
+    const hasChanges = Object.keys(formValues).some(key => {
+      const currentValue = formValues[key as keyof typeof formValues];
+      if (!field) return !!currentValue;
+      
+      switch(key) {
+        case 'label':
+          return currentValue !== field.label;
+        case 'field_type':  
+          return currentValue !== field.field_type;
+        case 'is_required':
+          return currentValue !== field.is_required;
+        case 'is_visible_in_form':
+          return currentValue !== field.is_visible_in_form;
+        case 'options':
+          const fieldOptions = field.options?.options?.join(", ") || "";
+          return currentValue !== fieldOptions;
+        default:
+          return false;
+      }
+    });
+    setIsDirty(hasChanges);
+  }, [formValues, field]);
 
   const selectedFieldType = form.watch("field_type") as LeadFieldType;
   const fieldTypeConfig = FIELD_TYPE_CONFIG[selectedFieldType];
@@ -138,24 +158,51 @@ export function LeadFieldDialog({ open, onOpenChange, field, onClose }: LeadFiel
     }
   };
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            {isEdit ? <Settings className="h-5 w-5" /> : <Plus className="h-5 w-5" />}
-            {isEdit ? "Edit Field" : "Add Custom Field"}
-          </DialogTitle>
-          <DialogDescription>
-            {isEdit 
-              ? "Modify the field configuration. System fields have limited editing options."
-              : "Create a new custom field to capture additional lead information."
-            }
-          </DialogDescription>
-        </DialogHeader>
+  const handleClose = () => {
+    if (isDirty) {
+      if (confirm('You have unsaved changes. Are you sure you want to close?')) {
+        onClose();
+      }
+    } else {
+      onClose();
+    }
+  };
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+  const footerActions = [
+    {
+      label: "Cancel",
+      onClick: onClose,
+      variant: "outline" as const,
+    },
+    {
+      label: loading ? "Saving..." : isEdit ? "Update Field" : "Create Field",
+      onClick: form.handleSubmit(onSubmit),
+      loading,
+      disabled: loading,
+    }
+  ];
+
+  return (
+    <AppSheetModal
+      title={isEdit ? "Edit Field" : "Add Custom Field"}
+      isOpen={open}
+      onOpenChange={onOpenChange}
+      size="lg"
+      dirty={isDirty}
+      onDirtyClose={handleClose}
+      footerActions={footerActions}
+    >
+      <div className="space-y-1 mb-6">
+        <p className="text-sm text-muted-foreground">
+          {isEdit 
+            ? "Modify the field configuration. System fields have limited editing options."
+            : "Create a new custom field to capture additional lead information."
+          }
+        </p>
+      </div>
+
+      <Form {...form}>
+        <div className="space-y-6">
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -284,18 +331,8 @@ export function LeadFieldDialog({ open, onOpenChange, field, onClose }: LeadFiel
                 </p>
               </div>
             )}
-
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={onClose}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={loading}>
-                {loading ? "Saving..." : isEdit ? "Update Field" : "Create Field"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+        </div>
+      </Form>
+    </AppSheetModal>
   );
 }

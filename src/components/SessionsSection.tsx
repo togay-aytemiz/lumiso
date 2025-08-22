@@ -71,7 +71,7 @@ export function SessionsSection({
               {!loading && <p className="text-sm text-muted-foreground mb-3">
                   This project includes {sessions.length} session{sessions.length !== 1 ? 's' : ''}
                 </p>}
-              {sessions.map(session => <CompactSessionBanner key={session.id} session={{...session, leads: { name: leadName }, projects: { name: projectName }}} onStatusUpdate={onSessionUpdated} onEdit={() => setEditingSessionId(session.id)} onDelete={() => onDeleteSession(session.id)} />)}
+              {sessions.map(session => <CompactSessionBanner key={session.id} session={{...session, leads: { name: leadName }, projects: { name: projectName, project_types: { name: projectName.split(' ')[0] } }}} onStatusUpdate={onSessionUpdated} onEdit={() => setEditingSessionId(session.id)} onDelete={() => onDeleteSession(session.id)} />)}
             </div> : <div className="text-center py-4">
               <Calendar className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
               <p className="text-muted-foreground text-sm">No sessions linked to this project</p>

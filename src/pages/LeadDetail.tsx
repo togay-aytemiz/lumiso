@@ -49,6 +49,12 @@ interface Session {
   status: SessionStatus;
   project_id?: string;
   project_name?: string;
+  projects?: {
+    name: string;
+    project_types?: {
+      name: string;
+    };
+  };
 }
 
 // Helpers: validation and phone normalization (TR defaults)
@@ -499,7 +505,10 @@ const LeadDetail = () => {
       } = await supabase.from('sessions').select(`
           *,
           projects:project_id (
-            name
+            name,
+            project_types (
+              name
+            )
           )
         `).eq('lead_id', id).order('created_at', {
         ascending: false
@@ -878,7 +887,10 @@ const LeadDetail = () => {
                   session={{
                     ...session, 
                     leads: { name: lead.name }, 
-                    projects: session.project_name ? { name: session.project_name } : undefined
+                    projects: session.projects ? {
+                      name: session.projects.name,
+                      project_types: session.projects.project_types
+                    } : undefined
                   }} 
                   onStatusUpdate={handleSessionUpdated} 
                   onEdit={() => setEditingSessionId(session.id)} 

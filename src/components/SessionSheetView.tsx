@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, ExternalLink, MoreVertical, Edit, Trash2, ChevronDown, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -74,6 +75,7 @@ export default function SessionSheetView({
 }: SessionSheetViewProps) {
   const { toast } = useToast();
   const { deleteSession } = useSessionActions();
+  const navigate = useNavigate();
   
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
@@ -171,6 +173,11 @@ export default function SessionSheetView({
     }
   };
 
+  const handleSessionClick = () => {
+    navigate(`/sessions/${sessionId}`);
+    onOpenChange(false);
+  };
+
   return (
     <>
       <Sheet open={isOpen} onOpenChange={onOpenChange}>
@@ -250,7 +257,7 @@ export default function SessionSheetView({
                     <Button 
                       variant="outline" 
                       size="sm" 
-                      onClick={onViewFullDetails}
+                      onClick={handleSessionClick}
                       className="text-sm h-8 px-2 md:h-10 md:px-3"
                     >
                       <span className="hidden md:inline">Full Details</span>

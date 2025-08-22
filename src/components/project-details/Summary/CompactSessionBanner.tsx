@@ -1,9 +1,9 @@
-import { Calendar, Clock, User, Folder, MoreVertical, Edit, Trash2 } from "lucide-react";
+import { Calendar, Clock, User, Folder, MoreVertical, Edit, Trash2, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { formatLongDate, formatTime } from "@/lib/utils";
+import { formatLongDate, formatTime, cn } from "@/lib/utils";
 import SessionStatusBadge from "@/components/SessionStatusBadge";
 
 type SessionStatus = 'planned' | 'completed' | 'in_post_processing' | 'delivered' | 'cancelled';
@@ -33,6 +33,7 @@ interface CompactSessionBannerProps {
   onStatusUpdate?: () => void;
   onLeadClick?: () => void;
   onProjectClick?: () => void;
+  onClick?: () => void;
   showActions?: boolean;
 }
 
@@ -43,6 +44,7 @@ const CompactSessionBanner = ({
   onStatusUpdate,
   onLeadClick,
   onProjectClick,
+  onClick,
   showActions = true 
 }: CompactSessionBannerProps) => {
   
@@ -54,7 +56,13 @@ const CompactSessionBanner = ({
   };
 
   return (
-    <Card className="shadow-sm hover:shadow-md transition-shadow border border-border bg-card">
+    <Card 
+      className={cn(
+        "shadow-sm border border-border bg-card transition-colors",
+        onClick ? "cursor-pointer hover:bg-gray-50" : "hover:shadow-md transition-shadow"
+      )}
+      onClick={onClick}
+    >
       <CardContent className="p-4">
         <div className="flex items-center justify-between gap-4">
           {/* Left section */}
@@ -63,6 +71,9 @@ const CompactSessionBanner = ({
               <h3 className="font-semibold text-base text-foreground truncate">
                 {getSessionName()}
               </h3>
+              {onClick && (
+                <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+              )}
               <SessionStatusBadge
                 sessionId={session.id}
                 currentStatus={session.status}

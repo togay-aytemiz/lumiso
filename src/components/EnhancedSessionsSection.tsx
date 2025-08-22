@@ -126,46 +126,39 @@ const EnhancedSessionsSection = ({ sessions, loading, onSessionClick }: Enhanced
               )}
               onClick={() => onSessionClick(session.id)}
             >
-              <CardContent className="p-0">
-                {/* Single flex container with perfect vertical centering */}
-                <div className="flex items-center justify-between h-20 px-4">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between min-h-[4rem]">
                   
-                  {/* Left content - all info stacked vertically */}
-                  <div className="flex flex-col justify-center space-y-1 flex-1 min-w-0">
+                  {/* Left content - compact vertical layout */}
+                  <div className="flex flex-col justify-center flex-1 min-w-0">
                     
-                    {/* Row 1: Session name + time label + overdue icon */}
-                    <div className="flex items-center gap-2 min-h-0">
-                      <span className="font-semibold text-sm truncate">
+                    {/* Main title row with badges */}
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="font-semibold text-sm truncate leading-tight">
                         {getSessionName(session)}
                       </span>
                       {timeIndicator.label && (
-                        <Badge variant="secondary" className={cn("text-xs px-2 py-0.5 shrink-0", timeIndicator.labelBg)}>
+                        <Badge variant="secondary" className={cn("text-xs px-1.5 py-0.5 shrink-0", timeIndicator.labelBg)}>
                           {timeIndicator.label}
                         </Badge>
                       )}
                       {isOverdue && (
-                        <AlertTriangle className="h-4 w-4 text-orange-500 shrink-0" />
+                        <AlertTriangle className="h-3 w-3 text-orange-500 shrink-0" />
                       )}
                     </div>
                     
-                    {/* Row 2: Project name (if available) */}
-                    {session.projects?.name && (
-                      <div className="text-xs text-muted-foreground truncate">
-                        {session.projects.name}
+                    {/* Secondary info row */}
+                    <div className="flex items-center justify-between">
+                      {/* Left: Date/time */}
+                      <div className="flex items-center gap-1">
+                        <Clock className="h-3 w-3 text-muted-foreground shrink-0" />
+                        <span className="text-xs text-muted-foreground leading-tight">
+                          {!timeIndicator.label && getRelativeDate(session.session_date)}
+                          {session.session_time && ` • ${formatTime(session.session_time)}`}
+                        </span>
                       </div>
-                    )}
-                    
-                    {/* Row 3: Date and time */}
-                    <div className="flex items-center gap-1">
-                      <Clock className="h-3 w-3 text-muted-foreground shrink-0" />
-                      <span className="text-xs text-muted-foreground">
-                        {!timeIndicator.label && getRelativeDate(session.session_date)}
-                        {session.session_time && ` • ${formatTime(session.session_time)}`}
-                      </span>
-                    </div>
-                    
-                    {/* Row 4: Status badge */}
-                    <div>
+                      
+                      {/* Right: Status */}
                       <SessionStatusBadge
                         sessionId={session.id}
                         currentStatus={session.status as any}
@@ -174,9 +167,16 @@ const EnhancedSessionsSection = ({ sessions, loading, onSessionClick }: Enhanced
                         size="sm"
                       />
                     </div>
+                    
+                    {/* Project name if available */}
+                    {session.projects?.name && (
+                      <div className="text-xs text-muted-foreground truncate mt-1 leading-tight">
+                        {session.projects.name}
+                      </div>
+                    )}
                   </div>
 
-                  {/* Right arrow - perfectly centered */}
+                  {/* Right arrow */}
                   <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0 ml-3" />
                 </div>
               </CardContent>

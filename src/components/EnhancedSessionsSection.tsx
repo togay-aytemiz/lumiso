@@ -126,19 +126,19 @@ const EnhancedSessionsSection = ({ sessions, loading, onSessionClick }: Enhanced
               )}
               onClick={() => onSessionClick(session.id)}
             >
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between min-h-[4rem]">
+              <CardContent className="p-0 h-20">
+                <div className="grid grid-cols-[1fr,auto] items-center h-full px-4 gap-3">
                   
-                  {/* Left content - compact vertical layout */}
-                  <div className="flex flex-col justify-center flex-1 min-w-0">
+                  {/* Left content area */}
+                  <div className="min-w-0">
                     
                     {/* Main title row with badges */}
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="font-semibold text-sm truncate leading-tight">
+                      <span className="font-semibold text-sm truncate leading-none">
                         {getSessionName(session)}
                       </span>
                       {timeIndicator.label && (
-                        <Badge variant="secondary" className={cn("text-xs px-1.5 py-0.5 shrink-0", timeIndicator.labelBg)}>
+                        <Badge variant="secondary" className={cn("text-xs px-1.5 py-0.5 shrink-0 leading-none", timeIndicator.labelBg)}>
                           {timeIndicator.label}
                         </Badge>
                       )}
@@ -148,11 +148,11 @@ const EnhancedSessionsSection = ({ sessions, loading, onSessionClick }: Enhanced
                     </div>
                     
                     {/* Secondary info row */}
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between mb-1">
                       {/* Left: Date/time */}
                       <div className="flex items-center gap-1">
                         <Clock className="h-3 w-3 text-muted-foreground shrink-0" />
-                        <span className="text-xs text-muted-foreground leading-tight">
+                        <span className="text-xs text-muted-foreground leading-none">
                           {!timeIndicator.label && getRelativeDate(session.session_date)}
                           {session.session_time && ` • ${formatTime(session.session_time)}`}
                         </span>
@@ -170,14 +170,14 @@ const EnhancedSessionsSection = ({ sessions, loading, onSessionClick }: Enhanced
                     
                     {/* Project name if available */}
                     {session.projects?.name && (
-                      <div className="text-xs text-muted-foreground truncate mt-1 leading-tight">
+                      <div className="text-xs text-muted-foreground truncate leading-none">
                         {session.projects.name}
                       </div>
                     )}
                   </div>
 
-                  {/* Right arrow */}
-                  <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0 ml-3" />
+                  {/* Right arrow - grid handles centering */}
+                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
                 </div>
               </CardContent>
             </Card>

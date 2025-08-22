@@ -162,10 +162,10 @@ export function UnifiedClientDetails({
                    <div className="col-span-2 text-sm">
                      {field.type === 'core' ? (
                        field.key === 'name' && showClickableNames ? (
-                         <button 
-                           onClick={() => navigate(`/leads/${lead.id}`)}
-                           className="text-link hover:underline font-medium break-words text-left"
-                         >
+                          <button 
+                            onClick={() => navigate(`/leads/${lead.id}`)}
+                            className="text-accent hover:underline font-medium break-words text-left"
+                          >
                            {field.value}
                          </button>
                        ) : field.key === 'notes' && field.value ? (

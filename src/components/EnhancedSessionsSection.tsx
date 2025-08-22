@@ -127,13 +127,13 @@ const EnhancedSessionsSection = ({ sessions, loading, onSessionClick }: Enhanced
               )}
               onClick={() => onSessionClick(session.id)}
             >
-              <CardContent className="pt-4">
-                <div className="flex items-center justify-between p-0 min-h-[4rem] m-0">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between min-h-[4rem] m-0">
                   {/* Left content - vertically centered */}
                   <div className="flex flex-col justify-center flex-1">
                     {/* Session name and time label */}
                     <div className="flex items-center gap-2">
-                      <h4 className="font-semibold text-sm truncate">
+                      <h4 className="font-semibold text-sm truncate leading-tight">
                         {getSessionName(session)}
                       </h4>
                       {timeIndicator.label && (
@@ -142,21 +142,21 @@ const EnhancedSessionsSection = ({ sessions, loading, onSessionClick }: Enhanced
                         </Badge>
                       )}
                       {isOverdue && (
-                        <AlertTriangle className="h-4 w-4 text-orange-500 flex-shrink-0" />
+                        <AlertTriangle className="h-4 w-4 text-orange-500 flex-shrink-0 self-center" />
                       )}
                     </div>
                     
                     {/* Project name if available */}
                     {session.projects?.name && (
-                      <p className="text-xs text-muted-foreground truncate">
+                      <p className="text-xs text-muted-foreground truncate leading-tight">
                         {session.projects.name}
                       </p>
                     )}
                     
                     {/* Date and time */}
                     <div className="flex items-center gap-1">
-                      <Clock className="h-3 w-3 text-muted-foreground flex-shrink-0" />
-                      <span className="text-xs text-muted-foreground">
+                      <Clock className="h-3 w-3 text-muted-foreground flex-shrink-0 self-center" />
+                      <span className="text-xs text-muted-foreground leading-tight">
                         {!timeIndicator.label && getRelativeDate(session.session_date)}
                         {session.session_time && ` • ${formatTime(session.session_time)}`}
                       </span>
@@ -175,7 +175,7 @@ const EnhancedSessionsSection = ({ sessions, loading, onSessionClick }: Enhanced
                   </div>
 
                   {/* Right chevron */}
-                  <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0 ml-2" />
+                  <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0 ml-2 self-center" />
                 </div>
               </CardContent>
             </Card>

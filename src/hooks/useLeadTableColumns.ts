@@ -243,6 +243,8 @@ export function useLeadTableColumns() {
           user_id: user.user.id,
           table_name: 'leads',
           column_config: newPreferences as any,
+        }, {
+          onConflict: 'user_id,table_name'
         });
 
       if (error) {

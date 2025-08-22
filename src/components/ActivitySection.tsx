@@ -15,6 +15,7 @@ import ReminderCard from "@/components/ReminderCard";
 import { formatLongDate, formatTime } from "@/lib/utils";
 import { useCalendarSync } from "@/hooks/useCalendarSync";
 import DateTimePicker from "@/components/ui/date-time-picker";
+import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 interface Activity {
   id: string;
   type: string;
@@ -69,13 +70,48 @@ const ActivitySection = ({
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  // Form state
   const [content, setContent] = useState('');
   const [isReminderMode, setIsReminderMode] = useState(false);
   const [reminderDateTime, setReminderDateTime] = useState('');
   const {
     createReminderEvent
   } = useCalendarSync();
+  const { settings: orgSettings } = useOrganizationSettings();
+  
+  // Helper function to format date according to organization settings
+  const formatOrgDate = (date: Date): string => {
+    const dateFormat = orgSettings?.date_format || 'DD/MM/YYYY';
+    
+    if (dateFormat === 'DD/MM/YYYY') {
+      return date.toLocaleDateString('en-GB'); // UK format for DD/MM/YYYY
+    } else if (dateFormat === 'MM/DD/YYYY') {
+      return date.toLocaleDateString('en-US'); // US format for MM/DD/YYYY
+    } else {
+      return date.toLocaleDateString(); // Fallback to browser default
+    }
+  };
+  
+  // Helper function to format time according to organization settings
+  const formatOrgTime = (timeString: string): string => {
+    const timeFormat = orgSettings?.time_format || '12-hour';
+    const [hours, minutes] = timeString.split(':').map(Number);
+    const date = new Date();
+    date.setHours(hours, minutes, 0, 0);
+    
+    if (timeFormat === '24-hour') {
+      return new Intl.DateTimeFormat('en-GB', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      }).format(date);
+    } else {
+      return new Intl.DateTimeFormat('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      }).format(date);
+    }
+  };
   useEffect(() => {
     fetchActivities();
     fetchAuditLogs();
@@ -822,9 +858,9 @@ const ActivitySection = ({
                                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                     <Clock className="h-3 w-3" />
                                     <span>Created:</span>
-                                    <span>
-                                      {new Date(item.date).toLocaleDateString()} at {formatTime(new Date(item.date).toTimeString().slice(0, 5))}
-                                    </span>
+                                     <span>
+                                       {formatOrgDate(new Date(item.date))} at {formatOrgTime(new Date(item.date).toTimeString().slice(0, 5))}
+                                     </span>
                                   </div>
                                 </div>
                               </div>

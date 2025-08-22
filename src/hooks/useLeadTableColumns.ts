@@ -173,7 +173,7 @@ export function useLeadTableColumns() {
             currentStatusId: lead.status_id,
             currentStatus: lead.status,
             onStatusChange: () => {}, // Will be passed from parent
-            editable: true,
+            editable: false,
             size: "sm"
           }),
         };

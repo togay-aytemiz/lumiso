@@ -10,7 +10,7 @@ import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { EnhancedProjectDialog } from "@/components/EnhancedProjectDialog";
 import { ViewProjectDialog } from "@/components/ViewProjectDialog";
-import ProjectSheetPreview from "@/components/ProjectSheetPreview";
+import { ProjectSheetView } from "@/components/ProjectSheetView";
 import ProjectKanbanBoard from "@/components/ProjectKanbanBoard";
 import GlobalSearch from "@/components/GlobalSearch";
 import { PageHeader, PageHeaderSearch, PageHeaderActions } from "@/components/ui/page-header";
@@ -380,6 +380,13 @@ const AllProjects = () => {
   const handleQuickView = (project: Project) => {
     setQuickViewProject(project);
     setShowQuickView(true);
+  };
+
+  const handleViewFullDetails = () => {
+    if (quickViewProject) {
+      navigate(`/projects/${quickViewProject.id}`);
+      setShowQuickView(false);
+    }
   };
 
   const handleLeadClick = (leadId: string) => {
@@ -868,12 +875,15 @@ const AllProjects = () => {
         )}
       </div>
 
-      {/* Project Sheet Preview */}
-      <ProjectSheetPreview
+      {/* Project Sheet View */}
+      <ProjectSheetView
         project={quickViewProject}
         open={showQuickView}
         onOpenChange={setShowQuickView}
         onProjectUpdated={fetchProjects}
+        leadName={quickViewProject?.lead?.name || ""}
+        mode="sheet"
+        onViewFullDetails={handleViewFullDetails}
       />
 
       {/* View Project Dialog */}

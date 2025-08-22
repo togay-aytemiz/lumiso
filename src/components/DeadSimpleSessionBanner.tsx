@@ -95,6 +95,9 @@ const DeadSimpleSessionBanner = ({ session, onClick }: DeadSimpleSessionBannerPr
           )}
         </div>
 
+        {/* Divider - only on desktop */}
+        <div className="hidden sm:block w-px h-8 bg-gray-200"></div>
+
         {/* Middle: Session details */}
         <div className="flex-1 min-w-0 space-y-1">
           <div className="flex items-center gap-2 flex-wrap">

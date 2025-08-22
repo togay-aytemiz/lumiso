@@ -67,7 +67,7 @@ export function UnifiedClientDetails({
   showClickableNames = false
 }: UnifiedClientDetailsProps) {
   const { fieldDefinitions, loading: fieldsLoading } = useLeadFieldDefinitions();
-  const { fieldValues, loading: valuesLoading } = useLeadFieldValues(lead.id);
+  const { fieldValues, loading: valuesLoading, refetch: refetchFieldValues } = useLeadFieldValues(lead.id);
   const { hasPermission } = usePermissions();
   const [editOpen, setEditOpen] = useState(false);
   const navigate = useNavigate();
@@ -271,6 +271,9 @@ export function UnifiedClientDetails({
         onOpenChange={setEditOpen}
         onClose={() => setEditOpen(false)}
         onSuccess={() => {
+          // First refresh our own field values
+          refetchFieldValues?.();
+          // Then call parent's onLeadUpdated callback
           onLeadUpdated?.();
           setEditOpen(false);
         }}

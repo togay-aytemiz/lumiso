@@ -403,14 +403,11 @@ export default function ProjectDetail() {
             {isEditing ? (
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
-                  <Button
-                    variant="ghost"
-                    size="sm"
+                  <ArrowLeft 
+                    className="h-6 w-6 cursor-pointer text-foreground hover:text-[hsl(var(--accent-foreground))] transition-colors" 
+                    strokeWidth={2.5}
                     onClick={() => navigate('/projects')}
-                    className="p-2"
-                  >
-                    <ArrowLeft className="h-5 w-5" />
-                  </Button>
+                  />
                   <Input 
                     value={editName} 
                     onChange={e => setEditName(e.target.value)} 
@@ -459,14 +456,11 @@ export default function ProjectDetail() {
             ) : (
               <div className="space-y-4">
                 <div className="flex items-center gap-3 flex-wrap">
-                  <Button
-                    variant="ghost"
-                    size="sm"
+                  <ArrowLeft 
+                    className="h-6 w-6 cursor-pointer text-foreground hover:text-[hsl(var(--accent-foreground))] transition-colors" 
+                    strokeWidth={2.5}
                     onClick={() => navigate('/projects')}
-                    className="p-2"
-                  >
-                    <ArrowLeft className="h-5 w-5" />
-                  </Button>
+                  />
                   <h1 className="text-4xl font-bold leading-tight break-words">
                     {project?.name}
                   </h1>

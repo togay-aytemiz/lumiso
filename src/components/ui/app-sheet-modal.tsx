@@ -61,7 +61,7 @@ export function AppSheetModal({
     <Sheet open={isOpen} onOpenChange={handleOpenChange}>
       <SheetContent 
         side={sideVariant} 
-        className={cn(sheetContentClass, "[&>button]:hidden bg-background border-border z-[100]")}
+        className={cn(sheetContentClass, "[&>button]:hidden")}
         onPointerDownOutside={(e) => {
           // Prevent immediate closure on mobile touch events
           const target = e.target as HTMLElement;

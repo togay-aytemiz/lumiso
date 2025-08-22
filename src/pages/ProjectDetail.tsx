@@ -519,10 +519,7 @@ export default function ProjectDetail() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" side="bottom">
-                  <DropdownMenuItem onSelect={() => {
-                    console.log('Edit Project clicked - setting showEditDialog to true');
-                    setShowEditDialog(true);
-                  }}>
+                  <DropdownMenuItem onSelect={() => setShowEditDialog(true)}>
                     <Pencil className="mr-2 h-4 w-4" />
                     <span>Edit Project</span>
                   </DropdownMenuItem>
@@ -677,24 +674,16 @@ export default function ProjectDetail() {
         </AlertDialogContent>
       </AlertDialog>
 
-          {/* Edit Project Dialog */}
-          <EditProjectDialog
-            project={project}
-            open={showEditDialog}
-            onOpenChange={(open) => {
-              console.log('EditProjectDialog onOpenChange called with:', open);
-              setShowEditDialog(open);
-            }}
-            onProjectUpdated={() => {
-              fetchProject();
-              setServicesVersion(v => v + 1);
-            }}
-          />
-          {/* Debug log - remove in production */}
-          {(() => {
-            console.log('Rendering EditProjectDialog with showEditDialog:', showEditDialog);
-            return null;
-          })()}
+      {/* Edit Project Dialog */}
+      <EditProjectDialog
+        project={project}
+        open={showEditDialog}
+        onOpenChange={setShowEditDialog}
+        onProjectUpdated={() => {
+          fetchProject();
+          setServicesVersion(v => v + 1);
+        }}
+      />
     </div>
   );
 }

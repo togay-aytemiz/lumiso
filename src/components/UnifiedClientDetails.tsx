@@ -5,10 +5,21 @@ import { Button } from "@/components/ui/button";
 import { Phone, Mail, MessageCircle } from "lucide-react";
 import { useLeadFieldDefinitions } from "@/hooks/useLeadFieldDefinitions";
 import { useLeadFieldValues } from "@/hooks/useLeadFieldValues";
+import { useLeadUpdate } from "@/hooks/useLeadUpdate";
 import { CustomFieldDisplay } from "@/components/fields/CustomFieldDisplay";
 import { FieldTextareaDisplay } from "@/components/fields/FieldTextareaDisplay";
+import { InlineEditField } from "@/components/fields/InlineEditField";
+import { InlineTextEditor } from "@/components/fields/inline-editors/InlineTextEditor";
+import { InlineTextareaEditor } from "@/components/fields/inline-editors/InlineTextareaEditor";
+import { InlineEmailEditor } from "@/components/fields/inline-editors/InlineEmailEditor";
+import { InlinePhoneEditor } from "@/components/fields/inline-editors/InlinePhoneEditor";
+import { InlineSelectEditor } from "@/components/fields/inline-editors/InlineSelectEditor";
+import { InlineNumberEditor } from "@/components/fields/inline-editors/InlineNumberEditor";
+import { InlineDateEditor } from "@/components/fields/inline-editors/InlineDateEditor";
+import { InlineCheckboxEditor } from "@/components/fields/inline-editors/InlineCheckboxEditor";
 import { EnhancedEditLeadDialog } from "./EnhancedEditLeadDialog";
 import { usePermissions } from "@/hooks/usePermissions";
+import { validateFieldValue } from "@/lib/leadFieldValidation";
 
 interface Lead {
   id: string;
@@ -70,7 +81,16 @@ export function UnifiedClientDetails({
   const { fieldValues, loading: valuesLoading, refetch: refetchFieldValues } = useLeadFieldValues(lead.id);
   const { hasPermission } = usePermissions();
   const [editOpen, setEditOpen] = useState(false);
+  const [editingField, setEditingField] = useState<string | null>(null);
   const navigate = useNavigate();
+
+  const { updateCoreField, updateCustomField } = useLeadUpdate({
+    leadId: lead.id,
+    onSuccess: () => {
+      refetchFieldValues?.();
+      onLeadUpdated?.();
+    }
+  });
 
   const loading = fieldsLoading || valuesLoading;
 
@@ -101,6 +121,52 @@ export function UnifiedClientDetails({
   // Filter out empty fields for display and separate core from custom
   const coreFields = allFields.filter(field => field.type === 'core' && field.value);
   const customFields = allFields.filter(field => field.type === 'custom' && field.value);
+
+  // Handle inline editing
+  const canEdit = hasPermission('edit_assigned_leads');
+
+  const handleFieldSave = async (fieldKey: string, value: string, isCustom: boolean) => {
+    const trimmedValue = value.trim();
+    
+    if (isCustom) {
+      await updateCustomField(fieldKey, trimmedValue || null);
+    } else {
+      await updateCoreField(fieldKey, trimmedValue || null);
+    }
+    
+    setEditingField(null);
+  };
+
+  const getInlineEditor = (field: any) => {
+    const fieldType = field.type === 'custom' ? field.fieldDefinition?.field_type : field.key;
+    const options = field.fieldDefinition?.options?.options || [];
+
+    const commonProps = {
+      value: field.value,
+      onSave: (value: string) => handleFieldSave(field.key, value, field.type === 'custom'),
+      onCancel: () => setEditingField(null)
+    };
+
+    switch (fieldType) {
+      case 'email':
+        return <InlineEmailEditor {...commonProps} />;
+      case 'phone':
+        return <InlinePhoneEditor {...commonProps} />;
+      case 'textarea':
+      case 'notes':
+        return <InlineTextareaEditor {...commonProps} maxLength={field.fieldDefinition?.validation_rules?.maxLength || 1000} />;
+      case 'select':
+        return <InlineSelectEditor {...commonProps} options={options} />;
+      case 'number':
+        return <InlineNumberEditor {...commonProps} min={field.fieldDefinition?.validation_rules?.min} max={field.fieldDefinition?.validation_rules?.max} />;
+      case 'date':
+        return <InlineDateEditor {...commonProps} />;
+      case 'checkbox':
+        return <InlineCheckboxEditor {...commonProps} />;
+      default:
+        return <InlineTextEditor {...commonProps} maxLength={field.fieldDefinition?.validation_rules?.maxLength || 255} />;
+    }
+  };
 
   // Get phone and email for quick actions (from any field)
   const phoneField = allFields.find(field => 
@@ -161,33 +227,33 @@ export function UnifiedClientDetails({
                   <label className="text-sm font-medium text-muted-foreground">
                     {field.label}
                   </label>
-                   <div className="col-span-2 text-sm">
-                     {field.type === 'core' ? (
-                       field.key === 'name' && showClickableNames ? (
-                          <button 
-                            onClick={() => navigate(`/leads/${lead.id}`)}
-                            className="text-accent hover:underline font-medium break-words text-left"
-                          >
-                           {field.value}
-                         </button>
-                       ) : field.key === 'notes' && field.value ? (
-                         <FieldTextareaDisplay 
-                           value={field.value} 
-                           maxLines={2}
-                         />
-                       ) : (
-                         <span className="break-words">{field.value || 'Not provided'}</span>
-                       )
-                     ) : (
-                       <CustomFieldDisplay
-                         fieldDefinition={field.fieldDefinition!}
-                         value={field.value}
-                         showCopyButtons={false}
-                         allowTruncation={true}
-                         maxLines={2}
-                       />
-                     )}
-                   </div>
+                  <div className="col-span-2 text-sm">
+                    <InlineEditField
+                      value={field.value}
+                      isEditing={editingField === field.key}
+                      onStartEdit={() => setEditingField(field.key)}
+                      onSave={(value) => handleFieldSave(field.key, value, false)}
+                      onCancel={() => setEditingField(null)}
+                      disabled={!canEdit}
+                      editComponent={getInlineEditor(field)}
+                    >
+                      {field.key === 'name' && showClickableNames ? (
+                        <button 
+                          onClick={() => navigate(`/leads/${lead.id}`)}
+                          className="text-accent hover:underline font-medium break-words text-left"
+                        >
+                          {field.value}
+                        </button>
+                      ) : field.key === 'notes' && field.value ? (
+                        <FieldTextareaDisplay 
+                          value={field.value} 
+                          maxLines={2}
+                        />
+                      ) : (
+                        <span className="break-words">{field.value || 'Not provided'}</span>
+                      )}
+                    </InlineEditField>
+                  </div>
                 </div>
               ))}
             </div>
@@ -248,13 +314,23 @@ export function UnifiedClientDetails({
                       {field.label}
                     </label>
                     <div className="col-span-2 text-sm">
-                      <CustomFieldDisplay
-                        fieldDefinition={field.fieldDefinition!}
+                      <InlineEditField
                         value={field.value}
-                        showCopyButtons={false}
-                        allowTruncation={true}
-                        maxLines={2}
-                      />
+                        isEditing={editingField === field.key}
+                        onStartEdit={() => setEditingField(field.key)}
+                        onSave={(value) => handleFieldSave(field.key, value, true)}
+                        onCancel={() => setEditingField(null)}
+                        disabled={!canEdit}
+                        editComponent={getInlineEditor(field)}
+                      >
+                        <CustomFieldDisplay
+                          fieldDefinition={field.fieldDefinition!}
+                          value={field.value}
+                          showCopyButtons={false}
+                          allowTruncation={true}
+                          maxLines={2}
+                        />
+                      </InlineEditField>
                     </div>
                   </div>
                 ))}

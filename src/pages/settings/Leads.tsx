@@ -2,6 +2,7 @@ import SettingsPageWrapper from "@/components/settings/SettingsPageWrapper";
 import SettingsHeader from "@/components/settings/SettingsHeader";
 import { settingsHelpContent } from "@/lib/settingsHelpContent";
 import LeadStatusesSection from "@/components/LeadStatusesSection";
+import { LeadFieldsSection } from "@/components/LeadFieldsSection";
 import { usePermissions } from "@/hooks/usePermissions";
 
 export default function Leads() {
@@ -37,6 +38,7 @@ export default function Leads() {
       
       <div className="space-y-8">
         <LeadStatusesSection />
+        <LeadFieldsSection />
       </div>
     </SettingsPageWrapper>
   );

@@ -118,20 +118,14 @@ export function LeadFieldsList({ fields, onEdit }: LeadFieldsListProps) {
                           <span className="font-medium">{field.label}</span>
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline">
+                          <span className="text-sm text-muted-foreground">
                             {getFieldTypeLabel(field.field_type)}
-                          </Badge>
+                          </span>
                         </TableCell>
                         <TableCell>
-                          {field.is_required ? (
-                            <Badge variant="destructive" className="text-xs">
-                              Required
-                            </Badge>
-                          ) : (
-                            <Badge variant="secondary" className="text-xs">
-                              Optional
-                            </Badge>
-                          )}
+                          <span className="text-sm text-muted-foreground">
+                            {field.is_required ? "Required" : "Optional"}
+                          </span>
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-1">
@@ -146,9 +140,9 @@ export function LeadFieldsList({ fields, onEdit }: LeadFieldsListProps) {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge variant={field.is_system ? "secondary" : "default"}>
+                          <span className="text-sm text-muted-foreground">
                             {field.is_system ? "System" : "Custom"}
-                          </Badge>
+                          </span>
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-1">

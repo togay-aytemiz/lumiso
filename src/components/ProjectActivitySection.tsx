@@ -296,8 +296,8 @@ export function ProjectActivitySection({
             <Label className="text-sm text-muted-foreground">Recent activities</Label>
             <div className="space-y-2">
               {activities.map(activity => <Card key={activity.id}>
-                  <CardContent className="py-6 px-4">
-                    <div className="space-y-4">
+                  <CardContent className="py-6 px-4 flex items-center">
+                    <div className="space-y-4 w-full">
                       {/* Row 1: Icon + Type chip + User attribution */}
                       <div className="flex items-center gap-3">
                         <div className="flex items-center gap-2">

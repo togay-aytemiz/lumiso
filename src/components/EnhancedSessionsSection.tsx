@@ -130,7 +130,7 @@ const EnhancedSessionsSection = ({ sessions, loading, onSessionClick }: Enhanced
               <CardContent className="pt-4">
                 <div className="flex items-center justify-between p-0 min-h-[4rem] m-0">
                   {/* Left content - vertically centered */}
-                  <div className="flex flex-col justify-center flex-1 min-w-0 space-y-1">
+                  <div className="flex flex-col justify-center flex-1">
                     {/* Session name and time label */}
                     <div className="flex items-center gap-2">
                       <h4 className="font-semibold text-sm truncate">

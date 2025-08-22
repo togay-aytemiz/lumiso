@@ -10,7 +10,7 @@ import { LeadFieldDefinition } from "@/types/leadFields";
 export function LeadFieldsSection() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingField, setEditingField] = useState<LeadFieldDefinition | null>(null);
-  const { fieldDefinitions, loading } = useLeadFieldDefinitions();
+  const { fieldDefinitions, loading, refetch } = useLeadFieldDefinitions();
 
   const handleEdit = (field: LeadFieldDefinition) => {
     setEditingField(field);
@@ -20,6 +20,8 @@ export function LeadFieldsSection() {
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
     setEditingField(null);
+    // Refresh the data to show any changes made in the dialog
+    refetch();
   };
 
   if (loading) {

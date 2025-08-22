@@ -50,7 +50,7 @@ export function SettingsHelpButton({ helpContent }: SettingsHelpButtonProps) {
         variant="outline"
         size={isMobile ? "icon" : "sm"}
         onClick={() => setIsOpen(true)}
-        className="flex items-center gap-2 border-border bg-background hover:bg-muted"
+        className="flex items-center gap-2 hover:bg-accent hover:text-accent-foreground"
       >
         <HelpCircle className="h-4 w-4" />
         {!isMobile && <span>Need Help?</span>}

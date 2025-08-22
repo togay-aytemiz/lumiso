@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, Calendar } from "lucide-react";
-import CompactSessionBanner from "./project-details/Summary/CompactSessionBanner";
+import DeadSimpleSessionBanner from "./DeadSimpleSessionBanner";
 import EditSessionDialog from "./EditSessionDialog";
 import SessionSheetView from "./SessionSheetView";
 import { NewSessionDialogForProject } from "./NewSessionDialogForProject";
@@ -96,11 +96,10 @@ export function SessionsSection({
                   This project includes {sessions.length} session{sessions.length !== 1 ? 's' : ''}
                 </p>}
               {sessions.map(session => (
-                <CompactSessionBanner 
+                <DeadSimpleSessionBanner 
                   key={session.id} 
                   session={{
                     ...session, 
-                    leads: { name: leadName }, 
                     projects: { name: projectName, project_types: { name: projectName.split(' ')[0] } }
                   }} 
                   onClick={() => handleSessionClick(session.id)}

@@ -255,6 +255,89 @@ export type Database = {
         }
         Relationships: []
       }
+      lead_field_definitions: {
+        Row: {
+          created_at: string
+          field_key: string
+          field_type: string
+          id: string
+          is_required: boolean
+          is_system: boolean
+          is_visible_in_form: boolean
+          label: string
+          options: Json | null
+          organization_id: string
+          sort_order: number
+          updated_at: string
+          validation_rules: Json | null
+        }
+        Insert: {
+          created_at?: string
+          field_key: string
+          field_type: string
+          id?: string
+          is_required?: boolean
+          is_system?: boolean
+          is_visible_in_form?: boolean
+          label: string
+          options?: Json | null
+          organization_id: string
+          sort_order?: number
+          updated_at?: string
+          validation_rules?: Json | null
+        }
+        Update: {
+          created_at?: string
+          field_key?: string
+          field_type?: string
+          id?: string
+          is_required?: boolean
+          is_system?: boolean
+          is_visible_in_form?: boolean
+          label?: string
+          options?: Json | null
+          organization_id?: string
+          sort_order?: number
+          updated_at?: string
+          validation_rules?: Json | null
+        }
+        Relationships: []
+      }
+      lead_field_values: {
+        Row: {
+          created_at: string
+          field_key: string
+          id: string
+          lead_id: string
+          updated_at: string
+          value: string | null
+        }
+        Insert: {
+          created_at?: string
+          field_key: string
+          id?: string
+          lead_id: string
+          updated_at?: string
+          value?: string | null
+        }
+        Update: {
+          created_at?: string
+          field_key?: string
+          id?: string
+          lead_id?: string
+          updated_at?: string
+          value?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_field_values_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lead_statuses: {
         Row: {
           color: string
@@ -1177,6 +1260,10 @@ export type Database = {
         Args: { user_uuid: string }
         Returns: undefined
       }
+      ensure_default_lead_field_definitions: {
+        Args: { org_id: string; user_uuid: string }
+        Returns: undefined
+      }
       ensure_default_lead_statuses_for_org: {
         Args: { org_id: string; user_uuid: string }
         Returns: undefined
@@ -1260,6 +1347,14 @@ export type Database = {
       get_user_organization_ids: {
         Args: Record<PropertyKey, never>
         Returns: string[]
+      }
+      initialize_all_organization_field_definitions: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      migrate_existing_lead_data: {
+        Args: { org_id: string }
+        Returns: undefined
       }
       reset_guided_setup: {
         Args: { user_uuid: string }

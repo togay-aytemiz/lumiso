@@ -1,6 +1,6 @@
 import { AlertTriangle, Clock, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { formatTime, cn, getUserLocale, formatDate } from "@/lib/utils";
+import { formatTime, cn, getUserLocale, formatLongDate } from "@/lib/utils";
 import { getRelativeDate, isOverdueSession } from "@/lib/dateUtils";
 import { SessionStatusBadge } from "@/components/SessionStatusBadge";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
@@ -48,8 +48,8 @@ const DeadSimpleSessionBanner = ({ session, onClick }: DeadSimpleSessionBannerPr
     if (relativeDate === "Today" || relativeDate === "Tomorrow" || relativeDate === "Yesterday") {
       return relativeDate;
     }
-    // Use browser locale for absolute dates
-    return formatDate(dateString, userLocale);
+    // Use browser locale for long date format (e.g., "22 Ağu 2025 Cum")
+    return formatLongDate(dateString, userLocale);
   };
 
   const getTimeIndicator = (session: Session) => {

@@ -14,6 +14,9 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useRoleManagement, Permission, CustomRole } from '@/hooks/useRoleManagement';
 import { SimpleRoleDialog } from '@/components/settings/SimpleRoleDialog';
 import { Plus, Edit, Trash2, Users, Shield } from 'lucide-react';
+import SettingsPageWrapper from "@/components/settings/SettingsPageWrapper";
+import SettingsHeader from "@/components/settings/SettingsHeader";
+import { settingsHelpContent } from "@/lib/settingsHelpContent";
 
 export default function Roles() {
   const { 
@@ -71,20 +74,20 @@ export default function Roles() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Role Management</h1>
-          <p className="text-muted-foreground">
-            Manage team roles and permissions for your organization
-          </p>
+    <SettingsPageWrapper>
+      <SettingsHeader
+        title="Role Management"
+        description="Manage team roles and permissions for your organization"
+        helpContent={settingsHelpContent.roles}
+      />
+      
+      <div className="space-y-6">
+        <div className="flex items-center justify-end">
+          <Button onClick={() => setShowCreateRoleDialog(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Create Role
+          </Button>
         </div>
-        
-        <Button onClick={() => setShowCreateRoleDialog(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Create Role
-        </Button>
-      </div>
 
       {/* Custom Roles */}
       <div className="grid gap-4">
@@ -272,6 +275,7 @@ export default function Roles() {
         onSave={editingRole ? handleUpdateRole : handleCreateRole}
         loading={loading}
       />
-    </div>
+      </div>
+    </SettingsPageWrapper>
   );
 }

@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import SettingsPageWrapper from "@/components/settings/SettingsPageWrapper";
 import SettingsHeader from "@/components/settings/SettingsHeader";
+import { settingsHelpContent } from "@/lib/settingsHelpContent";
 import SettingsSection from "@/components/SettingsSection";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -169,6 +170,7 @@ export default function ClientMessaging() {
       <SettingsHeader
         title="Client Messaging"
         description="Manage automated message templates and delivery triggers for client communication"
+        helpContent={settingsHelpContent.clientMessaging}
       />
       
       <div className="space-y-8">

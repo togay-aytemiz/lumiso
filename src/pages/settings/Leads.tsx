@@ -1,5 +1,6 @@
 import SettingsPageWrapper from "@/components/settings/SettingsPageWrapper";
 import SettingsHeader from "@/components/settings/SettingsHeader";
+import { settingsHelpContent } from "@/lib/settingsHelpContent";
 import LeadStatusesSection from "@/components/LeadStatusesSection";
 import { usePermissions } from "@/hooks/usePermissions";
 
@@ -31,6 +32,7 @@ export default function Leads() {
       <SettingsHeader
         title="Lead Management"
         description="Configure lead statuses and management settings"
+        helpContent={settingsHelpContent.leads}
       />
       
       <div className="space-y-8">

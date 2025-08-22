@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import SettingsPageWrapper from "@/components/settings/SettingsPageWrapper";
 import SettingsHeader from "@/components/settings/SettingsHeader";
+import { settingsHelpContent } from "@/lib/settingsHelpContent";
 import { CategorySettingsSection } from "@/components/settings/CategorySettingsSection";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -255,6 +256,7 @@ export default function Profile() {
         <SettingsHeader
           title="Profile"
           description="Manage your personal information and working hours"
+          helpContent={settingsHelpContent.profile}
         />
         <div className="flex items-center justify-center h-48">
           <Loader2 className="h-8 w-8 animate-spin" />
@@ -268,6 +270,7 @@ export default function Profile() {
       <SettingsHeader
         title="Profile"
         description="Manage your personal information and working hours"
+        helpContent={settingsHelpContent.profile}
       />
       
       <div className="space-y-8">

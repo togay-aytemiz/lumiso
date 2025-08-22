@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import SettingsPageWrapper from "@/components/settings/SettingsPageWrapper";
 import SettingsHeader from "@/components/settings/SettingsHeader";
+import { settingsHelpContent } from "@/lib/settingsHelpContent";
 import PackagesSection from "@/components/PackagesSection";
 import ServicesSection from "@/components/ServicesSection";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -146,6 +147,7 @@ export default function Services() {
         <SettingsHeader
           title="Packages & Services"
           description="Create service packages and manage individual services for your business"
+          helpContent={settingsHelpContent.services}
         />
         
         <div className="space-y-8">

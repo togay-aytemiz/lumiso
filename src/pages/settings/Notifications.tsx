@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import SettingsPageWrapper from "@/components/settings/SettingsPageWrapper";
 import SettingsHeader from "@/components/settings/SettingsHeader";
+import { settingsHelpContent } from "@/lib/settingsHelpContent";
 import { CategorySettingsSection } from "@/components/settings/CategorySettingsSection";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -224,6 +225,7 @@ export default function Notifications() {
         <SettingsHeader
           title="Notifications"
           description="Configure your notification preferences and delivery times"
+          helpContent={settingsHelpContent.notifications}
         />
         <div className="flex items-center justify-center h-48">
           <Loader2 className="h-8 w-8 animate-spin" />
@@ -237,6 +239,7 @@ export default function Notifications() {
       <SettingsHeader
         title="Notifications"
         description="Streamlined notification system for your photography business"
+        helpContent={settingsHelpContent.notifications}
       />
       
       <div className="space-y-8">

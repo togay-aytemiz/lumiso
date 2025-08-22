@@ -4,6 +4,7 @@ import { Calendar, CheckCircle, Loader2 } from "lucide-react";
 import { useGoogleCalendar } from "@/hooks/useGoogleCalendar";
 import SettingsPageWrapper from "@/components/settings/SettingsPageWrapper";
 import SettingsHeader from "@/components/settings/SettingsHeader";
+import { settingsHelpContent } from "@/lib/settingsHelpContent";
 
 export default function Integrations() {
   const { connection, loading, connectCalendar, disconnectCalendar } = useGoogleCalendar();
@@ -13,6 +14,7 @@ export default function Integrations() {
       <SettingsHeader
         title="Integrations"
         description="Connect external services and manage third-party integrations"
+        helpContent={settingsHelpContent.integrations}
       />
       
       <div className="space-y-8">

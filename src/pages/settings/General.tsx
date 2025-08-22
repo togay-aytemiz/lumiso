@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import SettingsPageWrapper from "@/components/settings/SettingsPageWrapper";
 import SettingsHeader from "@/components/settings/SettingsHeader";
+import { settingsHelpContent } from "@/lib/settingsHelpContent";
 import { CategorySettingsSection } from "@/components/settings/CategorySettingsSection";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -218,6 +219,7 @@ export default function General() {
         <SettingsHeader
           title="General"
           description="Manage your general application preferences"
+          helpContent={settingsHelpContent.general}
         />
         <div className="flex items-center justify-center h-48">
           <Loader2 className="h-8 w-8 animate-spin" />
@@ -231,6 +233,7 @@ export default function General() {
       <SettingsHeader
         title="General"
         description="Manage your general application preferences"
+        helpContent={settingsHelpContent.general}
       />
       
       <div className="space-y-8">

@@ -1,5 +1,6 @@
 import SettingsPageWrapper from "@/components/settings/SettingsPageWrapper";
 import SettingsHeader from "@/components/settings/SettingsHeader";
+import { settingsHelpContent } from "@/lib/settingsHelpContent";
 import ProjectStatusesSection from "@/components/ProjectStatusesSection";
 import ProjectTypesSection from "@/components/ProjectTypesSection";
 import SessionStatusesSection from "@/components/SessionStatusesSection";
@@ -41,6 +42,7 @@ export default function Projects() {
       <SettingsHeader
         title="Projects & Sessions"
         description="Manage project stages, types, and session statuses"
+        helpContent={settingsHelpContent.projects}
       />
       
       <div className="space-y-8">

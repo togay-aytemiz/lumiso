@@ -135,7 +135,8 @@ export function useLeadTableColumns() {
             return emailFieldDef 
               ? React.createElement(CustomFieldDisplay, {
                   fieldDefinition: emailFieldDef,
-                  value: value
+                  value: value,
+                  tableContext: true
                 })
               : React.createElement('span', {}, value || '-');
           },
@@ -154,7 +155,8 @@ export function useLeadTableColumns() {
             return phoneFieldDef 
               ? React.createElement(CustomFieldDisplay, {
                   fieldDefinition: phoneFieldDef,
-                  value: value
+                  value: value,
+                  tableContext: true
                 })
               : React.createElement('span', {}, value || '-');
           },
@@ -216,7 +218,8 @@ export function useLeadTableColumns() {
           accessor: (lead) => lead.custom_fields[fieldDef.field_key],
           render: (lead) => React.createElement(CustomFieldDisplay, {
             fieldDefinition: fieldDef,
-            value: lead.custom_fields[fieldDef.field_key]
+            value: lead.custom_fields[fieldDef.field_key],
+            tableContext: true
           }),
         };
       }

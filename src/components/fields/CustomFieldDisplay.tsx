@@ -1,6 +1,8 @@
 import { LeadFieldDefinition } from "@/types/leadFields";
 import { FieldTextDisplay } from "./FieldTextDisplay";
 import { FieldTextareaDisplay } from "./FieldTextareaDisplay";
+import { FieldTextTableDisplay } from "./FieldTextTableDisplay";
+import { FieldTextareaTableDisplay } from "./FieldTextareaTableDisplay";
 import { FieldEmailDisplay } from "./FieldEmailDisplay";
 import { FieldPhoneDisplay } from "./FieldPhoneDisplay";
 import { FieldDateDisplay } from "./FieldDateDisplay";
@@ -14,6 +16,7 @@ interface CustomFieldDisplayProps {
   showCopyButtons?: boolean;
   allowTruncation?: boolean;
   maxLines?: number;
+  tableContext?: boolean;
 }
 
 export function CustomFieldDisplay({ 
@@ -21,7 +24,8 @@ export function CustomFieldDisplay({
   value, 
   showCopyButtons = true,
   allowTruncation = true,
-  maxLines = 3
+  maxLines = 3,
+  tableContext = false
 }: CustomFieldDisplayProps) {
   if (!value) {
     return <span className="text-muted-foreground italic">Not provided</span>;
@@ -29,7 +33,9 @@ export function CustomFieldDisplay({
 
   switch (fieldDefinition.field_type) {
     case 'text':
-      return (
+      return tableContext ? (
+        <FieldTextTableDisplay value={value} />
+      ) : (
         <FieldTextDisplay 
           value={value} 
           allowTruncation={allowTruncation}
@@ -38,7 +44,9 @@ export function CustomFieldDisplay({
       );
     
     case 'textarea':
-      return (
+      return tableContext ? (
+        <FieldTextareaTableDisplay value={value} />
+      ) : (
         <FieldTextareaDisplay 
           value={value} 
           maxLines={maxLines}
@@ -82,7 +90,9 @@ export function CustomFieldDisplay({
       );
     
     default:
-      return (
+      return tableContext ? (
+        <FieldTextTableDisplay value={value} />
+      ) : (
         <FieldTextDisplay 
           value={value} 
           allowTruncation={allowTruncation}

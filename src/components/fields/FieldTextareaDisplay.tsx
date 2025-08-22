@@ -8,7 +8,7 @@ interface FieldTextareaDisplayProps {
 
 export function FieldTextareaDisplay({ 
   value, 
-  maxLines = 3 
+  maxLines = 2 
 }: FieldTextareaDisplayProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isTruncatable, setIsTruncatable] = useState(false);
@@ -38,7 +38,7 @@ export function FieldTextareaDisplay({
       <div
         ref={textRef}
         className={cn(
-          "whitespace-pre-wrap text-sm bg-muted/50 p-3 rounded-md transition-all break-words",
+          "whitespace-pre-wrap text-sm transition-all break-words text-left",
           !isExpanded && "overflow-hidden"
         )}
         style={{
@@ -51,7 +51,7 @@ export function FieldTextareaDisplay({
       {(isTruncatable || isExpanded) && (
         <button
           type="button"
-          className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-4 transition-colors"
+          className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-4 transition-colors inline"
           onClick={() => setIsExpanded(prev => !prev)}
         >
           {isExpanded ? "Show less" : "Show more"}

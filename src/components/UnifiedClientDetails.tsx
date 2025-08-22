@@ -6,6 +6,7 @@ import { Phone, Mail, MessageCircle } from "lucide-react";
 import { useLeadFieldDefinitions } from "@/hooks/useLeadFieldDefinitions";
 import { useLeadFieldValues } from "@/hooks/useLeadFieldValues";
 import { CustomFieldDisplay } from "@/components/fields/CustomFieldDisplay";
+import { FieldTextareaDisplay } from "@/components/fields/FieldTextareaDisplay";
 import { EnhancedEditLeadDialog } from "./EnhancedEditLeadDialog";
 import { usePermissions } from "@/hooks/usePermissions";
 
@@ -168,21 +169,22 @@ export function UnifiedClientDetails({
                           >
                            {field.value}
                          </button>
-                       ) : field.key === 'notes' && field.value ? (
-                         <div className="whitespace-pre-wrap break-words bg-muted/50 p-2 rounded-md text-sm">
-                           {field.value}
-                         </div>
-                       ) : (
+                        ) : field.key === 'notes' && field.value ? (
+                          <FieldTextareaDisplay 
+                            value={field.value} 
+                            maxLines={2}
+                          />
+                        ) : (
                          <span className="break-words">{field.value || 'Not provided'}</span>
                        )
                      ) : (
-                       <CustomFieldDisplay
-                         fieldDefinition={field.fieldDefinition!}
-                         value={field.value}
-                         showCopyButtons={false}
-                         allowTruncation={true}
-                         maxLines={2}
-                       />
+                        <CustomFieldDisplay
+                          fieldDefinition={field.fieldDefinition!}
+                          value={field.value}
+                          showCopyButtons={false}
+                          allowTruncation={true}
+                          maxLines={2}
+                        />
                      )}
                    </div>
                 </div>

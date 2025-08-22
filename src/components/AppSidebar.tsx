@@ -13,7 +13,7 @@ import {
   BookOpen, 
   Settings,
   HelpCircle,
-  ChevronRight
+  ChevronDown
 } from "lucide-react";
 import logo from "@/assets/Logo.png";
 import { useOnboardingV2 } from "@/hooks/useOnboardingV2";
@@ -36,6 +36,10 @@ const moduleItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Leads", url: "/leads", icon: Users },
   { title: "Projects", url: "/projects", icon: FolderOpen },
+];
+
+// Tools items - analytics and financial
+const toolItems = [
   { title: "Analytics", url: "/analytics", icon: BarChart3 },
   { title: "Payments", url: "/payments", icon: CreditCard },
 ];
@@ -186,35 +190,57 @@ export function AppSidebar() {
               onClick={!isItemLocked('/calendar') ? handleBookingsClick : undefined}
               badge={
                 !isItemLocked('/calendar') ? (
-                  <ChevronRight 
+                  <ChevronDown 
                     className={`h-4 w-4 transition-transform duration-200 ${
-                      bookingsOpen ? 'rotate-90' : 'rotate-0'
+                      bookingsOpen ? 'rotate-180' : 'rotate-0'
                     }`} 
                   />
                 ) : undefined
               }
             >
               {bookingsOpen && !isItemLocked('/calendar') && (
-                <SidebarMenu className="space-y-1">
-                  {bookingItems.map((item) => (
-                    <SidebarSubItem
-                      key={item.title}
-                      title={item.title}
-                      url={item.url}
-                      icon={item.icon}
-                      isActive={isActive(item.url)}
-                      isLocked={isItemLocked(item.url)}
-                      onLockedClick={handleLockedItemClick}
-                      onClick={handleNavClick}
-                    />
-                  ))}
-                </SidebarMenu>
+                <div className="overflow-hidden">
+                  <div className="animate-accordion-down">
+                    <SidebarMenu className="space-y-1">
+                      {bookingItems.map((item) => (
+                        <SidebarSubItem
+                          key={item.title}
+                          title={item.title}
+                          url={item.url}
+                          icon={item.icon}
+                          isActive={isActive(item.url)}
+                          isLocked={isItemLocked(item.url)}
+                          onLockedClick={handleLockedItemClick}
+                          onClick={handleNavClick}
+                        />
+                      ))}
+                    </SidebarMenu>
+                  </div>
+                </div>
               )}
             </SidebarNavItem>
           </SidebarCategory>
 
+          {/* TOOLS Category */}
+          <div className="mt-6">
+            <SidebarCategory title="TOOLS">
+              {toolItems.map((item) => (
+                <SidebarNavItem
+                  key={item.title}
+                  title={item.title}
+                  url={item.url}
+                  icon={item.icon}
+                  isActive={isActive(item.url)}
+                  isLocked={isItemLocked(item.url)}
+                  onLockedClick={handleLockedItemClick}
+                  onClick={handleNavClick}
+                />
+              ))}
+            </SidebarCategory>
+          </div>
+
           {/* SYSTEM Category */}
-          <div className="mt-8">
+          <div className="mt-6">
             <SidebarCategory title="SYSTEM">
               <SidebarNavItem
                 title="Settings"

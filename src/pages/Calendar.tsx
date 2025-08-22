@@ -10,6 +10,7 @@ import { ViewProjectDialog } from "@/components/ViewProjectDialog";
 import { formatDate, formatTime, getUserLocale, getStartOfWeek, getEndOfWeek } from "@/lib/utils";
 import { addDays, startOfMonth, endOfMonth, eachDayOfInterval, format, isToday, isSameMonth, startOfWeek, endOfWeek, addMonths, subMonths, addWeeks, subWeeks, isSameDay, startOfDay, endOfDay } from "date-fns";
 import { PageHeader, PageHeaderSearch, PageHeaderActions } from "@/components/ui/page-header";
+import SessionSheetView from "@/components/SessionSheetView";
 
 type ViewMode = "day" | "week" | "month";
 
@@ -223,6 +224,8 @@ export default function Calendar() {
   const [projectDialogOpen, setProjectDialogOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<any | null>(null);
   const [selectedProjectLeadName, setSelectedProjectLeadName] = useState("");
+  const [sessionSheetOpen, setSessionSheetOpen] = useState(false);
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -252,11 +255,8 @@ export default function Calendar() {
   };
 
   const handleSessionClick = (session: Session) => {
-    if (session.project_id) {
-      openProjectById(session.project_id);
-    } else {
-      navigate(`/leads/${session.lead_id}`);
-    }
+    setSelectedSessionId(session.id);
+    setSessionSheetOpen(true);
   };
 
   const handleActivityClick = (activity: Activity) => {
@@ -1030,6 +1030,20 @@ export default function Calendar() {
             onProjectUpdated={refreshCalendar}
             onActivityUpdated={refreshCalendar}
             leadName={selectedProjectLeadName}
+          />
+        )}
+
+        {selectedSessionId && (
+          <SessionSheetView
+            sessionId={selectedSessionId}
+            isOpen={sessionSheetOpen}
+            onOpenChange={setSessionSheetOpen}
+            onViewFullDetails={() => {
+              navigate(`/sessions/${selectedSessionId}`);
+              setSessionSheetOpen(false);
+            }}
+            onNavigateToLead={(leadId) => navigate(`/leads/${leadId}`)}
+            onNavigateToProject={(projectId) => openProjectById(projectId)}
           />
         )}
     </>

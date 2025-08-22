@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Plus } from "lucide-react";
 import { ProjectCard } from "./ProjectCard";
-import { ViewProjectDialog } from "./ViewProjectDialog";
+import { ProjectSheetView } from "./ProjectSheetView";
 import { EnhancedProjectDialog } from "./EnhancedProjectDialog";
 import {
   AlertDialog,
@@ -47,6 +48,7 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
   const [showViewDialog, setShowViewDialog] = useState(false);
   const [viewingProject, setViewingProject] = useState<Project | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const navigate = useNavigate();
   
   const [showArchived, setShowArchived] = useState(false);
   const [hasArchived, setHasArchived] = useState(false);
@@ -120,12 +122,24 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
 
 
   const handleViewProject = (project: Project) => {
+    // Navigate to full project page instead of opening dialog
+    navigate(`/projects/${project.id}`);
+  };
+
+  const handleQuickViewProject = (project: Project) => {
     setViewingProject(project);
     setShowViewDialog(true);
     // Call tutorial callback immediately when project is clicked
     if (onProjectClicked) {
       console.log('🚀 Project clicked, triggering tutorial callback');
       onProjectClicked();
+    }
+  };
+
+  const handleViewFullDetails = () => {
+    if (viewingProject) {
+      navigate(`/projects/${viewingProject.id}`);
+      setShowViewDialog(false);
     }
   };
 
@@ -227,6 +241,7 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
                   key={project.id}
                   project={project}
                   onView={handleViewProject}
+                  onQuickView={handleQuickViewProject}
                   refreshTrigger={refreshTrigger}
                 />
               ))}
@@ -240,6 +255,7 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
                       key={project.id}
                       project={project}
                       onView={handleViewProject}
+                      onQuickView={handleQuickViewProject}
                       refreshTrigger={refreshTrigger}
                     />
                   ))}
@@ -252,7 +268,7 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
 
 
 
-      <ViewProjectDialog
+      <ProjectSheetView
         project={viewingProject}
         open={showViewDialog}
         onOpenChange={(open) => {
@@ -265,6 +281,8 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
         }}
         onActivityUpdated={onActivityUpdated}
         leadName={leadName}
+        mode="sheet"
+        onViewFullDetails={handleViewFullDetails}
       />
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>

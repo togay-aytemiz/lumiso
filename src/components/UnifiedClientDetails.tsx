@@ -7,6 +7,7 @@ import { useLeadFieldDefinitions } from "@/hooks/useLeadFieldDefinitions";
 import { useLeadFieldValues } from "@/hooks/useLeadFieldValues";
 import { useLeadUpdate } from "@/hooks/useLeadUpdate";
 import { CustomFieldDisplay } from "@/components/fields/CustomFieldDisplay";
+import { CustomFieldDisplayWithEmpty } from "@/components/fields/CustomFieldDisplayWithEmpty";
 import { FieldTextareaDisplay } from "@/components/fields/FieldTextareaDisplay";
 import { InlineEditField } from "@/components/fields/InlineEditField";
 import { InlineTextEditor } from "@/components/fields/inline-editors/InlineTextEditor";
@@ -118,9 +119,9 @@ export function UnifiedClientDetails({
       }))
   ];
 
-  // Filter out empty fields for display and separate core from custom
-  const coreFields = allFields.filter(field => field.type === 'core' && field.value);
-  const customFields = allFields.filter(field => field.type === 'custom' && field.value);
+  // Show all fields regardless of whether they have values
+  const coreFields = allFields.filter(field => field.type === 'core');
+  const customFields = allFields.filter(field => field.type === 'custom');
 
   // Handle inline editing
   const canEdit = hasPermission('edit_assigned_leads');
@@ -242,15 +243,19 @@ export function UnifiedClientDetails({
                           onClick={() => navigate(`/leads/${lead.id}`)}
                           className="text-accent hover:underline font-medium break-words text-left"
                         >
-                          {field.value}
+                          {field.value || ' - '}
                         </button>
-                      ) : field.key === 'notes' && field.value ? (
-                        <FieldTextareaDisplay 
-                          value={field.value} 
-                          maxLines={2}
-                        />
+                      ) : field.key === 'notes' ? (
+                        field.value ? (
+                          <FieldTextareaDisplay 
+                            value={field.value} 
+                            maxLines={2}
+                          />
+                        ) : (
+                          <span className="break-words text-muted-foreground"> - </span>
+                        )
                       ) : (
-                        <span className="break-words">{field.value || 'Not provided'}</span>
+                        <span className="break-words">{field.value || ' - '}</span>
                       )}
                     </InlineEditField>
                   </div>
@@ -323,7 +328,7 @@ export function UnifiedClientDetails({
                         disabled={!canEdit}
                         editComponent={getInlineEditor(field)}
                       >
-                        <CustomFieldDisplay
+                        <CustomFieldDisplayWithEmpty
                           fieldDefinition={field.fieldDefinition!}
                           value={field.value}
                           showCopyButtons={false}

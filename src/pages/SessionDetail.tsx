@@ -402,8 +402,8 @@ export default function SessionDetail() {
       {/* Session Summary Details - Above Grid */}
       <div className="max-w-full mx-auto px-6 py-4">
         <div className="bg-muted/30 rounded-lg p-4 mb-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
-            <div>
+          <div className="flex flex-col sm:flex-row sm:items-start gap-4 sm:gap-6 text-sm">
+            <div className="flex-shrink-0">
               <div className="flex items-center gap-2 mb-2">
                 <Calendar className="h-4 w-4 text-muted-foreground" />
                 <label className="font-medium text-muted-foreground">Date & Time</label>
@@ -412,28 +412,34 @@ export default function SessionDetail() {
             </div>
 
             {session.projects && (
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <FolderOpen className="h-4 w-4 text-muted-foreground" />
-                  <label className="font-medium text-muted-foreground">Project</label>
+              <>
+                <div className="hidden sm:block w-px h-12 bg-border"></div>
+                <div className="flex-shrink-0">
+                  <div className="flex items-center gap-2 mb-2">
+                    <FolderOpen className="h-4 w-4 text-muted-foreground" />
+                    <label className="font-medium text-muted-foreground">Project</label>
+                  </div>
+                  <button
+                    onClick={handleProjectClick}
+                    className="text-primary hover:underline"
+                  >
+                    {session.projects.name}
+                  </button>
                 </div>
-                <button
-                  onClick={handleProjectClick}
-                  className="text-primary hover:underline"
-                >
-                  {session.projects.name}
-                </button>
-              </div>
+              </>
             )}
 
             {session.notes && (
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <FileText className="h-4 w-4 text-muted-foreground" />
-                  <label className="font-medium text-muted-foreground">Notes</label>
+              <>
+                <div className="hidden sm:block w-px h-12 bg-border"></div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-2">
+                    <FileText className="h-4 w-4 text-muted-foreground" />
+                    <label className="font-medium text-muted-foreground">Notes</label>
+                  </div>
+                  <p className="line-clamp-2">{session.notes}</p>
                 </div>
-                <p className="line-clamp-2">{session.notes}</p>
-              </div>
+              </>
             )}
           </div>
         </div>

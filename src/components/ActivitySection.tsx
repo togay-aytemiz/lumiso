@@ -611,7 +611,22 @@ const ActivitySection = ({
     type: 'audit' as const,
     data: log,
     date: log.created_at
-  })).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }))
+  .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+  .filter((item, index, array) => {
+    // Simple deduplication: remove if identical to previous item
+    if (index === 0) return true;
+    const prev = array[index - 1];
+    const current = item.data;
+    const prevData = prev.data;
+    return !(
+      current.entity_type === prevData.entity_type &&
+      current.action === prevData.action &&
+      JSON.stringify(current.old_values || {}) === JSON.stringify(prevData.old_values || {}) &&
+      JSON.stringify(current.new_values || {}) === JSON.stringify(prevData.new_values || {}) &&
+      Math.abs(new Date(current.created_at).getTime() - new Date(prevData.created_at).getTime()) < 5000 // within 5 seconds
+    );
+  });
 
   // Group activities and sessions by date
   const groupedActivities = activitiesAndSessions.reduce((groups, item) => {

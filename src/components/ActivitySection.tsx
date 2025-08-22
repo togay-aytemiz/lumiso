@@ -24,6 +24,7 @@ interface Activity {
   created_at: string;
   completed?: boolean;
   lead_id: string;
+  user_id: string; // Add user_id field
   project_id?: string;
   projects?: {
     name: string;
@@ -47,6 +48,7 @@ interface Session {
   notes: string;
   status: string;
   created_at: string;
+  user_id: string; // Add user_id field
   project_id?: string;
   projects?: {
     name: string;
@@ -95,7 +97,7 @@ const ActivitySection = ({
         data,
         error
       } = await supabase.from('activities').select(`
-          id, type, content, reminder_date, reminder_time, created_at, completed, lead_id, project_id,
+          id, type, content, reminder_date, reminder_time, created_at, completed, lead_id, user_id, project_id,
           projects:project_id (name)
         `).eq('lead_id', leadId).order('created_at', {
         ascending: false
@@ -129,6 +131,10 @@ const ActivitySection = ({
         }
       }
       setActivities(filtered);
+      
+      // Fetch user profiles for activities
+      const userIds = [...new Set(filtered.map(a => a.user_id).filter(Boolean))];
+      await fetchUserProfiles(userIds);
     } catch (error: any) {
       console.error('Error fetching activities:', error);
     }
@@ -139,7 +145,7 @@ const ActivitySection = ({
         data,
         error
       } = await supabase.from('sessions').select(`
-          id, session_date, session_time, notes, status, created_at, project_id,
+          id, session_date, session_time, notes, status, created_at, user_id, project_id,
           projects:project_id (name)
         `).eq('lead_id', leadId).order('created_at', {
         ascending: false
@@ -173,6 +179,10 @@ const ActivitySection = ({
         // }
       }
       setSessions(filtered || []);
+      
+      // Fetch user profiles for sessions
+      const userIds = [...new Set((filtered || []).map(s => s.user_id).filter(Boolean))];
+      await fetchUserProfiles(userIds);
     } catch (error: any) {
       console.error('Error fetching sessions:', error);
     }
@@ -707,77 +717,126 @@ const ActivitySection = ({
             </TabsList>
             
             <TabsContent value="activities" className="mt-4">
-              {Object.keys(groupedActivities).length === 0 ? <p className="text-muted-foreground text-center py-8">No activities yet</p> : <div className="space-y-6">
-                  {Object.entries(groupedActivities).map(([date, items]) => <div key={date}>
-                       <h4 className="font-medium text-sm text-muted-foreground mb-3 sticky top-0">
+              {Object.keys(groupedActivities).length === 0 ? (
+                <p className="text-muted-foreground text-center py-8">No activities yet</p>
+              ) : (
+                <div className="space-y-6">
+                  {Object.entries(groupedActivities).map(([date, items]) => (
+                    <div key={date}>
+                      <h4 className="font-medium text-sm text-muted-foreground mb-3 sticky top-0">
                         {formatLongDate(date)}
                       </h4>
-                       <div className="space-y-3 pl-2 md:pl-4 border-l-2 border-muted">
-                         {items.map((item, index) => <div key={`${item.type}-${item.data.id}-${index}`} className="relative">
-                             <div className="absolute -left-4 md:-left-6 top-3 w-3 h-3 bg-background border-2 border-muted-foreground/40 rounded-full"></div>
-                             <div className="bg-muted/50 rounded-lg p-3 space-y-2">
-                               {/* Mobile: Stack vertically, Desktop: Keep horizontal */}
-                               <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-                                 <div className="flex items-center gap-2 flex-wrap">
-                                   {/* Remove redundant icons on mobile when badge already indicates type */}
-                                   <div className="hidden md:block">
-                                     {item.type === 'activity' ? item.data.type === 'note' ? <MessageSquare className="h-4 w-4 text-blue-500" /> : <Bell className="h-4 w-4 text-orange-500" /> : <Clock className="h-4 w-4 text-green-500" />}
-                                   </div>
-                                   <Badge variant="outline" className="text-xs">
-                                     {item.type === 'activity' ? item.data.type : 'session'}
-                                   </Badge>
-                                   {/* Show project/lead badge */}
-                                   <Badge variant="secondary" className={`text-xs max-w-[120px] md:max-w-[120px] max-w-full truncate ${item.data.project_id ? 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'}`}>
-                                      {item.data.project_id ? item.data.projects?.name || 'Project' : 'Lead'}
+                      <div className="space-y-3 pl-2 md:pl-4 border-l-2 border-muted">
+                        {items.map((item, index) => (
+                          <div key={`${item.type}-${item.data.id}-${index}`} className="relative">
+                            <div className="absolute -left-4 md:-left-6 top-3 w-3 h-3 bg-background border-2 border-muted-foreground/40 rounded-full"></div>
+                            <div className="bg-muted/50 rounded-lg py-6 px-4 flex items-center">
+                              <div className="space-y-4 w-full pt-2">
+                                {/* Row 1: Icon + Type chip + User attribution */}
+                                <div className="flex items-center gap-3">
+                                  <div className="flex items-center gap-2">
+                                    {item.type === 'activity' ? item.data.type === 'note' ? (
+                                      <MessageSquare className="h-4 w-4 text-blue-500" />
+                                    ) : (
+                                      <Bell className="h-4 w-4 text-orange-500" />
+                                    ) : (
+                                      <Clock className="h-4 w-4 text-green-500" />
+                                    )}
+                                    <Badge variant="outline" className="text-xs">
+                                      {item.type === 'activity' ? item.data.type : 'session'}
                                     </Badge>
-                                 </div>
-                                 <span className="text-xs text-muted-foreground flex-shrink-0 md:block block order-last">
-                                   {formatTime(new Date(item.date).toTimeString().slice(0, 5))}
-                                 </span>
-                               </div>
-                              
-                              {item.type === 'activity' && <>
-                                  {(item.data as Activity).type === 'reminder' ? <div className="mt-2">
-                                      <ReminderCard activity={item.data as Activity} leadName={leadName} onToggleCompletion={toggleCompletion} showCompletedBadge={false} hideStatusBadge={!shouldShowStatusBadge(item.data as Activity)} />
-                                    </div> : (item.data as Activity).type === 'note' ?
-                        // Regular note - no completion button
-                        <div className="mt-2">
-                                      <p className="text-sm">
-                                        {(item.data as Activity).content}
+                                  </div>
+                                  <div className="flex-1" />
+                                  <UserAvatar userId={item.data.user_id} />
+                                </div>
+
+                                {/* Row 2: Main content */}
+                                <div className="pl-1">
+                                  {item.type === 'activity' && (
+                                    <>
+                                      {(item.data as Activity).type === 'reminder' ? (
+                                        <div className="mt-2">
+                                          <ReminderCard 
+                                            activity={item.data as Activity} 
+                                            leadName={leadName} 
+                                            onToggleCompletion={toggleCompletion} 
+                                            showCompletedBadge={false} 
+                                            hideStatusBadge={!shouldShowStatusBadge(item.data as Activity)} 
+                                          />
+                                        </div>
+                                      ) : (item.data as Activity).type === 'note' ? (
+                                        // Regular note - no completion button
+                                        <div className="mt-2">
+                                          <p className="text-sm break-words">
+                                            {(item.data as Activity).content}
+                                          </p>
+                                        </div>
+                                      ) : (
+                                        // Other activity types that might need completion
+                                        <div className="flex items-start gap-3">
+                                          <button 
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              toggleCompletion((item.data as Activity).id, !(item.data as Activity).completed);
+                                            }} 
+                                            className="flex items-center justify-center w-5 h-5 rounded-full border-2 border-muted-foreground/40 hover:border-primary transition-colors mt-0.5 flex-shrink-0"
+                                          >
+                                            {(item.data as Activity).completed ? (
+                                              <CheckCircle className="h-3 w-3 text-green-600 dark:text-green-400" />
+                                            ) : (
+                                              <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40" />
+                                            )}
+                                          </button>
+                                          <div className="flex-1">
+                                            <p className={`text-sm break-words ${(item.data as Activity).completed ? 'line-through opacity-60' : ''}`}>
+                                              {(item.data as Activity).content}
+                                            </p>
+                                          </div>
+                                        </div>
+                                      )}
+                                    </>
+                                  )}
+                                  
+                                  {item.type === 'session' && (
+                                    <div className="mt-2">
+                                      <p className="text-sm font-medium">
+                                        Session scheduled for {formatLongDate((item.data as Session).session_date)} at {formatTime((item.data as Session).session_time)}
                                       </p>
-                                    </div> :
-                        // Other activity types that might need completion
-                        <div className="flex items-start gap-3">
-                                      <button onClick={e => {
-                            e.stopPropagation();
-                            toggleCompletion((item.data as Activity).id, !(item.data as Activity).completed);
-                          }} className="flex items-center justify-center w-5 h-5 rounded-full border-2 border-muted-foreground/40 hover:border-primary transition-colors mt-0.5 flex-shrink-0">
-                                        {(item.data as Activity).completed ? <CheckCircle className="h-3 w-3 text-green-600 dark:text-green-400" /> : <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40" />}
-                                      </button>
-                                      <div className="flex-1">
-                                        <p className={`text-sm ${(item.data as Activity).completed ? 'line-through opacity-60' : ''}`}>
-                                          {(item.data as Activity).content}
+                                      <p className="text-xs text-muted-foreground">
+                                        Status: {(item.data as Session).status}
+                                      </p>
+                                      {(item.data as Session).notes && (
+                                        <p className="text-sm text-muted-foreground mt-1 italic">
+                                          "{(item.data as Session).notes}"
                                         </p>
-                                      </div>
-                                    </div>}
-                                </>}
-                              
-                              {item.type === 'session' && <div className="mt-2">
-                                  <p className="text-sm font-medium">
-                                    Session scheduled for {formatLongDate((item.data as Session).session_date)} at {formatTime((item.data as Session).session_time)}
-                                  </p>
-                                  <p className="text-xs text-muted-foreground">
-                                    Status: {(item.data as Session).status}
-                                  </p>
-                                  {(item.data as Session).notes && <p className="text-sm text-muted-foreground mt-1 italic">
-                                      "{(item.data as Session).notes}"
-                                    </p>}
-                                </div>}
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* Row 3: Project/Lead info */}
+                                <div className="pl-1">
+                                  <Badge variant="secondary" className={`text-xs max-w-[120px] md:max-w-[120px] max-w-full truncate ${item.data.project_id ? 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'}`}>
+                                    {item.data.project_id ? item.data.projects?.name || 'Project' : 'Lead'}
+                                  </Badge>
+                                </div>
+
+                                {/* Row 4: Date and time */}
+                                <div className="pl-1">
+                                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                    <Clock className="h-3 w-3" />
+                                    {formatTime(new Date(item.date).toTimeString().slice(0, 5))}
+                                  </div>
+                                </div>
+                              </div>
                             </div>
-                          </div>)}
+                          </div>
+                        ))}
                       </div>
-                    </div>)}
-                </div>}
+                    </div>
+                  ))}
+                </div>
+              )}
             </TabsContent>
             
             <TabsContent value="history" className="mt-4">

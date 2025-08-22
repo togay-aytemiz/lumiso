@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, MoreVertical, Edit, Trash2, ExternalLink, ChevronDown } from 'lucide-react';
+import { ArrowLeft, MoreVertical, Edit, Trash2, ExternalLink, ChevronDown, Calendar, User, FolderOpen, FileText } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -404,40 +404,47 @@ export default function SessionDetail() {
         <div className="bg-muted/30 rounded-lg p-4 mb-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
             <div>
-              <label className="font-medium text-muted-foreground">Date & Time</label>
-              <p className="mt-1">{formatLongDate(session.session_date)} at {formatTime(session.session_time)}</p>
+              <div className="flex items-center gap-2 mb-2">
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+                <label className="font-medium text-muted-foreground">Date & Time</label>
+              </div>
+              <p>{formatLongDate(session.session_date)} at {formatTime(session.session_time)}</p>
             </div>
             
             <div>
-              <label className="font-medium text-muted-foreground">Client</label>
-              <p className="mt-1">
-                <button
-                  onClick={handleLeadClick}
-                  className="text-primary hover:underline"
-                >
-                  {session.leads?.name || 'Unknown Client'}
-                </button>
-              </p>
+              <div className="flex items-center gap-2 mb-2">
+                <User className="h-4 w-4 text-muted-foreground" />
+              </div>
+              <button
+                onClick={handleLeadClick}
+                className="text-primary hover:underline"
+              >
+                {session.leads?.name || 'Unknown Client'}
+              </button>
             </div>
 
             {session.projects && (
               <div>
-                <label className="font-medium text-muted-foreground">Project</label>
-                <p className="mt-1">
-                  <button
-                    onClick={handleProjectClick}
-                    className="text-primary hover:underline"
-                  >
-                    {session.projects.name}
-                  </button>
-                </p>
+                <div className="flex items-center gap-2 mb-2">
+                  <FolderOpen className="h-4 w-4 text-muted-foreground" />
+                  <label className="font-medium text-muted-foreground">Project</label>
+                </div>
+                <button
+                  onClick={handleProjectClick}
+                  className="text-primary hover:underline"
+                >
+                  {session.projects.name}
+                </button>
               </div>
             )}
 
             {session.notes && (
               <div>
-                <label className="font-medium text-muted-foreground">Notes</label>
-                <p className="mt-1 line-clamp-2">{session.notes}</p>
+                <div className="flex items-center gap-2 mb-2">
+                  <FileText className="h-4 w-4 text-muted-foreground" />
+                  <label className="font-medium text-muted-foreground">Notes</label>
+                </div>
+                <p className="line-clamp-2">{session.notes}</p>
               </div>
             )}
           </div>

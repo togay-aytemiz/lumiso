@@ -20,6 +20,7 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 import { UnifiedClientDetails } from "@/components/UnifiedClientDetails";
 import { AssigneesList } from "@/components/AssigneesList";
 import { onArchiveToggle } from "@/components/ViewProjectDialog";
+import { EditProjectDialog } from "@/components/EditProjectDialog";
 
 interface Project {
   id: string;
@@ -80,6 +81,7 @@ export default function ProjectDetail() {
   const [isArchived, setIsArchived] = useState(false);
   const [localStatusId, setLocalStatusId] = useState<string | null | undefined>(null);
   const [servicesVersion, setServicesVersion] = useState(0);
+  const [showEditDialog, setShowEditDialog] = useState(false);
 
   const fetchProject = async () => {
     if (!id) return;
@@ -517,7 +519,7 @@ export default function ProjectDetail() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" side="bottom">
-                  <DropdownMenuItem onSelect={() => setIsEditing(true)}>
+                  <DropdownMenuItem onSelect={() => setShowEditDialog(true)}>
                     <Pencil className="mr-2 h-4 w-4" />
                     <span>Edit Project</span>
                   </DropdownMenuItem>
@@ -671,6 +673,17 @@ export default function ProjectDetail() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Edit Project Dialog */}
+      <EditProjectDialog
+        project={project}
+        open={showEditDialog}
+        onOpenChange={setShowEditDialog}
+        onProjectUpdated={() => {
+          fetchProject();
+          setServicesVersion(v => v + 1);
+        }}
+      />
     </div>
   );
 }

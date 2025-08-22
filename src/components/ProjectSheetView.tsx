@@ -23,6 +23,7 @@ import { UnifiedClientDetails } from "@/components/UnifiedClientDetails";
 import { AssigneesList } from "@/components/AssigneesList";
 import { onArchiveToggle } from "@/components/ViewProjectDialog";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { EditProjectDialog } from "./EditProjectDialog";
 
 interface Project {
   id: string;
@@ -97,6 +98,7 @@ export function ProjectSheetView({
   const [servicesVersion, setServicesVersion] = useState(0);
   const [isArchived, setIsArchived] = useState(false);
   const [localStatusId, setLocalStatusId] = useState<string | null | undefined>(null);
+  const [showEditDialog, setShowEditDialog] = useState(false);
   const { toast } = useToast();
   const isMobile = useIsMobile();
 
@@ -584,7 +586,7 @@ export function ProjectSheetView({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" side="bottom" className="z-50 bg-background">
-              <DropdownMenuItem role="menuitem" onSelect={() => setIsEditing(true)}>
+              <DropdownMenuItem role="menuitem" onSelect={() => setShowEditDialog(true)}>
                 <Pencil className="mr-2 h-4 w-4" />
                 <span>Edit Project</span>
               </DropdownMenuItem>
@@ -817,6 +819,19 @@ export function ProjectSheetView({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Edit Project Dialog */}
+      <EditProjectDialog
+        project={project}
+        open={showEditDialog}
+        onOpenChange={setShowEditDialog}
+        onProjectUpdated={() => {
+          fetchProjectSessions();
+          fetchLead();
+          onProjectUpdated();
+          setServicesVersion(v => v + 1);
+        }}
+      />
     </>
   );
 }

@@ -914,9 +914,6 @@ const LeadDetail = () => {
                       project_types: session.projects.project_types
                     } : undefined
                   }} 
-                  onStatusUpdate={handleSessionUpdated} 
-                  onEdit={() => setEditingSessionId(session.id)} 
-                  onDelete={() => setDeletingSessionId(session.id)}
                   onClick={() => handleSessionClick(session.id)}
                 />
                 

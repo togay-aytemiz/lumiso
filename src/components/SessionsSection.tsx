@@ -103,9 +103,6 @@ export function SessionsSection({
                     leads: { name: leadName }, 
                     projects: { name: projectName, project_types: { name: projectName.split(' ')[0] } }
                   }} 
-                  onStatusUpdate={onSessionUpdated} 
-                  onEdit={() => setEditingSessionId(session.id)} 
-                  onDelete={() => onDeleteSession(session.id)}
                   onClick={() => handleSessionClick(session.id)}
                 />
               ))}

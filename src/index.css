@@ -66,7 +66,7 @@ All colors MUST be HSL.
     --sidebar-foreground: 215.4 16.3% 46.9%; /* #6B7280 - muted text */
     --sidebar-primary: 172 71% 41%; /* #1EB29F - accent color */
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 198 93% 93%; /* light blue like reference image */
+    --sidebar-accent: 220 14% 96%; /* gray hover like reference image #F3F4F6 */
     --sidebar-accent-foreground: 172 71% 41%; /* use primary color for active text */
     --sidebar-border: 214.3 31.8% 91.4%; /* light divider */
     --sidebar-ring: 172 71% 41%;

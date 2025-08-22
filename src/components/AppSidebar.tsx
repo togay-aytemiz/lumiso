@@ -198,26 +198,28 @@ export function AppSidebar() {
                 ) : undefined
               }
             >
-              {bookingsOpen && !isItemLocked('/calendar') && (
-                <div className="overflow-hidden">
-                  <div className="animate-accordion-down">
-                    <SidebarMenu className="space-y-1">
-                      {bookingItems.map((item) => (
-                        <SidebarSubItem
-                          key={item.title}
-                          title={item.title}
-                          url={item.url}
-                          icon={item.icon}
-                          isActive={isActive(item.url)}
-                          isLocked={isItemLocked(item.url)}
-                          onLockedClick={handleLockedItemClick}
-                          onClick={handleNavClick}
-                        />
-                      ))}
-                    </SidebarMenu>
-                  </div>
-                </div>
-              )}
+              <div 
+                className={`overflow-hidden transition-all duration-300 ease-out ${
+                  bookingsOpen && !isItemLocked('/calendar') 
+                    ? 'max-h-40 opacity-100' 
+                    : 'max-h-0 opacity-0'
+                }`}
+              >
+                <SidebarMenu className="space-y-1 pt-1">
+                  {bookingItems.map((item) => (
+                    <SidebarSubItem
+                      key={item.title}
+                      title={item.title}
+                      url={item.url}
+                      icon={item.icon}
+                      isActive={isActive(item.url)}
+                      isLocked={isItemLocked(item.url)}
+                      onLockedClick={handleLockedItemClick}
+                      onClick={handleNavClick}
+                    />
+                  ))}
+                </SidebarMenu>
+              </div>
             </SidebarNavItem>
           </SidebarCategory>
 

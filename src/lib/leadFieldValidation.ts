@@ -29,19 +29,22 @@ export function createDynamicLeadSchema(fieldDefinitions: LeadFieldDefinition[])
 /**
  * Creates a validation schema for a specific field type
  */
-function createFieldSchema(fieldType: LeadFieldType, validationRules?: Record<string, any>): z.ZodTypeAny {
+function createFieldSchema(fieldType: LeadFieldType, validationRules?: Record<string, any> | null): z.ZodTypeAny {
+  // Handle null validation rules
+  const rules = validationRules || {};
+  
   switch (fieldType) {
     case 'text':
-      let textSchema = z.string().max(validationRules?.maxLength || 255, `Text is too long`);
-      if (validationRules?.minLength) {
-        textSchema = textSchema.min(validationRules.minLength, `Text must be at least ${validationRules.minLength} characters`);
+      let textSchema = z.string().max(rules?.maxLength || 255, `Text is too long`);
+      if (rules?.minLength) {
+        textSchema = textSchema.min(rules.minLength, `Text must be at least ${rules.minLength} characters`);
       }
       return textSchema;
 
     case 'textarea':
-      let textareaSchema = z.string().max(validationRules?.maxLength || 1000, `Text is too long`);
-      if (validationRules?.minLength) {
-        textareaSchema = textareaSchema.min(validationRules.minLength, `Text must be at least ${validationRules.minLength} characters`);
+      let textareaSchema = z.string().max(rules?.maxLength || 1000, `Text is too long`);
+      if (rules?.minLength) {
+        textareaSchema = textareaSchema.min(rules.minLength, `Text must be at least ${rules.minLength} characters`);
       }
       return textareaSchema;
 
@@ -72,17 +75,17 @@ function createFieldSchema(fieldType: LeadFieldType, validationRules?: Record<st
         'Please enter a valid number'
       );
       
-      if (validationRules?.min !== undefined) {
+      if (rules?.min !== undefined) {
         numberSchema = numberSchema.refine(
-          (val) => Number(val) >= validationRules.min,
-          `Number must be at least ${validationRules.min}`
+          (val) => Number(val) >= rules.min,
+          `Number must be at least ${rules.min}`
         );
       }
       
-      if (validationRules?.max !== undefined) {
+      if (rules?.max !== undefined) {
         numberSchema = numberSchema.refine(
-          (val) => Number(val) <= validationRules.max,
-          `Number must be at most ${validationRules.max}`
+          (val) => Number(val) <= rules.max,
+          `Number must be at most ${rules.max}`
         );
       }
       

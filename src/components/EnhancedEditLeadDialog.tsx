@@ -206,7 +206,7 @@ export function EnhancedEditLeadDialog({
         <DynamicLeadFormFields
           fieldDefinitions={fieldDefinitions}
           control={form.control}
-          visibleOnly={false}
+          visibleOnly={true}
         />
       </Form>
     </AppSheetModal>

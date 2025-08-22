@@ -43,7 +43,7 @@ const fieldSchema = z.object({
     min_length: z.number().optional(),
     max_length: z.number().optional(),
     pattern: z.string().optional(),
-  }).optional(),
+  }).optional().nullable(),
 });
 
 type FieldFormData = z.infer<typeof fieldSchema>;
@@ -138,10 +138,10 @@ export function LeadFieldDialog({ open, onOpenChange, field, onClose }: LeadFiel
         is_visible_in_form: data.is_visible_in_form,
         options: fieldTypeConfig.supportsOptions && data.options 
           ? { options: data.options.split(",").map(opt => opt.trim()).filter(Boolean) }
-          : null,
+          : undefined,
         validation_rules: fieldTypeConfig.supportsValidation && data.validation_rules 
           ? data.validation_rules 
-          : null,
+          : undefined,
       };
 
       if (isEdit) {

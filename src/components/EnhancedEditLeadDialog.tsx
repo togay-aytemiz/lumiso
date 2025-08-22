@@ -101,6 +101,7 @@ export function EnhancedEditLeadDialog({
     
     try {
       setLoading(true);
+      console.log('📝 Form submission data:', data);
 
       // Update the main lead record
       const { error: leadError } = await supabase

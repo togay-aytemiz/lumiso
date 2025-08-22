@@ -50,42 +50,45 @@ function createFieldSchema(fieldType: LeadFieldType, validationRules?: Record<st
       return textareaSchema;
 
     case 'email':
-      return z.string().email('Please enter a valid email address').max(254, 'Email address is too long');
+      return z.string().refine(
+        (val) => val === '' || z.string().email().safeParse(val).success,
+        'Please enter a valid email address'
+      ).max(254, 'Email address is too long');
 
     case 'phone':
-      return z.string().regex(
-        /^[\+]?[\d\s\-\(\)]+$/,
+      return z.string().refine(
+        (val) => val === '' || /^[\+]?[\d\s\-\(\)]+$/.test(val),
         'Please enter a valid phone number'
       ).max(20, 'Phone number is too long');
 
     case 'date':
-      return z.string().regex(
-        /^\d{4}-\d{2}-\d{2}$/,
+      return z.string().refine(
+        (val) => val === '' || /^\d{4}-\d{2}-\d{2}$/.test(val),
         'Please enter a valid date (YYYY-MM-DD)'
       );
 
     case 'select':
-      return z.string().min(1, 'Please select an option');
+      return z.string();
 
     case 'checkbox':
       return z.boolean().or(z.string().transform((val) => val === 'true' || val === '1'));
 
     case 'number':
       let numberSchema = z.string().refine(
-        (val) => !isNaN(Number(val)) && val !== '',
+        (val) => val === '' || (!isNaN(Number(val)) && val.trim() !== ''),
         'Please enter a valid number'
       );
       
       if (rules?.min !== undefined) {
         numberSchema = numberSchema.refine(
-          (val) => Number(val) >= rules.min,
+          (val) => val === '' || Number(val) >= rules.min,
           `Number must be at least ${rules.min}`
         );
       }
       
       if (rules?.max !== undefined) {
         numberSchema = numberSchema.refine(
-          (val) => Number(val) <= rules.max,
+          (val) => val === '' || Number(val) <= rules.max,
           `Number must be at most ${rules.max}`
         );
       }

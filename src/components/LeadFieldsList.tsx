@@ -115,14 +115,7 @@ export function LeadFieldsList({ fields, onEdit }: LeadFieldsListProps) {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium">{field.label}</span>
-                            {field.is_system && (
-                              <Badge variant="secondary" className="text-xs">
-                                System
-                              </Badge>
-                            )}
-                          </div>
+                          <span className="font-medium">{field.label}</span>
                         </TableCell>
                         <TableCell>
                           <Badge variant="outline">

@@ -13,7 +13,7 @@ import { ProjectTodoListEnhanced } from "@/components/ProjectTodoListEnhanced";
 import { ProjectServicesSection } from "@/components/ProjectServicesSection";
 import { SessionsSection } from "@/components/SessionsSection";
 import { ProjectStatusBadge } from "@/components/ProjectStatusBadge";
-import { ProjectTypeSelector } from "@/components/ProjectTypeSelector";
+import { SimpleProjectTypeSelect } from "@/components/SimpleProjectTypeSelect";
 import { ProjectPaymentsSection } from "@/components/ProjectPaymentsSection";
 import ProjectDetailsLayout from "@/components/project-details/ProjectDetailsLayout";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
@@ -422,12 +422,12 @@ export default function ProjectDetail() {
                   className="text-lg border rounded-md px-4 py-3 resize-none" 
                   rows={3} 
                 />
-                <ProjectTypeSelector 
-                  value={editProjectTypeId} 
-                  onValueChange={setEditProjectTypeId} 
-                  disabled={isSaving} 
-                  required 
-                />
+                  <SimpleProjectTypeSelect 
+                    value={editProjectTypeId} 
+                    onValueChange={setEditProjectTypeId} 
+                    disabled={isSaving} 
+                    required 
+                  />
                 <div className="flex gap-3">
                   <Button 
                     onClick={handleSaveProject} 

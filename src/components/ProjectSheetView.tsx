@@ -15,7 +15,7 @@ import { ProjectTodoListEnhanced } from "./ProjectTodoListEnhanced";
 import { ProjectServicesSection } from "./ProjectServicesSection";
 import { SessionsSection } from "./SessionsSection";
 import { ProjectStatusBadge } from "./ProjectStatusBadge";
-import { ProjectTypeSelector } from "./ProjectTypeSelector";
+import { SimpleProjectTypeSelect } from "./SimpleProjectTypeSelect";
 import { ProjectPaymentsSection } from "./ProjectPaymentsSection";
 import ProjectDetailsLayout from "@/components/project-details/ProjectDetailsLayout";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
@@ -435,7 +435,7 @@ export function ProjectSheetView({
               className="text-base border rounded-md px-3 py-2 resize-none" 
               rows={2} 
             />
-            <ProjectTypeSelector 
+            <SimpleProjectTypeSelect 
               value={editProjectTypeId} 
               onValueChange={setEditProjectTypeId} 
               disabled={isSaving} 

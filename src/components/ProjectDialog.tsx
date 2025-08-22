@@ -5,7 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { ProjectTypeSelector } from "./ProjectTypeSelector";
+import { SimpleProjectTypeSelect } from "./SimpleProjectTypeSelect";
 
 interface ProjectDialogProps {
   open: boolean;
@@ -186,11 +186,12 @@ export function ProjectDialog({ open, onOpenChange, leadId, onProjectCreated }: 
         
         <div className="space-y-2">
           <Label htmlFor="project-type">Project Type *</Label>
-          <ProjectTypeSelector
+          <SimpleProjectTypeSelect
             value={projectTypeId}
             onValueChange={setProjectTypeId}
             disabled={isSaving}
             required
+            className="rounded-xl border-2 border-primary/20 focus:border-primary"
           />
         </div>
         

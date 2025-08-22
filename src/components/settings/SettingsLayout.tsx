@@ -87,8 +87,8 @@ export default function SettingsLayout() {
                 const locked = isItemLocked(item.href);
                 
                 const linkContent = (
-                  <div className={cn(
-                    "flex items-center gap-4 px-2 md:px-4 py-3 text-sm rounded-lg transition-colors justify-center md:justify-start relative",
+                <div className={cn(
+                    "flex items-center gap-4 px-2 md:px-4 py-3 text-sm rounded-lg transition-colors justify-center md:justify-start relative group",
                     "hover:bg-sidebar-accent",
                     isActive 
                       ? "bg-sidebar-active text-sidebar-active-foreground font-medium" 
@@ -97,7 +97,7 @@ export default function SettingsLayout() {
                   )}
                   onClick={(e) => handleLockedItemClick(e, item.href)}
                 >
-                  <Icon className="h-5 w-5 flex-shrink-0" />
+                  <Icon className="h-5 w-5 flex-shrink-0 transition-colors group-hover:text-sidebar-primary" />
                   <span className="hidden md:flex md:items-center md:gap-2">
                     {item.title}
                     {hasChanges && (
@@ -150,8 +150,8 @@ export default function SettingsLayout() {
                 const isDangerZone = item.title === "Danger Zone";
                 
                 const linkContent = (
-                  <div className={cn(
-                    "flex items-center gap-4 px-2 md:px-4 py-3 text-sm rounded-lg transition-colors justify-center md:justify-start relative",
+                <div className={cn(
+                    "flex items-center gap-4 px-2 md:px-4 py-3 text-sm rounded-lg transition-colors justify-center md:justify-start relative group",
                     !isDangerZone && "hover:bg-sidebar-accent",
                     isActive 
                       ? "bg-sidebar-active text-sidebar-active-foreground font-medium" 
@@ -162,7 +162,8 @@ export default function SettingsLayout() {
                   onClick={(e) => handleLockedItemClick(e, item.href)}
                 >
                   <Icon className={cn(
-                    "h-5 w-5 flex-shrink-0",
+                    "h-5 w-5 flex-shrink-0 transition-colors",
+                    !isDangerZone && "group-hover:text-sidebar-primary",
                     isDangerZone && "text-red-600"
                   )} />
                   <span className="hidden md:flex md:items-center md:gap-2">

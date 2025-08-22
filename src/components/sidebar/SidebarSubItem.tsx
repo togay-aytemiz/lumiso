@@ -30,7 +30,7 @@ export function SidebarSubItem({
       className={`flex items-center gap-3 w-full ${isLocked ? 'opacity-50' : ''}`}
       onClick={isLocked ? onLockedClick : undefined}
     >
-      <Icon className="h-4 w-4 text-sidebar-foreground group-hover/item:text-sidebar-primary group-data-[active=true]/item:text-sidebar-primary transition-colors" />
+      <Icon className="h-4 w-4 text-sidebar-foreground group-hover/item:text-sidebar-primary group-data-[active=true]/item:text-sidebar-active-foreground transition-colors" />
       <span className="font-medium text-sm">{title}</span>
       {isLocked && <Lock className="h-3 w-3 ml-auto text-muted-foreground" />}
     </div>

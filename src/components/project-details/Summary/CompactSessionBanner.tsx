@@ -1,5 +1,4 @@
 import { ChevronRight, AlertTriangle } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatTime, cn } from "@/lib/utils";
 import { getRelativeDate, isOverdueSession, getDateDisplayClasses } from "@/lib/dateUtils";
@@ -54,23 +53,23 @@ const CompactSessionBanner = ({
       )}
       onClick={onClick}
     >
-      <CardContent className="p-4">
-        <div className="flex items-center justify-between gap-4 min-h-[56px]">
-          {/* Session Name - Always visible */}
-          <div className="flex items-center gap-2 min-w-0 flex-shrink-0">
+      <CardContent className="p-0">
+        <div className="flex items-center justify-between gap-4 p-4 min-h-[64px]">
+          {/* Session Name */}
+          <div className="flex items-center gap-2 min-w-0 flex-1">
             <h3 className="font-semibold text-base text-foreground truncate">
               {getSessionName()}
             </h3>
             {isOverdue && (
               <div className="flex items-center gap-1 text-orange-600">
                 <AlertTriangle className="h-4 w-4 flex-shrink-0" />
-                <span className="text-xs font-medium hidden sm:inline">Past due</span>
+                <span className="text-xs font-medium hidden md:inline">Past due</span>
               </div>
             )}
           </div>
 
-          {/* Status Badge - Hidden on mobile */}
-          <div className="hidden sm:flex flex-shrink-0">
+          {/* Status - Desktop only */}
+          <div className="hidden md:block flex-shrink-0">
             <SessionStatusBadge
               sessionId={session.id}
               currentStatus={session.status}
@@ -90,13 +89,11 @@ const CompactSessionBanner = ({
           </div>
 
           {/* Chevron */}
-          {onClick && (
-            <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-          )}
+          <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
         </div>
-
-        {/* Mobile: Status Badge and Warning Row */}
-        <div className="sm:hidden mt-2 flex items-center justify-between">
+        
+        {/* Mobile Status and Warning */}
+        <div className="md:hidden px-4 pb-4 flex items-center justify-between">
           <SessionStatusBadge
             sessionId={session.id}
             currentStatus={session.status}
@@ -104,10 +101,7 @@ const CompactSessionBanner = ({
             onStatusChange={() => {}}
           />
           {isOverdue && (
-            <div className="flex items-center gap-1 text-orange-600">
-              <AlertTriangle className="h-3 w-3" />
-              <span className="text-xs font-medium">This session is past due and needs attention</span>
-            </div>
+            <span className="text-xs text-orange-600 font-medium">Needs attention</span>
           )}
         </div>
       </CardContent>

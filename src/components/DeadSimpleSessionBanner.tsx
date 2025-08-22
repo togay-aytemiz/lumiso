@@ -81,22 +81,24 @@ const DeadSimpleSessionBanner = ({ session, onClick }: DeadSimpleSessionBannerPr
       )}
       onClick={() => onClick(session.id)}
     >
-      <div className="flex items-center justify-between w-full">
-        {/* Left: Date */}
-        <div className="text-sm font-medium text-gray-900 min-w-0 flex-shrink-0">
-          {getRelativeDate(session.session_date)}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between w-full gap-3 sm:gap-4">
+        {/* Left: Date and Time (2 lines) */}
+        <div className="flex-shrink-0">
+          <div className="text-sm font-medium text-gray-900">
+            {getRelativeDate(session.session_date)}
+          </div>
           {session.session_time && (
-            <>
-              <Clock className="inline h-3 w-3 ml-2 mr-1" />
+            <div className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
+              <Clock className="h-3 w-3" />
               {formatTime(session.session_time)}
-            </>
+            </div>
           )}
         </div>
 
-        {/* Middle: Session name and project */}
-        <div className="flex-1 mx-4 min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold text-gray-900 truncate">
+        {/* Middle: Session details */}
+        <div className="flex-1 min-w-0 space-y-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-sm font-semibold text-gray-900">
               {getSessionName(session)}
             </span>
             {timeIndicator.label && (
@@ -108,15 +110,22 @@ const DeadSimpleSessionBanner = ({ session, onClick }: DeadSimpleSessionBannerPr
               <AlertTriangle className="h-4 w-4 text-orange-500 flex-shrink-0" />
             )}
           </div>
+          
           {session.projects?.name && (
-            <div className="text-xs text-gray-500 truncate">
-              {session.projects.name}
+            <div className="text-xs text-gray-500">
+              Project: {session.projects.name}
+            </div>
+          )}
+          
+          {session.notes && (
+            <div className="text-xs text-gray-600 line-clamp-2">
+              {session.notes}
             </div>
           )}
         </div>
 
         {/* Right: Status and arrow */}
-        <div className="flex items-center gap-3 flex-shrink-0">
+        <div className="flex items-center gap-3 flex-shrink-0 self-start sm:self-center">
           <SessionStatusBadge
             sessionId={session.id}
             currentStatus={session.status as any}

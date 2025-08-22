@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, MoreVertical, Edit, Trash2, ExternalLink, ChevronDown, Calendar, User, FolderOpen, FileText } from 'lucide-react';
+import { ArrowLeft, MoreVertical, Edit, Trash2, ExternalLink, ChevronDown, Calendar, User, FolderOpen, FileText, AlertTriangle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -24,6 +24,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import SessionStatusBadge from '@/components/SessionStatusBadge';
 import { formatLongDate, formatTime } from '@/lib/utils';
+import { isOverdueSession } from '@/lib/dateUtils';
 import EditSessionDialog from '@/components/EditSessionDialog';
 import { useSessionActions } from '@/hooks/useSessionActions';
 import ProjectDetailsLayout from '@/components/project-details/ProjectDetailsLayout';
@@ -395,9 +396,24 @@ export default function SessionDetail() {
     }
   ];
 
+  const isOverdue = isOverdueSession(session.session_date, session.status);
+
   return (
     <div className="min-h-screen bg-background">
       {header}
+      
+      {/* Overdue Warning Bar */}
+      {isOverdue && (
+        <div className="bg-orange-50 border-b border-orange-200 px-6 py-3">
+          <div className="flex items-center gap-3 text-orange-800">
+            <AlertTriangle className="h-5 w-5 text-orange-600" />
+            <div>
+              <p className="font-medium">This session is overdue</p>
+              <p className="text-sm text-orange-700">Please update the session status or reschedule if needed.</p>
+            </div>
+          </div>
+        </div>
+      )}
       
       {/* Session Summary Details - Above Grid */}
       <div className="max-w-full mx-auto px-6 py-4">

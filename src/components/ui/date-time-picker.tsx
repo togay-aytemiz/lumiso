@@ -107,7 +107,11 @@ export const DateTimePicker: React.FC<DateTimePickerProps> = ({
               next2Label={null}
               prev2Label={null}
               onChange={(value: any) => {
-                if (value instanceof Date) setSelectedDate(value);
+                if (value instanceof Date) {
+                  setSelectedDate(value);
+                  // Automatically emit the change when date is selected
+                  onChange(toIsoLocal(value, hours, minutes));
+                }
               }}
               value={selectedDate || null}
               formatShortWeekday={(_, date) => new Intl.DateTimeFormat(browserLocale, { weekday: 'short' }).format(date)}
@@ -117,7 +121,14 @@ export const DateTimePicker: React.FC<DateTimePickerProps> = ({
                 <Clock className="h-3 w-3" /> Time
               </Label>
               <div className="mt-2 grid grid-cols-2 gap-2">
-                <Select value={String(hours)} onValueChange={(v) => setHours(parseInt(v))}>
+                <Select value={String(hours)} onValueChange={(v) => {
+                  const newHours = parseInt(v);
+                  setHours(newHours);
+                  // Automatically emit the change when hours change
+                  if (selectedDate) {
+                    onChange(toIsoLocal(selectedDate, newHours, minutes));
+                  }
+                }}>
                   <SelectTrigger className="h-9 rounded-md">
                     <SelectValue placeholder="Hour" />
                   </SelectTrigger>
@@ -129,7 +140,14 @@ export const DateTimePicker: React.FC<DateTimePickerProps> = ({
                     ))}
                   </SelectContent>
                 </Select>
-                <Select value={String(minutes)} onValueChange={(v) => setMinutes(parseInt(v))}>
+                <Select value={String(minutes)} onValueChange={(v) => {
+                  const newMinutes = parseInt(v);
+                  setMinutes(newMinutes);
+                  // Automatically emit the change when minutes change
+                  if (selectedDate) {
+                    onChange(toIsoLocal(selectedDate, hours, newMinutes));
+                  }
+                }}>
                   <SelectTrigger className="h-9 rounded-md">
                     <SelectValue placeholder="Min" />
                   </SelectTrigger>
@@ -151,6 +169,8 @@ export const DateTimePicker: React.FC<DateTimePickerProps> = ({
                     onClick={() => {
                       const today = new Date();
                       setSelectedDate(today);
+                      // Also emit the change when "Today" is clicked
+                      onChange(toIsoLocal(today, hours, minutes));
                     }}
                   >
                     Today
@@ -173,15 +193,9 @@ export const DateTimePicker: React.FC<DateTimePickerProps> = ({
                 <Button
                   type="button"
                   size="sm"
-                  disabled={!selectedDate}
-                  onClick={() => {
-                    if (selectedDate) {
-                      onChange(toIsoLocal(selectedDate, hours, minutes));
-                      setOpen(false);
-                    }
-                  }}
+                  onClick={() => setOpen(false)}
                 >
-                  Apply
+                  Done
                 </Button>
               </div>
             </div>

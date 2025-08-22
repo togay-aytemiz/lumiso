@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, LogOut, Calendar, Users, CheckCircle, XCircle, Bell, AlertTriangle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-import AddLeadDialog from "@/components/AddLeadDialog";
+import { EnhancedAddLeadDialog } from "@/components/EnhancedAddLeadDialog";
 import NewSessionDialog from "@/components/NewSessionDialog";
 import { PageHeader, PageHeaderSearch } from "@/components/ui/page-header";
 import GlobalSearch from "@/components/GlobalSearch";
@@ -523,10 +523,11 @@ const CrmDashboard = () => {
         </div>
       </main>
       
-      <AddLeadDialog 
-        onLeadAdded={fetchData} 
+      <EnhancedAddLeadDialog 
+        onSuccess={fetchData} 
         open={addLeadDialogOpen}
         onOpenChange={setAddLeadDialogOpen}
+        onClose={() => setAddLeadDialogOpen(false)}
       />
     </div>
   );

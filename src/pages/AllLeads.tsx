@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ArrowLeft, ArrowUpDown, ArrowUp, ArrowDown, Plus, Users, FileText, Filter } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import AddLeadDialog from "@/components/AddLeadDialog";
+import { EnhancedAddLeadDialog } from "@/components/EnhancedAddLeadDialog";
 import { useNavigate } from "react-router-dom";
 import { getLeadStatusStyles, formatStatusText } from "@/lib/leadStatusColors";
 import { LeadStatusBadge } from "@/components/LeadStatusBadge";
@@ -485,10 +485,11 @@ const AllLeads = () => {
         </Card>
       </div>
       
-      <AddLeadDialog 
-        onLeadAdded={fetchLeads} 
+      <EnhancedAddLeadDialog 
+        onSuccess={fetchLeads} 
         open={addLeadDialogOpen}
         onOpenChange={handleAddLeadDialogChange}
+        onClose={() => handleAddLeadDialogChange(false)}
       />
 
       <OnboardingTutorial

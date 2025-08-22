@@ -15,7 +15,8 @@ import ClientDetailsList from "@/components/ClientDetailsList";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import ScheduleSessionDialog from "@/components/ScheduleSessionDialog";
 import EditSessionDialog from "@/components/EditSessionDialog";
-import { EditLeadDialog } from "@/components/EditLeadDialog";
+import { EnhancedEditLeadDialog } from "@/components/EnhancedEditLeadDialog";
+import { LeadFieldValuesDisplay } from "@/components/LeadFieldValuesDisplay";
 import { EnhancedProjectDialog } from "@/components/EnhancedProjectDialog";
 import ActivitySection from "@/components/ActivitySection";
 import SessionBanner from "@/components/SessionBanner";
@@ -918,11 +919,20 @@ const LeadDetail = () => {
             </CardContent>
           </Card>
 
+          {/* Custom Fields Display */}
+          <LeadFieldValuesDisplay leadId={lead.id} />
+
           {/* Edit Lead Dialog */}
-          <EditLeadDialog lead={lead} open={editOpen} onOpenChange={setEditOpen} onLeadUpdated={() => {
-          fetchLead();
-          setActivityRefreshKey(prev => prev + 1);
-        }} />
+          <EnhancedEditLeadDialog 
+            lead={lead} 
+            open={editOpen} 
+            onOpenChange={setEditOpen} 
+            onClose={() => setEditOpen(false)}
+            onSuccess={() => {
+              fetchLead();
+              setActivityRefreshKey(prev => prev + 1);
+            }} 
+          />
         </div>
 
         {/* Right column - Projects and Activity Section (75%) */}

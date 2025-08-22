@@ -817,11 +817,14 @@ const ActivitySection = ({
                                   )}
                                 </div>
 
-                                {/* Row 3: Date and time */}
+                                {/* Row 3: Creation date and time */}
                                 <div className="pl-1">
                                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                     <Clock className="h-3 w-3" />
-                                    {formatTime(new Date(item.date).toTimeString().slice(0, 5))}
+                                    <span>Created:</span>
+                                    <span>
+                                      {new Date(item.date).toLocaleDateString()} at {formatTime(new Date(item.date).toTimeString().slice(0, 5))}
+                                    </span>
                                   </div>
                                 </div>
                               </div>

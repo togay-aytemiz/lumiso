@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { AlertTriangle, Clock, CheckCircle, Calendar } from "lucide-react";
+import { AlertTriangle, Clock, CheckCircle, ChevronRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatTime, cn } from "@/lib/utils";
@@ -33,11 +33,11 @@ interface EnhancedSessionsSectionProps {
 const EnhancedSessionsSection = ({ sessions, loading, onSessionClick }: EnhancedSessionsSectionProps) => {
   if (loading) {
     return (
-      <div className="w-full bg-background/95 backdrop-blur border rounded-lg p-6">
+      <div className="w-full bg-blue-50/50 border border-blue-100 rounded-lg p-6">
         <div className="animate-pulse space-y-3">
           <div className="h-4 bg-muted rounded w-1/4"></div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {[1, 2, 3].map((i) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
+            {[1, 2, 3, 4].map((i) => (
               <div key={i} className="h-20 bg-muted rounded-lg"></div>
             ))}
           </div>
@@ -71,53 +71,48 @@ const EnhancedSessionsSection = ({ sessions, loading, onSessionClick }: Enhanced
     if (isOverdue) {
       return {
         label: "Past Due",
-        color: "bg-orange-500",
+        leftBorder: "border-l-4 border-l-orange-500",
         textColor: "text-orange-700",
-        bgColor: "bg-orange-50",
-        borderColor: "border-orange-200"
+        labelBg: "bg-orange-100 text-orange-800"
       };
     }
     
     if (relativeDate === "Today") {
       return {
         label: "Today",
-        color: "bg-blue-500",
+        leftBorder: "border-l-4 border-l-blue-500",
         textColor: "text-blue-700",
-        bgColor: "bg-blue-50",
-        borderColor: "border-blue-200"
+        labelBg: "bg-blue-100 text-blue-800"
       };
     }
     
     if (relativeDate === "Tomorrow") {
       return {
         label: "Tomorrow",
-        color: "bg-green-500",
+        leftBorder: "border-l-4 border-l-green-500",
         textColor: "text-green-700",
-        bgColor: "bg-green-50",
-        borderColor: "border-green-200"
+        labelBg: "bg-green-100 text-green-800"
       };
     }
     
     return {
       label: null,
-      color: null,
+      leftBorder: "border-l-4 border-l-gray-200",
       textColor: "text-muted-foreground",
-      bgColor: "bg-background",
-      borderColor: "border-border"
+      labelBg: null
     };
   };
 
   return (
-    <div className="w-full bg-background/95 backdrop-blur border rounded-lg p-6 mb-6">
-      <div className="flex items-center gap-2 mb-4">
-        <Calendar className="h-5 w-5 text-muted-foreground" />
+    <div className="w-full bg-blue-50/50 border border-blue-100 rounded-lg p-6 mb-6">
+      <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold">Sessions</h3>
-        <Badge variant="secondary" className="ml-auto">
+        <Badge variant="secondary">
           {sessions.length}
         </Badge>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
         {sortedSessions.map((session) => {
           const timeIndicator = getTimeIndicator(session);
           const isOverdue = isOverdueSession(session.session_date, session.status);
@@ -126,72 +121,61 @@ const EnhancedSessionsSection = ({ sessions, loading, onSessionClick }: Enhanced
             <Card
               key={session.id}
               className={cn(
-                "cursor-pointer transition-all duration-200 hover:shadow-md relative",
-                timeIndicator.bgColor,
-                timeIndicator.borderColor,
+                "cursor-pointer transition-all duration-200 hover:shadow-md bg-white",
+                timeIndicator.leftBorder,
                 "hover:scale-[1.02]"
               )}
               onClick={() => onSessionClick(session.id)}
             >
-              <CardContent className="p-4">
-                {/* Time indicator dot */}
-                {timeIndicator.color && (
-                  <div className={cn("absolute top-2 right-2 w-2 h-2 rounded-full", timeIndicator.color)} />
-                )}
-                
-                {/* Main content - vertically centered */}
-                <div className="flex flex-col justify-center min-h-[4rem] space-y-2">
-                  {/* Session name and overdue warning */}
-                  <div className="flex items-center justify-between">
-                    <h4 className="font-semibold text-sm truncate">
-                      {getSessionName(session)}
-                    </h4>
-                    {isOverdue && (
-                      <AlertTriangle className="h-4 w-4 text-orange-500 flex-shrink-0" />
-                    )}
-                  </div>
-                  
-                  {/* Project name if available */}
-                  {session.projects?.name && (
-                    <p className="text-xs text-muted-foreground truncate">
-                      {session.projects.name}
-                    </p>
-                  )}
-                  
-                  {/* Date and time */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1">
-                      <Clock className="h-3 w-3 text-muted-foreground" />
-                      <span className={cn("text-xs font-medium", timeIndicator.textColor)}>
-                        {timeIndicator.label || getRelativeDate(session.session_date)}
-                      </span>
-                      {session.session_time && (
-                        <span className="text-xs text-muted-foreground">
-                          • {formatTime(session.session_time)}
-                        </span>
+              <CardContent className="p-0">
+                <div className="flex items-center justify-between p-4 min-h-[4rem]">
+                  {/* Left content - vertically centered */}
+                  <div className="flex flex-col justify-center flex-1 min-w-0 space-y-1">
+                    {/* Session name and time label */}
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-semibold text-sm truncate">
+                        {getSessionName(session)}
+                      </h4>
+                      {timeIndicator.label && (
+                        <Badge variant="secondary" className={cn("text-xs px-2 py-0", timeIndicator.labelBg)}>
+                          {timeIndicator.label}
+                        </Badge>
+                      )}
+                      {isOverdue && (
+                        <AlertTriangle className="h-4 w-4 text-orange-500 flex-shrink-0" />
                       )}
                     </div>
                     
-                    {/* Status indicator */}
+                    {/* Project name if available */}
+                    {session.projects?.name && (
+                      <p className="text-xs text-muted-foreground truncate">
+                        {session.projects.name}
+                      </p>
+                    )}
+                    
+                    {/* Date and time */}
+                    <div className="flex items-center gap-1">
+                      <Clock className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                      <span className="text-xs text-muted-foreground">
+                        {!timeIndicator.label && getRelativeDate(session.session_date)}
+                        {session.session_time && ` • ${formatTime(session.session_time)}`}
+                      </span>
+                    </div>
+                    
+                    {/* Status badge */}
                     <div className="flex items-center">
-                      {session.status === 'completed' && (
-                        <CheckCircle className="h-3 w-3 text-green-500" />
-                      )}
-                      {session.status === 'planned' && !isOverdue && (
-                        <div className="w-2 h-2 bg-blue-500 rounded-full" />
-                      )}
-                      {session.status === 'cancelled' && (
-                        <div className="w-2 h-2 bg-red-500 rounded-full" />
-                      )}
+                      <SessionStatusBadge
+                        sessionId={session.id}
+                        currentStatus={session.status as any}
+                        editable={false}
+                        onStatusChange={() => {}}
+                        size="sm"
+                      />
                     </div>
                   </div>
-                  
-                  {/* Warning text for overdue sessions */}
-                  {isOverdue && (
-                    <p className="text-xs text-orange-600 font-medium">
-                      Needs attention
-                    </p>
-                  )}
+
+                  {/* Right chevron */}
+                  <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0 ml-2" />
                 </div>
               </CardContent>
             </Card>

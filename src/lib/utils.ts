@@ -21,7 +21,7 @@ export const formatDate = (dateString: string | Date, locale?: string): string =
   }).format(date);
 };
 
-export const formatTime = (timeString: string, locale?: string): string => {
+export const formatTime = (timeString: string, locale?: string, timeFormat?: string): string => {
   const userLocale = locale || getUserLocale();
   
   // Parse time string (HH:mm format)
@@ -29,12 +29,17 @@ export const formatTime = (timeString: string, locale?: string): string => {
   const date = new Date();
   date.setHours(hours, minutes, 0, 0);
   
-  // Determine if locale uses 24-hour format
-  const uses24Hour = userLocale.startsWith('tr') || 
-                     userLocale.startsWith('de') || 
-                     userLocale.startsWith('fr') || 
-                     userLocale.startsWith('es') ||
-                     userLocale.startsWith('it');
+  // Use provided time format, or determine from locale if not provided
+  let uses24Hour: boolean;
+  if (timeFormat) {
+    uses24Hour = timeFormat === '24-hour';
+  } else {
+    uses24Hour = userLocale.startsWith('tr') || 
+                 userLocale.startsWith('de') || 
+                 userLocale.startsWith('fr') || 
+                 userLocale.startsWith('es') ||
+                 userLocale.startsWith('it');
+  }
   
   return new Intl.DateTimeFormat(userLocale, {
     hour: '2-digit',

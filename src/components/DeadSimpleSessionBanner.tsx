@@ -1,8 +1,9 @@
 import { AlertTriangle, Clock, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { formatTime, cn } from "@/lib/utils";
+import { formatTime, cn, getUserLocale, formatDate } from "@/lib/utils";
 import { getRelativeDate, isOverdueSession } from "@/lib/dateUtils";
 import { SessionStatusBadge } from "@/components/SessionStatusBadge";
+import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 
 type SessionStatus = "planned" | "completed" | "cancelled" | "no_show" | "rescheduled" | "in_post_processing" | "delivered";
 
@@ -28,11 +29,27 @@ interface DeadSimpleSessionBannerProps {
 }
 
 const DeadSimpleSessionBanner = ({ session, onClick }: DeadSimpleSessionBannerProps) => {
+  const { settings: orgSettings } = useOrganizationSettings();
+  const userLocale = getUserLocale();
+
   const getSessionName = (session: Session): string => {
     if (session.projects?.project_types?.name) {
       return `${session.projects.project_types.name} Session`;
     }
     return "Session";
+  };
+
+  const formatSessionTime = (timeString: string): string => {
+    return formatTime(timeString, userLocale, orgSettings?.time_format || undefined);
+  };
+
+  const formatSessionDate = (dateString: string): string => {
+    const relativeDate = getRelativeDate(dateString);
+    if (relativeDate === "Today" || relativeDate === "Tomorrow" || relativeDate === "Yesterday") {
+      return relativeDate;
+    }
+    // Use browser locale for absolute dates
+    return formatDate(dateString, userLocale);
   };
 
   const getTimeIndicator = (session: Session) => {
@@ -85,12 +102,12 @@ const DeadSimpleSessionBanner = ({ session, onClick }: DeadSimpleSessionBannerPr
         {/* Left: Date and Time (2 lines) */}
         <div className="flex-shrink-0">
           <div className="text-sm font-medium text-gray-900">
-            {getRelativeDate(session.session_date)}
+            {formatSessionDate(session.session_date)}
           </div>
           {session.session_time && (
             <div className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
               <Clock className="h-3 w-3" />
-              {formatTime(session.session_time)}
+              {formatSessionTime(session.session_time)}
             </div>
           )}
         </div>

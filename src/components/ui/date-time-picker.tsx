@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState, useCallback } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
 import { CalendarIcon, Clock } from "lucide-react";
 
@@ -67,27 +67,14 @@ export const DateTimePicker: React.FC<DateTimePickerProps> = ({
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(initialDate);
   const [hours, setHours] = useState<number>(initialHours);
   const [minutes, setMinutes] = useState<number>(initialMinutes);
-  const [isInitializing, setIsInitializing] = useState(true);
 
   useEffect(() => {
     const parsed = parseIsoLocal(value);
-    setIsInitializing(true);
     setSelectedDate(parsed.date);
     setHours(parsed.hours);
     setMinutes(parsed.minutes);
-    setIsInitializing(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
-
-  // Auto-update when date/time changes (but not during initialization)
-  useEffect(() => {
-    if (isInitializing) return;
-    
-    if (selectedDate) {
-      onChange(toIsoLocal(selectedDate, hours, minutes));
-    } else {
-      onChange("");
-    }
-  }, [selectedDate, hours, minutes, onChange, isInitializing]);
 
   const browserLocale = getUserLocale();
   const hourOptions = Array.from({ length: 24 }, (_, i) => i);
@@ -177,6 +164,7 @@ export const DateTimePicker: React.FC<DateTimePickerProps> = ({
                       setSelectedDate(undefined);
                       setHours(9);
                       setMinutes(0);
+                      onChange("");
                     }}
                   >
                     Clear
@@ -185,9 +173,15 @@ export const DateTimePicker: React.FC<DateTimePickerProps> = ({
                 <Button
                   type="button"
                   size="sm"
-                  onClick={() => setOpen(false)}
+                  disabled={!selectedDate}
+                  onClick={() => {
+                    if (selectedDate) {
+                      onChange(toIsoLocal(selectedDate, hours, minutes));
+                      setOpen(false);
+                    }
+                  }}
                 >
-                  Done
+                  Apply
                 </Button>
               </div>
             </div>

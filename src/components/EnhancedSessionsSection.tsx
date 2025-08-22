@@ -1,10 +1,6 @@
 import { useState } from "react";
-import { AlertTriangle, Clock, CheckCircle, ChevronRight } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { formatTime, cn } from "@/lib/utils";
-import { getRelativeDate, isOverdueSession } from "@/lib/dateUtils";
-import { SessionStatusBadge } from "@/components/SessionStatusBadge";
+import DeadSimpleSessionBanner from "@/components/DeadSimpleSessionBanner";
 
 type SessionStatus = "planned" | "completed" | "cancelled" | "no_show" | "rescheduled" | "in_post_processing" | "delivered";
 
@@ -36,9 +32,9 @@ const EnhancedSessionsSection = ({ sessions, loading, onSessionClick }: Enhanced
       <div className="w-full bg-blue-50/50 border border-blue-100 rounded-lg p-6">
         <div className="animate-pulse space-y-3">
           <div className="h-4 bg-muted rounded w-1/4"></div>
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
+          <div className="space-y-3">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-20 bg-muted rounded-lg"></div>
+              <div key={i} className="h-16 bg-muted rounded-lg"></div>
             ))}
           </div>
         </div>
@@ -57,52 +53,6 @@ const EnhancedSessionsSection = ({ sessions, loading, onSessionClick }: Enhanced
     return dateA.getTime() - dateB.getTime();
   });
 
-  const getSessionName = (session: Session): string => {
-    if (session.projects?.project_types?.name) {
-      return `${session.projects.project_types.name} Session`;
-    }
-    return "Session";
-  };
-
-  const getTimeIndicator = (session: Session) => {
-    const relativeDate = getRelativeDate(session.session_date);
-    const isOverdue = isOverdueSession(session.session_date, session.status);
-    
-    if (isOverdue) {
-      return {
-        label: "Past Due",
-        leftBorder: "border-l-4 border-l-orange-500",
-        textColor: "text-orange-700",
-        labelBg: "bg-orange-100 text-orange-800"
-      };
-    }
-    
-    if (relativeDate === "Today") {
-      return {
-        label: "Today",
-        leftBorder: "border-l-4 border-l-blue-500",
-        textColor: "text-blue-700",
-        labelBg: "bg-blue-100 text-blue-800"
-      };
-    }
-    
-    if (relativeDate === "Tomorrow") {
-      return {
-        label: "Tomorrow",
-        leftBorder: "border-l-4 border-l-green-500",
-        textColor: "text-green-700",
-        labelBg: "bg-green-100 text-green-800"
-      };
-    }
-    
-    return {
-      label: null,
-      leftBorder: "border-l-4 border-l-gray-200",
-      textColor: "text-muted-foreground",
-      labelBg: null
-    };
-  };
-
   return (
     <div className="w-full bg-blue-50/50 border border-blue-100 rounded-lg p-6 mb-6">
       <div className="flex items-center justify-between mb-4">
@@ -112,77 +62,14 @@ const EnhancedSessionsSection = ({ sessions, loading, onSessionClick }: Enhanced
         </Badge>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
-        {sortedSessions.map((session) => {
-          const timeIndicator = getTimeIndicator(session);
-          const isOverdue = isOverdueSession(session.session_date, session.status);
-          
-          return (
-            <Card
-              key={session.id}
-              className={cn(
-                "cursor-pointer transition-all duration-200 hover:shadow-md bg-white hover:scale-[1.02]",
-                timeIndicator.leftBorder
-              )}
-              onClick={() => onSessionClick(session.id)}
-            >
-              <CardContent className="p-0 h-20">
-                <div className="grid grid-cols-[1fr,auto] items-center h-full px-4 gap-3">
-                  
-                  {/* Left content area */}
-                  <div className="min-w-0">
-                    
-                    {/* Main title row with badges */}
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-semibold text-sm truncate leading-none">
-                        {getSessionName(session)}
-                      </span>
-                      {timeIndicator.label && (
-                        <Badge variant="secondary" className={cn("text-xs px-1.5 py-0.5 shrink-0 leading-none", timeIndicator.labelBg)}>
-                          {timeIndicator.label}
-                        </Badge>
-                      )}
-                      {isOverdue && (
-                        <AlertTriangle className="h-3 w-3 text-orange-500 shrink-0" />
-                      )}
-                    </div>
-                    
-                    {/* Secondary info row */}
-                    <div className="flex items-center justify-between mb-1">
-                      {/* Left: Date/time */}
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-3 w-3 text-muted-foreground shrink-0" />
-                        <span className="text-xs text-muted-foreground leading-none">
-                          {!timeIndicator.label && getRelativeDate(session.session_date)}
-                          {session.session_time && ` • ${formatTime(session.session_time)}`}
-                        </span>
-                      </div>
-                      
-                      {/* Right: Status */}
-                      <SessionStatusBadge
-                        sessionId={session.id}
-                        currentStatus={session.status as any}
-                        editable={false}
-                        onStatusChange={() => {}}
-                        size="sm"
-                      />
-                    </div>
-                    
-                    {/* Project name if available */}
-                    {session.projects?.name && (
-                      <div className="text-xs text-muted-foreground truncate leading-none">
-                        {session.projects.name}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Right arrow - grid handles centering */}
-                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
+      <div className="space-y-3">
+        {sortedSessions.map((session) => (
+          <DeadSimpleSessionBanner
+            key={session.id}
+            session={session}
+            onClick={onSessionClick}
+          />
+        ))}
       </div>
     </div>
   );

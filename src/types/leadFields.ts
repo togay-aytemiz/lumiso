@@ -19,6 +19,7 @@ export interface LeadFieldDefinition {
   is_system: boolean;
   is_required: boolean;
   is_visible_in_form: boolean;
+  is_visible_in_table: boolean;
   sort_order: number;
   options?: { options: string[] };
   validation_rules?: Record<string, any>;
@@ -41,6 +42,7 @@ export interface CreateLeadFieldDefinition {
   field_type: LeadFieldType;
   is_required?: boolean;
   is_visible_in_form?: boolean;
+  is_visible_in_table?: boolean;
   sort_order?: number;
   options?: { options: string[] };
   validation_rules?: Record<string, any>;
@@ -50,6 +52,7 @@ export interface UpdateLeadFieldDefinition {
   label?: string;
   is_required?: boolean;
   is_visible_in_form?: boolean;
+  is_visible_in_table?: boolean;
   sort_order?: number;
   options?: { options: string[] };
   validation_rules?: Record<string, any>;

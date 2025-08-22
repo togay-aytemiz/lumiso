@@ -264,6 +264,7 @@ export type Database = {
           is_required: boolean
           is_system: boolean
           is_visible_in_form: boolean
+          is_visible_in_table: boolean
           label: string
           options: Json | null
           organization_id: string
@@ -279,6 +280,7 @@ export type Database = {
           is_required?: boolean
           is_system?: boolean
           is_visible_in_form?: boolean
+          is_visible_in_table?: boolean
           label: string
           options?: Json | null
           organization_id: string
@@ -294,6 +296,7 @@ export type Database = {
           is_required?: boolean
           is_system?: boolean
           is_visible_in_form?: boolean
+          is_visible_in_table?: boolean
           label?: string
           options?: Json | null
           organization_id?: string
@@ -1115,6 +1118,33 @@ export type Database = {
           id?: string
           is_completed?: boolean
           project_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_column_preferences: {
+        Row: {
+          column_config: Json
+          created_at: string
+          id: string
+          table_name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          column_config?: Json
+          created_at?: string
+          id?: string
+          table_name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          column_config?: Json
+          created_at?: string
+          id?: string
+          table_name?: string
           updated_at?: string
           user_id?: string
         }

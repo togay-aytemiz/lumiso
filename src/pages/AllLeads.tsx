@@ -1,46 +1,23 @@
 import { useState, useEffect, useMemo } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowLeft, ArrowUpDown, ArrowUp, ArrowDown, Plus, Users, FileText, Filter } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { Plus, Filter } from "lucide-react";
 import { EnhancedAddLeadDialog } from "@/components/EnhancedAddLeadDialog";
 import { useNavigate } from "react-router-dom";
-import { getLeadStatusStyles, formatStatusText } from "@/lib/leadStatusColors";
-import { LeadStatusBadge } from "@/components/LeadStatusBadge";
-import { formatDate } from "@/lib/utils";
 import GlobalSearch from "@/components/GlobalSearch";
-import { PageHeader, PageHeaderSearch, PageHeaderActions } from "@/components/ui/page-header";
-import { AssigneeAvatars } from "@/components/AssigneeAvatars";
+import { PageHeader, PageHeaderSearch } from "@/components/ui/page-header";
 import { OnboardingTutorial, TutorialStep } from "@/components/shared/OnboardingTutorial";
 import { useOnboardingV2 } from "@/hooks/useOnboardingV2";
-import { Calendar, MessageSquare, CheckSquare } from "lucide-react";
+import { Calendar, MessageSquare, Users, FileText } from "lucide-react";
+import { DataTable } from "@/components/ui/data-table";
+import { useLeadsWithCustomFields } from "@/hooks/useLeadsWithCustomFields";
+import { useLeadTableColumns } from "@/hooks/useLeadTableColumns";
+import { LeadTableColumnManager } from "@/components/LeadTableColumnManager";
+import { supabase } from "@/integrations/supabase/client";
 
-interface Lead {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  due_date: string;
-  notes: string;
-  status: string;
-  status_id?: string;
-  created_at: string;
-  assignees?: string[];
-}
-
-type SortField = keyof Lead;
-type SortDirection = 'asc' | 'desc';
-
-const AllLeads = () => {
-  const [leads, setLeads] = useState<Lead[]>([]);
-  const [loading, setLoading] = useState(true);
+const AllLeadsNew = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [sortField, setSortField] = useState<SortField>("created_at");
-  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [leadStatuses, setLeadStatuses] = useState<any[]>([]);
   const [addLeadDialogOpen, setAddLeadDialogOpen] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
@@ -48,6 +25,19 @@ const AllLeads = () => {
   const [isSchedulingTutorial, setIsSchedulingTutorial] = useState(false);
   const navigate = useNavigate();
   const { currentStep, completeCurrentStep } = useOnboardingV2();
+
+  // Use new hooks
+  const { leads, loading: leadsLoading, refetch: refetchLeads } = useLeadsWithCustomFields();
+  const { 
+    columns, 
+    columnPreferences, 
+    availableColumns, 
+    loading: columnsLoading, 
+    saveColumnPreferences, 
+    resetToDefault 
+  } = useLeadTableColumns();
+
+  const loading = leadsLoading || columnsLoading;
 
   const leadsTutorialSteps: TutorialStep[] = [
     {
@@ -73,8 +63,8 @@ const AllLeads = () => {
           <div className="flex items-start gap-3">
             <FileText className="w-5 h-5 text-primary mt-0.5" />
             <div>
-              <h4 className="font-medium">Manage Details</h4>
-              <p className="text-sm text-muted-foreground">Click on any lead to view detailed information, add notes, and track progress.</p>
+              <h4 className="font-medium">Customize Columns</h4>
+              <p className="text-sm text-muted-foreground">Customize which columns to show and arrange them to match your workflow.</p>
             </div>
           </div>
         </div>
@@ -160,36 +150,31 @@ const AllLeads = () => {
       setCurrentTutorialStep(0);
     } else if (currentStep === 2) {
       setShowTutorial(true);
-      setCurrentTutorialStep(0); // Start from step 1
+      setCurrentTutorialStep(0);
     }
   }, [currentStep]);
 
   // Update tutorial step when needed
   useEffect(() => {
     if (showTutorial && !addLeadDialogOpen && currentTutorialStep === 1) {
-      // If we're on step 2 (floating) and dialog closes, move to step 3
       setCurrentTutorialStep(2);
     }
   }, [addLeadDialogOpen, showTutorial, currentTutorialStep]);
 
-  // Handle tutorial completion - don't complete the step yet, continue to lead details
+  // Handle tutorial completion
   const handleTutorialComplete = () => {
     setShowTutorial(false);
-    // Don't call completeStep() yet - the lead details page will handle it
   };
 
   const handleTutorialExit = () => {
     setShowTutorial(false);
   };
 
-  // Handle add lead dialog close - advance to step 3 if we're on step 2
   const handleAddLeadDialogChange = (open: boolean) => {
     setAddLeadDialogOpen(open);
-    // Tutorial step advancement is handled in useEffect
   };
 
   useEffect(() => {
-    fetchLeads();
     fetchLeadStatuses();
   }, []);
 
@@ -207,95 +192,27 @@ const AllLeads = () => {
     }
   };
 
-  const fetchLeads = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('leads')
-        .select(`
-          *,
-          lead_statuses(id, name, color, is_system_final)
-        `)
-        .order('created_at', { ascending: false });
+  // Filter leads by status
+  const filteredLeads = useMemo(() => {
+    if (statusFilter === "all") return leads;
+    return leads.filter(lead => lead.lead_statuses?.name === statusFilter);
+  }, [leads, statusFilter]);
 
-      if (error) throw error;
-      setLeads(data || []);
-    } catch (error: any) {
-      toast({
-        title: "Error fetching leads",
-        description: error.message,
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const filteredAndSortedLeads = useMemo(() => {
-    let filtered = leads;
-    
-    // Apply status filter
-    if (statusFilter !== "all") {
-      filtered = leads.filter(lead => (lead as any).lead_statuses?.name === statusFilter);
-    }
-
-    // Apply sorting
-    filtered.sort((a, b) => {
-      let aValue: any = a[sortField];
-      let bValue: any = b[sortField];
-
-      // Handle date values
-      if (sortField === 'due_date' || sortField === 'created_at') {
-        aValue = aValue ? new Date(aValue).getTime() : 0;
-        bValue = bValue ? new Date(bValue).getTime() : 0;
-      }
-
-      // Handle string values
-      if (typeof aValue === 'string' && typeof bValue === 'string') {
-        aValue = aValue.toLowerCase();
-        bValue = bValue.toLowerCase();
-      }
-
-      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
-      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
-      return 0;
-    });
-
-    return filtered;
-  }, [leads, statusFilter, sortField, sortDirection]);
-
-  const handleSort = (field: SortField) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortDirection('asc');
-    }
-  };
-
-  const handleRowClick = (leadId: string) => {
-    // If we're in tutorial mode, pass appropriate tutorial context
+  const handleRowClick = (lead: any) => {
     const state: any = { from: 'all-leads' };
     
     if (showTutorial) {
       if (isSchedulingTutorial && currentTutorialStep === 1) {
-        // Scheduling tutorial - go to lead detail for scheduling
         state.continueTutorial = true;
         state.tutorialType = 'scheduling';
-        state.tutorialStep = 3; // Next step in scheduling tutorial
+        state.tutorialStep = 3;
       } else if (currentTutorialStep === 2) {
-        // Regular leads tutorial
         state.continueTutorial = true;
-        state.tutorialStep = 4; // Next step in lead details
+        state.tutorialStep = 4;
       }
     }
     
-    navigate(`/leads/${leadId}`, { state });
-  };
-
-
-  const getSortIcon = (field: SortField) => {
-    if (sortField !== field) return <ArrowUpDown className="h-4 w-4" />;
-    return sortDirection === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />;
+    navigate(`/leads/${lead.id}`, { state });
   };
 
   const statusOptions = [
@@ -305,6 +222,15 @@ const AllLeads = () => {
       label: status.name
     }))
   ];
+
+  const emptyState = (
+    <div className="text-center py-8 text-muted-foreground">
+      {statusFilter === "all" 
+        ? "No leads found. Add your first lead to get started!"
+        : `No leads found with status "${statusFilter}".`
+      }
+    </div>
+  );
 
   if (loading) {
     return (
@@ -344,7 +270,7 @@ const AllLeads = () => {
       <div className="p-4 sm:p-6">
         <Card className="min-w-0">
           <CardHeader>
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
                 <span className="text-sm text-muted-foreground whitespace-nowrap">Filter by status:</span>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -360,133 +286,29 @@ const AllLeads = () => {
                   </SelectContent>
                 </Select>
               </div>
+              
+              <LeadTableColumnManager
+                columnPreferences={columnPreferences}
+                availableColumns={availableColumns}
+                onSave={saveColumnPreferences}
+                onReset={resetToDefault}
+              />
             </div>
           </CardHeader>
-        <CardContent className="p-0">
-          <div className="w-full overflow-x-auto overflow-y-hidden" style={{ maxWidth: '100vw' }}>
-            <div className="min-w-max">
-              <Table style={{ minWidth: '800px' }}>
-                <TableHeader>
-                <TableRow>
-                  <TableHead 
-                    className="cursor-pointer hover:bg-muted/50 whitespace-nowrap"
-                    onClick={() => handleSort('name')}
-                  >
-                    <div className="flex items-center gap-2">
-                      Name
-                      {getSortIcon('name')}
-                    </div>
-                  </TableHead>
-                  <TableHead 
-                    className="cursor-pointer hover:bg-muted/50 whitespace-nowrap"
-                    onClick={() => handleSort('email')}
-                  >
-                    <div className="flex items-center gap-2">
-                      Email
-                      {getSortIcon('email')}
-                    </div>
-                  </TableHead>
-                  <TableHead 
-                    className="cursor-pointer hover:bg-muted/50 whitespace-nowrap"
-                    onClick={() => handleSort('phone')}
-                  >
-                    <div className="flex items-center gap-2">
-                      Phone
-                      {getSortIcon('phone')}
-                    </div>
-                  </TableHead>
-                  <TableHead 
-                    className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => handleSort('status')}
-                  >
-                    <div className="flex items-center gap-2">
-                      Status
-                      {getSortIcon('status')}
-                    </div>
-                  </TableHead>
-                  <TableHead 
-                    className="cursor-pointer hover:bg-muted/50 whitespace-nowrap"
-                    onClick={() => handleSort('due_date')}
-                  >
-                    <div className="flex items-center gap-2">
-                      Due Date
-                      {getSortIcon('due_date')}
-                    </div>
-                  </TableHead>
-                  <TableHead className="whitespace-nowrap">Assignees</TableHead>
-                  <TableHead className="whitespace-nowrap">Notes</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredAndSortedLeads.length > 0 ? (
-                  filteredAndSortedLeads.map((lead) => (
-                    <TableRow 
-                      key={lead.id}
-                      className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => handleRowClick(lead.id)}
-                    >
-                      <TableCell className="font-medium">{lead.name}</TableCell>
-                      <TableCell>{lead.email || '-'}</TableCell>
-                      <TableCell>{lead.phone || '-'}</TableCell>
-                        <TableCell>
-                          <LeadStatusBadge
-                            leadId={lead.id}
-                            currentStatusId={lead.status_id}
-                            currentStatus={lead.status}
-                            onStatusChange={fetchLeads}
-                            editable={true}
-                            size="sm"
-                            statuses={leadStatuses}
-                          />
-                         </TableCell>
-                      <TableCell>
-                        {lead.due_date ? formatDate(lead.due_date) : '-'}
-                      </TableCell>
-                      <TableCell>
-                        {lead.assignees && lead.assignees.length > 0 ? (
-                          <AssigneeAvatars 
-                            assigneeIds={lead.assignees} 
-                            maxVisible={3}
-                            size="sm"
-                          />
-                        ) : (
-                          <span className="text-muted-foreground text-sm">-</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="max-w-xs">
-                        {lead.notes ? (
-                          <div 
-                            className="truncate hover:whitespace-normal hover:overflow-visible hover:text-wrap cursor-help"
-                            title={lead.notes}
-                          >
-                            {lead.notes}
-                          </div>
-                        ) : (
-                          '-'
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                      {statusFilter === "all" 
-                        ? "No leads found. Add your first lead to get started!"
-                        : `No leads found with status "${statusFilter}".`
-                      }
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-            </div>
-          </div>
+          <CardContent className="p-0">
+            <DataTable
+              data={filteredLeads}
+              columns={columns}
+              onRowClick={handleRowClick}
+              emptyState={emptyState}
+              itemsPerPage={20}
+            />
           </CardContent>
         </Card>
       </div>
       
       <EnhancedAddLeadDialog 
-        onSuccess={fetchLeads} 
+        onSuccess={refetchLeads} 
         open={addLeadDialogOpen}
         onOpenChange={handleAddLeadDialogChange}
         onClose={() => handleAddLeadDialogChange(false)}
@@ -503,4 +325,4 @@ const AllLeads = () => {
   );
 };
 
-export default AllLeads;
+export default AllLeadsNew;

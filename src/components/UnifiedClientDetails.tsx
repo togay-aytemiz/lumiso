@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Edit, Phone, Mail, MessageCircle } from "lucide-react";
+import { Phone, Mail, MessageCircle } from "lucide-react";
 import { useLeadFieldDefinitions } from "@/hooks/useLeadFieldDefinitions";
 import { useLeadFieldValues } from "@/hooks/useLeadFieldValues";
 import { CustomFieldDisplay } from "@/components/fields/CustomFieldDisplay";
@@ -134,19 +134,20 @@ export function UnifiedClientDetails({
   return (
     <>
       <Card className={className}>
-        <CardHeader className="pb-3 relative">
-          <h3 className="text-lg font-semibold">{title}</h3>
-          {hasPermission('edit_assigned_leads') && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setEditOpen(true)}
-              className="absolute top-2 right-2 text-muted-foreground h-8 px-2"
-            >
-              <Edit className="h-3 w-3 mr-1" />
-              Edit
-            </Button>
-          )}
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold">{title}</h3>
+            {hasPermission('edit_assigned_leads') && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setEditOpen(true)}
+                className="text-muted-foreground h-8 px-3"
+              >
+                Edit
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent className="space-y-3">
           {fieldsToShow.length === 0 ? (

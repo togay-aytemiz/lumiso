@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { Save, X, ChevronDown, Pencil, Archive, ArchiveRestore, Calendar } from "lucide-react";
+import { Save, X, ChevronDown, Pencil, Archive, ArchiveRestore } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { ProjectActivitySection } from "./ProjectActivitySection";
@@ -16,9 +16,7 @@ import { SessionsSection } from "./SessionsSection";
 import { ProjectTodoListEnhanced } from "./ProjectTodoListEnhanced";
 import { ProjectStatusBadge } from "./ProjectStatusBadge";
 import { ProjectTypeSelector } from "./ProjectTypeSelector";
-import { ProjectPaymentsSection } from "@/components/ProjectPaymentsSection";
-import { hasUpcomingPlannedSessions, getNextPlannedSession } from "@/lib/dateUtils";
-import { formatLongDate, formatTime } from "@/lib/utils";
+import { ProjectPaymentsSection } from "./ProjectPaymentsSection";
 import ProjectDetailsLayout from "@/components/project-details/ProjectDetailsLayout";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { UnifiedClientDetails } from "@/components/UnifiedClientDetails";
@@ -659,26 +657,6 @@ export function ViewProjectDialog({
           {isArchived && <div className="mb-3 rounded-md border border-border bg-muted/40 text-muted-foreground text-sm px-3 py-2">
               This project is archived. Most actions are disabled. While archived, its sessions and reminders are hidden from calendars, the Sessions page, and activity lists. Use More → Restore to re-enable editing and visibility.
             </div>}
-
-          {/* Upcoming Sessions Warning */}
-          {!isArchived && hasUpcomingPlannedSessions(sessions) && (
-            <div className="mb-3 bg-teal-50 border border-teal-200 rounded-md p-3">
-              <div className="flex items-center gap-3 text-teal-800">
-                <Calendar className="h-5 w-5 text-teal-600" />
-                <div>
-                  <p className="font-medium">Upcoming session scheduled</p>
-                  {(() => {
-                    const nextSession = getNextPlannedSession(sessions);
-                    return nextSession ? (
-                      <p className="text-sm text-teal-700">
-                        Next session: {formatLongDate(nextSession.session_date)} at {formatTime(nextSession.session_time)}
-                      </p>
-                    ) : null;
-                  })()}
-                </div>
-              </div>
-            </div>
-          )}
 
           <div className={isArchived ? 'opacity-60 pointer-events-none select-none' : ''}>
             <ProjectDetailsLayout header={<></>} left={<div className="space-y-4">

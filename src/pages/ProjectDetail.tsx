@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { Save, X, ChevronDown, Pencil, Archive, ArchiveRestore, ArrowLeft, Calendar } from "lucide-react";
+import { Save, X, ChevronDown, Pencil, Archive, ArchiveRestore, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ProjectActivitySection } from "@/components/ProjectActivitySection";
 import { ProjectTodoListEnhanced } from "@/components/ProjectTodoListEnhanced";
@@ -20,8 +20,6 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 import { UnifiedClientDetails } from "@/components/UnifiedClientDetails";
 import { AssigneesList } from "@/components/AssigneesList";
 import { onArchiveToggle } from "@/components/ViewProjectDialog";
-import { hasUpcomingPlannedSessions, getNextPlannedSession } from "@/lib/dateUtils";
-import { formatLongDate, formatTime } from "@/lib/utils";
 
 interface Project {
   id: string;
@@ -557,26 +555,6 @@ export default function ProjectDetail() {
       {isArchived && (
         <div className="mb-6 rounded-lg border border-border bg-muted/40 text-muted-foreground text-sm px-4 py-3">
           This project is archived. Most actions are disabled. While archived, its sessions and reminders are hidden from calendars, the Sessions page, and activity lists. Use More Actions → Restore to re-enable editing and visibility.
-        </div>
-      )}
-
-      {/* Upcoming Sessions Warning */}
-      {!isArchived && hasUpcomingPlannedSessions(sessions) && (
-        <div className="mb-6 bg-teal-50 border border-teal-200 rounded-lg p-3">
-          <div className="flex items-center gap-3 text-teal-800">
-            <Calendar className="h-5 w-5 text-teal-600" />
-            <div>
-              <p className="font-medium">Upcoming session scheduled</p>
-              {(() => {
-                const nextSession = getNextPlannedSession(sessions);
-                return nextSession ? (
-                  <p className="text-sm text-teal-700">
-                    Next session: {formatLongDate(nextSession.session_date)} at {formatTime(nextSession.session_time)}
-                  </p>
-                ) : null;
-              })()}
-            </div>
-          </div>
         </div>
       )}
 

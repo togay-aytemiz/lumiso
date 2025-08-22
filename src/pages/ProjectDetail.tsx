@@ -461,7 +461,7 @@ export default function ProjectDetail() {
                     strokeWidth={2.5}
                     onClick={() => window.history.back()}
                   />
-                  <h1 className="text-4xl font-bold leading-tight break-words">
+                  <h1 className="text-xl sm:text-2xl font-bold leading-tight break-words">
                     {project?.name}
                   </h1>
                   

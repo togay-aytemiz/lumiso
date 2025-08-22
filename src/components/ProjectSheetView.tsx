@@ -472,7 +472,7 @@ export function ProjectSheetView({
               <div className="space-y-2">
                 {/* Desktop: Name + Badges on same line */}
                 <div className="hidden md:flex items-center gap-3 flex-wrap">
-                  <h1 className="text-xl font-bold leading-tight break-words text-left md:text-3xl">
+                  <h1 className="text-xl sm:text-2xl font-bold leading-tight break-words text-left">
                     {project?.name}
                   </h1>
                   
@@ -498,7 +498,7 @@ export function ProjectSheetView({
                 
                 {/* Mobile: Name only */}
                 <div className="md:hidden">
-                  <h1 className="text-xl font-bold leading-tight break-words text-left">
+                  <h1 className="text-xl sm:text-2xl font-bold leading-tight break-words text-left">
                     {project?.name}
                   </h1>
                 </div>

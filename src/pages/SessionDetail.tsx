@@ -268,17 +268,17 @@ export default function SessionDetail() {
           </div>
           
           <div className="flex items-center gap-1 shrink-0 self-start">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="text-muted-foreground hover:bg-accent hover:text-accent-foreground h-8 px-2 gap-1 md:h-10 md:px-3"
-                >
-                  <span className="text-sm hidden md:inline">More</span>
-                  <ChevronDown className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button 
+                        variant="outline" 
+                        size="lg"
+                        className="gap-2"
+                      >
+                        <span>More Actions</span>
+                        <ChevronDown className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
               <DropdownMenuContent align="end" side="bottom" className="z-50 bg-background">
                 <DropdownMenuItem role="menuitem" onSelect={handleEdit}>
                   <Edit className="mr-2 h-4 w-4" />

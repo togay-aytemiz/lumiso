@@ -267,6 +267,11 @@ const AllSessions = () => {
     setIsSessionSheetOpen(true);
   };
 
+  const handleSessionClick = (sessionId: string) => {
+    setSelectedSessionId(sessionId);
+    setIsSessionSheetOpen(true);
+  };
+
   const handleViewFullSessionDetails = () => {
     if (selectedSessionId) {
       navigate(`/sessions/${selectedSessionId}`);

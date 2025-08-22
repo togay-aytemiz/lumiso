@@ -4,7 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Plus, Calendar } from "lucide-react";
 import CompactSessionBanner from "./project-details/Summary/CompactSessionBanner";
 import EditSessionDialog from "./EditSessionDialog";
+import SessionSheetView from "./SessionSheetView";
 import { NewSessionDialogForProject } from "./NewSessionDialogForProject";
+import { useNavigate } from "react-router-dom";
 interface Session {
   id: string;
   session_date: string;
@@ -35,9 +37,31 @@ export function SessionsSection({
   onDeleteSession
 }: SessionsSectionProps) {
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
+  const [isSessionSheetOpen, setIsSessionSheetOpen] = useState(false);
+  const navigate = useNavigate();
   const handleSessionUpdated = () => {
     onSessionUpdated();
     setEditingSessionId(null);
+  };
+
+  const handleSessionClick = (sessionId: string) => {
+    setSelectedSessionId(sessionId);
+    setIsSessionSheetOpen(true);
+  };
+
+  const handleViewFullSessionDetails = () => {
+    if (selectedSessionId) {
+      navigate(`/sessions/${selectedSessionId}`);
+    }
+  };
+
+  const handleNavigateToLead = (leadId: string) => {
+    navigate(`/leads/${leadId}`);
+  };
+
+  const handleNavigateToProject = (projectId: string) => {
+    navigate(`/projects/${projectId}`);
   };
   if (loading) {
     return <Card>
@@ -71,7 +95,20 @@ export function SessionsSection({
               {!loading && <p className="text-sm text-muted-foreground mb-3">
                   This project includes {sessions.length} session{sessions.length !== 1 ? 's' : ''}
                 </p>}
-              {sessions.map(session => <CompactSessionBanner key={session.id} session={{...session, leads: { name: leadName }, projects: { name: projectName, project_types: { name: projectName.split(' ')[0] } }}} onStatusUpdate={onSessionUpdated} onEdit={() => setEditingSessionId(session.id)} onDelete={() => onDeleteSession(session.id)} />)}
+              {sessions.map(session => (
+                <CompactSessionBanner 
+                  key={session.id} 
+                  session={{
+                    ...session, 
+                    leads: { name: leadName }, 
+                    projects: { name: projectName, project_types: { name: projectName.split(' ')[0] } }
+                  }} 
+                  onStatusUpdate={onSessionUpdated} 
+                  onEdit={() => setEditingSessionId(session.id)} 
+                  onDelete={() => onDeleteSession(session.id)}
+                  onClick={() => handleSessionClick(session.id)}
+                />
+              ))}
             </div> : <div className="text-center py-4">
               <Calendar className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
               <p className="text-muted-foreground text-sm">No sessions linked to this project</p>
@@ -84,12 +121,35 @@ export function SessionsSection({
 
       {/* Edit Session Dialog */}
       {editingSessionId && (() => {
-      const session = sessions.find(s => s.id === editingSessionId);
-      return session ? <EditSessionDialog sessionId={session.id} leadId={session.lead_id} currentDate={session.session_date} currentTime={session.session_time} currentNotes={session.notes} currentProjectId={session.project_id} leadName={leadName} open={!!editingSessionId} onOpenChange={open => {
-        if (!open) {
-          setEditingSessionId(null);
-        }
-      }} onSessionUpdated={handleSessionUpdated} /> : null;
-    })()}
+        const session = sessions.find(s => s.id === editingSessionId);
+        return session ? (
+          <EditSessionDialog 
+            sessionId={session.id} 
+            leadId={session.lead_id} 
+            currentDate={session.session_date} 
+            currentTime={session.session_time} 
+            currentNotes={session.notes} 
+            currentProjectId={session.project_id} 
+            leadName={leadName} 
+            open={!!editingSessionId} 
+            onOpenChange={open => {
+              if (!open) {
+                setEditingSessionId(null);
+              }
+            }} 
+            onSessionUpdated={handleSessionUpdated} 
+          />
+        ) : null;
+      })()}
+
+      {/* Session Sheet View */}
+      <SessionSheetView
+        sessionId={selectedSessionId || ''}
+        isOpen={isSessionSheetOpen}
+        onOpenChange={setIsSessionSheetOpen}
+        onViewFullDetails={handleViewFullSessionDetails}
+        onNavigateToLead={handleNavigateToLead}
+        onNavigateToProject={handleNavigateToProject}
+      />
     </>;
 }

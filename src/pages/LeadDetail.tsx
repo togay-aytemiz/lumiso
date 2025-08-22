@@ -15,6 +15,7 @@ import { UnifiedClientDetails } from "@/components/UnifiedClientDetails";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import ScheduleSessionDialog from "@/components/ScheduleSessionDialog";
 import EditSessionDialog from "@/components/EditSessionDialog";
+import SessionSheetView from "@/components/SessionSheetView";
 import { EnhancedProjectDialog } from "@/components/EnhancedProjectDialog";
 import ActivitySection from "@/components/ActivitySection";
 import CompactSessionBanner from "@/components/project-details/Summary/CompactSessionBanner";
@@ -102,6 +103,8 @@ const LeadDetail = () => {
   const [deleting, setDeleting] = useState(false);
   const [deletingSessionId, setDeletingSessionId] = useState<string | null>(null);
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
+  const [isSessionSheetOpen, setIsSessionSheetOpen] = useState(false);
   const [activityRefreshKey, setActivityRefreshKey] = useState(0);
   const [leadStatuses, setLeadStatuses] = useState<any[]>([]);
 
@@ -733,6 +736,25 @@ const LeadDetail = () => {
   const handleSessionUpdated = () => {
     fetchSessions();
   };
+
+  const handleSessionClick = (sessionId: string) => {
+    setSelectedSessionId(sessionId);
+    setIsSessionSheetOpen(true);
+  };
+
+  const handleViewFullSessionDetails = () => {
+    if (selectedSessionId) {
+      navigate(`/sessions/${selectedSessionId}`);
+    }
+  };
+
+  const handleNavigateToLead = (leadId: string) => {
+    navigate(`/leads/${leadId}`);
+  };
+
+  const handleNavigateToProject = (projectId: string) => {
+    navigate(`/projects/${projectId}`);
+  };
   const handleProjectUpdated = () => {
     // Refresh sessions and activities when project changes (archive/restore should affect visibility)
     fetchSessions();
@@ -894,7 +916,8 @@ const LeadDetail = () => {
                   }} 
                   onStatusUpdate={handleSessionUpdated} 
                   onEdit={() => setEditingSessionId(session.id)} 
-                  onDelete={() => setDeletingSessionId(session.id)} 
+                  onDelete={() => setDeletingSessionId(session.id)}
+                  onClick={() => handleSessionClick(session.id)}
                 />
                 
               </div>)}
@@ -995,7 +1018,17 @@ const LeadDetail = () => {
         </AlertDialogContent>
       </AlertDialog>
       
-      <OnboardingTutorial 
+      {/* Session Sheet View */}
+      <SessionSheetView
+        sessionId={selectedSessionId || ''}
+        isOpen={isSessionSheetOpen}
+        onOpenChange={setIsSessionSheetOpen}
+        onViewFullDetails={handleViewFullSessionDetails}
+        onNavigateToLead={handleNavigateToLead}
+        onNavigateToProject={handleNavigateToProject}
+      />
+
+      <OnboardingTutorial
         key={`tutorial-${currentTutorialStep}`} 
         steps={isSchedulingTutorial ? schedulingTutorialSteps : leadDetailsTutorialSteps} 
         isVisible={showTutorial} 

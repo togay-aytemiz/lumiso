@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Clock, FileText, Plus, MessageSquare, Bell, CheckCircle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
@@ -37,6 +38,7 @@ interface AuditLog {
   created_at: string;
   session_project_id?: string;
   project_name?: string;
+  user_id?: string;
 }
 interface Session {
   id: string;
@@ -76,6 +78,16 @@ const ActivitySection = ({
     fetchActivities();
     fetchAuditLogs();
     fetchSessions();
+  }, [leadId]);
+
+  // Refresh audit logs when the component receives focus (useful for seeing real-time updates)
+  useEffect(() => {
+    const handleFocus = () => {
+      fetchAuditLogs();
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
   }, [leadId]);
   const fetchActivities = async () => {
     try {
@@ -212,10 +224,15 @@ const ActivitySection = ({
         return sessionData && typeof sessionData === 'object' && sessionData !== null && 'lead_id' in sessionData && sessionData.lead_id === leadId;
       });
 
-      // Lead audit logs
+      // Lead audit logs (including lead_field_value)
       const {
         data: leadAuditLogs
       } = await supabase.from('audit_log').select('*').eq('entity_id', leadId);
+
+      // Lead field value audit logs
+      const {
+        data: fieldValueAuditLogs
+      } = await supabase.from('audit_log').select('*').eq('entity_type', 'lead_field_value').eq('entity_id', leadId);
 
       // Project audit logs (archived/restored)
       let projectAuditLogs: any[] = [];
@@ -227,7 +244,7 @@ const ActivitySection = ({
       }
 
       // Combine and sort
-      const data = [...(leadAuditLogs || []), ...sessionAuditLogs, ...projectAuditLogs].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      const data = [...(leadAuditLogs || []), ...sessionAuditLogs, ...projectAuditLogs, ...(fieldValueAuditLogs || [])].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
       // Enrich logs with project names
       const projectsMap = new Map((projectsForLead || []).map(p => [p.id, p.name]));
@@ -251,9 +268,15 @@ const ActivitySection = ({
         return log;
       });
       
-      // Extract user IDs from assignee changes in audit logs to fetch their profiles
+      // Extract user IDs from all audit logs to fetch their profiles
       const allUserIds = new Set<string>();
       data.forEach(log => {
+        // Add the user who made the change
+        if (log.user_id) {
+          allUserIds.add(log.user_id);
+        }
+        
+        // Add assignees from lead changes
         if (log.entity_type === 'lead' && log.action === 'updated') {
           const oldAssignees = log.old_values?.assignees || [];
           const newAssignees = log.new_values?.assignees || [];
@@ -261,7 +284,7 @@ const ActivitySection = ({
         }
       });
       
-      // Fetch user profiles for assignees
+      // Fetch user profiles for all users
       if (allUserIds.size > 0) {
         await fetchUserProfiles(Array.from(allUserIds));
       }
@@ -401,6 +424,51 @@ const ActivitySection = ({
     if (activity.completed) return false;
     return true;
   };
+  // Helper component for user avatar
+  const UserAvatar = ({ userId, className = "" }: { userId?: string; className?: string }) => {
+    if (!userId || !userProfiles[userId]) {
+      return null;
+    }
+
+    const profile = userProfiles[userId];
+    const initials = profile.full_name
+      .split(' ')
+      .map(name => name.charAt(0))
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+
+    return (
+      <div className={`flex items-center gap-2 ${className}`}>
+        <Avatar className="h-6 w-6">
+          <AvatarImage src={profile.profile_photo_url} alt={profile.full_name} />
+          <AvatarFallback className="text-xs bg-primary/10 text-primary">
+            {initials}
+          </AvatarFallback>
+        </Avatar>
+        <span className="text-xs text-muted-foreground font-medium hidden sm:inline">
+          {profile.full_name}
+        </span>
+      </div>
+    );
+  };
+
+  const formatValue = (value: any, fieldType?: string) => {
+    if (value === null || value === undefined || value === '') {
+      return 'empty';
+    }
+    
+    if (fieldType === 'date' && value) {
+      return new Date(value).toLocaleDateString();
+    }
+    
+    if (fieldType === 'checkbox') {
+      return value === 'true' || value === true ? 'checked' : 'unchecked';
+    }
+    
+    return `"${value}"`;
+  };
+
   const formatAuditAction = (log: AuditLog) => {
     if (log.entity_type === 'lead') {
       if (log.action === 'created') {
@@ -440,21 +508,21 @@ const ActivitySection = ({
         const oldName = log.old_values?.name;
         const newName = log.new_values?.name;
         if (oldName !== newName) {
-          changes.push(`name changed from "${oldName}" to "${newName}"`);
+          changes.push(`name changed from ${formatValue(oldName)} to ${formatValue(newName)}`);
         }
         
         // Check for email changes
         const oldEmail = log.old_values?.email;
         const newEmail = log.new_values?.email;
         if (oldEmail !== newEmail) {
-          changes.push(`email changed from "${oldEmail || 'empty'}" to "${newEmail || 'empty'}"`);
+          changes.push(`email changed from ${formatValue(oldEmail)} to ${formatValue(newEmail)}`);
         }
         
         // Check for phone changes
         const oldPhone = log.old_values?.phone;
         const newPhone = log.new_values?.phone;
         if (oldPhone !== newPhone) {
-          changes.push(`phone changed from "${oldPhone || 'empty'}" to "${newPhone || 'empty'}"`);
+          changes.push(`phone changed from ${formatValue(oldPhone)} to ${formatValue(newPhone)}`);
         }
         
         // Check for notes changes
@@ -488,6 +556,21 @@ const ActivitySection = ({
         }
         
         return 'Lead updated';
+      }
+    } else if (log.entity_type === 'lead_field_value') {
+      const fieldLabel = log.new_values?.field_label || log.old_values?.field_label || 'Field';
+      const fieldType = log.new_values?.field_type || log.old_values?.field_type;
+      
+      if (log.action === 'created') {
+        const value = formatValue(log.new_values?.value, fieldType);
+        return `${fieldLabel} set to ${value}`;
+      } else if (log.action === 'updated') {
+        const oldValue = formatValue(log.old_values?.value, fieldType);
+        const newValue = formatValue(log.new_values?.value, fieldType);
+        return `${fieldLabel} changed from ${oldValue} to ${newValue}`;
+      } else if (log.action === 'deleted') {
+        const value = formatValue(log.old_values?.value, fieldType);
+        return `${fieldLabel} removed (was ${value})`;
       }
     } else if (log.entity_type === 'session') {
       if (log.action === 'created') {
@@ -692,26 +775,29 @@ const ActivitySection = ({
                          {items.map((item, index) => <div key={`${item.type}-${item.data.id}-${index}`} className="relative">
                              <div className="absolute -left-4 md:-left-6 top-3 w-3 h-3 bg-background border-2 border-muted-foreground/40 rounded-full"></div>
                              <div className="bg-muted/50 rounded-lg p-2 md:p-3 space-y-1 md:space-y-2">
-                                <div className="flex flex-col gap-1 md:gap-2">
-                                  <div className="flex items-start justify-between gap-2">
-                                    <div className="flex items-center gap-2 flex-wrap flex-1 min-w-0">
-                                      {/* Hide icon on mobile for compact view */}
-                                      <div className="hidden md:block">
-                                        <FileText className="h-4 w-4 text-gray-500" />
-                                      </div>
-                                      <span className="text-xs text-foreground font-medium break-words">
-                                        {formatAuditAction(item.data as AuditLog)}
-                                      </span>
-                                      {/* Show project badge for session audit logs */}
-                                      {(item.data as AuditLog).entity_type === 'session' && (item.data as AuditLog).project_name && <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300 max-w-[120px] md:max-w-[120px] max-w-full truncate">
-                                          {(item.data as AuditLog).project_name}
-                                        </Badge>}
-                                    </div>
-                                    <span className="text-xs text-muted-foreground flex-shrink-0">
-                                      {formatTime(new Date(item.date).toTimeString().slice(0, 5))}
-                                    </span>
-                                  </div>
-                                </div>
+                                 <div className="flex flex-col gap-1 md:gap-2">
+                                   <div className="flex items-start justify-between gap-2">
+                                     <div className="flex items-center gap-2 flex-wrap flex-1 min-w-0">
+                                       {/* Hide icon on mobile for compact view */}
+                                       <div className="hidden md:block">
+                                         <FileText className="h-4 w-4 text-gray-500" />
+                                       </div>
+                                       <span className="text-xs text-foreground font-medium break-words">
+                                         {formatAuditAction(item.data as AuditLog)}
+                                       </span>
+                                       {/* Show project badge for session audit logs */}
+                                       {(item.data as AuditLog).entity_type === 'session' && (item.data as AuditLog).project_name && <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300 max-w-[120px] md:max-w-[120px] max-w-full truncate">
+                                           {(item.data as AuditLog).project_name}
+                                         </Badge>}
+                                     </div>
+                                     <div className="flex items-center gap-2 flex-shrink-0">
+                                       <UserAvatar userId={(item.data as AuditLog).user_id} />
+                                       <span className="text-xs text-muted-foreground">
+                                         {formatTime(new Date(item.date).toTimeString().slice(0, 5))}
+                                       </span>
+                                     </div>
+                                   </div>
+                                 </div>
                             </div>
                           </div>)}
                       </div>

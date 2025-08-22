@@ -11,12 +11,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { ArrowLeft, Save, Calendar, Clock, FileText, CheckCircle, FolderPlus, User, Activity, CheckSquare } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import ClientDetailsList from "@/components/ClientDetailsList";
+import { UnifiedClientDetails } from "@/components/UnifiedClientDetails";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import ScheduleSessionDialog from "@/components/ScheduleSessionDialog";
 import EditSessionDialog from "@/components/EditSessionDialog";
-import { EnhancedEditLeadDialog } from "@/components/EnhancedEditLeadDialog";
-import { LeadFieldValuesDisplay } from "@/components/LeadFieldValuesDisplay";
 import { EnhancedProjectDialog } from "@/components/EnhancedProjectDialog";
 import ActivitySection from "@/components/ActivitySection";
 import SessionBanner from "@/components/SessionBanner";
@@ -886,52 +884,13 @@ const LeadDetail = () => {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 md:gap-8 max-w-full">
         {/* Left column - Lead Details (25%) */}
         <div className="lg:col-span-1 space-y-6 min-w-0">
-          <Card className="relative">
-            <CardHeader className="flex flex-row items-start justify-between">
-              <div>
-                <CardTitle className="text-xl font-semibold text-left">Client Details</CardTitle>
-                <CardDescription className="text-xs">
-                  Created on {new Date(lead.created_at).toLocaleDateString('tr-TR')}
-                </CardDescription>
-              </div>
-              {userCanEdit && <Button variant="ghost" size="sm" onClick={() => {
-              setFormData({
-                name: lead.name || "",
-                email: lead.email || "",
-                phone: lead.phone || "",
-                notes: lead.notes || "",
-                status: lead.status || formData.status
-              });
-              setInitialFormData({
-                name: lead.name || "",
-                email: lead.email || "",
-                phone: lead.phone || "",
-                notes: lead.notes || "",
-                status: lead.status || formData.status
-              });
-              setEditOpen(true);
-            }} aria-label="Edit lead information" className="absolute top-2 right-2 text-muted-foreground hover:text-foreground text-sm h-8 px-2">
-                  Edit
-                </Button>}
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <ClientDetailsList name={lead.name} email={lead.email} phone={lead.phone} notes={lead.notes} showQuickActions />
-            </CardContent>
-          </Card>
-
-          {/* Custom Fields Display */}
-          <LeadFieldValuesDisplay leadId={lead.id} />
-
-          {/* Edit Lead Dialog */}
-          <EnhancedEditLeadDialog 
-            lead={lead} 
-            open={editOpen} 
-            onOpenChange={setEditOpen} 
-            onClose={() => setEditOpen(false)}
-            onSuccess={() => {
+          <UnifiedClientDetails 
+            lead={lead}
+            showQuickActions={true}
+            onLeadUpdated={() => {
               fetchLead();
               setActivityRefreshKey(prev => prev + 1);
-            }} 
+            }}
           />
         </div>
 

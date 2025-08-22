@@ -25,6 +25,7 @@ import { LeadStatusBadge } from "@/components/LeadStatusBadge";
 import { AssigneesList } from "@/components/AssigneesList";
 import { formatDate, cn } from "@/lib/utils";
 import { useOrganizationQuickSettings } from "@/hooks/useOrganizationQuickSettings";
+import EnhancedSessionsSection from "@/components/EnhancedSessionsSection";
 import { useLeadStatusActions } from "@/hooks/useLeadStatusActions";
 import { usePermissions } from "@/hooks/usePermissions";
 import { OnboardingTutorial, TutorialStep } from "@/components/shared/OnboardingTutorial";
@@ -49,6 +50,7 @@ interface Session {
   notes: string;
   status: SessionStatus;
   project_id?: string;
+  lead_id: string;
   project_name?: string;
   projects?: {
     name: string;
@@ -901,25 +903,12 @@ const LeadDetail = () => {
         </div>
       </div>
 
-      {/* Sessions Section */}
-      {sessions.length > 0 && <div className="mb-6">
-          <div className="space-y-4">
-            {sessions.map(session => <div key={session.id}>
-                <CompactSessionBanner 
-                  session={{
-                    ...session, 
-                    leads: { name: lead.name }, 
-                    projects: session.projects ? {
-                      name: session.projects.name,
-                      project_types: session.projects.project_types
-                    } : undefined
-                  }} 
-                  onClick={() => handleSessionClick(session.id)}
-                />
-                
-              </div>)}
-          </div>
-        </div>}
+      {/* Enhanced Sessions Section */}
+      <EnhancedSessionsSection
+        sessions={sessions}
+        loading={loading}
+        onSessionClick={handleSessionClick}
+      />
 
       {/* Two-column layout */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 md:gap-8 max-w-full">

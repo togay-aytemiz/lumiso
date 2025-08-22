@@ -20,7 +20,8 @@ export function createDynamicLeadSchema(fieldDefinitions: LeadFieldDefinition[])
       fieldSchema = fieldSchema.optional().nullable();
     }
 
-    schemaFields[field.field_key] = fieldSchema;
+    // Use prefixed field name to match form data structure
+    schemaFields[`field_${field.field_key}`] = fieldSchema;
   });
 
   return z.object(schemaFields);
@@ -53,7 +54,7 @@ function createFieldSchema(fieldType: LeadFieldType, validationRules?: Record<st
 
     case 'phone':
       return z.string().regex(
-        /^[\+]?[1-9][\d]{0,15}$/,
+        /^[\+]?[\d\s\-\(\)]+$/,
         'Please enter a valid phone number'
       ).max(20, 'Phone number is too long');
 

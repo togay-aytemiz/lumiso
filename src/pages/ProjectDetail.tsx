@@ -395,31 +395,29 @@ export default function ProjectDetail() {
   }
 
   return (
-    <div className="w-full min-h-screen p-6 max-w-7xl mx-auto">
+    <div className="w-full min-h-screen p-6">
       {/* Header - same as modal but optimized for page */}
       <div className="mb-8">
-        <div className="flex items-center justify-between gap-4 mb-6">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate('/projects')}
-            className="flex items-center gap-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Projects
-          </Button>
-        </div>
-
         <div className="flex items-center justify-between gap-2">
           <div className="flex-1 min-w-0 space-y-4">
             {isEditing ? (
               <div className="space-y-4">
-                <Input 
-                  value={editName} 
-                  onChange={e => setEditName(e.target.value)} 
-                  placeholder="Project name" 
-                  className="text-3xl font-bold border rounded-md px-4 py-3 h-auto" 
-                />
+                <div className="flex items-center gap-3">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => navigate('/projects')}
+                    className="p-2"
+                  >
+                    <ArrowLeft className="h-5 w-5" />
+                  </Button>
+                  <Input 
+                    value={editName} 
+                    onChange={e => setEditName(e.target.value)} 
+                    placeholder="Project name" 
+                    className="text-3xl font-bold border rounded-md px-4 py-3 h-auto flex-1" 
+                  />
+                </div>
                 <Textarea 
                   value={editDescription} 
                   onChange={e => setEditDescription(e.target.value)} 
@@ -460,7 +458,15 @@ export default function ProjectDetail() {
               </div>
             ) : (
               <div className="space-y-4">
-                <div className="flex items-center gap-4 flex-wrap">
+                <div className="flex items-center gap-3 flex-wrap">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => navigate('/projects')}
+                    className="p-2"
+                  >
+                    <ArrowLeft className="h-5 w-5" />
+                  </Button>
                   <h1 className="text-4xl font-bold leading-tight break-words">
                     {project?.name}
                   </h1>

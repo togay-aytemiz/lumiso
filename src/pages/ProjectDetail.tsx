@@ -401,7 +401,7 @@ export default function ProjectDetail() {
         <div className="flex items-center justify-between gap-2">
           <div className="flex-1 min-w-0 space-y-4">
             {isEditing ? (
-              <div className="space-y-4">
+                <div className="space-y-4">
                 <div className="flex items-center gap-3">
                   <ArrowLeft 
                     className="h-6 w-6 cursor-pointer text-foreground hover:text-[hsl(var(--accent-foreground))] transition-colors" 
@@ -454,7 +454,7 @@ export default function ProjectDetail() {
                 </div>
               </div>
             ) : (
-              <div className="space-y-4">
+                <div className="space-y-4">
                 <div className="flex items-center gap-3 flex-wrap">
                   <ArrowLeft 
                     className="h-6 w-6 cursor-pointer text-foreground hover:text-[hsl(var(--accent-foreground))] transition-colors" 
@@ -490,8 +490,8 @@ export default function ProjectDetail() {
                   </p>
                 )}
                 
-                {/* Assignees */}
-                <div className="pt-4">
+                {/* Mobile Assignees - shown only on mobile */}
+                <div className="pt-4 md:hidden">
                   <AssigneesList
                     assignees={project.assignees || []}
                     entityType="project"
@@ -504,6 +504,16 @@ export default function ProjectDetail() {
           </div>
           
           <div className="flex items-center gap-2 shrink-0 self-start">
+            {/* Desktop Assignees - positioned left of More Actions dropdown */}
+            <div className="hidden md:flex items-center mr-4">
+              <AssigneesList
+                assignees={project.assignees || []}
+                entityType="project"
+                entityId={project.id}
+                onUpdate={handleAssigneesUpdate}
+              />
+            </div>
+            
             {!isEditing && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
-// Single source of truth for onboarding stages
+// Single source of truth for onboarding stages - V3 with bulletproof state management
 export type OnboardingStage = 'not_started' | 'modal_shown' | 'in_progress' | 'completed' | 'skipped';
 
 // Define onboarding steps in a single place - easy to modify in future
@@ -63,23 +63,25 @@ interface OnboardingState {
   stage: OnboardingStage;
   currentStep: number;
   loading: boolean;
+  sessionModalShown: boolean; // V3: Prevent multiple modal displays per session
 }
 
-// Import and run the bulletproof test in development
-import { runOnboardingBulletproofTest } from "@/hooks/useOnboardingBulletproofTest";
+// Import and run the V3 bulletproof test in development
+import { runOnboardingBulletproofTestV3 } from "@/hooks/useOnboardingBulletproofTest";
 
 export function useOnboardingV2() {
   const { user } = useAuth();
   const [state, setState] = useState<OnboardingState>({
     stage: 'not_started',
     currentStep: 1,
-    loading: true
+    loading: true,
+    sessionModalShown: false // V3: Track modal display per session
   });
 
-  // Run bulletproof test in development
+  // Run V3 bulletproof test in development
   useEffect(() => {
     if (process.env.NODE_ENV === 'development') {
-      runOnboardingBulletproofTest();
+      runOnboardingBulletproofTestV3();
     }
   }, []);
 
@@ -122,7 +124,8 @@ export function useOnboardingV2() {
         setState({
           stage: 'not_started',
           currentStep: 1,
-          loading: false
+          loading: false,
+          sessionModalShown: false
         });
         return;
       }
@@ -139,7 +142,8 @@ export function useOnboardingV2() {
       setState({
         stage,
         currentStep,
-        loading: false
+        loading: false,
+        sessionModalShown: false
       });
 
     } catch (error) {
@@ -154,16 +158,19 @@ export function useOnboardingV2() {
     if (user) {
       fetchState();
     } else {
-      setState({ stage: 'not_started', currentStep: 1, loading: false });
+      setState({ stage: 'not_started', currentStep: 1, loading: false, sessionModalShown: false });
     }
   }, [user?.id]); // Only depend on user ID to prevent infinite loops
 
-  // Helper functions for determining what to show - memoized to prevent recalculation
+  // V3: Bulletproof modal display logic with session tracking
   const shouldShowWelcomeModal = () => {
-    const result = !state.loading && state.stage === 'not_started';
-    console.log('🎯 shouldShowWelcomeModal:', { 
+    const result = !state.loading && 
+                   state.stage === 'not_started' && 
+                   !state.sessionModalShown;
+    console.log('🎯 V3 shouldShowWelcomeModal:', { 
       loading: state.loading, 
       stage: state.stage, 
+      sessionModalShown: state.sessionModalShown,
       result 
     });
     return result;
@@ -214,14 +221,14 @@ export function useOnboardingV2() {
     return state.stage === 'in_progress' && state.currentStep > TOTAL_STEPS;
   };
 
-  // State transition functions
+  // V3: Enhanced state transition functions with bulletproof error handling
   const startGuidedSetup = async () => {
     if (!user) return;
     
-    console.log('useOnboardingV2: Starting guided setup');
+    console.log('🚀 V3 startGuidedSetup: Starting guided setup');
 
     try {
-      // Use atomic update with proper error handling
+      // First update database
       const { error } = await supabase
         .from('user_settings')
         .update({ 
@@ -232,19 +239,29 @@ export function useOnboardingV2() {
 
       if (error) throw error;
 
-      // Update state atomically to prevent race conditions
+      // Then update state atomically with session tracking
       setState(prev => {
-        console.log('useOnboardingV2: State updated to in_progress');
+        console.log('🚀 V3 startGuidedSetup: State updated to in_progress with session tracking');
         return {
           ...prev,
           stage: 'in_progress',
-          currentStep: 1
+          currentStep: 1,
+          sessionModalShown: true // Mark modal as shown
         };
       });
     } catch (error) {
-      console.error('Error starting guided setup:', error);
+      console.error('❌ V3 startGuidedSetup: Error starting guided setup:', error);
       throw error;
     }
+  };
+
+  // V3: Mark modal as shown without starting guided setup (for restart flow)
+  const markModalShown = () => {
+    console.log('🎯 V3 markModalShown: Marking modal as shown for this session');
+    setState(prev => ({
+      ...prev,
+      sessionModalShown: true
+    }));
   };
 
   const completeCurrentStep = async () => {
@@ -332,25 +349,30 @@ export function useOnboardingV2() {
     }
   };
 
+  // V3: Enhanced reset with direct guided setup start (bypass modal)
   const resetOnboarding = async () => {
     if (!user) return;
 
+    console.log('🔄 V3 resetOnboarding: Resetting and starting guided setup directly');
     try {
+      // Directly set to in_progress to bypass modal
       await supabase
         .from('user_settings')
         .update({
-          onboarding_stage: 'not_started',
+          onboarding_stage: 'in_progress',
           current_onboarding_step: 1
         })
         .eq('user_id', user.id);
 
       setState({
-        stage: 'not_started',
+        stage: 'in_progress',
         currentStep: 1,
-        loading: false
+        loading: false,
+        sessionModalShown: true // Prevent modal from showing
       });
+      console.log('🔄 V3 resetOnboarding: Reset completed, directly in guided setup');
     } catch (error) {
-      console.error('Error resetting onboarding:', error);
+      console.error('❌ V3 resetOnboarding: Error resetting onboarding:', error);
       throw error;
     }
   };
@@ -379,6 +401,7 @@ export function useOnboardingV2() {
     completeCurrentStep,
     completeOnboarding,
     skipOnboarding,
-    resetOnboarding
+    resetOnboarding,
+    markModalShown // V3: New action to mark modal as shown
   };
 }

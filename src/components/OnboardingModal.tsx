@@ -19,23 +19,31 @@ export function OnboardingModal({ open, onClose }: OnboardingModalProps) {
   const [showSampleDataModal, setShowSampleDataModal] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { startGuidedSetup } = useOnboardingV2();
+  const { startGuidedSetup, markModalShown } = useOnboardingV2();
+
+  // V3: Mark modal as shown when it's closed without starting guided setup
+  const handleClose = () => {
+    console.log('🎯 V3 OnboardingModal: Closing modal and marking as shown');
+    markModalShown();
+    onClose();
+  };
 
   const handleStartLearning = async () => {
     if (!user) return;
     
+    console.log('🚀 V3 OnboardingModal: Starting guided setup from modal');
     setIsLoading(true);
     try {
       await startGuidedSetup();
       
-      onClose();
+      onClose(); // Close modal first
       navigate('/getting-started');
       toast({
         title: "Welcome to Lumiso! 🎉",
         description: "Let's get you set up step by step.",
       });
     } catch (error) {
-      console.error('Error starting guided setup:', error);
+      console.error('❌ V3 OnboardingModal: Error starting guided setup:', error);
       toast({
         title: "Error",
         description: "Failed to start guided setup. Please try again.",
@@ -56,7 +64,7 @@ export function OnboardingModal({ open, onClose }: OnboardingModalProps) {
 
   const handleCloseAll = () => {
     setShowSampleDataModal(false);
-    onClose();
+    handleClose(); // Use the enhanced close handler
   };
 
   const actions: OnboardingAction[] = [
@@ -78,7 +86,7 @@ export function OnboardingModal({ open, onClose }: OnboardingModalProps) {
     <>
       <BaseOnboardingModal
         open={open && !showSampleDataModal}
-        onClose={onClose}
+        onClose={handleClose} // Use enhanced close handler
         title="Welcome to Lumiso! 🎉"
         description="We'll guide you through setting up your photography CRM step by step. Each task builds on the previous one, so you'll learn naturally."
         actions={actions}

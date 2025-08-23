@@ -15,9 +15,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   // Simple rule: Don't show modal on getting-started page
   const isOnGettingStartedPage = location.pathname === '/getting-started';
 
-  // Check if we should show onboarding modal - simplified logic
+  // V3: Enhanced modal display logic with better state management
   useEffect(() => {
-    console.log('🖥️ Layout: Modal check triggered', {
+    console.log('🖥️ V3 Layout: Modal check triggered', {
       onboardingLoading,
       shouldShowWelcomeModal,
       shouldLockNavigation,
@@ -25,15 +25,15 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       pathname: location.pathname
     });
 
-    // Simple rule: Only show modal if explicitly needed AND not in guided setup
+    // V3: Only show modal if onboarding hook explicitly says to show it
+    // The hook now handles session tracking internally
     const shouldShow = !onboardingLoading && 
                       !isOnGettingStartedPage && 
-                      !shouldLockNavigation && 
-                      shouldShowWelcomeModal;
+                      shouldShowWelcomeModal; // This now includes session tracking
 
-    console.log('🖥️ Layout: Setting modal to', shouldShow);
+    console.log('🖥️ V3 Layout: Setting modal to', shouldShow);
     setShowOnboardingModal(shouldShow);
-  }, [onboardingLoading, shouldShowWelcomeModal, shouldLockNavigation, isOnGettingStartedPage]);
+  }, [onboardingLoading, shouldShowWelcomeModal, isOnGettingStartedPage]);
 
   useLayoutEffect(() => {
     // Disable automatic scroll restoration
@@ -64,10 +64,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </div>
       <MobileBottomNav hideForOnboarding={showOnboardingModal || shouldLockNavigation} />
       
-      {/* Onboarding Modal */}
+      {/* V3: Onboarding Modal with enhanced close handling */}
       <OnboardingModal 
         open={showOnboardingModal} 
-        onClose={() => setShowOnboardingModal(false)} 
+        onClose={() => {
+          console.log('🎯 V3 Layout: Onboarding modal closed from Layout');
+          setShowOnboardingModal(false);
+        }} 
       />
       
       {/* Restart Guided Mode Button (only for specific user) */}

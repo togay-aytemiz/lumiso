@@ -100,7 +100,7 @@ const GettingStarted = () => {
           <div className={`mb-6 sm:mb-8 text-center ${isAnimating ? 'animate-scale-in' : ''}`}>
             <Card className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950/20">
               <CardContent className="py-12">
-                <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4 animate-pulse" />
+                <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4 md:mt-4 animate-pulse" />
                 <h2 className="text-2xl font-bold text-green-700 dark:text-green-400 mb-2">
                   Congratulations! 🎉
                 </h2>

@@ -100,14 +100,14 @@ export function OnboardingTutorial({
       <TooltipProvider>
         <div className={`fixed z-50 max-w-sm ${
           isAddLeadStep
-            ? "right-2 bottom-4 sm:right-4 sm:bottom-4 md:right-6 md:top-24" // Bottom for mobile/tablet, top for desktop
+            ? "right-2 bottom-4 sm:right-4 sm:bottom-4 md:right-6 md:bottom-6" // Bottom positioning for add lead step
             : isSchedulingTutorialStep
               ? "right-2 top-20 sm:right-4 sm:top-20 md:right-6 md:top-24" // Keep scheduling steps at top
             : isPackagesSetupStep
               ? "right-2 bottom-16 sm:right-4 sm:bottom-4 md:right-6 md:bottom-6" // Bottom corner for packages setup
               : isProjectManagementStep 
                 ? "right-2 bottom-16 sm:right-4 sm:bottom-4 md:right-6 md:bottom-6" // Bottom positioning for project management
-                : "right-2 top-36 sm:right-4 sm:top-72 md:right-6 md:top-20" // Original positioning for other steps
+                : "right-2 bottom-4 sm:right-4 sm:bottom-4 md:right-6 md:bottom-6" // Bottom positioning for all other steps
         }`}>
           <Card className="shadow-2xl border-2">
             <CardHeader className="pb-3">

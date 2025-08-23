@@ -15,9 +15,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   // Simple rule: Don't show modal on getting-started page
   const isOnGettingStartedPage = location.pathname === '/getting-started';
 
-  // Check if we should show onboarding modal
+  // Check if we should show onboarding modal - simplified logic
   useEffect(() => {
-    console.log('Layout: Modal visibility check', {
+    console.log('🖥️ Layout: Modal check triggered', {
       onboardingLoading,
       shouldShowWelcomeModal,
       shouldLockNavigation,
@@ -25,29 +25,15 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       pathname: location.pathname
     });
 
-    // CRITICAL: Never show modal during guided setup (in_progress stage)
-    if (shouldLockNavigation) {
-      console.log('Layout: Hiding modal - user is in guided setup');
-      setShowOnboardingModal(false);
-      return;
-    }
+    // Simple rule: Only show modal if explicitly needed AND not in guided setup
+    const shouldShow = !onboardingLoading && 
+                      !isOnGettingStartedPage && 
+                      !shouldLockNavigation && 
+                      shouldShowWelcomeModal;
 
-    // Don't show modal while loading or on getting-started page
-    if (onboardingLoading || isOnGettingStartedPage) {
-      console.log('Layout: Hiding modal - loading or on getting-started page');
-      setShowOnboardingModal(false);
-      return;
-    }
-
-    // Only show modal if user truly needs to start onboarding
-    if (shouldShowWelcomeModal) {
-      console.log('Layout: Showing welcome modal');
-      setShowOnboardingModal(true);
-    } else {
-      console.log('Layout: Hiding modal - not needed');
-      setShowOnboardingModal(false);
-    }
-  }, [onboardingLoading, shouldShowWelcomeModal, shouldLockNavigation, isOnGettingStartedPage, location.pathname]);
+    console.log('🖥️ Layout: Setting modal to', shouldShow);
+    setShowOnboardingModal(shouldShow);
+  }, [onboardingLoading, shouldShowWelcomeModal, shouldLockNavigation, isOnGettingStartedPage]);
 
   useLayoutEffect(() => {
     // Disable automatic scroll restoration

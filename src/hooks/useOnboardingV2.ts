@@ -89,6 +89,7 @@ export function useOnboardingV2() {
       return;
     }
 
+    console.log('🔄 fetchState: Starting fetch for user', user.id);
     try {
       const { data, error } = await supabase
         .from('user_settings')
@@ -97,12 +98,13 @@ export function useOnboardingV2() {
         .maybeSingle();
 
       if (error) {
-        console.error('Error fetching onboarding state:', error);
+        console.error('🔄 fetchState: Database error:', error);
         setState(prev => ({ ...prev, loading: false }));
         return;
       }
 
       if (!data) {
+        console.log('🔄 fetchState: No user settings, creating defaults...');
         // Create default settings for new user
         const { error: insertError } = await supabase
           .from('user_settings')
@@ -113,9 +115,10 @@ export function useOnboardingV2() {
           });
 
         if (insertError) {
-          console.error('Error creating user settings:', insertError);
+          console.error('🔄 fetchState: Error creating user settings:', insertError);
         }
 
+        console.log('🔄 fetchState: Setting state to not_started');
         setState({
           stage: 'not_started',
           currentStep: 1,
@@ -132,6 +135,7 @@ export function useOnboardingV2() {
       if (currentStep < 1) currentStep = 1;
       if (currentStep > TOTAL_STEPS + 1) currentStep = TOTAL_STEPS + 1;
 
+      console.log('🔄 fetchState: Setting state from database:', { stage, currentStep });
       setState({
         stage,
         currentStep,
@@ -139,19 +143,25 @@ export function useOnboardingV2() {
       });
 
     } catch (error) {
-      console.error('Error fetching onboarding state:', error);
+      console.error('🔄 fetchState: Unexpected error:', error);
       setState(prev => ({ ...prev, loading: false }));
     }
   };
 
+  // Only fetch state once when user changes - prevent race conditions
   useEffect(() => {
-    fetchState();
-  }, [user]);
+    console.log('🔄 useOnboardingV2: User effect triggered, user:', user?.id);
+    if (user) {
+      fetchState();
+    } else {
+      setState({ stage: 'not_started', currentStep: 1, loading: false });
+    }
+  }, [user?.id]); // Only depend on user ID to prevent infinite loops
 
-  // Helper functions for determining what to show
+  // Helper functions for determining what to show - memoized to prevent recalculation
   const shouldShowWelcomeModal = () => {
     const result = !state.loading && state.stage === 'not_started';
-    console.log('useOnboardingV2: shouldShowWelcomeModal', { 
+    console.log('🎯 shouldShowWelcomeModal:', { 
       loading: state.loading, 
       stage: state.stage, 
       result 
@@ -169,7 +179,7 @@ export function useOnboardingV2() {
 
   const shouldLockNavigation = () => {
     const result = state.stage === 'in_progress';
-    console.log('useOnboardingV2: shouldLockNavigation', { 
+    console.log('🔒 shouldLockNavigation:', { 
       stage: state.stage, 
       result 
     });

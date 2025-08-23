@@ -277,7 +277,7 @@ export function useOnboardingV2() {
     
     try {
       // Bulletproof: Prevent completing beyond total steps
-      if (state.currentStep >= TOTAL_STEPS) {
+      if (state.currentStep > TOTAL_STEPS) {
         console.warn('🚫 completeCurrentStep: Attempted to complete step beyond total steps');
         return;
       }
@@ -322,7 +322,7 @@ export function useOnboardingV2() {
     
     try {
       // Prevent completing beyond total steps
-      if (state.currentStep >= TOTAL_STEPS) {
+      if (state.currentStep > TOTAL_STEPS) {
         console.warn('🚫 completeMultipleSteps: Already at or beyond total steps');
         return;
       }

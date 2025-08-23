@@ -361,29 +361,29 @@ export function useOnboardingV2() {
     }
   };
 
-  // Reset for restart but keep modal flag - modal will NOT show during restart
+  // Reset for restart: START guided mode but keep modal permanently disabled
   const resetOnboarding = async () => {
     if (!user) return;
 
-    console.log('🔄 BULLETPROOF resetOnboarding: Reset but keep modal permanently disabled');
+    console.log('🔄 BULLETPROOF resetOnboarding: Starting guided mode without modal');
     try {
-      // Reset to not_started but keep welcome_modal_shown = true
+      // Set to in_progress to actually start guided mode
       await supabase
         .from('user_settings')
         .update({
-          onboarding_stage: 'not_started',
-          current_onboarding_step: 1
-          // welcome_modal_shown stays true - NEVER reset
+          onboarding_stage: 'in_progress',  // Actually start guided mode
+          current_onboarding_step: 1,
+          welcome_modal_shown: true         // Keep modal permanently disabled
         })
         .eq('user_id', user.id);
 
       setState({
-        stage: 'not_started',
+        stage: 'in_progress',      // Actually in guided mode now
         currentStep: 1,
         loading: false,
-        welcomeModalShown: true // Keep as true - modal will NOT show
+        welcomeModalShown: true    // Modal stays disabled
       });
-      console.log('🔄 BULLETPROOF resetOnboarding: Reset completed, modal STAYS disabled');
+      console.log('🔄 BULLETPROOF resetOnboarding: Guided mode STARTED, modal STAYS disabled');
     } catch (error) {
       console.error('❌ BULLETPROOF resetOnboarding: Error:', error);
       throw error;

@@ -18,18 +18,18 @@ export function RestartGuidedModeButton() {
   }
 
   const handleRestart = async () => {
-    console.log('🔄 V3 RestartButton: Starting restart flow with modal');
+    console.log('🔄 BULLETPROOF RestartButton: Restart (no modal will show)');
     setIsLoading(true);
     try {
-      await resetOnboarding(); // V3: This now shows the welcome modal
+      await resetOnboarding(); // This keeps modal permanently disabled
       toast({
         title: "Guided mode restarted",
-        description: "Welcome modal will appear...",
+        description: "Starting over from step 1...",
       });
-      // Navigate to home so the modal shows in Layout
-      navigate('/');
+      // Navigate to getting-started directly
+      navigate('/getting-started');
     } catch (error) {
-      console.error('❌ V3 RestartButton: Error restarting guided mode:', error);
+      console.error('❌ BULLETPROOF RestartButton: Error:', error);
       toast({
         title: "Error",
         description: "Failed to restart guided mode. Please try again.",

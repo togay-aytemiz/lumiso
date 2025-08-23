@@ -1182,6 +1182,7 @@ export type Database = {
           time_format: string | null
           updated_at: string
           user_id: string
+          welcome_modal_shown: boolean
         }
         Insert: {
           active_organization_id?: string | null
@@ -1211,6 +1212,7 @@ export type Database = {
           time_format?: string | null
           updated_at?: string
           user_id: string
+          welcome_modal_shown?: boolean
         }
         Update: {
           active_organization_id?: string | null
@@ -1240,6 +1242,7 @@ export type Database = {
           time_format?: string | null
           updated_at?: string
           user_id?: string
+          welcome_modal_shown?: boolean
         }
         Relationships: []
       }

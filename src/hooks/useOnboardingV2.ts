@@ -63,6 +63,7 @@ interface OnboardingState {
   stage: OnboardingStage;
   currentStep: number;
   loading: boolean;
+  welcomeModalShown: boolean; // PERMANENT: Once true, NEVER reset
 }
 
 // Import and run the V3 bulletproof test in development
@@ -73,7 +74,8 @@ export function useOnboardingV2() {
   const [state, setState] = useState<OnboardingState>({
     stage: 'not_started',
     currentStep: 1,
-    loading: true
+    loading: true,
+    welcomeModalShown: false // Will be loaded from database
   });
 
   // Run V3 bulletproof test in development
@@ -93,7 +95,7 @@ export function useOnboardingV2() {
     try {
       const { data, error } = await supabase
         .from('user_settings')
-        .select('onboarding_stage, current_onboarding_step')
+        .select('onboarding_stage, current_onboarding_step, welcome_modal_shown')
         .eq('user_id', user.id)
         .maybeSingle();
 
@@ -111,7 +113,8 @@ export function useOnboardingV2() {
           .insert({
             user_id: user.id,
             onboarding_stage: 'not_started',
-            current_onboarding_step: 1
+            current_onboarding_step: 1,
+            welcome_modal_shown: false
           });
 
         if (insertError) {
@@ -122,7 +125,8 @@ export function useOnboardingV2() {
         setState({
           stage: 'not_started',
           currentStep: 1,
-          loading: false
+          loading: false,
+          welcomeModalShown: false
         });
         return;
       }
@@ -130,16 +134,18 @@ export function useOnboardingV2() {
       // Bulletproof: Validate and sanitize data from database
       const stage = data.onboarding_stage as OnboardingStage;
       let currentStep = data.current_onboarding_step || 1;
+      const welcomeModalShown = data.welcome_modal_shown || false;
       
       // Ensure step is within valid range
       if (currentStep < 1) currentStep = 1;
       if (currentStep > TOTAL_STEPS + 1) currentStep = TOTAL_STEPS + 1;
 
-      console.log('🔄 fetchState: Setting state from database:', { stage, currentStep });
+      console.log('🔄 fetchState: Setting state from database:', { stage, currentStep, welcomeModalShown });
       setState({
         stage,
         currentStep,
-        loading: false
+        loading: false,
+        welcomeModalShown
       });
 
     } catch (error) {
@@ -154,16 +160,19 @@ export function useOnboardingV2() {
     if (user) {
       fetchState();
     } else {
-      setState({ stage: 'not_started', currentStep: 1, loading: false });
+      setState({ stage: 'not_started', currentStep: 1, loading: false, welcomeModalShown: false });
     }
   }, [user?.id]); // Only depend on user ID to prevent infinite loops
 
-  // V3: Bulletproof modal display logic - ONLY show if truly not started
+  // BULLETPROOF: Modal shows ONLY if user has NEVER seen it
   const shouldShowWelcomeModal = () => {
-    const result = !state.loading && state.stage === 'not_started';
-    console.log('🎯 V3 shouldShowWelcomeModal SIMPLE:', { 
+    const result = !state.loading && 
+                   state.stage === 'not_started' && 
+                   !state.welcomeModalShown;
+    console.log('🎯 BULLETPROOF shouldShowWelcomeModal:', { 
       loading: state.loading, 
-      stage: state.stage, 
+      stage: state.stage,
+      welcomeModalShown: state.welcomeModalShown,
       result 
     });
     return result;
@@ -214,35 +223,37 @@ export function useOnboardingV2() {
     return state.stage === 'in_progress' && state.currentStep > TOTAL_STEPS;
   };
 
-  // V3: BULLETPROOF - Once you start, modal NEVER shows again
+  // BULLETPROOF: Mark modal as shown PERMANENTLY
   const startGuidedSetup = async () => {
     if (!user) return;
     
-    console.log('🚀 V3 startGuidedSetup: Starting - modal will NEVER show again');
+    console.log('🚀 BULLETPROOF startGuidedSetup: Starting - modal PERMANENTLY disabled');
 
     try {
-      // Update database first
+      // Update database - mark modal as shown FOREVER
       const { error } = await supabase
         .from('user_settings')
         .update({ 
           onboarding_stage: 'in_progress',
-          current_onboarding_step: 1
+          current_onboarding_step: 1,
+          welcome_modal_shown: true  // PERMANENT - NEVER reset
         })
         .eq('user_id', user.id);
 
       if (error) throw error;
 
-      // Update state - modal will never show again because stage != 'not_started'
+      // Update state - modal disabled forever
       setState(prev => {
-        console.log('🚀 V3 startGuidedSetup: Stage set to in_progress - MODAL DISABLED FOREVER');
+        console.log('🚀 BULLETPROOF: Modal PERMANENTLY disabled');
         return {
           ...prev,
           stage: 'in_progress',
-          currentStep: 1
+          currentStep: 1,
+          welcomeModalShown: true // NEVER reset
         };
       });
     } catch (error) {
-      console.error('❌ V3 startGuidedSetup: Error starting guided setup:', error);
+      console.error('❌ BULLETPROOF startGuidedSetup: Error:', error);
       throw error;
     }
   };
@@ -350,29 +361,31 @@ export function useOnboardingV2() {
     }
   };
 
-  // V3: Reset with option to show modal (user requested)
+  // Reset for restart but keep modal flag - modal will NOT show during restart
   const resetOnboarding = async () => {
     if (!user) return;
 
-    console.log('🔄 V3 resetOnboarding: Resetting to show welcome modal');
+    console.log('🔄 BULLETPROOF resetOnboarding: Reset but keep modal permanently disabled');
     try {
-      // Reset to not_started so modal will show
+      // Reset to not_started but keep welcome_modal_shown = true
       await supabase
         .from('user_settings')
         .update({
           onboarding_stage: 'not_started',
           current_onboarding_step: 1
+          // welcome_modal_shown stays true - NEVER reset
         })
         .eq('user_id', user.id);
 
       setState({
         stage: 'not_started',
         currentStep: 1,
-        loading: false
+        loading: false,
+        welcomeModalShown: true // Keep as true - modal will NOT show
       });
-      console.log('🔄 V3 resetOnboarding: Reset completed, modal will show');
+      console.log('🔄 BULLETPROOF resetOnboarding: Reset completed, modal STAYS disabled');
     } catch (error) {
-      console.error('❌ V3 resetOnboarding: Error resetting onboarding:', error);
+      console.error('❌ BULLETPROOF resetOnboarding: Error:', error);
       throw error;
     }
   };

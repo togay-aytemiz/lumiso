@@ -24,10 +24,10 @@ export function OnboardingModal({ open, onClose }: OnboardingModalProps) {
   const handleStartLearning = async () => {
     if (!user) return;
     
-    console.log('🚀 V3 OnboardingModal: Starting guided setup - MODAL WILL NEVER SHOW AGAIN');
+    console.log('🚀 BULLETPROOF OnboardingModal: Starting guided setup - MODAL DISABLED FOREVER');
     setIsLoading(true);
     try {
-      await startGuidedSetup();
+      await startGuidedSetup(); // This sets welcome_modal_shown = true PERMANENTLY
       
       onClose(); // Close modal
       navigate('/getting-started');
@@ -36,7 +36,7 @@ export function OnboardingModal({ open, onClose }: OnboardingModalProps) {
         description: "Let's get you set up step by step.",
       });
     } catch (error) {
-      console.error('❌ V3 OnboardingModal: Error starting guided setup:', error);
+      console.error('❌ BULLETPROOF OnboardingModal: Error:', error);
       toast({
         title: "Error",
         description: "Failed to start guided setup. Please try again.",

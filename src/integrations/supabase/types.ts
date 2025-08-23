@@ -1156,16 +1156,10 @@ export type Database = {
       user_settings: {
         Row: {
           active_organization_id: string | null
-          completed_steps: Json | null
-          completed_steps_count: number | null
           created_at: string
           current_onboarding_step: number | null
-          current_step: number | null
           date_format: string | null
-          guidance_completed: boolean | null
-          guided_setup_skipped: boolean | null
           id: string
-          in_guided_setup: boolean | null
           logo_url: string | null
           notification_daily_summary_enabled: boolean | null
           notification_daily_summary_send_at: string | null
@@ -1186,16 +1180,10 @@ export type Database = {
         }
         Insert: {
           active_organization_id?: string | null
-          completed_steps?: Json | null
-          completed_steps_count?: number | null
           created_at?: string
           current_onboarding_step?: number | null
-          current_step?: number | null
           date_format?: string | null
-          guidance_completed?: boolean | null
-          guided_setup_skipped?: boolean | null
           id?: string
-          in_guided_setup?: boolean | null
           logo_url?: string | null
           notification_daily_summary_enabled?: boolean | null
           notification_daily_summary_send_at?: string | null
@@ -1216,16 +1204,10 @@ export type Database = {
         }
         Update: {
           active_organization_id?: string | null
-          completed_steps?: Json | null
-          completed_steps_count?: number | null
           created_at?: string
           current_onboarding_step?: number | null
-          current_step?: number | null
           date_format?: string | null
-          guidance_completed?: boolean | null
-          guided_setup_skipped?: boolean | null
           id?: string
-          in_guided_setup?: boolean | null
           logo_url?: string | null
           notification_daily_summary_enabled?: boolean | null
           notification_daily_summary_send_at?: string | null
@@ -1284,17 +1266,9 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      advance_guided_step: {
-        Args: { skip_step?: boolean; step_number: number; user_uuid: string }
-        Returns: undefined
-      }
       check_email_not_in_any_organization: {
         Args: { email_to_check: string }
         Returns: boolean
-      }
-      complete_onboarding_step: {
-        Args: { user_uuid: string }
-        Returns: undefined
       }
       ensure_default_lead_field_definitions: {
         Args: { org_id: string; user_uuid: string }
@@ -1392,14 +1366,6 @@ export type Database = {
         Args: { org_id: string }
         Returns: undefined
       }
-      reset_guided_setup: {
-        Args: { user_uuid: string }
-        Returns: undefined
-      }
-      set_guided_step: {
-        Args: { target_step: number; user_uuid: string }
-        Returns: undefined
-      }
       user_can_access_project: {
         Args: { project_uuid: string; user_uuid: string }
         Returns: boolean
@@ -1444,12 +1410,7 @@ export type Database = {
         | "booked"
         | "completed"
         | "lost"
-      onboarding_stage:
-        | "not_started"
-        | "modal_shown"
-        | "in_progress"
-        | "completed"
-        | "skipped"
+      onboarding_stage: "not_started" | "in_progress" | "completed" | "skipped"
       session_status:
         | "planned"
         | "completed"
@@ -1600,13 +1561,7 @@ export const Constants = {
         "completed",
         "lost",
       ],
-      onboarding_stage: [
-        "not_started",
-        "modal_shown",
-        "in_progress",
-        "completed",
-        "skipped",
-      ],
+      onboarding_stage: ["not_started", "in_progress", "completed", "skipped"],
       session_status: [
         "planned",
         "completed",

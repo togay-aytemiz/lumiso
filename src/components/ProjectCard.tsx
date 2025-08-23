@@ -11,8 +11,6 @@ import { ProjectStatusBadge } from "@/components/ProjectStatusBadge";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { AssigneeAvatars } from "@/components/AssigneeAvatars";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { useNavigate } from "react-router-dom";
 
 interface Project {
   id: string;
@@ -36,8 +34,6 @@ interface ProjectCardProps {
 export function ProjectCard({ project, onView, refreshTrigger, onQuickView }: ProjectCardProps) {
   const { progress, loading } = useProjectProgress(project.id, refreshTrigger);
   const { paymentSummary, loading: paymentsLoading } = useProjectPayments(project.id, refreshTrigger);
-  const isMobile = useIsMobile();
-  const navigate = useNavigate();
 
   const [isArchived, setIsArchived] = useState(false);
   useEffect(() => {
@@ -72,13 +68,7 @@ export function ProjectCard({ project, onView, refreshTrigger, onQuickView }: Pr
       <CardContent className="p-4 md:p-6">
         <div 
           className="flex flex-col md:flex-row md:items-center md:justify-between md:gap-6 gap-4"
-          onClick={() => {
-            if (isMobile) {
-              navigate(`/projects/${project.id}`);
-            } else {
-              onQuickView ? onQuickView(project) : onView(project);
-            }
-          }}
+          onClick={() => onQuickView ? onQuickView(project) : onView(project)}
         >
           <div className="flex-1 min-w-0 space-y-3">
             {/* Title, Archived Badge, and Assignees */}

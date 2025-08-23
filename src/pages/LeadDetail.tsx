@@ -28,7 +28,6 @@ import { useOrganizationQuickSettings } from "@/hooks/useOrganizationQuickSettin
 import EnhancedSessionsSection from "@/components/EnhancedSessionsSection";
 import { useLeadStatusActions } from "@/hooks/useLeadStatusActions";
 import { usePermissions } from "@/hooks/usePermissions";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { OnboardingTutorial, TutorialStep } from "@/components/shared/OnboardingTutorial";
 import { useOnboardingV2 } from "@/hooks/useOnboardingV2";
 interface Lead {
@@ -99,7 +98,6 @@ const LeadDetail = () => {
   }>();
   const navigate = useNavigate();
   const location = useLocation();
-  const isMobile = useIsMobile();
   const [lead, setLead] = useState<Lead | null>(null);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
@@ -747,12 +745,8 @@ const LeadDetail = () => {
   };
 
   const handleSessionClick = (sessionId: string) => {
-    if (isMobile) {
-      navigate(`/sessions/${sessionId}`);
-    } else {
-      setSelectedSessionId(sessionId);
-      setIsSessionSheetOpen(true);
-    }
+    setSelectedSessionId(sessionId);
+    setIsSessionSheetOpen(true);
   };
 
   const handleViewFullSessionDetails = () => {

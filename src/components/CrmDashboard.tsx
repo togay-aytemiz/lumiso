@@ -12,7 +12,6 @@ import { PageHeader, PageHeaderSearch } from "@/components/ui/page-header";
 import GlobalSearch from "@/components/GlobalSearch";
 import { getLeadStatusStyles, formatStatusText } from "@/lib/leadStatusColors";
 import { getWeekRange, getUserLocale, formatLongDate, formatTime, formatDate } from "@/lib/utils";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Lead {
   id: string;
@@ -63,7 +62,6 @@ const CrmDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [addLeadDialogOpen, setAddLeadDialogOpen] = useState(false);
   const navigate = useNavigate();
-  const isMobile = useIsMobile();
 
   useEffect(() => {
     fetchData();
@@ -505,13 +503,7 @@ const CrmDashboard = () => {
                     <div 
                       key={session.id} 
                       className="flex items-center justify-between p-4 border border-slate-200 dark:border-slate-700 rounded-lg cursor-pointer hover:bg-slate-50 hover:shadow-sm dark:hover:bg-slate-800 transition-all duration-200"
-                      onClick={() => {
-                        if (isMobile) {
-                          navigate(`/sessions/${session.id}`);
-                        } else {
-                          navigate(`/leads/${session.lead_id}`, { state: { from: 'dashboard' } });
-                        }
-                      }}
+                      onClick={() => navigate(`/leads/${session.lead_id}`, { state: { from: 'dashboard' } })}
                     >
                        <div className="space-y-1">
                          <h4 className="font-medium text-slate-800 dark:text-slate-200 hover:text-primary transition-colors">{session.lead_name || 'Unknown Client'}</h4>

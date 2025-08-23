@@ -11,7 +11,6 @@ import { formatDate, formatTime, getUserLocale, getStartOfWeek, getEndOfWeek } f
 import { addDays, startOfMonth, endOfMonth, eachDayOfInterval, format, isToday, isSameMonth, startOfWeek, endOfWeek, addMonths, subMonths, addWeeks, subWeeks, isSameDay, startOfDay, endOfDay } from "date-fns";
 import { PageHeader, PageHeaderSearch, PageHeaderActions } from "@/components/ui/page-header";
 import SessionSheetView from "@/components/SessionSheetView";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 type ViewMode = "day" | "week" | "month";
 
@@ -45,7 +44,6 @@ export default function Calendar() {
     return window.innerWidth <= 768 ? "day" : "month";
   });
   const userLocale = getUserLocale();
-  const isMobile = useIsMobile();
   
   useEffect(() => {
     localStorage.setItem("calendar:viewMode", viewMode);
@@ -257,12 +255,8 @@ export default function Calendar() {
   };
 
   const handleSessionClick = (session: Session) => {
-    if (isMobile) {
-      navigate(`/sessions/${session.id}`);
-    } else {
-      setSelectedSessionId(session.id);
-      setSessionSheetOpen(true);
-    }
+    setSelectedSessionId(session.id);
+    setSessionSheetOpen(true);
   };
 
   const handleActivityClick = (activity: Activity) => {

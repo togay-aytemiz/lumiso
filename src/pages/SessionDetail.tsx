@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useNavigationHistory } from '@/hooks/useNavigationHistory';
 import { ArrowLeft, MoreVertical, Edit, Trash2, ExternalLink, ChevronDown, Calendar, User, FolderOpen, FileText, AlertTriangle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -63,6 +64,7 @@ export default function SessionDetail() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { deleteSession } = useSessionActions();
+  const { goBack } = useNavigationHistory();
   
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
@@ -142,7 +144,7 @@ export default function SessionDetail() {
     
     const success = await deleteSession(session.id);
     if (success) {
-      navigate('/sessions');
+      goBack('/sessions');
     }
   };
 
@@ -212,11 +214,11 @@ export default function SessionDetail() {
                 <div className="space-y-2">
                   {/* Desktop: Name + Badges on same line */}
                   <div className="hidden md:flex items-center gap-3 flex-wrap">
-                    <ArrowLeft 
-                      className="h-6 w-6 cursor-pointer text-foreground hover:text-[hsl(var(--accent-foreground))] transition-colors" 
-                      strokeWidth={2.5}
-                      onClick={() => navigate('/sessions')}
-                    />
+                     <ArrowLeft 
+                       className="h-6 w-6 cursor-pointer text-foreground hover:text-[hsl(var(--accent-foreground))] transition-colors" 
+                       strokeWidth={2.5}
+                       onClick={() => goBack('/sessions')}
+                     />
                     <h1 className="text-xl sm:text-2xl font-bold leading-tight break-words text-left">
                       {getSessionName()}
                     </h1>
@@ -242,11 +244,11 @@ export default function SessionDetail() {
                   {/* Mobile: Name only */}
                   <div className="md:hidden">
                     <div className="flex items-center gap-3">
-                      <ArrowLeft 
-                        className="h-6 w-6 cursor-pointer text-foreground hover:text-[hsl(var(--accent-foreground))] transition-colors" 
-                        strokeWidth={2.5}
-                        onClick={() => navigate('/sessions')}
-                      />
+                       <ArrowLeft 
+                         className="h-6 w-6 cursor-pointer text-foreground hover:text-[hsl(var(--accent-foreground))] transition-colors" 
+                         strokeWidth={2.5}
+                         onClick={() => goBack('/sessions')}
+                       />
                       <h1 className="text-xl sm:text-2xl font-bold leading-tight break-words text-left">
                         {getSessionName()}
                       </h1>

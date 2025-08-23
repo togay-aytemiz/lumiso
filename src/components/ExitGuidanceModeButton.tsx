@@ -28,9 +28,8 @@ export function ExitGuidanceModeButton() {
         title: "Exited guidance mode",
         description: "You can now access all features.",
       });
-      // Navigate to dashboard
-      console.log('🚪 Navigating to dashboard');
-      navigate('/');
+      // Don't navigate manually - let the app's redirect logic handle it
+      console.log('🚪 Onboarding completed, app will redirect automatically');
     } catch (error) {
       console.error('❌ Error exiting guidance mode:', error);
       toast({

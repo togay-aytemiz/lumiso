@@ -356,31 +356,44 @@ export default function SessionSheetView({
                     </>
                   )}
 
-                  {session.notes && (
+                  {(session.notes || session.location) && (
                     <>
                       <div className="hidden sm:block w-px h-12 bg-border"></div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-2">
-                          <FileText className="h-4 w-4 text-muted-foreground" />
-                          <label className="font-medium text-muted-foreground">Notes</label>
+                        <div className="space-y-3">
+                          {session.notes && (
+                            <div>
+                              <div className="flex items-center gap-2 mb-2">
+                                <FileText className="h-4 w-4 text-muted-foreground" />
+                                <label className="font-medium text-muted-foreground">Notes</label>
+                              </div>
+                              <div className="relative group">
+                                <p className="line-clamp-2 cursor-help">{session.notes}</p>
+                                <div className="absolute left-0 top-full mt-1 hidden group-hover:block z-50 bg-popover border border-border rounded-md shadow-md p-3 max-w-md whitespace-pre-wrap text-sm">
+                                  {session.notes}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                          
+                          {session.location && (
+                            <div>
+                              <div className="flex items-center gap-2 mb-2">
+                                <svg className="h-4 w-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                                <label className="font-medium text-muted-foreground">Location</label>
+                              </div>
+                              <div className="relative group">
+                                <p className="line-clamp-2 cursor-help">{session.location}</p>
+                                <div className="absolute left-0 top-full mt-1 hidden group-hover:block z-50 bg-popover border border-border rounded-md shadow-md p-3 max-w-md whitespace-pre-wrap text-sm">
+                                  {session.location}
+                                </div>
+                              </div>
+                            </div>
+                          )}
                         </div>
-                        <p className="line-clamp-2">{session.notes}</p>
-                      </div>
-                    </>
-                  )}
-
-                  {session.location && (
-                    <>
-                      <div className="hidden sm:block w-px h-12 bg-border"></div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-2">
-                          <svg className="h-4 w-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                          </svg>
-                          <label className="font-medium text-muted-foreground">Location</label>
-                        </div>
-                        <p className="line-clamp-2">{session.location}</p>
                       </div>
                     </>
                   )}

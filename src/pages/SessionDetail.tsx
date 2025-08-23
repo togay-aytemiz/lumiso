@@ -72,6 +72,9 @@ export default function SessionDetail() {
   const fetchSession = async () => {
     if (!id) return;
     
+    console.log('SessionDetail: Starting to fetch session data for ID:', id);
+    const startTime = performance.now();
+    
     try {
       const { data, error } = await supabase
         .from('sessions')
@@ -96,9 +99,13 @@ export default function SessionDetail() {
         .single();
 
       if (error) throw error;
+      
+      const endTime = performance.now();
+      console.log(`SessionDetail: Fetch completed in ${endTime - startTime}ms`);
+      
       setSession(data);
     } catch (error: any) {
-      console.error('Error fetching session:', error);
+      console.error('SessionDetail: Error fetching session:', error);
       toast({
         title: "Error",
         description: "Failed to load session details",
@@ -110,6 +117,7 @@ export default function SessionDetail() {
   };
 
   useEffect(() => {
+    console.log('SessionDetail: Component mounted, session ID:', id);
     fetchSession();
   }, [id]);
 

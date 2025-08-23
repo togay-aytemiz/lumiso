@@ -11,15 +11,29 @@ interface CalendarConnection {
 export const useGoogleCalendar = () => {
   const [connection, setConnection] = useState<CalendarConnection>({ connected: false });
   const [loading, setLoading] = useState(false);
+  const [lastCheckTime, setLastCheckTime] = useState<number>(0);
   const { toast } = useToast();
 
-  const checkConnectionStatus = async () => {
+  const checkConnectionStatus = async (force = false) => {
     try {
+      // Throttle requests - only check once every 30 seconds unless forced
+      const now = Date.now();
+      if (!force && (now - lastCheckTime) < 30000) {
+        console.log('Throttling calendar connection check');
+        return;
+      }
+      
+      setLastCheckTime(now);
+      console.log('Checking Google Calendar connection status...');
+
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) {
         setConnection({ connected: false });
         return;
       }
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
 
       const response = await fetch(
         `https://rifdykpdubrowzbylffe.supabase.co/functions/v1/google-calendar-oauth?action=status`,
@@ -29,11 +43,18 @@ export const useGoogleCalendar = () => {
             'Authorization': `Bearer ${session.access_token}`,
             'Content-Type': 'application/json',
           },
+          signal: controller.signal,
         }
       );
 
+      clearTimeout(timeoutId);
+
       if (!response.ok) {
-        console.error('Failed to check connection status:', response.status, response.statusText);
+        console.warn('Calendar connection check failed:', response.status, response.statusText);
+        // Don't show error for 500s to avoid spam
+        if (response.status !== 500) {
+          console.error('Failed to check connection status:', response.status, response.statusText);
+        }
         setConnection({ connected: false });
         return;
       }
@@ -48,8 +69,12 @@ export const useGoogleCalendar = () => {
           variant: "destructive",
         });
       }
-    } catch (error) {
-      console.error('Error checking connection:', error);
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        console.warn('Calendar connection check timed out');
+      } else {
+        console.warn('Error checking calendar connection:', error.message);
+      }
       setConnection({ connected: false });
     }
   };
@@ -188,8 +213,14 @@ export const useGoogleCalendar = () => {
   };
 
   useEffect(() => {
-    checkConnectionStatus();
-  }, []);
+    // Only check connection status once when component mounts
+    const checkConnection = async () => {
+      console.log('Component mounted - checking calendar connection');
+      await checkConnectionStatus();
+    };
+    
+    checkConnection();
+  }, []); // Empty dependency array to run only once
 
   return {
     connection,

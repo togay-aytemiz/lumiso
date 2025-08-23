@@ -220,7 +220,7 @@ export function useOnboardingV2() {
   };
 
   const isAllStepsComplete = () => {
-    return state.stage === 'in_progress' && state.currentStep > TOTAL_STEPS;
+    return state.stage === 'completed' || (state.stage === 'in_progress' && state.currentStep > TOTAL_STEPS);
   };
 
   // BULLETPROOF: Mark modal as shown PERMANENTLY

@@ -37,13 +37,15 @@ const GettingStarted = () => {
     }
   }, [loading, isInGuidedSetup, isOnboardingComplete, navigate]);
   
-  // Handle completion
+  // Handle completion - let useEffect handle navigation automatically
   const handleComplete = async () => {
     try {
+      console.log('🎯 handleComplete: Starting onboarding completion');
       await completeOnboarding();
-      navigate('/', { replace: true });
+      console.log('✅ handleComplete: Onboarding completed - automatic redirect will handle navigation');
+      // Don't navigate manually - let the useEffect redirect logic handle it
     } catch (error) {
-      console.error('Error completing onboarding:', error);
+      console.error('❌ handleComplete: Error completing onboarding:', error);
     }
   };
 

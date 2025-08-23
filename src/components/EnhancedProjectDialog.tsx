@@ -14,6 +14,7 @@ import { AssigneesPicker } from "./AssigneesPicker";
 import { InlineAssigneesPicker } from "./InlineAssigneesPicker";
 import { ServicePicker } from "./ServicePicker";
 import { useProfile } from "@/contexts/ProfileContext";
+import { useOnboardingV2 } from "@/hooks/useOnboardingV2";
 
 interface Lead {
   id: string;
@@ -56,6 +57,7 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
   const [loadingLeads, setLoadingLeads] = useState(false);
   const [isNewLead, setIsNewLead] = useState(false);
   const { toast } = useToast();
+  const { currentStep, shouldLockNavigation, completeCurrentStep } = useOnboardingV2();
 
   const [projectData, setProjectData] = useState({
     name: "",
@@ -388,6 +390,18 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
         title: "Success",
         description: "Project created successfully."
       });
+
+      // Check if we're in onboarding step 3 and complete it
+      if (shouldLockNavigation && currentStep === 3) {
+        console.log('🎯 Project created during onboarding step 3 - completing step automatically');
+        try {
+          await completeCurrentStep();
+          console.log('✅ Onboarding step 3 completed successfully');
+        } catch (error) {
+          console.error('❌ Failed to complete onboarding step:', error);
+          // Don't fail the project creation if step completion fails
+        }
+      }
 
       resetForm();
       setOpen(false);

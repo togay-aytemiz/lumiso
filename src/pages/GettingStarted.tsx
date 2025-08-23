@@ -30,22 +30,13 @@ const GettingStarted = () => {
     completeOnboarding
   } = useOnboardingV2();
 
-  // If guided setup is complete, redirect to dashboard
-  useEffect(() => {
-    if (!loading && (!isInGuidedSetup || isOnboardingComplete)) {
-      navigate('/', { replace: true });
-    }
-  }, [loading, isInGuidedSetup, isOnboardingComplete, navigate]);
-  
-  // Handle completion - let useEffect handle navigation automatically
+  // Handle completion - simple and direct
   const handleComplete = async () => {
     try {
-      console.log('🎯 handleComplete: Starting onboarding completion');
       await completeOnboarding();
-      console.log('✅ handleComplete: Onboarding completed - automatic redirect will handle navigation');
-      // Don't navigate manually - let the useEffect redirect logic handle it
+      navigate('/', { replace: true });
     } catch (error) {
-      console.error('❌ handleComplete: Error completing onboarding:', error);
+      console.error('Error completing onboarding:', error);
     }
   };
 

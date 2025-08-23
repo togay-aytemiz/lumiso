@@ -215,8 +215,13 @@ export function useOnboardingV2() {
   };
 
   const getCompletedSteps = () => {
-    if (state.stage !== 'in_progress') return [];
-    return ONBOARDING_STEPS.slice(0, state.currentStep - 1);
+    if (state.stage === 'in_progress') {
+      return ONBOARDING_STEPS.slice(0, state.currentStep - 1);
+    }
+    if (state.stage === 'completed') {
+      return ONBOARDING_STEPS; // Show all steps as completed
+    }
+    return [];
   };
 
   const isAllStepsComplete = () => {

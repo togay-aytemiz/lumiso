@@ -92,7 +92,7 @@ export function OnboardingTutorial({
   if (isFloatingMode) {
     // Floating mode positioning logic
     const isProjectManagementStep = [2, 3, 4].includes(currentStep.id); // Board, List, and Archive view steps
-    const isSchedulingTutorialStep = [3, 4].includes(currentStep.id); // Scheduling tutorial steps (step 3 and 4 in scheduling flow)
+    const isSchedulingTutorialStep = [3, 4].includes(currentStep.id) && !isProjectManagementStep; // Scheduling tutorial steps (only if not project management)
     const isPackagesSetupStep = [1, 2, 3].includes(currentStep.id); // Packages setup steps (step 1, 2, 3 in packages flow)
     const isAddLeadStep = currentStep.id === 2 && currentStep.title === "Add Your First Lead"; // Specific "Add Lead" step
     

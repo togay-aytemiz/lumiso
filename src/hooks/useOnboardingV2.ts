@@ -150,7 +150,13 @@ export function useOnboardingV2() {
 
   // Helper functions for determining what to show
   const shouldShowWelcomeModal = () => {
-    return !state.loading && state.stage === 'not_started';
+    const result = !state.loading && state.stage === 'not_started';
+    console.log('useOnboardingV2: shouldShowWelcomeModal', { 
+      loading: state.loading, 
+      stage: state.stage, 
+      result 
+    });
+    return result;
   };
 
   const isInGuidedSetup = () => {
@@ -162,7 +168,12 @@ export function useOnboardingV2() {
   };
 
   const shouldLockNavigation = () => {
-    return state.stage === 'in_progress';
+    const result = state.stage === 'in_progress';
+    console.log('useOnboardingV2: shouldLockNavigation', { 
+      stage: state.stage, 
+      result 
+    });
+    return result;
   };
 
   // Get current step info
@@ -196,9 +207,12 @@ export function useOnboardingV2() {
   // State transition functions
   const startGuidedSetup = async () => {
     if (!user) return;
+    
+    console.log('useOnboardingV2: Starting guided setup');
 
     try {
-      await supabase
+      // Use atomic update with proper error handling
+      const { error } = await supabase
         .from('user_settings')
         .update({ 
           onboarding_stage: 'in_progress',
@@ -206,11 +220,17 @@ export function useOnboardingV2() {
         })
         .eq('user_id', user.id);
 
-      setState(prev => ({
-        ...prev,
-        stage: 'in_progress',
-        currentStep: 1
-      }));
+      if (error) throw error;
+
+      // Update state atomically to prevent race conditions
+      setState(prev => {
+        console.log('useOnboardingV2: State updated to in_progress');
+        return {
+          ...prev,
+          stage: 'in_progress',
+          currentStep: 1
+        };
+      });
     } catch (error) {
       console.error('Error starting guided setup:', error);
       throw error;

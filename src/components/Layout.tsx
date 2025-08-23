@@ -17,17 +17,37 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   // Check if we should show onboarding modal
   useEffect(() => {
-    if (!onboardingLoading && !isOnGettingStartedPage) {
-      if (shouldShowWelcomeModal) {
-        setShowOnboardingModal(true);
-      } else {
-        setShowOnboardingModal(false);
-      }
+    console.log('Layout: Modal visibility check', {
+      onboardingLoading,
+      shouldShowWelcomeModal,
+      shouldLockNavigation,
+      isOnGettingStartedPage,
+      pathname: location.pathname
+    });
+
+    // CRITICAL: Never show modal during guided setup (in_progress stage)
+    if (shouldLockNavigation) {
+      console.log('Layout: Hiding modal - user is in guided setup');
+      setShowOnboardingModal(false);
+      return;
+    }
+
+    // Don't show modal while loading or on getting-started page
+    if (onboardingLoading || isOnGettingStartedPage) {
+      console.log('Layout: Hiding modal - loading or on getting-started page');
+      setShowOnboardingModal(false);
+      return;
+    }
+
+    // Only show modal if user truly needs to start onboarding
+    if (shouldShowWelcomeModal) {
+      console.log('Layout: Showing welcome modal');
+      setShowOnboardingModal(true);
     } else {
-      // Always hide modal on getting-started page
+      console.log('Layout: Hiding modal - not needed');
       setShowOnboardingModal(false);
     }
-  }, [onboardingLoading, shouldShowWelcomeModal, isOnGettingStartedPage]);
+  }, [onboardingLoading, shouldShowWelcomeModal, shouldLockNavigation, isOnGettingStartedPage, location.pathname]);
 
   useLayoutEffect(() => {
     // Disable automatic scroll restoration

@@ -19,24 +19,17 @@ export function OnboardingModal({ open, onClose }: OnboardingModalProps) {
   const [showSampleDataModal, setShowSampleDataModal] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { startGuidedSetup, markModalShown } = useOnboardingV2();
-
-  // V3: Mark modal as shown when it's closed without starting guided setup
-  const handleClose = () => {
-    console.log('🎯 V3 OnboardingModal: Closing modal and marking as shown');
-    markModalShown();
-    onClose();
-  };
+  const { startGuidedSetup } = useOnboardingV2();
 
   const handleStartLearning = async () => {
     if (!user) return;
     
-    console.log('🚀 V3 OnboardingModal: Starting guided setup from modal');
+    console.log('🚀 V3 OnboardingModal: Starting guided setup - MODAL WILL NEVER SHOW AGAIN');
     setIsLoading(true);
     try {
       await startGuidedSetup();
       
-      onClose(); // Close modal first
+      onClose(); // Close modal
       navigate('/getting-started');
       toast({
         title: "Welcome to Lumiso! 🎉",
@@ -64,7 +57,7 @@ export function OnboardingModal({ open, onClose }: OnboardingModalProps) {
 
   const handleCloseAll = () => {
     setShowSampleDataModal(false);
-    handleClose(); // Use the enhanced close handler
+    onClose(); // Simple close, no special handling needed
   };
 
   const actions: OnboardingAction[] = [
@@ -86,7 +79,7 @@ export function OnboardingModal({ open, onClose }: OnboardingModalProps) {
     <>
       <BaseOnboardingModal
         open={open && !showSampleDataModal}
-        onClose={handleClose} // Use enhanced close handler
+        onClose={onClose} // Simple close handler
         title="Welcome to Lumiso! 🎉"
         description="We'll guide you through setting up your photography CRM step by step. Each task builds on the previous one, so you'll learn naturally."
         actions={actions}

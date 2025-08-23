@@ -63,7 +63,6 @@ interface OnboardingState {
   stage: OnboardingStage;
   currentStep: number;
   loading: boolean;
-  sessionModalShown: boolean; // V3: Prevent multiple modal displays per session
 }
 
 // Import and run the V3 bulletproof test in development
@@ -74,8 +73,7 @@ export function useOnboardingV2() {
   const [state, setState] = useState<OnboardingState>({
     stage: 'not_started',
     currentStep: 1,
-    loading: true,
-    sessionModalShown: false // V3: Track modal display per session
+    loading: true
   });
 
   // Run V3 bulletproof test in development
@@ -124,8 +122,7 @@ export function useOnboardingV2() {
         setState({
           stage: 'not_started',
           currentStep: 1,
-          loading: false,
-          sessionModalShown: false
+          loading: false
         });
         return;
       }
@@ -142,8 +139,7 @@ export function useOnboardingV2() {
       setState({
         stage,
         currentStep,
-        loading: false,
-        sessionModalShown: false
+        loading: false
       });
 
     } catch (error) {
@@ -158,19 +154,16 @@ export function useOnboardingV2() {
     if (user) {
       fetchState();
     } else {
-      setState({ stage: 'not_started', currentStep: 1, loading: false, sessionModalShown: false });
+      setState({ stage: 'not_started', currentStep: 1, loading: false });
     }
   }, [user?.id]); // Only depend on user ID to prevent infinite loops
 
-  // V3: Bulletproof modal display logic with session tracking
+  // V3: Bulletproof modal display logic - ONLY show if truly not started
   const shouldShowWelcomeModal = () => {
-    const result = !state.loading && 
-                   state.stage === 'not_started' && 
-                   !state.sessionModalShown;
-    console.log('🎯 V3 shouldShowWelcomeModal:', { 
+    const result = !state.loading && state.stage === 'not_started';
+    console.log('🎯 V3 shouldShowWelcomeModal SIMPLE:', { 
       loading: state.loading, 
       stage: state.stage, 
-      sessionModalShown: state.sessionModalShown,
       result 
     });
     return result;
@@ -221,14 +214,14 @@ export function useOnboardingV2() {
     return state.stage === 'in_progress' && state.currentStep > TOTAL_STEPS;
   };
 
-  // V3: Enhanced state transition functions with bulletproof error handling
+  // V3: BULLETPROOF - Once you start, modal NEVER shows again
   const startGuidedSetup = async () => {
     if (!user) return;
     
-    console.log('🚀 V3 startGuidedSetup: Starting guided setup');
+    console.log('🚀 V3 startGuidedSetup: Starting - modal will NEVER show again');
 
     try {
-      // First update database
+      // Update database first
       const { error } = await supabase
         .from('user_settings')
         .update({ 
@@ -239,29 +232,19 @@ export function useOnboardingV2() {
 
       if (error) throw error;
 
-      // Then update state atomically with session tracking
+      // Update state - modal will never show again because stage != 'not_started'
       setState(prev => {
-        console.log('🚀 V3 startGuidedSetup: State updated to in_progress with session tracking');
+        console.log('🚀 V3 startGuidedSetup: Stage set to in_progress - MODAL DISABLED FOREVER');
         return {
           ...prev,
           stage: 'in_progress',
-          currentStep: 1,
-          sessionModalShown: true // Mark modal as shown
+          currentStep: 1
         };
       });
     } catch (error) {
       console.error('❌ V3 startGuidedSetup: Error starting guided setup:', error);
       throw error;
     }
-  };
-
-  // V3: Mark modal as shown without starting guided setup (for restart flow)
-  const markModalShown = () => {
-    console.log('🎯 V3 markModalShown: Marking modal as shown for this session');
-    setState(prev => ({
-      ...prev,
-      sessionModalShown: true
-    }));
   };
 
   // Enhanced step completion with better debugging
@@ -385,8 +368,7 @@ export function useOnboardingV2() {
       setState({
         stage: 'not_started',
         currentStep: 1,
-        loading: false,
-        sessionModalShown: false // Allow modal to show
+        loading: false
       });
       console.log('🔄 V3 resetOnboarding: Reset completed, modal will show');
     } catch (error) {
@@ -419,7 +401,6 @@ export function useOnboardingV2() {
     completeCurrentStep,
     completeOnboarding,
     skipOnboarding,
-    resetOnboarding,
-    markModalShown // V3: New action to mark modal as shown
+    resetOnboarding
   };
 }

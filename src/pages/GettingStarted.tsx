@@ -95,47 +95,77 @@ const GettingStarted = () => {
       </div>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 pb-safe">
-        {/* Progress Section */}
-        <div className={`mb-6 sm:mb-8 ${isAnimating ? 'animate-fade-in' : ''}`}>
-          <Card>
-            <CardHeader className="pb-4">
-              <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
-                Setup Progress
-                {completedSteps.length > 0 && (
-                  <CheckCircle className="w-5 h-5 text-green-500" />
-                )}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <GuidedStepProgress 
-                  currentValue={currentStep - 1}
-                  targetValue={currentStep - 1}
-                  totalSteps={totalSteps}
-                  animate={true}
-                />
-                <div className="flex flex-col gap-2 text-sm text-muted-foreground">
-                  <div className="font-medium">
-                    <span className="text-foreground">Now:</span> {currentStepInfo ? currentStepInfo.title : "All tasks complete! 🎉"}
-                  </div>
-                  {nextStepInfo && (
-                    <div>
-                      <span className="text-foreground">Next:</span> {nextStepInfo.title}
-                    </div>
+        {/* Completion Banner - Show at top when all steps complete */}
+        {isAllStepsComplete && (
+          <div className={`mb-6 sm:mb-8 text-center ${isAnimating ? 'animate-scale-in' : ''}`}>
+            <Card className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950/20">
+              <CardContent className="py-12">
+                <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4 animate-pulse" />
+                <h2 className="text-2xl font-bold text-green-700 dark:text-green-400 mb-2">
+                  Congratulations! 🎉
+                </h2>
+                <p className="text-green-600 dark:text-green-300 mb-6">
+                  You've completed the guided setup and learned the essentials of Lumiso!
+                </p>
+                <Button 
+                  size="lg" 
+                  className="bg-green-600 hover:bg-green-700 hover-scale"
+                  onClick={handleComplete}
+                >
+                  Go to Dashboard
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Progress Section - Only show when not completed */}
+        {!isAllStepsComplete && (
+          <div className={`mb-6 sm:mb-8 ${isAnimating ? 'animate-fade-in' : ''}`}>
+            <Card>
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+                  Setup Progress
+                  {completedSteps.length > 0 && (
+                    <CheckCircle className="w-5 h-5 text-green-500" />
                   )}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <GuidedStepProgress 
+                    currentValue={currentStep - 1}
+                    targetValue={currentStep - 1}
+                    totalSteps={totalSteps}
+                    animate={true}
+                  />
+                  <div className="flex flex-col gap-2 text-sm text-muted-foreground">
+                    <div className="font-medium">
+                      <span className="text-foreground">Now:</span> {currentStepInfo ? currentStepInfo.title : "All tasks complete! 🎉"}
+                    </div>
+                    {nextStepInfo && (
+                      <div>
+                        <span className="text-foreground">Next:</span> {nextStepInfo.title}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         {/* Learning Path Header */}
         <div className="mb-6 sm:mb-8 text-center">
           <h2 className="text-xl sm:text-2xl font-semibold text-foreground mb-2">
-            Your Learning Path
+            {isAllStepsComplete ? "What You've Learned" : "Your Learning Path"}
           </h2>
           <p className="text-sm sm:text-base text-muted-foreground">
-            Each step teaches you how to use Lumiso naturally.
+            {isAllStepsComplete 
+              ? "You've successfully mastered these essential Lumiso features:"
+              : "Each step teaches you how to use Lumiso naturally."
+            }
           </p>
         </div>
 
@@ -252,30 +282,6 @@ const GettingStarted = () => {
           </div>
         )}
 
-        {/* Completion */}
-        {isAllStepsComplete && (
-          <div className={`text-center ${isAnimating ? 'animate-scale-in' : ''}`}>
-            <Card className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950/20">
-              <CardContent className="py-12">
-                <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4 animate-pulse" />
-                <h2 className="text-2xl font-bold text-green-700 dark:text-green-400 mb-2">
-                  Congratulations! 🎉
-                </h2>
-                <p className="text-green-600 dark:text-green-300 mb-6">
-                  You've completed the guided setup!
-                </p>
-                <Button 
-                  size="lg" 
-                  className="bg-green-600 hover:bg-green-700 hover-scale"
-                  onClick={handleComplete}
-                >
-                  Go to Dashboard
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-        )}
       </div>
 
       <SampleDataModal 

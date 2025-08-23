@@ -264,15 +264,27 @@ export function useOnboardingV2() {
     }));
   };
 
+  // Enhanced step completion with better debugging
   const completeCurrentStep = async () => {
-    if (!user || state.stage !== 'in_progress') return;
+    if (!user || state.stage !== 'in_progress') {
+      console.warn('🚫 completeCurrentStep: Cannot complete - user missing or not in progress', {
+        user: !!user,
+        stage: state.stage
+      });
+      return;
+    }
 
     const nextStep = state.currentStep + 1;
+    console.log('🎯 V3 completeCurrentStep: Completing step', {
+      currentStep: state.currentStep,
+      nextStep,
+      totalSteps: TOTAL_STEPS
+    });
     
     try {
       // Bulletproof: Prevent completing beyond total steps
       if (state.currentStep >= TOTAL_STEPS) {
-        console.warn('Attempted to complete step beyond total steps');
+        console.warn('🚫 completeCurrentStep: Attempted to complete step beyond total steps');
         return;
       }
 
@@ -283,12 +295,18 @@ export function useOnboardingV2() {
         })
         .eq('user_id', user.id);
 
-      setState(prev => ({
-        ...prev,
-        currentStep: nextStep
-      }));
+      setState(prev => {
+        console.log('🎯 V3 completeCurrentStep: State updated', {
+          from: prev.currentStep,
+          to: nextStep
+        });
+        return {
+          ...prev,
+          currentStep: nextStep
+        };
+      });
     } catch (error) {
-      console.error('Error completing step:', error);
+      console.error('❌ V3 completeCurrentStep: Error completing step:', error);
       throw error;
     }
   };
@@ -349,28 +367,28 @@ export function useOnboardingV2() {
     }
   };
 
-  // V3: Enhanced reset with direct guided setup start (bypass modal)
+  // V3: Reset with option to show modal (user requested)
   const resetOnboarding = async () => {
     if (!user) return;
 
-    console.log('🔄 V3 resetOnboarding: Resetting and starting guided setup directly');
+    console.log('🔄 V3 resetOnboarding: Resetting to show welcome modal');
     try {
-      // Directly set to in_progress to bypass modal
+      // Reset to not_started so modal will show
       await supabase
         .from('user_settings')
         .update({
-          onboarding_stage: 'in_progress',
+          onboarding_stage: 'not_started',
           current_onboarding_step: 1
         })
         .eq('user_id', user.id);
 
       setState({
-        stage: 'in_progress',
+        stage: 'not_started',
         currentStep: 1,
         loading: false,
-        sessionModalShown: true // Prevent modal from showing
+        sessionModalShown: false // Allow modal to show
       });
-      console.log('🔄 V3 resetOnboarding: Reset completed, directly in guided setup');
+      console.log('🔄 V3 resetOnboarding: Reset completed, modal will show');
     } catch (error) {
       console.error('❌ V3 resetOnboarding: Error resetting onboarding:', error);
       throw error;

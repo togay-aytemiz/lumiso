@@ -354,26 +354,35 @@ const LeadDetail = () => {
     }
   }, [currentStep, showTutorial, location.state?.continueTutorial]);
 
-  // Handle tutorial completion
+  // Handle tutorial completion with enhanced debugging
   const handleTutorialComplete = async () => {
     try {
       if (isSchedulingTutorial) {
         // For scheduling tutorial, complete step 5 (scheduling step)
+        console.log('🎯 V3 LeadDetail: Completing scheduling tutorial (Step 5)');
         await completeCurrentStep();
         setShowTutorial(false);
-        console.log('🎉 Scheduling tutorial completed! Navigating back to getting-started');
+        console.log('🎉 V3 LeadDetail: Scheduling tutorial completed! Navigating back to getting-started');
         navigate('/getting-started');
       } else {
         // For regular lead details tutorial that includes project creation
         // Complete both Step 2 (leads) and Step 3 (projects) since this tutorial covers both
+        console.log('🎯 V3 LeadDetail: Starting combined tutorial completion (Steps 2 & 3)');
+        console.log('🎯 V3 LeadDetail: Completing Step 2 (leads)...');
         await completeCurrentStep(); // Complete current step (Step 2)
+        
+        // Small delay to ensure database and state are updated before second completion
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        console.log('🎯 V3 LeadDetail: Completing Step 3 (projects)...');  
         await completeCurrentStep(); // Complete next step (Step 3) since we created projects
+        
         setShowTutorial(false);
-        console.log('🎉 Lead details tutorial completed! Both Step 2 & 3 completed, navigating back to getting-started');
+        console.log('🎉 V3 LeadDetail: Lead details tutorial completed! Both Step 2 & 3 completed, navigating back to getting-started');
         navigate('/getting-started');
       }
     } catch (error) {
-      console.error('Error completing tutorial:', error);
+      console.error('❌ V3 LeadDetail: Error completing tutorial:', error);
       toast({
         title: "Error",
         description: "Failed to save progress. Please try again.",

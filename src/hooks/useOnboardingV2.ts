@@ -269,8 +269,10 @@ export function useOnboardingV2() {
   const completeOnboarding = async () => {
     if (!user) return;
 
+    console.log('🎯 completeOnboarding: Starting to complete onboarding');
     try {
-      await supabase
+      console.log('🎯 completeOnboarding: Updating database...');
+      const { error } = await supabase
         .from('user_settings')
         .update({ 
           onboarding_stage: 'completed',
@@ -278,13 +280,23 @@ export function useOnboardingV2() {
         })
         .eq('user_id', user.id);
 
-      setState(prev => ({
-        ...prev,
-        stage: 'completed',
-        currentStep: TOTAL_STEPS + 1
-      }));
+      if (error) {
+        console.error('🎯 completeOnboarding: Database error:', error);
+        throw error;
+      }
+
+      console.log('🎯 completeOnboarding: Database updated successfully, updating state...');
+      setState(prev => {
+        console.log('🎯 completeOnboarding: State updated to completed');
+        return {
+          ...prev,
+          stage: 'completed',
+          currentStep: TOTAL_STEPS + 1
+        };
+      });
+      console.log('🎯 completeOnboarding: Function completed successfully');
     } catch (error) {
-      console.error('Error completing onboarding:', error);
+      console.error('🎯 completeOnboarding: Error completing onboarding:', error);
       throw error;
     }
   };

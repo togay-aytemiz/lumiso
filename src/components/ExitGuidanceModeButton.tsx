@@ -18,23 +18,28 @@ export function ExitGuidanceModeButton() {
   }
 
   const handleExit = async () => {
+    console.log('🚪 Exit guidance mode clicked');
     setIsLoading(true);
     try {
+      console.log('🚪 Calling completeOnboarding...');
       await completeOnboarding();
+      console.log('✅ completeOnboarding finished successfully');
       toast({
         title: "Exited guidance mode",
         description: "You can now access all features.",
       });
       // Navigate to dashboard
+      console.log('🚪 Navigating to dashboard');
       navigate('/');
     } catch (error) {
-      console.error('Error exiting guidance mode:', error);
+      console.error('❌ Error exiting guidance mode:', error);
       toast({
         title: "Error",
         description: "Failed to exit guidance mode. Please try again.",
         variant: "destructive"
       });
     } finally {
+      console.log('🚪 Setting loading to false');
       setIsLoading(false);
     }
   };

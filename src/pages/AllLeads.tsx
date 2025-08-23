@@ -15,6 +15,7 @@ import { useLeadsWithCustomFields } from "@/hooks/useLeadsWithCustomFields";
 import { useLeadTableColumns } from "@/hooks/useLeadTableColumns";
 import { LeadTableColumnManager } from "@/components/LeadTableColumnManager";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
 const AllLeadsNew = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -162,8 +163,21 @@ const AllLeadsNew = () => {
   }, [addLeadDialogOpen, showTutorial, currentTutorialStep]);
 
   // Handle tutorial completion
-  const handleTutorialComplete = () => {
-    setShowTutorial(false);
+  const handleTutorialComplete = async () => {
+    try {
+      // Complete Step 2 (leads) since this tutorial was accessed from leads page
+      await completeCurrentStep();
+      setShowTutorial(false);
+      console.log('🎉 Lead tutorial completed! Step 2 completed, navigating back to getting-started');
+      navigate('/getting-started');
+    } catch (error) {
+      console.error('Error completing tutorial:', error);
+      toast({
+        title: "Error", 
+        description: "Failed to save progress. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleTutorialExit = () => {

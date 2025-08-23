@@ -364,10 +364,12 @@ const LeadDetail = () => {
         console.log('🎉 Scheduling tutorial completed! Navigating back to getting-started');
         navigate('/getting-started');
       } else {
-        // For regular lead details tutorial
-        await completeCurrentStep();
+        // For regular lead details tutorial that includes project creation
+        // Complete both Step 2 (leads) and Step 3 (projects) since this tutorial covers both
+        await completeCurrentStep(); // Complete current step (Step 2)
+        await completeCurrentStep(); // Complete next step (Step 3) since we created projects
         setShowTutorial(false);
-        console.log('🎉 Tutorial completed! Navigating back to getting-started');
+        console.log('🎉 Lead details tutorial completed! Both Step 2 & 3 completed, navigating back to getting-started');
         navigate('/getting-started');
       }
     } catch (error) {

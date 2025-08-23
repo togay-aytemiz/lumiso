@@ -16,6 +16,7 @@ import SessionStatusBadge from "@/components/SessionStatusBadge";
 import { ViewProjectDialog } from "@/components/ViewProjectDialog";
 import { FilterBar } from "@/components/FilterBar";
 import SessionSheetView from "@/components/SessionSheetView";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Session {
   id: string;
@@ -42,6 +43,7 @@ const AllSessions = () => {
   const [sortField, setSortField] = useState<SortField>("session_date");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [viewingProject, setViewingProject] = useState<any>(null);
   const [showProjectDialog, setShowProjectDialog] = useState(false);
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
@@ -268,8 +270,12 @@ const AllSessions = () => {
   };
 
   const handleSessionClick = (sessionId: string) => {
-    setSelectedSessionId(sessionId);
-    setIsSessionSheetOpen(true);
+    if (isMobile) {
+      navigate(`/sessions/${sessionId}`);
+    } else {
+      setSelectedSessionId(sessionId);
+      setIsSessionSheetOpen(true);
+    }
   };
 
   const handleViewFullSessionDetails = () => {

@@ -7,6 +7,7 @@ import EditSessionDialog from "./EditSessionDialog";
 import SessionSheetView from "./SessionSheetView";
 import { NewSessionDialogForProject } from "./NewSessionDialogForProject";
 import { useNavigate } from "react-router-dom";
+import { useIsMobile } from "@/hooks/use-mobile";
 interface Session {
   id: string;
   session_date: string;
@@ -40,14 +41,19 @@ export function SessionsSection({
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   const [isSessionSheetOpen, setIsSessionSheetOpen] = useState(false);
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const handleSessionUpdated = () => {
     onSessionUpdated();
     setEditingSessionId(null);
   };
 
   const handleSessionClick = (sessionId: string) => {
-    setSelectedSessionId(sessionId);
-    setIsSessionSheetOpen(true);
+    if (isMobile) {
+      navigate(`/sessions/${sessionId}`);
+    } else {
+      setSelectedSessionId(sessionId);
+      setIsSessionSheetOpen(true);
+    }
   };
 
   const handleViewFullSessionDetails = () => {

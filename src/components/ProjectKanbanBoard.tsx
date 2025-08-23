@@ -11,6 +11,8 @@ import { EnhancedProjectDialog } from "@/components/EnhancedProjectDialog";
 import { ViewProjectDialog } from "@/components/ViewProjectDialog";
 import { formatDate } from "@/lib/utils";
 import { AssigneeAvatars } from "@/components/AssigneeAvatars";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useNavigate } from "react-router-dom";
 
 interface ProjectStatus {
   id: string;
@@ -71,6 +73,8 @@ const ProjectKanbanBoard = ({ projects, projectStatuses, onProjectsChange, onPro
   const [selectedStatusId, setSelectedStatusId] = useState<string | null>(null);
   const [viewingProject, setViewingProject] = useState<Project | null>(null);
   const [showViewDialog, setShowViewDialog] = useState(false);
+  const isMobile = useIsMobile();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (projectStatuses && projectStatuses.length > 0) {
@@ -191,7 +195,9 @@ const ProjectKanbanBoard = ({ projects, projectStatuses, onProjectsChange, onPro
   };
 
   const handleProjectClick = (project: Project) => {
-    if (onQuickView) {
+    if (isMobile) {
+      navigate(`/projects/${project.id}`);
+    } else if (onQuickView) {
       onQuickView(project);
     } else {
       setViewingProject(project);

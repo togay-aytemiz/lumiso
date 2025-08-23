@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import DeadSimpleSessionBanner from "@/components/DeadSimpleSessionBanner";
+import { useNavigate } from "react-router-dom";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 type SessionStatus = "planned" | "completed" | "cancelled" | "no_show" | "rescheduled" | "in_post_processing" | "delivered";
 
@@ -27,6 +29,16 @@ interface EnhancedSessionsSectionProps {
 }
 
 const EnhancedSessionsSection = ({ sessions, loading, onSessionClick }: EnhancedSessionsSectionProps) => {
+  const navigate = useNavigate();
+  const isMobile = useIsMobile();
+
+  const handleSessionClick = (sessionId: string) => {
+    if (isMobile) {
+      navigate(`/sessions/${sessionId}`);
+    } else {
+      onSessionClick(sessionId);
+    }
+  };
   if (loading) {
     return (
       <div className="w-full bg-blue-50/50 border border-blue-100 rounded-lg p-6">
@@ -67,7 +79,7 @@ const EnhancedSessionsSection = ({ sessions, loading, onSessionClick }: Enhanced
           <DeadSimpleSessionBanner
             key={session.id}
             session={session}
-            onClick={onSessionClick}
+            onClick={handleSessionClick}
           />
         ))}
       </div>

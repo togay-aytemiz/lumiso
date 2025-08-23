@@ -134,7 +134,8 @@ const LeadDetail = () => {
 
   const {
     currentStep,
-    completeCurrentStep
+    completeCurrentStep,
+    completeMultipleSteps // BULLETPROOF: For combined tutorials
   } = useOnboardingV2();
   const [showTutorial, setShowTutorial] = useState(false);
   const [currentTutorialStep, setCurrentTutorialStep] = useState(0);
@@ -354,35 +355,28 @@ const LeadDetail = () => {
     }
   }, [currentStep, showTutorial, location.state?.continueTutorial]);
 
-  // Handle tutorial completion with enhanced debugging
+  // Handle tutorial completion with BULLETPROOF step completion
   const handleTutorialComplete = async () => {
     try {
       if (isSchedulingTutorial) {
         // For scheduling tutorial, complete step 5 (scheduling step)
-        console.log('🎯 V3 LeadDetail: Completing scheduling tutorial (Step 5)');
+        console.log('🎯 BULLETPROOF LeadDetail: Completing scheduling tutorial (Step 5)');
         await completeCurrentStep();
         setShowTutorial(false);
-        console.log('🎉 V3 LeadDetail: Scheduling tutorial completed! Navigating back to getting-started');
+        console.log('🎉 BULLETPROOF LeadDetail: Scheduling tutorial completed! Navigating back to getting-started');
         navigate('/getting-started');
       } else {
         // For regular lead details tutorial that includes project creation
-        // Complete both Step 2 (leads) and Step 3 (projects) since this tutorial covers both
-        console.log('🎯 V3 LeadDetail: Starting combined tutorial completion (Steps 2 & 3)');
-        console.log('🎯 V3 LeadDetail: Completing Step 2 (leads)...');
-        await completeCurrentStep(); // Complete current step (Step 2)
-        
-        // Small delay to ensure database and state are updated before second completion
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-        console.log('🎯 V3 LeadDetail: Completing Step 3 (projects)...');  
-        await completeCurrentStep(); // Complete next step (Step 3) since we created projects
+        // Complete BOTH Step 2 (leads) and Step 3 (projects) in one atomic operation
+        console.log('🎯 BULLETPROOF LeadDetail: Completing combined tutorial (Steps 2 & 3) atomically');
+        await completeMultipleSteps(2); // Complete 2 steps at once: current + next
         
         setShowTutorial(false);
-        console.log('🎉 V3 LeadDetail: Lead details tutorial completed! Both Step 2 & 3 completed, navigating back to getting-started');
+        console.log('🎉 BULLETPROOF LeadDetail: Combined tutorial completed! Both Step 2 & 3 completed atomically, navigating back to getting-started');
         navigate('/getting-started');
       }
     } catch (error) {
-      console.error('❌ V3 LeadDetail: Error completing tutorial:', error);
+      console.error('❌ BULLETPROOF LeadDetail: Error completing tutorial:', error);
       toast({
         title: "Error",
         description: "Failed to save progress. Please try again.",

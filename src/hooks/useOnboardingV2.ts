@@ -305,6 +305,53 @@ export function useOnboardingV2() {
     }
   };
 
+  // BULLETPROOF: Complete multiple steps at once (for combined tutorials)
+  const completeMultipleSteps = async (numberOfSteps: number) => {
+    if (!user || state.stage !== 'in_progress') {
+      console.warn('🚫 completeMultipleSteps: Cannot complete - user missing or not in progress');
+      return;
+    }
+
+    const targetStep = state.currentStep + numberOfSteps;
+    console.log('🎯 BULLETPROOF completeMultipleSteps: Completing multiple steps', {
+      currentStep: state.currentStep,
+      numberOfSteps,
+      targetStep,
+      totalSteps: TOTAL_STEPS
+    });
+    
+    try {
+      // Prevent completing beyond total steps
+      if (state.currentStep >= TOTAL_STEPS) {
+        console.warn('🚫 completeMultipleSteps: Already at or beyond total steps');
+        return;
+      }
+
+      const finalStep = Math.min(targetStep, TOTAL_STEPS + 1);
+      
+      await supabase
+        .from('user_settings')
+        .update({ 
+          current_onboarding_step: finalStep
+        })
+        .eq('user_id', user.id);
+
+      setState(prev => {
+        console.log('🎯 BULLETPROOF completeMultipleSteps: State updated', {
+          from: prev.currentStep,
+          to: finalStep
+        });
+        return {
+          ...prev,
+          currentStep: finalStep
+        };
+      });
+    } catch (error) {
+      console.error('❌ BULLETPROOF completeMultipleSteps: Error:', error);
+      throw error;
+    }
+  };
+
   const completeOnboarding = async () => {
     if (!user) return;
 
@@ -412,6 +459,7 @@ export function useOnboardingV2() {
     // Actions
     startGuidedSetup,
     completeCurrentStep,
+    completeMultipleSteps, // BULLETPROOF: For combined tutorials
     completeOnboarding,
     skipOnboarding,
     resetOnboarding

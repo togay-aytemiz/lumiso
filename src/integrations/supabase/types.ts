@@ -1039,6 +1039,7 @@ export type Database = {
           google_event_id: string | null
           id: string
           lead_id: string
+          location: string | null
           notes: string | null
           organization_id: string
           project_id: string | null
@@ -1053,6 +1054,7 @@ export type Database = {
           google_event_id?: string | null
           id?: string
           lead_id: string
+          location?: string | null
           notes?: string | null
           organization_id: string
           project_id?: string | null
@@ -1067,6 +1069,7 @@ export type Database = {
           google_event_id?: string | null
           id?: string
           lead_id?: string
+          location?: string | null
           notes?: string | null
           organization_id?: string
           project_id?: string | null

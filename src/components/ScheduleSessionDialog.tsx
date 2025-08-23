@@ -26,6 +26,7 @@ const ScheduleSessionDialog = ({ leadId, leadName, onSessionScheduled, disabled 
     session_date: "",
     session_time: "",
     notes: "",
+    location: "",
     project_id: ""
   });
   const [projects, setProjects] = useState<{id: string, name: string}[]>([]);
@@ -113,6 +114,7 @@ const ScheduleSessionDialog = ({ leadId, leadName, onSessionScheduled, disabled 
           session_date: formData.session_date,
           session_time: formData.session_time,
           notes: formData.notes.trim() || null,
+          location: formData.location.trim() || null,
           project_id: formData.project_id || null
         });
 
@@ -147,6 +149,7 @@ const ScheduleSessionDialog = ({ leadId, leadName, onSessionScheduled, disabled 
         session_date: "",
         session_time: "",
         notes: "",
+        location: "",
         project_id: ""
       });
       setOpen(false);
@@ -237,6 +240,17 @@ const ScheduleSessionDialog = ({ leadId, leadName, onSessionScheduled, disabled 
                 type="time"
                 value={formData.session_time}
                 onChange={(e) => handleInputChange("session_time", e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="location">Location / Address</Label>
+              <Textarea
+                id="location"
+                value={formData.location}
+                onChange={(e) => handleInputChange("location", e.target.value)}
+                placeholder="Enter session location or address..."
+                rows={2}
               />
             </div>
 

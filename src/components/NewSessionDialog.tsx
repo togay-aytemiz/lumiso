@@ -40,7 +40,8 @@ const NewSessionDialog = ({ onSessionScheduled, children }: NewSessionDialogProp
   const [sessionData, setSessionData] = useState({
     session_date: "",
     session_time: "",
-    notes: ""
+    notes: "",
+    location: ""
   });
 
   const [newLeadData, setNewLeadData] = useState({
@@ -230,6 +231,7 @@ const NewSessionDialog = ({ onSessionScheduled, children }: NewSessionDialogProp
           session_date: sessionData.session_date,
           session_time: sessionData.session_time,
           notes: sessionData.notes.trim() || null,
+          location: sessionData.location.trim() || null,
           project_id: selectedProjectId || null
         })
         .select('id')
@@ -263,7 +265,8 @@ const NewSessionDialog = ({ onSessionScheduled, children }: NewSessionDialogProp
       setSessionData({
         session_date: "",
         session_time: "",
-        notes: ""
+        notes: "",
+        location: ""
       });
       setNewLeadData({
         name: "",
@@ -315,6 +318,7 @@ const NewSessionDialog = ({ onSessionScheduled, children }: NewSessionDialogProp
     sessionData.session_date.trim() ||
     sessionData.session_time.trim() ||
     sessionData.notes.trim() ||
+    sessionData.location.trim() ||
     (isNewLead && (newLeadData.name.trim() || newLeadData.email.trim() || newLeadData.phone.trim() || newLeadData.notes.trim())) ||
     (!isNewLead && selectedLeadId)
   );
@@ -324,7 +328,8 @@ const NewSessionDialog = ({ onSessionScheduled, children }: NewSessionDialogProp
       setSessionData({
         session_date: "",
         session_time: "",
-        notes: ""
+        notes: "",
+        location: ""
       });
       setNewLeadData({
         name: "",
@@ -584,6 +589,17 @@ const NewSessionDialog = ({ onSessionScheduled, children }: NewSessionDialogProp
                 type="time"
                 value={sessionData.session_time}
                 onChange={(e) => handleSessionDataChange("session_time", e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="session_location">Location / Address</Label>
+              <Textarea
+                id="session_location"
+                value={sessionData.location}
+                onChange={(e) => handleSessionDataChange("location", e.target.value)}
+                placeholder="Enter session location or address..."
+                rows={2}
               />
             </div>
 

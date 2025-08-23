@@ -18,6 +18,7 @@ interface EditSessionDialogProps {
   currentDate: string;
   currentTime: string;
   currentNotes: string;
+  currentLocation?: string;
   currentProjectId?: string;
   leadName?: string;
   onSessionUpdated?: () => void;
@@ -25,13 +26,14 @@ interface EditSessionDialogProps {
   onOpenChange?: (open: boolean) => void;
 }
 
-const EditSessionDialog = ({ sessionId, leadId, currentDate, currentTime, currentNotes, currentProjectId, leadName, onSessionUpdated, open = false, onOpenChange }: EditSessionDialogProps) => {
+const EditSessionDialog = ({ sessionId, leadId, currentDate, currentTime, currentNotes, currentLocation, currentProjectId, leadName, onSessionUpdated, open = false, onOpenChange }: EditSessionDialogProps) => {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formData, setFormData] = useState({
     session_date: currentDate,
     session_time: currentTime,
     notes: currentNotes || "",
+    location: currentLocation || "",
     project_id: currentProjectId || "no-project"
   });
   const [projects, setProjects] = useState<{id: string, name: string}[]>([]);
@@ -73,9 +75,10 @@ const EditSessionDialog = ({ sessionId, leadId, currentDate, currentTime, curren
       session_date: currentDate,
       session_time: currentTime,
       notes: currentNotes || "",
+      location: currentLocation || "",
       project_id: currentProjectId || "no-project"
     });
-  }, [currentDate, currentTime, currentNotes, currentProjectId]);
+  }, [currentDate, currentTime, currentNotes, currentLocation, currentProjectId]);
 
   useEffect(() => {
     if (open) {
@@ -117,6 +120,7 @@ const EditSessionDialog = ({ sessionId, leadId, currentDate, currentTime, curren
           session_date: sanitizeInput(formData.session_date),
           session_time: sanitizeInput(formData.session_time),
           notes: formData.notes ? await sanitizeHtml(formData.notes) : null,
+          location: formData.location.trim() || null,
           project_id: formData.project_id === "no-project" ? null : formData.project_id || null
         })
         .eq('id', sessionId);
@@ -166,6 +170,7 @@ const EditSessionDialog = ({ sessionId, leadId, currentDate, currentTime, curren
     formData.session_date !== currentDate ||
     formData.session_time !== currentTime ||
     formData.notes !== (currentNotes || "") ||
+    formData.location !== (currentLocation || "") ||
     formData.project_id !== (currentProjectId || "no-project")
   );
 
@@ -225,6 +230,17 @@ const EditSessionDialog = ({ sessionId, leadId, currentDate, currentTime, curren
             className="w-full"
           />
           {errors.session_time && <p className="text-sm text-destructive">{errors.session_time}</p>}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="location">Location / Address</Label>
+          <Textarea
+            id="location"
+            value={formData.location}
+            onChange={(e) => handleInputChange("location", e.target.value)}
+            placeholder="Enter session location or address..."
+            rows={2}
+          />
         </div>
 
         <div className="space-y-2">

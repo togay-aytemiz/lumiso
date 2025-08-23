@@ -41,6 +41,7 @@ interface Session {
   session_date: string;
   session_time: string;
   notes: string | null;
+  location: string | null;
   status: string;
   lead_id: string;
   project_id: string | null;
@@ -367,6 +368,22 @@ export default function SessionSheetView({
                       </div>
                     </>
                   )}
+
+                  {session.location && (
+                    <>
+                      <div className="hidden sm:block w-px h-12 bg-border"></div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2">
+                          <svg className="h-4 w-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                          </svg>
+                          <label className="font-medium text-muted-foreground">Location</label>
+                        </div>
+                        <p className="line-clamp-2">{session.location}</p>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
 
@@ -423,6 +440,7 @@ export default function SessionSheetView({
           currentDate={session.session_date}
           currentTime={session.session_time}
           currentNotes={session.notes || ''}
+          currentLocation={session.location || ''}
           currentProjectId={session.project_id}
           leadName={session.leads?.name || ''}
           onSessionUpdated={handleSessionUpdated}

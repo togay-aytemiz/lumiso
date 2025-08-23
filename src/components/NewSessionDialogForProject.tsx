@@ -38,7 +38,8 @@ export function NewSessionDialogForProject({
   const [sessionData, setSessionData] = useState({
     session_date: "",
     session_time: "",
-    notes: ""
+    notes: "",
+    location: ""
   });
 
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
@@ -130,6 +131,7 @@ export function NewSessionDialogForProject({
           session_date: sessionData.session_date,
           session_time: sessionData.session_time,
           notes: sessionData.notes.trim() || null,
+          location: sessionData.location.trim() || null,
           project_id: projectId
         })
         .select('id')
@@ -160,7 +162,8 @@ export function NewSessionDialogForProject({
       setSessionData({
         session_date: "",
         session_time: "",
-        notes: ""
+        notes: "",
+        location: ""
       });
       setOpen(false);
       
@@ -214,7 +217,8 @@ export function NewSessionDialogForProject({
   const isDirty = Boolean(
     sessionData.session_date.trim() ||
     sessionData.session_time.trim() ||
-    sessionData.notes.trim()
+    sessionData.notes.trim() ||
+    sessionData.location.trim()
   );
 
   const handleDirtyClose = () => {
@@ -222,7 +226,8 @@ export function NewSessionDialogForProject({
       setSessionData({
         session_date: "",
         session_time: "",
-        notes: ""
+        notes: "",
+        location: ""
       });
       setSelectedDate(undefined);
       setOpen(false);
@@ -378,6 +383,17 @@ export function NewSessionDialogForProject({
               type="time"
               value={sessionData.session_time}
               onChange={(e) => handleInputChange("session_time", e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="location">Location / Address</Label>
+            <Textarea
+              id="location"
+              value={sessionData.location}
+              onChange={(e) => handleInputChange("location", e.target.value)}
+              placeholder="Enter session location or address..."
+              rows={2}
             />
           </div>
 

@@ -100,7 +100,7 @@ export function OnboardingTutorial({
       <TooltipProvider>
         <div className={`fixed z-50 max-w-sm ${
           isAddLeadStep || isSchedulingTutorialStep
-            ? "right-2 top-30 sm:right-4 sm:top-30 md:right-6 md:top-24" // More top margin for mobile/small screens, same as Step 3
+            ? "right-2 top-20 sm:right-4 sm:top-20 md:right-6 md:top-24" // Right under header/search area for mobile/tablet
             : isPackagesSetupStep
               ? "right-2 bottom-16 sm:right-4 sm:bottom-4 md:right-6 md:bottom-6" // Bottom corner for packages setup
               : isProjectManagementStep 

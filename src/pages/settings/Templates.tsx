@@ -16,6 +16,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { EmailPreview } from "@/components/templates/EmailPreview";
 import { WhatsAppPreview } from "@/components/templates/WhatsAppPreview";
 import { SMSPreview } from "@/components/templates/SMSPreview";
+import { VariablePicker } from "@/components/templates/VariablePicker";
 import { 
   Plus, 
   Edit, 
@@ -106,7 +107,6 @@ export default function Templates() {
     master_subject: '',
     email_content: '',
     email_subject: '',
-    email_html: '',
     whatsapp_content: '',
     sms_content: ''
   });
@@ -201,13 +201,13 @@ export default function Templates() {
       const channelUpdates = [];
 
       // Email channel
-      if (newTemplate.email_content || newTemplate.email_subject || newTemplate.email_html) {
+      if (newTemplate.email_content || newTemplate.email_subject) {
         channelUpdates.push({
           template_id: templateData.id,
           channel: 'email',
           content: newTemplate.email_content || null,
           subject: newTemplate.email_subject || null,
-          html_content: newTemplate.email_html || null
+          html_content: null
         });
       }
 
@@ -270,7 +270,6 @@ export default function Templates() {
       master_subject: template.master_subject || '',
       email_content: '',
       email_subject: '',
-      email_html: '',
       whatsapp_content: '',
       sms_content: ''
     });
@@ -282,8 +281,7 @@ export default function Templates() {
         setNewTemplate(prev => ({
           ...prev,
           email_content: cv.content || '',
-          email_subject: cv.subject || '',
-          email_html: cv.html_content || ''
+          email_subject: cv.subject || ''
         }));
       } else if (cv.channel === 'whatsapp') {
         setNewTemplate(prev => ({ ...prev, whatsapp_content: cv.content || '' }));
@@ -331,17 +329,16 @@ export default function Templates() {
       master_subject: '',
       email_content: '',
       email_subject: '',
-      email_html: '',
       whatsapp_content: '',
       sms_content: ''
     });
   };
 
-  const insertPlaceholder = (placeholder: string, field: keyof typeof newTemplate) => {
+  const insertVariable = (variableKey: string, field: keyof typeof newTemplate) => {
     const currentContent = newTemplate[field] || '';
     setNewTemplate({
       ...newTemplate,
-      [field]: currentContent + `{${placeholder}}`
+      [field]: currentContent + `{${variableKey}}`
     });
   };
 
@@ -575,7 +572,10 @@ export default function Templates() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="master_content">Master Message</Label>
+              <div className="flex items-center gap-2">
+                <Label htmlFor="master_content">Master Message</Label>
+                <VariablePicker onVariableSelect={(key) => insertVariable(key, 'master_content')} />
+              </div>
               <Textarea
                 id="master_content"
                 value={newTemplate.master_content}
@@ -637,7 +637,10 @@ export default function Templates() {
 
             <TabsContent value="email" className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email_subject">Email Subject</Label>
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="email_subject">Email Subject</Label>
+                  <VariablePicker onVariableSelect={(key) => insertVariable(key, 'email_subject')} />
+                </div>
                 <Input
                   id="email_subject"
                   value={newTemplate.email_subject}
@@ -649,30 +652,29 @@ export default function Templates() {
                 </p>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="email_content">Email Content (Plain Text)</Label>
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="email_content">Email Content</Label>
+                  <VariablePicker onVariableSelect={(key) => insertVariable(key, 'email_content')} />
+                </div>
                 <Textarea
                   id="email_content"
                   value={newTemplate.email_content}
                   onChange={(e) => setNewTemplate({ ...newTemplate, email_content: e.target.value })}
-                  placeholder="Plain text version (leave empty to use master message)"
-                  rows={4}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email_html">Email Content (HTML)</Label>
-                <Textarea
-                  id="email_html"
-                  value={newTemplate.email_html}
-                  onChange={(e) => setNewTemplate({ ...newTemplate, email_html: e.target.value })}
-                  placeholder="HTML version with rich formatting"
+                  placeholder="Email message (leave empty to use master message)"
                   rows={6}
                 />
+                <p className="text-xs text-muted-foreground">
+                  Leave empty to use master message
+                </p>
               </div>
             </TabsContent>
 
             <TabsContent value="whatsapp" className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="whatsapp_content">WhatsApp Message</Label>
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="whatsapp_content">WhatsApp Message</Label>
+                  <VariablePicker onVariableSelect={(key) => insertVariable(key, 'whatsapp_content')} />
+                </div>
                 <Textarea
                   id="whatsapp_content"
                   value={newTemplate.whatsapp_content}
@@ -688,7 +690,10 @@ export default function Templates() {
 
             <TabsContent value="sms" className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="sms_content">SMS Message</Label>
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="sms_content">SMS Message</Label>
+                  <VariablePicker onVariableSelect={(key) => insertVariable(key, 'sms_content')} />
+                </div>
                 <Textarea
                   id="sms_content"
                   value={newTemplate.sms_content}

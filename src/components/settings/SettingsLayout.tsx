@@ -27,7 +27,15 @@ const personalSettingsItems = [
 const organizationSettingsItems = [
   { title: "General", href: "/settings/general", icon: Settings, testId: "general-section" },
   { title: "Team Management", href: "/settings/team", icon: Users, testId: "team-section" },
-  { title: "Client Messaging", href: "/settings/client-messaging", icon: MessageSquare, testId: "client-messaging-section" },
+  { 
+    title: "Client Messaging", 
+    href: "/settings/client-messaging", 
+    icon: MessageSquare, 
+    testId: "client-messaging-section",
+    children: [
+      { title: "Templates", href: "/settings/templates", icon: FileText, testId: "templates-section" },
+    ]
+  },
   { title: "Projects & Sessions", href: "/settings/projects", icon: FolderOpen, testId: "projects-section" },
   { title: "Lead Management", href: "/settings/leads", icon: UserCheck, testId: "leads-section" },
   { title: "Packages & Services", href: "/settings/services", icon: Package, testId: "services-section" },
@@ -184,7 +192,7 @@ export default function SettingsLayout() {
                 </div>
                 );
                 
-                return locked ? (
+                const navItem = locked ? (
                   <Tooltip key={item.href}>
                     <TooltipTrigger asChild>
                       <div data-walkthrough={item.testId}>
@@ -203,6 +211,72 @@ export default function SettingsLayout() {
                   >
                     {linkContent}
                   </NavLink>
+                );
+
+                return (
+                  <div key={item.href}>
+                    {navItem}
+                    {/* Child items */}
+                    {item.children && (
+                      <div className="ml-6 mt-1 space-y-1">
+                        {item.children.map((child) => {
+                          const ChildIcon = child.icon;
+                          const childIsActive = location.pathname === child.href;
+                          const childHasChanges = hasCategoryChanges(child.href);
+                          const childLocked = isItemLocked(child.href);
+                          
+                          const childLinkContent = (
+                            <div className={cn(
+                                "flex items-center gap-3 px-2 md:px-3 py-2 text-sm rounded-lg transition-colors justify-center md:justify-start relative group",
+                                "hover:bg-sidebar-accent",
+                                childIsActive 
+                                  ? "bg-sidebar-active text-sidebar-active-foreground font-medium" 
+                                  : "text-muted-foreground hover:text-foreground",
+                                childLocked && "opacity-50 cursor-not-allowed"
+                              )}
+                              onClick={(e) => handleLockedItemClick(e, child.href)}
+                            >
+                              <ChildIcon className={cn(
+                                "h-4 w-4 flex-shrink-0 transition-colors group-hover:text-sidebar-primary",
+                                childIsActive && "text-[hsl(var(--sidebar-active-icon))]"
+                              )} />
+                              <span className="hidden md:flex md:items-center md:gap-2">
+                                {child.title}
+                                {childHasChanges && (
+                                  <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse" />
+                                )}
+                                {childLocked && <Lock className="h-3 w-3 ml-auto text-muted-foreground" />}
+                              </span>
+                              {childHasChanges && (
+                                <div className="md:hidden absolute -top-1 -right-1 w-2 h-2 bg-orange-500 rounded-full animate-pulse" />
+                              )}
+                            </div>
+                          );
+                          
+                          return childLocked ? (
+                            <Tooltip key={child.href}>
+                              <TooltipTrigger asChild>
+                                <div data-walkthrough={child.testId}>
+                                  {childLinkContent}
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent side="right">
+                                <p>Complete the guided setup first</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          ) : (
+                            <NavLink
+                              key={child.href}
+                              to={child.href}
+                              data-walkthrough={child.testId}
+                            >
+                              {childLinkContent}
+                            </NavLink>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
                 );
               })}
             </nav>

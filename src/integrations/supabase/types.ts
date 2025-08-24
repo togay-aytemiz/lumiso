@@ -1350,6 +1350,139 @@ export type Database = {
         }
         Relationships: []
       }
+      workflow_executions: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          error_message: string | null
+          execution_log: Json | null
+          id: string
+          started_at: string | null
+          status: string
+          trigger_entity_id: string
+          trigger_entity_type: string
+          workflow_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          execution_log?: Json | null
+          id?: string
+          started_at?: string | null
+          status?: string
+          trigger_entity_id: string
+          trigger_entity_type: string
+          workflow_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          execution_log?: Json | null
+          id?: string
+          started_at?: string | null
+          status?: string
+          trigger_entity_id?: string
+          trigger_entity_type?: string
+          workflow_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_executions_workflow_id_fkey"
+            columns: ["workflow_id"]
+            isOneToOne: false
+            referencedRelation: "workflows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workflow_steps: {
+        Row: {
+          action_config: Json
+          action_type: string
+          conditions: Json | null
+          created_at: string
+          delay_minutes: number | null
+          id: string
+          is_active: boolean
+          step_order: number
+          updated_at: string
+          workflow_id: string
+        }
+        Insert: {
+          action_config?: Json
+          action_type: string
+          conditions?: Json | null
+          created_at?: string
+          delay_minutes?: number | null
+          id?: string
+          is_active?: boolean
+          step_order?: number
+          updated_at?: string
+          workflow_id: string
+        }
+        Update: {
+          action_config?: Json
+          action_type?: string
+          conditions?: Json | null
+          created_at?: string
+          delay_minutes?: number | null
+          id?: string
+          is_active?: boolean
+          step_order?: number
+          updated_at?: string
+          workflow_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_steps_workflow_id_fkey"
+            columns: ["workflow_id"]
+            isOneToOne: false
+            referencedRelation: "workflows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workflows: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          organization_id: string
+          trigger_conditions: Json | null
+          trigger_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          organization_id: string
+          trigger_conditions?: Json | null
+          trigger_type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          organization_id?: string
+          trigger_conditions?: Json | null
+          trigger_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       working_hours: {
         Row: {
           created_at: string

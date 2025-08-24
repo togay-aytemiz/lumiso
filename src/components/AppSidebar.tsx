@@ -254,6 +254,15 @@ export function AppSidebar() {
                 onClick={handleNavClick}
               />
               <SidebarNavItem
+                title="Templates"
+                url="/settings/templates"
+                icon={BookOpen}
+                isActive={isActive("/settings/templates")}
+                isLocked={isItemLocked("/settings/templates")}
+                onLockedClick={handleLockedItemClick}
+                onClick={handleNavClick}
+              />
+              <SidebarNavItem
                 title="Help & Support"
                 icon={HelpCircle}
                 onClick={() => setHelpModalOpen(true)}

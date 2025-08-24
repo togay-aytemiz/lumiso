@@ -449,6 +449,7 @@ export type Database = {
           id: string
           is_active: boolean
           master_content: string
+          master_subject: string | null
           name: string
           organization_id: string
           placeholders: Json | null
@@ -461,6 +462,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           master_content: string
+          master_subject?: string | null
           name: string
           organization_id: string
           placeholders?: Json | null
@@ -473,6 +475,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           master_content?: string
+          master_subject?: string | null
           name?: string
           organization_id?: string
           placeholders?: Json | null

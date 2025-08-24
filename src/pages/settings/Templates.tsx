@@ -13,6 +13,9 @@ import { AppSheetModal } from "@/components/ui/app-sheet-modal";
 import SettingsPageWrapper from "@/components/settings/SettingsPageWrapper";
 import SettingsHeader from "@/components/settings/SettingsHeader";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { EmailPreview } from "@/components/templates/EmailPreview";
+import { WhatsAppPreview } from "@/components/templates/WhatsAppPreview";
+import { SMSPreview } from "@/components/templates/SMSPreview";
 import { 
   Plus, 
   Edit, 
@@ -31,6 +34,7 @@ interface MessageTemplate {
   name: string;
   category: string;
   master_content: string;
+  master_subject?: string;
   placeholders: any; // Json type from Supabase
   is_active: boolean;
   created_at: string;
@@ -48,11 +52,18 @@ interface TemplateChannelView {
 }
 
 const TEMPLATE_CATEGORIES = [
-  { value: 'session_confirmation', label: 'Session Confirmation' },
-  { value: 'session_reminder', label: 'Session Reminder' },
-  { value: 'session_rescheduled', label: 'Session Rescheduled' },
-  { value: 'session_cancelled', label: 'Session Cancelled' },
-  { value: 'session_completed', label: 'Session Completed' }
+  { 
+    group: 'Communication', 
+    items: [
+      { value: 'session_confirmation', label: 'Session Confirmation' },
+      { value: 'session_reminder', label: 'Session Reminder' },
+      { value: 'session_rescheduled', label: 'Session Rescheduled' },
+      { value: 'session_cancelled', label: 'Session Cancelled' },
+      { value: 'session_completed', label: 'Session Completed' },
+      { value: 'payment_reminder', label: 'Payment Reminder' },
+      { value: 'welcome_message', label: 'Welcome Message' }
+    ]
+  }
 ];
 
 const CHANNELS = [
@@ -62,13 +73,18 @@ const CHANNELS = [
 ];
 
 const PLACEHOLDERS = [
-  'customer_name',
-  'session_type', 
-  'session_date',
-  'session_time',
-  'session_location',
-  'studio_name',
-  'studio_phone'
+  { key: 'customer_name', label: 'Customer Name', example: 'Jane Smith' },
+  { key: 'session_type', label: 'Session Type', example: 'Wedding Photography' },
+  { key: 'session_date', label: 'Session Date', example: 'Saturday, March 15, 2024' },
+  { key: 'session_time', label: 'Session Time', example: '2:00 PM' },
+  { key: 'session_location', label: 'Session Location', example: 'Central Park' },
+  { key: 'studio_name', label: 'Studio Name', example: 'Sunset Photography Studio' },
+  { key: 'studio_phone', label: 'Studio Phone', example: '+1 (555) 123-4567' },
+  { key: 'studio_email', label: 'Studio Email', example: 'hello@sunsetphoto.com' },
+  { key: 'booking_link', label: 'Booking Link', example: 'https://studio.com/book' },
+  { key: 'reschedule_link', label: 'Reschedule Link', example: 'https://studio.com/reschedule' },
+  { key: 'payment_amount', label: 'Payment Amount', example: '$500' },
+  { key: 'payment_due_date', label: 'Payment Due Date', example: 'March 10, 2024' }
 ];
 
 export default function Templates() {
@@ -87,6 +103,7 @@ export default function Templates() {
     name: '',
     category: '',
     master_content: '',
+    master_subject: '',
     email_content: '',
     email_subject: '',
     email_html: '',
@@ -151,7 +168,8 @@ export default function Templates() {
             name: newTemplate.name,
             category: newTemplate.category,
             master_content: newTemplate.master_content,
-            placeholders: PLACEHOLDERS
+            master_subject: newTemplate.master_subject || null,
+            placeholders: PLACEHOLDERS.map(p => p.key)
           })
           .eq('id', editingTemplate.id)
           .select()
@@ -169,7 +187,8 @@ export default function Templates() {
             name: newTemplate.name,
             category: newTemplate.category,
             master_content: newTemplate.master_content,
-            placeholders: PLACEHOLDERS
+            master_subject: newTemplate.master_subject || null,
+            placeholders: PLACEHOLDERS.map(p => p.key)
           })
           .select()
           .single();
@@ -248,6 +267,7 @@ export default function Templates() {
       name: template.name,
       category: template.category,
       master_content: template.master_content,
+      master_subject: template.master_subject || '',
       email_content: '',
       email_subject: '',
       email_html: '',
@@ -308,6 +328,7 @@ export default function Templates() {
       name: '',
       category: '',
       master_content: '',
+      master_subject: '',
       email_content: '',
       email_subject: '',
       email_html: '',
@@ -331,12 +352,29 @@ export default function Templates() {
   };
 
   const getCategoryLabel = (category: string) => {
-    return TEMPLATE_CATEGORIES.find(cat => cat.value === category)?.label || category;
+    // Find the category in the grouped structure
+    for (const group of TEMPLATE_CATEGORIES) {
+      const item = group.items.find(item => item.value === category);
+      if (item) return item.label;
+    }
+    return category;
   };
 
   const getChannelIcon = (channel: string) => {
     const channelData = CHANNELS.find(c => c.value === channel);
     return channelData?.icon || FileText;
+  };
+
+  // Replace placeholders with sample data for preview
+  const replacePlaceholders = (content: string) => {
+    let result = content;
+    PLACEHOLDERS.forEach(placeholder => {
+      result = result.replace(
+        new RegExp(`\\{${placeholder.key}\\}`, 'g'), 
+        placeholder.example
+      );
+    });
+    return result;
   };
 
   if (loading) {
@@ -371,7 +409,7 @@ export default function Templates() {
                   Message Templates
                 </CardTitle>
                 <CardDescription>
-                  Create and manage templates for different session events
+                  Create and manage templates for different communication channels
                 </CardDescription>
               </div>
               <Button onClick={() => setIsSheetOpen(true)}>
@@ -507,13 +545,33 @@ export default function Templates() {
                   <SelectValue placeholder="Select template category" />
                 </SelectTrigger>
                 <SelectContent>
-                  {TEMPLATE_CATEGORIES.map((category) => (
-                    <SelectItem key={category.value} value={category.value}>
-                      {category.label}
-                    </SelectItem>
+                  {TEMPLATE_CATEGORIES.map((group) => (
+                    <div key={group.group}>
+                      <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                        {group.group}
+                      </div>
+                      {group.items.map((item) => (
+                        <SelectItem key={item.value} value={item.value}>
+                          {item.label}
+                        </SelectItem>
+                      ))}
+                    </div>
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="master_subject">Master Subject Line</Label>
+              <Input
+                id="master_subject"
+                value={newTemplate.master_subject}
+                onChange={(e) => setNewTemplate({ ...newTemplate, master_subject: e.target.value })}
+                placeholder="Default subject line that channels can inherit"
+              />
+              <p className="text-xs text-muted-foreground">
+                This will be used as the default subject for emails if no channel-specific subject is defined
+              </p>
             </div>
 
             <div className="space-y-2">
@@ -528,29 +586,35 @@ export default function Templates() {
             </div>
           </div>
 
-          {/* Placeholders */}
+          {/* Enhanced Placeholders */}
           <div className="space-y-2">
             <Label>Available Placeholders</Label>
-            <div className="flex flex-wrap gap-2">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
               {PLACEHOLDERS.map((placeholder) => (
                 <Button
-                  key={placeholder}
+                  key={placeholder.key}
                   variant="outline"
                   size="sm"
-                  onClick={() => copyPlaceholder(placeholder)}
-                  className="text-xs"
+                  onClick={() => copyPlaceholder(placeholder.key)}
+                  className="text-xs flex-col h-auto py-2 justify-start"
+                  title={`Example: ${placeholder.example}`}
                 >
-                  {copiedPlaceholder === placeholder ? (
-                    <Check className="w-3 h-3 mr-1" />
-                  ) : (
-                    <Copy className="w-3 h-3 mr-1" />
-                  )}
-                  {`{${placeholder}}`}
+                  <div className="flex items-center gap-1 mb-1">
+                    {copiedPlaceholder === placeholder.key ? (
+                      <Check className="w-3 h-3 text-green-600" />
+                    ) : (
+                      <Copy className="w-3 h-3" />
+                    )}
+                    <span className="font-mono text-xs">{`{${placeholder.key}}`}</span>
+                  </div>
+                  <span className="font-normal text-muted-foreground text-xs">
+                    {placeholder.label}
+                  </span>
                 </Button>
               ))}
             </div>
             <p className="text-xs text-muted-foreground">
-              Click to copy placeholders to clipboard, then paste into your message content
+              💡 Click to copy placeholders, then paste into your message content. Hover to see examples.
             </p>
           </div>
 
@@ -578,8 +642,11 @@ export default function Templates() {
                   id="email_subject"
                   value={newTemplate.email_subject}
                   onChange={(e) => setNewTemplate({ ...newTemplate, email_subject: e.target.value })}
-                  placeholder="Subject line for email (leave empty to use master message)"
+                  placeholder="Subject line for email (leave empty to inherit from master subject)"
                 />
+                <p className="text-xs text-muted-foreground">
+                  Leave empty to use master subject line
+                </p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="email_content">Email Content (Plain Text)</Label>
@@ -630,7 +697,7 @@ export default function Templates() {
                   rows={3}
                 />
                 <p className="text-xs text-muted-foreground">
-                  📱 Keep it short - SMS messages are best under 160 characters
+                  📱 Keep it short - SMS messages are best under 160 characters ({newTemplate.sms_content.length}/160)
                 </p>
               </div>
             </TabsContent>
@@ -639,7 +706,7 @@ export default function Templates() {
         </div>
       </AppSheetModal>
 
-      {/* Preview Dialog */}
+      {/* Enhanced Preview Dialog */}
       <AppSheetModal
         title="Template Preview"
         isOpen={previewOpen}
@@ -653,68 +720,85 @@ export default function Templates() {
               <Badge variant="outline">{getCategoryLabel(previewTemplate.category)}</Badge>
             </div>
 
-            <Tabs defaultValue="master" className="w-full">
+            <Tabs defaultValue="email" className="w-full">
               <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="master">Master</TabsTrigger>
                 <TabsTrigger value="email">Email</TabsTrigger>
                 <TabsTrigger value="whatsapp">WhatsApp</TabsTrigger>
                 <TabsTrigger value="sms">SMS</TabsTrigger>
+                <TabsTrigger value="master">Master</TabsTrigger>
               </TabsList>
 
-              <TabsContent value="master" className="space-y-4">
-                <div className="p-4 bg-muted rounded-lg">
-                  <p className="text-sm">{previewTemplate.master_content}</p>
-                </div>
+              <TabsContent value="email" className="space-y-4">
+                {(() => {
+                  const channelView = channelViews.find(cv => 
+                    cv.template_id === previewTemplate.id && cv.channel === 'email'
+                  );
+                  const subject = channelView?.subject || previewTemplate.master_subject || 'No Subject';
+                  const content = channelView?.content || previewTemplate.master_content;
+                  const htmlContent = channelView?.html_content;
+                  
+                  return (
+                    <EmailPreview
+                      subject={replacePlaceholders(subject)}
+                      content={replacePlaceholders(content)}
+                      htmlContent={htmlContent ? replacePlaceholders(htmlContent) : undefined}
+                    />
+                  );
+                })()}
               </TabsContent>
 
-              {CHANNELS.map(channel => {
-                const channelView = channelViews.find(cv => 
-                  cv.template_id === previewTemplate.id && cv.channel === channel.value
-                );
-                
-                return (
-                  <TabsContent key={channel.value} value={channel.value} className="space-y-4">
-                    {channelView ? (
-                      <div className="space-y-4">
-                        {channelView.subject && (
-                          <div>
-                            <Label className="text-xs text-muted-foreground">Subject</Label>
-                            <div className="p-2 bg-muted rounded text-sm font-medium">
-                              {channelView.subject}
-                            </div>
-                          </div>
-                        )}
-                        <div>
-                          <Label className="text-xs text-muted-foreground">Content</Label>
-                          <div className="p-4 bg-muted rounded-lg">
-                            <p className="text-sm whitespace-pre-wrap">
-                              {channelView.content || previewTemplate.master_content}
-                            </p>
-                          </div>
-                        </div>
-                        {channelView.html_content && (
-                          <div>
-                            <Label className="text-xs text-muted-foreground">HTML Version</Label>
-                            <div className="p-4 bg-muted rounded-lg">
-                              <div 
-                                className="text-sm"
-                                dangerouslySetInnerHTML={{ __html: channelView.html_content }}
-                              />
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="p-4 bg-muted rounded-lg">
-                        <p className="text-sm text-muted-foreground">
-                          No custom content for {channel.label}. Will use master message:
+              <TabsContent value="whatsapp" className="space-y-4">
+                {(() => {
+                  const channelView = channelViews.find(cv => 
+                    cv.template_id === previewTemplate.id && cv.channel === 'whatsapp'
+                  );
+                  const content = channelView?.content || previewTemplate.master_content;
+                  
+                  return (
+                    <WhatsAppPreview
+                      content={replacePlaceholders(content)}
+                    />
+                  );
+                })()}
+              </TabsContent>
+
+              <TabsContent value="sms" className="space-y-4">
+                {(() => {
+                  const channelView = channelViews.find(cv => 
+                    cv.template_id === previewTemplate.id && cv.channel === 'sms'
+                  );
+                  const content = channelView?.content || previewTemplate.master_content;
+                  
+                  return (
+                    <SMSPreview
+                      content={replacePlaceholders(content)}
+                    />
+                  );
+                })()}
+              </TabsContent>
+
+              <TabsContent value="master" className="space-y-4">
+                <div className="space-y-4">
+                  {previewTemplate.master_subject && (
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Master Subject</Label>
+                      <div className="p-3 bg-muted rounded-lg">
+                        <p className="text-sm font-medium">
+                          {replacePlaceholders(previewTemplate.master_subject)}
                         </p>
-                        <p className="text-sm mt-2">{previewTemplate.master_content}</p>
                       </div>
-                    )}
-                  </TabsContent>
-                );
-               })}
+                    </div>
+                  )}
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Master Content</Label>
+                    <div className="p-4 bg-muted rounded-lg">
+                      <p className="text-sm whitespace-pre-wrap">
+                        {replacePlaceholders(previewTemplate.master_content)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </TabsContent>
             </Tabs>
           </div>
         )}

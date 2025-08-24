@@ -442,6 +442,45 @@ export type Database = {
           },
         ]
       }
+      message_templates: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          is_active: boolean
+          master_content: string
+          name: string
+          organization_id: string
+          placeholders: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          master_content: string
+          name: string
+          organization_id: string
+          placeholders?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          master_content?: string
+          name?: string
+          organization_id?: string
+          placeholders?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       organization_members: {
         Row: {
           created_at: string
@@ -1096,6 +1135,86 @@ export type Database = {
           },
         ]
       }
+      silent_hours_config: {
+        Row: {
+          channel: string
+          created_at: string
+          enabled: boolean
+          end_time: string
+          id: string
+          organization_id: string
+          start_time: string
+          timezone: string
+          updated_at: string
+        }
+        Insert: {
+          channel: string
+          created_at?: string
+          enabled?: boolean
+          end_time?: string
+          id?: string
+          organization_id: string
+          start_time?: string
+          timezone?: string
+          updated_at?: string
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          enabled?: boolean
+          end_time?: string
+          id?: string
+          organization_id?: string
+          start_time?: string
+          timezone?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      template_channel_views: {
+        Row: {
+          channel: string
+          content: string | null
+          created_at: string
+          html_content: string | null
+          id: string
+          metadata: Json | null
+          subject: string | null
+          template_id: string
+          updated_at: string
+        }
+        Insert: {
+          channel: string
+          content?: string | null
+          created_at?: string
+          html_content?: string | null
+          id?: string
+          metadata?: Json | null
+          subject?: string | null
+          template_id: string
+          updated_at?: string
+        }
+        Update: {
+          channel?: string
+          content?: string | null
+          created_at?: string
+          html_content?: string | null
+          id?: string
+          metadata?: Json | null
+          subject?: string | null
+          template_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "template_channel_views_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "message_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       todos: {
         Row: {
           content: string
@@ -1275,6 +1394,10 @@ export type Database = {
         Returns: undefined
       }
       ensure_default_lead_statuses_for_org: {
+        Args: { org_id: string; user_uuid: string }
+        Returns: undefined
+      }
+      ensure_default_message_templates: {
         Args: { org_id: string; user_uuid: string }
         Returns: undefined
       }

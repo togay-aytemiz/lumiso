@@ -32,6 +32,8 @@ import ContractsSettings from "./pages/settings/Contracts";
 import BillingSettings from "./pages/settings/Billing";
 import TemplatesSettings from "./pages/settings/Templates";
 import WorkflowsSettings from "./pages/settings/Workflows";
+import Templates from "./pages/Templates";
+import Workflows from "./pages/Workflows";
 import DangerZone from "./pages/settings/DangerZone";
 import NotFound from "./pages/NotFound";
 import AcceptInvite from "./pages/AcceptInvite";
@@ -69,6 +71,8 @@ const App = () => (
               <Route path="reminders" element={<ReminderDetails />} />
               <Route path="analytics" element={<Analytics />} />
               <Route path="payments" element={<Payments />} />
+              <Route path="templates" element={<Templates />} />
+              <Route path="workflows" element={<Workflows />} />
               <Route path="settings" element={<SettingsLayout />}>
                 <Route path="profile" element={<ProfileSettings />} />
                 <Route path="general" element={<GeneralSettings />} />

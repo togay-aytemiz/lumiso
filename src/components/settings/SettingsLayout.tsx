@@ -19,22 +19,27 @@ import { useSettingsContext } from "@/contexts/SettingsContext";
 import { useOnboardingV2 } from "@/hooks/useOnboardingV2";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
-const personalSettingsItems = [
+interface SettingsItem {
+  title: string;
+  href: string;
+  icon: React.ElementType;
+  testId: string;
+  children?: SettingsItem[];
+}
+
+const personalSettingsItems: SettingsItem[] = [
   { title: "Profile", href: "/settings/profile", icon: User, testId: "profile-section" },
   { title: "Notifications", href: "/settings/notifications", icon: Bell, testId: "notifications-section" },
 ];
 
-const organizationSettingsItems = [
+const organizationSettingsItems: SettingsItem[] = [
   { title: "General", href: "/settings/general", icon: Settings, testId: "general-section" },
   { title: "Team Management", href: "/settings/team", icon: Users, testId: "team-section" },
   { 
     title: "Client Messaging", 
     href: "/settings/client-messaging", 
     icon: MessageSquare, 
-    testId: "client-messaging-section",
-    children: [
-      { title: "Templates", href: "/settings/templates", icon: FileText, testId: "templates-section" },
-    ]
+    testId: "client-messaging-section"
   },
   { title: "Projects & Sessions", href: "/settings/projects", icon: FolderOpen, testId: "projects-section" },
   { title: "Lead Management", href: "/settings/leads", icon: UserCheck, testId: "leads-section" },
@@ -216,8 +221,8 @@ export default function SettingsLayout() {
                 return (
                   <div key={item.href}>
                     {navItem}
-                    {/* Child items */}
-                    {item.children && (
+                    {/* Child items - only render if children exist */}
+                    {item.children && item.children.length > 0 && (
                       <div className="ml-6 mt-1 space-y-1">
                         {item.children.map((child) => {
                           const ChildIcon = child.icon;
@@ -273,7 +278,7 @@ export default function SettingsLayout() {
                               {childLinkContent}
                             </NavLink>
                           );
-                        })}
+                         })}
                       </div>
                     )}
                   </div>

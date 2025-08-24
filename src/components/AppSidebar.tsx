@@ -14,7 +14,7 @@ import {
   Settings,
   HelpCircle,
   ChevronDown,
-  MessageSquare
+  Workflow
 } from "lucide-react";
 import logo from "@/assets/Logo.png";
 import { useOnboardingV2 } from "@/hooks/useOnboardingV2";
@@ -43,7 +43,7 @@ const moduleItems = [
 const toolItems = [
   { title: "Analytics", url: "/analytics", icon: BarChart3 },
   { title: "Payments", url: "/payments", icon: CreditCard },
-  { title: "Workflows", url: "/workflows", icon: Settings },
+  { title: "Workflows", url: "/workflows", icon: Workflow },
 ];
 
 // Bookings sub-items
@@ -246,15 +246,6 @@ export function AppSidebar() {
           {/* SYSTEM Category */}
           <div className="mt-6">
             <SidebarCategory title="SYSTEM">
-              <SidebarNavItem
-                title="Templates"
-                url="/templates"
-                icon={MessageSquare}
-                isActive={isActive("/templates")}
-                isLocked={isItemLocked("/templates")}
-                onLockedClick={handleLockedItemClick}
-                onClick={handleNavClick}
-              />
               <SidebarNavItem
                 title="Settings"
                 url="/settings"

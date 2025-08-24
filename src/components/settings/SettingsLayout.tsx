@@ -12,7 +12,8 @@ import {
   FileText, 
   CreditCard, 
   AlertTriangle,
-  Lock
+  Lock,
+  FileTextIcon
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSettingsContext } from "@/contexts/SettingsContext";
@@ -41,6 +42,7 @@ const organizationSettingsItems: SettingsItem[] = [
     icon: MessageSquare, 
     testId: "client-messaging-section"
   },
+  { title: "Templates", href: "/settings/templates", icon: FileTextIcon, testId: "templates-section" },
   { title: "Projects & Sessions", href: "/settings/projects", icon: FolderOpen, testId: "projects-section" },
   { title: "Lead Management", href: "/settings/leads", icon: UserCheck, testId: "leads-section" },
   { title: "Packages & Services", href: "/settings/services", icon: Package, testId: "services-section" },

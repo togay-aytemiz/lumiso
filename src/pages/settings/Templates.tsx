@@ -1,39 +1,27 @@
 import { useState, useEffect } from "react";
+import { Plus, Edit, Trash2, Eye, Copy, FileText, MessageSquare, FileTextIcon, HelpCircle, Quote } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useOrganization } from "@/contexts/OrganizationContext";
+import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AppSheetModal } from "@/components/ui/app-sheet-modal";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { VariablePicker } from "@/components/templates/VariablePicker";
 import { EmailPreview } from "@/components/templates/EmailPreview";
 import { SMSPreview } from "@/components/templates/SMSPreview";
 import { WhatsAppPreview } from "@/components/templates/WhatsAppPreview";
-import { 
-  AlertDialog, 
-  AlertDialogAction, 
-  AlertDialogCancel, 
-  AlertDialogContent, 
-  AlertDialogDescription, 
-  AlertDialogFooter, 
-  AlertDialogHeader, 
-  AlertDialogTitle,
-  AlertDialogTrigger
-} from "@/components/ui/alert-dialog";
-import { Edit, Trash2, Eye, MoreHorizontal, Copy } from "lucide-react";
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
-} from "@/components/ui/dropdown-menu";
+import { format } from "date-fns";
 
-// Data structures and constants
 interface MessageTemplate {
   id: string;
   name: string;
@@ -60,90 +48,81 @@ interface TemplateChannelView {
   metadata?: any;
 }
 
-// Template categories for reference
+// Template categories for tabs
 const TEMPLATE_CATEGORIES = [
-  { id: 'session_confirmation', name: 'Session Confirmation', types: ['session_confirmation'] },
-  { id: 'session_reminder', name: 'Session Reminder', types: ['session_reminder'] },
-  { id: 'session_rescheduled', name: 'Session Rescheduled', types: ['session_rescheduled'] },
-  { id: 'session_cancelled', name: 'Session Cancelled', types: ['session_cancelled'] },
-  { id: 'session_completed', name: 'Session Completed', types: ['session_completed'] },
-  { id: 'lead_follow_up', name: 'Lead Follow Up', types: ['lead_follow_up'] },
-  { id: 'payment_reminder', name: 'Payment Reminder', types: ['payment_reminder'] },
-  { id: 'general', name: 'General', types: ['general'] },
+  { id: "messages", title: "Messages", icon: MessageSquare },
+  { id: "contracts", title: "Contracts", icon: FileText },
+  { id: "invoices", title: "Invoices", icon: FileTextIcon },
+  { id: "questionnaires", title: "Questionnaires", icon: HelpCircle },
+  { id: "quotes", title: "Quotes", icon: Quote },
 ];
 
-// Channels configuration
+// Available channels for multi-channel support
 const CHANNELS = [
-  { id: 'email', label: 'Email', icon: '📧' },
-  { id: 'sms', label: 'SMS', icon: '💬' },
-  { id: 'whatsapp', label: 'WhatsApp', icon: '📱' },
+  { value: 'email', label: 'Email' },
+  { value: 'sms', label: 'SMS' },
+  { value: 'whatsapp', label: 'WhatsApp' },
 ];
 
 // Available placeholders
 const PLACEHOLDERS = [
-  { key: '{customer_name}', label: 'Customer Name', example: 'John Smith' },
-  { key: '{session_type}', label: 'Session Type', example: 'Wedding Photography' },
-  { key: '{session_date}', label: 'Session Date', example: 'March 15, 2024' },
-  { key: '{session_time}', label: 'Session Time', example: '2:00 PM' },
-  { key: '{session_location}', label: 'Session Location', example: 'Central Park' },
-  { key: '{studio_name}', label: 'Studio Name', example: 'Your Studio' },
-  { key: '{studio_phone}', label: 'Studio Phone', example: '(555) 123-4567' },
+  { key: '{{client_name}}', label: 'Client Name', example: 'John Smith' },
+  { key: '{{session_date}}', label: 'Session Date', example: 'March 15, 2024' },
+  { key: '{{session_time}}', label: 'Session Time', example: '2:00 PM' },
+  { key: '{{session_location}}', label: 'Session Location', example: 'Central Park' },
+  { key: '{{photographer_name}}', label: 'Photographer Name', example: 'Jane Doe' },
+  { key: '{{studio_name}}', label: 'Studio Name', example: 'Creative Photography Studio' },
+  { key: '{{project_type}}', label: 'Project Type', example: 'Wedding Photography' },
+  { key: '{{total_amount}}', label: 'Total Amount', example: '$1,200' },
+  { key: '{{payment_due_date}}', label: 'Payment Due Date', example: 'April 1, 2024' },
 ];
 
-interface TemplatesSettingsProps {
-  onBack?: () => void;
-  organizationName?: string;
-  brandColor?: string | null;
-  logoUrl?: string | null;
-  businessName?: string | null;
-}
-
-export default function TemplatesSettings({ 
-  onBack, 
-  organizationName, 
-  brandColor, 
-  logoUrl, 
-  businessName 
-}: TemplatesSettingsProps) {
+export default function Templates() {
   const [templates, setTemplates] = useState<MessageTemplate[]>([]);
   const [channelViews, setChannelViews] = useState<TemplateChannelView[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeCategory, setActiveCategory] = useState("messages");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingTemplate, setEditingTemplate] = useState<MessageTemplate | null>(null);
-  const [previewTemplate, setPreviewTemplate] = useState<MessageTemplate | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-  const [deleteTemplate, setDeleteTemplate] = useState<MessageTemplate | null>(null);
-
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [editingTemplate, setEditingTemplate] = useState<MessageTemplate | null>(null);
+  const [deletingTemplate, setDeletingTemplate] = useState<MessageTemplate | null>(null);
+  const [previewTemplate, setPreviewTemplate] = useState<MessageTemplate | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     master_content: "",
     subject: "",
-    category: "general" as string,
+    category: "",
+    // Channel-specific content
+    email_content: "",
+    email_subject: "",
+    sms_content: "",
+    whatsapp_content: "",
   });
 
   const { activeOrganization } = useOrganization();
+  const { settings } = useOrganizationSettings();
   const { toast } = useToast();
 
   const fetchTemplates = async () => {
     try {
       setLoading(true);
-      const { data: templatesData, error: templatesError } = await supabase
-        .from('message_templates')
-        .select('*')
-        .eq('organization_id', activeOrganization?.id)
-        .order('created_at', { ascending: false });
+      const [templatesResult, channelViewsResult] = await Promise.all([
+        supabase
+          .from('message_templates')
+          .select('*')
+          .eq('organization_id', activeOrganization?.id)
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('template_channel_views')
+          .select('*')
+      ]);
 
-      if (templatesError) throw templatesError;
+      if (templatesResult.error) throw templatesResult.error;
+      if (channelViewsResult.error) throw channelViewsResult.error;
 
-      const { data: viewsData, error: viewsError } = await supabase
-        .from('template_channel_views')
-        .select('*')
-        .in('template_id', templatesData?.map(t => t.id) || []);
-
-      if (viewsError) throw viewsError;
-
-      setTemplates(templatesData || []);
-      setChannelViews(viewsData || []);
+      setTemplates(templatesResult.data || []);
+      setChannelViews(channelViewsResult.data || []);
     } catch (error) {
       console.error('Error fetching templates:', error);
       toast({
@@ -158,6 +137,15 @@ export default function TemplatesSettings({
 
   const handleSaveTemplate = async () => {
     try {
+      if (!formData.name || !formData.master_content) {
+        toast({
+          title: "Validation Error",
+          description: "Name and content are required",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
@@ -168,7 +156,7 @@ export default function TemplatesSettings({
             name: formData.name,
             master_content: formData.master_content,
             master_subject: formData.subject,
-            category: formData.category || 'general',
+            category: activeCategory,
             placeholders: PLACEHOLDERS.map(p => p.key),
             updated_at: new Date().toISOString(),
           })
@@ -184,7 +172,7 @@ export default function TemplatesSettings({
             name: formData.name,
             master_content: formData.master_content,
             master_subject: formData.subject,
-            category: formData.category || 'general',
+            category: activeCategory,
             placeholders: PLACEHOLDERS.map(p => p.key),
             is_active: true,
           })
@@ -193,29 +181,63 @@ export default function TemplatesSettings({
 
         if (error) throw error;
 
-        // Create default channel views
-        const channelViewsToCreate = CHANNELS.map(channel => ({
-          template_id: newTemplate.id,
-          channel: channel.id as 'email' | 'sms' | 'whatsapp',
-          subject: channel.id === 'email' ? formData.subject || formData.name : undefined,
-          content: formData.master_content,
-        }));
+        // Create channel-specific views if provided
+        if (newTemplate && (formData.email_content || formData.sms_content || formData.whatsapp_content)) {
+          const channelInserts = [];
+          
+          if (formData.email_content) {
+            channelInserts.push({
+              template_id: newTemplate.id,
+              channel: 'email',
+              subject: formData.email_subject || formData.subject,
+              content: formData.email_content,
+              html_content: formData.email_content,
+            });
+          }
+          
+          if (formData.sms_content) {
+            channelInserts.push({
+              template_id: newTemplate.id,
+              channel: 'sms',
+              content: formData.sms_content,
+            });
+          }
+          
+          if (formData.whatsapp_content) {
+            channelInserts.push({
+              template_id: newTemplate.id,
+              channel: 'whatsapp',
+              content: formData.whatsapp_content,
+            });
+          }
 
-        const { error: viewsError } = await supabase
-          .from('template_channel_views')
-          .insert(channelViewsToCreate);
+          if (channelInserts.length > 0) {
+            const { error: channelError } = await supabase
+              .from('template_channel_views')
+              .insert(channelInserts);
 
-        if (viewsError) throw viewsError;
+            if (channelError) throw channelError;
+          }
+        }
       }
 
       toast({
         title: "Success",
-        description: editingTemplate ? "Template updated successfully" : "Template created successfully",
+        description: `Template ${editingTemplate ? 'updated' : 'created'} successfully`,
       });
 
       setIsModalOpen(false);
       setEditingTemplate(null);
-      setFormData({ name: "", master_content: "", subject: "", category: "general" });
+      setFormData({
+        name: "",
+        master_content: "",
+        subject: "",
+        category: "",
+        email_content: "",
+        email_subject: "",
+        sms_content: "",
+        whatsapp_content: "",
+      });
       fetchTemplates();
     } catch (error) {
       console.error('Error saving template:', error);
@@ -227,12 +249,21 @@ export default function TemplatesSettings({
     }
   };
 
-  const handleDeleteTemplate = async (template: MessageTemplate) => {
+  const handleDeleteTemplate = async () => {
+    if (!deletingTemplate) return;
+
     try {
+      // Delete channel views first
+      await supabase
+        .from('template_channel_views')
+        .delete()
+        .eq('template_id', deletingTemplate.id);
+
+      // Delete template
       const { error } = await supabase
         .from('message_templates')
         .delete()
-        .eq('id', template.id);
+        .eq('id', deletingTemplate.id);
 
       if (error) throw error;
 
@@ -241,6 +272,8 @@ export default function TemplatesSettings({
         description: "Template deleted successfully",
       });
 
+      setIsDeleteDialogOpen(false);
+      setDeletingTemplate(null);
       fetchTemplates();
     } catch (error) {
       console.error('Error deleting template:', error);
@@ -252,19 +285,49 @@ export default function TemplatesSettings({
     }
   };
 
-  const insertVariable = (variableKey: string) => {
-    setFormData(prev => ({
-      ...prev,
-      master_content: prev.master_content + variableKey
-    }));
+  const insertVariable = (variable: string) => {
+    const textarea = document.querySelector('textarea[name="master_content"]') as HTMLTextAreaElement;
+    if (textarea) {
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const text = textarea.value;
+      const before = text.substring(0, start);
+      const after = text.substring(end, text.length);
+      const newValue = before + variable + after;
+      
+      setFormData({ ...formData, master_content: newValue });
+      
+      // Set cursor position after the inserted variable
+      setTimeout(() => {
+        textarea.focus();
+        textarea.setSelectionRange(start + variable.length, start + variable.length);
+      }, 10);
+    }
   };
 
-  const replacePlaceholders = (content: string, subject?: string) => {
-    let replaced = content;
+  const replacePlaceholders = (content: string): string => {
+    let result = content;
     PLACEHOLDERS.forEach(placeholder => {
-      replaced = replaced.replace(new RegExp(placeholder.key, 'g'), placeholder.example);
+      result = result.replace(new RegExp(placeholder.key.replace(/[{}]/g, '\\$&'), 'g'), placeholder.example);
     });
-    return replaced;
+    return result;
+  };
+
+  const filteredTemplates = templates.filter(template => template.category === activeCategory);
+
+  const duplicateTemplate = async (template: MessageTemplate) => {
+    setFormData({
+      name: `${template.name} (Copy)`,
+      master_content: template.master_content,
+      subject: template.master_subject || "",
+      category: template.category,
+      email_content: "",
+      email_subject: "",
+      sms_content: "",
+      whatsapp_content: "",
+    });
+    setEditingTemplate(null);
+    setIsModalOpen(true);
   };
 
   useEffect(() => {
@@ -274,136 +337,286 @@ export default function TemplatesSettings({
   }, [activeOrganization?.id]);
 
   if (loading) {
-    return (
-      <div className="space-y-6 p-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            {onBack && (
-              <Button variant="ghost" size="sm" onClick={onBack}>
-                ← Back
-              </Button>
-            )}
-            <div>
-              <h1 className="text-2xl font-semibold">Message Templates</h1>
-              <p className="text-muted-foreground mt-1">
-                Create and manage message templates for automated communication
-              </p>
-            </div>
-          </div>
-        </div>
-        <div className="flex items-center justify-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        </div>
-      </div>
-    );
+    return <div className="p-6">Loading templates...</div>;
   }
+
+  const organizationName = activeOrganization?.name;
+  const brandColor = settings?.primary_brand_color;
+  const logoUrl = settings?.logo_url;
+  const businessName = settings?.photography_business_name;
 
   return (
     <div className="space-y-6 p-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          {onBack && (
-            <Button variant="ghost" size="sm" onClick={onBack}>
-              ← Back
-            </Button>
-          )}
-          <div>
-            <h1 className="text-2xl font-semibold">Message Templates</h1>
-            <p className="text-muted-foreground mt-1">
-              Create and manage message templates for automated communication
-            </p>
-          </div>
-        </div>
-        <Button onClick={() => setIsModalOpen(true)}>
-          Create Template
-        </Button>
+      <div>
+        <h1 className="text-2xl font-semibold">Templates</h1>
+        <p className="text-muted-foreground mt-1">
+          Manage your communication templates across different channels
+        </p>
       </div>
 
-      <div className="space-y-6">
-        {templates.length === 0 ? (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-16">
-              <h3 className="text-lg font-semibold mb-2">No templates yet</h3>
-              <p className="text-muted-foreground text-center mb-4">
-                Create your first template to start automating your communication.
-              </p>
-              <Button onClick={() => setIsModalOpen(true)}>
-                Create Your First Template
+      <Tabs value={activeCategory} onValueChange={setActiveCategory}>
+        <TabsList className="grid w-full grid-cols-5">
+          {TEMPLATE_CATEGORIES.map((category) => {
+            const IconComponent = category.icon;
+            return (
+              <TabsTrigger key={category.id} value={category.id} className="flex items-center gap-2">
+                <IconComponent className="h-4 w-4" />
+                <span className="hidden sm:inline">{category.title}</span>
+              </TabsTrigger>
+            );
+          })}
+        </TabsList>
+
+        {TEMPLATE_CATEGORIES.map((category) => (
+          <TabsContent key={category.id} value={category.id} className="space-y-4">
+            <div className="flex justify-between items-center">
+              <div>
+                <h2 className="text-lg font-semibold">{category.title}</h2>
+                <p className="text-sm text-muted-foreground">
+                  {filteredTemplates.length} template{filteredTemplates.length !== 1 ? 's' : ''}
+                </p>
+              </div>
+              <Button onClick={() => {
+                setFormData({
+                  name: "",
+                  master_content: "",
+                  subject: "",
+                  category: category.id,
+                  email_content: "",
+                  email_subject: "",
+                  sms_content: "",
+                  whatsapp_content: "",
+                });
+                setEditingTemplate(null);
+                setIsModalOpen(true);
+              }}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add {category.title.slice(0, -1)}
               </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid gap-4">
-            {templates.map((template) => (
-              <Card key={template.id}>
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="text-lg">{template.name}</CardTitle>
-                      <CardDescription>
-                        {TEMPLATE_CATEGORIES.find(cat => cat.id === template.category)?.name || template.category}
-                      </CardDescription>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Badge variant={template.is_active ? 'default' : 'secondary'}>
-                        {template.is_active ? 'active' : 'inactive'}
-                      </Badge>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => {
-                            setPreviewTemplate(template);
-                            setIsPreviewOpen(true);
-                          }}>
-                            <Eye className="h-4 w-4 mr-2" />
-                            Preview
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => {
-                            setEditingTemplate(template);
-                            setFormData({
-                              name: template.name,
-                              master_content: template.master_content,
-                              subject: template.master_subject || "",
-                              category: template.category,
-                            });
-                            setIsModalOpen(true);
-                          }}>
-                            <Edit className="h-4 w-4 mr-2" />
-                            Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem 
-                            onClick={() => setDeleteTemplate(template)}
-                            className="text-red-600"
-                          >
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground line-clamp-2">
-                    {template.master_content}
+            </div>
+
+            {filteredTemplates.length === 0 ? (
+              <Card>
+                <CardContent className="flex flex-col items-center justify-center py-16">
+                  <category.icon className="h-12 w-12 text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">No {category.title.toLowerCase()} yet</h3>
+                  <p className="text-muted-foreground text-center mb-4">
+                    Create your first {category.title.toLowerCase().slice(0, -1)} template to get started.
                   </p>
+                  <Button onClick={() => {
+                    setFormData({
+                      name: "",
+                      master_content: "",
+                      subject: "",
+                      category: category.id,
+                      email_content: "",
+                      email_subject: "",
+                      sms_content: "",
+                      whatsapp_content: "",
+                    });
+                    setEditingTemplate(null);
+                    setIsModalOpen(true);
+                  }}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create Your First {category.title.slice(0, -1)}
+                  </Button>
                 </CardContent>
               </Card>
-            ))}
-          </div>
-        )}
+            ) : (
+              <Card>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Content</TableHead>
+                      <TableHead>Created</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredTemplates.map((template) => (
+                      <TableRow key={template.id}>
+                        <TableCell className="font-medium">{template.name}</TableCell>
+                        <TableCell className="max-w-xs">
+                          <div className="truncate text-muted-foreground">
+                            {template.master_content.substring(0, 60)}
+                            {template.master_content.length > 60 && '...'}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {template.created_at ? format(new Date(template.created_at), 'MMM d, yyyy') : '-'}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={template.is_active ? "default" : "secondary"}>
+                            {template.is_active ? 'Active' : 'Inactive'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                •••
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => {
+                                setPreviewTemplate(template);
+                                setIsPreviewOpen(true);
+                              }}>
+                                <Eye className="h-4 w-4 mr-2" />
+                                Preview
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => {
+                                setFormData({
+                                  name: template.name,
+                                  master_content: template.master_content,
+                                  subject: template.master_subject || "",
+                                  category: template.category,
+                                  email_content: "",
+                                  email_subject: "",
+                                  sms_content: "",
+                                  whatsapp_content: "",
+                                });
+                                setEditingTemplate(template);
+                                setIsModalOpen(true);
+                              }}>
+                                <Edit className="h-4 w-4 mr-2" />
+                                Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => duplicateTemplate(template)}>
+                                <Copy className="h-4 w-4 mr-2" />
+                                Duplicate
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                onClick={() => {
+                                  setDeletingTemplate(template);
+                                  setIsDeleteDialogOpen(true);
+                                }}
+                                className="text-red-600"
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </Card>
+            )}
+          </TabsContent>
+        ))}
+      </Tabs>
 
-        {/* Preview Modal */}
-        {previewTemplate && (
-          <AppSheetModal
-            title={`Preview: ${previewTemplate.name}`}
-            isOpen={isPreviewOpen}
-            onOpenChange={setIsPreviewOpen}
-          >
+      {/* Preview Modal */}
+      {previewTemplate && (
+        <AppSheetModal
+          title={`Preview: ${previewTemplate.name}`}
+          isOpen={isPreviewOpen}
+          onOpenChange={setIsPreviewOpen}
+        >
+          <Tabs defaultValue="email" className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="email">Email</TabsTrigger>
+              <TabsTrigger value="sms">SMS</TabsTrigger>
+              <TabsTrigger value="whatsapp">WhatsApp</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="email" className="mt-6">
+              <EmailPreview
+                subject={replacePlaceholders(previewTemplate.master_subject || previewTemplate.name)}
+                content={replacePlaceholders(previewTemplate.master_content)}
+                sender={`${businessName || organizationName || 'Your Studio'} <hello@yourstudio.com>`}
+                recipient="Jane Smith <jane.smith@example.com>"
+                studioName={businessName || organizationName || 'Your Studio'}
+                brandColor={brandColor}
+                logoUrl={logoUrl}
+              />
+            </TabsContent>
+            
+            <TabsContent value="sms" className="mt-6">
+              <SMSPreview
+                content={replacePlaceholders(previewTemplate.master_content)}
+                senderName={businessName || organizationName || 'Your Studio'}
+              />
+            </TabsContent>
+            
+            <TabsContent value="whatsapp" className="mt-6">
+              <WhatsAppPreview
+                content={replacePlaceholders(previewTemplate.master_content)}
+                senderName={businessName || organizationName || 'Your Studio'}
+              />
+            </TabsContent>
+          </Tabs>
+        </AppSheetModal>
+      )}
+
+      {/* Create/Edit Modal */}
+      <AppSheetModal
+        title={editingTemplate ? "Edit Template" : "Create Template"}
+        isOpen={isModalOpen}
+        onOpenChange={setIsModalOpen}
+        footerActions={[
+          {
+            label: "Cancel",
+            onClick: () => setIsModalOpen(false),
+            variant: "outline",
+          },
+          {
+            label: editingTemplate ? "Update Template" : "Create Template",
+            onClick: handleSaveTemplate,
+            variant: "default",
+          },
+        ]}
+      >
+        <div className="space-y-6">
+          <div>
+            <Label htmlFor="name">Template Name</Label>
+            <Input
+              id="name"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              placeholder="Enter template name"
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="subject">Subject (for emails)</Label>
+            <Input
+              id="subject"
+              value={formData.subject}
+              onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+              placeholder="Email subject line"
+            />
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="master_content">Master Content</Label>
+              <VariablePicker onInsert={insertVariable} />
+            </div>
+            <Textarea
+              id="master_content"
+              name="master_content"
+              value={formData.master_content}
+              onChange={(e) => setFormData({ ...formData, master_content: e.target.value })}
+              placeholder="Enter your template content..."
+              className="min-h-[120px]"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              This content will be used as the default for all channels unless overridden below.
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <h3 className="text-sm font-medium">Channel-Specific Content (Optional)</h3>
+            <p className="text-xs text-muted-foreground">
+              Customize content for specific channels. If left empty, master content will be used.
+            </p>
+            
             <Tabs defaultValue="email" className="w-full">
               <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="email">Email</TabsTrigger>
@@ -411,116 +624,78 @@ export default function TemplatesSettings({
                 <TabsTrigger value="whatsapp">WhatsApp</TabsTrigger>
               </TabsList>
               
-              <TabsContent value="email" className="mt-6">
-                <EmailPreview
-                  subject={replacePlaceholders(previewTemplate.master_subject || previewTemplate.name)}
-                  content={replacePlaceholders(previewTemplate.master_content)}
-                  sender={`${businessName || organizationName || 'Your Studio'} <hello@yourstudio.com>`}
-                  recipient="Jane Smith <jane.smith@example.com>"
-                  studioName={businessName || organizationName || 'Your Studio'}
-                  brandColor={brandColor || "#1EB29F"}
-                  logoUrl={logoUrl}
-                />
+              <TabsContent value="email" className="space-y-4">
+                <div>
+                  <Label htmlFor="email_subject">Email Subject</Label>
+                  <Input
+                    id="email_subject"
+                    value={formData.email_subject}
+                    onChange={(e) => setFormData({ ...formData, email_subject: e.target.value })}
+                    placeholder="Custom email subject"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="email_content">Email Content</Label>
+                  <Textarea
+                    id="email_content"
+                    value={formData.email_content}
+                    onChange={(e) => setFormData({ ...formData, email_content: e.target.value })}
+                    placeholder="Custom email content..."
+                    className="min-h-[100px]"
+                  />
+                </div>
               </TabsContent>
               
-              <TabsContent value="sms" className="mt-6">
-                <SMSPreview 
-                  content={replacePlaceholders(previewTemplate.master_content)}
-                  senderName={businessName || organizationName || 'Your Studio'}
-                />
+              <TabsContent value="sms" className="space-y-4">
+                <div>
+                  <Label htmlFor="sms_content">SMS Content</Label>
+                  <Textarea
+                    id="sms_content"
+                    value={formData.sms_content}
+                    onChange={(e) => setFormData({ ...formData, sms_content: e.target.value })}
+                    placeholder="Custom SMS content (keep it short)..."
+                    className="min-h-[100px]"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    SMS messages should be concise (160 characters recommended).
+                  </p>
+                </div>
               </TabsContent>
               
-              <TabsContent value="whatsapp" className="mt-6">
-                <WhatsAppPreview 
-                  content={replacePlaceholders(previewTemplate.master_content)}
-                  senderName={businessName || organizationName || 'Your Studio'}
-                />
+              <TabsContent value="whatsapp" className="space-y-4">
+                <div>
+                  <Label htmlFor="whatsapp_content">WhatsApp Content</Label>
+                  <Textarea
+                    id="whatsapp_content"
+                    value={formData.whatsapp_content}
+                    onChange={(e) => setFormData({ ...formData, whatsapp_content: e.target.value })}
+                    placeholder="Custom WhatsApp content..."
+                    className="min-h-[100px]"
+                  />
+                </div>
               </TabsContent>
             </Tabs>
-          </AppSheetModal>
-        )}
-
-        {/* Create/Edit Modal */}
-        <AppSheetModal
-          title={editingTemplate ? "Edit Template" : "Create Template"}
-          isOpen={isModalOpen}
-          onOpenChange={setIsModalOpen}
-          footerActions={[
-            {
-              label: "Cancel",
-              onClick: () => setIsModalOpen(false),
-              variant: "outline",
-            },
-            {
-              label: editingTemplate ? "Update Template" : "Create Template",
-              onClick: handleSaveTemplate,
-              variant: "default",
-            },
-          ]}
-        >
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="name">Template Name</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="Enter template name"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="subject">Email Subject (Optional)</Label>
-              <Input
-                id="subject"
-                value={formData.subject}
-                onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                placeholder="Enter email subject line"
-              />
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <Label htmlFor="content">Message Content</Label>
-                <VariablePicker onVariableSelect={insertVariable} />
-              </div>
-              <Textarea
-                id="content"
-                value={formData.master_content}
-                onChange={(e) => setFormData({ ...formData, master_content: e.target.value })}
-                placeholder="Enter your message content..."
-                rows={8}
-              />
-            </div>
           </div>
-        </AppSheetModal>
+        </div>
+      </AppSheetModal>
 
-        {/* Delete Confirmation */}
-        {deleteTemplate && (
-          <AlertDialog open={!!deleteTemplate} onOpenChange={() => setDeleteTemplate(null)}>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Delete Template</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Are you sure you want to delete "{deleteTemplate.name}"? This action cannot be undone.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction 
-                  onClick={() => {
-                    handleDeleteTemplate(deleteTemplate);
-                    setDeleteTemplate(null);
-                  }}
-                  className="bg-red-600 hover:bg-red-700"
-                >
-                  Delete
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        )}
-      </div>
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Template</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{deletingTemplate?.name}"? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteTemplate} className="bg-red-600 hover:bg-red-700">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

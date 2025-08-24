@@ -39,19 +39,25 @@ interface MessageTemplate {
   name: string;
   category: string;
   master_content: string;
-  subject?: string;
-  placeholders: string[];
-  status: 'active' | 'draft';
+  master_subject?: string;
+  placeholders: any;
+  is_active: boolean;
   created_at?: string;
+  updated_at?: string;
+  user_id: string;
+  organization_id: string;
 }
 
 interface TemplateChannelView {
   id: string;
   template_id: string;
-  channel: 'email' | 'sms' | 'whatsapp';
+  channel: string;
   subject?: string;
   content: string;
   html_content?: string;
+  created_at?: string;
+  updated_at?: string;
+  metadata?: any;
 }
 
 // Template categories for reference
@@ -161,6 +167,7 @@ export default function TemplatesSettings({
           .update({
             name: formData.name,
             master_content: formData.master_content,
+            master_subject: formData.subject,
             category: formData.category || 'general',
             placeholders: PLACEHOLDERS.map(p => p.key),
             updated_at: new Date().toISOString(),
@@ -176,9 +183,10 @@ export default function TemplatesSettings({
             organization_id: activeOrganization?.id,
             name: formData.name,
             master_content: formData.master_content,
+            master_subject: formData.subject,
             category: formData.category || 'general',
             placeholders: PLACEHOLDERS.map(p => p.key),
-            status: 'active',
+            is_active: true,
           })
           .select()
           .single();
@@ -337,8 +345,8 @@ export default function TemplatesSettings({
                       </CardDescription>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <Badge variant={template.status === 'active' ? 'default' : 'secondary'}>
-                        {template.status}
+                      <Badge variant={template.is_active ? 'default' : 'secondary'}>
+                        {template.is_active ? 'active' : 'inactive'}
                       </Badge>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -359,7 +367,7 @@ export default function TemplatesSettings({
                             setFormData({
                               name: template.name,
                               master_content: template.master_content,
-                              subject: template.subject || "",
+                              subject: template.master_subject || "",
                               category: template.category,
                             });
                             setIsModalOpen(true);
@@ -393,7 +401,7 @@ export default function TemplatesSettings({
         {previewTemplate && (
           <AppSheetModal
             title={`Preview: ${previewTemplate.name}`}
-            open={isPreviewOpen}
+            isOpen={isPreviewOpen}
             onOpenChange={setIsPreviewOpen}
           >
             <Tabs defaultValue="email" className="w-full">
@@ -405,7 +413,7 @@ export default function TemplatesSettings({
               
               <TabsContent value="email" className="mt-6">
                 <EmailPreview
-                  subject={replacePlaceholders(previewTemplate.subject || previewTemplate.name)}
+                  subject={replacePlaceholders(previewTemplate.master_subject || previewTemplate.name)}
                   content={replacePlaceholders(previewTemplate.master_content)}
                   sender={`${businessName || organizationName || 'Your Studio'} <hello@yourstudio.com>`}
                   recipient="Jane Smith <jane.smith@example.com>"
@@ -435,7 +443,7 @@ export default function TemplatesSettings({
         {/* Create/Edit Modal */}
         <AppSheetModal
           title={editingTemplate ? "Edit Template" : "Create Template"}
-          open={isModalOpen}
+          isOpen={isModalOpen}
           onOpenChange={setIsModalOpen}
           footerActions={[
             {

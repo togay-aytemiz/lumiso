@@ -31,6 +31,7 @@ import ClientMessagingSettings from "./pages/settings/ClientMessaging";
 import ContractsSettings from "./pages/settings/Contracts";
 import BillingSettings from "./pages/settings/Billing";
 import TemplatesSettings from "./pages/settings/Templates";
+import DangerZone from "./pages/settings/DangerZone";
 import NotFound from "./pages/NotFound";
 import AcceptInvite from "./pages/AcceptInvite";
 import AcceptInvitation from "./pages/AcceptInvitation";
@@ -80,7 +81,7 @@ const App = () => (
                 <Route path="client-messaging" element={<ClientMessagingSettings />} />
                 <Route path="contracts" element={<ContractsSettings />} />
                 <Route path="billing" element={<BillingSettings />} />
-                <Route path="danger-zone" element={<DangerZoneSettings />} />
+                <Route path="danger-zone" element={<DangerZone />} />
                 <Route index element={<Navigate to="/settings/profile" replace />} />
               </Route>
             </Route>

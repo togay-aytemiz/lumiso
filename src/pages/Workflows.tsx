@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useOrganization } from "@/contexts/OrganizationContext";
+import { useWorkflowEvents } from "@/hooks/useWorkflowEvents";
 import { AppSheetModal } from "@/components/ui/app-sheet-modal";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -56,24 +57,8 @@ export default function Workflows() {
     selected_template: "",
   });
   const { activeOrganization } = useOrganization();
+  const { events: eventTypes } = useWorkflowEvents();
   const { toast } = useToast();
-
-  // Enhanced events with more business-specific triggers
-  const eventTypes = [
-    { value: "session_scheduled", label: "Session Scheduled", description: "When a new session is booked" },
-    { value: "session_completed", label: "Session Completed", description: "When a session is marked as complete" },
-    { value: "session_rescheduled", label: "Session Rescheduled", description: "When a session date/time changes" },
-    { value: "session_cancelled", label: "Session Cancelled", description: "When a session is cancelled" },
-    { value: "payment_received", label: "Payment Received", description: "When a payment is processed" },
-    { value: "payment_overdue", label: "Payment Overdue", description: "When a payment becomes overdue" },
-    { value: "payment_reminder", label: "Payment Reminder", description: "Send payment reminders based on due dates" },
-    { value: "lead_status_changed", label: "Lead Status Changed", description: "When a lead status is updated" },
-    { value: "project_status_changed", label: "Project Status Changed", description: "When a project status changes" },
-    { value: "project_created", label: "Project Created", description: "When a new project is created" },
-    { value: "lead_created", label: "New Lead", description: "When a new lead is added" },
-    { value: "contract_signed", label: "Contract Signed", description: "When a contract is digitally signed" },
-    { value: "gallery_delivered", label: "Gallery Delivered", description: "When photos are delivered to client" },
-  ];
 
   const fetchData = async () => {
     try {
@@ -478,14 +463,21 @@ export default function Workflows() {
                 <SelectValue placeholder="Select an event trigger" />
               </SelectTrigger>
               <SelectContent>
-                {eventTypes.map((event) => (
-                  <SelectItem key={event.value} value={event.value}>
-                    <div>
-                      <div className="font-medium">{event.label}</div>
-                      <div className="text-xs text-muted-foreground">{event.description}</div>
-                    </div>
+                {eventTypes.length === 0 ? (
+                  <SelectItem value="loading" disabled>
+                    Loading events...
                   </SelectItem>
-                ))}
+                ) : (
+                  eventTypes.map((event) => (
+                    <SelectItem key={event.value} value={event.value}>
+                      <div className="flex flex-col">
+                        <span className="font-medium">{event.label}</span>
+                        <span className="text-xs text-muted-foreground">{event.description}</span>
+                        <span className="text-xs text-blue-600 font-medium">{event.category}</span>
+                      </div>
+                    </SelectItem>
+                  ))
+                )}
               </SelectContent>
             </Select>
           </div>
@@ -549,9 +541,9 @@ export default function Workflows() {
                 ) : (
                   templates.map((template) => (
                     <SelectItem key={template.id} value={template.id}>
-                      <div>
-                        <div className="font-medium">{template.name}</div>
-                        <div className="text-xs text-muted-foreground capitalize">{template.category}</div>
+                      <div className="flex flex-col">
+                        <span className="font-medium">{template.name}</span>
+                        <span className="text-xs text-muted-foreground capitalize">{template.category}</span>
                       </div>
                     </SelectItem>
                   ))

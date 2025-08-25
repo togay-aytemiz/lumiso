@@ -65,17 +65,46 @@ const CHANNELS = [
   { value: 'whatsapp', label: 'WhatsApp' },
 ];
 
-// Available placeholders
+// Available placeholders - Real variables from database schema
 const PLACEHOLDERS = [
-  { key: '{{client_name}}', label: 'Client Name', example: 'John Smith' },
-  { key: '{{session_date}}', label: 'Session Date', example: 'March 15, 2024' },
+  // Client/Lead related (from leads table)
+  { key: '{{client_name}}', label: 'Client Name', example: 'Sarah Johnson' },
+  { key: '{{customer_name}}', label: 'Customer Name', example: 'Sarah Johnson' },
+  { key: '{{lead_name}}', label: 'Lead Name', example: 'Sarah Johnson' },
+  { key: '{{customer_email}}', label: 'Customer Email', example: 'sarah.johnson@example.com' },
+  { key: '{{client_email}}', label: 'Client Email', example: 'sarah.johnson@example.com' },
+  { key: '{{customer_phone}}', label: 'Customer Phone', example: '+1 (555) 123-4567' },
+  { key: '{{client_phone}}', label: 'Client Phone', example: '+1 (555) 123-4567' },
+  
+  // Session related (from sessions table)
+  { key: '{{session_type}}', label: 'Session Type', example: 'Newborn Photography Session' },
+  { key: '{{session_date}}', label: 'Session Date', example: 'Monday, February 5, 2024' },
   { key: '{{session_time}}', label: 'Session Time', example: '2:00 PM' },
-  { key: '{{session_location}}', label: 'Session Location', example: 'Central Park' },
-  { key: '{{photographer_name}}', label: 'Photographer Name', example: 'Jane Doe' },
-  { key: '{{studio_name}}', label: 'Studio Name', example: 'Creative Photography Studio' },
-  { key: '{{project_type}}', label: 'Project Type', example: 'Wedding Photography' },
-  { key: '{{total_amount}}', label: 'Total Amount', example: '$1,200' },
-  { key: '{{payment_due_date}}', label: 'Payment Due Date', example: 'April 1, 2024' },
+  { key: '{{session_location}}', label: 'Session Location', example: 'Photography Studio' },
+  
+  // Studio/Organization related (from organization_settings)
+  { key: '{{studio_name}}', label: 'Studio Name', example: 'Your Photography Studio' },
+  { key: '{{business_name}}', label: 'Business Name', example: 'Your Photography Studio' },
+  { key: '{{studio_phone}}', label: 'Studio Phone', example: '+1 (555) 987-6543' },
+  { key: '{{studio_email}}', label: 'Studio Email', example: 'hello@yourstudio.com' },
+  
+  // Project related 
+  { key: '{{project_name}}', label: 'Project Name', example: 'Newborn Session - Johnson Family' },
+  
+  // Booking/Links
+  { key: '{{booking_link}}', label: 'Booking Link', example: 'https://yourstudio.com/book' },
+  { key: '{{reschedule_link}}', label: 'Reschedule Link', example: 'https://yourstudio.com/reschedule' },
+  { key: '{{gallery_link}}', label: 'Gallery Link', example: 'https://yourstudio.com/gallery/johnson-newborn' },
+  
+  // Payment related (from payments table)
+  { key: '{{payment_amount}}', label: 'Payment Amount', example: '$650.00' },
+  { key: '{{payment_due_date}}', label: 'Payment Due Date', example: 'February 19, 2024' },
+  { key: '{{total_amount}}', label: 'Total Amount', example: '$650.00' },
+  { key: '{{remaining_balance}}', label: 'Remaining Balance', example: '$325.00' },
+  
+  // Reminder related
+  { key: '{{reminder_title}}', label: 'Reminder Title', example: 'Session Preparation Reminder' },
+  { key: '{{reminder_date}}', label: 'Reminder Date', example: 'February 7, 2024' },
 ];
 
 export default function Templates() {
@@ -397,8 +426,8 @@ export default function Templates() {
       if (error) throw error;
 
       toast({
-        title: "Test Email Sent",
-        description: `Test email has been sent to ${user.email}`,
+        title: "Email Sent Successfully",
+        description: `Template preview has been sent to ${user.email}`,
       });
     } catch (error) {
       console.error('Error sending test email:', error);

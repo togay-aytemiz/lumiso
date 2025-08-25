@@ -11,11 +11,15 @@ import { Plus } from "lucide-react";
 
 const VARIABLE_GROUPS = [
   {
-    label: "Customer Information",
+    label: "Client Information",
     variables: [
+      { key: 'client_name', label: 'Client Name' },
       { key: 'customer_name', label: 'Customer Name' },
+      { key: 'lead_name', label: 'Lead Name' },
       { key: 'customer_email', label: 'Customer Email' },
-      { key: 'customer_phone', label: 'Customer Phone Number' }
+      { key: 'client_email', label: 'Client Email' },
+      { key: 'customer_phone', label: 'Customer Phone' },
+      { key: 'client_phone', label: 'Client Phone' }
     ]
   },
   {
@@ -31,8 +35,19 @@ const VARIABLE_GROUPS = [
     label: "Studio Information",
     variables: [
       { key: 'studio_name', label: 'Studio Name' },
+      { key: 'business_name', label: 'Business Name' },
       { key: 'studio_phone', label: 'Studio Phone' },
       { key: 'studio_email', label: 'Studio Email' }
+    ]
+  },
+  {
+    label: "Project & Payment",
+    variables: [
+      { key: 'project_name', label: 'Project Name' },
+      { key: 'payment_amount', label: 'Payment Amount' },
+      { key: 'payment_due_date', label: 'Payment Due Date' },
+      { key: 'total_amount', label: 'Total Amount' },
+      { key: 'remaining_balance', label: 'Remaining Balance' }
     ]
   },
   {
@@ -40,8 +55,14 @@ const VARIABLE_GROUPS = [
     variables: [
       { key: 'booking_link', label: 'Booking Link' },
       { key: 'reschedule_link', label: 'Reschedule Link' },
-      { key: 'payment_amount', label: 'Payment Amount' },
-      { key: 'payment_due_date', label: 'Payment Due Date' }
+      { key: 'gallery_link', label: 'Gallery Link' }
+    ]
+  },
+  {
+    label: "Reminders",
+    variables: [
+      { key: 'reminder_title', label: 'Reminder Title' },
+      { key: 'reminder_date', label: 'Reminder Date' }
     ]
   }
 ];

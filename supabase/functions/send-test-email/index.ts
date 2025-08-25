@@ -41,27 +41,59 @@ const handler = async (req: Request): Promise<Response> => {
       .eq('organization_id', organizationId)
       .single();
 
-    // Replace placeholders with sample data - using known org data where possible
+    // Replace placeholders with real data from organization and sample client data
     const sampleData = {
-      '{{customer_name}}': 'John Smith',
-      '{{customer_email}}': 'john.smith@example.com',
-      '{{customer_phone}}': '(555) 123-4567',
-      '{{session_type}}': 'Wedding Photography',
-      '{{session_date}}': 'March 15, 2024',
+      // Client/Lead related (from leads table)
+      '{{client_name}}': 'Sarah Johnson',
+      '{{customer_name}}': 'Sarah Johnson', 
+      '{{lead_name}}': 'Sarah Johnson',
+      '{{customer_email}}': 'sarah.johnson@example.com',
+      '{{client_email}}': 'sarah.johnson@example.com',
+      '{{customer_phone}}': '+1 (555) 123-4567',
+      '{{client_phone}}': '+1 (555) 123-4567',
+      
+      // Session related (from sessions table)
+      '{{session_type}}': 'Newborn Photography Session',
+      '{{session_date}}': new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      }),
       '{{session_time}}': '2:00 PM',
-      '{{session_location}}': 'Central Park, New York',
+      '{{session_location}}': orgSettings?.photography_business_name ? `${orgSettings.photography_business_name} Studio` : 'Photography Studio',
+      
+      // Studio/Organization related (from organization_settings)
       '{{studio_name}}': orgSettings?.photography_business_name || 'Your Photography Studio',
-      '{{studio_phone}}': '(555) 987-6543',
+      '{{business_name}}': orgSettings?.photography_business_name || 'Your Photography Studio',
+      '{{studio_phone}}': '+1 (555) 987-6543',
       '{{studio_email}}': 'hello@yourstudio.com',
+      
+      // Project related 
+      '{{project_name}}': 'Newborn Session - Johnson Family',
+      
+      // Booking/Links
       '{{booking_link}}': 'https://yourstudio.com/book',
       '{{reschedule_link}}': 'https://yourstudio.com/reschedule',
-      '{{payment_amount}}': '$1,200',
-      '{{payment_due_date}}': 'April 1, 2024',
-      '{{project_name}}': 'Sample Wedding Project',
-      '{{client_name}}': 'John Smith',
-      '{{lead_name}}': 'John Smith',
-      '{{reminder_title}}': 'Sample Reminder',
-      '{{reminder_date}}': 'March 20, 2024'
+      '{{gallery_link}}': 'https://yourstudio.com/gallery/johnson-newborn',
+      
+      // Payment related (from payments table)
+      '{{payment_amount}}': '$650.00',
+      '{{payment_due_date}}': new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long', 
+        day: 'numeric'
+      }),
+      '{{total_amount}}': '$650.00',
+      '{{remaining_balance}}': '$325.00',
+      
+      // Reminder related
+      '{{reminder_title}}': 'Session Preparation Reminder',
+      '{{reminder_date}}': new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      })
     };
 
     let emailContent = content;
@@ -77,24 +109,42 @@ const handler = async (req: Request): Promise<Response> => {
     // Initialize Resend
     const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
-    // Send test email
+    // Send email with identical format to EmailPreview
     const emailResponse = await resend.emails.send({
-      from: `${orgSettings?.photography_business_name || 'Your Studio'} <onboarding@resend.dev>`,
+      from: `${orgSettings?.photography_business_name || 'Your Photography Studio'} <onboarding@resend.dev>`,
       to: [recipientEmail],
-      subject: `[TEST] ${emailSubject}`,
+      subject: emailSubject,
       html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; text-align: center;">
-            <h1 style="color: white; margin: 0;">📧 Test Email Preview</h1>
-            <p style="color: rgba(255,255,255,0.8); margin: 10px 0 0 0;">This is a test of your template: "${templateName}"</p>
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif; max-width: 600px; margin: 0 auto; background: white; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+          <!-- Header Banner -->
+          <div style="position: relative; height: 128px; overflow: hidden; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            <div style="position: absolute; bottom: 16px; left: 24px; color: white;">
+              <h2 style="font-size: 18px; font-weight: bold; margin: 0;">${orgSettings?.photography_business_name || 'Your Photography Studio'}</h2>
+              <p style="font-size: 12px; opacity: 0.9; margin: 4px 0 0 0;">Professional Photography</p>
+            </div>
           </div>
-          <div style="padding: 30px; background: white; border-left: 4px solid ${orgSettings?.primary_brand_color || '#1EB29F'};">
-            <div style="white-space: pre-wrap; line-height: 1.6; color: #333;">${emailContent}</div>
+          
+          <!-- Email Content -->
+          <div style="padding: 24px;">
+            <div style="color: #334155; line-height: 1.6; font-size: 15px; white-space: pre-wrap;">${emailContent}</div>
           </div>
-          <div style="padding: 20px; background: #f8f9fa; text-align: center; font-size: 12px; color: #666;">
-            <p>This was a test email sent from your template system.</p>
-            <p style="margin: 0;">Template: ${templateName} | Organization: ${organizationId}</p>
+          
+          <!-- Professional Footer -->
+          <div style="padding: 16px 24px; border-top: 1px solid #e2e8f0; background: #f8fafc;">
+            <div style="display: flex; justify-content: space-between; font-size: 12px; color: #64748b;">
+              <div>
+                <strong>${orgSettings?.photography_business_name || 'Your Photography Studio'}</strong>
+                <div style="margin-top: 4px;">Professional Photography Services</div>
+              </div>
+              <div style="text-align: right;">
+                <div>${new Date().toLocaleDateString()}</div>
+                <div style="margin-top: 4px; color: #94a3b8;">Powered by Photography CRM</div>
+              </div>
+            </div>
           </div>
+          
+          <!-- Brand Color Accent -->
+          <div style="height: 4px; background-color: ${orgSettings?.primary_brand_color || '#1EB29F'};"></div>
         </div>
       `,
     });
@@ -103,7 +153,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     return new Response(JSON.stringify({ 
       success: true, 
-      message: "Test email sent successfully",
+      message: "Email sent successfully",
       emailId: emailResponse.data?.id 
     }), {
       status: 200,
@@ -116,10 +166,10 @@ const handler = async (req: Request): Promise<Response> => {
   } catch (error: any) {
     console.error("Error sending test email:", error);
     return new Response(
-      JSON.stringify({ 
-        success: false, 
-        error: error.message || "Failed to send test email" 
-      }),
+        JSON.stringify({ 
+          success: false, 
+          error: error.message || "Failed to send email" 
+        }),
       {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },

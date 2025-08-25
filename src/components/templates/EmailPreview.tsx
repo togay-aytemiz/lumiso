@@ -18,89 +18,116 @@ export function EmailPreview({
   subject, 
   content, 
   htmlContent, 
-  sender = "Sunset Photography Studio <hello@sunsetphoto.com>", 
-  recipient = "Jane Smith <jane.smith@example.com>",
-  studioName = "Sunset Photography Studio",
+  sender = "Your Photography Studio <hello@yourstudio.com>", 
+  recipient = "Sarah Johnson <sarah.johnson@example.com>",
+  studioName = "Your Photography Studio",
   brandColor = "#1EB29F",
   logoUrl
 }: EmailPreviewProps) {
   return (
-    <Card className="w-full max-w-2xl mx-auto shadow-lg">
-      {/* Email Client Header */}
-      <div className="flex items-center gap-3 p-4 border-b bg-slate-50">
+    <div style={{ 
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif', 
+      maxWidth: '600px', 
+      margin: '0 auto', 
+      background: 'white', 
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+      border: '1px solid #e5e7eb',
+      borderRadius: '8px',
+      overflow: 'hidden'
+    }}>
+      {/* Email Client Header - For Preview Only */}
+      <div style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        gap: '12px', 
+        padding: '16px', 
+        borderBottom: '1px solid #e5e7eb', 
+        background: '#f8fafc' 
+      }}>
         <Mail className="w-5 h-5 text-slate-500" />
-        <div className="flex-1">
-          <div className="text-sm font-semibold text-slate-900">{subject}</div>
-          <div className="text-xs text-slate-600">From: {sender}</div>
-          <div className="text-xs text-slate-600">To: {recipient}</div>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: '14px', fontWeight: '600', color: '#1f2937' }}>{subject}</div>
+          <div style={{ fontSize: '12px', color: '#6b7280' }}>From: {sender}</div>
+          <div style={{ fontSize: '12px', color: '#6b7280' }}>To: {recipient}</div>
         </div>
         <Badge variant="secondary" className="text-xs">
           Preview
         </Badge>
       </div>
 
-      {/* Professional Email Body */}
-      <div className="bg-white">
+      {/* Email Body - Matches actual sent email exactly */}
+      <div>
         {/* Header Banner */}
-        <div className="relative h-32 overflow-hidden">
-          <img 
-            src={newbornBg} 
-            alt="Studio Banner" 
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/50 to-transparent"></div>
-          <div className="absolute bottom-4 left-6 flex items-center gap-3">
-            {logoUrl && (
-              <img 
-                src={logoUrl} 
-                alt="Studio Logo" 
-                className="w-10 h-10 rounded-full bg-white p-1"
-              />
-            )}
-            <div className="text-white">
-              <h2 className="text-lg font-bold">{studioName}</h2>
-              <p className="text-xs opacity-90">Professional Photography</p>
-            </div>
+        <div style={{ 
+          position: 'relative', 
+          height: '128px', 
+          overflow: 'hidden', 
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' 
+        }}>
+          <div style={{ 
+            position: 'absolute', 
+            bottom: '16px', 
+            left: '24px', 
+            color: 'white' 
+          }}>
+            <h2 style={{ 
+              fontSize: '18px', 
+              fontWeight: 'bold', 
+              margin: '0' 
+            }}>{studioName}</h2>
+            <p style={{ 
+              fontSize: '12px', 
+              opacity: '0.9', 
+              margin: '4px 0 0 0' 
+            }}>Professional Photography</p>
           </div>
         </div>
-
+        
         {/* Email Content */}
-        <div className="p-6">
-          {htmlContent ? (
-            <div 
-              className="prose prose-sm max-w-none text-slate-700 leading-relaxed"
-              dangerouslySetInnerHTML={{ __html: htmlContent }}
-            />
-          ) : (
-            <div 
-              className="text-slate-700 leading-relaxed whitespace-pre-wrap"
-              style={{ fontSize: '15px', lineHeight: '1.6' }}
-            >
-              {content}
-            </div>
-          )}
+        <div style={{ padding: '24px' }}>
+          <div style={{ 
+            color: '#334155', 
+            lineHeight: '1.6', 
+            fontSize: '15px', 
+            whiteSpace: 'pre-wrap' 
+          }}>
+            {htmlContent ? (
+              <div dangerouslySetInnerHTML={{ __html: htmlContent }} />
+            ) : (
+              content
+            )}
+          </div>
         </div>
-
+        
         {/* Professional Footer */}
-        <div className="px-6 py-4 border-t bg-slate-50">
-          <div className="flex items-center justify-between text-xs text-slate-600">
+        <div style={{ 
+          padding: '16px 24px', 
+          borderTop: '1px solid #e2e8f0', 
+          background: '#f8fafc' 
+        }}>
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            fontSize: '12px', 
+            color: '#64748b' 
+          }}>
             <div>
               <strong>{studioName}</strong>
-              <div className="mt-1">Professional Photography Services</div>
+              <div style={{ marginTop: '4px' }}>Professional Photography Services</div>
             </div>
-            <div className="text-right">
+            <div style={{ textAlign: 'right' }}>
               <div>{new Date().toLocaleDateString()}</div>
-              <div className="mt-1 text-slate-500">Powered by Photography CRM</div>
+              <div style={{ marginTop: '4px', color: '#94a3b8' }}>Powered by Photography CRM</div>
             </div>
           </div>
         </div>
-
+        
         {/* Brand Color Accent */}
-        <div 
-          className="h-1" 
-          style={{ backgroundColor: brandColor }}
-        ></div>
+        <div style={{ 
+          height: '4px', 
+          backgroundColor: brandColor 
+        }}></div>
       </div>
-    </Card>
+    </div>
   );
 }

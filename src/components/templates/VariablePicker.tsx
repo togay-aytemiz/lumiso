@@ -69,7 +69,7 @@ export function VariablePicker({ onVariableSelect, className }: VariablePickerPr
             {group.variables.map((variable) => (
               <DropdownMenuItem
                 key={variable.key}
-                onClick={() => onVariableSelect(variable.key)}
+                onClick={() => onVariableSelect(`{{${variable.key}}}`)}
                 className="cursor-pointer"
               >
                 {variable.label}

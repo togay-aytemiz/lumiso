@@ -596,7 +596,7 @@ export default function Templates() {
           <div>
             <div className="flex items-center justify-between">
               <Label htmlFor="master_content">Master Content</Label>
-              <VariablePicker onInsert={insertVariable} />
+              <VariablePicker onVariableSelect={insertVariable} />
             </div>
             <Textarea
               id="master_content"

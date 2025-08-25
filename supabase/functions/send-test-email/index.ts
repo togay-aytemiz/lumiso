@@ -8,7 +8,9 @@ const corsHeaders = {
 };
 
 interface TestEmailRequest {
-  templateId: string;
+  templateName: string;
+  subject: string;
+  content: string;
   recipientEmail: string;
   organizationId: string;
 }
@@ -30,19 +32,7 @@ const handler = async (req: Request): Promise<Response> => {
       }
     );
 
-    const { templateId, recipientEmail, organizationId }: TestEmailRequest = await req.json();
-
-    // Fetch template data
-    const { data: template, error: templateError } = await supabaseClient
-      .from('message_templates')
-      .select('*')
-      .eq('id', templateId)
-      .eq('organization_id', organizationId)
-      .single();
-
-    if (templateError || !template) {
-      throw new Error('Template not found');
-    }
+    const { templateName, subject, content, recipientEmail, organizationId }: TestEmailRequest = await req.json();
 
     // Fetch organization settings for branding
     const { data: orgSettings } = await supabaseClient
@@ -51,7 +41,7 @@ const handler = async (req: Request): Promise<Response> => {
       .eq('organization_id', organizationId)
       .single();
 
-    // Replace placeholders with sample data
+    // Replace placeholders with sample data - using known org data where possible
     const sampleData = {
       '{{customer_name}}': 'John Smith',
       '{{customer_email}}': 'john.smith@example.com',
@@ -66,11 +56,16 @@ const handler = async (req: Request): Promise<Response> => {
       '{{booking_link}}': 'https://yourstudio.com/book',
       '{{reschedule_link}}': 'https://yourstudio.com/reschedule',
       '{{payment_amount}}': '$1,200',
-      '{{payment_due_date}}': 'April 1, 2024'
+      '{{payment_due_date}}': 'April 1, 2024',
+      '{{project_name}}': 'Sample Wedding Project',
+      '{{client_name}}': 'John Smith',
+      '{{lead_name}}': 'John Smith',
+      '{{reminder_title}}': 'Sample Reminder',
+      '{{reminder_date}}': 'March 20, 2024'
     };
 
-    let emailContent = template.master_content;
-    let emailSubject = template.master_subject || template.name;
+    let emailContent = content;
+    let emailSubject = subject;
 
     // Replace all placeholders
     Object.entries(sampleData).forEach(([placeholder, value]) => {
@@ -91,14 +86,14 @@ const handler = async (req: Request): Promise<Response> => {
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; text-align: center;">
             <h1 style="color: white; margin: 0;">📧 Test Email Preview</h1>
-            <p style="color: rgba(255,255,255,0.8); margin: 10px 0 0 0;">This is a test of your template: "${template.name}"</p>
+            <p style="color: rgba(255,255,255,0.8); margin: 10px 0 0 0;">This is a test of your template: "${templateName}"</p>
           </div>
           <div style="padding: 30px; background: white; border-left: 4px solid ${orgSettings?.primary_brand_color || '#1EB29F'};">
             <div style="white-space: pre-wrap; line-height: 1.6; color: #333;">${emailContent}</div>
           </div>
           <div style="padding: 20px; background: #f8f9fa; text-align: center; font-size: 12px; color: #666;">
             <p>This was a test email sent from your template system.</p>
-            <p style="margin: 0;">Template ID: ${templateId} | Organization: ${organizationId}</p>
+            <p style="margin: 0;">Template: ${templateName} | Organization: ${organizationId}</p>
           </div>
         </div>
       `,

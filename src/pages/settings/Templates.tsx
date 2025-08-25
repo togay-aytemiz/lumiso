@@ -384,20 +384,13 @@ export default function Templates() {
       if (!user) throw new Error('User not authenticated');
 
       // Use current template data for test
-      const testTemplateData = {
-        id: editingTemplate?.id || 'draft',
-        name: formData.name,
-        master_content: formData.master_content,
-        master_subject: formData.subject,
-        organization_id: activeOrganization?.id
-      };
-
       const { data, error } = await supabase.functions.invoke('send-test-email', {
         body: {
-          templateId: testTemplateData.id,
+          templateName: formData.name || 'Draft Template',
+          subject: formData.subject || formData.name || 'Test Subject',
+          content: formData.master_content || 'Test content',
           recipientEmail: user.email,
-          organizationId: activeOrganization?.id,
-          templateData: testTemplateData
+          organizationId: activeOrganization?.id
         }
       });
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Plus, Edit, Trash2, Eye, Copy, FileText, MessageSquare, FileTextIcon, HelpCircle, Quote, Send } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -102,6 +102,13 @@ export default function Templates() {
     whatsapp_content: "",
   });
   const [isSendingTest, setIsSendingTest] = useState(false);
+
+  // Refs for textareas to avoid DOM manipulation
+  const masterContentRef = useRef<HTMLTextAreaElement>(null);
+  const emailSubjectRef = useRef<HTMLInputElement>(null);
+  const emailContentRef = useRef<HTMLTextAreaElement>(null);
+  const smsContentRef = useRef<HTMLTextAreaElement>(null);
+  const whatsappContentRef = useRef<HTMLTextAreaElement>(null);
 
   const { activeOrganization } = useOrganization();
   const { settings } = useOrganizationSettings();
@@ -291,8 +298,31 @@ export default function Templates() {
   };
 
   const insertVariable = (variable: string, targetField = 'master_content') => {
-    const textarea = document.querySelector(`textarea[name="${targetField}"], textarea[id="${targetField}"]`) as HTMLTextAreaElement;
-    if (textarea) {
+    let targetRef: React.RefObject<HTMLTextAreaElement | HTMLInputElement> | null = null;
+    
+    // Get the appropriate ref based on the target field
+    switch (targetField) {
+      case 'master_content':
+        targetRef = masterContentRef;
+        break;
+      case 'email_subject':
+        targetRef = emailSubjectRef;
+        break;
+      case 'email_content':
+        targetRef = emailContentRef;
+        break;
+      case 'sms_content':
+        targetRef = smsContentRef;
+        break;
+      case 'whatsapp_content':
+        targetRef = whatsappContentRef;
+        break;
+      default:
+        targetRef = masterContentRef;
+    }
+
+    if (targetRef?.current) {
+      const textarea = targetRef.current;
       const start = textarea.selectionStart;
       const end = textarea.selectionEnd;
       const text = textarea.value;
@@ -300,7 +330,8 @@ export default function Templates() {
       const after = text.substring(end, text.length);
       const newValue = before + variable + after;
       
-      setFormData({ ...formData, [targetField]: newValue });
+      // Update form data using functional update to ensure we have the latest state
+      setFormData(prev => ({ ...prev, [targetField]: newValue }));
       
       // Set cursor position after the inserted variable
       setTimeout(() => {
@@ -744,6 +775,7 @@ export default function Templates() {
             <Textarea
               id="master_content"
               name="master_content"
+              ref={masterContentRef}
               value={formData.master_content}
               onChange={(e) => setFormData({ ...formData, master_content: e.target.value })}
               placeholder="Enter your template content..."
@@ -776,6 +808,7 @@ export default function Templates() {
                   <Input
                     id="email_subject"
                     name="email_subject"
+                    ref={emailSubjectRef}
                     value={formData.email_subject}
                     onChange={(e) => setFormData({ ...formData, email_subject: e.target.value })}
                     placeholder="Custom email subject (leave empty to use master subject)"
@@ -789,6 +822,7 @@ export default function Templates() {
                   <Textarea
                     id="email_content"
                     name="email_content"
+                    ref={emailContentRef}
                     value={formData.email_content}
                     onChange={(e) => setFormData({ ...formData, email_content: e.target.value })}
                     placeholder="Custom email content (leave empty to use master content)..."
@@ -806,6 +840,7 @@ export default function Templates() {
                   <Textarea
                     id="sms_content"
                     name="sms_content"
+                    ref={smsContentRef}
                     value={formData.sms_content}
                     onChange={(e) => setFormData({ ...formData, sms_content: e.target.value })}
                     placeholder="Custom SMS content (leave empty to use master content, keep it short)..."
@@ -826,6 +861,7 @@ export default function Templates() {
                   <Textarea
                     id="whatsapp_content"
                     name="whatsapp_content"
+                    ref={whatsappContentRef}
                     value={formData.whatsapp_content}
                     onChange={(e) => setFormData({ ...formData, whatsapp_content: e.target.value })}
                     placeholder="Custom WhatsApp content (leave empty to use master content)..."

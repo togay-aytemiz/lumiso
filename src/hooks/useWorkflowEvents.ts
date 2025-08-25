@@ -16,7 +16,9 @@ export function useWorkflowEvents() {
 
   useEffect(() => {
     const fetchEvents = async () => {
-      if (!activeOrganization?.id) return;
+      if (!activeOrganization?.id) {
+        return;
+      }
 
       try {
         setLoading(true);

@@ -91,41 +91,16 @@ export default function Services() {
     }
   }, [currentStep, showTutorial]);
 
-  // Handle tutorial completion with BULLETPROOF step 6 completion
+  // Handle tutorial completion
   const handleTutorialComplete = async () => {
     try {
-      console.log('🎉 BULLETPROOF Packages tutorial completed - completing step 6');
+      console.log('🎉 Packages tutorial completed - completing step 6');
       setShowTutorial(false);
       
-      // Ensure we're on step 6 before completion
-      if (currentStep !== 6) {
-        console.warn('⚠️ BULLETPROOF Packages tutorial: Not on step 6, current:', currentStep);
-        navigate('/getting-started');
-        return;
-      }
+      // Complete step 6 and mark guidance as complete
+      await completeCurrentStep();
       
-      // Complete step 6 with retry logic
-      let retryCount = 0;
-      const maxRetries = 3;
-      
-      while (retryCount < maxRetries) {
-        try {
-          console.log(`🎯 BULLETPROOF Packages tutorial: Attempting step 6 completion (attempt ${retryCount + 1})`);
-          await completeCurrentStep();
-          console.log('✅ BULLETPROOF Packages tutorial: Step 6 completion successful');
-          break;
-        } catch (error) {
-          retryCount++;
-          console.error(`❌ BULLETPROOF Packages tutorial: Step 6 completion failed (attempt ${retryCount}):`, error);
-          if (retryCount >= maxRetries) {
-            throw error;
-          }
-          // Wait before retry
-          await new Promise(resolve => setTimeout(resolve, 200));
-        }
-      }
-      
-      console.log('🚀 BULLETPROOF Packages tutorial: Navigating to getting-started');
+      console.log('✅ Step 6 completed, navigating to getting-started');
       
       // Small delay to ensure database update, then navigate
       setTimeout(() => {
@@ -133,9 +108,7 @@ export default function Services() {
       }, 500);
       
     } catch (error) {
-      console.error('❌ BULLETPROOF Packages tutorial: Critical error completing packages tutorial:', error);
-      // Still navigate even if completion fails
-      navigate('/getting-started');
+      console.error('❌ Error completing packages tutorial:', error);
     }
   };
 

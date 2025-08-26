@@ -264,6 +264,12 @@ All colors MUST be HSL.
     touch-action: pan-y;
   }
 
+  /* Guidance highlight effect */
+  .guidance-highlight {
+    @apply ring-2 ring-primary ring-offset-2 ring-offset-background animate-pulse;
+    animation: guidance-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
   /* Walkthrough highlighting */
   .walkthrough-highlight {
     position: relative;
@@ -273,15 +279,15 @@ All colors MUST be HSL.
   .walkthrough-highlight:before {
     content: '';
     position: absolute;
-    top: -4px;
-    left: -4px;
-    right: -4px;
-    bottom: -4px;
-    background: rgba(59, 130, 246, 0.1);
-    border: 2px solid rgb(59, 130, 246);
-    border-radius: 8px;
-    pointer-events: none;
+    top: -6px;
+    left: -6px;
+    right: -6px;
+    bottom: -6px;
+    background: linear-gradient(45deg, hsl(172 71% 41%), hsl(172 71% 55%));
+    border-radius: 12px;
     z-index: -1;
+    animation: walkthrough-pulse 2s infinite;
+    box-shadow: 0 0 20px hsl(172 71% 41% / 0.5);
   }
 
   .walkthrough-clickable {
@@ -291,6 +297,17 @@ All colors MUST be HSL.
 
   .walkthrough-clickable:hover {
     transform: scale(1.02);
+  }
+
+  @keyframes guidance-pulse {
+    0%, 100% {
+      @apply ring-primary;
+      transform: scale(1);
+    }
+    50% {
+      @apply ring-primary/50;
+      transform: scale(1.02);
+    }
   }
 
   @keyframes walkthrough-pulse {

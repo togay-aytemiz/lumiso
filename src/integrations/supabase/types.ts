@@ -442,48 +442,6 @@ export type Database = {
           },
         ]
       }
-      message_templates: {
-        Row: {
-          category: string
-          created_at: string
-          id: string
-          is_active: boolean
-          master_content: string
-          master_subject: string | null
-          name: string
-          organization_id: string
-          placeholders: Json | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          category: string
-          created_at?: string
-          id?: string
-          is_active?: boolean
-          master_content: string
-          master_subject?: string | null
-          name: string
-          organization_id: string
-          placeholders?: Json | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          category?: string
-          created_at?: string
-          id?: string
-          is_active?: boolean
-          master_content?: string
-          master_subject?: string | null
-          name?: string
-          organization_id?: string
-          placeholders?: Json | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       organization_members: {
         Row: {
           created_at: string
@@ -1138,86 +1096,6 @@ export type Database = {
           },
         ]
       }
-      silent_hours_config: {
-        Row: {
-          channel: string
-          created_at: string
-          enabled: boolean
-          end_time: string
-          id: string
-          organization_id: string
-          start_time: string
-          timezone: string
-          updated_at: string
-        }
-        Insert: {
-          channel: string
-          created_at?: string
-          enabled?: boolean
-          end_time?: string
-          id?: string
-          organization_id: string
-          start_time?: string
-          timezone?: string
-          updated_at?: string
-        }
-        Update: {
-          channel?: string
-          created_at?: string
-          enabled?: boolean
-          end_time?: string
-          id?: string
-          organization_id?: string
-          start_time?: string
-          timezone?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      template_channel_views: {
-        Row: {
-          channel: string
-          content: string | null
-          created_at: string
-          html_content: string | null
-          id: string
-          metadata: Json | null
-          subject: string | null
-          template_id: string
-          updated_at: string
-        }
-        Insert: {
-          channel: string
-          content?: string | null
-          created_at?: string
-          html_content?: string | null
-          id?: string
-          metadata?: Json | null
-          subject?: string | null
-          template_id: string
-          updated_at?: string
-        }
-        Update: {
-          channel?: string
-          content?: string | null
-          created_at?: string
-          html_content?: string | null
-          id?: string
-          metadata?: Json | null
-          subject?: string | null
-          template_id?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "template_channel_views_template_id_fkey"
-            columns: ["template_id"]
-            isOneToOne: false
-            referencedRelation: "message_templates"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       todos: {
         Row: {
           content: string
@@ -1278,10 +1156,16 @@ export type Database = {
       user_settings: {
         Row: {
           active_organization_id: string | null
+          completed_steps: Json | null
+          completed_steps_count: number | null
           created_at: string
           current_onboarding_step: number | null
+          current_step: number | null
           date_format: string | null
+          guidance_completed: boolean | null
+          guided_setup_skipped: boolean | null
           id: string
+          in_guided_setup: boolean | null
           logo_url: string | null
           notification_daily_summary_enabled: boolean | null
           notification_daily_summary_send_at: string | null
@@ -1302,10 +1186,16 @@ export type Database = {
         }
         Insert: {
           active_organization_id?: string | null
+          completed_steps?: Json | null
+          completed_steps_count?: number | null
           created_at?: string
           current_onboarding_step?: number | null
+          current_step?: number | null
           date_format?: string | null
+          guidance_completed?: boolean | null
+          guided_setup_skipped?: boolean | null
           id?: string
+          in_guided_setup?: boolean | null
           logo_url?: string | null
           notification_daily_summary_enabled?: boolean | null
           notification_daily_summary_send_at?: string | null
@@ -1326,10 +1216,16 @@ export type Database = {
         }
         Update: {
           active_organization_id?: string | null
+          completed_steps?: Json | null
+          completed_steps_count?: number | null
           created_at?: string
           current_onboarding_step?: number | null
+          current_step?: number | null
           date_format?: string | null
+          guidance_completed?: boolean | null
+          guided_setup_skipped?: boolean | null
           id?: string
+          in_guided_setup?: boolean | null
           logo_url?: string | null
           notification_daily_summary_enabled?: boolean | null
           notification_daily_summary_send_at?: string | null
@@ -1347,139 +1243,6 @@ export type Database = {
           updated_at?: string
           user_id?: string
           welcome_modal_shown?: boolean
-        }
-        Relationships: []
-      }
-      workflow_executions: {
-        Row: {
-          completed_at: string | null
-          created_at: string
-          error_message: string | null
-          execution_log: Json | null
-          id: string
-          started_at: string | null
-          status: string
-          trigger_entity_id: string
-          trigger_entity_type: string
-          workflow_id: string
-        }
-        Insert: {
-          completed_at?: string | null
-          created_at?: string
-          error_message?: string | null
-          execution_log?: Json | null
-          id?: string
-          started_at?: string | null
-          status?: string
-          trigger_entity_id: string
-          trigger_entity_type: string
-          workflow_id: string
-        }
-        Update: {
-          completed_at?: string | null
-          created_at?: string
-          error_message?: string | null
-          execution_log?: Json | null
-          id?: string
-          started_at?: string | null
-          status?: string
-          trigger_entity_id?: string
-          trigger_entity_type?: string
-          workflow_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "workflow_executions_workflow_id_fkey"
-            columns: ["workflow_id"]
-            isOneToOne: false
-            referencedRelation: "workflows"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      workflow_steps: {
-        Row: {
-          action_config: Json
-          action_type: string
-          conditions: Json | null
-          created_at: string
-          delay_minutes: number | null
-          id: string
-          is_active: boolean
-          step_order: number
-          updated_at: string
-          workflow_id: string
-        }
-        Insert: {
-          action_config?: Json
-          action_type: string
-          conditions?: Json | null
-          created_at?: string
-          delay_minutes?: number | null
-          id?: string
-          is_active?: boolean
-          step_order?: number
-          updated_at?: string
-          workflow_id: string
-        }
-        Update: {
-          action_config?: Json
-          action_type?: string
-          conditions?: Json | null
-          created_at?: string
-          delay_minutes?: number | null
-          id?: string
-          is_active?: boolean
-          step_order?: number
-          updated_at?: string
-          workflow_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "workflow_steps_workflow_id_fkey"
-            columns: ["workflow_id"]
-            isOneToOne: false
-            referencedRelation: "workflows"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      workflows: {
-        Row: {
-          created_at: string
-          description: string | null
-          id: string
-          is_active: boolean
-          name: string
-          organization_id: string
-          trigger_conditions: Json | null
-          trigger_type: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          is_active?: boolean
-          name: string
-          organization_id: string
-          trigger_conditions?: Json | null
-          trigger_type: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          is_active?: boolean
-          name?: string
-          organization_id?: string
-          trigger_conditions?: Json | null
-          trigger_type?: string
-          updated_at?: string
-          user_id?: string
         }
         Relationships: []
       }
@@ -1521,19 +1284,23 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      advance_guided_step: {
+        Args: { skip_step?: boolean; step_number: number; user_uuid: string }
+        Returns: undefined
+      }
       check_email_not_in_any_organization: {
         Args: { email_to_check: string }
         Returns: boolean
+      }
+      complete_onboarding_step: {
+        Args: { user_uuid: string }
+        Returns: undefined
       }
       ensure_default_lead_field_definitions: {
         Args: { org_id: string; user_uuid: string }
         Returns: undefined
       }
       ensure_default_lead_statuses_for_org: {
-        Args: { org_id: string; user_uuid: string }
-        Returns: undefined
-      }
-      ensure_default_message_templates: {
         Args: { org_id: string; user_uuid: string }
         Returns: undefined
       }
@@ -1625,6 +1392,14 @@ export type Database = {
         Args: { org_id: string }
         Returns: undefined
       }
+      reset_guided_setup: {
+        Args: { user_uuid: string }
+        Returns: undefined
+      }
+      set_guided_step: {
+        Args: { target_step: number; user_uuid: string }
+        Returns: undefined
+      }
       user_can_access_project: {
         Args: { project_uuid: string; user_uuid: string }
         Returns: boolean
@@ -1669,7 +1444,12 @@ export type Database = {
         | "booked"
         | "completed"
         | "lost"
-      onboarding_stage: "not_started" | "in_progress" | "completed" | "skipped"
+      onboarding_stage:
+        | "not_started"
+        | "modal_shown"
+        | "in_progress"
+        | "completed"
+        | "skipped"
       session_status:
         | "planned"
         | "completed"
@@ -1820,7 +1600,13 @@ export const Constants = {
         "completed",
         "lost",
       ],
-      onboarding_stage: ["not_started", "in_progress", "completed", "skipped"],
+      onboarding_stage: [
+        "not_started",
+        "modal_shown",
+        "in_progress",
+        "completed",
+        "skipped",
+      ],
       session_status: [
         "planned",
         "completed",

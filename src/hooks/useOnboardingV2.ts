@@ -215,17 +215,12 @@ export function useOnboardingV2() {
   };
 
   const getCompletedSteps = () => {
-    if (state.stage === 'in_progress') {
-      return ONBOARDING_STEPS.slice(0, state.currentStep - 1);
-    }
-    if (state.stage === 'completed') {
-      return ONBOARDING_STEPS; // Show all steps as completed
-    }
-    return [];
+    if (state.stage !== 'in_progress') return [];
+    return ONBOARDING_STEPS.slice(0, state.currentStep - 1);
   };
 
   const isAllStepsComplete = () => {
-    return state.stage === 'completed' || (state.stage === 'in_progress' && state.currentStep > TOTAL_STEPS);
+    return state.stage === 'in_progress' && state.currentStep > TOTAL_STEPS;
   };
 
   // BULLETPROOF: Mark modal as shown PERMANENTLY
@@ -282,7 +277,7 @@ export function useOnboardingV2() {
     
     try {
       // Bulletproof: Prevent completing beyond total steps
-      if (state.currentStep > TOTAL_STEPS) {
+      if (state.currentStep >= TOTAL_STEPS) {
         console.warn('🚫 completeCurrentStep: Attempted to complete step beyond total steps');
         return;
       }
@@ -327,7 +322,7 @@ export function useOnboardingV2() {
     
     try {
       // Prevent completing beyond total steps
-      if (state.currentStep > TOTAL_STEPS) {
+      if (state.currentStep >= TOTAL_STEPS) {
         console.warn('🚫 completeMultipleSteps: Already at or beyond total steps');
         return;
       }

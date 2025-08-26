@@ -13,8 +13,7 @@ import {
   BookOpen, 
   Settings,
   HelpCircle,
-  ChevronDown,
-  Workflow
+  ChevronDown
 } from "lucide-react";
 import logo from "@/assets/Logo.png";
 import { useOnboardingV2 } from "@/hooks/useOnboardingV2";
@@ -43,7 +42,6 @@ const moduleItems = [
 const toolItems = [
   { title: "Analytics", url: "/analytics", icon: BarChart3 },
   { title: "Payments", url: "/payments", icon: CreditCard },
-  { title: "Workflows", url: "/workflows", icon: Workflow },
 ];
 
 // Bookings sub-items

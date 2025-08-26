@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigationHistory } from "@/hooks/useNavigationHistory";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -99,7 +98,6 @@ const LeadDetail = () => {
   }>();
   const navigate = useNavigate();
   const location = useLocation();
-  const { setPreviousRoute } = useNavigationHistory();
   const [lead, setLead] = useState<Lead | null>(null);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
@@ -753,10 +751,7 @@ const LeadDetail = () => {
 
   const handleViewFullSessionDetails = () => {
     if (selectedSessionId) {
-      // Set the current lead details page as the previous route before navigating
-      setPreviousRoute(location.pathname + location.search);
       navigate(`/sessions/${selectedSessionId}`);
-      setIsSessionSheetOpen(false);
     }
   };
 

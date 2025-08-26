@@ -21,6 +21,7 @@ import { VariablePicker } from "@/components/templates/VariablePicker";
 import { EmailPreview } from "@/components/templates/EmailPreview";
 import { SMSPreview } from "@/components/templates/SMSPreview";
 import { WhatsAppPreview } from "@/components/templates/WhatsAppPreview";
+import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 
 interface MessageTemplate {
@@ -141,6 +142,7 @@ export default function Templates() {
 
   const { activeOrganization } = useOrganization();
   const { settings } = useOrganizationSettings();
+  const navigate = useNavigate();
   const { toast } = useToast();
 
   const fetchTemplates = async () => {
@@ -517,24 +519,35 @@ export default function Templates() {
                 </p>
               </div>
               {category.id === "messages" ? (
-                <Button onClick={() => {
-                  setFormData({
-                    name: "",
-                    master_content: "",
-                    subject: "",
-                    category: category.id,
-                    is_active: true,
-                    email_content: "",
-                    email_subject: "",
-                    sms_content: "",
-                    whatsapp_content: "",
-                  });
-                  setEditingTemplate(null);
-                  setIsModalOpen(true);
-                }}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add {category.title.slice(0, -1)}
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => navigate(`/settings/templates/builder/new`)}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    New Template
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setFormData({
+                        name: "",
+                        master_content: "",
+                        subject: "",
+                        category: category.id,
+                        is_active: true,
+                        email_content: "",
+                        email_subject: "",
+                        sms_content: "",
+                        whatsapp_content: "",
+                      });
+                      setEditingTemplate(null);
+                      setIsModalOpen(true);
+                    }}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Legacy Editor
+                  </Button>
+                </div>
               ) : (
                 <Button disabled variant="outline">
                   Coming Soon

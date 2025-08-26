@@ -31,6 +31,7 @@ import ClientMessagingSettings from "./pages/settings/ClientMessaging";
 import ContractsSettings from "./pages/settings/Contracts";
 import BillingSettings from "./pages/settings/Billing";
 import TemplatesSettings from "./pages/settings/Templates";
+import TemplateBuilder from "./pages/TemplateBuilder";
 import WorkflowsSettings from "./pages/settings/Workflows";
 import Workflows from "./pages/Workflows";
 import DangerZone from "./pages/settings/DangerZone";
@@ -81,6 +82,7 @@ const App = () => (
                 <Route path="services" element={<ServicesSettings />} />
                 <Route path="integrations" element={<IntegrationsSettings />} />
                 <Route path="templates" element={<TemplatesSettings />} />
+                <Route path="templates/builder/:id" element={<TemplateBuilder />} />
                 <Route path="workflows" element={<WorkflowsSettings />} />
                 <Route path="client-messaging" element={<ClientMessagingSettings />} />
                 <Route path="contracts" element={<ContractsSettings />} />

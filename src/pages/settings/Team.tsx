@@ -25,21 +25,18 @@ import { useTeamManagement } from "@/hooks/useTeamManagement";
 import { useToast } from "@/hooks/use-toast";
 import { useSettingsCategorySection } from "@/hooks/useSettingsCategorySection";
 import { formatDistanceToNow } from "date-fns";
-
 interface Permission {
   id: string;
   name: string;
   description: string;
   category: string;
 }
-
 interface CustomRole {
   id: string;
   name: string;
   description: string;
   permissions: Permission[];
 }
-
 interface SystemRole {
   id: string;
   name: string;
@@ -47,11 +44,12 @@ interface SystemRole {
   permissions: Permission[];
   isEditable: boolean;
 }
-
 export default function Team() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("Member");
-  const [copiedStates, setCopiedStates] = useState<{ [key: string]: boolean }>({});
+  const [copiedStates, setCopiedStates] = useState<{
+    [key: string]: boolean;
+  }>({});
   const [permissions, setPermissions] = useState<Permission[]>([]);
   const [customRoles, setCustomRoles] = useState<CustomRole[]>([]);
   const [systemRoles, setSystemRoles] = useState<SystemRole[]>([]);
@@ -64,47 +62,43 @@ export default function Team() {
   const [selectedPreset, setSelectedPreset] = useState<string>('');
 
   // Define presets
-  const presets = [
-    {
-      id: 'viewer',
-      name: 'Viewer',
-      description: 'Can only view projects and leads',
-      permissions: ['view_projects', 'view_leads']
-    },
-    {
-      id: 'assistant',
-      name: 'Assistant', 
-      description: 'Can view and edit assigned items',
-      permissions: ['view_projects', 'view_leads', 'edit_assigned_projects', 'edit_assigned_leads']
-    },
-    {
-      id: 'photographer',
-      name: 'Photographer',
-      description: 'Can manage sessions and view projects',
-      permissions: ['view_projects', 'view_leads', 'manage_sessions', 'edit_assigned_projects']
-    },
-    {
-      id: 'manager',
-      name: 'Project Manager',
-      description: 'Can manage all projects and leads',
-      permissions: ['view_projects', 'view_leads', 'manage_all_projects', 'manage_all_leads', 'manage_sessions']
-    }
-  ];
+  const presets = [{
+    id: 'viewer',
+    name: 'Viewer',
+    description: 'Can only view projects and leads',
+    permissions: ['view_projects', 'view_leads']
+  }, {
+    id: 'assistant',
+    name: 'Assistant',
+    description: 'Can view and edit assigned items',
+    permissions: ['view_projects', 'view_leads', 'edit_assigned_projects', 'edit_assigned_leads']
+  }, {
+    id: 'photographer',
+    name: 'Photographer',
+    description: 'Can manage sessions and view projects',
+    permissions: ['view_projects', 'view_leads', 'manage_sessions', 'edit_assigned_projects']
+  }, {
+    id: 'manager',
+    name: 'Project Manager',
+    description: 'Can manage all projects and leads',
+    permissions: ['view_projects', 'view_leads', 'manage_all_projects', 'manage_all_leads', 'manage_sessions']
+  }];
   const [isLoading, setIsLoading] = useState(true);
   const [roleToDelete, setRoleToDelete] = useState<string | null>(null);
   const isMobile = useIsMobile();
-  
-  const { 
-    teamMembers, 
-    invitations, 
-    loading: teamLoading, 
+  const {
+    teamMembers,
+    invitations,
+    loading: teamLoading,
     currentUserRole,
-    sendInvitation, 
-    cancelInvitation, 
-    removeMember, 
-    updateMemberRole 
+    sendInvitation,
+    cancelInvitation,
+    removeMember,
+    updateMemberRole
   } = useTeamManagement();
-  const { toast } = useToast();
+  const {
+    toast
+  } = useToast();
 
   // Team management section state
   const teamSection = useSettingsCategorySection({
@@ -119,33 +113,36 @@ export default function Team() {
     const loadData = async () => {
       try {
         setIsLoading(true);
-        
+
         // Load permissions
-        const { data: permissionsData, error: permissionsError } = await supabase
-          .from('permissions')
-          .select('*')
-          .order('category', { ascending: true });
-        
+        const {
+          data: permissionsData,
+          error: permissionsError
+        } = await supabase.from('permissions').select('*').order('category', {
+          ascending: true
+        });
         if (permissionsError) throw permissionsError;
         setPermissions(permissionsData || []);
 
         // Load custom roles for current organization
-        const { data: { user } } = await supabase.auth.getUser();
+        const {
+          data: {
+            user
+          }
+        } = await supabase.auth.getUser();
         if (user) {
-          const { data: rolesData, error: rolesError } = await supabase
-            .from('custom_roles')
-            .select(`
+          const {
+            data: rolesData,
+            error: rolesError
+          } = await supabase.from('custom_roles').select(`
               *,
               role_permissions!inner(
                 permission_id,
                 permissions(*)
               )
-            `)
-            .eq('organization_id', user.id)
-            .order('sort_order');
-          
+            `).eq('organization_id', user.id).order('sort_order');
           if (rolesError) throw rolesError;
-          
+
           // Transform the data to include permissions array
           const transformedRoles = (rolesData || []).map(role => ({
             id: role.id,
@@ -153,113 +150,102 @@ export default function Team() {
             description: role.description || '',
             permissions: role.role_permissions?.map((rp: any) => rp.permissions) || []
           }));
-          
           setCustomRoles(transformedRoles);
 
           // Set up system roles (Owner and Member)
-          setSystemRoles([
-            {
-              id: 'owner',
-              name: 'Owner',
-              description: 'Full access to all features and settings',
-              permissions: permissionsData || [],
-              isEditable: false
-            },
-            {
-              id: 'member',
-              name: 'Member', 
-              description: 'Basic team member access',
-              permissions: (permissionsData || []).filter(p => 
-                ['view_projects', 'view_sessions', 'view_clients'].includes(p.name)
-              ),
-              isEditable: true
-            }
-          ]);
+          setSystemRoles([{
+            id: 'owner',
+            name: 'Owner',
+            description: 'Full access to all features and settings',
+            permissions: permissionsData || [],
+            isEditable: false
+          }, {
+            id: 'member',
+            name: 'Member',
+            description: 'Basic team member access',
+            permissions: (permissionsData || []).filter(p => ['view_projects', 'view_sessions', 'view_clients'].includes(p.name)),
+            isEditable: true
+          }]);
         }
       } catch (error) {
         console.error('Error loading team data:', error);
         toast({
           title: "Error",
           description: "Failed to load team data",
-          variant: "destructive",
+          variant: "destructive"
         });
       } finally {
         setIsLoading(false);
       }
     };
-
     loadData();
   }, []);
-
   const handleSendInvitation = async () => {
     if (!inviteEmail.trim()) return;
-    
     const result = await sendInvitation(inviteEmail, inviteRole);
     if (result.success) {
       setInviteEmail("");
       setInviteRole("Member");
     }
   };
-
   const handleCopyInvitationLink = async (invitationId: string) => {
     try {
       const invitation = invitations.find(inv => inv.id === invitationId);
       if (!invitation) return;
-      
       const invitationLink = `${window.location.origin}/accept-invitation?invitation=${invitationId}&email=${encodeURIComponent(invitation.email)}`;
       await navigator.clipboard.writeText(invitationLink);
-      
-      setCopiedStates(prev => ({ ...prev, [invitationId]: true }));
-      
+      setCopiedStates(prev => ({
+        ...prev,
+        [invitationId]: true
+      }));
       toast({
         title: "Invitation link copied!",
-        description: "You can now share this link with your team member.",
+        description: "You can now share this link with your team member."
       });
-      
       setTimeout(() => {
-        setCopiedStates(prev => ({ ...prev, [invitationId]: false }));
+        setCopiedStates(prev => ({
+          ...prev,
+          [invitationId]: false
+        }));
       }, 2000);
     } catch (error) {
       toast({
         title: "Copy failed",
         description: "Could not copy invitation link to clipboard.",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
-
   const handleCreateRole = async () => {
     if (!newRoleName.trim()) return;
-    
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: {
+          user
+        }
+      } = await supabase.auth.getUser();
       if (!user) return;
 
       // Create the role
-      const { data: roleData, error: roleError } = await supabase
-        .from('custom_roles')
-        .insert({
-          organization_id: user.id,
-          name: newRoleName.trim(),
-          description: newRoleDescription.trim(),
-          sort_order: customRoles.length + 1
-        })
-        .select()
-        .single();
-
+      const {
+        data: roleData,
+        error: roleError
+      } = await supabase.from('custom_roles').insert({
+        organization_id: user.id,
+        name: newRoleName.trim(),
+        description: newRoleDescription.trim(),
+        sort_order: customRoles.length + 1
+      }).select().single();
       if (roleError) throw roleError;
 
       // Add permissions to the role
       if (selectedPermissions.length > 0) {
-        const { error: permissionsError } = await supabase
-          .from('role_permissions')
-          .insert(
-            selectedPermissions.map(permissionId => ({
-              role_id: roleData.id,
-              permission_id: permissionId
-            }))
-          );
-
+        const {
+          error: permissionsError
+        } = await supabase.from('role_permissions').insert(selectedPermissions.map(permissionId => ({
+          role_id: roleData.id,
+          permission_id: permissionId
+        })));
         if (permissionsError) throw permissionsError;
       }
 
@@ -270,99 +256,78 @@ export default function Team() {
         description: roleData.description || '',
         permissions: permissions.filter(p => selectedPermissions.includes(p.id))
       };
-      
       setCustomRoles(prev => [...prev, newRole]);
-      
+
       // Reset form
       resetRoleForm();
-      
       toast({
         title: "Success",
-        description: "Role created successfully",
+        description: "Role created successfully"
       });
     } catch (error) {
       console.error('Error creating role:', error);
       toast({
         title: "Error",
         description: "Failed to create role",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
-
   const handleEditRole = async () => {
     if (!editingRole || !newRoleName.trim()) return;
-    
     try {
       if (isEditingSystem) {
         // For system roles, just update local state (Member role)
-        setSystemRoles(prev => prev.map(role => 
-          role.id === editingRole.id 
-            ? {
-                ...role,
-                name: newRoleName.trim(),
-                description: newRoleDescription.trim(),
-                permissions: permissions.filter(p => selectedPermissions.includes(p.id))
-              }
-            : role
-        ));
-        
+        setSystemRoles(prev => prev.map(role => role.id === editingRole.id ? {
+          ...role,
+          name: newRoleName.trim(),
+          description: newRoleDescription.trim(),
+          permissions: permissions.filter(p => selectedPermissions.includes(p.id))
+        } : role));
         toast({
           title: "Success",
-          description: "Role updated successfully",
+          description: "Role updated successfully"
         });
       } else {
         // Update custom role in database
-        const { error: roleError } = await supabase
-          .from('custom_roles')
-          .update({
-            name: newRoleName.trim(),
-            description: newRoleDescription.trim(),
-          })
-          .eq('id', editingRole.id);
-
+        const {
+          error: roleError
+        } = await supabase.from('custom_roles').update({
+          name: newRoleName.trim(),
+          description: newRoleDescription.trim()
+        }).eq('id', editingRole.id);
         if (roleError) throw roleError;
 
         // Delete existing permissions
-        const { error: deleteError } = await supabase
-          .from('role_permissions')
-          .delete()
-          .eq('role_id', editingRole.id);
-
+        const {
+          error: deleteError
+        } = await supabase.from('role_permissions').delete().eq('role_id', editingRole.id);
         if (deleteError) throw deleteError;
 
         // Add new permissions
         if (selectedPermissions.length > 0) {
-          const { error: permissionsError } = await supabase
-            .from('role_permissions')
-            .insert(
-              selectedPermissions.map(permissionId => ({
-                role_id: editingRole.id,
-                permission_id: permissionId
-              }))
-            );
-
+          const {
+            error: permissionsError
+          } = await supabase.from('role_permissions').insert(selectedPermissions.map(permissionId => ({
+            role_id: editingRole.id,
+            permission_id: permissionId
+          })));
           if (permissionsError) throw permissionsError;
         }
 
         // Update local state
-        setCustomRoles(prev => prev.map(role => 
-          role.id === editingRole.id 
-            ? {
-                ...role,
-                name: newRoleName.trim(),
-                description: newRoleDescription.trim(),
-                permissions: permissions.filter(p => selectedPermissions.includes(p.id))
-              }
-            : role
-        ));
-        
+        setCustomRoles(prev => prev.map(role => role.id === editingRole.id ? {
+          ...role,
+          name: newRoleName.trim(),
+          description: newRoleDescription.trim(),
+          permissions: permissions.filter(p => selectedPermissions.includes(p.id))
+        } : role));
         toast({
           title: "Success",
-          description: "Role updated successfully",
+          description: "Role updated successfully"
         });
       }
-      
+
       // Reset form
       resetRoleForm();
     } catch (error) {
@@ -370,11 +335,10 @@ export default function Team() {
       toast({
         title: "Error",
         description: "Failed to update role",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
-
   const resetRoleForm = () => {
     setNewRoleName("");
     setNewRoleDescription("");
@@ -384,26 +348,21 @@ export default function Team() {
     setEditingRole(null);
     setIsEditingSystem(false);
   };
-
   const handlePresetChange = (presetId: string) => {
     setSelectedPreset(presetId);
     if (presetId === 'custom' || !presetId) {
       // Keep current form values for custom
       return;
     }
-    
     const preset = presets.find(p => p.id === presetId);
     if (preset) {
       // Filter to only include permissions that exist in the system
-      const validPermissions = preset.permissions.filter(permId => 
-        permissions.some(p => p.id === permId)
-      );
+      const validPermissions = preset.permissions.filter(permId => permissions.some(p => p.id === permId));
       setSelectedPermissions(validPermissions);
       setNewRoleName(preset.name);
       setNewRoleDescription(preset.description);
     }
   };
-
   const openEditRole = (role: CustomRole | SystemRole, isSystem: boolean = false) => {
     setEditingRole(role);
     setIsEditingSystem(isSystem);
@@ -412,33 +371,27 @@ export default function Team() {
     setSelectedPermissions(role.permissions.map(p => p.id));
     setIsCreateRoleOpen(true);
   };
-
   const handleDeleteRole = async (roleId: string) => {
     try {
-      const { error } = await supabase
-        .from('custom_roles')
-        .delete()
-        .eq('id', roleId);
-
+      const {
+        error
+      } = await supabase.from('custom_roles').delete().eq('id', roleId);
       if (error) throw error;
-
       setCustomRoles(prev => prev.filter(role => role.id !== roleId));
       setRoleToDelete(null);
-      
       toast({
         title: "Success",
-        description: "Role deleted successfully",
+        description: "Role deleted successfully"
       });
     } catch (error) {
       console.error('Error deleting role:', error);
       toast({
         title: "Error",
         description: "Failed to delete role",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
-
   const handleSelectAllPermissions = () => {
     if (selectedPermissions.length === permissions.length) {
       setSelectedPermissions([]);
@@ -446,18 +399,17 @@ export default function Team() {
       setSelectedPermissions(permissions.map(p => p.id));
     }
   };
-
   const getAvailableRoles = () => {
     const baseRoles = ["Owner", "Member"];
     const customRoleNames = customRoles.map(role => role.name);
     return [...baseRoles, ...customRoleNames];
   };
-
   const formatLastActive = (lastActive: string | null) => {
     if (!lastActive) return "Never";
-    return formatDistanceToNow(new Date(lastActive), { addSuffix: true });
+    return formatDistanceToNow(new Date(lastActive), {
+      addSuffix: true
+    });
   };
-
   const permissionsByCategory = permissions.reduce((acc, permission) => {
     if (!acc[permission.category]) {
       acc[permission.category] = [];
@@ -465,47 +417,24 @@ export default function Team() {
     acc[permission.category].push(permission);
     return acc;
   }, {} as Record<string, Permission[]>);
-
   if (isLoading || teamLoading) {
-    return (
-      <SettingsPageWrapper>
-        <SettingsHeader
-          title="Team Management"
-          description="Manage your team members, roles, and permissions"
-          helpContent={settingsHelpContent.team}
-        />
+    return <SettingsPageWrapper>
+        <SettingsHeader title="Team Management" description="Manage your team members, roles, and permissions" helpContent={settingsHelpContent.team} />
         <div className="flex items-center justify-center h-48">
           <Loader2 className="h-8 w-8 animate-spin" />
         </div>
-      </SettingsPageWrapper>
-    );
+      </SettingsPageWrapper>;
   }
-
-  return (
-    <SettingsPageWrapper>
-      <SettingsHeader
-        title="Team Management"
-        description="Manage your team members, roles, and permissions"
-        helpContent={settingsHelpContent.team}
-      />
+  return <SettingsPageWrapper>
+      <SettingsHeader title="Team Management" description="Manage your team members, roles, and permissions" helpContent={settingsHelpContent.team} />
       
       <div className="space-y-8">
-        <CategorySettingsSection
-          title="Invite Team Member"
-          description="Send invitations to new team members."
-          sectionId="team"
-        >
+        <CategorySettingsSection title="Invite Team Member" description="Send invitations to new team members." sectionId="team">
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="invite-email">Email Address</Label>
-                <Input
-                  id="invite-email"
-                  type="email"
-                  placeholder="Enter email address"
-                  value={inviteEmail}
-                  onChange={(e) => setInviteEmail(e.target.value)}
-                />
+                <Input id="invite-email" type="email" placeholder="Enter email address" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="invite-role">Role</Label>
@@ -514,11 +443,9 @@ export default function Team() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {getAvailableRoles().filter(role => role !== "Owner").map((role) => (
-                      <SelectItem key={role} value={role}>
+                    {getAvailableRoles().filter(role => role !== "Owner").map(role => <SelectItem key={role} value={role}>
                         {role}
-                      </SelectItem>
-                    ))}
+                      </SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -528,12 +455,10 @@ export default function Team() {
             </Button>
 
             {/* Pending Invitations */}
-            {invitations.length > 0 && (
-              <div className="mt-6">
+            {invitations.length > 0 && <div className="mt-6">
                 <h4 className="text-sm font-medium mb-3">Pending Invitations</h4>
                 <div className="space-y-2">
-                  {invitations.map((invitation) => (
-                    <div key={invitation.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  {invitations.map(invitation => <div key={invitation.id} className="flex items-center justify-between p-3 border rounded-lg">
                       <div className="flex items-center gap-3">
                         <div>
                           <p className="font-medium">{invitation.email}</p>
@@ -543,45 +468,23 @@ export default function Team() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleCopyInvitationLink(invitation.id)}
-                          className="flex items-center gap-2"
-                        >
-                          {copiedStates[invitation.id] ? (
-                            <Check className="h-4 w-4" />
-                          ) : (
-                            <Copy className="h-4 w-4" />
-                          )}
+                        <Button variant="outline" size="sm" onClick={() => handleCopyInvitationLink(invitation.id)} className="flex items-center gap-2">
+                          {copiedStates[invitation.id] ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                           {copiedStates[invitation.id] ? "Copied!" : "Copy Link"}
                         </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => cancelInvitation(invitation.id)}
-                        >
+                        <Button variant="outline" size="sm" onClick={() => cancelInvitation(invitation.id)}>
                           Cancel
                         </Button>
                       </div>
-                    </div>
-                  ))}
+                    </div>)}
                 </div>
-              </div>
-            )}
+              </div>}
           </div>
         </CategorySettingsSection>
 
-        <CategorySettingsSection
-          title="Team Members"
-          description="Manage existing team members and their roles."
-          sectionId="team-members"
-        >
+        <CategorySettingsSection title="Team Members" description="Manage existing team members and their roles." sectionId="team-members">
           <div className="space-y-4">
-            {teamMembers.length === 0 ? (
-              <p className="text-muted-foreground">No team members found.</p>
-            ) : (
-              <div className="overflow-x-auto">
+            {teamMembers.length === 0 ? <p className="text-muted-foreground">No team members found.</p> : <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -592,8 +495,7 @@ export default function Team() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {teamMembers.map((member) => (
-                      <TableRow key={member.id}>
+                    {teamMembers.map(member => <TableRow key={member.id}>
                         <TableCell>
                           <div className="flex items-center gap-3">
                             <Avatar className="h-8 w-8">
@@ -609,64 +511,41 @@ export default function Team() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          {member.system_role === "Owner" ? (
-                            <Badge variant="outline">{member.system_role}</Badge>
-                          ) : (
-                            <Select value={member.system_role} onValueChange={(newRole) => updateMemberRole(member.id, newRole)}>
+                          {member.system_role === "Owner" ? <Badge variant="outline">{member.system_role}</Badge> : <Select value={member.system_role} onValueChange={newRole => updateMemberRole(member.id, newRole)}>
                               <SelectTrigger className="w-auto min-w-[100px] h-8 px-3 py-1 text-sm">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
-                                {getAvailableRoles().filter(role => role !== "Owner").map((role) => (
-                                  <SelectItem key={role} value={role}>
+                                {getAvailableRoles().filter(role => role !== "Owner").map(role => <SelectItem key={role} value={role}>
                                     {role}
-                                  </SelectItem>
-                                ))}
+                                  </SelectItem>)}
                               </SelectContent>
-                            </Select>
-                          )}
+                            </Select>}
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
-                            {member.is_online ? (
-                              <>
+                            {member.is_online ? <>
                                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
                                 <span className="text-sm font-medium text-green-600">Online</span>
-                              </>
-                            ) : (
-                              <span className="text-sm text-muted-foreground">
+                              </> : <span className="text-sm text-muted-foreground">
                                 {formatLastActive(member.last_active)}
-                              </span>
-                            )}
+                              </span>}
                           </div>
                         </TableCell>
                         <TableCell className="text-right">
-                          {member.system_role !== "Owner" && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => removeMember(member.id)}
-                              className="text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground"
-                            >
+                          {member.system_role !== "Owner" && <Button variant="outline" size="sm" onClick={() => removeMember(member.id)} className="text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground">
                               <Trash2 className="h-4 w-4 mr-1" />
                               Remove
-                            </Button>
-                          )}
+                            </Button>}
                         </TableCell>
-                      </TableRow>
-                     ))}
+                      </TableRow>)}
                   </TableBody>
                 </Table>
-              </div>
-            )}
+              </div>}
           </div>
         </CategorySettingsSection>
 
-        <CategorySettingsSection
-          title="Roles & Permissions"
-          description="Create and manage custom roles with specific permissions."
-          sectionId="roles-permissions"
-        >
+        <CategorySettingsSection title="Roles & Permissions" description="Create and manage custom roles with specific permissions." sectionId="roles-permissions">
           <div className="space-y-6">
             {/* Create Role Button */}
             <div className="flex justify-between items-center">
@@ -681,9 +560,8 @@ export default function Team() {
             <div className="space-y-4">
               <h5 className="text-sm font-medium text-muted-foreground">System Roles</h5>
               <div className="space-y-4">
-                {systemRoles.map((role) => (
-                  <Card key={role.id} className="border">
-                    <CardContent className="p-6">
+                {systemRoles.map(role => <Card key={role.id} className="border">
+                    <CardContent className="p-6 mx-0">
                       <div className="flex items-center justify-between min-h-[80px]">
                         {/* Left Side - Role Info & Permissions */}
                         <div className="flex-1 min-w-0 pr-4">
@@ -696,17 +574,11 @@ export default function Team() {
                             
                             {/* Permissions Row */}
                             <div className="flex flex-wrap gap-2 mt-2">
-                              {role.id === 'owner' ? (
-                                <Badge variant="outline" className="text-xs font-medium">All Permissions</Badge>
-                              ) : (
-                                <>
-                                  {role.permissions.slice(0, 3).map((permission) => (
-                                    <Badge key={permission.id} variant="outline" className="text-xs">
+                              {role.id === 'owner' ? <Badge variant="outline" className="text-xs font-medium">All Permissions</Badge> : <>
+                                  {role.permissions.slice(0, 3).map(permission => <Badge key={permission.id} variant="outline" className="text-xs">
                                       {permission.name.replace(/_/g, ' ')}
-                                    </Badge>
-                                  ))}
-                                  {role.permissions.length > 3 && (
-                                    <Popover>
+                                    </Badge>)}
+                                  {role.permissions.length > 3 && <Popover>
                                       <PopoverTrigger asChild>
                                         <Badge variant="outline" className="text-xs cursor-pointer hover:bg-muted">
                                           +{role.permissions.length - 3} more
@@ -716,50 +588,36 @@ export default function Team() {
                                         <div className="space-y-2">
                                           <h4 className="font-medium text-sm">All Permissions</h4>
                                           <div className="flex flex-wrap gap-1">
-                                            {role.permissions.map((permission) => (
-                                              <Badge key={permission.id} variant="outline" className="text-xs">
+                                            {role.permissions.map(permission => <Badge key={permission.id} variant="outline" className="text-xs">
                                                 {permission.name.replace(/_/g, ' ')}
-                                              </Badge>
-                                            ))}
+                                              </Badge>)}
                                           </div>
                                         </div>
                                       </PopoverContent>
-                                    </Popover>
-                                  )}
-                                </>
-                              )}
+                                    </Popover>}
+                                </>}
                             </div>
                           </div>
                         </div>
                         
                         {/* Right Side - Actions Vertically Centered */}
                         <div className="flex items-center justify-center">
-                          {role.isEditable && (
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => openEditRole(role, true)}
-                              className="whitespace-nowrap"
-                            >
+                          {role.isEditable && <Button variant="outline" size="sm" onClick={() => openEditRole(role, true)} className="whitespace-nowrap">
                               <Edit2 className="h-4 w-4 mr-2" />
                               Edit
-                            </Button>
-                          )}
+                            </Button>}
                         </div>
                       </div>
                     </CardContent>
-                  </Card>
-                ))}
+                  </Card>)}
               </div>
             </div>
 
             {/* Custom Roles */}
-            {customRoles.length > 0 && (
-              <div className="space-y-4">
+            {customRoles.length > 0 && <div className="space-y-4">
                 <h5 className="text-sm font-medium text-muted-foreground">Custom Roles</h5>
                 <div className="space-y-4">
-                  {customRoles.map((role) => (
-                    <Card key={role.id} className="border">
+                  {customRoles.map(role => <Card key={role.id} className="border">
                       <CardContent className="p-6">
                         <div className="flex items-center justify-between min-h-[80px]">
                           {/* Left Side - Role Info & Permissions */}
@@ -768,20 +626,15 @@ export default function Team() {
                               {/* Title & Description Row */}
                               <div>
                                 <h3 className="text-base font-semibold text-foreground">{role.name}</h3>
-                                {role.description && (
-                                  <p className="text-sm text-muted-foreground mt-1">{role.description}</p>
-                                )}
+                                {role.description && <p className="text-sm text-muted-foreground mt-1">{role.description}</p>}
                               </div>
                               
                               {/* Permissions Row */}
                               <div className="flex flex-wrap gap-2 mt-2">
-                                {role.permissions.slice(0, 3).map((permission) => (
-                                  <Badge key={permission.id} variant="outline" className="text-xs">
+                                {role.permissions.slice(0, 3).map(permission => <Badge key={permission.id} variant="outline" className="text-xs">
                                     {permission.name.replace(/_/g, ' ')}
-                                  </Badge>
-                                ))}
-                                {role.permissions.length > 3 && (
-                                  <Popover>
+                                  </Badge>)}
+                                {role.permissions.length > 3 && <Popover>
                                     <PopoverTrigger asChild>
                                       <Badge variant="outline" className="text-xs cursor-pointer hover:bg-muted">
                                         +{role.permissions.length - 3} more
@@ -791,16 +644,13 @@ export default function Team() {
                                       <div className="space-y-2">
                                         <h4 className="font-medium text-sm">All Permissions</h4>
                                         <div className="flex flex-wrap gap-1">
-                                          {role.permissions.map((permission) => (
-                                            <Badge key={permission.id} variant="outline" className="text-xs">
+                                          {role.permissions.map(permission => <Badge key={permission.id} variant="outline" className="text-xs">
                                               {permission.name.replace(/_/g, ' ')}
-                                            </Badge>
-                                          ))}
+                                            </Badge>)}
                                         </div>
                                       </div>
                                     </PopoverContent>
-                                  </Popover>
-                                )}
+                                  </Popover>}
                               </div>
                             </div>
                           </div>
@@ -808,21 +658,11 @@ export default function Team() {
                           {/* Right Side - Actions Vertically Centered */}
                           <div className="flex items-center justify-center">
                             <div className="flex items-center gap-2">
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={() => openEditRole(role)}
-                                className="whitespace-nowrap"
-                              >
+                              <Button variant="outline" size="sm" onClick={() => openEditRole(role)} className="whitespace-nowrap">
                                 <Edit2 className="h-4 w-4 mr-2" />
                                 Edit
                               </Button>
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={() => setRoleToDelete(role.id)}
-                                className="text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground whitespace-nowrap"
-                              >
+                              <Button variant="outline" size="sm" onClick={() => setRoleToDelete(role.id)} className="text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground whitespace-nowrap">
                                 <Trash2 className="h-4 w-4 mr-2" />
                                 Delete
                               </Button>
@@ -830,69 +670,43 @@ export default function Team() {
                           </div>
                         </div>
                       </CardContent>
-                    </Card>
-                  ))}
+                    </Card>)}
                 </div>
-              </div>
-            )}
+              </div>}
           </div>
         </CategorySettingsSection>
 
         
         
         {/* Create/Edit Role Sheet */}
-        <AppSheetModal
-          title={editingRole ? 'Edit Role' : 'Create New Role'}
-          isOpen={isCreateRoleOpen}
-          onOpenChange={setIsCreateRoleOpen}
-          size="lg"
-          footerActions={[
-            {
-              label: "Cancel",
-              onClick: resetRoleForm,
-              variant: "outline"
-            },
-            {
-              label: editingRole ? 'Update Role' : 'Create Role',
-              onClick: editingRole ? handleEditRole : handleCreateRole,
-              disabled: !newRoleName.trim()
-            }
-          ]}
-        >
+        <AppSheetModal title={editingRole ? 'Edit Role' : 'Create New Role'} isOpen={isCreateRoleOpen} onOpenChange={setIsCreateRoleOpen} size="lg" footerActions={[{
+        label: "Cancel",
+        onClick: resetRoleForm,
+        variant: "outline"
+      }, {
+        label: editingRole ? 'Update Role' : 'Create Role',
+        onClick: editingRole ? handleEditRole : handleCreateRole,
+        disabled: !newRoleName.trim()
+      }]}>
           <div className="space-y-6">
             <div className="text-sm text-muted-foreground">
-              {editingRole 
-                ? 'Modify the role details and permissions.' 
-                : 'Create a custom role with specific permissions for your team members.'
-              }
+              {editingRole ? 'Modify the role details and permissions.' : 'Create a custom role with specific permissions for your team members.'}
             </div>
             
             {/* Role Name */}
             <div className="space-y-2">
               <Label htmlFor="role-name">Role Name</Label>
-              <Input
-                id="role-name"
-                placeholder="e.g., Editor, Viewer, Admin"
-                value={newRoleName}
-                onChange={(e) => setNewRoleName(e.target.value)}
-              />
+              <Input id="role-name" placeholder="e.g., Editor, Viewer, Admin" value={newRoleName} onChange={e => setNewRoleName(e.target.value)} />
             </div>
 
             {/* Role Description */}
             <div className="space-y-2">
               <Label htmlFor="role-description">Description (Optional)</Label>
-              <Textarea
-                id="role-description"
-                placeholder="Describe what this role can do..."
-                value={newRoleDescription}
-                onChange={(e) => setNewRoleDescription(e.target.value)}
-                rows={3}
-              />
+              <Textarea id="role-description" placeholder="Describe what this role can do..." value={newRoleDescription} onChange={e => setNewRoleDescription(e.target.value)} rows={3} />
             </div>
 
             {/* Role Template Selection */}
-            {!editingRole && (
-              <div className="space-y-2">
+            {!editingRole && <div className="space-y-2">
                 <Label htmlFor="role-template">Role Template (Optional)</Label>
                 <Select value={selectedPreset} onValueChange={handlePresetChange}>
                   <SelectTrigger className="bg-background">
@@ -900,66 +714,47 @@ export default function Team() {
                   </SelectTrigger>
                   <SelectContent className="bg-background border z-50">
                     <SelectItem value="custom">Custom Role</SelectItem>
-                    {presets.map((preset) => (
-                      <SelectItem key={preset.id} value={preset.id}>
+                    {presets.map(preset => <SelectItem key={preset.id} value={preset.id}>
                         {preset.name} - {preset.description}
-                      </SelectItem>
-                    ))}
+                      </SelectItem>)}
                   </SelectContent>
                 </Select>
-              </div>
-            )}
+              </div>}
 
             {/* Permissions Section */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <Label>Permissions</Label>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleSelectAllPermissions}
-                >
+                <Button type="button" variant="outline" size="sm" onClick={handleSelectAllPermissions}>
                   {selectedPermissions.length === permissions.length ? 'Deselect All' : 'Select All'}
                 </Button>
               </div>
               
               <div className="space-y-4">
-                {Object.entries(permissionsByCategory).map(([category, categoryPermissions]) => (
-                  <div key={category} className="space-y-3">
+                {Object.entries(permissionsByCategory).map(([category, categoryPermissions]) => <div key={category} className="space-y-3">
                     <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
                       {category}
                     </h4>
                     <div className="space-y-3">
-                      {categoryPermissions.map((permission) => (
-                        <div key={permission.id} className="flex items-start space-x-3">
-                          <Checkbox
-                            id={`permission-${permission.id}`}
-                            checked={selectedPermissions.includes(permission.id)}
-                            onCheckedChange={(checked) => {
-                              if (checked) {
-                                setSelectedPermissions(prev => [...prev, permission.id]);
-                              } else {
-                                setSelectedPermissions(prev => prev.filter(id => id !== permission.id));
-                              }
-                            }}
-                          />
+                      {categoryPermissions.map(permission => <div key={permission.id} className="flex items-start space-x-3">
+                          <Checkbox id={`permission-${permission.id}`} checked={selectedPermissions.includes(permission.id)} onCheckedChange={checked => {
+                      if (checked) {
+                        setSelectedPermissions(prev => [...prev, permission.id]);
+                      } else {
+                        setSelectedPermissions(prev => prev.filter(id => id !== permission.id));
+                      }
+                    }} />
                           <div className="space-y-1 leading-none">
-                            <Label 
-                              htmlFor={`permission-${permission.id}`}
-                              className="text-sm font-medium cursor-pointer"
-                            >
+                            <Label htmlFor={`permission-${permission.id}`} className="text-sm font-medium cursor-pointer">
                               {permission.name.replace(/_/g, ' ')}
                             </Label>
                             <p className="text-xs text-muted-foreground">
                               {permission.description}
                             </p>
                           </div>
-                        </div>
-                      ))}
+                        </div>)}
                     </div>
-                  </div>
-                ))}
+                  </div>)}
               </div>
             </div>
           </div>
@@ -976,16 +771,12 @@ export default function Team() {
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={() => roleToDelete && handleDeleteRole(roleToDelete)}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              >
+              <AlertDialogAction onClick={() => roleToDelete && handleDeleteRole(roleToDelete)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
                 Delete Role
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
       </div>
-    </SettingsPageWrapper>
-  );
+    </SettingsPageWrapper>;
 }

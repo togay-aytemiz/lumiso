@@ -13,7 +13,9 @@ import {
   BookOpen, 
   Settings,
   HelpCircle,
-  ChevronDown
+  ChevronDown,
+  FileText,
+  Zap
 } from "lucide-react";
 import logo from "@/assets/Logo.png";
 import { useOnboardingV2 } from "@/hooks/useOnboardingV2";
@@ -24,6 +26,7 @@ import {
   SidebarHeader,
   SidebarMenu,
 } from "@/components/ui/sidebar";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { UserMenu } from "@/components/UserMenu";
 import { SidebarCategory } from "@/components/sidebar/SidebarCategory";
@@ -51,6 +54,12 @@ const bookingItems = [
   { title: "Reminders", url: "/reminders", icon: Bell },
 ];
 
+// Automation sub-items
+const automationItems = [
+  { title: "Workflows", url: "/workflows", icon: BarChart3 },
+  { title: "Templates", url: "/automation-templates", icon: FileText },
+];
+
 export function AppSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -58,6 +67,10 @@ export function AppSidebar() {
   const isMobile = useIsMobile();
   const { shouldLockNavigation, loading } = useOnboardingV2();
   const [helpModalOpen, setHelpModalOpen] = useState(false);
+
+  // Mobile sheet states
+  const [bookingsSheetOpen, setBookingsSheetOpen] = useState(false);
+  const [automationSheetOpen, setAutomationSheetOpen] = useState(false);
 
   // Debug logging
   useEffect(() => {
@@ -85,6 +98,11 @@ export function AppSidebar() {
     currentPath.startsWith(path)
   );
   const [bookingsOpen, setBookingsOpen] = useState(isBookingsChildActive);
+
+  const isAutomationChildActive = ["/workflows", "/automation-templates"].some((path) =>
+    currentPath.startsWith(path)
+  );
+  const [automationOpen, setAutomationOpen] = useState(isAutomationChildActive);
   
   const isItemLocked = (itemUrl?: string) => {
     // If on getting-started page - LOCK EVERYTHING
@@ -112,13 +130,32 @@ export function AppSidebar() {
   };
 
   const handleBookingsClick = () => {
-    if (!bookingsOpen) {
-      setBookingsOpen(true);
-      if (!isBookingsChildActive) {
-        navigate("/calendar");
-      }
+    if (isMobile) {
+      setBookingsSheetOpen(true);
     } else {
-      setBookingsOpen(false);
+      if (!bookingsOpen) {
+        setBookingsOpen(true);
+        if (!isBookingsChildActive) {
+          navigate("/calendar");
+        }
+      } else {
+        setBookingsOpen(false);
+      }
+    }
+  };
+
+  const handleAutomationClick = () => {
+    if (isMobile) {
+      setAutomationSheetOpen(true);
+    } else {
+      if (!automationOpen) {
+        setAutomationOpen(true);
+        if (!isAutomationChildActive) {
+          navigate("/workflows");
+        }
+      } else {
+        setAutomationOpen(false);
+      }
     }
   };
 
@@ -127,9 +164,16 @@ export function AppSidebar() {
     setBookingsOpen(isBookingsChildActive);
   }, [isBookingsChildActive]);
 
+  // Auto-close/open Automation based on current route
+  useEffect(() => {
+    setAutomationOpen(isAutomationChildActive);
+  }, [isAutomationChildActive]);
+
   const handleNavClick = () => {
     if (isMobile) {
-      // Will be handled by SidebarProvider
+      // Close any open mobile sheets
+      setBookingsSheetOpen(false);
+      setAutomationSheetOpen(false);
     }
   };
 
@@ -189,7 +233,7 @@ export function AppSidebar() {
               onLockedClick={handleLockedItemClick}
               onClick={!isItemLocked('/calendar') ? handleBookingsClick : undefined}
               badge={
-                !isItemLocked('/calendar') ? (
+                !isItemLocked('/calendar') && !isMobile ? (
                   <ChevronDown 
                     className={`h-4 w-4 transition-transform duration-200 ${
                       bookingsOpen ? 'rotate-180' : 'rotate-0'
@@ -200,7 +244,7 @@ export function AppSidebar() {
             >
               <div 
                 className={`overflow-hidden transition-all duration-300 ease-out ${
-                  bookingsOpen && !isItemLocked('/calendar') 
+                  bookingsOpen && !isItemLocked('/calendar') && !isMobile
                     ? 'max-h-40 opacity-100' 
                     : 'max-h-0 opacity-0'
                 }`}
@@ -238,6 +282,47 @@ export function AppSidebar() {
                   onClick={handleNavClick}
                 />
               ))}
+
+              <SidebarNavItem
+                title="Automation"
+                icon={Zap}
+                isActive={isAutomationChildActive}
+                isLocked={isItemLocked('/workflows')}
+                onLockedClick={handleLockedItemClick}
+                onClick={!isItemLocked('/workflows') ? handleAutomationClick : undefined}
+                badge={
+                  !isItemLocked('/workflows') && !isMobile ? (
+                    <ChevronDown 
+                      className={`h-4 w-4 transition-transform duration-200 ${
+                        automationOpen ? 'rotate-180' : 'rotate-0'
+                      }`} 
+                    />
+                  ) : undefined
+                }
+              >
+                <div 
+                  className={`overflow-hidden transition-all duration-300 ease-out ${
+                    automationOpen && !isItemLocked('/workflows') && !isMobile
+                      ? 'max-h-40 opacity-100' 
+                      : 'max-h-0 opacity-0'
+                  }`}
+                >
+                  <SidebarMenu className="space-y-1 pt-1">
+                    {automationItems.map((item) => (
+                      <SidebarSubItem
+                        key={item.title}
+                        title={item.title}
+                        url={item.url}
+                        icon={item.icon}
+                        isActive={isActive(item.url)}
+                        isLocked={isItemLocked(item.url)}
+                        onLockedClick={handleLockedItemClick}
+                        onClick={handleNavClick}
+                      />
+                    ))}
+                  </SidebarMenu>
+                </div>
+              </SidebarNavItem>
             </SidebarCategory>
           </div>
 
@@ -273,6 +358,55 @@ export function AppSidebar() {
         isOpen={helpModalOpen} 
         onOpenChange={setHelpModalOpen} 
       />
+
+      {/* Mobile Sheets */}
+      <Sheet open={bookingsSheetOpen} onOpenChange={setBookingsSheetOpen}>
+        <SheetContent side="left" className="w-80 p-0">
+          <SheetHeader className="p-6 pb-4">
+            <SheetTitle>Bookings</SheetTitle>
+          </SheetHeader>
+          <div className="px-3">
+            <SidebarMenu className="space-y-1">
+              {bookingItems.map((item) => (
+                <SidebarSubItem
+                  key={item.title}
+                  title={item.title}
+                  url={item.url}
+                  icon={item.icon}
+                  isActive={isActive(item.url)}
+                  isLocked={isItemLocked(item.url)}
+                  onLockedClick={handleLockedItemClick}
+                  onClick={handleNavClick}
+                />
+              ))}
+            </SidebarMenu>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      <Sheet open={automationSheetOpen} onOpenChange={setAutomationSheetOpen}>
+        <SheetContent side="left" className="w-80 p-0">
+          <SheetHeader className="p-6 pb-4">
+            <SheetTitle>Automation</SheetTitle>
+          </SheetHeader>
+          <div className="px-3">
+            <SidebarMenu className="space-y-1">
+              {automationItems.map((item) => (
+                <SidebarSubItem
+                  key={item.title}
+                  title={item.title}
+                  url={item.url}
+                  icon={item.icon}
+                  isActive={isActive(item.url)}
+                  isLocked={isItemLocked(item.url)}
+                  onLockedClick={handleLockedItemClick}
+                  onClick={handleNavClick}
+                />
+              ))}
+            </SidebarMenu>
+          </div>
+        </SheetContent>
+      </Sheet>
     </>
   );
 }

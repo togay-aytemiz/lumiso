@@ -37,6 +37,8 @@ import AcceptInvitation from "./pages/AcceptInvitation";
 import InvitationSignup from "./pages/InvitationSignup";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ErrorBoundary from "./components/ErrorBoundary";
+import Workflows from "./pages/Workflows";
+import AutomationTemplates from "./pages/AutomationTemplates";
 
 const queryClient = new QueryClient();
 
@@ -67,6 +69,8 @@ const App = () => (
               <Route path="reminders" element={<ReminderDetails />} />
               <Route path="analytics" element={<Analytics />} />
               <Route path="payments" element={<Payments />} />
+              <Route path="workflows" element={<Workflows />} />
+              <Route path="automation-templates" element={<AutomationTemplates />} />
               <Route path="settings" element={<SettingsLayout />}>
                 <Route path="profile" element={<ProfileSettings />} />
                 <Route path="general" element={<GeneralSettings />} />

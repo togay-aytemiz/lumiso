@@ -39,14 +39,15 @@ export default function AutomationTemplates() {
   const [activeCategory, setActiveCategory] = useState("messages");
 
   return (
-    <div className="container mx-auto px-4 py-8 space-y-6">
+    <div className="min-h-screen overflow-x-hidden">
       <PageHeader 
         title="Templates" 
         subtitle="Manage your templates for automated communications and client interactions"
       />
       
-      <Tabs value={activeCategory} onValueChange={setActiveCategory} className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+      <div className="p-4 sm:p-6">
+        <Tabs value={activeCategory} onValueChange={setActiveCategory} className="w-full">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
           {categories.map((category) => {
             const Icon = category.icon;
             return (
@@ -93,7 +94,8 @@ export default function AutomationTemplates() {
             </TabsContent>
           );
         })}
-      </Tabs>
+        </Tabs>
+      </div>
     </div>
   );
 }

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { MessageSquare, FileText, ClipboardList, ScrollText, Users } from "lucide-react";
+import { MessageSquare, FileText, ClipboardList, ScrollText } from "lucide-react";
 
 const categories = [
   {
@@ -39,11 +39,11 @@ export default function AutomationTemplates() {
   const [activeCategory, setActiveCategory] = useState("messages");
 
   return (
-    <div className="space-y-6">
-      <PageHeader title="Templates" />
-      <p className="text-muted-foreground -mt-2">
-        Manage your templates for automated communications and client interactions
-      </p>
+    <div className="container mx-auto px-4 py-8 space-y-6">
+      <PageHeader 
+        title="Templates" 
+        subtitle="Manage your templates for automated communications and client interactions"
+      />
       
       <Tabs value={activeCategory} onValueChange={setActiveCategory} className="w-full">
         <TabsList className="grid w-full grid-cols-4">

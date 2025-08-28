@@ -1,8 +1,10 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/ui/page-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { MessageSquare, FileText, ClipboardList, ScrollText } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { MessageSquare, FileText, ClipboardList, ScrollText, Plus } from "lucide-react";
 
 const categories = [
   {
@@ -37,6 +39,7 @@ const categories = [
 
 export default function AutomationTemplates() {
   const [activeCategory, setActiveCategory] = useState("messages");
+  const navigate = useNavigate();
 
   return (
     <div className="min-h-screen overflow-x-hidden">
@@ -69,17 +72,30 @@ export default function AutomationTemplates() {
           return (
             <TabsContent key={category.id} value={category.id} className="space-y-4">
               {category.active ? (
-                <div className="flex items-center justify-center h-64 border-2 border-dashed border-muted rounded-lg">
-                  <div className="text-center">
-                    <Icon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-muted-foreground">
-                      {category.title} Templates
-                    </h3>
-                    <p className="text-sm text-muted-foreground mt-2">
-                      Template builder coming soon
-                    </p>
-                  </div>
-                </div>
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle className="flex items-center gap-2">
+                          <Icon className="h-5 w-5" />
+                          {category.title} Templates
+                        </CardTitle>
+                        <CardDescription>
+                          Create and manage templates for {category.description.toLowerCase()}
+                        </CardDescription>
+                      </div>
+                      <Button onClick={() => navigate('/template-builder')} className="flex items-center gap-2">
+                        <Plus className="h-4 w-4" />
+                        New Template
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center justify-center h-32 border-2 border-dashed border-muted rounded-lg">
+                      <p className="text-muted-foreground">No templates created yet</p>
+                    </div>
+                  </CardContent>
+                </Card>
               ) : (
                 <Card>
                   <CardHeader className="text-center">

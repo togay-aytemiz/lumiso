@@ -14,7 +14,9 @@ import {
   Settings,
   LogOut,
   User,
-  HelpCircle
+  HelpCircle,
+  Zap,
+  FileText
 } from 'lucide-react';
 import { BottomSheetMenu } from './BottomSheetMenu';
 import { cn } from '@/lib/utils';
@@ -34,6 +36,7 @@ interface NavTab {
 
 export function MobileBottomNav({ hideForOnboarding = false }: { hideForOnboarding?: boolean }) {
   const [bookingsOpen, setBookingsOpen] = useState(false);
+  const [automationOpen, setAutomationOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
@@ -125,11 +128,29 @@ export function MobileBottomNav({ hideForOnboarding = false }: { hideForOnboardi
     }
   ];
 
+  const automationItems = [
+    {
+      title: 'Workflows',
+      icon: BarChart3,
+      onClick: () => navigate('/workflows')
+    },
+    {
+      title: 'Templates',
+      icon: FileText,
+      onClick: () => navigate('/automation-templates')
+    }
+  ];
+
   const moreItems = [
     {
       title: 'Analytics',
       icon: BarChart3,
       onClick: () => navigate('/analytics')
+    },
+    {
+      title: 'Automation',
+      icon: Zap,
+      onClick: () => setAutomationOpen(true)
     },
     {
       title: 'Payments',
@@ -166,9 +187,13 @@ export function MobileBottomNav({ hideForOnboarding = false }: { hideForOnboardi
     location.pathname.startsWith(path)
   );
 
-  const isMoreActive = ['/analytics', '/payments', '/settings'].some(path =>
+  const isAutomationActive = ['/workflows', '/automation-templates'].some(path =>
     location.pathname.startsWith(path)
   );
+
+  const isMoreActive = ['/analytics', '/payments', '/settings'].some(path =>
+    location.pathname.startsWith(path)
+  ) || isAutomationActive;
 
   if (!isVisible) return null;
 
@@ -248,6 +273,13 @@ export function MobileBottomNav({ hideForOnboarding = false }: { hideForOnboardi
         isOpen={bookingsOpen}
         onOpenChange={setBookingsOpen}
         items={bookingItems}
+      />
+
+      <BottomSheetMenu
+        title="Automation"
+        isOpen={automationOpen}
+        onOpenChange={setAutomationOpen}
+        items={automationItems}
       />
 
       <BottomSheetMenu

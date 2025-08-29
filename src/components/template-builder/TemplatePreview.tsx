@@ -12,9 +12,10 @@ interface TemplatePreviewProps {
   blocks: TemplateBlock[];
   activeChannel: "email" | "whatsapp" | "sms";
   onChannelChange: (channel: "email" | "whatsapp" | "sms") => void;
+  emailSubject?: string;
 }
 
-export function TemplatePreview({ blocks, activeChannel, onChannelChange }: TemplatePreviewProps) {
+export function TemplatePreview({ blocks, activeChannel, onChannelChange, emailSubject }: TemplatePreviewProps) {
   const [previewDevice, setPreviewDevice] = useState<"desktop" | "mobile">("desktop");
 
   const mockData = {
@@ -97,6 +98,7 @@ export function TemplatePreview({ blocks, activeChannel, onChannelChange }: Temp
               blocks={blocks.filter(b => b.visible)}
               mockData={mockData}
               device={previewDevice}
+              emailSubject={emailSubject}
             />
           )}
           

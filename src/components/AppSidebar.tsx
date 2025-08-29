@@ -57,7 +57,7 @@ const bookingItems = [
 // Automation sub-items
 const automationItems = [
   { title: "Workflows", url: "/workflows", icon: BarChart3 },
-  { title: "Templates", url: "/automation-templates", icon: FileText },
+  { title: "Templates", url: "/templates", icon: FileText },
 ];
 
 export function AppSidebar() {

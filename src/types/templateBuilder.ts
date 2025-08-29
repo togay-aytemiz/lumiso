@@ -12,6 +12,7 @@ export interface TextBlockData {
     fontSize: "h1" | "h2" | "h3" | "p";
     fontFamily?: string;
     bullets?: boolean;
+    alignment?: "left" | "center" | "right" | "justify";
   };
 }
 
@@ -64,4 +65,5 @@ export interface TemplateBuilderState {
   activeBlock: string | null;
   previewChannel: "email" | "whatsapp" | "sms";
   previewDevice: "desktop" | "mobile";
+  emailSubject?: string;
 }

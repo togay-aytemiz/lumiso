@@ -5,9 +5,10 @@ interface EmailPreviewProps {
   blocks: TemplateBlock[];
   mockData: Record<string, string>;
   device: "desktop" | "mobile";
+  emailSubject?: string;
 }
 
-export function EmailPreview({ blocks, mockData, device }: EmailPreviewProps) {
+export function EmailPreview({ blocks, mockData, device, emailSubject }: EmailPreviewProps) {
   const replacePlaceholders = (text: string) => {
     return text.replace(/\{(\w+)\}/g, (match, key) => mockData[key] || match);
   };
@@ -28,7 +29,7 @@ export function EmailPreview({ blocks, mockData, device }: EmailPreviewProps) {
       <div className="p-4 border-b bg-gray-50 text-sm">
         <div><strong>From:</strong> {mockData.business_name} &lt;hello@{mockData.business_name.toLowerCase().replace(/\s+/g, '')}.com&gt;</div>
         <div><strong>To:</strong> {mockData.customer_name} &lt;{mockData.customer_name.toLowerCase().replace(/\s+/g, '')}@email.com&gt;</div>
-        <div><strong>Subject:</strong> 📸 Your photography session is confirmed!</div>
+        <div><strong>Subject:</strong> {emailSubject ? replacePlaceholders(emailSubject) : "📸 Your photography session is confirmed!"}</div>
       </div>
 
       {/* Email Body */}
@@ -71,6 +72,7 @@ function TextBlockPreview({ data, replacePlaceholders }: { data: TextBlockData; 
       fontFamily: data.formatting.fontFamily,
       fontWeight: data.formatting.bold ? 'bold' : 'normal',
       fontStyle: data.formatting.italic ? 'italic' : 'normal',
+      textAlign: data.formatting.alignment as any || 'left',
     };
     return styles;
   };

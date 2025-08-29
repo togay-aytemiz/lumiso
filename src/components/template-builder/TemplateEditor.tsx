@@ -6,6 +6,7 @@ import { TemplateBlock, BlockData, TextBlockData, SessionDetailsBlockData, CTABl
 import { BlockEditor } from "./BlockEditor";
 import { AddBlockSheet } from "./AddBlockSheet";
 import { cn } from "@/lib/utils";
+import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 
 interface TemplateEditorProps {
   blocks: TemplateBlock[];
@@ -71,6 +72,22 @@ export function TemplateEditor({ blocks, onBlocksChange }: TemplateEditorProps) 
     onBlocksChange(newBlocks);
   };
 
+  const onDragEnd = (result: DropResult) => {
+    if (!result.destination) return;
+
+    const items = Array.from(blocks);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+
+    // Update order values
+    const updatedItems = items.map((item, index) => ({
+      ...item,
+      order: index
+    }));
+
+    onBlocksChange(updatedItems);
+  };
+
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
@@ -81,55 +98,79 @@ export function TemplateEditor({ blocks, onBlocksChange }: TemplateEditorProps) 
 
       {/* Blocks List */}
       <div className="flex-1 overflow-y-auto p-6 space-y-4">
-        {blocks.map((block, index) => (
-          <Card
-            key={block.id}
-            className={cn(
-              "cursor-pointer transition-colors",
-              activeBlock === block.id && "ring-2 ring-primary",
-              !block.visible && "opacity-50"
-            )}
-            onClick={() => setActiveBlock(block.id)}
-          >
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <GripVertical className="h-4 w-4 text-muted-foreground" />
-                  {getBlockTitle(block.type)}
-                </CardTitle>
-                <div className="flex items-center gap-1">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleBlockVisibility(block.id);
-                    }}
-                  >
-                    {block.visible ? (
-                      <Eye className="h-3 w-3" />
-                    ) : (
-                      <EyeOff className="h-3 w-3" />
+        <DragDropContext onDragEnd={onDragEnd}>
+          <Droppable droppableId="template-blocks">
+            {(provided) => (
+              <div
+                {...provided.droppableProps}
+                ref={provided.innerRef}
+                className="space-y-4"
+              >
+                {blocks.map((block, index) => (
+                  <Draggable key={block.id} draggableId={block.id} index={index}>
+                    {(provided, snapshot) => (
+                      <Card
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        className={cn(
+                          "cursor-pointer transition-colors",
+                          activeBlock === block.id && "ring-2 ring-primary",
+                          !block.visible && "opacity-50",
+                          snapshot.isDragging && "shadow-lg"
+                        )}
+                        onClick={() => setActiveBlock(block.id)}
+                      >
+                        <CardHeader className="pb-2">
+                          <div className="flex items-center justify-between">
+                            <CardTitle className="text-sm flex items-center gap-2">
+                              <div 
+                                {...provided.dragHandleProps}
+                                className="cursor-grab active:cursor-grabbing"
+                              >
+                                <GripVertical className="h-4 w-4 text-muted-foreground" />
+                              </div>
+                              {getBlockTitle(block.type)}
+                            </CardTitle>
+                            <div className="flex items-center gap-1">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleBlockVisibility(block.id);
+                                }}
+                              >
+                                {block.visible ? (
+                                  <Eye className="h-3 w-3" />
+                                ) : (
+                                  <EyeOff className="h-3 w-3" />
+                                )}
+                              </Button>
+                            </div>
+                          </div>
+                        </CardHeader>
+                        {activeBlock === block.id && (
+                          <CardContent className="pt-0">
+                            <BlockEditor
+                              block={block}
+                              onUpdate={(data) => updateBlock(block.id, data)}
+                              onRemove={() => removeBlock(block.id)}
+                              onMoveUp={() => moveBlock(block.id, "up")}
+                              onMoveDown={() => moveBlock(block.id, "down")}
+                              canMoveUp={index > 0}
+                              canMoveDown={index < blocks.length - 1}
+                            />
+                          </CardContent>
+                        )}
+                      </Card>
                     )}
-                  </Button>
-                </div>
+                  </Draggable>
+                ))}
+                {provided.placeholder}
               </div>
-            </CardHeader>
-            {activeBlock === block.id && (
-              <CardContent className="pt-0">
-                <BlockEditor
-                  block={block}
-                  onUpdate={(data) => updateBlock(block.id, data)}
-                  onRemove={() => removeBlock(block.id)}
-                  onMoveUp={() => moveBlock(block.id, "up")}
-                  onMoveDown={() => moveBlock(block.id, "down")}
-                  canMoveUp={index > 0}
-                  canMoveDown={index < blocks.length - 1}
-                />
-              </CardContent>
             )}
-          </Card>
-        ))}
+          </Droppable>
+        </DragDropContext>
 
         {/* Add Block Button */}
         <Button
@@ -171,6 +212,7 @@ function getDefaultBlockData(type: TemplateBlock["type"]): BlockData {
         formatting: {
           fontSize: "p" as const,
           fontFamily: "Arial",
+          alignment: "left" as const,
         },
       } as TextBlockData;
     case "session-details":

@@ -5,8 +5,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { ChevronUp, ChevronDown, Trash2, Bold, Italic, List } from "lucide-react";
+import { ChevronUp, ChevronDown, Trash2, Bold, Italic, List, AlignLeft, AlignCenter, AlignRight, AlignJustify, Upload } from "lucide-react";
 import { TemplateBlock, TextBlockData, SessionDetailsBlockData, CTABlockData, ImageBlockData, FooterBlockData } from "@/types/templateBuilder";
+import { VariablePicker } from "./VariablePicker";
+import { useToast } from "@/hooks/use-toast";
+import { useRef } from "react";
 
 interface BlockEditorProps {
   block: TemplateBlock;
@@ -62,6 +65,8 @@ export function BlockEditor({ block, onUpdate, onRemove, onMoveUp, onMoveDown, c
 }
 
 function TextBlockEditor({ data, onUpdate }: { data: TextBlockData; onUpdate: (data: TextBlockData) => void }) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  
   const updateFormatting = (key: keyof TextBlockData["formatting"], value: any) => {
     onUpdate({
       ...data,
@@ -69,11 +74,33 @@ function TextBlockEditor({ data, onUpdate }: { data: TextBlockData; onUpdate: (d
     });
   };
 
+  const insertVariable = (variable: string) => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const newContent = data.content.slice(0, start) + variable + data.content.slice(end);
+      onUpdate({ ...data, content: newContent });
+      
+      // Focus and set cursor position after variable
+      setTimeout(() => {
+        textarea.focus();
+        textarea.setSelectionRange(start + variable.length, start + variable.length);
+      }, 0);
+    } else {
+      onUpdate({ ...data, content: data.content + variable });
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div>
-        <Label>Content</Label>
+        <div className="flex items-center justify-between mb-2">
+          <Label>Content</Label>
+          <VariablePicker onVariableSelect={insertVariable} />
+        </div>
         <Textarea
+          ref={textareaRef}
           value={data.content}
           onChange={(e) => onUpdate({ ...data, content: e.target.value })}
           placeholder="Enter your text here..."
@@ -84,6 +111,7 @@ function TextBlockEditor({ data, onUpdate }: { data: TextBlockData; onUpdate: (d
       <div className="space-y-3">
         <Label>Formatting</Label>
         
+        {/* First row: Bold, Italic, Bullets */}
         <div className="flex items-center gap-2">
           <Button
             size="sm"
@@ -108,6 +136,7 @@ function TextBlockEditor({ data, onUpdate }: { data: TextBlockData; onUpdate: (d
           </Button>
         </div>
         
+        {/* Second row: Font size, Font family on same row */}
         <div className="grid grid-cols-2 gap-2">
           <div>
             <Label className="text-xs">Font Size</Label>
@@ -137,6 +166,41 @@ function TextBlockEditor({ data, onUpdate }: { data: TextBlockData; onUpdate: (d
                 <SelectItem value="Times New Roman">Times New Roman</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+        </div>
+
+        {/* Third row: Text alignment */}
+        <div>
+          <Label className="text-xs mb-2 block">Text Alignment</Label>
+          <div className="flex items-center gap-1">
+            <Button
+              size="sm"
+              variant={data.formatting.alignment === "left" ? "default" : "outline"}
+              onClick={() => updateFormatting("alignment", "left")}
+            >
+              <AlignLeft className="h-3 w-3" />
+            </Button>
+            <Button
+              size="sm"
+              variant={data.formatting.alignment === "center" ? "default" : "outline"}
+              onClick={() => updateFormatting("alignment", "center")}
+            >
+              <AlignCenter className="h-3 w-3" />
+            </Button>
+            <Button
+              size="sm"
+              variant={data.formatting.alignment === "right" ? "default" : "outline"}
+              onClick={() => updateFormatting("alignment", "right")}
+            >
+              <AlignRight className="h-3 w-3" />
+            </Button>
+            <Button
+              size="sm"
+              variant={data.formatting.alignment === "justify" ? "default" : "outline"}
+              onClick={() => updateFormatting("alignment", "justify")}
+            >
+              <AlignJustify className="h-3 w-3" />
+            </Button>
           </div>
         </div>
       </div>
@@ -233,15 +297,67 @@ function CTABlockEditor({ data, onUpdate }: { data: CTABlockData; onUpdate: (dat
 }
 
 function ImageBlockEditor({ data, onUpdate }: { data: ImageBlockData; onUpdate: (data: ImageBlockData) => void }) {
+  const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        toast({
+          title: "File too large",
+          description: "Please select an image smaller than 5MB.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        onUpdate({ 
+          ...data, 
+          src: result, 
+          placeholder: false,
+          alt: file.name.split('.')[0] // Use filename as alt text
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div>
-        <Label>Image URL</Label>
-        <Input
-          value={data.src || ""}
-          onChange={(e) => onUpdate({ ...data, src: e.target.value, placeholder: !e.target.value })}
-          placeholder="https://example.com/image.jpg"
-        />
+        <Label>Image Source</Label>
+        <div className="space-y-2">
+          <Input
+            value={data.src || ""}
+            onChange={(e) => onUpdate({ ...data, src: e.target.value, placeholder: !e.target.value })}
+            placeholder="https://example.com/image.jpg"
+          />
+          
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">or</span>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => fileInputRef.current?.click()}
+              className="flex items-center gap-2"
+            >
+              <Upload className="h-3 w-3" />
+              Upload Image
+            </Button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleFileUpload}
+              className="hidden"
+            />
+          </div>
+        </div>
       </div>
       
       <div>

@@ -16,6 +16,36 @@ export interface TextBlockData {
   };
 }
 
+export interface DividerBlockData {
+  style: "line" | "space";
+  height?: number;
+  color?: string;
+}
+
+export interface ColumnsBlockData {
+  columns: number;
+  content: string[];
+}
+
+export interface SocialLinksBlockData {
+  links: Array<{
+    platform: "facebook" | "instagram" | "twitter" | "website";
+    url: string;
+    show: boolean;
+  }>;
+}
+
+export interface HeaderBlockData {
+  showLogo: boolean;
+  tagline?: string;
+  backgroundColor?: string;
+}
+
+export interface RawHTMLBlockData {
+  html: string;
+  sanitized: boolean;
+}
+
 export interface SessionDetailsBlockData {
   showDate: boolean;
   showTime: boolean;
@@ -43,6 +73,9 @@ export interface FooterBlockData {
   showStudioName: boolean;
   showContactInfo: boolean;
   customText?: string;
+  showUnsubscribe?: boolean;
+  showMailingAddress?: boolean;
+  showLegalText?: boolean;
 }
 
 export type BlockData = 
@@ -50,11 +83,16 @@ export type BlockData =
   | SessionDetailsBlockData
   | CTABlockData
   | ImageBlockData
-  | FooterBlockData;
+  | FooterBlockData
+  | DividerBlockData
+  | ColumnsBlockData
+  | SocialLinksBlockData
+  | HeaderBlockData
+  | RawHTMLBlockData;
 
 export interface TemplateBlock {
   id: string;
-  type: "text" | "session-details" | "cta" | "image" | "footer";
+  type: "text" | "session-details" | "cta" | "image" | "footer" | "divider" | "columns" | "social-links" | "header" | "raw-html";
   data: BlockData;
   visible: boolean;
   order: number;
@@ -66,4 +104,10 @@ export interface TemplateBuilderState {
   previewChannel: "email" | "whatsapp" | "sms";
   previewDevice: "desktop" | "mobile";
   emailSubject?: string;
+  preheader?: string;
+}
+
+export interface PreviewDataSet {
+  name: string;
+  data: Record<string, string>;
 }

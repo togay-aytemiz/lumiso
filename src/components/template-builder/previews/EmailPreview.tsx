@@ -6,11 +6,14 @@ interface EmailPreviewProps {
   mockData: Record<string, string>;
   device: "desktop" | "mobile";
   emailSubject?: string;
+  preheader?: string;
 }
 
-export function EmailPreview({ blocks, mockData, device, emailSubject }: EmailPreviewProps) {
+export function EmailPreview({ blocks, mockData, device, emailSubject, preheader }: EmailPreviewProps) {
   const replacePlaceholders = (text: string) => {
-    return text.replace(/\{(\w+)\}/g, (match, key) => mockData[key] || match);
+    return text.replace(/\{(\w+)(?:\|([^}]*))?\}/g, (match, key, fallback) => {
+      return mockData[key] || fallback || match;
+    });
   };
 
   return (
@@ -30,6 +33,9 @@ export function EmailPreview({ blocks, mockData, device, emailSubject }: EmailPr
         <div><strong>From:</strong> {mockData.business_name} &lt;hello@{mockData.business_name.toLowerCase().replace(/\s+/g, '')}.com&gt;</div>
         <div><strong>To:</strong> {mockData.customer_name} &lt;{mockData.customer_name.toLowerCase().replace(/\s+/g, '')}@email.com&gt;</div>
         <div><strong>Subject:</strong> {emailSubject ? replacePlaceholders(emailSubject) : "📸 Your photography session is confirmed!"}</div>
+        {preheader && (
+          <div><strong>Preview:</strong> <span className="text-muted-foreground">{replacePlaceholders(preheader)}</span></div>
+        )}
       </div>
 
       {/* Email Body */}
@@ -78,7 +84,19 @@ function TextBlockPreview({ data, replacePlaceholders }: { data: TextBlockData; 
   };
 
   const content = replacePlaceholders(data.content);
-  const Tag = data.formatting.fontSize as keyof JSX.IntrinsicElements;
+  
+  // Map fontSize to actual HTML elements for proper semantic rendering
+  const getElementTag = () => {
+    switch (data.formatting.fontSize) {
+      case 'h1': return 'h1';
+      case 'h2': return 'h2'; 
+      case 'h3': return 'h3';
+      case 'p':
+      default: return 'p';
+    }
+  };
+
+  const Tag = getElementTag() as keyof JSX.IntrinsicElements;
 
   return (
     <div>

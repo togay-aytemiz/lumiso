@@ -6,19 +6,22 @@ import { TemplateBlock } from "@/types/templateBuilder";
 import { EmailPreview } from "./previews/EmailPreview";
 import { WhatsAppPreview } from "./previews/WhatsAppPreview";
 import { SMSPreview } from "./previews/SMSPreview";
+import { PlainTextPreview } from "./PlainTextPreview";
 import { cn } from "@/lib/utils";
 
 interface TemplatePreviewProps {
   blocks: TemplateBlock[];
-  activeChannel: "email" | "whatsapp" | "sms";
-  onChannelChange: (channel: "email" | "whatsapp" | "sms") => void;
+  activeChannel: "email" | "whatsapp" | "sms" | "plaintext";
+  onChannelChange: (channel: "email" | "whatsapp" | "sms" | "plaintext") => void;
   emailSubject?: string;
+  preheader?: string;
+  previewData?: Record<string, string>;
 }
 
-export function TemplatePreview({ blocks, activeChannel, onChannelChange, emailSubject }: TemplatePreviewProps) {
+export function TemplatePreview({ blocks, activeChannel, onChannelChange, emailSubject, preheader, previewData }: TemplatePreviewProps) {
   const [previewDevice, setPreviewDevice] = useState<"desktop" | "mobile">("desktop");
 
-  const mockData = {
+  const defaultMockData = {
     customer_name: "Sarah Johnson",
     session_date: "March 15, 2024",
     session_time: "2:00 PM",
@@ -26,6 +29,8 @@ export function TemplatePreview({ blocks, activeChannel, onChannelChange, emailS
     business_name: "Radiant Photography",
     business_phone: "(555) 123-4567",
   };
+
+  const mockData = previewData || defaultMockData;
 
   return (
     <div className="h-full flex flex-col">
@@ -69,7 +74,7 @@ export function TemplatePreview({ blocks, activeChannel, onChannelChange, emailS
       {/* Channel Tabs */}
       <div className="border-b px-6 py-2">
         <Tabs value={activeChannel} onValueChange={(value) => onChannelChange(value as any)}>
-          <TabsList className="grid grid-cols-3 w-full max-w-md">
+          <TabsList className="grid grid-cols-4 w-full max-w-lg">
             <TabsTrigger value="email" className="flex items-center gap-2">
               📧 Email
             </TabsTrigger>
@@ -78,6 +83,9 @@ export function TemplatePreview({ blocks, activeChannel, onChannelChange, emailS
             </TabsTrigger>
             <TabsTrigger value="sms" className="flex items-center gap-2">
               📱 SMS
+            </TabsTrigger>
+            <TabsTrigger value="plaintext" className="flex items-center gap-2">
+              📄 Plain
             </TabsTrigger>
           </TabsList>
         </Tabs>
@@ -91,7 +99,9 @@ export function TemplatePreview({ blocks, activeChannel, onChannelChange, emailS
             ? previewDevice === "desktop" 
               ? "max-w-2xl" 
               : "max-w-sm"
-            : "max-w-sm"
+            : activeChannel === "plaintext"
+              ? "max-w-2xl"
+              : "max-w-sm"
         )}>
           {activeChannel === "email" && (
             <EmailPreview
@@ -99,6 +109,7 @@ export function TemplatePreview({ blocks, activeChannel, onChannelChange, emailS
               mockData={mockData}
               device={previewDevice}
               emailSubject={emailSubject}
+              preheader={preheader}
             />
           )}
           
@@ -111,6 +122,13 @@ export function TemplatePreview({ blocks, activeChannel, onChannelChange, emailS
           
           {activeChannel === "sms" && (
             <SMSPreview
+              blocks={blocks.filter(b => b.visible)}
+              mockData={mockData}
+            />
+          )}
+
+          {activeChannel === "plaintext" && (
+            <PlainTextPreview
               blocks={blocks.filter(b => b.visible)}
               mockData={mockData}
             />

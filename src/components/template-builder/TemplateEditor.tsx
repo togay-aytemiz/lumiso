@@ -200,6 +200,11 @@ function getBlockTitle(type: TemplateBlock["type"]) {
     case "cta": return "Call to Action";
     case "image": return "Image Block";
     case "footer": return "Footer";
+    case "divider": return "Divider";
+    case "columns": return "Columns";
+    case "social-links": return "Social Links";
+    case "header": return "Header";
+    case "raw-html": return "Raw HTML";
     default: return "Unknown Block";
   }
 }
@@ -238,6 +243,36 @@ function getDefaultBlockData(type: TemplateBlock["type"]): BlockData {
         showStudioName: true,
         showContactInfo: true,
       } as FooterBlockData;
+    case "divider":
+      return {
+        style: "line" as const,
+        color: "#e5e5e5",
+      };
+    case "columns":
+      return {
+        columns: 2,
+        content: ["Column 1 content...", "Column 2 content..."],
+      };
+    case "social-links":
+      return {
+        links: [
+          { platform: "facebook" as const, url: "", show: false },
+          { platform: "instagram" as const, url: "", show: true },
+          { platform: "twitter" as const, url: "", show: false },
+          { platform: "website" as const, url: "", show: false },
+        ],
+      };
+    case "header":
+      return {
+        showLogo: true,
+        tagline: "Professional Photography",
+        backgroundColor: "#ffffff",
+      };
+    case "raw-html":
+      return {
+        html: "<div>Your custom HTML here...</div>",
+        sanitized: false,
+      };
     default:
       return {} as any;
   }

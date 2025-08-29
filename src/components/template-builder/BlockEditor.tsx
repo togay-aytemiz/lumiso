@@ -10,6 +10,7 @@ import { TemplateBlock, TextBlockData, SessionDetailsBlockData, CTABlockData, Im
 import { VariablePicker } from "./VariablePicker";
 import { useToast } from "@/hooks/use-toast";
 import { useRef } from "react";
+import { DividerBlockEditor, ColumnsBlockEditor, SocialLinksBlockEditor, HeaderBlockEditor, RawHTMLBlockEditor } from "./NewBlockEditors";
 
 interface BlockEditorProps {
   block: TemplateBlock;
@@ -34,6 +35,16 @@ export function BlockEditor({ block, onUpdate, onRemove, onMoveUp, onMoveDown, c
         return <ImageBlockEditor data={block.data as ImageBlockData} onUpdate={onUpdate} />;
       case "footer":
         return <FooterBlockEditor data={block.data as FooterBlockData} onUpdate={onUpdate} />;
+      case "divider":
+        return <DividerBlockEditor data={block.data as any} onUpdate={onUpdate} />;
+      case "columns":
+        return <ColumnsBlockEditor data={block.data as any} onUpdate={onUpdate} />;
+      case "social-links":
+        return <SocialLinksBlockEditor data={block.data as any} onUpdate={onUpdate} />;
+      case "header":
+        return <HeaderBlockEditor data={block.data as any} onUpdate={onUpdate} />;
+      case "raw-html":
+        return <RawHTMLBlockEditor data={block.data as any} onUpdate={onUpdate} />;
       default:
         return <div>Unknown block type</div>;
     }
@@ -361,7 +372,7 @@ function ImageBlockEditor({ data, onUpdate }: { data: ImageBlockData; onUpdate: 
       </div>
       
       <div>
-        <Label>Alt Text</Label>
+        <Label>Alt Text (optional)</Label>
         <Input
           value={data.alt || ""}
           onChange={(e) => onUpdate({ ...data, alt: e.target.value })}
@@ -426,6 +437,27 @@ function FooterBlockEditor({ data, onUpdate }: { data: FooterBlockData; onUpdate
             <Switch
               checked={data.showContactInfo}
               onCheckedChange={(checked) => onUpdate({ ...data, showContactInfo: checked })}
+            />
+          </div>
+          <div className="flex items-center justify-between">
+            <Label className="text-sm">Unsubscribe Link</Label>
+            <Switch
+              checked={data.showUnsubscribe || false}
+              onCheckedChange={(checked) => onUpdate({ ...data, showUnsubscribe: checked })}
+            />
+          </div>
+          <div className="flex items-center justify-between">
+            <Label className="text-sm">Mailing Address</Label>
+            <Switch
+              checked={data.showMailingAddress || false}
+              onCheckedChange={(checked) => onUpdate({ ...data, showMailingAddress: checked })}
+            />
+          </div>
+          <div className="flex items-center justify-between">
+            <Label className="text-sm">Legal Text</Label>
+            <Switch
+              checked={data.showLegalText || false}
+              onCheckedChange={(checked) => onUpdate({ ...data, showLegalText: checked })}
             />
           </div>
         </div>

@@ -1,7 +1,7 @@
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Type, Calendar, MousePointer, Image, Columns3 } from "lucide-react";
+import { Type, Calendar, MousePointer, Image, Columns3, Minus, Grid3X3, Link, Layout, Code } from "lucide-react";
 import { TemplateBlock } from "@/types/templateBuilder";
 
 interface AddBlockSheetProps {
@@ -36,10 +36,40 @@ const blockTypes = [
     description: "Insert brand image, uploaded file, or cover with caption + link option",
   },
   {
+    type: "divider" as const,
+    icon: Minus,
+    title: "Divider/Spacer",
+    description: "Add visual separation with lines or spacing between content",
+  },
+  {
+    type: "columns" as const,
+    icon: Grid3X3,
+    title: "Columns Layout",
+    description: "Organize content in 1, 2, or 3 column layouts",
+  },
+  {
+    type: "social-links" as const,
+    icon: Link,
+    title: "Social Links",
+    description: "Add social media links with platform icons",
+  },
+  {
+    type: "header" as const,
+    icon: Layout,
+    title: "Header Block",
+    description: "Logo and tagline header section with custom styling",
+  },
+  {
+    type: "raw-html" as const,
+    icon: Code,
+    title: "Raw HTML",
+    description: "Custom HTML content for advanced users (sanitized)",
+  },
+  {
     type: "footer" as const,
     icon: Columns3,
     title: "Footer Block",
-    description: "Logo, studio name, contact info auto-injected",
+    description: "Logo, studio name, contact info, and compliance options",
   },
 ];
 

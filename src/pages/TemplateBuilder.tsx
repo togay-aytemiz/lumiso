@@ -156,13 +156,11 @@ export default function TemplateBuilder() {
       <div className="border-b bg-background px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="icon"
+            <ArrowLeft 
+              className="h-6 w-6 cursor-pointer text-foreground hover:text-[hsl(var(--accent-foreground))] transition-colors" 
+              strokeWidth={2.5}
               onClick={handleNavigateBack}
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
+            />
             <div className="flex items-center gap-2">
               {isEditingName ? (
                 <Input

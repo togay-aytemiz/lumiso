@@ -218,7 +218,7 @@ export default function TemplateBuilder() {
 
         {/* Compact Email Settings */}
         {activeChannel === "email" && (
-          <div className="mt-3 pt-3 border-t space-y-2">
+          <div className="mt-3 pt-3 border-t space-y-3">
             {/* Subject Line - Side by Side */}
             <div className="space-y-1">
               {isEditingSubject ? (
@@ -228,8 +228,8 @@ export default function TemplateBuilder() {
                   onCancel={() => setIsEditingSubject(false)}
                 />
               ) : (
-                <div className="flex items-center gap-2">
-                  <Label className="text-sm text-muted-foreground w-16 flex-shrink-0">
+                <div className="flex items-center gap-3 pl-1">
+                  <Label className="text-sm text-muted-foreground w-20 flex-shrink-0">
                     Subject:
                   </Label>
                   <button
@@ -252,7 +252,7 @@ export default function TemplateBuilder() {
               
               {/* Character count and spam warnings for subject */}
               {!isEditingSubject && subject && (subjectCharCount > 60 || spamWords.length > 0) && (
-                <div className="flex items-center gap-2 text-xs text-muted-foreground ml-16">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground ml-24">
                   {subjectCharCount > 60 && (
                     <div className="flex items-center gap-1">
                       <span className="text-amber-600">⚠️</span>
@@ -290,8 +290,8 @@ export default function TemplateBuilder() {
                   onCancel={() => setIsEditingPreheader(false)}
                 />
               ) : (
-                <div className="flex items-center gap-2">
-                  <Label className="text-sm text-muted-foreground w-16 flex-shrink-0">
+                <div className="flex items-center gap-3 pl-1">
+                  <Label className="text-sm text-muted-foreground w-20 flex-shrink-0">
                     Preheader:
                   </Label>
                   <button

@@ -223,14 +223,39 @@ export function useTemplateBuilder(templateId?: string) {
     }
 
     const timeout = setTimeout(() => {
-      saveTemplate(templateData, false); // Don't show toast for auto-save
-    }, 3000); // Auto-save after 3 seconds of inactivity
+      // Save to localStorage only for auto-save, not to database
+      const draftData = {
+        ...templateData,
+        lastSaved: new Date().toISOString(),
+      };
+      localStorage.setItem('template-builder-draft', JSON.stringify(draftData));
+      setLastSaved(new Date());
+    }, 3000); // Auto-save to localStorage after 3 seconds of inactivity
 
     setAutoSaveTimeout(timeout);
-  }, [autoSaveTimeout, saveTemplate]);
+  }, [autoSaveTimeout]);
 
   const updateTemplate = useCallback((updates: Partial<EmailTemplate>) => {
-    if (!template) return;
+    if (!template) {
+      // If no template exists, create a basic one with updates
+      const newTemplate: EmailTemplate = {
+        id: '',
+        name: 'Untitled Template',
+        description: null,
+        subject: '',
+        preheader: '',
+        blocks: [],
+        status: 'draft',
+        category: 'general',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        last_saved_at: null,
+        ...updates,
+      };
+      setTemplate(newTemplate);
+      scheduleAutoSave(newTemplate);
+      return;
+    }
 
     const updatedTemplate = { ...template, ...updates };
     setTemplate(updatedTemplate);
@@ -241,8 +266,14 @@ export function useTemplateBuilder(templateId?: string) {
   useEffect(() => {
     if (templateId) {
       loadTemplate();
+      // Clear localStorage draft when loading existing template
+      localStorage.removeItem('template-builder-draft');
+    } else {
+      // For new templates, start with empty state (don't load from localStorage for now)
+      // Clear any existing draft to start fresh
+      localStorage.removeItem('template-builder-draft');
     }
-  }, [loadTemplate]);
+  }, [loadTemplate, templateId]);
 
   // Cleanup auto-save timeout on unmount
   useEffect(() => {

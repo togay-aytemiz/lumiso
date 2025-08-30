@@ -56,7 +56,7 @@ export function useTemplateVariables() {
 
       // Build template variables
       const templateVariables: TemplateVariable[] = [
-        // Business variables
+        // Business variables (only real ones from organization_settings)
         {
           key: "business_name",
           label: "Business Name",
@@ -64,22 +64,12 @@ export function useTemplateVariables() {
         },
         {
           key: "business_phone",
-          label: "Business Phone",
+          label: "Business Phone", 
           category: "business"
         },
         {
           key: "business_email",
           label: "Business Email",
-          category: "business"
-        },
-        {
-          key: "business_address",
-          label: "Business Address",
-          category: "business"
-        },
-        {
-          key: "business_website",
-          label: "Business Website",
           category: "business"
         },
 
@@ -90,10 +80,15 @@ export function useTemplateVariables() {
           category: "lead" as const
         })) || []),
 
-        // Static lead variables
+        // Static lead variables that exist in database
         {
           key: "lead_status",
           label: "Lead Status",
+          category: "lead"
+        },
+        {
+          key: "lead_due_date",
+          label: "Lead Due Date", 
           category: "lead"
         },
         {
@@ -101,15 +96,20 @@ export function useTemplateVariables() {
           label: "Lead Created Date",
           category: "lead"
         },
+        {
+          key: "lead_updated_date",
+          label: "Lead Updated Date",
+          category: "lead"
+        },
 
-        // Session variables
+        // Session variables (real database fields)
         {
           key: "session_date",
           label: "Session Date",
           category: "session"
         },
         {
-          key: "session_time",
+          key: "session_time", 
           label: "Session Time",
           category: "session"
         },
@@ -119,8 +119,8 @@ export function useTemplateVariables() {
           category: "session"
         },
         {
-          key: "session_type",
-          label: "Session Type",
+          key: "session_notes",
+          label: "Session Notes",
           category: "session"
         },
         {
@@ -128,13 +128,30 @@ export function useTemplateVariables() {
           label: "Session Status",
           category: "session"
         },
+
+        // Project variables (real database fields)
         {
-          key: "session_notes",
-          label: "Session Notes",
+          key: "project_name",
+          label: "Project Name",
+          category: "session"
+        },
+        {
+          key: "project_type",
+          label: "Project Type", 
+          category: "session"
+        },
+        {
+          key: "project_status",
+          label: "Project Status",
+          category: "session"
+        },
+        {
+          key: "project_due_date",
+          label: "Project Due Date",
           category: "session"
         },
 
-        // Custom variables
+        // System variables
         {
           key: "current_date",
           label: "Current Date",
@@ -142,7 +159,7 @@ export function useTemplateVariables() {
         },
         {
           key: "current_time",
-          label: "Current Time",
+          label: "Current Time", 
           category: "custom"
         }
       ];
@@ -161,12 +178,10 @@ export function useTemplateVariables() {
       return mockData[key];
     }
 
-    // Business variables
+    // Business variables (only real ones)
     if (key === "business_name") return businessInfo?.name || "Your Business";
-    if (key === "business_phone") return "+1 (555) 123-4567";
-    if (key === "business_email") return "hello@yourbusiness.com";
-    if (key === "business_address") return "123 Main St, City, State 12345";
-    if (key === "business_website") return "www.yourbusiness.com";
+    if (key === "business_phone") return "+1 (555) 123-4567"; // placeholder
+    if (key === "business_email") return "hello@yourbusiness.com"; // placeholder
 
     // Lead variables
     if (key.startsWith("lead_")) {
@@ -175,18 +190,25 @@ export function useTemplateVariables() {
       if (fieldKey === "email") return "john@example.com";
       if (fieldKey === "phone") return "+1 (555) 987-6543";
       if (fieldKey === "status") return "New";
+      if (fieldKey === "due_date") return new Date().toLocaleDateString();
       if (fieldKey === "created_date") return new Date().toLocaleDateString();
+      if (fieldKey === "updated_date") return new Date().toLocaleDateString();
     }
 
-    // Session variables
+    // Session variables (real database fields)
     if (key === "session_date") return new Date().toLocaleDateString();
-    if (key === "session_time") return "2:00 PM";
+    if (key === "session_time") return "2:00 PM";  
     if (key === "session_location") return "Studio Location";
-    if (key === "session_type") return "Portrait Session";
-    if (key === "session_status") return "Planned";
     if (key === "session_notes") return "Bring comfortable clothes";
+    if (key === "session_status") return "Planned";
 
-    // Custom variables
+    // Project variables (real database fields)
+    if (key === "project_name") return "Wedding Photography";
+    if (key === "project_type") return "Wedding";
+    if (key === "project_status") return "In Progress";
+    if (key === "project_due_date") return new Date().toLocaleDateString();
+
+    // System variables
     if (key === "current_date") return new Date().toLocaleDateString();
     if (key === "current_time") return new Date().toLocaleTimeString();
 

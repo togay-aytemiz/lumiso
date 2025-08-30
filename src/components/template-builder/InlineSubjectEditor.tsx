@@ -47,6 +47,9 @@ export function InlineSubjectEditor({
       e.preventDefault();
       handleSave();
     }
+    if (e.key === 'Escape') {
+      onCancel();
+    }
   };
 
   const insertVariable = (variable: string) => {
@@ -69,7 +72,7 @@ export function InlineSubjectEditor({
   const spamWords = checkSpamWords(inputValue);
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-1">
       {/* Input row */}
       <div className="flex items-center gap-1">
         <Input
@@ -96,7 +99,7 @@ export function InlineSubjectEditor({
             variant="ghost"
             onClick={handleSave}
             disabled={isSaving}
-            className="h-6 w-6 p-0 bg-gray-100 hover:bg-gray-200 border border-border rounded-md shadow-sm"
+            className="h-6 w-6 p-0 bg-muted hover:bg-muted/80 border border-border rounded-md shadow-sm"
           >
             <Check className="h-3 w-3 text-green-600" />
           </Button>
@@ -105,7 +108,7 @@ export function InlineSubjectEditor({
             variant="ghost"
             onClick={onCancel}
             disabled={isSaving}
-            className="h-6 w-6 p-0 bg-gray-100 hover:bg-gray-200 border border-border rounded-md shadow-sm"
+            className="h-6 w-6 p-0 bg-muted hover:bg-muted/80 border border-border rounded-md shadow-sm"
           >
             <X className="h-3 w-3 text-red-600" />
           </Button>
@@ -114,7 +117,7 @@ export function InlineSubjectEditor({
 
       {/* Validation row */}
       {(charCount > 60 || spamWords.length > 0) && (
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground ml-16">
           {charCount > 60 && (
             <div className="flex items-center gap-1">
               <span className="text-amber-600">⚠️</span>

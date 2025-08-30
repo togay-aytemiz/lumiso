@@ -44,6 +44,9 @@ export function InlinePreheaderEditor({
       e.preventDefault();
       handleSave();
     }
+    if (e.key === 'Escape') {
+      onCancel();
+    }
   };
 
   const insertVariable = (variable: string) => {
@@ -79,7 +82,7 @@ export function InlinePreheaderEditor({
           variant="ghost"
           onClick={handleSave}
           disabled={isSaving}
-          className="h-6 w-6 p-0 bg-gray-100 hover:bg-gray-200 border border-border rounded-md shadow-sm"
+          className="h-6 w-6 p-0 bg-muted hover:bg-muted/80 border border-border rounded-md shadow-sm"
         >
           <Check className="h-3 w-3 text-green-600" />
         </Button>
@@ -88,7 +91,7 @@ export function InlinePreheaderEditor({
           variant="ghost"
           onClick={onCancel}
           disabled={isSaving}
-          className="h-6 w-6 p-0 bg-gray-100 hover:bg-gray-200 border border-border rounded-md shadow-sm"
+          className="h-6 w-6 p-0 bg-muted hover:bg-muted/80 border border-border rounded-md shadow-sm"
         >
           <X className="h-3 w-3 text-red-600" />
         </Button>

@@ -9,7 +9,6 @@ import { useToast } from '@/hooks/use-toast';
 import { TemplateEditorWithTest } from '@/components/template-builder/TemplateEditorWithTest';
 import { TemplatePreview } from '@/components/template-builder/TemplatePreview';
 import { TemplateBlock } from '@/types/templateBuilder';
-import { InlineEditField } from '@/components/fields/InlineEditField';
 import { InlineSubjectEditor } from '@/components/template-builder/InlineSubjectEditor';
 import { InlinePreheaderEditor } from '@/components/template-builder/InlinePreheaderEditor';
 import { useTemplateBuilder } from '@/hooks/useTemplateBuilder';
@@ -219,78 +218,99 @@ export default function TemplateBuilder() {
 
         {/* Compact Email Settings */}
         {activeChannel === "email" && (
-          <div className="mt-3 pt-3 border-t space-y-3">
-            {/* Subject Line - Inline Edit */}
+          <div className="mt-3 pt-3 border-t space-y-2">
+            {/* Subject Line - Side by Side */}
             <div className="space-y-1">
-              <Label className="text-xs font-medium text-muted-foreground">
-                📧 Subject
-              </Label>
-              <InlineEditField
-                value={subject}
-                isEditing={isEditingSubject}
-                onStartEdit={() => setIsEditingSubject(true)}
-                onSave={handleSubjectSave}
-                onCancel={() => setIsEditingSubject(false)}
-                editComponent={
-                  <InlineSubjectEditor
-                    value={subject}
-                    onSave={handleSubjectSave}
-                    onCancel={() => setIsEditingSubject(false)}
-                  />
-                }
-              >
+              {isEditingSubject ? (
+                <InlineSubjectEditor
+                  value={subject}
+                  onSave={handleSubjectSave}
+                  onCancel={() => setIsEditingSubject(false)}
+                />
+              ) : (
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-foreground flex-1">
-                    {subject || "Your photography session is confirmed!"}
-                  </span>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <span className={subjectCharCount > 60 ? "text-amber-600" : ""}>
-                      {subjectCharCount}/60
+                  <Label className="text-xs font-medium text-muted-foreground w-16 flex-shrink-0">
+                    📧 Subject:
+                  </Label>
+                  <button
+                    onClick={() => setIsEditingSubject(true)}
+                    className="flex-1 flex items-center gap-2 text-left hover:bg-muted/50 rounded px-2 py-1 -mx-2 -my-1 cursor-pointer group"
+                  >
+                    <span className={`text-sm flex-1 ${!subject ? 'text-muted-foreground' : 'text-foreground'}`}>
+                      {subject || "Click to add subject"}
                     </span>
-                    {subjectCharCount > 60 && <span className="text-amber-600">⚠️</span>}
-                    {spamWords.length > 0 && (
-                      <div className="flex items-center gap-1">
-                        <span className="text-amber-600">⚠️</span>
-                        <div className="flex gap-1">
-                          {spamWords.slice(0, 2).map(word => (
-                            <Badge key={word} variant="secondary" className="text-xs px-1 py-0">
-                              {word}
-                            </Badge>
-                          ))}
-                          {spamWords.length > 2 && (
-                            <span className="text-amber-600">+{spamWords.length - 2}</span>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 p-0 opacity-100"
+                    >
+                      <Edit className="h-3 w-3" />
+                    </Button>
+                  </button>
                 </div>
-              </InlineEditField>
+              )}
+              
+              {/* Character count and spam warnings for subject */}
+              {!isEditingSubject && subject && (subjectCharCount > 60 || spamWords.length > 0) && (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground ml-16">
+                  {subjectCharCount > 60 && (
+                    <div className="flex items-center gap-1">
+                      <span className="text-amber-600">⚠️</span>
+                      <span className="text-amber-600">
+                        {subjectCharCount}/60 characters (too long)
+                      </span>
+                    </div>
+                  )}
+                  {spamWords.length > 0 && (
+                    <div className="flex items-center gap-1">
+                      <span className="text-amber-600">⚠️</span>
+                      <span>Spam words:</span>
+                      <div className="flex gap-1">
+                        {spamWords.slice(0, 2).map(word => (
+                          <Badge key={word} variant="secondary" className="text-xs px-1 py-0">
+                            {word}
+                          </Badge>
+                        ))}
+                        {spamWords.length > 2 && (
+                          <span className="text-amber-600">+{spamWords.length - 2} more</span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
-            {/* Preheader - Inline Edit */}
-            <div className="space-y-1">
-              <Label className="text-xs font-medium text-muted-foreground">
-                📄 Preheader
-              </Label>
-              <InlineEditField
-                value={preheader}
-                isEditing={isEditingPreheader}
-                onStartEdit={() => setIsEditingPreheader(true)}
-                onSave={handlePreheaderSave}
-                onCancel={() => setIsEditingPreheader(false)}
-                editComponent={
-                  <InlinePreheaderEditor
-                    value={preheader}
-                    onSave={handlePreheaderSave}
-                    onCancel={() => setIsEditingPreheader(false)}
-                  />
-                }
-              >
-                <span className="text-sm text-foreground">
-                  {preheader || "We're excited to capture your special moments"}
-                </span>
-              </InlineEditField>
+            {/* Preheader - Side by Side */}
+            <div>
+              {isEditingPreheader ? (
+                <InlinePreheaderEditor
+                  value={preheader}
+                  onSave={handlePreheaderSave}
+                  onCancel={() => setIsEditingPreheader(false)}
+                />
+              ) : (
+                <div className="flex items-center gap-2">
+                  <Label className="text-xs font-medium text-muted-foreground w-16 flex-shrink-0">
+                    📄 Preheader:
+                  </Label>
+                  <button
+                    onClick={() => setIsEditingPreheader(true)}
+                    className="flex-1 flex items-center gap-2 text-left hover:bg-muted/50 rounded px-2 py-1 -mx-2 -my-1 cursor-pointer group"
+                  >
+                    <span className={`text-sm flex-1 ${!preheader ? 'text-muted-foreground' : 'text-foreground'}`}>
+                      {preheader || "Click to add preheader"}
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 p-0 opacity-100"
+                    >
+                      <Edit className="h-3 w-3" />
+                    </Button>
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         )}

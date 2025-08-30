@@ -8,6 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { ChevronUp, ChevronDown, Trash2, Bold, Italic, List, AlignLeft, AlignCenter, AlignRight, AlignJustify, Upload, Smile } from "lucide-react";
 import { TemplateBlock, TextBlockData, SessionDetailsBlockData, CTABlockData, ImageBlockData, FooterBlockData } from "@/types/templateBuilder";
 import { VariablePicker } from "./VariablePicker";
+import { EmojiPicker } from "./EmojiPicker";
 import { useToast } from "@/hooks/use-toast";
 import { useRef, useState } from "react";
 import { emojis } from "@/lib/templateUtils";
@@ -76,7 +77,6 @@ export function BlockEditor({ block, onUpdate, onRemove, onMoveUp, onMoveDown, c
 
 function TextBlockEditor({ data, onUpdate }: { data: TextBlockData; onUpdate: (data: TextBlockData) => void }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   
   const updateFormatting = (key: keyof TextBlockData["formatting"], value: any) => {
     onUpdate({
@@ -119,7 +119,6 @@ function TextBlockEditor({ data, onUpdate }: { data: TextBlockData; onUpdate: (d
     } else {
       onUpdate({ ...data, content: data.content + emoji });
     }
-    setShowEmojiPicker(false);
   };
 
   return (
@@ -128,31 +127,7 @@ function TextBlockEditor({ data, onUpdate }: { data: TextBlockData; onUpdate: (d
         <div className="flex items-center justify-between mb-2">
           <Label>Content</Label>
           <div className="flex items-center gap-2">
-            <div className="relative">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-              >
-                <Smile className="h-3 w-3" />
-              </Button>
-              {showEmojiPicker && (
-                <div className="absolute right-0 top-8 z-10 bg-background border rounded-lg p-3 shadow-lg max-h-40 overflow-y-auto">
-                  <div className="grid grid-cols-8 gap-1">
-                    {emojis.map((emoji, index) => (
-                      <button
-                        key={index}
-                        type="button"
-                        onClick={() => insertEmoji(emoji)}
-                        className="text-lg hover:bg-muted p-1 rounded text-center"
-                      >
-                        {emoji}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
+            <EmojiPicker onEmojiSelect={insertEmoji} />
             <VariablePicker onVariableSelect={insertVariable} />
           </div>
         </div>

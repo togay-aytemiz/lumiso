@@ -276,7 +276,10 @@ function SocialLinksBlockPreview({ data }: { data: any }) {
 
 function HeaderBlockPreview({ data, replacePlaceholders }: { data: any; replacePlaceholders: (text: string) => string }) {
   return (
-    <div className="text-center py-6" style={{ backgroundColor: data.backgroundColor || "#ffffff" }}>
+    <div 
+      className="text-center py-6 rounded-lg" 
+      style={{ backgroundColor: data.backgroundColor || "#ffffff" }}
+    >
       {data.showLogo && (
         <div className="mb-2 text-2xl">🏢</div>
       )}

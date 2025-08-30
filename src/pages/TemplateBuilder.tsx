@@ -3,16 +3,16 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Eye, Send, Save } from "lucide-react";
+import { ArrowLeft, Eye, Send, Save, Edit3 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Smile } from "lucide-react";
 import { TemplateEditor } from "@/components/template-builder/TemplateEditor";
 import { TemplatePreview } from "@/components/template-builder/TemplatePreview";
 import { VariablePicker } from "@/components/template-builder/VariablePicker";
+import { EmojiPicker } from "@/components/template-builder/EmojiPicker";
 import { TemplateBlock } from "@/types/templateBuilder";
 import { useToast } from "@/hooks/use-toast";
-import { previewDataSets, getCharacterCount, checkSpamWords, emojis } from "@/lib/templateUtils";
+import { previewDataSets, getCharacterCount, checkSpamWords } from "@/lib/templateUtils";
 
 export default function TemplateBuilder() {
   const navigate = useNavigate();
@@ -25,6 +25,7 @@ export default function TemplateBuilder() {
   const [activePreviewChannel, setActivePreviewChannel] = useState<"email" | "whatsapp" | "sms" | "plaintext">("email");
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [selectedPreviewData, setSelectedPreviewData] = useState(0);
+  const [isEditingName, setIsEditingName] = useState(false);
 
   // Auto-save functionality
   const saveTemplate = useCallback(() => {
@@ -114,6 +115,20 @@ export default function TemplateBuilder() {
     setEmailSubject(prev => prev + emoji);
   };
 
+  const handleNameEdit = () => {
+    setIsEditingName(!isEditingName);
+  };
+
+  const handleNameBlur = () => {
+    setIsEditingName(false);
+  };
+
+  const handleNameKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      setIsEditingName(false);
+    }
+  };
+
   const subjectCharCount = getCharacterCount(emailSubject);
   const spamWords = checkSpamWords(emailSubject);
   const selectedData = previewDataSets[selectedPreviewData];
@@ -132,25 +147,42 @@ export default function TemplateBuilder() {
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <div className="flex items-center gap-2">
-              <Input
-                value={templateName}
-                onChange={(e) => setTemplateName(e.target.value)}
-                className="font-semibold text-lg border-none bg-transparent p-0 h-auto focus-visible:ring-0"
-              />
-              <div className="flex items-center gap-2">
-                <span className="text-xs bg-muted px-2 py-1 rounded">
-                  {isDraft ? "Draft" : "Published"}
-                </span>
-                {lastSaved && (
-                  <span className="text-xs text-muted-foreground">
-                    Saved {lastSaved.toLocaleTimeString()}
-                  </span>
-                )}
-              </div>
+              {isEditingName ? (
+                <Input
+                  value={templateName}
+                  onChange={(e) => setTemplateName(e.target.value)}
+                  onBlur={handleNameBlur}
+                  onKeyDown={handleNameKeyDown}
+                  className="font-semibold text-lg border bg-background px-2 py-1 h-auto focus-visible:ring-1"
+                  autoFocus
+                />
+              ) : (
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold text-lg">{templateName}</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleNameEdit}
+                    className="h-6 w-6 p-0"
+                  >
+                    <Edit3 className="h-3 w-3" />
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
           
           <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
+              <span className="text-xs bg-muted px-2 py-1 rounded">
+                {isDraft ? "Draft" : "Published"}
+              </span>
+              {lastSaved && (
+                <span className="text-xs text-muted-foreground">
+                  Saved {lastSaved.toLocaleTimeString()}
+                </span>
+              )}
+            </div>
             <Button variant="outline" onClick={handleTestSend}>
               <Send className="h-4 w-4" />
               Test Send
@@ -159,12 +191,10 @@ export default function TemplateBuilder() {
               <Save className="h-4 w-4" />
               Save Draft
             </Button>
-            {isDraft && (
-              <Button onClick={handlePublishTemplate}>
-                <Eye className="h-4 w-4" />
-                Publish
-              </Button>
-            )}
+            <Button onClick={handlePublishTemplate}>
+              <Eye className="h-4 w-4" />
+              {isDraft ? "Publish" : "Published"}
+            </Button>
           </div>
         </div>
 
@@ -223,17 +253,7 @@ export default function TemplateBuilder() {
                   placeholder="Your photography session is confirmed!"
                   className="flex-1 h-8 text-sm"
                 />
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-8 px-2"
-                  onClick={() => {
-                    const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
-                    insertEmojiInSubject(randomEmoji);
-                  }}
-                >
-                  <Smile className="h-3 w-3" />
-                </Button>
+                <EmojiPicker onEmojiSelect={insertEmojiInSubject} />
                 <VariablePicker 
                   onVariableSelect={insertVariableInSubject}
                   trigger={

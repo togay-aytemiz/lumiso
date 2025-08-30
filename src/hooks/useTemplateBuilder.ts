@@ -42,12 +42,10 @@ export function useTemplateBuilder(templateId?: string) {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [isDirty, setIsDirty] = useState(false);
   const { activeOrganization } = useOrganization();
   const { user } = useAuth();
   const { toast } = useToast();
-
-  // Auto-save functionality
-  const [autoSaveTimeout, setAutoSaveTimeout] = useState<NodeJS.Timeout | null>(null);
 
   const loadTemplate = useCallback(async () => {
     if (!templateId || !activeOrganization?.id) return;
@@ -141,6 +139,7 @@ export function useTemplateBuilder(templateId?: string) {
 
       setTemplate(result);
       setLastSaved(new Date());
+      setIsDirty(false);
 
       if (showToast) {
         toast({
@@ -222,24 +221,10 @@ export function useTemplateBuilder(templateId?: string) {
     }
   }, [templateId, activeOrganization?.id, toast]);
 
-  // Auto-save with debouncing
-  const scheduleAutoSave = useCallback((templateData: Partial<EmailTemplate>) => {
-    if (autoSaveTimeout) {
-      clearTimeout(autoSaveTimeout);
-    }
-
-    const timeout = setTimeout(() => {
-      // Save to localStorage only for auto-save, not to database
-      const draftData = {
-        ...templateData,
-        lastSaved: new Date().toISOString(),
-      };
-      localStorage.setItem('template-builder-draft', JSON.stringify(draftData));
-      setLastSaved(new Date());
-    }, 3000); // Auto-save to localStorage after 3 seconds of inactivity
-
-    setAutoSaveTimeout(timeout);
-  }, [autoSaveTimeout]);
+  // Reset dirty state when template is loaded
+  const resetDirtyState = useCallback(() => {
+    setIsDirty(false);
+  }, []);
 
   const updateTemplate = useCallback((updates: Partial<EmailTemplate>) => {
     if (!template) {
@@ -259,46 +244,33 @@ export function useTemplateBuilder(templateId?: string) {
         ...updates,
       };
       setTemplate(newTemplate);
-      scheduleAutoSave(newTemplate);
+      setIsDirty(true);
       return;
     }
 
     const updatedTemplate = { ...template, ...updates };
     setTemplate(updatedTemplate);
-    scheduleAutoSave(updatedTemplate);
-  }, [template, scheduleAutoSave]);
+    setIsDirty(true);
+  }, [template]);
 
-  // Load template on mount
+  // Load template on mount - only when templateId changes
   useEffect(() => {
     if (templateId) {
       loadTemplate();
-      // Clear localStorage draft when loading existing template
-      localStorage.removeItem('template-builder-draft');
-    } else {
-      // For new templates, start with empty state (don't load from localStorage for now)
-      // Clear any existing draft to start fresh
-      localStorage.removeItem('template-builder-draft');
     }
-  }, [loadTemplate, templateId]);
-
-  // Cleanup auto-save timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (autoSaveTimeout) {
-        clearTimeout(autoSaveTimeout);
-      }
-    };
-  }, [autoSaveTimeout]);
+  }, [templateId]); // Only depend on templateId, not loadTemplate
 
   return {
     template,
     loading,
     saving,
     lastSaved,
+    isDirty,
     saveTemplate,
     publishTemplate,
     deleteTemplate,
     updateTemplate,
     loadTemplate,
+    resetDirtyState,
   };
 }

@@ -46,12 +46,16 @@ function generateHTMLContent(
         margin: 0; 
         padding: 0; 
         background-color: #f4f4f4;
+        -webkit-text-size-adjust: 100%;
+        -ms-text-size-adjust: 100%;
       }
       .container { 
         max-width: 600px; 
         margin: 0 auto; 
         background: #fff; 
         padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
       }
       .header { 
         text-align: center; 
@@ -68,6 +72,8 @@ function generateHTMLContent(
         text-decoration: none; 
         border-radius: 4px; 
         font-weight: bold;
+        text-align: center;
+        font-size: 16px;
       }
       .cta-primary { 
         background-color: #007bff; 
@@ -84,6 +90,8 @@ function generateHTMLContent(
       .image-block img { 
         max-width: 100%; 
         height: auto; 
+        display: block;
+        margin: 0 auto;
       }
       .footer { 
         margin-top: 40px; 
@@ -91,6 +99,7 @@ function generateHTMLContent(
         border-top: 1px solid #eee; 
         font-size: 14px; 
         color: #666; 
+        text-align: center;
       }
       .divider { 
         margin: 30px 0; 
@@ -104,20 +113,37 @@ function generateHTMLContent(
         margin: 0 10px; 
         text-decoration: none; 
       }
+      
+      /* Mobile responsive styles */
+      @media only screen and (max-width: 600px) {
+        .container { 
+          width: 100% !important; 
+          padding: 15px !important; 
+        }
+        .cta-button {
+          display: block !important;
+          width: 80% !important;
+          margin: 10px auto !important;
+        }
+      }
     </style>
   `;
 
   let htmlContent = `
     <!DOCTYPE html>
-    <html>
+    <html lang="en">
     <head>
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+      <meta name="x-apple-disable-message-reformatting" content="">
+      <meta name="format-detection" content="telephone=no,address=no,email=no,date=no,url=no">
       <title>${replacePlaceholders(subject, mockData)}</title>
       ${baseStyles}
     </head>
     <body>
-      <div class="container">
+      <div style="width: 100%; background-color: #f4f4f4; padding: 20px 0;">
+        <div class="container">
   `;
 
   if (preheader) {
@@ -237,6 +263,10 @@ function generateHTMLContent(
     });
 
   htmlContent += `
+        </div>
+      </div>
+      <div style="text-align: center; padding: 20px; font-size: 12px; color: #666;">
+        <p>This email was sent by Lumiso. <a href="mailto:hello@updates.lumiso.app?subject=unsubscribe" style="color: #666;">Unsubscribe</a></p>
       </div>
     </body>
     </html>
@@ -323,10 +353,18 @@ const handler = async (req: Request): Promise<Response> => {
 
     const emailData = {
       from: 'Lumiso <hello@updates.lumiso.app>',
+      reply_to: 'hello@updates.lumiso.app',
       to: [to],
       subject: replacePlaceholders(finalSubject, mockData),
       html: htmlContent,
       text: textContent,
+      headers: {
+        'List-Unsubscribe': '<mailto:hello@updates.lumiso.app?subject=unsubscribe>',
+        'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+        'X-Mailer': 'Lumiso Template System',
+        'X-Priority': '3',
+        'X-Auto-Response-Suppress': 'OOF',
+      },
     };
 
     console.log('Sending email with Resend to:', to);

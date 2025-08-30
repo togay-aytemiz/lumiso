@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Save, Send, Eye, Edit } from 'lucide-react';
+import { ArrowLeft, Save, Eye, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -15,6 +15,8 @@ import { VariablePicker } from '@/components/template-builder/VariablePicker';
 import { useTemplateBuilder } from '@/hooks/useTemplateBuilder';
 import { useTemplateVariables } from '@/hooks/useTemplateVariables';
 import { getCharacterCount, checkSpamWords, previewDataSets } from '@/lib/templateUtils';
+import { NavigationGuardDialog } from '@/components/settings/NavigationGuardDialog';
+import { useSettingsNavigation } from '@/hooks/useSettingsNavigation';
 
 export default function TemplateBuilder() {
   const navigate = useNavigate();
@@ -23,7 +25,7 @@ export default function TemplateBuilder() {
   const templateId = searchParams.get('id');
 
   // Backend hooks
-  const { template, loading, saving, lastSaved, saveTemplate, publishTemplate, updateTemplate } = useTemplateBuilder(templateId || undefined);
+  const { template, loading, saving, lastSaved, isDirty, saveTemplate, publishTemplate, updateTemplate, resetDirtyState } = useTemplateBuilder(templateId || undefined);
   const { getVariableValue } = useTemplateVariables();
 
   // Local state for UI
@@ -40,6 +42,25 @@ export default function TemplateBuilder() {
   const preheader = template?.preheader || '';
   const blocks = template?.blocks || [];
   const isDraft = template?.status === 'draft' || !template;
+
+  // Navigation guard
+  const {
+    showGuard,
+    message: guardMessage,
+    handleNavigationAttempt,
+    handleDiscardChanges,
+    handleStayOnPage,
+    handleSaveAndExit
+  } = useSettingsNavigation({
+    isDirty,
+    onDiscard: () => {
+      resetDirtyState();
+    },
+    onSaveAndExit: async () => {
+      await handleSaveTemplate();
+    },
+    message: "You have unsaved changes to this template."
+  });
 
   const handleSaveTemplate = async () => {
     if (!template) {
@@ -69,13 +90,15 @@ export default function TemplateBuilder() {
     }
   };
 
-  const handleTestSend = () => {
-    // TODO: Implement test email sending
-    toast({
-      title: "Test email sent",
-      description: "A test email has been sent to your email address.",
-    });
+  const handleNavigateBack = () => {
+    if (isDirty) {
+      if (!handleNavigationAttempt('/automation-templates')) {
+        return; // Navigation blocked by guard
+      }
+    }
+    navigate('/automation-templates');
   };
+
 
   const handlePublishTemplate = async () => {
     await publishTemplate();
@@ -147,7 +170,7 @@ export default function TemplateBuilder() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => navigate('/automation-templates')}
+              onClick={handleNavigateBack}
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
@@ -182,16 +205,17 @@ export default function TemplateBuilder() {
               <Badge variant={isDraft ? "secondary" : "default"}>
                 {isDraft ? "Draft" : "Published"}
               </Badge>
-              {lastSaved && (
+              {isDirty && (
+                <Badge variant="outline" className="text-amber-600 border-amber-600">
+                  Unsaved Changes
+                </Badge>
+              )}
+              {lastSaved && !isDirty && (
                 <span className="text-xs text-muted-foreground">
                   Saved {lastSaved.toLocaleTimeString()}
                 </span>
               )}
             </div>
-            <Button variant="outline" onClick={handleTestSend}>
-              <Send className="h-4 w-4" />
-              Test Send
-            </Button>
             <Button variant="outline" onClick={handleSaveTemplate} disabled={saving}>
               <Save className="h-4 w-4" />
               {saving ? "Saving..." : "Save Draft"}
@@ -319,6 +343,15 @@ export default function TemplateBuilder() {
           />
         </div>
       </div>
+
+      {/* Navigation Guard Dialog */}
+      <NavigationGuardDialog
+        open={showGuard}
+        onDiscard={handleDiscardChanges}
+        onStay={handleStayOnPage}
+        onSaveAndExit={handleSaveAndExit}
+        message={guardMessage}
+      />
     </div>
   );
 }

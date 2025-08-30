@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import { useOrganization } from "@/contexts/OrganizationContext";
+import { DeleteTemplateDialog } from "@/components/template-builder/DeleteTemplateDialog";
 
 interface EmailTemplate {
   id: string;
@@ -61,6 +62,11 @@ export default function Templates() {
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [deleteDialog, setDeleteDialog] = useState<{
+    open: boolean;
+    template: EmailTemplate | null;
+  }>({ open: false, template: null });
+  const [deleting, setDeleting] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   const { activeOrganizationId } = useOrganization();
@@ -95,12 +101,17 @@ export default function Templates() {
     }
   };
 
-  const handleDeleteTemplate = async (templateId: string, templateName: string) => {
-    if (!confirm(`Are you sure you want to delete "${templateName}"? This action cannot be undone.`)) {
-      return;
-    }
+  const handleDeleteTemplate = async (template: EmailTemplate) => {
+    setDeleteDialog({ open: true, template });
+  };
 
+  const confirmDeleteTemplate = async () => {
+    if (!deleteDialog.template) return;
+
+    const { id: templateId, name: templateName } = deleteDialog.template;
+    
     try {
+      setDeleting(true);
       const { error } = await supabase
         .from('email_templates')
         .delete()
@@ -113,13 +124,21 @@ export default function Templates() {
         title: "Template deleted",
         description: `"${templateName}" has been deleted successfully.`
       });
+      
+      setDeleteDialog({ open: false, template: null });
     } catch (error: any) {
       toast({
         title: "Error deleting template",
         description: error.message,
         variant: "destructive"
       });
+    } finally {
+      setDeleting(false);
     }
+  };
+
+  const cancelDeleteTemplate = () => {
+    setDeleteDialog({ open: false, template: null });
   };
 
   const handleDuplicateTemplate = async (template: EmailTemplate) => {
@@ -246,7 +265,7 @@ export default function Templates() {
                 Duplicate
               </DropdownMenuItem>
               <DropdownMenuItem 
-                onClick={() => handleDeleteTemplate(template.id, template.name)}
+                onClick={() => handleDeleteTemplate(template)}
                 className="text-destructive focus:text-destructive"
               >
                 <Trash2 className="h-4 w-4 mr-2" />
@@ -334,6 +353,15 @@ export default function Templates() {
           )}
         </div>
       </div>
+
+      {/* Delete Template Dialog */}
+      <DeleteTemplateDialog
+        open={deleteDialog.open}
+        onClose={cancelDeleteTemplate}
+        onConfirm={confirmDeleteTemplate}
+        templateName={deleteDialog.template?.name || ''}
+        loading={deleting}
+      />
     </div>
   );
 }

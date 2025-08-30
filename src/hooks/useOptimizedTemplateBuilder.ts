@@ -1,10 +1,9 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { TemplateBlock } from "@/types/templateBuilder";
 import { useToast } from "@/hooks/use-toast";
-import { useDebounce } from "@/hooks/useDebounce";
 
 interface EmailTemplate {
   id: string;
@@ -41,14 +40,10 @@ export function useOptimizedTemplateBuilder(templateId?: string): UseOptimizedTe
   const [saving, setSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [isDirty, setIsDirty] = useState(false);
-  const [pendingUpdates, setPendingUpdates] = useState<Partial<EmailTemplate>>({});
   
   const { activeOrganization } = useOrganization();
   const { user } = useAuth();
   const { toast } = useToast();
-
-  // Debounce pending updates to batch them
-  const debouncedUpdates = useDebounce(pendingUpdates, 500);
 
   const loadTemplate = useCallback(async () => {
     if (!templateId || !activeOrganization?.id) return;
@@ -146,7 +141,6 @@ export function useOptimizedTemplateBuilder(templateId?: string): UseOptimizedTe
       setTemplate(result);
       setLastSaved(new Date());
       setIsDirty(false);
-      setPendingUpdates({});
 
       if (showToast) {
         toast({
@@ -230,7 +224,7 @@ export function useOptimizedTemplateBuilder(templateId?: string): UseOptimizedTe
   }, [templateId, activeOrganization?.id, toast]);
 
   const updateTemplate = useCallback((updates: Partial<EmailTemplate>) => {
-    if (!template && !Object.keys(pendingUpdates).length) {
+    if (!template) {
       // If no template exists, create a basic one with updates
       const newTemplate: EmailTemplate = {
         id: '',
@@ -251,18 +245,13 @@ export function useOptimizedTemplateBuilder(templateId?: string): UseOptimizedTe
       return;
     }
 
-    if (template) {
-      const updatedTemplate = { ...template, ...updates };
-      setTemplate(updatedTemplate);
-    }
-    
-    setPendingUpdates(prev => ({ ...prev, ...updates }));
+    const updatedTemplate = { ...template, ...updates };
+    setTemplate(updatedTemplate);
     setIsDirty(true);
-  }, [template, pendingUpdates]);
+  }, [template]);
 
   const resetDirtyState = useCallback(() => {
     setIsDirty(false);
-    setPendingUpdates({});
   }, []);
 
   // Load template on mount
@@ -271,14 +260,6 @@ export function useOptimizedTemplateBuilder(templateId?: string): UseOptimizedTe
       loadTemplate();
     }
   }, [templateId, activeOrganization?.id, loadTemplate]);
-
-  // Auto-save debounced updates
-  useEffect(() => {
-    if (Object.keys(debouncedUpdates).length > 0 && template && !saving) {
-      saveTemplate(debouncedUpdates, false);
-      setPendingUpdates({});
-    }
-  }, [debouncedUpdates, template, saving, saveTemplate]);
 
   return {
     template,

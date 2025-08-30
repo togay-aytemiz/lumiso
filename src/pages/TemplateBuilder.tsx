@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Save, Eye, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,8 @@ import { useTemplateVariables } from '@/hooks/useTemplateVariables';
 import { getCharacterCount, checkSpamWords, previewDataSets } from '@/lib/templateUtils';
 import { NavigationGuardDialog } from '@/components/settings/NavigationGuardDialog';
 import { useSettingsNavigation } from '@/hooks/useSettingsNavigation';
+import { TemplateNameDialog } from '@/components/template-builder/TemplateNameDialog';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function TemplateBuilder() {
   const navigate = useNavigate();
@@ -34,6 +36,9 @@ export default function TemplateBuilder() {
   const [editingName, setEditingName] = useState('');
   const [isEditingSubject, setIsEditingSubject] = useState(false);
   const [isEditingPreheader, setIsEditingPreheader] = useState(false);
+  const [showNameDialog, setShowNameDialog] = useState(false);
+  const [pendingAction, setPendingAction] = useState<'save' | 'publish' | null>(null);
+  const [existingTemplateNames, setExistingTemplateNames] = useState<string[]>([]);
 
   // Template data from backend or defaults
   const templateName = template?.name || 'Untitled Template';
@@ -41,6 +46,39 @@ export default function TemplateBuilder() {
   const preheader = template?.preheader || '';
   const blocks = template?.blocks || [];
   const isDraft = template?.status === 'draft' || !template;
+
+  // Fetch existing template names for validation
+  useEffect(() => {
+    const fetchTemplateNames = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('email_templates')
+          .select('name')
+          .neq('id', templateId || '');
+        
+        if (error) {
+          console.error('Error fetching template names:', error);
+          return;
+        }
+
+        setExistingTemplateNames(data?.map(t => t.name) || []);
+      } catch (error) {
+        console.error('Error fetching template names:', error);
+      }
+    };
+
+    fetchTemplateNames();
+  }, [templateId]);
+
+  // Helper function to check if template name is untitled
+  const isUntitledTemplate = (name: string) => {
+    const normalizedName = name.toLowerCase().trim();
+    return normalizedName === 'untitled template' || 
+           normalizedName.includes('untitled') ||
+           normalizedName === '' ||
+           normalizedName === 'new template' ||
+           normalizedName === 'template';
+  };
 
   // Navigation guard
   const {
@@ -61,11 +99,20 @@ export default function TemplateBuilder() {
     message: "You have unsaved changes to this template."
   });
 
-  const handleSaveTemplate = async () => {
+  const handleSaveTemplate = async (customName?: string) => {
+    const nameToUse = customName || templateName;
+    
+    // Check if template needs a name
+    if (isUntitledTemplate(nameToUse)) {
+      setPendingAction('save');
+      setShowNameDialog(true);
+      return;
+    }
+
     if (!template) {
       // Create new template
       const newTemplate = await saveTemplate({
-        name: templateName,
+        name: nameToUse,
         subject,
         preheader,
         blocks,
@@ -81,7 +128,7 @@ export default function TemplateBuilder() {
       // Update existing template
       await saveTemplate({
         ...template,
-        name: templateName,
+        name: nameToUse,
         subject,
         preheader,
         blocks,
@@ -99,7 +146,19 @@ export default function TemplateBuilder() {
   };
 
 
-  const handlePublishTemplate = async () => {
+  const handlePublishTemplate = async (customName?: string) => {
+    const nameToUse = customName || templateName;
+    
+    // Check if template needs a name
+    if (isUntitledTemplate(nameToUse)) {
+      setPendingAction('publish');
+      setShowNameDialog(true);
+      return;
+    }
+
+    // Save with the name first (will handle creation/update)
+    await handleSaveTemplate(nameToUse);
+    // Then publish
     await publishTemplate();
   };
 
@@ -134,6 +193,29 @@ export default function TemplateBuilder() {
 
   const handleBlocksChange = (newBlocks: TemplateBlock[]) => {
     updateTemplate({ blocks: newBlocks });
+  };
+
+  // Handle name dialog confirmation
+  const handleNameDialogConfirm = async (name: string) => {
+    setShowNameDialog(false);
+    
+    // Update the template name in local state
+    updateTemplate({ name });
+    
+    // Perform the pending action with the new name
+    if (pendingAction === 'save') {
+      await handleSaveTemplate(name);
+    } else if (pendingAction === 'publish') {
+      await handlePublishTemplate(name);
+    }
+    
+    setPendingAction(null);
+  };
+
+  // Handle name dialog cancel
+  const handleNameDialogCancel = () => {
+    setShowNameDialog(false);
+    setPendingAction(null);
   };
 
   const subjectCharCount = getCharacterCount(subject);
@@ -203,11 +285,11 @@ export default function TemplateBuilder() {
                 </span>
               )}
             </div>
-            <Button variant="outline" onClick={handleSaveTemplate} disabled={saving}>
+            <Button variant="outline" onClick={() => handleSaveTemplate()} disabled={saving}>
               <Save className="h-4 w-4" />
               {saving ? "Saving..." : "Save Draft"}
             </Button>
-            <Button onClick={handlePublishTemplate} disabled={saving}>
+            <Button onClick={() => handlePublishTemplate()} disabled={saving}>
               <Eye className="h-4 w-4" />
               {isDraft ? "Publish" : "Published"}
             </Button>
@@ -344,6 +426,17 @@ export default function TemplateBuilder() {
         onStay={handleStayOnPage}
         onSaveAndExit={handleSaveAndExit}
         message={guardMessage}
+      />
+
+      {/* Template Name Dialog */}
+      <TemplateNameDialog
+        open={showNameDialog}
+        onClose={handleNameDialogCancel}
+        onConfirm={handleNameDialogConfirm}
+        currentName={templateName}
+        existingNames={existingTemplateNames}
+        action={pendingAction || 'save'}
+        loading={saving}
       />
     </div>
   );

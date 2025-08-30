@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Save, Eye, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -6,27 +6,29 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { TemplateEditorWithTest } from '@/components/template-builder/TemplateEditorWithTest';
-import { TemplatePreview } from '@/components/template-builder/TemplatePreview';
+import { OptimizedTemplateEditor } from '@/components/template-builder/OptimizedTemplateEditor';
+import { OptimizedTemplatePreview } from '@/components/template-builder/OptimizedTemplatePreview';
 import { TemplateBlock } from '@/types/templateBuilder';
 import { InlineSubjectEditor } from '@/components/template-builder/InlineSubjectEditor';
 import { InlinePreheaderEditor } from '@/components/template-builder/InlinePreheaderEditor';
-import { useTemplateBuilder } from '@/hooks/useTemplateBuilder';
+import { useOptimizedTemplateBuilder } from '@/hooks/useOptimizedTemplateBuilder';
 import { useTemplateVariables } from '@/hooks/useTemplateVariables';
 import { getCharacterCount, checkSpamWords, previewDataSets } from '@/lib/templateUtils';
 import { NavigationGuardDialog } from '@/components/settings/NavigationGuardDialog';
 import { useSettingsNavigation } from '@/hooks/useSettingsNavigation';
 import { TemplateNameDialog } from '@/components/template-builder/TemplateNameDialog';
 import { supabase } from '@/integrations/supabase/client';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
-export default function TemplateBuilder() {
+// Optimized TemplateBuilder component
+const OptimizedTemplateBuilderContent = React.memo(() => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
   const templateId = searchParams.get('id');
 
   // Backend hooks
-  const { template, loading, saving, lastSaved, isDirty, saveTemplate, publishTemplate, updateTemplate, resetDirtyState } = useTemplateBuilder(templateId || undefined);
+  const { template, loading, saving, lastSaved, isDirty, saveTemplate, publishTemplate, updateTemplate, resetDirtyState } = useOptimizedTemplateBuilder(templateId || undefined);
   const { getVariableValue } = useTemplateVariables();
 
   // Local state for UI
@@ -99,7 +101,7 @@ export default function TemplateBuilder() {
     message: "You have unsaved changes to this template."
   });
 
-  const handleSaveTemplate = async (customName?: string) => {
+  const handleSaveTemplate = useCallback(async (customName?: string) => {
     const nameToUse = customName || templateName;
     
     // Check if template needs a name
@@ -134,19 +136,19 @@ export default function TemplateBuilder() {
         blocks,
       });
     }
-  };
+  }, [template, saveTemplate, templateName, subject, preheader, blocks, navigate]);
 
-  const handleNavigateBack = () => {
+  const handleNavigateBack = useCallback(() => {
     if (isDirty) {
       if (!handleNavigationAttempt('/templates')) {
         return; // Navigation blocked by guard
       }
     }
     navigate('/templates');
-  };
+  }, [isDirty, handleNavigationAttempt, navigate]);
 
 
-  const handlePublishTemplate = async (customName?: string) => {
+  const handlePublishTemplate = useCallback(async (customName?: string) => {
     const nameToUse = customName || templateName;
     
     // Check if template needs a name
@@ -160,7 +162,7 @@ export default function TemplateBuilder() {
     await handleSaveTemplate(nameToUse);
     // Then publish
     await publishTemplate();
-  };
+  }, [templateName, handleSaveTemplate, publishTemplate]);
 
   const handleSubjectSave = async (newSubject: string) => {
     updateTemplate({ subject: newSubject });
@@ -191,9 +193,9 @@ export default function TemplateBuilder() {
   };
 
 
-  const handleBlocksChange = (newBlocks: TemplateBlock[]) => {
+  const handleBlocksChange = useCallback((newBlocks: TemplateBlock[]) => {
     updateTemplate({ blocks: newBlocks });
-  };
+  }, [updateTemplate]);
 
   // Handle name dialog confirmation
   const handleNameDialogConfirm = async (name: string) => {
@@ -218,9 +220,10 @@ export default function TemplateBuilder() {
     setPendingAction(null);
   };
 
-  const subjectCharCount = getCharacterCount(subject);
-  const spamWords = checkSpamWords(subject);
-  const selectedData = previewDataSets[selectedPreviewData];
+  // Memoize expensive calculations
+  const subjectCharCount = useMemo(() => getCharacterCount(subject), [subject]);
+  const spamWords = useMemo(() => checkSpamWords(subject), [subject]);
+  const selectedData = useMemo(() => previewDataSets[selectedPreviewData], [selectedPreviewData]);
 
   if (loading) {
     return (
@@ -400,7 +403,7 @@ export default function TemplateBuilder() {
       <div className="flex-1 flex min-h-0">
         {/* Left Side - Template Editor */}
         <div className="w-1/2 border-r">
-          <TemplateEditorWithTest
+          <OptimizedTemplateEditor
             blocks={blocks}
             onBlocksChange={handleBlocksChange}
           />
@@ -408,7 +411,7 @@ export default function TemplateBuilder() {
 
         {/* Right Side - Live Preview */}
         <div className="w-1/2">
-          <TemplatePreview
+          <OptimizedTemplatePreview
             blocks={blocks}
             activeChannel={activeChannel as 'email' | 'whatsapp' | 'sms' | 'plaintext'}
             onChannelChange={(channel) => setActiveChannel(channel as 'email' | 'whatsapp' | 'sms' | 'plain')}
@@ -439,5 +442,15 @@ export default function TemplateBuilder() {
         loading={saving}
       />
     </div>
+  );
+});
+
+OptimizedTemplateBuilderContent.displayName = 'OptimizedTemplateBuilderContent';
+
+export default function TemplateBuilder() {
+  return (
+    <ErrorBoundary>
+      <OptimizedTemplateBuilderContent />
+    </ErrorBoundary>
   );
 }

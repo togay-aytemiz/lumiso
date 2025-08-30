@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
@@ -7,11 +7,11 @@ import { Input } from "@/components/ui/input";
 import { DataTable, type Column } from "@/components/ui/data-table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Plus, Search, Edit, Trash2, Copy, MoreHorizontal, MessageSquare } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
-import { useOrganization } from "@/contexts/OrganizationContext";
 import { DeleteTemplateDialog } from "@/components/template-builder/DeleteTemplateDialog";
+import { useOptimizedTemplates } from "@/hooks/useOptimizedTemplates";
+import { LoadingSkeleton } from "@/components/ui/loading-skeleton";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 interface EmailTemplate {
   id: string;
@@ -25,165 +25,88 @@ interface EmailTemplate {
   blocks: any[];
 }
 
-// Helper function to extract preview text from template
-const extractPreviewText = (template: EmailTemplate): string => {
-  // First priority: subject line
-  if (template.subject?.trim()) {
-    return template.subject.trim();
-  }
-  
-  // Second priority: preheader
-  if (template.preheader?.trim()) {
-    return template.preheader.trim();
-  }
-  
-  // Third priority: first text block content
-  if (template.blocks && Array.isArray(template.blocks)) {
-    for (const block of template.blocks) {
-      if (block.type === 'text' && block.content?.trim()) {
-        // Remove HTML tags and get first 60 characters
-        const plainText = block.content.replace(/<[^>]*>/g, '').trim();
-        if (plainText) {
-          return plainText.length > 60 ? `${plainText.substring(0, 60)}...` : plainText;
-        }
-      }
-    }
-  }
-  
-  // Fallback: description
-  if (template.description?.trim()) {
-    return template.description.length > 60 ? `${template.description.substring(0, 60)}...` : template.description;
-  }
-  
-  return 'No preview available';
-};
+// Optimized Templates component with memoization and error handling
+const OptimizedTemplatesContent = React.memo(() => {
+  const navigate = useNavigate();
+  const {
+    loading,
+    error,
+    searchTerm,
+    setSearchTerm,
+    filteredTemplates,
+    deleteTemplate,
+    duplicateTemplate,
+  } = useOptimizedTemplates();
 
-export default function Templates() {
-  const [templates, setTemplates] = useState<EmailTemplate[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
   const [deleteDialog, setDeleteDialog] = useState<{
     open: boolean;
-    template: EmailTemplate | null;
+    template: any | null;
   }>({ open: false, template: null });
   const [deleting, setDeleting] = useState(false);
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  const { activeOrganizationId } = useOrganization();
 
-  useEffect(() => {
-    if (activeOrganizationId) {
-      fetchTemplates();
-    }
-  }, [activeOrganizationId]);
-
-  const fetchTemplates = async () => {
-    if (!activeOrganizationId) return;
-    
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('email_templates')
-        .select('id, name, description, subject, preheader, status, category, updated_at, blocks')
-        .eq('organization_id', activeOrganizationId)
-        .order('updated_at', { ascending: false });
-
-      if (error) throw error;
-      setTemplates(data as EmailTemplate[] || []);
-    } catch (error: any) {
-      toast({
-        title: "Error loading templates",
-        description: error.message,
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDeleteTemplate = async (template: EmailTemplate) => {
+  const handleDeleteTemplate = React.useCallback((template: any) => {
     setDeleteDialog({ open: true, template });
-  };
+  }, []);
 
-  const confirmDeleteTemplate = async () => {
+  const confirmDeleteTemplate = React.useCallback(async () => {
     if (!deleteDialog.template) return;
 
     const { id: templateId, name: templateName } = deleteDialog.template;
     
     try {
       setDeleting(true);
-      const { error } = await supabase
-        .from('email_templates')
-        .delete()
-        .eq('id', templateId);
-
-      if (error) throw error;
-
-      setTemplates(prev => prev.filter(t => t.id !== templateId));
-      toast({
-        title: "Template deleted",
-        description: `"${templateName}" has been deleted successfully.`
-      });
+      const success = await deleteTemplate(templateId);
       
-      setDeleteDialog({ open: false, template: null });
-    } catch (error: any) {
-      toast({
-        title: "Error deleting template",
-        description: error.message,
-        variant: "destructive"
-      });
+      if (success) {
+        setDeleteDialog({ open: false, template: null });
+      }
     } finally {
       setDeleting(false);
     }
-  };
+  }, [deleteDialog.template, deleteTemplate]);
 
-  const cancelDeleteTemplate = () => {
+  const cancelDeleteTemplate = React.useCallback(() => {
     setDeleteDialog({ open: false, template: null });
-  };
+  }, []);
 
-  const handleDuplicateTemplate = async (template: EmailTemplate) => {
-    try {
-      const { data, error } = await supabase
-        .from('email_templates')
-        .insert({
-          name: `${template.name} (Copy)`,
-          description: template.description,
-          organization_id: activeOrganizationId,
-          user_id: (await supabase.auth.getUser()).data.user?.id,
-          blocks: template.blocks,
-          status: 'draft',
-          category: template.category
-        })
-        .select()
-        .single();
+  const handleDuplicateTemplate = React.useCallback(async (template: any) => {
+    await duplicateTemplate(template);
+  }, [duplicateTemplate]);
 
-      if (error) throw error;
-
-      setTemplates(prev => [data as EmailTemplate, ...prev]);
-      toast({
-        title: "Template duplicated",
-        description: `"${template.name}" has been duplicated successfully.`
-      });
-    } catch (error: any) {
-      toast({
-        title: "Error duplicating template",
-        description: error.message,
-        variant: "destructive"
-      });
+  // Helper function to extract preview text from template
+  const extractPreviewText = React.useCallback((template: any): string => {
+    // First priority: subject line
+    if (template.subject?.trim()) {
+      return template.subject.trim();
     }
-  };
+    
+    // Second priority: preheader
+    if (template.preheader?.trim()) {
+      return template.preheader.trim();
+    }
+    
+    // Third priority: first text block content
+    if (template.blocks && Array.isArray(template.blocks)) {
+      for (const block of template.blocks) {
+        if (block.type === 'text' && block.content?.trim()) {
+          // Remove HTML tags and get first 60 characters
+          const plainText = block.content.replace(/<[^>]*>/g, '').trim();
+          if (plainText) {
+            return plainText.length > 60 ? `${plainText.substring(0, 60)}...` : plainText;
+          }
+        }
+      }
+    }
+    
+    // Fallback: description
+    if (template.description?.trim()) {
+      return template.description.length > 60 ? `${template.description.substring(0, 60)}...` : template.description;
+    }
+    
+    return 'No preview available';
+  }, []);
 
-  const filteredTemplates = templates.filter(template => {
-    const searchLower = searchTerm.toLowerCase();
-    const matchesSearch = 
-      template.name.toLowerCase().includes(searchLower) ||
-      template.description?.toLowerCase().includes(searchLower) ||
-      template.subject?.toLowerCase().includes(searchLower) ||
-      extractPreviewText(template).toLowerCase().includes(searchLower);
-    return matchesSearch;
-  });
-
-  const columns: Column<EmailTemplate>[] = [
+  const columns: Column<any>[] = useMemo(() => [
     {
       key: 'name',
       header: 'Template Name',
@@ -276,9 +199,9 @@ export default function Templates() {
         </div>
       )
     }
-  ];
+  ], [handleDeleteTemplate, handleDuplicateTemplate, navigate]);
 
-  const emptyState = (
+  const emptyState = useMemo(() => (
     <div className="text-center py-12">
       <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
       <h3 className="text-lg font-medium mb-2">
@@ -297,7 +220,18 @@ export default function Templates() {
         </Button>
       )}
     </div>
-  );
+  ), [searchTerm, navigate]);
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-lg font-semibold text-destructive mb-2">Error Loading Templates</div>
+          <p className="text-muted-foreground">{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen">
@@ -328,20 +262,7 @@ export default function Templates() {
         <div className="bg-card rounded-lg border">
           {loading ? (
             <div className="p-8">
-              <div className="animate-pulse space-y-4">
-                <div className="h-4 bg-muted rounded w-1/4"></div>
-                <div className="space-y-3">
-                  {[...Array(5)].map((_, i) => (
-                    <div key={i} className="flex space-x-4">
-                      <div className="h-4 bg-muted rounded flex-1"></div>
-                      <div className="h-4 bg-muted rounded w-24"></div>
-                      <div className="h-4 bg-muted rounded w-20"></div>
-                      <div className="h-4 bg-muted rounded w-32"></div>
-                      <div className="h-4 bg-muted rounded w-24"></div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <LoadingSkeleton variant="table" rows={5} />
             </div>
           ) : (
             <DataTable
@@ -363,5 +284,15 @@ export default function Templates() {
         loading={deleting}
       />
     </div>
+  );
+});
+
+OptimizedTemplatesContent.displayName = 'OptimizedTemplatesContent';
+
+export default function Templates() {
+  return (
+    <ErrorBoundary>
+      <OptimizedTemplatesContent />
+    </ErrorBoundary>
   );
 }

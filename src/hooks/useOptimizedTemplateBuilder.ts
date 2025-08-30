@@ -1,9 +1,10 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { TemplateBlock } from "@/types/templateBuilder";
 import { useToast } from "@/hooks/use-toast";
+import { useDebounce } from "@/hooks/useDebounce";
 
 interface EmailTemplate {
   id: string;
@@ -20,32 +21,34 @@ interface EmailTemplate {
   published_at?: string | null;
 }
 
-interface DatabaseTemplate {
-  id: string;
-  name: string;
-  description: string | null;
-  subject: string | null;
-  preheader: string | null;
-  blocks: any; // JSON from database
-  status: string;
-  category: string;
-  created_at: string;
-  updated_at: string;
-  last_saved_at: string | null;
-  published_at: string | null;
-  user_id: string;
-  organization_id: string;
+interface UseOptimizedTemplateBuilderReturn {
+  template: EmailTemplate | null;
+  loading: boolean;
+  saving: boolean;
+  lastSaved: Date | null;
+  isDirty: boolean;
+  saveTemplate: (templateData: Partial<EmailTemplate>, showToast?: boolean) => Promise<EmailTemplate | null>;
+  publishTemplate: () => Promise<EmailTemplate | null>;
+  deleteTemplate: () => Promise<boolean>;
+  updateTemplate: (updates: Partial<EmailTemplate>) => void;
+  loadTemplate: () => Promise<void>;
+  resetDirtyState: () => void;
 }
 
-export function useTemplateBuilder(templateId?: string) {
+export function useOptimizedTemplateBuilder(templateId?: string): UseOptimizedTemplateBuilderReturn {
   const [template, setTemplate] = useState<EmailTemplate | null>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [isDirty, setIsDirty] = useState(false);
+  const [pendingUpdates, setPendingUpdates] = useState<Partial<EmailTemplate>>({});
+  
   const { activeOrganization } = useOrganization();
   const { user } = useAuth();
   const { toast } = useToast();
+
+  // Debounce pending updates to batch them
+  const debouncedUpdates = useDebounce(pendingUpdates, 500);
 
   const loadTemplate = useCallback(async () => {
     if (!templateId || !activeOrganization?.id) return;
@@ -70,6 +73,7 @@ export function useTemplateBuilder(templateId?: string) {
       };
 
       setTemplate(transformedTemplate);
+      setIsDirty(false);
     } catch (error) {
       console.error("Error loading template:", error);
       toast({
@@ -82,28 +86,30 @@ export function useTemplateBuilder(templateId?: string) {
     }
   }, [templateId, activeOrganization?.id, toast]);
 
-  const saveTemplate = useCallback(async (templateData: Partial<EmailTemplate>, showToast = true) => {
+  const saveTemplate = useCallback(async (templateData: Partial<EmailTemplate>, showToast = true): Promise<EmailTemplate | null> => {
     if (!activeOrganization?.id || !user?.id) return null;
 
     try {
       setSaving(true);
 
-      // Create payload without id for inserts, include id for updates
+      // Merge current template data with updates
+      const dataToSave = template ? { ...template, ...templateData } : templateData;
+
       const basePayload = {
-        name: templateData.name || 'Untitled Template',
-        description: templateData.description || null,
-        subject: templateData.subject || null,
-        preheader: templateData.preheader || null,
-        status: templateData.status || 'draft',
-        category: templateData.category || 'general',
+        name: dataToSave.name || 'Untitled Template',
+        description: dataToSave.description || null,
+        subject: dataToSave.subject || null,
+        preheader: dataToSave.preheader || null,
+        status: dataToSave.status || 'draft',
+        category: dataToSave.category || 'general',
         user_id: user.id,
         organization_id: activeOrganization.id,
         last_saved_at: new Date().toISOString(),
-        blocks: templateData.blocks ? JSON.stringify(templateData.blocks) : '[]',
+        blocks: dataToSave.blocks ? JSON.stringify(dataToSave.blocks) : '[]',
       };
 
       let result;
-      if (templateId) {
+      if (templateId && template) {
         // Update existing template
         const { data, error } = await supabase
           .from("email_templates")
@@ -121,7 +127,7 @@ export function useTemplateBuilder(templateId?: string) {
           status: data.status as 'draft' | 'published',
         };
       } else {
-        // Create new template - don't include id field
+        // Create new template
         const { data, error } = await supabase
           .from("email_templates")
           .insert(basePayload)
@@ -140,6 +146,7 @@ export function useTemplateBuilder(templateId?: string) {
       setTemplate(result);
       setLastSaved(new Date());
       setIsDirty(false);
+      setPendingUpdates({});
 
       if (showToast) {
         toast({
@@ -162,15 +169,16 @@ export function useTemplateBuilder(templateId?: string) {
     } finally {
       setSaving(false);
     }
-  }, [templateId, activeOrganization?.id, user?.id, toast]);
+  }, [templateId, template, activeOrganization?.id, user?.id, toast]);
 
-  const publishTemplate = useCallback(async () => {
-    if (!template) return;
+  const publishTemplate = useCallback(async (): Promise<EmailTemplate | null> => {
+    if (!template) return null;
 
     try {
       const updatedTemplate = await saveTemplate({
         ...template,
         status: 'published',
+        published_at: new Date().toISOString(),
       });
 
       if (updatedTemplate) {
@@ -192,7 +200,7 @@ export function useTemplateBuilder(templateId?: string) {
     }
   }, [template, saveTemplate, toast]);
 
-  const deleteTemplate = useCallback(async () => {
+  const deleteTemplate = useCallback(async (): Promise<boolean> => {
     if (!templateId || !activeOrganization?.id) return false;
 
     try {
@@ -221,23 +229,18 @@ export function useTemplateBuilder(templateId?: string) {
     }
   }, [templateId, activeOrganization?.id, toast]);
 
-  // Reset dirty state when template is loaded
-  const resetDirtyState = useCallback(() => {
-    setIsDirty(false);
-  }, []);
-
   const updateTemplate = useCallback((updates: Partial<EmailTemplate>) => {
-    if (!template) {
+    if (!template && !Object.keys(pendingUpdates).length) {
       // If no template exists, create a basic one with updates
       const newTemplate: EmailTemplate = {
-        id: '', // Will be set after first save
-        name: updates.name || 'Untitled Template',
-        description: updates.description || null,
-        subject: updates.subject || '',
-        preheader: updates.preheader || '',
-        blocks: updates.blocks || [],
+        id: '',
+        name: 'Untitled Template',
+        description: null,
+        subject: '',
+        preheader: '',
+        blocks: [],
         status: 'draft',
-        category: updates.category || 'general',
+        category: 'general',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         last_saved_at: null,
@@ -248,17 +251,34 @@ export function useTemplateBuilder(templateId?: string) {
       return;
     }
 
-    const updatedTemplate = { ...template, ...updates };
-    setTemplate(updatedTemplate);
+    if (template) {
+      const updatedTemplate = { ...template, ...updates };
+      setTemplate(updatedTemplate);
+    }
+    
+    setPendingUpdates(prev => ({ ...prev, ...updates }));
     setIsDirty(true);
-  }, [template]);
+  }, [template, pendingUpdates]);
 
-  // Load template on mount - only when templateId changes
+  const resetDirtyState = useCallback(() => {
+    setIsDirty(false);
+    setPendingUpdates({});
+  }, []);
+
+  // Load template on mount
   useEffect(() => {
-    if (templateId) {
+    if (templateId && activeOrganization?.id) {
       loadTemplate();
     }
-  }, [templateId, activeOrganization?.id]); // Fixed dependency array
+  }, [templateId, activeOrganization?.id, loadTemplate]);
+
+  // Auto-save debounced updates
+  useEffect(() => {
+    if (Object.keys(debouncedUpdates).length > 0 && template && !saving) {
+      saveTemplate(debouncedUpdates, false);
+      setPendingUpdates({});
+    }
+  }, [debouncedUpdates, template, saving, saveTemplate]);
 
   return {
     template,

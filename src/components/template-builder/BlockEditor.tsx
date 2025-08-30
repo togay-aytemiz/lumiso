@@ -5,10 +5,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChevronUp, ChevronDown, Trash2, Bold, Italic, List, AlignLeft, AlignCenter, AlignRight, AlignJustify, Upload, Smile } from "lucide-react";
 import { TemplateBlock, TextBlockData, SessionDetailsBlockData, CTABlockData, ImageBlockData, FooterBlockData } from "@/types/templateBuilder";
 import { VariablePicker } from "./VariablePicker";
 import { EmojiPicker } from "./EmojiPicker";
+import { ImageUpload } from "./ImageUpload";
+import { ImageManager } from "./ImageManager";
 import { useToast } from "@/hooks/use-toast";
 import { useRef, useState } from "react";
 import { emojis } from "@/lib/templateUtils";
@@ -329,68 +332,57 @@ function CTABlockEditor({ data, onUpdate }: { data: CTABlockData; onUpdate: (dat
 }
 
 function ImageBlockEditor({ data, onUpdate }: { data: ImageBlockData; onUpdate: (data: ImageBlockData) => void }) {
-  const { toast } = useToast();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit
-        toast({
-          title: "File too large",
-          description: "Please select an image smaller than 5MB.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const result = e.target?.result as string;
-        onUpdate({ 
-          ...data, 
-          src: result, 
-          placeholder: false,
-          alt: file.name.split('.')[0] // Use filename as alt text
-        });
-      };
-      reader.readAsDataURL(file);
-    }
+  const handleImageSelect = (imageUrl: string, altText?: string) => {
+    onUpdate({ 
+      ...data, 
+      src: imageUrl, 
+      placeholder: false,
+      alt: altText || data.alt || 'Image'
+    });
   };
 
   return (
     <div className="space-y-4">
-      <div>
-        <Label>Image Source</Label>
-        <div className="space-y-2">
-          <Input
-            value={data.src || ""}
-            onChange={(e) => onUpdate({ ...data, src: e.target.value, placeholder: !e.target.value })}
-            placeholder="https://example.com/image.jpg"
-          />
-          
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">or</span>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => fileInputRef.current?.click()}
-              className="flex items-center gap-2"
-            >
-              <Upload className="h-3 w-3" />
-              Upload Image
-            </Button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleFileUpload}
-              className="hidden"
+      <Tabs defaultValue="upload" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="upload">Upload New</TabsTrigger>
+          <TabsTrigger value="library">Image Library</TabsTrigger>
+          <TabsTrigger value="url">URL</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="upload" className="space-y-4">
+          <ImageUpload onImageUploaded={handleImageSelect} />
+        </TabsContent>
+        
+        <TabsContent value="library" className="space-y-4">
+          <ImageManager onImageSelect={handleImageSelect} />
+        </TabsContent>
+        
+        <TabsContent value="url" className="space-y-4">
+          <div>
+            <Label>Image URL</Label>
+            <Input
+              value={data.src || ""}
+              onChange={(e) => onUpdate({ ...data, src: e.target.value, placeholder: !e.target.value })}
+              placeholder="https://example.com/image.jpg"
+            />
+          </div>
+        </TabsContent>
+      </Tabs>
+
+      {/* Show current image if exists */}
+      {data.src && !data.placeholder && (
+        <div className="border rounded-lg p-3">
+          <Label className="text-sm text-muted-foreground">Current Image</Label>
+          <div className="mt-2">
+            <img 
+              src={data.src} 
+              alt={data.alt || 'Preview'} 
+              className="max-w-full h-32 object-cover rounded border"
             />
           </div>
         </div>
-      </div>
+      )}
       
       <div>
         <Label>Alt Text (optional)</Label>

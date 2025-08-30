@@ -90,12 +90,18 @@ export function useTemplateBuilder(templateId?: string) {
     try {
       setSaving(true);
 
-      const payload: any = {
-        ...templateData,
+      // Create payload without id for inserts, include id for updates
+      const basePayload = {
+        name: templateData.name || 'Untitled Template',
+        description: templateData.description || null,
+        subject: templateData.subject || null,
+        preheader: templateData.preheader || null,
+        status: templateData.status || 'draft',
+        category: templateData.category || 'general',
         user_id: user.id,
         organization_id: activeOrganization.id,
         last_saved_at: new Date().toISOString(),
-        blocks: templateData.blocks ? JSON.stringify(templateData.blocks) : undefined,
+        blocks: templateData.blocks ? JSON.stringify(templateData.blocks) : '[]',
       };
 
       let result;
@@ -103,7 +109,7 @@ export function useTemplateBuilder(templateId?: string) {
         // Update existing template
         const { data, error } = await supabase
           .from("email_templates")
-          .update(payload)
+          .update(basePayload)
           .eq("id", templateId)
           .eq("organization_id", activeOrganization.id)
           .select()
@@ -117,10 +123,10 @@ export function useTemplateBuilder(templateId?: string) {
           status: data.status as 'draft' | 'published',
         };
       } else {
-        // Create new template
+        // Create new template - don't include id field
         const { data, error } = await supabase
           .from("email_templates")
-          .insert(payload)
+          .insert(basePayload)
           .select()
           .single();
 
@@ -239,14 +245,14 @@ export function useTemplateBuilder(templateId?: string) {
     if (!template) {
       // If no template exists, create a basic one with updates
       const newTemplate: EmailTemplate = {
-        id: '',
-        name: 'Untitled Template',
-        description: null,
-        subject: '',
-        preheader: '',
-        blocks: [],
+        id: '', // Will be set after first save
+        name: updates.name || 'Untitled Template',
+        description: updates.description || null,
+        subject: updates.subject || '',
+        preheader: updates.preheader || '',
+        blocks: updates.blocks || [],
         status: 'draft',
-        category: 'general',
+        category: updates.category || 'general',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         last_saved_at: null,

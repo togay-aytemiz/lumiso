@@ -308,20 +308,23 @@ const handler = async (req: Request): Promise<Response> => {
     console.log('Subject:', subject);
     console.log('Blocks count:', blocks?.length || 0);
 
-    if (!to || !subject || !blocks) {
+    if (!to || !blocks) {
       return new Response(
-        JSON.stringify({ error: 'Missing required fields: to, subject, or blocks' }),
+        JSON.stringify({ error: 'Missing required fields: to or blocks' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const htmlContent = generateHTMLContent(blocks, mockData, subject, preheader);
+    // Use default subject if empty
+    const finalSubject = subject?.trim() || 'Test Email from Template Builder';
+
+    const htmlContent = generateHTMLContent(blocks, mockData, finalSubject, preheader);
     const textContent = generatePlainText(blocks, mockData);
 
     const emailData = {
       from: 'Template System <onboarding@resend.dev>',
       to: [to],
-      subject: replacePlaceholders(subject, mockData),
+      subject: replacePlaceholders(finalSubject, mockData),
       html: htmlContent,
       text: textContent,
     };

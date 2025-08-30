@@ -304,9 +304,6 @@ export default function TemplateBuilder() {
           <TemplateEditorWithTest
             blocks={blocks}
             onBlocksChange={handleBlocksChange}
-            emailSubject={subject}
-            preheader={preheader}
-            mockData={previewDataSets[selectedPreviewData].data}
           />
         </div>
 

@@ -1,32 +1,24 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, GripVertical, Eye, EyeOff, Mail, Send } from "lucide-react";
+import { Plus, GripVertical, Eye, EyeOff } from "lucide-react";
 import { TemplateBlock, BlockData, TextBlockData, SessionDetailsBlockData, CTABlockData, ImageBlockData, FooterBlockData } from "@/types/templateBuilder";
 import { BlockEditor } from "./BlockEditor";
 import { AddBlockSheet } from "./AddBlockSheet";
-import { EmailTestDialog } from "./EmailTestDialog";
 import { cn } from "@/lib/utils";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 
 interface TemplateEditorWithTestProps {
   blocks: TemplateBlock[];
   onBlocksChange: (blocks: TemplateBlock[]) => void;
-  emailSubject: string;
-  preheader?: string;
-  mockData: Record<string, string>;
 }
 
 export function TemplateEditorWithTest({ 
   blocks, 
-  onBlocksChange,
-  emailSubject,
-  preheader,
-  mockData
+  onBlocksChange
 }: TemplateEditorWithTestProps) {
   const [activeBlock, setActiveBlock] = useState<string | null>(null);
   const [showAddBlock, setShowAddBlock] = useState(false);
-  const [emailTestOpen, setEmailTestOpen] = useState(false);
 
   const addBlock = (type: TemplateBlock["type"]) => {
     const newBlock: TemplateBlock = {
@@ -101,21 +93,11 @@ export function TemplateEditorWithTest({
 
   return (
     <div className="h-full flex flex-col">
-      {/* Header with Test Button */}
+      {/* Header */}
       <div className="border-b px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="font-semibold">Template Editor</h2>
-            <p className="text-sm text-muted-foreground">Add and customize blocks to build your template</p>
-          </div>
-          <Button
-            onClick={() => setEmailTestOpen(true)}
-            disabled={blocks.length === 0}
-            size="sm"
-          >
-            <Mail className="mr-2 h-4 w-4" />
-            Test Email
-          </Button>
+        <div>
+          <h2 className="font-semibold">Template Editor</h2>
+          <p className="text-sm text-muted-foreground">Add and customize blocks to build your template</p>
         </div>
       </div>
 
@@ -206,20 +188,11 @@ export function TemplateEditorWithTest({
         </Button>
       </div>
 
-      {/* Dialogs */}
+      {/* Add Block Sheet */}
       <AddBlockSheet
         open={showAddBlock}
         onOpenChange={setShowAddBlock}
         onAddBlock={addBlock}
-      />
-
-      <EmailTestDialog 
-        open={emailTestOpen}
-        onOpenChange={setEmailTestOpen}
-        blocks={blocks}
-        emailSubject={emailSubject}
-        preheader={preheader}
-        mockData={mockData}
       />
     </div>
   );

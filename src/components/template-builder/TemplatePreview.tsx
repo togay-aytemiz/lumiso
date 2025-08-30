@@ -8,6 +8,9 @@ import { WhatsAppPreview } from "./previews/WhatsAppPreview";
 import { SMSPreview } from "./previews/SMSPreview";
 import { PlainTextPreview } from "./PlainTextPreview";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
 interface TemplatePreviewProps {
   blocks: TemplateBlock[];
@@ -20,6 +23,8 @@ interface TemplatePreviewProps {
 
 export function TemplatePreview({ blocks, activeChannel, onChannelChange, emailSubject, preheader, previewData }: TemplatePreviewProps) {
   const [previewDevice, setPreviewDevice] = useState<"desktop" | "mobile">("desktop");
+  const [isLoading, setIsLoading] = useState(false);
+  const { user } = useAuth();
 
   const defaultMockData = {
     customer_name: "Sarah Johnson",
@@ -31,6 +36,59 @@ export function TemplatePreview({ blocks, activeChannel, onChannelChange, emailS
   };
 
   const mockData = previewData || defaultMockData;
+
+  const sendTestEmail = async () => {
+    if (!user?.email) {
+      toast({
+        title: "Error",
+        description: "User email not found. Please make sure you're logged in.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (blocks.length === 0) {
+      toast({
+        title: "Error", 
+        description: "No blocks to send. Add some blocks to your template first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('send-template-email', {
+        body: {
+          to: user.email,
+          subject: emailSubject || 'Test Email from Template Builder',
+          preheader: preheader,
+          blocks: blocks.filter(b => b.visible),
+          mockData: mockData,
+          isTest: true
+        }
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Success",
+        description: `Test email sent to ${user.email}`,
+      });
+    } catch (error: any) {
+      console.error('Error sending test email:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to send test email. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="h-full flex flex-col">
@@ -63,9 +121,14 @@ export function TemplatePreview({ blocks, activeChannel, onChannelChange, emailS
                 </Button>
               </>
             )}
-            <Button size="sm" variant="outline">
+            <Button 
+              size="sm" 
+              variant="outline"
+              onClick={sendTestEmail}
+              disabled={isLoading || blocks.length === 0}
+            >
               <Send className="h-4 w-4" />
-              Test Send
+              {isLoading ? "Sending..." : "Test Send"}
             </Button>
           </div>
         </div>

@@ -137,7 +137,7 @@ export function MobileBottomNav({ hideForOnboarding = false }: { hideForOnboardi
     {
       title: 'Templates',
       icon: FileText,
-      onClick: () => navigate('/automation-templates')
+      onClick: () => navigate('/templates')
     }
   ];
 
@@ -187,7 +187,7 @@ export function MobileBottomNav({ hideForOnboarding = false }: { hideForOnboardi
     location.pathname.startsWith(path)
   );
 
-  const isAutomationActive = ['/workflows', '/automation-templates'].some(path =>
+  const isAutomationActive = ['/workflows', '/templates'].some(path =>
     location.pathname.startsWith(path)
   );
 

@@ -38,7 +38,7 @@ import InvitationSignup from "./pages/InvitationSignup";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ErrorBoundary from "./components/ErrorBoundary";
 import Workflows from "./pages/Workflows";
-import AutomationTemplates from "./pages/AutomationTemplates";
+import Templates from "./pages/Templates";
 import TemplateBuilder from "./pages/TemplateBuilder";
 
 const queryClient = new QueryClient();
@@ -71,7 +71,7 @@ const App = () => (
               <Route path="analytics" element={<Analytics />} />
               <Route path="payments" element={<Payments />} />
               <Route path="workflows" element={<Workflows />} />
-              <Route path="templates" element={<AutomationTemplates />} />
+              <Route path="templates" element={<Templates />} />
               <Route path="template-builder" element={<TemplateBuilder />} />
               <Route path="settings" element={<SettingsLayout />}>
                 <Route path="profile" element={<ProfileSettings />} />

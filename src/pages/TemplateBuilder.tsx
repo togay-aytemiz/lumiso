@@ -92,11 +92,11 @@ export default function TemplateBuilder() {
 
   const handleNavigateBack = () => {
     if (isDirty) {
-      if (!handleNavigationAttempt('/automation-templates')) {
+      if (!handleNavigationAttempt('/templates')) {
         return; // Navigation blocked by guard
       }
     }
-    navigate('/automation-templates');
+    navigate('/templates');
   };
 
 

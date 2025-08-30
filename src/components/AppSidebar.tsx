@@ -99,7 +99,7 @@ export function AppSidebar() {
   );
   const [bookingsOpen, setBookingsOpen] = useState(isBookingsChildActive);
 
-  const isAutomationChildActive = ["/workflows", "/automation-templates"].some((path) =>
+  const isAutomationChildActive = ["/workflows", "/templates"].some((path) =>
     currentPath.startsWith(path)
   );
   const [automationOpen, setAutomationOpen] = useState(isAutomationChildActive);

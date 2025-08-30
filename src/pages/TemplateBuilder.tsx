@@ -229,8 +229,8 @@ export default function TemplateBuilder() {
                 />
               ) : (
                 <div className="flex items-center gap-2">
-                  <Label className="text-xs font-medium text-muted-foreground w-16 flex-shrink-0">
-                    📧 Subject:
+                  <Label className="text-sm text-muted-foreground w-16 flex-shrink-0">
+                    Subject:
                   </Label>
                   <button
                     onClick={() => setIsEditingSubject(true)}
@@ -291,8 +291,8 @@ export default function TemplateBuilder() {
                 />
               ) : (
                 <div className="flex items-center gap-2">
-                  <Label className="text-xs font-medium text-muted-foreground w-16 flex-shrink-0">
-                    📄 Preheader:
+                  <Label className="text-sm text-muted-foreground w-16 flex-shrink-0">
+                    Preheader:
                   </Label>
                   <button
                     onClick={() => setIsEditingPreheader(true)}

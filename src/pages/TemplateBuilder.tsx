@@ -168,50 +168,65 @@ export default function TemplateBuilder() {
           </div>
         </div>
 
-        {/* Email Subject and Preheader Fields */}
+        {/* Compact Email Settings */}
         {activePreviewChannel === "email" && (
-          <div className="mt-4 pt-4 border-t space-y-4">
-            {/* Preview Data Selector */}
-            <div className="flex items-center gap-2">
-              <Label className="text-sm font-medium">Preview as:</Label>
-              <Select value={selectedPreviewData.toString()} onValueChange={(value) => setSelectedPreviewData(parseInt(value))}>
-                <SelectTrigger className="w-48">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {previewDataSets.map((dataset, index) => (
-                    <SelectItem key={index} value={index.toString()}>
-                      {dataset.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          <div className="mt-3 pt-3 border-t space-y-2">
+            {/* Preview Data Selector - Inline */}
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Label className="text-xs font-medium text-muted-foreground">Preview as:</Label>
+                <Select value={selectedPreviewData.toString()} onValueChange={(value) => setSelectedPreviewData(parseInt(value))}>
+                  <SelectTrigger className="w-36 h-7 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {previewDataSets.map((dataset, index) => (
+                      <SelectItem key={index} value={index.toString()}>
+                        {dataset.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
-            {/* Subject Line */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Label htmlFor="email-subject" className="text-sm font-medium min-w-fit">
-                  📧 Email Subject Line
+            {/* Subject Line - Compact */}
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <Label htmlFor="email-subject" className="text-xs font-medium text-muted-foreground">
+                  📧 Subject
                 </Label>
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
                   <span className={subjectCharCount > 60 ? "text-amber-600" : ""}>
-                    {subjectCharCount}/60 chars
+                    {subjectCharCount}/60
                   </span>
-                  {subjectCharCount > 60 && <span className="text-amber-600">⚠️ May be truncated</span>}
+                  {subjectCharCount > 60 && <span className="text-amber-600">⚠️</span>}
                 </div>
+                {spamWords.length > 0 && (
+                  <div className="flex items-center gap-1">
+                    <span className="text-amber-600 text-xs">⚠️</span>
+                    <div className="flex gap-1">
+                      {spamWords.slice(0,2).map(word => (
+                        <Badge key={word} variant="secondary" className="text-xs px-1 py-0">
+                          {word}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
                 <Input
                   id="email-subject"
                   value={emailSubject}
                   onChange={(e) => setEmailSubject(e.target.value)}
                   placeholder="Your photography session is confirmed!"
-                  className="flex-1"
+                  className="flex-1 h-8 text-sm"
                 />
                 <Button
                   variant="outline"
                   size="sm"
+                  className="h-8 px-2"
                   onClick={() => {
                     const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
                     insertEmojiInSubject(randomEmoji);
@@ -222,44 +237,32 @@ export default function TemplateBuilder() {
                 <VariablePicker 
                   onVariableSelect={insertVariableInSubject}
                   trigger={
-                    <Button variant="outline" size="sm">
-                      + Variable
+                    <Button variant="outline" size="sm" className="h-8 px-2 text-xs">
+                      {"{…}"}
                     </Button>
                   }
                 />
               </div>
-              {spamWords.length > 0 && (
-                <div className="flex items-center gap-2 text-sm">
-                  <span className="text-amber-600">⚠️ Potential spam words:</span>
-                  <div className="flex gap-1">
-                    {spamWords.map(word => (
-                      <Badge key={word} variant="secondary" className="text-xs">
-                        {word}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
 
-            {/* Preheader */}
-            <div className="space-y-2">
-              <Label htmlFor="email-preheader" className="text-sm font-medium">
-                📄 Preheader Text
+            {/* Preheader - Compact */}
+            <div>
+              <Label htmlFor="email-preheader" className="text-xs font-medium text-muted-foreground mb-1 block">
+                📄 Preheader
               </Label>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
                 <Input
                   id="email-preheader"
                   value={preheader}
                   onChange={(e) => setPreheader(e.target.value)}
                   placeholder="We're excited to capture your special moments"
-                  className="flex-1"
+                  className="flex-1 h-8 text-sm"
                 />
                 <VariablePicker 
                   onVariableSelect={insertVariableInPreheader}
                   trigger={
-                    <Button variant="outline" size="sm">
-                      + Variable
+                    <Button variant="outline" size="sm" className="h-8 px-2 text-xs">
+                      {"{…}"}
                     </Button>
                   }
                 />

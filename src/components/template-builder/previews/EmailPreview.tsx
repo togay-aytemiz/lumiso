@@ -40,25 +40,31 @@ export function EmailPreview({ blocks, mockData, device, emailSubject, preheader
 
       {/* Email Body */}
       <div className={cn("p-6 space-y-6", device === "mobile" && "p-4 space-y-4")}>
-        {blocks.map((block) => (
-          <div key={block.id}>
-            {block.type === "text" && (
-              <TextBlockPreview data={block.data as TextBlockData} replacePlaceholders={replacePlaceholders} />
-            )}
-            {block.type === "session-details" && (
-              <SessionDetailsPreview data={block.data as SessionDetailsBlockData} mockData={mockData} />
-            )}
-            {block.type === "cta" && (
-              <CTABlockPreview data={block.data as CTABlockData} replacePlaceholders={replacePlaceholders} />
-            )}
-            {block.type === "image" && (
-              <ImageBlockPreview data={block.data as ImageBlockData} replacePlaceholders={replacePlaceholders} />
-            )}
-            {block.type === "footer" && (
-              <FooterBlockPreview data={block.data as FooterBlockData} mockData={mockData} />
-            )}
-          </div>
-        ))}
+        {/* Render all blocks */}
+        {blocks.map((block) => {
+          switch (block.type) {
+            case "text":
+              return <TextBlockPreview key={block.id} data={block.data as TextBlockData} replacePlaceholders={replacePlaceholders} />;
+            case "session-details":
+              return <SessionDetailsPreview key={block.id} data={block.data as SessionDetailsBlockData} mockData={mockData} />;
+            case "cta":
+              return <CTABlockPreview key={block.id} data={block.data as CTABlockData} replacePlaceholders={replacePlaceholders} />;
+            case "image":
+              return <ImageBlockPreview key={block.id} data={block.data as ImageBlockData} replacePlaceholders={replacePlaceholders} />;
+            case "divider":
+              return <DividerBlockPreview key={block.id} data={block.data} />;
+            case "social-links":
+              return <SocialLinksBlockPreview key={block.id} data={block.data} />;
+            case "header":
+              return <HeaderBlockPreview key={block.id} data={block.data} replacePlaceholders={replacePlaceholders} />;
+            case "raw-html":
+              return <RawHTMLBlockPreview key={block.id} data={block.data} />;
+            case "footer":
+              return <FooterBlockPreview key={block.id} data={block.data as FooterBlockData} mockData={mockData} />;
+            default:
+              return null;
+          }
+        })}
 
         {blocks.length === 0 && (
           <div className="text-center py-12 text-muted-foreground">
@@ -74,13 +80,25 @@ export function EmailPreview({ blocks, mockData, device, emailSubject, preheader
 
 function TextBlockPreview({ data, replacePlaceholders }: { data: TextBlockData; replacePlaceholders: (text: string) => string }) {
   const getTextStyles = () => {
-    const styles: React.CSSProperties = {
-      fontFamily: data.formatting.fontFamily,
+    const baseStyles: React.CSSProperties = {
+      fontFamily: data.formatting.fontFamily || 'Arial',
       fontWeight: data.formatting.bold ? 'bold' : 'normal',
       fontStyle: data.formatting.italic ? 'italic' : 'normal',
       textAlign: data.formatting.alignment as any || 'left',
     };
-    return styles;
+
+    // Add font size based on semantic type
+    switch (data.formatting.fontSize) {
+      case 'h1':
+        return { ...baseStyles, fontSize: '32px', fontWeight: 'bold', lineHeight: '1.2' };
+      case 'h2':
+        return { ...baseStyles, fontSize: '24px', fontWeight: 'bold', lineHeight: '1.3' };
+      case 'h3':
+        return { ...baseStyles, fontSize: '20px', fontWeight: 'bold', lineHeight: '1.4' };
+      case 'p':
+      default:
+        return { ...baseStyles, fontSize: '16px', lineHeight: '1.6' };
+    }
   };
 
   const content = replacePlaceholders(data.content);
@@ -229,6 +247,51 @@ function FooterBlockPreview({ data, mockData }: { data: FooterBlockData; mockDat
           {data.customText}
         </div>
       )}
+    </div>
+  );
+}
+
+// New block preview components
+function DividerBlockPreview({ data }: { data: any }) {
+  if (data.style === "line") {
+    return <hr style={{ borderColor: data.color || "#e5e5e5", margin: "20px 0" }} />;
+  } else {
+    return <div style={{ height: data.height || 20 }}></div>;
+  }
+}
+
+function SocialLinksBlockPreview({ data }: { data: any }) {
+  return (
+    <div className="text-center py-4">
+      <div className="flex justify-center gap-4">
+        {data.links.filter((link: any) => link.show && link.url).map((link: any) => (
+          <a key={link.platform} href={link.url} className="text-blue-600 capitalize underline">
+            {link.platform}
+          </a>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function HeaderBlockPreview({ data, replacePlaceholders }: { data: any; replacePlaceholders: (text: string) => string }) {
+  return (
+    <div className="text-center py-6" style={{ backgroundColor: data.backgroundColor || "#ffffff" }}>
+      {data.showLogo && (
+        <div className="mb-2 text-2xl">🏢</div>
+      )}
+      {data.tagline && (
+        <p className="text-lg font-medium">{replacePlaceholders(data.tagline)}</p>
+      )}
+    </div>
+  );
+}
+
+function RawHTMLBlockPreview({ data }: { data: any }) {
+  return (
+    <div className="border-2 border-dashed border-amber-300 bg-amber-50 p-4">
+      <div className="text-sm text-amber-700 mb-2">⚠️ Raw HTML Block (sanitized in production)</div>
+      <div dangerouslySetInnerHTML={{ __html: data.html || '<p>No HTML content</p>' }} />
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Type, Calendar, MousePointer, Image, Columns3, Minus, Grid3X3, Link, Layout, Code } from "lucide-react";
+import { Type, Calendar, MousePointer, Image, Columns3, Minus, Link, Layout, Code } from "lucide-react";
 import { TemplateBlock } from "@/types/templateBuilder";
 
 interface AddBlockSheetProps {
@@ -40,12 +40,6 @@ const blockTypes = [
     icon: Minus,
     title: "Divider/Spacer",
     description: "Add visual separation with lines or spacing between content",
-  },
-  {
-    type: "columns" as const,
-    icon: Grid3X3,
-    title: "Columns Layout",
-    description: "Organize content in 1, 2, or 3 column layouts",
   },
   {
     type: "social-links" as const,

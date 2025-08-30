@@ -5,12 +5,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { ChevronUp, ChevronDown, Trash2, Bold, Italic, List, AlignLeft, AlignCenter, AlignRight, AlignJustify, Upload } from "lucide-react";
+import { ChevronUp, ChevronDown, Trash2, Bold, Italic, List, AlignLeft, AlignCenter, AlignRight, AlignJustify, Upload, Smile } from "lucide-react";
 import { TemplateBlock, TextBlockData, SessionDetailsBlockData, CTABlockData, ImageBlockData, FooterBlockData } from "@/types/templateBuilder";
 import { VariablePicker } from "./VariablePicker";
 import { useToast } from "@/hooks/use-toast";
-import { useRef } from "react";
-import { DividerBlockEditor, ColumnsBlockEditor, SocialLinksBlockEditor, HeaderBlockEditor, RawHTMLBlockEditor } from "./NewBlockEditors";
+import { useRef, useState } from "react";
+import { emojis } from "@/lib/templateUtils";
+import { DividerBlockEditor, SocialLinksBlockEditor, HeaderBlockEditor, RawHTMLBlockEditor } from "./NewBlockEditors";
 
 interface BlockEditorProps {
   block: TemplateBlock;
@@ -37,8 +38,6 @@ export function BlockEditor({ block, onUpdate, onRemove, onMoveUp, onMoveDown, c
         return <FooterBlockEditor data={block.data as FooterBlockData} onUpdate={onUpdate} />;
       case "divider":
         return <DividerBlockEditor data={block.data as any} onUpdate={onUpdate} />;
-      case "columns":
-        return <ColumnsBlockEditor data={block.data as any} onUpdate={onUpdate} />;
       case "social-links":
         return <SocialLinksBlockEditor data={block.data as any} onUpdate={onUpdate} />;
       case "header":
@@ -77,6 +76,7 @@ export function BlockEditor({ block, onUpdate, onRemove, onMoveUp, onMoveDown, c
 
 function TextBlockEditor({ data, onUpdate }: { data: TextBlockData; onUpdate: (data: TextBlockData) => void }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   
   const updateFormatting = (key: keyof TextBlockData["formatting"], value: any) => {
     onUpdate({
@@ -103,12 +103,58 @@ function TextBlockEditor({ data, onUpdate }: { data: TextBlockData; onUpdate: (d
     }
   };
 
+  const insertEmoji = (emoji: string) => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const newContent = data.content.slice(0, start) + emoji + data.content.slice(end);
+      onUpdate({ ...data, content: newContent });
+      
+      // Focus and set cursor position after emoji
+      setTimeout(() => {
+        textarea.focus();
+        textarea.setSelectionRange(start + emoji.length, start + emoji.length);
+      }, 0);
+    } else {
+      onUpdate({ ...data, content: data.content + emoji });
+    }
+    setShowEmojiPicker(false);
+  };
+
   return (
     <div className="space-y-4">
       <div>
         <div className="flex items-center justify-between mb-2">
           <Label>Content</Label>
-          <VariablePicker onVariableSelect={insertVariable} />
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+              >
+                <Smile className="h-3 w-3" />
+              </Button>
+              {showEmojiPicker && (
+                <div className="absolute right-0 top-8 z-10 bg-background border rounded-lg p-3 shadow-lg max-h-40 overflow-y-auto">
+                  <div className="grid grid-cols-8 gap-1">
+                    {emojis.map((emoji, index) => (
+                      <button
+                        key={index}
+                        type="button"
+                        onClick={() => insertEmoji(emoji)}
+                        className="text-lg hover:bg-muted p-1 rounded text-center"
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+            <VariablePicker onVariableSelect={insertVariable} />
+          </div>
         </div>
         <Textarea
           ref={textareaRef}

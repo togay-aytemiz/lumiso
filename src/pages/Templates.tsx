@@ -284,7 +284,7 @@ export default function Templates() {
     <div className="min-h-screen">
       <PageHeader 
         title="Message Templates" 
-        subtitle="Create and manage email templates for automated communications"
+        subtitle="Design and manage reusable email templates"
       />
       
       <div className="p-4 sm:p-6 space-y-6">

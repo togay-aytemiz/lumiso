@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { TemplateEditor } from '@/components/template-builder/TemplateEditor';
+import { TemplateEditorWithTest } from '@/components/template-builder/TemplateEditorWithTest';
 import { TemplatePreview } from '@/components/template-builder/TemplatePreview';
 import { TemplateBlock } from '@/types/templateBuilder';
 import { EmojiPicker } from '@/components/template-builder/EmojiPicker';
@@ -301,9 +301,12 @@ export default function TemplateBuilder() {
       <div className="flex-1 flex min-h-0">
         {/* Left Side - Template Editor */}
         <div className="w-1/2 border-r">
-          <TemplateEditor
+          <TemplateEditorWithTest
             blocks={blocks}
             onBlocksChange={handleBlocksChange}
+            emailSubject={subject}
+            preheader={preheader}
+            mockData={previewDataSets[selectedPreviewData].data}
           />
         </div>
 

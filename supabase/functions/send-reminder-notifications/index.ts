@@ -294,7 +294,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send email
     const emailResult = await resend.emails.send({
-      from: 'Lumiso <onboarding@resend.dev>',
+      from: 'Lumiso <hello@updates.lumiso.app>',
       to: [userEmail],
       subject: `Daily Summary - ${today.toLocaleDateString()}`,
       html: emailHtml

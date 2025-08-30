@@ -117,7 +117,7 @@ serve(async (req: Request) => {
     
     // Send invitation email using Resend
     const emailResponse = await resend.emails.send({
-      from: "Lumiso <onboarding@resend.dev>",
+      from: "Lumiso <hello@updates.lumiso.app>",
       to: [email],
       subject: "You're invited to join our team!",
       html: `

@@ -329,7 +329,7 @@ const handler = async (req: Request): Promise<Response> => {
       text: textContent,
     };
 
-    console.log('Sending email with Resend...');
+    console.log('Sending email with Resend to:', to);
     const emailResponse = await resend.emails.send(emailData);
 
     console.log('Email sent successfully:', emailResponse);

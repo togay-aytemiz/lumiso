@@ -322,7 +322,7 @@ const handler = async (req: Request): Promise<Response> => {
     const textContent = generatePlainText(blocks, mockData);
 
     const emailData = {
-      from: 'Template System <onboarding@resend.dev>',
+      from: 'Lumiso <hello@updates.lumiso.app>',
       to: [to],
       subject: replacePlaceholders(finalSubject, mockData),
       html: htmlContent,

@@ -5,13 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { TemplateEditorWithTest } from '@/components/template-builder/TemplateEditorWithTest';
 import { TemplatePreview } from '@/components/template-builder/TemplatePreview';
 import { TemplateBlock } from '@/types/templateBuilder';
-import { EmojiPicker } from '@/components/template-builder/EmojiPicker';
-import { VariablePicker } from '@/components/template-builder/VariablePicker';
+import { InlineEditField } from '@/components/fields/InlineEditField';
+import { InlineSubjectEditor } from '@/components/template-builder/InlineSubjectEditor';
+import { InlinePreheaderEditor } from '@/components/template-builder/InlinePreheaderEditor';
 import { useTemplateBuilder } from '@/hooks/useTemplateBuilder';
 import { useTemplateVariables } from '@/hooks/useTemplateVariables';
 import { getCharacterCount, checkSpamWords, previewDataSets } from '@/lib/templateUtils';
@@ -31,10 +31,10 @@ export default function TemplateBuilder() {
   // Local state for UI
   const [activeChannel, setActiveChannel] = useState<'email' | 'whatsapp' | 'sms' | 'plain'>('email');
   const [selectedPreviewData, setSelectedPreviewData] = useState(0);
-  const [subjectEmojiOpen, setSubjectEmojiOpen] = useState(false);
-  const [preheaderEmojiOpen, setPreheaderEmojiOpen] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [editingName, setEditingName] = useState('');
+  const [isEditingSubject, setIsEditingSubject] = useState(false);
+  const [isEditingPreheader, setIsEditingPreheader] = useState(false);
 
   // Template data from backend or defaults
   const templateName = template?.name || 'Untitled Template';
@@ -104,17 +104,14 @@ export default function TemplateBuilder() {
     await publishTemplate();
   };
 
-  const insertVariableInSubject = (variable: string) => {
-    updateTemplate({ subject: (subject + variable) });
+  const handleSubjectSave = async (newSubject: string) => {
+    updateTemplate({ subject: newSubject });
+    setIsEditingSubject(false);
   };
 
-  const insertVariableInPreheader = (variable: string) => {
-    updateTemplate({ preheader: (preheader + variable) });
-  };
-
-  const insertEmojiInSubject = (emoji: string) => {
-    updateTemplate({ subject: (subject + emoji) });
-    setSubjectEmojiOpen(false);
+  const handlePreheaderSave = async (newPreheader: string) => {
+    updateTemplate({ preheader: newPreheader });
+    setIsEditingPreheader(false);
   };
 
   const handleNameEdit = () => {
@@ -135,13 +132,6 @@ export default function TemplateBuilder() {
     }
   };
 
-  const handleSubjectChange = (newSubject: string) => {
-    updateTemplate({ subject: newSubject });
-  };
-
-  const handlePreheaderChange = (newPreheader: string) => {
-    updateTemplate({ preheader: newPreheader });
-  };
 
   const handleBlocksChange = (newBlocks: TemplateBlock[]) => {
     updateTemplate({ blocks: newBlocks });
@@ -229,93 +219,78 @@ export default function TemplateBuilder() {
 
         {/* Compact Email Settings */}
         {activeChannel === "email" && (
-          <div className="mt-3 pt-3 border-t space-y-2">
-            {/* Preview Data Selector - Inline */}
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <Label className="text-xs font-medium text-muted-foreground">Preview as:</Label>
-                <Select value={selectedPreviewData.toString()} onValueChange={(value) => setSelectedPreviewData(parseInt(value))}>
-                  <SelectTrigger className="w-36 h-7 text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {previewDataSets.map((dataset, index) => (
-                      <SelectItem key={index} value={index.toString()}>
-                        {dataset.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* Subject Line - Compact */}
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <Label htmlFor="email-subject" className="text-xs font-medium text-muted-foreground">
-                  📧 Subject
-                </Label>
-                <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <span className={subjectCharCount > 60 ? "text-amber-600" : ""}>
-                    {subjectCharCount}/60
+          <div className="mt-3 pt-3 border-t space-y-3">
+            {/* Subject Line - Inline Edit */}
+            <div className="space-y-1">
+              <Label className="text-xs font-medium text-muted-foreground">
+                📧 Subject
+              </Label>
+              <InlineEditField
+                value={subject}
+                isEditing={isEditingSubject}
+                onStartEdit={() => setIsEditingSubject(true)}
+                onSave={handleSubjectSave}
+                onCancel={() => setIsEditingSubject(false)}
+                editComponent={
+                  <InlineSubjectEditor
+                    value={subject}
+                    onSave={handleSubjectSave}
+                    onCancel={() => setIsEditingSubject(false)}
+                  />
+                }
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-foreground flex-1">
+                    {subject || "Your photography session is confirmed!"}
                   </span>
-                  {subjectCharCount > 60 && <span className="text-amber-600">⚠️</span>}
-                </div>
-                {spamWords.length > 0 && (
-                  <div className="flex items-center gap-1">
-                    <span className="text-amber-600 text-xs">⚠️</span>
-                    <div className="flex gap-1">
-                      {spamWords.slice(0,2).map(word => (
-                        <Badge key={word} variant="secondary" className="text-xs px-1 py-0">
-                          {word}
-                        </Badge>
-                      ))}
-                    </div>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span className={subjectCharCount > 60 ? "text-amber-600" : ""}>
+                      {subjectCharCount}/60
+                    </span>
+                    {subjectCharCount > 60 && <span className="text-amber-600">⚠️</span>}
+                    {spamWords.length > 0 && (
+                      <div className="flex items-center gap-1">
+                        <span className="text-amber-600">⚠️</span>
+                        <div className="flex gap-1">
+                          {spamWords.slice(0, 2).map(word => (
+                            <Badge key={word} variant="secondary" className="text-xs px-1 py-0">
+                              {word}
+                            </Badge>
+                          ))}
+                          {spamWords.length > 2 && (
+                            <span className="text-amber-600">+{spamWords.length - 2}</span>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-              <div className="flex items-center gap-1">
-                <Input
-                  id="email-subject"
-                  value={subject}
-                  onChange={(e) => handleSubjectChange(e.target.value)}
-                  placeholder="Your photography session is confirmed!"
-                  className="flex-1 h-8 text-sm"
-                />
-                <EmojiPicker onEmojiSelect={insertEmojiInSubject} />
-                <VariablePicker 
-                  onVariableSelect={insertVariableInSubject}
-                  trigger={
-                    <Button variant="outline" size="sm" className="h-8 px-2 text-xs">
-                      {"{…}"}
-                    </Button>
-                  }
-                />
-              </div>
+                </div>
+              </InlineEditField>
             </div>
 
-            {/* Preheader - Compact */}
-            <div>
-              <Label htmlFor="email-preheader" className="text-xs font-medium text-muted-foreground mb-1 block">
+            {/* Preheader - Inline Edit */}
+            <div className="space-y-1">
+              <Label className="text-xs font-medium text-muted-foreground">
                 📄 Preheader
               </Label>
-              <div className="flex items-center gap-1">
-                <Input
-                  id="email-preheader"
-                  value={preheader}
-                  onChange={(e) => handlePreheaderChange(e.target.value)}
-                  placeholder="We're excited to capture your special moments"
-                  className="flex-1 h-8 text-sm"
-                />
-                <VariablePicker 
-                  onVariableSelect={insertVariableInPreheader}
-                  trigger={
-                    <Button variant="outline" size="sm" className="h-8 px-2 text-xs">
-                      {"{…}"}
-                    </Button>
-                  }
-                />
-              </div>
+              <InlineEditField
+                value={preheader}
+                isEditing={isEditingPreheader}
+                onStartEdit={() => setIsEditingPreheader(true)}
+                onSave={handlePreheaderSave}
+                onCancel={() => setIsEditingPreheader(false)}
+                editComponent={
+                  <InlinePreheaderEditor
+                    value={preheader}
+                    onSave={handlePreheaderSave}
+                    onCancel={() => setIsEditingPreheader(false)}
+                  />
+                }
+              >
+                <span className="text-sm text-foreground">
+                  {preheader || "We're excited to capture your special moments"}
+                </span>
+              </InlineEditField>
             </div>
           </div>
         )}

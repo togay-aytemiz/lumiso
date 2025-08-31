@@ -46,6 +46,7 @@ export default function ClientDetailsCard({
           email={email}
           phone={phone}
           notes={notes}
+          createdAt={createdAt}
           clickableNameHref={clickableNameHref}
           clickableNameClasses={clickableNameClasses}
           showQuickActions={showQuickActions}

@@ -921,6 +921,7 @@ const LeadDetail = () => {
         <div className="lg:col-span-1 space-y-6 min-w-0">
           <UnifiedClientDetails 
             lead={lead}
+            createdAt={lead.created_at}
             showQuickActions={true}
             onLeadUpdated={() => {
               fetchLead();

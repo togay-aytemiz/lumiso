@@ -33,7 +33,8 @@ export default function ClientCard({
           name={name} 
           email={email} 
           phone={phone} 
-          notes={notes} 
+          notes={notes}
+          createdAt={createdAt}
           onNameClick={handleNameClick}
           clickableNameClasses="text-blue-600 hover:text-blue-800 hover:underline" 
           showQuickActions 

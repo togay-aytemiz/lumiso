@@ -10,6 +10,7 @@ interface ClientDetailsListProps {
   email?: string | null;
   phone?: string | null;
   notes?: string | null;
+  createdAt?: string | null; // creation date
   clickableNameHref?: string; // if provided, name becomes a link
   clickableNameClasses?: string; // custom classes for clickable name (e.g., blue link)
   showQuickActions?: boolean; // default true
@@ -41,7 +42,7 @@ function normalizeTRPhone(phone?: string | null): null | { e164: string; e164NoP
   return { e164, e164NoPlus: e164.slice(1) };
 }
 
-export function ClientDetailsList({ name, email, phone, notes, clickableNameHref, clickableNameClasses, showQuickActions = true, clampNotes = true, onNameClick }: ClientDetailsListProps) {
+export function ClientDetailsList({ name, email, phone, notes, createdAt, clickableNameHref, clickableNameClasses, showQuickActions = true, clampNotes = true, onNameClick }: ClientDetailsListProps) {
   const [notesExpanded, setNotesExpanded] = useState(false);
   const [isNotesTruncatable, setIsNotesTruncatable] = useState(false);
   const notesRef = useRef<HTMLDivElement>(null);
@@ -153,6 +154,19 @@ export function ClientDetailsList({ name, email, phone, notes, clickableNameHref
           </div>
         </TooltipProvider>
       </div>
+
+      {/* Creation date - subtle and compact */}
+      {createdAt && (
+        <div className="mt-3 text-center">
+          <span className="text-[10px] text-muted-foreground/60 font-normal">
+            Created on {new Date(createdAt).toLocaleDateString('tr-TR', { 
+              year: 'numeric', 
+              month: 'short', 
+              day: 'numeric' 
+            })}
+          </span>
+        </div>
+      )}
 
       {showQuickActions && (
         <div className="border-t mt-4 pt-3">

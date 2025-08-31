@@ -38,6 +38,7 @@ interface UnifiedClientDetailsProps {
   onLeadUpdated?: () => void;
   className?: string;
   showClickableNames?: boolean;
+  createdAt?: string | null; // creation date
 }
 
 // Helper functions for validation and phone normalization
@@ -76,7 +77,8 @@ export function UnifiedClientDetails({
   showQuickActions = true,
   onLeadUpdated,
   className,
-  showClickableNames = false
+  showClickableNames = false,
+  createdAt
 }: UnifiedClientDetailsProps) {
   const { fieldDefinitions, loading: fieldsLoading } = useLeadFieldDefinitions();
   const { fieldValues, loading: valuesLoading, refetch: refetchFieldValues } = useLeadFieldValues(lead.id);
@@ -340,6 +342,19 @@ export function UnifiedClientDetails({
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* Creation date - subtle and compact */}
+          {createdAt && (
+            <div className="mt-3 text-center">
+              <span className="text-[10px] text-muted-foreground/60 font-normal">
+                Created on {new Date(createdAt).toLocaleDateString('tr-TR', { 
+                  year: 'numeric', 
+                  month: 'short', 
+                  day: 'numeric' 
+                })}
+              </span>
             </div>
           )}
         </CardContent>

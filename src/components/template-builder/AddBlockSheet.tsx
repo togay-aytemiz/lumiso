@@ -73,22 +73,22 @@ export function AddBlockSheet({ open, onOpenChange, onAddBlock }: AddBlockSheetP
           </SheetDescription>
         </SheetHeader>
         
-        <div className="mt-6 h-full overflow-x-auto">
-          <div className="flex gap-6 pb-4 h-full" style={{ minWidth: 'max-content' }}>
+        <div className="mt-6 h-full overflow-y-auto">
+          <div className="flex flex-col gap-4 pb-4">
             {blockTypes.map((blockType) => {
               const Icon = blockType.icon;
               return (
                 <Card 
                   key={blockType.type}
-                  className="cursor-pointer hover:scale-105 hover:shadow-lg hover:border-primary/20 transition-all duration-200 flex-shrink-0 w-52"
+                  className="cursor-pointer hover:scale-[1.02] hover:shadow-lg hover:border-primary/20 transition-all duration-200"
                   onClick={() => onAddBlock(blockType.type)}
                 >
-                  <CardHeader className="pb-4 h-full">
-                    <div className="flex flex-col items-center text-center gap-3 h-full justify-center">
-                      <div className="p-4 bg-primary/10 text-primary rounded-lg">
+                  <CardHeader className="pb-4">
+                    <div className="flex items-center gap-4">
+                      <div className="p-4 bg-primary/10 text-primary rounded-lg flex-shrink-0">
                         <Icon className="h-10 w-10" />
                       </div>
-                      <div>
+                      <div className="flex-1">
                         <CardTitle className="text-base">{blockType.title}</CardTitle>
                         <CardDescription className="text-sm mt-2 leading-relaxed">
                           {blockType.description}

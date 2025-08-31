@@ -5,6 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganization } from '@/contexts/OrganizationContext';
+import { checkStorageLimits } from './StorageQuotaDisplay';
 
 interface ImageUploadProps {
   onImageUploaded: (imageUrl: string, altText?: string) => void;
@@ -32,6 +33,25 @@ export function ImageUpload({ onImageUploaded, templateId, className }: ImageUpl
 
     try {
       setUploading(true);
+
+      // Check storage limits first
+      const { data: currentUsage } = await supabase
+        .from('template_image_usage')
+        .select('total_images, total_storage_bytes')
+        .eq('organization_id', activeOrganization.id)
+        .single();
+
+      const usage = currentUsage || { total_images: 0, total_storage_bytes: 0 };
+      const { canUpload, reason } = checkStorageLimits(usage, file.size);
+
+      if (!canUpload) {
+        toast({
+          title: 'Upload Limit Reached',
+          description: reason,
+          variant: 'destructive',
+        });
+        return;
+      }
 
       // Create unique filename
       const fileExt = file.name.split('.').pop();

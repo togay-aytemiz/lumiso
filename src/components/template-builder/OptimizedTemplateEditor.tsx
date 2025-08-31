@@ -5,6 +5,7 @@ import { Plus, GripVertical, Eye, EyeOff } from "lucide-react";
 import { TemplateBlock, BlockData, TextBlockData, SessionDetailsBlockData, CTABlockData, ImageBlockData, FooterBlockData } from "@/types/templateBuilder";
 import { BlockEditor } from "./BlockEditor";
 import { AddBlockSheet } from "./AddBlockSheet";
+import { StorageQuotaDisplay } from './StorageQuotaDisplay';
 import { cn } from "@/lib/utils";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 
@@ -234,11 +235,12 @@ export const OptimizedTemplateEditor = React.memo(({
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
-      <div className="border-b px-6 py-4">
+      <div className="border-b px-6 py-4 space-y-4">
         <div>
           <h2 className="font-semibold">Template Editor</h2>
           <p className="text-sm text-muted-foreground">Add and customize blocks to build your template</p>
         </div>
+        <StorageQuotaDisplay />
       </div>
 
       {/* Blocks List */}

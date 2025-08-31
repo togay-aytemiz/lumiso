@@ -73,7 +73,7 @@ function generateHTMLContent(
         -moz-osx-font-smoothing: grayscale;
       }
       .email-container { 
-        max-width: 600px; 
+        max-width: 700px; 
         margin: 20px auto; 
         background: #ffffff; 
         border-radius: 12px;
@@ -196,7 +196,7 @@ function generateHTMLContent(
         margin: 24px 0; 
       }
       .image-block img { 
-        max-width: 100%; 
+        width: 100%; 
         height: auto; 
         display: block;
         margin: 0 auto;
@@ -212,7 +212,7 @@ function generateHTMLContent(
       /* Header styles */
       .email-header-block { 
         text-align: center; 
-        padding: 24px 0;
+        padding: 24px 0 32px 0;
         border-radius: 8px;
       }
       .header-logo {
@@ -481,7 +481,7 @@ function generateHTMLContent(
             } else {
               htmlContent += `
                 <div class="image-block">
-                  <img src="${imageUrl}" alt="${altText}" style="max-width: 448px; width: 100%; height: auto; border-radius: 8px;">
+                  <img src="${imageUrl}" alt="${altText}" style="width: 100%; height: auto; border-radius: 8px;">
                   ${caption ? `<div class="image-caption">${caption}</div>` : ''}
                 </div>
               `;
@@ -563,8 +563,8 @@ function generateHTMLContent(
           
           // Use real organization data if available
           const businessName = organizationSettings?.photography_business_name || mockData.business_name || 'Your Business';
-          const businessPhone = mockData.business_phone || '+1 (555) 123-4567';
-          const businessEmail = mockData.business_email || `hello@${businessName.toLowerCase().replace(/\s+/g, '')}.com`;
+          const businessPhone = organizationSettings?.phone || mockData.business_phone || '+1 (555) 123-4567';
+          const businessEmail = organizationSettings?.email || mockData.business_email || `hello@${businessName.toLowerCase().replace(/\s+/g, '')}.com`;
           const logoUrl = organizationSettings?.logo_url;
           
           htmlContent += `<div class="email-footer">`;
@@ -719,7 +719,7 @@ const handler = async (req: Request): Promise<Response> => {
           if (userSettings?.active_organization_id) {
             const { data: orgSettings } = await supabase
               .from('organization_settings')
-              .select('photography_business_name, primary_brand_color, logo_url')
+              .select('photography_business_name, primary_brand_color, logo_url, phone, email')
               .eq('organization_id', userSettings.active_organization_id)
               .single();
             

@@ -21,7 +21,7 @@ export function EmailPreview({ blocks, mockData, device, emailSubject, preheader
       if (activeOrganization?.id) {
         const { data } = await supabase
           .from("organization_settings")
-          .select("photography_business_name, logo_url, primary_brand_color")
+          .select("photography_business_name, logo_url, primary_brand_color, phone, email")
           .eq("organization_id", activeOrganization.id)
           .single();
         setOrganizationSettings(data);
@@ -51,8 +51,6 @@ export function EmailPreview({ blocks, mockData, device, emailSubject, preheader
 
       {/* Email Meta */}
       <div className="p-4 border-b bg-gray-50 text-sm">
-        <div><strong>From:</strong> {mockData.business_name} &lt;hello@{mockData.business_name.toLowerCase().replace(/\s+/g, '')}.com&gt;</div>
-        <div><strong>To:</strong> {mockData.customer_name} &lt;{mockData.customer_name.toLowerCase().replace(/\s+/g, '')}@email.com&gt;</div>
         <div><strong>Subject:</strong> {emailSubject ? replacePlaceholders(emailSubject) : "📸 Your photography session is confirmed!"}</div>
         {preheader && (
           <div><strong>Preview:</strong> <span className="text-muted-foreground">{replacePlaceholders(preheader)}</span></div>
@@ -237,7 +235,7 @@ function ImageBlockPreview({ data, replacePlaceholders }: { data: ImageBlockData
         <img
           src={data.src}
           alt={data.alt}
-          className="w-full max-w-md mx-auto rounded-lg"
+          className="w-full rounded-lg"
         />
       )}
       {data.caption && (
@@ -249,8 +247,8 @@ function ImageBlockPreview({ data, replacePlaceholders }: { data: ImageBlockData
 
 function FooterBlockPreview({ data, mockData, organizationSettings }: { data: FooterBlockData; mockData: Record<string, string>; organizationSettings: any }) {
   const businessName = organizationSettings?.photography_business_name || mockData.business_name || 'Your Business';
-  const businessPhone = mockData.business_phone || '+1 (555) 123-4567';
-  const businessEmail = mockData.business_email || `hello@${businessName.toLowerCase().replace(/\s+/g, '')}.com`;
+  const businessPhone = organizationSettings?.phone || mockData.business_phone || '+1 (555) 123-4567';
+  const businessEmail = organizationSettings?.email || mockData.business_email || `hello@${businessName.toLowerCase().replace(/\s+/g, '')}.com`;
   const logoUrl = organizationSettings?.logo_url;
 
   return (

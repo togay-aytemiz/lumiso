@@ -73,14 +73,14 @@ export function AddBlockSheet({ open, onOpenChange, onAddBlock }: AddBlockSheetP
           </SheetDescription>
         </SheetHeader>
         
-        <div className="mt-6 overflow-x-auto">
-          <div className="flex gap-4 pb-4" style={{ minWidth: 'max-content' }}>
+        <div className="mt-6 overflow-y-auto max-h-[70vh]">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
             {blockTypes.map((blockType) => {
               const Icon = blockType.icon;
               return (
                 <Card 
                   key={blockType.type}
-                  className="cursor-pointer hover:shadow-sm transition-shadow flex-shrink-0 w-[200px]"
+                  className="cursor-pointer hover:shadow-sm transition-shadow"
                   onClick={() => onAddBlock(blockType.type)}
                 >
                   <CardHeader className="pb-3">

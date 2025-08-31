@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import SettingsSection from "@/components/SettingsSection";
+import { FormLoadingSkeleton } from "@/components/ui/loading-presets";
 import { LeadFieldsList } from "./LeadFieldsList";
 import { LeadFieldDialog } from "./LeadFieldDialog";
 import { useLeadFieldDefinitions } from "@/hooks/useLeadFieldDefinitions";
@@ -30,9 +31,7 @@ export function LeadFieldsSection() {
         title="Custom Lead Fields"
         description="Configure custom fields for your leads"
       >
-        <div className="flex items-center justify-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        </div>
+        <FormLoadingSkeleton rows={3} />
       </SettingsSection>
     );
   }

@@ -16,6 +16,7 @@ import { useSessionStatuses } from "@/hooks/useOrganizationData";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { cn } from "@/lib/utils";
 import SettingsSection from "./SettingsSection";
+import { FormLoadingSkeleton } from "@/components/ui/loading-presets";
 
 const sessionStatusSchema = z.object({
   name: z.string().min(1, "Status name is required").max(50, "Status name must be less than 50 characters"),
@@ -345,9 +346,7 @@ const SessionStatusesSection = () => {
   if (isLoading) {
     return (
       <SettingsSection title="Session Stages" description="Add, rename and reorder session stages.">
-        <div className="flex items-center justify-center py-8">
-          <Loader2 className="h-8 w-8 animate-spin" />
-        </div>
+        <FormLoadingSkeleton rows={3} />
       </SettingsSection>
     );
   }

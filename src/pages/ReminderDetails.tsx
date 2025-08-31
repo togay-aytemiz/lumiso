@@ -12,6 +12,7 @@ import { formatDate, formatTime, formatDateTime, formatGroupDate, getWeekRange }
 import GlobalSearch from "@/components/GlobalSearch";
 import { PageHeader, PageHeaderSearch } from "@/components/ui/page-header";
 import { FilterBar } from "@/components/FilterBar";
+import { PageLoadingSkeleton } from "@/components/ui/loading-presets";
 
 interface Activity {
   id: string;
@@ -375,14 +376,7 @@ const ReminderDetails = () => {
   ];
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-gray-100 dark:from-gray-900 dark:to-slate-800">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
-          <p className="mt-4 text-muted-foreground">Loading reminders...</p>
-        </div>
-      </div>
-    );
+    return <PageLoadingSkeleton />;
   }
 
   const filteredActivities = getFilteredActivities();

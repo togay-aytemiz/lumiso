@@ -30,6 +30,7 @@ import { useLeadStatusActions } from "@/hooks/useLeadStatusActions";
 import { usePermissions } from "@/hooks/usePermissions";
 import { OnboardingTutorial, TutorialStep } from "@/components/shared/OnboardingTutorial";
 import { useOnboardingV2 } from "@/hooks/useOnboardingV2";
+import { DetailPageLoadingSkeleton } from "@/components/ui/loading-presets";
 interface Lead {
   id: string;
   name: string;
@@ -819,12 +820,7 @@ const LeadDetail = () => {
     label: status.name
   }));
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
-          <p className="mt-4 text-muted-foreground">Loading lead details...</p>
-        </div>
-      </div>;
+    return <DetailPageLoadingSkeleton />;
   }
   if (!lead) {
     return null;

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Search, FileText, Clock, Calendar, User, ChevronRight, X, FolderOpen } from "lucide-react";
+import { SearchLoadingSkeleton } from "@/components/ui/loading-presets";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import { LeadStatusBadge } from "@/components/LeadStatusBadge";
@@ -421,10 +422,7 @@ const GlobalSearch = () => {
       {isOpen && (
         <div className="absolute top-full mt-2 left-0 right-0 bg-background border border-slate-200 dark:border-slate-700 rounded-lg shadow-xl backdrop-blur-sm z-[9999] max-h-96 overflow-y-auto">
           {loading ? (
-            <div className="p-6 text-center text-muted-foreground">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto"></div>
-              <p className="mt-3 text-sm">Searching...</p>
-            </div>
+            <SearchLoadingSkeleton rows={3} />
           ) : results.length === 0 ? (
             <div className="p-6 text-center text-muted-foreground">
               <Search className="h-10 w-10 mx-auto mb-3 opacity-50" />

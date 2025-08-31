@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/form";
 import { DynamicLeadFormFields } from "./DynamicLeadFormFields";
 import { useLeadFieldDefinitions } from "@/hooks/useLeadFieldDefinitions";
+import { FormLoadingSkeleton } from "@/components/ui/loading-presets";
 import { useLeadFieldValues } from "@/hooks/useLeadFieldValues";
 import { createDynamicLeadSchema } from "@/lib/leadFieldValidation";
 import { supabase } from "@/integrations/supabase/client";
@@ -170,9 +171,7 @@ export function EnhancedAddLeadDialog({
         size="lg"
         footerActions={[]}
       >
-        <div className="flex items-center justify-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        </div>
+        <FormLoadingSkeleton rows={4} />
       </AppSheetModal>
     );
   }

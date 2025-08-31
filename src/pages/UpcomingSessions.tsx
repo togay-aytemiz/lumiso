@@ -15,6 +15,7 @@ import { PageHeader, PageHeaderSearch, PageHeaderActions } from "@/components/ui
 import SessionStatusBadge from "@/components/SessionStatusBadge";
 import { ViewProjectDialog } from "@/components/ViewProjectDialog";
 import { FilterBar } from "@/components/FilterBar";
+import { PageLoadingSkeleton } from "@/components/ui/loading-presets";
 import SessionSheetView from "@/components/SessionSheetView";
 
 interface Session {
@@ -346,14 +347,7 @@ const AllSessions = () => {
   ];
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
-          <p className="mt-4 text-muted-foreground">Loading sessions...</p>
-        </div>
-      </div>
-    );
+    return <PageLoadingSkeleton />;
   }
 
   // Prepare filter options for FilterBar (mobile only)

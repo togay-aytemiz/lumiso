@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import SettingsSection from "./SettingsSection";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { useProjectTypes } from "@/hooks/useOrganizationData";
+import { FormLoadingSkeleton } from "@/components/ui/loading-presets";
 
 const projectTypeSchema = z.object({
   name: z.string().min(1, "Type name is required").max(50, "Type name must be less than 50 characters"),
@@ -344,9 +345,7 @@ const ProjectTypesSection = () => {
         title="Project Types" 
         description="Customize your project types to reflect the type of work you offer."
       >
-        <div className="flex items-center justify-center py-8">
-          <Loader2 className="h-8 w-8 animate-spin" />
-        </div>
+        <FormLoadingSkeleton rows={3} />
       </SettingsSection>
     );
   }

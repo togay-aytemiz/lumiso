@@ -16,6 +16,7 @@ import { useProjectStatuses } from "@/hooks/useOrganizationData";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { cn } from "@/lib/utils";
 import SettingsSection from "./SettingsSection";
+import { FormLoadingSkeleton } from "@/components/ui/loading-presets";
 import { usePermissions } from "@/hooks/usePermissions";
 
 const projectStatusSchema = z.object({
@@ -453,9 +454,7 @@ const ProjectStatusesSection = () => {
         title="Project Stages" 
         description="Add, rename and reorder stages to customize your workflow."
       >
-        <div className="flex items-center justify-center py-8">
-          <Loader2 className="h-8 w-8 animate-spin" />
-        </div>
+        <FormLoadingSkeleton rows={3} />
       </SettingsSection>
     );
   }

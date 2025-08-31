@@ -7,6 +7,7 @@ import { Plus, Edit, Trash2, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import SettingsSection from "./SettingsSection";
+import { FormLoadingSkeleton } from "@/components/ui/loading-presets";
 import { AddPackageDialog, EditPackageDialog } from "./settings/PackageDialogs";
 import { usePermissions } from "@/hooks/usePermissions";
 import { usePackages, useServices } from "@/hooks/useOrganizationData";
@@ -112,9 +113,7 @@ const PackagesSection = () => {
         title="Packages" 
         description="Create comprehensive packages that bundle services together for your clients."
       >
-        <div className="flex items-center justify-center py-8">
-          <Loader2 className="h-6 w-6 animate-spin" />
-        </div>
+        <FormLoadingSkeleton rows={2} />
       </SettingsSection>
     );
   }

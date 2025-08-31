@@ -12,6 +12,8 @@ interface InlineEditFieldProps {
   editComponent: ReactNode;
   className?: string;
   disabled?: boolean;
+  clickToEdit?: boolean;
+  autoSave?: boolean;
 }
 
 export function InlineEditField({
@@ -23,7 +25,9 @@ export function InlineEditField({
   children,
   editComponent,
   className,
-  disabled = false
+  disabled = false,
+  clickToEdit = true,
+  autoSave = true
 }: InlineEditFieldProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -89,7 +93,12 @@ export function InlineEditField({
         </div>
       ) : (
         <>
-          <div className="w-full">{children}</div>
+          <div 
+            className={cn("w-full", clickToEdit && !disabled && "cursor-pointer")}
+            onClick={clickToEdit && !disabled ? onStartEdit : undefined}
+          >
+            {children}
+          </div>
           {isHovered && !isSaving && (
             <button
               onClick={onStartEdit}

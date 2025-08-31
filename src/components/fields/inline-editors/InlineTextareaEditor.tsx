@@ -9,6 +9,7 @@ interface InlineTextareaEditorProps {
   onCancel: () => void;
   placeholder?: string;
   maxLength?: number;
+  showButtons?: boolean;
 }
 
 export function InlineTextareaEditor({
@@ -16,10 +17,12 @@ export function InlineTextareaEditor({
   onSave,
   onCancel,
   placeholder = "Enter text",
-  maxLength = 1000
+  maxLength = 1000,
+  showButtons = false
 }: InlineTextareaEditorProps) {
   const [inputValue, setInputValue] = useState(value || '');
   const [isSaving, setIsSaving] = useState(false);
+  const [originalValue] = useState(value || '');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -43,10 +46,19 @@ export function InlineTextareaEditor({
     }
   };
 
+  const handleBlur = async () => {
+    if (!showButtons && inputValue.trim() !== originalValue.trim()) {
+      await handleSave();
+    }
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && e.ctrlKey) {
       e.preventDefault();
       handleSave();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      onCancel();
     }
   };
 
@@ -64,35 +76,40 @@ export function InlineTextareaEditor({
         value={inputValue}
         onChange={handleChange}
         onKeyDown={handleKeyDown}
+        onBlur={handleBlur}
         placeholder={placeholder}
         maxLength={maxLength}
         className="text-sm resize-none"
         disabled={isSaving}
         rows={2}
       />
-      <div className="flex items-center gap-1 justify-end">
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={handleSave}
-          disabled={isSaving}
-          className="h-6 w-6 p-0 bg-gray-100 hover:bg-gray-200 border border-border rounded-md shadow-sm"
-        >
-          <Check className="h-3 w-3 text-green-600" />
-        </Button>
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={onCancel}
-          disabled={isSaving}
-          className="h-6 w-6 p-0 bg-gray-100 hover:bg-gray-200 border border-border rounded-md shadow-sm"
-        >
-          <X className="h-3 w-3 text-red-600" />
-        </Button>
-      </div>
-      <p className="text-xs text-muted-foreground">
-        Press Ctrl+Enter to save
-      </p>
+      {showButtons && (
+        <>
+          <div className="flex items-center gap-1 justify-end">
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={handleSave}
+              disabled={isSaving}
+              className="h-6 w-6 p-0 bg-gray-100 hover:bg-gray-200 border border-border rounded-md shadow-sm"
+            >
+              <Check className="h-3 w-3 text-green-600" />
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={onCancel}
+              disabled={isSaving}
+              className="h-6 w-6 p-0 bg-gray-100 hover:bg-gray-200 border border-border rounded-md shadow-sm"
+            >
+              <X className="h-3 w-3 text-red-600" />
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Press Ctrl+Enter to save
+          </p>
+        </>
+      )}
     </div>
   );
 }

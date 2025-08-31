@@ -65,7 +65,7 @@ const blockTypes = [
 export function AddBlockSheet({ open, onOpenChange, onAddBlock }: AddBlockSheetProps) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[900px] sm:w-[1200px]">
+      <SheetContent className="w-[45vw] min-w-[600px]">
         <SheetHeader>
           <SheetTitle>Block Library</SheetTitle>
           <SheetDescription>
@@ -74,7 +74,7 @@ export function AddBlockSheet({ open, onOpenChange, onAddBlock }: AddBlockSheetP
         </SheetHeader>
         
         <div className="mt-6 h-full overflow-y-auto">
-          <div className="flex flex-col gap-4 pb-4">
+          <div className="grid grid-cols-2 gap-4 pb-4">
             {blockTypes.map((blockType) => {
               const Icon = blockType.icon;
               return (

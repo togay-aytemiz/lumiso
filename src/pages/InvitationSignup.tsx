@@ -277,7 +277,7 @@ export default function InvitationSignup() {
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-pink-600 via-purple-600 to-blue-600 bg-clip-text text-transparent font-serif">
-            Sweet Dreams CRM
+            Lumiso
           </h1>
           <div className="flex items-center justify-center gap-2 text-lg text-slate-600 dark:text-slate-300">
             <Users className="h-5 w-5" />

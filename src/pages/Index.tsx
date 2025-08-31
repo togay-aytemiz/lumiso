@@ -61,13 +61,13 @@ const Index = () => {
         
         <div className="relative z-10 text-center animate-fade-in">
           <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-pink-600 via-purple-600 to-blue-600 bg-clip-text text-transparent font-serif">
-            Sweet Dreams CRM
+            Lumiso
           </h1>
           <p className="text-xl md:text-2xl text-slate-600 dark:text-slate-300 font-light mb-4">
             Where precious moments become lasting memories
           </p>
           <p className="text-lg text-slate-500 dark:text-slate-400 mb-12">
-            Manage your newborn photography business with ease
+            Manage your photography business with ease
           </p>
           <Button 
             onClick={() => navigate("/auth")} 

@@ -248,7 +248,14 @@ const AllLeadsNew = () => {
   );
 
   if (loading) {
-    return <TableLoadingSkeleton />;
+    return (
+      <div className="relative">
+        <TableLoadingSkeleton />
+        <div className="absolute top-8 left-1/2 transform -translate-x-1/2 text-sm text-muted-foreground">
+          Loading Leads...
+        </div>
+      </div>
+    );
   }
 
   return (

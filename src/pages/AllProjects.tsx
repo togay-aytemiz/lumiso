@@ -599,7 +599,14 @@ const AllProjects = () => {
   };
 
   if (loading && isInitialLoad) {
-    return <PageLoadingSkeleton />;
+    return (
+      <div className="relative">
+        <PageLoadingSkeleton />
+        <div className="absolute top-8 left-1/2 transform -translate-x-1/2 text-sm text-muted-foreground">
+          Loading Projects...
+        </div>
+      </div>
+    );
   }
 
   return (

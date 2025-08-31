@@ -11,7 +11,7 @@ import { EnhancedProjectDialog } from "@/components/EnhancedProjectDialog";
 import { ViewProjectDialog } from "@/components/ViewProjectDialog";
 import { formatDate } from "@/lib/utils";
 import { AssigneeAvatars } from "@/components/AssigneeAvatars";
-import { CompactLoadingSkeleton } from "@/components/ui/loading-presets";
+import { KanbanLoadingSkeleton } from "@/components/ui/loading-presets";
 
 interface ProjectStatus {
   id: string;
@@ -348,7 +348,7 @@ const ProjectKanbanBoard = ({ projects, projectStatuses, onProjectsChange, onPro
   };
 
   if (loading) {
-    return <CompactLoadingSkeleton />;
+    return <KanbanLoadingSkeleton />;
   }
 
   return (

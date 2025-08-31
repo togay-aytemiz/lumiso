@@ -288,7 +288,14 @@ const Payments = () => {
   };
 
   if (loading) {
-    return <PageLoadingSkeleton />;
+    return (
+      <div className="relative">
+        <PageLoadingSkeleton />
+        <div className="absolute top-8 left-1/2 transform -translate-x-1/2 text-sm text-muted-foreground">
+          Loading Payments...
+        </div>
+      </div>
+    );
   }
 
   return (

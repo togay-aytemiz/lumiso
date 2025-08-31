@@ -203,7 +203,14 @@ const CrmDashboard = () => {
   };
 
   if (loading) {
-    return <DashboardLoadingSkeleton />;
+    return (
+      <div className="relative">
+        <DashboardLoadingSkeleton />
+        <div className="absolute top-8 left-1/2 transform -translate-x-1/2 text-sm text-muted-foreground">
+          Loading Dashboard...
+        </div>
+      </div>
+    );
   }
 
   return (

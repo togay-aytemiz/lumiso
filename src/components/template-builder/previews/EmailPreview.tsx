@@ -184,7 +184,7 @@ function SessionDetailsPreview({ data, mockData }: { data: SessionDetailsBlockDa
         {data.showNotes && (
           <div className="flex items-start gap-2">
             <span className="text-sm font-medium text-slate-600 w-16">Notes:</span>
-            <span className="text-sm">Please arrive 10 minutes early. Bring comfortable outfits!</span>
+            <span className="text-sm">{data.customNotes || "Please arrive 10 minutes early. Bring comfortable outfits!"}</span>
           </div>
         )}
       </div>
@@ -196,21 +196,29 @@ function CTABlockPreview({ data, replacePlaceholders }: { data: CTABlockData; re
   const getButtonStyles = () => {
     switch (data.variant) {
       case "primary":
-        return "bg-blue-600 text-white px-6 py-3 rounded-md font-medium hover:bg-blue-700 transition-colors";
+        return "bg-blue-600 text-white px-6 py-3 rounded-md font-medium hover:bg-blue-700 transition-colors inline-block no-underline";
       case "secondary":
-        return "bg-gray-200 text-gray-800 px-6 py-3 rounded-md font-medium hover:bg-gray-300 transition-colors";
+        return "bg-gray-200 text-gray-800 px-6 py-3 rounded-md font-medium hover:bg-gray-300 transition-colors inline-block no-underline";
       case "text":
         return "text-blue-600 underline font-medium";
       default:
-        return "bg-blue-600 text-white px-6 py-3 rounded-md font-medium";
+        return "bg-blue-600 text-white px-6 py-3 rounded-md font-medium inline-block no-underline";
     }
   };
 
+  const buttonContent = replacePlaceholders(data.text);
+
   return (
     <div className="text-center">
-      <button className={getButtonStyles()}>
-        {replacePlaceholders(data.text)}
-      </button>
+      {data.link ? (
+        <a href={data.link} className={getButtonStyles()}>
+          {buttonContent}
+        </a>
+      ) : (
+        <button className={getButtonStyles()}>
+          {buttonContent}
+        </button>
+      )}
     </div>
   );
 }

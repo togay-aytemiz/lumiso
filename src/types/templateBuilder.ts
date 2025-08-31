@@ -52,6 +52,7 @@ export interface SessionDetailsBlockData {
   showLocation: boolean;
   showNotes: boolean;
   customLabel?: string;
+  customNotes?: string;
 }
 
 export interface CTABlockData {

@@ -289,6 +289,18 @@ function SessionDetailsBlockEditor({ data, onUpdate }: { data: SessionDetailsBlo
           </div>
         </div>
       </div>
+      
+      {data.showNotes && (
+        <div>
+          <Label>Custom Notes (optional)</Label>
+          <Textarea
+            value={data.customNotes || ""}
+            onChange={(e) => onUpdate({ ...data, customNotes: e.target.value })}
+            placeholder="Please arrive 10 minutes early. Bring comfortable outfits!"
+            rows={2}
+          />
+        </div>
+      )}
     </div>
   );
 }

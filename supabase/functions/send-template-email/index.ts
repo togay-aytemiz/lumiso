@@ -452,7 +452,7 @@ function generateHTMLContent(
 
         case 'cta':
           const buttonText = replacePlaceholders(block.data.text || 'Click Here', mockData);
-          const buttonUrl = replacePlaceholders(block.data.url || '#', mockData);
+          const buttonUrl = replacePlaceholders(block.data.link || '#', mockData);
           const variant = block.data.variant || 'primary';
           
           htmlContent += `
@@ -523,10 +523,11 @@ function generateHTMLContent(
             `;
           }
           if (sessionData.showNotes) {
+            const customNotes = sessionData.customNotes || "Please arrive 10 minutes early. Bring comfortable outfits!";
             htmlContent += `
               <div class="session-detail-item">
                 <span class="session-detail-label">Notes:</span>
-                <span class="session-detail-value">Please arrive 10 minutes early. Bring comfortable outfits!</span>
+                <span class="session-detail-value">${replacePlaceholders(customNotes, mockData)}</span>
               </div>
             `;
           }

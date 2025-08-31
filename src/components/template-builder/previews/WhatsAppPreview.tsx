@@ -1,7 +1,4 @@
-import { TemplateBlock, TextBlockData, SessionDetailsBlockData, CTABlockData, ImageBlockData, FooterBlockData } from "@/types/templateBuilder";
-import { useOrganization } from "@/contexts/OrganizationContext";
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { TemplateBlock, TextBlockData, SessionDetailsBlockData, CTABlockData, FooterBlockData } from "@/types/templateBuilder";
 
 interface WhatsAppPreviewProps {
   blocks: TemplateBlock[];
@@ -15,8 +12,8 @@ export function WhatsAppPreview({ blocks, mockData }: WhatsAppPreviewProps) {
 
   const formatWhatsAppText = (text: string, formatting: any) => {
     let formatted = text;
-    if (formatting.bold) formatted = `*${formatted}*`;
-    if (formatting.italic) formatted = `_${formatted}_`;
+    if (formatting?.bold) formatted = `*${formatted}*`;
+    if (formatting?.italic) formatted = `_${formatted}_`;
     return formatted;
   };
 
@@ -33,8 +30,8 @@ export function WhatsAppPreview({ blocks, mockData }: WhatsAppPreviewProps) {
     }
 
     return (
-      <div className="text-sm space-y-3">
-        {blocks.filter(block => block.visible).map((block) => (
+      <div className="text-sm space-y-2">
+        {blocks.filter(block => block.visible).map((block, index) => (
           <div key={block.id}>
             {block.type === "text" && (
               <WhatsAppTextBlock data={block.data as TextBlockData} replacePlaceholders={replacePlaceholders} formatText={formatWhatsAppText} />
@@ -48,7 +45,6 @@ export function WhatsAppPreview({ blocks, mockData }: WhatsAppPreviewProps) {
             {block.type === "footer" && (
               <WhatsAppFooter data={block.data as FooterBlockData} mockData={mockData} />
             )}
-            {/* Removed image support as it's not reliably supported inline in WhatsApp */}
           </div>
         ))}
       </div>
@@ -129,56 +125,14 @@ function WhatsAppSessionDetails({ data, mockData }: { data: SessionDetailsBlockD
 }
 
 function WhatsAppCTA({ data, replacePlaceholders }: { data: CTABlockData; replacePlaceholders: (text: string) => string }) {
-  const { activeOrganization } = useOrganization();
-  const [organizationSettings, setOrganizationSettings] = useState<any>(null);
-
-  useEffect(() => {
-    const fetchOrganizationSettings = async () => {
-      if (activeOrganization?.id) {
-        const { data: settings } = await supabase
-          .from("organization_settings")
-          .select("primary_brand_color")
-          .eq("organization_id", activeOrganization.id)
-          .single();
-        setOrganizationSettings(settings);
-      }
-    };
-
-    fetchOrganizationSettings();
-  }, [activeOrganization?.id]);
-
-  const brandColor = organizationSettings?.primary_brand_color || "#1EB29F";
-
-  const getButtonStyle = () => {
-    switch (data.variant) {
-      case "text":
-        return { color: brandColor };
-      case "secondary":
-        return {};
-      default:
-        return { backgroundColor: brandColor };
-    }
-  };
-
-  const getButtonClass = () => {
-    switch (data.variant) {
-      case "text":
-        return "text-sm font-medium underline";
-      case "secondary":
-        return "bg-gray-100 text-gray-800 px-4 py-2 rounded-full inline-block text-sm font-medium";
-      default:
-        return "text-white px-4 py-2 rounded-full inline-block text-sm font-medium";
-    }
-  };
-
   return (
-    <div className="text-center">
-      <div className={getButtonClass()} style={getButtonStyle()}>
-        {replacePlaceholders(data.text)} ✨
+    <div className="mt-2">
+      <div className="text-sm font-medium">
+        👆 {replacePlaceholders(data.text)}
       </div>
       {data.link && (
-        <div className="text-xs mt-1 underline" style={{ color: brandColor }}>
-          {data.link}
+        <div className="text-xs mt-1 text-blue-600 underline">
+          🔗 {data.link}
         </div>
       )}
     </div>

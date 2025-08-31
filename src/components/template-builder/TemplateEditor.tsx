@@ -113,7 +113,7 @@ export function TemplateEditor({ blocks, onBlocksChange }: TemplateEditorProps) 
                         ref={provided.innerRef}
                         {...provided.draggableProps}
                         className={cn(
-                          "cursor-pointer transition-colors",
+                          "cursor-pointer transition-all duration-200",
                           activeBlock === block.id && "ring-2 ring-primary",
                           !block.visible && "opacity-50",
                           snapshot.isDragging && "shadow-lg"
@@ -161,7 +161,7 @@ export function TemplateEditor({ blocks, onBlocksChange }: TemplateEditorProps) 
                           </div>
                         </CardHeader>
                         {activeBlock === block.id && (
-                          <CardContent className="pt-0 animate-accordion-down overflow-hidden transition-all duration-200">
+                          <CardContent className="pt-0 overflow-hidden animate-in slide-in-from-top-2 duration-200">
                             <BlockEditor
                               block={block}
                               onUpdate={(data) => updateBlock(block.id, data)}
@@ -189,7 +189,7 @@ export function TemplateEditor({ blocks, onBlocksChange }: TemplateEditorProps) 
           className="w-full h-12 border-dashed"
           onClick={() => setShowAddBlock(true)}
         >
-          <Plus className="h-4 w-4" />
+          <Plus className="h-4 w-4 mr-2" />
           Add Block
         </Button>
       </div>

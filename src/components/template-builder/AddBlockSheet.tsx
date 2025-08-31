@@ -65,7 +65,7 @@ const blockTypes = [
 export function AddBlockSheet({ open, onOpenChange, onAddBlock }: AddBlockSheetProps) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[600px] sm:w-[800px]">
+      <SheetContent className="w-[900px] sm:w-[1200px]">
         <SheetHeader>
           <SheetTitle>Block Library</SheetTitle>
           <SheetDescription>
@@ -73,24 +73,24 @@ export function AddBlockSheet({ open, onOpenChange, onAddBlock }: AddBlockSheetP
           </SheetDescription>
         </SheetHeader>
         
-        <div className="mt-6 overflow-y-auto max-h-[70vh]">
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+        <div className="mt-6 h-full overflow-x-auto">
+          <div className="flex gap-6 pb-4 h-full" style={{ minWidth: 'max-content' }}>
             {blockTypes.map((blockType) => {
               const Icon = blockType.icon;
               return (
                 <Card 
                   key={blockType.type}
-                  className="cursor-pointer hover:shadow-sm transition-shadow"
+                  className="cursor-pointer hover:scale-105 hover:shadow-lg hover:border-primary/20 transition-all duration-200 flex-shrink-0 w-52"
                   onClick={() => onAddBlock(blockType.type)}
                 >
-                  <CardHeader className="pb-3">
-                    <div className="flex flex-col items-center text-center gap-2">
-                      <div className="p-3 bg-primary/10 text-primary rounded-md">
-                        <Icon className="h-5 w-5" />
+                  <CardHeader className="pb-4 h-full">
+                    <div className="flex flex-col items-center text-center gap-3 h-full justify-center">
+                      <div className="p-4 bg-primary/10 text-primary rounded-lg">
+                        <Icon className="h-10 w-10" />
                       </div>
                       <div>
-                        <CardTitle className="text-sm">{blockType.title}</CardTitle>
-                        <CardDescription className="text-xs mt-1">
+                        <CardTitle className="text-base">{blockType.title}</CardTitle>
+                        <CardDescription className="text-sm mt-2 leading-relaxed">
                           {blockType.description}
                         </CardDescription>
                       </div>

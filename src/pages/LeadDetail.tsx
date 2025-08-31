@@ -916,8 +916,8 @@ const LeadDetail = () => {
       />
 
       {/* Two-column layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 md:gap-8 max-w-full">
-        {/* Left column - Lead Details (25%) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-8 max-w-full">
+        {/* Left column - Lead Details (33%) */}
         <div className="lg:col-span-1 space-y-6 min-w-0">
           <UnifiedClientDetails 
             lead={lead}
@@ -929,8 +929,8 @@ const LeadDetail = () => {
           />
         </div>
 
-        {/* Right column - Projects and Activity Section (75%) */}
-        <div className="lg:col-span-3 space-y-6 min-w-0">
+        {/* Right column - Projects and Activity Section (67%) */}
+        <div className="lg:col-span-2 space-y-6 min-w-0">
           <ProjectsSection leadId={lead.id} leadName={lead.name} onProjectUpdated={handleProjectUpdated} onActivityUpdated={handleActivityUpdated} onProjectClicked={handleProjectClicked} />
           <ActivitySection key={activityRefreshKey} leadId={lead.id} leadName={lead.name} />
 

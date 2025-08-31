@@ -191,16 +191,47 @@ function SessionDetailsPreview({ data, mockData }: { data: SessionDetailsBlockDa
 }
 
 function CTABlockPreview({ data, replacePlaceholders }: { data: CTABlockData; replacePlaceholders: (text: string) => string }) {
+  const { activeOrganization } = useOrganization();
+  const [organizationSettings, setOrganizationSettings] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchOrganizationSettings = async () => {
+      if (activeOrganization?.id) {
+        const { data: settings } = await supabase
+          .from("organization_settings")
+          .select("primary_brand_color")
+          .eq("organization_id", activeOrganization.id)
+          .single();
+        setOrganizationSettings(settings);
+      }
+    };
+
+    fetchOrganizationSettings();
+  }, [activeOrganization?.id]);
+
   const getButtonStyles = () => {
+    const brandColor = organizationSettings?.primary_brand_color || "#1EB29F";
+    
     switch (data.variant) {
-      case "primary":
-        return "bg-blue-600 text-white px-6 py-3 rounded-md font-medium hover:bg-blue-700 transition-colors inline-block no-underline";
       case "secondary":
-        return "bg-gray-200 text-gray-800 px-6 py-3 rounded-md font-medium hover:bg-gray-300 transition-colors inline-block no-underline";
+        return `bg-gray-100 text-gray-800 px-6 py-3 rounded-md font-medium inline-block no-underline border border-gray-300`;
       case "text":
-        return "text-blue-600 underline font-medium";
+        return `font-medium underline inline-block no-underline`;
       default:
-        return "bg-blue-600 text-white px-6 py-3 rounded-md font-medium inline-block no-underline";
+        return `text-white px-6 py-3 rounded-md font-medium inline-block no-underline`;
+    }
+  };
+
+  const getButtonStyle = () => {
+    const brandColor = organizationSettings?.primary_brand_color || "#1EB29F";
+    
+    switch (data.variant) {
+      case "text":
+        return { color: brandColor };
+      case "secondary":
+        return {};
+      default:
+        return { backgroundColor: brandColor };
     }
   };
 
@@ -209,11 +240,11 @@ function CTABlockPreview({ data, replacePlaceholders }: { data: CTABlockData; re
   return (
     <div className="text-center">
       {data.link ? (
-        <a href={data.link} className={getButtonStyles()}>
+        <a href={data.link} className={getButtonStyles()} style={getButtonStyle()}>
           {buttonContent}
         </a>
       ) : (
-        <button className={getButtonStyles()}>
+        <button className={getButtonStyles()} style={getButtonStyle()}>
           {buttonContent}
         </button>
       )}
@@ -335,6 +366,7 @@ function HeaderBlockPreview({ data, replacePlaceholders, organizationSettings }:
   const businessName = orgSettings?.photography_business_name || 'Your Business';
   const logoUrl = orgSettings?.logo_url;
   const alignment = data.logoAlignment || "center";
+  const hasBackground = data.backgroundColor && data.backgroundColor !== "#ffffff";
 
   const getAlignmentStyle = () => {
     switch (alignment) {
@@ -354,9 +386,16 @@ function HeaderBlockPreview({ data, replacePlaceholders, organizationSettings }:
     }
   };
 
+  const getPaddingClass = () => {
+    if (hasBackground && alignment === "left") {
+      return "px-6 py-6"; // Add horizontal padding when background and left aligned
+    }
+    return "py-6";
+  };
+
   return (
     <div 
-      className={`py-6 rounded-lg ${getAlignmentStyle()}`}
+      className={`rounded-lg ${getAlignmentStyle()} ${getPaddingClass()}`}
       style={{ backgroundColor: data.backgroundColor || "#ffffff" }}
     >
       {data.showLogo && (

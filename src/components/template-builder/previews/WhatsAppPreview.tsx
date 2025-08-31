@@ -1,4 +1,7 @@
 import { TemplateBlock, TextBlockData, SessionDetailsBlockData, CTABlockData, ImageBlockData, FooterBlockData } from "@/types/templateBuilder";
+import { useOrganization } from "@/contexts/OrganizationContext";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface WhatsAppPreviewProps {
   blocks: TemplateBlock[];
@@ -56,7 +59,8 @@ export function WhatsAppPreview({ blocks, mockData }: WhatsAppPreviewProps) {
           <div className="bg-white p-4 rounded-lg shadow-sm">
             <div className="text-sm">
               <div className="mb-2">Hello {mockData.customer_name}! 👋</div>
-              <div>We're excited to capture your special moments ✨</div>
+              <div>We're excited to capture your special moments ✨📸</div>
+              <div className="mt-2">Looking forward to our session! 🎉</div>
               <div className="mt-3 text-gray-500 text-xs">Add blocks to build your template</div>
             </div>
           </div>
@@ -82,9 +86,20 @@ function WhatsAppTextBlock({
   const content = replacePlaceholders(data.content);
   const formatted = formatText(content, data.formatting);
   
+  // Add emojis to enhance WhatsApp feel
+  const enhanceWithEmojis = (text: string) => {
+    return text
+      .replace(/\b(hello|hi|hey)\b/gi, '$& 👋')
+      .replace(/\b(thank you|thanks)\b/gi, '$& 🙏')
+      .replace(/\b(excited|amazing|wonderful)\b/gi, '$& ✨')
+      .replace(/\b(perfect|great|awesome)\b/gi, '$& 🎉')
+      .replace(/\b(photography|photo|session)\b/gi, '$& 📸')
+      .replace(/\b(beautiful|stunning)\b/gi, '$& 💫');
+  };
+  
   return (
     <div className="text-sm whitespace-pre-wrap">
-      {formatted.split('\n').map((line, index) => (
+      {enhanceWithEmojis(formatted).split('\n').map((line, index) => (
         <div key={index}>{line}</div>
       ))}
     </div>
@@ -108,13 +123,55 @@ function WhatsAppSessionDetails({ data, mockData }: { data: SessionDetailsBlockD
 }
 
 function WhatsAppCTA({ data, replacePlaceholders }: { data: CTABlockData; replacePlaceholders: (text: string) => string }) {
+  const { activeOrganization } = useOrganization();
+  const [organizationSettings, setOrganizationSettings] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchOrganizationSettings = async () => {
+      if (activeOrganization?.id) {
+        const { data: settings } = await supabase
+          .from("organization_settings")
+          .select("primary_brand_color")
+          .eq("organization_id", activeOrganization.id)
+          .single();
+        setOrganizationSettings(settings);
+      }
+    };
+
+    fetchOrganizationSettings();
+  }, [activeOrganization?.id]);
+
+  const brandColor = organizationSettings?.primary_brand_color || "#1EB29F";
+
+  const getButtonStyle = () => {
+    switch (data.variant) {
+      case "text":
+        return { color: brandColor };
+      case "secondary":
+        return {};
+      default:
+        return { backgroundColor: brandColor };
+    }
+  };
+
+  const getButtonClass = () => {
+    switch (data.variant) {
+      case "text":
+        return "text-sm font-medium underline";
+      case "secondary":
+        return "bg-gray-100 text-gray-800 px-4 py-2 rounded-full inline-block text-sm font-medium";
+      default:
+        return "text-white px-4 py-2 rounded-full inline-block text-sm font-medium";
+    }
+  };
+
   return (
     <div className="text-center">
-      <div className="bg-blue-500 text-white px-4 py-2 rounded-full inline-block text-sm font-medium">
-        {replacePlaceholders(data.text)}
+      <div className={getButtonClass()} style={getButtonStyle()}>
+        {replacePlaceholders(data.text)} ✨
       </div>
       {data.link && (
-        <div className="text-xs text-blue-600 mt-1 underline">
+        <div className="text-xs mt-1 underline" style={{ color: brandColor }}>
           {data.link}
         </div>
       )}
@@ -153,19 +210,20 @@ function WhatsAppFooter({ data, mockData }: { data: FooterBlockData; mockData: R
     <div className="text-xs text-gray-600 border-t pt-2 mt-2">
       {data.showStudioName && (
         <div className="font-medium text-gray-800 mb-1">
-          {mockData.business_name}
+          📸 {mockData.business_name}
         </div>
       )}
       
       {data.showContactInfo && (
         <div className="space-y-1">
           <div>📞 {mockData.business_phone}</div>
+          <div>💌 Professional Photography Services</div>
         </div>
       )}
       
       {data.customText && (
         <div className="mt-2 italic">
-          {data.customText}
+          ✨ {data.customText}
         </div>
       )}
     </div>

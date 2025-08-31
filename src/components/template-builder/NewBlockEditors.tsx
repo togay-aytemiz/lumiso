@@ -43,6 +43,7 @@ export function DividerBlockEditor({ data, onUpdate }: { data: DividerBlockData;
             type="color"
             value={data.color || "#e5e5e5"}
             onChange={(e) => onUpdate({ ...data, color: e.target.value })}
+            className="w-full"
           />
         </div>
       )}
@@ -167,24 +168,28 @@ export function HeaderBlockEditor({ data, onUpdate }: { data: HeaderBlockData; o
         />
       </div>
       
-      {data.tagline && (
-        <div>
-          <Label>Tagline Color</Label>
+      <div className="grid grid-cols-2 gap-4">
+        {data.tagline && (
+          <div>
+            <Label>Tagline Color</Label>
+            <Input
+              type="color"
+              value={data.taglineColor || "#000000"}
+              onChange={(e) => onUpdate({ ...data, taglineColor: e.target.value })}
+              className="w-full"
+            />
+          </div>
+        )}
+        
+        <div className={data.tagline ? "" : "col-span-2"}>
+          <Label>Background Color</Label>
           <Input
             type="color"
-            value={data.taglineColor || "#000000"}
-            onChange={(e) => onUpdate({ ...data, taglineColor: e.target.value })}
+            value={data.backgroundColor || "#ffffff"}
+            onChange={(e) => onUpdate({ ...data, backgroundColor: e.target.value })}
+            className="w-full"
           />
         </div>
-      )}
-      
-      <div>
-        <Label>Background Color</Label>
-        <Input
-          type="color"
-          value={data.backgroundColor || "#ffffff"}
-          onChange={(e) => onUpdate({ ...data, backgroundColor: e.target.value })}
-        />
       </div>
     </div>
   );

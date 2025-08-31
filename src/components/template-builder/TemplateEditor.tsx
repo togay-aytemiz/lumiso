@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, GripVertical, Eye, EyeOff } from "lucide-react";
+import { Plus, GripVertical, Eye, EyeOff, Trash2 } from "lucide-react";
 import { TemplateBlock, BlockData, TextBlockData, SessionDetailsBlockData, CTABlockData, ImageBlockData, FooterBlockData } from "@/types/templateBuilder";
 import { BlockEditor } from "./BlockEditor";
 import { AddBlockSheet } from "./AddBlockSheet";
@@ -118,7 +118,7 @@ export function TemplateEditor({ blocks, onBlocksChange }: TemplateEditorProps) 
                           !block.visible && "opacity-50",
                           snapshot.isDragging && "shadow-lg"
                         )}
-                        onClick={() => setActiveBlock(block.id)}
+                        onClick={() => setActiveBlock(activeBlock === block.id ? null : block.id)}
                       >
                         <CardHeader className="pb-2">
                           <div className="flex items-center justify-between">
@@ -146,11 +146,22 @@ export function TemplateEditor({ blocks, onBlocksChange }: TemplateEditorProps) 
                                   <EyeOff className="h-3 w-3" />
                                 )}
                               </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  removeBlock(block.id);
+                                }}
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
                             </div>
                           </div>
                         </CardHeader>
                         {activeBlock === block.id && (
-                          <CardContent className="pt-0">
+                          <CardContent className="pt-0 animate-accordion-down">
                             <BlockEditor
                               block={block}
                               onUpdate={(data) => updateBlock(block.id, data)}

@@ -40,7 +40,10 @@ export function ProjectActivitySection({
   onActivityUpdated
 }: ProjectActivitySectionProps) {
   const [activities, setActivities] = useState<ProjectActivity[]>([]);
-  const [userProfiles, setUserProfiles] = useState<Record<string, { full_name: string; profile_photo_url?: string }>>({});
+  const [userProfiles, setUserProfiles] = useState<Record<string, {
+    full_name: string;
+    profile_photo_url?: string;
+  }>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -54,26 +57,24 @@ export function ProjectActivitySection({
   useEffect(() => {
     fetchProjectActivities();
   }, [projectId]);
-
   const fetchUserProfiles = async (userIds: string[]) => {
     if (userIds.length === 0) return;
-    
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('user_id, full_name, profile_photo_url')
-        .in('user_id', userIds);
-      
+      const {
+        data,
+        error
+      } = await supabase.from('profiles').select('user_id, full_name, profile_photo_url').in('user_id', userIds);
       if (error) throw error;
-      
       const profilesMap = (data || []).reduce((acc, profile) => {
         acc[profile.user_id] = {
           full_name: profile.full_name || 'Unknown User',
           profile_photo_url: profile.profile_photo_url
         };
         return acc;
-      }, {} as Record<string, { full_name: string; profile_photo_url?: string }>);
-      
+      }, {} as Record<string, {
+        full_name: string;
+        profile_photo_url?: string;
+      }>);
       setUserProfiles(profilesMap);
     } catch (error: any) {
       console.error('Error fetching user profiles:', error);
@@ -90,7 +91,7 @@ export function ProjectActivitySection({
       if (error) throw error;
       const activities = data || [];
       setActivities(activities);
-      
+
       // Fetch user profiles for the activities
       const userIds = [...new Set(activities.map(a => a.user_id).filter(Boolean))];
       await fetchUserProfiles(userIds);
@@ -136,21 +137,16 @@ export function ProjectActivitySection({
         })
       };
       // Get user's active organization
-      const { data: userSettings } = await supabase
-        .from('user_settings')
-        .select('active_organization_id')
-        .eq('user_id', userData.user.id)
-        .single();
-
+      const {
+        data: userSettings
+      } = await supabase.from('user_settings').select('active_organization_id').eq('user_id', userData.user.id).single();
       if (!userSettings?.active_organization_id) {
         throw new Error("Organization required");
       }
-
       const activityDataWithOrg = {
         ...activityData,
         organization_id: userSettings.active_organization_id
       };
-
       const {
         data: newActivity,
         error
@@ -196,21 +192,19 @@ export function ProjectActivitySection({
   };
 
   // Helper component for user avatar
-  const UserAvatar = ({ userId, className = "" }: { userId?: string; className?: string }) => {
+  const UserAvatar = ({
+    userId,
+    className = ""
+  }: {
+    userId?: string;
+    className?: string;
+  }) => {
     if (!userId || !userProfiles[userId]) {
       return null;
     }
-
     const profile = userProfiles[userId];
-    const initials = profile.full_name
-      .split(' ')
-      .map(name => name.charAt(0))
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
-
-    return (
-      <div className={`flex items-center gap-2 ${className}`}>
+    const initials = profile.full_name.split(' ').map(name => name.charAt(0)).join('').toUpperCase().slice(0, 2);
+    return <div className={`flex items-center gap-2 ${className}`}>
         <Avatar className="h-6 w-6">
           <AvatarImage src={profile.profile_photo_url} alt={profile.full_name} />
           <AvatarFallback className="text-xs bg-primary/10 text-primary">
@@ -220,8 +214,7 @@ export function ProjectActivitySection({
         <span className="text-xs text-muted-foreground font-medium">
           Added by: {profile.full_name}
         </span>
-      </div>
-    );
+      </div>;
   };
   const handleReminderToggle = (checked: boolean) => {
     setIsReminderMode(checked);
@@ -297,7 +290,7 @@ export function ProjectActivitySection({
             <div className="space-y-2">
               {activities.map(activity => <Card key={activity.id}>
                   <CardContent className="py-6 px-4 flex items-center">
-                    <div className="space-y-4 w-full pt-2">
+                    <div className="space-y-4 w-full pt-2 my-0 py-0 px-0 mx-0">
                       {/* Row 1: Icon + Type chip + User attribution */}
                       <div className="flex items-center gap-3">
                         <div className="flex items-center gap-2">
@@ -312,43 +305,27 @@ export function ProjectActivitySection({
                       
                       {/* Row 2: Main content */}
                       <div className="pl-1">
-                        {activity.type === 'reminder' && activity.reminder_date ? (
-                          <ReminderCard 
-                            activity={activity} 
-                            leadName={leadName} 
-                            onToggleCompletion={toggleCompletion} 
-                            showCompletedBadge={false} 
-                            hideStatusBadge={activity.completed} 
-                          />
-                        ) : activity.type === 'reminder' ? (
-                          // Reminder without date - show with completion button
-                          <div className="flex items-start gap-3">
-                            <button 
-                              onClick={e => {
-                                e.stopPropagation();
-                                toggleCompletion(activity.id, !activity.completed);
-                              }} 
-                              className="flex items-center justify-center w-5 h-5 rounded-full border-2 border-muted-foreground/40 hover:border-primary transition-colors mt-0.5 flex-shrink-0"
-                            >
-                              {activity.completed ? 
-                                <CheckCircle className="h-3 w-3 text-green-600 dark:text-green-400" /> : 
-                                <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40" />
-                              }
+                        {activity.type === 'reminder' && activity.reminder_date ? <ReminderCard activity={activity} leadName={leadName} onToggleCompletion={toggleCompletion} showCompletedBadge={false} hideStatusBadge={activity.completed} /> : activity.type === 'reminder' ?
+                  // Reminder without date - show with completion button
+                  <div className="flex items-start gap-3">
+                            <button onClick={e => {
+                      e.stopPropagation();
+                      toggleCompletion(activity.id, !activity.completed);
+                    }} className="flex items-center justify-center w-5 h-5 rounded-full border-2 border-muted-foreground/40 hover:border-primary transition-colors mt-0.5 flex-shrink-0">
+                              {activity.completed ? <CheckCircle className="h-3 w-3 text-green-600 dark:text-green-400" /> : <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40" />}
                             </button>
                             <div className="flex-1">
                               <p className={`text-sm break-words ${activity.completed ? 'line-through opacity-60' : ''}`}>
                                 {activity.content}
                               </p>
                             </div>
-                          </div>
-                        ) : (
-                          // Regular note - no completion button
-                          <div>
+                          </div> :
+                  // Regular note - no completion button
+                  <div>
                             <p className="text-sm break-words">
                               {activity.content}
                             </p>
-                          </div>
-                        )}
+                          </div>}
                       </div>
 
                       {/* Row 3: Lead information */}

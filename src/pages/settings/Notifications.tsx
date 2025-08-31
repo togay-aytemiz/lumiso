@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, TestTube, Power, PowerOff, Clock, Zap } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { SettingsLoadingSkeleton } from "@/components/ui/loading-presets";
 
 interface NotificationSettings {
   // Master Controls
@@ -227,9 +228,7 @@ export default function Notifications() {
           description="Configure your notification preferences and delivery times"
           helpContent={settingsHelpContent.notifications}
         />
-        <div className="flex items-center justify-center h-48">
-          <Loader2 className="h-8 w-8 animate-spin" />
-        </div>
+        <SettingsLoadingSkeleton rows={4} />
       </SettingsPageWrapper>
     );
   }

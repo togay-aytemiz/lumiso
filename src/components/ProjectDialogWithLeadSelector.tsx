@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { CompactLoadingSkeleton } from "@/components/ui/loading-presets";
 import { Save, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -218,10 +219,7 @@ export function ProjectDialogWithLeadSelector({
                 <div className="space-y-2">
                   <Label htmlFor="lead-select">Select Lead *</Label>
                   {loadingLeads ? (
-                    <div className="flex items-center justify-center py-2">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-                      <span className="ml-2 text-sm text-muted-foreground">Loading leads...</span>
-                    </div>
+                    <CompactLoadingSkeleton />
                   ) : (
                     <Select value={selectedLeadId} onValueChange={setSelectedLeadId} disabled={isSaving}>
                       <SelectTrigger id="lead-select">

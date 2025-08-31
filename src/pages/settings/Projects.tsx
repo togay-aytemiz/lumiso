@@ -1,4 +1,5 @@
 import SettingsPageWrapper from "@/components/settings/SettingsPageWrapper";
+import { SettingsLoadingSkeleton } from "@/components/ui/loading-presets";
 import SettingsHeader from "@/components/settings/SettingsHeader";
 import { settingsHelpContent } from "@/lib/settingsHelpContent";
 import ProjectStatusesSection from "@/components/ProjectStatusesSection";
@@ -13,9 +14,7 @@ export default function Projects() {
   if (loading) {
     return (
       <SettingsPageWrapper>
-        <div className="flex items-center justify-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        </div>
+        <SettingsLoadingSkeleton rows={2} />
       </SettingsPageWrapper>
     );
   }

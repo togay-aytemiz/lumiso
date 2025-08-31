@@ -25,6 +25,7 @@ import { useTeamManagement } from "@/hooks/useTeamManagement";
 import { useToast } from "@/hooks/use-toast";
 import { useSettingsCategorySection } from "@/hooks/useSettingsCategorySection";
 import { formatDistanceToNow } from "date-fns";
+import { SettingsLoadingSkeleton } from "@/components/ui/loading-presets";
 interface Permission {
   id: string;
   name: string;
@@ -420,9 +421,7 @@ export default function Team() {
   if (isLoading || teamLoading) {
     return <SettingsPageWrapper>
         <SettingsHeader title="Team Management" description="Manage your team members, roles, and permissions" helpContent={settingsHelpContent.team} />
-        <div className="flex items-center justify-center h-48">
-          <Loader2 className="h-8 w-8 animate-spin" />
-        </div>
+        <SettingsLoadingSkeleton rows={5} />
       </SettingsPageWrapper>;
   }
   return <SettingsPageWrapper>

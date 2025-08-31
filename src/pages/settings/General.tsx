@@ -17,6 +17,8 @@ import { useSettingsCategorySection } from "@/hooks/useSettingsCategorySection";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { useOnboardingV2 } from "@/hooks/useOnboardingV2";
 import { OnboardingTutorial, TutorialStep } from "@/components/shared/OnboardingTutorial";
+import { useOrganization } from "@/contexts/OrganizationContext";
+import { SettingsLoadingSkeleton } from "@/components/ui/loading-presets";
 
 export default function General() {
   const { settings, loading, uploading, updateSettings, uploadLogo, deleteLogo } = useOrganizationSettings();
@@ -221,9 +223,7 @@ export default function General() {
           description="Manage your general application preferences"
           helpContent={settingsHelpContent.general}
         />
-        <div className="flex items-center justify-center h-48">
-          <Loader2 className="h-8 w-8 animate-spin" />
-        </div>
+        <SettingsLoadingSkeleton rows={4} />
       </SettingsPageWrapper>
     );
   }

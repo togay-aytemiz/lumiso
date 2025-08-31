@@ -256,7 +256,7 @@ const ServiceAddOnsPicker = ({ services, value, onChange, navigate }: {
   );
 };
 
-const durationOptions = [
+const staticDurationOptions = [
   { value: "30m", label: "30 minutes" },
   { value: "1h", label: "1 hour" },
   { value: "2h", label: "2 hours" },
@@ -539,7 +539,7 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
               <SelectValue placeholder="Select duration" />
             </SelectTrigger>
             <SelectContent>
-              {durationOptions.map((option) => (
+              {staticDurationOptions.map((option) => (
                 <SelectItem key={option.value} value={option.value}>
                   {option.label}
                 </SelectItem>
@@ -725,6 +725,52 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
       if (error) throw error;
       return data || [];
     },
+  });
+
+  // Fetch existing duration options from packages
+  const { data: existingDurations = [] } = useQuery({
+    queryKey: ['existing_durations'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
+
+      // Get user's active organization
+      const { data: userSettings } = await supabase
+        .from('user_settings')
+        .select('active_organization_id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!userSettings?.active_organization_id) {
+        return [];
+      }
+
+      const { data, error } = await supabase
+        .from('packages')
+        .select('duration')
+        .eq('organization_id', userSettings.active_organization_id)
+        .not('duration', 'is', null);
+      
+      if (error) throw error;
+      return [...new Set(data?.map(p => p.duration) || [])];
+    },
+  });
+
+  // Combine static options with existing durations
+  const durationOptions = [
+    ...staticDurationOptions,
+    ...existingDurations
+      .filter(duration => !staticDurationOptions.some(option => option.value === duration))
+      .map(duration => ({ value: duration, label: duration }))
+  ].sort((a, b) => {
+    // Sort with static options first, then custom ones
+    const staticValues = staticDurationOptions.map(opt => opt.value);
+    const aIsStatic = staticValues.includes(a.value);
+    const bIsStatic = staticValues.includes(b.value);
+    
+    if (aIsStatic && !bIsStatic) return -1;
+    if (!aIsStatic && bIsStatic) return 1;
+    return a.label.localeCompare(b.label);
   });
 
   useEffect(() => {

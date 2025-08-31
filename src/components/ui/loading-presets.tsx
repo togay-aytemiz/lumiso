@@ -6,9 +6,9 @@ interface LoadingPresetProps {
   className?: string;
 }
 
-// Page-level loading components
+// Page-level loading components - using settings variant for better appearance
 export const PageLoadingSkeleton = ({ className }: LoadingPresetProps) => (
-  <LoadingSkeleton variant="page" className={className} />
+  <LoadingSkeleton variant="settings" rows={3} showHeader className={className} />
 );
 
 export const DashboardLoadingSkeleton = ({ className }: LoadingPresetProps) => (

@@ -213,8 +213,14 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
       </CardHeader>
       <CardContent>
         {isLoading ? (
-          <div className="text-center text-muted-foreground py-8">
-            Loading projects...
+          <div className="space-y-4">
+            {[1, 2].map((i) => (
+              <div key={i} className="animate-pulse border rounded-lg p-4 space-y-3">
+                <div className="h-4 bg-muted rounded w-3/4"></div>
+                <div className="h-3 bg-muted rounded w-1/2"></div>
+                <div className="h-3 bg-muted rounded w-2/3"></div>
+              </div>
+            ))}
           </div>
         ) : projects.length === 0 ? (
           <div className="text-center text-muted-foreground py-8">

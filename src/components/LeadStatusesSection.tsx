@@ -247,8 +247,13 @@ const LeadStatusesSection = () => {
         title="Lead Statuses" 
         description="Add, rename and reorder statuses to customize your lead workflow."
       >
-        <div className="flex items-center justify-center py-8">
-          <Loader2 className="h-8 w-8 animate-spin" />
+        <div className="space-y-4">
+          <div className="h-8 bg-muted rounded animate-pulse" />
+          <div className="flex flex-wrap gap-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-8 w-24 bg-muted rounded-full animate-pulse" />
+            ))}
+          </div>
         </div>
       </SettingsSection>
     );

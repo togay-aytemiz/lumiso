@@ -446,7 +446,7 @@ const GlobalSearch = () => {
                         key={`${result.type}-${result.id}`}
                         onClick={() => handleResultClick(result)}
                         className={`w-full text-left px-4 py-3 transition-colors group ${
-                          isActive ? 'bg-accent text-accent-foreground' : 'hover:bg-accent hover:text-accent-foreground'
+                          isActive ? 'bg-muted/50' : 'hover:bg-muted/30'
                         }`}
                       >
                         <div className="flex items-start gap-3">

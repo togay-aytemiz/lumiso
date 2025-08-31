@@ -111,8 +111,16 @@ const ServicesSection = () => {
         title="Services" 
         description="Define the photography services you offer, like albums, prints, and extras."
       >
-        <div className="flex items-center justify-center py-8">
-          <div className="text-muted-foreground">Loading services...</div>
+        <div className="space-y-4">
+          {[1, 2].map((i) => (
+            <div key={i} className="animate-pulse">
+              <div className="h-12 bg-muted rounded-lg mb-3" />
+              <div className="pl-6 space-y-2">
+                <div className="h-16 bg-muted/50 rounded-lg" />
+                <div className="h-16 bg-muted/50 rounded-lg" />
+              </div>
+            </div>
+          ))}
         </div>
       </SettingsSection>
     );

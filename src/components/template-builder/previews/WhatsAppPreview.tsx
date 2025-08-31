@@ -20,6 +20,41 @@ export function WhatsAppPreview({ blocks, mockData }: WhatsAppPreviewProps) {
     return formatted;
   };
 
+  const renderAllBlocks = () => {
+    if (blocks.length === 0) {
+      return (
+        <div className="text-sm">
+          <div className="mb-2">Hello {mockData.customer_name}! 👋</div>
+          <div>We're excited to capture your special moments ✨📸</div>
+          <div className="mt-2">Looking forward to our session! 🎉</div>
+          <div className="mt-3 text-gray-500 text-xs">Add blocks to build your template</div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="text-sm space-y-3">
+        {blocks.filter(block => block.visible).map((block) => (
+          <div key={block.id}>
+            {block.type === "text" && (
+              <WhatsAppTextBlock data={block.data as TextBlockData} replacePlaceholders={replacePlaceholders} formatText={formatWhatsAppText} />
+            )}
+            {block.type === "session-details" && (
+              <WhatsAppSessionDetails data={block.data as SessionDetailsBlockData} mockData={mockData} />
+            )}
+            {block.type === "cta" && (
+              <WhatsAppCTA data={block.data as CTABlockData} replacePlaceholders={replacePlaceholders} />
+            )}
+            {block.type === "footer" && (
+              <WhatsAppFooter data={block.data as FooterBlockData} mockData={mockData} />
+            )}
+            {/* Removed image support as it's not reliably supported inline in WhatsApp */}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   return (
     <div className="bg-[#e5ddd5] p-4 rounded-lg max-w-sm">
       {/* WhatsApp Header */}
@@ -33,38 +68,9 @@ export function WhatsAppPreview({ blocks, mockData }: WhatsAppPreviewProps) {
         </div>
       </div>
 
-      {/* Messages */}
-      <div className="space-y-2">
-        {blocks.map((block) => (
-          <div key={block.id} className="bg-white p-3 rounded-lg shadow-sm">
-            {block.type === "text" && (
-              <WhatsAppTextBlock data={block.data as TextBlockData} replacePlaceholders={replacePlaceholders} formatText={formatWhatsAppText} />
-            )}
-            {block.type === "session-details" && (
-              <WhatsAppSessionDetails data={block.data as SessionDetailsBlockData} mockData={mockData} />
-            )}
-            {block.type === "cta" && (
-              <WhatsAppCTA data={block.data as CTABlockData} replacePlaceholders={replacePlaceholders} />
-            )}
-            {block.type === "image" && (
-              <WhatsAppImage data={block.data as ImageBlockData} replacePlaceholders={replacePlaceholders} />
-            )}
-            {block.type === "footer" && (
-              <WhatsAppFooter data={block.data as FooterBlockData} mockData={mockData} />
-            )}
-          </div>
-        ))}
-
-        {blocks.length === 0 && (
-          <div className="bg-white p-4 rounded-lg shadow-sm">
-            <div className="text-sm">
-              <div className="mb-2">Hello {mockData.customer_name}! 👋</div>
-              <div>We're excited to capture your special moments ✨📸</div>
-              <div className="mt-2">Looking forward to our session! 🎉</div>
-              <div className="mt-3 text-gray-500 text-xs">Add blocks to build your template</div>
-            </div>
-          </div>
-        )}
+      {/* Single Message Bubble */}
+      <div className="bg-white p-4 rounded-lg shadow-sm">
+        {renderAllBlocks()}
       </div>
 
       <div className="text-xs text-gray-500 text-right mt-2">
@@ -173,32 +179,6 @@ function WhatsAppCTA({ data, replacePlaceholders }: { data: CTABlockData; replac
       {data.link && (
         <div className="text-xs mt-1 underline" style={{ color: brandColor }}>
           {data.link}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function WhatsAppImage({ data, replacePlaceholders }: { data: ImageBlockData; replacePlaceholders: (text: string) => string }) {
-  return (
-    <div>
-      {data.placeholder || !data.src ? (
-        <div className="w-full h-32 bg-gray-200 rounded-lg flex items-center justify-center">
-          <div className="text-center text-gray-500">
-            <div className="text-2xl mb-1">🖼️</div>
-            <div className="text-xs">Image</div>
-          </div>
-        </div>
-      ) : (
-        <img
-          src={data.src}
-          alt={data.alt}
-          className="w-full rounded-lg"
-        />
-      )}
-      {data.caption && (
-        <div className="text-sm text-gray-600 mt-2">
-          {replacePlaceholders(data.caption)}
         </div>
       )}
     </div>

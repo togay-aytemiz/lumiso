@@ -161,7 +161,7 @@ export function TemplateEditor({ blocks, onBlocksChange }: TemplateEditorProps) 
                           </div>
                         </CardHeader>
                         {activeBlock === block.id && (
-                          <CardContent className="pt-0 animate-accordion-down">
+                          <CardContent className="pt-0 animate-accordion-down overflow-hidden transition-all duration-200">
                             <BlockEditor
                               block={block}
                               onUpdate={(data) => updateBlock(block.id, data)}

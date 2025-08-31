@@ -48,6 +48,9 @@ All colors MUST be HSL.
     /* States */
     --success: 160 84% 39%;                  /* #10B981 */
     --success-bg: 160 84% 90%;               /* light background */
+
+    /* Animations */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --success-foreground: 160 84% 22%;       /* dark text */
 
     --warning: 36 100% 50%;                  /* #F59E0B */
@@ -318,6 +321,28 @@ All colors MUST be HSL.
     50% {
       opacity: 1;
       transform: scale(1.03);
+    }
+  }
+
+  @keyframes accordion-down {
+    from {
+      height: 0;
+      opacity: 0;
+    }
+    to {
+      height: var(--radix-accordion-content-height);
+      opacity: 1;
+    }
+  }
+
+  @keyframes accordion-up {
+    from {
+      height: var(--radix-accordion-content-height);
+      opacity: 1;
+    }
+    to {
+      height: 0;
+      opacity: 0;
     }
   }
 }

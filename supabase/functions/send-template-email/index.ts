@@ -38,7 +38,8 @@ function generateHTMLContent(
   mockData: Record<string, string>, 
   subject: string,
   preheader?: string,
-  organizationSettings?: any
+  organizationSettings?: any,
+  isPreview: boolean = false
 ): string {
   const baseStyles = `
     <style>
@@ -132,12 +133,12 @@ function generateHTMLContent(
         transition: all 0.2s ease;
       }
       .cta-primary { 
-        background-color: #2563eb; 
-        color: #ffffff; 
+        background-color: #2563eb !important; 
+        color: #ffffff !important; 
       }
       .cta-primary:hover { 
-        background-color: #1d4ed8; 
-        color: #ffffff;
+        background-color: #1d4ed8 !important; 
+        color: #ffffff !important;
       }
       .cta-secondary { 
         background-color: #e5e7eb; 
@@ -337,7 +338,11 @@ function generateHTMLContent(
       ${baseStyles}
     </head>
     <body>
-      <div class="email-container">
+      <div class="email-container">`;
+
+  // Only include email preview header for preview mode
+  if (isPreview) {
+    htmlContent += `
         <!-- Email Header Bar -->
         <div class="email-header">
           <div class="email-header-dots">
@@ -346,10 +351,10 @@ function generateHTMLContent(
             <div class="email-header-dot dot-green"></div>
           </div>
           <span style="font-size: 14px; font-weight: 500;">Email Preview</span>
-        </div>
+        </div>`;
+  }
         
-        <div class="email-body">
-  `;
+  htmlContent += `<div class="email-body">`;
 
   if (preheader) {
     htmlContent += `
@@ -557,17 +562,26 @@ function generateHTMLContent(
           
           // Use real organization data if available
           const businessName = organizationSettings?.photography_business_name || mockData.business_name || 'Your Business';
-          const businessPhone = mockData.business_phone;
-          const businessEmail = `hello@${businessName.toLowerCase().replace(/\s+/g, '')}.com`;
+          const businessPhone = mockData.business_phone || '+1 (555) 123-4567';
+          const businessEmail = mockData.business_email || `hello@${businessName.toLowerCase().replace(/\s+/g, '')}.com`;
+          const logoUrl = organizationSettings?.logo_url;
           
           htmlContent += `<div class="email-footer">`;
           
           if (footerData.showLogo) {
-            htmlContent += `
-              <div class="footer-logo">
-                ${businessName.charAt(0)}
-              </div>
-            `;
+            if (logoUrl) {
+              htmlContent += `
+                <div style="margin-bottom: 12px;">
+                  <img src="${logoUrl}" alt="${businessName} Logo" style="width: 64px; height: auto; max-height: 64px; border-radius: 8px;">
+                </div>
+              `;
+            } else {
+              htmlContent += `
+                <div class="footer-logo">
+                  ${businessName.charAt(0)}
+                </div>
+              `;
+            }
           }
           
           if (footerData.showStudioName && businessName) {
@@ -704,7 +718,7 @@ const handler = async (req: Request): Promise<Response> => {
           if (userSettings?.active_organization_id) {
             const { data: orgSettings } = await supabase
               .from('organization_settings')
-              .select('photography_business_name, primary_brand_color')
+              .select('photography_business_name, primary_brand_color, logo_url')
               .eq('organization_id', userSettings.active_organization_id)
               .single();
             
@@ -719,7 +733,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Use default subject if empty
     const finalSubject = subject?.trim() || 'Test Email from Template Builder';
 
-    const htmlContent = generateHTMLContent(blocks, mockData, finalSubject, preheader, organizationSettings);
+    const htmlContent = generateHTMLContent(blocks, mockData, finalSubject, preheader, organizationSettings, false);
     const textContent = generatePlainText(blocks, mockData);
 
     const emailData = {

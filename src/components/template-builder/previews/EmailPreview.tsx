@@ -1,5 +1,8 @@
 import { TemplateBlock, TextBlockData, SessionDetailsBlockData, CTABlockData, ImageBlockData, FooterBlockData } from "@/types/templateBuilder";
 import { cn } from "@/lib/utils";
+import { useOrganization } from "@/contexts/OrganizationContext";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface EmailPreviewProps {
   blocks: TemplateBlock[];
@@ -10,6 +13,24 @@ interface EmailPreviewProps {
 }
 
 export function EmailPreview({ blocks, mockData, device, emailSubject, preheader }: EmailPreviewProps) {
+  const { activeOrganization } = useOrganization();
+  const [organizationSettings, setOrganizationSettings] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchOrganizationSettings = async () => {
+      if (activeOrganization?.id) {
+        const { data } = await supabase
+          .from("organization_settings")
+          .select("photography_business_name, logo_url, primary_brand_color")
+          .eq("organization_id", activeOrganization.id)
+          .single();
+        setOrganizationSettings(data);
+      }
+    };
+
+    fetchOrganizationSettings();
+  }, [activeOrganization?.id]);
+
   const replacePlaceholders = (text: string) => {
     return text.replace(/\{(\w+)(?:\|([^}]*))?\}/g, (match, key, fallback) => {
       return mockData[key] || fallback || match;
@@ -60,7 +81,7 @@ export function EmailPreview({ blocks, mockData, device, emailSubject, preheader
             case "raw-html":
               return <RawHTMLBlockPreview key={block.id} data={block.data} />;
             case "footer":
-              return <FooterBlockPreview key={block.id} data={block.data as FooterBlockData} mockData={mockData} />;
+              return <FooterBlockPreview key={block.id} data={block.data as FooterBlockData} mockData={mockData} organizationSettings={organizationSettings} />;
             default:
               return null;
           }
@@ -218,27 +239,36 @@ function ImageBlockPreview({ data, replacePlaceholders }: { data: ImageBlockData
   );
 }
 
-function FooterBlockPreview({ data, mockData }: { data: FooterBlockData; mockData: Record<string, string> }) {
+function FooterBlockPreview({ data, mockData, organizationSettings }: { data: FooterBlockData; mockData: Record<string, string>; organizationSettings: any }) {
+  const businessName = organizationSettings?.photography_business_name || mockData.business_name || 'Your Business';
+  const businessPhone = mockData.business_phone || '+1 (555) 123-4567';
+  const businessEmail = mockData.business_email || `hello@${businessName.toLowerCase().replace(/\s+/g, '')}.com`;
+  const logoUrl = organizationSettings?.logo_url;
+
   return (
     <div className="border-t pt-6 mt-8 text-center text-sm text-gray-600">
       {data.showLogo && (
         <div className="mb-3">
-          <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg mx-auto flex items-center justify-center text-white font-bold text-xl">
-            {mockData.business_name.charAt(0)}
-          </div>
+          {logoUrl ? (
+            <img src={logoUrl} alt={`${businessName} Logo`} className="w-16 h-16 mx-auto rounded-lg object-cover" />
+          ) : (
+            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg mx-auto flex items-center justify-center text-white font-bold text-xl">
+              {businessName.charAt(0)}
+            </div>
+          )}
         </div>
       )}
       
       {data.showStudioName && (
         <div className="font-semibold text-gray-800 mb-2">
-          {mockData.business_name}
+          {businessName}
         </div>
       )}
       
       {data.showContactInfo && (
         <div className="space-y-1">
-          <div>{mockData.business_phone}</div>
-          <div>hello@{mockData.business_name.toLowerCase().replace(/\s+/g, '')}.com</div>
+          <div>{businessPhone}</div>
+          <div>{businessEmail}</div>
         </div>
       )}
       

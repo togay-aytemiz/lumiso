@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Type, Calendar, MousePointer, Image, Columns3, Minus, Link, Layout, Code } from "lucide-react";
 import { TemplateBlock } from "@/types/templateBuilder";
+import { CompactStorageIndicator } from "./CompactStorageIndicator";
 
 interface AddBlockSheetProps {
   open: boolean;
@@ -97,6 +98,11 @@ export function AddBlockSheet({ open, onOpenChange, onAddBlock }: AddBlockSheetP
                       <CardDescription className="text-xs mt-1">
                         {blockType.description}
                       </CardDescription>
+                      {blockType.type === 'image' && (
+                        <div className="mt-3">
+                          <CompactStorageIndicator />
+                        </div>
+                      )}
                     </div>
                   </div>
                 </CardHeader>

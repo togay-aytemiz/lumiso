@@ -11,7 +11,7 @@ import { TemplateBlock, TextBlockData, SessionDetailsBlockData, CTABlockData, Im
 import { VariablePicker } from "./VariablePicker";
 import { EmojiPicker } from "./EmojiPicker";
 import { ImageUpload } from "./ImageUpload";
-import { ImageManager } from "./ImageManager";
+import { ImageLibrarySheet } from "./ImageLibrarySheet";
 import { useToast } from "@/hooks/use-toast";
 import { useRef, useState } from "react";
 import { emojis } from "@/lib/templateUtils";
@@ -344,6 +344,8 @@ function CTABlockEditor({ data, onUpdate }: { data: CTABlockData; onUpdate: (dat
 }
 
 function ImageBlockEditor({ data, onUpdate }: { data: ImageBlockData; onUpdate: (data: ImageBlockData) => void }) {
+  const [isLibraryOpen, setIsLibraryOpen] = useState(false);
+  
   const handleImageSelect = (imageUrl: string, altText?: string) => {
     onUpdate({ 
       ...data, 
@@ -367,7 +369,13 @@ function ImageBlockEditor({ data, onUpdate }: { data: ImageBlockData; onUpdate: 
         </TabsContent>
         
         <TabsContent value="library" className="space-y-4">
-          <ImageManager onImageSelect={handleImageSelect} />
+          <Button 
+            variant="outline" 
+            onClick={() => setIsLibraryOpen(true)}
+            className="w-full"
+          >
+            Open Image Library
+          </Button>
         </TabsContent>
         
         <TabsContent value="url" className="space-y-4">
@@ -422,6 +430,12 @@ function ImageBlockEditor({ data, onUpdate }: { data: ImageBlockData; onUpdate: 
           placeholder="https://example.com"
         />
       </div>
+
+      <ImageLibrarySheet
+        open={isLibraryOpen}
+        onOpenChange={setIsLibraryOpen}
+        onImageSelect={handleImageSelect}
+      />
     </div>
   );
 }

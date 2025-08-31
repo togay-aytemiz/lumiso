@@ -4,6 +4,7 @@ import { User, Session } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
 import CrmDashboard from "@/components/CrmDashboard";
 import { Button } from "@/components/ui/button";
+import { PageLoadingSkeleton } from "@/components/ui/loading-presets";
 
 const Index = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -32,14 +33,7 @@ const Index = () => {
   }, []);
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
-          <p className="mt-4 text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    );
+    return <PageLoadingSkeleton />;
   }
 
   if (!user) {

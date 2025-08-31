@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 interface LoadingSkeletonProps {
   className?: string;
   rows?: number;
-  variant?: 'default' | 'table' | 'card' | 'dashboard' | 'list' | 'form' | 'search' | 'kanban' | 'page';
+  variant?: 'default' | 'table' | 'card' | 'dashboard' | 'list' | 'form' | 'search' | 'kanban' | 'page' | 'settings' | 'detail-page';
   size?: 'sm' | 'md' | 'lg';
   showHeader?: boolean;
   showActions?: boolean;
@@ -159,12 +159,81 @@ export const LoadingSkeleton = React.memo(({
     );
   }
 
+  if (variant === 'settings') {
+    return (
+      <div className={cn("p-4 sm:p-6 md:p-8 space-y-6", className)}>
+        {showHeader && (
+          <div className="animate-pulse space-y-2">
+            <div className="h-8 bg-muted rounded w-64"></div>
+            <div className="h-4 bg-muted rounded w-96"></div>
+          </div>
+        )}
+        <div className="grid gap-6">
+          {Array.from({ length: rows || 3 }).map((_, i) => (
+            <div key={i} className="animate-pulse border rounded-lg p-6 space-y-4">
+              <div className="h-6 bg-muted rounded w-48"></div>
+              <div className="space-y-3">
+                <div className="h-4 bg-muted rounded"></div>
+                <div className="h-4 bg-muted rounded w-3/4"></div>
+              </div>
+              {showActions && (
+                <div className="flex gap-2 pt-2">
+                  <div className="h-9 bg-muted rounded w-20"></div>
+                  <div className="h-9 bg-muted rounded w-24"></div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (variant === 'detail-page') {
+    return (
+      <div className={cn("p-4 sm:p-6 space-y-6", className)}>
+        {/* Header */}
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 bg-muted rounded w-64"></div>
+          <div className="h-4 bg-muted rounded w-96"></div>
+        </div>
+        
+        {/* Content sections */}
+        <div className="grid gap-6 lg:grid-cols-3">
+          <div className="lg:col-span-2 space-y-6">
+            {Array.from({ length: rows || 2 }).map((_, i) => (
+              <div key={i} className="animate-pulse border rounded-lg p-6 space-y-4">
+                <div className="h-5 bg-muted rounded w-32"></div>
+                <div className="space-y-3">
+                  {Array.from({ length: 4 }).map((_, j) => (
+                    <div key={j} className="h-4 bg-muted rounded"></div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+          
+          <div className="space-y-6">
+            <div className="animate-pulse border rounded-lg p-6 space-y-4">
+              <div className="h-5 bg-muted rounded w-24"></div>
+              <div className="space-y-2">
+                {Array.from({ length: 3 }).map((_, j) => (
+                  <div key={j} className="h-3 bg-muted rounded"></div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (variant === 'page') {
     return (
-      <div className={cn("min-h-screen flex items-center justify-center", className)}>
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center space-y-4">
-          <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full mx-auto"></div>
-          <div className="h-4 bg-muted rounded w-32 mx-auto"></div>
+          <div className="animate-pulse rounded-full h-32 w-32 bg-muted mx-auto"></div>
+          <div className="h-4 bg-muted rounded w-24 mx-auto"></div>
         </div>
       </div>
     );

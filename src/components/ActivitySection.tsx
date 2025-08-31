@@ -16,6 +16,7 @@ import { formatLongDate, formatTime } from "@/lib/utils";
 import { useCalendarSync } from "@/hooks/useCalendarSync";
 import DateTimePicker from "@/components/ui/date-time-picker";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
+import { ListLoadingSkeleton } from "@/components/ui/loading-presets";
 interface Activity {
   id: string;
   type: string;
@@ -694,9 +695,9 @@ const ActivitySection = ({
     return groups;
   }, {} as Record<string, typeof auditLogsOnly>);
   if (loading) {
-    return <div className="flex items-center justify-center p-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>;
+    return (
+      <ListLoadingSkeleton rows={5} />
+    );
   }
   return <div className="space-y-6">
       {/* Add Activity Section */}

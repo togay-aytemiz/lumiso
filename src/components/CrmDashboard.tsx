@@ -12,6 +12,7 @@ import { PageHeader, PageHeaderSearch } from "@/components/ui/page-header";
 import GlobalSearch from "@/components/GlobalSearch";
 import { getLeadStatusStyles, formatStatusText } from "@/lib/leadStatusColors";
 import { getWeekRange, getUserLocale, formatLongDate, formatTime, formatDate } from "@/lib/utils";
+import { DashboardLoadingSkeleton } from "@/components/ui/loading-presets";
 
 interface Lead {
   id: string;
@@ -202,14 +203,7 @@ const CrmDashboard = () => {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
-          <p className="mt-4 text-muted-foreground">Loading your CRM...</p>
-        </div>
-      </div>
-    );
+    return <DashboardLoadingSkeleton />;
   }
 
   return (

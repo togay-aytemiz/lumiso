@@ -21,6 +21,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { OnboardingTutorial, TutorialStep } from "@/components/shared/OnboardingTutorial";
 import { useOnboardingV2 } from "@/hooks/useOnboardingV2";
 import { Calendar, MessageSquare, CheckSquare } from "lucide-react";
+import { PageLoadingSkeleton } from "@/components/ui/loading-presets";
 
 interface ProjectStatus {
   id: string;
@@ -598,14 +599,7 @@ const AllProjects = () => {
   };
 
   if (loading && isInitialLoad) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
-          <p className="mt-4 text-muted-foreground">Loading projects...</p>
-        </div>
-      </div>
-    );
+    return <PageLoadingSkeleton />;
   }
 
   return (

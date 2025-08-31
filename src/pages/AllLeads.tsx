@@ -16,6 +16,7 @@ import { useLeadTableColumns } from "@/hooks/useLeadTableColumns";
 import { LeadTableColumnManager } from "@/components/LeadTableColumnManager";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { TableLoadingSkeleton } from "@/components/ui/loading-presets";
 
 const AllLeadsNew = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -247,14 +248,7 @@ const AllLeadsNew = () => {
   );
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
-          <p className="mt-4 text-muted-foreground">Loading leads...</p>
-        </div>
-      </div>
-    );
+    return <TableLoadingSkeleton />;
   }
 
   return (

@@ -11,6 +11,7 @@ import { EnhancedProjectDialog } from "@/components/EnhancedProjectDialog";
 import { ViewProjectDialog } from "@/components/ViewProjectDialog";
 import { formatDate } from "@/lib/utils";
 import { AssigneeAvatars } from "@/components/AssigneeAvatars";
+import { CompactLoadingSkeleton } from "@/components/ui/loading-presets";
 
 interface ProjectStatus {
   id: string;
@@ -347,11 +348,7 @@ const ProjectKanbanBoard = ({ projects, projectStatuses, onProjectsChange, onPro
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
+    return <CompactLoadingSkeleton />;
   }
 
   return (

@@ -75,7 +75,7 @@ export function EmailPreview({ blocks, mockData, device, emailSubject, preheader
             case "social-links":
               return <SocialLinksBlockPreview key={block.id} data={block.data} />;
             case "header":
-              return <HeaderBlockPreview key={block.id} data={block.data} replacePlaceholders={replacePlaceholders} />;
+              return <HeaderBlockPreview key={block.id} data={block.data} replacePlaceholders={replacePlaceholders} organizationSettings={organizationSettings} />;
             case "raw-html":
               return <RawHTMLBlockPreview key={block.id} data={block.data} />;
             case "footer":
@@ -254,11 +254,15 @@ function FooterBlockPreview({ data, mockData, organizationSettings }: { data: Fo
   return (
     <div className="border-t pt-6 mt-8 text-center text-sm text-gray-600">
       {data.showLogo && (
-        <div className="mb-3">
+        <div className="mb-3 flex justify-center">
           {logoUrl ? (
-            <img src={logoUrl} alt={`${businessName} Logo`} className="w-16 h-16 mx-auto rounded-lg object-cover" />
+            <img 
+              src={logoUrl} 
+              alt={`${businessName} Logo`} 
+              className="max-w-[80px] max-h-[80px] object-contain"
+            />
           ) : (
-            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg mx-auto flex items-center justify-center text-white font-bold text-xl">
+            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold text-xl">
               {businessName.charAt(0)}
             </div>
           )}
@@ -310,17 +314,73 @@ function SocialLinksBlockPreview({ data }: { data: any }) {
   );
 }
 
-function HeaderBlockPreview({ data, replacePlaceholders }: { data: any; replacePlaceholders: (text: string) => string }) {
+function HeaderBlockPreview({ data, replacePlaceholders, organizationSettings }: { data: any; replacePlaceholders: (text: string) => string; organizationSettings?: any }) {
+  const { activeOrganization } = useOrganization();
+  const [orgSettings, setOrgSettings] = useState<any>(organizationSettings);
+
+  useEffect(() => {
+    if (!orgSettings && activeOrganization?.id) {
+      const fetchSettings = async () => {
+        const { data } = await supabase
+          .from("organization_settings")
+          .select("photography_business_name, logo_url")
+          .eq("organization_id", activeOrganization.id)
+          .single();
+        setOrgSettings(data);
+      };
+      fetchSettings();
+    }
+  }, [activeOrganization?.id, orgSettings]);
+
+  const businessName = orgSettings?.photography_business_name || 'Your Business';
+  const logoUrl = orgSettings?.logo_url;
+  const alignment = data.logoAlignment || "center";
+
+  const getAlignmentStyle = () => {
+    switch (alignment) {
+      case "left": return "text-left";
+      case "right": return "text-right";
+      case "center":
+      default: return "text-center";
+    }
+  };
+
+  const getJustifyStyle = () => {
+    switch (alignment) {
+      case "left": return "justify-start";
+      case "right": return "justify-end";
+      case "center":
+      default: return "justify-center";
+    }
+  };
+
   return (
     <div 
-      className="text-center py-6 rounded-lg" 
+      className={`py-6 rounded-lg ${getAlignmentStyle()}`}
       style={{ backgroundColor: data.backgroundColor || "#ffffff" }}
     >
       {data.showLogo && (
-        <div className="mb-2 text-2xl">🏢</div>
+        <div className={`mb-3 flex ${getJustifyStyle()}`}>
+          {logoUrl ? (
+            <img 
+              src={logoUrl} 
+              alt={`${businessName} Logo`} 
+              className="max-w-[120px] max-h-[60px] object-contain"
+            />
+          ) : (
+            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold text-lg">
+              {businessName.charAt(0)}
+            </div>
+          )}
+        </div>
       )}
       {data.tagline && (
-        <p className="text-lg font-medium">{replacePlaceholders(data.tagline)}</p>
+        <p 
+          className="text-lg font-medium"
+          style={{ color: data.taglineColor || "#000000" }}
+        >
+          {replacePlaceholders(data.tagline)}
+        </p>
       )}
     </div>
   );

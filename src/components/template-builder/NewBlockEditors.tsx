@@ -142,6 +142,22 @@ export function HeaderBlockEditor({ data, onUpdate }: { data: HeaderBlockData; o
         />
       </div>
       
+      {data.showLogo && (
+        <div>
+          <Label>Logo Alignment</Label>
+          <Select value={data.logoAlignment || "center"} onValueChange={(value) => onUpdate({ ...data, logoAlignment: value as "left" | "center" | "right" })}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="left">Left</SelectItem>
+              <SelectItem value="center">Center</SelectItem>
+              <SelectItem value="right">Right</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+      
       <div>
         <Label>Tagline (optional)</Label>
         <Input
@@ -150,6 +166,17 @@ export function HeaderBlockEditor({ data, onUpdate }: { data: HeaderBlockData; o
           placeholder="Your photography tagline"
         />
       </div>
+      
+      {data.tagline && (
+        <div>
+          <Label>Tagline Color</Label>
+          <Input
+            type="color"
+            value={data.taglineColor || "#000000"}
+            onChange={(e) => onUpdate({ ...data, taglineColor: e.target.value })}
+          />
+        </div>
+      )}
       
       <div>
         <Label>Background Color</Label>

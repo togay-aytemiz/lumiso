@@ -55,12 +55,6 @@ const blockTypes = [
     description: "Logo and tagline header section with custom styling",
   },
   {
-    type: "raw-html" as const,
-    icon: Code,
-    title: "Raw HTML",
-    description: "Custom HTML content for advanced users (sanitized)",
-  },
-  {
     type: "footer" as const,
     icon: Columns3,
     title: "Footer Block",
@@ -71,7 +65,7 @@ const blockTypes = [
 export function AddBlockSheet({ open, onOpenChange, onAddBlock }: AddBlockSheetProps) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[400px] sm:w-[540px]">
+      <SheetContent className="w-[600px] sm:w-[800px]">
         <SheetHeader>
           <SheetTitle>Block Library</SheetTitle>
           <SheetDescription>
@@ -79,31 +73,33 @@ export function AddBlockSheet({ open, onOpenChange, onAddBlock }: AddBlockSheetP
           </SheetDescription>
         </SheetHeader>
         
-        <div className="mt-6 space-y-4">
-          {blockTypes.map((blockType) => {
-            const Icon = blockType.icon;
-            return (
-              <Card 
-                key={blockType.type}
-                className="cursor-pointer hover:shadow-sm transition-shadow"
-                onClick={() => onAddBlock(blockType.type)}
-              >
-                <CardHeader className="pb-3">
-                  <div className="flex items-start gap-3">
-                    <div className="p-2 bg-primary/10 text-primary rounded-md">
-                      <Icon className="h-4 w-4" />
+        <div className="mt-6 overflow-x-auto">
+          <div className="flex gap-4 pb-4" style={{ minWidth: 'max-content' }}>
+            {blockTypes.map((blockType) => {
+              const Icon = blockType.icon;
+              return (
+                <Card 
+                  key={blockType.type}
+                  className="cursor-pointer hover:shadow-sm transition-shadow flex-shrink-0 w-[200px]"
+                  onClick={() => onAddBlock(blockType.type)}
+                >
+                  <CardHeader className="pb-3">
+                    <div className="flex flex-col items-center text-center gap-2">
+                      <div className="p-3 bg-primary/10 text-primary rounded-md">
+                        <Icon className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-sm">{blockType.title}</CardTitle>
+                        <CardDescription className="text-xs mt-1">
+                          {blockType.description}
+                        </CardDescription>
+                      </div>
                     </div>
-                    <div className="flex-1">
-                      <CardTitle className="text-sm">{blockType.title}</CardTitle>
-                      <CardDescription className="text-xs mt-1">
-                        {blockType.description}
-                      </CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-              </Card>
-            );
-          })}
+                  </CardHeader>
+                </Card>
+              );
+            })}
+          </div>
         </div>
       </SheetContent>
     </Sheet>

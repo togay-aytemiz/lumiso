@@ -37,7 +37,9 @@ export interface SocialLinksBlockData {
 
 export interface HeaderBlockData {
   showLogo: boolean;
+  logoAlignment?: "left" | "center" | "right";
   tagline?: string;
+  taglineColor?: string;
   backgroundColor?: string;
 }
 

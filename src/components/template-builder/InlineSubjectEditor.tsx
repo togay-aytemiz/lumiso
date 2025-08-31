@@ -42,6 +42,13 @@ export function InlineSubjectEditor({
     }
   };
 
+  const handleBlur = () => {
+    // Auto-save on blur if content changed
+    if (inputValue.trim() !== (value || '').trim()) {
+      handleSave();
+    }
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -80,6 +87,7 @@ export function InlineSubjectEditor({
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           onKeyDown={handleKeyDown}
+          onBlur={handleBlur}
           placeholder={placeholder}
           className="flex-1 h-8 text-sm"
           disabled={isSaving}

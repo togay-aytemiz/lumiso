@@ -592,6 +592,7 @@ export type Database = {
         Row: {
           created_at: string
           date_format: string | null
+          email: string | null
           id: string
           logo_url: string | null
           notification_daily_summary_enabled: boolean | null
@@ -603,6 +604,7 @@ export type Database = {
           notification_weekly_recap_enabled: boolean | null
           notification_weekly_recap_send_at: string | null
           organization_id: string
+          phone: string | null
           photography_business_name: string | null
           primary_brand_color: string | null
           show_quick_status_buttons: boolean | null
@@ -612,6 +614,7 @@ export type Database = {
         Insert: {
           created_at?: string
           date_format?: string | null
+          email?: string | null
           id?: string
           logo_url?: string | null
           notification_daily_summary_enabled?: boolean | null
@@ -623,6 +626,7 @@ export type Database = {
           notification_weekly_recap_enabled?: boolean | null
           notification_weekly_recap_send_at?: string | null
           organization_id: string
+          phone?: string | null
           photography_business_name?: string | null
           primary_brand_color?: string | null
           show_quick_status_buttons?: boolean | null
@@ -632,6 +636,7 @@ export type Database = {
         Update: {
           created_at?: string
           date_format?: string | null
+          email?: string | null
           id?: string
           logo_url?: string | null
           notification_daily_summary_enabled?: boolean | null
@@ -643,6 +648,7 @@ export type Database = {
           notification_weekly_recap_enabled?: boolean | null
           notification_weekly_recap_send_at?: string | null
           organization_id?: string
+          phone?: string | null
           photography_business_name?: string | null
           primary_brand_color?: string | null
           show_quick_status_buttons?: boolean | null
@@ -1312,6 +1318,44 @@ export type Database = {
             columns: ["template_id"]
             isOneToOne: false
             referencedRelation: "message_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      template_image_usage: {
+        Row: {
+          created_at: string | null
+          id: string
+          organization_id: string
+          total_images: number | null
+          total_storage_bytes: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          organization_id: string
+          total_images?: number | null
+          total_storage_bytes?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          organization_id?: string
+          total_images?: number | null
+          total_storage_bytes?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "template_image_usage_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]

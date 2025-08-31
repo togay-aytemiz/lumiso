@@ -728,7 +728,7 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
   });
 
   // Fetch existing duration options from packages
-  const { data: existingDurations = [] } = useQuery({
+  const { data: durationOptions = [] } = useQuery({
     queryKey: ['existing_durations'],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -752,25 +752,13 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
         .not('duration', 'is', null);
       
       if (error) throw error;
-      return [...new Set(data?.map(p => p.duration) || [])];
+      
+      // Get unique durations and map to options format
+      const uniqueDurations = [...new Set(data?.map(p => p.duration) || [])];
+      return uniqueDurations
+        .map(duration => ({ value: duration, label: duration }))
+        .sort((a, b) => a.label.localeCompare(b.label));
     },
-  });
-
-  // Combine static options with existing durations
-  const durationOptions = [
-    ...staticDurationOptions,
-    ...existingDurations
-      .filter(duration => !staticDurationOptions.some(option => option.value === duration))
-      .map(duration => ({ value: duration, label: duration }))
-  ].sort((a, b) => {
-    // Sort with static options first, then custom ones
-    const staticValues = staticDurationOptions.map(opt => opt.value);
-    const aIsStatic = staticValues.includes(a.value);
-    const bIsStatic = staticValues.includes(b.value);
-    
-    if (aIsStatic && !bIsStatic) return -1;
-    if (!aIsStatic && bIsStatic) return 1;
-    return a.label.localeCompare(b.label);
   });
 
   useEffect(() => {
@@ -958,9 +946,9 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
             <SelectTrigger>
               <SelectValue placeholder="Select duration" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="max-h-60 overflow-y-auto">
               {durationOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
+                <SelectItem key={option.value} value={option.value} className="py-2">
                   {option.label}
                 </SelectItem>
               ))}

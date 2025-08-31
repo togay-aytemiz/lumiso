@@ -118,26 +118,28 @@ export const useOrganizationSettings = () => {
 
       // Delete existing logo if it exists
       if (settings?.logo_url) {
-        const oldPath = settings.logo_url.split('/').pop();
-        if (oldPath) {
-          await supabase.storage.from('logos').remove([oldPath]);
+        const urlParts = settings.logo_url.split('/');
+        const oldPath = urlParts.slice(-2).join('/'); // Get organizationId/filename format
+        if (oldPath && oldPath.includes(organizationId)) {
+          await supabase.storage.from('business-assets').remove([oldPath]);
         }
       }
 
-      // Upload new logo
+      // Upload new logo with organization folder structure
       const fileExt = file.name.split('.').pop();
-      const fileName = `${organizationId}-${Date.now()}.${fileExt}`;
+      const fileName = `logo-${Date.now()}.${fileExt}`;
+      const filePath = `${organizationId}/${fileName}`;
       
       const { error: uploadError } = await supabase.storage
-        .from('logos')
-        .upload(fileName, file);
+        .from('business-assets')
+        .upload(filePath, file);
 
       if (uploadError) throw uploadError;
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
-        .from('logos')
-        .getPublicUrl(fileName);
+        .from('business-assets')
+        .getPublicUrl(filePath);
 
       // Update settings with new logo URL
       const updateResult = await updateSettings({ logo_url: publicUrl });
@@ -169,9 +171,10 @@ export const useOrganizationSettings = () => {
       if (!settings?.logo_url) return { success: true };
 
       // Delete from storage
-      const oldPath = settings.logo_url.split('/').pop();
+      const urlParts = settings.logo_url.split('/');
+      const oldPath = urlParts.slice(-2).join('/'); // Get organizationId/filename format
       if (oldPath) {
-        await supabase.storage.from('logos').remove([oldPath]);
+        await supabase.storage.from('business-assets').remove([oldPath]);
       }
 
       // Clear the logo URL in settings

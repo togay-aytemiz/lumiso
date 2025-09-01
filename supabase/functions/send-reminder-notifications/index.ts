@@ -2,8 +2,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { Resend } from "npm:resend@2.0.0";
 import { generateDailySummaryEmail } from './_templates/enhanced-daily-summary-template.ts';
-import { generateAssignmentEmail, AssignmentEmailData } from './_templates/enhanced-assignment-template.ts';
-import { generateMilestoneEmail, MilestoneEmailData } from './_templates/enhanced-milestone-template.ts';
+import { generateImmediateNotificationEmail, generateSubject, ImmediateNotificationEmailData, ProjectAssignmentData, LeadAssignmentData, ProjectMilestoneData } from './_templates/immediate-notifications.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -580,8 +579,53 @@ async function handleNewAssignmentNotification(requestData: ReminderRequest, adm
 
     console.log('Assignment notifications are enabled - proceeding with email send');
 
+    // Prepare unified notification data
+    let notificationData: ProjectAssignmentData | LeadAssignmentData;
+    
+    if (entity_type === 'project') {
+      notificationData = {
+        type: 'project-assignment' as const,
+        organizationId: organizationId || '',
+        triggeredByUser: {
+          name: assigner_name || 'System',
+          id: requestData.assigner_id || ''
+        },
+        project: {
+          id: entity_id || '',
+          name: entityName || `Project ${entity_id}`,
+          type: projectType || undefined,
+          status: status || undefined,
+          notes: notes || undefined
+        },
+        assignee: {
+          name: assignee_name || 'there',
+          email: assignee_email || ''
+        }
+      };
+    } else {
+      notificationData = {
+        type: 'lead-assignment' as const,
+        organizationId: organizationId || '',
+        triggeredByUser: {
+          name: assigner_name || 'System',
+          id: requestData.assigner_id || ''
+        },
+        lead: {
+          id: entity_id || '',
+          name: entityName || `Lead ${entity_id}`,
+          status: status || undefined,
+          dueDate: dueDate || undefined,
+          notes: notes || undefined
+        },
+        assignee: {
+          name: assignee_name || 'there',
+          email: assignee_email || ''
+        }
+      };
+    }
+
     // Prepare template data
-    const templateData: AssignmentEmailData = {
+    const templateData: ImmediateNotificationEmailData = {
       user: {
         fullName: assignee_name || 'there',
         email: assignee_email || ''
@@ -590,28 +634,18 @@ async function handleNewAssignmentNotification(requestData: ReminderRequest, adm
         businessName: orgSettings?.photography_business_name || 'Lumiso',
         brandColor: orgSettings?.primary_brand_color || '#1EB29F'
       },
-      assignmentData: {
-        entityType: entity_type,
-        entityId: entity_id || '',
-        entityName: entityName || `${entity_type} ${entity_id}`,
-        assigneeName: assignee_name || 'there',
-        assignerName: assigner_name || 'System',
-        dueDate,
-        notes,
-        projectType,
-        status,
-        organizationId: organizationId || ''
-      }
+      notificationData
     };
 
-    // Generate email HTML
-    const emailHtml = generateAssignmentEmail(templateData);
+    // Generate email HTML and subject
+    const emailHtml = generateImmediateNotificationEmail(templateData);
+    const emailSubject = generateSubject(notificationData);
 
     // Send email using Resend
     const emailResult = await resend.emails.send({
       from: 'Lumiso <hello@updates.lumiso.app>',
       to: [assignee_email || ''],
-      subject: `New Assignment: ${entityName}`,
+      subject: emailSubject,
       html: emailHtml
     });
 
@@ -829,8 +863,30 @@ async function handleProjectMilestoneNotification(requestData: ReminderRequest, 
           continue;
         }
 
-        // Prepare template data
-        const templateData: MilestoneEmailData = {
+        // Generate unified milestone notification
+        const notificationData: ProjectMilestoneData = {
+          type: 'project-milestone' as const,
+          organizationId: organizationId,
+          triggeredByUser: {
+            name: changedByUserName,
+            id: changed_by_user_id || ''
+          },
+          project: {
+            id: project.id,
+            name: project.name,
+            type: project.project_types?.name || undefined,
+            oldStatus: old_status || 'Previous Status',
+            newStatus: currentStatusName,
+            lifecycle: lifecycle as 'completed' | 'cancelled',
+            notes: project.description || undefined
+          },
+          assignee: {
+            name: assigneeName,
+            email: assigneeAuth.user.email
+          }
+        };
+
+        const emailData: ImmediateNotificationEmailData = {
           user: {
             fullName: assigneeName,
             email: assigneeAuth.user.email
@@ -839,30 +895,17 @@ async function handleProjectMilestoneNotification(requestData: ReminderRequest, 
             businessName: orgSettings?.photography_business_name || 'Lumiso',
             brandColor: orgSettings?.primary_brand_color || '#1EB29F'
           },
-          milestoneData: {
-            projectId: project.id,
-            projectName: project.name,
-            projectType: project.project_types?.name || null,
-            oldStatus: old_status || 'Previous Status',
-            newStatus: currentStatusName,
-            lifecycle: lifecycle,
-            milestoneUserName: changedByUserName,
-            notes: project.description,
-            organizationId: organizationId
-          }
+          notificationData
         };
-
-        // Generate email HTML
-        const emailHtml = generateMilestoneEmail(templateData);
-
-        // Determine emoji based on lifecycle
-        const emoji = lifecycle === 'completed' ? '🎉' : '⚠️';
         
-        // Send email using Resend
+        const emailHtml = generateImmediateNotificationEmail(emailData);
+        const emailSubject = generateSubject(notificationData);
+
+        // Send the email
         const emailResult = await resend.emails.send({
           from: 'Lumiso <hello@updates.lumiso.app>',
           to: [assigneeAuth.user.email],
-          subject: `${emoji} Project Milestone: ${project.name} → ${currentStatusName}`,
+          subject: emailSubject,
           html: emailHtml
         });
 

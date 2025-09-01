@@ -59,7 +59,13 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log(`Authenticated user: ${user.email}`);
 
-    // Get user's active organization - using a direct query instead of RPC
+    // Get user profile and organization
+    const { data: userProfile } = await adminSupabase
+      .from('profiles')
+      .select('full_name, first_name, last_name')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
     const { data: userSettings } = await adminSupabase
       .from('user_settings')
       .select('active_organization_id')
@@ -73,12 +79,20 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error('No active organization found for user');
     }
 
+    // Extract user's full name
+    const userFullName = userProfile?.full_name || 
+                        (userProfile?.first_name && userProfile?.last_name ? 
+                         `${userProfile.first_name} ${userProfile.last_name}` : 
+                         user.user_metadata?.full_name || 
+                         user.email?.split('@')[0] || 'there');
+    console.log(`User full name: ${userFullName}`);
+
     // Get today's date
     const today = new Date();
     const todayStr = today.toISOString().split('T')[0];
     console.log(`Today's date: ${todayStr}`);
 
-    // Get today's sessions using admin client with auth context
+    // Get today's sessions
     const { data: todaySessions, error: todaySessionsError } = await adminSupabase
       .from('sessions')
       .select(`
@@ -94,8 +108,28 @@ const handler = async (req: Request): Promise<Response> => {
       .eq('organization_id', organizationId)
       .order('session_time');
 
+    // Get past sessions that need action (past sessions that might need follow-up)
+    const { data: pastSessions, error: pastSessionsError } = await adminSupabase
+      .from('sessions')
+      .select(`
+        id,
+        session_date,
+        session_time,
+        notes,
+        location,
+        leads(id, name),
+        projects(id, name)
+      `)
+      .lt('session_date', todayStr)
+      .eq('organization_id', organizationId)
+      .order('session_date', { ascending: false })
+      .limit(10);
+
     if (todaySessionsError) {
       console.error('Error fetching today sessions:', todaySessionsError);
+    }
+    if (pastSessionsError) {
+      console.error('Error fetching past sessions:', pastSessionsError);
     }
 
     // Get overdue reminders/activities
@@ -167,6 +201,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log('Data fetched:', {
       todaySessions: todaySessions?.length || 0,
+      pastSessions: pastSessions?.length || 0,
       overdueActivities: overdueActivities?.length || 0,
       todayActivities: todayActivities?.length || 0,
       pendingTodos: pendingTodos?.length || 0
@@ -174,8 +209,9 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Prepare data for enhanced email template
     const templateData = {
-      organizationName: orgSettings?.photography_business_name || 'Lumiso',
-      primaryColor: orgSettings?.primary_brand_color || '#1EB29F',
+      userFullName,
+      businessName: orgSettings?.photography_business_name || 'Lumiso',
+      brandColor: orgSettings?.primary_brand_color || '#1EB29F',
       dateFormat: orgSettings?.date_format || 'DD/MM/YYYY',
       timeFormat: orgSettings?.time_format || '12-hour',
       baseUrl: isTest ? 'http://localhost:3000' : 'https://app.lumiso.com'
@@ -183,6 +219,17 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Transform sessions data
     const sessions = (todaySessions || []).map(session => ({
+      id: session.id,
+      session_date: session.session_date,
+      session_time: session.session_time,
+      notes: session.notes,
+      location: session.location,
+      leads: session.leads,
+      projects: session.projects
+    }));
+
+    // Transform past sessions that need action
+    const pastSessionsNeedingAction = (pastSessions || []).map(session => ({
       id: session.id,
       session_date: session.session_date,
       session_time: session.session_time,
@@ -218,6 +265,7 @@ const handler = async (req: Request): Promise<Response> => {
       sessions,
       todos,
       overdueItems,
+      pastSessionsNeedingAction,
       templateData
     );
 
@@ -243,6 +291,7 @@ const handler = async (req: Request): Promise<Response> => {
       organizationId,
       dataCount: {
         sessions: sessions.length,
+        pastSessions: pastSessionsNeedingAction.length,
         todos: todos.length,
         overdueActivities: overdueItems.activities.length
       }

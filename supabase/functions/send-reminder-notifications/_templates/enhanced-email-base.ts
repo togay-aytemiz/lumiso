@@ -381,9 +381,9 @@ export const createEmailTemplate = (
   content: string,
   templateData: EmailTemplateData
 ) => {
-  const { userFullName, businessName = "Lumiso", logoUrl, brandColor = "#1EB29F", baseUrl = "https://rifdykpdubrowzbylffe.supabase.co" } = templateData;
+  const { userFullName, businessName = "Lumiso", logoUrl, brandColor = "#1EB29F", baseUrl = "https://app.lumiso.com" } = templateData;
   
-  console.log(`Using Lumiso logo from public folder`);
+  console.log(`Using Lumiso logo from: ${baseUrl}/lumiso-logo.png`);
   
   return `
     <!DOCTYPE html>
@@ -397,19 +397,18 @@ export const createEmailTemplate = (
     <body>
       <div class="email-container">
         <div class="email-header">
-          <img src="${baseUrl}/lumiso-logo.png" alt="Lumiso" class="logo" />
+          <img src="${baseUrl}/lumiso-logo.png" alt="${businessName}" class="logo" />
         </div>
         
         <div class="email-body">
-          <div class="greeting">Hi ${userFullName},</div>
+          <div class="greeting">Hi ${userFullName}! 👋</div>
           ${content}
         </div>
         
         <div class="email-footer">
           <p class="footer-text">
-            This is an automated notification from Lumiso.<br>
-            <a href="${baseUrl}" class="footer-link">Go to Dashboard</a> | 
-            <a href="${baseUrl}/leads" class="footer-link">Manage All Leads</a>
+            This is an automated notification from ${businessName}.<br>
+            You're receiving this because you have notifications enabled in your account settings.
           </p>
         </div>
       </div>

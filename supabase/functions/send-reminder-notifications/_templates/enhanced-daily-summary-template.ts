@@ -1,4 +1,4 @@
-import { createEmailTemplate, EmailTemplateData, Session, Todo, Activity, Lead, formatDateTime, formatDate } from './enhanced-email-base.ts';
+import { createEmailTemplate, EmailTemplateData, Session, Todo, Activity, Lead, formatDateTime, formatDate, formatTime } from './enhanced-email-base.ts';
 
 interface OverdueItems {
   leads: Lead[];
@@ -9,12 +9,16 @@ export function generateDailySummaryEmail(
   upcomingSessions: Session[], 
   pendingTodos: Todo[], 
   overdueItems: OverdueItems, 
+  pastSessions: Session[],
   templateData: EmailTemplateData
 ): string {
   const today = formatDate(new Date().toISOString(), templateData.dateFormat);
   const totalOverdue = overdueItems.leads.length + overdueItems.activities.length;
+  const totalPastSessions = pastSessions.length;
   
   let content = `
+    <p>Here's your daily summary for <strong>${today}</strong>:</p>
+    
     <div class="summary-stats">
       <div class="stat-item">
         <span class="stat-number">${upcomingSessions.length}</span>
@@ -28,9 +32,11 @@ export function generateDailySummaryEmail(
         <span class="stat-number">${totalOverdue}</span>
         <div class="stat-label">Overdue Items</div>
       </div>
+      <div class="stat-item">
+        <span class="stat-number">${totalPastSessions}</span>
+        <div class="stat-label">Past Sessions</div>
+      </div>
     </div>
-    
-    <p>Here's your daily summary for <strong>${today}</strong>:</p>
   `;
 
   // Today's Sessions
@@ -137,13 +143,50 @@ export function generateDailySummaryEmail(
     }
   }
 
+  // Past Sessions that need action
+  if (totalPastSessions > 0) {
+    content += `
+      <h3 class="section-title">📅 Past Sessions Needing Follow-up (${totalPastSessions})</h3>
+      <p>These sessions have passed and may need your attention:</p>
+    `;
+
+    pastSessions.slice(0, 8).forEach(session => {
+      const daysPassed = Math.ceil((new Date().getTime() - new Date(session.session_date).getTime()) / (1000 * 60 * 60 * 24));
+      
+      content += `
+        <div class="item-card medium-priority">
+          <div class="item-title">
+            <span>Session ${daysPassed} day${daysPassed > 1 ? 's' : ''} ago</span>
+            <span class="overdue-badge">${daysPassed} days ago</span>
+          </div>
+          <div class="item-meta">📅 ${formatDate(session.session_date, templateData.dateFormat)} at ${formatTime(session.session_time, templateData.timeFormat)}</div>
+          ${session.leads ? `<div class="item-meta">👤 Client: ${session.leads.name}</div>` : ''}
+          ${session.projects ? `<div class="item-relationship">Project: ${session.projects.name}</div>` : ''}
+          ${session.location ? `<div class="item-meta">📍 ${session.location}</div>` : ''}
+          <div style="margin-top: 12px;">
+            ${templateData.baseUrl ? `<a href="${templateData.baseUrl}/sessions/${session.id}" class="item-action">Update Status</a>` : ''}
+            ${templateData.baseUrl && session.projects ? `<a href="${templateData.baseUrl}/projects/${session.projects.id}" class="item-action">View Project</a>` : ''}
+          </div>
+        </div>
+      `;
+    });
+
+    if (pastSessions.length > 8) {
+      content += `
+        <p style="font-style: italic; color: #6B7280; margin-top: 8px;">
+          ... and ${pastSessions.length - 8} more past sessions
+        </p>
+      `;
+    }
+  }
+
     // Quick Actions
     content += `
       <div class="inline-buttons">
-        ${templateData.baseUrl ? `<a href="${templateData.baseUrl}/dashboard" class="cta-button">Dashboard</a>` : ''}
+        ${templateData.baseUrl ? `<a href="${templateData.baseUrl}" class="cta-button">Dashboard</a>` : ''}
         ${templateData.baseUrl ? `<a href="${templateData.baseUrl}/leads" class="cta-button">Manage Leads</a>` : ''}
         ${templateData.baseUrl ? `<a href="${templateData.baseUrl}/projects" class="cta-button">View Projects</a>` : ''}
-        ${templateData.baseUrl ? `<a href="${templateData.baseUrl}/calendar" class="cta-button">Calendar</a>` : ''}
+        ${templateData.baseUrl ? `<a href="${templateData.baseUrl}/sessions" class="cta-button">All Sessions</a>` : ''}
       </div>
     `;
 

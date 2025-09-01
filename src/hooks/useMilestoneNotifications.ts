@@ -45,40 +45,19 @@ export function useMilestoneNotifications() {
         return acc;
       }, {} as Record<string, any>);
 
-      // Process each unique notification
+      // Process each unique notification by calling the edge function
+      // The edge function will handle getting user details and sending emails
       for (const notification of Object.values(uniqueNotifications)) {
         try {
-          // Get the user's profile and email
-          const { data: userProfile } = await supabase
-            .from('profiles')
-            .select('full_name')
-            .eq('user_id', notification.user_id)
-            .maybeSingle();
-
-          // Get user email from auth
-          const { data: { user }, error: userError } = await supabase.auth.admin.getUserById(notification.user_id);
-          
-          if (userError || !user?.email) {
-            console.error('Error getting user email:', userError);
-            continue;
-          }
-
-          // Find the project that was updated (this is a simplified approach)
-          // In a real scenario, you'd want to store more context in the notification_logs
-          const assigneeName = userProfile?.full_name || 
-                              user.user_metadata?.full_name || 
-                              user.email.split('@')[0];
+          console.log(`Processing milestone notification for user: ${notification.user_id}`);
 
           // Invoke the edge function to send the milestone notification
+          // The edge function has admin privileges to get user emails
           const { data, error } = await supabase.functions.invoke('send-reminder-notifications', {
             body: {
               type: 'project-milestone',
               assignee_id: notification.user_id,
-              assignee_email: user.email,
-              assignee_name: assigneeName,
               organizationId: notification.organization_id,
-              // Note: In a real implementation, you'd want to store project details
-              // in the notification_logs table when the trigger fires
             }
           });
 

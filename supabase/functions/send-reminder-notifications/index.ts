@@ -485,7 +485,8 @@ async function handleNewAssignmentNotification(requestData: ReminderRequest, adm
             description,
             project_type_id,
             status_id,
-            leads(name)
+            lead_id,
+            leads!projects_lead_id_fkey(name)
           `)
           .eq('id', entity_id)
           .maybeSingle();
@@ -764,7 +765,9 @@ async function handleProjectMilestoneNotification(requestData: ReminderRequest, 
         description,
         assignees,
         project_types(name),
-        status_id
+        status_id,
+        lead_id,
+        leads!projects_lead_id_fkey(name)
       `)
       .eq('id', project_id)
       .maybeSingle();
@@ -878,7 +881,8 @@ async function handleProjectMilestoneNotification(requestData: ReminderRequest, 
             oldStatus: old_status || 'Previous Status',
             newStatus: currentStatusName,
             lifecycle: lifecycle as 'completed' | 'cancelled',
-            notes: project.description || undefined
+            notes: project.description || undefined,
+            leadName: project.leads?.name || undefined
           },
           assignee: {
             name: assigneeName,

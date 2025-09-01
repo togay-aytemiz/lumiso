@@ -49,7 +49,7 @@ export function generateModernDailySummaryEmail(
           font-size: 48px;
           margin-bottom: 8px;
           line-height: 1;
-        ">📅</div>
+        ">📊</div>
         <h2 style="
           color: #1f2937;
           font-size: 24px;
@@ -68,9 +68,9 @@ export function generateModernDailySummaryEmail(
       <!-- Summary Stats -->
       <div style="
         display: flex;
-        justify-content: space-around;
+        justify-content: space-between;
         flex-wrap: wrap;
-        gap: 16px;
+        gap: 12px;
         margin-top: 24px;
       ">
         <div style="
@@ -282,12 +282,12 @@ export function generateModernDailySummaryEmail(
                 display: inline-block;
                 background: ${brandColor};
                 color: white;
-                padding: 8px 16px;
+                padding: 6px 12px;
                 border-radius: 6px;
                 text-decoration: none;
                 font-weight: 500;
-                font-size: 14px;
-              ">View Details →</a>
+                font-size: 13px;
+              ">View →</a>
             </div>
           ` : ''}
         </div>
@@ -371,12 +371,12 @@ export function generateModernDailySummaryEmail(
                 display: inline-block;
                 background: #f59e0b;
                 color: white;
-                padding: 8px 16px;
+                padding: 6px 12px;
                 border-radius: 6px;
                 text-decoration: none;
                 font-weight: 500;
-                font-size: 14px;
-              ">View Reminders →</a>
+                font-size: 13px;
+              ">View →</a>
             </div>
           ` : ''}
         </div>
@@ -399,6 +399,7 @@ export function generateModernDailySummaryEmail(
       ">
         <div style="
           display: flex;
+          justify-content: space-between;
           align-items: center;
           gap: 12px;
         ">
@@ -420,12 +421,12 @@ export function generateModernDailySummaryEmail(
               display: inline-block;
               background: #ef4444;
               color: white;
-              padding: 8px 16px;
+              padding: 6px 12px;
               border-radius: 6px;
               text-decoration: none;
               font-weight: 500;
-              font-size: 14px;
-            ">View Reminders →</a>
+              font-size: 13px;
+            ">View →</a>
           ` : ''}
         </div>
       </div>
@@ -445,6 +446,7 @@ export function generateModernDailySummaryEmail(
       ">
         <div style="
           display: flex;
+          justify-content: space-between;
           align-items: center;
           gap: 12px;
         ">
@@ -466,12 +468,12 @@ export function generateModernDailySummaryEmail(
               display: inline-block;
               background: #f59e0b;
               color: white;
-              padding: 8px 16px;
+              padding: 6px 12px;
               border-radius: 6px;
               text-decoration: none;
               font-weight: 500;
-              font-size: 14px;
-            ">View Sessions →</a>
+              font-size: 13px;
+            ">View →</a>
           ` : ''}
         </div>
       </div>
@@ -497,10 +499,11 @@ export function generateModernDailySummaryEmail(
         ">Quick Actions</h3>
         
         <div style="
-          display: flex;
-          justify-content: center;
-          flex-wrap: wrap;
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
           gap: 12px;
+          max-width: 600px;
+          margin: 0 auto;
         ">
           <a href="${templateData.baseUrl}" style="
             display: inline-block;

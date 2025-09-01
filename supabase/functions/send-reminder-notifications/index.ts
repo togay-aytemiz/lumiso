@@ -150,7 +150,12 @@ const handler = async (req: Request): Promise<Response> => {
       console.error('Error fetching overdue activities:', overdueError);
     }
 
-    // Get today's reminders/activities (using date comparison for timestamps)
+    // Get today's reminders/activities - using gte/lt for full day range
+    const startOfDay = `${todayStr}T00:00:00.000Z`;
+    const endOfDay = `${todayStr}T23:59:59.999Z`;
+    
+    console.log(`Searching for today's reminders between ${startOfDay} and ${endOfDay}`);
+    
     const { data: todayActivities, error: todayActivitiesError } = await adminSupabase
       .from('activities')
       .select(`
@@ -164,8 +169,9 @@ const handler = async (req: Request): Promise<Response> => {
         leads(id, name),
         projects(id, name)
       `)
-      .eq('reminder_date::date', todayStr)
-      .eq('completed', false)
+      .gte('reminder_date', startOfDay)
+      .lt('reminder_date', endOfDay)
+      .eq('completed', false)  
       .eq('organization_id', organizationId)
       .order('reminder_time');
 

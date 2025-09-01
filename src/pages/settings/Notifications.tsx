@@ -194,11 +194,33 @@ export default function Notifications() {
   const testNotification = async (type: string) => {
     setTestingNotification(type);
     try {
+      let requestBody: any = { 
+        type,
+        isTest: true 
+      };
+
+      // For new assignment tests, add required mock data
+      if (type === 'new-assignment') {
+        const { data: { user } } = await supabase.auth.getUser();
+        const userSettings = await supabase
+          .from('user_settings')
+          .select('active_organization_id')
+          .eq('user_id', user?.id)
+          .maybeSingle();
+
+        requestBody = {
+          ...requestBody,
+          entity_type: 'lead',
+          entity_id: 'test-lead-id',
+          assignee_email: user?.email,
+          assignee_name: 'Test User',
+          assigner_name: 'System',
+          organizationId: userSettings.data?.active_organization_id,
+        };
+      }
+
       const { data, error } = await supabase.functions.invoke('send-reminder-notifications', {
-        body: { 
-          type,
-          isTest: true // Add test flag
-        }
+        body: requestBody
       });
 
       if (error) throw error;

@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { Resend } from "npm:resend@2.0.0";
 import { generateDailySummaryEmail } from './_templates/enhanced-daily-summary-template.ts';
+import { generateAssignmentEmail, AssignmentEmailData } from './_templates/enhanced-assignment-template.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -15,6 +16,13 @@ interface ReminderRequest {
   isTest?: boolean;
   organizationId?: string; // For batch processing
   userId?: string; // For batch processing
+  // New assignment specific fields
+  entity_type?: 'lead' | 'project';
+  entity_id?: string;
+  assignee_id?: string;
+  assignee_email?: string;
+  assignee_name?: string;
+  assigner_name?: string;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -22,22 +30,30 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  try {
-    const { type, isTest = false, organizationId: batchOrgId, userId: batchUserId }: ReminderRequest = await req.json();
-    console.log(`Processing ${type}, test mode: ${isTest}`);
+  // Create admin client once at the beginning
+  const adminSupabase = createClient(
+    Deno.env.get("SUPABASE_URL") ?? "",
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+  );
 
-    if (type !== 'daily-summary') {
-      return new Response(JSON.stringify({ message: 'Only daily-summary supported' }), {
+  try {
+    const requestData: ReminderRequest = await req.json();
+    console.log(`Processing ${requestData.type}, test mode: ${requestData.isTest || false}`);
+
+    // Handle new-assignment notifications first (simpler path)
+    if (requestData.type === 'new-assignment') {
+      return await handleNewAssignmentNotification(requestData, adminSupabase);
+    }
+
+    // Handle daily-summary notifications
+    if (requestData.type !== 'daily-summary') {
+      return new Response(JSON.stringify({ message: 'Only daily-summary and new-assignment supported' }), {
         status: 200,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });
     }
 
-    // Create admin client 
-    const adminSupabase = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-    );
+    const { type, isTest = false, organizationId: batchOrgId, userId: batchUserId } = requestData;
 
     let user: any;
     let organizationId: string;
@@ -391,5 +407,190 @@ const handler = async (req: Request): Promise<Response> => {
     });
   }
 };
+
+// Handler for new assignment notifications
+async function handleNewAssignmentNotification(requestData: ReminderRequest, adminSupabase: any): Promise<Response> {
+  console.log('Handling new assignment notification:', requestData);
+  
+  try {
+    let { 
+      entity_type,
+      entity_id,
+      assignee_id,
+      assignee_email,
+      assignee_name,
+      assigner_name,
+      organizationId,
+      isTest = false
+    } = requestData;
+
+    // Validate required fields
+    if (!entity_type || !entity_id || !assignee_email || !organizationId) {
+      throw new Error('Missing required fields for assignment notification');
+    }
+
+    // Initialize variables for entity details
+    let entityName = '';
+    let dueDate = null;
+    let notes = null;
+    let projectType = null;
+    let status = null;
+
+    // For testing, create mock data
+    if (isTest) {
+      console.log('Test mode - creating mock assignment data');
+      
+      // Create a mock assignment for testing
+      entity_type = 'lead';
+      entity_id = 'test-lead-id';
+      assignee_name = 'Test User';
+      assigner_name = 'System';
+      entityName = 'Sarah & John Wedding - TEST';
+      dueDate = new Date().toISOString().split('T')[0]; // Today's date
+      notes = 'This is a test assignment notification. You can safely ignore this email.';
+      status = 'New';
+      
+      console.log(`Test notification will be sent to: ${assignee_email}`);
+    } else {
+      // Get entity details for real assignments
+      if (entity_type === 'lead') {
+        const { data: lead } = await adminSupabase
+          .from('leads')
+          .select('name, due_date, notes, status')
+          .eq('id', entity_id)
+          .maybeSingle();
+        
+        if (lead) {
+          entityName = lead.name;
+          dueDate = lead.due_date;
+          notes = lead.notes;
+          status = lead.status;
+        }
+      } else if (entity_type === 'project') {
+        const { data: project } = await adminSupabase
+          .from('projects')
+          .select(`
+            name,
+            due_date,
+            notes,
+            project_types(name),
+            project_statuses(name)
+          `)
+          .eq('id', entity_id)
+          .maybeSingle();
+        
+        if (project) {
+          entityName = project.name;
+          dueDate = project.due_date;
+          notes = project.notes;
+          projectType = project.project_types?.name;
+          status = project.project_statuses?.name;
+        }
+      }
+    }
+
+    // Get organization settings for branding
+    const { data: orgSettings } = await adminSupabase
+      .from('organization_settings')
+      .select('photography_business_name, primary_brand_color')
+      .eq('organization_id', organizationId)
+      .maybeSingle();
+
+    // Prepare template data
+    const templateData: AssignmentEmailData = {
+      user: {
+        fullName: assignee_name || 'there',
+        email: assignee_email || ''
+      },
+      business: {
+        businessName: orgSettings?.photography_business_name || 'Lumiso',
+        brandColor: orgSettings?.primary_brand_color || '#1EB29F'
+      },
+      assignmentData: {
+        entityType: entity_type,
+        entityId: entity_id || '',
+        entityName: entityName || `${entity_type} ${entity_id}`,
+        assigneeName: assignee_name || 'there',
+        assignerName: assigner_name || 'System',
+        dueDate,
+        notes,
+        projectType,
+        status,
+        organizationId: organizationId || ''
+      }
+    };
+
+    // Generate email HTML
+    const emailHtml = generateAssignmentEmail(templateData);
+
+    // Send email using Resend
+    const emailResult = await resend.emails.send({
+      from: 'Lumiso <hello@updates.lumiso.app>',
+      to: [assignee_email || ''],
+      subject: `New Assignment: ${entityName}`,
+      html: emailHtml
+    });
+
+    console.log('Assignment notification sent successfully:', emailResult);
+
+    // Update notification log status to sent
+    if (assignee_id) {
+      await adminSupabase
+        .from('notification_logs')
+        .update({ status: 'sent', sent_at: new Date().toISOString() })
+        .eq('user_id', assignee_id)
+        .eq('notification_type', 'new_assignment')
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false })
+        .limit(1);
+    }
+
+    return new Response(JSON.stringify({
+      message: `Assignment notification sent to ${assignee_email}`,
+      successful: 1,
+      failed: 0,
+      total: 1,
+      entityType: entity_type,
+      entityName,
+      assigneeEmail: assignee_email
+    }), {
+      status: 200,
+      headers: { "Content-Type": "application/json", ...corsHeaders },
+    });
+
+  } catch (error) {
+    console.error('Error in assignment notification:', error);
+    
+    // Log error in notification_logs if possible
+    if (requestData.assignee_id && requestData.organizationId) {
+      try {
+        await adminSupabase
+          .from('notification_logs')
+          .update({ 
+            status: 'failed', 
+            error_message: error.message,
+            sent_at: new Date().toISOString()
+          })
+          .eq('user_id', requestData.assignee_id)
+          .eq('notification_type', 'new_assignment')
+          .eq('status', 'pending')
+          .order('created_at', { ascending: false })
+          .limit(1);
+      } catch (logError) {
+        console.error('Failed to update error log:', logError);
+      }
+    }
+
+    return new Response(JSON.stringify({
+      error: error.message,
+      successful: 0,
+      failed: 1,
+      total: 1
+    }), {
+      status: 200,
+      headers: { "Content-Type": "application/json", ...corsHeaders },
+    });
+  }
+}
 
 serve(handler);

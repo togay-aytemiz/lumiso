@@ -43,24 +43,29 @@ export function generateDailySummaryEmail(
   // Today's Sessions
   if (upcomingSessions.length > 0) {
     content += `
-      <h3 class="section-title">📸 Today's Photography Sessions (${upcomingSessions.length})</h3>
+      <h3 class="section-title">📸 Today's Sessions (${upcomingSessions.length})</h3>
     `;
 
     upcomingSessions.forEach(session => {
       const sessionTime = formatDateTime(session.session_date, session.session_time, templateData);
+      // Use project type name as session name, fallback to generic name
+      const sessionName = session.projects?.project_types?.name 
+        ? `${session.projects.project_types.name} Session`
+        : (session.notes || 'Photography Session');
       
       content += `
         <div class="item-card">
           <div class="item-title">
-            <span>Photography Session</span>
+            <span>${sessionName}</span>
             <span class="upcoming-badge">Today</span>
           </div>
           <div class="item-meta">⏰ ${sessionTime}</div>
           ${session.leads ? `<div class="item-meta">👤 Client: ${session.leads.name}</div>` : ''}
-          ${session.projects ? `<div class="item-relationship">Project: ${session.projects.name}</div>` : ''}
+          ${session.projects ? `<div class="item-relationship">📋 Project: ${session.projects.name}</div>` : ''}
+          ${session.location ? `<div class="item-meta">📍 ${session.location}</div>` : ''}
           ${session.notes ? `<div class="item-meta">📝 ${session.notes}</div>` : ''}
           <div style="margin-top: 12px;">
-            ${templateData.baseUrl ? `<a href="${templateData.baseUrl}/sessions/${session.id}" style="color: ${templateData.brandColor}; text-decoration: none; font-weight: 500;">View Details →</a>` : ''}
+            ${templateData.baseUrl ? `<a href="${templateData.baseUrl}/sessions/${session.id}" style="color: ${templateData.brandColor}; text-decoration: none; font-weight: 500; padding: 8px 16px; background: rgba(30,178,159,0.1); border-radius: 4px;">View Details →</a>` : ''}
           </div>
         </div>
       `;
@@ -80,8 +85,10 @@ export function generateDailySummaryEmail(
             <span>${reminder.content}</span>
           </div>
           <div class="item-meta">📅 ${formatDate(reminder.reminder_date, templateData.dateFormat)} ${reminder.reminder_time ? `at ${formatTime(reminder.reminder_time, templateData.timeFormat)}` : ''}</div>
+          ${reminder.leads ? `<div class="item-meta">👤 Client: ${reminder.leads.name}</div>` : ''}
+          ${reminder.projects ? `<div class="item-relationship">📋 Project: ${reminder.projects.name}</div>` : ''}
           <div style="margin-top: 12px;">
-            ${templateData.baseUrl ? `<a href="${templateData.baseUrl}/reminders" style="color: ${templateData.brandColor}; text-decoration: none; font-weight: 500;">View Reminders →</a>` : ''}
+            ${templateData.baseUrl ? `<a href="${templateData.baseUrl}/reminders" style="color: ${templateData.brandColor}; text-decoration: none; font-weight: 500; padding: 8px 16px; background: rgba(30,178,159,0.1); border-radius: 4px;">View Reminders →</a>` : ''}
           </div>
         </div>
       `;
@@ -105,7 +112,7 @@ export function generateDailySummaryEmail(
             </div>
             ${lead.due_date ? `<div class="item-meta">📅 Due: ${formatDate(lead.due_date, templateData.dateFormat)}</div>` : ''}
             <div style="margin-top: 12px;">
-              ${templateData.baseUrl ? `<a href="${templateData.baseUrl}/leads/${lead.id}" style="color: ${templateData.brandColor}; text-decoration: none; font-weight: 500;">Follow Up →</a>` : ''}
+              ${templateData.baseUrl ? `<a href="${templateData.baseUrl}/leads/${lead.id}" style="color: ${templateData.brandColor}; text-decoration: none; font-weight: 500; padding: 8px 16px; background: rgba(30,178,159,0.1); border-radius: 4px;">Follow Up →</a>` : ''}
             </div>
           </div>
         `;
@@ -122,9 +129,9 @@ export function generateDailySummaryEmail(
                <span class="overdue-badge">Overdue</span>
              </div>
              ${activity.reminder_date ? `<div class="item-meta">📅 Due: ${formatDate(activity.reminder_date, templateData.dateFormat)}</div>` : ''}
-              <div style="margin-top: 12px;">
-                ${templateData.baseUrl ? `<a href="${templateData.baseUrl}/reminders" style="color: ${templateData.brandColor}; text-decoration: none; font-weight: 500;">View Reminders →</a>` : ''}
-              </div>
+               <div style="margin-top: 12px;">
+                 ${templateData.baseUrl ? `<a href="${templateData.baseUrl}/reminders" style="color: ${templateData.brandColor}; text-decoration: none; font-weight: 500; padding: 8px 16px; background: rgba(30,178,159,0.1); border-radius: 4px;">View Reminders →</a>` : ''}
+               </div>
            </div>
          `;
        });
@@ -136,7 +143,7 @@ export function generateDailySummaryEmail(
            <p style="color: #6B7280; margin-bottom: 12px;">
              ... and ${overdueItems.activities.length - 3} more overdue items
            </p>
-           ${templateData.baseUrl ? `<a href="${templateData.baseUrl}/reminders" style="color: ${templateData.brandColor}; text-decoration: none; font-weight: 500;">See All Reminders →</a>` : ''}
+           ${templateData.baseUrl ? `<a href="${templateData.baseUrl}/reminders" style="color: ${templateData.brandColor}; text-decoration: none; font-weight: 500; padding: 8px 16px; background: rgba(30,178,159,0.1); border-radius: 4px;">See All Reminders →</a>` : ''}
          </div>
        `;
      }
@@ -145,26 +152,29 @@ export function generateDailySummaryEmail(
   // Past Sessions that need action
   if (totalPastSessions > 0) {
     content += `
-      <h3 class="section-title">📅 Past Sessions Needing Follow-up (${totalPastSessions})</h3>
+      <h3 class="section-title">📋 Past Sessions Needing Follow-up (${totalPastSessions})</h3>
       <p>These sessions have passed and may need your attention:</p>
     `;
 
     pastSessions.slice(0, 3).forEach(session => {
       const daysPassed = Math.ceil((new Date().getTime() - new Date(session.session_date).getTime()) / (1000 * 60 * 60 * 24));
+      const sessionName = session.projects?.project_types?.name 
+        ? `${session.projects.project_types.name} Session`
+        : (session.notes || 'Photography Session');
       
       content += `
         <div class="item-card medium-priority">
           <div class="item-title">
-            <span>Session ${daysPassed} day${daysPassed > 1 ? 's' : ''} ago</span>
-            <span class="overdue-badge">${daysPassed} days ago</span>
+            <span>${sessionName}</span>
+            <span class="overdue-badge">${daysPassed} day${daysPassed > 1 ? 's' : ''} ago</span>
           </div>
           <div class="item-meta">📅 ${formatDate(session.session_date, templateData.dateFormat)} at ${formatTime(session.session_time, templateData.timeFormat)}</div>
           ${session.leads ? `<div class="item-meta">👤 Client: ${session.leads.name}</div>` : ''}
-          ${session.projects ? `<div class="item-relationship">Project: ${session.projects.name}</div>` : ''}
+          ${session.projects ? `<div class="item-relationship">📋 Project: ${session.projects.name}</div>` : ''}
           ${session.location ? `<div class="item-meta">📍 ${session.location}</div>` : ''}
           <div style="margin-top: 12px;">
-            ${templateData.baseUrl ? `<a href="${templateData.baseUrl}/sessions/${session.id}" style="color: ${templateData.brandColor}; text-decoration: none; font-weight: 500; margin-right: 16px;">Update Status →</a>` : ''}
-            ${templateData.baseUrl && session.projects ? `<a href="${templateData.baseUrl}/projects/${session.projects.id}" style="color: ${templateData.brandColor}; text-decoration: none; font-weight: 500;">View Project →</a>` : ''}
+            ${templateData.baseUrl ? `<a href="${templateData.baseUrl}/sessions/${session.id}" style="color: ${templateData.brandColor}; text-decoration: none; font-weight: 500; padding: 8px 16px; background: rgba(30,178,159,0.1); border-radius: 4px; margin-right: 8px;">Update Status</a>` : ''}
+            ${templateData.baseUrl && session.projects ? `<a href="${templateData.baseUrl}/projects/${session.projects.id}" style="color: ${templateData.brandColor}; text-decoration: none; font-weight: 500; padding: 8px 16px; background: rgba(30,178,159,0.1); border-radius: 4px;">View Project</a>` : ''}
           </div>
         </div>
       `;
@@ -176,7 +186,7 @@ export function generateDailySummaryEmail(
           <p style="color: #6B7280; margin-bottom: 12px;">
             ... and ${pastSessions.length - 3} more past sessions
           </p>
-          ${templateData.baseUrl ? `<a href="${templateData.baseUrl}/sessions" style="color: ${templateData.brandColor}; text-decoration: none; font-weight: 500;">See All Sessions →</a>` : ''}
+          ${templateData.baseUrl ? `<a href="${templateData.baseUrl}/sessions" style="color: ${templateData.brandColor}; text-decoration: none; font-weight: 500; padding: 8px 16px; background: rgba(30,178,159,0.1); border-radius: 4px;">See All Sessions →</a>` : ''}
         </div>
       `;
     }

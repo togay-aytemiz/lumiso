@@ -100,7 +100,7 @@ const handler = async (req: Request): Promise<Response> => {
         notes,
         location,
         leads(id, name),
-        projects(id, name)
+        projects(id, name, project_types(name))
       `)
       .eq('session_date', todayStr)
       .eq('organization_id', organizationId)
@@ -116,7 +116,7 @@ const handler = async (req: Request): Promise<Response> => {
         notes,
         location,
         leads(id, name),
-        projects(id, name, status_id, project_statuses(name, lifecycle))
+        projects(id, name, status_id, project_statuses(name, lifecycle), project_types(name))
       `)
       .lt('session_date', todayStr)
       .eq('organization_id', organizationId)
@@ -163,7 +163,9 @@ const handler = async (req: Request): Promise<Response> => {
         reminder_time,
         completed,
         lead_id,
-        project_id
+        project_id,
+        leads(id, name),
+        projects(id, name)
       `)
       .eq('reminder_date', todayStr)
       .eq('completed', false)

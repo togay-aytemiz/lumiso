@@ -535,6 +535,50 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_logs: {
+        Row: {
+          created_at: string | null
+          email_id: string | null
+          error_message: string | null
+          id: string
+          notification_type: string
+          organization_id: string
+          sent_at: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          email_id?: string | null
+          error_message?: string | null
+          id?: string
+          notification_type: string
+          organization_id: string
+          sent_at?: string | null
+          status: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          email_id?: string | null
+          error_message?: string | null
+          id?: string
+          notification_type?: string
+          organization_id?: string
+          sent_at?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_logs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organization_members: {
         Row: {
           created_at: string
@@ -1038,6 +1082,56 @@ export type Database = {
             columns: ["role_id"]
             isOneToOne: false
             referencedRelation: "custom_roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scheduled_notifications: {
+        Row: {
+          created_at: string | null
+          error_message: string | null
+          id: string
+          last_attempt: string | null
+          notification_type: string
+          organization_id: string
+          retry_count: number | null
+          scheduled_for: string
+          status: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          last_attempt?: string | null
+          notification_type: string
+          organization_id: string
+          retry_count?: number | null
+          scheduled_for: string
+          status?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          last_attempt?: string | null
+          notification_type?: string
+          organization_id?: string
+          retry_count?: number | null
+          scheduled_for?: string
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scheduled_notifications_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]

@@ -13,6 +13,8 @@ const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 interface ReminderRequest {
   type: string;
   isTest?: boolean;
+  organizationId?: string; // For batch processing
+  userId?: string; // For batch processing
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -21,7 +23,7 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { type, isTest = false }: ReminderRequest = await req.json();
+    const { type, isTest = false, organizationId: batchOrgId, userId: batchUserId }: ReminderRequest = await req.json();
     console.log(`Processing ${type}, test mode: ${isTest}`);
 
     if (type !== 'daily-summary') {
@@ -31,53 +33,73 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
-    // Get authenticated user - simplified approach
-    const authHeader = req.headers.get('authorization');
-    console.log('Auth header present:', !!authHeader);
-    
-    if (!authHeader) {
-      throw new Error('Authorization header required');
-    }
-
     // Create admin client 
     const adminSupabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    // Extract token and get user directly with admin client
-    const token = authHeader.replace('Bearer ', '');
-    console.log('Token length:', token.length);
-    
-    const { data: { user }, error: userError } = await adminSupabase.auth.getUser(token);
-    console.log('User auth result:', { user: !!user, error: userError?.message });
-    
-    if (userError || !user) {
-      console.error('Auth error details:', userError);
-      throw new Error(`Failed to get authenticated user: ${userError?.message || 'Unknown error'}`);
+    let user: any;
+    let organizationId: string;
+
+    // Check if this is batch processing mode (called from process-scheduled-notifications)
+    if (batchOrgId && batchUserId) {
+      console.log('Batch processing mode - using provided org and user IDs');
+      
+      // Get user data directly using admin client
+      const { data: userData, error: userError } = await adminSupabase.auth.admin.getUserById(batchUserId);
+      if (userError || !userData.user) {
+        throw new Error(`Failed to get batch user: ${userError?.message || 'User not found'}`);
+      }
+      user = userData.user;
+      organizationId = batchOrgId;
+      
+    } else {
+      // Regular auth mode - get authenticated user
+      const authHeader = req.headers.get('authorization');
+      console.log('Auth header present:', !!authHeader);
+      
+      if (!authHeader) {
+        throw new Error('Authorization header required');
+      }
+
+      // Extract token and get user directly with admin client
+      const token = authHeader.replace('Bearer ', '');
+      console.log('Token length:', token.length);
+      
+      const { data: { user: authUser }, error: userError } = await adminSupabase.auth.getUser(token);
+      console.log('User auth result:', { user: !!authUser, error: userError?.message });
+      
+      if (userError || !authUser) {
+        console.error('Auth error details:', userError);
+        throw new Error(`Failed to get authenticated user: ${userError?.message || 'Unknown error'}`);
+      }
+
+      user = authUser;
+
+      // Get user's active organization
+      const { data: userSettings } = await adminSupabase
+        .from('user_settings')
+        .select('active_organization_id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      organizationId = userSettings?.active_organization_id;
+      
+      if (!organizationId) {
+        throw new Error('No active organization found for user');
+      }
     }
 
     console.log(`Authenticated user: ${user.email}`);
+    console.log('Organization ID:', organizationId);
 
-    // Get user profile and organization
+    // Get user profile for display name
     const { data: userProfile } = await adminSupabase
       .from('profiles')
       .select('full_name')
       .eq('user_id', user.id)
       .maybeSingle();
-
-    const { data: userSettings } = await adminSupabase
-      .from('user_settings')
-      .select('active_organization_id')
-      .eq('user_id', user.id)
-      .maybeSingle();
-
-    const organizationId = userSettings?.active_organization_id;
-    console.log('Organization ID:', organizationId);
-    
-    if (!organizationId) {
-      throw new Error('No active organization found for user');
-    }
 
     // Extract user's full name - only use full_name since first_name/last_name don't exist
     const userFullName = userProfile?.full_name || 

@@ -404,7 +404,6 @@ export const createEmailTemplate = (
         </div>
         
         <div class="email-body">
-          <div class="greeting">Hi ${userFullName}! 👋</div>
           ${content}
         </div>
         

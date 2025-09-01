@@ -27,9 +27,6 @@ function generateAssignmentEmailContent(data: AssignmentEmailData): string {
   return `
     <!-- Header -->
     <div style="background: linear-gradient(135deg, ${data.business?.brandColor || '#1EB29F'} 0%, ${adjustBrightness(data.business?.brandColor || '#1EB29F', -10)} 100%); padding: 40px 0; text-align: center; border-radius: 12px 12px 0 0;">
-      <div style="width: 80px; height: 80px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px auto; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
-        <span style="font-size: 32px; color: ${data.business?.brandColor || '#1EB29F'};">📋</span>
-      </div>
       <h1 style="color: white; margin: 0; font-size: 28px; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">
         New Assignment
       </h1>

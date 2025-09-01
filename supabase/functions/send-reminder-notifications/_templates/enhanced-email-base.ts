@@ -222,18 +222,21 @@ export const getEmailBaseStyles = (brandColor = '#1EB29F') => `
     }
     
     .summary-stats {
-      background-color: #F3F4F6;
-      border: 1px solid #E5E7EB;
-      border-radius: 6px;
-      padding: 20px;
+      background-color: #F9FAFB;
+      border-radius: 8px;
+      padding: 16px;
       margin: 24px 0;
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-      gap: 16px;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
     }
     
     .stat-item {
       text-align: center;
+      background-color: #FFFFFF;
+      border: 1px solid #E5E7EB;
+      border-radius: 6px;
+      padding: 16px;
     }
     
     .stat-number {
@@ -254,12 +257,11 @@ export const getEmailBaseStyles = (brandColor = '#1EB29F') => `
       background-color: #1EB29F !important;
       color: #FFFFFF !important;
       text-decoration: none !important;
-      padding: 14px 22px;
+      padding: 8px 16px;
       border-radius: 4px;
       font-weight: 500;
-      margin: 8px 8px 8px 0;
-      text-align: center;
-      font-size: 15px;
+      margin: 4px 8px 4px 0;
+      font-size: 14px;
     }
     
     .cta-button:hover {
@@ -268,14 +270,14 @@ export const getEmailBaseStyles = (brandColor = '#1EB29F') => `
       text-decoration: none !important;
     }
     
-      .inline-buttons {
-        margin: 20px 0;
-        text-align: center;
-      }
-      
-      .inline-buttons .cta-button {
-        margin: 8px 16px 8px 0;
-      }
+    .inline-buttons {
+      margin: 20px 0;
+      text-align: center;
+    }
+    
+    .inline-buttons .cta-button {
+      margin: 4px 6px;
+    }
     
     .email-footer {
       background-color: #F3F4F6;
@@ -348,12 +350,12 @@ export const getEmailBaseStyles = (brandColor = '#1EB29F') => `
       }
       
       .summary-stats {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: 1fr;
+        gap: 8px;
       }
       
-      .cta-button {
-        display: block;
-        margin: 8px 0;
+      .stat-item {
+        padding: 12px;
       }
       
       .inline-buttons .cta-button {

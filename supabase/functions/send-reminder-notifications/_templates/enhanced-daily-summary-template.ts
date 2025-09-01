@@ -20,6 +20,7 @@ export function generateDailySummaryEmail(
   let content = `
     <p>Here's your daily summary for <strong>${today}</strong>:</p>
     
+    
     <div class="summary-stats">
       <div class="stat-item">
         <span class="stat-number">${upcomingSessions.length}</span>
@@ -119,13 +120,13 @@ export function generateDailySummaryEmail(
     `;
   }
 
-    // Quick Actions
+    // Quick Actions (compact buttons)
     content += `
       <div class="inline-buttons">
         ${templateData.baseUrl ? `<a href="${templateData.baseUrl}" class="cta-button">Dashboard</a>` : ''}
-        ${templateData.baseUrl ? `<a href="${templateData.baseUrl}/leads" class="cta-button">Manage Leads</a>` : ''}
-        ${templateData.baseUrl ? `<a href="${templateData.baseUrl}/projects" class="cta-button">View Projects</a>` : ''}
-        ${templateData.baseUrl ? `<a href="${templateData.baseUrl}/sessions" class="cta-button">All Sessions</a>` : ''}
+        ${templateData.baseUrl ? `<a href="${templateData.baseUrl}/leads" class="cta-button">Leads</a>` : ''}
+        ${templateData.baseUrl ? `<a href="${templateData.baseUrl}/projects" class="cta-button">Projects</a>` : ''}
+        ${templateData.baseUrl ? `<a href="${templateData.baseUrl}/sessions" class="cta-button">Sessions</a>` : ''}
       </div>
     `;
 

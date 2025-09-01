@@ -129,7 +129,7 @@ const handler = async (req: Request): Promise<Response> => {
       console.error('Error fetching past sessions:', pastSessionsError);
     }
 
-    // Get overdue reminders/activities (simplified query without joins)
+    // Get overdue reminders/activities (using date comparison)
     const { data: overdueActivities, error: overdueError } = await adminSupabase
       .from('activities')
       .select(`
@@ -141,7 +141,7 @@ const handler = async (req: Request): Promise<Response> => {
         lead_id,
         project_id
       `)
-      .lt('reminder_date', todayStr)
+      .lt('reminder_date::date', todayStr)
       .eq('completed', false)
       .eq('organization_id', organizationId)
       .order('reminder_date', { ascending: false });
@@ -150,7 +150,7 @@ const handler = async (req: Request): Promise<Response> => {
       console.error('Error fetching overdue activities:', overdueError);
     }
 
-    // Get today's reminders/activities (simplified query)
+    // Get today's reminders/activities (using date comparison for timestamps)
     const { data: todayActivities, error: todayActivitiesError } = await adminSupabase
       .from('activities')
       .select(`
@@ -164,7 +164,7 @@ const handler = async (req: Request): Promise<Response> => {
         leads(id, name),
         projects(id, name)
       `)
-      .eq('reminder_date', todayStr)
+      .eq('reminder_date::date', todayStr)
       .eq('completed', false)
       .eq('organization_id', organizationId)
       .order('reminder_time');

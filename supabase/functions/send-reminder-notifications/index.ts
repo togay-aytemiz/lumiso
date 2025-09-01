@@ -247,11 +247,20 @@ const handler = async (req: Request): Promise<Response> => {
       projects: todo.projects
     }));
 
-    // Transform overdue data (combine today's and overdue activities)
-    const allActivities = [...(overdueActivities || []), ...(todayActivities || [])];
+    // Transform today's activities separately from overdue
+    const todayReminders = (todayActivities || []).map(activity => ({
+      id: activity.id,
+      content: activity.content,
+      reminder_date: activity.reminder_date,
+      reminder_time: activity.reminder_time,
+      lead_id: activity.lead_id,
+      project_id: activity.project_id
+    }));
+
+    // Transform overdue data (only overdue activities, not today's)
     const overdueItems = {
       leads: [], // No overdue leads for now, focus on activities
-      activities: allActivities.map(activity => ({
+      activities: (overdueActivities || []).map(activity => ({
         id: activity.id,
         content: activity.content,
         reminder_date: activity.reminder_date,
@@ -264,7 +273,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Generate enhanced email content using the template
     const emailHtml = generateDailySummaryEmail(
       sessions,
-      todos,
+      todayReminders,
       overdueItems,
       pastSessionsNeedingAction,
       templateData

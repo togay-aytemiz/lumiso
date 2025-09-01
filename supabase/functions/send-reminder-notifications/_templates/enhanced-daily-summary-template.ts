@@ -7,7 +7,7 @@ interface OverdueItems {
 
 export function generateDailySummaryEmail(
   upcomingSessions: Session[], 
-  pendingTodos: Todo[], 
+  todayReminders: Activity[], 
   overdueItems: OverdueItems, 
   pastSessions: Session[],
   templateData: EmailTemplateData
@@ -15,6 +15,7 @@ export function generateDailySummaryEmail(
   const today = formatDate(new Date().toISOString(), templateData.dateFormat);
   const totalOverdue = overdueItems.leads.length + overdueItems.activities.length;
   const totalPastSessions = pastSessions.length;
+  const totalTodayReminders = todayReminders.length;
   
   let content = `
     <p>Here's your daily summary for <strong>${today}</strong>:</p>
@@ -23,6 +24,10 @@ export function generateDailySummaryEmail(
       <div class="stat-item">
         <span class="stat-number">${upcomingSessions.length}</span>
         <div class="stat-label">Today's Sessions</div>
+      </div>
+      <div class="stat-item">
+        <span class="stat-number">${totalTodayReminders}</span>
+        <div class="stat-label">Today's Reminders</div>
       </div>
       <div class="stat-item">
         <span class="stat-number">${totalOverdue}</span>
@@ -55,44 +60,32 @@ export function generateDailySummaryEmail(
           ${session.projects ? `<div class="item-relationship">Project: ${session.projects.name}</div>` : ''}
           ${session.notes ? `<div class="item-meta">📝 ${session.notes}</div>` : ''}
           <div style="margin-top: 12px;">
-            ${templateData.baseUrl ? `<a href="${templateData.baseUrl}/sessions/${session.id}" class="item-action">View Details</a>` : ''}
+            ${templateData.baseUrl ? `<a href="${templateData.baseUrl}/sessions/${session.id}" style="color: ${templateData.brandColor}; text-decoration: none; font-weight: 500;">View Details →</a>` : ''}
           </div>
         </div>
       `;
     });
   }
 
-  // Pending Tasks
-  if (pendingTodos.length > 0) {
+  // Today's Reminders
+  if (todayReminders.length > 0) {
     content += `
-      <h3 class="section-title">✅ Pending Tasks (${pendingTodos.length})</h3>
+      <h3 class="section-title">⏰ Today's Reminders (${todayReminders.length})</h3>
     `;
 
-    // Show up to 5 most recent tasks
-    const recentTodos = pendingTodos.slice(0, 5);
-    
-    recentTodos.forEach(todo => {
+    todayReminders.forEach(reminder => {
       content += `
         <div class="item-card">
           <div class="item-title">
-            <span>${todo.content}</span>
+            <span>${reminder.content}</span>
           </div>
-          ${todo.projects ? `<div class="item-relationship">Project: ${todo.projects.name}</div>` : ''}
-          <div class="item-meta">📅 Created: ${formatDate(todo.created_at, templateData.dateFormat)}</div>
+          <div class="item-meta">📅 ${formatDate(reminder.reminder_date, templateData.dateFormat)} ${reminder.reminder_time ? `at ${formatTime(reminder.reminder_time, templateData.timeFormat)}` : ''}</div>
           <div style="margin-top: 12px;">
-            ${templateData.baseUrl && todo.projects ? `<a href="${templateData.baseUrl}/projects/${todo.projects.id}" class="item-action">View Project</a>` : ''}
+            ${templateData.baseUrl ? `<a href="${templateData.baseUrl}/reminders" style="color: ${templateData.brandColor}; text-decoration: none; font-weight: 500;">View Reminders →</a>` : ''}
           </div>
         </div>
       `;
     });
-
-    if (pendingTodos.length > 5) {
-      content += `
-        <p style="font-style: italic; color: #6B7280; margin-top: 8px;">
-          ... and ${pendingTodos.length - 5} more tasks
-        </p>
-      `;
-    }
   }
 
   // Overdue Items (if any)
@@ -112,7 +105,7 @@ export function generateDailySummaryEmail(
             </div>
             ${lead.due_date ? `<div class="item-meta">📅 Due: ${formatDate(lead.due_date, templateData.dateFormat)}</div>` : ''}
             <div style="margin-top: 12px;">
-              ${templateData.baseUrl ? `<a href="${templateData.baseUrl}/leads/${lead.id}" class="item-action">Follow Up</a>` : ''}
+              ${templateData.baseUrl ? `<a href="${templateData.baseUrl}/leads/${lead.id}" style="color: ${templateData.brandColor}; text-decoration: none; font-weight: 500;">Follow Up →</a>` : ''}
             </div>
           </div>
         `;
@@ -129,14 +122,25 @@ export function generateDailySummaryEmail(
                <span class="overdue-badge">Overdue</span>
              </div>
              ${activity.reminder_date ? `<div class="item-meta">📅 Due: ${formatDate(activity.reminder_date, templateData.dateFormat)}</div>` : ''}
-             <div style="margin-top: 12px;">
-               ${templateData.baseUrl ? `<a href="${templateData.baseUrl}/activities" class="item-action">View Reminders</a>` : ''}
-             </div>
+              <div style="margin-top: 12px;">
+                ${templateData.baseUrl ? `<a href="${templateData.baseUrl}/reminders" style="color: ${templateData.brandColor}; text-decoration: none; font-weight: 500;">View Reminders →</a>` : ''}
+              </div>
            </div>
          `;
        });
      }
-  }
+
+     if (overdueItems.activities.length > 3) {
+       content += `
+         <div style="text-align: center; margin-top: 16px;">
+           <p style="color: #6B7280; margin-bottom: 12px;">
+             ... and ${overdueItems.activities.length - 3} more overdue items
+           </p>
+           ${templateData.baseUrl ? `<a href="${templateData.baseUrl}/reminders" style="color: ${templateData.brandColor}; text-decoration: none; font-weight: 500;">See All Reminders →</a>` : ''}
+         </div>
+       `;
+     }
+   }
 
   // Past Sessions that need action
   if (totalPastSessions > 0) {
@@ -159,8 +163,8 @@ export function generateDailySummaryEmail(
           ${session.projects ? `<div class="item-relationship">Project: ${session.projects.name}</div>` : ''}
           ${session.location ? `<div class="item-meta">📍 ${session.location}</div>` : ''}
           <div style="margin-top: 12px;">
-            ${templateData.baseUrl ? `<a href="${templateData.baseUrl}/sessions/${session.id}" class="item-action">Update Status</a>` : ''}
-            ${templateData.baseUrl && session.projects ? `<a href="${templateData.baseUrl}/projects/${session.projects.id}" class="item-action">View Project</a>` : ''}
+            ${templateData.baseUrl ? `<a href="${templateData.baseUrl}/sessions/${session.id}" style="color: ${templateData.brandColor}; text-decoration: none; font-weight: 500; margin-right: 16px;">Update Status →</a>` : ''}
+            ${templateData.baseUrl && session.projects ? `<a href="${templateData.baseUrl}/projects/${session.projects.id}" style="color: ${templateData.brandColor}; text-decoration: none; font-weight: 500;">View Project →</a>` : ''}
           </div>
         </div>
       `;
@@ -172,7 +176,7 @@ export function generateDailySummaryEmail(
           <p style="color: #6B7280; margin-bottom: 12px;">
             ... and ${pastSessions.length - 3} more past sessions
           </p>
-          ${templateData.baseUrl ? `<a href="${templateData.baseUrl}/sessions" class="cta-button">See All Sessions</a>` : ''}
+          ${templateData.baseUrl ? `<a href="${templateData.baseUrl}/sessions" style="color: ${templateData.brandColor}; text-decoration: none; font-weight: 500;">See All Sessions →</a>` : ''}
         </div>
       `;
     }

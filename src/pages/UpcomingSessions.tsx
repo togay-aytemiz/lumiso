@@ -15,7 +15,7 @@ import { PageHeader, PageHeaderSearch, PageHeaderActions } from "@/components/ui
 import SessionStatusBadge from "@/components/SessionStatusBadge";
 import { ViewProjectDialog } from "@/components/ViewProjectDialog";
 import { FilterBar } from "@/components/FilterBar";
-import { PageLoadingSkeleton } from "@/components/ui/loading-presets";
+import { ListLoadingSkeleton } from "@/components/ui/loading-presets";
 import SessionSheetView from "@/components/SessionSheetView";
 
 interface Session {
@@ -268,11 +268,6 @@ const AllSessions = () => {
     setIsSessionSheetOpen(true);
   };
 
-  const handleSessionClick = (sessionId: string) => {
-    setSelectedSessionId(sessionId);
-    setIsSessionSheetOpen(true);
-  };
-
   const handleViewFullSessionDetails = () => {
     if (selectedSessionId) {
       navigate(`/sessions/${selectedSessionId}`);
@@ -318,25 +313,6 @@ const AllSessions = () => {
     return sortDirection === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />;
   };
 
-  const getStatusBadgeColor = (status: string) => {
-    switch (status) {
-      case 'planned': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
-      case 'completed': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
-      case 'in_post_processing': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
-      case 'delivered': return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200';
-      case 'cancelled': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
-      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
-    }
-  };
-
-  const formatStatusText = (status: string) => {
-    switch (status) {
-      case 'in_post_processing': return 'In Post-Processing';
-      default: return status.charAt(0).toUpperCase() + status.slice(1);
-    }
-  };
-
-
   const statusOptions = [
     { value: "all", label: "All Statuses" },
     { value: "planned", label: "Planned" },
@@ -346,60 +322,7 @@ const AllSessions = () => {
     { value: "cancelled", label: "Cancelled" }
   ];
 
-  if (loading) {
-    return (
-      <div className="relative">
-        <PageLoadingSkeleton />
-        <div className="absolute top-8 left-1/2 transform -translate-x-1/2 text-sm text-muted-foreground">
-          Loading Sessions...
-        </div>
-      </div>
-    );
-  }
-
-  // Prepare filter options for FilterBar (mobile only)
-  const quickFilters = [
-    { key: "all", label: "All", count: getSessionCountForDateFilter("all") },
-    { key: "today", label: "Today", count: getSessionCountForDateFilter("today") },
-    { key: "tomorrow", label: "Tomorrow", count: getSessionCountForDateFilter("tomorrow") }
-  ];
-
-  const allDateFilters = [
-    { key: "all", label: "All", count: getSessionCountForDateFilter("all") },
-    { key: "past", label: "Past", count: getSessionCountForDateFilter("past") },
-    { key: "today", label: "Today", count: getSessionCountForDateFilter("today") },
-    { key: "tomorrow", label: "Tomorrow", count: getSessionCountForDateFilter("tomorrow") },
-    { key: "thisweek", label: "This Week", count: getSessionCountForDateFilter("thisweek") },
-    { key: "nextweek", label: "Next Week", count: getSessionCountForDateFilter("nextweek") },
-    { key: "thismonth", label: "This Month", count: getSessionCountForDateFilter("thismonth") },
-    { key: "nextmonth", label: "Next Month", count: getSessionCountForDateFilter("nextmonth") }
-  ];
-
-  const statusOptionsForFilter = statusOptions.map(option => ({
-    key: option.value,
-    label: option.label
-  }));
-
   return (
-    <div className="min-h-screen bg-background overflow-x-hidden">
-      <PageHeader
-        title="Sessions"
-        subtitle="Manage your photo sessions and appointments"
-      >
-        <PageHeaderSearch>
-          <div className="flex items-center gap-2 w-full">
-            <div className="flex-1 min-w-0">
-              <GlobalSearch />
-            </div>
-          </div>
-        </PageHeaderSearch>
-      </PageHeader>
-
-      <div className="p-4 sm:p-6 space-y-6">
-        {loading ? (
-          <ListLoadingSkeleton />
-        ) : (
-          <div>
     <div className="min-h-screen bg-background overflow-x-hidden">
       <PageHeader
         title="Sessions"
@@ -423,248 +346,239 @@ const AllSessions = () => {
         </PageHeaderSearch>
       </PageHeader>
 
-      {/* Mobile Filter Bar (≤767px only) */}
-      <div className="md:hidden">
-        <FilterBar
-          quickFilters={quickFilters}
-          activeQuickFilter={dateFilter}
-          onQuickFilterChange={setDateFilter}
-          allDateFilters={allDateFilters}
-          activeDateFilter={dateFilter}
-          onDateFilterChange={setDateFilter}
-          statusOptions={statusOptionsForFilter}
-          activeStatus={statusFilter}
-          onStatusChange={setStatusFilter}
-          isSticky={true}
-        />
-      </div>
+      <div className="p-4 sm:p-6 space-y-6">
+        {loading ? (
+          <ListLoadingSkeleton />
+        ) : (
+          <>
+            {/* Mobile Filter Bar (≤767px only) */}
+            <div className="md:hidden">
+              {(() => {
+                const quickFilters = [
+                  { key: "all", label: "All", count: getSessionCountForDateFilter("all") },
+                  { key: "today", label: "Today", count: getSessionCountForDateFilter("today") },
+                  { key: "tomorrow", label: "Tomorrow", count: getSessionCountForDateFilter("tomorrow") }
+                ];
 
-      {/* Main Content */}
-      <div className="p-4 sm:p-6">
-        <Card className="min-w-0">
-          <CardHeader>
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              {/* Desktop Status Filter (≥768px only) */}
-              <div className="hidden md:flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                <span className="text-sm text-muted-foreground whitespace-nowrap">Filter by status:</span>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-full sm:w-48 min-w-0">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {statusOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+                const allDateFilters = [
+                  { key: "all", label: "All", count: getSessionCountForDateFilter("all") },
+                  { key: "past", label: "Past", count: getSessionCountForDateFilter("past") },
+                  { key: "today", label: "Today", count: getSessionCountForDateFilter("today") },
+                  { key: "tomorrow", label: "Tomorrow", count: getSessionCountForDateFilter("tomorrow") },
+                  { key: "thisweek", label: "This Week", count: getSessionCountForDateFilter("thisweek") },
+                  { key: "nextweek", label: "Next Week", count: getSessionCountForDateFilter("nextweek") },
+                  { key: "thismonth", label: "This Month", count: getSessionCountForDateFilter("thismonth") },
+                  { key: "nextmonth", label: "Next Month", count: getSessionCountForDateFilter("nextmonth") }
+                ];
+
+                const statusOptionsForFilter = statusOptions.map(option => ({
+                  key: option.value,
+                  label: option.label
+                }));
+
+                return (
+                  <FilterBar
+                    quickFilters={quickFilters}
+                    activeQuickFilter={dateFilter}
+                    onQuickFilterChange={setDateFilter}
+                    allDateFilters={allDateFilters}
+                    activeDateFilter={dateFilter}
+                    onDateFilterChange={setDateFilter}
+                    statusOptions={statusOptionsForFilter}
+                    activeStatus={statusFilter}
+                    onStatusChange={setStatusFilter}
+                    isSticky={true}
+                  />
+                );
+              })()}
             </div>
-          </CardHeader>
-          <CardContent className="p-0">
-            {/* Desktop Date Filters (≥768px only) */}
-             <div className="p-6 pb-0">
-               <div className="hidden md:block mb-6">
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  variant={dateFilter === "all" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setDateFilter("all")}
-                >
-                  All ({getSessionCountForDateFilter("all")})
-                </Button>
-                <Button
-                  variant={dateFilter === "past" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setDateFilter("past")}
-                >
-                  Past ({getSessionCountForDateFilter("past")})
-                </Button>
-                <Button
-                  variant={dateFilter === "today" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setDateFilter("today")}
-                >
-                  Today ({getSessionCountForDateFilter("today")})
-                </Button>
-                <Button
-                  variant={dateFilter === "tomorrow" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setDateFilter("tomorrow")}
-                >
-                  Tomorrow ({getSessionCountForDateFilter("tomorrow")})
-                </Button>
-                <Button
-                  variant={dateFilter === "thisweek" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setDateFilter("thisweek")}
-                >
-                  This Week ({getSessionCountForDateFilter("thisweek")})
-                </Button>
-                <Button
-                  variant={dateFilter === "nextweek" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setDateFilter("nextweek")}
-                >
-                  Next Week ({getSessionCountForDateFilter("nextweek")})
-                </Button>
-                <Button
-                  variant={dateFilter === "thismonth" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setDateFilter("thismonth")}
-                >
-                  This Month ({getSessionCountForDateFilter("thismonth")})
-                </Button>
-                <Button
-                  variant={dateFilter === "nextmonth" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setDateFilter("nextmonth")}
-                >
-                  Next Month ({getSessionCountForDateFilter("nextmonth")})
-                </Button>
-               </div>
-             </div>
-             {filteredAndSortedSessions.length > 0 ? (
-             <div className="w-full overflow-x-auto overflow-y-hidden" style={{ maxWidth: '100vw' }}>
-               <div className="min-w-max">
-                 <Table style={{ minWidth: '700px' }}>
-                   <TableHeader>
-                     <TableRow>
-                     <TableHead className="whitespace-nowrap">Project</TableHead>
-                     <TableHead 
-                       className="cursor-pointer hover:bg-muted/50 whitespace-nowrap"
-                       onClick={() => handleSort('lead_name')}
-                     >
-                       <div className="flex items-center gap-2">
-                         Client Name
-                         {getSortIcon('lead_name')}
-                       </div>
-                     </TableHead>
-                     <TableHead 
-                       className="cursor-pointer hover:bg-muted/50 whitespace-nowrap"
-                       onClick={() => handleSort('session_date')}
-                     >
-                       <div className="flex items-center gap-2">
-                         Date
-                         {getSortIcon('session_date')}
-                       </div>
-                     </TableHead>
-                     <TableHead 
-                       className="cursor-pointer hover:bg-muted/50 whitespace-nowrap"
-                       onClick={() => handleSort('session_time')}
-                     >
-                       <div className="flex items-center gap-2">
-                         Time
-                         {getSortIcon('session_time')}
-                       </div>
-                     </TableHead>
-                     <TableHead 
-                       className="cursor-pointer hover:bg-muted/50 whitespace-nowrap"
-                       onClick={() => handleSort('status')}
-                     >
-                       <div className="flex items-center gap-2">
-                         Status
-                         {getSortIcon('status')}
-                       </div>
-                     </TableHead>
-                     <TableHead className="whitespace-nowrap">Notes</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredAndSortedSessions.map((session) => (
-                  <TableRow 
-                    key={session.id}
-                    className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => handleRowClick(session)}
-                  >
-                     <TableCell className="whitespace-nowrap">
-                       {session.project_id ? (
-                         <Button
-                           variant="link"
-                           className="p-0 h-auto font-normal text-foreground hover:text-foreground hover:underline"
-                           onClick={(e) => handleProjectClick(e, session)}
-                           aria-label="View project details"
-                         >
-                           {session.project_name || 'Project'}
-                         </Button>
-                       ) : (
-                         <span className="text-muted-foreground">-</span>
-                       )}
-                     </TableCell>
-                     <TableCell className="font-medium whitespace-nowrap">
-                       {session.lead_name}
-                     </TableCell>
-                     <TableCell className="whitespace-nowrap">
-                       {formatLongDate(session.session_date)}
-                     </TableCell>
-                     <TableCell className="whitespace-nowrap">
-                       {formatTime(session.session_time)}
-                     </TableCell>
-                     <TableCell className="whitespace-nowrap">
-                       <SessionStatusBadge
-                         sessionId={session.id}
-                         currentStatus={session.status}
-                         editable
-                         size="sm"
-                         onStatusChange={fetchSessions}
-                       />
-                     </TableCell>
-                     <TableCell className="max-w-xs truncate whitespace-nowrap">
-                       {session.notes ? (
-                         <div 
-                           className="truncate hover:whitespace-normal hover:overflow-visible hover:text-wrap cursor-help"
-                           title={session.notes}
-                         >
-                           {session.notes}
-                         </div>
-                       ) : (
-                         '-'
-                       )}
-                     </TableCell>
-                  </TableRow>
-                ))}
-                 </TableBody>
-                 </Table>
-               </div>
-             </div>
-          ) : (
-            <div className="text-center py-12 text-muted-foreground">
-              <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <h3 className="text-lg font-medium mb-2">No sessions found</h3>
-              <p>
-                {statusFilter === "all" 
-                  ? "You don't have any sessions yet."
-                  : `No sessions found with status "${statusFilter}".`
-                }
-              </p>
-               <p className="text-sm mt-2">Click "Schedule Session" to add your first session.</p>
-             </div>
-           )}
-           </div>
-           </CardContent>
-        </Card>
-      </div>
 
-      <ViewProjectDialog
-        project={viewingProject}
-        open={showProjectDialog}
-        onOpenChange={setShowProjectDialog}
-        onProjectUpdated={fetchSessions}
-        leadName={viewingProject?.leads?.name || ''}
-      />
+            {/* Main Content */}
+            <Card className="min-w-0">
+              <CardHeader>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  {/* Desktop Status Filter (≥768px only) */}
+                  <div className="hidden md:flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                    <span className="text-sm text-muted-foreground whitespace-nowrap">Filter by status:</span>
+                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                      <SelectTrigger className="w-full sm:w-48 min-w-0">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {statusOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="p-0">
+                {/* Desktop Date Filters (≥768px only) */}
+                <div className="p-6 pb-0">
+                  <div className="hidden md:block mb-6">
+                    <div className="flex flex-wrap gap-2">
+                      {["all", "past", "today", "tomorrow", "thisweek", "nextweek", "thismonth", "nextmonth"].map((filter) => (
+                        <Button
+                          key={filter}
+                          variant={dateFilter === filter ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setDateFilter(filter)}
+                        >
+                          {filter === "all" ? "All" :
+                           filter === "past" ? "Past" :
+                           filter === "today" ? "Today" :
+                           filter === "tomorrow" ? "Tomorrow" :
+                           filter === "thisweek" ? "This Week" :
+                           filter === "nextweek" ? "Next Week" :
+                           filter === "thismonth" ? "This Month" :
+                           "Next Month"} ({getSessionCountForDateFilter(filter)})
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  {filteredAndSortedSessions.length > 0 ? (
+                    <div className="w-full overflow-x-auto overflow-y-hidden" style={{ maxWidth: '100vw' }}>
+                      <div className="min-w-max">
+                        <Table style={{ minWidth: '700px' }}>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead className="whitespace-nowrap">Project</TableHead>
+                              <TableHead 
+                                className="cursor-pointer hover:bg-muted/50 whitespace-nowrap"
+                                onClick={() => handleSort('lead_name')}
+                              >
+                                <div className="flex items-center gap-2">
+                                  Client Name
+                                  {getSortIcon('lead_name')}
+                                </div>
+                              </TableHead>
+                              <TableHead 
+                                className="cursor-pointer hover:bg-muted/50 whitespace-nowrap"
+                                onClick={() => handleSort('session_date')}
+                              >
+                                <div className="flex items-center gap-2">
+                                  Date
+                                  {getSortIcon('session_date')}
+                                </div>
+                              </TableHead>
+                              <TableHead 
+                                className="cursor-pointer hover:bg-muted/50 whitespace-nowrap"
+                                onClick={() => handleSort('session_time')}
+                              >
+                                <div className="flex items-center gap-2">
+                                  Time
+                                  {getSortIcon('session_time')}
+                                </div>
+                              </TableHead>
+                              <TableHead 
+                                className="cursor-pointer hover:bg-muted/50 whitespace-nowrap"
+                                onClick={() => handleSort('status')}
+                              >
+                                <div className="flex items-center gap-2">
+                                  Status
+                                  {getSortIcon('status')}
+                                </div>
+                              </TableHead>
+                              <TableHead className="whitespace-nowrap">Notes</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {filteredAndSortedSessions.map((session) => (
+                              <TableRow 
+                                key={session.id}
+                                className="cursor-pointer hover:bg-muted/50"
+                                onClick={() => handleRowClick(session)}
+                              >
+                                <TableCell className="whitespace-nowrap">
+                                  {session.project_id ? (
+                                    <Button
+                                      variant="link"
+                                      className="p-0 h-auto font-normal text-foreground hover:text-foreground hover:underline"
+                                      onClick={(e) => handleProjectClick(e, session)}
+                                      aria-label="View project details"
+                                    >
+                                      {session.project_name || 'Project'}
+                                    </Button>
+                                  ) : (
+                                    <span className="text-muted-foreground">-</span>
+                                  )}
+                                </TableCell>
+                                <TableCell className="font-medium whitespace-nowrap">
+                                  {session.lead_name}
+                                </TableCell>
+                                <TableCell className="whitespace-nowrap">
+                                  {formatLongDate(session.session_date)}
+                                </TableCell>
+                                <TableCell className="whitespace-nowrap">
+                                  {formatTime(session.session_time)}
+                                </TableCell>
+                                <TableCell className="whitespace-nowrap">
+                                  <SessionStatusBadge
+                                    sessionId={session.id}
+                                    currentStatus={session.status}
+                                    editable
+                                    size="sm"
+                                    onStatusChange={fetchSessions}
+                                  />
+                                </TableCell>
+                                <TableCell className="max-w-xs truncate whitespace-nowrap">
+                                  {session.notes ? (
+                                    <div 
+                                      className="truncate hover:whitespace-normal hover:overflow-visible hover:text-wrap cursor-help"
+                                      title={session.notes}
+                                    >
+                                      {session.notes}
+                                    </div>
+                                  ) : (
+                                    '-'
+                                  )}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-12 text-muted-foreground">
+                      <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <h3 className="text-lg font-medium mb-2">No sessions found</h3>
+                      <p>
+                        {statusFilter === "all" 
+                          ? "You don't have any sessions yet."
+                          : `No sessions found with status "${statusFilter}".`
+                        }
+                      </p>
+                      <p className="text-sm mt-2">Click "Schedule Session" to add your first session.</p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
 
-      {selectedSessionId && (
-        <SessionSheetView
-          sessionId={selectedSessionId}
-          isOpen={isSessionSheetOpen}
-          onOpenChange={setIsSessionSheetOpen}
-          onViewFullDetails={handleViewFullSessionDetails}
-          onNavigateToLead={handleNavigateToLead}
-          onNavigateToProject={handleNavigateToProject}
-        />
-      )}
-          </div>
+            <ViewProjectDialog
+              project={viewingProject}
+              open={showProjectDialog}
+              onOpenChange={setShowProjectDialog}
+              onProjectUpdated={fetchSessions}
+              leadName={viewingProject?.leads?.name || ''}
+            />
+
+            {selectedSessionId && (
+              <SessionSheetView
+                sessionId={selectedSessionId}
+                isOpen={isSessionSheetOpen}
+                onOpenChange={setIsSessionSheetOpen}
+                onViewFullDetails={handleViewFullSessionDetails}
+                onNavigateToLead={handleNavigateToLead}
+                onNavigateToProject={handleNavigateToProject}
+              />
+            )}
+          </>
         )}
       </div>
     </div>

@@ -23,7 +23,9 @@ import type { DateRange } from "react-day-picker";
 import { formatDate } from "@/lib/utils";
 import GlobalSearch from "@/components/GlobalSearch";
 import { PageHeader, PageHeaderSearch } from "@/components/ui/page-header";
-import { PageLoadingSkeleton } from "@/components/ui/loading-presets";
+import { PageLoadingSkeleton, TableLoadingSkeleton } from "@/components/ui/loading-presets";
+import { AddPaymentDialog } from "@/components/AddPaymentDialog";
+import { EditPaymentDialog } from "@/components/EditPaymentDialog";
 
 interface Payment {
   id: string;
@@ -72,6 +74,9 @@ const Payments = () => {
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [viewingProject, setViewingProject] = useState<any>(null);
   const [showProjectDialog, setShowProjectDialog] = useState(false);
+  const [isAddPaymentDialogOpen, setIsAddPaymentDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingPayment, setEditingPayment] = useState<Payment | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -548,9 +553,28 @@ const Payments = () => {
         onOpenChange={setShowProjectDialog}
         onProjectUpdated={fetchPayments}
         leadName={viewingProject?.leads?.name || ""}
+      />
           </>
         )}
       </div>
+
+      {/* Payment dialogs - temporarily removed due to interface mismatch */}
+      {/*
+      <AddPaymentDialog
+        projectId=""
+        onPaymentAdded={fetchPayments}
+      />
+      
+      <EditPaymentDialog
+        payment={editingPayment}
+        isOpen={isEditDialogOpen}
+        onClose={() => {
+          setIsEditDialogOpen(false);
+          setEditingPayment(null);
+        }}
+        onPaymentUpdated={fetchPayments}
+      />
+      */}
     </div>
   );
 };

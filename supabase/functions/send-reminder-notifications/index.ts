@@ -106,7 +106,7 @@ const handler = async (req: Request): Promise<Response> => {
       .eq('organization_id', organizationId)
       .order('session_time');
 
-    // Get past sessions that need action (active projects only, excluding completed/cancelled/archived)
+    // Get past sessions that need action (simplified - just count them)
     const { data: pastSessions, error: pastSessionsError } = await adminSupabase
       .from('sessions')
       .select(`
@@ -116,12 +116,10 @@ const handler = async (req: Request): Promise<Response> => {
         notes,
         location,
         leads(id, name),
-        projects(id, name, status_id, project_statuses(name, lifecycle), project_types(name))
+        projects(id, name, project_types(name))
       `)
       .lt('session_date', todayStr)
       .eq('organization_id', organizationId)
-      .eq('projects.project_statuses.lifecycle', 'active')
-      .not('projects.project_statuses.name', 'in', '(Archived,Completed,Cancelled)')
       .order('session_date', { ascending: false });
 
     if (todaySessionsError) {
@@ -152,7 +150,7 @@ const handler = async (req: Request): Promise<Response> => {
       console.error('Error fetching overdue activities:', overdueError);
     }
 
-    // Get today's reminders/activities using date range 
+    // Get today's reminders/activities (simplified query)
     const { data: todayActivities, error: todayActivitiesError } = await adminSupabase
       .from('activities')
       .select(`
@@ -166,8 +164,7 @@ const handler = async (req: Request): Promise<Response> => {
         leads(id, name),
         projects(id, name)
       `)
-      .gte('reminder_date', todayStr)
-      .lt('reminder_date', `${todayStr}T23:59:59`)
+      .eq('reminder_date', todayStr)
       .eq('completed', false)
       .eq('organization_id', organizationId)
       .order('reminder_time');
@@ -208,6 +205,9 @@ const handler = async (req: Request): Promise<Response> => {
       todayActivities: todayActivities?.length || 0,
       pendingTodos: pendingTodos?.length || 0
     });
+
+    console.log('Today activities data:', todayActivities);
+    console.log('Past sessions data:', pastSessions);
 
     // Prepare data for enhanced email template
     const templateData = {

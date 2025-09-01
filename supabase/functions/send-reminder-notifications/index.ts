@@ -37,28 +37,31 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error('Authorization header required');
     }
 
-    // Create supabase client with user's auth token for RLS
+    // Create supabase clients
     const userSupabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-      { global: { headers: { Authorization: authHeader } } }
+      Deno.env.get("SUPABASE_ANON_KEY") ?? ""
     );
 
-    // Create admin client for bypassing RLS when needed
     const adminSupabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    // Get current user
-    const { data: { user }, error: userError } = await userSupabase.auth.getUser();
+    // Extract token and get current user
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: userError } = await userSupabase.auth.getUser(token);
     if (userError || !user) {
+      console.error('Auth error:', userError);
       throw new Error('Failed to get authenticated user');
     }
 
-    // Get user's active organization
-    const { data: organizationId, error: orgError } = await userSupabase.rpc('get_user_active_organization_id');
+    // Get user's active organization using admin client with proper auth
+    const { data: organizationId, error: orgError } = await adminSupabase
+      .rpc('get_user_active_organization_id')
+      .headers({ Authorization: authHeader });
     if (orgError || !organizationId) {
+      console.error('Organization error:', orgError);
       throw new Error('No active organization found for user');
     }
 
@@ -69,8 +72,8 @@ const handler = async (req: Request): Promise<Response> => {
     const todayStr = today.toISOString().split('T')[0];
     console.log(`Today's date: ${todayStr}`);
 
-    // Get today's sessions
-    const { data: todaySessions, error: todaySessionsError } = await userSupabase
+    // Get today's sessions using admin client with auth context
+    const { data: todaySessions, error: todaySessionsError } = await adminSupabase
       .from('sessions')
       .select(`
         id,
@@ -82,6 +85,7 @@ const handler = async (req: Request): Promise<Response> => {
         projects(id, name)
       `)
       .eq('session_date', todayStr)
+      .eq('organization_id', organizationId)
       .order('session_time');
 
     if (todaySessionsError) {
@@ -89,7 +93,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Get overdue reminders/activities
-    const { data: overdueActivities, error: overdueError } = await userSupabase
+    const { data: overdueActivities, error: overdueError } = await adminSupabase
       .from('activities')
       .select(`
         id,
@@ -102,6 +106,7 @@ const handler = async (req: Request): Promise<Response> => {
       `)
       .lt('reminder_date', todayStr)
       .eq('completed', false)
+      .eq('organization_id', organizationId)
       .order('reminder_date', { ascending: false });
 
     if (overdueError) {
@@ -109,7 +114,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Get today's reminders/activities
-    const { data: todayActivities, error: todayActivitiesError } = await userSupabase
+    const { data: todayActivities, error: todayActivitiesError } = await adminSupabase
       .from('activities')
       .select(`
         id,
@@ -122,6 +127,7 @@ const handler = async (req: Request): Promise<Response> => {
       `)
       .eq('reminder_date', todayStr)
       .eq('completed', false)
+      .eq('organization_id', organizationId)
       .order('reminder_time');
 
     if (todayActivitiesError) {
@@ -147,7 +153,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Get organization settings for branding
-    const { data: orgSettings } = await userSupabase
+    const { data: orgSettings } = await adminSupabase
       .from('organization_settings')
       .select('photography_business_name, primary_brand_color, date_format, time_format')
       .eq('organization_id', organizationId)

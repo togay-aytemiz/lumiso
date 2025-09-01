@@ -381,7 +381,7 @@ export const createEmailTemplate = (
   content: string,
   templateData: EmailTemplateData
 ) => {
-  const { userFullName, businessName = "Lumiso", logoUrl, brandColor = "#1EB29F", baseUrl = "https://app.lumiso.com" } = templateData;
+  const { userFullName, businessName = "Lumiso", logoUrl, brandColor = "#1EB29F", baseUrl = "https://my.lumiso.app" } = templateData;
   
   console.log(`Using Lumiso logo from: ${baseUrl}/lumiso-logo.png`);
   
@@ -397,7 +397,7 @@ export const createEmailTemplate = (
     <body>
       <div class="email-container">
         <div class="email-header">
-          <img src="https://app.lumiso.com/lumiso-logo.png" alt="${businessName}" class="logo" />
+          <img src="https://my.lumiso.app/lumiso-logo.png" alt="${businessName}" class="logo" />
         </div>
         
         <div class="email-body">

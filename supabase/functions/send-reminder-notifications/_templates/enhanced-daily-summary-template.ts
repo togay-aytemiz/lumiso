@@ -25,10 +25,6 @@ export function generateDailySummaryEmail(
         <div class="stat-label">Today's Sessions</div>
       </div>
       <div class="stat-item">
-        <span class="stat-number">${pendingTodos.length}</span>
-        <div class="stat-label">Pending Tasks</div>
-      </div>
-      <div class="stat-item">
         <span class="stat-number">${totalOverdue}</span>
         <div class="stat-label">Overdue Items</div>
       </div>
@@ -123,24 +119,23 @@ export function generateDailySummaryEmail(
       });
     }
 
-    if (overdueItems.activities.length > 0) {
-      content += `<p><strong>Overdue Activities:</strong></p>`;
-      overdueItems.activities.slice(0, 3).forEach(activity => {
-        content += `
-          <div class="item-card high-priority">
-            <div class="item-title">
-              <span>${activity.content}</span>
-              <span class="overdue-badge">Overdue</span>
-            </div>
-            ${activity.projects ? `<div class="item-relationship">Project: ${activity.projects.name}</div>` : ''}
-            ${activity.leads ? `<div class="item-relationship">Lead: ${activity.leads.name}</div>` : ''}
-            <div style="margin-top: 12px;">
-              ${templateData.baseUrl && activity.projects ? `<a href="${templateData.baseUrl}/projects/${activity.projects.id}" class="item-action">View Project</a>` : ''}
-            </div>
-          </div>
-        `;
-      });
-    }
+     if (overdueItems.activities.length > 0) {
+       content += `<p><strong>Overdue Activities:</strong></p>`;
+       overdueItems.activities.slice(0, 3).forEach(activity => {
+         content += `
+           <div class="item-card high-priority">
+             <div class="item-title">
+               <span>${activity.content}</span>
+               <span class="overdue-badge">Overdue</span>
+             </div>
+             ${activity.reminder_date ? `<div class="item-meta">📅 Due: ${formatDate(activity.reminder_date, templateData.dateFormat)}</div>` : ''}
+             <div style="margin-top: 12px;">
+               ${templateData.baseUrl ? `<a href="${templateData.baseUrl}/activities" class="item-action">View Reminders</a>` : ''}
+             </div>
+           </div>
+         `;
+       });
+     }
   }
 
   // Past Sessions that need action
@@ -150,7 +145,7 @@ export function generateDailySummaryEmail(
       <p>These sessions have passed and may need your attention:</p>
     `;
 
-    pastSessions.slice(0, 8).forEach(session => {
+    pastSessions.slice(0, 3).forEach(session => {
       const daysPassed = Math.ceil((new Date().getTime() - new Date(session.session_date).getTime()) / (1000 * 60 * 60 * 24));
       
       content += `
@@ -171,11 +166,14 @@ export function generateDailySummaryEmail(
       `;
     });
 
-    if (pastSessions.length > 8) {
+    if (pastSessions.length > 3) {
       content += `
-        <p style="font-style: italic; color: #6B7280; margin-top: 8px;">
-          ... and ${pastSessions.length - 8} more past sessions
-        </p>
+        <div style="text-align: center; margin-top: 16px;">
+          <p style="color: #6B7280; margin-bottom: 12px;">
+            ... and ${pastSessions.length - 3} more past sessions
+          </p>
+          ${templateData.baseUrl ? `<a href="${templateData.baseUrl}/sessions" class="cta-button">See All Sessions</a>` : ''}
+        </div>
       `;
     }
   }

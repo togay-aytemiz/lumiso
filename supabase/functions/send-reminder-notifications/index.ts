@@ -106,7 +106,7 @@ const handler = async (req: Request): Promise<Response> => {
       .eq('organization_id', organizationId)
       .order('session_time');
 
-    // Get past sessions that need action (past sessions that might need follow-up)
+    // Get past sessions that need action (excluding archived/completed/cancelled projects)
     const { data: pastSessions, error: pastSessionsError } = await adminSupabase
       .from('sessions')
       .select(`
@@ -116,12 +116,14 @@ const handler = async (req: Request): Promise<Response> => {
         notes,
         location,
         leads(id, name),
-        projects(id, name)
+        projects(id, name, status_id, project_statuses(name, lifecycle))
       `)
       .lt('session_date', todayStr)
       .eq('organization_id', organizationId)
+      .not('projects.project_statuses.lifecycle', 'in', '(completed,cancelled)')
+      .neq('projects.project_statuses.name', 'Archived')
       .order('session_date', { ascending: false })
-      .limit(10);
+      .limit(3);
 
     if (todaySessionsError) {
       console.error('Error fetching today sessions:', todaySessionsError);
@@ -130,7 +132,7 @@ const handler = async (req: Request): Promise<Response> => {
       console.error('Error fetching past sessions:', pastSessionsError);
     }
 
-    // Get overdue reminders/activities
+    // Get overdue reminders/activities (simplified query without joins)
     const { data: overdueActivities, error: overdueError } = await adminSupabase
       .from('activities')
       .select(`
@@ -139,8 +141,8 @@ const handler = async (req: Request): Promise<Response> => {
         reminder_date,
         reminder_time,
         completed,
-        leads(id, name),
-        projects(id, name)
+        lead_id,
+        project_id
       `)
       .lt('reminder_date', todayStr)
       .eq('completed', false)
@@ -151,7 +153,7 @@ const handler = async (req: Request): Promise<Response> => {
       console.error('Error fetching overdue activities:', overdueError);
     }
 
-    // Get today's reminders/activities
+    // Get today's reminders/activities (simplified query without joins) 
     const { data: todayActivities, error: todayActivitiesError } = await adminSupabase
       .from('activities')
       .select(`
@@ -160,8 +162,8 @@ const handler = async (req: Request): Promise<Response> => {
         reminder_date,
         reminder_time,
         completed,
-        leads(id, name),
-        projects(id, name)
+        lead_id,
+        project_id
       `)
       .eq('reminder_date', todayStr)
       .eq('completed', false)
@@ -212,7 +214,7 @@ const handler = async (req: Request): Promise<Response> => {
       brandColor: orgSettings?.primary_brand_color || '#1EB29F',
       dateFormat: orgSettings?.date_format || 'DD/MM/YYYY',
       timeFormat: orgSettings?.time_format || '12-hour',
-      baseUrl: 'https://app.lumiso.com'
+      baseUrl: 'https://my.lumiso.app'
     };
 
     // Transform sessions data
@@ -245,16 +247,17 @@ const handler = async (req: Request): Promise<Response> => {
       projects: todo.projects
     }));
 
-    // Transform overdue data
+    // Transform overdue data (combine today's and overdue activities)
+    const allActivities = [...(overdueActivities || []), ...(todayActivities || [])];
     const overdueItems = {
       leads: [], // No overdue leads for now, focus on activities
-      activities: (overdueActivities || []).map(activity => ({
+      activities: allActivities.map(activity => ({
         id: activity.id,
         content: activity.content,
         reminder_date: activity.reminder_date,
         reminder_time: activity.reminder_time,
-        leads: activity.leads,
-        projects: activity.projects
+        lead_id: activity.lead_id,
+        project_id: activity.project_id
       }))
     };
 

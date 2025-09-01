@@ -106,7 +106,7 @@ const handler = async (req: Request): Promise<Response> => {
       .eq('organization_id', organizationId)
       .order('session_time');
 
-    // Get past sessions that need action (excluding archived/completed/cancelled projects)
+    // Get past sessions that need action (active projects only, excluding completed/cancelled/archived)
     const { data: pastSessions, error: pastSessionsError } = await adminSupabase
       .from('sessions')
       .select(`
@@ -120,10 +120,9 @@ const handler = async (req: Request): Promise<Response> => {
       `)
       .lt('session_date', todayStr)
       .eq('organization_id', organizationId)
-      .not('projects.project_statuses.lifecycle', 'in', '(completed,cancelled)')
-      .neq('projects.project_statuses.name', 'Archived')
-      .order('session_date', { ascending: false })
-      .limit(3);
+      .eq('projects.project_statuses.lifecycle', 'active')
+      .not('projects.project_statuses.name', 'in', '(Archived,Completed,Cancelled)')
+      .order('session_date', { ascending: false });
 
     if (todaySessionsError) {
       console.error('Error fetching today sessions:', todaySessionsError);
@@ -153,7 +152,7 @@ const handler = async (req: Request): Promise<Response> => {
       console.error('Error fetching overdue activities:', overdueError);
     }
 
-    // Get today's reminders/activities (simplified query without joins) 
+    // Get today's reminders/activities using date range 
     const { data: todayActivities, error: todayActivitiesError } = await adminSupabase
       .from('activities')
       .select(`
@@ -167,7 +166,8 @@ const handler = async (req: Request): Promise<Response> => {
         leads(id, name),
         projects(id, name)
       `)
-      .eq('reminder_date', todayStr)
+      .gte('reminder_date', todayStr)
+      .lt('reminder_date', `${todayStr}T23:59:59`)
       .eq('completed', false)
       .eq('organization_id', organizationId)
       .order('reminder_time');

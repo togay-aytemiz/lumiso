@@ -686,7 +686,7 @@ async function handleProjectMilestoneNotification(requestData: ReminderRequest, 
       project_id,
       old_status,
       new_status,
-      milestone_user_name,
+      changed_by_user_id,
       organizationId,
       isTest = false
     } = requestData;
@@ -694,6 +694,31 @@ async function handleProjectMilestoneNotification(requestData: ReminderRequest, 
     // Validate required fields
     if (!project_id || !organizationId) {
       throw new Error('Missing required fields for milestone notification');
+    }
+
+    // Get the name of the person who made the change
+    let changedByUserName = 'Someone';
+    if (changed_by_user_id) {
+      try {
+        const { data: changedByProfile } = await adminSupabase
+          .from('profiles')
+          .select('full_name')
+          .eq('user_id', changed_by_user_id)
+          .maybeSingle();
+
+        const { data: changedByAuth } = await adminSupabase.auth.admin.getUserById(changed_by_user_id);
+        
+        if (changedByProfile?.full_name) {
+          changedByUserName = changedByProfile.full_name;
+        } else if (changedByAuth?.user?.user_metadata?.full_name) {
+          changedByUserName = changedByAuth.user.user_metadata.full_name;
+        } else if (changedByAuth?.user?.email) {
+          changedByUserName = changedByAuth.user.email.split('@')[0];
+        }
+      } catch (error) {
+        console.error('Error fetching changed-by user details:', error);
+        // Keep default "Someone" if we can't fetch the user
+      }
     }
 
     // Get project details and assigned users
@@ -821,7 +846,7 @@ async function handleProjectMilestoneNotification(requestData: ReminderRequest, 
             oldStatus: old_status || 'Previous Status',
             newStatus: currentStatusName,
             lifecycle: lifecycle,
-            milestoneUserName: milestone_user_name || 'Someone',
+            milestoneUserName: changedByUserName,
             notes: project.description,
             organizationId: organizationId
           }

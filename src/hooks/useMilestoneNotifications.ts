@@ -57,13 +57,14 @@ export function useMilestoneNotifications() {
           const projectName = metadata.project_name;
           const newStatus = metadata.new_status;
           const oldStatus = metadata.old_status;
+          const changedByUserId = metadata.changed_by_user_id;
 
           if (!projectId) {
             console.error('No project_id in notification metadata:', notification);
             continue;
           }
 
-          console.log(`Sending milestone notification for project "${projectName}" (${oldStatus} → ${newStatus})`);
+          console.log(`Sending milestone notification for project "${projectName}" (${oldStatus} → ${newStatus}) changed by user ${changedByUserId}`);
 
           // Invoke the edge function with the complete project context
           const { data, error } = await supabase.functions.invoke('send-reminder-notifications', {
@@ -72,6 +73,7 @@ export function useMilestoneNotifications() {
               project_id: projectId,
               old_status: oldStatus,
               new_status: newStatus,
+              changed_by_user_id: changedByUserId,
               organizationId: notification.organization_id,
             }
           });

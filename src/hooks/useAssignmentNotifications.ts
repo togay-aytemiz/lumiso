@@ -42,7 +42,7 @@ export const useAssignmentNotifications = () => {
 
           // Get the assignee's email using the edge function
           const { data: emailData, error: emailError } = await supabase.functions.invoke('get-users-email', {
-            body: { user_id: notification.user_id }
+            body: { userIds: [notification.user_id] }
           });
 
           if (emailError) {
@@ -50,7 +50,7 @@ export const useAssignmentNotifications = () => {
             continue;
           }
 
-          const assigneeEmail = emailData?.email;
+          const assigneeEmail = emailData?.users?.[0]?.email;
           if (!assigneeEmail) {
             console.error('No email found for assignee:', notification.user_id);
             continue;

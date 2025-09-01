@@ -521,12 +521,53 @@ async function handleNewAssignmentNotification(requestData: ReminderRequest, adm
       }
     }
 
-    // Get organization settings for branding
+    // Get organization settings for branding AND notification preferences
     const { data: orgSettings } = await adminSupabase
       .from('organization_settings')
-      .select('photography_business_name, primary_brand_color')
+      .select('photography_business_name, primary_brand_color, notification_new_assignment_enabled, notification_global_enabled')
       .eq('organization_id', organizationId)
       .maybeSingle();
+
+    // Get user-level notification settings (takes precedence over org settings)
+    const { data: userSettings } = await adminSupabase
+      .from('user_settings')
+      .select('notification_new_assignment_enabled, notification_global_enabled')
+      .eq('user_id', assignee_id)
+      .maybeSingle();
+
+    // Check if assignment notifications are disabled - user settings override org settings
+    const globalEnabled = (userSettings?.notification_global_enabled ?? orgSettings?.notification_global_enabled) ?? true;
+    const assignmentEnabled = (userSettings?.notification_new_assignment_enabled ?? orgSettings?.notification_new_assignment_enabled) ?? true;
+
+    if (!globalEnabled || !assignmentEnabled) {
+      console.log('Assignment notifications are disabled - Global:', globalEnabled, 'Assignment:', assignmentEnabled);
+      
+      // Still update the notification log to processed status to avoid retries
+      if (assignee_id) {
+        await adminSupabase
+          .from('notification_logs')
+          .update({ status: 'skipped', sent_at: new Date().toISOString() })
+          .eq('user_id', assignee_id)
+          .eq('notification_type', 'new_assignment')
+          .eq('status', 'pending')
+          .order('created_at', { ascending: false })
+          .limit(1);
+      }
+
+      return new Response(JSON.stringify({
+        message: `Assignment notification skipped - notifications disabled`,
+        successful: 0,
+        failed: 0,
+        total: 1,
+        skipped: 1,
+        reason: globalEnabled ? 'Assignment notifications disabled' : 'All notifications disabled'
+      }), {
+        status: 200,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    console.log('Assignment notifications are enabled - proceeding with email send');
 
     // Prepare template data
     const templateData: AssignmentEmailData = {

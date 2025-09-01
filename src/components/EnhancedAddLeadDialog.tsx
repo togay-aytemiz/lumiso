@@ -14,6 +14,8 @@ import { createDynamicLeadSchema } from "@/lib/leadFieldValidation";
 import { supabase } from "@/integrations/supabase/client";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
 import { useToast } from "@/hooks/use-toast";
+import { InlineAssigneesPicker } from "./InlineAssigneesPicker";
+import { useProfile } from "@/contexts/ProfileContext";
 
 interface EnhancedAddLeadDialogProps {
   open: boolean;
@@ -31,8 +33,10 @@ export function EnhancedAddLeadDialog({
   const { fieldDefinitions, loading: fieldsLoading } = useLeadFieldDefinitions();
   const { upsertFieldValues } = useLeadFieldValues("");
   const { toast } = useToast();
+  const { profile } = useProfile();
   const [loading, setLoading] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
+  const [assignees, setAssignees] = useState<string[]>([]);
 
   // Create dynamic schema based on field definitions
   const schema = createDynamicLeadSchema(fieldDefinitions);
@@ -42,14 +46,21 @@ export function EnhancedAddLeadDialog({
     defaultValues: {},
   });
 
+  // Auto-add current user as first assignee
+  useEffect(() => {
+    if (profile?.user_id && assignees.length === 0) {
+      setAssignees([profile.user_id]);
+    }
+  }, [profile?.user_id, assignees.length]);
+
   // Track form dirty state
   const formValues = form.watch();
   useEffect(() => {
     const hasValues = Object.values(formValues).some(value => 
       value !== '' && value !== null && value !== undefined
-    );
+    ) || assignees.length > 0;
     setIsDirty(hasValues);
-  }, [formValues]);
+  }, [formValues, assignees]);
 
   useEffect(() => {
     if (open && !fieldsLoading) {
@@ -100,7 +111,7 @@ export function EnhancedAddLeadDialog({
           phone: data.field_phone || null,
           notes: data.field_notes || null,
           status_id: defaultStatus?.id,
-          assignees: [],
+          assignees: assignees.length > 0 ? assignees : [(await supabase.auth.getUser()).data.user?.id].filter(Boolean),
         })
         .select()
         .single();
@@ -198,6 +209,14 @@ export function EnhancedAddLeadDialog({
           control={form.control}
           visibleOnly={true}
         />
+        
+        <div className="pt-4 border-t">
+          <InlineAssigneesPicker
+            value={assignees}
+            onChange={setAssignees}
+            disabled={loading}
+          />
+        </div>
       </Form>
     </AppSheetModal>
   );

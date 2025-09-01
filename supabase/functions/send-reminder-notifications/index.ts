@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { Resend } from "npm:resend@2.0.0";
-import { generateDailySummaryEmail } from './_templates/enhanced-daily-summary-template.ts';
+import { generateModernDailySummaryEmail } from './_templates/enhanced-daily-summary-modern.ts';
 import { generateImmediateNotificationEmail, generateSubject, ImmediateNotificationEmailData, ProjectAssignmentData, LeadAssignmentData, ProjectMilestoneData } from './_templates/immediate-notifications.ts';
 
 const corsHeaders = {
@@ -364,8 +364,8 @@ const handler = async (req: Request): Promise<Response> => {
       }))
     };
 
-    // Generate enhanced email content using the template
-    const emailHtml = generateDailySummaryEmail(
+    // Generate enhanced email content using the modern template
+    const emailHtml = generateModernDailySummaryEmail(
       sessions,
       todayReminders,
       overdueItems,
@@ -377,7 +377,7 @@ const handler = async (req: Request): Promise<Response> => {
     const emailResult = await resend.emails.send({
       from: 'Lumiso <hello@updates.lumiso.app>',
       to: [user.email],
-      subject: `Daily Summary - ${today.toLocaleDateString('en-GB', { 
+      subject: `📅 Daily Summary - ${today.toLocaleDateString('en-GB', { 
         day: '2-digit', 
         month: '2-digit', 
         year: 'numeric' 
@@ -441,10 +441,10 @@ async function handleNewAssignmentNotification(requestData: ReminderRequest, adm
 
     // Initialize variables for entity details
     let entityName = '';
-    let dueDate = null;
     let notes = null;
     let projectType = null;
     let status = null;
+    let leadName = null;
 
     // For testing, create mock data
     if (isTest) {
@@ -456,7 +456,6 @@ async function handleNewAssignmentNotification(requestData: ReminderRequest, adm
       assignee_name = 'Test User';
       assigner_name = 'System';
       entityName = 'Sarah & John Wedding - TEST';
-      dueDate = new Date().toISOString().split('T')[0]; // Today's date
       notes = 'This is a test assignment notification. You can safely ignore this email.';
       status = 'New';
       
@@ -466,27 +465,27 @@ async function handleNewAssignmentNotification(requestData: ReminderRequest, adm
       if (entity_type === 'lead') {
         const { data: lead } = await adminSupabase
           .from('leads')
-          .select('name, due_date, notes, status')
+          .select('name, notes, status')
           .eq('id', entity_id)
           .maybeSingle();
         
         if (lead) {
           entityName = lead.name;
-          dueDate = lead.due_date;
           notes = lead.notes;
           status = lead.status;
         }
       } else if (entity_type === 'project') {
         console.log('Fetching project details for ID:', entity_id);
         
-        // First get the project details
+        // First get the project details with lead information
         const { data: project, error: projectError } = await adminSupabase
           .from('projects')
           .select(`
             name,
             description,
             project_type_id,
-            status_id
+            status_id,
+            leads(name)
           `)
           .eq('id', entity_id)
           .maybeSingle();
@@ -499,6 +498,7 @@ async function handleNewAssignmentNotification(requestData: ReminderRequest, adm
           console.log('Found project:', project.name);
           entityName = project.name;
           notes = project.description;
+          leadName = project.leads?.name;
           
           // Get project type name if available
           if (project.project_type_id) {
@@ -595,7 +595,8 @@ async function handleNewAssignmentNotification(requestData: ReminderRequest, adm
           name: entityName || `Project ${entity_id}`,
           type: projectType || undefined,
           status: status || undefined,
-          notes: notes || undefined
+          notes: notes || undefined,
+          leadName: leadName || undefined
         },
         assignee: {
           name: assignee_name || 'there',
@@ -614,7 +615,6 @@ async function handleNewAssignmentNotification(requestData: ReminderRequest, adm
           id: entity_id || '',
           name: entityName || `Lead ${entity_id}`,
           status: status || undefined,
-          dueDate: dueDate || undefined,
           notes: notes || undefined
         },
         assignee: {

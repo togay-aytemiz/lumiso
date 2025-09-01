@@ -18,6 +18,7 @@ export interface ProjectAssignmentData extends BaseImmediateNotificationData {
     type?: string;
     status?: string;
     notes?: string;
+    leadName?: string;
   };
   assignee: {
     name: string;
@@ -32,7 +33,6 @@ export interface LeadAssignmentData extends BaseImmediateNotificationData {
     id: string;
     name: string;
     status?: string;
-    dueDate?: string;
     notes?: string;
   };
   assignee: {
@@ -52,6 +52,7 @@ export interface ProjectMilestoneData extends BaseImmediateNotificationData {
     newStatus: string;
     lifecycle: 'completed' | 'cancelled';
     notes?: string;
+    leadName?: string;
   };
   assignee: {
     name: string;
@@ -177,7 +178,7 @@ function generateProjectAssignmentCard(data: ProjectAssignmentData, brandColor: 
             font-weight: 600;
             margin: 0 0 4px 0;
             line-height: 1.3;
-          ">${data.project.name}</h3>
+          ">${data.project.name}${data.project.leadName ? ` • Client: ${data.project.leadName}` : ''}</h3>
           ${data.project.type ? `
             <span style="
               background: #f3f4f6;
@@ -295,27 +296,6 @@ function generateLeadAssignmentCard(data: LeadAssignmentData, brandColor: string
         </div>
       </div>
 
-      ${data.lead.dueDate ? `
-        <div style="
-          display: flex;
-          align-items: center;
-          margin-bottom: 16px;
-        ">
-          <span style="
-            font-weight: 600;
-            color: #6b7280;
-            margin-right: 12px;
-          ">Due Date:</span>
-          <span style="
-            background: #fef3c7;
-            color: #d97706;
-            padding: 4px 12px;
-            border-radius: 6px;
-            font-size: 14px;
-            font-weight: 500;
-          ">${data.lead.dueDate}</span>
-        </div>
-      ` : ''}
 
       ${data.lead.notes ? `
         <div style="
@@ -384,7 +364,7 @@ function generateProjectMilestoneCard(data: ProjectMilestoneData, brandColor: st
             font-weight: 600;
             margin: 0 0 4px 0;
             line-height: 1.3;
-          ">${data.project.name}</h3>
+          ">${data.project.name}${data.project.leadName ? ` • Client: ${data.project.leadName}` : ''}</h3>
           ${data.project.type ? `
             <span style="
               background: #f3f4f6;

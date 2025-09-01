@@ -202,17 +202,6 @@ const CrmDashboard = () => {
     };
   };
 
-  if (loading) {
-    return (
-      <div className="relative">
-        <DashboardLoadingSkeleton />
-        <div className="absolute top-8 left-1/2 transform -translate-x-1/2 text-sm text-muted-foreground">
-          Loading Dashboard...
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 dark:from-gray-900 dark:to-slate-800 overflow-x-hidden">
       <PageHeader
@@ -225,6 +214,10 @@ const CrmDashboard = () => {
       </PageHeader>
 
       <main className="px-4 sm:px-6 lg:px-8 py-6">
+        {loading ? (
+          <DashboardLoadingSkeleton />
+        ) : (
+        <div>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 mb-8">
           <Card className={`${getStatCardGradient('leads')} border-0 shadow-md hover:shadow-lg transition-shadow`}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -522,6 +515,8 @@ const CrmDashboard = () => {
             </CardContent>
           </Card>
         </div>
+        </div>
+        )}
       </main>
       
       <EnhancedAddLeadDialog 

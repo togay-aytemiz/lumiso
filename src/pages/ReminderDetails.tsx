@@ -375,19 +375,28 @@ const ReminderDetails = () => {
     { key: 'thisMonth', label: 'This Month', count: getReminderCountForFilter('thisMonth') }
   ];
 
-  if (loading) {
-    return (
-      <div className="relative">
-        <PageLoadingSkeleton />
-        <div className="absolute top-8 left-1/2 transform -translate-x-1/2 text-sm text-muted-foreground">
-          Loading Reminders...
-        </div>
-      </div>
-    );
-  }
+  return (
+    <div className="min-h-screen bg-background overflow-x-hidden">
+      <PageHeader
+        title="Reminders"
+        subtitle="Manage your activities and reminders"
+      >
+        <PageHeaderSearch>
+          <div className="flex items-center gap-2 w-full">
+            <div className="flex-1 min-w-0">
+              <GlobalSearch />
+            </div>
+          </div>
+        </PageHeaderSearch>
+      </PageHeader>
 
-  const filteredActivities = getFilteredActivities();
-  const completedGroupedByDate = getCompletedActivitiesGroupedByDate();
+      <div className="p-4 sm:p-6 space-y-6">
+        {loading ? (
+          <ListLoadingSkeleton />
+        ) : (
+          <div>
+            {/* Content */}
+            <div className="space-y-6">
   const activeActivities = filteredActivities.filter(activity => !activity.completed);
 
   return (

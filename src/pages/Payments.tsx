@@ -287,17 +287,6 @@ const Payments = () => {
     }).format(amount);
   };
 
-  if (loading) {
-    return (
-      <div className="relative">
-        <PageLoadingSkeleton />
-        <div className="absolute top-8 left-1/2 transform -translate-x-1/2 text-sm text-muted-foreground">
-          Loading Payments...
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen overflow-x-hidden">
       <PageHeader
@@ -310,6 +299,10 @@ const Payments = () => {
       </PageHeader>
 
       <div className="p-4 sm:p-6">
+        {loading ? (
+          <TableLoadingSkeleton />
+        ) : (
+          <>
 
       {/* Date Filter */}
       <div className="mb-6 flex justify-end">
@@ -555,7 +548,8 @@ const Payments = () => {
         onOpenChange={setShowProjectDialog}
         onProjectUpdated={fetchPayments}
         leadName={viewingProject?.leads?.name || ""}
-      />
+          </>
+        )}
       </div>
     </div>
   );

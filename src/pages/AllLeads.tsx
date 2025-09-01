@@ -247,17 +247,6 @@ const AllLeadsNew = () => {
     </div>
   );
 
-  if (loading) {
-    return (
-      <div className="relative">
-        <TableLoadingSkeleton />
-        <div className="absolute top-8 left-1/2 transform -translate-x-1/2 text-sm text-muted-foreground">
-          Loading Leads...
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen">
       <PageHeader

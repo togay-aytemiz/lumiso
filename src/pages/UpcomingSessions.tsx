@@ -391,6 +391,25 @@ const AllSessions = () => {
             <div className="flex-1 min-w-0">
               <GlobalSearch />
             </div>
+          </div>
+        </PageHeaderSearch>
+      </PageHeader>
+
+      <div className="p-4 sm:p-6 space-y-6">
+        {loading ? (
+          <ListLoadingSkeleton />
+        ) : (
+          <div>
+    <div className="min-h-screen bg-background overflow-x-hidden">
+      <PageHeader
+        title="Sessions"
+        subtitle="Manage your photo sessions and appointments"
+      >
+        <PageHeaderSearch>
+          <div className="flex items-center gap-2 w-full">
+            <div className="flex-1 min-w-0">
+              <GlobalSearch />
+            </div>
             <NewSessionDialog onSessionScheduled={fetchSessions}>
               <Button 
                 size="sm"
@@ -645,6 +664,9 @@ const AllSessions = () => {
           onNavigateToProject={handleNavigateToProject}
         />
       )}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

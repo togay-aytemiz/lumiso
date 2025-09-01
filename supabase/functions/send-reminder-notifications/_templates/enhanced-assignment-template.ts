@@ -28,7 +28,7 @@ function generateAssignmentEmailContent(data: AssignmentEmailData): string {
     <!-- Header -->
     <div style="background: linear-gradient(135deg, ${data.business?.brandColor || '#1EB29F'} 0%, ${adjustBrightness(data.business?.brandColor || '#1EB29F', -10)} 100%); padding: 40px 0; text-align: center; border-radius: 12px 12px 0 0;">
       <h1 style="color: white; margin: 0; font-size: 28px; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-        New Assignment
+        New ${entityTypeLabel} Assignment
       </h1>
       <p style="color: rgba(255, 255, 255, 0.9); margin: 8px 0 0 0; font-size: 16px;">
         You've been assigned to a new ${entityTypeLabel.toLowerCase()}
@@ -41,7 +41,7 @@ function generateAssignmentEmailContent(data: AssignmentEmailData): string {
         <h2 style="color: #2d3748; margin: 0 0 12px 0; font-size: 20px; font-weight: 600;">
           Hi ${assigneeName || 'there'}! 👋
         </h2>
-        <p style="color: #4a5568; margin: 0 0 30px 0; font-size: 16px; line-height: 1.6;">
+        <p style="color: #4a5568; margin: 0; font-size: 16px; line-height: 1.6;">
           ${assignerName} has assigned you to a new ${entityTypeLabel.toLowerCase()}.
         </p>
       </div>

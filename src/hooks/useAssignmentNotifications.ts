@@ -4,13 +4,15 @@ import { supabase } from '@/integrations/supabase/client';
 export const useAssignmentNotifications = () => {
   const sendPendingNotifications = useCallback(async (entityType: 'lead' | 'project', entityId: string) => {
     try {
-      // Get pending notifications for this organization
+      console.log(`🔔 Looking for pending ${entityType} assignment notifications for entity:`, entityId);
+      
+      // Get pending notifications for this organization (extended to 5 minutes for better reliability)
       const { data: pendingNotifications, error: fetchError } = await supabase
         .from('notification_logs')
         .select('*')
         .eq('notification_type', 'new-assignment')
         .eq('status', 'pending')
-        .gte('sent_at', new Date(Date.now() - 2 * 60 * 1000).toISOString()) // Last 2 minutes
+        .gte('sent_at', new Date(Date.now() - 5 * 60 * 1000).toISOString()) // Last 5 minutes
         .order('sent_at', { ascending: false });
 
       if (fetchError) {
@@ -19,8 +21,11 @@ export const useAssignmentNotifications = () => {
       }
 
       if (!pendingNotifications || pendingNotifications.length === 0) {
+        console.log('📭 No pending notifications found');
         return;
       }
+
+      console.log(`📨 Found ${pendingNotifications.length} pending notifications to process`);
 
       // Get current user info for assigner name
       const { data: { user: currentUser } } = await supabase.auth.getUser();

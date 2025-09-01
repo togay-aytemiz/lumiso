@@ -48,10 +48,10 @@ export function generateDailySummaryEmail(
 
     upcomingSessions.forEach(session => {
       const sessionTime = formatDateTime(session.session_date, session.session_time, templateData);
-      // Use project type name as session name, fallback to generic name
-      const sessionName = session.projects?.project_types?.name 
-        ? `${session.projects.project_types.name} Session`
-        : (session.notes || 'Photography Session');
+    // Use project type name as session name, fallback to generic name
+    const sessionName = session.projects?.project_types?.name 
+      ? `${session.projects.project_types.name} Session`
+      : (session.notes || 'Photography Session');
       
       content += `
         <div class="item-card">
@@ -101,7 +101,7 @@ export function generateDailySummaryEmail(
       <div style="padding: 16px; background-color: #FEF2F2; border-radius: 8px; border-left: 4px solid #EF4444; margin: 20px 0;">
         <p style="margin: 0; color: #DC2626; font-weight: 500;">
           🚨 You have <strong>${totalOverdue}</strong> overdue item${totalOverdue > 1 ? 's' : ''} that need attention.
-          ${templateData.baseUrl ? `<a href="${templateData.baseUrl}/" style="color: ${templateData.brandColor}; text-decoration: none; font-weight: 600; margin-left: 8px; padding: 6px 12px; background: rgba(30,178,159,0.1); border-radius: 4px;">View Dashboard →</a>` : ''}
+          ${templateData.baseUrl ? `<a href="${templateData.baseUrl}/reminders" style="color: ${templateData.brandColor}; text-decoration: none; font-weight: 600; margin-left: 8px; padding: 6px 12px; background: rgba(30,178,159,0.1); border-radius: 4px;">View Reminders →</a>` : ''}
         </p>
       </div>
     `;

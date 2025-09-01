@@ -256,7 +256,9 @@ const handler = async (req: Request): Promise<Response> => {
       reminder_date: activity.reminder_date,
       reminder_time: activity.reminder_time,
       lead_id: activity.lead_id,
-      project_id: activity.project_id
+      project_id: activity.project_id,
+      leads: activity.leads,
+      projects: activity.projects
     }));
 
     // Transform overdue data (only overdue activities, not today's)

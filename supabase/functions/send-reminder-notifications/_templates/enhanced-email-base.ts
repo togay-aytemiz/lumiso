@@ -397,7 +397,7 @@ export const createEmailTemplate = (
     <body>
       <div class="email-container">
         <div class="email-header">
-          <img src="${baseUrl}/lumiso-logo.png" alt="${businessName}" class="logo" />
+          <img src="https://app.lumiso.com/lumiso-logo.png" alt="${businessName}" class="logo" />
         </div>
         
         <div class="email-body">

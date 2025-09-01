@@ -62,7 +62,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Get user profile and organization
     const { data: userProfile } = await adminSupabase
       .from('profiles')
-      .select('full_name, first_name, last_name')
+      .select('full_name')
       .eq('user_id', user.id)
       .maybeSingle();
 
@@ -79,12 +79,10 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error('No active organization found for user');
     }
 
-    // Extract user's full name
+    // Extract user's full name - only use full_name since first_name/last_name don't exist
     const userFullName = userProfile?.full_name || 
-                        (userProfile?.first_name && userProfile?.last_name ? 
-                         `${userProfile.first_name} ${userProfile.last_name}` : 
                          user.user_metadata?.full_name || 
-                         user.email?.split('@')[0] || 'there');
+                         user.email?.split('@')[0] || 'there';
     console.log(`User full name: ${userFullName}`);
 
     // Get today's date
@@ -214,7 +212,7 @@ const handler = async (req: Request): Promise<Response> => {
       brandColor: orgSettings?.primary_brand_color || '#1EB29F',
       dateFormat: orgSettings?.date_format || 'DD/MM/YYYY',
       timeFormat: orgSettings?.time_format || '12-hour',
-      baseUrl: isTest ? 'http://localhost:3000' : 'https://app.lumiso.com'
+      baseUrl: 'https://app.lumiso.com'
     };
 
     // Transform sessions data

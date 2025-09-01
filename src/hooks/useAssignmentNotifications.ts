@@ -33,12 +33,28 @@ export const useAssignmentNotifications = () => {
       // Process each pending notification
       for (const notification of pendingNotifications) {
         try {
-          // Get the assignee's profile
+          // Get the assignee's profile and email
           const { data: assigneeProfile } = await supabase
             .from('profiles')
             .select('full_name')
             .eq('user_id', notification.user_id)
             .maybeSingle();
+
+          // Get the assignee's email using the edge function
+          const { data: emailData, error: emailError } = await supabase.functions.invoke('get-users-email', {
+            body: { user_id: notification.user_id }
+          });
+
+          if (emailError) {
+            console.error('Error fetching assignee email:', emailError);
+            continue;
+          }
+
+          const assigneeEmail = emailData?.email;
+          if (!assigneeEmail) {
+            console.error('No email found for assignee:', notification.user_id);
+            continue;
+          }
 
           // Call the edge function to send the notification
           const { error: sendError } = await supabase.functions.invoke('send-reminder-notifications', {
@@ -47,7 +63,7 @@ export const useAssignmentNotifications = () => {
               entity_type: entityType,
               entity_id: entityId,
               assignee_id: notification.user_id,
-              assignee_email: '', // Will be fetched in the edge function
+              assignee_email: assigneeEmail,
               assignee_name: assigneeProfile?.full_name || 'User',
               assigner_name: currentProfile?.full_name || currentUser?.email?.split('@')[0],
               organizationId: notification.organization_id

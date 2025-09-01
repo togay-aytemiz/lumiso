@@ -501,9 +501,9 @@ export default function Calendar() {
                               return (
                                 <Tooltip key={`a-${activity.id}`}>
                                   <TooltipTrigger asChild>
-                                    <button
-                                      className={`w-full text-left text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground truncate border border-border hover:bg-accent ${activity.completed ? "line-through opacity-60" : ""}`}
-                                      onClick={() => handleActivityClick(activity)}
+                                     <button
+                                       className={`w-full text-left text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground truncate border border-border hover:bg-accent hover:text-accent-foreground ${activity.completed ? "line-through opacity-60" : ""}`}
+                                       onClick={() => handleActivityClick(activity)}
                                     >
                                       {line}
                                     </button>
@@ -642,10 +642,10 @@ export default function Calendar() {
                           const activity = event as Activity & { type: string };
                           const leadName = leadsMap[activity.lead_id]?.name || "Lead";
                           return (
-                            <button
-                              key={`a-${activity.id}`}
-                              className={`w-full text-left text-xs p-2 rounded bg-muted text-muted-foreground border border-border hover:bg-accent min-h-11 ${activity.completed ? "line-through opacity-60" : ""}`}
-                              onClick={() => handleActivityClick(activity)}
+                             <button
+                               key={`a-${activity.id}`}
+                               className={`w-full text-left text-xs p-2 rounded bg-muted text-muted-foreground border border-border hover:bg-accent hover:text-accent-foreground min-h-11 ${activity.completed ? "line-through opacity-60" : ""}`}
+                               onClick={() => handleActivityClick(activity)}
                             >
                               <div className="font-semibold">{activity.reminder_time ? formatTime(activity.reminder_time, userLocale) : "All day"}</div>
                               <div className="truncate">{leadName}</div>
@@ -722,9 +722,9 @@ export default function Calendar() {
                             return (
                               <Tooltip key={activity.id}>
                                 <TooltipTrigger asChild>
-                                  <button
-                                    className={`w-full text-left text-xs p-2 rounded-md bg-muted text-muted-foreground border border-border hover:bg-accent transition-colors cursor-pointer min-h-11 ${activity.completed ? "line-through opacity-60" : ""}`}
-                                    onClick={() => handleActivityClick(activity)}
+                                   <button
+                                     className={`w-full text-left text-xs p-2 rounded-md bg-muted text-muted-foreground border border-border hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer min-h-11 ${activity.completed ? "line-through opacity-60" : ""}`}
+                                     onClick={() => handleActivityClick(activity)}
                                   >
                                     <div className="font-semibold">{activity.reminder_time ? formatTime(activity.reminder_time, userLocale) : "All day"}</div>
                                     <div className="truncate">{leadName}</div>
@@ -816,10 +816,10 @@ export default function Calendar() {
                     const projectName = isProjectReminder ? projectsMap[activity.project_id!]?.name : undefined;
                     const timeText = activity.reminder_time ? formatTime(activity.reminder_time, userLocale) : "All day";
                     return (
-                      <button
-                        key={activity.id}
-                        className={`w-full text-left p-3 rounded-lg bg-muted border border-border hover:bg-accent min-h-11 ${activity.completed ? 'line-through opacity-60' : ''}`}
-                        onClick={() => handleActivityClick(activity)}
+                       <button
+                         key={activity.id}
+                         className={`w-full text-left p-3 rounded-lg bg-muted border border-border hover:bg-accent hover:text-accent-foreground min-h-11 ${activity.completed ? 'line-through opacity-60' : ''}`}
+                         onClick={() => handleActivityClick(activity)}
                       >
                         <div className="flex items-center gap-2 text-sm md:text-base">
                           <span className="font-semibold">{timeText}</span>

@@ -31,41 +31,47 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
-    // Get authenticated user
+    // Get authenticated user - simplified approach
     const authHeader = req.headers.get('authorization');
+    console.log('Auth header present:', !!authHeader);
+    
     if (!authHeader) {
       throw new Error('Authorization header required');
     }
 
-    // Create supabase clients
-    const userSupabase = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? ""
-    );
-
+    // Create admin client 
     const adminSupabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    // Extract token and get current user
+    // Extract token and get user directly with admin client
     const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: userError } = await userSupabase.auth.getUser(token);
+    console.log('Token length:', token.length);
+    
+    const { data: { user }, error: userError } = await adminSupabase.auth.getUser(token);
+    console.log('User auth result:', { user: !!user, error: userError?.message });
+    
     if (userError || !user) {
-      console.error('Auth error:', userError);
-      throw new Error('Failed to get authenticated user');
+      console.error('Auth error details:', userError);
+      throw new Error(`Failed to get authenticated user: ${userError?.message || 'Unknown error'}`);
     }
 
-    // Get user's active organization using admin client with proper auth
-    const { data: organizationId, error: orgError } = await adminSupabase
-      .rpc('get_user_active_organization_id')
-      .headers({ Authorization: authHeader });
-    if (orgError || !organizationId) {
-      console.error('Organization error:', orgError);
+    console.log(`Authenticated user: ${user.email}`);
+
+    // Get user's active organization - using a direct query instead of RPC
+    const { data: userSettings } = await adminSupabase
+      .from('user_settings')
+      .select('active_organization_id')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    const organizationId = userSettings?.active_organization_id;
+    console.log('Organization ID:', organizationId);
+    
+    if (!organizationId) {
       throw new Error('No active organization found for user');
     }
-
-    console.log(`Sending daily summary to: ${user.email} for org: ${organizationId}`);
 
     // Get today's date
     const today = new Date();

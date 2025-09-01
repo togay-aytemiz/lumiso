@@ -95,101 +95,28 @@ export function generateDailySummaryEmail(
     });
   }
 
-  // Overdue Items (if any)
+  // Overdue Items (simplified one line)
   if (totalOverdue > 0) {
     content += `
-      <h3 class="section-title">🚨 Overdue Items Requiring Attention (${totalOverdue})</h3>
+      <div style="padding: 16px; background-color: #FEF2F2; border-radius: 8px; border-left: 4px solid #EF4444; margin: 20px 0;">
+        <p style="margin: 0; color: #DC2626; font-weight: 500;">
+          🚨 You have <strong>${totalOverdue}</strong> overdue item${totalOverdue > 1 ? 's' : ''} that need attention.
+          ${templateData.baseUrl ? `<a href="${templateData.baseUrl}/" style="color: ${templateData.brandColor}; text-decoration: none; font-weight: 600; margin-left: 8px; padding: 6px 12px; background: rgba(30,178,159,0.1); border-radius: 4px;">View Dashboard →</a>` : ''}
+        </p>
+      </div>
     `;
+  }
 
-    if (overdueItems.leads.length > 0) {
-      content += `<p><strong>Overdue Leads:</strong></p>`;
-      overdueItems.leads.slice(0, 3).forEach(lead => {
-        content += `
-          <div class="item-card high-priority">
-            <div class="item-title">
-              <span>${lead.name}</span>
-              <span class="overdue-badge">Overdue</span>
-            </div>
-            ${lead.due_date ? `<div class="item-meta">📅 Due: ${formatDate(lead.due_date, templateData.dateFormat)}</div>` : ''}
-            <div style="margin-top: 12px;">
-              ${templateData.baseUrl ? `<a href="${templateData.baseUrl}/leads/${lead.id}" style="color: ${templateData.brandColor}; text-decoration: none; font-weight: 500; padding: 8px 16px; background: rgba(30,178,159,0.1); border-radius: 4px;">Follow Up →</a>` : ''}
-            </div>
-          </div>
-        `;
-      });
-    }
-
-     if (overdueItems.activities.length > 0) {
-       content += `<p><strong>Overdue Activities:</strong></p>`;
-       overdueItems.activities.slice(0, 3).forEach(activity => {
-         content += `
-           <div class="item-card high-priority">
-             <div class="item-title">
-               <span>${activity.content}</span>
-               <span class="overdue-badge">Overdue</span>
-             </div>
-             ${activity.reminder_date ? `<div class="item-meta">📅 Due: ${formatDate(activity.reminder_date, templateData.dateFormat)}</div>` : ''}
-               <div style="margin-top: 12px;">
-                 ${templateData.baseUrl ? `<a href="${templateData.baseUrl}/reminders" style="color: ${templateData.brandColor}; text-decoration: none; font-weight: 500; padding: 8px 16px; background: rgba(30,178,159,0.1); border-radius: 4px;">View Reminders →</a>` : ''}
-               </div>
-           </div>
-         `;
-       });
-     }
-
-     if (overdueItems.activities.length > 3) {
-       content += `
-         <div style="text-align: center; margin-top: 16px;">
-           <p style="color: #6B7280; margin-bottom: 12px;">
-             ... and ${overdueItems.activities.length - 3} more overdue items
-           </p>
-           ${templateData.baseUrl ? `<a href="${templateData.baseUrl}/reminders" style="color: ${templateData.brandColor}; text-decoration: none; font-weight: 500; padding: 8px 16px; background: rgba(30,178,159,0.1); border-radius: 4px;">See All Reminders →</a>` : ''}
-         </div>
-       `;
-     }
-   }
-
-  // Past Sessions that need action
+  // Past Sessions (simplified one line)
   if (totalPastSessions > 0) {
     content += `
-      <h3 class="section-title">📋 Past Sessions Needing Follow-up (${totalPastSessions})</h3>
-      <p>These sessions have passed and may need your attention:</p>
+      <div style="padding: 16px; background-color: #FEF7ED; border-radius: 8px; border-left: 4px solid #F59E0B; margin: 20px 0;">
+        <p style="margin: 0; color: #D97706; font-weight: 500;">
+          📋 You have <strong>${totalPastSessions}</strong> past session${totalPastSessions > 1 ? 's' : ''} that need${totalPastSessions === 1 ? 's' : ''} action.
+          ${templateData.baseUrl ? `<a href="${templateData.baseUrl}/sessions" style="color: ${templateData.brandColor}; text-decoration: none; font-weight: 600; margin-left: 8px; padding: 6px 12px; background: rgba(30,178,159,0.1); border-radius: 4px;">View Sessions →</a>` : ''}
+        </p>
+      </div>
     `;
-
-    pastSessions.slice(0, 3).forEach(session => {
-      const daysPassed = Math.ceil((new Date().getTime() - new Date(session.session_date).getTime()) / (1000 * 60 * 60 * 24));
-      const sessionName = session.projects?.project_types?.name 
-        ? `${session.projects.project_types.name} Session`
-        : (session.notes || 'Photography Session');
-      
-      content += `
-        <div class="item-card medium-priority">
-          <div class="item-title">
-            <span>${sessionName}</span>
-            <span class="overdue-badge">${daysPassed} day${daysPassed > 1 ? 's' : ''} ago</span>
-          </div>
-          <div class="item-meta">📅 ${formatDate(session.session_date, templateData.dateFormat)} at ${formatTime(session.session_time, templateData.timeFormat)}</div>
-          ${session.leads ? `<div class="item-meta">👤 Client: ${session.leads.name}</div>` : ''}
-          ${session.projects ? `<div class="item-relationship">📋 Project: ${session.projects.name}</div>` : ''}
-          ${session.location ? `<div class="item-meta">📍 ${session.location}</div>` : ''}
-          <div style="margin-top: 12px;">
-            ${templateData.baseUrl ? `<a href="${templateData.baseUrl}/sessions/${session.id}" style="color: ${templateData.brandColor}; text-decoration: none; font-weight: 500; padding: 8px 16px; background: rgba(30,178,159,0.1); border-radius: 4px; margin-right: 8px;">Update Status</a>` : ''}
-            ${templateData.baseUrl && session.projects ? `<a href="${templateData.baseUrl}/projects/${session.projects.id}" style="color: ${templateData.brandColor}; text-decoration: none; font-weight: 500; padding: 8px 16px; background: rgba(30,178,159,0.1); border-radius: 4px;">View Project</a>` : ''}
-          </div>
-        </div>
-      `;
-    });
-
-    if (pastSessions.length > 3) {
-      content += `
-        <div style="text-align: center; margin-top: 16px;">
-          <p style="color: #6B7280; margin-bottom: 12px;">
-            ... and ${pastSessions.length - 3} more past sessions
-          </p>
-          ${templateData.baseUrl ? `<a href="${templateData.baseUrl}/sessions" style="color: ${templateData.brandColor}; text-decoration: none; font-weight: 500; padding: 8px 16px; background: rgba(30,178,159,0.1); border-radius: 4px;">See All Sessions →</a>` : ''}
-        </div>
-      `;
-    }
   }
 
     // Quick Actions

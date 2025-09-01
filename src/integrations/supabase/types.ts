@@ -541,6 +541,7 @@ export type Database = {
           email_id: string | null
           error_message: string | null
           id: string
+          metadata: Json | null
           notification_type: string
           organization_id: string
           sent_at: string | null
@@ -552,6 +553,7 @@ export type Database = {
           email_id?: string | null
           error_message?: string | null
           id?: string
+          metadata?: Json | null
           notification_type: string
           organization_id: string
           sent_at?: string | null
@@ -563,6 +565,7 @@ export type Database = {
           email_id?: string | null
           error_message?: string | null
           id?: string
+          metadata?: Json | null
           notification_type?: string
           organization_id?: string
           sent_at?: string | null

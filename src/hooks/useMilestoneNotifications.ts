@@ -17,6 +17,7 @@ export function useMilestoneNotifications() {
           id,
           user_id,
           organization_id,
+          metadata,
           created_at
         `)
         .eq('notification_type', 'project-milestone')
@@ -46,17 +47,31 @@ export function useMilestoneNotifications() {
       }, {} as Record<string, any>);
 
       // Process each unique notification by calling the edge function
-      // The edge function will handle getting user details and sending emails
       for (const notification of Object.values(uniqueNotifications)) {
         try {
           console.log(`Processing milestone notification for user: ${notification.user_id}`);
+          
+          // Extract project context from metadata
+          const metadata = notification.metadata || {};
+          const projectId = metadata.project_id;
+          const projectName = metadata.project_name;
+          const newStatus = metadata.new_status;
+          const oldStatus = metadata.old_status;
 
-          // Invoke the edge function to send the milestone notification
-          // The edge function has admin privileges to get user emails
+          if (!projectId) {
+            console.error('No project_id in notification metadata:', notification);
+            continue;
+          }
+
+          console.log(`Sending milestone notification for project "${projectName}" (${oldStatus} → ${newStatus})`);
+
+          // Invoke the edge function with the complete project context
           const { data, error } = await supabase.functions.invoke('send-reminder-notifications', {
             body: {
               type: 'project-milestone',
-              assignee_id: notification.user_id,
+              project_id: projectId,
+              old_status: oldStatus,
+              new_status: newStatus,
               organizationId: notification.organization_id,
             }
           });

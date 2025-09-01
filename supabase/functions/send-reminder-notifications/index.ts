@@ -467,24 +467,56 @@ async function handleNewAssignmentNotification(requestData: ReminderRequest, adm
           status = lead.status;
         }
       } else if (entity_type === 'project') {
-        const { data: project } = await adminSupabase
+        console.log('Fetching project details for ID:', entity_id);
+        
+        // First get the project details
+        const { data: project, error: projectError } = await adminSupabase
           .from('projects')
           .select(`
             name,
-            due_date,
-            notes,
-            project_types(name),
-            project_statuses(name)
+            description,
+            project_type_id,
+            status_id
           `)
           .eq('id', entity_id)
           .maybeSingle();
         
+        if (projectError) {
+          console.error('Error fetching project:', projectError);
+        }
+        
         if (project) {
+          console.log('Found project:', project.name);
           entityName = project.name;
-          dueDate = project.due_date;
-          notes = project.notes;
-          projectType = project.project_types?.name;
-          status = project.project_statuses?.name;
+          notes = project.description;
+          
+          // Get project type name if available
+          if (project.project_type_id) {
+            const { data: projectTypeData } = await adminSupabase
+              .from('project_types')
+              .select('name')
+              .eq('id', project.project_type_id)
+              .maybeSingle();
+            
+            if (projectTypeData) {
+              projectType = projectTypeData.name;
+            }
+          }
+          
+          // Get project status name if available
+          if (project.status_id) {
+            const { data: statusData } = await adminSupabase
+              .from('project_statuses')
+              .select('name')
+              .eq('id', project.status_id)
+              .maybeSingle();
+            
+            if (statusData) {
+              status = statusData.name;
+            }
+          }
+        } else {
+          console.log('No project found for ID:', entity_id);
         }
       }
     }

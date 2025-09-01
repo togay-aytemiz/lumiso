@@ -84,7 +84,7 @@ async function processDailySummaryNotifications(
     .from('organization_settings')
     .select(`
       organization_id,
-      notification_daily_summary_send_at,
+      notification_scheduled_time,
       organizations!inner(
         id,
         owner_id,
@@ -96,7 +96,7 @@ async function processDailySummaryNotifications(
     `)
     .eq('notification_daily_summary_enabled', true)
     .eq('organizations.organization_members.status', 'active')
-    .like('notification_daily_summary_send_at', timePattern);
+    .like('notification_scheduled_time', timePattern);
 
   if (orgsError) {
     console.error('Error fetching organizations:', orgsError);
@@ -111,7 +111,7 @@ async function processDailySummaryNotifications(
 
   // Filter organizations by time window
   const eligibleOrgs = organizations.filter(org => {
-    const [hour, minute] = org.notification_daily_summary_send_at.split(':').map(Number);
+    const [hour, minute] = org.notification_scheduled_time.split(':').map(Number);
     return hour === currentHour && minute >= windowStart && minute <= windowEnd;
   });
 

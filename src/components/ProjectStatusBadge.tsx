@@ -4,6 +4,8 @@ import { ChevronDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { useAssignmentNotifications } from "@/hooks/useAssignmentNotifications";
+import { useMilestoneNotifications } from "@/hooks/useMilestoneNotifications";
 
 interface ProjectStatus {
   id: string;
@@ -37,6 +39,8 @@ export function ProjectStatusBadge({
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  const { sendPendingNotifications } = useAssignmentNotifications();
+  const { sendPendingMilestoneNotifications } = useMilestoneNotifications();
 
   console.log('ProjectStatusBadge rendered:', { projectId, currentStatusId, editable });
 
@@ -159,6 +163,12 @@ export function ProjectStatusBadge({
         title: "Status Updated",
         description: `Project status ${currentStatus ? 'changed' : 'set'} to "${newStatus.name}"`
       });
+
+      // Send pending assignment notifications
+      await sendPendingNotifications('project', projectId);
+      
+      // Send pending milestone notifications
+      await sendPendingMilestoneNotifications();
     } catch (error: any) {
       toast({
         title: "Error updating status",

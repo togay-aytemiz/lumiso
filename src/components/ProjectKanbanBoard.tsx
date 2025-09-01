@@ -12,6 +12,8 @@ import { ViewProjectDialog } from "@/components/ViewProjectDialog";
 import { formatDate } from "@/lib/utils";
 import { AssigneeAvatars } from "@/components/AssigneeAvatars";
 import { KanbanLoadingSkeleton } from "@/components/ui/loading-presets";
+import { useAssignmentNotifications } from "@/hooks/useAssignmentNotifications";
+import { useMilestoneNotifications } from "@/hooks/useMilestoneNotifications";
 
 interface ProjectStatus {
   id: string;
@@ -72,6 +74,9 @@ const ProjectKanbanBoard = ({ projects, projectStatuses, onProjectsChange, onPro
   const [selectedStatusId, setSelectedStatusId] = useState<string | null>(null);
   const [viewingProject, setViewingProject] = useState<Project | null>(null);
   const [showViewDialog, setShowViewDialog] = useState(false);
+  
+  const { sendPendingNotifications } = useAssignmentNotifications();
+  const { sendPendingMilestoneNotifications } = useMilestoneNotifications();
 
   useEffect(() => {
     if (projectStatuses && projectStatuses.length > 0) {
@@ -172,6 +177,12 @@ const ProjectKanbanBoard = ({ projects, projectStatuses, onProjectsChange, onPro
       }
 
       onProjectsChange();
+      
+      // Send pending assignment notifications
+      await sendPendingNotifications('project', projectId);
+      
+      // Send pending milestone notifications
+      await sendPendingMilestoneNotifications();
     } catch (error) {
       console.error('Error updating project status:', error);
       toast({

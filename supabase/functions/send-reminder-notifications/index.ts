@@ -3,6 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { Resend } from "npm:resend@2.0.0";
 import { generateDailySummaryEmail } from './_templates/enhanced-daily-summary-template.ts';
 import { generateAssignmentEmail, AssignmentEmailData } from './_templates/enhanced-assignment-template.ts';
+import { generateMilestoneEmail, MilestoneEmailData } from './_templates/enhanced-milestone-template.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -23,6 +24,11 @@ interface ReminderRequest {
   assignee_email?: string;
   assignee_name?: string;
   assigner_name?: string;
+  // Project milestone specific fields
+  project_id?: string;
+  old_status?: string;
+  new_status?: string;
+  milestone_user_name?: string;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -45,9 +51,14 @@ const handler = async (req: Request): Promise<Response> => {
       return await handleNewAssignmentNotification(requestData, adminSupabase);
     }
 
+    // Handle project-milestone notifications
+    if (requestData.type === 'project-milestone') {
+      return await handleProjectMilestoneNotification(requestData, adminSupabase);
+    }
+
     // Handle daily-summary notifications
     if (requestData.type !== 'daily-summary') {
-      return new Response(JSON.stringify({ message: 'Only daily-summary and new-assignment supported' }), {
+      return new Response(JSON.stringify({ message: 'Only daily-summary, new-assignment and project-milestone supported' }), {
         status: 200,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });
@@ -654,6 +665,238 @@ async function handleNewAssignmentNotification(requestData: ReminderRequest, adm
       }
     }
 
+    return new Response(JSON.stringify({
+      error: error.message,
+      successful: 0,
+      failed: 1,
+      total: 1
+    }), {
+      status: 200,
+      headers: { "Content-Type": "application/json", ...corsHeaders },
+    });
+  }
+}
+
+// Handler for project milestone notifications
+async function handleProjectMilestoneNotification(requestData: ReminderRequest, adminSupabase: any): Promise<Response> {
+  console.log('Handling project milestone notification:', requestData);
+  
+  try {
+    const { 
+      project_id,
+      old_status,
+      new_status,
+      milestone_user_name,
+      organizationId,
+      isTest = false
+    } = requestData;
+
+    // Validate required fields
+    if (!project_id || !organizationId) {
+      throw new Error('Missing required fields for milestone notification');
+    }
+
+    // Get project details and assigned users
+    const { data: project, error: projectError } = await adminSupabase
+      .from('projects')
+      .select(`
+        id,
+        name,
+        description,
+        assignees,
+        project_types(name),
+        status_id
+      `)
+      .eq('id', project_id)
+      .maybeSingle();
+
+    if (projectError || !project) {
+      console.error('Error fetching project:', projectError);
+      throw new Error('Project not found');
+    }
+
+    console.log('Found project for milestone:', project.name);
+
+    // Get current status name
+    const { data: statusData } = await adminSupabase
+      .from('project_statuses')
+      .select('name, lifecycle')
+      .eq('id', project.status_id)
+      .maybeSingle();
+
+    const currentStatusName = statusData?.name || new_status || 'Unknown Status';
+    const lifecycle = statusData?.lifecycle || 'active';
+
+    // Only proceed if this is actually a milestone (completed or cancelled)
+    if (!['completed', 'cancelled'].includes(lifecycle)) {
+      console.log('Status change is not a milestone, skipping notification');
+      return new Response(JSON.stringify({
+        message: 'Not a milestone status change',
+        successful: 0,
+        failed: 0,
+        total: 0,
+        skipped: 1
+      }), {
+        status: 200,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    // Get organization settings for branding and notification preferences
+    const { data: orgSettings } = await adminSupabase
+      .from('organization_settings')
+      .select('photography_business_name, primary_brand_color, notification_project_milestone_enabled, notification_global_enabled')
+      .eq('organization_id', organizationId)
+      .maybeSingle();
+
+    let successful = 0;
+    let failed = 0;
+    let skipped = 0;
+    const total = project.assignees?.length || 0;
+
+    // Send notifications to all assigned users
+    for (const assigneeId of project.assignees || []) {
+      try {
+        // Get assignee details
+        const { data: assigneeProfile } = await adminSupabase
+          .from('profiles')
+          .select('full_name')
+          .eq('user_id', assigneeId)
+          .maybeSingle();
+
+        const { data: assigneeAuth } = await adminSupabase.auth.admin.getUserById(assigneeId);
+        
+        if (!assigneeAuth?.user?.email) {
+          console.log('No email found for assignee:', assigneeId);
+          failed++;
+          continue;
+        }
+
+        const assigneeName = assigneeProfile?.full_name || 
+                            assigneeAuth.user.user_metadata?.full_name || 
+                            assigneeAuth.user.email.split('@')[0];
+
+        // Get user-level notification settings (takes precedence over org settings)
+        const { data: userSettings } = await adminSupabase
+          .from('user_settings')
+          .select('notification_project_milestone_enabled, notification_global_enabled')
+          .eq('user_id', assigneeId)
+          .maybeSingle();
+
+        // Check if milestone notifications are disabled - user settings override org settings
+        const globalEnabled = (userSettings?.notification_global_enabled ?? orgSettings?.notification_global_enabled) ?? true;
+        const milestoneEnabled = (userSettings?.notification_project_milestone_enabled ?? orgSettings?.notification_project_milestone_enabled) ?? true;
+
+        if (!globalEnabled || !milestoneEnabled) {
+          console.log(`Milestone notifications disabled for user ${assigneeId} - Global: ${globalEnabled}, Milestone: ${milestoneEnabled}`);
+          
+          // Update notification log to skipped
+          await adminSupabase
+            .from('notification_logs')
+            .update({ status: 'skipped', sent_at: new Date().toISOString() })
+            .eq('user_id', assigneeId)
+            .eq('notification_type', 'project-milestone')
+            .eq('status', 'pending')
+            .order('created_at', { ascending: false })
+            .limit(1);
+
+          skipped++;
+          continue;
+        }
+
+        // Prepare template data
+        const templateData: MilestoneEmailData = {
+          user: {
+            fullName: assigneeName,
+            email: assigneeAuth.user.email
+          },
+          business: {
+            businessName: orgSettings?.photography_business_name || 'Lumiso',
+            brandColor: orgSettings?.primary_brand_color || '#1EB29F'
+          },
+          milestoneData: {
+            projectId: project.id,
+            projectName: project.name,
+            projectType: project.project_types?.name || null,
+            oldStatus: old_status || 'Previous Status',
+            newStatus: currentStatusName,
+            lifecycle: lifecycle,
+            milestoneUserName: milestone_user_name || 'Someone',
+            notes: project.description,
+            organizationId: organizationId
+          }
+        };
+
+        // Generate email HTML
+        const emailHtml = generateMilestoneEmail(templateData);
+
+        // Determine emoji based on lifecycle
+        const emoji = lifecycle === 'completed' ? '🎉' : '⚠️';
+        
+        // Send email using Resend
+        const emailResult = await resend.emails.send({
+          from: 'Lumiso <hello@updates.lumiso.app>',
+          to: [assigneeAuth.user.email],
+          subject: `${emoji} Project Milestone: ${project.name} → ${currentStatusName}`,
+          html: emailHtml
+        });
+
+        console.log(`Milestone notification sent to ${assigneeAuth.user.email}:`, emailResult);
+
+        // Update notification log status to sent
+        await adminSupabase
+          .from('notification_logs')
+          .update({ status: 'sent', sent_at: new Date().toISOString() })
+          .eq('user_id', assigneeId)
+          .eq('notification_type', 'project-milestone')
+          .eq('status', 'pending')
+          .order('created_at', { ascending: false })
+          .limit(1);
+
+        successful++;
+
+      } catch (error) {
+        console.error(`Error sending milestone notification to ${assigneeId}:`, error);
+        
+        // Log error in notification_logs
+        try {
+          await adminSupabase
+            .from('notification_logs')
+            .update({ 
+              status: 'failed', 
+              error_message: error.message,
+              sent_at: new Date().toISOString()
+            })
+            .eq('user_id', assigneeId)
+            .eq('notification_type', 'project-milestone')
+            .eq('status', 'pending')
+            .order('created_at', { ascending: false })
+            .limit(1);
+        } catch (logError) {
+          console.error('Failed to update error log:', logError);
+        }
+
+        failed++;
+      }
+    }
+
+    return new Response(JSON.stringify({
+      message: `Project milestone notifications processed for ${project.name}`,
+      successful,
+      failed,
+      skipped,
+      total,
+      projectName: project.name,
+      newStatus: currentStatusName,
+      lifecycle
+    }), {
+      status: 200,
+      headers: { "Content-Type": "application/json", ...corsHeaders },
+    });
+
+  } catch (error) {
+    console.error('Error in project milestone notification:', error);
+    
     return new Response(JSON.stringify({
       error: error.message,
       successful: 0,

@@ -178,6 +178,43 @@ const handler = async (req: Request): Promise<Response> => {
       console.error('Error fetching today activities:', todayActivitiesError);
     }
 
+    // Fetch lead and project names for today's activities
+    const todayActivitiesWithNames = [];
+    if (todayActivities && todayActivities.length > 0) {
+      for (const activity of todayActivities) {
+        let leadName = null;
+        let projectName = null;
+
+        // Fetch lead name if lead_id exists
+        if (activity.lead_id) {
+          const { data: lead } = await adminSupabase
+            .from('leads')
+            .select('name')
+            .eq('id', activity.lead_id)
+            .maybeSingle();
+          leadName = lead?.name || null;
+        }
+
+        // Fetch project name if project_id exists
+        if (activity.project_id) {
+          const { data: project } = await adminSupabase
+            .from('projects')
+            .select('name')
+            .eq('id', activity.project_id)
+            .maybeSingle();
+          projectName = project?.name || null;
+        }
+
+        todayActivitiesWithNames.push({
+          ...activity,
+          leads: leadName ? { name: leadName } : null,
+          projects: projectName ? { name: projectName } : null
+        });
+      }
+    }
+
+    console.log('Today activities with names:', todayActivitiesWithNames);
+
     // Get pending todos - use admin client since todos are user-specific
     const { data: pendingTodos, error: todosError } = await adminSupabase
       .from('todos')
@@ -255,13 +292,15 @@ const handler = async (req: Request): Promise<Response> => {
     }));
 
     // Transform today's activities separately from overdue
-    const todayReminders = (todayActivities || []).map(activity => ({
+    const todayReminders = (todayActivitiesWithNames || []).map(activity => ({
       id: activity.id,
       content: activity.content,
       reminder_date: activity.reminder_date,
       reminder_time: activity.reminder_time,
       lead_id: activity.lead_id,
-      project_id: activity.project_id
+      project_id: activity.project_id,
+      leads: activity.leads,
+      projects: activity.projects
     }));
 
     // Transform overdue data (only overdue activities, not today's)

@@ -157,14 +157,14 @@ const handler = async (req: Request): Promise<Response> => {
       .from('activities')
       .select(`
         id,
+        user_id,
         content,
         reminder_date,
         reminder_time,
+        type,
         completed,
         lead_id,
-        project_id,
-        leads(id, name),
-        projects(id, name)
+        project_id
       `)
       .eq('organization_id', organizationId)
       .eq('completed', false)
@@ -261,9 +261,7 @@ const handler = async (req: Request): Promise<Response> => {
       reminder_date: activity.reminder_date,
       reminder_time: activity.reminder_time,
       lead_id: activity.lead_id,
-      project_id: activity.project_id,
-      leads: activity.leads,
-      projects: activity.projects
+      project_id: activity.project_id
     }));
 
     // Transform overdue data (only overdue activities, not today's)

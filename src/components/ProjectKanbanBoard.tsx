@@ -178,31 +178,17 @@ const ProjectKanbanBoard = ({
       const insertIndex = Math.min(Math.max(destination.index, 0), dstList.length);
       dstList.splice(insertIndex, 0, itemWithNewStatus);
 
-      const updates: Array<Partial<Project> & { id: string }> = [];
+      // Calculate the new sort order based on the destination index
+      const newSortOrder = (destination.index + 1) * GAP;
 
-      dstList.forEach((p, i) => {
-        updates.push({
-          id: p.id,
-          status_id: dstStatusId,
-          sort_order: (i + 1) * GAP,
-          user_id: user.id
-        });
-      });
-
-      if (srcStatusId !== dstStatusId) {
-        srcListBase.forEach((p, i) => {
-          updates.push({
-            id: p.id,
-            status_id: srcStatusId,
-            sort_order: (i + 1) * GAP,
-            user_id: p.user_id || user.id
-          });
-        });
-      }
-
+      // Update just the moved project with its new status and position
       const { error } = await supabase
         .from("projects")
-        .upsert(updates, { onConflict: "id" });
+        .update({
+          status_id: dstStatusId,
+          sort_order: newSortOrder
+        })
+        .eq("id", projectId);
 
       if (error) throw error;
 

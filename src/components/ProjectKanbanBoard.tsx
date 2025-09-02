@@ -11,6 +11,7 @@ import { EnhancedProjectDialog } from "@/components/EnhancedProjectDialog";
 import { ViewProjectDialog } from "@/components/ViewProjectDialog";
 import { formatDate } from "@/lib/utils";
 import { AssigneeAvatars } from "@/components/AssigneeAvatars";
+import { ProfessionalKanbanCard } from "@/components/ProfessionalKanbanCard";
 import { KanbanLoadingSkeleton } from "@/components/ui/loading-presets";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { useNotificationTriggers } from "@/hooks/useNotificationTriggers";
@@ -223,64 +224,11 @@ const ProjectKanbanBoard = ({
   };
   const renderProjectCard = (project: Project, index: number) => <Draggable key={project.id} draggableId={project.id} index={index}>
       {provided => <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} className="mb-3">
-          <Card className="cursor-pointer hover:shadow-lg hover:-translate-y-1 transition-all duration-300 ease-out bg-card border border-border/50 hover:border-border group" onClick={() => handleProjectClick(project)}>
-            <CardContent className="p-4 space-y-3">
-              {/* Project Type - Top Left Corner */}
-              {kanbanSettings.kanban_show_project_type && project.project_type && (
-                <div className="flex">
-                  <Badge variant="secondary" className="text-xs font-medium bg-muted text-muted-foreground border-0 px-2 py-1">
-                    {project.project_type.name}
-                  </Badge>
-                </div>
-              )}
-
-              {/* Main Content */}
-              <div className="space-y-2">
-                {/* Project Name - Bold, Larger Text */}
-                {kanbanSettings.kanban_show_project_name && (
-                  <h3 className="font-bold text-base text-foreground line-clamp-2 group-hover:text-primary transition-colors">
-                    {project.name}
-                  </h3>
-                )}
-                
-                {/* Lead Name - Smaller, with user icon */}
-                {kanbanSettings.kanban_show_client_name && (
-                  <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                    <User className="h-3.5 w-3.5 flex-shrink-0" />
-                    <span className="truncate">{project.lead?.name || 'No Lead'}</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Optional To-Do Progress Bar */}
-              {kanbanSettings.kanban_show_todo_progress && (project.todo_count || 0) > 0 && <div className="space-y-2">
-                  <ProgressBar value={Math.round((project.completed_todo_count || 0) / (project.todo_count || 0) * 100)} total={project.todo_count || 0} completed={project.completed_todo_count || 0} className="w-full" showLabel={true} size="sm" />
-                </div>}
-
-              {/* Separator Line */}
-              
-
-              {/* Footer with stats and assignees */}
-              <div className="flex items-center justify-between py-0.5">
-                <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                  {/* Session Count */}
-                  {kanbanSettings.kanban_show_session_count && <div className="flex items-center gap-1">
-                    <Calendar className="h-3.5 w-3.5" />
-                    <span>{project.session_count || project.planned_session_count || 0}</span>
-                  </div>}
-                  
-                  {/* Service Count */}
-                  {kanbanSettings.kanban_show_service_count && <div className="flex items-center gap-1">
-                    <Briefcase className="h-3.5 w-3.5" />
-                    <span>{project.services?.length || 0}</span>
-                  </div>}
-                </div>
-
-                {/* Avatar Stack */}
-                {kanbanSettings.kanban_show_assignees && project.assignees && project.assignees.length > 0 && <AssigneeAvatars assigneeIds={project.assignees} maxVisible={3} size="sm" />}
-              </div>
-            </CardContent>
-          </Card>
+          <ProfessionalKanbanCard
+            project={project}
+            kanbanSettings={kanbanSettings}
+            onClick={() => handleProjectClick(project)}
+          />
         </div>}
     </Draggable>;
   const renderColumn = (status: ProjectStatus | null, projects: Project[]) => {

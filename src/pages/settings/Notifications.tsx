@@ -343,6 +343,22 @@ export default function Notifications() {
                 <Button
                   variant="ghost"
                   size="sm"
+                  onClick={() => testNotification('daily-summary-empty')}
+                  disabled={testingNotification === 'daily-summary-empty'}
+                  className="text-muted-foreground hover:text-muted-foreground/80 hover:bg-transparent p-0 h-auto font-medium text-sm"
+                >
+                  {testingNotification === 'daily-summary-empty' ? (
+                    <>
+                      <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                      Testing...
+                    </>
+                  ) : (
+                    'Send empty test'
+                  )}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => testNotification('daily-summary')}
                   disabled={testingNotification === 'daily-summary'}
                   className="text-primary hover:text-primary/80 hover:bg-transparent p-0 h-auto font-medium text-sm"

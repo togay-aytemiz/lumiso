@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { Resend } from "npm:resend@2.0.0";
 import { generateModernDailySummaryEmail } from './_templates/enhanced-daily-summary-modern.ts';
+import { generateEmptyDailySummaryEmail } from './_templates/enhanced-daily-summary-empty.ts';
 import { generateImmediateNotificationEmail, generateSubject, ImmediateNotificationEmailData, ProjectAssignmentData, LeadAssignmentData, ProjectMilestoneData } from './_templates/immediate-notifications.ts';
 
 const corsHeaders = {
@@ -55,9 +56,9 @@ const handler = async (req: Request): Promise<Response> => {
       return await handleProjectMilestoneNotification(requestData, adminSupabase);
     }
 
-    // Handle daily-summary notifications
-    if (requestData.type !== 'daily-summary') {
-      return new Response(JSON.stringify({ message: 'Only daily-summary, new-assignment and project-milestone supported' }), {
+    // Handle daily-summary and daily-summary-empty notifications
+    if (!['daily-summary', 'daily-summary-empty'].includes(requestData.type)) {
+      return new Response(JSON.stringify({ message: 'Only daily-summary, daily-summary-empty, new-assignment and project-milestone supported' }), {
         status: 200,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });
@@ -364,24 +365,48 @@ const handler = async (req: Request): Promise<Response> => {
       }))
     };
 
-    // Generate enhanced email content using the modern template
-    const emailHtml = generateModernDailySummaryEmail(
-      sessions,
-      todayReminders,
-      overdueItems,
-      pastSessionsNeedingAction,
-      templateData
-    );
+    // Generate enhanced email content using the appropriate template
+    let emailHtml: string;
+    let emailSubject: string;
+    const todayFormatted = today.toLocaleDateString('en-GB', { 
+      day: '2-digit', 
+      month: '2-digit', 
+      year: 'numeric' 
+    });
+
+    if (type === 'daily-summary-empty') {
+      // Force empty state for testing
+      emailHtml = generateEmptyDailySummaryEmail(
+        overdueItems,
+        pastSessionsNeedingAction,
+        templateData
+      );
+      emailSubject = `🌅 Fresh Start Today - ${todayFormatted}`;
+    } else if (sessions.length === 0 && todayReminders.length === 0) {
+      // Automatically use empty template when no sessions or reminders
+      emailHtml = generateEmptyDailySummaryEmail(
+        overdueItems,
+        pastSessionsNeedingAction,
+        templateData
+      );
+      emailSubject = `🌅 Fresh Start Today - ${todayFormatted}`;
+    } else {
+      // Use regular daily summary template
+      emailHtml = generateModernDailySummaryEmail(
+        sessions,
+        todayReminders,
+        overdueItems,
+        pastSessionsNeedingAction,
+        templateData
+      );
+      emailSubject = `📅 Daily Summary - ${todayFormatted}`;
+    }
 
     // Send email using Resend
     const emailResult = await resend.emails.send({
       from: 'Lumiso <hello@updates.lumiso.app>',
       to: [user.email],
-      subject: `📅 Daily Summary - ${today.toLocaleDateString('en-GB', { 
-        day: '2-digit', 
-        month: '2-digit', 
-        year: 'numeric' 
-      })}`,
+      subject: emailSubject,
       html: emailHtml
     });
 

@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useWorkflows } from "@/hooks/useWorkflows";
 import { CreateWorkflowDialog } from "@/components/CreateWorkflowDialog";
+import { EditWorkflowDialog } from "@/components/EditWorkflowDialog";
 import { WorkflowCard } from "@/components/WorkflowCard";
 import { Workflow } from "@/types/workflow";
 import { Plus, Search, Zap, CheckCircle, XCircle, Clock, AlertTriangle } from "lucide-react";
@@ -16,6 +17,8 @@ export default function Workflows() {
   const { workflows, loading, createWorkflow, updateWorkflow, deleteWorkflow, toggleWorkflowStatus } = useWorkflows();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "paused">("all");
+  const [editingWorkflow, setEditingWorkflow] = useState<Workflow | undefined>();
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
 
   const filteredWorkflows = workflows.filter((workflow) => {
     const matchesSearch = workflow.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -27,8 +30,8 @@ export default function Workflows() {
   });
 
   const handleEditWorkflow = (workflow: Workflow) => {
-    // TODO: Implement edit dialog in Phase 2
-    console.log("Edit workflow:", workflow);
+    setEditingWorkflow(workflow);
+    setEditDialogOpen(true);
   };
 
   const handleDeleteWorkflow = async (id: string) => {
@@ -132,15 +135,20 @@ export default function Workflows() {
           </div>
         ) : filteredWorkflows.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredWorkflows.map((workflow) => (
-              <WorkflowCard
-                key={workflow.id}
-                workflow={workflow}
-                onEdit={handleEditWorkflow}
-                onDelete={handleDeleteWorkflow}
-                onToggleStatus={toggleWorkflowStatus}
-              />
-            ))}
+        {filteredWorkflows.map((workflow) => (
+          <div key={workflow.id} className="relative">
+            <WorkflowCard
+              workflow={workflow}
+              onEdit={handleEditWorkflow}
+              onDelete={handleDeleteWorkflow}
+              onToggleStatus={toggleWorkflowStatus}
+            />
+            {/* Quick Preview Button */}
+            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+              {/* Preview component would go here */}
+            </div>
+          </div>
+        ))}
           </div>
         ) : workflows.length === 0 ? (
           <Card className="border-dashed">
@@ -172,6 +180,14 @@ export default function Workflows() {
           </Card>
         )}
       </div>
+
+      {/* Edit Workflow Dialog */}
+      <EditWorkflowDialog
+        workflow={editingWorkflow}
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        onUpdateWorkflow={updateWorkflow}
+      />
     </div>
   );
 }

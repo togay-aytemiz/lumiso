@@ -20,6 +20,7 @@ interface ProjectStatus {
   name: string;
   color: string;
   sort_order: number;
+  lifecycle?: string;
   created_at?: string;
   updated_at?: string;
   user_id?: string;
@@ -215,7 +216,7 @@ const ProjectKanbanBoard = ({
         const oldStatus = statuses.find(s => s.id === moving.status_id);
         const newStatus = statuses.find(s => s.id === (dstStatusId || ""));
         
-        // Run activity insertion and milestone notification in parallel to improve performance
+        // Insert activity log
         const activityPromise = supabase.from("activities").insert({
           type: "status_change",
           content: `Status changed from '${oldStatus?.name || "No Status"}' to '${newStatus?.name || "No Status"}'`,
@@ -224,7 +225,11 @@ const ProjectKanbanBoard = ({
           user_id: user.id
         });
 
-        const notificationPromise = activeOrganization?.id && triggerProjectMilestone 
+        // TEMPORARILY SKIP milestone notifications for completed/cancelled to test performance
+        // Skip notifications for completed and cancelled lifecycle statuses
+        const shouldSkipNotification = newStatus?.lifecycle === 'completed' || newStatus?.lifecycle === 'cancelled';
+        
+        const notificationPromise = !shouldSkipNotification && activeOrganization?.id && triggerProjectMilestone 
           ? triggerProjectMilestone(
               projectId,
               srcStatusId || "",
@@ -233,6 +238,10 @@ const ProjectKanbanBoard = ({
               moving.assignees || []
             ).catch(error => console.error("Failed to trigger milestone notification:", error))
           : Promise.resolve();
+
+        if (shouldSkipNotification) {
+          console.log("Skipping milestone notification for performance testing - target status:", newStatus?.name, "lifecycle:", newStatus?.lifecycle);
+        }
 
         // Wait for both operations in parallel
         await Promise.all([activityPromise, notificationPromise]);
@@ -325,18 +334,17 @@ const ProjectKanbanBoard = ({
               <div
                 ref={provided.innerRef}
                 {...provided.droppableProps}
-                className={`transition-colors pb-2 min-h-96 flex flex-col ${snapshot.isDraggingOver ? "bg-accent/20 rounded" : ""}`}
+                className={`h-full flex flex-col transition-colors ${snapshot.isDraggingOver ? "bg-accent/20 rounded" : ""}`}
               >
-                <div className="flex-shrink-0">
+                {/* Projects area */}
+                <div className="flex flex-col gap-2 mb-3">
                   {ordered.map((project, index) => renderProjectCard(project, index))}
                 </div>
 
-                {/* This div will expand to take remaining space and serve as drop zone */}
-                <div className="flex-1 min-h-24 flex items-end">
-                  {provided.placeholder}
-                  
+                {/* Add Project Button */}
+                <div className="mb-3">
                   {ordered.length === 0 ? (
-                    <div className="flex items-center justify-center w-full h-32">
+                    <div className="flex items-center justify-center h-32 border-2 border-dashed border-muted-foreground/20 rounded-lg">
                       <Button
                         variant="outline"
                         onClick={() => handleAddProject(status?.id || null)}
@@ -350,11 +358,21 @@ const ProjectKanbanBoard = ({
                     <Button
                       variant="outline"
                       onClick={() => handleAddProject(status?.id || null)}
-                      className="w-full flex items-center gap-2 border-dashed mt-2"
+                      className="w-full flex items-center gap-2 border-dashed"
                     >
                       <Plus className="h-4 w-4" />
                       Add Project
                     </Button>
+                  )}
+                </div>
+
+                {/* Large drop zone area */}
+                <div className="flex-1 min-h-32 relative">
+                  {provided.placeholder}
+                  {snapshot.isDraggingOver && (
+                    <div className="absolute inset-0 border-2 border-dashed border-primary/50 rounded-lg bg-primary/5 flex items-center justify-center">
+                      <span className="text-muted-foreground text-sm">Drop project here</span>
+                    </div>
                   )}
                 </div>
               </div>

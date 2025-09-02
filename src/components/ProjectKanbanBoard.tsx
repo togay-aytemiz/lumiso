@@ -224,7 +224,7 @@ const ProjectKanbanBoard = ({
           <Card className="cursor-pointer hover:shadow-lg hover:-translate-y-1 transition-all duration-300 ease-out bg-card border border-border/50 hover:border-border group" onClick={() => handleProjectClick(project)}>
             <CardContent className="p-4 space-y-3 px-[14px] py-[8px]">
               {/* Project Type - Top Left Corner */}
-              {project.project_type && <div className="flex pt-4">
+              {project.project_type && <div className="flex pt-4 py-0">
                   <Badge variant="secondary" className="text-xs font-medium bg-muted text-muted-foreground border-0 px-2 py-1">
                     {project.project_type.name}
                   </Badge>

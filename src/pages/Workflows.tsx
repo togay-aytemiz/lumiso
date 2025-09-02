@@ -9,6 +9,7 @@ import { DataTable, type Column } from "@/components/ui/data-table";
 import { PageLoadingSkeleton } from "@/components/ui/loading-presets";
 import { useWorkflows } from "@/hooks/useWorkflows";
 import { CreateWorkflowSheet } from "@/components/CreateWorkflowSheet";
+import { WorkflowDeleteDialog } from "@/components/WorkflowDeleteDialog";
 import { Workflow } from "@/types/workflow";
 import { Plus, Search, Zap, CheckCircle, Clock, AlertTriangle, Edit, Trash2, Mail, MessageCircle, Phone } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
@@ -31,14 +32,34 @@ export default function Workflows() {
   });
 
   const [editingWorkflow, setEditingWorkflow] = useState<Workflow | null>(null);
+  const [deletingWorkflow, setDeletingWorkflow] = useState<Workflow | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleEditWorkflow = (workflow: Workflow) => {
     setEditingWorkflow(workflow);
   };
 
-  const handleDeleteWorkflow = async (id: string) => {
-    if (confirm("Are you sure you want to delete this workflow?")) {
-      await deleteWorkflow(id);
+  const handleDeleteWorkflow = (workflow: Workflow) => {
+    setDeletingWorkflow(workflow);
+  };
+
+  const confirmDeleteWorkflow = async () => {
+    if (!deletingWorkflow) return;
+    
+    setIsDeleting(true);
+    try {
+      await deleteWorkflow(deletingWorkflow.id);
+      setDeletingWorkflow(null);
+    } catch (error) {
+      console.error('Failed to delete workflow:', error);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const cancelDeleteWorkflow = () => {
+    if (!isDeleting) {
+      setDeletingWorkflow(null);
     }
   };
 
@@ -163,7 +184,7 @@ export default function Workflows() {
                 Edit
               </DropdownMenuItem>
               <DropdownMenuItem 
-                onClick={() => handleDeleteWorkflow(workflow.id)}
+                onClick={() => handleDeleteWorkflow(workflow)}
                 className="text-destructive"
               >
                 <Trash2 className="h-4 w-4 mr-2" />
@@ -308,6 +329,15 @@ export default function Workflows() {
           />
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <WorkflowDeleteDialog
+        open={!!deletingWorkflow}
+        workflow={deletingWorkflow}
+        onConfirm={confirmDeleteWorkflow}
+        onCancel={cancelDeleteWorkflow}
+        isDeleting={isDeleting}
+      />
     </div>
   );
 }

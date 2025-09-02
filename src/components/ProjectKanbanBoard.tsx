@@ -223,7 +223,7 @@ const ProjectKanbanBoard = ({
     }
   };
   const renderProjectCard = (project: Project, index: number) => <Draggable key={project.id} draggableId={project.id} index={index}>
-      {provided => <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} className="mb-3">
+      {provided => <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} className="mb-3 md:mb-2">
           <ProfessionalKanbanCard
             project={project}
             kanbanSettings={kanbanSettings}

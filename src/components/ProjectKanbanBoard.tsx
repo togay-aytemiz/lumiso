@@ -228,27 +228,27 @@ const ProjectKanbanBoard = ({ projects, projectStatuses, onProjectsChange, onPro
             onClick={() => handleProjectClick(project)}
           >
             <CardContent className="p-4 space-y-3">
-              {/* Header with Project Type badge */}
-              <div className="flex items-start justify-between">
-                <div className="flex-1 min-w-0">
-                  {/* Project Name - Bold, Larger Text */}
-                  <h3 className="font-bold text-base text-foreground mb-2 line-clamp-2 group-hover:text-primary transition-colors">
-                    {project.name}
-                  </h3>
-                  
-                  {/* Lead Name - Smaller, with user icon */}
-                  <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                    <User className="h-3.5 w-3.5 flex-shrink-0" />
-                    <span className="truncate">{project.lead?.name || 'No Lead'}</span>
-                  </div>
-                </div>
-
-                {/* Project Type Badge - Top Right */}
-                {project.project_type && (
-                  <Badge variant="secondary" className="text-xs font-medium bg-muted/50 text-muted-foreground border-0 flex-shrink-0 ml-2">
+              {/* Project Type - Top Left Corner */}
+              {project.project_type && (
+                <div className="flex">
+                  <Badge variant="secondary" className="text-xs font-medium bg-muted text-muted-foreground border-0 px-2 py-1">
                     {project.project_type.name}
                   </Badge>
-                )}
+                </div>
+              )}
+
+              {/* Main Content */}
+              <div className="space-y-2">
+                {/* Project Name - Bold, Larger Text */}
+                <h3 className="font-bold text-base text-foreground line-clamp-2 group-hover:text-primary transition-colors">
+                  {project.name}
+                </h3>
+                
+                {/* Lead Name - Smaller, with user icon */}
+                <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                  <User className="h-3.5 w-3.5 flex-shrink-0" />
+                  <span className="truncate">{project.lead?.name || 'No Lead'}</span>
+                </div>
               </div>
 
               {/* Optional To-Do Progress Bar */}
@@ -271,21 +271,17 @@ const ProjectKanbanBoard = ({ projects, projectStatuses, onProjectsChange, onPro
               {/* Footer with stats and assignees */}
               <div className="flex items-center justify-between pt-1">
                 <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                  {/* Session Count */}
-                  {(project.session_count || project.planned_session_count || 0) > 0 && (
-                    <div className="flex items-center gap-1">
-                      <Calendar className="h-3.5 w-3.5" />
-                      <span>{project.session_count || project.planned_session_count}</span>
-                    </div>
-                  )}
+                  {/* Session Count - Always show icon */}
+                  <div className="flex items-center gap-1">
+                    <Calendar className="h-3.5 w-3.5" />
+                    <span>{project.session_count || project.planned_session_count || 0}</span>
+                  </div>
                   
-                  {/* Service Count */}
-                  {(project.services?.length || 0) > 0 && (
-                    <div className="flex items-center gap-1">
-                      <Briefcase className="h-3.5 w-3.5" />
-                      <span>{project.services?.length}</span>
-                    </div>
-                  )}
+                  {/* Service Count - Always show icon */}
+                  <div className="flex items-center gap-1">
+                    <Briefcase className="h-3.5 w-3.5" />
+                    <span>{project.services?.length || 0}</span>
+                  </div>
                 </div>
 
                 {/* Avatar Stack */}

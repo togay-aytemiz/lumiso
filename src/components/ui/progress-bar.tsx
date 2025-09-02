@@ -23,26 +23,26 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
   
   return (
     <div className={cn('w-full', className)}>
-      <div className={cn(
-        'w-full bg-muted rounded-full overflow-hidden',
-        height
-      )}>
-        <div
-          className={cn(
-            'h-full rounded-full transition-all duration-500 ease-in-out',
-            isComplete ? 'bg-green-600' : 'bg-primary'
-          )}
-          style={{ width: `${value}%` }}
-        />
-      </div>
-      
-      {showLabel && total > 0 && (
-        <div className="flex justify-between items-center mt-1">
-          <span className="text-xs text-muted-foreground">
-            {completed} of {total} todos completed {value > 0 && `(${value}%)`}
-          </span>
+      <div className="flex items-center gap-2">
+        <div className={cn(
+          'flex-1 bg-muted rounded-full overflow-hidden',
+          height
+        )}>
+          <div
+            className={cn(
+              'h-full rounded-full transition-all duration-500 ease-in-out',
+              isComplete ? 'bg-green-600' : 'bg-primary'
+            )}
+            style={{ width: `${value}%` }}
+          />
         </div>
-      )}
+        
+        {showLabel && total > 0 && (
+          <span className="text-xs text-muted-foreground whitespace-nowrap">
+            {completed}/{total}
+          </span>
+        )}
+      </div>
     </div>
   );
 };

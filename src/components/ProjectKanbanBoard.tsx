@@ -222,7 +222,7 @@ const ProjectKanbanBoard = ({
   const renderProjectCard = (project: Project, index: number) => <Draggable key={project.id} draggableId={project.id} index={index}>
       {provided => <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} className="mb-3">
           <Card className="cursor-pointer hover:shadow-lg hover:-translate-y-1 transition-all duration-300 ease-out bg-card border border-border/50 hover:border-border group" onClick={() => handleProjectClick(project)}>
-            <CardContent className="p-4 space-y-3">
+            <CardContent className="p-3 space-y-2">
               {/* Project Type - Top Left Corner */}
               {project.project_type && <div className="flex pt-4">
                   <Badge variant="secondary" className="text-xs font-medium bg-muted text-muted-foreground border-0 px-2 py-1">
@@ -246,7 +246,7 @@ const ProjectKanbanBoard = ({
 
               {/* Optional To-Do Progress Bar */}
               {(project.todo_count || 0) > 0 && <div className="space-y-2">
-                  <ProgressBar value={Math.round((project.completed_todo_count || 0) / (project.todo_count || 0) * 100)} total={project.todo_count || 0} completed={project.completed_todo_count || 0} className="w-full" showLabel={false} size="sm" />
+                  <ProgressBar value={Math.round((project.completed_todo_count || 0) / (project.todo_count || 0) * 100)} total={project.todo_count || 0} completed={project.completed_todo_count || 0} className="w-full" showLabel={true} size="sm" />
                 </div>}
 
               {/* Separator Line */}

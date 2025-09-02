@@ -7,10 +7,12 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
 import { Loader2, TestTube, Power, PowerOff, Clock, Zap } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { SettingsLoadingSkeleton } from "@/components/ui/loading-presets";
+import { NotificationSystemManager } from "@/components/settings/NotificationSystemManager";
 
 interface NotificationSettings {
   // Master Controls
@@ -500,6 +502,17 @@ export default function Notifications() {
             </div>
           </div>
         </CategorySettingsSection>
+
+        <Separator />
+
+        {/* New Unified System Manager */}
+        <div>
+          <h3 className="text-lg font-medium mb-2">System Management</h3>
+          <p className="text-sm text-muted-foreground mb-4">
+            Advanced controls for the unified notification system
+          </p>
+          <NotificationSystemManager />
+        </div>
       </div>
     </SettingsPageWrapper>
   );

@@ -19,6 +19,16 @@ export function KanbanSettingsSheet({ children }: KanbanSettingsSheetProps) {
 
   const settingsOptions = [
     {
+      key: 'kanban_show_project_name' as const,
+      label: 'Project Name',
+      description: 'Show project names on cards',
+    },
+    {
+      key: 'kanban_show_client_name' as const,
+      label: 'Client Name',
+      description: 'Show client names on cards',
+    },
+    {
       key: 'kanban_show_project_type' as const,
       label: 'Project Type',
       description: 'Show project type badges on cards',
@@ -89,7 +99,7 @@ export function KanbanSettingsSheet({ children }: KanbanSettingsSheetProps) {
                     disabled={isUpdating}
                   />
                 </div>
-                {option.key !== 'kanban_show_service_count' && (
+                {settingsOptions.findIndex(opt => opt.key === option.key) !== settingsOptions.length - 1 && (
                   <Separator className="my-4" />
                 )}
               </div>

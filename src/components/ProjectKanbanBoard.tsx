@@ -224,26 +224,32 @@ const ProjectKanbanBoard = ({
   const renderProjectCard = (project: Project, index: number) => <Draggable key={project.id} draggableId={project.id} index={index}>
       {provided => <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} className="mb-3">
           <Card className="cursor-pointer hover:shadow-lg hover:-translate-y-1 transition-all duration-300 ease-out bg-card border border-border/50 hover:border-border group" onClick={() => handleProjectClick(project)}>
-            <CardContent className="p-4 space-y-3 px-[14px] py-[8px]">
+            <CardContent className={`p-4 space-y-3 px-[14px] py-[8px] ${!kanbanSettings.kanban_show_project_type ? 'pt-4' : ''}`}>
               {/* Project Type - Top Left Corner */}
-              {kanbanSettings.kanban_show_project_type && project.project_type && <div className="flex pt-4 py-0">
+              {kanbanSettings.kanban_show_project_type && project.project_type && (
+                <div className="flex pt-4 py-0">
                   <Badge variant="secondary" className="text-xs font-medium bg-muted text-muted-foreground border-0 px-2 py-1">
                     {project.project_type.name}
                   </Badge>
-                </div>}
+                </div>
+              )}
 
               {/* Main Content */}
               <div className="space-y-2">
                 {/* Project Name - Bold, Larger Text */}
-                <h3 className="font-bold text-base text-foreground line-clamp-2 group-hover:text-primary transition-colors">
-                  {project.name}
-                </h3>
+                {kanbanSettings.kanban_show_project_name && (
+                  <h3 className="font-bold text-base text-foreground line-clamp-2 group-hover:text-primary transition-colors">
+                    {project.name}
+                  </h3>
+                )}
                 
                 {/* Lead Name - Smaller, with user icon */}
-                <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                  <User className="h-3.5 w-3.5 flex-shrink-0" />
-                  <span className="truncate">{project.lead?.name || 'No Lead'}</span>
-                </div>
+                {kanbanSettings.kanban_show_client_name && (
+                  <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                    <User className="h-3.5 w-3.5 flex-shrink-0" />
+                    <span className="truncate">{project.lead?.name || 'No Lead'}</span>
+                  </div>
+                )}
               </div>
 
               {/* Optional To-Do Progress Bar */}
@@ -304,10 +310,15 @@ const ProjectKanbanBoard = ({
           </Button>
         </div>
 
-        {/* Droppable area with vertical scrolling */}
+        {/* Droppable area without vertical scrolling constraints */}
         <div className="flex-1 px-4 pb-4 min-h-0">
           <Droppable droppableId={statusId}>
-            {(provided, snapshot) => <div ref={provided.innerRef} {...provided.droppableProps} className={`max-h-[calc(100vh-280px)] overflow-y-auto transition-colors pb-2 ${snapshot.isDraggingOver ? 'bg-accent/20' : ''}`}>
+            {(provided, snapshot) => (
+              <div
+                ref={provided.innerRef}
+                {...provided.droppableProps}
+                className={`transition-colors pb-2 ${snapshot.isDraggingOver ? 'bg-accent/20' : ''}`}
+              >
                 {/* Project cards */}
                 {projects.map((project, index) => renderProjectCard(project, index))}
                 
@@ -323,7 +334,8 @@ const ProjectKanbanBoard = ({
                   </Button>}
                 
                 {provided.placeholder}
-              </div>}
+              </div>
+            )}
           </Droppable>
         </div>
       </div>;
@@ -332,12 +344,12 @@ const ProjectKanbanBoard = ({
     return <KanbanLoadingSkeleton />;
   }
   return <>
-      {/* Kanban board horizontal scroll container */}
-      <div className="h-full w-full max-w-full overflow-x-auto overflow-y-hidden" style={{
-      WebkitOverflowScrolling: 'touch',
-      scrollbarWidth: 'thin',
-      touchAction: 'pan-x pan-y'
-    }}>
+      {/* Kanban board container with natural height flow */}
+      <div className="h-full w-full max-w-full overflow-x-auto" style={{
+        WebkitOverflowScrolling: 'touch',
+        scrollbarWidth: 'thin',
+        touchAction: 'pan-x pan-y'
+      }}>
         <div className="p-4 sm:p-6 h-full">
           <DragDropContext onDragEnd={handleDragEnd}>
             {/* Board lanes - intrinsic width forces overflow */}

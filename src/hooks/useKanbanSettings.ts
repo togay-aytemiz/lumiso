@@ -10,6 +10,8 @@ export interface KanbanSettings {
   kanban_show_todo_progress: boolean;
   kanban_show_session_count: boolean;
   kanban_show_service_count: boolean;
+  kanban_show_project_name: boolean;
+  kanban_show_client_name: boolean;
 }
 
 export function useKanbanSettings() {
@@ -28,7 +30,9 @@ export function useKanbanSettings() {
           kanban_show_assignees,
           kanban_show_todo_progress,
           kanban_show_session_count,
-          kanban_show_service_count
+          kanban_show_service_count,
+          kanban_show_project_name,
+          kanban_show_client_name
         `)
         .eq('organization_id', activeOrganizationId)
         .maybeSingle();
@@ -42,6 +46,8 @@ export function useKanbanSettings() {
         kanban_show_todo_progress: true,
         kanban_show_session_count: true,
         kanban_show_service_count: true,
+        kanban_show_project_name: true,
+        kanban_show_client_name: true,
       };
     },
     enabled: !!activeOrganizationId,
@@ -84,6 +90,8 @@ export function useKanbanSettings() {
       kanban_show_todo_progress: true,
       kanban_show_session_count: true,
       kanban_show_service_count: true,
+      kanban_show_project_name: true,
+      kanban_show_client_name: true,
     },
     isLoading,
     updateSettings,

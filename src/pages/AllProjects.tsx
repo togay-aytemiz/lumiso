@@ -658,15 +658,6 @@ const AllProjects = () => {
                 <List className="h-4 w-4" />
                 <span className="hidden sm:inline">List</span>
               </button>
-            </div>
-            <div className="flex items-center gap-2">
-              {viewMode === 'board' && (
-                <KanbanSettingsSheet>
-                  <Button variant="outline" size="sm" className="h-8 w-8 p-0">
-                    <Settings className="h-4 w-4" />
-                  </Button>
-                </KanbanSettingsSheet>
-              )}
               <button
                 onClick={() => handleViewChange('archived')}
                 className={`flex items-center gap-2 px-3 py-2 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
@@ -681,6 +672,15 @@ const AllProjects = () => {
                   {archivedProjects.length}
                 </span>
               </button>
+              {viewMode === 'board' && (
+                <div className="flex items-center pl-2">
+                  <KanbanSettingsSheet>
+                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-muted/50">
+                      <Settings className="h-4 w-4" />
+                    </Button>
+                  </KanbanSettingsSheet>
+                </div>
+              )}
             </div>
           </div>
         </div>

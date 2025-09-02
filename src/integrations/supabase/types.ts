@@ -696,6 +696,8 @@ export type Database = {
           email: string | null
           id: string
           kanban_show_assignees: boolean | null
+          kanban_show_client_name: boolean | null
+          kanban_show_project_name: boolean | null
           kanban_show_project_type: boolean | null
           kanban_show_service_count: boolean | null
           kanban_show_session_count: boolean | null
@@ -723,6 +725,8 @@ export type Database = {
           email?: string | null
           id?: string
           kanban_show_assignees?: boolean | null
+          kanban_show_client_name?: boolean | null
+          kanban_show_project_name?: boolean | null
           kanban_show_project_type?: boolean | null
           kanban_show_service_count?: boolean | null
           kanban_show_session_count?: boolean | null
@@ -750,6 +754,8 @@ export type Database = {
           email?: string | null
           id?: string
           kanban_show_assignees?: boolean | null
+          kanban_show_client_name?: boolean | null
+          kanban_show_project_name?: boolean | null
           kanban_show_project_type?: boolean | null
           kanban_show_service_count?: boolean | null
           kanban_show_session_count?: boolean | null

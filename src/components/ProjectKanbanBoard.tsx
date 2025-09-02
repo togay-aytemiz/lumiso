@@ -214,7 +214,9 @@ const ProjectKanbanBoard = ({
       if (srcStatusId !== dstStatusId) {
         const oldStatus = statuses.find(s => s.id === moving.status_id);
         const newStatus = statuses.find(s => s.id === (dstStatusId || ""));
-        await supabase.from("activities").insert({
+        
+        // Run activity insertion and milestone notification in parallel to improve performance
+        const activityPromise = supabase.from("activities").insert({
           type: "status_change",
           content: `Status changed from '${oldStatus?.name || "No Status"}' to '${newStatus?.name || "No Status"}'`,
           project_id: projectId,
@@ -222,20 +224,18 @@ const ProjectKanbanBoard = ({
           user_id: user.id
         });
 
-        // Trigger milestone notification when project status changes
-        if (activeOrganization?.id && triggerProjectMilestone) {
-          try {
-            await triggerProjectMilestone(
+        const notificationPromise = activeOrganization?.id && triggerProjectMilestone 
+          ? triggerProjectMilestone(
               projectId,
               srcStatusId || "",
               dstStatusId || "",
               activeOrganization.id,
               moving.assignees || []
-            );
-          } catch (error) {
-            console.error("Failed to trigger milestone notification:", error);
-          }
-        }
+            ).catch(error => console.error("Failed to trigger milestone notification:", error))
+          : Promise.resolve();
+
+        // Wait for both operations in parallel
+        await Promise.all([activityPromise, notificationPromise]);
 
         toast({ title: "Project Updated", description: `Project moved to ${newStatus?.name || "No Status"}` });
       } else {
@@ -325,33 +325,38 @@ const ProjectKanbanBoard = ({
               <div
                 ref={provided.innerRef}
                 {...provided.droppableProps}
-                className={`transition-colors pb-2 min-h-32 ${snapshot.isDraggingOver ? "bg-accent/20" : ""}`}
+                className={`transition-colors pb-2 min-h-96 flex flex-col ${snapshot.isDraggingOver ? "bg-accent/20 rounded" : ""}`}
               >
-                {ordered.map((project, index) => renderProjectCard(project, index))}
+                <div className="flex-shrink-0">
+                  {ordered.map((project, index) => renderProjectCard(project, index))}
+                </div>
 
-                {provided.placeholder}
-
-                {ordered.length === 0 ? (
-                  <div className="flex items-center justify-center h-32">
+                {/* This div will expand to take remaining space and serve as drop zone */}
+                <div className="flex-1 min-h-24 flex items-end">
+                  {provided.placeholder}
+                  
+                  {ordered.length === 0 ? (
+                    <div className="flex items-center justify-center w-full h-32">
+                      <Button
+                        variant="outline"
+                        onClick={() => handleAddProject(status?.id || null)}
+                        className="flex items-center gap-2 border-dashed"
+                      >
+                        <Plus className="h-4 w-4" />
+                        Add Project
+                      </Button>
+                    </div>
+                  ) : (
                     <Button
                       variant="outline"
                       onClick={() => handleAddProject(status?.id || null)}
-                      className="flex items-center gap-2 border-dashed"
+                      className="w-full flex items-center gap-2 border-dashed mt-2"
                     >
                       <Plus className="h-4 w-4" />
                       Add Project
                     </Button>
-                  </div>
-                ) : (
-                  <Button
-                    variant="outline"
-                    onClick={() => handleAddProject(status?.id || null)}
-                    className="w-full flex items-center gap-2 border-dashed mt-2"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Add Project
-                  </Button>
-                )}
+                  )}
+                </div>
               </div>
             )}
           </Droppable>

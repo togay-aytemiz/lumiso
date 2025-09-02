@@ -1,16 +1,19 @@
 import { useState } from "react";
 import { PageHeader } from "@/components/ui/page-header";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DataTable, type Column } from "@/components/ui/data-table";
 import { useWorkflows } from "@/hooks/useWorkflows";
-import { CreateWorkflowDialog } from "@/components/CreateWorkflowDialog";
-import { WorkflowCard } from "@/components/WorkflowCard";
+import { CreateWorkflowSheet } from "@/components/CreateWorkflowSheet";
 import { Workflow } from "@/types/workflow";
-import { Plus, Search, Zap, CheckCircle, XCircle, Clock, AlertTriangle } from "lucide-react";
+import { Plus, Search, Zap, CheckCircle, Clock, AlertTriangle, Edit, Trash2, Mail, MessageCircle, Phone } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { MoreHorizontal } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
 
 export default function Workflows() {
   const { workflows, loading, createWorkflow, updateWorkflow, deleteWorkflow, toggleWorkflowStatus } = useWorkflows();
@@ -42,6 +45,134 @@ export default function Workflows() {
     active: workflows.filter(w => w.is_active).length,
     paused: workflows.filter(w => !w.is_active).length,
   };
+
+  const getTriggerLabel = (triggerType: string) => {
+    const labels = {
+      session_scheduled: 'Session Scheduled',
+      session_confirmed: 'Session Confirmed', 
+      session_completed: 'Session Completed',
+      session_cancelled: 'Session Cancelled',
+      session_rescheduled: 'Session Rescheduled',
+      project_status_change: 'Project Status Change',
+      lead_status_change: 'Lead Status Change',
+    };
+    return labels[triggerType as keyof typeof labels] || triggerType;
+  };
+
+  const getChannelIcons = (channels: string[]) => {
+    const iconMap = {
+      email: Mail,
+      sms: Phone,
+      whatsapp: MessageCircle,
+    };
+    
+    return channels?.map((channel) => {
+      const IconComponent = iconMap[channel as keyof typeof iconMap];
+      if (!IconComponent) return null;
+      
+      return (
+        <div key={channel} className="p-1 bg-muted rounded">
+          <IconComponent className="h-3 w-3" />
+        </div>
+      );
+    }).filter(Boolean) || [];
+  };
+
+  const columns: Column<Workflow>[] = [
+    {
+      key: 'name',
+      header: 'Workflow Name',
+      sortable: true,
+      render: (workflow) => (
+        <div>
+          <div className="font-medium">{workflow.name}</div>
+          {workflow.description && (
+            <div className="text-sm text-muted-foreground truncate max-w-[200px]">
+              {workflow.description}
+            </div>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: 'trigger_type',
+      header: 'Trigger',
+      sortable: true,
+      render: (workflow) => (
+        <Badge variant="outline" className="text-xs">
+          {getTriggerLabel(workflow.trigger_type)}
+        </Badge>
+      ),
+    },
+    {
+      key: 'channels',
+      header: 'Channels',
+      render: (workflow) => {
+        // For now, show all channels as we don't have the step data loaded
+        // This would need to be updated when we add step data fetching
+        const defaultChannels = ['email', 'sms', 'whatsapp'];
+        const icons = getChannelIcons(defaultChannels);
+        
+        return (
+          <div className="flex gap-1">
+            {icons.length > 0 ? icons : <span className="text-muted-foreground text-xs">No channels</span>}
+          </div>
+        );
+      },
+    },
+    {
+      key: 'is_active',
+      header: 'Status',
+      sortable: true,
+      render: (workflow) => (
+        <Badge variant={workflow.is_active ? "default" : "secondary"}>
+          {workflow.is_active ? 'Active' : 'Paused'}
+        </Badge>
+      ),
+    },
+    {
+      key: 'created_at',
+      header: 'Created',
+      sortable: true,
+      render: (workflow) => (
+        <div className="text-sm text-muted-foreground">
+          {formatDistanceToNow(new Date(workflow.created_at), { addSuffix: true })}
+        </div>
+      ),
+    },
+    {
+      key: 'actions',
+      header: 'Actions',
+      render: (workflow) => (
+        <div className="flex items-center gap-2">
+          <Switch
+            checked={workflow.is_active}
+            onCheckedChange={(checked) => toggleWorkflowStatus(workflow.id, checked)}
+          />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => handleEditWorkflow(workflow)}>
+                <Edit className="h-4 w-4 mr-2" />
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={() => handleDeleteWorkflow(workflow.id)}
+                className="text-destructive"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      ),
+    },
+  ];
 
   return (
     <div className="min-h-screen overflow-x-hidden">
@@ -109,68 +240,49 @@ export default function Workflows() {
             </Tabs>
           </div>
           
-          <CreateWorkflowDialog onCreateWorkflow={createWorkflow}>
+          <CreateWorkflowSheet onCreateWorkflow={createWorkflow}>
             <Button>
               <Plus className="h-4 w-4 mr-2" />
               Create Workflow
             </Button>
-          </CreateWorkflowDialog>
+          </CreateWorkflowSheet>
         </div>
 
-        {/* Workflows List */}
-        {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[...Array(6)].map((_, i) => (
-              <Card key={i} className="animate-pulse">
-                <CardContent className="p-6">
-                  <div className="h-4 bg-muted rounded mb-2" />
-                  <div className="h-3 bg-muted rounded w-3/4 mb-4" />
-                  <div className="h-6 bg-muted rounded w-1/2" />
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        ) : filteredWorkflows.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredWorkflows.map((workflow) => (
-              <WorkflowCard
-                key={workflow.id}
-                workflow={workflow}
-                onEdit={handleEditWorkflow}
-                onDelete={handleDeleteWorkflow}
-                onToggleStatus={toggleWorkflowStatus}
-              />
-            ))}
-          </div>
-        ) : workflows.length === 0 ? (
-          <Card className="border-dashed">
-            <CardContent className="flex flex-col items-center justify-center p-12 text-center">
-              <div className="p-4 bg-primary/10 rounded-full mb-4">
-                <Zap className="h-8 w-8 text-primary" />
-              </div>
-              <h3 className="text-lg font-semibold mb-2">No workflows yet</h3>
-              <p className="text-muted-foreground mb-6 max-w-sm">
-                Create your first automated workflow to streamline your client communications.
-              </p>
-              <CreateWorkflowDialog onCreateWorkflow={createWorkflow}>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Your First Workflow
-                </Button>
-              </CreateWorkflowDialog>
-            </CardContent>
-          </Card>
-        ) : (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center p-12 text-center">
-              <AlertTriangle className="h-8 w-8 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No workflows match your filters</h3>
-              <p className="text-muted-foreground">
-                Try adjusting your search or filter criteria.
-              </p>
-            </CardContent>
-          </Card>
-        )}
+        {/* Workflows Table */}
+        <div className="space-y-4">
+          <DataTable
+            data={filteredWorkflows}
+            columns={columns}
+            itemsPerPage={10}
+            emptyState={
+              workflows.length === 0 ? (
+                <div className="flex flex-col items-center justify-center p-12 text-center">
+                  <div className="p-4 bg-primary/10 rounded-full mb-4">
+                    <Zap className="h-8 w-8 text-primary" />
+                  </div>
+                  <h3 className="text-lg font-semibold mb-2">No workflows yet</h3>
+                  <p className="text-muted-foreground mb-6 max-w-sm">
+                    Create your first automated workflow to streamline your client communications.
+                  </p>
+                  <CreateWorkflowSheet onCreateWorkflow={createWorkflow}>
+                    <Button>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create Your First Workflow
+                    </Button>
+                  </CreateWorkflowSheet>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center p-8 text-center">
+                  <AlertTriangle className="h-8 w-8 text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">No workflows match your filters</h3>
+                  <p className="text-muted-foreground">
+                    Try adjusting your search or filter criteria.
+                  </p>
+                </div>
+              )
+            }
+          />
+        </div>
       </div>
     </div>
   );

@@ -15,7 +15,7 @@ export interface WorkflowStep {
   id: string;
   workflow_id: string;
   step_order: number;
-  action_type: 'send_email' | 'send_sms' | 'send_whatsapp' | 'create_reminder' | 'update_status';
+  action_type: 'send_notification' | 'send_email' | 'send_sms' | 'send_whatsapp' | 'create_reminder' | 'update_status';
   action_config: {
     template_id?: string;
     channels?: ('email' | 'sms' | 'whatsapp')[];

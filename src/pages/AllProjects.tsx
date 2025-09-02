@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, LayoutGrid, List, Archive, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { Plus, LayoutGrid, List, Archive, ArrowUpDown, ArrowUp, ArrowDown, Settings } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { EnhancedProjectDialog } from "@/components/EnhancedProjectDialog";
@@ -22,6 +22,7 @@ import { OnboardingTutorial, TutorialStep } from "@/components/shared/Onboarding
 import { useOnboardingV2 } from "@/hooks/useOnboardingV2";
 import { Calendar, MessageSquare, CheckSquare } from "lucide-react";
 import { PageLoadingSkeleton } from "@/components/ui/loading-presets";
+import { KanbanSettingsSheet } from "@/components/KanbanSettingsSheet";
 
 interface ProjectStatus {
   id: string;
@@ -658,20 +659,29 @@ const AllProjects = () => {
                 <span className="hidden sm:inline">List</span>
               </button>
             </div>
-            <button
-              onClick={() => handleViewChange('archived')}
-              className={`flex items-center gap-2 px-3 py-2 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
-                viewMode === 'archived' 
-                  ? 'border-primary text-primary' 
-                  : 'border-transparent text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              <Archive className="h-4 w-4" />
-              <span className="hidden sm:inline">Archived</span>
-              <span className="text-xs bg-muted text-muted-foreground px-1.5 py-0.5 rounded ml-1">
-                {archivedProjects.length}
-              </span>
-            </button>
+            <div className="flex items-center gap-2">
+              {viewMode === 'board' && (
+                <KanbanSettingsSheet>
+                  <Button variant="outline" size="sm" className="h-8 w-8 p-0">
+                    <Settings className="h-4 w-4" />
+                  </Button>
+                </KanbanSettingsSheet>
+              )}
+              <button
+                onClick={() => handleViewChange('archived')}
+                className={`flex items-center gap-2 px-3 py-2 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
+                  viewMode === 'archived' 
+                    ? 'border-primary text-primary' 
+                    : 'border-transparent text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <Archive className="h-4 w-4" />
+                <span className="hidden sm:inline">Archived</span>
+                <span className="text-xs bg-muted text-muted-foreground px-1.5 py-0.5 rounded ml-1">
+                  {archivedProjects.length}
+                </span>
+              </button>
+            </div>
           </div>
         </div>
       </div>

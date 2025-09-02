@@ -15,6 +15,7 @@ import { KanbanLoadingSkeleton } from "@/components/ui/loading-presets";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { useNotificationTriggers } from "@/hooks/useNotificationTriggers";
 import { useOrganization } from "@/contexts/OrganizationContext";
+import { useKanbanSettings } from "@/hooks/useKanbanSettings";
 interface ProjectStatus {
   id: string;
   name: string;
@@ -84,6 +85,7 @@ const ProjectKanbanBoard = ({
   const {
     activeOrganization
   } = useOrganization();
+  const { settings: kanbanSettings } = useKanbanSettings();
   useEffect(() => {
     if (projectStatuses && projectStatuses.length > 0) {
       // Use passed statuses if available
@@ -224,7 +226,7 @@ const ProjectKanbanBoard = ({
           <Card className="cursor-pointer hover:shadow-lg hover:-translate-y-1 transition-all duration-300 ease-out bg-card border border-border/50 hover:border-border group" onClick={() => handleProjectClick(project)}>
             <CardContent className="p-4 space-y-3 px-[14px] py-[8px]">
               {/* Project Type - Top Left Corner */}
-              {project.project_type && <div className="flex pt-4 py-0">
+              {kanbanSettings.kanban_show_project_type && project.project_type && <div className="flex pt-4 py-0">
                   <Badge variant="secondary" className="text-xs font-medium bg-muted text-muted-foreground border-0 px-2 py-1">
                     {project.project_type.name}
                   </Badge>
@@ -245,7 +247,7 @@ const ProjectKanbanBoard = ({
               </div>
 
               {/* Optional To-Do Progress Bar */}
-              {(project.todo_count || 0) > 0 && <div className="space-y-2">
+              {kanbanSettings.kanban_show_todo_progress && (project.todo_count || 0) > 0 && <div className="space-y-2">
                   <ProgressBar value={Math.round((project.completed_todo_count || 0) / (project.todo_count || 0) * 100)} total={project.todo_count || 0} completed={project.completed_todo_count || 0} className="w-full" showLabel={true} size="sm" />
                 </div>}
 
@@ -255,21 +257,21 @@ const ProjectKanbanBoard = ({
               {/* Footer with stats and assignees */}
               <div className="flex items-center justify-between py-0.5">
                 <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                  {/* Session Count - Always show icon */}
-                  <div className="flex items-center gap-1">
+                  {/* Session Count */}
+                  {kanbanSettings.kanban_show_session_count && <div className="flex items-center gap-1">
                     <Calendar className="h-3.5 w-3.5" />
                     <span>{project.session_count || project.planned_session_count || 0}</span>
-                  </div>
+                  </div>}
                   
-                  {/* Service Count - Always show icon */}
-                  <div className="flex items-center gap-1">
+                  {/* Service Count */}
+                  {kanbanSettings.kanban_show_service_count && <div className="flex items-center gap-1">
                     <Briefcase className="h-3.5 w-3.5" />
                     <span>{project.services?.length || 0}</span>
-                  </div>
+                  </div>}
                 </div>
 
                 {/* Avatar Stack */}
-                {project.assignees && project.assignees.length > 0 && <AssigneeAvatars assigneeIds={project.assignees} maxVisible={3} size="sm" />}
+                {kanbanSettings.kanban_show_assignees && project.assignees && project.assignees.length > 0 && <AssigneeAvatars assigneeIds={project.assignees} maxVisible={3} size="sm" />}
               </div>
             </CardContent>
           </Card>
@@ -302,10 +304,10 @@ const ProjectKanbanBoard = ({
           </Button>
         </div>
 
-        {/* Droppable area without individual scrolling */}
-        <div className="flex-1 px-4 pb-4">
+        {/* Droppable area with vertical scrolling */}
+        <div className="flex-1 px-4 pb-4 min-h-0">
           <Droppable droppableId={statusId}>
-            {(provided, snapshot) => <div ref={provided.innerRef} {...provided.droppableProps} className={`min-h-full transition-colors pb-2 ${snapshot.isDraggingOver ? 'bg-accent/20' : ''}`}>
+            {(provided, snapshot) => <div ref={provided.innerRef} {...provided.droppableProps} className={`max-h-[calc(100vh-280px)] overflow-y-auto transition-colors pb-2 ${snapshot.isDraggingOver ? 'bg-accent/20' : ''}`}>
                 {/* Project cards */}
                 {projects.map((project, index) => renderProjectCard(project, index))}
                 

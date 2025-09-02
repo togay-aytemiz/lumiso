@@ -17,6 +17,8 @@ import { useProfile } from "@/contexts/ProfileContext";
 import { useOnboardingV2 } from "@/hooks/useOnboardingV2";
 import { useNotificationTriggers } from "@/hooks/useNotificationTriggers";
 import { useOrganization } from "@/contexts/OrganizationContext";
+import { useSettingsNavigation } from "@/hooks/useSettingsNavigation";
+import { NavigationGuardDialog } from "@/components/settings/NavigationGuardDialog";
 
 interface Lead {
   id: string;
@@ -505,22 +507,37 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
   const totalEstimatedCost = basePrice + servicesTotal;
 
 
+  // Check if form has meaningful changes (excluding auto-assigned values)
+  const hasInitialAssignee = profile?.user_id && projectData.assignees.length === 1 && projectData.assignees[0] === profile.user_id;
   const isDirty = Boolean(
     projectData.name.trim() ||
     projectData.description.trim() ||
     projectData.basePrice.trim() ||
     projectData.packageId ||
     projectData.selectedServiceIds.length > 0 ||
-    projectData.assignees.length > 1 || // More than just the default creator
+    (projectData.assignees.length > 1) || // More than just the default creator
+    (!hasInitialAssignee && projectData.assignees.length > 0) || // Manual assignee changes
     (isNewLead && (newLeadData.name.trim() || newLeadData.email.trim() || newLeadData.phone.trim() || newLeadData.notes.trim())) ||
-    (!isNewLead && selectedLeadId)
+    (!isNewLead && selectedLeadId && selectedLeadId !== defaultLeadId)
   );
 
-  const handleDirtyClose = () => {
-    if (window.confirm("Discard changes?")) {
+  const navigation = useSettingsNavigation({
+    isDirty,
+    onDiscard: () => {
       resetForm();
       setOpen(false);
+    },
+    onSaveAndExit: async () => {
+      await handleSubmit();
     }
+  });
+
+  const handleDirtyClose = () => {
+    if (!navigation.handleModalClose()) {
+      return; // Navigation guard will handle it
+    }
+    resetForm();
+    setOpen(false);
   };
 
   const footerActions = [
@@ -1199,6 +1216,14 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
           </div>
         </div>
       </AppSheetModal>
+
+      <NavigationGuardDialog
+        open={navigation.showGuard}
+        onDiscard={navigation.handleDiscardChanges}
+        onStay={navigation.handleStayOnPage}
+        onSaveAndExit={navigation.handleSaveAndExit}
+        message="You have unsaved project changes."
+      />
     </>
   );
 }

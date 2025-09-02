@@ -8,6 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Calendar as CalendarIcon, Plus } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useCalendarSync } from "@/hooks/useCalendarSync";
+import { useSettingsNavigation } from "@/hooks/useSettingsNavigation";
+import { NavigationGuardDialog } from "@/components/settings/NavigationGuardDialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn, getUserLocale } from "@/lib/utils";
 import { format } from "date-fns";
@@ -221,8 +223,9 @@ export function NewSessionDialogForProject({
     sessionData.location.trim()
   );
 
-  const handleDirtyClose = () => {
-    if (window.confirm("Discard changes?")) {
+  const navigation = useSettingsNavigation({
+    isDirty,
+    onDiscard: () => {
       setSessionData({
         session_date: "",
         session_time: "",
@@ -231,7 +234,24 @@ export function NewSessionDialogForProject({
       });
       setSelectedDate(undefined);
       setOpen(false);
+    },
+    onSaveAndExit: async () => {
+      await handleSubmit();
     }
+  });
+
+  const handleDirtyClose = () => {
+    if (!navigation.handleModalClose()) {
+      return; // Navigation guard will handle it
+    }
+    setSessionData({
+      session_date: "",
+      session_time: "",
+      notes: "",
+      location: ""
+    });
+    setSelectedDate(undefined);
+    setOpen(false);
   };
 
   const footerActions = [
@@ -409,6 +429,14 @@ export function NewSessionDialogForProject({
           </div>
         </div>
       </AppSheetModal>
+
+      <NavigationGuardDialog
+        open={navigation.showGuard}
+        onDiscard={navigation.handleDiscardChanges}
+        onStay={navigation.handleStayOnPage}
+        onSaveAndExit={navigation.handleSaveAndExit}
+        message="You have unsaved session details."
+      />
     </>
   );
 }

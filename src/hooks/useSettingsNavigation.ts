@@ -54,6 +54,14 @@ export function useSettingsNavigation({
     return true;
   };
 
+  const handleModalClose = () => {
+    if (isDirty) {
+      setShowGuard(true);
+      return false; // Block close
+    }
+    return true; // Allow close
+  };
+
   const handleDiscardChanges = () => {
     onDiscard();
     setShowGuard(false);
@@ -83,6 +91,7 @@ export function useSettingsNavigation({
     showGuard,
     message,
     handleNavigationAttempt,
+    handleModalClose,
     handleDiscardChanges,
     handleStayOnPage,
     handleSaveAndExit

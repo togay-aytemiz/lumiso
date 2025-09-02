@@ -7,18 +7,36 @@ export function useNotificationTriggers() {
   // Trigger project milestone notification
   const triggerProjectMilestone = async (
     projectId: string,
-    oldStatus: string,
-    newStatus: string,
+    oldStatusId: string,
+    newStatusId: string,
     organizationId: string,
     assigneeIds: string[] = []
   ) => {
     try {
-      console.log(`Triggering milestone notification: ${projectId} (${oldStatus} → ${newStatus})`);
+      console.log(`Triggering milestone notification: ${projectId} (${oldStatusId} → ${newStatusId})`);
 
       // Get current user for changed_by_user_id
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         console.error('No authenticated user for milestone notification');
+        return;
+      }
+
+      // Fetch status names from IDs
+      const { data: oldStatus } = await supabase
+        .from('project_statuses')
+        .select('name')
+        .eq('id', oldStatusId)
+        .single();
+        
+      const { data: newStatus } = await supabase
+        .from('project_statuses')
+        .select('name, lifecycle')
+        .eq('id', newStatusId)
+        .single();
+
+      if (!oldStatus || !newStatus) {
+        console.error('Could not fetch status names for milestone notification');
         return;
       }
 
@@ -31,8 +49,9 @@ export function useNotificationTriggers() {
         status: 'pending',
         metadata: {
           project_id: projectId,
-          old_status: oldStatus,
-          new_status: newStatus,
+          old_status: oldStatus.name,
+          new_status: newStatus.name,
+          new_status_lifecycle: newStatus.lifecycle,
           changed_by_user_id: user.id
         }
       }));

@@ -142,7 +142,10 @@ const ProjectKanbanBoard = ({
       draggableId
     } = result;
     if (!destination) return;
-    if (destination.droppableId === source.droppableId) return;
+    
+    // If dropped in the same position, do nothing
+    if (destination.droppableId === source.droppableId && destination.index === source.index) return;
+    
     const projectId = draggableId;
     const newStatusId = destination.droppableId === 'no-status' ? null : destination.droppableId;
     try {
@@ -301,7 +304,7 @@ const ProjectKanbanBoard = ({
         <div className="p-4 sm:p-6 h-full">
           <DragDropContext onDragEnd={handleDragEnd}>
             {/* Board lanes - intrinsic width forces overflow */}
-            <div className="flex gap-4 sm:gap-6 pb-4 h-full" style={{
+            <div className="flex gap-3 sm:gap-4 pb-4 h-full" style={{
             width: 'max-content',
             minWidth: '100%'
           }}>

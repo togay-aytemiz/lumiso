@@ -833,8 +833,7 @@ async function handleProjectMilestoneNotification(requestData: ReminderRequest, 
         assignees,
         project_types(name),
         status_id,
-        lead_id,
-        leads!projects_lead_id_fkey(name)
+        lead_id
       `)
       .eq('id', project_id)
       .maybeSingle();
@@ -845,6 +844,18 @@ async function handleProjectMilestoneNotification(requestData: ReminderRequest, 
     }
 
     console.log('Found project for milestone:', project.name);
+
+    // Get lead name separately if lead_id exists
+    let leadName = '';
+    if (project.lead_id) {
+      const { data: leadData } = await adminSupabase
+        .from('leads')
+        .select('name')
+        .eq('id', project.lead_id)
+        .maybeSingle();
+      
+      leadName = leadData?.name || '';
+    }
 
     // Get current status name
     const { data: statusData } = await adminSupabase
@@ -949,7 +960,7 @@ async function handleProjectMilestoneNotification(requestData: ReminderRequest, 
             newStatus: currentStatusName,
             lifecycle: lifecycle as 'completed' | 'cancelled',
             notes: project.description || undefined,
-            leadName: project.leads?.name || undefined
+            leadName: leadName || undefined
           },
           assignee: {
             name: assigneeName,

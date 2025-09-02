@@ -103,11 +103,28 @@ export function CreateWorkflowSheet({
     is_active: true,
     steps: []
   });
+  
+  // Track initial state for dirty detection
+  const [initialFormData, setInitialFormData] = useState<WorkflowFormData>({
+    name: '',
+    description: '',
+    trigger_type: 'session_scheduled',
+    is_active: true,
+    steps: []
+  });
+  
   const [selectedTemplate, setSelectedTemplate] = useState<string>('');
+  const [initialSelectedTemplate, setInitialSelectedTemplate] = useState<string>('');
   const [templateSearch, setTemplateSearch] = useState('');
   const [templateDropdownOpen, setTemplateDropdownOpen] = useState(false);
   const [reminderDelay, setReminderDelay] = useState<number>(1440);
+  const [initialReminderDelay, setInitialReminderDelay] = useState<number>(1440);
   const [enabledChannels, setEnabledChannels] = useState<Record<ChannelType, boolean>>({
+    email: true,
+    whatsapp: true,
+    sms: true
+  });
+  const [initialEnabledChannels, setInitialEnabledChannels] = useState<Record<ChannelType, boolean>>({
     email: true,
     whatsapp: true,
     sms: true
@@ -116,22 +133,52 @@ export function CreateWorkflowSheet({
   // Auto-open when editWorkflow is provided and reset form data
   useEffect(() => {
     if (editWorkflow) {
-      setFormData({
+      const newFormData = {
         name: editWorkflow.name || '',
         description: editWorkflow.description || '',
         trigger_type: editWorkflow.trigger_type || 'session_scheduled',
         is_active: editWorkflow.is_active ?? true,
         steps: []
-      });
-      setSelectedTemplate('');
+      };
+      const newSelectedTemplate = editWorkflow.template_id || '';
+      const newReminderDelay = editWorkflow.reminder_delay_minutes || 1440;
+      const newEnabledChannels = {
+        email: editWorkflow.email_enabled ?? true,
+        whatsapp: editWorkflow.whatsapp_enabled ?? true,
+        sms: editWorkflow.sms_enabled ?? true
+      };
+      
+      setFormData(newFormData);
+      setInitialFormData(newFormData);
+      setSelectedTemplate(newSelectedTemplate);
+      setInitialSelectedTemplate(newSelectedTemplate);
+      setReminderDelay(newReminderDelay);
+      setInitialReminderDelay(newReminderDelay);
+      setEnabledChannels(newEnabledChannels);
+      setInitialEnabledChannels(newEnabledChannels);
       setTemplateSearch('');
-      setReminderDelay(1440);
-      setEnabledChannels({
+      setOpen(true);
+    } else {
+      // Reset to defaults for new workflow
+      const defaultFormData = {
+        name: '',
+        description: '',
+        trigger_type: 'session_scheduled' as TriggerType,
+        is_active: true,
+        steps: []
+      };
+      const defaultSelectedTemplate = '';
+      const defaultReminderDelay = 1440;
+      const defaultEnabledChannels = {
         email: true,
         whatsapp: true,
         sms: true
-      });
-      setOpen(true);
+      };
+      
+      setInitialFormData(defaultFormData);
+      setInitialSelectedTemplate(defaultSelectedTemplate);
+      setInitialReminderDelay(defaultReminderDelay);
+      setInitialEnabledChannels(defaultEnabledChannels);
     }
   }, [editWorkflow]);
 
@@ -214,7 +261,11 @@ export function CreateWorkflowSheet({
   };
   const selectedTemplateData = sessionTemplates.find(t => t.id === selectedTemplate);
   const hasEnabledChannels = Object.values(enabledChannels).some(enabled => enabled);
-  const isDirty = formData.name.trim() !== '' || formData.description !== '' || selectedTemplate !== '';
+  // Check if form has actual changes from initial state
+  const isDirty = JSON.stringify(formData) !== JSON.stringify(initialFormData) || 
+                  selectedTemplate !== initialSelectedTemplate ||
+                  reminderDelay !== initialReminderDelay ||
+                  JSON.stringify(enabledChannels) !== JSON.stringify(initialEnabledChannels);
   const filteredTemplates = sessionTemplates.filter(template => template.name.toLowerCase().includes(templateSearch.toLowerCase()) || template.description?.toLowerCase().includes(templateSearch.toLowerCase()));
   const footerActions = [{
     label: 'Cancel',

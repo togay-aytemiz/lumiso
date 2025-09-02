@@ -230,7 +230,7 @@ const ProjectKanbanBoard = ({ projects, projectStatuses, onProjectsChange, onPro
             <CardContent className="p-4 space-y-3">
               {/* Project Type - Top Left Corner */}
               {project.project_type && (
-                <div className="flex">
+                <div className="flex pt-1">
                   <Badge variant="secondary" className="text-xs font-medium bg-muted text-muted-foreground border-0 px-2 py-1">
                     {project.project_type.name}
                   </Badge>

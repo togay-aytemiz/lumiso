@@ -582,6 +582,60 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          created_at: string
+          delivery_method: string
+          email_id: string | null
+          error_message: string | null
+          id: string
+          max_retries: number
+          metadata: Json
+          notification_type: string
+          organization_id: string
+          retry_count: number
+          scheduled_for: string | null
+          sent_at: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          delivery_method?: string
+          email_id?: string | null
+          error_message?: string | null
+          id?: string
+          max_retries?: number
+          metadata?: Json
+          notification_type: string
+          organization_id: string
+          retry_count?: number
+          scheduled_for?: string | null
+          sent_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          delivery_method?: string
+          email_id?: string | null
+          error_message?: string | null
+          id?: string
+          max_retries?: number
+          metadata?: Json
+          notification_type?: string
+          organization_id?: string
+          retry_count?: number
+          scheduled_for?: string | null
+          sent_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       organization_members: {
         Row: {
           created_at: string
@@ -1764,6 +1818,10 @@ export type Database = {
         Args: { email_to_check: string }
         Returns: boolean
       }
+      cleanup_old_notifications: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       ensure_default_lead_field_definitions: {
         Args: { org_id: string; user_uuid: string }
         Returns: undefined
@@ -1863,6 +1921,10 @@ export type Database = {
       migrate_existing_lead_data: {
         Args: { org_id: string }
         Returns: undefined
+      }
+      retry_failed_notifications: {
+        Args: Record<PropertyKey, never>
+        Returns: number
       }
       user_can_access_project: {
         Args: { project_uuid: string; user_uuid: string }

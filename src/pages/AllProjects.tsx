@@ -675,14 +675,12 @@ const AllProjects = () => {
             </div>
             
             {viewMode === 'board' && (
-              <div className="flex items-center gap-2">
-                <span className="hidden md:inline text-sm text-muted-foreground">Board Settings</span>
-                <KanbanSettingsSheet>
-                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground hover:bg-accent/5 hover:text-accent">
-                    <Settings className="h-4 w-4" />
-                  </Button>
-                </KanbanSettingsSheet>
-              </div>
+              <KanbanSettingsSheet>
+                <Button variant="ghost" size="sm" className="flex items-center gap-2 h-8 px-2 text-muted-foreground hover:bg-accent/5 hover:text-accent">
+                  <Settings className="h-4 w-4" />
+                  <span className="hidden md:inline text-sm">Board Settings</span>
+                </Button>
+              </KanbanSettingsSheet>
             )}
           </div>
         </div>

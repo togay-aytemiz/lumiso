@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DataTable, type Column } from "@/components/ui/data-table";
+import { PageLoadingSkeleton } from "@/components/ui/loading-presets";
 import { useWorkflows } from "@/hooks/useWorkflows";
 import { CreateWorkflowSheet } from "@/components/CreateWorkflowSheet";
 import { Workflow } from "@/types/workflow";
@@ -174,6 +175,18 @@ export default function Workflows() {
       ),
     },
   ];
+
+  if (loading) {
+    return (
+      <div className="min-h-screen overflow-x-hidden">
+        <PageHeader 
+          title="Workflows" 
+          subtitle="Automate your client communications with smart workflows"
+        />
+        <PageLoadingSkeleton />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen overflow-x-hidden">

@@ -257,30 +257,29 @@ export function CreateWorkflowSheet({ onCreateWorkflow, editWorkflow, onUpdateWo
 
           {/* Reminder Timing - Only for session_reminder */}
           {formData.trigger_type === 'session_reminder' && (
-            <>
-              <Separator />
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Reminder Timing *</Label>
-                  <Select value={reminderDelay.toString()} onValueChange={(value) => setReminderDelay(Number(value))}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {reminderDelayOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value.toString()}>
-                          <div className="flex items-center gap-2">
-                            <Clock className="h-4 w-4" />
-                            {option.label}
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Reminder Timing *</Label>
+                <Select value={reminderDelay.toString()} onValueChange={(value) => setReminderDelay(Number(value))}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {reminderDelayOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value.toString()}>
+                        <div className="flex items-center gap-2">
+                          <Clock className="h-4 w-4" />
+                          {option.label}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-            </>
+            </div>
           )}
+
+          <Separator />
 
           {/* Template Selection */}
           <div className="space-y-4">

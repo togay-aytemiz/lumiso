@@ -51,12 +51,22 @@ export function useTemplates() {
   };
 
   const getSessionTemplates = () => {
-    return templates.filter(template => 
+    const filtered = templates.filter(template => 
       template.category === 'session' || 
+      template.category === 'sessions' ||
+      template.category === 'client-communication' ||
       template.name.toLowerCase().includes('session') ||
       template.name.toLowerCase().includes('appointment') ||
-      template.name.toLowerCase().includes('booking')
+      template.name.toLowerCase().includes('booking') ||
+      template.name.toLowerCase().includes('reminder') ||
+      template.name.toLowerCase().includes('confirmation')
     );
+    
+    // Debug logging to help troubleshoot template loading
+    console.log('All templates:', templates);
+    console.log('Filtered session templates:', filtered);
+    
+    return filtered;
   };
 
   useEffect(() => {

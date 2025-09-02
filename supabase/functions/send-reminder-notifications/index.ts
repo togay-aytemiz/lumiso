@@ -28,6 +28,7 @@ interface ReminderRequest {
   project_id?: string;
   old_status?: string;
   new_status?: string;
+  milestone_user_id?: string;
   milestone_user_name?: string;
 }
 
@@ -784,7 +785,8 @@ async function handleProjectMilestoneNotification(requestData: ReminderRequest, 
       project_id,
       old_status,
       new_status,
-      changed_by_user_id,
+      milestone_user_id,
+      milestone_user_name,
       organizationId,
       isTest = false
     } = requestData;
@@ -794,17 +796,19 @@ async function handleProjectMilestoneNotification(requestData: ReminderRequest, 
       throw new Error('Missing required fields for milestone notification');
     }
 
+    console.log('Processing milestone for project:', project_id, 'from', old_status, 'to', new_status);
+
     // Get the name of the person who made the change
-    let changedByUserName = 'Someone';
-    if (changed_by_user_id) {
+    let changedByUserName = milestone_user_name || 'Someone';
+    if (milestone_user_id && !milestone_user_name) {
       try {
         const { data: changedByProfile } = await adminSupabase
           .from('profiles')
           .select('full_name')
-          .eq('user_id', changed_by_user_id)
+          .eq('user_id', milestone_user_id)
           .maybeSingle();
 
-        const { data: changedByAuth } = await adminSupabase.auth.admin.getUserById(changed_by_user_id);
+        const { data: changedByAuth } = await adminSupabase.auth.admin.getUserById(milestone_user_id);
         
         if (changedByProfile?.full_name) {
           changedByUserName = changedByProfile.full_name;
@@ -935,7 +939,7 @@ async function handleProjectMilestoneNotification(requestData: ReminderRequest, 
           organizationId: organizationId,
           triggeredByUser: {
             name: changedByUserName,
-            id: changed_by_user_id || ''
+            id: milestone_user_id || ''
           },
           project: {
             id: project.id,

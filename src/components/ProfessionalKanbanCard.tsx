@@ -48,7 +48,7 @@ export const ProfessionalKanbanCard: React.FC<ProfessionalKanbanCardProps> = ({
       className="cursor-pointer hover:shadow-md transition-shadow bg-card border border-border" 
       onClick={onClick}
     >
-      <CardContent className="p-4 md:p-6">
+      <CardContent className="p-4 md:p-3">
         <div className="space-y-3">
           {/* Project Type Badge */}
           {kanbanSettings.kanban_show_project_type && project.project_type && (

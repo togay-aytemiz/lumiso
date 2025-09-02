@@ -151,8 +151,31 @@ const ProjectKanbanBoard = ({
       const project = projects.find(p => p.id === projectId);
       if (!project) return;
 
-      // Simple sort order: use destination index + 1
-      const newSortOrder = destination.index + 1;
+      // Get projects in destination column, sorted by sort_order
+      const destinationProjects = projects
+        .filter(p => p.status_id === newStatusId)
+        .filter(p => p.id !== projectId) // Exclude the project being moved
+        .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+
+      let newSortOrder: number;
+
+      if (destinationProjects.length === 0) {
+        // First project in column
+        newSortOrder = 1;
+      } else if (destination.index === 0) {
+        // Moving to top
+        newSortOrder = Math.max(1, (destinationProjects[0]?.sort_order || 1) - 1);
+      } else if (destination.index >= destinationProjects.length) {
+        // Moving to bottom
+        newSortOrder = (destinationProjects[destinationProjects.length - 1]?.sort_order || 0) + 1;
+      } else {
+        // Moving between two projects
+        const prevProject = destinationProjects[destination.index - 1];
+        const nextProject = destinationProjects[destination.index];
+        const prevOrder = prevProject?.sort_order || 0;
+        const nextOrder = nextProject?.sort_order || (prevOrder + 2);
+        newSortOrder = Math.floor((prevOrder + nextOrder) / 2) || prevOrder + 1;
+      }
 
       // Update project
       const { error } = await supabase

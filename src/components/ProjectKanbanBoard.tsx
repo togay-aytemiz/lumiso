@@ -269,7 +269,7 @@ const ProjectKanbanBoard = ({ projects, projectStatuses, onProjectsChange, onPro
               <div className="border-t border-border/30" />
 
               {/* Footer with stats and assignees */}
-              <div className="flex items-center justify-between pt-1">
+              <div className="flex items-center justify-between py-0.5">
                 <div className="flex items-center gap-3 text-xs text-muted-foreground">
                   {/* Session Count - Always show icon */}
                   <div className="flex items-center gap-1">

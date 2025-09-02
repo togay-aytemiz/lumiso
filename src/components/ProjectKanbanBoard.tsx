@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Plus, Calendar, CheckSquare, User } from "lucide-react";
+import { Plus, Calendar, CheckSquare, User, Briefcase } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { EnhancedProjectDialog } from "@/components/EnhancedProjectDialog";
@@ -12,6 +12,7 @@ import { ViewProjectDialog } from "@/components/ViewProjectDialog";
 import { formatDate } from "@/lib/utils";
 import { AssigneeAvatars } from "@/components/AssigneeAvatars";
 import { KanbanLoadingSkeleton } from "@/components/ui/loading-presets";
+import { ProgressBar } from "@/components/ui/progress-bar";
 import { useNotificationTriggers } from "@/hooks/useNotificationTriggers";
 import { useOrganization } from "@/contexts/OrganizationContext";
 
@@ -223,52 +224,79 @@ const ProjectKanbanBoard = ({ projects, projectStatuses, onProjectsChange, onPro
           className="mb-3"
         >
           <Card 
-            className="cursor-pointer hover:shadow-md transition-shadow duration-200 bg-card border border-border"
+            className="cursor-pointer hover:shadow-lg hover:-translate-y-1 transition-all duration-300 ease-out bg-card border border-border/50 hover:border-border group"
             onClick={() => handleProjectClick(project)}
           >
-            <CardContent className="p-3 md:p-4">
-              {/* Lead name and assignees */}
-              <div className="flex items-center justify-between gap-2 mb-2">
-                <span className="font-bold text-sm truncate">{project.lead?.name || 'No Lead'}</span>
+            <CardContent className="p-4 space-y-3">
+              {/* Header with Project Type badge */}
+              <div className="flex items-start justify-between">
+                <div className="flex-1 min-w-0">
+                  {/* Project Name - Bold, Larger Text */}
+                  <h3 className="font-bold text-base text-foreground mb-2 line-clamp-2 group-hover:text-primary transition-colors">
+                    {project.name}
+                  </h3>
+                  
+                  {/* Lead Name - Smaller, with user icon */}
+                  <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                    <User className="h-3.5 w-3.5 flex-shrink-0" />
+                    <span className="truncate">{project.lead?.name || 'No Lead'}</span>
+                  </div>
+                </div>
+
+                {/* Project Type Badge - Top Right */}
+                {project.project_type && (
+                  <Badge variant="secondary" className="text-xs font-medium bg-muted/50 text-muted-foreground border-0 flex-shrink-0 ml-2">
+                    {project.project_type.name}
+                  </Badge>
+                )}
+              </div>
+
+              {/* Optional To-Do Progress Bar */}
+              {(project.todo_count || 0) > 0 && (
+                <div className="space-y-2">
+                  <ProgressBar
+                    value={Math.round(((project.completed_todo_count || 0) / (project.todo_count || 0)) * 100)}
+                    total={project.todo_count || 0}
+                    completed={project.completed_todo_count || 0}
+                    className="w-full"
+                    showLabel={false}
+                    size="sm"
+                  />
+                </div>
+              )}
+
+              {/* Separator Line */}
+              <div className="border-t border-border/30" />
+
+              {/* Footer with stats and assignees */}
+              <div className="flex items-center justify-between pt-1">
+                <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                  {/* Session Count */}
+                  {(project.session_count || project.planned_session_count || 0) > 0 && (
+                    <div className="flex items-center gap-1">
+                      <Calendar className="h-3.5 w-3.5" />
+                      <span>{project.session_count || project.planned_session_count}</span>
+                    </div>
+                  )}
+                  
+                  {/* Service Count */}
+                  {(project.services?.length || 0) > 0 && (
+                    <div className="flex items-center gap-1">
+                      <Briefcase className="h-3.5 w-3.5" />
+                      <span>{project.services?.length}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Avatar Stack */}
                 {project.assignees && project.assignees.length > 0 && (
                   <AssigneeAvatars 
                     assigneeIds={project.assignees} 
-                    maxVisible={2}
-                    size="xs"
+                    maxVisible={3}
+                    size="sm"
                   />
                 )}
               </div>
-              
-              {/* Project name (middle) */}
-              <h4 className="font-normal text-sm mb-2 line-clamp-2">{project.name}</h4>
-              
-              {/* Project type badge and todo completion side by side */}
-              <div className={`flex items-center gap-2 ${(project.planned_session_count || 0) > 0 ? 'mb-3' : 'mb-1'}`}>
-                {project.project_type && (
-                  <Badge variant="outline" className="text-xs">
-                    {project.project_type.name.toUpperCase()}
-                  </Badge>
-                )}
-                {(project.todo_count || 0) > 0 && (
-                  <Badge 
-                    variant={(project.completed_todo_count || 0) === (project.todo_count || 0) ? "default" : "secondary"}
-                    className={`text-xs h-5 px-2 ${(project.completed_todo_count || 0) === (project.todo_count || 0) ? 'bg-green-600 text-white' : ''}`}
-                  >
-                    {project.completed_todo_count || 0}/{project.todo_count || 0}
-                  </Badge>
-                )}
-              </div>
-              
-              {/* Bottom section */}
-              {(project.planned_session_count || 0) > 0 && (
-                <div className="space-y-2">
-                  {/* Session info */}
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Calendar className="h-3 w-3" />
-                    <span>{project.planned_session_count} planned session{project.planned_session_count !== 1 ? 's' : ''}</span>
-                  </div>
-                </div>
-              )}
             </CardContent>
           </Card>
         </div>

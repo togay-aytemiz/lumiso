@@ -8,9 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Plus, Loader2, Mail, MessageCircle, Phone, Clock } from "lucide-react";
+import { Plus, Loader2, Mail, MessageCircle, Phone, Clock, Search, ChevronDown, Check } from "lucide-react";
 import { WorkflowFormData, TriggerType } from "@/types/workflow";
 import { useTemplates } from "@/hooks/useTemplates";
+import { cn } from "@/lib/utils";
 
 interface CreateWorkflowSheetProps {
   onCreateWorkflow: (data: WorkflowFormData) => Promise<void>;
@@ -54,7 +55,6 @@ const channelConfigs: Record<ChannelType, ChannelConfig> = {
 export function CreateWorkflowSheet({ onCreateWorkflow, editWorkflow, onUpdateWorkflow, setEditingWorkflow, children }: CreateWorkflowSheetProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [templateSearch, setTemplateSearch] = useState('');
   const { sessionTemplates, loading: templatesLoading } = useTemplates();
   
   const isEditing = !!editWorkflow;
@@ -69,6 +69,8 @@ export function CreateWorkflowSheet({ onCreateWorkflow, editWorkflow, onUpdateWo
   });
 
   const [selectedTemplate, setSelectedTemplate] = useState<string>('');
+  const [templateSearch, setTemplateSearch] = useState('');
+  const [templateDropdownOpen, setTemplateDropdownOpen] = useState(false);
   const [reminderDelay, setReminderDelay] = useState<number>(1440);
   const [enabledChannels, setEnabledChannels] = useState<Record<ChannelType, boolean>>({
     email: true,
@@ -93,6 +95,21 @@ export function CreateWorkflowSheet({ onCreateWorkflow, editWorkflow, onUpdateWo
       setOpen(true);
     }
   }, [editWorkflow]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (templateDropdownOpen && !target.closest('[data-template-dropdown]')) {
+        setTemplateDropdownOpen(false);
+      }
+    };
+
+    if (templateDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [templateDropdownOpen]);
 
   const handleSubmit = async () => {
     if (!formData.name.trim() || !formData.trigger_type || !selectedTemplate) return;
@@ -145,6 +162,7 @@ export function CreateWorkflowSheet({ onCreateWorkflow, editWorkflow, onUpdateWo
     });
     setSelectedTemplate('');
     setTemplateSearch('');
+    setTemplateDropdownOpen(false);
     setReminderDelay(1440);
     setEnabledChannels({ email: true, whatsapp: true, sms: true });
   };
@@ -292,31 +310,89 @@ export function CreateWorkflowSheet({ onCreateWorkflow, editWorkflow, onUpdateWo
                   No session templates found. Please create a template first in the Templates section.
                 </div>
               ) : (
-                <>
-                  <Input
-                    placeholder="Search templates..."
-                    value={templateSearch}
-                    onChange={(e) => setTemplateSearch(e.target.value)}
-                    className="mb-2"
-                  />
-                  <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a template" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {filteredTemplates.map((template) => (
-                        <SelectItem key={template.id} value={template.id}>
-                          <div>
-                            <div className="font-medium">{template.name}</div>
-                            {template.description && (
-                              <div className="text-xs text-muted-foreground">{template.description}</div>
-                            )}
+                <div className="relative" data-template-dropdown>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-between text-left h-auto min-h-[40px]"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setTemplateDropdownOpen(!templateDropdownOpen);
+                    }}
+                  >
+                    {selectedTemplate ? (
+                      <div className="flex flex-col items-start w-full">
+                        <span className="font-medium">{selectedTemplateData?.name}</span>
+                        {selectedTemplateData?.description && (
+                          <span className="text-xs text-muted-foreground">{selectedTemplateData.description}</span>
+                        )}
+                      </div>
+                    ) : (
+                      "Search and select a template..."
+                    )}
+                    <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                  
+                  {templateDropdownOpen && (
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-background border rounded-lg shadow-lg z-50 max-h-64 overflow-hidden">
+                      <div className="p-3 border-b">
+                        <div className="relative">
+                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                          <Input
+                            placeholder="Search templates..."
+                            value={templateSearch}
+                            onChange={(e) => setTemplateSearch(e.target.value)}
+                            className="pl-10"
+                            autoFocus
+                          />
+                        </div>
+                      </div>
+                      <div className="overflow-y-auto max-h-48">
+                        {filteredTemplates.length === 0 ? (
+                          <div className="p-4 text-center text-sm text-muted-foreground">
+                            {templateSearch ? 'No templates match your search' : 'No templates found'}
                           </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </>
+                        ) : (
+                          filteredTemplates.map((template) => (
+                            <button
+                              key={template.id}
+                              type="button"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setSelectedTemplate(template.id);
+                                setTemplateDropdownOpen(false);
+                                setTemplateSearch("");
+                              }}
+                              className={cn(
+                                "flex items-center justify-between p-3 hover:bg-muted/50 cursor-pointer border-b last:border-b-0 w-full text-left",
+                                selectedTemplate === template.id && "bg-muted"
+                              )}
+                            >
+                              <div className="flex items-start space-x-3 flex-1">
+                                <Check
+                                  className={cn(
+                                    "h-4 w-4 mt-0.5",
+                                    selectedTemplate === template.id ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                <div className="flex-1 min-w-0">
+                                  <div className="font-medium">{template.name}</div>
+                                  {template.description && (
+                                    <div className="text-xs text-muted-foreground">{template.description}</div>
+                                  )}
+                                  {template.subject && (
+                                    <div className="text-xs text-muted-foreground mt-1">Subject: {template.subject}</div>
+                                  )}
+                                </div>
+                              </div>
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
               )}
             </div>
 

@@ -69,24 +69,24 @@ export function generateModernDailySummaryEmail(
       <div style="
         display: flex;
         justify-content: space-between;
-        gap: 8px;
+        gap: 16px;
         margin-top: 24px;
       ">
         <div style="
           text-align: center;
           background: white;
-          padding: 12px 8px;
+          padding: 16px 12px;
           border-radius: 12px;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+          box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
           flex: 1;
-          min-width: 80px;
-          flex-shrink: 1;
+          min-width: 70px;
+          border: 1px solid #f3f4f6;
         ">
           <div style="
             font-size: 20px;
             font-weight: 700;
             color: ${brandColor};
-            margin-bottom: 4px;
+            margin-bottom: 6px;
             line-height: 1;
           ">${upcomingSessions.length}</div>
           <div style="
@@ -102,18 +102,18 @@ export function generateModernDailySummaryEmail(
         <div style="
           text-align: center;
           background: white;
-          padding: 12px 8px;
+          padding: 16px 12px;
           border-radius: 12px;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+          box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
           flex: 1;
-          min-width: 80px;
-          flex-shrink: 1;
+          min-width: 70px;
+          border: 1px solid #f3f4f6;
         ">
           <div style="
             font-size: 20px;
             font-weight: 700;
             color: ${brandColor};
-            margin-bottom: 4px;
+            margin-bottom: 6px;
             line-height: 1;
           ">${totalTodayReminders}</div>
           <div style="
@@ -129,18 +129,18 @@ export function generateModernDailySummaryEmail(
         <div style="
           text-align: center;
           background: white;
-          padding: 12px 8px;
+          padding: 16px 12px;
           border-radius: 12px;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+          box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
           flex: 1;
-          min-width: 80px;
-          flex-shrink: 1;
+          min-width: 70px;
+          border: 1px solid #f3f4f6;
         ">
           <div style="
             font-size: 20px;
             font-weight: 700;
             color: ${totalOverdue > 0 ? '#ef4444' : '#6b7280'};
-            margin-bottom: 4px;
+            margin-bottom: 6px;
             line-height: 1;
           ">${totalOverdue}</div>
           <div style="
@@ -156,18 +156,18 @@ export function generateModernDailySummaryEmail(
         <div style="
           text-align: center;
           background: white;
-          padding: 12px 8px;
+          padding: 16px 12px;
           border-radius: 12px;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+          box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
           flex: 1;
-          min-width: 80px;
-          flex-shrink: 1;
+          min-width: 70px;
+          border: 1px solid #f3f4f6;
         ">
           <div style="
             font-size: 20px;
             font-weight: 700;
             color: ${totalPastSessions > 0 ? '#f59e0b' : '#6b7280'};
-            margin-bottom: 4px;
+            margin-bottom: 6px;
             line-height: 1;
           ">${totalPastSessions}</div>
           <div style="

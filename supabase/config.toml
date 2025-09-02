@@ -10,6 +10,9 @@ max_rows = 1000
 [functions.notification-processor]
 verify_jwt = false
 
+[functions.workflow-executor]
+verify_jwt = false
+
 [db]
 enabled = true
 port = 54322

@@ -5,6 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useOrganizationQuickSettings } from "@/hooks/useOrganizationQuickSettings";
+import { useWorkflowTriggers } from "@/hooks/useWorkflowTriggers";
+import { useOrganization } from "@/contexts/OrganizationContext";
 
 interface LeadStatus {
   id: string;
@@ -42,6 +44,8 @@ export function LeadStatusBadge({
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { settings: userSettings } = useOrganizationQuickSettings();
+  const { triggerLeadStatusChange } = useWorkflowTriggers();
+  const { activeOrganization } = useOrganization();
 
   useEffect(() => {
     if (passedStatuses) {
@@ -182,6 +186,20 @@ export function LeadStatusBadge({
         title: "Status Updated",
         description: `Lead status ${currentStatusData ? 'changed' : 'set'} to "${newStatus.name}"`
       });
+
+      // Trigger workflow for lead status change
+      if (activeOrganization?.id && currentStatusData) {
+        try {
+          await triggerLeadStatusChange(leadId, activeOrganization.id, currentStatusData.name, newStatus.name, {
+            old_status_id: currentStatusData.id,
+            new_status_id: newStatusId,
+            lead_id: leadId
+          });
+        } catch (workflowError) {
+          console.error('Error triggering lead status workflow:', workflowError);
+          // Don't block status change if workflow fails
+        }
+      }
     } catch (error: any) {
       toast({
         title: "Error updating status",

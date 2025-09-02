@@ -11,6 +11,7 @@ import { toast } from "@/hooks/use-toast";
 import { sessionSchema, sanitizeInput, sanitizeHtml } from "@/lib/validation";
 import { ZodError } from "zod";
 import { useCalendarSync } from "@/hooks/useCalendarSync";
+import { useWorkflowTriggers } from "@/hooks/useWorkflowTriggers";
 
 interface EditSessionDialogProps {
   sessionId: string;
@@ -38,6 +39,7 @@ const EditSessionDialog = ({ sessionId, leadId, currentDate, currentTime, curren
   });
   const [projects, setProjects] = useState<{id: string, name: string}[]>([]);
   const { updateSessionEvent } = useCalendarSync();
+  const { triggerSessionRescheduled } = useWorkflowTriggers();
 
   const fetchProjects = async () => {
     try {
@@ -114,6 +116,11 @@ const EditSessionDialog = ({ sessionId, leadId, currentDate, currentTime, curren
 
     setLoading(true);
     try {
+      // Check if date/time changed for workflow trigger
+      const dateTimeChanged = formData.session_date !== currentDate || formData.session_time !== currentTime;
+      const oldDateTime = `${currentDate} ${currentTime}`;
+      const newDateTime = `${formData.session_date} ${formData.session_time}`;
+
       const { error } = await supabase
         .from('sessions')
         .update({
@@ -126,6 +133,26 @@ const EditSessionDialog = ({ sessionId, leadId, currentDate, currentTime, curren
         .eq('id', sessionId);
 
       if (error) throw error;
+
+      // Trigger workflow for session rescheduled if date/time changed
+      if (dateTimeChanged) {
+        try {
+          const { data: organizationId } = await supabase.rpc('get_user_active_organization_id');
+          if (organizationId) {
+            await triggerSessionRescheduled(sessionId, organizationId, oldDateTime, newDateTime, {
+              session_date: formData.session_date,
+              session_time: formData.session_time,
+              location: formData.location,
+              client_name: leadName,
+              lead_id: leadId,
+              project_id: formData.project_id === "no-project" ? null : formData.project_id
+            });
+          }
+        } catch (workflowError) {
+          console.error('Error triggering rescheduled workflow:', workflowError);
+          // Don't block session update if workflow fails
+        }
+      }
 
       // Sync to Google Calendar
       if (leadName) {

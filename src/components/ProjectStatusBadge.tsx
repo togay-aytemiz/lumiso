@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useNotificationTriggers } from "@/hooks/useNotificationTriggers";
 import { useOrganization } from "@/contexts/OrganizationContext";
+import { useWorkflowTriggers } from "@/hooks/useWorkflowTriggers";
 
 interface ProjectStatus {
   id: string;
@@ -41,6 +42,7 @@ export function ProjectStatusBadge({
   const { toast } = useToast();
   const { triggerProjectMilestone } = useNotificationTriggers();
   const { activeOrganization } = useOrganization();
+  const { triggerProjectStatusChange } = useWorkflowTriggers();
 
   console.log('ProjectStatusBadge rendered:', { projectId, currentStatusId, editable });
 
@@ -167,6 +169,21 @@ export function ProjectStatusBadge({
       // Send milestone notifications for status change
       if (activeOrganization?.id && currentStatus?.id) {
         await triggerProjectMilestone(projectId, currentStatus.id, newStatusId, activeOrganization.id, []);
+      }
+
+      // Trigger workflow for project status change
+      if (activeOrganization?.id && currentStatus?.id) {
+        try {
+          await triggerProjectStatusChange(projectId, activeOrganization.id, currentStatus.name, newStatus.name, {
+            old_status_id: currentStatus.id,
+            new_status_id: newStatusId,
+            project_id: projectId,
+            lead_id: projectData.lead_id
+          });
+        } catch (workflowError) {
+          console.error('Error triggering project status workflow:', workflowError);
+          // Don't block status change if workflow fails
+        }
       }
     } catch (error: any) {
       toast({

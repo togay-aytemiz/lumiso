@@ -43,7 +43,7 @@ export interface WorkflowExecution {
   created_at: string;
 }
 
-export type TriggerType = 'session_scheduled' | 'session_confirmed' | 'session_completed' | 'session_cancelled' | 'session_rescheduled' | 'project_status_change' | 'lead_status_change';
+export type TriggerType = 'session_scheduled' | 'session_completed' | 'session_cancelled' | 'session_rescheduled' | 'session_reminder' | 'project_status_change' | 'lead_status_change';
 
 export interface WorkflowFormData {
   name: string;

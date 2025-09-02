@@ -29,9 +29,10 @@ export default function Workflows() {
     return matchesSearch && matchesStatus;
   });
 
+  const [editingWorkflow, setEditingWorkflow] = useState<Workflow | null>(null);
+
   const handleEditWorkflow = (workflow: Workflow) => {
-    // TODO: Implement edit dialog in Phase 2
-    console.log("Edit workflow:", workflow);
+    setEditingWorkflow(workflow);
   };
 
   const handleDeleteWorkflow = async (id: string) => {
@@ -49,10 +50,10 @@ export default function Workflows() {
   const getTriggerLabel = (triggerType: string) => {
     const labels = {
       session_scheduled: 'Session Scheduled',
-      session_confirmed: 'Session Confirmed', 
       session_completed: 'Session Completed',
       session_cancelled: 'Session Cancelled',
       session_rescheduled: 'Session Rescheduled',
+      session_reminder: 'Session Reminder',
       project_status_change: 'Project Status Change',
       lead_status_change: 'Lead Status Change',
     };
@@ -99,9 +100,9 @@ export default function Workflows() {
       header: 'Trigger',
       sortable: true,
       render: (workflow) => (
-        <Badge variant="outline" className="text-xs">
+        <div className="text-sm">
           {getTriggerLabel(workflow.trigger_type)}
-        </Badge>
+        </div>
       ),
     },
     {
@@ -246,6 +247,15 @@ export default function Workflows() {
               Create Workflow
             </Button>
           </CreateWorkflowSheet>
+          
+          {editingWorkflow && (
+            <CreateWorkflowSheet 
+              editWorkflow={editingWorkflow}
+              onCreateWorkflow={createWorkflow}
+              onUpdateWorkflow={updateWorkflow}
+              setEditingWorkflow={setEditingWorkflow}
+            />
+          )}
         </div>
 
         {/* Workflows Table */}

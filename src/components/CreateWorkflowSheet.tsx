@@ -1,29 +1,39 @@
 import { useState } from "react";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { AppSheetModal } from "@/components/ui/app-sheet-modal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Plus, Loader2, Mail, MessageCircle, Phone } from "lucide-react";
+import { Plus, Loader2, Mail, MessageCircle, Phone, Clock } from "lucide-react";
 import { WorkflowFormData, TriggerType } from "@/types/workflow";
 import { useTemplates } from "@/hooks/useTemplates";
 
 interface CreateWorkflowSheetProps {
   onCreateWorkflow: (data: WorkflowFormData) => Promise<void>;
+  editWorkflow?: any;
+  onUpdateWorkflow?: (id: string, data: WorkflowFormData) => Promise<void>;
+  setEditingWorkflow?: (workflow: any) => void;
   children?: React.ReactNode;
 }
 
 const triggerOptions = [
   { value: 'session_scheduled', label: 'Session Scheduled' },
-  { value: 'session_confirmed', label: 'Session Confirmed' },
   { value: 'session_completed', label: 'Session Completed' },
   { value: 'session_cancelled', label: 'Session Cancelled' },
   { value: 'session_rescheduled', label: 'Session Rescheduled' },
+  { value: 'session_reminder', label: 'Session Reminder' },
+];
+
+const reminderDelayOptions = [
+  { value: 1440, label: '1 day before' },
+  { value: 4320, label: '3 days before' },
+  { value: 10080, label: '1 week before' },
+  { value: 60, label: '1 hour before' },
+  { value: 480, label: 'Same day morning (8 AM)' },
 ];
 
 type ChannelType = 'email' | 'sms' | 'whatsapp';
@@ -37,32 +47,35 @@ interface ChannelConfig {
 
 const channelConfigs: Record<ChannelType, ChannelConfig> = {
   email: { enabled: true, icon: Mail, label: 'Email', color: 'bg-blue-500' },
-  sms: { enabled: true, icon: Phone, label: 'SMS', color: 'bg-green-500' },
   whatsapp: { enabled: true, icon: MessageCircle, label: 'WhatsApp', color: 'bg-green-600' },
+  sms: { enabled: true, icon: Phone, label: 'SMS', color: 'bg-green-500' },
 };
 
-export function CreateWorkflowSheet({ onCreateWorkflow, children }: CreateWorkflowSheetProps) {
+export function CreateWorkflowSheet({ onCreateWorkflow, editWorkflow, onUpdateWorkflow, setEditingWorkflow, children }: CreateWorkflowSheetProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [templateSearch, setTemplateSearch] = useState('');
   const { sessionTemplates, loading: templatesLoading } = useTemplates();
   
+  const isEditing = !!editWorkflow;
+  
   const [formData, setFormData] = useState<WorkflowFormData>({
-    name: '',
-    description: '',
-    trigger_type: 'session_scheduled',
-    is_active: true,
+    name: editWorkflow?.name || '',
+    description: editWorkflow?.description || '',
+    trigger_type: editWorkflow?.trigger_type || 'session_scheduled',
+    is_active: editWorkflow?.is_active ?? true,
     steps: [],
   });
 
   const [selectedTemplate, setSelectedTemplate] = useState<string>('');
+  const [reminderDelay, setReminderDelay] = useState<number>(1440);
   const [enabledChannels, setEnabledChannels] = useState<Record<ChannelType, boolean>>({
     email: true,
-    sms: true,
     whatsapp: true,
+    sms: true,
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     if (!formData.name.trim() || !formData.trigger_type || !selectedTemplate) return;
 
     const activeChannels = Object.entries(enabledChannels)
@@ -71,12 +84,12 @@ export function CreateWorkflowSheet({ onCreateWorkflow, children }: CreateWorkfl
 
     const workflowStep = {
       step_order: 1,
-      action_type: 'send_email' as const, // Use existing action type
+      action_type: 'send_notification' as const,
       action_config: {
         template_id: selectedTemplate,
         channels: activeChannels,
       },
-      delay_minutes: 0,
+      delay_minutes: formData.trigger_type === 'session_reminder' ? reminderDelay : 0,
       is_active: true,
     };
 
@@ -87,23 +100,34 @@ export function CreateWorkflowSheet({ onCreateWorkflow, children }: CreateWorkfl
 
     try {
       setLoading(true);
-      await onCreateWorkflow(workflowData);
-      setOpen(false);
-      // Reset form
-      setFormData({
-        name: '',
-        description: '',
-        trigger_type: 'session_scheduled',
-        is_active: true,
-        steps: [],
-      });
-      setSelectedTemplate('');
-      setEnabledChannels({ email: true, sms: true, whatsapp: true });
+      if (isEditing && onUpdateWorkflow) {
+        await onUpdateWorkflow(editWorkflow.id, workflowData);
+      } else {
+        await onCreateWorkflow(workflowData);
+      }
+      handleClose();
     } catch (error) {
-      console.error('Error creating workflow:', error);
+      console.error('Error saving workflow:', error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+    setEditingWorkflow?.(null);
+    // Reset form
+    setFormData({
+      name: '',
+      description: '',
+      trigger_type: 'session_scheduled',
+      is_active: true,
+      steps: [],
+    });
+    setSelectedTemplate('');
+    setTemplateSearch('');
+    setReminderDelay(1440);
+    setEnabledChannels({ email: true, whatsapp: true, sms: true });
   };
 
   const updateFormData = (field: keyof WorkflowFormData, value: any) => {
@@ -119,23 +143,49 @@ export function CreateWorkflowSheet({ onCreateWorkflow, children }: CreateWorkfl
 
   const selectedTemplateData = sessionTemplates.find(t => t.id === selectedTemplate);
   const hasEnabledChannels = Object.values(enabledChannels).some(enabled => enabled);
+  const isDirty = formData.name.trim() !== '' || formData.description !== '' || selectedTemplate !== '';
+
+  const filteredTemplates = sessionTemplates.filter(template =>
+    template.name.toLowerCase().includes(templateSearch.toLowerCase()) ||
+    template.description?.toLowerCase().includes(templateSearch.toLowerCase())
+  );
+
+  const footerActions = [
+    {
+      label: 'Cancel',
+      onClick: handleClose,
+      variant: 'outline' as const,
+    },
+    {
+      label: isEditing ? 'Update Workflow' : 'Create Workflow',
+      onClick: handleSubmit,
+      disabled: loading || !formData.name.trim() || !selectedTemplate || !hasEnabledChannels,
+      loading,
+    },
+  ];
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger asChild>
-        {children || (
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Create Workflow
-          </Button>
-        )}
-      </SheetTrigger>
-      <SheetContent className="w-full sm:max-w-[600px] overflow-y-auto">
-        <SheetHeader>
-          <SheetTitle>Create New Workflow</SheetTitle>
-        </SheetHeader>
-        
-        <form onSubmit={handleSubmit} className="space-y-6 mt-6">
+    <>
+      {children && (
+        <div onClick={() => setOpen(true)}>
+          {children}
+        </div>
+      )}
+      
+      <AppSheetModal
+        title={isEditing ? 'Edit Workflow' : 'Create New Workflow'}
+        isOpen={open}
+        onOpenChange={setOpen}
+        footerActions={footerActions}
+        dirty={isDirty}
+        onDirtyClose={() => {
+          if (confirm('You have unsaved changes. Are you sure you want to close?')) {
+            handleClose();
+          }
+        }}
+        size="lg"
+      >
+        <div className="space-y-6 mt-6">
           {/* Basic Info */}
           <div className="space-y-4">
             <div className="space-y-2">
@@ -182,25 +232,71 @@ export function CreateWorkflowSheet({ onCreateWorkflow, children }: CreateWorkfl
 
           <Separator />
 
+          {/* Reminder Timing - Only for session_reminder */}
+          {formData.trigger_type === 'session_reminder' && (
+            <>
+              <Separator />
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Reminder Timing *</Label>
+                  <Select value={reminderDelay.toString()} onValueChange={(value) => setReminderDelay(Number(value))}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {reminderDelayOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value.toString()}>
+                          <div className="flex items-center gap-2">
+                            <Clock className="h-4 w-4" />
+                            {option.label}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </>
+          )}
+
+          <Separator />
+
           {/* Template Selection */}
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>Message Template *</Label>
               {templatesLoading ? (
                 <div className="text-sm text-muted-foreground">Loading templates...</div>
+              ) : sessionTemplates.length === 0 ? (
+                <div className="text-sm text-muted-foreground p-4 border border-dashed rounded-lg text-center">
+                  No session templates found. Please create a template first in the Templates section.
+                </div>
               ) : (
-                <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a template" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {sessionTemplates.map((template) => (
-                      <SelectItem key={template.id} value={template.id}>
-                        {template.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <>
+                  <Input
+                    placeholder="Search templates..."
+                    value={templateSearch}
+                    onChange={(e) => setTemplateSearch(e.target.value)}
+                    className="mb-2"
+                  />
+                  <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a template" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {filteredTemplates.map((template) => (
+                        <SelectItem key={template.id} value={template.id}>
+                          <div>
+                            <div className="font-medium">{template.name}</div>
+                            {template.description && (
+                              <div className="text-xs text-muted-foreground">{template.description}</div>
+                            )}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </>
               )}
             </div>
 
@@ -291,21 +387,15 @@ export function CreateWorkflowSheet({ onCreateWorkflow, children }: CreateWorkfl
             />
           </div>
 
-          {/* Actions */}
-          <div className="flex justify-end gap-3 pt-4">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-              Cancel
-            </Button>
-            <Button 
-              type="submit" 
-              disabled={loading || !formData.name.trim() || !selectedTemplate || !hasEnabledChannels}
-            >
-              {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Create Workflow
-            </Button>
-          </div>
-        </form>
-      </SheetContent>
-    </Sheet>
+        </div>
+      </AppSheetModal>
+      
+      {!children && (
+        <Button onClick={() => setOpen(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          Create Workflow
+        </Button>
+      )}
+    </>
   );
 }

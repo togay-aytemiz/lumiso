@@ -194,7 +194,18 @@ const AddLeadDialog = ({ onLeadAdded, open, onOpenChange }: AddLeadDialogProps) 
       resetForm();
       onOpenChange(false);
     },
+    onSaveAndExit: async () => {
+      await handleSubmit();
+    }
   });
+
+  const handleDirtyClose = () => {
+    if (!navigation.handleModalClose()) {
+      return; // Navigation guard will handle it
+    }
+    resetForm();
+    onOpenChange(false);
+  };
 
   const footerActions = [
     {
@@ -219,7 +230,7 @@ const AddLeadDialog = ({ onLeadAdded, open, onOpenChange }: AddLeadDialogProps) 
         onOpenChange={onOpenChange}
         size="default"
         dirty={isDirty}
-        onDirtyClose={() => navigation.handleNavigationAttempt('close')}
+        onDirtyClose={handleDirtyClose}
         footerActions={footerActions}
       >
         <div className="space-y-4">
@@ -312,7 +323,8 @@ const AddLeadDialog = ({ onLeadAdded, open, onOpenChange }: AddLeadDialogProps) 
         open={navigation.showGuard}
         onDiscard={navigation.handleDiscardChanges}
         onStay={navigation.handleStayOnPage}
-        message={navigation.message}
+        onSaveAndExit={navigation.handleSaveAndExit}
+        message="You have unsaved lead changes."
       />
     </>
   );

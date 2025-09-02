@@ -156,7 +156,17 @@ export function EnhancedAddLeadDialog({
     onDiscard: () => {
       onClose();
     },
+    onSaveAndExit: async () => {
+      await form.handleSubmit(onSubmit)();
+    }
   });
+
+  const handleDirtyClose = () => {
+    if (!navigation.handleModalClose()) {
+      return; // Navigation guard will handle it
+    }
+    onClose();
+  };
 
   const footerActions = [
     {
@@ -194,7 +204,7 @@ export function EnhancedAddLeadDialog({
         onOpenChange={onOpenChange}
         size="lg"
         dirty={isDirty}
-        onDirtyClose={() => navigation.handleNavigationAttempt('close')}
+        onDirtyClose={handleDirtyClose}
         footerActions={footerActions}
       >
         <div className="space-y-1 mb-6">
@@ -224,7 +234,8 @@ export function EnhancedAddLeadDialog({
         open={navigation.showGuard}
         onDiscard={navigation.handleDiscardChanges}
         onStay={navigation.handleStayOnPage}
-        message={navigation.message}
+        onSaveAndExit={navigation.handleSaveAndExit}
+        message="You have unsaved lead changes."
       />
     </>
   );

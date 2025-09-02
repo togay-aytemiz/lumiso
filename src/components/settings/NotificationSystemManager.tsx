@@ -213,7 +213,7 @@ export function NotificationSystemManager() {
               className="flex items-center gap-2"
             >
               <Play className="h-4 w-4" />
-              Process Pending
+              Process Pending ({stats?.pending || 0})
             </Button>
             
             <Button

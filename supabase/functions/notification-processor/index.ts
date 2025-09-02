@@ -101,7 +101,7 @@ async function processPendingNotifications(supabase: any, organizationId?: strin
     .select('*')
     .eq('delivery_method', 'immediate')
     .eq('status', 'pending')
-    .lt('retry_count', supabase.rpc('notifications.max_retries'));
+    .lt('retry_count', 3); // Maximum 3 retries
 
   if (organizationId && !force) {
     query = query.eq('organization_id', organizationId);
@@ -151,7 +151,7 @@ async function processScheduledNotifications(supabase: any, organizationId?: str
     .select('*')
     .eq('delivery_method', 'scheduled')
     .eq('status', 'pending')
-    .lt('retry_count', supabase.rpc('notifications.max_retries'));
+    .lt('retry_count', 3); // Maximum 3 retries
 
   if (!force) {
     // Only process notifications scheduled for now or earlier
@@ -281,39 +281,61 @@ async function processDailySummary(supabase: any, notification: any) {
     .eq('organization_id', notification.organization_id)
     .eq('session_date', today);
 
-  // Get todos
-  const { data: todos } = await supabase
-    .from('todos')
-    .select('*')
-    .eq('user_id', notification.user_id)
-    .eq('is_completed', false);
+  // Get overdue activities
+  const { data: overdueActivities } = await supabase
+    .from('activities')
+    .select(`
+      id, content, reminder_date, reminder_time,
+      lead_id, project_id,
+      leads(name),
+      projects(name)
+    `)
+    .eq('organization_id', notification.organization_id)
+    .lt('reminder_date', today)
+    .eq('completed', false);
+
+  // Get past sessions needing action
+  const { data: pastSessions } = await supabase
+    .from('sessions')
+    .select(`
+      id, location, session_date, session_time,
+      leads(name), projects(name)
+    `)
+    .eq('organization_id', notification.organization_id)
+    .lt('session_date', today);
+
+  const templateData = {
+    userFullName: userData.user.email?.split('@')[0] || 'User',
+    businessName: orgSettings?.photography_business_name || 'Lumiso',
+    brandColor: orgSettings?.primary_brand_color || '#1EB29F',
+    dateFormat: orgSettings?.date_format || 'DD/MM/YYYY',
+    timeFormat: orgSettings?.time_format || '12-hour',
+    baseUrl: 'https://my.lumiso.app'
+  };
 
   // Check if there's any activity
-  const hasActivity = (activities && activities.length > 0) || 
-                     (sessions && sessions.length > 0) || 
-                     (todos && todos.length > 0);
-
+  const hasActivity = (activities && activities.length > 0) || (sessions && sessions.length > 0);
+  
   let emailHtml;
   if (hasActivity) {
-    emailHtml = generateModernDailySummaryEmail({
-      userName: userData.user.email?.split('@')[0] || 'User',
-      activities: activities || [],
-      upcomingSessions: sessions || [],
-      todos: todos || [],
-      businessName: orgSettings?.photography_business_name || 'Your Business',
-      logoUrl: orgSettings?.logo_url || 'https://my.lumiso.app/lumiso-logo.png'
-    });
+    emailHtml = generateModernDailySummaryEmail(
+      sessions || [], 
+      activities || [], 
+      { leads: [], activities: overdueActivities || [] }, 
+      pastSessions || [],
+      templateData
+    );
   } else {
-    emailHtml = generateEmptyDailySummaryEmail({
-      userName: userData.user.email?.split('@')[0] || 'User',
-      businessName: orgSettings?.photography_business_name || 'Your Business',
-      logoUrl: orgSettings?.logo_url || 'https://my.lumiso.app/lumiso-logo.png'
-    });
+    emailHtml = generateEmptyDailySummaryEmail(
+      { leads: [], activities: overdueActivities || [] }, 
+      pastSessions || [],
+      templateData
+    );
   }
 
   // Send email
   const emailResponse = await resend.emails.send({
-    from: `${orgSettings?.photography_business_name || 'Lumiso'} <daily-summary@lumiso.app>`,
+    from: `Lumiso <daily-summary@lumiso.app>`,
     to: [userData.user.email!],
     subject: hasActivity ? 'Your Daily Summary' : 'Daily Summary - Nothing scheduled today',
     html: emailHtml,

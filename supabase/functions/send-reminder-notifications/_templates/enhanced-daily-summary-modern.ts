@@ -69,100 +69,115 @@ export function generateModernDailySummaryEmail(
       <div style="
         display: flex;
         justify-content: space-between;
-        flex-wrap: wrap;
-        gap: 12px;
+        gap: 8px;
         margin-top: 24px;
       ">
         <div style="
           text-align: center;
           background: white;
-          padding: 16px;
+          padding: 12px 8px;
           border-radius: 12px;
           box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-          min-width: 120px;
+          flex: 1;
+          min-width: 80px;
+          flex-shrink: 1;
         ">
           <div style="
-            font-size: 24px;
+            font-size: 20px;
             font-weight: 700;
             color: ${brandColor};
             margin-bottom: 4px;
+            line-height: 1;
           ">${upcomingSessions.length}</div>
           <div style="
-            font-size: 12px;
+            font-size: 10px;
             color: #6b7280;
             font-weight: 500;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.3px;
+            line-height: 1.2;
           ">Today's Sessions</div>
         </div>
         
         <div style="
           text-align: center;
           background: white;
-          padding: 16px;
+          padding: 12px 8px;
           border-radius: 12px;
           box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-          min-width: 120px;
+          flex: 1;
+          min-width: 80px;
+          flex-shrink: 1;
         ">
           <div style="
-            font-size: 24px;
+            font-size: 20px;
             font-weight: 700;
             color: ${brandColor};
             margin-bottom: 4px;
+            line-height: 1;
           ">${totalTodayReminders}</div>
           <div style="
-            font-size: 12px;
+            font-size: 10px;
             color: #6b7280;
             font-weight: 500;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-          ">Today's Reminders</div>
+            letter-spacing: 0.3px;
+            line-height: 1.2;
+          ">Reminders</div>
         </div>
         
         <div style="
           text-align: center;
           background: white;
-          padding: 16px;
+          padding: 12px 8px;
           border-radius: 12px;
           box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-          min-width: 120px;
+          flex: 1;
+          min-width: 80px;
+          flex-shrink: 1;
         ">
           <div style="
-            font-size: 24px;
+            font-size: 20px;
             font-weight: 700;
             color: ${totalOverdue > 0 ? '#ef4444' : '#6b7280'};
             margin-bottom: 4px;
+            line-height: 1;
           ">${totalOverdue}</div>
           <div style="
-            font-size: 12px;
+            font-size: 10px;
             color: #6b7280;
             font-weight: 500;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-          ">Overdue Items</div>
+            letter-spacing: 0.3px;
+            line-height: 1.2;
+          ">Overdue</div>
         </div>
         
         <div style="
           text-align: center;
           background: white;
-          padding: 16px;
+          padding: 12px 8px;
           border-radius: 12px;
           box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-          min-width: 120px;
+          flex: 1;
+          min-width: 80px;
+          flex-shrink: 1;
         ">
           <div style="
-            font-size: 24px;
+            font-size: 20px;
             font-weight: 700;
             color: ${totalPastSessions > 0 ? '#f59e0b' : '#6b7280'};
             margin-bottom: 4px;
+            line-height: 1;
           ">${totalPastSessions}</div>
           <div style="
-            font-size: 12px;
+            font-size: 10px;
             color: #6b7280;
             font-weight: 500;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-          ">Past Sessions</div>
+            letter-spacing: 0.3px;
+            line-height: 1.2;
+          ">Past</div>
         </div>
       </div>
     </div>
@@ -491,61 +506,60 @@ export function generateModernDailySummaryEmail(
         <div style="
           display: flex;
           justify-content: space-between;
-          flex-wrap: wrap;
-          gap: 16px;
+          gap: 12px;
           margin: 0 auto;
         ">
           <a href="${templateData.baseUrl}" style="
             display: inline-block;
             background: ${brandColor};
             color: white;
-            padding: 10px 20px;
+            padding: 8px 16px;
             border-radius: 8px;
             text-decoration: none;
             font-weight: 600;
-            font-size: 14px;
+            font-size: 13px;
             text-align: center;
             flex: 1;
-            min-width: 120px;
+            min-width: 85px;
           ">Dashboard</a>
           <a href="${templateData.baseUrl}/leads" style="
             display: inline-block;
             background: #6b7280;
             color: white;
-            padding: 10px 20px;
+            padding: 8px 16px;
             border-radius: 8px;
             text-decoration: none;
             font-weight: 600;
-            font-size: 14px;
+            font-size: 13px;
             text-align: center;
             flex: 1;
-            min-width: 120px;
+            min-width: 85px;
           ">Leads</a>
           <a href="${templateData.baseUrl}/projects" style="
             display: inline-block;
             background: #6b7280;
             color: white;
-            padding: 10px 20px;
+            padding: 8px 16px;
             border-radius: 8px;
             text-decoration: none;
             font-weight: 600;
-            font-size: 14px;
+            font-size: 13px;
             text-align: center;
             flex: 1;
-            min-width: 120px;
+            min-width: 85px;
           ">Projects</a>
           <a href="${templateData.baseUrl}/sessions" style="
             display: inline-block;
             background: #6b7280;
             color: white;
-            padding: 10px 20px;
+            padding: 8px 16px;
             border-radius: 8px;
             text-decoration: none;
             font-weight: 600;
-            font-size: 14px;
+            font-size: 13px;
             text-align: center;
             flex: 1;
-            min-width: 120px;
+            min-width: 85px;
           ">Sessions</a>
         </div>
       </div>

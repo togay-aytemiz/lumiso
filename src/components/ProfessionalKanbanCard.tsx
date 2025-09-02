@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ProgressBar } from '@/components/ui/progress-bar';
-import { User, Calendar, DollarSign } from 'lucide-react';
+import { User, Calendar, DollarSign, Package } from 'lucide-react';
 import { AssigneeAvatars } from './AssigneeAvatars';
 
 interface Project {
@@ -59,7 +59,7 @@ export const ProfessionalKanbanCard: React.FC<ProfessionalKanbanCardProps> = ({
 
           {/* Project Name */}
           {kanbanSettings.kanban_show_project_name && (
-            <h3 className="font-bold text-lg line-clamp-2 leading-tight">
+            <h3 className="font-bold text-base line-clamp-2 leading-tight">
               {project.name}
             </h3>
           )}
@@ -86,7 +86,7 @@ export const ProfessionalKanbanCard: React.FC<ProfessionalKanbanCardProps> = ({
 
           {/* Bottom Section */}
           <div className="flex items-center justify-between text-xs text-muted-foreground border-t border-border pt-3">
-            {/* Left Side - Session Count or Revenue */}
+            {/* Left Side - Session Count, Revenue, Service Count */}
             <div className="flex items-center gap-4">
               {kanbanSettings.kanban_show_session_count && (
                 <div className="flex items-center gap-1.5">
@@ -99,6 +99,13 @@ export const ProfessionalKanbanCard: React.FC<ProfessionalKanbanCardProps> = ({
                 <div className="flex items-center gap-1.5">
                   <DollarSign className="h-3.5 w-3.5" />
                   <span>${project.total_revenue.toLocaleString()}</span>
+                </div>
+              )}
+
+              {kanbanSettings.kanban_show_service_count && project.services && project.services.length > 0 && (
+                <div className="flex items-center gap-1.5">
+                  <Package className="h-3.5 w-3.5" />
+                  <span>{project.services.length} services</span>
                 </div>
               )}
             </div>

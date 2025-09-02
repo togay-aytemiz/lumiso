@@ -523,11 +523,15 @@ async function handleNewAssignmentNotification(requestData: ReminderRequest, adm
           console.error('Error fetching project:', projectError);
         }
         
+        console.log('Project query result:', project);
+        
         if (project) {
           console.log('Found project:', project.name);
-          entityName = project.name;
+          entityName = project.name || `Unnamed Project`;
           notes = project.description;
           leadName = project.leads?.name;
+          
+          console.log('Project details - Name:', entityName, 'Lead:', leadName);
           
           // Get project type name if available
           if (project.project_type_id) {
@@ -539,6 +543,7 @@ async function handleNewAssignmentNotification(requestData: ReminderRequest, adm
             
             if (projectTypeData) {
               projectType = projectTypeData.name;
+              console.log('Project type:', projectType);
             }
           }
           
@@ -552,10 +557,40 @@ async function handleNewAssignmentNotification(requestData: ReminderRequest, adm
             
             if (statusData) {
               status = statusData.name;
+              console.log('Project status:', status);
             }
           }
         } else {
           console.log('No project found for ID:', entity_id);
+          // Try to get just the basic project info without joins
+          const { data: basicProject } = await adminSupabase
+            .from('projects')
+            .select('name, description, lead_id')
+            .eq('id', entity_id)
+            .maybeSingle();
+          
+          if (basicProject) {
+            console.log('Found basic project:', basicProject);
+            entityName = basicProject.name || `Unnamed Project`;
+            notes = basicProject.description;
+            
+            // Fetch lead name separately if lead_id exists
+            if (basicProject.lead_id) {
+              const { data: leadData } = await adminSupabase
+                .from('leads')
+                .select('name')
+                .eq('id', basicProject.lead_id)
+                .maybeSingle();
+              
+              if (leadData) {
+                leadName = leadData.name;
+                console.log('Lead name fetched separately:', leadName);
+              }
+            }
+          } else {
+            console.error('Project not found with ID:', entity_id);
+            entityName = `Project ${entity_id}`;
+          }
         }
       }
     }
@@ -621,7 +656,7 @@ async function handleNewAssignmentNotification(requestData: ReminderRequest, adm
         },
         project: {
           id: entity_id || '',
-          name: entityName || `Project ${entity_id}`,
+          name: entityName || 'Unnamed Project',
           type: projectType || undefined,
           status: status || undefined,
           notes: notes || undefined,

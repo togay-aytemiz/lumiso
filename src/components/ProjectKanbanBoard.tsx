@@ -137,171 +137,69 @@ const ProjectKanbanBoard = ({
     return projects.filter(project => !project.status_id);
   };
 
-  // Calculate new sort order for a project based on its destination index
-  const calculateSortOrder = async (statusId: string | null, destinationIndex: number): Promise<number> => {
-    const projectsInColumn = statusId 
-      ? projects.filter(p => p.status_id === statusId)
-      : projects.filter(p => !p.status_id);
-    
-    if (projectsInColumn.length === 0) {
-      return 1;
-    }
-    
-    // Sort by current sort_order, then by created_at
-    projectsInColumn.sort((a, b) => {
-      const aOrder = (a as any).sort_order || 0;
-      const bOrder = (b as any).sort_order || 0;
-      if (aOrder === bOrder) {
-        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-      }
-      return aOrder - bOrder;
-    });
-    
-    if (destinationIndex === 0) {
-      // Moving to the top
-      const firstProject = projectsInColumn[0];
-      const firstOrder = (firstProject as any).sort_order || 1;
-      return Math.max(1, firstOrder - 1);
-    }
-    
-    if (destinationIndex >= projectsInColumn.length) {
-      // Moving to the bottom
-      const lastProject = projectsInColumn[projectsInColumn.length - 1];
-      const lastOrder = (lastProject as any).sort_order || projectsInColumn.length;
-      return lastOrder + 1;
-    }
-    
-    // Moving between two projects
-    const prevProject = projectsInColumn[destinationIndex - 1];
-    const nextProject = projectsInColumn[destinationIndex];
-    const prevOrder = (prevProject as any).sort_order || destinationIndex;
-    const nextOrder = (nextProject as any).sort_order || destinationIndex + 1;
-    
-    return Math.floor((prevOrder + nextOrder) / 2) || prevOrder + 1;
-  };
+  const handleDragEnd = async (result: any) => {
+    const { destination, source, draggableId } = result;
+    if (!destination) return;
+    if (destination.droppableId === source.droppableId && destination.index === source.index) return;
 
-  // Handle reordering within the same column
-  const handleSameColumnReorder = async (
-    projectId: string, 
-    destinationIndex: number, 
-    sourceIndex: number, 
-    statusId: string
-  ) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      const actualStatusId = statusId === 'no-status' ? null : statusId;
-      const newSortOrder = await calculateSortOrder(actualStatusId, destinationIndex);
+      const projectId = draggableId;
+      const newStatusId = destination.droppableId === 'no-status' ? null : destination.droppableId;
+      const project = projects.find(p => p.id === projectId);
+      if (!project) return;
 
-      // Update project sort order
+      // Simple sort order: use destination index + 1
+      const newSortOrder = destination.index + 1;
+
+      // Update project
       const { error } = await supabase
         .from('projects')
-        .update({ sort_order: newSortOrder })
+        .update({ 
+          status_id: newStatusId,
+          sort_order: newSortOrder
+        })
         .eq('id', projectId)
         .eq('user_id', user.id);
 
       if (error) throw error;
 
+      // Log status change if column changed
+      if (destination.droppableId !== source.droppableId) {
+        const oldStatus = statuses.find(s => s.id === project?.status_id);
+        const newStatus = statuses.find(s => s.id === newStatusId);
+        const statusChangeMessage = `Status changed from '${oldStatus?.name || 'No Status'}' to '${newStatus?.name || 'No Status'}'`;
+        
+        await supabase.from('activities').insert({
+          type: 'status_change',
+          content: statusChangeMessage,
+          project_id: projectId,
+          lead_id: project?.lead_id,
+          user_id: user.id
+        });
+
+        toast({
+          title: "Project Updated",
+          description: `Project moved to ${newStatus?.name || 'No Status'}`
+        });
+      } else {
+        toast({
+          title: "Project Reordered",
+          description: "Project position updated"
+        });
+      }
+
       onProjectsChange();
-      
-      toast({
-        title: "Project Reordered",
-        description: "Project position has been updated"
-      });
-    } catch (error) {
-      console.error('Error reordering project:', error);
-      toast({
-        title: "Error",
-        description: "Failed to reorder project",
-        variant: "destructive"
-      });
-    }
-  };
-  const handleDragEnd = async (result: any) => {
-    const {
-      destination,
-      source,
-      draggableId
-    } = result;
-    if (!destination) return;
-    
-    // If dropped in the same position, do nothing
-    if (destination.droppableId === source.droppableId && destination.index === source.index) return;
-    
-    const projectId = draggableId;
-    const newStatusId = destination.droppableId === 'no-status' ? null : destination.droppableId;
-    
-    // Get current project data
-    const project = projects.find(p => p.id === projectId);
-    if (!project) return;
-
-    // Handle reordering within the same column
-    if (destination.droppableId === source.droppableId) {
-      await handleSameColumnReorder(projectId, destination.index, source.index, destination.droppableId);
-      return;
-    }
-    try {
-      const {
-        data: {
-          user
-        }
-      } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
-
-      // Find the project and old status
-      const project = projects.find(p => p.id === projectId);
-      const oldStatus = statuses.find(s => s.id === project?.status_id);
-      const newStatus = statuses.find(s => s.id === newStatusId);
-
-      // Calculate new sort order for cross-column move
-      const newSortOrder = await calculateSortOrder(newStatusId, destination.index);
-
-      // Update project status and sort order
-      const {
-        error
-      } = await supabase.from('projects').update({
-        status_id: newStatusId,
-        sort_order: newSortOrder
-      }).eq('id', projectId).eq('user_id', user.id);
-      if (error) throw error;
-
-      // Log the status change
-      const statusChangeMessage = `Status changed from '${oldStatus?.name || 'No Status'}' to '${newStatus?.name || 'No Status'}'`;
-      await supabase.from('activities').insert({
-        type: 'status_change',
-        content: statusChangeMessage,
-        project_id: projectId,
-        lead_id: project?.lead_id,
-        user_id: user.id
-      });
-      toast({
-        title: "Project Updated",
-        description: `Project moved to ${newStatus?.name || 'No Status'}`
-      });
-
-      // Notify parent about project update for tutorial tracking
       if (onProjectUpdate && project) {
-        const updatedProject = {
-          ...project,
-          status_id: newStatusId
-        };
-        onProjectUpdate(updatedProject);
-      }
-      onProjectsChange();
-
-      // Send milestone notifications for status change
-      if (activeOrganization?.id) {
-        const oldStatus = project?.status_id;
-        if (oldStatus && oldStatus !== newStatusId) {
-          await triggerProjectMilestone(projectId, oldStatus, newStatusId, activeOrganization.id, project?.assignees || []);
-        }
+        onProjectUpdate({ ...project, status_id: newStatusId });
       }
     } catch (error) {
-      console.error('Error updating project status:', error);
+      console.error('Error updating project:', error);
       toast({
         title: "Error",
-        description: "Failed to update project status",
+        description: "Failed to update project",
         variant: "destructive"
       });
     }

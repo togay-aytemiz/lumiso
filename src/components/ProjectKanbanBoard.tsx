@@ -4,16 +4,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Plus, Calendar, CheckSquare, User, Briefcase } from "lucide-react";
+import { Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { EnhancedProjectDialog } from "@/components/EnhancedProjectDialog";
 import { ViewProjectDialog } from "@/components/ViewProjectDialog";
-import { formatDate } from "@/lib/utils";
-import { AssigneeAvatars } from "@/components/AssigneeAvatars";
 import { ProfessionalKanbanCard } from "@/components/ProfessionalKanbanCard";
 import { KanbanLoadingSkeleton } from "@/components/ui/loading-presets";
-import { ProgressBar } from "@/components/ui/progress-bar";
 import { useNotificationTriggers } from "@/hooks/useNotificationTriggers";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { useKanbanSettings } from "@/hooks/useKanbanSettings";
@@ -39,7 +36,7 @@ interface Project {
   status_id?: string | null;
   project_type_id?: string | null;
   sort_order?: number;
-  lead: {
+  lead?: {
     id: string;
     name: string;
     status: string;
@@ -56,10 +53,7 @@ interface Project {
   next_session_date?: string | null;
   todo_count?: number;
   completed_todo_count?: number;
-  services?: Array<{
-    id: string;
-    name: string;
-  }>;
+  services?: Array<{ id: string; name: string }>;
   assignees?: string[];
 }
 
@@ -73,8 +67,8 @@ interface ProjectKanbanBoardProps {
 
 const GAP = 1000;
 
-const orderProjects = (list: Project[]) => {
-  return [...list].sort((a, b) => {
+const orderProjects = (list: Project[]) =>
+  [...list].sort((a, b) => {
     const ao = a.sort_order ?? Number.MAX_SAFE_INTEGER;
     const bo = b.sort_order ?? Number.MAX_SAFE_INTEGER;
     if (ao !== bo) return ao - bo;
@@ -82,7 +76,46 @@ const orderProjects = (list: Project[]) => {
     const bd = b.created_at ? new Date(b.created_at).getTime() : 0;
     return ad - bd;
   });
-};
+
+function computeSortForInsert(
+  withMoving: Project[],
+  index: number
+): { value: number | null; needReindex: boolean } {
+  const prev = index > 0 ? withMoving[index - 1] : undefined;
+  const next = index < withMoving.length - 1 ? withMoving[index + 1] : undefined;
+
+  if (!prev && !next) return { value: GAP, needReindex: false };
+  if (!prev && next) {
+    const nextOrder = next.sort_order ?? GAP;
+    return { value: nextOrder - GAP, needReindex: false };
+  }
+  if (prev && !next) {
+    const prevOrder = prev.sort_order ?? 0;
+    return { value: prevOrder + GAP, needReindex: false };
+  }
+
+  const prevOrder = prev?.sort_order ?? 0;
+  const nextOrder = next?.sort_order ?? prevOrder + 2;
+
+  if (nextOrder - prevOrder >= 2) {
+    return { value: Math.floor((prevOrder + nextOrder) / 2), needReindex: false };
+  }
+  return { value: null, needReindex: true };
+}
+
+async function reindexColumn(
+  statusId: string | null,
+  ordered: Project[]
+) {
+  await Promise.all(
+    ordered.map((p, i) =>
+      supabase
+        .from("projects")
+        .update({ status_id: statusId, sort_order: (i + 1) * GAP })
+        .eq("id", p.id)
+    )
+  );
+}
 
 const ProjectKanbanBoard = ({
   projects,
@@ -93,13 +126,12 @@ const ProjectKanbanBoard = ({
 }: ProjectKanbanBoardProps) => {
   const [statuses, setStatuses] = useState<ProjectStatus[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showAddProjectDialog, setShowAddProjectDialog] = useState(false);
   const [selectedStatusId, setSelectedStatusId] = useState<string | null>(null);
   const [viewingProject, setViewingProject] = useState<Project | null>(null);
   const [showViewDialog, setShowViewDialog] = useState(false);
 
-  const { triggerNewAssignment, triggerProjectMilestone } = useNotificationTriggers();
-  const { activeOrganization } = useOrganization();
+  useNotificationTriggers();
+  useOrganization();
   const { settings: kanbanSettings } = useKanbanSettings();
 
   useEffect(() => {
@@ -129,23 +161,17 @@ const ProjectKanbanBoard = ({
       setStatuses((data || []).filter(s => s.name?.toLowerCase?.() !== "archived"));
     } catch (error) {
       console.error("Error fetching project statuses:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load project statuses",
-        variant: "destructive"
-      });
+      toast({ title: "Error", description: "Failed to load project statuses", variant: "destructive" });
     } finally {
       setLoading(false);
     }
   };
 
-  const getProjectsByStatus = (statusId: string) => {
-    return orderProjects(projects.filter(project => project.status_id === statusId));
-  };
+  const getProjectsByStatus = (statusId: string) =>
+    orderProjects(projects.filter(p => p.status_id === statusId));
 
-  const getProjectsWithoutStatus = () => {
-    return orderProjects(projects.filter(project => !project.status_id));
-  };
+  const getProjectsWithoutStatus = () =>
+    orderProjects(projects.filter(p => !p.status_id));
 
   const handleDragEnd = async (result: any) => {
     const { destination, source, draggableId } = result;
@@ -163,81 +189,60 @@ const ProjectKanbanBoard = ({
       const moving = projects.find(p => p.id === projectId);
       if (!moving) return;
 
-      const oldStatus = statuses.find(s => s.id === moving.status_id);
-      const newStatus = statuses.find(s => s.id === dstStatusId || "");
+      const dstBase = orderProjects(projects.filter(p => p.status_id === dstStatusId && p.id !== moving.id));
+      const insertIndex = Math.min(Math.max(destination.index, 0), dstBase.length);
 
-      const srcListBase = orderProjects(projects.filter(p => p.status_id === srcStatusId && p.id !== moving.id));
-      let dstListBase = orderProjects(projects.filter(p => p.status_id === dstStatusId && p.id !== moving.id));
+      const dstWithMoving: Project[] = [...dstBase];
+      dstWithMoving.splice(insertIndex, 0, { ...moving, status_id: dstStatusId });
 
-      if (srcStatusId === dstStatusId) {
-        dstListBase = orderProjects(projects.filter(p => p.status_id === srcStatusId && p.id !== moving.id));
+      const { value, needReindex } = computeSortForInsert(dstWithMoving, insertIndex);
+
+      if (!needReindex && value !== null) {
+        const { error } = await supabase
+          .from("projects")
+          .update({ status_id: dstStatusId, sort_order: value })
+          .eq("id", projectId);
+        if (error) throw error;
+      } else {
+        await reindexColumn(dstStatusId, dstWithMoving);
+        if (srcStatusId !== dstStatusId) {
+          const srcAfterMove = orderProjects(projects.filter(p => p.status_id === srcStatusId && p.id !== moving.id));
+          await reindexColumn(srcStatusId, srcAfterMove);
+        }
       }
 
-      const itemWithNewStatus: Project = { ...moving, status_id: dstStatusId };
-      const dstList = [...dstListBase];
-      const insertIndex = Math.min(Math.max(destination.index, 0), dstList.length);
-      dstList.splice(insertIndex, 0, itemWithNewStatus);
-
-      // Calculate the new sort order based on the destination index
-      const newSortOrder = (destination.index + 1) * GAP;
-
-      // Update just the moved project with its new status and position
-      const { error } = await supabase
-        .from("projects")
-        .update({
-          status_id: dstStatusId,
-          sort_order: newSortOrder
-        })
-        .eq("id", projectId);
-
-      if (error) throw error;
-
       if (srcStatusId !== dstStatusId) {
-        const statusChangeMessage = `Status changed from '${oldStatus?.name || "No Status"}' to '${newStatus?.name || "No Status"}'`;
+        const oldStatus = statuses.find(s => s.id === moving.status_id);
+        const newStatus = statuses.find(s => s.id === (dstStatusId || ""));
         await supabase.from("activities").insert({
           type: "status_change",
-          content: statusChangeMessage,
+          content: `Status changed from '${oldStatus?.name || "No Status"}' to '${newStatus?.name || "No Status"}'`,
           project_id: projectId,
           lead_id: moving.lead_id,
           user_id: user.id
         });
-        toast({
-          title: "Project Updated",
-          description: `Project moved to ${newStatus?.name || "No Status"}`
-        });
+        toast({ title: "Project Updated", description: `Project moved to ${newStatus?.name || "No Status"}` });
       } else {
-        toast({
-          title: "Project Reordered",
-          description: "Project position updated"
-        });
+        toast({ title: "Project Reordered", description: "Project position updated" });
       }
 
       onProjectsChange();
-      if (onProjectUpdate) {
-        onProjectUpdate({ ...moving, status_id: dstStatusId, sort_order: (insertIndex + 1) * GAP });
-      }
+      if (onProjectUpdate) onProjectUpdate({ ...moving, status_id: dstStatusId });
     } catch (error) {
       console.error("Error updating project order:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update project",
-        variant: "destructive"
-      });
+      toast({ title: "Error", description: "Failed to update project", variant: "destructive" });
     }
   };
 
   const handleAddProject = (statusId: string | null) => {
     setSelectedStatusId(statusId);
     const triggerButton = document.getElementById("kanban-add-project-trigger");
-    if (triggerButton) {
-      triggerButton.click();
-    }
+    triggerButton?.click();
   };
 
   const handleProjectClick = (project: Project) => {
-    if (onQuickView) {
-      onQuickView(project);
-    } else {
+    if (onQuickView) onQuickView(project);
+    else {
       setViewingProject(project);
       setShowViewDialog(true);
     }
@@ -281,10 +286,7 @@ const ProjectKanbanBoard = ({
                 border: `1px solid ${statusColor}40`
               }}
             >
-              <div
-                className="w-2 h-2 rounded-full"
-                style={{ backgroundColor: statusColor }}
-              />
+              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: statusColor }} />
               <span className="uppercase tracking-wide font-semibold">{statusName}</span>
             </button>
             <Badge variant="secondary" className="text-xs">
@@ -342,29 +344,19 @@ const ProjectKanbanBoard = ({
     );
   };
 
-  if (loading) {
-    return <KanbanLoadingSkeleton />;
-  }
+  if (loading) return <KanbanLoadingSkeleton />;
 
   return (
     <>
       <div
         className="h-full w-full max-w-full overflow-x-auto"
-        style={{
-          WebkitOverflowScrolling: "touch",
-          scrollbarWidth: "thin",
-          touchAction: "pan-x pan-y"
-        }}
+        style={{ WebkitOverflowScrolling: "touch", scrollbarWidth: "thin", touchAction: "pan-x pan-y" }}
       >
         <div className="p-4 sm:p-6 h-full">
           <DragDropContext onDragEnd={handleDragEnd}>
-            <div
-              className="flex gap-2 sm:gap-3 pb-4 h-full"
-              style={{ width: "max-content", minWidth: "100%" }}
-            >
+            <div className="flex gap-2 sm:gap-3 pb-4 h-full" style={{ width: "max-content", minWidth: "100%" }}>
               {statuses.map(status => renderColumn(status, getProjectsByStatus(status.id)))}
-              {getProjectsWithoutStatus().length > 0 &&
-                renderColumn(null, getProjectsWithoutStatus())}
+              {getProjectsWithoutStatus().length > 0 && renderColumn(null, getProjectsWithoutStatus())}
             </div>
           </DragDropContext>
         </div>
@@ -377,9 +369,7 @@ const ProjectKanbanBoard = ({
           setSelectedStatusId(null);
         }}
       >
-        <Button id="kanban-add-project-trigger" className="hidden">
-          Add Project
-        </Button>
+        <Button id="kanban-add-project-trigger" className="hidden">Add Project</Button>
       </EnhancedProjectDialog>
 
       <ViewProjectDialog

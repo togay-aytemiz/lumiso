@@ -45,6 +45,7 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     const requestData: ReminderRequest = await req.json();
     console.log(`Processing ${requestData.type}, test mode: ${requestData.isTest || false}`);
+    console.log('Available types: daily-summary, daily-summary-empty, new-assignment, project-milestone');
 
     // Handle new-assignment notifications first (simpler path)
     if (requestData.type === 'new-assignment') {
@@ -58,12 +59,14 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Handle daily-summary and daily-summary-empty notifications
     if (!['daily-summary', 'daily-summary-empty'].includes(requestData.type)) {
+      console.log(`Unsupported type received: ${requestData.type}`);
       return new Response(JSON.stringify({ message: 'Only daily-summary, daily-summary-empty, new-assignment and project-milestone supported' }), {
         status: 200,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });
     }
 
+    console.log(`Proceeding with type: ${requestData.type}`);
     const { type, isTest = false, organizationId: batchOrgId, userId: batchUserId } = requestData;
 
     let user: any;

@@ -21,7 +21,6 @@ interface NotificationSettings {
   
   // Scheduled Notifications  
   dailySummaryEnabled: boolean;
-  weeklyRecapEnabled: boolean;
   
   // Immediate Notifications
   newAssignmentEnabled: boolean;
@@ -35,7 +34,6 @@ export default function Notifications() {
     globalEnabled: true,
     scheduledTime: "09:00",
     dailySummaryEnabled: true,
-    weeklyRecapEnabled: true,
     newAssignmentEnabled: true,
     projectMilestoneEnabled: true,
   });
@@ -82,7 +80,6 @@ export default function Notifications() {
           globalEnabled: data.notification_global_enabled ?? true,
           scheduledTime: data.notification_scheduled_time ?? "09:00",
           dailySummaryEnabled: data.notification_daily_summary_enabled ?? true,
-          weeklyRecapEnabled: data.notification_weekly_recap_enabled ?? true,
           newAssignmentEnabled: data.notification_new_assignment_enabled ?? true,
           projectMilestoneEnabled: data.notification_project_milestone_enabled ?? true,
         };
@@ -107,7 +104,6 @@ export default function Notifications() {
       const updates = {
         notification_global_enabled: enabled,
         notification_daily_summary_enabled: enabled,
-        notification_weekly_recap_enabled: enabled,
         notification_new_assignment_enabled: enabled,
         notification_project_milestone_enabled: enabled,
       };
@@ -123,7 +119,6 @@ export default function Notifications() {
         ...prev,
         globalEnabled: enabled,
         dailySummaryEnabled: enabled,
-        weeklyRecapEnabled: enabled,
         newAssignmentEnabled: enabled,
         projectMilestoneEnabled: enabled,
       }));
@@ -153,7 +148,6 @@ export default function Notifications() {
       globalEnabled: 'notification_global_enabled',
       scheduledTime: 'notification_scheduled_time',
       dailySummaryEnabled: 'notification_daily_summary_enabled',
-      weeklyRecapEnabled: 'notification_weekly_recap_enabled',
       newAssignmentEnabled: 'notification_new_assignment_enabled',
       projectMilestoneEnabled: 'notification_project_milestone_enabled',
     };
@@ -300,7 +294,7 @@ export default function Notifications() {
                   Scheduled Notification Time
                 </Label>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Time when daily summaries and weekly recaps are sent
+                  Time when daily summaries are sent each morning
                 </p>
               </div>
               <Select
@@ -326,7 +320,7 @@ export default function Notifications() {
         {/* Scheduled Notifications */}
         <CategorySettingsSection
           title="Scheduled Notifications"
-          description={`Automated summaries sent daily at ${settings.scheduledTime}`}
+          description={`Daily digest sent automatically at ${settings.scheduledTime}`}
           sectionId="scheduled"
         >
           <div className="space-y-6">
@@ -383,41 +377,6 @@ export default function Notifications() {
               </div>
             </div>
 
-            {/* Weekly Recap */}
-            <div className="flex items-center justify-between p-4 border rounded-lg">
-              <div className="flex-1">
-                <Label htmlFor="weekly-recap" className="text-base font-medium">
-                  Weekly Recap (Owner Only)
-                </Label>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Weekly business insights: leads, projects, sessions, revenue, and aging alerts
-                </p>
-              </div>
-              <div className="flex items-center gap-3">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => testNotification('weekly-recap')}
-                  disabled={testingNotification === 'weekly-recap'}
-                  className="text-primary hover:text-primary/80 hover:bg-transparent p-0 h-auto font-medium text-sm"
-                >
-                  {testingNotification === 'weekly-recap' ? (
-                    <>
-                      <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                      Testing...
-                    </>
-                  ) : (
-                    'Send test'
-                  )}
-                </Button>
-                <Switch
-                  id="weekly-recap"
-                  checked={settings.weeklyRecapEnabled}
-                  onCheckedChange={(checked) => handleAutoSave('weeklyRecapEnabled', checked)}
-                  disabled={autoSaveStates.weeklyRecapEnabled === 'saving'}
-                />
-              </div>
-            </div>
           </div>
         </CategorySettingsSection>
 

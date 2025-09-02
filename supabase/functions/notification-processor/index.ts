@@ -211,6 +211,14 @@ async function processSpecificNotification(supabase: any, notificationId: string
 
   console.log(`Processing ${notificationData.notification_type} notification for user ${notificationData.user_id}`);
 
+  // Check if notifications are globally enabled before processing
+  const isEnabled = await checkNotificationEnabled(supabase, notificationData.user_id, notificationData.organization_id, notificationData.notification_type);
+  if (!isEnabled) {
+    console.log(`Notifications disabled for user ${notificationData.user_id}, skipping ${notificationData.notification_type}`);
+    await updateNotificationStatus(supabase, notificationId, 'cancelled', 'Notifications disabled');
+    return { skipped: true, reason: 'Notifications disabled' };
+  }
+
   // Route to appropriate processor based on type
   let result;
   
@@ -229,7 +237,7 @@ async function processSpecificNotification(supabase: any, notificationId: string
   }
 
   // Mark as sent on success
-  await updateNotificationStatus(supabase, notificationId, 'sent', null, 0, result.id);
+  await updateNotificationStatus(supabase, notificationId, 'sent', null, 0, result?.id);
   
   return result;
 }
@@ -358,34 +366,25 @@ async function processProjectMilestone(supabase: any, notification: any) {
     throw new Error('project_id required in metadata for milestone notification');
   }
 
-  // Use existing project milestone logic from send-reminder-notifications
-  // This would call the same logic as handleProjectMilestoneNotification
-  // For brevity, I'll reference the existing function
   console.log(`Processing milestone: ${project_id} from ${old_status} to ${new_status}`);
   
-  // TODO: Extract milestone processing logic from send-reminder-notifications
-  // For now, delegate to the existing function
-  const result = await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/send-reminder-notifications`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`
-    },
-    body: JSON.stringify({
+  // Use the send-reminder-notifications function for actual processing
+  const { data, error } = await supabase.functions.invoke('send-reminder-notifications', {
+    body: {
       type: 'project-milestone',
       project_id,
       old_status,
       new_status,
       changed_by_user_id,
       organizationId: notification.organization_id
-    })
+    }
   });
 
-  if (!result.ok) {
-    throw new Error(`Failed to process milestone: ${result.statusText}`);
+  if (error) {
+    throw new Error(`Failed to process milestone: ${error.message}`);
   }
 
-  return await result.json();
+  return data;
 }
 
 // Process new assignment notification
@@ -405,31 +404,25 @@ async function processNewAssignment(supabase: any, notification: any) {
 
   console.log(`Processing assignment: ${entity_type}:${entity_id} to ${userData.user.email}`);
   
-  // TODO: Extract assignment processing logic from send-reminder-notifications
-  // For now, delegate to the existing function
-  const result = await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/send-reminder-notifications`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`
-    },
-    body: JSON.stringify({
+  // Use the send-reminder-notifications function for actual processing
+  const { data, error } = await supabase.functions.invoke('send-reminder-notifications', {
+    body: {
       type: 'new-assignment',
       entity_type,
       entity_id,
       assignee_id: notification.user_id,
       assignee_email: userData.user.email,
-      assignee_name: userData.user.email?.split('@')[0],
+      assignee_name: userData.user.email?.split('@')[0] || 'User',
       assigner_name,
       organizationId: notification.organization_id
-    })
+    }
   });
 
-  if (!result.ok) {
-    throw new Error(`Failed to process assignment: ${result.statusText}`);
+  if (error) {
+    throw new Error(`Failed to process assignment: ${error.message}`);
   }
 
-  return await result.json();
+  return data;
 }
 
 // Schedule future notifications (e.g., daily summaries for tomorrow)
@@ -573,6 +566,70 @@ async function updateNotificationStatus(
 
   if (error) {
     console.error(`Error updating notification status:`, error);
+  }
+}
+
+// Check if notifications are enabled for user/organization
+async function checkNotificationEnabled(supabase: any, userId: string, organizationId: string, notificationType: string): Promise<boolean> {
+  try {
+    // Check user settings first
+    const { data: userSettings } = await supabase
+      .from('user_settings')
+      .select('notification_global_enabled, notification_daily_summary_enabled, notification_new_assignment_enabled, notification_project_milestone_enabled')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    // If user has global disabled, skip
+    if (userSettings && userSettings.notification_global_enabled === false) {
+      return false;
+    }
+
+    // Check specific notification type settings
+    if (userSettings) {
+      switch (notificationType) {
+        case 'daily-summary':
+          if (userSettings.notification_daily_summary_enabled === false) return false;
+          break;
+        case 'new-assignment':
+          if (userSettings.notification_new_assignment_enabled === false) return false;
+          break;
+        case 'project-milestone':
+          if (userSettings.notification_project_milestone_enabled === false) return false;
+          break;
+      }
+    }
+
+    // Check organization settings if available
+    const { data: orgSettings } = await supabase
+      .from('organization_settings')
+      .select('notification_global_enabled, notification_daily_summary_enabled, notification_new_assignment_enabled, notification_project_milestone_enabled')
+      .eq('organization_id', organizationId)
+      .maybeSingle();
+
+    if (orgSettings && orgSettings.notification_global_enabled === false) {
+      return false;
+    }
+
+    // Check org-specific settings
+    if (orgSettings) {
+      switch (notificationType) {
+        case 'daily-summary':
+          if (orgSettings.notification_daily_summary_enabled === false) return false;
+          break;
+        case 'new-assignment':
+          if (orgSettings.notification_new_assignment_enabled === false) return false;
+          break;
+        case 'project-milestone':
+          if (orgSettings.notification_project_milestone_enabled === false) return false;
+          break;
+      }
+    }
+
+    return true;
+  } catch (error: any) {
+    console.error('Error checking notification settings:', error);
+    // Default to enabled on error to avoid blocking notifications
+    return true;
   }
 }
 

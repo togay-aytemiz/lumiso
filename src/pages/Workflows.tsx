@@ -220,7 +220,7 @@ export default function Workflows() {
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card>
-            <CardContent className="p-4 flex items-center gap-3">
+            <CardContent className="p-6 flex items-center gap-3">
               <div className="p-2 bg-primary/10 rounded-lg">
                 <Zap className="h-5 w-5 text-primary" />
               </div>
@@ -231,7 +231,7 @@ export default function Workflows() {
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4 flex items-center gap-3">
+            <CardContent className="p-6 flex items-center gap-3">
               <div className="p-2 bg-green-500/10 rounded-lg">
                 <CheckCircle className="h-5 w-5 text-green-600" />
               </div>
@@ -242,7 +242,7 @@ export default function Workflows() {
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-4 flex items-center gap-3">
+            <CardContent className="p-6 flex items-center gap-3">
               <div className="p-2 bg-orange-500/10 rounded-lg">
                 <Clock className="h-5 w-5 text-orange-600" />
               </div>

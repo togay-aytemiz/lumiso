@@ -1,9 +1,9 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { Resend } from "npm:resend@2.0.0";
-import { generateModernDailySummaryEmail } from '../send-reminder-notifications/_templates/enhanced-daily-summary-modern.ts';
-import { generateEmptyDailySummaryEmail } from '../send-reminder-notifications/_templates/enhanced-daily-summary-empty.ts';
-import { generateImmediateNotificationEmail, generateSubject, ImmediateNotificationEmailData, ProjectAssignmentData, LeadAssignmentData, ProjectMilestoneData } from '../send-reminder-notifications/_templates/immediate-notifications.ts';
+import { generateModernDailySummaryEmail } from './_templates/enhanced-daily-summary-modern.ts';
+import { generateEmptyDailySummaryEmail } from './_templates/enhanced-daily-summary-empty.ts';
+import { generateImmediateNotificationEmail, generateSubject, ImmediateNotificationEmailData, ProjectAssignmentData, LeadAssignmentData, ProjectMilestoneData } from './_templates/immediate-notifications.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",

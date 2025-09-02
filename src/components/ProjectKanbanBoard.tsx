@@ -246,7 +246,7 @@ const ProjectKanbanBoard = ({
 
               {/* Optional To-Do Progress Bar */}
               {(project.todo_count || 0) > 0 && <div className="space-y-2">
-                  <ProgressBar value={Math.round((project.completed_todo_count || 0) / (project.todo_count || 0) * 100)} total={project.todo_count || 0} completed={project.completed_todo_count || 0} className="w-full" showLabel={false} size="sm" />
+                  <ProgressBar value={Math.round((project.completed_todo_count || 0) / (project.todo_count || 0) * 100)} total={project.todo_count || 0} completed={project.completed_todo_count || 0} className="w-full" showLabel={true} size="sm" />
                 </div>}
 
               {/* Separator Line */}

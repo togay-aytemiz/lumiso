@@ -617,13 +617,13 @@ async function handleNewAssignmentNotification(requestData: ReminderRequest, adm
     if (!globalEnabled || !assignmentEnabled) {
       console.log('Assignment notifications are disabled - Global:', globalEnabled, 'Assignment:', assignmentEnabled);
       
-      // Still update the notification log to processed status to avoid retries
+      // Still update the notification to processed status to avoid retries
       if (assignee_id) {
         await adminSupabase
-          .from('notification_logs')
-          .update({ status: 'skipped', sent_at: new Date().toISOString() })
+          .from('notifications')
+          .update({ status: 'skipped', updated_at: new Date().toISOString() })
           .eq('user_id', assignee_id)
-          .eq('notification_type', 'new_assignment')
+          .eq('notification_type', 'new-assignment')
           .eq('status', 'pending')
           .order('created_at', { ascending: false })
           .limit(1);
@@ -716,13 +716,17 @@ async function handleNewAssignmentNotification(requestData: ReminderRequest, adm
 
     console.log('Assignment notification sent successfully:', emailResult);
 
-    // Update notification log status to sent
+    // Update notification status to sent
     if (assignee_id) {
       await adminSupabase
-        .from('notification_logs')
-        .update({ status: 'sent', sent_at: new Date().toISOString() })
+        .from('notifications')
+        .update({ 
+          status: 'sent', 
+          updated_at: new Date().toISOString(),
+          email_id: emailResult.data?.id || null
+        })
         .eq('user_id', assignee_id)
-        .eq('notification_type', 'new_assignment')
+        .eq('notification_type', 'new-assignment')
         .eq('status', 'pending')
         .order('created_at', { ascending: false })
         .limit(1);
@@ -744,18 +748,19 @@ async function handleNewAssignmentNotification(requestData: ReminderRequest, adm
   } catch (error) {
     console.error('Error in assignment notification:', error);
     
-    // Log error in notification_logs if possible
+    // Log error in notifications table if possible
     if (requestData.assignee_id && requestData.organizationId) {
       try {
         await adminSupabase
-          .from('notification_logs')
+          .from('notifications')
           .update({ 
             status: 'failed', 
             error_message: error.message,
-            sent_at: new Date().toISOString()
+            updated_at: new Date().toISOString(),
+            retry_count: 1
           })
           .eq('user_id', requestData.assignee_id)
-          .eq('notification_type', 'new_assignment')
+          .eq('notification_type', 'new-assignment')
           .eq('status', 'pending')
           .order('created_at', { ascending: false })
           .limit(1);
@@ -930,10 +935,10 @@ async function handleProjectMilestoneNotification(requestData: ReminderRequest, 
         if (!globalEnabled || !milestoneEnabled) {
           console.log(`Milestone notifications disabled for user ${assigneeId} - Global: ${globalEnabled}, Milestone: ${milestoneEnabled}`);
           
-          // Update notification log to skipped
+          // Update notification to skipped
           await adminSupabase
-            .from('notification_logs')
-            .update({ status: 'skipped', sent_at: new Date().toISOString() })
+            .from('notifications')
+            .update({ status: 'skipped', updated_at: new Date().toISOString() })
             .eq('user_id', assigneeId)
             .eq('notification_type', 'project-milestone')
             .eq('status', 'pending')
@@ -993,10 +998,14 @@ async function handleProjectMilestoneNotification(requestData: ReminderRequest, 
 
         console.log(`Milestone notification sent to ${assigneeAuth.user.email}:`, emailResult);
 
-        // Update notification log status to sent
+        // Update notification status to sent
         await adminSupabase
-          .from('notification_logs')
-          .update({ status: 'sent', sent_at: new Date().toISOString() })
+          .from('notifications')
+          .update({ 
+            status: 'sent', 
+            updated_at: new Date().toISOString(),
+            email_id: emailResult.data?.id || null 
+          })
           .eq('user_id', assigneeId)
           .eq('notification_type', 'project-milestone')
           .eq('status', 'pending')
@@ -1008,14 +1017,15 @@ async function handleProjectMilestoneNotification(requestData: ReminderRequest, 
       } catch (error) {
         console.error(`Error sending milestone notification to ${assigneeId}:`, error);
         
-        // Log error in notification_logs
+        // Log error in notifications table
         try {
           await adminSupabase
-            .from('notification_logs')
+            .from('notifications')
             .update({ 
               status: 'failed', 
               error_message: error.message,
-              sent_at: new Date().toISOString()
+              updated_at: new Date().toISOString(),
+              retry_count: 1
             })
             .eq('user_id', assigneeId)
             .eq('notification_type', 'project-milestone')

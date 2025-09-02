@@ -27,7 +27,14 @@ export function useTemplates() {
     try {
       setLoading(true);
       const organizationId = await getUserOrganizationId();
-      if (!organizationId) return;
+      
+      console.log('Organization ID for templates:', organizationId);
+      
+      if (!organizationId) {
+        console.warn('No organization ID found, cannot fetch templates');
+        setTemplates([]);
+        return;
+      }
 
       const { data, error } = await supabase
         .from('email_templates')
@@ -36,8 +43,11 @@ export function useTemplates() {
         .eq('status', 'published')
         .order('created_at', { ascending: false });
 
+      console.log('Template query result:', { data, error });
+
       if (error) throw error;
       setTemplates((data || []) as Template[]);
+      console.log('Templates loaded:', data?.length || 0);
     } catch (error) {
       console.error('Error fetching templates:', error);
       toast({
@@ -45,13 +55,14 @@ export function useTemplates() {
         description: 'Failed to load templates',
         variant: 'destructive',
       });
+      setTemplates([]);
     } finally {
       setLoading(false);
     }
   };
 
   const getSessionTemplates = () => {
-    const filtered = templates.filter(template => 
+    const sessionFiltered = templates.filter(template => 
       template.category === 'session' || 
       template.category === 'sessions' ||
       template.category === 'client-communication' ||
@@ -62,11 +73,15 @@ export function useTemplates() {
       template.name.toLowerCase().includes('confirmation')
     );
     
+    // If no session-specific templates found, show all general templates as fallback
+    const result = sessionFiltered.length > 0 ? sessionFiltered : templates;
+    
     // Debug logging to help troubleshoot template loading
     console.log('All templates:', templates);
-    console.log('Filtered session templates:', filtered);
+    console.log('Session-filtered templates:', sessionFiltered);
+    console.log('Final result templates:', result);
     
-    return filtered;
+    return result;
   };
 
   useEffect(() => {

@@ -18,19 +18,39 @@ export async function getUserOrganizationId(): Promise<string | null> {
       return null;
     }
 
-    // Use the optimized database function for better performance
-    const { data, error } = await supabase.rpc('get_user_active_organization_id');
-    
-    if (error) {
-      console.error('Error getting user organization ID:', error);
-      return null;
+    // First try to get the active organization from user settings
+    let { data: userSettings, error: settingsError } = await supabase
+      .from('user_settings')
+      .select('active_organization_id')
+      .eq('user_id', user.id)
+      .single();
+
+    if (!settingsError && userSettings?.active_organization_id) {
+      cachedOrganizationId = userSettings.active_organization_id;
+      cacheExpiry = Date.now() + CACHE_DURATION;
+      console.log('Found organization ID from user settings:', cachedOrganizationId);
+      return cachedOrganizationId;
     }
-    
-    // Update cache
-    cachedOrganizationId = data || null;
-    cacheExpiry = Date.now() + CACHE_DURATION;
-    
-    return data || null;
+
+    // Fallback to first active membership
+    const { data: membership, error: membershipError } = await supabase
+      .from('organization_members')
+      .select('organization_id')
+      .eq('user_id', user.id)
+      .eq('status', 'active')
+      .order('joined_at', { ascending: true })
+      .limit(1)
+      .single();
+
+    if (!membershipError && membership?.organization_id) {
+      cachedOrganizationId = membership.organization_id;
+      cacheExpiry = Date.now() + CACHE_DURATION;
+      console.log('Found organization ID from membership:', cachedOrganizationId);
+      return cachedOrganizationId;
+    }
+
+    console.warn('No organization found for user:', user.id);
+    return null;
   } catch (error) {
     console.error('Error getting user organization ID:', error);
     return null;

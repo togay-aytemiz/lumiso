@@ -130,8 +130,8 @@ const ProjectKanbanBoard = ({
   const [viewingProject, setViewingProject] = useState<Project | null>(null);
   const [showViewDialog, setShowViewDialog] = useState(false);
 
-  useNotificationTriggers();
-  useOrganization();
+  const { triggerProjectMilestone } = useNotificationTriggers();
+  const { activeOrganization } = useOrganization();
   const { settings: kanbanSettings } = useKanbanSettings();
 
   useEffect(() => {
@@ -221,6 +221,22 @@ const ProjectKanbanBoard = ({
           lead_id: moving.lead_id,
           user_id: user.id
         });
+
+        // Trigger milestone notification when project status changes
+        if (activeOrganization?.id && triggerProjectMilestone) {
+          try {
+            await triggerProjectMilestone(
+              projectId,
+              srcStatusId || "",
+              dstStatusId || "",
+              activeOrganization.id,
+              moving.assignees || []
+            );
+          } catch (error) {
+            console.error("Failed to trigger milestone notification:", error);
+          }
+        }
+
         toast({ title: "Project Updated", description: `Project moved to ${newStatus?.name || "No Status"}` });
       } else {
         toast({ title: "Project Reordered", description: "Project position updated" });
@@ -309,9 +325,11 @@ const ProjectKanbanBoard = ({
               <div
                 ref={provided.innerRef}
                 {...provided.droppableProps}
-                className={`transition-colors pb-2 ${snapshot.isDraggingOver ? "bg-accent/20" : ""}`}
+                className={`transition-colors pb-2 min-h-32 ${snapshot.isDraggingOver ? "bg-accent/20" : ""}`}
               >
                 {ordered.map((project, index) => renderProjectCard(project, index))}
+
+                {provided.placeholder}
 
                 {ordered.length === 0 ? (
                   <div className="flex items-center justify-center h-32">
@@ -334,8 +352,6 @@ const ProjectKanbanBoard = ({
                     Add Project
                   </Button>
                 )}
-
-                {provided.placeholder}
               </div>
             )}
           </Droppable>

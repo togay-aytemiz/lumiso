@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useIsMobile } from "./use-mobile";
 
 interface NavigationGuardOptions {
   isDirty: boolean;
@@ -19,6 +20,7 @@ export function useSettingsNavigation({
   const navigate = useNavigate();
   const location = useLocation();
   const currentPath = useRef(location.pathname);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     currentPath.current = location.pathname;
@@ -33,14 +35,15 @@ export function useSettingsNavigation({
       }
     };
 
-    if (isDirty) {
+    // Only use browser guard on mobile devices
+    if (isDirty && isMobile) {
       window.addEventListener('beforeunload', handleBeforeUnload);
     }
 
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
-  }, [isDirty, message]);
+  }, [isDirty, message, isMobile]);
 
   const handleNavigationAttempt = (path: string) => {
     if (isDirty && path !== currentPath.current) {

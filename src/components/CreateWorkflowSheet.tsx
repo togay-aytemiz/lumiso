@@ -12,6 +12,8 @@ import { Plus, Loader2, Mail, MessageCircle, Phone, Clock, Search, ChevronDown, 
 import { WorkflowFormData, TriggerType } from "@/types/workflow";
 import { useTemplates } from "@/hooks/useTemplates";
 import { cn } from "@/lib/utils";
+import { NavigationGuardDialog } from "@/components/settings/NavigationGuardDialog";
+import { useSettingsNavigation } from "@/hooks/useSettingsNavigation";
 interface CreateWorkflowSheetProps {
   onCreateWorkflow: (data: WorkflowFormData) => Promise<void>;
   editWorkflow?: any;
@@ -266,6 +268,33 @@ export function CreateWorkflowSheet({
                   selectedTemplate !== initialSelectedTemplate ||
                   reminderDelay !== initialReminderDelay ||
                   JSON.stringify(enabledChannels) !== JSON.stringify(initialEnabledChannels);
+
+  // Navigation guard
+  const {
+    showGuard,
+    message: guardMessage,
+    handleNavigationAttempt,
+    handleDiscardChanges,
+    handleStayOnPage,
+    handleSaveAndExit
+  } = useSettingsNavigation({
+    isDirty,
+    onDiscard: () => {
+      handleClose();
+    },
+    onSaveAndExit: async () => {
+      await handleSubmit();
+    },
+    message: "You have unsaved changes to this workflow."
+  });
+
+  const handleDirtyClose = () => {
+    if (isDirty) {
+      handleNavigationAttempt('/');
+    } else {
+      handleClose();
+    }
+  };
   const filteredTemplates = sessionTemplates.filter(template => template.name.toLowerCase().includes(templateSearch.toLowerCase()) || template.description?.toLowerCase().includes(templateSearch.toLowerCase()));
   const footerActions = [{
     label: 'Cancel',
@@ -284,15 +313,11 @@ export function CreateWorkflowSheet({
       
       <AppSheetModal title={isEditing ? 'Edit Workflow' : 'Create New Workflow'} isOpen={open} onOpenChange={newOpen => {
       if (!newOpen) {
-        handleClose();
+        handleDirtyClose();
       } else {
         setOpen(true);
       }
-    }} footerActions={footerActions} dirty={isDirty} onDirtyClose={() => {
-      if (confirm('You have unsaved changes. Are you sure you want to close?')) {
-        handleClose();
-      }
-    }} size="lg">
+    }} footerActions={footerActions} dirty={isDirty} onDirtyClose={handleDirtyClose} size="lg">
         <div className="space-y-6 mt-6">
           {/* Basic Info */}
           <div className="space-y-4">
@@ -442,6 +467,15 @@ export function CreateWorkflowSheet({
 
         </div>
       </AppSheetModal>
+      
+      {/* Navigation Guard Dialog */}
+      <NavigationGuardDialog
+        open={showGuard}
+        onDiscard={handleDiscardChanges}
+        onStay={handleStayOnPage}
+        onSaveAndExit={handleSaveAndExit}
+        message={guardMessage}
+      />
       
       {!children && <Button onClick={() => setOpen(true)}>
           <Plus className="h-4 w-4 mr-2" />

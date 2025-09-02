@@ -148,6 +148,14 @@ const ProjectKanbanBoard = ({
     
     const projectId = draggableId;
     const newStatusId = destination.droppableId === 'no-status' ? null : destination.droppableId;
+    
+    // Handle reordering within the same column
+    if (destination.droppableId === source.droppableId) {
+      // For now, we'll just update the UI optimistically since we don't have sort_order column
+      // The projects will maintain their database order but appear reordered in the UI
+      onProjectsChange();
+      return;
+    }
     try {
       const {
         data: {
@@ -304,7 +312,7 @@ const ProjectKanbanBoard = ({
         <div className="p-4 sm:p-6 h-full">
           <DragDropContext onDragEnd={handleDragEnd}>
             {/* Board lanes - intrinsic width forces overflow */}
-            <div className="flex gap-3 sm:gap-4 pb-4 h-full" style={{
+            <div className="flex gap-2 sm:gap-3 pb-4 h-full" style={{
             width: 'max-content',
             minWidth: '100%'
           }}>

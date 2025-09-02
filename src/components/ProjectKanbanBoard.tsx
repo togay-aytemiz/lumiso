@@ -179,84 +179,101 @@ const ProjectKanbanBoard = ({
     if (!destination) return;
     if (destination.droppableId === source.droppableId && destination.index === source.index) return;
 
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+    const projectId = draggableId;
+    const srcStatusId = source.droppableId === "no-status" ? null : source.droppableId;
+    const dstStatusId = destination.droppableId === "no-status" ? null : destination.droppableId;
 
-      const projectId = draggableId;
-      const srcStatusId = source.droppableId === "no-status" ? null : source.droppableId;
-      const dstStatusId = destination.droppableId === "no-status" ? null : destination.droppableId;
+    const moving = projects.find(p => p.id === projectId);
+    if (!moving) return;
 
-      const moving = projects.find(p => p.id === projectId);
-      if (!moving) return;
+    // OPTIMISTIC UPDATE: Update UI immediately
+    onProjectsChange();
+    if (onProjectUpdate) onProjectUpdate({ ...moving, status_id: dstStatusId });
 
-      const dstBase = orderProjects(projects.filter(p => p.status_id === dstStatusId && p.id !== moving.id));
-      const insertIndex = Math.min(Math.max(destination.index, 0), dstBase.length);
-
-      const dstWithMoving: Project[] = [...dstBase];
-      dstWithMoving.splice(insertIndex, 0, { ...moving, status_id: dstStatusId });
-
-      const { value, needReindex } = computeSortForInsert(dstWithMoving, insertIndex);
-
-      if (!needReindex && value !== null) {
-        const { error } = await supabase
-          .from("projects")
-          .update({ status_id: dstStatusId, sort_order: value })
-          .eq("id", projectId);
-        if (error) throw error;
-      } else {
-        await reindexColumn(dstStatusId, dstWithMoving);
-        if (srcStatusId !== dstStatusId) {
-          const srcAfterMove = orderProjects(projects.filter(p => p.status_id === srcStatusId && p.id !== moving.id));
-          await reindexColumn(srcStatusId, srcAfterMove);
-        }
-      }
-
-      if (srcStatusId !== dstStatusId) {
-        const oldStatus = statuses.find(s => s.id === moving.status_id);
-        const newStatus = statuses.find(s => s.id === (dstStatusId || ""));
-        
-        // Insert activity log
-        const activityPromise = supabase.from("activities").insert({
-          type: "status_change",
-          content: `Status changed from '${oldStatus?.name || "No Status"}' to '${newStatus?.name || "No Status"}'`,
-          project_id: projectId,
-          lead_id: moving.lead_id,
-          user_id: user.id
-        });
-
-        // TEMPORARILY SKIP milestone notifications for completed/cancelled to test performance
-        // Skip notifications for completed and cancelled lifecycle statuses
-        const shouldSkipNotification = newStatus?.lifecycle === 'completed' || newStatus?.lifecycle === 'cancelled';
-        
-        const notificationPromise = !shouldSkipNotification && activeOrganization?.id && triggerProjectMilestone 
-          ? triggerProjectMilestone(
-              projectId,
-              srcStatusId || "",
-              dstStatusId || "",
-              activeOrganization.id,
-              moving.assignees || []
-            ).catch(error => console.error("Failed to trigger milestone notification:", error))
-          : Promise.resolve();
-
-        if (shouldSkipNotification) {
-          console.log("Skipping milestone notification for performance testing - target status:", newStatus?.name, "lifecycle:", newStatus?.lifecycle);
-        }
-
-        // Wait for both operations in parallel
-        await Promise.all([activityPromise, notificationPromise]);
-
-        toast({ title: "Project Updated", description: `Project moved to ${newStatus?.name || "No Status"}` });
-      } else {
-        toast({ title: "Project Reordered", description: "Project position updated" });
-      }
-
-      onProjectsChange();
-      if (onProjectUpdate) onProjectUpdate({ ...moving, status_id: dstStatusId });
-    } catch (error) {
-      console.error("Error updating project order:", error);
-      toast({ title: "Error", description: "Failed to update project", variant: "destructive" });
+    // Show immediate feedback
+    if (srcStatusId !== dstStatusId) {
+      const oldStatus = statuses.find(s => s.id === moving.status_id);
+      const newStatus = statuses.find(s => s.id === (dstStatusId || ""));
+      toast({ title: "Project Updated", description: `Project moved to ${newStatus?.name || "No Status"}` });
+    } else {
+      toast({ title: "Project Reordered", description: "Project position updated" });
     }
+
+    // BACKGROUND OPERATIONS: Handle all database operations async
+    (async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("Not authenticated");
+
+        const dstBase = orderProjects(projects.filter(p => p.status_id === dstStatusId && p.id !== moving.id));
+        const insertIndex = Math.min(Math.max(destination.index, 0), dstBase.length);
+
+        const dstWithMoving: Project[] = [...dstBase];
+        dstWithMoving.splice(insertIndex, 0, { ...moving, status_id: dstStatusId });
+
+        const { value, needReindex } = computeSortForInsert(dstWithMoving, insertIndex);
+
+        // Update project position in database
+        if (!needReindex && value !== null) {
+          const { error } = await supabase
+            .from("projects")
+            .update({ status_id: dstStatusId, sort_order: value })
+            .eq("id", projectId);
+          if (error) throw error;
+        } else {
+          await reindexColumn(dstStatusId, dstWithMoving);
+          if (srcStatusId !== dstStatusId) {
+            const srcAfterMove = orderProjects(projects.filter(p => p.status_id === srcStatusId && p.id !== moving.id));
+            await reindexColumn(srcStatusId, srcAfterMove);
+          }
+        }
+
+        // Handle status change activities and notifications
+        if (srcStatusId !== dstStatusId) {
+          const oldStatus = statuses.find(s => s.id === moving.status_id);
+          const newStatus = statuses.find(s => s.id === (dstStatusId || ""));
+          
+          // Insert activity log
+          const activityPromise = supabase.from("activities").insert({
+            type: "status_change",
+            content: `Status changed from '${oldStatus?.name || "No Status"}' to '${newStatus?.name || "No Status"}'`,
+            project_id: projectId,
+            lead_id: moving.lead_id,
+            user_id: user.id
+          });
+
+          // TEMPORARILY SKIP milestone notifications for completed/cancelled to test performance
+          const shouldSkipNotification = newStatus?.lifecycle === 'completed' || newStatus?.lifecycle === 'cancelled';
+          
+          const notificationPromise = !shouldSkipNotification && activeOrganization?.id && triggerProjectMilestone 
+            ? triggerProjectMilestone(
+                projectId,
+                srcStatusId || "",
+                dstStatusId || "",
+                activeOrganization.id,
+                moving.assignees || []
+              ).catch(error => console.error("Failed to trigger milestone notification:", error))
+            : Promise.resolve();
+
+          if (shouldSkipNotification) {
+            console.log("Skipping milestone notification for performance testing - target status:", newStatus?.name, "lifecycle:", newStatus?.lifecycle);
+          }
+
+          // Wait for both operations in parallel
+          await Promise.all([activityPromise, notificationPromise]);
+        }
+
+        console.log("Background database operations completed successfully");
+      } catch (error) {
+        console.error("Error in background database operations:", error);
+        // Show error but don't revert UI since user has already seen the change
+        toast({ 
+          title: "Sync Warning", 
+          description: "Project moved locally but sync failed. Please refresh if issues persist.", 
+          variant: "destructive" 
+        });
+      }
+    })();
   };
 
   const handleAddProject = (statusId: string | null) => {

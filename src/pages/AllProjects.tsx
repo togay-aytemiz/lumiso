@@ -675,7 +675,7 @@ const AllProjects = () => {
               {viewMode === 'board' && (
                 <div className="flex items-center pl-2">
                   <KanbanSettingsSheet>
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-muted/50">
+                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground hover:bg-accent/10 hover:text-accent-foreground">
                       <Settings className="h-4 w-4" />
                     </Button>
                   </KanbanSettingsSheet>

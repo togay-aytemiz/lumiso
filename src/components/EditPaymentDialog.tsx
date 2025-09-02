@@ -12,6 +12,8 @@ import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { useSettingsNavigation } from "@/hooks/useSettingsNavigation";
+import { NavigationGuardDialog } from "./settings/NavigationGuardDialog";
 
 interface Payment {
   id: string;
@@ -116,11 +118,12 @@ export function EditPaymentDialog({ payment, open, onOpenChange, onPaymentUpdate
     (status === 'paid' && datePaid?.toISOString().split('T')[0] !== payment.date_paid)
   );
 
-  const handleDirtyClose = () => {
-    if (window.confirm("Discard changes?")) {
+  const navigation = useSettingsNavigation({
+    isDirty,
+    onDiscard: () => {
       onOpenChange(false);
-    }
-  };
+    },
+  });
 
   const footerActions = [
     {
@@ -138,82 +141,91 @@ export function EditPaymentDialog({ payment, open, onOpenChange, onPaymentUpdate
   ];
 
   return (
-    <AppSheetModal
-      title="Edit Payment"
-      isOpen={open}
-      onOpenChange={onOpenChange}
-      size="content"
-      dirty={isDirty}
-      onDirtyClose={handleDirtyClose}
-      footerActions={footerActions}
-    >
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="amount">Amount (TRY) *</Label>
-          <Input
-            id="amount"
-            type="number"
-            step="0.01"
-            placeholder="0.00"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            required
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="description">Description</Label>
-          <Textarea
-            id="description"
-            placeholder="e.g., Deposit, Final Payment, Balance"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            rows={2}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="status">Payment Status</Label>
-          <Select value={status} onValueChange={(value: "paid" | "due") => setStatus(value)}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="paid">Paid</SelectItem>
-              <SelectItem value="due">Due</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        {status === 'paid' && (
+    <>
+      <AppSheetModal
+        title="Edit Payment"
+        isOpen={open}
+        onOpenChange={onOpenChange}
+        size="content"
+        dirty={isDirty}
+        onDirtyClose={() => navigation.handleNavigationAttempt('close')}
+        footerActions={footerActions}
+      >
+        <div className="space-y-4">
           <div className="space-y-2">
-            <Label>Date Paid</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !datePaid && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {datePaid ? format(datePaid, "PPP") : <span>Pick a date</span>}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={datePaid}
-                  onSelect={setDatePaid}
-                  initialFocus
-                  className="p-3 pointer-events-auto"
-                />
-              </PopoverContent>
-            </Popover>
+            <Label htmlFor="amount">Amount (TRY) *</Label>
+            <Input
+              id="amount"
+              type="number"
+              step="0.01"
+              placeholder="0.00"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              required
+            />
           </div>
-        )}
-      </div>
-    </AppSheetModal>
+
+          <div className="space-y-2">
+            <Label htmlFor="description">Description</Label>
+            <Textarea
+              id="description"
+              placeholder="e.g., Deposit, Final Payment, Balance"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={2}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="status">Payment Status</Label>
+            <Select value={status} onValueChange={(value: "paid" | "due") => setStatus(value)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="paid">Paid</SelectItem>
+                <SelectItem value="due">Due</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {status === 'paid' && (
+            <div className="space-y-2">
+              <Label>Date Paid</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !datePaid && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {datePaid ? format(datePaid, "PPP") : <span>Pick a date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={datePaid}
+                    onSelect={setDatePaid}
+                    initialFocus
+                    className="p-3 pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+          )}
+        </div>
+      </AppSheetModal>
+      
+      <NavigationGuardDialog
+        open={navigation.showGuard}
+        onDiscard={navigation.handleDiscardChanges}
+        onStay={navigation.handleStayOnPage}
+        message={navigation.message}
+      />
+    </>
   );
 }

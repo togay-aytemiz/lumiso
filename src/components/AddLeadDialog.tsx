@@ -15,6 +15,8 @@ import { AssigneesPicker } from "./AssigneesPicker";
 import { InlineAssigneesPicker } from "./InlineAssigneesPicker";
 import { useProfile } from "@/contexts/ProfileContext";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useSettingsNavigation } from "@/hooks/useSettingsNavigation";
+import { NavigationGuardDialog } from "./settings/NavigationGuardDialog";
 
 interface AddLeadDialogProps {
   onLeadAdded: () => void;
@@ -147,16 +149,7 @@ const AddLeadDialog = ({ onLeadAdded, open, onOpenChange }: AddLeadDialogProps) 
       });
 
       // Reset form and close dialog
-      const defaultStatus = leadStatuses.length > 0 ? leadStatuses[0].name : "";
-      setFormData({
-        name: "",
-        email: "",
-        phone: "",
-        notes: "",
-        status: defaultStatus,
-        assignees: profile?.user_id ? [profile.user_id] : [],
-      });
-      setErrors({});
+      resetForm();
       onOpenChange(false);
       onLeadAdded();
     } catch (error: any) {
@@ -178,24 +171,30 @@ const AddLeadDialog = ({ onLeadAdded, open, onOpenChange }: AddLeadDialogProps) 
     formData.name.trim() || 
     formData.email.trim() || 
     formData.phone.trim() || 
-    formData.notes.trim()
+    formData.notes.trim() ||
+    (formData.assignees.length !== 1 || formData.assignees[0] !== profile?.user_id)
   );
 
-  const handleDirtyClose = () => {
-    if (window.confirm("Discard changes?")) {
-      const defaultStatus = leadStatuses.length > 0 ? leadStatuses[0].name : "";
-      setFormData({
-        name: "",
-        email: "",
-        phone: "",
-        notes: "",
-        status: defaultStatus,
-        assignees: profile?.user_id ? [profile.user_id] : [],
-      });
-      setErrors({});
-      onOpenChange(false);
-    }
+  const resetForm = () => {
+    const defaultStatus = leadStatuses.length > 0 ? leadStatuses[0].name : "";
+    setFormData({
+      name: "",
+      email: "",
+      phone: "",
+      notes: "",
+      status: defaultStatus,
+      assignees: profile?.user_id ? [profile.user_id] : [],
+    });
+    setErrors({});
   };
+
+  const navigation = useSettingsNavigation({
+    isDirty,
+    onDiscard: () => {
+      resetForm();
+      onOpenChange(false);
+    },
+  });
 
   const footerActions = [
     {
@@ -220,7 +219,7 @@ const AddLeadDialog = ({ onLeadAdded, open, onOpenChange }: AddLeadDialogProps) 
         onOpenChange={onOpenChange}
         size="default"
         dirty={isDirty}
-        onDirtyClose={handleDirtyClose}
+        onDirtyClose={() => navigation.handleNavigationAttempt('close')}
         footerActions={footerActions}
       >
         <div className="space-y-4">
@@ -308,6 +307,13 @@ const AddLeadDialog = ({ onLeadAdded, open, onOpenChange }: AddLeadDialogProps) 
           </div>
         </div>
       </AppSheetModal>
+      
+      <NavigationGuardDialog
+        open={navigation.showGuard}
+        onDiscard={navigation.handleDiscardChanges}
+        onStay={navigation.handleStayOnPage}
+        message={navigation.message}
+      />
     </>
   );
 };

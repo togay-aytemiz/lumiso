@@ -14,6 +14,8 @@ import { useToast } from "@/hooks/use-toast";
 import ReactCalendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import "@/components/react-calendar.css";
+import { useSettingsNavigation } from "@/hooks/useSettingsNavigation";
+import { NavigationGuardDialog } from "./settings/NavigationGuardDialog";
 
 interface AddPaymentDialogProps {
   projectId: string;
@@ -80,10 +82,7 @@ export function AddPaymentDialog({ projectId, onPaymentAdded }: AddPaymentDialog
       });
 
       // Reset form
-      setAmount("");
-      setDescription("");
-      setStatus("paid");
-      setDatePaid(new Date());
+      resetForm();
       setOpen(false);
       onPaymentAdded();
     } catch (error: any) {
@@ -99,15 +98,20 @@ export function AddPaymentDialog({ projectId, onPaymentAdded }: AddPaymentDialog
 
   const isDirty = Boolean(amount.trim() || description.trim() || status !== "paid");
 
-  const handleDirtyClose = () => {
-    if (window.confirm("Discard changes?")) {
-      setAmount("");
-      setDescription("");
-      setStatus("paid");
-      setDatePaid(new Date());
-      setOpen(false);
-    }
+  const resetForm = () => {
+    setAmount("");
+    setDescription("");
+    setStatus("paid");
+    setDatePaid(new Date());
   };
+
+  const navigation = useSettingsNavigation({
+    isDirty,
+    onDiscard: () => {
+      resetForm();
+      setOpen(false);
+    },
+  });
 
   const handleSubmitClick = () => {
     const event = { preventDefault: () => {} } as React.FormEvent;
@@ -142,7 +146,7 @@ export function AddPaymentDialog({ projectId, onPaymentAdded }: AddPaymentDialog
         onOpenChange={setOpen}
         size="content"
         dirty={isDirty}
-        onDirtyClose={handleDirtyClose}
+        onDirtyClose={() => navigation.handleNavigationAttempt('close')}
         footerActions={footerActions}
       >
         <div className="space-y-4">
@@ -223,6 +227,13 @@ export function AddPaymentDialog({ projectId, onPaymentAdded }: AddPaymentDialog
           )}
         </div>
       </AppSheetModal>
+      
+      <NavigationGuardDialog
+        open={navigation.showGuard}
+        onDiscard={navigation.handleDiscardChanges}
+        onStay={navigation.handleStayOnPage}
+        message={navigation.message}
+      />
     </>
   );
 }

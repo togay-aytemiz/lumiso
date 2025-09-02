@@ -6,6 +6,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useSettingsNavigation } from "@/hooks/useSettingsNavigation";
+import { NavigationGuardDialog } from "./settings/NavigationGuardDialog";
 
 interface Lead {
   id: string;
@@ -123,11 +125,12 @@ export function EditLeadDialog({ lead, open, onOpenChange, onLeadUpdated }: Edit
 
   const isDirty = JSON.stringify(formData) !== JSON.stringify(initialFormData);
 
-  const handleDirtyClose = () => {
-    if (window.confirm("Discard changes?")) {
+  const navigation = useSettingsNavigation({
+    isDirty,
+    onDiscard: () => {
       onOpenChange(false);
-    }
-  };
+    },
+  });
 
   const footerActions = [
     {
@@ -145,83 +148,92 @@ export function EditLeadDialog({ lead, open, onOpenChange, onLeadUpdated }: Edit
   ];
 
   return (
-    <AppSheetModal
-      title="EDIT LEAD"
-      isOpen={open}
-      onOpenChange={onOpenChange}
-      dirty={isDirty}
-      onDirtyClose={handleDirtyClose}
-      footerActions={footerActions}
-    >
-      <div className="space-y-6">
-        <div className="space-y-2">
-          <Label htmlFor="name">Name *</Label>
-          <Input
-            id="name"
-            value={formData.name}
-            onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-            placeholder="Lead name"
-            className="rounded-xl border-2 border-primary/20 focus:border-primary"
-          />
-        </div>
+    <>
+      <AppSheetModal
+        title="EDIT LEAD"
+        isOpen={open}
+        onOpenChange={onOpenChange}
+        dirty={isDirty}
+        onDirtyClose={() => navigation.handleNavigationAttempt('close')}
+        footerActions={footerActions}
+      >
+        <div className="space-y-6">
+          <div className="space-y-2">
+            <Label htmlFor="name">Name *</Label>
+            <Input
+              id="name"
+              value={formData.name}
+              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+              placeholder="Lead name"
+              className="rounded-xl border-2 border-primary/20 focus:border-primary"
+            />
+          </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
-          <Input
-            id="email"
-            type="email"
-            value={formData.email}
-            onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-            placeholder="email@example.com"
-            className="rounded-xl border-2 border-primary/20 focus:border-primary"
-          />
-        </div>
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              value={formData.email}
+              onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+              placeholder="email@example.com"
+              className="rounded-xl border-2 border-primary/20 focus:border-primary"
+            />
+          </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="phone">Phone</Label>
-          <Input
-            id="phone"
-            value={formData.phone}
-            onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-            placeholder="+90 555 123 4567"
-            className="rounded-xl border-2 border-primary/20 focus:border-primary"
-          />
-        </div>
+          <div className="space-y-2">
+            <Label htmlFor="phone">Phone</Label>
+            <Input
+              id="phone"
+              value={formData.phone}
+              onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+              placeholder="+90 555 123 4567"
+              className="rounded-xl border-2 border-primary/20 focus:border-primary"
+            />
+          </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="status">Status</Label>
-          <Select value={formData.status} onValueChange={(value) => setFormData(prev => ({ ...prev, status: value }))}>
-            <SelectTrigger className="rounded-xl border-2 border-primary/20 focus:border-primary">
-              <SelectValue placeholder="Select status" />
-            </SelectTrigger>
-            <SelectContent>
-              {leadStatuses.map((status) => (
-                <SelectItem key={status.id} value={status.name}>
-                  <div className="flex items-center gap-2">
-                    <div 
-                      className="w-3 h-3 rounded-full" 
-                      style={{ backgroundColor: status.color }}
-                    />
-                    {status.name}
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+          <div className="space-y-2">
+            <Label htmlFor="status">Status</Label>
+            <Select value={formData.status} onValueChange={(value) => setFormData(prev => ({ ...prev, status: value }))}>
+              <SelectTrigger className="rounded-xl border-2 border-primary/20 focus:border-primary">
+                <SelectValue placeholder="Select status" />
+              </SelectTrigger>
+              <SelectContent>
+                {leadStatuses.map((status) => (
+                  <SelectItem key={status.id} value={status.name}>
+                    <div className="flex items-center gap-2">
+                      <div 
+                        className="w-3 h-3 rounded-full" 
+                        style={{ backgroundColor: status.color }}
+                      />
+                      {status.name}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="notes">Notes</Label>
-          <Textarea
-            id="notes"
-            value={formData.notes}
-            onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-            placeholder="Additional notes about this lead"
-            rows={4}
-            className="rounded-xl border-2 border-primary/20 focus:border-primary resize-none"
-          />
+          <div className="space-y-2">
+            <Label htmlFor="notes">Notes</Label>
+            <Textarea
+              id="notes"
+              value={formData.notes}
+              onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+              placeholder="Additional notes about this lead"
+              rows={4}
+              className="rounded-xl border-2 border-primary/20 focus:border-primary resize-none"
+            />
+          </div>
         </div>
-      </div>
-    </AppSheetModal>
+      </AppSheetModal>
+      
+      <NavigationGuardDialog
+        open={navigation.showGuard}
+        onDiscard={navigation.handleDiscardChanges}
+        onStay={navigation.handleStayOnPage}
+        message={navigation.message}
+      />
+    </>
   );
 }

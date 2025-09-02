@@ -13,6 +13,8 @@ import { useLeadFieldValues } from "@/hooks/useLeadFieldValues";
 import { createDynamicLeadSchema } from "@/lib/leadFieldValidation";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useSettingsNavigation } from "@/hooks/useSettingsNavigation";
+import { NavigationGuardDialog } from "./settings/NavigationGuardDialog";
 
 interface Lead {
   id: string;
@@ -148,15 +150,12 @@ export function EnhancedEditLeadDialog({
     }
   };
 
-  const handleClose = () => {
-    if (isDirty) {
-      if (confirm('You have unsaved changes. Are you sure you want to close?')) {
-        onClose();
-      }
-    } else {
+  const navigation = useSettingsNavigation({
+    isDirty,
+    onDiscard: () => {
       onClose();
-    }
-  };
+    },
+  });
 
   const footerActions = [
     {
@@ -187,28 +186,37 @@ export function EnhancedEditLeadDialog({
   }
 
   return (
-    <AppSheetModal
-      title="Edit Lead"
-      isOpen={open}
-      onOpenChange={onOpenChange}
-      size="lg"
-      dirty={isDirty}
-      onDirtyClose={handleClose}
-      footerActions={footerActions}
-    >
-      <div className="space-y-1 mb-6">
-        <p className="text-sm text-muted-foreground">
-          Update lead information and custom field data.
-        </p>
-      </div>
+    <>
+      <AppSheetModal
+        title="Edit Lead"
+        isOpen={open}
+        onOpenChange={onOpenChange}
+        size="lg"
+        dirty={isDirty}
+        onDirtyClose={() => navigation.handleNavigationAttempt('close')}
+        footerActions={footerActions}
+      >
+        <div className="space-y-1 mb-6">
+          <p className="text-sm text-muted-foreground">
+            Update lead information and custom field data.
+          </p>
+        </div>
 
-      <Form {...form}>
-        <DynamicLeadFormFields
-          fieldDefinitions={fieldDefinitions}
-          control={form.control}
-          visibleOnly={true}
-        />
-      </Form>
-    </AppSheetModal>
+        <Form {...form}>
+          <DynamicLeadFormFields
+            fieldDefinitions={fieldDefinitions}
+            control={form.control}
+            visibleOnly={true}
+          />
+        </Form>
+      </AppSheetModal>
+      
+      <NavigationGuardDialog
+        open={navigation.showGuard}
+        onDiscard={navigation.handleDiscardChanges}
+        onStay={navigation.handleStayOnPage}
+        message={navigation.message}
+      />
+    </>
   );
 }

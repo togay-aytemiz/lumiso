@@ -16,6 +16,8 @@ import { getUserOrganizationId } from "@/lib/organizationUtils";
 import { useToast } from "@/hooks/use-toast";
 import { InlineAssigneesPicker } from "./InlineAssigneesPicker";
 import { useProfile } from "@/contexts/ProfileContext";
+import { useSettingsNavigation } from "@/hooks/useSettingsNavigation";
+import { NavigationGuardDialog } from "./settings/NavigationGuardDialog";
 
 interface EnhancedAddLeadDialogProps {
   open: boolean;
@@ -149,15 +151,12 @@ export function EnhancedAddLeadDialog({
     }
   };
 
-  const handleClose = () => {
-    if (isDirty) {
-      if (confirm('You have unsaved changes. Are you sure you want to close?')) {
-        onClose();
-      }
-    } else {
+  const navigation = useSettingsNavigation({
+    isDirty,
+    onDiscard: () => {
       onClose();
-    }
-  };
+    },
+  });
 
   const footerActions = [
     {
@@ -188,36 +187,45 @@ export function EnhancedAddLeadDialog({
   }
 
   return (
-    <AppSheetModal
-      title="Add New Lead"
-      isOpen={open}
-      onOpenChange={onOpenChange}
-      size="lg"
-      dirty={isDirty}
-      onDirtyClose={handleClose}
-      footerActions={footerActions}
-    >
-      <div className="space-y-1 mb-6">
-        <p className="text-sm text-muted-foreground">
-          Create a new lead and capture custom information using your configured fields.
-        </p>
-      </div>
-
-      <Form {...form}>
-        <DynamicLeadFormFields
-          fieldDefinitions={fieldDefinitions}
-          control={form.control}
-          visibleOnly={true}
-        />
-        
-        <div className="pt-4 border-t">
-          <InlineAssigneesPicker
-            value={assignees}
-            onChange={setAssignees}
-            disabled={loading}
-          />
+    <>
+      <AppSheetModal
+        title="Add New Lead"
+        isOpen={open}
+        onOpenChange={onOpenChange}
+        size="lg"
+        dirty={isDirty}
+        onDirtyClose={() => navigation.handleNavigationAttempt('close')}
+        footerActions={footerActions}
+      >
+        <div className="space-y-1 mb-6">
+          <p className="text-sm text-muted-foreground">
+            Create a new lead and capture custom information using your configured fields.
+          </p>
         </div>
-      </Form>
-    </AppSheetModal>
+
+        <Form {...form}>
+          <DynamicLeadFormFields
+            fieldDefinitions={fieldDefinitions}
+            control={form.control}
+            visibleOnly={true}
+          />
+          
+          <div className="pt-4 border-t">
+            <InlineAssigneesPicker
+              value={assignees}
+              onChange={setAssignees}
+              disabled={loading}
+            />
+          </div>
+        </Form>
+      </AppSheetModal>
+      
+      <NavigationGuardDialog
+        open={navigation.showGuard}
+        onDiscard={navigation.handleDiscardChanges}
+        onStay={navigation.handleStayOnPage}
+        message={navigation.message}
+      />
+    </>
   );
 }

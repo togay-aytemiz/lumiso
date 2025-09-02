@@ -17,6 +17,7 @@ import { ProgressBar } from "@/components/ui/progress-bar";
 import { useNotificationTriggers } from "@/hooks/useNotificationTriggers";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { useKanbanSettings } from "@/hooks/useKanbanSettings";
+
 interface ProjectStatus {
   id: string;
   name: string;
@@ -26,6 +27,7 @@ interface ProjectStatus {
   updated_at?: string;
   user_id?: string;
 }
+
 interface Project {
   id: string;
   name: string;
@@ -60,6 +62,7 @@ interface Project {
   }>;
   assignees?: string[];
 }
+
 interface ProjectKanbanBoardProps {
   projects: Project[];
   projectStatuses?: ProjectStatus[];
@@ -67,6 +70,20 @@ interface ProjectKanbanBoardProps {
   onProjectUpdate?: (project: Project) => void;
   onQuickView?: (project: Project) => void;
 }
+
+const GAP = 1000;
+
+const orderProjects = (list: Project[]) => {
+  return [...list].sort((a, b) => {
+    const ao = a.sort_order ?? Number.MAX_SAFE_INTEGER;
+    const bo = b.sort_order ?? Number.MAX_SAFE_INTEGER;
+    if (ao !== bo) return ao - bo;
+    const ad = a.created_at ? new Date(a.created_at).getTime() : 0;
+    const bd = b.created_at ? new Date(b.created_at).getTime() : 0;
+    return ad - bd;
+  });
+};
+
 const ProjectKanbanBoard = ({
   projects,
   projectStatuses,
@@ -80,47 +97,38 @@ const ProjectKanbanBoard = ({
   const [selectedStatusId, setSelectedStatusId] = useState<string | null>(null);
   const [viewingProject, setViewingProject] = useState<Project | null>(null);
   const [showViewDialog, setShowViewDialog] = useState(false);
-  const {
-    triggerNewAssignment,
-    triggerProjectMilestone
-  } = useNotificationTriggers();
-  const {
-    activeOrganization
-  } = useOrganization();
+
+  const { triggerNewAssignment, triggerProjectMilestone } = useNotificationTriggers();
+  const { activeOrganization } = useOrganization();
   const { settings: kanbanSettings } = useKanbanSettings();
+
   useEffect(() => {
     if (projectStatuses && projectStatuses.length > 0) {
-      // Use passed statuses if available
-      setStatuses(projectStatuses.filter(s => s.name?.toLowerCase?.() !== 'archived'));
+      setStatuses(projectStatuses.filter(s => s.name?.toLowerCase?.() !== "archived"));
       setLoading(false);
     } else {
       fetchStatuses();
     }
   }, [projectStatuses]);
+
   const fetchStatuses = async () => {
     try {
-      const {
-        data: {
-          user
-        }
-      } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Get user's active organization ID
-      const {
-        data: organizationId
-      } = await supabase.rpc('get_user_active_organization_id');
+      const { data: organizationId } = await supabase.rpc("get_user_active_organization_id");
       if (!organizationId) return;
-      const {
-        data,
-        error
-      } = await supabase.from('project_statuses').select('*').eq('organization_id', organizationId).order('sort_order', {
-        ascending: true
-      });
+
+      const { data, error } = await supabase
+        .from("project_statuses")
+        .select("*")
+        .eq("organization_id", organizationId)
+        .order("sort_order", { ascending: true });
+
       if (error) throw error;
-      setStatuses((data || []).filter(s => s.name?.toLowerCase?.() !== 'archived'));
+      setStatuses((data || []).filter(s => s.name?.toLowerCase?.() !== "archived"));
     } catch (error) {
-      console.error('Error fetching project statuses:', error);
+      console.error("Error fetching project statuses:", error);
       toast({
         title: "Error",
         description: "Failed to load project statuses",
@@ -130,11 +138,13 @@ const ProjectKanbanBoard = ({
       setLoading(false);
     }
   };
+
   const getProjectsByStatus = (statusId: string) => {
-    return projects.filter(project => project.status_id === statusId);
+    return orderProjects(projects.filter(project => project.status_id === statusId));
   };
+
   const getProjectsWithoutStatus = () => {
-    return projects.filter(project => !project.status_id);
+    return orderProjects(projects.filter(project => !project.status_id));
   };
 
   const handleDragEnd = async (result: any) => {
@@ -144,68 +154,70 @@ const ProjectKanbanBoard = ({
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
+      if (!user) throw new Error("Not authenticated");
 
       const projectId = draggableId;
-      const newStatusId = destination.droppableId === 'no-status' ? null : destination.droppableId;
-      const project = projects.find(p => p.id === projectId);
-      if (!project) return;
+      const srcStatusId = source.droppableId === "no-status" ? null : source.droppableId;
+      const dstStatusId = destination.droppableId === "no-status" ? null : destination.droppableId;
 
-      // Get projects in destination column, sorted by sort_order
-      const destinationProjects = projects
-        .filter(p => p.status_id === newStatusId)
-        .filter(p => p.id !== projectId) // Exclude the project being moved
-        .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+      const moving = projects.find(p => p.id === projectId);
+      if (!moving) return;
 
-      let newSortOrder: number;
+      const oldStatus = statuses.find(s => s.id === moving.status_id);
+      const newStatus = statuses.find(s => s.id === dstStatusId || "");
 
-      if (destinationProjects.length === 0) {
-        // First project in column
-        newSortOrder = 1;
-      } else if (destination.index === 0) {
-        // Moving to top
-        newSortOrder = Math.max(1, (destinationProjects[0]?.sort_order || 1) - 1);
-      } else if (destination.index >= destinationProjects.length) {
-        // Moving to bottom
-        newSortOrder = (destinationProjects[destinationProjects.length - 1]?.sort_order || 0) + 1;
-      } else {
-        // Moving between two projects
-        const prevProject = destinationProjects[destination.index - 1];
-        const nextProject = destinationProjects[destination.index];
-        const prevOrder = prevProject?.sort_order || 0;
-        const nextOrder = nextProject?.sort_order || (prevOrder + 2);
-        newSortOrder = Math.floor((prevOrder + nextOrder) / 2) || prevOrder + 1;
+      const srcListBase = orderProjects(projects.filter(p => p.status_id === srcStatusId && p.id !== moving.id));
+      let dstListBase = orderProjects(projects.filter(p => p.status_id === dstStatusId && p.id !== moving.id));
+
+      if (srcStatusId === dstStatusId) {
+        dstListBase = orderProjects(projects.filter(p => p.status_id === srcStatusId && p.id !== moving.id));
       }
 
-      // Update project
+      const itemWithNewStatus: Project = { ...moving, status_id: dstStatusId };
+      const dstList = [...dstListBase];
+      const insertIndex = Math.min(Math.max(destination.index, 0), dstList.length);
+      dstList.splice(insertIndex, 0, itemWithNewStatus);
+
+      const updates: Array<Partial<Project> & { id: string }> = [];
+
+      dstList.forEach((p, i) => {
+        updates.push({
+          id: p.id,
+          status_id: dstStatusId,
+          sort_order: (i + 1) * GAP,
+          user_id: user.id
+        });
+      });
+
+      if (srcStatusId !== dstStatusId) {
+        srcListBase.forEach((p, i) => {
+          updates.push({
+            id: p.id,
+            status_id: srcStatusId,
+            sort_order: (i + 1) * GAP,
+            user_id: p.user_id || user.id
+          });
+        });
+      }
+
       const { error } = await supabase
-        .from('projects')
-        .update({ 
-          status_id: newStatusId,
-          sort_order: newSortOrder
-        })
-        .eq('id', projectId)
-        .eq('user_id', user.id);
+        .from("projects")
+        .upsert(updates, { onConflict: "id" });
 
       if (error) throw error;
 
-      // Log status change if column changed
-      if (destination.droppableId !== source.droppableId) {
-        const oldStatus = statuses.find(s => s.id === project?.status_id);
-        const newStatus = statuses.find(s => s.id === newStatusId);
-        const statusChangeMessage = `Status changed from '${oldStatus?.name || 'No Status'}' to '${newStatus?.name || 'No Status'}'`;
-        
-        await supabase.from('activities').insert({
-          type: 'status_change',
+      if (srcStatusId !== dstStatusId) {
+        const statusChangeMessage = `Status changed from '${oldStatus?.name || "No Status"}' to '${newStatus?.name || "No Status"}'`;
+        await supabase.from("activities").insert({
+          type: "status_change",
           content: statusChangeMessage,
           project_id: projectId,
-          lead_id: project?.lead_id,
+          lead_id: moving.lead_id,
           user_id: user.id
         });
-
         toast({
           title: "Project Updated",
-          description: `Project moved to ${newStatus?.name || 'No Status'}`
+          description: `Project moved to ${newStatus?.name || "No Status"}`
         });
       } else {
         toast({
@@ -215,11 +227,11 @@ const ProjectKanbanBoard = ({
       }
 
       onProjectsChange();
-      if (onProjectUpdate && project) {
-        onProjectUpdate({ ...project, status_id: newStatusId });
+      if (onProjectUpdate) {
+        onProjectUpdate({ ...moving, status_id: dstStatusId, sort_order: (insertIndex + 1) * GAP });
       }
     } catch (error) {
-      console.error('Error updating project:', error);
+      console.error("Error updating project order:", error);
       toast({
         title: "Error",
         description: "Failed to update project",
@@ -227,14 +239,15 @@ const ProjectKanbanBoard = ({
       });
     }
   };
+
   const handleAddProject = (statusId: string | null) => {
     setSelectedStatusId(statusId);
-    // Trigger the hidden dialog button
-    const triggerButton = document.getElementById('kanban-add-project-trigger');
+    const triggerButton = document.getElementById("kanban-add-project-trigger");
     if (triggerButton) {
       triggerButton.click();
     }
   };
+
   const handleProjectClick = (project: Project) => {
     if (onQuickView) {
       onQuickView(project);
@@ -243,111 +256,156 @@ const ProjectKanbanBoard = ({
       setShowViewDialog(true);
     }
   };
-  const renderProjectCard = (project: Project, index: number) => <Draggable key={project.id} draggableId={project.id} index={index}>
-      {provided => <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} className="mb-3 md:mb-2">
+
+  const renderProjectCard = (project: Project, index: number) => (
+    <Draggable key={project.id} draggableId={project.id} index={index}>
+      {(provided) => (
+        <div
+          ref={provided.innerRef}
+          {...provided.draggableProps}
+          {...provided.dragHandleProps}
+          className="mb-3 md:mb-2"
+        >
           <ProfessionalKanbanCard
             project={project}
             kanbanSettings={kanbanSettings}
             onClick={() => handleProjectClick(project)}
           />
-        </div>}
-    </Draggable>;
-  const renderColumn = (status: ProjectStatus | null, projects: Project[]) => {
-    const statusId = status?.id || 'no-status';
-    const statusName = status?.name || 'No Status';
-    const statusColor = status?.color || '#6B7280';
-    return <div key={statusId} className="flex-shrink-0 w-80 bg-muted/30 rounded-lg flex flex-col">
-        {/* Column header - Fixed */}
+        </div>
+      )}
+    </Draggable>
+  );
+
+  const renderColumn = (status: ProjectStatus | null, columnProjects: Project[]) => {
+    const statusId = status?.id || "no-status";
+    const statusName = status?.name || "No Status";
+    const statusColor = status?.color || "#6B7280";
+
+    const ordered = orderProjects(columnProjects);
+
+    return (
+      <div key={statusId} className="flex-shrink-0 w-80 bg-muted/30 rounded-lg flex flex-col">
         <div className="p-4 pb-2 flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-2">
-            <button className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all hover:opacity-80" style={{
-            backgroundColor: statusColor + '20',
-            color: statusColor,
-            border: `1px solid ${statusColor}40`
-          }}>
-              <div className="w-2 h-2 rounded-full" style={{
-              backgroundColor: statusColor
-            }} />
+            <button
+              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all hover:opacity-80"
+              style={{
+                backgroundColor: statusColor + "20",
+                color: statusColor,
+                border: `1px solid ${statusColor}40`
+              }}
+            >
+              <div
+                className="w-2 h-2 rounded-full"
+                style={{ backgroundColor: statusColor }}
+              />
               <span className="uppercase tracking-wide font-semibold">{statusName}</span>
             </button>
             <Badge variant="secondary" className="text-xs">
-              {projects.length}
+              {ordered.length}
             </Badge>
           </div>
-          <Button variant="ghost" size="icon" onClick={() => handleAddProject(status?.id || null)} className="h-6 w-6 text-muted-foreground hover:text-foreground">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => handleAddProject(status?.id || null)}
+            className="h-6 w-6 text-muted-foreground hover:text-foreground"
+          >
             <Plus className="h-4 w-4" />
           </Button>
         </div>
 
-        {/* Droppable area without vertical scrolling constraints */}
         <div className="flex-1 px-4 pb-4 min-h-0">
           <Droppable droppableId={statusId}>
             {(provided, snapshot) => (
               <div
                 ref={provided.innerRef}
                 {...provided.droppableProps}
-                className={`transition-colors pb-2 ${snapshot.isDraggingOver ? 'bg-accent/20' : ''}`}
+                className={`transition-colors pb-2 ${snapshot.isDraggingOver ? "bg-accent/20" : ""}`}
               >
-                {/* Project cards */}
-                {projects.map((project, index) => renderProjectCard(project, index))}
-                
-                {/* Add project button */}
-                {projects.length === 0 ? <div className="flex items-center justify-center h-32">
-                    <Button variant="outline" onClick={() => handleAddProject(status?.id || null)} className="flex items-center gap-2 border-dashed">
+                {ordered.map((project, index) => renderProjectCard(project, index))}
+
+                {ordered.length === 0 ? (
+                  <div className="flex items-center justify-center h-32">
+                    <Button
+                      variant="outline"
+                      onClick={() => handleAddProject(status?.id || null)}
+                      className="flex items-center gap-2 border-dashed"
+                    >
                       <Plus className="h-4 w-4" />
                       Add Project
                     </Button>
-                  </div> : <Button variant="outline" onClick={() => handleAddProject(status?.id || null)} className="w-full flex items-center gap-2 border-dashed mt-2">
+                  </div>
+                ) : (
+                  <Button
+                    variant="outline"
+                    onClick={() => handleAddProject(status?.id || null)}
+                    className="w-full flex items-center gap-2 border-dashed mt-2"
+                  >
                     <Plus className="h-4 w-4" />
                     Add Project
-                  </Button>}
-                
+                  </Button>
+                )}
+
                 {provided.placeholder}
               </div>
             )}
           </Droppable>
         </div>
-      </div>;
+      </div>
+    );
   };
+
   if (loading) {
     return <KanbanLoadingSkeleton />;
   }
-  return <>
-      {/* Kanban board container with natural height flow */}
-      <div className="h-full w-full max-w-full overflow-x-auto" style={{
-        WebkitOverflowScrolling: 'touch',
-        scrollbarWidth: 'thin',
-        touchAction: 'pan-x pan-y'
-      }}>
+
+  return (
+    <>
+      <div
+        className="h-full w-full max-w-full overflow-x-auto"
+        style={{
+          WebkitOverflowScrolling: "touch",
+          scrollbarWidth: "thin",
+          touchAction: "pan-x pan-y"
+        }}
+      >
         <div className="p-4 sm:p-6 h-full">
           <DragDropContext onDragEnd={handleDragEnd}>
-            {/* Board lanes - intrinsic width forces overflow */}
-            <div className="flex gap-2 sm:gap-3 pb-4 h-full" style={{
-            width: 'max-content',
-            minWidth: '100%'
-          }}>
-            {/* Render columns for each status */}
-            {statuses.map(status => renderColumn(status, getProjectsByStatus(status.id)))}
-            
-            {/* Column for projects without status */}
-            {getProjectsWithoutStatus().length > 0 && renderColumn(null, getProjectsWithoutStatus())}
+            <div
+              className="flex gap-2 sm:gap-3 pb-4 h-full"
+              style={{ width: "max-content", minWidth: "100%" }}
+            >
+              {statuses.map(status => renderColumn(status, getProjectsByStatus(status.id)))}
+              {getProjectsWithoutStatus().length > 0 &&
+                renderColumn(null, getProjectsWithoutStatus())}
             </div>
           </DragDropContext>
         </div>
       </div>
 
-      {/* Add Project Dialog */}
-      <EnhancedProjectDialog defaultStatusId={selectedStatusId} onProjectCreated={() => {
-      onProjectsChange();
-      setSelectedStatusId(null);
-    }}>
+      <EnhancedProjectDialog
+        defaultStatusId={selectedStatusId}
+        onProjectCreated={() => {
+          onProjectsChange();
+          setSelectedStatusId(null);
+        }}
+      >
         <Button id="kanban-add-project-trigger" className="hidden">
           Add Project
         </Button>
       </EnhancedProjectDialog>
 
-      {/* View Project Dialog */}
-      <ViewProjectDialog project={viewingProject} open={showViewDialog} onOpenChange={setShowViewDialog} onProjectUpdated={onProjectsChange} onActivityUpdated={() => {}} leadName={viewingProject?.lead?.name || ""} />
-    </>;
+      <ViewProjectDialog
+        project={viewingProject}
+        open={showViewDialog}
+        onOpenChange={setShowViewDialog}
+        onProjectUpdated={onProjectsChange}
+        onActivityUpdated={() => {}}
+        leadName={viewingProject?.lead?.name || ""}
+      />
+    </>
+  );
 };
+
 export default ProjectKanbanBoard;

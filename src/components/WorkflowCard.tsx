@@ -4,8 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Workflow } from "@/types/workflow";
-import { WorkflowPreview } from "@/components/WorkflowPreview";
-import { MoreHorizontal, Edit, Trash2, Copy, Play, Pause, Zap, Eye } from "lucide-react";
+import { MoreHorizontal, Edit, Trash2, Copy, Play, Pause, Zap } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
 interface WorkflowCardProps {
@@ -124,18 +123,15 @@ export function WorkflowCard({ workflow, onEdit, onDelete, onToggleStatus, onDup
             <span>{workflow.is_active ? 'Active' : 'Paused'}</span>
           </div>
           
-          <div className="flex items-center gap-2">
-            <WorkflowPreview workflow={workflow} />
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => onEdit(workflow)}
-              className="opacity-0 group-hover:opacity-100 transition-opacity"
-            >
-              <Edit className="h-4 w-4 mr-1" />
-              Edit
-            </Button>
-          </div>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => onEdit(workflow)}
+            className="opacity-0 group-hover:opacity-100 transition-opacity"
+          >
+            <Edit className="h-4 w-4 mr-1" />
+            Edit
+          </Button>
         </div>
       </CardFooter>
     </Card>

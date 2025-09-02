@@ -341,8 +341,6 @@ export function CreateWorkflowSheet({
                     </div>}
                 </div>}
             </div>
-
-            {selectedTemplateData}
           </div>
 
           {/* Channel Selection */}

@@ -241,52 +241,44 @@ export function generateModernDailySummaryEmail(
           </div>
           
           <div style="
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
             margin-bottom: 16px;
           ">
             <div style="
               color: #6b7280;
               font-size: 14px;
-              display: flex;
-              align-items: center;
-              gap: 8px;
+              margin-bottom: 8px;
+              line-height: 1.4;
             ">⏰ ${sessionTime}</div>
             ${session.leads ? `
               <div style="
                 color: #6b7280;
                 font-size: 14px;
-                display: flex;
-                align-items: center;
-                gap: 8px;
+                margin-bottom: 8px;
+                line-height: 1.4;
               ">👤 Client: <strong style="color: #374151;">${session.leads.name}</strong></div>
             ` : ''}
             ${session.projects ? `
               <div style="
                 color: #6b7280;
                 font-size: 14px;
-                display: flex;
-                align-items: center;
-                gap: 8px;
+                margin-bottom: 8px;
+                line-height: 1.4;
               ">📋 Project: <strong style="color: #374151;">${session.projects.name}</strong></div>
             ` : ''}
             ${session.location ? `
               <div style="
                 color: #6b7280;
                 font-size: 14px;
-                display: flex;
-                align-items: center;
-                gap: 8px;
+                margin-bottom: 8px;
+                line-height: 1.4;
               ">📍 ${session.location}</div>
             ` : ''}
             ${session.notes ? `
               <div style="
                 color: #6b7280;
                 font-size: 14px;
-                display: flex;
-                align-items: center;
-                gap: 8px;
+                margin-bottom: 4px;
+                line-height: 1.4;
               ">📝 ${session.notes}</div>
             ` : ''}
           </div>
@@ -348,34 +340,28 @@ export function generateModernDailySummaryEmail(
           ">${reminder.content}</h4>
           
           <div style="
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
             margin-bottom: 16px;
           ">
             <div style="
               color: #6b7280;
               font-size: 14px;
-              display: flex;
-              align-items: center;
-              gap: 8px;
+              margin-bottom: 8px;
+              line-height: 1.4;
             ">📅 ${formatDate(reminder.reminder_date, templateData.dateFormat)} ${reminder.reminder_time ? `at ${formatTime(reminder.reminder_time, templateData.timeFormat)}` : ''}</div>
             ${reminder.leads ? `
               <div style="
                 color: #6b7280;
                 font-size: 14px;
-                display: flex;
-                align-items: center;
-                gap: 8px;
+                margin-bottom: 8px;
+                line-height: 1.4;
               ">👤 Client: <strong style="color: #374151;">${reminder.leads.name}</strong></div>
             ` : ''}
             ${reminder.projects ? `
               <div style="
                 color: #6b7280;
                 font-size: 14px;
-                display: flex;
-                align-items: center;
-                gap: 8px;
+                margin-bottom: 4px;
+                line-height: 1.4;
               ">📋 Project: <strong style="color: #374151;">${reminder.projects.name}</strong></div>
             ` : ''}
           </div>

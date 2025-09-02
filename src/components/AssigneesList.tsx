@@ -10,7 +10,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useAssignmentNotifications } from "@/hooks/useAssignmentNotifications";
+import { useNotificationTriggers } from "@/hooks/useNotificationTriggers";
+import { useOrganization } from "@/contexts/OrganizationContext";
 
 interface Assignee {
   id: string;
@@ -51,7 +52,8 @@ export function AssigneesList({
   const [showRemoveDialog, setShowRemoveDialog] = useState(false);
   const [userToRemove, setUserToRemove] = useState<{ id: string; name: string } | null>(null);
   const { toast } = useToast();
-  const { sendPendingNotifications } = useAssignmentNotifications();
+  const { triggerNewAssignment } = useNotificationTriggers();
+  const { activeOrganization } = useOrganization();
 
   const maxVisible = 3;
   const visibleAssignees = assigneeDetails.slice(0, maxVisible);
@@ -177,8 +179,10 @@ export function AssigneesList({
         description: "Assignee added successfully"
       });
 
-      // Send any pending notifications for this assignment
-      await sendPendingNotifications(entityType, entityId);
+      // Send assignment notifications
+      if (activeOrganization?.id) {
+        await triggerNewAssignment(entityType, entityId, [userId], activeOrganization.id);
+      }
 
       onUpdate?.();
     } catch (error: any) {

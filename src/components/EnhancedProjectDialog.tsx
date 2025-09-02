@@ -15,7 +15,8 @@ import { InlineAssigneesPicker } from "./InlineAssigneesPicker";
 import { ServicePicker } from "./ServicePicker";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useOnboardingV2 } from "@/hooks/useOnboardingV2";
-import { useAssignmentNotifications } from "@/hooks/useAssignmentNotifications";
+import { useNotificationTriggers } from "@/hooks/useNotificationTriggers";
+import { useOrganization } from "@/contexts/OrganizationContext";
 
 interface Lead {
   id: string;
@@ -59,7 +60,8 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
   const [isNewLead, setIsNewLead] = useState(false);
   const { toast } = useToast();
   const { currentStep, shouldLockNavigation, completeCurrentStep } = useOnboardingV2();
-  const { sendPendingNotifications } = useAssignmentNotifications();
+  const { triggerNewAssignment } = useNotificationTriggers();
+  const { activeOrganization } = useOrganization();
 
   const [projectData, setProjectData] = useState({
     name: "",
@@ -389,13 +391,15 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
       }
 
       // Send notifications for assigned users
-      console.log('🔔 Sending assignment notifications for project:', newProject.id);
-      try {
-        await sendPendingNotifications('project', newProject.id);
-        console.log('✅ Assignment notifications sent successfully');
-      } catch (notificationError) {
-        console.error('❌ Failed to send assignment notifications:', notificationError);
-        // Don't fail the project creation if notifications fail
+      if (activeOrganization?.id && projectData.assignees.length > 0) {
+        console.log('🔔 Sending assignment notifications for project:', newProject.id);
+        try {
+          await triggerNewAssignment('project', newProject.id, projectData.assignees, activeOrganization.id);
+          console.log('✅ Assignment notifications sent successfully');
+        } catch (notificationError) {
+          console.error('❌ Failed to send assignment notifications:', notificationError);
+          // Don't fail the project creation if notifications fail
+        }
       }
 
       toast({

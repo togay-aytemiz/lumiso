@@ -12,8 +12,8 @@ import { ViewProjectDialog } from "@/components/ViewProjectDialog";
 import { formatDate } from "@/lib/utils";
 import { AssigneeAvatars } from "@/components/AssigneeAvatars";
 import { KanbanLoadingSkeleton } from "@/components/ui/loading-presets";
-import { useAssignmentNotifications } from "@/hooks/useAssignmentNotifications";
-import { useMilestoneNotifications } from "@/hooks/useMilestoneNotifications";
+import { useNotificationTriggers } from "@/hooks/useNotificationTriggers";
+import { useOrganization } from "@/contexts/OrganizationContext";
 
 interface ProjectStatus {
   id: string;
@@ -75,8 +75,8 @@ const ProjectKanbanBoard = ({ projects, projectStatuses, onProjectsChange, onPro
   const [viewingProject, setViewingProject] = useState<Project | null>(null);
   const [showViewDialog, setShowViewDialog] = useState(false);
   
-  const { sendPendingNotifications } = useAssignmentNotifications();
-  const { sendPendingMilestoneNotifications } = useMilestoneNotifications();
+  const { triggerNewAssignment, triggerProjectMilestone } = useNotificationTriggers();
+  const { activeOrganization } = useOrganization();
 
   useEffect(() => {
     if (projectStatuses && projectStatuses.length > 0) {
@@ -178,11 +178,13 @@ const ProjectKanbanBoard = ({ projects, projectStatuses, onProjectsChange, onPro
 
       onProjectsChange();
       
-      // Send pending assignment notifications
-      await sendPendingNotifications('project', projectId);
-      
-      // Send pending milestone notifications
-      await sendPendingMilestoneNotifications();
+      // Send milestone notifications for status change
+      if (activeOrganization?.id) {
+        const oldStatus = project?.status_id;
+        if (oldStatus && oldStatus !== newStatusId) {
+          await triggerProjectMilestone(projectId, oldStatus, newStatusId, activeOrganization.id, project?.assignees || []);
+        }
+      }
     } catch (error) {
       console.error('Error updating project status:', error);
       toast({

@@ -241,21 +241,17 @@ export default function Workflows() {
             </Tabs>
           </div>
           
-          <CreateWorkflowSheet onCreateWorkflow={createWorkflow}>
+          <CreateWorkflowSheet 
+            onCreateWorkflow={createWorkflow}
+            editWorkflow={editingWorkflow}
+            onUpdateWorkflow={updateWorkflow}
+            setEditingWorkflow={setEditingWorkflow}
+          >
             <Button>
               <Plus className="h-4 w-4 mr-2" />
               Create Workflow
             </Button>
           </CreateWorkflowSheet>
-          
-          {editingWorkflow && (
-            <CreateWorkflowSheet 
-              editWorkflow={editingWorkflow}
-              onCreateWorkflow={createWorkflow}
-              onUpdateWorkflow={updateWorkflow}
-              setEditingWorkflow={setEditingWorkflow}
-            />
-          )}
         </div>
 
         {/* Workflows Table */}
@@ -274,7 +270,12 @@ export default function Workflows() {
                   <p className="text-muted-foreground mb-6 max-w-sm">
                     Create your first automated workflow to streamline your client communications.
                   </p>
-                  <CreateWorkflowSheet onCreateWorkflow={createWorkflow}>
+                  <CreateWorkflowSheet 
+                    onCreateWorkflow={createWorkflow} 
+                    editWorkflow={editingWorkflow}
+                    onUpdateWorkflow={updateWorkflow}
+                    setEditingWorkflow={setEditingWorkflow}
+                  >
                     <Button>
                       <Plus className="h-4 w-4 mr-2" />
                       Create Your First Workflow

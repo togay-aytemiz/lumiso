@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AppSheetModal } from "@/components/ui/app-sheet-modal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -59,11 +59,12 @@ export function CreateWorkflowSheet({ onCreateWorkflow, editWorkflow, onUpdateWo
   
   const isEditing = !!editWorkflow;
   
+  // Initialize form data based on edit workflow
   const [formData, setFormData] = useState<WorkflowFormData>({
-    name: editWorkflow?.name || '',
-    description: editWorkflow?.description || '',
-    trigger_type: editWorkflow?.trigger_type || 'session_scheduled',
-    is_active: editWorkflow?.is_active ?? true,
+    name: '',
+    description: '',
+    trigger_type: 'session_scheduled',
+    is_active: true,
     steps: [],
   });
 
@@ -74,6 +75,24 @@ export function CreateWorkflowSheet({ onCreateWorkflow, editWorkflow, onUpdateWo
     whatsapp: true,
     sms: true,
   });
+
+  // Auto-open when editWorkflow is provided and reset form data
+  useEffect(() => {
+    if (editWorkflow) {
+      setFormData({
+        name: editWorkflow.name || '',
+        description: editWorkflow.description || '',
+        trigger_type: editWorkflow.trigger_type || 'session_scheduled',
+        is_active: editWorkflow.is_active ?? true,
+        steps: [],
+      });
+      setSelectedTemplate('');
+      setTemplateSearch('');
+      setReminderDelay(1440);
+      setEnabledChannels({ email: true, whatsapp: true, sms: true });
+      setOpen(true);
+    }
+  }, [editWorkflow]);
 
   const handleSubmit = async () => {
     if (!formData.name.trim() || !formData.trigger_type || !selectedTemplate) return;
@@ -175,7 +194,13 @@ export function CreateWorkflowSheet({ onCreateWorkflow, editWorkflow, onUpdateWo
       <AppSheetModal
         title={isEditing ? 'Edit Workflow' : 'Create New Workflow'}
         isOpen={open}
-        onOpenChange={setOpen}
+        onOpenChange={(newOpen) => {
+          if (!newOpen) {
+            handleClose();
+          } else {
+            setOpen(true);
+          }
+        }}
         footerActions={footerActions}
         dirty={isDirty}
         onDirtyClose={() => {
@@ -230,8 +255,6 @@ export function CreateWorkflowSheet({ onCreateWorkflow, editWorkflow, onUpdateWo
             </div>
           </div>
 
-          <Separator />
-
           {/* Reminder Timing - Only for session_reminder */}
           {formData.trigger_type === 'session_reminder' && (
             <>
@@ -258,8 +281,6 @@ export function CreateWorkflowSheet({ onCreateWorkflow, editWorkflow, onUpdateWo
               </div>
             </>
           )}
-
-          <Separator />
 
           {/* Template Selection */}
           <div className="space-y-4">
@@ -320,8 +341,6 @@ export function CreateWorkflowSheet({ onCreateWorkflow, editWorkflow, onUpdateWo
             )}
           </div>
 
-          <Separator />
-
           {/* Channel Selection */}
           <div className="space-y-4">
             <div>
@@ -369,8 +388,6 @@ export function CreateWorkflowSheet({ onCreateWorkflow, editWorkflow, onUpdateWo
               </div>
             )}
           </div>
-
-          <Separator />
 
           {/* Status Toggle */}
           <div className="flex items-center justify-between p-3 border border-border rounded-lg">

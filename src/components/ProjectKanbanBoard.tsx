@@ -36,6 +36,7 @@ interface Project {
   updated_at: string;
   status_id?: string | null;
   project_type_id?: string | null;
+  sort_order?: number;
   lead: {
     id: string;
     name: string;
@@ -135,6 +136,88 @@ const ProjectKanbanBoard = ({
   const getProjectsWithoutStatus = () => {
     return projects.filter(project => !project.status_id);
   };
+
+  // Calculate new sort order for a project based on its destination index
+  const calculateSortOrder = async (statusId: string | null, destinationIndex: number): Promise<number> => {
+    const projectsInColumn = statusId 
+      ? projects.filter(p => p.status_id === statusId)
+      : projects.filter(p => !p.status_id);
+    
+    if (projectsInColumn.length === 0) {
+      return 1;
+    }
+    
+    // Sort by current sort_order, then by created_at
+    projectsInColumn.sort((a, b) => {
+      const aOrder = (a as any).sort_order || 0;
+      const bOrder = (b as any).sort_order || 0;
+      if (aOrder === bOrder) {
+        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      }
+      return aOrder - bOrder;
+    });
+    
+    if (destinationIndex === 0) {
+      // Moving to the top
+      const firstProject = projectsInColumn[0];
+      const firstOrder = (firstProject as any).sort_order || 1;
+      return Math.max(1, firstOrder - 1);
+    }
+    
+    if (destinationIndex >= projectsInColumn.length) {
+      // Moving to the bottom
+      const lastProject = projectsInColumn[projectsInColumn.length - 1];
+      const lastOrder = (lastProject as any).sort_order || projectsInColumn.length;
+      return lastOrder + 1;
+    }
+    
+    // Moving between two projects
+    const prevProject = projectsInColumn[destinationIndex - 1];
+    const nextProject = projectsInColumn[destinationIndex];
+    const prevOrder = (prevProject as any).sort_order || destinationIndex;
+    const nextOrder = (nextProject as any).sort_order || destinationIndex + 1;
+    
+    return Math.floor((prevOrder + nextOrder) / 2) || prevOrder + 1;
+  };
+
+  // Handle reordering within the same column
+  const handleSameColumnReorder = async (
+    projectId: string, 
+    destinationIndex: number, 
+    sourceIndex: number, 
+    statusId: string
+  ) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const actualStatusId = statusId === 'no-status' ? null : statusId;
+      const newSortOrder = await calculateSortOrder(actualStatusId, destinationIndex);
+
+      // Update project sort order
+      const { error } = await supabase
+        .from('projects')
+        .update({ sort_order: newSortOrder })
+        .eq('id', projectId)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      onProjectsChange();
+      
+      toast({
+        title: "Project Reordered",
+        description: "Project position has been updated"
+      });
+    } catch (error) {
+      console.error('Error reordering project:', error);
+      toast({
+        title: "Error",
+        description: "Failed to reorder project",
+        variant: "destructive"
+      });
+    }
+  };
   const handleDragEnd = async (result: any) => {
     const {
       destination,
@@ -149,11 +232,13 @@ const ProjectKanbanBoard = ({
     const projectId = draggableId;
     const newStatusId = destination.droppableId === 'no-status' ? null : destination.droppableId;
     
+    // Get current project data
+    const project = projects.find(p => p.id === projectId);
+    if (!project) return;
+
     // Handle reordering within the same column
     if (destination.droppableId === source.droppableId) {
-      // For now, we'll just update the UI optimistically since we don't have sort_order column
-      // The projects will maintain their database order but appear reordered in the UI
-      onProjectsChange();
+      await handleSameColumnReorder(projectId, destination.index, source.index, destination.droppableId);
       return;
     }
     try {
@@ -169,11 +254,15 @@ const ProjectKanbanBoard = ({
       const oldStatus = statuses.find(s => s.id === project?.status_id);
       const newStatus = statuses.find(s => s.id === newStatusId);
 
-      // Update project status
+      // Calculate new sort order for cross-column move
+      const newSortOrder = await calculateSortOrder(newStatusId, destination.index);
+
+      // Update project status and sort order
       const {
         error
       } = await supabase.from('projects').update({
-        status_id: newStatusId
+        status_id: newStatusId,
+        sort_order: newSortOrder
       }).eq('id', projectId).eq('user_id', user.id);
       if (error) throw error;
 

@@ -42,6 +42,7 @@ interface Project {
   status_id?: string | null;
   project_type_id?: string | null;
   base_price?: number | null;
+  sort_order?: number;
   lead: {
     id: string;
     name: string;
@@ -218,6 +219,7 @@ const AllProjects = () => {
         .from('projects')
         .select('*')
         .eq('organization_id', organizationId)
+        .order('sort_order', { ascending: true })
         .order('created_at', { ascending: false });
 
       if (error) {

@@ -399,9 +399,9 @@ export function generateModernDailySummaryEmail(
       ">
         <div style="
           display: flex;
-          justify-content: space-between;
           align-items: center;
           gap: 12px;
+          margin-bottom: 12px;
         ">
           <div style="
             font-size: 24px;
@@ -416,19 +416,17 @@ export function generateModernDailySummaryEmail(
               You have <strong>${totalOverdue}</strong> overdue item${totalOverdue > 1 ? 's' : ''} that need attention.
             </p>
           </div>
-          ${templateData.baseUrl ? `
-            <a href="${templateData.baseUrl}/reminders" style="
-              display: inline-block;
-              background: #ef4444;
-              color: white;
-              padding: 6px 12px;
-              border-radius: 6px;
-              text-decoration: none;
-              font-weight: 500;
-              font-size: 13px;
-            ">View →</a>
-          ` : ''}
         </div>
+        ${templateData.baseUrl ? `
+          <div style="text-align: left;">
+            <a href="${templateData.baseUrl}/reminders" style="
+              color: #dc2626;
+              text-decoration: underline;
+              font-size: 14px;
+              font-weight: 500;
+            ">View overdue items</a>
+          </div>
+        ` : ''}
       </div>
     `;
   }
@@ -446,9 +444,9 @@ export function generateModernDailySummaryEmail(
       ">
         <div style="
           display: flex;
-          justify-content: space-between;
           align-items: center;
           gap: 12px;
+          margin-bottom: 12px;
         ">
           <div style="
             font-size: 24px;
@@ -463,19 +461,17 @@ export function generateModernDailySummaryEmail(
               You have <strong>${totalPastSessions}</strong> past session${totalPastSessions > 1 ? 's' : ''} that need${totalPastSessions === 1 ? 's' : ''} action.
             </p>
           </div>
-          ${templateData.baseUrl ? `
-            <a href="${templateData.baseUrl}/sessions" style="
-              display: inline-block;
-              background: #f59e0b;
-              color: white;
-              padding: 6px 12px;
-              border-radius: 6px;
-              text-decoration: none;
-              font-weight: 500;
-              font-size: 13px;
-            ">View →</a>
-          ` : ''}
         </div>
+        ${templateData.baseUrl ? `
+          <div style="text-align: left;">
+            <a href="${templateData.baseUrl}/sessions" style="
+              color: #d97706;
+              text-decoration: underline;
+              font-size: 14px;
+              font-weight: 500;
+            ">View past sessions</a>
+          </div>
+        ` : ''}
       </div>
     `;
   }
@@ -499,8 +495,9 @@ export function generateModernDailySummaryEmail(
         ">Quick Actions</h3>
         
         <div style="
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+          display: flex;
+          justify-content: center;
+          flex-wrap: wrap;
           gap: 12px;
           max-width: 600px;
           margin: 0 auto;
@@ -514,6 +511,8 @@ export function generateModernDailySummaryEmail(
             text-decoration: none;
             font-weight: 600;
             font-size: 14px;
+            text-align: center;
+            min-width: 120px;
           ">Dashboard</a>
           <a href="${templateData.baseUrl}/leads" style="
             display: inline-block;
@@ -524,6 +523,8 @@ export function generateModernDailySummaryEmail(
             text-decoration: none;
             font-weight: 600;
             font-size: 14px;
+            text-align: center;
+            min-width: 120px;
           ">Leads</a>
           <a href="${templateData.baseUrl}/projects" style="
             display: inline-block;
@@ -534,6 +535,8 @@ export function generateModernDailySummaryEmail(
             text-decoration: none;
             font-weight: 600;
             font-size: 14px;
+            text-align: center;
+            min-width: 120px;
           ">Projects</a>
           <a href="${templateData.baseUrl}/sessions" style="
             display: inline-block;
@@ -544,6 +547,8 @@ export function generateModernDailySummaryEmail(
             text-decoration: none;
             font-weight: 600;
             font-size: 14px;
+            text-align: center;
+            min-width: 120px;
           ">Sessions</a>
         </div>
       </div>

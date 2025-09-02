@@ -15,7 +15,6 @@ import { KanbanLoadingSkeleton } from "@/components/ui/loading-presets";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { useNotificationTriggers } from "@/hooks/useNotificationTriggers";
 import { useOrganization } from "@/contexts/OrganizationContext";
-
 interface ProjectStatus {
   id: string;
   name: string;
@@ -25,7 +24,6 @@ interface ProjectStatus {
   updated_at?: string;
   user_id?: string;
 }
-
 interface Project {
   id: string;
   name: string;
@@ -59,7 +57,6 @@ interface Project {
   }>;
   assignees?: string[];
 }
-
 interface ProjectKanbanBoardProps {
   projects: Project[];
   projectStatuses?: ProjectStatus[];
@@ -67,18 +64,26 @@ interface ProjectKanbanBoardProps {
   onProjectUpdate?: (project: Project) => void;
   onQuickView?: (project: Project) => void;
 }
-
-const ProjectKanbanBoard = ({ projects, projectStatuses, onProjectsChange, onProjectUpdate, onQuickView }: ProjectKanbanBoardProps) => {
+const ProjectKanbanBoard = ({
+  projects,
+  projectStatuses,
+  onProjectsChange,
+  onProjectUpdate,
+  onQuickView
+}: ProjectKanbanBoardProps) => {
   const [statuses, setStatuses] = useState<ProjectStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddProjectDialog, setShowAddProjectDialog] = useState(false);
   const [selectedStatusId, setSelectedStatusId] = useState<string | null>(null);
   const [viewingProject, setViewingProject] = useState<Project | null>(null);
   const [showViewDialog, setShowViewDialog] = useState(false);
-  
-  const { triggerNewAssignment, triggerProjectMilestone } = useNotificationTriggers();
-  const { activeOrganization } = useOrganization();
-
+  const {
+    triggerNewAssignment,
+    triggerProjectMilestone
+  } = useNotificationTriggers();
+  const {
+    activeOrganization
+  } = useOrganization();
   useEffect(() => {
     if (projectStatuses && projectStatuses.length > 0) {
       // Use passed statuses if available
@@ -88,22 +93,26 @@ const ProjectKanbanBoard = ({ projects, projectStatuses, onProjectsChange, onPro
       fetchStatuses();
     }
   }, [projectStatuses]);
-
   const fetchStatuses = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: {
+          user
+        }
+      } = await supabase.auth.getUser();
       if (!user) return;
 
       // Get user's active organization ID
-      const { data: organizationId } = await supabase.rpc('get_user_active_organization_id');
+      const {
+        data: organizationId
+      } = await supabase.rpc('get_user_active_organization_id');
       if (!organizationId) return;
-
-      const { data, error } = await supabase
-        .from('project_statuses')
-        .select('*')
-        .eq('organization_id', organizationId)
-        .order('sort_order', { ascending: true });
-
+      const {
+        data,
+        error
+      } = await supabase.from('project_statuses').select('*').eq('organization_id', organizationId).order('sort_order', {
+        ascending: true
+      });
       if (error) throw error;
       setStatuses((data || []).filter(s => s.name?.toLowerCase?.() !== 'archived'));
     } catch (error) {
@@ -111,32 +120,34 @@ const ProjectKanbanBoard = ({ projects, projectStatuses, onProjectsChange, onPro
       toast({
         title: "Error",
         description: "Failed to load project statuses",
-        variant: "destructive",
+        variant: "destructive"
       });
     } finally {
       setLoading(false);
     }
   };
-
   const getProjectsByStatus = (statusId: string) => {
     return projects.filter(project => project.status_id === statusId);
   };
-
   const getProjectsWithoutStatus = () => {
     return projects.filter(project => !project.status_id);
   };
-
   const handleDragEnd = async (result: any) => {
-    const { destination, source, draggableId } = result;
-
+    const {
+      destination,
+      source,
+      draggableId
+    } = result;
     if (!destination) return;
     if (destination.droppableId === source.droppableId) return;
-
     const projectId = draggableId;
     const newStatusId = destination.droppableId === 'no-status' ? null : destination.droppableId;
-    
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: {
+          user
+        }
+      } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
       // Find the project and old status
@@ -145,40 +156,37 @@ const ProjectKanbanBoard = ({ projects, projectStatuses, onProjectsChange, onPro
       const newStatus = statuses.find(s => s.id === newStatusId);
 
       // Update project status
-      const { error } = await supabase
-        .from('projects')
-        .update({ status_id: newStatusId })
-        .eq('id', projectId)
-        .eq('user_id', user.id);
-
+      const {
+        error
+      } = await supabase.from('projects').update({
+        status_id: newStatusId
+      }).eq('id', projectId).eq('user_id', user.id);
       if (error) throw error;
 
       // Log the status change
       const statusChangeMessage = `Status changed from '${oldStatus?.name || 'No Status'}' to '${newStatus?.name || 'No Status'}'`;
-      
-      await supabase
-        .from('activities')
-        .insert({
-          type: 'status_change',
-          content: statusChangeMessage,
-          project_id: projectId,
-          lead_id: project?.lead_id,
-          user_id: user.id,
-        });
-
+      await supabase.from('activities').insert({
+        type: 'status_change',
+        content: statusChangeMessage,
+        project_id: projectId,
+        lead_id: project?.lead_id,
+        user_id: user.id
+      });
       toast({
         title: "Project Updated",
-        description: `Project moved to ${newStatus?.name || 'No Status'}`,
+        description: `Project moved to ${newStatus?.name || 'No Status'}`
       });
 
       // Notify parent about project update for tutorial tracking
       if (onProjectUpdate && project) {
-        const updatedProject = { ...project, status_id: newStatusId };
+        const updatedProject = {
+          ...project,
+          status_id: newStatusId
+        };
         onProjectUpdate(updatedProject);
       }
-
       onProjectsChange();
-      
+
       // Send milestone notifications for status change
       if (activeOrganization?.id) {
         const oldStatus = project?.status_id;
@@ -191,11 +199,10 @@ const ProjectKanbanBoard = ({ projects, projectStatuses, onProjectsChange, onPro
       toast({
         title: "Error",
         description: "Failed to update project status",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
-
   const handleAddProject = (statusId: string | null) => {
     setSelectedStatusId(statusId);
     // Trigger the hidden dialog button
@@ -204,7 +211,6 @@ const ProjectKanbanBoard = ({ projects, projectStatuses, onProjectsChange, onPro
       triggerButton.click();
     }
   };
-
   const handleProjectClick = (project: Project) => {
     if (onQuickView) {
       onQuickView(project);
@@ -213,29 +219,16 @@ const ProjectKanbanBoard = ({ projects, projectStatuses, onProjectsChange, onPro
       setShowViewDialog(true);
     }
   };
-
-  const renderProjectCard = (project: Project, index: number) => (
-    <Draggable key={project.id} draggableId={project.id} index={index}>
-      {(provided) => (
-        <div
-          ref={provided.innerRef}
-          {...provided.draggableProps}
-          {...provided.dragHandleProps}
-          className="mb-3"
-        >
-          <Card 
-            className="cursor-pointer hover:shadow-lg hover:-translate-y-1 transition-all duration-300 ease-out bg-card border border-border/50 hover:border-border group"
-            onClick={() => handleProjectClick(project)}
-          >
+  const renderProjectCard = (project: Project, index: number) => <Draggable key={project.id} draggableId={project.id} index={index}>
+      {provided => <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} className="mb-3">
+          <Card className="cursor-pointer hover:shadow-lg hover:-translate-y-1 transition-all duration-300 ease-out bg-card border border-border/50 hover:border-border group" onClick={() => handleProjectClick(project)}>
             <CardContent className="p-4 space-y-3">
               {/* Project Type - Top Left Corner */}
-              {project.project_type && (
-                <div className="flex pt-4">
+              {project.project_type && <div className="flex pt-4">
                   <Badge variant="secondary" className="text-xs font-medium bg-muted text-muted-foreground border-0 px-2 py-1">
                     {project.project_type.name}
                   </Badge>
-                </div>
-              )}
+                </div>}
 
               {/* Main Content */}
               <div className="space-y-2">
@@ -252,21 +245,12 @@ const ProjectKanbanBoard = ({ projects, projectStatuses, onProjectsChange, onPro
               </div>
 
               {/* Optional To-Do Progress Bar */}
-              {(project.todo_count || 0) > 0 && (
-                <div className="space-y-2">
-                  <ProgressBar
-                    value={Math.round(((project.completed_todo_count || 0) / (project.todo_count || 0)) * 100)}
-                    total={project.todo_count || 0}
-                    completed={project.completed_todo_count || 0}
-                    className="w-full"
-                    showLabel={false}
-                    size="sm"
-                  />
-                </div>
-              )}
+              {(project.todo_count || 0) > 0 && <div className="space-y-2">
+                  <ProgressBar value={Math.round((project.completed_todo_count || 0) / (project.todo_count || 0) * 100)} total={project.todo_count || 0} completed={project.completed_todo_count || 0} className="w-full" showLabel={false} size="sm" />
+                </div>}
 
               {/* Separator Line */}
-              <div className="border-t border-border/30" />
+              
 
               {/* Footer with stats and assignees */}
               <div className="flex items-center justify-between py-0.5">
@@ -285,55 +269,35 @@ const ProjectKanbanBoard = ({ projects, projectStatuses, onProjectsChange, onPro
                 </div>
 
                 {/* Avatar Stack */}
-                {project.assignees && project.assignees.length > 0 && (
-                  <AssigneeAvatars 
-                    assigneeIds={project.assignees} 
-                    maxVisible={3}
-                    size="sm"
-                  />
-                )}
+                {project.assignees && project.assignees.length > 0 && <AssigneeAvatars assigneeIds={project.assignees} maxVisible={3} size="sm" />}
               </div>
             </CardContent>
           </Card>
-        </div>
-      )}
-    </Draggable>
-  );
-
+        </div>}
+    </Draggable>;
   const renderColumn = (status: ProjectStatus | null, projects: Project[]) => {
     const statusId = status?.id || 'no-status';
     const statusName = status?.name || 'No Status';
     const statusColor = status?.color || '#6B7280';
-
-    return (
-      <div key={statusId} className="flex-shrink-0 w-80 bg-muted/30 rounded-lg flex flex-col">
+    return <div key={statusId} className="flex-shrink-0 w-80 bg-muted/30 rounded-lg flex flex-col">
         {/* Column header - Fixed */}
         <div className="p-4 pb-2 flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-2">
-            <button
-              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all hover:opacity-80"
-              style={{ 
-                backgroundColor: statusColor + '20',
-                color: statusColor,
-                border: `1px solid ${statusColor}40`
-              }}
-            >
-              <div 
-                className="w-2 h-2 rounded-full" 
-                style={{ backgroundColor: statusColor }}
-              />
+            <button className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all hover:opacity-80" style={{
+            backgroundColor: statusColor + '20',
+            color: statusColor,
+            border: `1px solid ${statusColor}40`
+          }}>
+              <div className="w-2 h-2 rounded-full" style={{
+              backgroundColor: statusColor
+            }} />
               <span className="uppercase tracking-wide font-semibold">{statusName}</span>
             </button>
             <Badge variant="secondary" className="text-xs">
               {projects.length}
             </Badge>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => handleAddProject(status?.id || null)}
-            className="h-6 w-6 text-muted-foreground hover:text-foreground"
-          >
+          <Button variant="ghost" size="icon" onClick={() => handleAddProject(status?.id || null)} className="h-6 w-6 text-muted-foreground hover:text-foreground">
             <Plus className="h-4 w-4" />
           </Button>
         </div>
@@ -341,78 +305,46 @@ const ProjectKanbanBoard = ({ projects, projectStatuses, onProjectsChange, onPro
         {/* Droppable area without individual scrolling */}
         <div className="flex-1 px-4 pb-4">
           <Droppable droppableId={statusId}>
-            {(provided, snapshot) => (
-              <div
-                ref={provided.innerRef}
-                {...provided.droppableProps}
-                className={`min-h-full transition-colors pb-2 ${
-                  snapshot.isDraggingOver ? 'bg-accent/20' : ''
-                }`}
-              >
+            {(provided, snapshot) => <div ref={provided.innerRef} {...provided.droppableProps} className={`min-h-full transition-colors pb-2 ${snapshot.isDraggingOver ? 'bg-accent/20' : ''}`}>
                 {/* Project cards */}
                 {projects.map((project, index) => renderProjectCard(project, index))}
                 
                 {/* Add project button */}
-                {projects.length === 0 ? (
-                  <div className="flex items-center justify-center h-32">
-                    <Button
-                      variant="outline"
-                      onClick={() => handleAddProject(status?.id || null)}
-                      className="flex items-center gap-2 border-dashed"
-                    >
+                {projects.length === 0 ? <div className="flex items-center justify-center h-32">
+                    <Button variant="outline" onClick={() => handleAddProject(status?.id || null)} className="flex items-center gap-2 border-dashed">
                       <Plus className="h-4 w-4" />
                       Add Project
                     </Button>
-                  </div>
-                ) : (
-                  <Button
-                    variant="outline"
-                    onClick={() => handleAddProject(status?.id || null)}
-                    className="w-full flex items-center gap-2 border-dashed mt-2"
-                  >
+                  </div> : <Button variant="outline" onClick={() => handleAddProject(status?.id || null)} className="w-full flex items-center gap-2 border-dashed mt-2">
                     <Plus className="h-4 w-4" />
                     Add Project
-                  </Button>
-                )}
+                  </Button>}
                 
                 {provided.placeholder}
-              </div>
-            )}
+              </div>}
           </Droppable>
         </div>
-      </div>
-    );
+      </div>;
   };
-
   if (loading) {
     return <KanbanLoadingSkeleton />;
   }
-
-  return (
-    <>
+  return <>
       {/* Kanban board horizontal scroll container */}
-      <div 
-        className="h-full w-full max-w-full overflow-x-auto overflow-y-hidden" 
-        style={{ 
-          WebkitOverflowScrolling: 'touch',
-          scrollbarWidth: 'thin',
-          touchAction: 'pan-x pan-y'
-        }}
-      >
+      <div className="h-full w-full max-w-full overflow-x-auto overflow-y-hidden" style={{
+      WebkitOverflowScrolling: 'touch',
+      scrollbarWidth: 'thin',
+      touchAction: 'pan-x pan-y'
+    }}>
         <div className="p-4 sm:p-6 h-full">
           <DragDropContext onDragEnd={handleDragEnd}>
             {/* Board lanes - intrinsic width forces overflow */}
-            <div 
-              className="flex gap-4 sm:gap-6 pb-4 h-full" 
-              style={{ 
-                width: 'max-content',
-                minWidth: '100%'
-              }}
-            >
+            <div className="flex gap-4 sm:gap-6 pb-4 h-full" style={{
+            width: 'max-content',
+            minWidth: '100%'
+          }}>
             {/* Render columns for each status */}
-            {statuses.map(status => 
-              renderColumn(status, getProjectsByStatus(status.id))
-            )}
+            {statuses.map(status => renderColumn(status, getProjectsByStatus(status.id)))}
             
             {/* Column for projects without status */}
             {getProjectsWithoutStatus().length > 0 && renderColumn(null, getProjectsWithoutStatus())}
@@ -422,32 +354,17 @@ const ProjectKanbanBoard = ({ projects, projectStatuses, onProjectsChange, onPro
       </div>
 
       {/* Add Project Dialog */}
-      <EnhancedProjectDialog
-        defaultStatusId={selectedStatusId}
-        onProjectCreated={() => {
-          onProjectsChange();
-          setSelectedStatusId(null);
-        }}
-      >
-        <Button 
-          id="kanban-add-project-trigger"
-          className="hidden"
-        >
+      <EnhancedProjectDialog defaultStatusId={selectedStatusId} onProjectCreated={() => {
+      onProjectsChange();
+      setSelectedStatusId(null);
+    }}>
+        <Button id="kanban-add-project-trigger" className="hidden">
           Add Project
         </Button>
       </EnhancedProjectDialog>
 
       {/* View Project Dialog */}
-      <ViewProjectDialog
-        project={viewingProject}
-        open={showViewDialog}
-        onOpenChange={setShowViewDialog}
-        onProjectUpdated={onProjectsChange}
-        onActivityUpdated={() => {}}
-        leadName={viewingProject?.lead?.name || ""}
-      />
-    </>
-  );
+      <ViewProjectDialog project={viewingProject} open={showViewDialog} onOpenChange={setShowViewDialog} onProjectUpdated={onProjectsChange} onActivityUpdated={() => {}} leadName={viewingProject?.lead?.name || ""} />
+    </>;
 };
-
 export default ProjectKanbanBoard;

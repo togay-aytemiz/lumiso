@@ -672,16 +672,18 @@ const AllProjects = () => {
                   {archivedProjects.length}
                 </span>
               </button>
-              {viewMode === 'board' && (
-                <div className="flex items-center pl-2">
-                  <KanbanSettingsSheet>
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground hover:bg-accent/5 hover:text-accent">
-                      <Settings className="h-4 w-4" />
-                    </Button>
-                  </KanbanSettingsSheet>
-                </div>
-              )}
             </div>
+            
+            {viewMode === 'board' && (
+              <div className="flex items-center gap-2">
+                <span className="hidden md:inline text-sm text-muted-foreground">Board Settings</span>
+                <KanbanSettingsSheet>
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground hover:bg-accent/5 hover:text-accent">
+                    <Settings className="h-4 w-4" />
+                  </Button>
+                </KanbanSettingsSheet>
+              </div>
+            )}
           </div>
         </div>
       </div>

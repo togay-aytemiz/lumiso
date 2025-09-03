@@ -322,44 +322,95 @@ async function executeSendMessageStep(supabase: any, step: any, execution: any) 
     return;
   }
 
+  console.log(`Executing send message step with template ${template_id}`);
+
   // Get trigger entity data for template variables
   const entityData = await getEntityData(supabase, execution.trigger_entity_type, execution.trigger_entity_id);
   
-  // Create notification through existing notification system
-  const notification = {
-    organization_id: execution.workflows.organization_id,
-    user_id: entityData.assignee_id || entityData.user_id,
-    notification_type: 'workflow-message',
-    delivery_method: 'immediate',
-    status: 'pending',
-    metadata: {
-      workflow_id: execution.workflow_id,
-      workflow_execution_id: execution.id,
-      template_id,
-      channels,
-      entity_type: execution.trigger_entity_type,
-      entity_id: execution.trigger_entity_id,
-      entity_data: entityData
-    }
-  };
+  console.log('Entity data for workflow:', entityData);
 
-  const { error } = await supabase
-    .from('notifications')
-    .insert(notification);
-
-  if (error) {
-    throw new Error(`Failed to create notification: ${error.message}`);
+  // Check if we have a client email to send to
+  const clientEmail = entityData.client_email || entityData.customer_email;
+  if (!clientEmail) {
+    console.log('No client email found, skipping workflow execution');
+    return; // Skip if no client email
   }
 
-  // Trigger notification processing
-  await supabase.functions.invoke('notification-processor', {
-    body: {
-      action: 'process-pending',
-      organizationId: execution.workflows.organization_id
-    }
-  });
+  console.log(`Sending workflow message to client: ${clientEmail}`);
 
-  console.log(`Created workflow notification for template ${template_id}`);
+  // For workflow messages, we send to the client, not the user
+  // Try to use send-template-email function first
+  try {
+    const { data, error } = await supabase.functions.invoke('send-template-email', {
+      body: {
+        template_id,
+        recipient_email: clientEmail,
+        recipient_name: entityData.customer_name || 'Client',
+        template_data: {
+          customer_name: entityData.customer_name || 'Client',
+          session_date: entityData.session_date,
+          session_time: entityData.session_time,
+          location: entityData.location,
+          project_name: entityData.project_name,
+          studio_name: 'Lumiso', // Default studio name
+          studio_phone: '555-0123', // Default phone
+          ...entityData
+        },
+        workflow_execution_id: execution.id
+      }
+    });
+
+    if (error) {
+      console.error('Error sending workflow email via send-template-email:', error);
+      throw error;
+    }
+
+    console.log('Successfully sent workflow email to client via send-template-email');
+  } catch (error) {
+    console.error('Failed to send via send-template-email, falling back to notification system:', error);
+    
+    // Fallback: Create notification record for processing
+    const notification = {
+      organization_id: execution.workflows.organization_id,
+      user_id: execution.workflows.user_id,
+      notification_type: 'workflow-message',
+      delivery_method: 'immediate',
+      status: 'pending',
+      metadata: {
+        workflow_id: execution.workflow_id,
+        workflow_execution_id: execution.id,
+        template_id,
+        channels,
+        entity_type: execution.trigger_entity_type,
+        entity_id: execution.trigger_entity_id,
+        entity_data: entityData,
+        client_email: clientEmail,
+        client_name: entityData.customer_name || 'Client'
+      }
+    };
+
+    const { error: notificationError } = await supabase
+      .from('notifications')
+      .insert(notification);
+
+    if (notificationError) {
+      console.error('Error creating fallback notification:', notificationError);
+      throw notificationError;
+    }
+
+    // Trigger notification processing
+    try {
+      await supabase.functions.invoke('notification-processor', {
+        body: {
+          action: 'process-pending',
+          organizationId: execution.workflows.organization_id
+        }
+      });
+      console.log('Successfully triggered notification processor');
+    } catch (processorError) {
+      console.error('Error triggering notification processor:', processorError);
+    }
+  }
 }
 
 // Execute create reminder step
@@ -422,23 +473,77 @@ async function executeUpdateStatusStep(supabase: any, step: any, execution: any)
 
 // Get entity data for template variables
 async function getEntityData(supabase: any, entityType: string, entityId: string) {
-  let table = entityType;
-  if (entityType === 'session') table = 'sessions';
-  else if (entityType === 'project') table = 'projects';
-  else if (entityType === 'lead') table = 'leads';
-
-  const { data, error } = await supabase
-    .from(table)
-    .select('*')
-    .eq('id', entityId)
-    .single();
-
-  if (error) {
-    console.error(`Error fetching ${entityType} data:`, error);
-    return {};
+  let entityData = {};
+  
+  if (entityType === 'session') {
+    const { data: session } = await supabase
+      .from('sessions')
+      .select(`
+        *,
+        leads:lead_id (
+          name,
+          email,
+          phone
+        ),
+        projects:project_id (
+          name,
+          description
+        )
+      `)
+      .eq('id', entityId)
+      .single();
+    
+    entityData = {
+      session_date: session?.session_date,
+      session_time: session?.session_time,
+      location: session?.location,
+      notes: session?.notes,
+      customer_name: session?.leads?.name,
+      customer_email: session?.leads?.email,
+      customer_phone: session?.leads?.phone,
+      project_name: session?.projects?.name,
+      client_email: session?.leads?.email, // Add client_email for targeting
+      ...session
+    };
+  } else if (entityType === 'project') {
+    const { data: project } = await supabase
+      .from('projects')
+      .select(`
+        *,
+        leads:lead_id (
+          name,
+          email,
+          phone
+        )
+      `)
+      .eq('id', entityId)
+      .single();
+    
+    entityData = {
+      project_name: project?.name,
+      customer_name: project?.leads?.name,
+      customer_email: project?.leads?.email,
+      customer_phone: project?.leads?.phone,
+      client_email: project?.leads?.email, // Add client_email for targeting
+      ...project
+    };
+  } else if (entityType === 'lead') {
+    const { data: lead } = await supabase
+      .from('leads')
+      .select('*')
+      .eq('id', entityId)
+      .single();
+    
+    entityData = {
+      customer_name: lead?.name,
+      customer_email: lead?.email,
+      customer_phone: lead?.phone,
+      client_email: lead?.email, // Add client_email for targeting
+      ...lead
+    };
   }
-
-  return data || {};
+  
+  return entityData;
 }
 
 // Evaluate trigger conditions

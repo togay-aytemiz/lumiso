@@ -13,6 +13,9 @@ verify_jwt = false
 [functions.workflow-executor]
 verify_jwt = false
 
+[functions.schedule-daily-notifications]
+verify_jwt = false
+
 [db]
 enabled = true
 port = 54322

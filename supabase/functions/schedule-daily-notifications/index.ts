@@ -31,22 +31,18 @@ serve(async (req) => {
       .from('organization_settings')
       .select(`
         organization_id,
-        notification_daily_summary_send_at,
-        organizations!inner (
-          owner_id,
-          name
-        )
+        notification_daily_summary_send_at
       `)
       .eq('notification_global_enabled', true)
       .eq('notification_daily_summary_enabled', true)
       .eq('notification_daily_summary_send_at', currentTime);
 
     if (orgError) {
-      console.error('Error fetching organizations:', orgError);
+      console.error('Error fetching organization settings:', orgError);
       throw orgError;
     }
 
-    console.log(`Found ${organizations?.length || 0} organizations to process`);
+    console.log(`Found ${organizations?.length || 0} organization settings to process`);
 
     if (!organizations || organizations.length === 0) {
       return new Response(JSON.stringify({ 
@@ -59,37 +55,57 @@ serve(async (req) => {
       });
     }
 
+    // Get organization details for each org
+    const orgIds = organizations.map(o => o.organization_id);
+    const { data: orgs, error: orgDetailsError } = await supabase
+      .from('organizations')
+      .select('id, owner_id, name')
+      .in('id', orgIds);
+
+    if (orgDetailsError) {
+      console.error('Error fetching organization details:', orgDetailsError);
+      throw orgDetailsError;
+    }
+
+    console.log(`Found ${orgs?.length || 0} organizations to process`);
+
     // Create daily summary notifications for each organization
     const today = new Date().toISOString().split('T')[0];
     const notifications = [];
 
-    for (const org of organizations) {
+    for (const orgSetting of organizations) {
+      const org = orgs?.find(o => o.id === orgSetting.organization_id);
+      if (!org) {
+        console.log(`Organization ${orgSetting.organization_id} not found`);
+        continue;
+      }
+
       // Check if notification already exists for today
       const { data: existingNotification } = await supabase
         .from('notifications')
         .select('id')
-        .eq('organization_id', org.organization_id)
-        .eq('user_id', org.organizations.owner_id)
+        .eq('organization_id', org.id)
+        .eq('user_id', org.owner_id)
         .eq('notification_type', 'daily-summary')
         .gte('created_at', `${today}T00:00:00Z`)
         .lt('created_at', `${today}T23:59:59Z`)
-        .single();
+        .maybeSingle();
 
       if (existingNotification) {
-        console.log(`Daily summary already exists for organization ${org.organization_id}`);
+        console.log(`Daily summary already exists for organization ${org.id}`);
         continue;
       }
 
       // Create daily summary notification
       const notification = {
-        organization_id: org.organization_id,
-        user_id: org.organizations.owner_id,
+        organization_id: org.id,
+        user_id: org.owner_id,
         notification_type: 'daily-summary',
         delivery_method: 'scheduled',
         scheduled_for: new Date().toISOString(),
         metadata: {
           date: today,
-          organization_name: org.organizations.name
+          organization_name: org.name
         },
         status: 'pending'
       };

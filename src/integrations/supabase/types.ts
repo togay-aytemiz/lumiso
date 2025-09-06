@@ -704,13 +704,9 @@ export type Database = {
           kanban_show_todo_progress: boolean | null
           logo_url: string | null
           notification_daily_summary_enabled: boolean | null
-          notification_daily_summary_send_at: string | null
           notification_global_enabled: boolean | null
           notification_new_assignment_enabled: boolean | null
           notification_project_milestone_enabled: boolean | null
-          notification_scheduled_time: string | null
-          notification_weekly_recap_enabled: boolean | null
-          notification_weekly_recap_send_at: string | null
           organization_id: string
           phone: string | null
           photography_business_name: string | null
@@ -733,13 +729,9 @@ export type Database = {
           kanban_show_todo_progress?: boolean | null
           logo_url?: string | null
           notification_daily_summary_enabled?: boolean | null
-          notification_daily_summary_send_at?: string | null
           notification_global_enabled?: boolean | null
           notification_new_assignment_enabled?: boolean | null
           notification_project_milestone_enabled?: boolean | null
-          notification_scheduled_time?: string | null
-          notification_weekly_recap_enabled?: boolean | null
-          notification_weekly_recap_send_at?: string | null
           organization_id: string
           phone?: string | null
           photography_business_name?: string | null
@@ -762,13 +754,9 @@ export type Database = {
           kanban_show_todo_progress?: boolean | null
           logo_url?: string | null
           notification_daily_summary_enabled?: boolean | null
-          notification_daily_summary_send_at?: string | null
           notification_global_enabled?: boolean | null
           notification_new_assignment_enabled?: boolean | null
           notification_project_milestone_enabled?: boolean | null
-          notification_scheduled_time?: string | null
-          notification_weekly_recap_enabled?: boolean | null
-          notification_weekly_recap_send_at?: string | null
           organization_id?: string
           phone?: string | null
           photography_business_name?: string | null
@@ -1601,13 +1589,10 @@ export type Database = {
           id: string
           logo_url: string | null
           notification_daily_summary_enabled: boolean | null
-          notification_daily_summary_send_at: string | null
           notification_global_enabled: boolean | null
           notification_new_assignment_enabled: boolean | null
           notification_project_milestone_enabled: boolean | null
           notification_scheduled_time: string | null
-          notification_weekly_recap_enabled: boolean | null
-          notification_weekly_recap_send_at: string | null
           onboarding_stage: Database["public"]["Enums"]["onboarding_stage"]
           photography_business_name: string | null
           primary_brand_color: string | null
@@ -1625,13 +1610,10 @@ export type Database = {
           id?: string
           logo_url?: string | null
           notification_daily_summary_enabled?: boolean | null
-          notification_daily_summary_send_at?: string | null
           notification_global_enabled?: boolean | null
           notification_new_assignment_enabled?: boolean | null
           notification_project_milestone_enabled?: boolean | null
           notification_scheduled_time?: string | null
-          notification_weekly_recap_enabled?: boolean | null
-          notification_weekly_recap_send_at?: string | null
           onboarding_stage?: Database["public"]["Enums"]["onboarding_stage"]
           photography_business_name?: string | null
           primary_brand_color?: string | null
@@ -1649,13 +1631,10 @@ export type Database = {
           id?: string
           logo_url?: string | null
           notification_daily_summary_enabled?: boolean | null
-          notification_daily_summary_send_at?: string | null
           notification_global_enabled?: boolean | null
           notification_new_assignment_enabled?: boolean | null
           notification_project_milestone_enabled?: boolean | null
           notification_scheduled_time?: string | null
-          notification_weekly_recap_enabled?: boolean | null
-          notification_weekly_recap_send_at?: string | null
           onboarding_stage?: Database["public"]["Enums"]["onboarding_stage"]
           photography_business_name?: string | null
           primary_brand_color?: string | null

@@ -1,26 +1,11 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import type { Database } from "@/integrations/supabase/types";
 
-interface UserSettings {
-  id?: string;
-  show_quick_status_buttons?: boolean;
-  photography_business_name?: string;
-  logo_url?: string;
-  primary_brand_color?: string;
-  date_format?: string;
-  notification_global_enabled?: boolean;
-  notification_daily_summary_enabled?: boolean;
-  notification_new_assignment_enabled?: boolean;
-  notification_project_milestone_enabled?: boolean;
-  notification_scheduled_time?: string;
-  active_organization_id?: string;
-  onboarding_stage?: string;
-  current_onboarding_step?: number;
-  welcome_modal_shown?: boolean;
-}
+type UserSettings = Database['public']['Tables']['user_settings']['Row'];
 
-const defaultSettings: UserSettings = {
+const defaultSettings: Partial<UserSettings> = {
   show_quick_status_buttons: true,
   photography_business_name: "",
   logo_url: null,
@@ -34,7 +19,7 @@ const defaultSettings: UserSettings = {
 };
 
 export function useUserSettings() {
-  const [settings, setSettings] = useState<UserSettings>(defaultSettings);
+  const [settings, setSettings] = useState<Partial<UserSettings>>(defaultSettings);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const { toast } = useToast();

@@ -9,7 +9,15 @@ interface UserSettings {
   logo_url?: string;
   primary_brand_color?: string;
   date_format?: string;
-  time_format?: string;
+  notification_global_enabled?: boolean;
+  notification_daily_summary_enabled?: boolean;
+  notification_new_assignment_enabled?: boolean;
+  notification_project_milestone_enabled?: boolean;
+  notification_scheduled_time?: string;
+  active_organization_id?: string;
+  onboarding_stage?: string;
+  current_onboarding_step?: number;
+  welcome_modal_shown?: boolean;
 }
 
 const defaultSettings: UserSettings = {
@@ -18,7 +26,11 @@ const defaultSettings: UserSettings = {
   logo_url: null,
   primary_brand_color: "#1EB29F",
   date_format: "DD/MM/YYYY",
-  time_format: "12-hour"
+  notification_global_enabled: true,
+  notification_daily_summary_enabled: true,
+  notification_new_assignment_enabled: true,
+  notification_project_milestone_enabled: true,
+  notification_scheduled_time: "12:30"
 };
 
 export function useUserSettings() {

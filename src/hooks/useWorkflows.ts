@@ -15,14 +15,41 @@ export function useWorkflows() {
       const organizationId = await getUserOrganizationId();
       if (!organizationId) return;
 
-      const { data, error } = await supabase
+      const { data: workflowsData, error } = await supabase
         .from('workflows')
-        .select('*')
+        .select(`
+          *,
+          workflow_steps (
+            id,
+            step_order,
+            action_type,
+            action_config,
+            delay_minutes,
+            is_active
+          )
+        `)
         .eq('organization_id', organizationId)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setWorkflows((data || []) as Workflow[]);
+      
+      // Transform workflows to include template data from steps
+      const transformedWorkflows = (workflowsData || []).map((workflow: any) => {
+        const firstStep = workflow.workflow_steps?.[0];
+        const actionConfig = firstStep?.action_config || {};
+        
+        return {
+          ...workflow,
+          template_id: actionConfig.template_id || '',
+          channels: actionConfig.channels || ['email'],
+          reminder_delay_minutes: firstStep?.delay_minutes || 0,
+          email_enabled: actionConfig.channels?.includes('email') ?? true,
+          whatsapp_enabled: actionConfig.channels?.includes('whatsapp') ?? true,
+          sms_enabled: actionConfig.channels?.includes('sms') ?? true
+        };
+      });
+      
+      setWorkflows(transformedWorkflows as Workflow[]);
     } catch (error) {
       console.error('Error fetching workflows:', error);
       toast({

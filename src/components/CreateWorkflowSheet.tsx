@@ -198,7 +198,8 @@ export function CreateWorkflowSheet({
     }
   }, [templateDropdownOpen]);
   const handleSubmit = async () => {
-    if (!formData.name.trim() || !formData.trigger_type || !selectedTemplate) return;
+    if (!formData.name.trim() || !formData.trigger_type || !selectedTemplate || !isTemplateValid) return;
+    
     const activeChannels = Object.entries(enabledChannels).filter(([_, enabled]) => enabled).map(([channel, _]) => channel) as ('email' | 'sms' | 'whatsapp')[];
     const workflowStep = {
       step_order: 1,
@@ -262,7 +263,16 @@ export function CreateWorkflowSheet({
     }));
   };
   const selectedTemplateData = sessionTemplates.find(t => t.id === selectedTemplate);
+  const isTemplateValid = selectedTemplate ? !!selectedTemplateData : true;
   const hasEnabledChannels = Object.values(enabledChannels).some(enabled => enabled);
+  
+  // Auto-clear invalid template selection when templates are loaded
+  useEffect(() => {
+    if (selectedTemplate && !templatesLoading && sessionTemplates.length > 0 && !selectedTemplateData) {
+      console.warn(`Template ${selectedTemplate} not found, clearing selection`);
+      setSelectedTemplate('');
+    }
+  }, [selectedTemplate, templatesLoading, sessionTemplates, selectedTemplateData]);
   // Check if form has actual changes from initial state
   const isDirty = JSON.stringify(formData) !== JSON.stringify(initialFormData) || 
                   selectedTemplate !== initialSelectedTemplate ||
@@ -303,7 +313,7 @@ export function CreateWorkflowSheet({
   }, {
     label: isEditing ? 'Update Workflow' : 'Create Workflow',
     onClick: handleSubmit,
-    disabled: loading || !formData.name.trim() || !selectedTemplate || !hasEnabledChannels,
+    disabled: loading || !formData.name.trim() || !selectedTemplate || !hasEnabledChannels || !isTemplateValid,
     loading
   }];
   return <>
@@ -372,6 +382,17 @@ export function CreateWorkflowSheet({
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>Message Template *</Label>
+              
+              {/* Warning for invalid template */}
+              {selectedTemplate && !isTemplateValid && !templatesLoading && (
+                <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
+                  <p className="text-sm font-medium text-destructive">Template not found</p>
+                  <p className="text-xs text-destructive/80 mt-1">
+                    The selected template no longer exists. Please select a different template.
+                  </p>
+                </div>
+              )}
+              
               {templatesLoading ? <div className="text-sm text-muted-foreground">Loading templates...</div> : sessionTemplates.length === 0 ? <div className="text-sm text-muted-foreground p-4 border border-dashed rounded-lg text-center">
                   No session templates found. Please create a template first in the Templates section.
                 </div> : <div className="relative" data-template-dropdown>
@@ -381,8 +402,14 @@ export function CreateWorkflowSheet({
                 setTemplateDropdownOpen(!templateDropdownOpen);
               }}>
                     {selectedTemplate ? <div className="flex flex-col items-start w-full">
-                        <span className="font-medium">{selectedTemplateData?.name}</span>
-                        {selectedTemplateData?.description && <span className="text-xs text-muted-foreground">{selectedTemplateData.description}</span>}
+                        {selectedTemplateData ? (
+                          <>
+                            <span className="font-medium">{selectedTemplateData.name}</span>
+                            {selectedTemplateData.description && <span className="text-xs text-muted-foreground">{selectedTemplateData.description}</span>}
+                          </>
+                        ) : (
+                          <span className="font-medium text-destructive">Invalid template selected</span>
+                        )}
                       </div> : "Search and select a template..."}
                     <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>

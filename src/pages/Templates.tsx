@@ -5,8 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { DataTable, type Column } from "@/components/ui/data-table";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Plus, Search, Edit, Trash2, Copy, MoreHorizontal, MessageSquare } from "lucide-react";
+import { Plus, Search, Edit, Trash2, Copy, MessageSquare } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { DeleteTemplateDialog } from "@/components/template-builder/DeleteTemplateDialog";
 import { useTemplateOperations } from "@/hooks/useTemplateOperations";
@@ -157,30 +156,29 @@ const OptimizedTemplatesContent = React.memo(() => {
             <Edit className="h-4 w-4 mr-1" />
             Edit
           </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => handleDuplicateTemplate(template)}>
-                <Copy className="h-4 w-4 mr-2" />
-                Duplicate
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                onClick={() => handleDeleteTemplate(template)}
-                className="text-destructive focus:text-destructive"
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDuplicateTemplate(template);
+            }}
+          >
+            <Copy className="h-4 w-4 mr-1" />
+            Duplicate
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDeleteTemplate(template);
+            }}
+            className="text-destructive hover:text-destructive border-destructive/20 hover:bg-destructive/10"
+          >
+            <Trash2 className="h-4 w-4 mr-1" />
+            Delete
+          </Button>
         </div>
       )
     }

@@ -110,7 +110,7 @@ export function UnifiedClientDetails({
     { key: 'phone', label: 'Phone', value: lead.phone, type: 'core' },
     { key: 'notes', label: 'Notes', value: lead.notes, type: 'core' },
     ...fieldDefinitions
-      .filter(field => !['name', 'email', 'phone', 'notes'].includes(field.field_key))
+      .filter(field => !['name', 'email', 'phone', 'notes', 'status'].includes(field.field_key))
       .sort((a, b) => a.sort_order - b.sort_order)
       .map(field => ({
         key: field.field_key,

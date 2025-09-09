@@ -109,21 +109,26 @@ export function EditPaymentDialog({ payment, open, onOpenChange, onPaymentUpdate
     }
   };
 
-  if (!payment) return null;
-
+  // Calculate isDirty state (safe for null payment)
   const isDirty = Boolean(
-    amount !== payment.amount.toString() ||
-    description !== (payment.description || "") ||
-    status !== payment.status ||
-    (status === 'paid' && datePaid?.toISOString().split('T')[0] !== payment.date_paid)
+    payment && (
+      amount !== payment.amount.toString() ||
+      description !== (payment.description || "") ||
+      status !== payment.status ||
+      (status === 'paid' && datePaid?.toISOString().split('T')[0] !== payment.date_paid)
+    )
   );
 
+  // Always call hooks before any early returns
   const navigation = useModalNavigation({
     isDirty,
     onDiscard: () => {
       onOpenChange(false);
     },
   });
+
+  // Early return after all hooks are called
+  if (!payment) return null;
 
   const handleDirtyClose = () => {
     const canClose = navigation.handleModalClose();

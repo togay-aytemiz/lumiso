@@ -232,6 +232,9 @@ async function processSpecificNotification(supabase: any, notificationId: string
     case 'new-assignment':
       result = await processNewAssignment(supabase, notificationData);
       break;
+    case 'workflow-message':
+      result = await processWorkflowMessage(supabase, notificationData);
+      break;
     default:
       throw new Error(`Unsupported notification type: ${notificationData.notification_type}`);
   }
@@ -423,6 +426,90 @@ async function processNewAssignment(supabase: any, notification: any) {
   }
 
   return data;
+}
+
+// Process workflow message notification
+async function processWorkflowMessage(supabase: any, notification: any) {
+  const metadata = notification.metadata || {};
+  const { template_id, entity_data } = metadata;
+
+  if (!template_id) {
+    throw new Error('template_id required in metadata for workflow-message notification');
+  }
+
+  console.log(`Processing workflow message with template ${template_id} for user ${notification.user_id}`);
+
+  // Get user data
+  const { data: userData, error: userError } = await supabase.auth.admin.getUserById(notification.user_id);
+  if (userError || !userData.user) {
+    throw new Error(`Failed to get user: ${userError?.message || 'User not found'}`);
+  }
+
+  // Fetch the message template and its email channel view
+  const { data: template, error: templateError } = await supabase
+    .from('message_templates')
+    .select(`
+      *,
+      template_channel_views!inner(
+        channel,
+        subject,
+        content,
+        html_content
+      )
+    `)
+    .eq('id', template_id)
+    .eq('template_channel_views.channel', 'email')
+    .single();
+
+  if (templateError || !template) {
+    throw new Error(`Template not found: ${template_id}`);
+  }
+
+  // Get organization settings for branding
+  const { data: orgSettings } = await supabase
+    .from('organization_settings')
+    .select('photography_business_name, primary_brand_color, email')
+    .eq('organization_id', notification.organization_id)
+    .maybeSingle();
+
+  // Prepare template variables
+  const variables = {
+    customer_name: entity_data?.customer_name || entity_data?.client_name || 'Valued Client',
+    customer_email: entity_data?.customer_email || entity_data?.client_email || '',
+    session_type: entity_data?.project_name || 'Session',
+    session_date: entity_data?.session_date || '',
+    session_time: entity_data?.session_time || '',
+    session_location: entity_data?.location || 'Studio',
+    project_name: entity_data?.project_name || '',
+    studio_name: orgSettings?.photography_business_name || 'Lumiso',
+    studio_phone: orgSettings?.phone || ''
+  };
+
+  // Replace placeholders in subject and content
+  let subject = template.template_channel_views[0].subject || template.name;
+  let htmlContent = template.template_channel_views[0].html_content || template.template_channel_views[0].content;
+  
+  // Simple placeholder replacement
+  Object.entries(variables).forEach(([key, value]) => {
+    const placeholder = `{${key}}`;
+    subject = subject.replace(new RegExp(placeholder, 'g'), value);
+    htmlContent = htmlContent.replace(new RegExp(placeholder, 'g'), value);
+  });
+
+  // Send email using Resend
+  const emailResponse = await resend.emails.send({
+    from: `${orgSettings?.photography_business_name || 'Lumiso'} <hello@updates.lumiso.app>`,
+    to: [variables.customer_email],
+    subject: subject,
+    html: htmlContent,
+  });
+
+  if (emailResponse.error) {
+    throw new Error(`Failed to send workflow message: ${emailResponse.error.message}`);
+  }
+
+  console.log(`Workflow message sent successfully to ${variables.customer_email}`);
+  return emailResponse.data;
 }
 
 // Schedule future notifications (e.g., daily summaries for tomorrow)

@@ -179,7 +179,7 @@ async function triggerWorkflows(supabase: any, triggerData: {
       }
 
       // Create fingerprint for duplicate detection
-      const fingerprint = `${workflow.id}_${trigger_entity_type}_${trigger_entity_id}_${JSON.stringify(trigger_data?.status_change || '')}_${JSON.stringify(trigger_data?.date_change || '')}`;
+      const fingerprint = `${workflow.id}_${trigger_entity_type}_${trigger_entity_id}_${JSON.stringify(trigger_data?.status_change || '')}_${JSON.stringify(trigger_data?.date_change || '')}_${JSON.stringify(trigger_data?.reminder_type || '')}`;
       
       if (duplicateFingerprints.has(fingerprint)) {
         console.log(`Skipping workflow ${workflow.id}: Duplicate execution detected in this batch`);
@@ -210,7 +210,8 @@ async function triggerWorkflows(supabase: any, triggerData: {
           // Compare relevant trigger data fields
           return (
             execTriggerData.status_change === trigger_data.status_change &&
-            execTriggerData.date_change === trigger_data.date_change
+            execTriggerData.date_change === trigger_data.date_change &&
+            execTriggerData.reminder_type === trigger_data.reminder_type
           );
         });
         
@@ -906,6 +907,16 @@ function evaluateTriggerConditions(conditions: any, triggerData: any): boolean {
   
   if (conditions.status_changed_from) {
     return triggerData.old_status === conditions.status_changed_from;
+  }
+
+  // Session reminder conditions
+  if (conditions.reminder_type) {
+    return triggerData.reminder_type === conditions.reminder_type;
+  }
+
+  if (conditions.reminder_days) {
+    // This condition is used for scheduling, not for evaluation during execution
+    return true;
   }
 
   // Default to true if no specific conditions

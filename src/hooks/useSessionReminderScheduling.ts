@@ -23,9 +23,10 @@ export function useSessionReminderScheduling() {
       console.error('Failed to schedule session reminders:', error);
       toast({
         title: 'Warning',
-        description: 'Session created but reminders could not be scheduled',
+        description: 'Session created but reminders could not be scheduled automatically',
         variant: 'destructive',
       });
+      // Don't throw - allow session creation to succeed even if reminders fail
     }
   }, [toast]);
 
@@ -51,6 +52,7 @@ export function useSessionReminderScheduling() {
     } catch (error: any) {
       console.error('Failed to cancel session reminders:', error);
       // Don't show toast for this as it's usually called during deletion
+      // and shouldn't block the main action
     }
   }, []);
 
@@ -58,7 +60,7 @@ export function useSessionReminderScheduling() {
     try {
       console.log(`Rescheduling reminders for session: ${sessionId}`);
 
-      // Cancel existing reminders
+      // Cancel existing reminders first
       await cancelSessionReminders(sessionId);
       
       // Schedule new ones
@@ -69,9 +71,10 @@ export function useSessionReminderScheduling() {
       console.error('Failed to reschedule session reminders:', error);
       toast({
         title: 'Warning', 
-        description: 'Session updated but reminders could not be rescheduled',
+        description: 'Session updated but reminders could not be rescheduled automatically',
         variant: 'destructive',
       });
+      // Don't throw - allow session update to succeed
     }
   }, [scheduleSessionReminders, cancelSessionReminders, toast]);
 

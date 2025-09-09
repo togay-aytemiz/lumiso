@@ -50,6 +50,8 @@ async function processScheduledReminders(supabase: any) {
   const now = new Date();
   const bufferTime = new Date(now.getTime() + 5 * 60 * 1000); // 5 minutes ahead
 
+  console.log(`Looking for reminders scheduled before: ${bufferTime.toISOString()}`);
+
   const { data: dueReminders, error: fetchError } = await supabase
     .from('scheduled_session_reminders')
     .select(`
@@ -98,16 +100,24 @@ async function processScheduledReminders(supabase: any) {
   // Process each reminder
   for (const reminder of dueReminders) {
     try {
-      console.log(`Processing reminder ${reminder.id} for session ${reminder.session_id}`);
+      console.log(`Processing reminder ${reminder.id} for session ${reminder.session_id}, type: ${reminder.reminder_type}`);
 
-      // Mark reminder as being processed
-      await supabase
+      // Mark reminder as being processed first to prevent duplicate processing
+      const { error: updateError } = await supabase
         .from('scheduled_session_reminders')
         .update({ 
           status: 'sent',
           processed_at: new Date().toISOString()
         })
-        .eq('id', reminder.id);
+        .eq('id', reminder.id)
+        .eq('status', 'pending'); // Only update if still pending
+
+      if (updateError) {
+        console.error(`Error updating reminder ${reminder.id}:`, updateError);
+        failed++;
+        processed++;
+        continue;
+      }
 
       // Trigger the workflow executor for this session reminder
       const { error: triggerError } = await supabase.functions.invoke('workflow-executor', {
@@ -141,7 +151,7 @@ async function processScheduledReminders(supabase: any) {
       if (triggerError) {
         console.error(`Error triggering workflow for reminder ${reminder.id}:`, triggerError);
         
-        // Mark reminder as failed
+        // Mark reminder as failed and record error
         await supabase
           .from('scheduled_session_reminders')
           .update({ 

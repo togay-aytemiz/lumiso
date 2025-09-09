@@ -495,6 +495,7 @@ export type Database = {
       }
       message_templates: {
         Row: {
+          blocks: Json | null
           category: string
           created_at: string
           id: string
@@ -508,6 +509,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          blocks?: Json | null
           category: string
           created_at?: string
           id?: string
@@ -521,6 +523,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          blocks?: Json | null
           category?: string
           created_at?: string
           id?: string

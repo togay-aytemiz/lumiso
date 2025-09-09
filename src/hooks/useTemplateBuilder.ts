@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Template, TemplateBuilderData, DatabaseTemplate } from "@/types/template";
 import { TemplateBlock } from "@/types/templateBuilder";
+import { blocksToHTML, blocksToPlainText, blocksToMasterContent, htmlToBlocks } from "@/lib/templateBlockUtils";
 
 interface UseTemplateBuilderReturn {
   template: TemplateBuilderData | null;
@@ -34,8 +35,33 @@ const extractPlaceholders = (content: string): string[] => {
 };
 
 // Transform database template to builder data
-const transformToBuilderData = (dbTemplate: DatabaseTemplate): TemplateBuilderData => {
+const transformToBuilderData = (dbTemplate: DatabaseTemplate & { blocks?: any }): TemplateBuilderData => {
   const emailChannel = dbTemplate.template_channel_views?.find(v => v.channel === 'email');
+  
+  // Load blocks from database or try to parse from HTML content
+  let blocks: TemplateBlock[] = [];
+  
+  if (dbTemplate.blocks && Array.isArray(dbTemplate.blocks)) {
+    blocks = dbTemplate.blocks;
+  } else if (emailChannel?.html_content) {
+    // Try to parse blocks from HTML content (fallback)
+    blocks = htmlToBlocks(emailChannel.html_content);
+  } else if (dbTemplate.master_content) {
+    // Create basic text block from master content
+    blocks = [{
+      id: `text-${Date.now()}`,
+      type: 'text',
+      data: {
+        content: dbTemplate.master_content,
+        formatting: {
+          fontSize: 'p' as const,
+          alignment: 'left' as const
+        }
+      },
+      visible: true,
+      order: 0
+    }];
+  }
   
   return {
     id: dbTemplate.id,
@@ -53,7 +79,7 @@ const transformToBuilderData = (dbTemplate: DatabaseTemplate): TemplateBuilderDa
     description: dbTemplate.master_content?.substring(0, 200) || undefined,
     subject: emailChannel?.subject || dbTemplate.master_subject || '',
     preheader: '', // Will be extracted from blocks if needed
-    blocks: [], // Will be populated from HTML content or created fresh
+    blocks: blocks,
     status: dbTemplate.is_active ? 'published' : 'draft',
     published_at: dbTemplate.is_active ? dbTemplate.updated_at : null,
     last_saved_at: dbTemplate.updated_at,
@@ -125,9 +151,19 @@ export function useTemplateBuilder(templateId?: string): UseTemplateBuilderRetur
       // Merge current template data with updates
       const mergedData = template ? { ...template, ...templateData } : templateData;
 
-      // Extract placeholders from all content
+      // Generate content from blocks if blocks exist
+      const blocks = mergedData.blocks || [];
+      let generatedMasterContent = '';
+      let generatedHtmlContent = '';
+      
+      if (blocks.length > 0) {
+        generatedMasterContent = blocksToMasterContent(blocks);
+        generatedHtmlContent = blocksToHTML(blocks);
+      }
+
+      // Extract placeholders from all content including blocks
       const allContent = [
-        mergedData.master_content || '',
+        generatedMasterContent || mergedData.master_content || '',
         mergedData.subject || '',
         mergedData.channels?.email?.content || '',
         mergedData.channels?.sms?.content || '',
@@ -136,16 +172,17 @@ export function useTemplateBuilder(templateId?: string): UseTemplateBuilderRetur
       
       const extractedPlaceholders = extractPlaceholders(allContent);
 
-      // Prepare template payload
+      // Prepare template payload with blocks
       const templatePayload = {
         name: mergedData.name || 'Untitled Template',
         category: mergedData.category || 'general',
-        master_content: mergedData.master_content || mergedData.description || '',
+        master_content: generatedMasterContent || mergedData.master_content || mergedData.description || '',
         master_subject: mergedData.master_subject || mergedData.subject || '',
         placeholders: extractedPlaceholders,
         is_active: mergedData.status === 'published',
         organization_id: activeOrganizationId,
         user_id: user.id,
+        blocks: blocks, // Store blocks as JSON
       };
 
       let result;
@@ -173,19 +210,29 @@ export function useTemplateBuilder(templateId?: string): UseTemplateBuilderRetur
         result = data;
       }
 
-      // Save channel views if provided
-      if (mergedData.channels && Object.keys(mergedData.channels).length > 0) {
-        // Delete existing channel views first
-        await supabase
-          .from("template_channel_views")
-          .delete()
-          .eq("template_id", result.id);
+      // Save channel views - always update/create email channel with generated HTML
+      // Delete existing channel views first
+      await supabase
+        .from("template_channel_views")
+        .delete()
+        .eq("template_id", result.id);
 
-        // Insert new channel views
-        const channelViews = [];
-        
+      // Prepare channel views with generated content
+      const channelViews = [];
+      
+      // Always create email channel view with generated HTML content
+      channelViews.push({
+        template_id: result.id,
+        channel: 'email',
+        subject: mergedData.subject || mergedData.master_subject || mergedData.name || 'Subject',
+        content: generatedMasterContent || mergedData.master_content || '',
+        html_content: generatedHtmlContent || null
+      });
+      
+      // Add other channels if they exist
+      if (mergedData.channels) {
         Object.entries(mergedData.channels).forEach(([channel, channelData]: [string, any]) => {
-          if (channelData && (channelData.subject || channelData.content || channelData.html_content)) {
+          if (channel !== 'email' && channelData && (channelData.subject || channelData.content || channelData.html_content)) {
             channelViews.push({
               template_id: result.id,
               channel,
@@ -195,32 +242,15 @@ export function useTemplateBuilder(templateId?: string): UseTemplateBuilderRetur
             });
           }
         });
-
-        if (channelViews.length > 0) {
-          const { error: channelError } = await supabase
-            .from("template_channel_views")
-            .insert(channelViews);
-
-          if (channelError) {
-            console.warn('Error saving channel views:', channelError);
-          }
-        }
       }
 
-      // Create default email channel view if none exists
-      if (!mergedData.channels?.email && (mergedData.subject || mergedData.master_content)) {
-        const { error: emailChannelError } = await supabase
+      if (channelViews.length > 0) {
+        const { error: channelError } = await supabase
           .from("template_channel_views")
-          .upsert({
-            template_id: result.id,
-            channel: 'email',
-            subject: mergedData.subject || mergedData.master_subject || '',
-            content: mergedData.master_content || '',
-            html_content: null
-          });
+          .insert(channelViews);
 
-        if (emailChannelError) {
-          console.warn('Error creating default email channel:', emailChannelError);
+        if (channelError) {
+          console.warn('Error saving channel views:', channelError);
         }
       }
 

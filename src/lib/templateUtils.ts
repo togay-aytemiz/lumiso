@@ -33,41 +33,20 @@ export function checkSpamWords(text: string): string[] {
   return foundWords;
 }
 
-export function generatePlainText(blocks: any[], mockData: Record<string, string>): string {
-  let plainText = '';
+// Plain text generation - use blocks if available, fallback to simple text processing
+export function generatePlainText(blocksOrText: any[] | string, mockData: Record<string, string> = {}): string {
+  // If it's an array of blocks, use the new block-to-plaintext converter
+  if (Array.isArray(blocksOrText)) {
+    const { blocksToPlainText } = require('./templateBlockUtils');
+    return blocksToPlainText(blocksOrText, mockData);
+  }
   
-  blocks.forEach(block => {
-    if (!block.visible) return;
-    
-    switch (block.type) {
-      case 'text':
-        plainText += replacePlaceholders(block.data.content, mockData) + '\n\n';
-        break;
-      case 'session-details':
-        plainText += (block.data.customLabel || 'Session Details') + '\n';
-        if (block.data.showDate) plainText += `Date: ${mockData.session_date}\n`;
-        if (block.data.showTime) plainText += `Time: ${mockData.session_time}\n`;
-        if (block.data.showLocation) plainText += `Location: ${mockData.session_location}\n`;
-        if (block.data.showNotes) plainText += `Notes: Please arrive 10 minutes early\n`;
-        plainText += '\n';
-        break;
-      case 'cta':
-        plainText += `${block.data.text}\n`;
-        if (block.data.link) plainText += `Link: ${block.data.link}\n`;
-        plainText += '\n';
-        break;
-      case 'footer':
-        if (block.data.showStudioName) plainText += `${mockData.business_name}\n`;
-        if (block.data.showContactInfo) {
-          plainText += `${mockData.business_phone}\n`;
-          plainText += `hello@${mockData.business_name.toLowerCase().replace(/\s+/g, '')}.com\n`;
-        }
-        if (block.data.customText) plainText += `${block.data.customText}\n`;
-        break;
-    }
-  });
+  // Legacy fallback for simple text processing
+  if (typeof blocksOrText === 'string') {
+    return replacePlaceholders(blocksOrText, mockData);
+  }
   
-  return plainText.trim();
+  return 'No content available';
 }
 
 export const previewDataSets = [

@@ -10,6 +10,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Calendar } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { formatDate, formatTime } from "@/lib/utils";
+import { useWorkflowTriggers } from "@/hooks/useWorkflowTriggers";
+import { useSessionReminderScheduling } from "@/hooks/useSessionReminderScheduling";
 
 interface ScheduleSessionDialogProps {
   leadId: string;
@@ -22,6 +24,8 @@ interface ScheduleSessionDialogProps {
 const ScheduleSessionDialog = ({ leadId, leadName, onSessionScheduled, disabled = false, disabledTooltip }: ScheduleSessionDialogProps) => {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const { triggerSessionScheduled } = useWorkflowTriggers();
+  const { scheduleSessionReminders } = useSessionReminderScheduling();
   const [formData, setFormData] = useState({
     session_date: "",
     session_time: "",
@@ -48,6 +52,30 @@ const ScheduleSessionDialog = ({ leadId, leadName, onSessionScheduled, disabled 
         .order('name', { ascending: true });
 
       if (error) throw error;
+      console.log(`✅ Session created successfully (ScheduleSessionDialog)`);
+
+      // Trigger workflow for session scheduled  
+      try {
+        console.log(`🚀 Triggering session_scheduled workflow (from schedule dialog)`);
+        await triggerSessionScheduled(newSession.id, organizationId, {
+          session_date: formData.session_date,
+          session_time: formData.session_time,
+          location: formData.location,
+          client_name: leadName,
+          lead_id: leadId,
+          project_id: formData.project_id
+        });
+      } catch (workflowError) {
+        console.error('❌ Error triggering workflow:', workflowError);
+      }
+
+      // Schedule session reminders
+      try {
+        console.log(`⏰ Scheduling reminders`);
+        await scheduleSessionReminders(newSession.id);
+      } catch (reminderError) {
+        console.error('❌ Error scheduling reminders:', reminderError);
+      }
       setProjects(projectsData || []);
     } catch (error: any) {
       console.error('Error fetching projects:', error);
@@ -105,7 +133,7 @@ const ScheduleSessionDialog = ({ leadId, leadName, onSessionScheduled, disabled 
         throw new Error("Organization required");
       }
 
-      const { error } = await supabase
+      const { data: newSession, error: sessionError } = await supabase
         .from('sessions')
         .insert({
           user_id: user.id,
@@ -116,9 +144,38 @@ const ScheduleSessionDialog = ({ leadId, leadName, onSessionScheduled, disabled 
           notes: formData.notes.trim() || null,
           location: formData.location.trim() || null,
           project_id: formData.project_id || null
-        });
+        })
+        .select('id')
+        .single();
 
-      if (error) throw error;
+      if (sessionError) throw sessionError;
+      console.log(`✅ Session created successfully (ScheduleSessionDialog): ${newSession.id}`);
+
+      // Trigger workflow for session scheduled
+      try {
+        console.log(`🚀 Triggering session_scheduled workflow for session: ${newSession.id} (from schedule dialog)`);
+        const workflowResult = await triggerSessionScheduled(newSession.id, organizationId, {
+          session_date: formData.session_date,
+          session_time: formData.session_time,
+          location: formData.location,
+          client_name: leadName,
+          lead_id: leadId,
+          project_id: formData.project_id
+        });
+        console.log(`✅ Session workflow result:`, workflowResult);
+      } catch (workflowError) {
+        console.error('❌ Error triggering workflow:', workflowError);
+        // Don't block session creation if workflow fails
+      }
+
+      // Schedule session reminders
+      try {
+        console.log(`⏰ Scheduling reminders for session: ${newSession.id}`);
+        await scheduleSessionReminders(newSession.id);
+      } catch (reminderError) {
+        console.error('❌ Error scheduling session reminders:', reminderError);
+        // Don't block session creation if reminder scheduling fails
+      }
 
       // Add activity entry for the scheduled session
       const sessionDate = formatDate(formData.session_date);

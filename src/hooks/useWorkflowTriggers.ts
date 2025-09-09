@@ -28,6 +28,7 @@ export function useWorkflowTriggers() {
       }
 
       console.log(`Triggering workflows for: ${triggerType} on ${entityType}:${entityId}`);
+      console.log(`📋 Trigger params:`, { triggerType, entityType, entityId, organizationId, triggerData });
 
       const { data, error } = await supabase.functions.invoke('workflow-executor', {
         body: {
@@ -39,6 +40,8 @@ export function useWorkflowTriggers() {
           trigger_data: triggerData || {}
         }
       });
+
+      console.log(`📡 Workflow executor response:`, { data, error });
 
       if (error) {
         console.error('Error triggering workflows:', error);

@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Calendar as CalendarIcon, Plus } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useCalendarSync } from "@/hooks/useCalendarSync";
+import { useWorkflowTriggers } from "@/hooks/useWorkflowTriggers";
 import { useSessionReminderScheduling } from "@/hooks/useSessionReminderScheduling";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { NavigationGuardDialog } from "@/components/settings/NavigationGuardDialog";
@@ -37,6 +38,7 @@ export function NewSessionDialogForProject({
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const { createSessionEvent } = useCalendarSync();
+  const { triggerSessionScheduled } = useWorkflowTriggers();
   const { scheduleSessionReminders } = useSessionReminderScheduling();
   
   const [sessionData, setSessionData] = useState({
@@ -155,6 +157,23 @@ export function NewSessionDialogForProject({
           },
           { name: leadName }
         );
+      }
+
+      // Trigger workflow for session scheduled
+      try {
+        console.log(`🚀 Triggering session_scheduled workflow for session: ${newSession.id} (from project)`);
+        const workflowResult = await triggerSessionScheduled(newSession.id, userSettings.active_organization_id, {
+          session_date: sessionData.session_date,
+          session_time: sessionData.session_time,
+          location: sessionData.location,
+          client_name: leadName,
+          lead_id: leadId,
+          project_id: projectId
+        });
+        console.log(`✅ Session workflow result:`, workflowResult);
+      } catch (workflowError) {
+        console.error('❌ Error triggering workflow:', workflowError);
+        // Don't block session creation if workflow fails
       }
 
       // Schedule session reminders

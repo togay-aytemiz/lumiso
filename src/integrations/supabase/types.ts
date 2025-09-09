@@ -1247,10 +1247,31 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_scheduled_session_reminders_organization"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_scheduled_session_reminders_session"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "fk_scheduled_session_reminders_session_id"
             columns: ["session_id"]
             isOneToOne: false
             referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_scheduled_session_reminders_workflow"
+            columns: ["workflow_id"]
+            isOneToOne: false
+            referencedRelation: "workflows"
             referencedColumns: ["id"]
           },
           {
@@ -2037,6 +2058,10 @@ export type Database = {
         Returns: undefined
       }
       ensure_default_services_for_org: {
+        Args: { org_id: string; user_uuid: string }
+        Returns: undefined
+      }
+      ensure_default_session_reminder_workflows: {
         Args: { org_id: string; user_uuid: string }
         Returns: undefined
       }

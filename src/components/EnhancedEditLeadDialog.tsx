@@ -84,6 +84,18 @@ export function EnhancedEditLeadDialog({
         const fieldName = `field_${field.field_key}`;
         const existingValue = fieldValues.find(fv => fv.field_key === field.field_key);
         
+        // Get fallback value from lead object for system fields
+        const getFallbackValue = (fieldKey: string) => {
+          switch (fieldKey) {
+            case 'name': return lead.name || '';
+            case 'email': return lead.email || '';
+            case 'phone': return lead.phone || '';
+            case 'notes': return lead.notes || '';
+            case 'status': return lead.status || '';
+            default: return '';
+          }
+        };
+
         switch (field.field_type) {
           case 'checkbox':
             formData[fieldName] = existingValue?.value === 'true';
@@ -96,11 +108,11 @@ export function EnhancedEditLeadDialog({
             if (field.field_key === 'status' && !existingValue?.value && lead.status) {
               formData[fieldName] = lead.status;
             } else {
-              formData[fieldName] = existingValue?.value || '';
+              formData[fieldName] = existingValue?.value || getFallbackValue(field.field_key);
             }
             break;
           default:
-            formData[fieldName] = existingValue?.value || '';
+            formData[fieldName] = existingValue?.value || getFallbackValue(field.field_key);
         }
       });
       

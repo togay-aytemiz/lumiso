@@ -338,6 +338,49 @@ async function executeSendMessageStep(supabase: any, step: any, execution: any) 
 
   console.log(`Sending workflow message to client: ${clientEmail}`);
 
+  // Get organization settings for business info and date formatting
+  const { data: orgSettings } = await supabase
+    .from('organization_settings')
+    .select('photography_business_name, date_format, time_format, primary_brand_color')
+    .eq('organization_id', execution.workflows.organization_id)
+    .single();
+
+  // Format dates according to organization preferences
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    const dateFormat = orgSettings?.date_format || 'DD/MM/YYYY';
+    
+    switch (dateFormat) {
+      case 'MM/DD/YYYY':
+        return date.toLocaleDateString('en-US');
+      case 'DD/MM/YYYY':
+        return date.toLocaleDateString('en-GB');
+      case 'YYYY-MM-DD':
+        return date.toISOString().split('T')[0];
+      case 'DD-MM-YYYY':
+        return date.toLocaleDateString('en-GB').replace(/\//g, '-');
+      case 'MM-DD-YYYY':
+        return date.toLocaleDateString('en-US').replace(/\//g, '-');
+      default:
+        return date.toLocaleDateString('en-GB');
+    }
+  };
+
+  const formatTime = (timeStr: string) => {
+    if (!timeStr) return '';
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    const timeFormat = orgSettings?.time_format || '12-hour';
+    
+    if (timeFormat === '24-hour') {
+      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+    } else {
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      const displayHours = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+      return `${displayHours}:${minutes.toString().padStart(2, '0')} ${ampm}`;
+    }
+  };
+
   // For workflow messages, we send to the client, not the user
   // Try to use send-template-email function first
   try {
@@ -346,14 +389,27 @@ async function executeSendMessageStep(supabase: any, step: any, execution: any) 
         template_id,
         recipient_email: clientEmail,
         recipient_name: entityData.customer_name || 'Client',
-        template_data: {
+        mockData: {
+          // Customer/Lead info
           customer_name: entityData.customer_name || 'Client',
-          session_date: entityData.session_date,
-          session_time: entityData.session_time,
-          location: entityData.location,
-          project_name: entityData.project_name,
-          studio_name: 'Lumiso', // Default studio name
-          studio_phone: '555-0123', // Default phone
+          lead_name: entityData.customer_name || 'Client',
+          lead_email: entityData.customer_email || clientEmail,
+          lead_phone: entityData.customer_phone || '',
+          
+          // Session info with proper formatting
+          session_date: formatDate(entityData.session_date),
+          session_time: formatTime(entityData.session_time),
+          session_location: entityData.location || '', // Don't use fallback location
+          session_notes: entityData.notes || '',
+          
+          // Project info
+          project_name: entityData.project_name || '',
+          
+          // Business info from organization settings
+          business_name: orgSettings?.photography_business_name || 'Your Business',
+          studio_name: orgSettings?.photography_business_name || 'Your Business',
+          
+          // Add all entity data for template flexibility
           ...entityData
         },
         workflow_execution_id: execution.id

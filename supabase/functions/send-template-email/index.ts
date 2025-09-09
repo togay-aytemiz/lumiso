@@ -25,6 +25,10 @@ interface SendEmailRequest {
   blocks: TemplateBlock[];
   mockData: Record<string, string>;
   isTest?: boolean;
+  template_id?: string;
+  recipient_email?: string;
+  recipient_name?: string;
+  workflow_execution_id?: string;
 }
 
 function replacePlaceholders(text: string, data: Record<string, string>): string {

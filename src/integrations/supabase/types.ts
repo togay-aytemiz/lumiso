@@ -1986,6 +1986,10 @@ export type Database = {
         Args: { user_uuid: string }
         Returns: undefined
       }
+      ensure_lead_status_field: {
+        Args: { org_id: string }
+        Returns: undefined
+      }
       ensure_organization_settings: {
         Args: { org_id: string }
         Returns: string
@@ -2058,6 +2062,10 @@ export type Database = {
       retry_failed_notifications: {
         Args: Record<PropertyKey, never>
         Returns: number
+      }
+      sync_lead_status_options: {
+        Args: { org_id: string }
+        Returns: undefined
       }
       user_can_access_project: {
         Args: { project_uuid: string; user_uuid: string }

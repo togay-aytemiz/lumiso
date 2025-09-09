@@ -1208,6 +1208,45 @@ export type Database = {
           },
         ]
       }
+      scheduled_session_reminders: {
+        Row: {
+          created_at: string | null
+          error_message: string | null
+          id: string
+          organization_id: string
+          processed_at: string | null
+          reminder_type: string
+          scheduled_for: string
+          session_id: string
+          status: string
+          workflow_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          organization_id: string
+          processed_at?: string | null
+          reminder_type: string
+          scheduled_for: string
+          session_id: string
+          status?: string
+          workflow_id: string
+        }
+        Update: {
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          organization_id?: string
+          processed_at?: string | null
+          reminder_type?: string
+          scheduled_for?: string
+          session_id?: string
+          status?: string
+          workflow_id?: string
+        }
+        Relationships: []
+      }
       services: {
         Row: {
           category: string | null
@@ -1938,6 +1977,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: number
       }
+      cleanup_old_session_reminders: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       cleanup_orphaned_channel_views: {
         Args: Record<PropertyKey, never>
         Returns: number
@@ -2062,6 +2105,10 @@ export type Database = {
       retry_failed_notifications: {
         Args: Record<PropertyKey, never>
         Returns: number
+      }
+      schedule_session_reminders: {
+        Args: { session_id_param: string }
+        Returns: undefined
       }
       sync_lead_status_options: {
         Args: { org_id: string }

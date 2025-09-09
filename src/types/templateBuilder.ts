@@ -1,7 +1,7 @@
 export interface TemplateVariable {
   key: string;
   label: string;
-  category: "lead" | "session" | "business" | "custom";
+  category: "lead" | "session" | "business" | "custom" | "project";
 }
 
 export interface TextBlockData {

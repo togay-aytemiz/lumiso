@@ -36,15 +36,26 @@ interface SendEmailRequest {
 
 function replacePlaceholders(text: string, data: Record<string, string>): string {
   return text.replace(/\{(\w+)(?:\|([^}]*))?\}/g, (match, key, fallback) => {
+    const value = data[key];
+    
     // Special handling for session_location - use dash if empty or default values
     if (key === 'session_location') {
-      const value = data[key];
       if (!value || value.trim() === '' || value === 'Studio' || value === 'TBD') {
         return '-';
       }
       return value;
     }
-    return data[key] || fallback || match;
+    
+    // Special handling for phone fields - use dash if empty
+    if (key.includes('phone')) {
+      if (!value || value.trim() === '') {
+        return '-';
+      }
+      return value;
+    }
+    
+    // Return value with fallback support
+    return value || fallback || match;
   });
 }
 

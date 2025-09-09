@@ -583,7 +583,7 @@ async function executeSendMessageStep(supabase: any, step: any, execution: any) 
     customer_name: entityData.customer_name || entityData.name || entityData.leads?.name || 'Client',
     lead_name: entityData.customer_name || entityData.name || entityData.leads?.name || 'Client',
     lead_email: entityData.customer_email || entityData.email || entityData.leads?.email || clientEmail,
-    lead_phone: entityData.customer_phone || entityData.phone || entityData.leads?.phone || '',
+    lead_phone: entityData.customer_phone || entityData.phone || entityData.leads?.phone || '-',
     
     // Session info with proper formatting using org settings
     session_date: formatDate(entityData.session_date || entityData.date),
@@ -593,6 +593,7 @@ async function executeSendMessageStep(supabase: any, step: any, execution: any) 
     
     // Project info
     project_name: entityData.project_name || entityData.projects?.name || '',
+    project_type: entityData.project_type || '',
     
     // Business info from organization settings
     business_name: orgSettings?.photography_business_name || 'Your Business',
@@ -619,7 +620,7 @@ async function executeSendMessageStep(supabase: any, step: any, execution: any) 
           customer_name: entityData.customer_name || entityData.name || entityData.leads?.name || 'Client',
           lead_name: entityData.customer_name || entityData.name || entityData.leads?.name || 'Client',
           lead_email: entityData.customer_email || entityData.email || entityData.leads?.email || clientEmail,
-          lead_phone: entityData.customer_phone || entityData.phone || entityData.leads?.phone || '',
+          lead_phone: entityData.customer_phone || entityData.phone || entityData.leads?.phone || '-',
           
           // Session info with proper formatting using org settings
           session_date: formatDate(entityData.session_date || entityData.date),
@@ -629,6 +630,7 @@ async function executeSendMessageStep(supabase: any, step: any, execution: any) 
           
           // Project info
           project_name: entityData.project_name || entityData.projects?.name || '',
+          project_type: entityData.project_type || '',
           
           // Business info from organization settings
           business_name: orgSettings?.photography_business_name || 'Your Business',
@@ -767,17 +769,38 @@ async function getEntityData(supabase: any, entityType: string, entityId: string
       .select(`
         *,
         leads:lead_id (
+          id,
           name,
           email,
-          phone
+          phone,
+          organization_id
         ),
         projects:project_id (
           name,
-          description
+          description,
+          project_types (
+            name
+          )
         )
       `)
       .eq('id', entityId)
       .single();
+
+    // Get lead field values if we have a lead
+    let leadFieldValues = {};
+    if (session?.leads?.id) {
+      const { data: fieldValues } = await supabase
+        .from('lead_field_values')
+        .select('field_key, value')
+        .eq('lead_id', session.leads.id);
+      
+      if (fieldValues) {
+        leadFieldValues = fieldValues.reduce((acc: any, fv: any) => {
+          acc[`lead_${fv.field_key}`] = fv.value || '-';
+          return acc;
+        }, {});
+      }
+    }
     
     entityData = {
       session_date: session?.session_date,
@@ -786,9 +809,11 @@ async function getEntityData(supabase: any, entityType: string, entityId: string
       notes: session?.notes,
       customer_name: session?.leads?.name,
       customer_email: session?.leads?.email,
-      customer_phone: session?.leads?.phone,
+      customer_phone: session?.leads?.phone || '-',
       project_name: session?.projects?.name,
-      client_email: session?.leads?.email, // Add client_email for targeting
+      project_type: session?.projects?.project_types?.name || '',
+      client_email: session?.leads?.email,
+      ...leadFieldValues,
       ...session
     };
   } else if (entityType === 'project') {
@@ -797,20 +822,43 @@ async function getEntityData(supabase: any, entityType: string, entityId: string
       .select(`
         *,
         leads:lead_id (
+          id,
           name,
           email,
-          phone
+          phone,
+          organization_id
+        ),
+        project_types (
+          name
         )
       `)
       .eq('id', entityId)
       .single();
+
+    // Get lead field values if we have a lead
+    let leadFieldValues = {};
+    if (project?.leads?.id) {
+      const { data: fieldValues } = await supabase
+        .from('lead_field_values')
+        .select('field_key, value')
+        .eq('lead_id', project.leads.id);
+      
+      if (fieldValues) {
+        leadFieldValues = fieldValues.reduce((acc: any, fv: any) => {
+          acc[`lead_${fv.field_key}`] = fv.value || '-';
+          return acc;
+        }, {});
+      }
+    }
     
     entityData = {
       project_name: project?.name,
+      project_type: project?.project_types?.name || '',
       customer_name: project?.leads?.name,
       customer_email: project?.leads?.email,
-      customer_phone: project?.leads?.phone,
-      client_email: project?.leads?.email, // Add client_email for targeting
+      customer_phone: project?.leads?.phone || '-',
+      client_email: project?.leads?.email,
+      ...leadFieldValues,
       ...project
     };
   } else if (entityType === 'lead') {
@@ -819,12 +867,29 @@ async function getEntityData(supabase: any, entityType: string, entityId: string
       .select('*')
       .eq('id', entityId)
       .single();
+
+    // Get lead field values
+    let leadFieldValues = {};
+    if (lead?.id) {
+      const { data: fieldValues } = await supabase
+        .from('lead_field_values')
+        .select('field_key, value')
+        .eq('lead_id', lead.id);
+      
+      if (fieldValues) {
+        leadFieldValues = fieldValues.reduce((acc: any, fv: any) => {
+          acc[`lead_${fv.field_key}`] = fv.value || '-';
+          return acc;
+        }, {});
+      }
+    }
     
     entityData = {
       customer_name: lead?.name,
       customer_email: lead?.email,
-      customer_phone: lead?.phone,
-      client_email: lead?.email, // Add client_email for targeting
+      customer_phone: lead?.phone || '-',
+      client_email: lead?.email,
+      ...leadFieldValues,
       ...lead
     };
   }

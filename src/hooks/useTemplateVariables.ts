@@ -62,16 +62,6 @@ export function useTemplateVariables() {
           label: "Business Name",
           category: "business"
         },
-        {
-          key: "business_phone",
-          label: "Business Phone", 
-          category: "business"
-        },
-        {
-          key: "business_email",
-          label: "Business Email",
-          category: "business"
-        },
 
         // Lead variables from field definitions
         ...(leadFields?.map(field => ({
@@ -133,22 +123,22 @@ export function useTemplateVariables() {
         {
           key: "project_name",
           label: "Project Name",
-          category: "session"
+          category: "project"
         },
         {
           key: "project_type",
           label: "Project Type", 
-          category: "session"
+          category: "project"
         },
         {
           key: "project_status",
           label: "Project Status",
-          category: "session"
+          category: "project"
         },
         {
           key: "project_due_date",
           label: "Project Due Date",
-          category: "session"
+          category: "project"
         },
 
         // System variables
@@ -180,19 +170,20 @@ export function useTemplateVariables() {
 
     // Business variables (only real ones)
     if (key === "business_name") return businessInfo?.name || "Your Business";
-    if (key === "business_phone") return "+1 (555) 123-4567"; // placeholder
-    if (key === "business_email") return "hello@yourbusiness.com"; // placeholder
 
-    // Lead variables
+    // Lead variables with fallbacks
     if (key.startsWith("lead_")) {
       const fieldKey = key.replace("lead_", "");
       if (fieldKey === "name") return "John Smith";
       if (fieldKey === "email") return "john@example.com";
-      if (fieldKey === "phone") return "+1 (555) 987-6543";
+      if (fieldKey === "phone") return "-"; // Show dash for empty phone
+      if (fieldKey === "notes") return "Sample notes";
       if (fieldKey === "status") return "New";
       if (fieldKey === "due_date") return new Date().toLocaleDateString();
       if (fieldKey === "created_date") return new Date().toLocaleDateString();
       if (fieldKey === "updated_date") return new Date().toLocaleDateString();
+      // For custom fields, return placeholder
+      return `Sample ${fieldKey}`;
     }
 
     // Session variables (real database fields)

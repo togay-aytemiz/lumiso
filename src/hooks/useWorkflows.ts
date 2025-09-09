@@ -124,7 +124,8 @@ export function useWorkflows() {
 
   const updateWorkflow = async (id: string, updates: Partial<WorkflowFormData>) => {
     try {
-      const { error } = await supabase
+      // Update the main workflow
+      const { error: workflowError } = await supabase
         .from('workflows')
         .update({
           name: updates.name,
@@ -136,7 +137,37 @@ export function useWorkflows() {
         })
         .eq('id', id);
 
-      if (error) throw error;
+      if (workflowError) throw workflowError;
+
+      // Handle workflow steps if provided
+      if (updates.steps) {
+        // Delete existing workflow steps
+        const { error: deleteError } = await supabase
+          .from('workflow_steps')
+          .delete()
+          .eq('workflow_id', id);
+
+        if (deleteError) throw deleteError;
+
+        // Insert new workflow steps
+        if (updates.steps.length > 0) {
+          const stepsToInsert = updates.steps.map((step, index) => ({
+            workflow_id: id,
+            step_order: index + 1,
+            action_type: step.action_type,
+            action_config: step.action_config,
+            delay_minutes: step.delay_minutes || 0,
+            conditions: step.conditions || {},
+            is_active: step.is_active,
+          }));
+
+          const { error: stepsError } = await supabase
+            .from('workflow_steps')
+            .insert(stepsToInsert);
+
+          if (stepsError) throw stepsError;
+        }
+      }
 
       toast({
         title: 'Success',

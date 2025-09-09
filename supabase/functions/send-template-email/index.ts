@@ -19,12 +19,15 @@ interface TemplateBlock {
 }
 
 interface SendEmailRequest {
-  to: string;
-  subject: string;
+  // Template builder format
+  to?: string;
+  subject?: string;
   preheader?: string;
-  blocks: TemplateBlock[];
-  mockData: Record<string, string>;
+  blocks?: TemplateBlock[];
+  mockData?: Record<string, string>;
   isTest?: boolean;
+  
+  // Workflow format
   template_id?: string;
   recipient_email?: string;
   recipient_name?: string;
@@ -688,9 +691,18 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { to, subject, preheader, blocks, mockData, isTest }: SendEmailRequest = await req.json();
+    const requestData: SendEmailRequest = await req.json();
+    console.log('Request data:', requestData);
+    
+    // Handle workflow requests
+    if (requestData.template_id && requestData.recipient_email) {
+      return await handleWorkflowEmail(requestData);
+    }
+    
+    // Handle template builder requests
+    const { to, subject, preheader, blocks, mockData, isTest } = requestData;
 
-    console.log('Sending email to:', to);
+    console.log('Template builder - Sending email to:', to);
     console.log('Subject:', subject);
     console.log('Blocks count:', blocks?.length || 0);
 
@@ -741,8 +753,11 @@ const handler = async (req: Request): Promise<Response> => {
     const htmlContent = generateHTMLContent(blocks, mockData, finalSubject, preheader, organizationSettings, false);
     const textContent = generatePlainText(blocks, mockData);
 
+    // Get business name for sender
+    const businessName = organizationSettings?.photography_business_name || 'Lumiso';
+    
     const emailData = {
-      from: 'Lumiso <hello@updates.lumiso.app>',
+      from: `${businessName} <hello@updates.lumiso.app>`,
       reply_to: 'hello@updates.lumiso.app',
       to: [to],
       subject: replacePlaceholders(finalSubject, mockData),
@@ -801,5 +816,124 @@ const handler = async (req: Request): Promise<Response> => {
     );
   }
 };
+
+async function handleWorkflowEmail(requestData: SendEmailRequest): Promise<Response> {
+  try {
+    const { template_id, recipient_email, recipient_name, mockData, workflow_execution_id } = requestData;
+    
+    console.log('Workflow email - Template ID:', template_id);
+    console.log('Workflow email - Recipient:', recipient_email);
+    console.log('Workflow email - Mock data:', mockData);
+
+    if (!template_id || !recipient_email) {
+      return new Response(
+        JSON.stringify({ error: 'Missing required fields: template_id or recipient_email' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Get template data
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    
+    const { data: template, error: templateError } = await supabase
+      .from('email_templates')
+      .select('*')
+      .eq('id', template_id)
+      .single();
+
+    if (templateError || !template) {
+      console.error('Template fetch error:', templateError);
+      return new Response(
+        JSON.stringify({ error: 'Template not found' }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Get organization settings
+    const { data: orgSettings } = await supabase
+      .from('organization_settings')
+      .select('photography_business_name, primary_brand_color, logo_url, phone, email, date_format, time_format')
+      .eq('organization_id', template.organization_id)
+      .single();
+
+    console.log('Organization settings:', orgSettings);
+
+    // Use template data for email generation
+    const finalSubject = template.subject || 'Notification';
+    const htmlContent = generateHTMLContent(
+      template.blocks || [], 
+      mockData || {}, 
+      finalSubject, 
+      template.preheader,
+      orgSettings,
+      false
+    );
+    const textContent = generatePlainText(template.blocks || [], mockData || {});
+
+    // Get business name for sender
+    const businessName = orgSettings?.photography_business_name || 'Lumiso';
+    
+    const emailData = {
+      from: `${businessName} <hello@updates.lumiso.app>`,
+      reply_to: 'hello@updates.lumiso.app',
+      to: [recipient_email],
+      subject: replacePlaceholders(finalSubject, mockData || {}),
+      html: htmlContent,
+      text: textContent,
+      headers: {
+        'List-Unsubscribe': '<mailto:hello@updates.lumiso.app?subject=unsubscribe>',
+        'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+        'X-Mailer': 'Lumiso Template System',
+        'X-Priority': '3',
+        'X-Auto-Response-Suppress': 'OOF',
+      },
+    };
+
+    console.log('Sending workflow email with Resend to:', recipient_email);
+    console.log('Email data:', emailData);
+    
+    const emailResponse = await resend.emails.send(emailData);
+    console.log('Workflow email sent successfully:', emailResponse);
+
+    // Log the email send
+    try {
+      await supabase.from('notification_logs').insert({
+        organization_id: template.organization_id,
+        user_id: template.user_id,
+        notification_type: 'workflow-email',
+        status: 'sent',
+        email_id: emailResponse.data?.id,
+        metadata: {
+          template_id,
+          recipient_email,
+          recipient_name,
+          workflow_execution_id,
+          subject: emailData.subject
+        }
+      });
+    } catch (logError) {
+      console.warn('Failed to log workflow email:', logError);
+    }
+
+    return new Response(
+      JSON.stringify({ 
+        success: true, 
+        emailId: emailResponse.data?.id,
+        message: 'Workflow email sent successfully'
+      }),
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+
+  } catch (error: any) {
+    console.error('Error in handleWorkflowEmail:', error);
+    return new Response(
+      JSON.stringify({ 
+        error: error.message,
+        details: error.stack 
+      }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+}
 
 serve(handler);

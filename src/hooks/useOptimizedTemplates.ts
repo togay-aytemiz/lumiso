@@ -13,6 +13,23 @@ interface EmailTemplate {
   category: string | null;
   updated_at: string;
   blocks: any[];
+  master_content: string;
+  master_subject?: string;
+  placeholders?: string[];
+  is_active: boolean;
+  channels?: {
+    email?: {
+      subject?: string;
+      content?: string;
+      html_content?: string;
+    };
+    sms?: {
+      content?: string;
+    };
+    whatsapp?: {
+      content?: string;
+    };
+  };
 }
 
 interface UseOptimizedTemplatesReturn {
@@ -100,14 +117,45 @@ export function useOptimizedTemplates(): UseOptimizedTemplatesReturn {
       setError(null);
       
       const { data, error: fetchError } = await supabase
-        .from('email_templates')
-        .select('id, name, description, subject, preheader, status, category, updated_at, blocks')
+        .from('message_templates')
+        .select(`
+          id, name, category, master_content, master_subject, placeholders, is_active, updated_at,
+          template_channel_views(
+            channel, subject, content, html_content
+          )
+        `)
         .eq('organization_id', activeOrganizationId)
+        .eq('is_active', true)
         .order('updated_at', { ascending: false });
 
       if (fetchError) throw fetchError;
       
-      setTemplates(data as EmailTemplate[] || []);
+      // Transform data to match EmailTemplate interface
+      const transformedTemplates = (data || []).map((template: any) => ({
+        id: template.id,
+        name: template.name,
+        description: template.master_content?.substring(0, 200) || null,
+        subject: template.template_channel_views?.find((v: any) => v.channel === 'email')?.subject || template.master_subject || null,
+        preheader: template.template_channel_views?.find((v: any) => v.channel === 'email')?.html_content?.match(/preheader[^>]*>([^<]*)/)?.[1] || null,
+        status: template.is_active ? 'published' : 'draft',
+        category: template.category,
+        updated_at: template.updated_at,
+        blocks: [], // Will be populated from channel views if needed
+        master_content: template.master_content,
+        master_subject: template.master_subject,
+        placeholders: Array.isArray(template.placeholders) ? template.placeholders : [],
+        is_active: template.is_active,
+        channels: template.template_channel_views?.reduce((acc: any, view: any) => {
+          acc[view.channel] = {
+            subject: view.subject,
+            content: view.content,
+            html_content: view.html_content
+          };
+          return acc;
+        }, {}) || {}
+      }));
+      
+      setTemplates(transformedTemplates as EmailTemplate[]);
     } catch (err: any) {
       console.error('Error fetching templates:', err);
       setError(err.message || 'Failed to fetch templates');
@@ -125,8 +173,20 @@ export function useOptimizedTemplates(): UseOptimizedTemplatesReturn {
     if (!activeOrganizationId) return false;
 
     try {
+      // First delete template_channel_views (foreign key dependency)
+      const { error: channelError } = await supabase
+        .from('template_channel_views')
+        .delete()
+        .eq('template_id', templateId);
+
+      if (channelError) {
+        console.warn('Error deleting channel views:', channelError);
+        // Continue with template deletion even if channel views fail
+      }
+
+      // Then delete the main template
       const { error: deleteError } = await supabase
-        .from('email_templates')
+        .from('message_templates')
         .delete()
         .eq('id', templateId)
         .eq('organization_id', activeOrganizationId);
@@ -135,6 +195,11 @@ export function useOptimizedTemplates(): UseOptimizedTemplatesReturn {
 
       // Optimistically update local state
       setTemplates(prev => prev.filter(t => t.id !== templateId));
+      
+      toast({
+        title: "Template deleted",
+        description: "Template has been successfully deleted."
+      });
       
       return true;
     } catch (err: any) {
@@ -156,25 +221,63 @@ export function useOptimizedTemplates(): UseOptimizedTemplatesReturn {
       if (!user.user) throw new Error('User not authenticated');
 
       const { data, error: insertError } = await supabase
-        .from('email_templates')
+        .from('message_templates')
         .insert({
           name: `${template.name} (Copy)`,
-          description: template.description,
-          subject: template.subject,
-          preheader: template.preheader,
+          category: template.category || 'general',
+          master_content: template.master_content || template.description || '',
+          master_subject: template.master_subject || template.subject,
+          placeholders: template.placeholders || [],
+          is_active: false, // Duplicated templates start as drafts
           organization_id: activeOrganizationId,
-          user_id: user.user.id,
-          blocks: template.blocks,
-          status: 'draft',
-          category: template.category
+          user_id: user.user.id
         })
         .select()
         .single();
 
       if (insertError) throw insertError;
 
+      // Create channel views if the original template has them
+      if (template.channels) {
+        const channelInserts = Object.entries(template.channels).map(([channel, channelData]: [string, any]) => ({
+          template_id: data.id,
+          channel,
+          subject: channelData?.subject || null,
+          content: channelData?.content || null,
+          html_content: channelData?.html_content || null
+        }));
+
+        if (channelInserts.length > 0) {
+          const { error: channelError } = await supabase
+            .from('template_channel_views')
+            .insert(channelInserts);
+
+          if (channelError) {
+            console.warn('Error creating channel views for duplicate:', channelError);
+          }
+        }
+      }
+
+      // Transform the new template to match our interface
+      const transformedTemplate = {
+        id: data.id,
+        name: data.name,
+        description: data.master_content?.substring(0, 200) || null,
+        subject: data.master_subject || null,
+        preheader: null,
+        status: 'draft',
+        category: data.category,
+        updated_at: data.updated_at,
+        blocks: [],
+        master_content: data.master_content,
+        master_subject: data.master_subject,
+        placeholders: data.placeholders || [],
+        is_active: data.is_active,
+        channels: template.channels || {}
+      };
+
       // Optimistically update local state
-      setTemplates(prev => [data as EmailTemplate, ...prev]);
+      setTemplates(prev => [transformedTemplate as EmailTemplate, ...prev]);
       
       toast({
         title: "Template duplicated",

@@ -51,8 +51,13 @@ export function useOptimizedTemplateBuilder(templateId?: string): UseOptimizedTe
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from("email_templates")
-        .select("*")
+        .from("message_templates")
+        .select(`
+          *,
+          template_channel_views(
+            channel, subject, content, html_content
+          )
+        `)
         .eq("id", templateId)
         .eq("organization_id", activeOrganization.id)
         .single();
@@ -60,11 +65,20 @@ export function useOptimizedTemplateBuilder(templateId?: string): UseOptimizedTe
       if (error) throw error;
 
       // Transform database data to our interface
+      const emailChannel = data.template_channel_views?.find((v: any) => v.channel === 'email');
       const transformedTemplate: EmailTemplate = {
-        ...data,
-        blocks: Array.isArray(data.blocks) ? (data.blocks as unknown as TemplateBlock[]) : 
-                typeof data.blocks === 'string' ? JSON.parse(data.blocks) : [],
-        status: data.status as 'draft' | 'published',
+        id: data.id,
+        name: data.name,
+        description: data.master_content?.substring(0, 200) || null,
+        subject: emailChannel?.subject || data.master_subject || '',
+        preheader: '', // Will be extracted from blocks if needed
+        blocks: [], // Will be populated from HTML content if needed
+        status: data.is_active ? 'published' : 'draft',
+        category: data.category,
+        created_at: data.created_at,
+        updated_at: data.updated_at,
+        last_saved_at: data.updated_at,
+        published_at: data.is_active ? data.updated_at : null,
       };
 
       setTemplate(transformedTemplate);
@@ -90,53 +104,76 @@ export function useOptimizedTemplateBuilder(templateId?: string): UseOptimizedTe
       // Merge current template data with updates
       const dataToSave = template ? { ...template, ...templateData } : templateData;
 
-      const basePayload = {
+      const messageTemplatePayload = {
         name: dataToSave.name || 'Untitled Template',
-        description: dataToSave.description || null,
-        subject: dataToSave.subject || null,
-        preheader: dataToSave.preheader || null,
-        status: dataToSave.status || 'draft',
         category: dataToSave.category || 'general',
-        user_id: user.id,
+        master_content: dataToSave.description || '',
+        master_subject: dataToSave.subject || '',
+        placeholders: [], // Will be extracted from content
+        is_active: dataToSave.status === 'published',
         organization_id: activeOrganization.id,
-        last_saved_at: new Date().toISOString(),
-        blocks: dataToSave.blocks ? JSON.stringify(dataToSave.blocks) : '[]',
+        user_id: user.id,
       };
 
       let result;
       if (templateId && template) {
         // Update existing template
         const { data, error } = await supabase
-          .from("email_templates")
-          .update(basePayload)
+          .from("message_templates")
+          .update(messageTemplatePayload)
           .eq("id", templateId)
           .eq("organization_id", activeOrganization.id)
           .select()
           .single();
 
         if (error) throw error;
-        result = {
-          ...data,
-          blocks: Array.isArray(data.blocks) ? (data.blocks as unknown as TemplateBlock[]) : 
-                  typeof data.blocks === 'string' ? JSON.parse(data.blocks) : [],
-          status: data.status as 'draft' | 'published',
-        };
+        result = data;
       } else {
         // Create new template
         const { data, error } = await supabase
-          .from("email_templates")
-          .insert(basePayload)
+          .from("message_templates")
+          .insert(messageTemplatePayload)
           .select()
           .single();
 
         if (error) throw error;
-        result = {
-          ...data,
-          blocks: Array.isArray(data.blocks) ? (data.blocks as unknown as TemplateBlock[]) : 
-                  typeof data.blocks === 'string' ? JSON.parse(data.blocks) : [],
-          status: data.status as 'draft' | 'published',
-        };
+        result = data;
       }
+
+      // Create or update email channel view
+      const emailChannelData = {
+        template_id: result.id,
+        channel: 'email',
+        subject: dataToSave.subject || '',
+        content: dataToSave.description || '',
+        html_content: JSON.stringify(dataToSave.blocks || [])
+      };
+
+      const { error: channelError } = await supabase
+        .from("template_channel_views")
+        .upsert(emailChannelData);
+
+      if (channelError) {
+        console.warn('Error saving channel view:', channelError);
+      }
+
+      // Transform result back to EmailTemplate interface
+      const transformedResult: EmailTemplate = {
+        id: result.id,
+        name: result.name,
+        description: result.master_content?.substring(0, 200) || null,
+        subject: dataToSave.subject || '',
+        preheader: dataToSave.preheader || '',
+        blocks: dataToSave.blocks || [],
+        status: result.is_active ? 'published' : 'draft',
+        category: result.category,
+        created_at: result.created_at,
+        updated_at: result.updated_at,
+        last_saved_at: result.updated_at,
+        published_at: result.is_active ? result.updated_at : null,
+      };
+
+      result = transformedResult;
 
       setTemplate(result);
       setLastSaved(new Date());
@@ -207,8 +244,20 @@ export function useOptimizedTemplateBuilder(templateId?: string): UseOptimizedTe
     if (!templateId || !activeOrganization?.id) return false;
 
     try {
+      // First delete template_channel_views (foreign key dependency)
+      const { error: channelError } = await supabase
+        .from('template_channel_views')
+        .delete()
+        .eq('template_id', templateId);
+
+      if (channelError) {
+        console.warn('Error deleting channel views:', channelError);
+        // Continue with template deletion even if channel views fail
+      }
+
+      // Then delete the main template
       const { error } = await supabase
-        .from("email_templates")
+        .from("message_templates")
         .delete()
         .eq("id", templateId)
         .eq("organization_id", activeOrganization.id);

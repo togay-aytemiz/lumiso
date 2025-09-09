@@ -54,7 +54,7 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
     const fetchTemplateNames = async () => {
       try {
         const { data, error } = await supabase
-          .from('email_templates')
+          .from('message_templates')
           .select('name')
           .neq('id', templateId || '');
         

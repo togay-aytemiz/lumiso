@@ -64,19 +64,43 @@ export function useWorkflows() {
 
   const createWorkflow = async (formData: WorkflowFormData): Promise<void> => {
     try {
+      // Input validation
+      if (!formData.name?.trim()) {
+        throw new Error('Workflow name is required');
+      }
+      if (!formData.trigger_type) {
+        throw new Error('Trigger type is required');
+      }
+      if (!formData.steps || formData.steps.length === 0) {
+        throw new Error('At least one workflow step is required');
+      }
+
       const organizationId = await getUserOrganizationId();
       if (!organizationId) throw new Error('No organization found');
 
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No user found');
 
+      // Validate workflow steps
+      for (const [index, step] of formData.steps.entries()) {
+        if (!step.action_type) {
+          throw new Error(`Step ${index + 1}: Action type is required`);
+        }
+        if (!step.action_config || Object.keys(step.action_config).length === 0) {
+          throw new Error(`Step ${index + 1}: Action configuration is required`);
+        }
+        if (step.delay_minutes && (step.delay_minutes < 0 || step.delay_minutes > 43200)) {
+          throw new Error(`Step ${index + 1}: Delay must be between 0 and 43200 minutes (30 days)`);
+        }
+      }
+
       const { data: workflow, error: workflowError } = await supabase
         .from('workflows')
         .insert({
           user_id: user.id,
           organization_id: organizationId,
-          name: formData.name,
-          description: formData.description,
+          name: formData.name.trim(),
+          description: formData.description?.trim() || null,
           trigger_type: formData.trigger_type,
           trigger_conditions: formData.trigger_conditions || {},
           is_active: formData.is_active,
@@ -86,16 +110,16 @@ export function useWorkflows() {
 
       if (workflowError) throw workflowError;
 
-      // Create workflow steps
+      // Create workflow steps with validation
       if (formData.steps.length > 0) {
         const stepsToInsert = formData.steps.map((step, index) => ({
           workflow_id: workflow.id,
           step_order: index + 1,
           action_type: step.action_type,
           action_config: step.action_config,
-          delay_minutes: step.delay_minutes || 0,
+          delay_minutes: Math.max(0, Math.min(43200, step.delay_minutes || 0)),
           conditions: step.conditions || {},
-          is_active: step.is_active,
+          is_active: step.is_active !== false, // Default to true
         }));
 
         const { error: stepsError } = await supabase
@@ -111,11 +135,11 @@ export function useWorkflows() {
       });
 
       await fetchWorkflows();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating workflow:', error);
       toast({
         title: 'Error',
-        description: 'Failed to create workflow',
+        description: error.message || 'Failed to create workflow',
         variant: 'destructive',
       });
       throw error;
@@ -124,17 +148,41 @@ export function useWorkflows() {
 
   const updateWorkflow = async (id: string, updates: Partial<WorkflowFormData>) => {
     try {
+      // Input validation
+      if (!id) {
+        throw new Error('Workflow ID is required');
+      }
+      
+      if (updates.name !== undefined && !updates.name?.trim()) {
+        throw new Error('Workflow name cannot be empty');
+      }
+      
+      if (updates.steps) {
+        // Validate workflow steps
+        for (const [index, step] of updates.steps.entries()) {
+          if (!step.action_type) {
+            throw new Error(`Step ${index + 1}: Action type is required`);
+          }
+          if (!step.action_config || Object.keys(step.action_config).length === 0) {
+            throw new Error(`Step ${index + 1}: Action configuration is required`);
+          }
+          if (step.delay_minutes && (step.delay_minutes < 0 || step.delay_minutes > 43200)) {
+            throw new Error(`Step ${index + 1}: Delay must be between 0 and 43200 minutes (30 days)`);
+          }
+        }
+      }
+
       // Update the main workflow
+      const updateData: any = { updated_at: new Date().toISOString() };
+      if (updates.name !== undefined) updateData.name = updates.name.trim();
+      if (updates.description !== undefined) updateData.description = updates.description?.trim() || null;
+      if (updates.trigger_type !== undefined) updateData.trigger_type = updates.trigger_type;
+      if (updates.trigger_conditions !== undefined) updateData.trigger_conditions = updates.trigger_conditions;
+      if (updates.is_active !== undefined) updateData.is_active = updates.is_active;
+
       const { error: workflowError } = await supabase
         .from('workflows')
-        .update({
-          name: updates.name,
-          description: updates.description,
-          trigger_type: updates.trigger_type,
-          trigger_conditions: updates.trigger_conditions,
-          is_active: updates.is_active,
-          updated_at: new Date().toISOString(),
-        })
+        .update(updateData)
         .eq('id', id);
 
       if (workflowError) throw workflowError;
@@ -149,16 +197,16 @@ export function useWorkflows() {
 
         if (deleteError) throw deleteError;
 
-        // Insert new workflow steps
+        // Insert new workflow steps with validation
         if (updates.steps.length > 0) {
           const stepsToInsert = updates.steps.map((step, index) => ({
             workflow_id: id,
             step_order: index + 1,
             action_type: step.action_type,
             action_config: step.action_config,
-            delay_minutes: step.delay_minutes || 0,
+            delay_minutes: Math.max(0, Math.min(43200, step.delay_minutes || 0)),
             conditions: step.conditions || {},
-            is_active: step.is_active,
+            is_active: step.is_active !== false, // Default to true
           }));
 
           const { error: stepsError } = await supabase
@@ -175,11 +223,11 @@ export function useWorkflows() {
       });
 
       await fetchWorkflows();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating workflow:', error);
       toast({
         title: 'Error',
-        description: 'Failed to update workflow',
+        description: error.message || 'Failed to update workflow',
         variant: 'destructive',
       });
     }

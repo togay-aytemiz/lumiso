@@ -13,6 +13,20 @@ export function useWorkflowTriggers() {
     triggerData?: any
   ) => {
     try {
+      // Input validation
+      if (!triggerType || !entityType || !entityId || !organizationId) {
+        throw new Error('Missing required parameters for workflow trigger');
+      }
+
+      // Validate UUID format for entityId and organizationId
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(entityId)) {
+        throw new Error('Invalid entity ID format');
+      }
+      if (!uuidRegex.test(organizationId)) {
+        throw new Error('Invalid organization ID format');
+      }
+
       console.log(`Triggering workflows for: ${triggerType} on ${entityType}:${entityId}`);
 
       const { data, error } = await supabase.functions.invoke('workflow-executor', {
@@ -22,7 +36,7 @@ export function useWorkflowTriggers() {
           trigger_entity_type: entityType,
           trigger_entity_id: entityId,
           organization_id: organizationId,
-          trigger_data: triggerData
+          trigger_data: triggerData || {}
         }
       });
 
@@ -31,16 +45,27 @@ export function useWorkflowTriggers() {
         throw error;
       }
 
-      console.log(`Triggered ${data?.result?.triggered_workflows || 0} workflows`);
+      const triggeredCount = data?.result?.triggered_workflows || 0;
+      console.log(`Successfully triggered ${triggeredCount} workflows`);
+      
+      if (triggeredCount === 0) {
+        console.log(`No workflows found for trigger type: ${triggerType}`);
+      }
+
       return data?.result;
 
     } catch (error: any) {
       console.error('Error in triggerWorkflow:', error);
-      toast({
-        title: 'Workflow Error',
-        description: 'Failed to trigger workflows',
-        variant: 'destructive',
-      });
+      
+      // Only show toast for unexpected errors, not for "no workflows found" cases
+      if (error.message && !error.message.includes('No workflows found')) {
+        toast({
+          title: 'Workflow Error',
+          description: error.message || 'Failed to trigger workflows',
+          variant: 'destructive',
+        });
+      }
+      
       throw error;
     }
   };

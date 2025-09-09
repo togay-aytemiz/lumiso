@@ -131,7 +131,7 @@ const handler = async (req: Request): Promise<Response> => {
   }
 };
 
-// Find and trigger matching workflows
+// Find and trigger matching workflows with enhanced duplicate prevention
 async function triggerWorkflows(supabase: any, triggerData: {
   trigger_type: string;
   trigger_entity_type: string;
@@ -164,6 +164,7 @@ async function triggerWorkflows(supabase: any, triggerData: {
   console.log(`Found ${workflows.length} matching workflows`);
 
   const executions = [];
+  const duplicateFingerprints = new Set();
 
   // Create workflow executions for matching workflows
   for (const workflow of workflows) {
@@ -177,24 +178,49 @@ async function triggerWorkflows(supabase: any, triggerData: {
         }
       }
 
-      // Check for recent duplicate executions (within last 30 seconds)
-      const recentCutoff = new Date(Date.now() - 30000).toISOString();
+      // Create fingerprint for duplicate detection
+      const fingerprint = `${workflow.id}_${trigger_entity_type}_${trigger_entity_id}_${JSON.stringify(trigger_data?.status_change || '')}_${JSON.stringify(trigger_data?.date_change || '')}`;
+      
+      if (duplicateFingerprints.has(fingerprint)) {
+        console.log(`Skipping workflow ${workflow.id}: Duplicate execution detected in this batch`);
+        continue;
+      }
+      duplicateFingerprints.add(fingerprint);
+
+      // Enhanced duplicate check: Check for recent executions (within last 60 seconds for same trigger data)
+      const recentCutoff = new Date(Date.now() - 60000).toISOString();
       const { data: recentExecutions, error: duplicateCheckError } = await supabase
         .from('workflow_executions')
-        .select('id')
+        .select('id, execution_log')
         .eq('workflow_id', workflow.id)
         .eq('trigger_entity_type', trigger_entity_type)
         .eq('trigger_entity_id', trigger_entity_id)
-        .gte('created_at', recentCutoff);
+        .gte('created_at', recentCutoff)
+        .in('status', ['pending', 'running', 'completed']);
 
       if (duplicateCheckError) {
         console.error('Error checking for duplicates:', duplicateCheckError);
       } else if (recentExecutions && recentExecutions.length > 0) {
-        console.log(`Skipping workflow ${workflow.id}: Recent execution found within 30 seconds`);
-        continue;
+        // Check if any recent execution has the same trigger data
+        const isDuplicate = recentExecutions.some(exec => {
+          const execTriggerData = exec.execution_log?.[0]?.trigger_data;
+          if (!execTriggerData && !trigger_data) return true;
+          if (!execTriggerData || !trigger_data) return false;
+          
+          // Compare relevant trigger data fields
+          return (
+            execTriggerData.status_change === trigger_data.status_change &&
+            execTriggerData.date_change === trigger_data.date_change
+          );
+        });
+        
+        if (isDuplicate) {
+          console.log(`Skipping workflow ${workflow.id}: Recent execution found with same trigger data`);
+          continue;
+        }
       }
 
-      // Create workflow execution record
+      // Create workflow execution record with enhanced logging
       const { data: execution, error: executionError } = await supabase
         .from('workflow_executions')
         .insert({
@@ -206,7 +232,8 @@ async function triggerWorkflows(supabase: any, triggerData: {
             timestamp: new Date().toISOString(),
             action: 'triggered',
             details: `Workflow triggered by ${trigger_type}`,
-            trigger_data
+            trigger_data,
+            fingerprint
           }]
         })
         .select()
@@ -220,8 +247,8 @@ async function triggerWorkflows(supabase: any, triggerData: {
       executions.push(execution);
       console.log(`Created execution ${execution.id} for workflow ${workflow.id}`);
 
-      // Execute workflow steps asynchronously
-      executeWorkflowSteps(supabase, execution.id).catch(error => {
+      // Execute workflow steps asynchronously with timeout monitoring
+      executeWorkflowStepsWithTimeout(supabase, execution.id).catch(error => {
         console.error(`Error executing workflow ${workflow.id}:`, error);
       });
 
@@ -233,7 +260,29 @@ async function triggerWorkflows(supabase: any, triggerData: {
   return { triggered_workflows: executions.length, executions };
 }
 
-// Execute workflow steps
+// Enhanced workflow execution with timeout monitoring
+async function executeWorkflowStepsWithTimeout(supabase: any, executionId: string) {
+  const EXECUTION_TIMEOUT = 5 * 60 * 1000; // 5 minutes
+  
+  const timeoutPromise = new Promise((_, reject) => {
+    setTimeout(() => {
+      reject(new Error('Workflow execution timed out after 5 minutes'));
+    }, EXECUTION_TIMEOUT);
+  });
+
+  try {
+    await Promise.race([
+      executeWorkflowSteps(supabase, executionId),
+      timeoutPromise
+    ]);
+  } catch (error) {
+    console.error(`Workflow execution ${executionId} failed or timed out:`, error);
+    await updateExecutionStatus(supabase, executionId, 'failed', error.message);
+    throw error;
+  }
+}
+
+// Execute workflow steps with enhanced error handling and retry logic
 async function executeWorkflowSteps(supabase: any, executionId: string) {
   console.log(`Executing workflow steps for execution: ${executionId}`);
 
@@ -251,7 +300,13 @@ async function executeWorkflowSteps(supabase: any, executionId: string) {
     throw new Error(`Failed to fetch workflow execution: ${executionError?.message}`);
   }
 
-  // Update execution status to running
+  // Check if execution is already completed or failed
+  if (execution.status === 'completed' || execution.status === 'failed') {
+    console.log(`Execution ${executionId} already ${execution.status}, skipping`);
+    return { executed_steps: 0 };
+  }
+
+  // Update execution status to running with heartbeat
   await supabase
     .from('workflow_executions')
     .update({ 
@@ -259,6 +314,9 @@ async function executeWorkflowSteps(supabase: any, executionId: string) {
       started_at: new Date().toISOString()
     })
     .eq('id', executionId);
+
+  let executedSteps = 0;
+  let failedSteps = 0;
 
   try {
     // Get workflow steps
@@ -281,7 +339,7 @@ async function executeWorkflowSteps(supabase: any, executionId: string) {
 
     console.log(`Executing ${steps.length} steps for workflow ${execution.workflow_id}`);
 
-    // Execute steps in order
+    // Execute steps in order with enhanced error handling
     for (let i = 0; i < steps.length; i++) {
       const step = steps[i];
       
@@ -289,8 +347,8 @@ async function executeWorkflowSteps(supabase: any, executionId: string) {
         // Apply delay if specified (for subsequent steps)
         if (i > 0 && step.delay_minutes && step.delay_minutes > 0) {
           console.log(`Applying delay of ${step.delay_minutes} minutes for step ${step.id}`);
-          // In a real implementation, you might want to schedule this step for later
-          // For now, we'll continue immediately but log the delay
+          // In production, you might want to implement proper scheduling here
+          // For now, we continue immediately but log the intended delay
         }
 
         // Check step conditions if they exist
@@ -298,14 +356,31 @@ async function executeWorkflowSteps(supabase: any, executionId: string) {
           const conditionsMet = evaluateStepConditions(step.conditions, execution);
           if (!conditionsMet) {
             console.log(`Skipping step ${step.id}: conditions not met`);
+            
+            // Log step skipped
+            const currentLog = execution.execution_log || [];
+            currentLog.push({
+              timestamp: new Date().toISOString(),
+              action: 'step_skipped',
+              step_id: step.id,
+              step_order: step.step_order,
+              details: 'Step conditions not met'
+            });
+
+            await supabase
+              .from('workflow_executions')
+              .update({ execution_log: currentLog })
+              .eq('id', executionId);
+            
             continue;
           }
         }
 
-        // Execute the step
-        await executeWorkflowStep(supabase, executionId, step, execution);
+        // Execute the step with retry logic
+        await executeWorkflowStepWithRetry(supabase, executionId, step, execution);
+        executedSteps++;
 
-        // Log step execution
+        // Log step execution success
         const currentLog = execution.execution_log || [];
         currentLog.push({
           timestamp: new Date().toISOString(),
@@ -313,7 +388,7 @@ async function executeWorkflowSteps(supabase: any, executionId: string) {
           step_id: step.id,
           step_order: step.step_order,
           action_type: step.action_type,
-          details: `Executed ${step.action_type} step`
+          details: `Successfully executed ${step.action_type} step`
         });
 
         await supabase
@@ -323,15 +398,19 @@ async function executeWorkflowSteps(supabase: any, executionId: string) {
 
       } catch (stepError) {
         console.error(`Error executing step ${step.id}:`, stepError);
+        failedSteps++;
         
-        // Log step error
+        // Log step error with more detail
         const currentLog = execution.execution_log || [];
         currentLog.push({
           timestamp: new Date().toISOString(),
           action: 'step_failed',
           step_id: step.id,
           step_order: step.step_order,
-          error: stepError.message
+          action_type: step.action_type,
+          error: stepError.message,
+          error_stack: stepError.stack,
+          details: `Failed to execute ${step.action_type} step`
         });
 
         await supabase
@@ -339,19 +418,68 @@ async function executeWorkflowSteps(supabase: any, executionId: string) {
           .update({ execution_log: currentLog })
           .eq('id', executionId);
 
-        // Continue with next step (don't fail entire workflow for one step)
+        // Continue with next step (resilient execution)
+        console.log(`Continuing with remaining steps despite step ${step.id} failure`);
       }
     }
 
-    // Mark execution as completed
-    await updateExecutionStatus(supabase, executionId, 'completed', `Executed ${steps.length} steps`);
-    return { executed_steps: steps.length };
+    // Determine final status based on step results
+    const finalStatus = failedSteps === 0 ? 'completed' : (executedSteps > 0 ? 'completed' : 'failed');
+    const statusMessage = `Executed ${executedSteps}/${steps.length} steps successfully${failedSteps > 0 ? `, ${failedSteps} failed` : ''}`;
+    
+    await updateExecutionStatus(supabase, executionId, finalStatus, statusMessage);
+    
+    return { 
+      executed_steps: executedSteps, 
+      failed_steps: failedSteps,
+      total_steps: steps.length,
+      success_rate: steps.length > 0 ? (executedSteps / steps.length) * 100 : 0
+    };
 
   } catch (error) {
-    console.error(`Error executing workflow:`, error);
-    await updateExecutionStatus(supabase, executionId, 'failed', error.message);
+    console.error(`Critical error executing workflow ${executionId}:`, error);
+    await updateExecutionStatus(supabase, executionId, 'failed', `Critical failure: ${error.message}`);
     throw error;
   }
+}
+
+// Execute individual workflow step with retry logic
+async function executeWorkflowStepWithRetry(supabase: any, executionId: string, step: any, execution: any, maxRetries: number = 2) {
+  let lastError;
+  
+  for (let retry = 0; retry <= maxRetries; retry++) {
+    try {
+      if (retry > 0) {
+        console.log(`Retrying step ${step.id}, attempt ${retry + 1}/${maxRetries + 1}`);
+        // Brief delay before retry
+        await new Promise(resolve => setTimeout(resolve, 1000 * retry));
+      }
+      
+      await executeWorkflowStep(supabase, executionId, step, execution);
+      
+      if (retry > 0) {
+        console.log(`Step ${step.id} succeeded on retry attempt ${retry + 1}`);
+      }
+      
+      return; // Success
+      
+    } catch (error) {
+      lastError = error;
+      console.error(`Step ${step.id} failed on attempt ${retry + 1}:`, error.message);
+      
+      // Don't retry certain types of errors (validation, authentication, etc.)
+      if (error.message.includes('authentication') || 
+          error.message.includes('permission') ||
+          error.message.includes('validation') ||
+          error.message.includes('not found')) {
+        console.log(`Step ${step.id} failed with non-retryable error, not retrying`);
+        throw error;
+      }
+    }
+  }
+  
+  // All retries exhausted
+  throw new Error(`Step failed after ${maxRetries + 1} attempts. Last error: ${lastError.message}`);
 }
 
 // Execute individual workflow step

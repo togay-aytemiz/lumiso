@@ -1,6 +1,8 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 import { Resend } from "npm:resend@2.0.0";
+import { generateModernDailySummaryEmail } from './_templates/enhanced-daily-summary-modern.ts';
+import { generateEmptyDailySummaryEmail } from './_templates/enhanced-daily-summary-empty.ts';
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -45,7 +47,10 @@ const handler = async (req: Request): Promise<Response> => {
         notification_daily_summary_enabled,
         notification_global_enabled,
         photography_business_name,
-        primary_brand_color
+        primary_brand_color,
+        date_format,
+        time_format,
+        active_organization_id
       `)
       .eq('notification_global_enabled', true)
       .eq('notification_daily_summary_enabled', true);
@@ -84,7 +89,7 @@ const handler = async (req: Request): Promise<Response> => {
       try {
         console.log(`Processing user ${userSettings.user_id} at ${userSettings.notification_scheduled_time}`);
         
-        // Get user profile for email
+        // Get user profile for full name
         const { data: profile, error: profileError } = await supabaseAdmin
           .from('profiles')
           .select('full_name')
@@ -104,110 +109,255 @@ const handler = async (req: Request): Promise<Response> => {
           continue;
         }
 
-        // Get user's active organization
-        const { data: orgData, error: orgError } = await supabaseAdmin
-          .from('user_settings')
-          .select('active_organization_id')
-          .eq('user_id', userSettings.user_id)
-          .single();
+        console.log(`Authenticated user: ${user.email}`);
 
-        if (orgError || !orgData?.active_organization_id) {
+        // Use active organization from user settings
+        const organizationId = userSettings.active_organization_id;
+        
+        if (!organizationId) {
           console.error('No active organization found for user');
           continue;
         }
 
-        // Get today's sessions
-        const today = new Date().toISOString().split('T')[0];
-        const { data: sessions } = await supabaseAdmin
+        console.log('Organization ID:', organizationId);
+
+        // Extract user's full name
+        const userFullName = profile?.full_name || 
+                             user.user_metadata?.full_name || 
+                             user.email?.split('@')[0] || 'there';
+        console.log(`User full name: ${userFullName}`);
+
+        // Get today's date
+        const today = new Date();
+        const todayStr = today.toISOString().split('T')[0];
+        console.log(`Today's date: ${todayStr}`);
+
+        // Get today's sessions with comprehensive data
+        const { data: todaySessions, error: todaySessionsError } = await supabaseAdmin
           .from('sessions')
-          .select('*')
-          .eq('organization_id', orgData.active_organization_id)
-          .eq('session_date', today);
+          .select(`
+            id,
+            session_date,
+            session_time,
+            notes,
+            location,
+            leads(id, name),
+            projects(id, name, project_types(name))
+          `)
+          .eq('session_date', todayStr)
+          .eq('organization_id', organizationId)
+          .order('session_time');
+
+        // Get past sessions that need action
+        const { data: pastSessions, error: pastSessionsError } = await supabaseAdmin
+          .from('sessions')
+          .select(`
+            id,
+            session_date,
+            session_time,
+            notes,
+            location,
+            leads(id, name),
+            projects(id, name, project_types(name))
+          `)
+          .lt('session_date', todayStr)
+          .eq('organization_id', organizationId)
+          .order('session_date', { ascending: false })
+          .limit(10); // Limit past sessions
+
+        // Get overdue activities
+        const { data: overdueActivities, error: overdueError } = await supabaseAdmin
+          .from('activities')
+          .select(`
+            id,
+            content,
+            reminder_date,
+            reminder_time,
+            completed,
+            lead_id,
+            project_id
+          `)
+          .lt('reminder_date::date', todayStr)
+          .eq('completed', false)
+          .eq('organization_id', organizationId)
+          .order('reminder_date', { ascending: false });
 
         // Get today's activities/reminders
-        const { data: activities } = await supabaseAdmin
-          .from('activities')
-          .select('*')
-          .eq('organization_id', orgData.active_organization_id)
-          .eq('reminder_date', today);
-
-        // Get overdue items (sessions and activities from previous days not completed)
-        const { data: overdueSessions } = await supabaseAdmin
-          .from('sessions')
-          .select('*')
-          .eq('organization_id', orgData.active_organization_id)
-          .lt('session_date', today)
-          .neq('status_id', 'completed'); // Assuming completed sessions have this status
-
-        const { data: overdueActivities } = await supabaseAdmin
-          .from('activities')
-          .select('*')
-          .eq('organization_id', orgData.active_organization_id)
-          .lt('reminder_date', today)
-          .eq('completed', false);
-
-        // Generate simple HTML email
-        const businessName = userSettings.photography_business_name || 'Your Photography Business';
-        const brandColor = userSettings.primary_brand_color || '#1EB29F';
-        const userName = profile?.full_name || 'there';
+        console.log(`Searching for today's reminders on date: ${todayStr}`);
         
-        const todaysCount = (sessions?.length || 0) + (activities?.length || 0);
-        const overdueCount = (overdueSessions?.length || 0) + (overdueActivities?.length || 0);
+        const { data: todayActivities, error: todayActivitiesError } = await supabaseAdmin
+          .from('activities')
+          .select(`
+            id,
+            user_id,
+            content,
+            reminder_date,
+            reminder_time,
+            type,
+            completed,
+            lead_id,
+            project_id
+          `)
+          .eq('organization_id', organizationId)
+          .eq('completed', false)
+          .gte('reminder_date', `${todayStr}T00:00:00`)
+          .lte('reminder_date', `${todayStr}T23:59:59`)
+          .order('reminder_time');
 
-        let emailContent = `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <div style="background: ${brandColor}; color: white; padding: 20px; text-align: center;">
-              <h1 style="margin: 0;">📸 Daily Summary</h1>
-              <h2 style="margin: 10px 0 0 0; font-weight: normal;">${businessName}</h2>
-            </div>
-            
-            <div style="padding: 20px; background: #f9f9f9;">
-              <p>Good morning ${userName}! 👋</p>
-              
-              <div style="background: white; padding: 15px; border-radius: 8px; margin: 15px 0;">
-                <h3 style="color: ${brandColor}; margin-top: 0;">📅 Today's Schedule</h3>
-                ${todaysCount > 0 ? `
-                  <p><strong>You have ${todaysCount} item(s) scheduled for today:</strong></p>
-                  <ul>
-                    ${sessions?.map(s => `<li>📸 Session: ${s.location || 'Location TBD'} at ${s.session_time || 'Time TBD'}</li>`).join('') || ''}
-                    ${activities?.map(a => `<li>📋 Task: ${a.content} at ${a.reminder_time || 'All day'}</li>`).join('') || ''}
-                  </ul>
-                ` : '<p>✅ No sessions or tasks scheduled for today. Great time to catch up!</p>'}
-              </div>
+        console.log(`Found ${todayActivities?.length || 0} today's activities:`, todayActivities);
 
-              ${overdueCount > 0 ? `
-                <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #ffc107;">
-                  <h3 style="color: #856404; margin-top: 0;">⚠️ Overdue Items</h3>
-                  <p>You have ${overdueCount} overdue item(s) that need attention:</p>
-                  <ul>
-                    ${overdueSessions?.map(s => `<li>📸 Session: ${s.location || 'Session'} from ${s.session_date}</li>`).join('') || ''}
-                    ${overdueActivities?.map(a => `<li>📋 Task: ${a.content} from ${a.reminder_date}</li>`).join('') || ''}
-                  </ul>
-                </div>
-              ` : ''}
-              
-              <div style="text-align: center; margin: 20px 0;">
-                <a href="https://rifdykpdubrowzbylffe.supabase.co" style="background: ${brandColor}; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
-                  🚀 Open ${businessName}
-                </a>
-              </div>
-              
-              <p style="text-align: center; color: #666; font-size: 12px; margin-top: 30px;">
-                You're receiving this because you have daily summaries enabled.<br>
-                Update your notification preferences in your account settings.
-              </p>
-            </div>
-          </div>
-        `;
+        // Fetch lead and project names for today's activities
+        const todayActivitiesWithNames = [];
+        if (todayActivities && todayActivities.length > 0) {
+          for (const activity of todayActivities) {
+            let leadName = null;
+            let projectName = null;
 
-        // Send email using Resend
+            // Fetch lead name if lead_id exists
+            if (activity.lead_id) {
+              const { data: lead } = await supabaseAdmin
+                .from('leads')
+                .select('name')
+                .eq('id', activity.lead_id)
+                .maybeSingle();
+              leadName = lead?.name || null;
+            }
+
+            // Fetch project name if project_id exists
+            if (activity.project_id) {
+              const { data: project } = await supabaseAdmin
+                .from('projects')
+                .select('name')
+                .eq('id', activity.project_id)
+                .maybeSingle();
+              projectName = project?.name || null;
+            }
+
+            todayActivitiesWithNames.push({
+              ...activity,
+              leads: leadName ? { name: leadName } : null,
+              projects: projectName ? { name: projectName } : null
+            });
+          }
+        }
+
+        console.log('Today activities with names:', todayActivitiesWithNames);
+
+        // Get organization settings for branding
+        const { data: orgSettings } = await supabaseAdmin
+          .from('organization_settings')
+          .select('photography_business_name, primary_brand_color, date_format, time_format')
+          .eq('organization_id', organizationId)
+          .maybeSingle();
+
+        // Use Lumiso logo
+        console.log('Using Lumiso logo from: https://my.lumiso.app/lumiso-logo.png');
+
+        console.log('Data fetched:', {
+          todaySessions: todaySessions?.length || 0,
+          pastSessions: pastSessions?.length || 0,
+          overdueActivities: overdueActivities?.length || 0,
+          todayActivities: todayActivities?.length || 0,
+          pendingTodos: 0
+        });
+
+        console.log('Today activities data:', todayActivities);
+        console.log('Past sessions data:', pastSessions);
+
+        // Prepare data for enhanced email template (same as test system)
+        const templateData = {
+          userFullName,
+          businessName: orgSettings?.photography_business_name || userSettings?.photography_business_name || 'Lumiso',
+          brandColor: orgSettings?.primary_brand_color || userSettings?.primary_brand_color || '#1EB29F',
+          dateFormat: orgSettings?.date_format || userSettings?.date_format || 'DD/MM/YYYY',
+          timeFormat: orgSettings?.time_format || userSettings?.time_format || '12-hour',
+          baseUrl: 'https://my.lumiso.app'
+        };
+
+        // Transform sessions data
+        const sessions = (todaySessions || []).map(session => ({
+          id: session.id,
+          session_date: session.session_date,
+          session_time: session.session_time,
+          notes: session.notes,
+          location: session.location,
+          leads: session.leads,
+          projects: session.projects
+        }));
+
+        // Transform past sessions that need action
+        const pastSessionsNeedingAction = (pastSessions || []).map(session => ({
+          id: session.id,
+          session_date: session.session_date,
+          session_time: session.session_time,
+          notes: session.notes,
+          location: session.location,
+          leads: session.leads,
+          projects: session.projects
+        }));
+
+        // Transform today's activities separately from overdue
+        const todayReminders = (todayActivitiesWithNames || []).map(activity => ({
+          id: activity.id,
+          content: activity.content,
+          reminder_date: activity.reminder_date,
+          reminder_time: activity.reminder_time,
+          lead_id: activity.lead_id,
+          project_id: activity.project_id,
+          leads: activity.leads,
+          projects: activity.projects
+        }));
+
+        // Transform overdue data (only overdue activities, not today's)
+        const overdueItems = {
+          leads: [], // No overdue leads for now, focus on activities
+          activities: (overdueActivities || []).map(activity => ({
+            id: activity.id,
+            content: activity.content,
+            reminder_date: activity.reminder_date,
+            reminder_time: activity.reminder_time,
+            lead_id: activity.lead_id,
+            project_id: activity.project_id
+          }))
+        };
+
+        // Generate enhanced email content using the same templates as test system
+        let emailHtml: string;
+        let emailSubject: string;
+        const todayFormatted = today.toLocaleDateString('en-GB', { 
+          day: '2-digit', 
+          month: '2-digit', 
+          year: 'numeric' 
+        });
+
+        if (sessions.length === 0 && todayReminders.length === 0) {
+          // Use empty template when no sessions or reminders
+          emailHtml = generateEmptyDailySummaryEmail(
+            overdueItems,
+            pastSessionsNeedingAction,
+            templateData
+          );
+          emailSubject = `🌅 Fresh Start Today - ${todayFormatted}`;
+        } else {
+          // Use regular daily summary template
+          emailHtml = generateModernDailySummaryEmail(
+            sessions,
+            todayReminders,
+            overdueItems,
+            pastSessionsNeedingAction,
+            templateData
+          );
+          emailSubject = `📅 Daily Summary - ${todayFormatted}`;
+        }
+
+        // Send email using Resend with EXACT same sender and subject as test system
         console.log(`Sending daily summary to ${user.email}`);
         
         const emailResult = await resend.emails.send({
-          from: `${businessName} <onboarding@resend.dev>`,
+          from: 'Lumiso <hello@updates.lumiso.app>', // Same sender as test system
           to: [user.email],
-          subject: `📸 Daily Summary for ${new Date().toLocaleDateString()}`,
-          html: emailContent,
+          subject: emailSubject, // Same subject format as test system
+          html: emailHtml,
         });
 
         if (emailResult.error) {

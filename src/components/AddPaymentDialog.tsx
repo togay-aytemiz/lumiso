@@ -14,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import ReactCalendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import "@/components/react-calendar.css";
-import { useSettingsNavigation } from "@/hooks/useSettingsNavigation";
+import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { NavigationGuardDialog } from "./settings/NavigationGuardDialog";
 
 interface AddPaymentDialogProps {
@@ -105,13 +105,21 @@ export function AddPaymentDialog({ projectId, onPaymentAdded }: AddPaymentDialog
     setDatePaid(new Date());
   };
 
-  const navigation = useSettingsNavigation({
+  const navigation = useModalNavigation({
     isDirty,
     onDiscard: () => {
       resetForm();
       setOpen(false);
     },
   });
+
+  const handleDirtyClose = () => {
+    const canClose = navigation.handleModalClose();
+    if (canClose) {
+      resetForm();
+      setOpen(false);
+    }
+  };
 
   const handleSubmitClick = () => {
     const event = { preventDefault: () => {} } as React.FormEvent;
@@ -146,7 +154,7 @@ export function AddPaymentDialog({ projectId, onPaymentAdded }: AddPaymentDialog
         onOpenChange={setOpen}
         size="content"
         dirty={isDirty}
-        onDirtyClose={() => navigation.handleNavigationAttempt('close')}
+        onDirtyClose={handleDirtyClose}
         footerActions={footerActions}
       >
         <div className="space-y-4">
@@ -231,7 +239,7 @@ export function AddPaymentDialog({ projectId, onPaymentAdded }: AddPaymentDialog
       <NavigationGuardDialog
         open={navigation.showGuard}
         onDiscard={navigation.handleDiscardChanges}
-        onStay={navigation.handleStayOnPage}
+        onStay={navigation.handleStayOnModal}
         message={navigation.message}
       />
     </>

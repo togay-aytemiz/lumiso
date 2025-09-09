@@ -15,7 +15,7 @@ import { AssigneesPicker } from "./AssigneesPicker";
 import { InlineAssigneesPicker } from "./InlineAssigneesPicker";
 import { useProfile } from "@/contexts/ProfileContext";
 import { usePermissions } from "@/hooks/usePermissions";
-import { useSettingsNavigation } from "@/hooks/useSettingsNavigation";
+import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { NavigationGuardDialog } from "./settings/NavigationGuardDialog";
 
 interface AddLeadDialogProps {
@@ -188,7 +188,7 @@ const AddLeadDialog = ({ onLeadAdded, open, onOpenChange }: AddLeadDialogProps) 
     setErrors({});
   };
 
-  const navigation = useSettingsNavigation({
+  const navigation = useModalNavigation({
     isDirty,
     onDiscard: () => {
       resetForm();
@@ -200,11 +200,11 @@ const AddLeadDialog = ({ onLeadAdded, open, onOpenChange }: AddLeadDialogProps) 
   });
 
   const handleDirtyClose = () => {
-    if (!navigation.handleModalClose()) {
-      return; // Navigation guard will handle it
+    const canClose = navigation.handleModalClose();
+    if (canClose) {
+      resetForm();
+      onOpenChange(false);
     }
-    resetForm();
-    onOpenChange(false);
   };
 
   const footerActions = [
@@ -322,12 +322,12 @@ const AddLeadDialog = ({ onLeadAdded, open, onOpenChange }: AddLeadDialogProps) 
       <NavigationGuardDialog
         open={navigation.showGuard}
         onDiscard={navigation.handleDiscardChanges}
-        onStay={navigation.handleStayOnPage}
+        onStay={navigation.handleStayOnModal}
         onSaveAndExit={navigation.handleSaveAndExit}
         message="You have unsaved lead changes."
       />
     </>
   );
-};
+}
 
 export default AddLeadDialog;

@@ -17,7 +17,7 @@ import { useProfile } from "@/contexts/ProfileContext";
 import { useOnboardingV2 } from "@/hooks/useOnboardingV2";
 import { useNotificationTriggers } from "@/hooks/useNotificationTriggers";
 import { useOrganization } from "@/contexts/OrganizationContext";
-import { useSettingsNavigation } from "@/hooks/useSettingsNavigation";
+import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { NavigationGuardDialog } from "@/components/settings/NavigationGuardDialog";
 
 interface Lead {
@@ -521,7 +521,7 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
     (!isNewLead && selectedLeadId && selectedLeadId !== defaultLeadId)
   );
 
-  const navigation = useSettingsNavigation({
+  const navigation = useModalNavigation({
     isDirty,
     onDiscard: () => {
       resetForm();
@@ -533,11 +533,11 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
   });
 
   const handleDirtyClose = () => {
-    if (!navigation.handleModalClose()) {
-      return; // Navigation guard will handle it
+    const canClose = navigation.handleModalClose();
+    if (canClose) {
+      resetForm();
+      setOpen(false);
     }
-    resetForm();
-    setOpen(false);
   };
 
   const footerActions = [
@@ -1220,7 +1220,7 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
       <NavigationGuardDialog
         open={navigation.showGuard}
         onDiscard={navigation.handleDiscardChanges}
-        onStay={navigation.handleStayOnPage}
+        onStay={navigation.handleStayOnModal}
         onSaveAndExit={navigation.handleSaveAndExit}
         message="You have unsaved project changes."
       />

@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Calendar as CalendarIcon, Plus } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useCalendarSync } from "@/hooks/useCalendarSync";
-import { useSettingsNavigation } from "@/hooks/useSettingsNavigation";
+import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { NavigationGuardDialog } from "@/components/settings/NavigationGuardDialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn, getUserLocale } from "@/lib/utils";
@@ -223,7 +223,7 @@ export function NewSessionDialogForProject({
     sessionData.location.trim()
   );
 
-  const navigation = useSettingsNavigation({
+  const navigation = useModalNavigation({
     isDirty,
     onDiscard: () => {
       setSessionData({
@@ -235,23 +235,20 @@ export function NewSessionDialogForProject({
       setSelectedDate(undefined);
       setOpen(false);
     },
-    onSaveAndExit: async () => {
-      await handleSubmit();
-    }
   });
 
   const handleDirtyClose = () => {
-    if (!navigation.handleModalClose()) {
-      return; // Navigation guard will handle it
+    const canClose = navigation.handleModalClose();
+    if (canClose) {
+      setSessionData({
+        session_date: "",
+        session_time: "",
+        notes: "",
+        location: ""
+      });
+      setSelectedDate(undefined);
+      setOpen(false);
     }
-    setSessionData({
-      session_date: "",
-      session_time: "",
-      notes: "",
-      location: ""
-    });
-    setSelectedDate(undefined);
-    setOpen(false);
   };
 
   const footerActions = [
@@ -433,7 +430,7 @@ export function NewSessionDialogForProject({
       <NavigationGuardDialog
         open={navigation.showGuard}
         onDiscard={navigation.handleDiscardChanges}
-        onStay={navigation.handleStayOnPage}
+        onStay={navigation.handleStayOnModal}
         onSaveAndExit={navigation.handleSaveAndExit}
         message="You have unsaved session details."
       />

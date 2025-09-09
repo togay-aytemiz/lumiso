@@ -16,7 +16,7 @@ import { getUserOrganizationId } from "@/lib/organizationUtils";
 import { useToast } from "@/hooks/use-toast";
 import { InlineAssigneesPicker } from "./InlineAssigneesPicker";
 import { useProfile } from "@/contexts/ProfileContext";
-import { useSettingsNavigation } from "@/hooks/useSettingsNavigation";
+import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { NavigationGuardDialog } from "./settings/NavigationGuardDialog";
 
 interface EnhancedAddLeadDialogProps {
@@ -151,7 +151,7 @@ export function EnhancedAddLeadDialog({
     }
   };
 
-  const navigation = useSettingsNavigation({
+  const navigation = useModalNavigation({
     isDirty,
     onDiscard: () => {
       onClose();
@@ -162,10 +162,10 @@ export function EnhancedAddLeadDialog({
   });
 
   const handleDirtyClose = () => {
-    if (!navigation.handleModalClose()) {
-      return; // Navigation guard will handle it
+    const canClose = navigation.handleModalClose();
+    if (canClose) {
+      onClose();
     }
-    onClose();
   };
 
   const footerActions = [
@@ -233,7 +233,7 @@ export function EnhancedAddLeadDialog({
       <NavigationGuardDialog
         open={navigation.showGuard}
         onDiscard={navigation.handleDiscardChanges}
-        onStay={navigation.handleStayOnPage}
+        onStay={navigation.handleStayOnModal}
         onSaveAndExit={navigation.handleSaveAndExit}
         message="You have unsaved lead changes."
       />

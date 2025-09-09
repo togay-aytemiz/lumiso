@@ -13,7 +13,7 @@ import { WorkflowFormData, TriggerType } from "@/types/workflow";
 import { useTemplates } from "@/hooks/useTemplates";
 import { cn } from "@/lib/utils";
 import { NavigationGuardDialog } from "@/components/settings/NavigationGuardDialog";
-import { useSettingsNavigation } from "@/hooks/useSettingsNavigation";
+import { useModalNavigation } from "@/hooks/useModalNavigation";
 interface CreateWorkflowSheetProps {
   onCreateWorkflow: (data: WorkflowFormData) => Promise<void>;
   editWorkflow?: any;
@@ -260,15 +260,15 @@ export function CreateWorkflowSheet({
                   reminderDelay !== initialReminderDelay ||
                   JSON.stringify(enabledChannels) !== JSON.stringify(initialEnabledChannels);
 
-  // Navigation guard
+  // Modal navigation guard
   const {
     showGuard,
     message: guardMessage,
-    handleNavigationAttempt,
+    handleModalClose,
     handleDiscardChanges,
-    handleStayOnPage,
+    handleStayOnModal,
     handleSaveAndExit
-  } = useSettingsNavigation({
+  } = useModalNavigation({
     isDirty,
     onDiscard: () => {
       handleClose();
@@ -280,9 +280,8 @@ export function CreateWorkflowSheet({
   });
 
   const handleDirtyClose = () => {
-    if (isDirty) {
-      handleNavigationAttempt('/');
-    } else {
+    const canClose = handleModalClose();
+    if (canClose) {
       handleClose();
     }
   };
@@ -439,7 +438,7 @@ export function CreateWorkflowSheet({
       <NavigationGuardDialog
         open={showGuard}
         onDiscard={handleDiscardChanges}
-        onStay={handleStayOnPage}
+        onStay={handleStayOnModal}
         onSaveAndExit={handleSaveAndExit}
         message={guardMessage}
       />

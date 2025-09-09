@@ -13,7 +13,7 @@ import { useLeadFieldValues } from "@/hooks/useLeadFieldValues";
 import { createDynamicLeadSchema } from "@/lib/leadFieldValidation";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useSettingsNavigation } from "@/hooks/useSettingsNavigation";
+import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { NavigationGuardDialog } from "./settings/NavigationGuardDialog";
 
 interface Lead {
@@ -150,12 +150,19 @@ export function EnhancedEditLeadDialog({
     }
   };
 
-  const navigation = useSettingsNavigation({
+  const navigation = useModalNavigation({
     isDirty,
     onDiscard: () => {
       onClose();
     },
   });
+
+  const handleDirtyClose = () => {
+    const canClose = navigation.handleModalClose();
+    if (canClose) {
+      onClose();
+    }
+  };
 
   const footerActions = [
     {
@@ -193,7 +200,7 @@ export function EnhancedEditLeadDialog({
         onOpenChange={onOpenChange}
         size="lg"
         dirty={isDirty}
-        onDirtyClose={() => navigation.handleNavigationAttempt('close')}
+        onDirtyClose={handleDirtyClose}
         footerActions={footerActions}
       >
         <div className="space-y-1 mb-6">
@@ -214,7 +221,7 @@ export function EnhancedEditLeadDialog({
       <NavigationGuardDialog
         open={navigation.showGuard}
         onDiscard={navigation.handleDiscardChanges}
-        onStay={navigation.handleStayOnPage}
+        onStay={navigation.handleStayOnModal}
         message={navigation.message}
       />
     </>

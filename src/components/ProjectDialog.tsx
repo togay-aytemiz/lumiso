@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { SimpleProjectTypeSelect } from "./SimpleProjectTypeSelect";
-import { useSettingsNavigation } from "@/hooks/useSettingsNavigation";
+import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { NavigationGuardDialog } from "@/components/settings/NavigationGuardDialog";
 
 interface ProjectDialogProps {
@@ -138,7 +138,7 @@ export function ProjectDialog({ open, onOpenChange, leadId, onProjectCreated }: 
 
   const isDirty = Boolean(name.trim() || description.trim() || projectTypeId || basePrice.trim());
 
-  const navigation = useSettingsNavigation({
+  const navigation = useModalNavigation({
     isDirty,
     onDiscard: () => {
       resetForm();
@@ -150,11 +150,11 @@ export function ProjectDialog({ open, onOpenChange, leadId, onProjectCreated }: 
   });
 
   const handleDirtyClose = () => {
-    if (!navigation.handleModalClose()) {
-      return; // Navigation guard will handle it
+    const canClose = navigation.handleModalClose();
+    if (canClose) {
+      resetForm();
+      onOpenChange(false);
     }
-    resetForm();
-    onOpenChange(false);
   };
 
   const footerActions = [
@@ -241,7 +241,7 @@ export function ProjectDialog({ open, onOpenChange, leadId, onProjectCreated }: 
       <NavigationGuardDialog
         open={navigation.showGuard}
         onDiscard={navigation.handleDiscardChanges}
-        onStay={navigation.handleStayOnPage}
+        onStay={navigation.handleStayOnModal}
         onSaveAndExit={navigation.handleSaveAndExit}
         message="You have unsaved project changes."
       />

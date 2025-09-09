@@ -12,7 +12,7 @@ import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { useSettingsNavigation } from "@/hooks/useSettingsNavigation";
+import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { NavigationGuardDialog } from "./settings/NavigationGuardDialog";
 
 interface Payment {
@@ -118,12 +118,19 @@ export function EditPaymentDialog({ payment, open, onOpenChange, onPaymentUpdate
     (status === 'paid' && datePaid?.toISOString().split('T')[0] !== payment.date_paid)
   );
 
-  const navigation = useSettingsNavigation({
+  const navigation = useModalNavigation({
     isDirty,
     onDiscard: () => {
       onOpenChange(false);
     },
   });
+
+  const handleDirtyClose = () => {
+    const canClose = navigation.handleModalClose();
+    if (canClose) {
+      onOpenChange(false);
+    }
+  };
 
   const footerActions = [
     {
@@ -148,7 +155,7 @@ export function EditPaymentDialog({ payment, open, onOpenChange, onPaymentUpdate
         onOpenChange={onOpenChange}
         size="content"
         dirty={isDirty}
-        onDirtyClose={() => navigation.handleNavigationAttempt('close')}
+        onDirtyClose={handleDirtyClose}
         footerActions={footerActions}
       >
         <div className="space-y-4">
@@ -223,7 +230,7 @@ export function EditPaymentDialog({ payment, open, onOpenChange, onPaymentUpdate
       <NavigationGuardDialog
         open={navigation.showGuard}
         onDiscard={navigation.handleDiscardChanges}
-        onStay={navigation.handleStayOnPage}
+        onStay={navigation.handleStayOnModal}
         message={navigation.message}
       />
     </>

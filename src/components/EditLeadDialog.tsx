@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useSettingsNavigation } from "@/hooks/useSettingsNavigation";
+import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { NavigationGuardDialog } from "./settings/NavigationGuardDialog";
 
 interface Lead {
@@ -125,12 +125,19 @@ export function EditLeadDialog({ lead, open, onOpenChange, onLeadUpdated }: Edit
 
   const isDirty = JSON.stringify(formData) !== JSON.stringify(initialFormData);
 
-  const navigation = useSettingsNavigation({
+  const navigation = useModalNavigation({
     isDirty,
     onDiscard: () => {
       onOpenChange(false);
     },
   });
+
+  const handleDirtyClose = () => {
+    const canClose = navigation.handleModalClose();
+    if (canClose) {
+      onOpenChange(false);
+    }
+  };
 
   const footerActions = [
     {
@@ -154,7 +161,7 @@ export function EditLeadDialog({ lead, open, onOpenChange, onLeadUpdated }: Edit
         isOpen={open}
         onOpenChange={onOpenChange}
         dirty={isDirty}
-        onDirtyClose={() => navigation.handleNavigationAttempt('close')}
+        onDirtyClose={handleDirtyClose}
         footerActions={footerActions}
       >
         <div className="space-y-6">
@@ -231,7 +238,7 @@ export function EditLeadDialog({ lead, open, onOpenChange, onLeadUpdated }: Edit
       <NavigationGuardDialog
         open={navigation.showGuard}
         onDiscard={navigation.handleDiscardChanges}
-        onStay={navigation.handleStayOnPage}
+        onStay={navigation.handleStayOnModal}
         message={navigation.message}
       />
     </>

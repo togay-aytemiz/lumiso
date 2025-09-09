@@ -903,63 +903,18 @@ async function handleWorkflowEmail(requestData: SendEmailRequest): Promise<Respo
     const emailSubject = emailChannelView.subject || template.master_subject || template.name || 'Notification';
     console.log('Email subject before replacement:', emailSubject);
 
-    // Convert template content to blocks format for consistent rendering
-    // This ensures workflow emails use the same rendering path as template builder tests
-    const blocks: TemplateBlock[] = [];
+    // Use existing template blocks for consistent rendering with template builder tests
+    const blocks: TemplateBlock[] = template.blocks && Array.isArray(template.blocks) ? template.blocks : [];
     
-    // If we have template blocks, use them
-    if (template.blocks && Array.isArray(template.blocks)) {
-      blocks.push(...template.blocks);
-    } else {
-      // Convert plain content to text blocks for consistent rendering
-      const content = emailChannelView.content || template.master_content || '';
-      const contentLines = content.split('\n').filter(line => line.trim());
-      
-      contentLines.forEach((line, index) => {
-        if (line.includes('Date:') || line.includes('Time:') || line.includes('Location:')) {
-          // Create session details block
-          blocks.push({
-            id: `session-details-${index}`,
-            type: 'session-details',
-            data: {
-              showDate: line.includes('Date:') || content.includes('{session_date}'),
-              showTime: line.includes('Time:') || content.includes('{session_time}'),
-              showLocation: line.includes('Location:') || content.includes('{session_location}'),
-              showNotes: false
-            },
-            order: index
-          });
-        } else if (line.trim() === '---' || line.includes('━')) {
-          // Create divider block
-          blocks.push({
-            id: `divider-${index}`,
-            type: 'divider',
-            data: {
-              style: 'line',
-              color: '#e5e5e5'
-            },
-            order: index
-          });
-        } else if (line.trim()) {
-          // Create text block
-          blocks.push({
-            id: `text-${index}`,
-            type: 'text',
-            data: {
-              content: line,
-              formatting: {
-                fontSize: 'p',
-                alignment: 'left',
-                fontFamily: 'Arial'
-              }
-            },
-            order: index
-          });
-        }
-      });
+    if (blocks.length === 0) {
+      console.warn('No template blocks found - template may not be properly configured');
+      return new Response(
+        JSON.stringify({ error: 'Template blocks not found or invalid' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
-    console.log('Generated blocks for workflow email:', blocks.length);
+    console.log('Using template blocks for workflow email:', blocks.length);
 
     // Use the same HTML generation function as template builder tests
     const finalHtmlContent = generateHTMLContent(
@@ -984,7 +939,7 @@ async function handleWorkflowEmail(requestData: SendEmailRequest): Promise<Respo
       from: `${businessName} <hello@updates.lumiso.app>`,
       reply_to: orgSettings?.email || 'hello@updates.lumiso.app',
       to: [recipient_email],
-      subject: processedSubject,
+      subject: replacePlaceholders(emailSubject, mockData || {}),
       html: finalHtmlContent,
       text: plainTextContent,
       headers: {
@@ -998,7 +953,7 @@ async function handleWorkflowEmail(requestData: SendEmailRequest): Promise<Respo
       },
     };
 
-    console.log('Sending workflow email with subject:', emailData.subject);
+    console.log('Sending workflow email with subject:', replacePlaceholders(emailSubject, mockData || {}));
     console.log('HTML content length:', finalHtmlContent.length);
     
     const emailResponse = await resend.emails.send(emailData);

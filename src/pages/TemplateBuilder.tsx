@@ -11,7 +11,7 @@ import { OptimizedTemplatePreview } from '@/components/template-builder/Optimize
 import { TemplateBlock } from '@/types/templateBuilder';
 import { InlineSubjectEditor } from '@/components/template-builder/InlineSubjectEditor';
 import { InlinePreheaderEditor } from '@/components/template-builder/InlinePreheaderEditor';
-import { useOptimizedTemplateBuilder } from '@/hooks/useOptimizedTemplateBuilder';
+import { useTemplateBuilder } from '@/hooks/useTemplateBuilder';
 import { useTemplateVariables } from '@/hooks/useTemplateVariables';
 import { getCharacterCount, checkSpamWords, previewDataSets } from '@/lib/templateUtils';
 import { NavigationGuardDialog } from '@/components/settings/NavigationGuardDialog';
@@ -28,7 +28,7 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
   const templateId = searchParams.get('id');
 
   // Backend hooks
-  const { template, loading, saving, lastSaved, isDirty, saveTemplate, publishTemplate, updateTemplate, resetDirtyState } = useOptimizedTemplateBuilder(templateId || undefined);
+  const { template, loading, saving, lastSaved, isDirty, saveTemplate, publishTemplate, updateTemplate, resetDirtyState } = useTemplateBuilder(templateId || undefined);
   const { getVariableValue } = useTemplateVariables();
 
   // Local state for UI

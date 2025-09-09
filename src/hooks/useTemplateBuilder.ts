@@ -1,0 +1,399 @@
+import { useState, useEffect, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useOrganization } from "@/contexts/OrganizationContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
+import { Template, TemplateBuilderData, DatabaseTemplate } from "@/types/template";
+import { TemplateBlock } from "@/types/templateBuilder";
+
+interface UseTemplateBuilderReturn {
+  template: TemplateBuilderData | null;
+  loading: boolean;
+  saving: boolean;
+  lastSaved: Date | null;
+  isDirty: boolean;
+  saveTemplate: (templateData: Partial<TemplateBuilderData>, showToast?: boolean) => Promise<TemplateBuilderData | null>;
+  publishTemplate: (templateData?: Partial<TemplateBuilderData>) => Promise<TemplateBuilderData | null>;
+  deleteTemplate: () => Promise<boolean>;
+  updateTemplate: (updates: Partial<TemplateBuilderData>) => void;
+  loadTemplate: () => Promise<void>;
+  resetDirtyState: () => void;
+}
+
+// Extract placeholders from text content
+const extractPlaceholders = (content: string): string[] => {
+  const placeholderRegex = /{([^}]+)}/g;
+  const placeholders = new Set<string>();
+  let match;
+  
+  while ((match = placeholderRegex.exec(content)) !== null) {
+    placeholders.add(match[1]);
+  }
+  
+  return Array.from(placeholders);
+};
+
+// Transform database template to builder data
+const transformToBuilderData = (dbTemplate: DatabaseTemplate): TemplateBuilderData => {
+  const emailChannel = dbTemplate.template_channel_views?.find(v => v.channel === 'email');
+  
+  return {
+    id: dbTemplate.id,
+    name: dbTemplate.name,
+    category: dbTemplate.category,
+    master_content: dbTemplate.master_content,
+    master_subject: dbTemplate.master_subject || undefined,
+    placeholders: Array.isArray(dbTemplate.placeholders) ? dbTemplate.placeholders : [],
+    is_active: dbTemplate.is_active,
+    created_at: dbTemplate.created_at,
+    updated_at: dbTemplate.updated_at,
+    user_id: dbTemplate.user_id,
+    organization_id: dbTemplate.organization_id,
+    // UI-specific fields
+    description: dbTemplate.master_content?.substring(0, 200) || undefined,
+    subject: emailChannel?.subject || dbTemplate.master_subject || '',
+    preheader: '', // Will be extracted from blocks if needed
+    blocks: [], // Will be populated from HTML content or created fresh
+    status: dbTemplate.is_active ? 'published' : 'draft',
+    published_at: dbTemplate.is_active ? dbTemplate.updated_at : null,
+    last_saved_at: dbTemplate.updated_at,
+    channels: dbTemplate.template_channel_views?.reduce((acc: any, view: any) => {
+      acc[view.channel] = {
+        subject: view.subject,
+        content: view.content,
+        html_content: view.html_content
+      };
+      return acc;
+    }, {}) || {}
+  };
+};
+
+export function useTemplateBuilder(templateId?: string): UseTemplateBuilderReturn {
+  const [template, setTemplate] = useState<TemplateBuilderData | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [isDirty, setIsDirty] = useState(false);
+  
+  const { activeOrganizationId } = useOrganization();
+  const { user } = useAuth();
+  const { toast } = useToast();
+
+  const loadTemplate = useCallback(async () => {
+    if (!templateId || !activeOrganizationId) return;
+
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("message_templates")
+        .select(`
+          *,
+          template_channel_views(
+            channel, subject, content, html_content
+          )
+        `)
+        .eq("id", templateId)
+        .eq("organization_id", activeOrganizationId)
+        .single();
+
+      if (error) throw error;
+
+      const transformedTemplate = transformToBuilderData(data);
+      setTemplate(transformedTemplate);
+      setIsDirty(false);
+    } catch (error) {
+      console.error("Error loading template:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load template",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [templateId, activeOrganizationId, toast]);
+
+  const saveTemplate = useCallback(async (
+    templateData: Partial<TemplateBuilderData>, 
+    showToast = true
+  ): Promise<TemplateBuilderData | null> => {
+    if (!activeOrganizationId || !user?.id) return null;
+
+    try {
+      setSaving(true);
+
+      // Merge current template data with updates
+      const mergedData = template ? { ...template, ...templateData } : templateData;
+
+      // Extract placeholders from all content
+      const allContent = [
+        mergedData.master_content || '',
+        mergedData.subject || '',
+        mergedData.channels?.email?.content || '',
+        mergedData.channels?.sms?.content || '',
+        mergedData.channels?.whatsapp?.content || ''
+      ].join(' ');
+      
+      const extractedPlaceholders = extractPlaceholders(allContent);
+
+      // Prepare template payload
+      const templatePayload = {
+        name: mergedData.name || 'Untitled Template',
+        category: mergedData.category || 'general',
+        master_content: mergedData.master_content || mergedData.description || '',
+        master_subject: mergedData.master_subject || mergedData.subject || '',
+        placeholders: extractedPlaceholders,
+        is_active: mergedData.status === 'published',
+        organization_id: activeOrganizationId,
+        user_id: user.id,
+      };
+
+      let result;
+      if (templateId && template) {
+        // Update existing template
+        const { data, error } = await supabase
+          .from("message_templates")
+          .update(templatePayload)
+          .eq("id", templateId)
+          .eq("organization_id", activeOrganizationId)
+          .select()
+          .single();
+
+        if (error) throw error;
+        result = data;
+      } else {
+        // Create new template
+        const { data, error } = await supabase
+          .from("message_templates")
+          .insert(templatePayload)
+          .select()
+          .single();
+
+        if (error) throw error;
+        result = data;
+      }
+
+      // Save channel views if provided
+      if (mergedData.channels && Object.keys(mergedData.channels).length > 0) {
+        // Delete existing channel views first
+        await supabase
+          .from("template_channel_views")
+          .delete()
+          .eq("template_id", result.id);
+
+        // Insert new channel views
+        const channelViews = [];
+        
+        Object.entries(mergedData.channels).forEach(([channel, channelData]: [string, any]) => {
+          if (channelData && (channelData.subject || channelData.content || channelData.html_content)) {
+            channelViews.push({
+              template_id: result.id,
+              channel,
+              subject: channelData.subject || null,
+              content: channelData.content || null,
+              html_content: channelData.html_content || null
+            });
+          }
+        });
+
+        if (channelViews.length > 0) {
+          const { error: channelError } = await supabase
+            .from("template_channel_views")
+            .insert(channelViews);
+
+          if (channelError) {
+            console.warn('Error saving channel views:', channelError);
+          }
+        }
+      }
+
+      // Create default email channel view if none exists
+      if (!mergedData.channels?.email && (mergedData.subject || mergedData.master_content)) {
+        const { error: emailChannelError } = await supabase
+          .from("template_channel_views")
+          .upsert({
+            template_id: result.id,
+            channel: 'email',
+            subject: mergedData.subject || mergedData.master_subject || '',
+            content: mergedData.master_content || '',
+            html_content: null
+          });
+
+        if (emailChannelError) {
+          console.warn('Error creating default email channel:', emailChannelError);
+        }
+      }
+
+      // Transform result back to TemplateBuilderData
+      const savedTemplate: TemplateBuilderData = {
+        ...result,
+        placeholders: extractedPlaceholders,
+        description: result.master_content?.substring(0, 200) || undefined,
+        subject: mergedData.subject || result.master_subject || '',
+        preheader: mergedData.preheader || '',
+        blocks: mergedData.blocks || [],
+        status: result.is_active ? 'published' : 'draft',
+        published_at: result.is_active ? result.updated_at : null,
+        last_saved_at: result.updated_at,
+        channels: mergedData.channels || {}
+      };
+
+      setTemplate(savedTemplate);
+      setLastSaved(new Date());
+      setIsDirty(false);
+
+      if (showToast) {
+        toast({
+          title: "Saved",
+          description: "Template saved successfully",
+        });
+      }
+
+      return savedTemplate;
+    } catch (error) {
+      console.error("Error saving template:", error);
+      if (showToast) {
+        toast({
+          title: "Error",
+          description: "Failed to save template",
+          variant: "destructive",
+        });
+      }
+      return null;
+    } finally {
+      setSaving(false);
+    }
+  }, [templateId, template, activeOrganizationId, user?.id, toast]);
+
+  const publishTemplate = useCallback(async (
+    templateData?: Partial<TemplateBuilderData>
+  ): Promise<TemplateBuilderData | null> => {
+    try {
+      setSaving(true);
+
+      const dataToPublish = template 
+        ? { ...template, ...templateData } 
+        : { name: 'Untitled Template', blocks: [], ...templateData };
+
+      const publishedTemplate = await saveTemplate({
+        ...dataToPublish,
+        status: 'published',
+        published_at: new Date().toISOString(),
+      }, false);
+
+      if (publishedTemplate) {
+        toast({
+          title: "Published",
+          description: "Template published successfully",
+        });
+      }
+
+      return publishedTemplate;
+    } catch (error) {
+      console.error("Error publishing template:", error);
+      toast({
+        title: "Error",
+        description: "Failed to publish template",
+        variant: "destructive",
+      });
+      return null;
+    } finally {
+      setSaving(false);
+    }
+  }, [template, saveTemplate, toast]);
+
+  const deleteTemplate = useCallback(async (): Promise<boolean> => {
+    if (!templateId || !activeOrganizationId) return false;
+
+    try {
+      // Delete channel views first (foreign key dependency)
+      const { error: channelError } = await supabase
+        .from('template_channel_views')
+        .delete()
+        .eq('template_id', templateId);
+
+      if (channelError) {
+        console.warn('Error deleting channel views:', channelError);
+      }
+
+      // Then delete the main template
+      const { error } = await supabase
+        .from("message_templates")
+        .delete()
+        .eq("id", templateId)
+        .eq("organization_id", activeOrganizationId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Deleted",
+        description: "Template deleted successfully",
+      });
+
+      return true;
+    } catch (error) {
+      console.error("Error deleting template:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete template",
+        variant: "destructive",
+      });
+      return false;
+    }
+  }, [templateId, activeOrganizationId, toast]);
+
+  const updateTemplate = useCallback((updates: Partial<TemplateBuilderData>) => {
+    if (!template) {
+      // Create a basic template with updates
+      const newTemplate: TemplateBuilderData = {
+        id: '',
+        name: 'Untitled Template',
+        category: 'general',
+        master_content: '',
+        placeholders: [],
+        is_active: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        user_id: '',
+        organization_id: '',
+        subject: '',
+        preheader: '',
+        blocks: [],
+        status: 'draft',
+        ...updates,
+      };
+      setTemplate(newTemplate);
+      setIsDirty(true);
+      return;
+    }
+
+    const updatedTemplate = { ...template, ...updates };
+    setTemplate(updatedTemplate);
+    setIsDirty(true);
+  }, [template]);
+
+  const resetDirtyState = useCallback(() => {
+    setIsDirty(false);
+  }, []);
+
+  // Load template on mount
+  useEffect(() => {
+    if (templateId && activeOrganizationId) {
+      loadTemplate();
+    }
+  }, [templateId, activeOrganizationId, loadTemplate]);
+
+  return {
+    template,
+    loading,
+    saving,
+    lastSaved,
+    isDirty,
+    saveTemplate,
+    publishTemplate,
+    deleteTemplate,
+    updateTemplate,
+    loadTemplate,
+    resetDirtyState,
+  };
+}

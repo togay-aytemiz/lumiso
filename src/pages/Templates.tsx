@@ -9,21 +9,10 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Plus, Search, Edit, Trash2, Copy, MoreHorizontal, MessageSquare } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { DeleteTemplateDialog } from "@/components/template-builder/DeleteTemplateDialog";
-import { useOptimizedTemplates } from "@/hooks/useOptimizedTemplates";
+import { useTemplateOperations } from "@/hooks/useTemplateOperations";
 import { LoadingSkeleton } from "@/components/ui/loading-skeleton";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-
-interface EmailTemplate {
-  id: string;
-  name: string;
-  description: string | null;
-  subject: string | null;
-  preheader: string | null;
-  status: string;
-  category: string | null;
-  updated_at: string;
-  blocks: any[];
-}
+import { Template } from "@/types/template";
 
 // Optimized Templates component with memoization and error handling
 const OptimizedTemplatesContent = React.memo(() => {
@@ -36,7 +25,7 @@ const OptimizedTemplatesContent = React.memo(() => {
     filteredTemplates,
     deleteTemplate,
     duplicateTemplate,
-  } = useOptimizedTemplates();
+  } = useTemplateOperations();
 
   const [deleteDialog, setDeleteDialog] = useState<{
     open: boolean;
@@ -74,39 +63,35 @@ const OptimizedTemplatesContent = React.memo(() => {
   }, [duplicateTemplate]);
 
   // Helper function to extract preview text from template
-  const extractPreviewText = React.useCallback((template: any): string => {
-    // First priority: subject line
-    if (template.subject?.trim()) {
-      return template.subject.trim();
+  const extractPreviewText = React.useCallback((template: Template): string => {
+    // First priority: email subject from channel views
+    if (template.channels?.email?.subject?.trim()) {
+      return template.channels.email.subject.trim();
     }
     
-    // Second priority: preheader
-    if (template.preheader?.trim()) {
-      return template.preheader.trim();
+    // Second priority: master subject
+    if (template.master_subject?.trim()) {
+      return template.master_subject.trim();
     }
     
-    // Third priority: first text block content
-    if (template.blocks && Array.isArray(template.blocks)) {
-      for (const block of template.blocks) {
-        if (block.type === 'text' && block.content?.trim()) {
-          // Remove HTML tags and get first 60 characters
-          const plainText = block.content.replace(/<[^>]*>/g, '').trim();
-          if (plainText) {
-            return plainText.length > 60 ? `${plainText.substring(0, 60)}...` : plainText;
-          }
-        }
+    // Third priority: email content from channel views
+    if (template.channels?.email?.content?.trim()) {
+      const plainText = template.channels.email.content.replace(/<[^>]*>/g, '').trim();
+      if (plainText) {
+        return plainText.length > 60 ? `${plainText.substring(0, 60)}...` : plainText;
       }
     }
     
-    // Fallback: description
-    if (template.description?.trim()) {
-      return template.description.length > 60 ? `${template.description.substring(0, 60)}...` : template.description;
+    // Fallback: master content
+    if (template.master_content?.trim()) {
+      const plainText = template.master_content.replace(/<[^>]*>/g, '').trim();
+      return plainText.length > 60 ? `${plainText.substring(0, 60)}...` : plainText;
     }
     
     return 'No preview available';
   }, []);
 
-  const columns: Column<any>[] = useMemo(() => [
+  const columns: Column<Template>[] = useMemo(() => [
     {
       key: 'name',
       header: 'Template Name',
@@ -114,9 +99,9 @@ const OptimizedTemplatesContent = React.memo(() => {
       render: (template) => (
         <div className="min-w-0">
           <div className="font-medium text-foreground truncate">{template.name}</div>
-          {template.description && (
+          {template.master_content && (
             <div className="text-sm text-muted-foreground truncate mt-1">
-              {template.description}
+              {template.master_content.length > 60 ? `${template.master_content.substring(0, 60)}...` : template.master_content}
             </div>
           )}
         </div>
@@ -138,7 +123,7 @@ const OptimizedTemplatesContent = React.memo(() => {
       header: 'Status',
       sortable: true,
       render: (template) => {
-        const isPublished = template.status === 'published';
+        const isPublished = template.is_active;
         return (
           <Badge variant={isPublished ? 'default' : 'secondary'}>
             {isPublished ? 'Published' : 'Draft'}

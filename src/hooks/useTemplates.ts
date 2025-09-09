@@ -3,32 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { getUserOrganizationId } from '@/lib/organizationUtils';
 
-export interface Template {
-  id: string;
-  name: string;
-  category: string;
-  master_content: string;
-  master_subject?: string;
-  placeholders?: string[];
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
-  user_id: string;
-  organization_id: string;
-  channels?: {
-    email?: {
-      subject?: string;
-      content?: string;
-      html_content?: string;
-    };
-    sms?: {
-      content?: string;
-    };
-    whatsapp?: {
-      content?: string;
-    };
-  };
-}
+import { Template } from "@/types/template";
 
 export function useTemplates() {
   const [templates, setTemplates] = useState<Template[]>([]);

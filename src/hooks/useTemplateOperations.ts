@@ -1,47 +1,20 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrganization } from "@/contexts/OrganizationContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { Template, DatabaseTemplate, TemplateBuilderData } from "@/types/template";
 
-interface EmailTemplate {
-  id: string;
-  name: string;
-  description: string | null;
-  subject: string | null;
-  preheader: string | null;
-  status: string;
-  category: string | null;
-  updated_at: string;
-  blocks: any[];
-  master_content: string;
-  master_subject?: string;
-  placeholders?: string[];
-  is_active: boolean;
-  channels?: {
-    email?: {
-      subject?: string;
-      content?: string;
-      html_content?: string;
-    };
-    sms?: {
-      content?: string;
-    };
-    whatsapp?: {
-      content?: string;
-    };
-  };
-}
-
-interface UseOptimizedTemplatesReturn {
-  templates: EmailTemplate[];
+interface UseTemplateOperationsReturn {
+  templates: Template[];
   loading: boolean;
   error: string | null;
   searchTerm: string;
   setSearchTerm: (term: string) => void;
-  filteredTemplates: EmailTemplate[];
+  filteredTemplates: Template[];
   refreshTemplates: () => Promise<void>;
   deleteTemplate: (templateId: string) => Promise<boolean>;
-  duplicateTemplate: (template: EmailTemplate) => Promise<boolean>;
+  duplicateTemplate: (template: Template) => Promise<boolean>;
 }
 
 // Debounce utility
@@ -61,45 +34,51 @@ function useDebounce<T>(value: T, delay: number): T {
   return debouncedValue;
 }
 
-// Helper function to extract preview text from template
-const extractPreviewText = (template: EmailTemplate): string => {
-  // First priority: subject line
-  if (template.subject?.trim()) {
-    return template.subject.trim();
-  }
-  
-  // Second priority: preheader
-  if (template.preheader?.trim()) {
-    return template.preheader.trim();
-  }
-  
-  // Third priority: first text block content
-  if (template.blocks && Array.isArray(template.blocks)) {
-    for (const block of template.blocks) {
-      if (block.type === 'text' && block.content?.trim()) {
-        // Remove HTML tags and get first 60 characters
-        const plainText = block.content.replace(/<[^>]*>/g, '').trim();
-        if (plainText) {
-          return plainText.length > 60 ? `${plainText.substring(0, 60)}...` : plainText;
-        }
-      }
-    }
-  }
-  
-  // Fallback: description
-  if (template.description?.trim()) {
-    return template.description.length > 60 ? `${template.description.substring(0, 60)}...` : template.description;
-  }
-  
-  return 'No preview available';
+// Transform database template to our unified interface
+const transformDatabaseTemplate = (dbTemplate: DatabaseTemplate): Template => {
+  return {
+    id: dbTemplate.id,
+    name: dbTemplate.name,
+    category: dbTemplate.category,
+    master_content: dbTemplate.master_content,
+    master_subject: dbTemplate.master_subject || undefined,
+    placeholders: Array.isArray(dbTemplate.placeholders) ? dbTemplate.placeholders as string[] : [],
+    is_active: dbTemplate.is_active,
+    created_at: dbTemplate.created_at,
+    updated_at: dbTemplate.updated_at,
+    user_id: dbTemplate.user_id,
+    organization_id: dbTemplate.organization_id,
+    channels: dbTemplate.template_channel_views?.reduce((acc: any, view: any) => {
+      acc[view.channel] = {
+        subject: view.subject,
+        content: view.content,
+        html_content: view.html_content
+      };
+      return acc;
+    }, {}) || {}
+  };
 };
 
-export function useOptimizedTemplates(): UseOptimizedTemplatesReturn {
-  const [templates, setTemplates] = useState<EmailTemplate[]>([]);
+// Extract placeholders from text content
+const extractPlaceholders = (content: string): string[] => {
+  const placeholderRegex = /{([^}]+)}/g;
+  const placeholders = new Set<string>();
+  let match;
+  
+  while ((match = placeholderRegex.exec(content)) !== null) {
+    placeholders.add(match[1]);
+  }
+  
+  return Array.from(placeholders);
+};
+
+export function useTemplateOperations(): UseTemplateOperationsReturn {
+  const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const { activeOrganizationId } = useOrganization();
+  const { user } = useAuth();
   const { toast } = useToast();
 
   // Debounce search term to avoid excessive filtering
@@ -119,7 +98,7 @@ export function useOptimizedTemplates(): UseOptimizedTemplatesReturn {
       const { data, error: fetchError } = await supabase
         .from('message_templates')
         .select(`
-          id, name, category, master_content, master_subject, placeholders, is_active, updated_at,
+          *,
           template_channel_views(
             channel, subject, content, html_content
           )
@@ -130,32 +109,8 @@ export function useOptimizedTemplates(): UseOptimizedTemplatesReturn {
 
       if (fetchError) throw fetchError;
       
-      // Transform data to match EmailTemplate interface
-      const transformedTemplates = (data || []).map((template: any) => ({
-        id: template.id,
-        name: template.name,
-        description: template.master_content?.substring(0, 200) || null,
-        subject: template.template_channel_views?.find((v: any) => v.channel === 'email')?.subject || template.master_subject || null,
-        preheader: template.template_channel_views?.find((v: any) => v.channel === 'email')?.html_content?.match(/preheader[^>]*>([^<]*)/)?.[1] || null,
-        status: template.is_active ? 'published' : 'draft',
-        category: template.category,
-        updated_at: template.updated_at,
-        blocks: [], // Will be populated from channel views if needed
-        master_content: template.master_content,
-        master_subject: template.master_subject,
-        placeholders: Array.isArray(template.placeholders) ? template.placeholders : [],
-        is_active: template.is_active,
-        channels: template.template_channel_views?.reduce((acc: any, view: any) => {
-          acc[view.channel] = {
-            subject: view.subject,
-            content: view.content,
-            html_content: view.html_content
-          };
-          return acc;
-        }, {}) || {}
-      }));
-      
-      setTemplates(transformedTemplates as EmailTemplate[]);
+      const transformedTemplates = (data || []).map(transformDatabaseTemplate);
+      setTemplates(transformedTemplates);
     } catch (err: any) {
       console.error('Error fetching templates:', err);
       setError(err.message || 'Failed to fetch templates');
@@ -173,7 +128,7 @@ export function useOptimizedTemplates(): UseOptimizedTemplatesReturn {
     if (!activeOrganizationId) return false;
 
     try {
-      // First delete template_channel_views (foreign key dependency)
+      // Use a transaction-like approach by deleting channel views first
       const { error: channelError } = await supabase
         .from('template_channel_views')
         .delete()
@@ -213,24 +168,22 @@ export function useOptimizedTemplates(): UseOptimizedTemplatesReturn {
     }
   }, [activeOrganizationId, toast]);
 
-  const duplicateTemplate = useCallback(async (template: EmailTemplate): Promise<boolean> => {
-    if (!activeOrganizationId) return false;
+  const duplicateTemplate = useCallback(async (template: Template): Promise<boolean> => {
+    if (!activeOrganizationId || !user?.id) return false;
 
     try {
-      const { data: user } = await supabase.auth.getUser();
-      if (!user.user) throw new Error('User not authenticated');
-
+      // Create the duplicate template
       const { data, error: insertError } = await supabase
         .from('message_templates')
         .insert({
           name: `${template.name} (Copy)`,
-          category: template.category || 'general',
-          master_content: template.master_content || template.description || '',
-          master_subject: template.master_subject || template.subject,
+          category: template.category,
+          master_content: template.master_content,
+          master_subject: template.master_subject,
           placeholders: template.placeholders || [],
           is_active: false, // Duplicated templates start as drafts
           organization_id: activeOrganizationId,
-          user_id: user.user.id
+          user_id: user.id
         })
         .select()
         .single();
@@ -238,7 +191,7 @@ export function useOptimizedTemplates(): UseOptimizedTemplatesReturn {
       if (insertError) throw insertError;
 
       // Create channel views if the original template has them
-      if (template.channels) {
+      if (template.channels && Object.keys(template.channels).length > 0) {
         const channelInserts = Object.entries(template.channels).map(([channel, channelData]: [string, any]) => ({
           template_id: data.id,
           channel,
@@ -258,26 +211,14 @@ export function useOptimizedTemplates(): UseOptimizedTemplatesReturn {
         }
       }
 
-      // Transform the new template to match our interface
-      const transformedTemplate = {
-        id: data.id,
-        name: data.name,
-        description: data.master_content?.substring(0, 200) || null,
-        subject: data.master_subject || null,
-        preheader: null,
-        status: 'draft',
-        category: data.category,
-        updated_at: data.updated_at,
-        blocks: [],
-        master_content: data.master_content,
-        master_subject: data.master_subject,
-        placeholders: data.placeholders || [],
-        is_active: data.is_active,
+      // Transform the new template and add to state
+      const newTemplate: Template = {
+        ...data,
+        placeholders: Array.isArray(data.placeholders) ? data.placeholders as string[] : [],
         channels: template.channels || {}
       };
 
-      // Optimistically update local state
-      setTemplates(prev => [transformedTemplate as EmailTemplate, ...prev]);
+      setTemplates(prev => [newTemplate, ...prev]);
       
       toast({
         title: "Template duplicated",
@@ -294,20 +235,20 @@ export function useOptimizedTemplates(): UseOptimizedTemplatesReturn {
       });
       return false;
     }
-  }, [activeOrganizationId, toast]);
+  }, [activeOrganizationId, user?.id, toast]);
 
-  // Memoized filtered templates to prevent unnecessary recalculations
+  // Memoized filtered templates
   const filteredTemplates = useMemo(() => {
     if (!debouncedSearchTerm.trim()) return templates;
     
     const searchLower = debouncedSearchTerm.toLowerCase();
     return templates.filter(template => {
-      const matchesSearch = 
+      return (
         template.name.toLowerCase().includes(searchLower) ||
-        template.description?.toLowerCase().includes(searchLower) ||
-        template.subject?.toLowerCase().includes(searchLower) ||
-        extractPreviewText(template).toLowerCase().includes(searchLower);
-      return matchesSearch;
+        template.master_content.toLowerCase().includes(searchLower) ||
+        template.master_subject?.toLowerCase().includes(searchLower) ||
+        template.category.toLowerCase().includes(searchLower)
+      );
     });
   }, [templates, debouncedSearchTerm]);
 

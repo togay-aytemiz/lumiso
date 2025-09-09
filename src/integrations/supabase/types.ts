@@ -1899,6 +1899,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: number
       }
+      cleanup_orphaned_channel_views: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       ensure_default_lead_field_definitions: {
         Args: { org_id: string; user_uuid: string }
         Returns: undefined

@@ -18,7 +18,7 @@ import { NavigationGuardDialog } from '@/components/settings/NavigationGuardDial
 import { useSettingsNavigation } from '@/hooks/useSettingsNavigation';
 import { TemplateNameDialog } from '@/components/template-builder/TemplateNameDialog';
 import { supabase } from '@/integrations/supabase/client';
-import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { TemplateErrorBoundary } from "@/components/template-builder/TemplateErrorBoundary";
 
 // Optimized TemplateBuilder component
 const OptimizedTemplateBuilderContent = React.memo(() => {
@@ -458,8 +458,8 @@ OptimizedTemplateBuilderContent.displayName = 'OptimizedTemplateBuilderContent';
 
 export default function TemplateBuilder() {
   return (
-    <ErrorBoundary>
+    <TemplateErrorBoundary>
       <OptimizedTemplateBuilderContent />
-    </ErrorBoundary>
+    </TemplateErrorBoundary>
   );
 }

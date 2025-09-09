@@ -11,7 +11,7 @@ import { formatDistanceToNow } from "date-fns";
 import { DeleteTemplateDialog } from "@/components/template-builder/DeleteTemplateDialog";
 import { useTemplateOperations } from "@/hooks/useTemplateOperations";
 import { LoadingSkeleton } from "@/components/ui/loading-skeleton";
-import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { TemplateErrorBoundary } from "@/components/template-builder/TemplateErrorBoundary";
 import { Template } from "@/types/template";
 
 // Optimized Templates component with memoization and error handling
@@ -276,8 +276,8 @@ OptimizedTemplatesContent.displayName = 'OptimizedTemplatesContent';
 
 export default function Templates() {
   return (
-    <ErrorBoundary>
+    <TemplateErrorBoundary>
       <OptimizedTemplatesContent />
-    </ErrorBoundary>
+    </TemplateErrorBoundary>
   );
 }

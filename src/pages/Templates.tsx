@@ -163,9 +163,9 @@ const OptimizedTemplatesContent = React.memo(() => {
               e.stopPropagation();
               handleDuplicateTemplate(template);
             }}
+            title="Duplicate template"
           >
-            <Copy className="h-4 w-4 mr-1" />
-            Duplicate
+            <Copy className="h-4 w-4" />
           </Button>
           <Button
             size="sm"
@@ -175,9 +175,9 @@ const OptimizedTemplatesContent = React.memo(() => {
               handleDeleteTemplate(template);
             }}
             className="text-destructive hover:text-destructive border-destructive/20 hover:bg-destructive/10"
+            title="Delete template"
           >
-            <Trash2 className="h-4 w-4 mr-1" />
-            Delete
+            <Trash2 className="h-4 w-4" />
           </Button>
         </div>
       )

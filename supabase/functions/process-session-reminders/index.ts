@@ -56,7 +56,7 @@ async function processScheduledReminders(supabase: any) {
     .from('scheduled_session_reminders')
     .select(`
       *,
-      sessions!inner (
+      sessions!fk_scheduled_session_reminders_session_id (
         id,
         session_date,
         session_time,
@@ -71,7 +71,7 @@ async function processScheduledReminders(supabase: any) {
           organization_id
         )
       ),
-      workflows!inner (
+      workflows!fk_scheduled_session_reminders_workflow_id (
         id,
         name,
         organization_id

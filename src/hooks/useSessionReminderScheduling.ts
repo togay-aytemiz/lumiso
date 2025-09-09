@@ -7,20 +7,34 @@ export function useSessionReminderScheduling() {
 
   const scheduleSessionReminders = useCallback(async (sessionId: string) => {
     try {
-      console.log(`Scheduling reminders for session: ${sessionId}`);
+      console.log(`🔔 Scheduling reminders for session: ${sessionId}`);
 
       const { error } = await supabase.rpc('schedule_session_reminders', {
         session_id_param: sessionId
       });
 
       if (error) {
-        console.error('Error scheduling session reminders:', error);
+        console.error('❌ Error scheduling session reminders:', error);
         throw error;
       }
 
-      console.log(`Successfully scheduled reminders for session: ${sessionId}`);
+      console.log(`✅ Successfully scheduled reminders for session: ${sessionId}`);
+      
+      // Verify reminders were created
+      const { data: reminders, error: checkError } = await supabase
+        .from('scheduled_session_reminders')
+        .select('id, reminder_type, scheduled_for, status')
+        .eq('session_id', sessionId)
+        .eq('status', 'pending');
+        
+      if (!checkError && reminders) {
+        console.log(`📅 Created ${reminders.length} reminder(s):`, reminders.map(r => 
+          `${r.reminder_type} at ${r.scheduled_for}`
+        ));
+      }
+      
     } catch (error: any) {
-      console.error('Failed to schedule session reminders:', error);
+      console.error('❌ Failed to schedule session reminders:', error);
       toast({
         title: 'Warning',
         description: 'Session created but reminders could not be scheduled automatically',

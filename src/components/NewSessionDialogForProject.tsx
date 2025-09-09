@@ -159,9 +159,10 @@ export function NewSessionDialogForProject({
 
       // Schedule session reminders
       try {
+        console.log(`⏰ Scheduling reminders for session: ${newSession.id}`);
         await scheduleSessionReminders(newSession.id);
       } catch (reminderError) {
-        console.error('Error scheduling session reminders:', reminderError);
+        console.error('❌ Error scheduling session reminders:', reminderError);
         // Don't block session creation if reminder scheduling fails
       }
 

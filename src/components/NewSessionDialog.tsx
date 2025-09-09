@@ -262,7 +262,8 @@ const NewSessionDialog = ({ onSessionScheduled, children }: NewSessionDialogProp
 
       // Trigger workflow for session scheduled
       try {
-        await triggerSessionScheduled(newSession.id, organizationId, {
+        console.log(`🚀 Triggering session_scheduled workflow for session: ${newSession.id}`);
+        const workflowResult = await triggerSessionScheduled(newSession.id, organizationId, {
           session_date: sessionData.session_date,
           session_time: sessionData.session_time,
           location: sessionData.location,
@@ -270,16 +271,18 @@ const NewSessionDialog = ({ onSessionScheduled, children }: NewSessionDialogProp
           lead_id: leadId,
           project_id: selectedProjectId
         });
+        console.log(`✅ Session workflow result:`, workflowResult);
       } catch (workflowError) {
-        console.error('Error triggering workflow:', workflowError);
+        console.error('❌ Error triggering workflow:', workflowError);
         // Don't block session creation if workflow fails
       }
 
       // Schedule session reminders
       try {
+        console.log(`⏰ Scheduling reminders for session: ${newSession.id}`);
         await scheduleSessionReminders(newSession.id);
       } catch (reminderError) {
-        console.error('Error scheduling session reminders:', reminderError);
+        console.error('❌ Error scheduling session reminders:', reminderError);
         // Don't block session creation if reminder scheduling fails
       }
 

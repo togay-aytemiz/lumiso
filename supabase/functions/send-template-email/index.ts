@@ -526,10 +526,11 @@ function generateHTMLContent(
             `;
           }
           if (sessionData.showLocation) {
+            const locationValue = replacePlaceholders('{session_location}', mockData);
             htmlContent += `
               <div class="session-detail-item">
                 <span class="session-detail-label">Location:</span>
-                <span class="session-detail-value">${mockData.session_location || 'TBD'}</span>
+                <span class="session-detail-value">${locationValue}</span>
               </div>
             `;
           }

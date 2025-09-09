@@ -1310,7 +1310,7 @@ export type Database = {
           project_id: string | null
           session_date: string
           session_time: string
-          status: Database["public"]["Enums"]["session_status"]
+          status: string
           updated_at: string
           user_id: string
         }
@@ -1325,7 +1325,7 @@ export type Database = {
           project_id?: string | null
           session_date: string
           session_time: string
-          status?: Database["public"]["Enums"]["session_status"]
+          status?: string
           updated_at?: string
           user_id: string
         }
@@ -1340,7 +1340,7 @@ export type Database = {
           project_id?: string | null
           session_date?: string
           session_time?: string
-          status?: Database["public"]["Enums"]["session_status"]
+          status?: string
           updated_at?: string
           user_id?: string
         }
@@ -2055,12 +2055,6 @@ export type Database = {
         | "completed"
         | "lost"
       onboarding_stage: "not_started" | "in_progress" | "completed" | "skipped"
-      session_status:
-        | "planned"
-        | "completed"
-        | "in_post_processing"
-        | "delivered"
-        | "cancelled"
       system_role: "Owner" | "Member"
     }
     CompositeTypes: {
@@ -2206,13 +2200,6 @@ export const Constants = {
         "lost",
       ],
       onboarding_stage: ["not_started", "in_progress", "completed", "skipped"],
-      session_status: [
-        "planned",
-        "completed",
-        "in_post_processing",
-        "delivered",
-        "cancelled",
-      ],
       system_role: ["Owner", "Member"],
     },
   },

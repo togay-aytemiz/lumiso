@@ -67,21 +67,48 @@ export function EnhancedAddLeadDialog({
   useEffect(() => {
     if (open && !fieldsLoading) {
       // Reset form when dialog opens
-      const defaultValues: Record<string, any> = {};
-      fieldDefinitions.forEach(field => {
-        const fieldName = `field_${field.field_key}`;
-        switch (field.field_type) {
-          case 'checkbox':
-            defaultValues[fieldName] = false;
-            break;
-          case 'number':
-            defaultValues[fieldName] = '';
-            break;
-          default:
-            defaultValues[fieldName] = '';
+      const setDefaultValues = async () => {
+        const defaultValues: Record<string, any> = {};
+        
+        // Get organization ID for status lookup
+        const organizationId = await getUserOrganizationId();
+        
+        for (const field of fieldDefinitions) {
+          const fieldName = `field_${field.field_key}`;
+          
+          if (field.field_key === 'status' && organizationId) {
+            // Set default status to "New" or the default status
+            try {
+              const { data: defaultStatus } = await supabase
+                .from('lead_statuses')
+                .select('name')
+                .eq('organization_id', organizationId)
+                .eq('is_default', true)
+                .maybeSingle();
+              
+              defaultValues[fieldName] = defaultStatus?.name || 'New';
+            } catch (error) {
+              console.error('Error fetching default status:', error);
+              defaultValues[fieldName] = 'New';
+            }
+          } else {
+            switch (field.field_type) {
+              case 'checkbox':
+                defaultValues[fieldName] = false;
+                break;
+              case 'number':
+                defaultValues[fieldName] = '';
+                break;
+              default:
+                defaultValues[fieldName] = '';
+            }
+          }
         }
-      });
-      form.reset(defaultValues);
+        
+        form.reset(defaultValues);
+      };
+      
+      setDefaultValues();
     }
   }, [open, fieldsLoading, fieldDefinitions, form]);
 

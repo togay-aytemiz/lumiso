@@ -1,6 +1,57 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
+// Date and time formatting functions
+function formatDate(dateString: string, format: string = 'DD/MM/YYYY'): string {
+  if (!dateString) return '';
+  
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return dateString;
+  
+  const day = date.getDate().toString().padStart(2, '0');
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const year = date.getFullYear();
+  
+  switch (format) {
+    case 'MM/DD/YYYY':
+      return `${month}/${day}/${year}`;
+    case 'DD/MM/YYYY':
+      return `${day}/${month}/${year}`;
+    case 'YYYY-MM-DD':
+      return `${year}-${month}-${day}`;
+    case 'DD-MM-YYYY':
+      return `${day}-${month}-${year}`;
+    case 'MM-DD-YYYY':
+      return `${month}-${day}-${year}`;
+    default:
+      return `${day}/${month}/${year}`; // Default to DD/MM/YYYY
+  }
+}
+
+function formatTime(timeString: string, format: string = '12-hour'): string {
+  if (!timeString) return '';
+  
+  // Handle different time formats
+  let hours: number, minutes: number;
+  
+  if (timeString.includes(':')) {
+    const [h, m] = timeString.split(':').map(Number);
+    hours = h;
+    minutes = m || 0;
+  } else {
+    return timeString; // Return as-is if not in expected format
+  }
+  
+  if (format === '24-hour') {
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+  } else {
+    // Convert to 12-hour format
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    const displayHours = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+    return `${displayHours}:${minutes.toString().padStart(2, '0')} ${ampm}`;
+  }
+}
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -413,10 +464,10 @@ async function executeSendMessageStep(supabase: any, step: any, execution: any) 
           lead_email: entityData.customer_email || clientEmail,
           lead_phone: entityData.customer_phone || '',
           
-          // Session info with proper formatting
+          // Session info with proper formatting using org settings
           session_date: formatDate(entityData.session_date),
           session_time: formatTime(entityData.session_time),
-          session_location: entityData.location || '-', // Use dash for empty location
+          session_location: (entityData.location && entityData.location !== 'Studio' && entityData.location.trim() !== '') ? entityData.location : '-', // Use dash for empty/default location
           session_notes: entityData.notes || '',
           
           // Project info

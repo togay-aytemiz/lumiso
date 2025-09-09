@@ -36,9 +36,13 @@ interface SendEmailRequest {
 
 function replacePlaceholders(text: string, data: Record<string, string>): string {
   return text.replace(/\{(\w+)(?:\|([^}]*))?\}/g, (match, key, fallback) => {
-    // Special handling for session_location - use dash if empty
-    if (key === 'session_location' && (!data[key] || data[key].trim() === '')) {
-      return '-';
+    // Special handling for session_location - use dash if empty or default values
+    if (key === 'session_location') {
+      const value = data[key];
+      if (!value || value.trim() === '' || value === 'Studio' || value === 'TBD') {
+        return '-';
+      }
+      return value;
     }
     return data[key] || fallback || match;
   });
@@ -900,35 +904,57 @@ async function handleWorkflowEmail(requestData: SendEmailRequest): Promise<Respo
       return await sendSimpleTextEmail(template, recipient_email, recipient_name, mockData, workflow_execution_id, supabase);
     }
 
-    // Use blocks from template.blocks if available, otherwise convert content to blocks
-    let emailBlocks = template.blocks;
+    // Try to get blocks from email_templates table if template was created in template builder
+    let emailBlocks = null;
     
-    if (!emailBlocks || emailBlocks.length === 0) {
-      console.log('No blocks found, converting content to text block');
-      emailBlocks = [{
-        id: 'content-block',
-        type: 'text',
-        order: 1,
-        data: {
-          content: emailChannelView.content || template.master_content || 'No content available',
-          formatting: {
-            alignment: 'left',
-            fontFamily: 'Arial',
-            fontSize: 'p'
+    // Check if this template has blocks from email_templates table
+    const { data: emailTemplate } = await supabase
+      .from('email_templates')
+      .select('blocks, subject, preheader')
+      .eq('id', template_id)
+      .single();
+    
+    if (emailTemplate && emailTemplate.blocks && emailTemplate.blocks.length > 0) {
+      console.log('Using blocks from email_templates:', emailTemplate.blocks.length, 'blocks');
+      emailBlocks = emailTemplate.blocks;
+    } else {
+      // Fallback: Try to get blocks from template_channel_views
+      if (emailChannelView && emailChannelView.blocks && emailChannelView.blocks.length > 0) {
+        console.log('Using blocks from template_channel_views:', emailChannelView.blocks.length, 'blocks');
+        emailBlocks = emailChannelView.blocks;
+      } else {
+        // Final fallback: Create text block from content
+        console.log('No blocks found, converting content to text block');
+        emailBlocks = [{
+          id: 'content-block',
+          type: 'text',
+          order: 1,
+          data: {
+            content: emailChannelView.content || template.master_content || 'No content available',
+            formatting: {
+              alignment: 'left',
+              fontFamily: 'Arial',
+              fontSize: 'p'
+            }
           }
-        }
-      }];
+        }];
+      }
     }
 
     console.log('Using', emailBlocks.length, 'blocks for email rendering');
 
     // Generate email content using the same system as template builder
-    const finalSubject = emailChannelView.subject || template.name || 'Notification';
+    const finalSubject = emailChannelView.subject || emailTemplate?.subject || template.name || 'Notification';
+    const preheader = emailTemplate?.preheader || emailChannelView.preheader;
+    
+    console.log('Final subject for email:', finalSubject);
+    console.log('Preheader:', preheader);
+    
     const htmlContent = generateHTMLContent(
       emailBlocks, 
       mockData || {}, 
       finalSubject, 
-      emailChannelView.preheader,
+      preheader,
       orgSettings,
       false // Not preview mode
     );

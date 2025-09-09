@@ -823,7 +823,7 @@ async function handleWorkflowEmail(requestData: SendEmailRequest): Promise<Respo
     
     console.log('Workflow email - Template ID:', template_id);
     console.log('Workflow email - Recipient:', recipient_email);
-    console.log('Workflow email - Mock data:', mockData);
+    console.log('Workflow email - Mock data keys:', Object.keys(mockData || {}));
 
     if (!template_id || !recipient_email) {
       return new Response(
@@ -832,50 +832,113 @@ async function handleWorkflowEmail(requestData: SendEmailRequest): Promise<Respo
       );
     }
 
-    // Get template data
+    // Get template data from message_templates (not email_templates)
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     
+    console.log('Fetching template from message_templates table...');
+    
+    // First try to get template with channel views
     const { data: template, error: templateError } = await supabase
-      .from('email_templates')
-      .select('*')
+      .from('message_templates')
+      .select(`
+        *,
+        template_channel_views!inner (
+          channel,
+          subject,
+          content,
+          blocks
+        )
+      `)
       .eq('id', template_id)
+      .eq('template_channel_views.channel', 'email')
       .single();
 
     if (templateError || !template) {
       console.error('Template fetch error:', templateError);
-      return new Response(
-        JSON.stringify({ error: 'Template not found' }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      
+      // Fallback: try without channel view filter
+      const { data: fallbackTemplate, error: fallbackError } = await supabase
+        .from('message_templates')
+        .select('*')
+        .eq('id', template_id)
+        .single();
+        
+      if (fallbackError || !fallbackTemplate) {
+        console.error('Fallback template fetch error:', fallbackError);
+        return new Response(
+          JSON.stringify({ error: 'Template not found in message_templates' }),
+          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      // Use master content as fallback
+      console.log('Using fallback template with master content');
+      return await sendSimpleTextEmail(fallbackTemplate, recipient_email, recipient_name, mockData, workflow_execution_id, supabase);
     }
 
-    // Get organization settings
-    const { data: orgSettings } = await supabase
+    console.log('Template found:', template.name);
+    console.log('Template channel views:', template.template_channel_views);
+
+    // Get organization settings with comprehensive data
+    const { data: orgSettings, error: orgError } = await supabase
       .from('organization_settings')
       .select('photography_business_name, primary_brand_color, logo_url, phone, email, date_format, time_format')
       .eq('organization_id', template.organization_id)
       .single();
 
-    console.log('Organization settings:', orgSettings);
+    if (orgError) {
+      console.warn('Could not fetch organization settings:', orgError);
+    } else {
+      console.log('Organization settings loaded:', orgSettings?.photography_business_name);
+    }
 
-    // Use template data for email generation
-    const finalSubject = template.subject || 'Notification';
+    // Get the email channel view
+    const emailChannelView = template.template_channel_views[0];
+    if (!emailChannelView) {
+      console.warn('No email channel view found, using master content');
+      return await sendSimpleTextEmail(template, recipient_email, recipient_name, mockData, workflow_execution_id, supabase);
+    }
+
+    // Use blocks from channel view if available, otherwise convert content to blocks
+    let emailBlocks = emailChannelView.blocks;
+    
+    if (!emailBlocks || emailBlocks.length === 0) {
+      console.log('No blocks found, converting content to text block');
+      emailBlocks = [{
+        id: 'content-block',
+        type: 'text',
+        order: 1,
+        data: {
+          content: emailChannelView.content || template.master_content || 'No content available',
+          formatting: {
+            alignment: 'left',
+            fontFamily: 'Arial',
+            fontSize: 'p'
+          }
+        }
+      }];
+    }
+
+    console.log('Using', emailBlocks.length, 'blocks for email rendering');
+
+    // Generate email content using the same system as template builder
+    const finalSubject = emailChannelView.subject || template.name || 'Notification';
     const htmlContent = generateHTMLContent(
-      template.blocks || [], 
+      emailBlocks, 
       mockData || {}, 
       finalSubject, 
-      template.preheader,
+      emailChannelView.preheader,
       orgSettings,
-      false
+      false // Not preview mode
     );
-    const textContent = generatePlainText(template.blocks || [], mockData || {});
+    const textContent = generatePlainText(emailBlocks, mockData || {});
 
     // Get business name for sender
-    const businessName = orgSettings?.photography_business_name || 'Lumiso';
+    const businessName = orgSettings?.photography_business_name || 'Your Business';
     
     const emailData = {
       from: `${businessName} <hello@updates.lumiso.app>`,
-      reply_to: 'hello@updates.lumiso.app',
+      reply_to: orgSettings?.email || 'hello@updates.lumiso.app',
       to: [recipient_email],
       subject: replacePlaceholders(finalSubject, mockData || {}),
       html: htmlContent,
@@ -886,14 +949,16 @@ async function handleWorkflowEmail(requestData: SendEmailRequest): Promise<Respo
         'X-Mailer': 'Lumiso Template System',
         'X-Priority': '3',
         'X-Auto-Response-Suppress': 'OOF',
+        'X-Template-ID': template_id,
+        'X-Workflow-Execution': workflow_execution_id || 'none',
       },
     };
 
-    console.log('Sending workflow email with Resend to:', recipient_email);
-    console.log('Email data:', emailData);
+    console.log('Sending workflow email with subject:', emailData.subject);
+    console.log('HTML content length:', htmlContent.length);
     
     const emailResponse = await resend.emails.send(emailData);
-    console.log('Workflow email sent successfully:', emailResponse);
+    console.log('Workflow email sent successfully. Email ID:', emailResponse.data?.id);
 
     // Log the email send
     try {
@@ -905,10 +970,13 @@ async function handleWorkflowEmail(requestData: SendEmailRequest): Promise<Respo
         email_id: emailResponse.data?.id,
         metadata: {
           template_id,
+          template_name: template.name,
           recipient_email,
           recipient_name,
           workflow_execution_id,
-          subject: emailData.subject
+          subject: emailData.subject,
+          business_name: businessName,
+          variable_count: Object.keys(mockData || {}).length
         }
       });
     } catch (logError) {
@@ -919,7 +987,9 @@ async function handleWorkflowEmail(requestData: SendEmailRequest): Promise<Respo
       JSON.stringify({ 
         success: true, 
         emailId: emailResponse.data?.id,
-        message: 'Workflow email sent successfully'
+        message: 'Workflow email sent successfully',
+        template_name: template.name,
+        recipient: recipient_email
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
@@ -929,11 +999,73 @@ async function handleWorkflowEmail(requestData: SendEmailRequest): Promise<Respo
     return new Response(
       JSON.stringify({ 
         error: error.message,
-        details: error.stack 
+        details: error.stack,
+        context: 'handleWorkflowEmail'
       }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
+}
+
+// Fallback function for templates without blocks
+async function sendSimpleTextEmail(
+  template: any, 
+  recipient_email: string, 
+  recipient_name: string | undefined, 
+  mockData: Record<string, string> | undefined,
+  workflow_execution_id: string | undefined,
+  supabase: any
+): Promise<Response> {
+  console.log('Sending simple text email fallback');
+  
+  // Get organization settings
+  const { data: orgSettings } = await supabase
+    .from('organization_settings')
+    .select('photography_business_name, email')
+    .eq('organization_id', template.organization_id)
+    .single();
+
+  const businessName = orgSettings?.photography_business_name || 'Your Business';
+  const content = replacePlaceholders(template.master_content || 'No content available', mockData || {});
+  
+  // Create simple HTML structure
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <title>${template.name}</title>
+    </head>
+    <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <div style="white-space: pre-wrap;">${content}</div>
+      <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+      <p style="font-size: 14px; color: #666; text-align: center;">
+        This email was sent by ${businessName}
+      </p>
+    </body>
+    </html>
+  `;
+
+  const emailData = {
+    from: `${businessName} <hello@updates.lumiso.app>`,
+    reply_to: orgSettings?.email || 'hello@updates.lumiso.app',
+    to: [recipient_email],
+    subject: template.name || 'Notification',
+    html: htmlContent,
+    text: content,
+  };
+
+  const emailResponse = await resend.emails.send(emailData);
+  console.log('Simple text email sent successfully');
+
+  return new Response(
+    JSON.stringify({ 
+      success: true, 
+      emailId: emailResponse.data?.id,
+      message: 'Simple text email sent successfully'
+    }),
+    { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+  );
 }
 
 serve(handler);

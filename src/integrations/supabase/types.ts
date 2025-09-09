@@ -1646,6 +1646,42 @@ export type Database = {
         }
         Relationships: []
       }
+      workflow_execution_metrics: {
+        Row: {
+          average_execution_time_ms: number | null
+          created_at: string | null
+          date: string
+          failed_executions: number | null
+          id: string
+          organization_id: string
+          successful_executions: number | null
+          total_executions: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          average_execution_time_ms?: number | null
+          created_at?: string | null
+          date?: string
+          failed_executions?: number | null
+          id?: string
+          organization_id: string
+          successful_executions?: number | null
+          total_executions?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          average_execution_time_ms?: number | null
+          created_at?: string | null
+          date?: string
+          failed_executions?: number | null
+          id?: string
+          organization_id?: string
+          successful_executions?: number | null
+          total_executions?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       workflow_executions: {
         Row: {
           completed_at: string | null
@@ -1906,6 +1942,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: number
       }
+      cleanup_workflow_executions: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       ensure_default_lead_field_definitions: {
         Args: { org_id: string; user_uuid: string }
         Returns: undefined
@@ -1997,6 +2037,15 @@ export type Database = {
       get_user_organization_ids: {
         Args: Record<PropertyKey, never>
         Returns: string[]
+      }
+      get_workflow_execution_fingerprint: {
+        Args: {
+          trigger_data_param?: Json
+          trigger_entity_id_param: string
+          trigger_entity_type_param: string
+          workflow_id_param: string
+        }
+        Returns: string
       }
       initialize_all_organization_field_definitions: {
         Args: Record<PropertyKey, never>

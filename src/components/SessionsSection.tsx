@@ -12,7 +12,7 @@ interface Session {
   session_date: string;
   session_time: string;
   notes: string;
-  status: 'planned' | 'completed' | 'in_post_processing' | 'delivered' | 'cancelled';
+  status: string;
   project_id?: string;
   lead_id: string;
 }
@@ -98,10 +98,10 @@ export function SessionsSection({
               {sessions.map(session => (
                 <DeadSimpleSessionBanner 
                   key={session.id} 
-                  session={{
-                    ...session, 
-                    projects: { name: projectName, project_types: { name: projectName.split(' ')[0] } }
-                  }} 
+                   session={{
+                     ...session, 
+                     projects: { name: projectName, project_types: { name: projectName.split(' ')[0] } }
+                   } as any}
                   onClick={() => handleSessionClick(session.id)}
                 />
               ))}

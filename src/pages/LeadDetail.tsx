@@ -43,13 +43,12 @@ interface Lead {
   assignees?: string[];
   user_id: string;
 }
-type SessionStatus = 'planned' | 'completed' | 'in_post_processing' | 'delivered' | 'cancelled';
 interface Session {
   id: string;
   session_date: string;
   session_time: string;
   notes: string;
-  status: SessionStatus;
+  status: string;
   project_id?: string;
   lead_id: string;
   project_name?: string;
@@ -906,7 +905,7 @@ const LeadDetail = () => {
 
       {/* Enhanced Sessions Section */}
       <EnhancedSessionsSection
-        sessions={sessions}
+        sessions={sessions as any}
         loading={loading}
         onSessionClick={handleSessionClick}
       />

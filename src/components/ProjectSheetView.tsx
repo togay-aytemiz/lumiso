@@ -52,7 +52,7 @@ interface Session {
   session_date: string;
   session_time: string;
   notes: string;
-  status: 'planned' | 'completed' | 'in_post_processing' | 'delivered' | 'cancelled';
+  status: string;
   project_id?: string;
   lead_id: string;
 }

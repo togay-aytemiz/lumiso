@@ -842,24 +842,24 @@ async function handleWorkflowEmail(requestData: SendEmailRequest): Promise<Respo
       );
     }
 
-    // Get template data from message_templates (not email_templates)
+    // Get template data from message_templates
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     
     console.log('Fetching template from message_templates table...');
     
-    // First try to get template with channel views
+    // Get template with blocks for proper rendering
     const { data: template, error: templateError } = await supabase
       .from('message_templates')
       .select(`
         *,
-        template_channel_views (
+        template_channel_views!inner (
           channel,
           subject,
-          content,
-          html_content
+          content
         )
       `)
       .eq('id', template_id)
+      .eq('template_channel_views.channel', 'email')
       .single();
 
     console.log('Template fetch result:', template ? 'Found' : 'Not found');
@@ -876,21 +876,8 @@ async function handleWorkflowEmail(requestData: SendEmailRequest): Promise<Respo
     }
 
     console.log('Template found:', template.name);
-    console.log('Channel views count:', template.template_channel_views?.length || 0);
-
-    // Find the email channel view
-    const emailChannelView = template.template_channel_views?.find((cv: any) => cv.channel === 'email');
     
-    if (!emailChannelView) {
-      console.warn('No email channel view found, using master content');
-      return await sendSimpleTextEmail(template, recipient_email, recipient_name, mockData, workflow_execution_id, supabase);
-    }
-
-    console.log('Email channel view found with subject:', emailChannelView.subject);
-    console.log('Email channel view has html_content:', !!emailChannelView.html_content);
-    console.log('Email channel view has content:', !!emailChannelView.content);
-
-    // Get organization settings with comprehensive data
+    // Get organization settings
     const { data: orgSettings, error: orgError } = await supabase
       .from('organization_settings')
       .select('photography_business_name, primary_brand_color, logo_url, phone, email, date_format, time_format')
@@ -903,53 +890,89 @@ async function handleWorkflowEmail(requestData: SendEmailRequest): Promise<Respo
       console.log('Organization settings loaded:', orgSettings?.photography_business_name || 'No business name');
     }
 
-    // Prepare email content and subject - Use html_content if available, otherwise content
-    let emailContent = '';
-    let emailSubject = '';
-    
-    if (emailChannelView) {
-      emailSubject = emailChannelView.subject || template.master_subject || template.name || 'Notification';
-      
-      // Use HTML content if available, otherwise plain content
-      if (emailChannelView.html_content) {
-        emailContent = emailChannelView.html_content;
-        console.log('Using HTML content from channel view');
-      } else if (emailChannelView.content) {
-        emailContent = emailChannelView.content;
-        console.log('Using plain content from channel view');
-      } else if (template.master_content) {
-        emailContent = template.master_content;
-        console.log('Using master content as fallback');
-      }
+    // Get email channel view data
+    const emailChannelView = template.template_channel_views?.[0];
+    if (!emailChannelView) {
+      console.warn('No email channel view found');
+      return new Response(
+        JSON.stringify({ error: 'No email template configuration found' }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
+    const emailSubject = emailChannelView.subject || template.master_subject || template.name || 'Notification';
     console.log('Email subject before replacement:', emailSubject);
-    console.log('Email content preview (first 100 chars):', emailContent.substring(0, 100));
-    console.log('Mock data for replacement:', JSON.stringify(mockData, null, 2));
+
+    // Convert template content to blocks format for consistent rendering
+    // This ensures workflow emails use the same rendering path as template builder tests
+    const blocks: TemplateBlock[] = [];
     
-    // Replace placeholders in both subject and content
-    const processedSubject = replacePlaceholders(emailSubject, mockData || {});
-    const processedContent = replacePlaceholders(emailContent, mockData || {});
-    
-    console.log('Processed subject:', processedSubject);
-    console.log('Processed content preview (first 100 chars):', processedContent.substring(0, 100));
-    
-    // Prepare final HTML content
-    let finalHtmlContent = '';
-    if (emailChannelView?.html_content || processedContent.includes('<')) {
-      // Already HTML or has HTML tags
-      finalHtmlContent = processedContent;
+    // If we have template blocks, use them
+    if (template.blocks && Array.isArray(template.blocks)) {
+      blocks.push(...template.blocks);
     } else {
-      // Plain text - wrap in basic HTML structure
-      finalHtmlContent = `
-        <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; padding: 20px;">
-          ${processedContent.replace(/\n/g, '<br>')}
-        </div>
-      `;
+      // Convert plain content to text blocks for consistent rendering
+      const content = emailChannelView.content || template.master_content || '';
+      const contentLines = content.split('\n').filter(line => line.trim());
+      
+      contentLines.forEach((line, index) => {
+        if (line.includes('Date:') || line.includes('Time:') || line.includes('Location:')) {
+          // Create session details block
+          blocks.push({
+            id: `session-details-${index}`,
+            type: 'session-details',
+            data: {
+              showDate: line.includes('Date:') || content.includes('{session_date}'),
+              showTime: line.includes('Time:') || content.includes('{session_time}'),
+              showLocation: line.includes('Location:') || content.includes('{session_location}'),
+              showNotes: false
+            },
+            order: index
+          });
+        } else if (line.trim() === '---' || line.includes('━')) {
+          // Create divider block
+          blocks.push({
+            id: `divider-${index}`,
+            type: 'divider',
+            data: {
+              style: 'line',
+              color: '#e5e5e5'
+            },
+            order: index
+          });
+        } else if (line.trim()) {
+          // Create text block
+          blocks.push({
+            id: `text-${index}`,
+            type: 'text',
+            data: {
+              content: line,
+              formatting: {
+                fontSize: 'p',
+                alignment: 'left',
+                fontFamily: 'Arial'
+              }
+            },
+            order: index
+          });
+        }
+      });
     }
+
+    console.log('Generated blocks for workflow email:', blocks.length);
+
+    // Use the same HTML generation function as template builder tests
+    const finalHtmlContent = generateHTMLContent(
+      blocks, 
+      mockData || {}, 
+      emailSubject, 
+      undefined, // no preheader
+      orgSettings,
+      false // not preview mode
+    );
     
-    // Create plain text version
-    const plainTextContent = processedContent.replace(/<[^>]*>/g, '').replace(/\n\s*\n/g, '\n');
+    // Create plain text version using the same function
+    const plainTextContent = generatePlainText(blocks, mockData || {});
     
     console.log('Final HTML content length:', finalHtmlContent.length);
     console.log('Final plain text length:', plainTextContent.length);

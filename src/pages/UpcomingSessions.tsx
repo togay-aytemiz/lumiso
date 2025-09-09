@@ -24,7 +24,7 @@ interface Session {
   session_date: string;
   session_time: string;
   notes: string;
-  status: 'planned' | 'completed' | 'in_post_processing' | 'delivered' | 'cancelled';
+  status: string;
   created_at: string;
   project_id?: string | null;
   project_name?: string;

@@ -4,14 +4,12 @@ import { formatTime, cn } from "@/lib/utils";
 import { getRelativeDate, isOverdueSession, getDateDisplayClasses } from "@/lib/dateUtils";
 import SessionStatusBadge from "@/components/SessionStatusBadge";
 
-type SessionStatus = 'planned' | 'completed' | 'in_post_processing' | 'delivered' | 'cancelled';
-
 interface Session {
   id: string;
   session_date: string;
   session_time: string;
   notes?: string;
-  status: SessionStatus;
+  status: string;
   project_id?: string;
   leads?: {
     name: string;

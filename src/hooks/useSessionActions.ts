@@ -2,8 +2,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useCalendarSync } from './useCalendarSync';
 
-type SessionStatus = 'planned' | 'completed' | 'in_post_processing' | 'delivered' | 'cancelled';
-
 export const useSessionActions = () => {
   const { toast } = useToast();
   const { deleteSessionEvent } = useCalendarSync();
@@ -36,7 +34,7 @@ export const useSessionActions = () => {
     }
   };
 
-  const updateSessionStatus = async (sessionId: string, status: SessionStatus) => {
+  const updateSessionStatus = async (sessionId: string, status: string) => {
     try {
       const { error } = await supabase
         .from('sessions')

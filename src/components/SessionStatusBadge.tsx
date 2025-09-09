@@ -12,7 +12,7 @@ interface SessionStatusRow {
   color: string;
 }
 
-type SessionEnum = 'planned' | 'completed' | 'in_post_processing' | 'delivered' | 'cancelled';
+type SessionEnum = string;
 
 interface SessionStatusBadgeProps {
   sessionId: string;

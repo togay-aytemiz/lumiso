@@ -9,14 +9,12 @@ import { formatLongDate, formatTime } from "@/lib/utils";
 import { useSessionActions } from "@/hooks/useSessionActions";
 import SessionStatusBadge from "@/components/SessionStatusBadge";
 
-type SessionStatus = 'planned' | 'completed' | 'in_post_processing' | 'delivered' | 'cancelled';
-
 interface Session {
   id: string;
   session_date: string;
   session_time: string;
   notes: string;
-  status: SessionStatus;
+  status: string;
   project_id?: string;
 }
 
@@ -62,7 +60,7 @@ const SessionBanner = ({ session, leadName, projectName, onStatusUpdate, onEdit,
     }
   };
 
-  const handleStatusChange = async (newStatus: SessionStatus) => {
+  const handleStatusChange = async (newStatus: string) => {
     const success = await updateSessionStatus(session.id, newStatus);
     if (success) {
       onStatusUpdate?.();

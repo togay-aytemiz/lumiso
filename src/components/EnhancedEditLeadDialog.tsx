@@ -15,6 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { NavigationGuardDialog } from "./settings/NavigationGuardDialog";
+import { getUserOrganizationId } from "@/lib/organizationUtils";
 
 interface Lead {
   id: string;
@@ -90,6 +91,14 @@ export function EnhancedEditLeadDialog({
           case 'number':
             formData[fieldName] = existingValue?.value ? Number(existingValue.value) : '';
             break;
+          case 'select':
+            // For status field, use the current lead status if no field value exists
+            if (field.field_key === 'status' && !existingValue?.value && lead.status) {
+              formData[fieldName] = lead.status;
+            } else {
+              formData[fieldName] = existingValue?.value || '';
+            }
+            break;
           default:
             formData[fieldName] = existingValue?.value || '';
         }
@@ -106,6 +115,19 @@ export function EnhancedEditLeadDialog({
       setLoading(true);
       console.log('📝 Form submission data:', data);
 
+      // Get status_id if status field is provided
+      let statusId = null;
+      if (data.field_status) {
+        const organizationId = await getUserOrganizationId();
+        const { data: statusData } = await supabase
+          .from('lead_statuses')
+          .select('id')
+          .eq('organization_id', organizationId)
+          .eq('name', data.field_status)
+          .maybeSingle();
+        statusId = statusData?.id;
+      }
+
       // Update the main lead record
       const { error: leadError } = await supabase
         .from('leads')
@@ -114,6 +136,7 @@ export function EnhancedEditLeadDialog({
           email: data.field_email || null,
           phone: data.field_phone || null,
           notes: data.field_notes || null,
+          ...(statusId && { status_id: statusId }),
         })
         .eq('id', lead.id);
 

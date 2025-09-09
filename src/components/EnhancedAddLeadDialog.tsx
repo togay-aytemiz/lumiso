@@ -94,13 +94,26 @@ export function EnhancedAddLeadDialog({
         throw new Error('No active organization found');
       }
 
-      // Get default lead status
-      const { data: defaultStatus } = await supabase
-        .from('lead_statuses')
-        .select('id')
-        .eq('organization_id', organizationId)
-        .eq('is_default', true)
-        .single();
+      // Get status_id based on selected status or default
+      let statusId = null;
+      if (data.field_status) {
+        const { data: statusData } = await supabase
+          .from('lead_statuses')
+          .select('id')
+          .eq('organization_id', organizationId)
+          .eq('name', data.field_status)
+          .maybeSingle();
+        statusId = statusData?.id;
+      } else {
+        // Get default lead status
+        const { data: defaultStatus } = await supabase
+          .from('lead_statuses')
+          .select('id')
+          .eq('organization_id', organizationId)
+          .eq('is_default', true)
+          .maybeSingle();
+        statusId = defaultStatus?.id;
+      }
 
       // Create the lead record
       const { data: newLead, error: leadError } = await supabase
@@ -112,7 +125,7 @@ export function EnhancedAddLeadDialog({
           email: data.field_email || null,
           phone: data.field_phone || null,
           notes: data.field_notes || null,
-          status_id: defaultStatus?.id,
+          status_id: statusId,
           assignees: assignees.length > 0 ? assignees : [(await supabase.auth.getUser()).data.user?.id].filter(Boolean),
         })
         .select()

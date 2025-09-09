@@ -125,6 +125,23 @@ async function triggerWorkflows(supabase: any, triggerData: {
         }
       }
 
+      // Check for recent duplicate executions (within last 30 seconds)
+      const recentCutoff = new Date(Date.now() - 30000).toISOString();
+      const { data: recentExecutions, error: duplicateCheckError } = await supabase
+        .from('workflow_executions')
+        .select('id')
+        .eq('workflow_id', workflow.id)
+        .eq('trigger_entity_type', trigger_entity_type)
+        .eq('trigger_entity_id', trigger_entity_id)
+        .gte('created_at', recentCutoff);
+
+      if (duplicateCheckError) {
+        console.error('Error checking for duplicates:', duplicateCheckError);
+      } else if (recentExecutions && recentExecutions.length > 0) {
+        console.log(`Skipping workflow ${workflow.id}: Recent execution found within 30 seconds`);
+        continue;
+      }
+
       // Create workflow execution record
       const { data: execution, error: executionError } = await supabase
         .from('workflow_executions')
@@ -399,7 +416,7 @@ async function executeSendMessageStep(supabase: any, step: any, execution: any) 
           // Session info with proper formatting
           session_date: formatDate(entityData.session_date),
           session_time: formatTime(entityData.session_time),
-          session_location: entityData.location || '', // Don't use fallback location
+          session_location: entityData.location || '-', // Use dash for empty location
           session_notes: entityData.notes || '',
           
           // Project info

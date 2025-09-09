@@ -36,6 +36,10 @@ interface SendEmailRequest {
 
 function replacePlaceholders(text: string, data: Record<string, string>): string {
   return text.replace(/\{(\w+)(?:\|([^}]*))?\}/g, (match, key, fallback) => {
+    // Special handling for session_location - use dash if empty
+    if (key === 'session_location' && (!data[key] || data[key].trim() === '')) {
+      return '-';
+    }
     return data[key] || fallback || match;
   });
 }
@@ -842,7 +846,7 @@ async function handleWorkflowEmail(requestData: SendEmailRequest): Promise<Respo
       .from('message_templates')
       .select(`
         *,
-        template_channel_views!inner (
+        template_channel_views (
           channel,
           subject,
           content,
@@ -850,34 +854,31 @@ async function handleWorkflowEmail(requestData: SendEmailRequest): Promise<Respo
         )
       `)
       .eq('id', template_id)
-      .eq('template_channel_views.channel', 'email')
       .single();
+
+    console.log('Template fetch result:', template ? 'Found' : 'Not found');
+    console.log('Template error:', templateError);
 
     if (templateError || !template) {
       console.error('Template fetch error:', templateError);
-      
-      // Fallback: try without channel view filter
-      const { data: fallbackTemplate, error: fallbackError } = await supabase
-        .from('message_templates')
-        .select('*')
-        .eq('id', template_id)
-        .single();
-        
-      if (fallbackError || !fallbackTemplate) {
-        console.error('Fallback template fetch error:', fallbackError);
-        return new Response(
-          JSON.stringify({ error: 'Template not found in message_templates' }),
-          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-      
-      // Use master content as fallback
-      console.log('Using fallback template with master content');
-      return await sendSimpleTextEmail(fallbackTemplate, recipient_email, recipient_name, mockData, workflow_execution_id, supabase);
+      return new Response(
+        JSON.stringify({ error: 'Template not found in message_templates' }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     console.log('Template found:', template.name);
-    console.log('Template channel views:', template.template_channel_views);
+    console.log('All channel views:', template.template_channel_views);
+
+    // Find the email channel view
+    const emailChannelView = template.template_channel_views?.find((cv: any) => cv.channel === 'email');
+    
+    if (!emailChannelView) {
+      console.warn('No email channel view found, using master content');
+      return await sendSimpleTextEmail(template, recipient_email, recipient_name, mockData, workflow_execution_id, supabase);
+    }
+
+    console.log('Email channel view subject:', emailChannelView.subject);
 
     // Get organization settings with comprehensive data
     const { data: orgSettings, error: orgError } = await supabase
@@ -893,14 +894,13 @@ async function handleWorkflowEmail(requestData: SendEmailRequest): Promise<Respo
     }
 
     // Get the email channel view
-    const emailChannelView = template.template_channel_views[0];
     if (!emailChannelView) {
       console.warn('No email channel view found, using master content');
       return await sendSimpleTextEmail(template, recipient_email, recipient_name, mockData, workflow_execution_id, supabase);
     }
 
-    // Use blocks from channel view if available, otherwise convert content to blocks
-    let emailBlocks = emailChannelView.blocks;
+    // Use blocks from template.blocks if available, otherwise convert content to blocks
+    let emailBlocks = template.blocks;
     
     if (!emailBlocks || emailBlocks.length === 0) {
       console.log('No blocks found, converting content to text block');

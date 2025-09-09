@@ -104,12 +104,7 @@ export function EnhancedEditLeadDialog({
             formData[fieldName] = existingValue?.value ? Number(existingValue.value) : '';
             break;
           case 'select':
-            // For status field, use the current lead status if no field value exists
-            if (field.field_key === 'status' && !existingValue?.value && lead.status) {
-              formData[fieldName] = lead.status;
-            } else {
-              formData[fieldName] = existingValue?.value || getFallbackValue(field.field_key);
-            }
+            formData[fieldName] = existingValue?.value || getFallbackValue(field.field_key);
             break;
           default:
             formData[fieldName] = existingValue?.value || getFallbackValue(field.field_key);

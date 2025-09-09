@@ -833,6 +833,7 @@ async function handleWorkflowEmail(requestData: SendEmailRequest): Promise<Respo
     console.log('Workflow email - Template ID:', template_id);
     console.log('Workflow email - Recipient:', recipient_email);
     console.log('Workflow email - Mock data keys:', Object.keys(mockData || {}));
+    console.log('Workflow email - Mock data values:', mockData);
 
     if (!template_id || !recipient_email) {
       return new Response(
@@ -942,6 +943,7 @@ async function handleWorkflowEmail(requestData: SendEmailRequest): Promise<Respo
     }
 
     console.log('Using', emailBlocks.length, 'blocks for email rendering');
+    console.log('Sample block content:', emailBlocks[0] ? JSON.stringify(emailBlocks[0], null, 2) : 'No blocks');
 
     // Generate email content using the same system as template builder
     const finalSubject = emailChannelView.subject || emailTemplate?.subject || template.name || 'Notification';
@@ -949,6 +951,7 @@ async function handleWorkflowEmail(requestData: SendEmailRequest): Promise<Respo
     
     console.log('Final subject for email:', finalSubject);
     console.log('Preheader:', preheader);
+    console.log('Mock data for replacement:', JSON.stringify(mockData, null, 2));
     
     const htmlContent = generateHTMLContent(
       emailBlocks, 

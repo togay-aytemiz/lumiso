@@ -31,13 +31,14 @@ function formatDate(dateString: string, format: string = 'DD/MM/YYYY'): string {
 function formatTime(timeString: string, format: string = '12-hour'): string {
   if (!timeString) return '';
   
-  // Handle different time formats
+  // Handle different time formats - strip seconds if present
   let hours: number, minutes: number;
   
   if (timeString.includes(':')) {
-    const [h, m] = timeString.split(':').map(Number);
-    hours = h;
-    minutes = m || 0;
+    const timeParts = timeString.split(':');
+    hours = Number(timeParts[0]);
+    minutes = Number(timeParts[1]) || 0;
+    // Ignore seconds (timeParts[2]) if present
   } else {
     return timeString; // Return as-is if not in expected format
   }
@@ -457,29 +458,29 @@ async function executeSendMessageStep(supabase: any, step: any, execution: any) 
         template_id,
         recipient_email: clientEmail,
         recipient_name: entityData.customer_name || 'Client',
-        mockData: {
-          // Customer/Lead info
-          customer_name: entityData.customer_name || 'Client',
-          lead_name: entityData.customer_name || 'Client',
-          lead_email: entityData.customer_email || clientEmail,
-          lead_phone: entityData.customer_phone || '',
-          
-          // Session info with proper formatting using org settings
-          session_date: formatDate(entityData.session_date),
-          session_time: formatTime(entityData.session_time),
-          session_location: (entityData.location && entityData.location !== 'Studio' && entityData.location.trim() !== '') ? entityData.location : '-', // Use dash for empty/default location
-          session_notes: entityData.notes || '',
-          
-          // Project info
-          project_name: entityData.project_name || '',
-          
-          // Business info from organization settings
-          business_name: orgSettings?.photography_business_name || 'Your Business',
-          studio_name: orgSettings?.photography_business_name || 'Your Business',
-          
-          // Add all entity data for template flexibility
-          ...entityData
-        },
+          mockData: {
+            // Customer/Lead info
+            customer_name: entityData.customer_name || entityData.name || 'Client',
+            lead_name: entityData.customer_name || entityData.name || 'Client',
+            lead_email: entityData.customer_email || entityData.email || clientEmail,
+            lead_phone: entityData.customer_phone || entityData.phone || '',
+            
+            // Session info with proper formatting using org settings
+            session_date: formatDate(entityData.session_date || entityData.date, orgSettings?.date_format || 'DD/MM/YYYY'),
+            session_time: formatTime(entityData.session_time || entityData.time, orgSettings?.time_format || '12-hour'),
+            session_location: (entityData.location && entityData.location !== 'Studio' && entityData.location.trim() !== '') ? entityData.location : '-', // Use dash for empty/default location
+            session_notes: entityData.notes || entityData.session_notes || '',
+            
+            // Project info
+            project_name: entityData.project_name || entityData.name || '',
+            
+            // Business info from organization settings
+            business_name: orgSettings?.photography_business_name || 'Your Business',
+            studio_name: orgSettings?.photography_business_name || 'Your Business',
+            
+            // Add all entity data for template flexibility
+            ...entityData
+          },
         workflow_execution_id: execution.id
       }
     });

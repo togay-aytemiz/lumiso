@@ -12,6 +12,7 @@ import { sessionSchema, sanitizeInput, sanitizeHtml } from "@/lib/validation";
 import { ZodError } from "zod";
 import { useCalendarSync } from "@/hooks/useCalendarSync";
 import { useWorkflowTriggers } from "@/hooks/useWorkflowTriggers";
+import { useSessionReminderScheduling } from "@/hooks/useSessionReminderScheduling";
 
 interface EditSessionDialogProps {
   sessionId: string;
@@ -40,6 +41,7 @@ const EditSessionDialog = ({ sessionId, leadId, currentDate, currentTime, curren
   const [projects, setProjects] = useState<{id: string, name: string}[]>([]);
   const { updateSessionEvent } = useCalendarSync();
   const { triggerSessionRescheduled } = useWorkflowTriggers();
+  const { rescheduleSessionReminders } = useSessionReminderScheduling();
 
   const fetchProjects = async () => {
     try {
@@ -166,6 +168,16 @@ const EditSessionDialog = ({ sessionId, leadId, currentDate, currentTime, curren
           },
           { name: leadName }
         );
+      }
+
+      // Reschedule session reminders if date/time changed
+      if (dateTimeChanged) {
+        try {
+          await rescheduleSessionReminders(sessionId);
+        } catch (reminderError) {
+          console.error('Error rescheduling session reminders:', reminderError);
+          // Don't block session update if reminder scheduling fails
+        }
       }
 
       toast({

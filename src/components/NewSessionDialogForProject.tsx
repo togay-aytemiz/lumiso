@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Calendar as CalendarIcon, Plus } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useCalendarSync } from "@/hooks/useCalendarSync";
+import { useSessionReminderScheduling } from "@/hooks/useSessionReminderScheduling";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { NavigationGuardDialog } from "@/components/settings/NavigationGuardDialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -36,6 +37,7 @@ export function NewSessionDialogForProject({
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const { createSessionEvent } = useCalendarSync();
+  const { scheduleSessionReminders } = useSessionReminderScheduling();
   
   const [sessionData, setSessionData] = useState({
     session_date: "",
@@ -153,6 +155,14 @@ export function NewSessionDialogForProject({
           },
           { name: leadName }
         );
+      }
+
+      // Schedule session reminders
+      try {
+        await scheduleSessionReminders(newSession.id);
+      } catch (reminderError) {
+        console.error('Error scheduling session reminders:', reminderError);
+        // Don't block session creation if reminder scheduling fails
       }
 
       toast({

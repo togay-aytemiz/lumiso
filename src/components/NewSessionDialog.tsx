@@ -15,6 +15,7 @@ import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useCalendarSync } from "@/hooks/useCalendarSync";
 import { useWorkflowTriggers } from "@/hooks/useWorkflowTriggers";
+import { useSessionReminderScheduling } from "@/hooks/useSessionReminderScheduling";
 
 interface Lead {
   id: string;
@@ -38,6 +39,7 @@ const NewSessionDialog = ({ onSessionScheduled, children }: NewSessionDialogProp
   const [isNewLead, setIsNewLead] = useState(false);
   const { createSessionEvent } = useCalendarSync();
   const { triggerSessionScheduled } = useWorkflowTriggers();
+  const { scheduleSessionReminders } = useSessionReminderScheduling();
   
   const [sessionData, setSessionData] = useState({
     session_date: "",
@@ -271,6 +273,14 @@ const NewSessionDialog = ({ onSessionScheduled, children }: NewSessionDialogProp
       } catch (workflowError) {
         console.error('Error triggering workflow:', workflowError);
         // Don't block session creation if workflow fails
+      }
+
+      // Schedule session reminders
+      try {
+        await scheduleSessionReminders(newSession.id);
+      } catch (reminderError) {
+        console.error('Error scheduling session reminders:', reminderError);
+        // Don't block session creation if reminder scheduling fails
       }
 
       toast({

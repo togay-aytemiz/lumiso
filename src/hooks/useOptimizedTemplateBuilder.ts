@@ -27,7 +27,7 @@ interface UseOptimizedTemplateBuilderReturn {
   lastSaved: Date | null;
   isDirty: boolean;
   saveTemplate: (templateData: Partial<EmailTemplate>, showToast?: boolean) => Promise<EmailTemplate | null>;
-  publishTemplate: () => Promise<EmailTemplate | null>;
+  publishTemplate: (templateData?: Partial<EmailTemplate>) => Promise<EmailTemplate | null>;
   deleteTemplate: () => Promise<boolean>;
   updateTemplate: (updates: Partial<EmailTemplate>) => void;
   loadTemplate: () => Promise<void>;
@@ -165,24 +165,31 @@ export function useOptimizedTemplateBuilder(templateId?: string): UseOptimizedTe
     }
   }, [templateId, template, activeOrganization?.id, user?.id, toast]);
 
-  const publishTemplate = useCallback(async (): Promise<EmailTemplate | null> => {
-    if (!template) return null;
+  const publishTemplate = useCallback(async (templateData?: Partial<EmailTemplate>): Promise<EmailTemplate | null> => {
+    if (!activeOrganization?.id || !user?.id) return null;
 
     try {
-      const updatedTemplate = await saveTemplate({
-        ...template,
+      setSaving(true);
+
+      // Merge current template data with updates and set status to published
+      const dataToPublish = template 
+        ? { ...template, ...templateData } 
+        : { name: 'Untitled Template', blocks: [], ...templateData };
+
+      const publishedTemplate = await saveTemplate({
+        ...dataToPublish,
         status: 'published',
         published_at: new Date().toISOString(),
-      });
+      }, false);
 
-      if (updatedTemplate) {
+      if (publishedTemplate) {
         toast({
           title: "Published",
           description: "Template published successfully",
         });
       }
 
-      return updatedTemplate;
+      return publishedTemplate;
     } catch (error) {
       console.error("Error publishing template:", error);
       toast({
@@ -191,8 +198,10 @@ export function useOptimizedTemplateBuilder(templateId?: string): UseOptimizedTe
         variant: "destructive",
       });
       return null;
+    } finally {
+      setSaving(false);
     }
-  }, [template, saveTemplate, toast]);
+  }, [template, activeOrganization?.id, user?.id, saveTemplate, toast]);
 
   const deleteTemplate = useCallback(async (): Promise<boolean> => {
     if (!templateId || !activeOrganization?.id) return false;

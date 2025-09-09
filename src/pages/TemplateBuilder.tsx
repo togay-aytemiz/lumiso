@@ -158,11 +158,20 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
       return;
     }
 
-    // Save with the name first (will handle creation/update)
-    await handleSaveTemplate(nameToUse);
-    // Then publish
-    await publishTemplate();
-  }, [templateName, handleSaveTemplate, publishTemplate]);
+    // Directly publish with all current data (atomic operation)
+    const publishedTemplate = await publishTemplate({
+      name: nameToUse,
+      subject,
+      preheader,
+      blocks,
+      category: template?.category || 'general',
+    });
+
+    // Update URL if it's a new template
+    if (publishedTemplate && !templateId) {
+      navigate(`/template-builder?id=${publishedTemplate.id}`, { replace: true });
+    }
+  }, [templateName, subject, preheader, blocks, template?.category, publishTemplate, templateId, navigate]);
 
   const handleSubjectSave = async (newSubject: string) => {
     updateTemplate({ subject: newSubject });
@@ -201,7 +210,7 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
   const handleNameDialogConfirm = async (name: string) => {
     setShowNameDialog(false);
     
-    // Update the template name in local state
+    // Update the template name in local state first
     updateTemplate({ name });
     
     // Perform the pending action with the new name

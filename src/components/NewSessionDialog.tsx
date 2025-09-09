@@ -155,6 +155,7 @@ const NewSessionDialog = ({ onSessionScheduled, children }: NewSessionDialogProp
   };
 
   const handleSubmit = async () => {
+    console.log('🔄 Starting session creation process...');
     
     if (!sessionData.session_date || !sessionData.session_time) {
       toast({
@@ -183,22 +184,29 @@ const NewSessionDialog = ({ onSessionScheduled, children }: NewSessionDialogProp
       return;
     }
 
+    console.log('✅ Validation passed, starting session creation...');
     setLoading(true);
     try {
+      console.log('🔐 Getting authenticated user...');
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("User not authenticated");
+      console.log(`✅ User authenticated: ${user.id}`);
 
       // Get user's active organization ID
+      console.log('🏢 Getting organization ID...');
       const { data: organizationId } = await supabase.rpc('get_user_active_organization_id');
+      console.log(`📋 Organization ID result: ${organizationId}`);
 
       if (!organizationId) {
         throw new Error("Organization required");
       }
+      console.log(`✅ Using organization: ${organizationId}`);
 
       let leadId = selectedLeadId;
 
       // Create new lead if needed
       if (isNewLead) {
+        console.log('👤 Creating new lead...');
         const { data: newLead, error: leadError } = await supabase
           .from('leads')
           .insert({
@@ -215,7 +223,9 @@ const NewSessionDialog = ({ onSessionScheduled, children }: NewSessionDialogProp
 
         if (leadError) throw leadError;
         leadId = newLead.id;
+        console.log(`✅ New lead created: ${leadId}`);
       } else {
+        console.log(`📝 Updating existing lead status: ${selectedLeadId}`);
         // Update existing lead status to booked
         const { error: updateError } = await supabase
           .from('leads')
@@ -223,9 +233,11 @@ const NewSessionDialog = ({ onSessionScheduled, children }: NewSessionDialogProp
           .eq('id', selectedLeadId);
 
         if (updateError) throw updateError;
+        console.log(`✅ Lead status updated to booked`);
       }
 
       // Create session
+      console.log('📅 Creating session...');
       const { data: newSession, error: sessionError } = await supabase
         .from('sessions')
         .insert({
@@ -242,12 +254,15 @@ const NewSessionDialog = ({ onSessionScheduled, children }: NewSessionDialogProp
         .single();
 
       if (sessionError) throw sessionError;
+      console.log(`✅ Session created successfully: ${newSession.id}`);
 
       // Get lead name for calendar sync
       const leadName = isNewLead ? newLeadData.name : leads.find(l => l.id === leadId)?.name || 'Unknown Client';
+      console.log(`📇 Lead name for session: ${leadName}`);
       
       // Sync to Google Calendar
       if (newSession) {
+        console.log('📅 Syncing to Google Calendar...');
         createSessionEvent(
           {
             id: newSession.id,
@@ -258,6 +273,7 @@ const NewSessionDialog = ({ onSessionScheduled, children }: NewSessionDialogProp
           },
           { name: leadName }
         );
+        console.log('✅ Calendar sync initiated');
       }
 
       // Trigger workflow for session scheduled
@@ -314,12 +330,22 @@ const NewSessionDialog = ({ onSessionScheduled, children }: NewSessionDialogProp
         onSessionScheduled();
       }
     } catch (error: any) {
+      console.error('❌ CRITICAL ERROR in session creation:', error);
+      console.error('Error details:', {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint,
+        stack: error.stack?.substring(0, 500)
+      });
+      
       toast({
         title: "Error scheduling session",
         description: error.message,
         variant: "destructive"
       });
     } finally {
+      console.log('🏁 Session creation process finished');
       setLoading(false);
     }
   };

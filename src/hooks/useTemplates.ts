@@ -6,16 +6,28 @@ import { getUserOrganizationId } from '@/lib/organizationUtils';
 export interface Template {
   id: string;
   name: string;
-  description?: string;
-  category?: string;
-  status: string;
+  category: string;
+  master_content: string;
+  master_subject?: string;
+  placeholders?: string[];
+  is_active: boolean;
   created_at: string;
   updated_at: string;
   user_id: string;
   organization_id: string;
-  blocks: any[];
-  subject?: string;
-  preheader?: string;
+  channels?: {
+    email?: {
+      subject?: string;
+      content?: string;
+      html_content?: string;
+    };
+    sms?: {
+      content?: string;
+    };
+    whatsapp?: {
+      content?: string;
+    };
+  };
 }
 
 export function useTemplates() {
@@ -37,17 +49,40 @@ export function useTemplates() {
       }
 
       const { data, error } = await supabase
-        .from('email_templates')
-        .select('*')
+        .from('message_templates')
+        .select(`
+          *,
+          template_channel_views(
+            channel,
+            subject,
+            content,
+            html_content
+          )
+        `)
         .eq('organization_id', organizationId)
-        .eq('status', 'published')
+        .eq('is_active', true)
         .order('created_at', { ascending: false });
 
       console.log('Template query result:', { data, error });
 
       if (error) throw error;
-      setTemplates((data || []) as Template[]);
-      console.log('Templates loaded:', data?.length || 0);
+      
+      // Transform data to include channel views
+      const transformedTemplates = (data || []).map((template: any) => ({
+        ...template,
+        placeholders: Array.isArray(template.placeholders) ? template.placeholders : [],
+        channels: template.template_channel_views?.reduce((acc: any, view: any) => {
+          acc[view.channel] = {
+            subject: view.subject,
+            content: view.content,
+            html_content: view.html_content
+          };
+          return acc;
+        }, {}) || {}
+      }));
+      
+      setTemplates(transformedTemplates as Template[]);
+      console.log('Templates loaded:', transformedTemplates?.length || 0);
     } catch (error) {
       console.error('Error fetching templates:', error);
       toast({
@@ -63,6 +98,11 @@ export function useTemplates() {
 
   const getSessionTemplates = () => {
     const sessionFiltered = templates.filter(template => 
+      template.category === 'session_scheduled' || 
+      template.category === 'session_reminder' ||
+      template.category === 'session_rescheduled' ||
+      template.category === 'session_cancelled' ||
+      template.category === 'session_completed' ||
       template.category === 'session' || 
       template.category === 'sessions' ||
       template.category === 'client-communication' ||

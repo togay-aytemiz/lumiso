@@ -82,7 +82,7 @@ export function useMessageTemplateBuilder(templateId?: string) {
       // Transform database data to our interface
       const transformedTemplate: MessageTemplate = {
         ...data,
-        placeholders: Array.isArray(data.placeholders) ? data.placeholders : [],
+        placeholders: Array.isArray(data.placeholders) ? data.placeholders as string[] : [],
         channels: data.template_channel_views?.reduce((acc: any, view: any) => {
           acc[view.channel] = {
             subject: view.subject,

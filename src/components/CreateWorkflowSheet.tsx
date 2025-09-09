@@ -305,7 +305,10 @@ export function CreateWorkflowSheet({
       handleClose();
     }
   };
-  const filteredTemplates = sessionTemplates.filter(template => template.name.toLowerCase().includes(templateSearch.toLowerCase()) || template.description?.toLowerCase().includes(templateSearch.toLowerCase()));
+  const filteredTemplates = sessionTemplates.filter(template => 
+    template.name.toLowerCase().includes(templateSearch.toLowerCase()) || 
+    template.master_content?.toLowerCase().includes(templateSearch.toLowerCase())
+  );
   const footerActions = [{
     label: 'Cancel',
     onClick: handleClose,
@@ -405,7 +408,7 @@ export function CreateWorkflowSheet({
                         {selectedTemplateData ? (
                           <>
                             <span className="font-medium">{selectedTemplateData.name}</span>
-                            {selectedTemplateData.description && <span className="text-xs text-muted-foreground">{selectedTemplateData.description}</span>}
+                            {selectedTemplateData.master_content && <span className="text-xs text-muted-foreground">{selectedTemplateData.master_content.substring(0, 100)}...</span>}
                           </>
                         ) : (
                           <span className="font-medium text-destructive">Invalid template selected</span>
@@ -435,8 +438,8 @@ export function CreateWorkflowSheet({
                                 <Check className={cn("h-4 w-4 mt-0.5", selectedTemplate === template.id ? "opacity-100" : "opacity-0")} />
                                 <div className="flex-1 min-w-0">
                                   <div className="font-medium">{template.name}</div>
-                                  {template.description && <div className="text-xs text-muted-foreground">{template.description}</div>}
-                                  {template.subject && <div className="text-xs text-muted-foreground mt-1">Subject: {template.subject}</div>}
+                                   {template.master_content && <div className="text-xs text-muted-foreground">{template.master_content.substring(0, 100)}...</div>}
+                                   {template.channels?.email?.subject && <div className="text-xs text-muted-foreground mt-1">Subject: {template.channels.email.subject}</div>}
                                 </div>
                               </div>
                             </button>)}

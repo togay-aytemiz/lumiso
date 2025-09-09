@@ -81,36 +81,62 @@ export async function onArchiveToggle(project: {
     throw new Error("Organization required");
   }
 
-  // Ensure we have an Archived status; create if missing
+  // Find or create Archived status
   let archivedId: string | undefined;
   
-  // Simple approach to avoid TypeScript issues
-  try {
-    const response = await fetch(`/api/supabase/project_statuses?organization_id=${userSettings.active_organization_id}&name=archived`);
-    // Fallback to direct query since API might not exist
-  } catch {
-    // Use direct query as fallback
-  }
+  // Check for existing Archived status
+  const { data: existingStatuses, error: statusError } = await supabase
+    .from('project_statuses')
+    .select('id, name')
+    .eq('organization_id', userSettings.active_organization_id)
+    .ilike('name', 'archived');
   
-  // Direct query approach - commenting out due to TypeScript complex inference issue
-  // const allStatuses = await supabase.from('project_statuses').select('id, name').eq('organization_id', userSettings.active_organization_id);
-  // if (allStatuses.data) {
-  //   const found = allStatuses.data.find((s: any) => s.name.toLowerCase() === 'archived');
-  //   archivedId = found?.id;
-  // }
-  if (!archivedId) {
-    const {
-      data: created,
-      error: createErr
-    } = await supabase.from('project_statuses').insert({
-      user_id: userData.user.id,
-      organization_id: userSettings.active_organization_id,
-      name: 'Archived',
-      color: '#6B7280',
-      sort_order: 9999
-    }).select('id').single();
-    if (createErr) throw createErr;
-    archivedId = created.id;
+  if (statusError) throw statusError;
+  
+  // Find existing archived status (case-insensitive)
+  const existingArchived = existingStatuses?.find(
+    (status: { id: string; name: string }) => 
+      status.name.toLowerCase() === 'archived'
+  );
+  
+  if (existingArchived) {
+    archivedId = existingArchived.id;
+  } else {
+    // Create new Archived status if it doesn't exist
+    const { data: created, error: createErr } = await supabase
+      .from('project_statuses')
+      .insert({
+        user_id: userData.user.id,
+        organization_id: userSettings.active_organization_id,
+        name: 'Archived',
+        color: '#6B7280',
+        sort_order: 9999,
+        lifecycle: 'cancelled'
+      })
+      .select('id')
+      .single();
+    
+    if (createErr) {
+      // Handle race condition - status might have been created by another user
+      if (createErr.code === '23505') { // Unique constraint violation
+        const { data: raceStatuses } = await supabase
+          .from('project_statuses')
+          .select('id')
+          .eq('organization_id', userSettings.active_organization_id)
+          .ilike('name', 'archived')
+          .limit(1);
+        
+        if (raceStatuses && raceStatuses.length > 0) {
+          archivedId = raceStatuses[0].id;
+        } else {
+          throw createErr;
+        }
+      } else {
+        throw createErr;
+      }
+    } else {
+      archivedId = created.id;
+    }
   }
 
   // Load current project to get existing status and previous_status_id

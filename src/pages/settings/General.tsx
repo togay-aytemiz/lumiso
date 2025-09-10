@@ -21,6 +21,7 @@ import { useOrganization } from "@/contexts/OrganizationContext";
 import { SettingsLoadingSkeleton } from "@/components/ui/loading-presets";
 import { TimezoneSelector } from "@/components/TimezoneSelector";
 import { detectBrowserTimezone } from "@/lib/dateFormatUtils";
+import { emailSchema, phoneSchema } from "@/lib/validation";
 
 export default function General() {
   const { settings, loading, uploading, updateSettings, uploadLogo, deleteLogo } = useOrganizationSettings();
@@ -97,12 +98,16 @@ export default function General() {
     sectionName: "Branding",
     initialValues: {
       companyName: settings?.photography_business_name || "",
+      businessEmail: settings?.email || "",
+      businessPhone: settings?.phone || "",
       brandColor: settings?.primary_brand_color || "#1EB29F"
     },
     onSave: async (values) => {
       // Save branding settings (logo uploads automatically on selection)
       const updates: any = {
         photography_business_name: values.companyName,
+        email: values.businessEmail,
+        phone: values.businessPhone,
         primary_brand_color: values.brandColor
       };
 
@@ -141,6 +146,8 @@ export default function General() {
     if (settings) {
       brandingSection.setValues({
         companyName: settings.photography_business_name || "",
+        businessEmail: settings.email || "",
+        businessPhone: settings.phone || "",
         brandColor: settings.primary_brand_color || "#1EB29F"
       });
 
@@ -261,6 +268,56 @@ export default function General() {
               />
               <p className="text-sm text-muted-foreground">
                 This will appear on invoices, contracts, and client communications
+              </p>
+            </div>
+
+            {/* Business Email */}
+            <div className="space-y-2">
+              <Label htmlFor="business-email">Business Email</Label>
+              <Input
+                id="business-email"
+                type="email"
+                value={brandingSection.values.businessEmail}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  brandingSection.updateValue("businessEmail", value);
+                  // Validate email format
+                  if (value && !emailSchema.safeParse(value).success) {
+                    e.target.setCustomValidity("Please enter a valid email address");
+                  } else {
+                    e.target.setCustomValidity("");
+                  }
+                }}
+                placeholder="Enter your business email"
+                className="max-w-md"
+              />
+              <p className="text-sm text-muted-foreground">
+                Used for client communications and appears on invoices
+              </p>
+            </div>
+
+            {/* Business Phone */}
+            <div className="space-y-2">
+              <Label htmlFor="business-phone">Business Phone</Label>
+              <Input
+                id="business-phone"
+                type="tel"
+                value={brandingSection.values.businessPhone}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  brandingSection.updateValue("businessPhone", value);
+                  // Validate phone format (optional)
+                  if (value && !phoneSchema.safeParse(value).success) {
+                    e.target.setCustomValidity("Please enter a valid phone number");
+                  } else {
+                    e.target.setCustomValidity("");
+                  }
+                }}
+                placeholder="Enter your business phone number"
+                className="max-w-md"
+              />
+              <p className="text-sm text-muted-foreground">
+                Optional contact number for client communications
               </p>
             </div>
 

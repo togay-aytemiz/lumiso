@@ -7,6 +7,8 @@ export interface OrganizationSettings {
   id?: string;
   organization_id?: string;
   photography_business_name?: string | null;
+  email?: string | null;
+  phone?: string | null;
   logo_url?: string | null;
   primary_brand_color?: string | null;
   date_format?: string | null;
@@ -36,14 +38,29 @@ export const useOrganizationSettings = () => {
         return;
       }
 
-      // Ensure organization settings exist first with detected timezone
-      const detectedTimezone = detectBrowserTimezone();
-      await supabase.rpc('ensure_organization_settings', { 
-        org_id: organizationId,
-        detected_timezone: detectedTimezone
-      });
+      // Check if organization settings already exist
+      const { data: existingSettings } = await supabase
+        .from('organization_settings')
+        .select('*')
+        .eq('organization_id', organizationId)
+        .single();
 
-      // Get organization settings
+      if (!existingSettings) {
+        // First time setup - create settings with user's email as business email
+        const detectedTimezone = detectBrowserTimezone();
+        await supabase.rpc('ensure_organization_settings', { 
+          org_id: organizationId,
+          detected_timezone: detectedTimezone
+        });
+
+        // Update the newly created settings with user's email
+        await supabase
+          .from('organization_settings')
+          .update({ email: user.email })
+          .eq('organization_id', organizationId);
+      }
+
+      // Get organization settings (after ensuring they exist)
       const { data: orgSettings, error } = await supabase
         .from('organization_settings')
         .select('*')

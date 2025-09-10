@@ -100,8 +100,10 @@ export function ColumnsBlockEditor({ data, onUpdate }: { data: ColumnsBlockData;
 export function SocialLinksBlockEditor({ data, onUpdate }: { data: SocialLinksBlockData; onUpdate: (data: SocialLinksBlockData) => void }) {
   const { settings } = useOrganizationSettings();
   
-  const toggleShowSocialLinks = (show: boolean) => {
-    onUpdate({ ...data, showSocialLinks: show });
+  const toggleChannelVisibility = (channelKey: string, visible: boolean) => {
+    const newVisibility = { ...(data.channelVisibility || {}) };
+    newVisibility[channelKey] = visible;
+    onUpdate({ ...data, channelVisibility: newVisibility });
   };
 
   const socialChannelsArray = settings?.socialChannels 
@@ -110,27 +112,28 @@ export function SocialLinksBlockEditor({ data, onUpdate }: { data: SocialLinksBl
         .filter(([, channel]) => channel.url?.trim())
     : [];
 
+  const isChannelVisible = (channelKey: string) => {
+    return data.channelVisibility?.[channelKey] !== false;
+  };
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <Label>Show Social Links</Label>
-        <Switch
-          checked={data.showSocialLinks !== false}
-          onCheckedChange={toggleShowSocialLinks}
-        />
-      </div>
-      
       {socialChannelsArray.length > 0 ? (
         <div className="space-y-3">
           <div className="text-sm text-muted-foreground">
-            The following social channels will be displayed:
+            Configure which social channels to display in emails:
           </div>
-          <div className="space-y-2">
+          <div className="space-y-3">
             {socialChannelsArray.map(([key, channel]) => (
-              <div key={key} className="flex items-center gap-2 p-2 bg-muted/50 rounded text-sm">
-                <span className="font-medium">{channel.name}</span>
-                <span className="text-muted-foreground">→</span>
-                <span className="text-xs text-muted-foreground truncate">{channel.url}</span>
+              <div key={key} className="flex items-center justify-between p-3 bg-muted/50 rounded">
+                <div className="flex-1">
+                  <div className="font-medium">{channel.name}</div>
+                  <div className="text-xs text-muted-foreground truncate">{channel.url}</div>
+                </div>
+                <Switch
+                  checked={isChannelVisible(key)}
+                  onCheckedChange={(checked) => toggleChannelVisibility(key, checked)}
+                />
               </div>
             ))}
           </div>

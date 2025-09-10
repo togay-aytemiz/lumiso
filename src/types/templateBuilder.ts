@@ -28,7 +28,7 @@ export interface ColumnsBlockData {
 }
 
 export interface SocialLinksBlockData {
-  showSocialLinks?: boolean;
+  channelVisibility?: Record<string, boolean>;
 }
 
 export interface HeaderBlockData {

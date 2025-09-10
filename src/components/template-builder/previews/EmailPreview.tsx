@@ -362,15 +362,16 @@ function DividerBlockPreview({ data }: { data: any }) {
 
 function SocialLinksBlockPreview({ data }: { data: any }) {
   const { settings } = useOrganizationSettings();
-  
-  if (data.showSocialLinks === false) {
-    return null;
-  }
 
   const socialChannelsArray = settings?.socialChannels 
     ? Object.entries(settings.socialChannels)
         .sort(([, a], [, b]) => ((a as SocialChannel).order || 0) - ((b as SocialChannel).order || 0))
-        .filter(([, channel]) => (channel as SocialChannel).url?.trim())
+        .filter(([key, channel]) => {
+          const socialChannel = channel as SocialChannel;
+          const hasUrl = socialChannel.url?.trim();
+          const isVisible = data.channelVisibility?.[key] !== false;
+          return hasUrl && isVisible;
+        })
     : [];
 
   if (socialChannelsArray.length === 0) {

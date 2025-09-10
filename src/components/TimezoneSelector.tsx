@@ -67,12 +67,18 @@ export function TimezoneSelector({ value, onValueChange, className }: TimezoneSe
             {selectedTimezone?.label || value || 'No timezone selected'}
           </p>
           <p className="text-xs text-muted-foreground">
-            Current time: {new Date().toLocaleTimeString('en-US', { 
-              timeZone: value || 'UTC',
-              hour12: true,
-              hour: 'numeric',
-              minute: '2-digit'
-            })}
+            Current time: {(() => {
+              try {
+                return new Date().toLocaleTimeString('en-US', { 
+                  timeZone: value || 'UTC',
+                  hour12: true,
+                  hour: 'numeric',
+                  minute: '2-digit'
+                });
+              } catch {
+                return 'Invalid timezone';
+              }
+            })()}
           </p>
         </div>
       </div>
@@ -127,12 +133,18 @@ export function TimezoneSelector({ value, onValueChange, className }: TimezoneSe
                     <div className="flex items-center justify-between w-full">
                       <span>{timezone.label}</span>
                       <span className="text-xs text-muted-foreground ml-2">
-                        {new Date().toLocaleTimeString('en-US', { 
-                          timeZone: timezone.value,
-                          hour12: false,
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
+                        {(() => {
+                          try {
+                            return new Date().toLocaleTimeString('en-US', { 
+                              timeZone: timezone.value,
+                              hour12: false,
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            });
+                          } catch {
+                            return '--:--';
+                          }
+                        })()}
                       </span>
                     </div>
                   </SelectItem>

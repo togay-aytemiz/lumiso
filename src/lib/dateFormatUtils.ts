@@ -69,7 +69,6 @@ export function getSupportedTimezones(): Array<{ value: string; label: string; r
     'America/Denver',
     'America/Los_Angeles',
     'America/Anchorage',
-    'America/Honolulu',
     'America/Toronto',
     'America/Montreal',
     'America/Vancouver',

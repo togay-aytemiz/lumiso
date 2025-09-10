@@ -573,15 +573,24 @@ function generateHTMLContent(
           break;
 
         case 'social-links':
-          const socialLinks = block.data.links || [];
-          const visibleLinks = socialLinks.filter((link: any) => link.show && link.url);
-          
-          if (visibleLinks.length > 0) {
-            htmlContent += `<div class="social-links">`;
-            visibleLinks.forEach((link: any) => {
-              htmlContent += `<a href="${link.url}">${link.platform}</a>`;
-            });
-            htmlContent += `</div>`;
+          // Handle new format: get social channels from organization settings
+          if (organizationSettings?.socialChannels) {
+            const channelVisibility = block.data.channelVisibility || {};
+            const socialChannelsArray = Object.entries(organizationSettings.socialChannels)
+              .sort(([, a], [, b]) => ((a as any).order || 0) - ((b as any).order || 0))
+              .filter(([key, channel]: [string, any]) => {
+                const hasUrl = channel.url?.trim();
+                const isVisible = channelVisibility[key] !== false;
+                return hasUrl && isVisible;
+              });
+            
+            if (socialChannelsArray.length > 0) {
+              htmlContent += `<div class="social-links">`;
+              socialChannelsArray.forEach(([key, channel]: [string, any]) => {
+                htmlContent += `<a href="${channel.url}">${channel.name}</a>`;
+              });
+              htmlContent += `</div>`;
+            }
           }
           break;
 
@@ -753,13 +762,16 @@ const handler = async (req: Request): Promise<Response> => {
             .single();
           
           if (userSettings?.active_organization_id) {
-            const { data: orgSettings } = await supabase
-              .from('organization_settings')
-              .select('photography_business_name, primary_brand_color, logo_url, phone, email')
-              .eq('organization_id', userSettings.active_organization_id)
-              .single();
+          const { data: orgSettings } = await supabase
+            .from('organization_settings')
+            .select('photography_business_name, primary_brand_color, logo_url, phone, email, social_channels')
+            .eq('organization_id', userSettings.active_organization_id)
+            .single();
             
-            organizationSettings = orgSettings;
+            organizationSettings = {
+              ...orgSettings,
+              socialChannels: orgSettings?.social_channels || {}
+            };
           }
         }
       }

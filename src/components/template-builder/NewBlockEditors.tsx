@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Skeleton } from "@/components/ui/skeleton";
 import { AlertTriangle, Settings } from "lucide-react";
 import { DividerBlockData, ColumnsBlockData, SocialLinksBlockData, HeaderBlockData, RawHTMLBlockData } from "@/types/templateBuilder";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
@@ -98,7 +99,7 @@ export function ColumnsBlockEditor({ data, onUpdate }: { data: ColumnsBlockData;
 }
 
 export function SocialLinksBlockEditor({ data, onUpdate }: { data: SocialLinksBlockData; onUpdate: (data: SocialLinksBlockData) => void }) {
-  const { settings } = useOrganizationSettings();
+  const { settings, loading } = useOrganizationSettings();
   
   const toggleChannelVisibility = (channelKey: string, visible: boolean) => {
     const newVisibility = { ...(data.channelVisibility || {}) };
@@ -115,6 +116,28 @@ export function SocialLinksBlockEditor({ data, onUpdate }: { data: SocialLinksBl
   const isChannelVisible = (channelKey: string) => {
     return data.channelVisibility?.[channelKey] !== false;
   };
+
+  // Show skeleton loading while fetching settings
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        <div className="text-sm text-muted-foreground">
+          Configure which social channels to display in emails:
+        </div>
+        <div className="space-y-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="flex items-center justify-between p-3 bg-muted/50 rounded">
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-3 w-32" />
+              </div>
+              <Skeleton className="h-6 w-11 rounded-full" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">

@@ -463,19 +463,13 @@ export default function General() {
         </CategorySettingsSection>
 
         {/* Social Channels Section */}
-        <CategorySettingsSection
-          title="Social Channels"
-          description="Add your social media and website links to display in email footers"
-          sectionId="social"
-        >
-          {settings && (
-            <SocialChannelsSection
-              socialChannels={settings.social_channels || {}}
-              onUpdate={(channels) => updateSettings({ social_channels: channels })}
-              isDirty={false}
-            />
-          )}
-        </CategorySettingsSection>
+        {settings && (
+          <SocialChannelsSection
+            socialChannels={settings.social_channels || {}}
+            onUpdate={(channels) => updateSettings({ social_channels: channels })}
+            isDirty={false}
+          />
+        )}
 
         <CategorySettingsSection
           title="Regional Settings"

@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { 
   Globe, 
   Facebook, 
@@ -13,8 +14,10 @@ import {
   Youtube, 
   Plus, 
   Trash2,
-  GripVertical
+  GripVertical,
+  Music
 } from 'lucide-react';
+import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { SocialChannel } from '@/hooks/useOrganizationSettings';
 import { cn } from '@/lib/utils';
 
@@ -31,6 +34,7 @@ const PREDEFINED_PLATFORMS = [
   { key: 'twitter', name: 'Twitter/X', icon: Twitter },
   { key: 'linkedin', name: 'LinkedIn', icon: Linkedin },
   { key: 'youtube', name: 'YouTube', icon: Youtube },
+  { key: 'tiktok', name: 'TikTok', icon: Music },
 ];
 
 export function SocialChannelsSection({ socialChannels, onUpdate, isDirty }: SocialChannelsSectionProps) {
@@ -84,6 +88,17 @@ export function SocialChannelsSection({ socialChannels, onUpdate, isDirty }: Soc
     onUpdate(remaining);
   };
 
+  const handleDragEnd = (result: DropResult) => {
+    if (!result.destination) return;
+
+    const channelEntries = Object.entries(socialChannels);
+    const [reorderedItem] = channelEntries.splice(result.source.index, 1);
+    channelEntries.splice(result.destination.index, 0, reorderedItem);
+
+    const reorderedChannels = Object.fromEntries(channelEntries);
+    onUpdate(reorderedChannels);
+  };
+
   const validateUrl = (url: string): boolean => {
     try {
       new URL(url);
@@ -102,6 +117,8 @@ export function SocialChannelsSection({ socialChannels, onUpdate, isDirty }: Soc
     platform => !socialChannels[platform.key]
   );
 
+  const channelEntries = Object.entries(socialChannels);
+
   return (
     <Card>
       <CardHeader>
@@ -115,56 +132,104 @@ export function SocialChannelsSection({ socialChannels, onUpdate, isDirty }: Soc
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Existing Channels */}
-        <div className="space-y-3">
-          {Object.entries(socialChannels).map(([key, channel]) => {
-            const Icon = getChannelIcon(channel);
-            const hasValidUrl = channel.url && validateUrl(channel.url);
-            
-            return (
-              <div 
-                key={key}
-                className={cn(
-                  "flex items-center gap-3 p-3 rounded-lg border bg-card",
-                  !hasValidUrl && channel.url && "border-destructive/50 bg-destructive/5"
-                )}
-              >
-                <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab" />
-                <div className="flex items-center gap-2 min-w-0 flex-1">
-                  <Icon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                  <div className="flex-1 space-y-1">
-                    <Label className="text-sm font-medium">
-                      {channel.customPlatformName || channel.name}
-                    </Label>
-                    <Input
-                      placeholder={`https://${channel.platform === 'website' ? 'yourwebsite.com' : `${channel.platform}.com/yourprofile`}`}
-                      value={channel.url}
-                      onChange={(e) => updateChannel(key, { url: e.target.value })}
-                      className={cn(
-                        "text-sm",
-                        !hasValidUrl && channel.url && "border-destructive focus:ring-destructive"
-                      )}
-                    />
-                    {!hasValidUrl && channel.url && (
-                      <p className="text-xs text-destructive">Please enter a valid URL</p>
-                    )}
-                  </div>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => removeChannel(key)}
-                  className="text-muted-foreground hover:text-destructive flex-shrink-0"
+        {/* Existing Channels with Drag & Drop */}
+        {channelEntries.length > 0 && (
+          <DragDropContext onDragEnd={handleDragEnd}>
+            <Droppable droppableId="social-channels">
+              {(provided) => (
+                <div 
+                  {...provided.droppableProps} 
+                  ref={provided.innerRef}
+                  className="space-y-3"
                 >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            );
-          })}
-        </div>
+                  {channelEntries.map(([key, channel], index) => {
+                    const Icon = getChannelIcon(channel);
+                    const hasValidUrl = channel.url && validateUrl(channel.url);
+                    
+                    return (
+                      <Draggable key={key} draggableId={key} index={index}>
+                        {(provided, snapshot) => (
+                          <div
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            className={cn(
+                              "flex items-center gap-3 p-3 rounded-lg border bg-card transition-colors",
+                              !hasValidUrl && channel.url && "border-destructive/50 bg-destructive/5",
+                              snapshot.isDragging && "shadow-lg"
+                            )}
+                          >
+                            <div 
+                              {...provided.dragHandleProps}
+                              className="cursor-grab active:cursor-grabbing"
+                            >
+                              <GripVertical className="h-4 w-4 text-muted-foreground" />
+                            </div>
+                            
+                            <Icon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                            
+                            <div className="min-w-0 w-20 flex-shrink-0">
+                              <span className="text-sm font-medium truncate block">
+                                {channel.customPlatformName || channel.name}
+                              </span>
+                            </div>
+                            
+                            <div className="flex-1">
+                              <Input
+                                placeholder={`https://${channel.platform === 'website' ? 'yourwebsite.com' : `${channel.platform}.com/yourprofile`}`}
+                                value={channel.url}
+                                onChange={(e) => updateChannel(key, { url: e.target.value })}
+                                className={cn(
+                                  "h-9 text-sm",
+                                  !hasValidUrl && channel.url && "border-destructive focus:ring-destructive"
+                                )}
+                              />
+                              {!hasValidUrl && channel.url && (
+                                <p className="text-xs text-destructive mt-1">Please enter a valid URL</p>
+                              )}
+                            </div>
+                            
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-destructive hover:text-destructive hover:bg-destructive/10 h-9 w-9 p-0 flex-shrink-0"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Remove Social Channel</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Are you sure you want to remove {channel.customPlatformName || channel.name}? This action cannot be undone.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction 
+                                    onClick={() => removeChannel(key)}
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  >
+                                    Remove
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        )}
+                      </Draggable>
+                    );
+                  })}
+                  {provided.placeholder}
+                </div>
+              )}
+            </Droppable>
+          </DragDropContext>
+        )}
 
         {/* Empty State */}
-        {Object.keys(socialChannels).length === 0 && (
+        {channelEntries.length === 0 && (
           <div className="text-center py-6 text-muted-foreground">
             <Globe className="h-8 w-8 mx-auto mb-2 opacity-50" />
             <p className="text-sm">No social channels added yet</p>
@@ -185,7 +250,7 @@ export function SocialChannelsSection({ socialChannels, onUpdate, isDirty }: Soc
                     variant="outline"
                     size="sm"
                     onClick={() => addPredefinedPlatform(platform.key)}
-                    className="flex items-center gap-2"
+                    className="flex items-center gap-2 h-9"
                   >
                     <Icon className="h-4 w-4" />
                     {platform.name}
@@ -203,14 +268,14 @@ export function SocialChannelsSection({ socialChannels, onUpdate, isDirty }: Soc
             value={customPlatformName}
             onChange={(e) => setCustomPlatformName(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && addCustomPlatform()}
-            className="flex-1"
+            className="flex-1 h-9"
           />
           <Button
             variant="outline"
             size="sm"
             onClick={addCustomPlatform}
             disabled={!customPlatformName.trim()}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 h-9"
           >
             <Plus className="h-4 w-4" />
             Add Custom

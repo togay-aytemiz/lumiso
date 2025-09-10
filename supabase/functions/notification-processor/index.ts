@@ -262,9 +262,10 @@ async function processDailySummary(supabase: any, notification: any) {
     .eq('user_id', notification.user_id)
     .maybeSingle();
 
+  // Get organization settings for branding and timezone
   const { data: orgSettings } = await supabase
     .from('organization_settings')
-    .select('*')
+    .select('photography_business_name, primary_brand_color, date_format, time_format, timezone')
     .eq('organization_id', notification.organization_id)
     .maybeSingle();
 
@@ -321,6 +322,7 @@ async function processDailySummary(supabase: any, notification: any) {
     brandColor: orgSettings?.primary_brand_color || '#1EB29F',
     dateFormat: orgSettings?.date_format || 'DD/MM/YYYY',
     timeFormat: orgSettings?.time_format || '12-hour',
+    timezone: orgSettings?.timezone || 'UTC',
     baseUrl: 'https://my.lumiso.app'
   };
 

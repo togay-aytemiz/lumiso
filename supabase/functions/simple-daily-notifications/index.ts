@@ -38,7 +38,7 @@ const handler = async (req: Request): Promise<Response> => {
     
     console.log(`Processing at ${currentTimeString}`);
 
-    // Get users who need daily summaries at this time
+    // Get users who need daily summaries at this time by joining with organization settings
     let usersQuery = supabaseAdmin
       .from('user_settings')
       .select(`
@@ -46,10 +46,6 @@ const handler = async (req: Request): Promise<Response> => {
         notification_scheduled_time, 
         notification_daily_summary_enabled,
         notification_global_enabled,
-        photography_business_name,
-        primary_brand_color,
-        date_format,
-        time_format,
         active_organization_id
       `)
       .eq('notification_global_enabled', true)
@@ -243,10 +239,10 @@ const handler = async (req: Request): Promise<Response> => {
 
         console.log('Today activities with names:', todayActivitiesWithNames);
 
-        // Get organization settings for branding
+        // Get organization settings for branding and timezone
         const { data: orgSettings } = await supabaseAdmin
           .from('organization_settings')
-          .select('photography_business_name, primary_brand_color, date_format, time_format')
+          .select('photography_business_name, primary_brand_color, date_format, time_format, timezone')
           .eq('organization_id', organizationId)
           .maybeSingle();
 
@@ -264,13 +260,14 @@ const handler = async (req: Request): Promise<Response> => {
         console.log('Today activities data:', todayActivities);
         console.log('Past sessions data:', pastSessions);
 
-        // Prepare data for enhanced email template (same as test system)
+        // Prepare data for enhanced email template with timezone support
         const templateData = {
           userFullName,
-          businessName: orgSettings?.photography_business_name || userSettings?.photography_business_name || 'Lumiso',
-          brandColor: orgSettings?.primary_brand_color || userSettings?.primary_brand_color || '#1EB29F',
-          dateFormat: orgSettings?.date_format || userSettings?.date_format || 'DD/MM/YYYY',
-          timeFormat: orgSettings?.time_format || userSettings?.time_format || '12-hour',
+          businessName: orgSettings?.photography_business_name || 'Lumiso',
+          brandColor: orgSettings?.primary_brand_color || '#1EB29F',
+          dateFormat: orgSettings?.date_format || 'DD/MM/YYYY',
+          timeFormat: orgSettings?.time_format || '12-hour',
+          timezone: orgSettings?.timezone || 'UTC',
           baseUrl: 'https://my.lumiso.app'
         };
 

@@ -286,10 +286,10 @@ const handler = async (req: Request): Promise<Response> => {
       console.error('Error fetching todos:', todosError);
     }
 
-    // Get organization settings for branding
+    // Get organization settings for branding and timezone
     const { data: orgSettings } = await adminSupabase
       .from('organization_settings')
-      .select('photography_business_name, primary_brand_color, date_format, time_format')
+      .select('photography_business_name, primary_brand_color, date_format, time_format, timezone')
       .eq('organization_id', organizationId)
       .maybeSingle();
 
@@ -304,13 +304,14 @@ const handler = async (req: Request): Promise<Response> => {
     console.log('Today activities data:', todayActivities);
     console.log('Past sessions data:', pastSessions);
 
-    // Prepare data for enhanced email template
+    // Prepare data for enhanced email template with timezone support
     const templateData = {
       userFullName,
       businessName: orgSettings?.photography_business_name || 'Lumiso',
       brandColor: orgSettings?.primary_brand_color || '#1EB29F',
       dateFormat: orgSettings?.date_format || 'DD/MM/YYYY',
       timeFormat: orgSettings?.time_format || '12-hour',
+      timezone: orgSettings?.timezone || 'UTC',
       baseUrl: 'https://my.lumiso.app'
     };
 

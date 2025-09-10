@@ -8,6 +8,7 @@ export interface EmailTemplateData {
   baseUrl?: string;
   dateFormat?: string;
   timeFormat?: string;
+  timezone?: string;
 }
 
 export interface Lead {
@@ -57,43 +58,59 @@ export interface Activity {
   projects?: { name: string; id: string };
 }
 
-// Format date according to user preference
-export function formatDate(dateString: string, format: string = 'DD/MM/YYYY'): string {
+// Format date according to user preference with timezone support
+export function formatDate(dateString: string, format: string = 'DD/MM/YYYY', timezone: string = 'UTC'): string {
   const date = new Date(dateString);
+  
+  // Convert to the specified timezone
+  const options: Intl.DateTimeFormatOptions = {
+    timeZone: timezone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  };
   
   switch (format) {
     case 'MM/DD/YYYY':
-      return date.toLocaleDateString('en-US');
+      return new Intl.DateTimeFormat('en-US', options).format(date);
     case 'YYYY-MM-DD':
-      return date.toISOString().split('T')[0];
+      return new Intl.DateTimeFormat('sv-SE', options).format(date);
     case 'DD/MM/YYYY':
     default:
-      return date.toLocaleDateString('en-GB');
+      return new Intl.DateTimeFormat('en-GB', options).format(date);
   }
 }
 
-// Format time according to user preference
-export function formatTime(timeString: string, format: string = '12-hour'): string {
-  const [hours, minutes] = timeString.split(':').map(Number);
-  const date = new Date();
-  date.setHours(hours, minutes, 0, 0);
+// Format time according to user preference with timezone support
+export function formatTime(timeString: string, format: string = '12-hour', timezone: string = 'UTC', date?: string): string {
+  let dateToFormat: Date;
   
-  if (format === '24-hour') {
-    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+  if (date) {
+    // Combine date and time for proper timezone conversion
+    dateToFormat = new Date(`${date}T${timeString}`);
   } else {
-    return date.toLocaleTimeString('en-US', { 
-      hour: 'numeric', 
-      minute: '2-digit',
-      hour12: true 
-    });
+    // Use current date with the provided time
+    const [hours, minutes] = timeString.split(':').map(Number);
+    dateToFormat = new Date();
+    dateToFormat.setHours(hours, minutes, 0, 0);
   }
+  
+  const options: Intl.DateTimeFormatOptions = {
+    timeZone: timezone,
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: format === '12-hour'
+  };
+  
+  return new Intl.DateTimeFormat('en-US', options).format(dateToFormat);
 }
 
-// Format date and time together
+// Format date and time together with timezone support
 export function formatDateTime(dateString: string, timeString?: string, templateData?: EmailTemplateData): string {
-  const formattedDate = formatDate(dateString, templateData?.dateFormat);
+  const timezone = templateData?.timezone || 'UTC';
+  const formattedDate = formatDate(dateString, templateData?.dateFormat, timezone);
   if (timeString) {
-    const formattedTime = formatTime(timeString, templateData?.timeFormat);
+    const formattedTime = formatTime(timeString, templateData?.timeFormat, timezone, dateString);
     return `${formattedDate} at ${formattedTime}`;
   }
   return formattedDate;

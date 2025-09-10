@@ -136,12 +136,17 @@ const ScheduleSessionDialog = ({ leadId, leadName, onSessionScheduled, disabled 
           location: formData.location,
           client_name: leadName,
           lead_id: leadId,
-          project_id: formData.project_id
+          project_id: formData.project_id,
+          status: 'planned'
         });
         console.log(`✅ Session workflow result:`, workflowResult);
       } catch (workflowError) {
-        console.error('❌ Error triggering workflow:', workflowError);
-        // Don't block session creation if workflow fails
+        console.error('❌ Error triggering session_scheduled workflow:', workflowError);
+        toast({
+          title: "Warning",
+          description: "Session created successfully, but notifications may not be sent.",
+          variant: "default"
+        });
       }
 
       // Schedule session reminders

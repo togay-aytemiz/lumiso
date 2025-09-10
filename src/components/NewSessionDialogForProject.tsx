@@ -168,12 +168,17 @@ export function NewSessionDialogForProject({
           location: sessionData.location,
           client_name: leadName,
           lead_id: leadId,
-          project_id: projectId
+          project_id: projectId,
+          status: 'planned'
         });
         console.log(`✅ Session workflow result:`, workflowResult);
       } catch (workflowError) {
-        console.error('❌ Error triggering workflow:', workflowError);
-        // Don't block session creation if workflow fails
+        console.error('❌ Error triggering session_scheduled workflow:', workflowError);
+        toast({
+          title: "Warning", 
+          description: "Session created successfully, but notifications may not be sent.",
+          variant: "default"
+        });
       }
 
       // Schedule session reminders

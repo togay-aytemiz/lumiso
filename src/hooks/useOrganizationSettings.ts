@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { detectBrowserTimezone } from '@/lib/dateFormatUtils';
 
 export interface OrganizationSettings {
   id?: string;
@@ -35,8 +36,12 @@ export const useOrganizationSettings = () => {
         return;
       }
 
-      // Ensure organization settings exist first
-      await supabase.rpc('ensure_organization_settings', { org_id: organizationId });
+      // Ensure organization settings exist first with detected timezone
+      const detectedTimezone = detectBrowserTimezone();
+      await supabase.rpc('ensure_organization_settings', { 
+        org_id: organizationId,
+        detected_timezone: detectedTimezone
+      });
 
       // Get organization settings
       const { data: orgSettings, error } = await supabase

@@ -172,7 +172,18 @@ export function useTemplateOperations(): UseTemplateOperationsReturn {
     if (!activeOrganizationId || !user?.id) return false;
 
     try {
-      // Create the duplicate template
+      // First fetch the original template to get the blocks field
+      const { data: originalTemplate, error: fetchError } = await supabase
+        .from('message_templates')
+        .select('blocks')
+        .eq('id', template.id)
+        .single();
+
+      if (fetchError) {
+        console.warn('Could not fetch original template blocks:', fetchError);
+      }
+
+      // Create the duplicate template including blocks
       const { data, error: insertError } = await supabase
         .from('message_templates')
         .insert({
@@ -181,6 +192,7 @@ export function useTemplateOperations(): UseTemplateOperationsReturn {
           master_content: template.master_content,
           master_subject: template.master_subject,
           placeholders: template.placeholders || [],
+          blocks: originalTemplate?.blocks || null,
           is_active: false, // Duplicated templates start as drafts
           organization_id: activeOrganizationId,
           user_id: user.id

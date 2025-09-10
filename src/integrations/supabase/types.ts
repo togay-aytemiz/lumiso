@@ -716,6 +716,7 @@ export type Database = {
           primary_brand_color: string | null
           show_quick_status_buttons: boolean | null
           time_format: string | null
+          timezone: string | null
           updated_at: string
         }
         Insert: {
@@ -741,6 +742,7 @@ export type Database = {
           primary_brand_color?: string | null
           show_quick_status_buttons?: boolean | null
           time_format?: string | null
+          timezone?: string | null
           updated_at?: string
         }
         Update: {
@@ -766,6 +768,7 @@ export type Database = {
           primary_brand_color?: string | null
           show_quick_status_buttons?: boolean | null
           time_format?: string | null
+          timezone?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -2060,7 +2063,9 @@ export type Database = {
         Returns: undefined
       }
       ensure_organization_settings: {
-        Args: { org_id: string }
+        Args:
+          | { detected_timezone?: string; org_id: string }
+          | { org_id: string }
         Returns: string
       }
       ensure_system_lead_statuses: {

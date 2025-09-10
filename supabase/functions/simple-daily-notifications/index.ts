@@ -31,14 +31,13 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     const { action, user_id }: ProcessorRequest = await req.json().catch(() => ({ action: 'process' }));
     
+    // Get current UTC time for processing
     const currentTime = new Date();
-    const currentHour = String(currentTime.getHours()).padStart(2, '0');
-    const currentMinute = String(currentTime.getMinutes()).padStart(2, '0');
-    const currentTimeString = `${currentHour}:${currentMinute}`;
+    console.log(`Processing at UTC: ${currentTime.toISOString()}`);
     
-    console.log(`Processing at ${currentTimeString}`);
+    // We'll handle timezone conversion per user/organization basis
 
-    // Get users who need daily summaries at this time by joining with organization settings
+    // Get users who need daily summaries - we'll check timezone per organization
     let usersQuery = supabaseAdmin
       .from('user_settings')
       .select(`
@@ -54,9 +53,8 @@ const handler = async (req: Request): Promise<Response> => {
     if (action === 'test' && user_id) {
       console.log(`Testing for specific user: ${user_id}`);
       usersQuery = usersQuery.eq('user_id', user_id);
-    } else {
-      usersQuery = usersQuery.eq('notification_scheduled_time', currentTimeString);
     }
+    // For scheduled processing, we'll check timezone conversion for each user
 
     const { data: users, error: usersError } = await usersQuery;
 
@@ -83,7 +81,38 @@ const handler = async (req: Request): Promise<Response> => {
 
     for (const userSettings of users) {
       try {
-        console.log(`Processing user ${userSettings.user_id} at ${userSettings.notification_scheduled_time}`);
+        console.log(`Processing user ${userSettings.user_id} with scheduled time ${userSettings.notification_scheduled_time}`);
+        
+        // Skip if testing mode and no specific user ID
+        if (action !== 'test') {
+          // Get organization timezone to check if it's time for this user
+          const { data: orgSettings } = await supabaseAdmin
+            .from('organization_settings')
+            .select('timezone')
+            .eq('organization_id', userSettings.active_organization_id)
+            .maybeSingle();
+          
+          const orgTimezone = orgSettings?.timezone || 'UTC';
+          
+          // Convert current UTC time to organization timezone
+          const orgTime = new Date().toLocaleString('en-US', { 
+            timeZone: orgTimezone,
+            hour12: false 
+          });
+          
+          const orgDate = new Date(orgTime);
+          const orgHour = String(orgDate.getHours()).padStart(2, '0');
+          const orgMinute = String(orgDate.getMinutes()).padStart(2, '0');
+          const orgTimeString = `${orgHour}:${orgMinute}`;
+          
+          console.log(`Organization timezone: ${orgTimezone}, Local time: ${orgTimeString}, Scheduled: ${userSettings.notification_scheduled_time}`);
+          
+          // Skip if it's not time for this user in their timezone
+          if (orgTimeString !== userSettings.notification_scheduled_time) {
+            console.log(`Skipping user ${userSettings.user_id} - not their scheduled time`);
+            continue;
+          }
+        }
         
         // Get user profile for full name
         const { data: profile, error: profileError } = await supabaseAdmin

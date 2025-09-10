@@ -391,62 +391,63 @@ export function generateEmptyDailySummaryEmail(
         
         <div style="
           display: flex;
-          justify-content: space-between;
+          justify-content: center;
           flex-wrap: wrap;
-          gap: 16px;
+          gap: 8px;
           margin: 0 auto;
+          max-width: 400px;
         ">
           <a href="${templateData.baseUrl}" style="
             display: inline-block;
             background: ${brandColor};
             color: white;
-            padding: 10px 20px;
-            border-radius: 8px;
+            padding: 6px 12px;
+            border-radius: 6px;
             text-decoration: none;
-            font-weight: 600;
-            font-size: 14px;
+            font-weight: 500;
+            font-size: 12px;
             text-align: center;
+            min-width: 70px;
             flex: 1;
-            min-width: 120px;
           ">Dashboard</a>
           <a href="${templateData.baseUrl}/leads" style="
             display: inline-block;
             background: #6b7280;
             color: white;
-            padding: 10px 20px;
-            border-radius: 8px;
+            padding: 6px 12px;
+            border-radius: 6px;
             text-decoration: none;
-            font-weight: 600;
-            font-size: 14px;
+            font-weight: 500;
+            font-size: 12px;
             text-align: center;
+            min-width: 70px;
             flex: 1;
-            min-width: 120px;
           ">Leads</a>
           <a href="${templateData.baseUrl}/projects" style="
             display: inline-block;
             background: #6b7280;
             color: white;
-            padding: 10px 20px;
-            border-radius: 8px;
+            padding: 6px 12px;
+            border-radius: 6px;
             text-decoration: none;
-            font-weight: 600;
-            font-size: 14px;
+            font-weight: 500;
+            font-size: 12px;
             text-align: center;
+            min-width: 70px;
             flex: 1;
-            min-width: 120px;
           ">Projects</a>
           <a href="${templateData.baseUrl}/sessions" style="
             display: inline-block;
             background: #6b7280;
             color: white;
-            padding: 10px 20px;
-            border-radius: 8px;
+            padding: 6px 12px;
+            border-radius: 6px;
             text-decoration: none;
-            font-weight: 600;
-            font-size: 14px;
+            font-weight: 500;
+            font-size: 12px;
             text-align: center;
+            min-width: 70px;
             flex: 1;
-            min-width: 120px;
           ">Sessions</a>
         </div>
       </div>

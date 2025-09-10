@@ -52,30 +52,6 @@ const ScheduleSessionDialog = ({ leadId, leadName, onSessionScheduled, disabled 
         .order('name', { ascending: true });
 
       if (error) throw error;
-      console.log(`✅ Session created successfully (ScheduleSessionDialog)`);
-
-      // Trigger workflow for session scheduled  
-      try {
-        console.log(`🚀 Triggering session_scheduled workflow (from schedule dialog)`);
-        await triggerSessionScheduled(newSession.id, organizationId, {
-          session_date: formData.session_date,
-          session_time: formData.session_time,
-          location: formData.location,
-          client_name: leadName,
-          lead_id: leadId,
-          project_id: formData.project_id
-        });
-      } catch (workflowError) {
-        console.error('❌ Error triggering workflow:', workflowError);
-      }
-
-      // Schedule session reminders
-      try {
-        console.log(`⏰ Scheduling reminders`);
-        await scheduleSessionReminders(newSession.id);
-      } catch (reminderError) {
-        console.error('❌ Error scheduling reminders:', reminderError);
-      }
       setProjects(projectsData || []);
     } catch (error: any) {
       console.error('Error fetching projects:', error);

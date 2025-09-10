@@ -19,6 +19,8 @@ import { useOnboardingV2 } from "@/hooks/useOnboardingV2";
 import { OnboardingTutorial, TutorialStep } from "@/components/shared/OnboardingTutorial";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { SettingsLoadingSkeleton } from "@/components/ui/loading-presets";
+import { TimezoneSelector } from "@/components/TimezoneSelector";
+import { detectBrowserTimezone } from "@/lib/dateFormatUtils";
 
 export default function General() {
   const { settings, loading, uploading, updateSettings, uploadLogo, deleteLogo } = useOrganizationSettings();
@@ -117,12 +119,14 @@ export default function General() {
     sectionName: "Regional Settings", 
     initialValues: {
       dateFormat: settings?.date_format || "DD/MM/YYYY",
-      timeFormat: settings?.time_format || "12-hour"
+      timeFormat: settings?.time_format || "12-hour",
+      timezone: settings?.timezone || detectBrowserTimezone()
     },
     onSave: async (values) => {
       const updates = {
         date_format: values.dateFormat,
-        time_format: values.timeFormat
+        time_format: values.timeFormat,
+        timezone: values.timezone
       };
 
       const result = await updateSettings(updates);
@@ -142,7 +146,8 @@ export default function General() {
 
       regionalSection.setValues({
         dateFormat: settings.date_format || "DD/MM/YYYY",
-        timeFormat: settings.time_format || "12-hour"
+        timeFormat: settings.time_format || "12-hour",
+        timezone: settings.timezone || detectBrowserTimezone()
       });
     }
   }, [settings]);
@@ -401,7 +406,7 @@ export default function General() {
 
         <CategorySettingsSection
           title="Regional Settings"
-          description="Configure date and time display preferences"
+          description="Configure date, time, and timezone preferences for your organization"
           sectionId="regional"
         >
           <div className="space-y-6">
@@ -440,6 +445,12 @@ export default function General() {
                 </div>
               </RadioGroup>
             </div>
+
+            {/* Timezone */}
+            <TimezoneSelector
+              value={regionalSection.values.timezone}
+              onValueChange={(value) => regionalSection.updateValue("timezone", value)}
+            />
           </div>
         </CategorySettingsSection>
       </div>

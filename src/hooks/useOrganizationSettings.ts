@@ -10,6 +10,7 @@ export interface OrganizationSettings {
   primary_brand_color?: string | null;
   date_format?: string | null;
   time_format?: string | null;
+  timezone?: string | null;
   created_at?: string;
   updated_at?: string;
 }

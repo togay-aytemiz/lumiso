@@ -163,6 +163,26 @@ async function triggerWorkflows(supabase: any, triggerData: {
 
   console.log(`Found ${workflows.length} matching workflows`);
 
+  // Special handling for session_scheduled trigger - schedule future reminders
+  if (trigger_type === 'session_scheduled' && trigger_entity_type === 'session') {
+    try {
+      console.log(`Scheduling session reminders for session: ${trigger_entity_id}`);
+      const { error: schedulingError } = await supabase.rpc('schedule_session_reminders', {
+        session_id_param: trigger_entity_id
+      });
+      
+      if (schedulingError) {
+        console.error('Error scheduling session reminders:', schedulingError);
+        // Don't throw - continue with workflow execution even if scheduling fails
+      } else {
+        console.log(`Successfully scheduled reminders for session: ${trigger_entity_id}`);
+      }
+    } catch (error) {
+      console.error('Failed to schedule session reminders:', error);
+      // Don't throw - continue with workflow execution
+    }
+  }
+
   const executions = [];
   const duplicateFingerprints = new Set();
 

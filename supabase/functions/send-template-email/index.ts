@@ -785,12 +785,16 @@ const handler = async (req: Request): Promise<Response> => {
     const htmlContent = generateHTMLContent(blocks, mockData, finalSubject, preheader, organizationSettings, false);
     const textContent = generatePlainText(blocks, mockData);
 
-    // Get business name for sender
+    // Get business name for sender and use business email as reply-to
     const businessName = organizationSettings?.photography_business_name || 'Lumiso';
+    const replyToEmail = organizationSettings?.email || 'hello@updates.lumiso.app';
+    
+    console.log(`Template builder - Using business name: ${businessName}`);
+    console.log(`Template builder - Using reply-to email: ${replyToEmail}`);
     
     const emailData = {
       from: `${businessName} <hello@updates.lumiso.app>`,
-      reply_to: 'hello@updates.lumiso.app',
+      reply_to: replyToEmail,
       to: [to],
       subject: replacePlaceholders(finalSubject, mockData),
       html: htmlContent,
@@ -955,12 +959,16 @@ async function handleWorkflowEmail(requestData: SendEmailRequest): Promise<Respo
     console.log('Final HTML content length:', finalHtmlContent.length);
     console.log('Final plain text length:', plainTextContent.length);
 
-    // Get business name for sender
+    // Get business name for sender and use business email as reply-to
     const businessName = orgSettings?.photography_business_name || 'Your Business';
+    const replyToEmail = orgSettings?.email || 'hello@updates.lumiso.app';
+    
+    console.log(`Workflow email - Using business name: ${businessName}`);
+    console.log(`Workflow email - Using reply-to email: ${replyToEmail}`);
     
     const emailData = {
       from: `${businessName} <hello@updates.lumiso.app>`,
-      reply_to: orgSettings?.email || 'hello@updates.lumiso.app',
+      reply_to: replyToEmail,
       to: [recipient_email],
       subject: replacePlaceholders(emailSubject, mockData || {}),
       html: finalHtmlContent,

@@ -904,10 +904,10 @@ async function handleWorkflowEmail(requestData: SendEmailRequest): Promise<Respo
 
     console.log('Template found:', template.name);
     
-    // Get organization settings
+    // Get organization settings including social channels
     const { data: orgSettings, error: orgError } = await supabase
       .from('organization_settings')
-      .select('photography_business_name, primary_brand_color, logo_url, phone, email, date_format, time_format')
+      .select('photography_business_name, primary_brand_color, logo_url, phone, email, date_format, time_format, social_channels')
       .eq('organization_id', template.organization_id)
       .single();
 
@@ -943,13 +943,19 @@ async function handleWorkflowEmail(requestData: SendEmailRequest): Promise<Respo
 
     console.log('Using template blocks for workflow email:', blocks.length);
 
+    // Format organization settings to match what the social-links block expects
+    const organizationSettings = orgSettings ? {
+      ...orgSettings,
+      socialChannels: orgSettings.social_channels || {}
+    } : null;
+
     // Use the same HTML generation function as template builder tests
     const finalHtmlContent = generateHTMLContent(
       blocks, 
       mockData || {}, 
       emailSubject, 
       undefined, // no preheader
-      orgSettings,
+      organizationSettings,
       false // not preview mode
     );
     

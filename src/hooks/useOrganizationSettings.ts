@@ -3,6 +3,15 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { detectBrowserTimezone } from '@/lib/dateFormatUtils';
 
+export interface SocialChannel {
+  name: string;
+  url: string;
+  platform: 'website' | 'facebook' | 'instagram' | 'twitter' | 'linkedin' | 'youtube' | 'tiktok' | 'custom';
+  customPlatformName?: string;
+  enabled: boolean;
+  icon?: string;
+}
+
 export interface OrganizationSettings {
   id?: string;
   organization_id?: string;
@@ -14,6 +23,7 @@ export interface OrganizationSettings {
   date_format?: string | null;
   time_format?: string | null;
   timezone?: string | null;
+  social_channels?: Record<string, SocialChannel>;
   created_at?: string;
   updated_at?: string;
 }
@@ -69,7 +79,13 @@ export const useOrganizationSettings = () => {
 
       if (error) throw error;
 
-      setSettings(orgSettings);
+      // Ensure social_channels field exists with fallback
+      const settingsWithDefaults = {
+        ...orgSettings,
+        social_channels: (orgSettings.social_channels as unknown as Record<string, SocialChannel>) || {}
+      } as OrganizationSettings;
+
+      setSettings(settingsWithDefaults);
     } catch (error) {
       console.error('Error fetching organization settings:', error);
       setSettings(null);
@@ -90,12 +106,20 @@ export const useOrganizationSettings = () => {
         throw new Error('No active organization found');
       }
 
+      // Convert social_channels to proper format for database and separate from other updates
+      const { social_channels, ...otherUpdates } = updates;
+      const dbUpdates = { ...otherUpdates } as any;
+      
+      if (social_channels) {
+        dbUpdates.social_channels = social_channels;
+      }
+
       let result;
       if (settings?.id) {
         // Update existing settings
         result = await supabase
           .from('organization_settings')
-          .update(updates)
+          .update(dbUpdates)
           .eq('id', settings.id)
           .select()
           .single();
@@ -105,7 +129,7 @@ export const useOrganizationSettings = () => {
           .from('organization_settings')
           .insert({
             organization_id: organizationId,
-            ...updates
+            ...dbUpdates
           })
           .select()
           .single();
@@ -113,8 +137,14 @@ export const useOrganizationSettings = () => {
 
       if (result.error) throw result.error;
 
-      setSettings(result.data);
-      return { success: true, data: result.data };
+      // Ensure social_channels field exists with fallback for returned data
+      const settingsWithDefaults = {
+        ...result.data,
+        social_channels: (result.data.social_channels as unknown as Record<string, SocialChannel>) || {}
+      } as OrganizationSettings;
+
+      setSettings(settingsWithDefaults);
+      return { success: true, data: settingsWithDefaults };
     } catch (error: any) {
       console.error('Error updating organization settings:', error);
       toast({

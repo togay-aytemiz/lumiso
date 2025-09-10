@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { SocialChannel } from "@/hooks/useOrganizationSettings";
 
 interface EmailPreviewProps {
   blocks: TemplateBlock[];
@@ -21,7 +22,7 @@ export function EmailPreview({ blocks, mockData, device, emailSubject, preheader
       if (activeOrganization?.id) {
         const { data } = await supabase
           .from("organization_settings")
-          .select("photography_business_name, logo_url, primary_brand_color, phone, email")
+          .select("photography_business_name, logo_url, primary_brand_color, phone, email, social_channels")
           .eq("organization_id", activeOrganization.id)
           .single();
         setOrganizationSettings(data);
@@ -281,6 +282,16 @@ function FooterBlockPreview({ data, mockData, organizationSettings }: { data: Fo
   const businessPhone = organizationSettings?.phone || mockData.business_phone || '+1 (555) 123-4567';
   const businessEmail = organizationSettings?.email || mockData.business_email || `hello@${businessName.toLowerCase().replace(/\s+/g, '')}.com`;
   const logoUrl = organizationSettings?.logo_url;
+  const socialChannels = (organizationSettings?.social_channels as Record<string, SocialChannel>) || {};
+
+  // Filter and prepare social links
+  const validSocialLinks = Object.entries(socialChannels)
+    .filter(([key, channel]) => channel.enabled && channel.url)
+    .map(([key, channel]) => ({
+      platform: channel.platform,
+      name: channel.customPlatformName || channel.name,
+      url: channel.url
+    }));
 
   return (
     <div className="border-t pt-6 mt-8 text-center text-sm text-gray-600">
@@ -307,9 +318,27 @@ function FooterBlockPreview({ data, mockData, organizationSettings }: { data: Fo
       )}
       
       {data.showContactInfo && (
-        <div className="space-y-1">
+        <div className="space-y-1 mb-3">
           <div>{businessPhone}</div>
           <div>{businessEmail}</div>
+        </div>
+      )}
+
+      {data.showSocialLinks && validSocialLinks.length > 0 && (
+        <div className="mb-3">
+          <div className="flex justify-center gap-4 flex-wrap">
+            {validSocialLinks.map((link, index) => (
+              <a 
+                key={index} 
+                href={link.url} 
+                className="text-blue-600 hover:text-blue-800 text-sm"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {link.name}
+              </a>
+            ))}
+          </div>
         </div>
       )}
       

@@ -75,6 +75,7 @@ export interface FooterBlockData {
   showLogo: boolean;
   showStudioName: boolean;
   showContactInfo: boolean;
+  showSocialLinks?: boolean;
   customText?: string;
   showUnsubscribe?: boolean;
   showMailingAddress?: boolean;

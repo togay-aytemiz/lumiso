@@ -17,6 +17,7 @@ import { useSettingsCategorySection } from "@/hooks/useSettingsCategorySection";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { useOnboardingV2 } from "@/hooks/useOnboardingV2";
 import { OnboardingTutorial, TutorialStep } from "@/components/shared/OnboardingTutorial";
+import { SocialChannelsSection } from "@/components/settings/SocialChannelsSection";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { SettingsLoadingSkeleton } from "@/components/ui/loading-presets";
 import { TimezoneSelector } from "@/components/TimezoneSelector";
@@ -459,6 +460,21 @@ export default function General() {
               </p>
             </div>
           </div>
+        </CategorySettingsSection>
+
+        {/* Social Channels Section */}
+        <CategorySettingsSection
+          title="Social Channels"
+          description="Add your social media and website links to display in email footers"
+          sectionId="social"
+        >
+          {settings && (
+            <SocialChannelsSection
+              socialChannels={settings.social_channels || {}}
+              onUpdate={(channels) => updateSettings({ social_channels: channels })}
+              isDirty={false}
+            />
+          )}
         </CategorySettingsSection>
 
         <CategorySettingsSection

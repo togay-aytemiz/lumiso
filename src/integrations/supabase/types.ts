@@ -715,6 +715,7 @@ export type Database = {
           photography_business_name: string | null
           primary_brand_color: string | null
           show_quick_status_buttons: boolean | null
+          social_channels: Json | null
           time_format: string | null
           timezone: string | null
           updated_at: string
@@ -741,6 +742,7 @@ export type Database = {
           photography_business_name?: string | null
           primary_brand_color?: string | null
           show_quick_status_buttons?: boolean | null
+          social_channels?: Json | null
           time_format?: string | null
           timezone?: string | null
           updated_at?: string
@@ -767,6 +769,7 @@ export type Database = {
           photography_business_name?: string | null
           primary_brand_color?: string | null
           show_quick_status_buttons?: boolean | null
+          social_channels?: Json | null
           time_format?: string | null
           timezone?: string | null
           updated_at?: string

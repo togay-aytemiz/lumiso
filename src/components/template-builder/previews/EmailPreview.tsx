@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { SocialChannel } from "@/hooks/useOrganizationSettings";
+import { SocialChannel, useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 
 interface EmailPreviewProps {
   blocks: TemplateBlock[];
@@ -361,14 +361,38 @@ function DividerBlockPreview({ data }: { data: any }) {
 }
 
 function SocialLinksBlockPreview({ data }: { data: any }) {
+  const { settings } = useOrganizationSettings();
+  
+  if (data.showSocialLinks === false) {
+    return null;
+  }
+
+  const socialChannelsArray = settings?.socialChannels 
+    ? Object.entries(settings.socialChannels)
+        .sort(([, a], [, b]) => ((a as SocialChannel).order || 0) - ((b as SocialChannel).order || 0))
+        .filter(([, channel]) => (channel as SocialChannel).url?.trim())
+    : [];
+
+  if (socialChannelsArray.length === 0) {
+    return null;
+  }
+
   return (
     <div className="text-center py-4">
       <div className="flex justify-center gap-4">
-        {data.links.filter((link: any) => link.show && link.url).map((link: any) => (
-          <a key={link.platform} href={link.url} className="text-blue-600 capitalize underline">
-            {link.platform}
-          </a>
-        ))}
+        {socialChannelsArray.map(([key, channel]) => {
+          const socialChannel = channel as SocialChannel;
+          return (
+            <a
+              key={key}
+              href={socialChannel.url}
+              className="inline-block p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors text-sm"
+              style={{ color: '#333' }}
+            >
+              {socialChannel.name}
+            </a>
+          );
+        })}
       </div>
     </div>
   );

@@ -28,11 +28,7 @@ export interface ColumnsBlockData {
 }
 
 export interface SocialLinksBlockData {
-  links: Array<{
-    platform: "facebook" | "instagram" | "twitter" | "website";
-    url: string;
-    show: boolean;
-  }>;
+  showSocialLinks?: boolean;
 }
 
 export interface HeaderBlockData {

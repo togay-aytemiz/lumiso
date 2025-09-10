@@ -260,12 +260,7 @@ function getDefaultBlockData(type: TemplateBlock["type"]): BlockData {
       };
     case "social-links":
       return {
-        links: [
-          { platform: "facebook" as const, url: "", show: false },
-          { platform: "instagram" as const, url: "", show: true },
-          { platform: "twitter" as const, url: "", show: false },
-          { platform: "website" as const, url: "", show: false },
-        ],
+        showSocialLinks: true,
       };
     case "header":
       return {

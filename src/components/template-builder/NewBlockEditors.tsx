@@ -5,8 +5,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Settings } from "lucide-react";
 import { DividerBlockData, ColumnsBlockData, SocialLinksBlockData, HeaderBlockData, RawHTMLBlockData } from "@/types/templateBuilder";
+import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 
 export function DividerBlockEditor({ data, onUpdate }: { data: DividerBlockData; onUpdate: (data: DividerBlockData) => void }) {
   return (
@@ -97,37 +98,51 @@ export function ColumnsBlockEditor({ data, onUpdate }: { data: ColumnsBlockData;
 }
 
 export function SocialLinksBlockEditor({ data, onUpdate }: { data: SocialLinksBlockData; onUpdate: (data: SocialLinksBlockData) => void }) {
-  const updateLink = (platform: string, field: 'url' | 'show', value: string | boolean) => {
-    const newLinks = data.links.map(link => 
-      link.platform === platform ? { ...link, [field]: value } : link
-    );
-    onUpdate({ ...data, links: newLinks });
+  const { settings } = useOrganizationSettings();
+  
+  const toggleShowSocialLinks = (show: boolean) => {
+    onUpdate({ ...data, showSocialLinks: show });
   };
+
+  const socialChannelsArray = settings?.socialChannels 
+    ? Object.entries(settings.socialChannels)
+        .sort(([, a], [, b]) => (a.order || 0) - (b.order || 0))
+        .filter(([, channel]) => channel.url?.trim())
+    : [];
 
   return (
     <div className="space-y-4">
-      <Label>Social Links</Label>
-      
-      <div className="space-y-3">
-        {data.links.map((link) => (
-          <div key={link.platform} className="space-y-2 p-3 border rounded">
-            <div className="flex items-center justify-between">
-              <Label className="capitalize">{link.platform}</Label>
-              <Switch
-                checked={link.show}
-                onCheckedChange={(checked) => updateLink(link.platform, 'show', checked)}
-              />
-            </div>
-            {link.show && (
-              <Input
-                value={link.url}
-                onChange={(e) => updateLink(link.platform, 'url', e.target.value)}
-                placeholder={`https://${link.platform}.com/yourprofile`}
-              />
-            )}
-          </div>
-        ))}
+      <div className="flex items-center justify-between">
+        <Label>Show Social Links</Label>
+        <Switch
+          checked={data.showSocialLinks !== false}
+          onCheckedChange={toggleShowSocialLinks}
+        />
       </div>
+      
+      {socialChannelsArray.length > 0 ? (
+        <div className="space-y-3">
+          <div className="text-sm text-muted-foreground">
+            The following social channels will be displayed:
+          </div>
+          <div className="space-y-2">
+            {socialChannelsArray.map(([key, channel]) => (
+              <div key={key} className="flex items-center gap-2 p-2 bg-muted/50 rounded text-sm">
+                <span className="font-medium">{channel.name}</span>
+                <span className="text-muted-foreground">→</span>
+                <span className="text-xs text-muted-foreground truncate">{channel.url}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <Alert>
+          <Settings className="h-4 w-4" />
+          <AlertDescription>
+            No social channels configured. Go to Settings → General → Social Channels to add your social media links.
+          </AlertDescription>
+        </Alert>
+      )}
     </div>
   );
 }

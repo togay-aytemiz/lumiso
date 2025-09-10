@@ -10,6 +10,7 @@ export interface SocialChannel {
   customPlatformName?: string;
   enabled: boolean;
   icon?: string;
+  order: number;
 }
 
 export interface OrganizationSettings {
@@ -24,6 +25,7 @@ export interface OrganizationSettings {
   time_format?: string | null;
   timezone?: string | null;
   social_channels?: Record<string, SocialChannel>;
+  socialChannels?: Record<string, SocialChannel>;
   created_at?: string;
   updated_at?: string;
 }
@@ -82,10 +84,10 @@ export const useOrganizationSettings = () => {
       // Ensure social_channels field exists with fallback
       const settingsWithDefaults = {
         ...orgSettings,
-        social_channels: (orgSettings.social_channels as unknown as Record<string, SocialChannel>) || {}
-      } as OrganizationSettings;
+        socialChannels: (orgSettings.social_channels as any) || {}
+      };
 
-      setSettings(settingsWithDefaults);
+      setSettings(settingsWithDefaults as unknown as OrganizationSettings);
     } catch (error) {
       console.error('Error fetching organization settings:', error);
       setSettings(null);
@@ -107,11 +109,11 @@ export const useOrganizationSettings = () => {
       }
 
       // Convert social_channels to proper format for database and separate from other updates
-      const { social_channels, ...otherUpdates } = updates;
+      const { socialChannels, ...otherUpdates } = updates;
       const dbUpdates = { ...otherUpdates } as any;
       
-      if (social_channels) {
-        dbUpdates.social_channels = social_channels;
+      if (socialChannels) {
+        dbUpdates.social_channels = socialChannels;
       }
 
       let result;
@@ -140,11 +142,11 @@ export const useOrganizationSettings = () => {
       // Ensure social_channels field exists with fallback for returned data
       const settingsWithDefaults = {
         ...result.data,
-        social_channels: (result.data.social_channels as unknown as Record<string, SocialChannel>) || {}
-      } as OrganizationSettings;
+        socialChannels: (result.data.social_channels as any) || {}
+      };
 
-      setSettings(settingsWithDefaults);
-      return { success: true, data: settingsWithDefaults };
+      setSettings(settingsWithDefaults as unknown as OrganizationSettings);
+      return { success: true, data: settingsWithDefaults as unknown as OrganizationSettings };
     } catch (error: any) {
       console.error('Error updating organization settings:', error);
       toast({

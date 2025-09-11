@@ -112,24 +112,24 @@ export function createEmailTemplate(
       margin: 0;
       padding: 0;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #f8fafc;
+      background-color: #F3F4F6;
       line-height: 1.6;
     }
     .email-container {
       max-width: 600px;
       margin: 0 auto;
-      background-color: #f8fafc;
+      background-color: #F3F4F6;
       box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     }
     .email-header {
-      background: linear-gradient(135deg, ${brandColor}, ${brandColor}dd);
+      background-color: #F3F4F6;
       padding: 24px;
       text-align: center;
-      color: white;
+      color: #374151;
     }
     .email-body {
       padding: 24px;
-      background-color: #f8fafc;
+      background-color: #F3F4F6;
     }
     .email-footer {
       background-color: #e2e8f0;

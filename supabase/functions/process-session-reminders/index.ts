@@ -46,11 +46,10 @@ const handler = async (req: Request): Promise<Response> => {
 async function processScheduledReminders(supabase: any) {
   console.log('Processing scheduled session reminders');
 
-  // Get reminders that are due to be sent (allow 2 minute buffer for processing delays, NOT early sending)
+  // Get reminders that are due to be sent (exact timing, no early processing buffer)
   const now = new Date();
-  const bufferTime = new Date(now.getTime() - 2 * 60 * 1000); // 2 minutes in the past for late processing
 
-  console.log(`Looking for reminders scheduled before: ${now.toISOString()} (with ${bufferTime.toISOString()} buffer)`);
+  console.log(`Processing reminders scheduled at or before: ${now.toISOString()}`);
 
   const { data: dueReminders, error: fetchError } = await supabase
     .from('scheduled_session_reminders')
@@ -79,7 +78,6 @@ async function processScheduledReminders(supabase: any) {
     `)
     .eq('status', 'pending')
     .lte('scheduled_for', now.toISOString())
-    .gte('scheduled_for', bufferTime.toISOString())
     .order('scheduled_for');
 
   if (fetchError) {
@@ -139,6 +137,8 @@ async function processScheduledReminders(supabase: any) {
 
       // Trigger the workflow executor for this session reminder with explicit session validation
       console.log(`Triggering workflow for session ${reminder.session_id} (${reminder.sessions.session_date} ${reminder.sessions.session_time})`);
+      console.log(`Processing reminder type: ${reminder.reminder_type} scheduled for: ${reminder.scheduled_for}`);
+      console.log(`Current time: ${now.toISOString()}, Reminder due: ${reminder.scheduled_for}`);
       
       const { error: triggerError } = await supabase.functions.invoke('workflow-executor', {
         body: {
@@ -170,7 +170,9 @@ async function processScheduledReminders(supabase: any) {
               expected_session_id: reminder.session_id,
               actual_session_date: reminder.sessions.session_date,
               actual_session_time: reminder.sessions.session_time,
-              lead_name: reminder.sessions.leads.name
+              lead_name: reminder.sessions.leads.name,
+              reminder_type: reminder.reminder_type,
+              scheduled_for: reminder.scheduled_for
             }
           }
         }

@@ -797,8 +797,16 @@ async function getEntityData(supabase: any, entityType: string, entityId: string
       if (triggerData.debug_session_validation) {
         console.log('Session validation:', triggerData.debug_session_validation);
         if (triggerData.debug_session_validation.expected_session_id !== entityId) {
-          console.error(`Session ID mismatch! Expected: ${triggerData.debug_session_validation.expected_session_id}, Got: ${entityId}`);
+          console.error(`❌ CRITICAL SESSION ID MISMATCH!`);
+          console.error(`Expected session: ${triggerData.debug_session_validation.expected_session_id}`);
+          console.error(`Received entity: ${entityId}`);  
+          console.error(`Reminder type: ${triggerData.debug_session_validation.reminder_type}`);
+          console.error(`This would cause wrong session notifications!`);
+          throw new Error(`Session ID mismatch: Expected ${triggerData.debug_session_validation.expected_session_id} but got ${entityId} for ${triggerData.debug_session_validation.reminder_type}`);
         }
+        
+        console.log(`✅ Session validation passed for ${triggerData.debug_session_validation.reminder_type}`);
+        console.log(`Processing session: ${entityId} (${triggerData.session_data.session_date} ${triggerData.session_data.session_time})`);
       }
       
       entityData = {

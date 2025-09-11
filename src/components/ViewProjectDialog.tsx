@@ -48,8 +48,20 @@ interface Session {
   session_time: string;
   notes: string;
   status: string;
+  status_id?: string | null;
   project_id?: string;
   lead_id: string;
+  session_statuses?: {
+    id: string;
+    name: string;
+    lifecycle: string;
+  } | null;
+  projects?: {
+    name: string;
+    project_types?: {
+      name: string;
+    };
+  };
 }
 interface ViewProjectDialogProps {
   project: Project | null;
@@ -264,11 +276,22 @@ export function ViewProjectDialog({
       const {
         data,
         error
-      } = await supabase.from('sessions').select('*').eq('project_id', project.id).order('session_date', {
-        ascending: false
-      });
+      } = await supabase.from('sessions').select(`
+          *,
+          session_statuses:status_id (
+            id,
+            name,
+            lifecycle
+          ),
+          projects:project_id (
+            name,
+            project_types (
+              name
+            )
+          )
+        `).eq('project_id', project.id);
       if (error) throw error;
-      setSessions(data || []);
+      setSessions(data as unknown as Session[]);
     } catch (error: any) {
       console.error('Error fetching project sessions:', error);
       toast({
@@ -498,6 +521,7 @@ export function ViewProjectDialog({
   };
   const handleSessionUpdated = () => {
     fetchProjectSessions();
+    onProjectUpdated(); // Propagate to parent
     setEditingSessionId(null);
     onProjectUpdated(); // Notify parent component to refresh sessions
   };

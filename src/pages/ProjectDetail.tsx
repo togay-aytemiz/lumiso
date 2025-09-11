@@ -19,6 +19,7 @@ import ProjectDetailsLayout from "@/components/project-details/ProjectDetailsLay
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { UnifiedClientDetails } from "@/components/UnifiedClientDetails";
 import { AssigneesList } from "@/components/AssigneesList";
+import { SessionWithStatus } from "@/lib/sessionSorting";
 import { onArchiveToggle } from "@/components/ViewProjectDialog";
 
 interface Project {
@@ -44,14 +45,9 @@ interface Lead {
   notes: string | null;
 }
 
-interface Session {
-  id: string;
-  session_date: string;
+interface Session extends SessionWithStatus {
   session_time: string;
   notes: string;
-  status: string;
-  project_id?: string;
-  lead_id: string;
 }
 
 interface ProjectType {
@@ -113,12 +109,24 @@ export default function ProjectDetail() {
     try {
       const { data, error } = await supabase
         .from('sessions')
-        .select('*')
-        .eq('project_id', project.id)
-        .order('session_date', { ascending: false });
+        .select(`
+          *,
+          session_statuses:status_id (
+            id,
+            name,
+            lifecycle
+          ),
+          projects:project_id (
+            name,
+            project_types (
+              name
+            )
+          )
+        `)
+        .eq('project_id', project.id);
       
       if (error) throw error;
-      setSessions(data || []);
+      setSessions(data as unknown as Session[]);
     } catch (error: any) {
       console.error('Error fetching project sessions:', error);
       toast({

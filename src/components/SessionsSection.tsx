@@ -7,14 +7,10 @@ import EditSessionDialog from "./EditSessionDialog";
 import SessionSheetView from "./SessionSheetView";
 import { NewSessionDialogForProject } from "./NewSessionDialogForProject";
 import { useNavigate } from "react-router-dom";
-interface Session {
-  id: string;
-  session_date: string;
+import { sortSessionsByLifecycle, SessionWithStatus } from "@/lib/sessionSorting";
+interface Session extends SessionWithStatus {
   session_time: string;
   notes: string;
-  status: string;
-  project_id?: string;
-  lead_id: string;
 }
 interface SessionsSectionProps {
   sessions: Session[];
@@ -43,6 +39,10 @@ export function SessionsSection({
   const handleSessionUpdated = () => {
     onSessionUpdated();
     setEditingSessionId(null);
+  };
+
+  const handleSessionSheetUpdated = () => {
+    onSessionUpdated(); // Propagate updates from session sheet to parent
   };
 
   const handleSessionClick = (sessionId: string) => {
@@ -95,7 +95,7 @@ export function SessionsSection({
               {!loading && <p className="text-sm text-muted-foreground mb-3">
                   This project includes {sessions.length} session{sessions.length !== 1 ? 's' : ''}
                 </p>}
-              {sessions.map(session => (
+              {sortSessionsByLifecycle(sessions).map(session => (
                 <DeadSimpleSessionBanner 
                   key={session.id} 
                    session={{
@@ -146,6 +146,7 @@ export function SessionsSection({
         onViewFullDetails={handleViewFullSessionDetails}
         onNavigateToLead={handleNavigateToLead}
         onNavigateToProject={handleNavigateToProject}
+        onSessionUpdated={handleSessionSheetUpdated}
       />
     </>;
 }

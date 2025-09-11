@@ -70,6 +70,7 @@ interface SessionSheetViewProps {
   onViewFullDetails: () => void;
   onNavigateToLead?: (leadId: string) => void;
   onNavigateToProject?: (projectId: string) => void;
+  onSessionUpdated?: () => void; // Added callback for session updates
 }
 
 export default function SessionSheetView({
@@ -79,6 +80,7 @@ export default function SessionSheetView({
   onViewFullDetails,
   onNavigateToLead,
   onNavigateToProject,
+  onSessionUpdated,
 }: SessionSheetViewProps) {
   const { toast } = useToast();
   const { deleteSession } = useSessionActions();
@@ -163,10 +165,12 @@ export default function SessionSheetView({
   const handleSessionUpdated = () => {
     fetchSession();
     setIsEditDialogOpen(false);
+    onSessionUpdated?.(); // Notify parent components
   };
 
   const handleStatusChange = () => {
     fetchSession();
+    onSessionUpdated?.(); // Notify parent components
   };
 
   const handleLeadClick = () => {

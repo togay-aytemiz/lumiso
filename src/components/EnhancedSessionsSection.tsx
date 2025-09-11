@@ -1,23 +1,13 @@
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import DeadSimpleSessionBanner from "@/components/DeadSimpleSessionBanner";
+import { sortSessionsByLifecycle, SessionWithStatus } from "@/lib/sessionSorting";
 
 type SessionStatus = "planned" | "completed" | "cancelled" | "no_show" | "rescheduled" | "in_post_processing" | "delivered";
 
-interface Session {
-  id: string;
-  session_date: string;
+interface Session extends SessionWithStatus {
   session_time?: string;
   notes?: string;
-  status: SessionStatus;
-  project_id?: string;
-  lead_id: string;
-  projects?: {
-    name: string;
-    project_types?: {
-      name: string;
-    };
-  };
 }
 
 interface EnhancedSessionsSectionProps {
@@ -46,12 +36,8 @@ const EnhancedSessionsSection = ({ sessions, loading, onSessionClick }: Enhanced
     return null;
   }
 
-  // Sort sessions chronologically (past to future)
-  const sortedSessions = [...sessions].sort((a, b) => {
-    const dateA = new Date(`${a.session_date}T${a.session_time || '00:00'}`);
-    const dateB = new Date(`${b.session_date}T${b.session_time || '00:00'}`);
-    return dateA.getTime() - dateB.getTime();
-  });
+  // Sort sessions by lifecycle priority (active -> completed -> cancelled)
+  const sortedSessions = sortSessionsByLifecycle(sessions);
 
   return (
     <div className="w-full bg-blue-50/50 border border-blue-100 rounded-lg p-6 mb-6">
@@ -66,7 +52,7 @@ const EnhancedSessionsSection = ({ sessions, loading, onSessionClick }: Enhanced
         {sortedSessions.map((session) => (
           <DeadSimpleSessionBanner
             key={session.id}
-            session={session}
+            session={session as any}
             onClick={onSessionClick}
           />
         ))}

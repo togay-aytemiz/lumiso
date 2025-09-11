@@ -1009,10 +1009,17 @@ const LeadDetail = () => {
       <SessionSheetView
         sessionId={selectedSessionId || ''}
         isOpen={isSessionSheetOpen}
-        onOpenChange={setIsSessionSheetOpen}
+        onOpenChange={(open) => {
+          setIsSessionSheetOpen(open);
+          // Refresh sessions when sheet closes
+          if (!open) {
+            fetchSessions();
+          }
+        }}
         onViewFullDetails={handleViewFullSessionDetails}
         onNavigateToLead={handleNavigateToLead}
         onNavigateToProject={handleNavigateToProject}
+        onSessionUpdated={fetchSessions}
       />
 
       <OnboardingTutorial

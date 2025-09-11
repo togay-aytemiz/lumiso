@@ -19,6 +19,8 @@ import ReactCalendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import "@/components/react-calendar.css";
 import { TimePicker } from "@/components/ui/time-picker";
+import { TimeSlotPicker } from "@/components/TimeSlotPicker";
+import { Badge } from "@/components/ui/badge";
 
 
 interface NewSessionDialogForProjectProps {
@@ -365,97 +367,104 @@ export function NewSessionDialogForProject({
           </div>
 
           <div className="space-y-3">
-            <Label htmlFor="session_date">Session Date *</Label>
-            <div className="rounded-lg border">
-              <div className="p-3">
-                <ReactCalendar
-                  className="react-calendar !w-full pointer-events-auto [&_.react-calendar\_\_navigation]:!w-full [&_.react-calendar\_\_viewContainer]:!w-full [&_.react-calendar\_\_month-view]:!w-full"
-                  locale={browserLocale}
-                  view="month"
-                  minDetail="month"
-                  next2Label={null}
-                  prev2Label={null}
-                  onActiveStartDateChange={({ activeStartDate, view }) => {
-                    if (view === 'month' && activeStartDate) {
-                      setVisibleMonth(activeStartDate);
-                    }
-                  }}
-                  onChange={(value) => {
-                    const d = Array.isArray(value) ? value[0] : value;
-                    const date = d instanceof Date ? d : undefined;
-                    setSelectedDate(date);
-                    if (date) {
-                      handleInputChange("session_date", format(date, "yyyy-MM-dd"));
-                    }
-                  }}
-                  value={selectedDate ?? null}
-                  formatShortWeekday={(_, date) => new Intl.DateTimeFormat(browserLocale, { weekday: 'short' }).format(date)}
-                  tileContent={({ date, view }) => {
-                    if (view !== 'month') return null;
-                    const key = format(date, 'yyyy-MM-dd');
-                    const count = sessionCountByDate[key] || 0;
-                    const dots = Math.min(count, 3);
-                    if (!dots) return null;
-                    return (
-                      <div className="pointer-events-none absolute bottom-1 left-1/2 -translate-x-1/2 flex items-center justify-center gap-0.5">
-                        {Array.from({ length: dots }).map((_, i) => (
-                          <span key={i} className="h-1.5 w-1.5 rounded-full bg-primary ring-1 ring-background" />
-                        ))}
-                      </div>
-                    );
-                  }}
-                />
-              </div>
-              <div className="px-3 pb-3 flex items-center justify-between border-t bg-muted/20">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => {
-                    const today = new Date();
-                    setSelectedDate(today);
-                    handleInputChange("session_date", format(today, "yyyy-MM-dd"));
-                  }}
-                >
-                  Today
-                </Button>
-              </div>
-            </div>
-            
-            {sessionsForDay.length > 0 && (
-              <div className="overflow-hidden">
-                <div className="rounded-md border p-3 animate-scale-in duration-300 ease-out transform transition-all">
-                  <div className="text-xs text-muted-foreground mb-2 flex items-center gap-2">
-                    <span className="h-2 w-2 rounded-full bg-primary/60"></span>
-                    Planned sessions on this day
+            <Label>Schedule Session *</Label>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* Date Picker - Left Side */}
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">Select Date</Label>
+                <div className="rounded-lg border">
+                  <div className="p-3">
+                    <ReactCalendar
+                      className="react-calendar !w-full pointer-events-auto [&_.react-calendar\_\_navigation]:!w-full [&_.react-calendar\_\_viewContainer]:!w-full [&_.react-calendar\_\_month-view]:!w-full"
+                      locale={browserLocale}
+                      view="month"
+                      minDetail="month"
+                      next2Label={null}
+                      prev2Label={null}
+                      onActiveStartDateChange={({ activeStartDate, view }) => {
+                        if (view === 'month' && activeStartDate) {
+                          setVisibleMonth(activeStartDate);
+                        }
+                      }}
+                      onChange={(value) => {
+                        const d = Array.isArray(value) ? value[0] : value;
+                        const date = d instanceof Date ? d : undefined;
+                        setSelectedDate(date);
+                        if (date) {
+                          handleInputChange("session_date", format(date, "yyyy-MM-dd"));
+                        }
+                      }}
+                      value={selectedDate ?? null}
+                      formatShortWeekday={(_, date) => new Intl.DateTimeFormat(browserLocale, { weekday: 'short' }).format(date)}
+                      tileContent={({ date, view }) => {
+                        if (view !== 'month') return null;
+                        const key = format(date, 'yyyy-MM-dd');
+                        const count = sessionCountByDate[key] || 0;
+                        const dots = Math.min(count, 3);
+                        if (!dots) return null;
+                        return (
+                          <div className="pointer-events-none absolute bottom-1 left-1/2 -translate-x-1/2 flex items-center justify-center gap-0.5">
+                            {Array.from({ length: dots }).map((_, i) => (
+                              <span key={i} className="h-1.5 w-1.5 rounded-full bg-primary ring-1 ring-background" />
+                            ))}
+                          </div>
+                        );
+                      }}
+                    />
                   </div>
-                  <ul className="space-y-2">
-                    {sortedSessionsForDay.map((s: any, index: any) => (
-                      <li 
-                        key={s.id} 
-                        className="flex items-center gap-3 text-sm animate-fade-in"
-                        style={{ animationDelay: `${index * 50}ms` }}
-                      >
-                        <span className="font-medium tabular-nums text-primary">{(s.session_time || '').slice(0,5)}</span>
-                        <span className="text-muted-foreground truncate">
-                          {s.leads?.name || 'Unknown lead'} · {s.projects?.name || 'No project'}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
+                  <div className="px-3 pb-3 flex items-center justify-between border-t bg-muted/20">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => {
+                        const today = new Date();
+                        setSelectedDate(today);
+                        handleInputChange("session_date", format(today, "yyyy-MM-dd"));
+                      }}
+                    >
+                      Today
+                    </Button>
+                  </div>
                 </div>
+                
+                {/* Planned sessions for selected day */}
+                {sessionsForDay.length > 0 && (
+                  <div className="overflow-hidden">
+                    <div className="rounded-md border p-3 animate-scale-in duration-300 ease-out transform transition-all">
+                      <div className="text-xs text-muted-foreground mb-2 flex items-center gap-2">
+                        <span className="h-2 w-2 rounded-full bg-primary/60"></span>
+                        Planned sessions on this day
+                      </div>
+                      <ul className="space-y-2">
+                        {sortedSessionsForDay.map((s: any, index: any) => (
+                          <li 
+                            key={s.id} 
+                            className="flex items-center gap-3 text-sm animate-fade-in"
+                            style={{ animationDelay: `${index * 50}ms` }}
+                          >
+                            <span className="font-medium tabular-nums text-primary">{(s.session_time || '').slice(0,5)}</span>
+                            <span className="text-muted-foreground truncate">
+                              {s.leads?.name || 'Unknown lead'} · {s.projects?.name || 'No project'}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
 
-          <div className="space-y-3">
-            <Label htmlFor="session_time">Session Time *</Label>
-            <div className="rounded-lg border">
-              <div className="p-3">
-                <TimePicker
-                  value={sessionData.session_time}
-                  onChange={(time) => handleInputChange("session_time", time)}
-                />
+              {/* Time Slot Picker - Right Side */}
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">Select Time</Label>
+                <div className="rounded-lg border p-3">
+                  <TimeSlotPicker
+                    selectedDate={selectedDate}
+                    selectedTime={sessionData.session_time}
+                    onTimeSelect={(time) => handleInputChange("session_time", time)}
+                  />
+                </div>
               </div>
             </div>
           </div>

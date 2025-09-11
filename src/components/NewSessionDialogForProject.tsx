@@ -5,15 +5,15 @@ import { AppSheetModal } from "@/components/ui/app-sheet-modal";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Calendar as CalendarIcon, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useCalendarSync } from "@/hooks/useCalendarSync";
 import { useWorkflowTriggers } from "@/hooks/useWorkflowTriggers";
 import { useSessionReminderScheduling } from "@/hooks/useSessionReminderScheduling";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { NavigationGuardDialog } from "@/components/settings/NavigationGuardDialog";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { cn, getUserLocale } from "@/lib/utils";
+import { getUserLocale } from "@/lib/utils";
+import { generateSessionName } from "@/lib/sessionUtils";
 import { format } from "date-fns";
 import ReactCalendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
@@ -42,6 +42,7 @@ export function NewSessionDialogForProject({
   const { scheduleSessionReminders } = useSessionReminderScheduling();
   
   const [sessionData, setSessionData] = useState({
+    session_name: "",
     session_date: "",
     session_time: "",
     notes: "",
@@ -49,9 +50,18 @@ export function NewSessionDialogForProject({
   });
 
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
-  const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [visibleMonth, setVisibleMonth] = useState<Date>(new Date());
   const [plannedSessions, setPlannedSessions] = useState<any[]>([]);
+
+  // Auto-populate session name when component mounts or project changes
+  useEffect(() => {
+    if (projectName && !sessionData.session_name.trim()) {
+      setSessionData(prev => ({
+        ...prev,
+        session_name: generateSessionName(projectName)
+      }));
+    }
+  }, [projectName, sessionData.session_name]);
 
   const fetchPlannedSessions = async (month: Date) => {
     try {
@@ -102,10 +112,10 @@ export function NewSessionDialogForProject({
 
   const handleSubmit = async () => {
     
-    if (!sessionData.session_date || !sessionData.session_time) {
+    if (!sessionData.session_name.trim() || !sessionData.session_date || !sessionData.session_time) {
       toast({
         title: "Validation error",
-        description: "Session date and time are required.",
+        description: "Session name, date and time are required.",
         variant: "destructive"
       });
       return;
@@ -134,6 +144,7 @@ export function NewSessionDialogForProject({
           user_id: user.id,
           organization_id: userSettings.active_organization_id,
           lead_id: leadId,
+          session_name: sessionData.session_name.trim(),
           session_date: sessionData.session_date,
           session_time: sessionData.session_time,
           notes: sessionData.notes.trim() || null,
@@ -197,6 +208,7 @@ export function NewSessionDialogForProject({
 
       // Reset form and close dialog
       setSessionData({
+        session_name: "",
         session_date: "",
         session_time: "",
         notes: "",
@@ -252,6 +264,7 @@ export function NewSessionDialogForProject({
 
 
   const isDirty = Boolean(
+    sessionData.session_name.trim() ||
     sessionData.session_date.trim() ||
     sessionData.session_time.trim() ||
     sessionData.notes.trim() ||
@@ -262,6 +275,7 @@ export function NewSessionDialogForProject({
     isDirty,
     onDiscard: () => {
       setSessionData({
+        session_name: "",
         session_date: "",
         session_time: "",
         notes: "",
@@ -276,6 +290,7 @@ export function NewSessionDialogForProject({
     const canClose = navigation.handleModalClose();
     if (canClose) {
       setSessionData({
+        session_name: "",
         session_date: "",
         session_time: "",
         notes: "",
@@ -296,7 +311,7 @@ export function NewSessionDialogForProject({
     {
       label: loading ? "Scheduling..." : "Schedule Session",
       onClick: handleSubmit,
-      disabled: loading || !sessionData.session_date || !sessionData.session_time,
+      disabled: loading || !sessionData.session_name.trim() || !sessionData.session_date || !sessionData.session_time,
       loading: loading
     }
   ];
@@ -339,78 +354,70 @@ export function NewSessionDialogForProject({
           </div>
 
           <div className="space-y-2">
+            <Label htmlFor="session_name">Session Name *</Label>
+            <Input
+              id="session_name"
+              value={sessionData.session_name}
+              onChange={(e) => handleInputChange("session_name", e.target.value)}
+              placeholder="Enter session name..."
+            />
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="session_date">Session Date *</Label>
-            <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
-              <PopoverTrigger asChild>
+            <div className="rounded-lg border p-3">
+              <ReactCalendar
+                className="react-calendar w-full pointer-events-auto"
+                locale={browserLocale}
+                view="month"
+                minDetail="month"
+                next2Label={null}
+                prev2Label={null}
+                onActiveStartDateChange={({ activeStartDate, view }) => {
+                  if (view === 'month' && activeStartDate) {
+                    setVisibleMonth(activeStartDate);
+                  }
+                }}
+                onChange={(value) => {
+                  const d = Array.isArray(value) ? value[0] : value;
+                  const date = d instanceof Date ? d : undefined;
+                  setSelectedDate(date);
+                  if (date) {
+                    handleInputChange("session_date", format(date, "yyyy-MM-dd"));
+                  }
+                }}
+                value={selectedDate ?? null}
+                formatShortWeekday={(_, date) => new Intl.DateTimeFormat(browserLocale, { weekday: 'short' }).format(date)}
+                tileContent={({ date, view }) => {
+                  if (view !== 'month') return null;
+                  const key = format(date, 'yyyy-MM-dd');
+                  const count = sessionCountByDate[key] || 0;
+                  const dots = Math.min(count, 3);
+                  if (!dots) return null;
+                  return (
+                    <div className="pointer-events-none absolute bottom-1 left-1/2 -translate-x-1/2 flex items-center justify-center gap-0.5">
+                      {Array.from({ length: dots }).map((_, i) => (
+                        <span key={i} className="h-1.5 w-1.5 rounded-full bg-primary ring-1 ring-background" />
+                      ))}
+                    </div>
+                  );
+                }}
+              />
+              <div className="mt-3 flex items-center justify-between">
                 <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !selectedDate && "text-muted-foreground"
-                  )}
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => {
+                    const today = new Date();
+                    setSelectedDate(today);
+                    handleInputChange("session_date", format(today, "yyyy-MM-dd"));
+                  }}
                 >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {selectedDate ? new Intl.DateTimeFormat(browserLocale, { dateStyle: "medium" }).format(selectedDate) : <span>Pick a date</span>}
+                  Today
                 </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto min-w-[18rem] p-0 rounded-xl border border-border shadow-md" align="start">
-                <div className="p-2">
-                  <ReactCalendar
-                    className="react-calendar w-full p-2 pointer-events-auto"
-                    locale={browserLocale}
-                    view="month"
-                    minDetail="month"
-                    next2Label={null}
-                    prev2Label={null}
-                    onActiveStartDateChange={({ activeStartDate, view }) => {
-                      if (view === 'month' && activeStartDate) {
-                        setVisibleMonth(activeStartDate);
-                      }
-                    }}
-                    onChange={(value) => {
-                      const d = Array.isArray(value) ? value[0] : value;
-                      const date = d instanceof Date ? d : undefined;
-                      setSelectedDate(date);
-                      if (date) {
-                        handleInputChange("session_date", format(date, "yyyy-MM-dd"));
-                        setDatePickerOpen(false);
-                      }
-                    }}
-                    value={selectedDate ?? null}
-                    formatShortWeekday={(_, date) => new Intl.DateTimeFormat(browserLocale, { weekday: 'short' }).format(date)}
-                    tileContent={({ date, view }) => {
-                      if (view !== 'month') return null;
-                      const key = format(date, 'yyyy-MM-dd');
-                      const count = sessionCountByDate[key] || 0;
-                      const dots = Math.min(count, 3);
-                      if (!dots) return null;
-                      return (
-                        <div className="pointer-events-none absolute bottom-1 left-1/2 -translate-x-1/2 flex items-center justify-center gap-0.5">
-                          {Array.from({ length: dots }).map((_, i) => (
-                            <span key={i} className="h-1.5 w-1.5 rounded-full bg-primary ring-1 ring-background" />
-                          ))}
-                        </div>
-                      );
-                    }}
-                  />
-                  <div className="mt-2 flex items-center justify-between px-1">
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => {
-                        const today = new Date();
-                        setSelectedDate(today);
-                        handleInputChange("session_date", format(today, "yyyy-MM-dd"));
-                        setDatePickerOpen(false);
-                      }}
-                    >
-                      Today
-                    </Button>
-                  </div>
-                </div>
-              </PopoverContent>
-            </Popover>
+              </div>
+            </div>
             {sessionsForDay.length > 0 && (
               <div className="rounded-md border p-3 animate-fade-in">
                 <div className="text-xs text-muted-foreground mb-2">Planned sessions on this day</div>

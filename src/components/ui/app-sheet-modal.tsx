@@ -18,7 +18,7 @@ interface AppSheetModalProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   children: ReactNode;
-  size?: 'content' | 'default' | 'lg';
+  size?: 'content' | 'default' | 'lg' | 'wide';
   footerActions?: FooterAction[];
   dirty?: boolean;
   onDirtyClose?: () => void;
@@ -62,7 +62,8 @@ export function AppSheetModal({
     isMobile && "max-h-[85vh] rounded-t-xl",
     // Size variants
     size === 'content' && !isMobile && "sm:max-w-md",
-    size === 'lg' && !isMobile && "sm:max-w-2xl"
+    size === 'lg' && !isMobile && "sm:max-w-2xl",
+    size === 'wide' && !isMobile && "sm:max-w-4xl"
   );
 
   return (

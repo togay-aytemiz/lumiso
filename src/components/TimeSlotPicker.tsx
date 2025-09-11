@@ -42,15 +42,22 @@ const generateTimeSlots = (startTime: string, endTime: string): string[] => {
   return slots;
 };
 
-const formatTimeSlot = (time: string): string => {
+const formatTimeSlot = (time: string, locale?: string): string => {
   const [hours, minutes] = time.split(':').map(Number);
-  const period = hours >= 12 ? 'PM' : 'AM';
-  const displayHours = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
-  return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
+  const date = new Date();
+  date.setHours(hours, minutes, 0, 0);
+  
+  // Use Intl.DateTimeFormat to respect user's locale preferences
+  return new Intl.DateTimeFormat(locale || navigator.language, {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: undefined // Let the locale decide 12/24 hour format
+  }).format(date);
 };
 
 export function TimeSlotPicker({ selectedDate, selectedTime, onTimeSelect, className }: TimeSlotPickerProps) {
   const { workingHours, loading } = useWorkingHours();
+  const userLocale = navigator.language;
   
   if (loading) {
     return (
@@ -120,22 +127,13 @@ export function TimeSlotPicker({ selectedDate, selectedTime, onTimeSelect, class
             key={slot}
             variant={selectedTime === slot ? "default" : "outline"}
             size="sm"
-            className="justify-start text-xs h-8 font-mono"
+            className="justify-start text-xs h-8"
             onClick={() => onTimeSelect(slot)}
           >
-            {formatTimeSlot(slot)}
+            {formatTimeSlot(slot, userLocale)}
           </Button>
         ))}
       </div>
-      
-      {selectedTime && (
-        <div className="flex items-center gap-2 p-2 bg-muted/20 rounded border">
-          <Clock className="h-3 w-3 text-muted-foreground" />
-          <span className="text-sm font-medium">
-            Selected: {formatTimeSlot(selectedTime)}
-          </span>
-        </div>
-      )}
     </div>
   );
 }

@@ -84,53 +84,55 @@ export function TimePicker({ value, onChange, className, disabled }: TimePickerP
 
 
   return (
-    <div className={cn("space-y-4", className)}>
-      {/* Selected Time Display */}
-      <div className="flex items-center justify-center p-4 rounded-lg border bg-muted/20">
-        <Clock className="h-4 w-4 mr-2 text-muted-foreground" />
-        <span className="text-lg font-semibold tabular-nums">
+    <div className={cn("space-y-3", className)}>
+      {/* Compact Time Display */}
+      <div className="flex items-center justify-center p-2 rounded border bg-muted/20">
+        <Clock className="h-3 w-3 mr-2 text-muted-foreground" />
+        <span className="text-sm font-medium tabular-nums">
           {formatDisplayTime(selectedHour, selectedMinute)}
         </span>
       </div>
 
-      {/* Hour Selection */}
-      <div className="space-y-2">
-        <Label className="text-xs text-muted-foreground">Hour</Label>
-        <div className="grid grid-cols-6 gap-1 max-h-40 overflow-y-auto">
-          {hours.map((hour) => (
-            <Button
-              key={hour}
-              variant={selectedHour === hour ? "default" : "outline"}
-              size="sm"
-              className="text-xs h-9 tabular-nums"
-              onClick={() => handleTimeChange(hour, selectedMinute)}
-              disabled={disabled}
-            >
-              {formatHourDisplay(hour)}
-            </Button>
-          ))}
+      {/* Side-by-side Hour and Minute Selection */}
+      <div className="grid grid-cols-2 gap-3">
+        {/* Hour Selection */}
+        <div className="space-y-1">
+          <Label className="text-xs text-muted-foreground">Hour</Label>
+          <div className="grid grid-cols-3 gap-1 max-h-24 overflow-y-auto border rounded p-1">
+            {hours.map((hour) => (
+              <Button
+                key={hour}
+                variant={selectedHour === hour ? "default" : "ghost"}
+                size="sm"
+                className="text-xs h-7 tabular-nums"
+                onClick={() => handleTimeChange(hour, selectedMinute)}
+                disabled={disabled}
+              >
+                {formatHourDisplay(hour)}
+              </Button>
+            ))}
+          </div>
+        </div>
+
+        {/* Minute Selection */}
+        <div className="space-y-1">
+          <Label className="text-xs text-muted-foreground">Minutes</Label>
+          <div className="grid grid-cols-2 gap-1">
+            {minutes.map((minute) => (
+              <Button
+                key={minute}
+                variant={selectedMinute === minute ? "default" : "ghost"}
+                size="sm"
+                className="text-xs h-7 tabular-nums"
+                onClick={() => handleTimeChange(selectedHour, minute)}
+                disabled={disabled}
+              >
+                :{minute.toString().padStart(2, '0')}
+              </Button>
+            ))}
+          </div>
         </div>
       </div>
-
-      {/* Minute Selection */}
-      <div className="space-y-2">
-        <Label className="text-xs text-muted-foreground">Minutes</Label>
-        <div className="grid grid-cols-4 gap-2">
-          {minutes.map((minute) => (
-            <Button
-              key={minute}
-              variant={selectedMinute === minute ? "default" : "outline"}
-              size="sm"
-              className="text-xs h-8 tabular-nums"
-              onClick={() => handleTimeChange(selectedHour, minute)}
-              disabled={disabled}
-            >
-              :{minute.toString().padStart(2, '0')}
-            </Button>
-          ))}
-        </div>
-      </div>
-
     </div>
   );
 }

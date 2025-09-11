@@ -276,20 +276,7 @@ export function ViewProjectDialog({
       const {
         data,
         error
-      } = await supabase.from('sessions').select(`
-          *,
-          session_statuses:status_id (
-            id,
-            name,
-            lifecycle
-          ),
-          projects:project_id (
-            name,
-            project_types (
-              name
-            )
-          )
-        `).eq('project_id', project.id);
+      } = await supabase.from('sessions').select('*').eq('project_id', project.id);
       if (error) throw error;
       setSessions(data as unknown as Session[]);
     } catch (error: any) {

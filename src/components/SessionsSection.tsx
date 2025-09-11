@@ -45,6 +45,14 @@ export function SessionsSection({
     onSessionUpdated(); // Propagate updates from session sheet to parent
   };
 
+  const handleSessionSheetOpenChange = (open: boolean) => {
+    setIsSessionSheetOpen(open);
+    if (!open) {
+      // When sheet closes, refresh the sessions to reflect any updates
+      onSessionUpdated();
+    }
+  };
+
   const handleSessionClick = (sessionId: string) => {
     setSelectedSessionId(sessionId);
     setIsSessionSheetOpen(true);
@@ -142,7 +150,7 @@ export function SessionsSection({
       <SessionSheetView
         sessionId={selectedSessionId || ''}
         isOpen={isSessionSheetOpen}
-        onOpenChange={setIsSessionSheetOpen}
+        onOpenChange={handleSessionSheetOpenChange}
         onViewFullDetails={handleViewFullSessionDetails}
         onNavigateToLead={handleNavigateToLead}
         onNavigateToProject={handleNavigateToProject}

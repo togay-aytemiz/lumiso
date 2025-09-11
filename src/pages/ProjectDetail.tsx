@@ -109,20 +109,7 @@ export default function ProjectDetail() {
     try {
       const { data, error } = await supabase
         .from('sessions')
-        .select(`
-          *,
-          session_statuses:status_id (
-            id,
-            name,
-            lifecycle
-          ),
-          projects:project_id (
-            name,
-            project_types (
-              name
-            )
-          )
-        `)
+        .select('*')
         .eq('project_id', project.id);
       
       if (error) throw error;

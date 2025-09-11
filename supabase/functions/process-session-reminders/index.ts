@@ -46,11 +46,11 @@ const handler = async (req: Request): Promise<Response> => {
 async function processScheduledReminders(supabase: any) {
   console.log('Processing scheduled session reminders');
 
-  // Get reminders that are due to be sent (with 5 minute buffer for cron timing)
+  // Get reminders that are due to be sent (allow 2 minute buffer for processing delays, NOT early sending)
   const now = new Date();
-  const bufferTime = new Date(now.getTime() + 5 * 60 * 1000); // 5 minutes ahead
+  const bufferTime = new Date(now.getTime() - 2 * 60 * 1000); // 2 minutes in the past for late processing
 
-  console.log(`Looking for reminders scheduled before: ${bufferTime.toISOString()}`);
+  console.log(`Looking for reminders scheduled before: ${now.toISOString()} (with ${bufferTime.toISOString()} buffer)`);
 
   const { data: dueReminders, error: fetchError } = await supabase
     .from('scheduled_session_reminders')
@@ -78,7 +78,8 @@ async function processScheduledReminders(supabase: any) {
       )
     `)
     .eq('status', 'pending')
-    .lte('scheduled_for', bufferTime.toISOString())
+    .lte('scheduled_for', now.toISOString())
+    .gte('scheduled_for', bufferTime.toISOString())
     .order('scheduled_for');
 
   if (fetchError) {
@@ -101,6 +102,23 @@ async function processScheduledReminders(supabase: any) {
   for (const reminder of dueReminders) {
     try {
       console.log(`Processing reminder ${reminder.id} for session ${reminder.session_id}, type: ${reminder.reminder_type}`);
+      console.log(`Session data: ${reminder.sessions.session_date} ${reminder.sessions.session_time}, Lead: ${reminder.sessions.leads.name}`);
+
+      // Verify session data before processing
+      if (!reminder.sessions || !reminder.sessions.leads) {
+        console.error(`Invalid session or lead data for reminder ${reminder.id}`);
+        await supabase
+          .from('scheduled_session_reminders')
+          .update({ 
+            status: 'failed',
+            error_message: 'Invalid session or lead data',
+            processed_at: new Date().toISOString()
+          })
+          .eq('id', reminder.id);
+        failed++;
+        processed++;
+        continue;
+      }
 
       // Mark reminder as being processed first to prevent duplicate processing
       const { error: updateError } = await supabase
@@ -119,16 +137,19 @@ async function processScheduledReminders(supabase: any) {
         continue;
       }
 
-      // Trigger the workflow executor for this session reminder
+      // Trigger the workflow executor for this session reminder with explicit session validation
+      console.log(`Triggering workflow for session ${reminder.session_id} (${reminder.sessions.session_date} ${reminder.sessions.session_time})`);
+      
       const { error: triggerError } = await supabase.functions.invoke('workflow-executor', {
         body: {
           action: 'trigger',
           trigger_type: 'session_reminder',
           trigger_entity_type: 'session',
-          trigger_entity_id: reminder.session_id,
+          trigger_entity_id: reminder.session_id, // This MUST match the session in the reminder
           organization_id: reminder.organization_id,
           trigger_data: {
             reminder_type: reminder.reminder_type,
+            // Pass the exact session data we retrieved to ensure consistency
             session_data: {
               id: reminder.sessions.id,
               session_date: reminder.sessions.session_date,
@@ -143,7 +164,14 @@ async function processScheduledReminders(supabase: any) {
               phone: reminder.sessions.leads.phone
             },
             scheduled_reminder_id: reminder.id,
-            workflow_id: reminder.workflow_id
+            workflow_id: reminder.workflow_id,
+            // Add debug info to ensure correct session is used
+            debug_session_validation: {
+              expected_session_id: reminder.session_id,
+              actual_session_date: reminder.sessions.session_date,
+              actual_session_time: reminder.sessions.session_time,
+              lead_name: reminder.sessions.leads.name
+            }
           }
         }
       });

@@ -530,7 +530,7 @@ async function executeWorkflowStep(supabase: any, executionId: string, step: any
   }
 }
 
-// Execute send message step
+  // Execute send message step
 async function executeSendMessageStep(supabase: any, step: any, execution: any) {
   const { action_config } = step;
   const { template_id, channels = ['email'] } = action_config;
@@ -542,8 +542,9 @@ async function executeSendMessageStep(supabase: any, step: any, execution: any) 
 
   console.log(`Executing send message step with template ${template_id}`);
 
-  // Get trigger entity data for template variables
-  const entityData = await getEntityData(supabase, execution.trigger_entity_type, execution.trigger_entity_id);
+  // Get trigger entity data for template variables - pass trigger_data for consistency
+  const triggerData = execution.execution_log?.[0]?.trigger_data;
+  const entityData = await getEntityData(supabase, execution.trigger_entity_type, execution.trigger_entity_id, triggerData);
   
   console.log('Entity data for workflow:', entityData);
 
@@ -732,7 +733,8 @@ async function executeCreateReminderStep(supabase: any, step: any, execution: an
   reminderDate.setMinutes(reminderDate.getMinutes() + delay_minutes);
 
   // Get entity data
-  const entityData = await getEntityData(supabase, execution.trigger_entity_type, execution.trigger_entity_id);
+  const triggerData = execution.execution_log?.[0]?.trigger_data;
+  const entityData = await getEntityData(supabase, execution.trigger_entity_type, execution.trigger_entity_id, triggerData);
 
   // Create activity/reminder
   const { error } = await supabase
@@ -781,10 +783,50 @@ async function executeUpdateStatusStep(supabase: any, step: any, execution: any)
 }
 
 // Get entity data for template variables
-async function getEntityData(supabase: any, entityType: string, entityId: string) {
+async function getEntityData(supabase: any, entityType: string, entityId: string, triggerData?: any) {
   let entityData = {};
   
   if (entityType === 'session') {
+    // If we have session data from trigger (e.g., from reminder processing), use it first for consistency
+    if (triggerData?.session_data && triggerData?.lead_data) {
+      console.log('Using session data from trigger_data to ensure consistency');
+      console.log('Trigger session data:', triggerData.session_data);
+      console.log('Trigger lead data:', triggerData.lead_data);
+      
+      // Validate that the session ID matches what we expect
+      if (triggerData.debug_session_validation) {
+        console.log('Session validation:', triggerData.debug_session_validation);
+        if (triggerData.debug_session_validation.expected_session_id !== entityId) {
+          console.error(`Session ID mismatch! Expected: ${triggerData.debug_session_validation.expected_session_id}, Got: ${entityId}`);
+        }
+      }
+      
+      entityData = {
+        session_date: triggerData.session_data.session_date,
+        session_time: triggerData.session_data.session_time,
+        location: triggerData.session_data.location,
+        notes: triggerData.session_data.notes,
+        customer_name: triggerData.lead_data.name,
+        customer_email: triggerData.lead_data.email,
+        customer_phone: triggerData.lead_data.phone || '-',
+        client_email: triggerData.lead_data.email,
+        // Add all trigger data
+        ...triggerData.session_data,
+        ...triggerData.lead_data,
+        // Map lead data to expected field names
+        leads: {
+          name: triggerData.lead_data.name,
+          email: triggerData.lead_data.email,
+          phone: triggerData.lead_data.phone
+        }
+      };
+      
+      console.log('Final entity data from trigger:', entityData);
+      return entityData;
+    }
+
+    // Fallback to database query if no trigger data available
+    console.log('No trigger data available, querying database for session:', entityId);
     const { data: session } = await supabase
       .from('sessions')
       .select(`

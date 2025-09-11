@@ -2001,6 +2001,10 @@ export type Database = {
         Args: { email_to_check: string }
         Returns: boolean
       }
+      cleanup_conflicting_reminders: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       cleanup_old_notifications: {
         Args: Record<PropertyKey, never>
         Returns: number
@@ -2016,6 +2020,10 @@ export type Database = {
       cleanup_workflow_executions: {
         Args: Record<PropertyKey, never>
         Returns: number
+      }
+      debug_get_session_for_reminder: {
+        Args: { reminder_id_param: string }
+        Returns: Json
       }
       ensure_default_lead_field_definitions: {
         Args: { org_id: string; user_uuid: string }

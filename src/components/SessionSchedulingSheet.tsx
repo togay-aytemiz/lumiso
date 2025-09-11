@@ -197,7 +197,7 @@ export function SessionSchedulingSheet({
                           const date = new Date(formData.session_date);
                           const [hours, minutes] = formData.session_time.split(':');
                           date.setHours(parseInt(hours), parseInt(minutes));
-                          return new Intl.DateTimeFormat(undefined, {
+                          return new Intl.DateTimeFormat(navigator.language, {
                             weekday: 'long',
                             year: 'numeric',
                             month: 'long',
@@ -207,7 +207,7 @@ export function SessionSchedulingSheet({
                           }).format(date);
                         })()
                       ) : formData.session_date ? (
-                        new Intl.DateTimeFormat(undefined, {
+                        new Intl.DateTimeFormat(navigator.language, {
                           weekday: 'long',
                           year: 'numeric',
                           month: 'long',
@@ -218,7 +218,7 @@ export function SessionSchedulingSheet({
                           const [hours, minutes] = formData.session_time.split(':');
                           const date = new Date();
                           date.setHours(parseInt(hours), parseInt(minutes));
-                          return new Intl.DateTimeFormat(undefined, {
+                          return new Intl.DateTimeFormat(navigator.language, {
                             hour: 'numeric',
                             minute: '2-digit'
                           }).format(date);

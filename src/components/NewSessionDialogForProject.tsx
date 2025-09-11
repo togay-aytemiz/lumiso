@@ -18,6 +18,7 @@ import { format } from "date-fns";
 import ReactCalendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import "@/components/react-calendar.css";
+import { TimePicker } from "@/components/ui/time-picker";
 
 
 interface NewSessionDialogForProjectProps {
@@ -447,14 +448,16 @@ export function NewSessionDialogForProject({
             )}
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-3">
             <Label htmlFor="session_time">Session Time *</Label>
-            <Input
-              id="session_time"
-              type="time"
-              value={sessionData.session_time}
-              onChange={(e) => handleInputChange("session_time", e.target.value)}
-            />
+            <div className="rounded-lg border">
+              <div className="p-3">
+                <TimePicker
+                  value={sessionData.session_time}
+                  onChange={(time) => handleInputChange("session_time", time)}
+                />
+              </div>
+            </div>
           </div>
 
           <div className="space-y-2">

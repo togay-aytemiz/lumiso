@@ -8,6 +8,7 @@ import { useSessionForm } from "@/hooks/useSessionForm";
 import { CalendarTimePicker } from "@/components/CalendarTimePicker";
 import { SessionFormFields } from "@/components/SessionFormFields";
 import { Label } from "@/components/ui/label";
+import { Calendar, Clock, MapPin, User, Briefcase } from "lucide-react";
 
 interface Project {
   id: string;
@@ -170,6 +171,88 @@ export function SessionSchedulingSheet({
               onDateStringChange={(dateString) => handleInputChange("session_date", dateString)}
             />
           </div>
+
+          {/* Session Summary */}
+          {(formData.session_name || formData.session_date || formData.session_time) && (
+            <div className="space-y-3 p-4 bg-muted/20 rounded-lg border">
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+                <Label className="text-sm font-medium">Session Summary</Label>
+              </div>
+              
+              <div className="space-y-2 text-sm">
+                {formData.session_name && (
+                  <div className="flex items-center gap-2">
+                    <Briefcase className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                    <span className="font-medium">{formData.session_name}</span>
+                  </div>
+                )}
+                
+                {(formData.session_date || formData.session_time) && (
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                    <span>
+                      {formData.session_date && formData.session_time ? (
+                        (() => {
+                          const date = new Date(formData.session_date);
+                          const [hours, minutes] = formData.session_time.split(':');
+                          date.setHours(parseInt(hours), parseInt(minutes));
+                          return new Intl.DateTimeFormat('en-US', {
+                            weekday: 'long',
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                            hour: 'numeric',
+                            minute: '2-digit',
+                            hour12: true
+                          }).format(date);
+                        })()
+                      ) : formData.session_date ? (
+                        new Intl.DateTimeFormat('en-US', {
+                          weekday: 'long',
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        }).format(new Date(formData.session_date))
+                      ) : formData.session_time ? (
+                        (() => {
+                          const [hours, minutes] = formData.session_time.split(':');
+                          const date = new Date();
+                          date.setHours(parseInt(hours), parseInt(minutes));
+                          return new Intl.DateTimeFormat('en-US', {
+                            hour: 'numeric',
+                            minute: '2-digit',
+                            hour12: true
+                          }).format(date);
+                        })()
+                      ) : null}
+                    </span>
+                  </div>
+                )}
+                
+                {formData.location && (
+                  <div className="flex items-center gap-2">
+                    <MapPin className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                    <span>{formData.location}</span>
+                  </div>
+                )}
+                
+                {(projectName || projects.find(p => p.id === formData.project_id)?.name) && (
+                  <div className="flex items-center gap-2">
+                    <Briefcase className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                    <span className="text-muted-foreground">
+                      Project: {projectName || projects.find(p => p.id === formData.project_id)?.name}
+                    </span>
+                  </div>
+                )}
+                
+                <div className="flex items-center gap-2">
+                  <User className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                  <span className="text-muted-foreground">Client: {leadName}</span>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </AppSheetModal>
 

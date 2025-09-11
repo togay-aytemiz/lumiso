@@ -1,17 +1,8 @@
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Calendar } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
-import { formatDate, formatTime } from "@/lib/utils";
-import { useWorkflowTriggers } from "@/hooks/useWorkflowTriggers";
-import { useSessionReminderScheduling } from "@/hooks/useSessionReminderScheduling";
+import { SessionSchedulingSheet } from "@/components/SessionSchedulingSheet";
 
 interface ScheduleSessionDialogProps {
   leadId: string;
@@ -23,318 +14,38 @@ interface ScheduleSessionDialogProps {
 
 const ScheduleSessionDialog = ({ leadId, leadName, onSessionScheduled, disabled = false, disabledTooltip }: ScheduleSessionDialogProps) => {
   const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const { triggerSessionScheduled } = useWorkflowTriggers();
-  const { scheduleSessionReminders } = useSessionReminderScheduling();
-  const [formData, setFormData] = useState({
-    session_date: "",
-    session_time: "",
-    notes: "",
-    location: "",
-    project_id: ""
-  });
-  const [projects, setProjects] = useState<{id: string, name: string}[]>([]);
-
-  const fetchProjects = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      // Get user's active organization ID
-      const { data: organizationId } = await supabase.rpc('get_user_active_organization_id');
-      if (!organizationId) return;
-
-      const { data: projectsData, error } = await supabase
-        .from('projects')
-        .select('id, name')
-        .eq('lead_id', leadId)
-        .eq('organization_id', organizationId)
-        .order('name', { ascending: true });
-
-      if (error) throw error;
-      setProjects(projectsData || []);
-    } catch (error: any) {
-      console.error('Error fetching projects:', error);
-      setProjects([]);
-    }
-  };
-
-  // Fetch projects when dialog opens
-  useEffect(() => {
-    if (open) {
-      fetchProjects();
-    }
-  }, [open]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!formData.session_date || !formData.session_time) {
-      toast({
-        title: "Validation error",
-        description: "Session date and time are required.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("User not authenticated");
-
-      // First check if lead status should be updated
-      const { data: leadData, error: leadError } = await supabase
-        .from('leads')
-        .select('status')
-        .eq('id', leadId)
-        .single();
-
-      if (leadError) throw leadError;
-
-      // Update lead status to 'booked' if not already 'completed' or 'lost'
-      if (leadData && !['completed', 'lost'].includes(leadData.status)) {
-        const { error: updateError } = await supabase
-          .from('leads')
-          .update({ status: 'booked' })
-          .eq('id', leadId);
-
-        if (updateError) throw updateError;
-      }
-
-      // Get user's active organization ID
-      const { data: organizationId } = await supabase.rpc('get_user_active_organization_id');
-
-      if (!organizationId) {
-        throw new Error("Organization required");
-      }
-
-      const { data: newSession, error: sessionError } = await supabase
-        .from('sessions')
-        .insert({
-          user_id: user.id,
-          organization_id: organizationId,
-          lead_id: leadId,
-          session_date: formData.session_date,
-          session_time: formData.session_time,
-          notes: formData.notes.trim() || null,
-          location: formData.location.trim() || null,
-          project_id: formData.project_id || null
-        })
-        .select('id')
-        .single();
-
-      if (sessionError) throw sessionError;
-      console.log(`✅ Session created successfully (ScheduleSessionDialog): ${newSession.id}`);
-
-      // Trigger workflow for session scheduled
-      try {
-        console.log(`🚀 Triggering session_scheduled workflow for session: ${newSession.id} (from schedule dialog)`);
-        const workflowResult = await triggerSessionScheduled(newSession.id, organizationId, {
-          session_date: formData.session_date,
-          session_time: formData.session_time,
-          location: formData.location,
-          client_name: leadName,
-          lead_id: leadId,
-          project_id: formData.project_id,
-          status: 'planned'
-        });
-        console.log(`✅ Session workflow result:`, workflowResult);
-      } catch (workflowError) {
-        console.error('❌ Error triggering session_scheduled workflow:', workflowError);
-        toast({
-          title: "Warning",
-          description: "Session created successfully, but notifications may not be sent.",
-          variant: "default"
-        });
-      }
-
-      // Schedule session reminders
-      try {
-        console.log(`⏰ Scheduling reminders for session: ${newSession.id}`);
-        await scheduleSessionReminders(newSession.id);
-      } catch (reminderError) {
-        console.error('❌ Error scheduling session reminders:', reminderError);
-        // Don't block session creation if reminder scheduling fails
-      }
-
-      // Add activity entry for the scheduled session
-      const sessionDate = formatDate(formData.session_date);
-      const sessionTime = formatTime(formData.session_time);
-      const activityContent = `Photo session scheduled for ${sessionDate} at ${sessionTime}`;
-      
-      const { error: activityError } = await supabase
-        .from('activities')
-        .insert({
-          user_id: user.id,
-          lead_id: leadId,
-          type: 'note',
-          content: activityContent
-        });
-
-      if (activityError) {
-        console.error('Error creating activity:', activityError);
-        // Don't throw here - session was created successfully
-      }
-
-      toast({
-        title: "Success",
-        description: "Session scheduled successfully.",
-      });
-
-      // Reset form and close dialog
-      setFormData({
-        session_date: "",
-        session_time: "",
-        notes: "",
-        location: "",
-        project_id: ""
-      });
-      setOpen(false);
-      
-      // Notify parent component
-      if (onSessionScheduled) {
-        onSessionScheduled();
-      }
-    } catch (error: any) {
-      toast({
-        title: "Error scheduling session",
-        description: error.message,
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleInputChange = (field: keyof typeof formData, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
-  const buttonContent = (
-    <Button disabled={disabled} className={disabled ? "opacity-50 cursor-not-allowed" : ""}>
-      <Calendar className="h-4 w-4 mr-2" />
-      Schedule Session
-    </Button>
-  );
-
-  if (disabled) {
-    return (
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            {buttonContent}
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>{disabledTooltip}</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-    );
-  }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {buttonContent}
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Schedule Session</DialogTitle>
-          <DialogDescription>
-            Schedule a photography session for {leadName}
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={handleSubmit}>
-          <div className="grid gap-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="lead">Client</Label>
-              <Input
-                id="lead"
-                value={leadName}
-                disabled
-                className="bg-muted"
-              />
-            </div>
+    <>
+      {disabled ? (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button disabled className="opacity-50 cursor-not-allowed">
+                <Calendar className="h-4 w-4 mr-2" />
+                Schedule Session
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{disabledTooltip}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      ) : (
+        <Button onClick={() => setOpen(true)}>
+          <Calendar className="h-4 w-4 mr-2" />
+          Schedule Session
+        </Button>
+      )}
 
-            <div className="space-y-2">
-              <Label htmlFor="session_date">Session Date *</Label>
-              <Input
-                id="session_date"
-                type="date"
-                value={formData.session_date}
-                onChange={(e) => handleInputChange("session_date", e.target.value)}
-                min={new Date().toISOString().split('T')[0]}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="session_time">Session Time *</Label>
-              <Input
-                id="session_time"
-                type="time"
-                value={formData.session_time}
-                onChange={(e) => handleInputChange("session_time", e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="location">Location / Address</Label>
-              <Textarea
-                id="location"
-                value={formData.location}
-                onChange={(e) => handleInputChange("location", e.target.value)}
-                placeholder="Enter session location or address..."
-                rows={2}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="project">Project (Optional)</Label>
-              <Select value={formData.project_id} onValueChange={(value) => handleInputChange("project_id", value)} disabled={projects.length === 0}>
-                <SelectTrigger>
-                  <SelectValue placeholder={projects.length === 0 ? "No projects created yet" : "Select a project"} />
-                </SelectTrigger>
-                <SelectContent>
-                  {projects.map((project) => (
-                    <SelectItem key={project.id} value={project.id}>
-                      {project.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="notes">Session Notes (Optional)</Label>
-              <Textarea
-                id="notes"
-                value={formData.notes}
-                onChange={(e) => handleInputChange("notes", e.target.value)}
-                placeholder="Any special requirements or notes for this session..."
-                rows={3}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={() => setOpen(false)}
-              disabled={loading}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? "Scheduling..." : "Schedule Session"}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+      <SessionSchedulingSheet
+        leadId={leadId}
+        leadName={leadName}
+        isOpen={open}
+        onOpenChange={setOpen}
+        onSessionScheduled={onSessionScheduled}
+      />
+    </>
   );
 };
 

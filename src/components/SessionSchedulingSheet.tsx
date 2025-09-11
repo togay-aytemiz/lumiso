@@ -174,10 +174,10 @@ export function SessionSchedulingSheet({
 
           {/* Session Summary */}
           {(formData.session_name || formData.session_date || formData.session_time) && (
-            <div className="space-y-3 p-4 bg-muted/20 rounded-lg border">
+            <div className="space-y-3 p-4 bg-gradient-to-br from-primary/5 to-primary/10 rounded-lg border border-primary/20">
               <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-                <Label className="text-sm font-medium">Session Summary</Label>
+                <Calendar className="h-4 w-4 text-primary" />
+                <Label className="text-sm font-medium text-primary">Session Summary</Label>
               </div>
               
               <div className="space-y-2 text-sm">
@@ -197,18 +197,17 @@ export function SessionSchedulingSheet({
                           const date = new Date(formData.session_date);
                           const [hours, minutes] = formData.session_time.split(':');
                           date.setHours(parseInt(hours), parseInt(minutes));
-                          return new Intl.DateTimeFormat('en-US', {
+                          return new Intl.DateTimeFormat(undefined, {
                             weekday: 'long',
                             year: 'numeric',
                             month: 'long',
                             day: 'numeric',
                             hour: 'numeric',
-                            minute: '2-digit',
-                            hour12: true
+                            minute: '2-digit'
                           }).format(date);
                         })()
                       ) : formData.session_date ? (
-                        new Intl.DateTimeFormat('en-US', {
+                        new Intl.DateTimeFormat(undefined, {
                           weekday: 'long',
                           year: 'numeric',
                           month: 'long',
@@ -219,10 +218,9 @@ export function SessionSchedulingSheet({
                           const [hours, minutes] = formData.session_time.split(':');
                           const date = new Date();
                           date.setHours(parseInt(hours), parseInt(minutes));
-                          return new Intl.DateTimeFormat('en-US', {
+                          return new Intl.DateTimeFormat(undefined, {
                             hour: 'numeric',
-                            minute: '2-digit',
-                            hour12: true
+                            minute: '2-digit'
                           }).format(date);
                         })()
                       ) : null}

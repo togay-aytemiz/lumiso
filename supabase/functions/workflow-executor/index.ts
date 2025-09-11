@@ -142,14 +142,23 @@ async function triggerWorkflows(supabase: any, triggerData: {
   const { trigger_type, trigger_entity_type, trigger_entity_id, trigger_data, organization_id } = triggerData;
   
   console.log(`Looking for workflows with trigger: ${trigger_type} in org: ${organization_id}`);
+  console.log(`Trigger data:`, JSON.stringify(trigger_data));
 
-  // Find active workflows that match this trigger
-  const { data: workflows, error: workflowsError } = await supabase
+  // If trigger_data contains a specific workflow_id, only execute that workflow
+  let workflowQuery = supabase
     .from('workflows')
     .select('*')
     .eq('trigger_type', trigger_type)
     .eq('organization_id', organization_id)
     .eq('is_active', true);
+
+  // CRITICAL FIX: If trigger_data has workflow_id, only execute that specific workflow
+  if (trigger_data?.workflow_id) {
+    console.log(`Executing specific workflow: ${trigger_data.workflow_id}`);
+    workflowQuery = workflowQuery.eq('id', trigger_data.workflow_id);
+  }
+
+  const { data: workflows, error: workflowsError } = await workflowQuery;
 
   if (workflowsError) {
     console.error('Error fetching workflows:', workflowsError);
@@ -970,26 +979,43 @@ async function getEntityData(supabase: any, entityType: string, entityId: string
 
 // Evaluate trigger conditions
 function evaluateTriggerConditions(conditions: any, triggerData: any): boolean {
+  console.log(`Evaluating conditions:`, JSON.stringify(conditions));
+  console.log(`Against trigger data:`, JSON.stringify(triggerData));
+  
   // Simple condition evaluation - can be extended
   if (conditions.status_changed_to) {
-    return triggerData.new_status === conditions.status_changed_to;
+    const result = triggerData.new_status === conditions.status_changed_to;
+    console.log(`Status changed to condition: ${result}`);
+    return result;
   }
   
   if (conditions.status_changed_from) {
-    return triggerData.old_status === conditions.status_changed_from;
+    const result = triggerData.old_status === conditions.status_changed_from;
+    console.log(`Status changed from condition: ${result}`);
+    return result;
   }
 
-  // Session reminder conditions
+  // Session reminder conditions - CRITICAL FIX: Strict matching
   if (conditions.reminder_type) {
-    return triggerData.reminder_type === conditions.reminder_type;
+    const result = triggerData.reminder_type === conditions.reminder_type;
+    console.log(`Reminder type condition (${conditions.reminder_type} === ${triggerData.reminder_type}): ${result}`);
+    return result;
   }
 
-  if (conditions.reminder_days) {
-    // This condition is used for scheduling, not for evaluation during execution
-    return true;
+  if (conditions.reminder_days !== undefined) {
+    const result = triggerData.reminder_days === conditions.reminder_days;
+    console.log(`Reminder days condition (${conditions.reminder_days} === ${triggerData.reminder_days}): ${result}`);
+    return result;
+  }
+
+  if (conditions.reminder_hours !== undefined) {
+    const result = triggerData.reminder_hours === conditions.reminder_hours;
+    console.log(`Reminder hours condition (${conditions.reminder_hours} === ${triggerData.reminder_hours}): ${result}`);
+    return result;
   }
 
   // Default to true if no specific conditions
+  console.log(`No specific conditions found, defaulting to true`);
   return true;
 }
 

@@ -2150,7 +2150,7 @@ export type Database = {
       }
       schedule_session_reminders: {
         Args: { session_id_param: string }
-        Returns: undefined
+        Returns: Json
       }
       sync_lead_status_options: {
         Args: { org_id: string }

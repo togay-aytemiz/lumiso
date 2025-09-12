@@ -252,22 +252,7 @@ serve(async (req: Request) => {
         margin: 32px 0;
         border: 1px solid #e5e7eb;
       ">
-        <div style="display: flex; align-items: center; margin-bottom: 20px;">
-          <div style="
-            background: ${brandColor};
-            color: white;
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 12px;
-            font-weight: bold;
-            font-size: 14px;
-          ">
-          👤
-          </div>
+        <div style="margin-bottom: 20px;">
           <h3 style="
             margin: 0;
             color: #1f2937;
@@ -278,7 +263,7 @@ serve(async (req: Request) => {
           </h3>
         </div>
         
-        <div style="margin-left: 44px;">
+        <div style="margin-left: 0px;">
           <div style="margin-bottom: 12px;">
             <div style="color: #6b7280; font-size: 14px; margin-bottom: 4px;">Invited by</div>
             <div style="color: #1f2937; font-weight: 600;">${inviterName}</div>
@@ -456,22 +441,7 @@ serve(async (req: Request) => {
         margin: 32px 0;
         border: 1px solid #e5e7eb;
       ">
-        <div style="display: flex; align-items: center; margin-bottom: 20px;">
-          <div style="
-            background: ${brandColor};
-            color: white;
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 12px;
-            font-weight: bold;
-            font-size: 14px;
-          ">
-            📋
-          </div>
+        <div style="margin-bottom: 20px;">
           <h3 style="
             margin: 0;
             color: #1f2937;
@@ -482,7 +452,7 @@ serve(async (req: Request) => {
           </h3>
         </div>
         
-        <div style="margin-left: 44px;">
+        <div style="margin-left: 0px;">
           <div style="margin-bottom: 12px;">
             <div style="color: #6b7280; font-size: 14px; margin-bottom: 4px;">Invited Email</div>
             <div style="color: #1f2937; font-weight: 600;">${email}</div>

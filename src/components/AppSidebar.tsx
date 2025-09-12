@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import logo from "@/assets/Logo.png";
 import { useOnboardingV2 } from "@/hooks/useOnboardingV2";
+import { usePermissions } from "@/hooks/usePermissions";
 import {
   Sidebar,
   SidebarContent,
@@ -66,6 +67,7 @@ export function AppSidebar() {
   const currentPath = location.pathname;
   const isMobile = useIsMobile();
   const { shouldLockNavigation, loading } = useOnboardingV2();
+  const { hasPermission, loading: permissionsLoading } = usePermissions();
   const [helpModalOpen, setHelpModalOpen] = useState(false);
 
   // Mobile sheet states
@@ -86,6 +88,13 @@ export function AppSidebar() {
   if (loading) {
     console.log('⏳ AppSidebar: Still loading onboarding state...');
   }
+
+  // Helper function to check if item should be visible based on permissions
+  const isItemVisible = (requiredPermissions: string[] = []): boolean => {
+    if (permissionsLoading) return true; // Show items while loading
+    if (requiredPermissions.length === 0) return true; // No permissions required
+    return requiredPermissions.some(permission => hasPermission(permission));
+  };
 
   const isActive = (path: string) => {
     if (path === "/") {
@@ -270,59 +279,82 @@ export function AppSidebar() {
           {/* TOOLS Category */}
           <div className="mt-6">
             <SidebarCategory title="TOOLS">
-              {toolItems.map((item) => (
-                <SidebarNavItem
-                  key={item.title}
-                  title={item.title}
-                  url={item.url}
-                  icon={item.icon}
-                  isActive={isActive(item.url)}
-                  isLocked={isItemLocked(item.url)}
-                  onLockedClick={handleLockedItemClick}
-                  onClick={handleNavClick}
-                />
-              ))}
+              {toolItems.map((item) => {
+                // Define required permissions for each tool item
+                let requiredPermissions: string[] = [];
+                if (item.title === "Analytics") requiredPermissions = ["view_analytics"];
+                if (item.title === "Payments") requiredPermissions = ["view_payments"];
 
-              <SidebarNavItem
-                title="Automation"
-                icon={Zap}
-                isActive={isAutomationChildActive}
-                isLocked={isItemLocked('/workflows')}
-                onLockedClick={handleLockedItemClick}
-                onClick={!isItemLocked('/workflows') ? handleAutomationClick : undefined}
-                badge={
-                  !isItemLocked('/workflows') && !isMobile ? (
-                    <ChevronDown 
-                      className={`h-4 w-4 transition-transform duration-200 ${
-                        automationOpen ? 'rotate-180' : 'rotate-0'
-                      }`} 
-                    />
-                  ) : undefined
-                }
-              >
-                <div 
-                  className={`overflow-hidden transition-all duration-300 ease-out ${
-                    automationOpen && !isItemLocked('/workflows') && !isMobile
-                      ? 'max-h-40 opacity-100' 
-                      : 'max-h-0 opacity-0'
-                  }`}
-                >
-                  <SidebarMenu className="space-y-1 pt-1">
-                    {automationItems.map((item) => (
-                      <SidebarSubItem
-                        key={item.title}
-                        title={item.title}
-                        url={item.url}
-                        icon={item.icon}
-                        isActive={isActive(item.url)}
-                        isLocked={isItemLocked(item.url)}
-                        onLockedClick={handleLockedItemClick}
-                        onClick={handleNavClick}
+                // Only render if user has required permissions
+                if (!isItemVisible(requiredPermissions)) return null;
+
+                return (
+                  <SidebarNavItem
+                    key={item.title}
+                    title={item.title}
+                    url={item.url}
+                    icon={item.icon}
+                    isActive={isActive(item.url)}
+                    isLocked={isItemLocked(item.url)}
+                    onLockedClick={handleLockedItemClick}
+                    onClick={handleNavClick}
+                  />
+                );
+              })}
+
+              {/* Only show Automation if user has workflow or template permissions */}
+              {isItemVisible(["view_workflows", "manage_workflows", "view_templates", "manage_templates"]) && (
+                <SidebarNavItem
+                  title="Automation"
+                  icon={Zap}
+                  isActive={isAutomationChildActive}
+                  isLocked={isItemLocked('/workflows')}
+                  onLockedClick={handleLockedItemClick}
+                  onClick={!isItemLocked('/workflows') ? handleAutomationClick : undefined}
+                  badge={
+                    !isItemLocked('/workflows') && !isMobile ? (
+                      <ChevronDown 
+                        className={`h-4 w-4 transition-transform duration-200 ${
+                          automationOpen ? 'rotate-180' : 'rotate-0'
+                        }`} 
                       />
-                    ))}
-                  </SidebarMenu>
-                </div>
-              </SidebarNavItem>
+                    ) : undefined
+                  }
+                >
+                  <div 
+                    className={`overflow-hidden transition-all duration-300 ease-out ${
+                      automationOpen && !isItemLocked('/workflows') && !isMobile
+                        ? 'max-h-40 opacity-100' 
+                        : 'max-h-0 opacity-0'
+                    }`}
+                  >
+                    <SidebarMenu className="space-y-1 pt-1">
+                      {automationItems.map((item) => {
+                        // Define required permissions for each automation item
+                        let requiredPermissions: string[] = [];
+                        if (item.title === "Workflows") requiredPermissions = ["view_workflows", "manage_workflows"];
+                        if (item.title === "Templates") requiredPermissions = ["view_templates", "manage_templates"];
+
+                        // Only render if user has required permissions
+                        if (!isItemVisible(requiredPermissions)) return null;
+
+                        return (
+                          <SidebarSubItem
+                            key={item.title}
+                            title={item.title}
+                            url={item.url}
+                            icon={item.icon}
+                            isActive={isActive(item.url)}
+                            isLocked={isItemLocked(item.url)}
+                            onLockedClick={handleLockedItemClick}
+                            onClick={handleNavClick}
+                          />
+                        );
+                      })}
+                    </SidebarMenu>
+                  </div>
+                </SidebarNavItem>
+              )}
             </SidebarCategory>
           </div>
 
@@ -391,18 +423,28 @@ export function AppSidebar() {
           </SheetHeader>
           <div className="px-3">
             <SidebarMenu className="space-y-1">
-              {automationItems.map((item) => (
-                <SidebarSubItem
-                  key={item.title}
-                  title={item.title}
-                  url={item.url}
-                  icon={item.icon}
-                  isActive={isActive(item.url)}
-                  isLocked={isItemLocked(item.url)}
-                  onLockedClick={handleLockedItemClick}
-                  onClick={handleNavClick}
-                />
-              ))}
+              {automationItems.map((item) => {
+                // Define required permissions for each automation item
+                let requiredPermissions: string[] = [];
+                if (item.title === "Workflows") requiredPermissions = ["view_workflows", "manage_workflows"];
+                if (item.title === "Templates") requiredPermissions = ["view_templates", "manage_templates"];
+
+                // Only render if user has required permissions
+                if (!isItemVisible(requiredPermissions)) return null;
+
+                return (
+                  <SidebarSubItem
+                    key={item.title}
+                    title={item.title}
+                    url={item.url}
+                    icon={item.icon}
+                    isActive={isActive(item.url)}
+                    isLocked={isItemLocked(item.url)}
+                    onLockedClick={handleLockedItemClick}
+                    onClick={handleNavClick}
+                  />
+                );
+              })}
             </SidebarMenu>
           </div>
         </SheetContent>

@@ -11,19 +11,34 @@ const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 export function usePermissions() {
   const [permissions, setPermissions] = useState<string[]>(cachedPermissions);
-  const [loading, setLoading] = useState(cachedPermissions.length === 0);
-  const { activeOrganizationId } = useOrganization();
+  const [loading, setLoading] = useState(true);
+  const { activeOrganizationId, loading: orgLoading } = useOrganization();
 
   useEffect(() => {
-    fetchUserPermissions();
-  }, [activeOrganizationId]);
+    // Only start loading permissions when organization context is ready
+    if (!orgLoading) {
+      fetchUserPermissions();
+    }
+  }, [activeOrganizationId, orgLoading]);
 
   const fetchUserPermissions = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user || !activeOrganizationId) {
+      if (!user) {
         setPermissions([]);
         setLoading(false);
+        return;
+      }
+
+      // Wait for activeOrganizationId to be available
+      if (activeOrganizationId === null && !orgLoading) {
+        setPermissions([]);
+        setLoading(false);
+        return;
+      }
+
+      // If still loading organization, don't fetch permissions yet
+      if (orgLoading || activeOrganizationId === null) {
         return;
       }
 

@@ -106,9 +106,11 @@ const AcceptInvite = () => {
   useEffect(() => {
     if (!authLoading) {
       if (!user) {
-        // Redirect to auth with invitation ID and email
+        // Check for both invitation_id and invitation parameters (support both formats)
+        const inviteId = searchParams.get('invitation_id') || searchParams.get('invitation');
         const email = searchParams.get('email') || '';
-        navigate(`/auth?invitation_id=${invitationId}&email=${email}`);
+        console.log('No user found, redirecting to invitation signup with:', { inviteId, email });
+        navigate(`/invitation-signup?invitation=${inviteId}&email=${encodeURIComponent(email)}`);
       } else {
         acceptInvitation();
       }

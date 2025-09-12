@@ -200,54 +200,100 @@ serve(async (req: Request) => {
     const baseUrl = productionDomain || req.headers.get('origin') || 'http://localhost:5173';
     const inviteLink = `${baseUrl}/accept-invite?invitation_id=${invitation.id}`;
     
-    // Send invitation email using Resend
+    // Get organization settings for branding
+    const { data: orgSettings } = await supabase
+      .from("organization_settings")
+      .select("photography_business_name, primary_brand_color")
+      .eq("organization_id", organizationId)
+      .maybeSingle();
+
+    const businessName = orgSettings?.photography_business_name || "Lumiso";
+    const brandColor = orgSettings?.primary_brand_color || "#1EB29F";
+
+    // Send invitation email using modern template design
     const emailResponse = await resend.emails.send({
       from: "Lumiso <hello@updates.lumiso.app>",
       to: [email],
-      subject: "You're invited to join our team!",
+      subject: `🎉 You're invited to join ${businessName}!`,
       html: `
-        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <h1 style="color: #1EB29F; margin-bottom: 24px;">Team Invitation</h1>
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
+          <!-- Header -->
+          <div style="background: linear-gradient(135deg, ${brandColor}, ${brandColor}DD); padding: 40px 32px; text-align: center;">
+            <div style="background: rgba(255, 255, 255, 0.15); padding: 16px; border-radius: 12px; display: inline-block; backdrop-filter: blur(10px);">
+              <h1 style="color: white; margin: 0; font-size: 24px; font-weight: 700;">
+                🎉 Team Invitation
+              </h1>
+            </div>
+          </div>
           
-          <p style="font-size: 16px; line-height: 1.5; margin-bottom: 16px;">
-            Hello! 👋
-          </p>
+          <!-- Content -->
+          <div style="padding: 40px 32px;">
+            <div style="text-align: center; margin-bottom: 32px;">
+              <h2 style="color: #1f2937; margin: 0 0 16px 0; font-size: 28px; font-weight: 700;">
+                Welcome to the team!
+              </h2>
+              <p style="color: #6b7280; margin: 0; font-size: 16px; line-height: 1.6;">
+                You've been invited to collaborate on amazing photography projects
+              </p>
+            </div>
+
+            <div style="background: linear-gradient(135deg, #f8fafc, #f1f5f9); border-radius: 16px; padding: 24px; margin: 32px 0; border-left: 4px solid ${brandColor};">
+              <p style="color: #374151; margin: 0 0 16px 0; font-size: 16px; line-height: 1.6;">
+                <strong style="color: ${brandColor};">${inviterName}</strong> has invited you to join <strong>${businessName}</strong> as a <strong style="color: ${brandColor};">${role}</strong>.
+              </p>
+              
+              <div style="background: white; border-radius: 8px; padding: 16px; margin-top: 16px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; font-size: 14px;">
+                  <div>
+                    <span style="color: #6b7280; display: block; margin-bottom: 4px;">Role</span>
+                    <strong style="color: #1f2937;">${role}</strong>
+                  </div>
+                  <div>
+                    <span style="color: #6b7280; display: block; margin-bottom: 4px;">Invited by</span>
+                    <strong style="color: #1f2937;">${inviterName}</strong>
+                  </div>
+                </div>
+                <div style="margin-top: 12px;">
+                  <span style="color: #6b7280; display: block; margin-bottom: 4px; font-size: 14px;">Expires</span>
+                  <strong style="color: #dc2626;">${new Date(invitation.expires_at).toLocaleDateString()}</strong>
+                </div>
+              </div>
+            </div>
+            
+            <!-- CTA Button -->
+            <div style="text-align: center; margin: 40px 0;">
+              <a href="${inviteLink}" 
+                 style="background: linear-gradient(135deg, ${brandColor}, ${brandColor}CC); 
+                        color: white; 
+                        text-decoration: none; 
+                        padding: 16px 32px; 
+                        border-radius: 12px; 
+                        font-weight: 600; 
+                        font-size: 16px;
+                        display: inline-block;
+                        box-shadow: 0 8px 25px rgba(30, 178, 159, 0.3);
+                        transition: all 0.3s ease;">
+                Accept Invitation →
+              </a>
+            </div>
+            
+            <div style="text-align: center; padding: 20px; background: #f9fafb; border-radius: 12px; margin: 32px 0;">
+              <p style="color: #6b7280; margin: 0; font-size: 14px; line-height: 1.5;">
+                ⏰ This invitation expires in 7 days<br>
+                If you didn't expect this invitation, you can safely ignore this email.
+              </p>
+            </div>
+          </div>
           
-          <p style="font-size: 16px; line-height: 1.5; margin-bottom: 16px;">
-            <strong>${inviterName}</strong> has invited you to join their team as a <strong>${role}</strong>.
-          </p>
-          
-          <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin: 24px 0;">
-            <p style="margin: 0; font-size: 14px; color: #6b7280;">
-              Role: <strong style="color: #1f2937;">${role}</strong><br>
-              Invited by: <strong style="color: #1f2937;">${inviterName}</strong><br>
-              Expires: <strong style="color: #1f2937;">${new Date(invitation.expires_at).toLocaleDateString()}</strong>
+          <!-- Footer -->
+          <div style="background: #f8fafc; padding: 24px 32px; text-align: center; border-top: 1px solid #e5e7eb;">
+            <p style="color: #9ca3af; margin: 0 0 8px 0; font-size: 12px;">
+              Having trouble with the button? Copy and paste this link:
+            </p>
+            <p style="margin: 0;">
+              <a href="${inviteLink}" style="color: ${brandColor}; font-size: 12px; word-break: break-all;">${inviteLink}</a>
             </p>
           </div>
-          
-          <div style="text-align: center; margin: 32px 0;">
-            <a href="${inviteLink}" 
-               style="background: linear-gradient(135deg, #D946EF, #9333EA); 
-                      color: white; 
-                      text-decoration: none; 
-                      padding: 12px 24px; 
-                      border-radius: 8px; 
-                      font-weight: 600; 
-                      display: inline-block;">
-              Accept Invitation
-            </a>
-          </div>
-          
-          <p style="font-size: 14px; color: #6b7280; line-height: 1.5;">
-            This invitation will expire in 7 days. If you didn't expect this invitation, you can safely ignore this email.
-          </p>
-          
-          <hr style="margin: 32px 0; border: none; border-top: 1px solid #e5e7eb;">
-          
-          <p style="font-size: 12px; color: #9ca3af; text-align: center;">
-            If the button doesn't work, copy and paste this link into your browser:<br>
-            <a href="${inviteLink}" style="color: #1EB29F; word-break: break-all;">${inviteLink}</a>
-          </p>
         </div>
       `,
     });

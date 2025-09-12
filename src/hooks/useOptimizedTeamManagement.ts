@@ -250,21 +250,7 @@ export function useOptimizedTeamManagement() {
         cache.delete(`invitations_${organizationId}`);
       }
 
-      // Send assignment notification for new team member invitation
-      if (organizationId) {
-        const { userId } = await getCurrentUserAndOrg();
-        if (userId) {
-          await sendAssignmentNotification({
-            type: 'project', // Generic type for team invitation
-            entity_id: 'team-invitation',
-            entity_name: `Team invitation sent to ${email}`,
-            assignee_ids: [userId], // Notify the inviter
-            assigned_by_id: userId,
-            organization_id: organizationId,
-            action: 'assigned'
-          });
-        }
-      }
+      // Note: No assignment notification for invitations - they are different from project assignments
 
       toast({
         title: "Success",

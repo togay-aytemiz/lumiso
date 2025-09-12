@@ -96,55 +96,49 @@ export function EnhancedInvitationForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="invite-email" className="flex items-center gap-2">
-                <Mail className="h-4 w-4" />
-                Email Address
-              </Label>
-              <Input
-                id="invite-email"
-                type="email"
-                placeholder="teammate@company.com"
-                value={inviteEmail}
-                onChange={(e) => setInviteEmail(e.target.value)}
-                disabled={isSubmitting || loading}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="invite-role" className="flex items-center gap-2">
-                <Shield className="h-4 w-4" />
-                Role
-              </Label>
-              <Select value={inviteRole} onValueChange={setInviteRole} disabled={isSubmitting || loading}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableRoles.filter(role => role !== "Owner" && role !== "Member").map(role => (
-                    <SelectItem key={role} value={role}>
-                      {role}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+      <div className="flex gap-4 items-end">
+        <div className="flex-1 space-y-2">
+          <Label htmlFor="invite-email" className="flex items-center gap-2">
+            <Mail className="h-4 w-4" />
+            Email Address
+          </Label>
+          <Input
+            id="invite-email"
+            type="email"
+            placeholder="teammate@company.com"
+            value={inviteEmail}
+            onChange={(e) => setInviteEmail(e.target.value)}
+            disabled={isSubmitting || loading}
+          />
+        </div>
+        
+        <div className="w-48 space-y-2">
+          <Label htmlFor="invite-role" className="flex items-center gap-2">
+            <Shield className="h-4 w-4" />
+            Role
+          </Label>
+          <Select value={inviteRole} onValueChange={setInviteRole} disabled={isSubmitting || loading}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {availableRoles.filter(role => role !== "Owner" && role !== "Member").map(role => (
+                <SelectItem key={role} value={role}>
+                  {role}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
-          <div className="flex items-center justify-between pt-4">
-            <Badge variant="secondary">
-              Role: {inviteRole}
-            </Badge>
-            
-            <Button 
-              type="submit" 
-              disabled={!inviteEmail.trim() || isSubmitting || loading}
-              className="min-w-32"
-            >
-              {isSubmitting ? "Sending..." : "Send Invitation"}
-            </Button>
-          </div>
-        </form>
+        <Button 
+          type="submit" 
+          disabled={!inviteEmail.trim() || isSubmitting || loading}
+          className="min-w-32"
+        >
+          {isSubmitting ? "Sending..." : "Send Invitation"}
+        </Button>
+      </div>
+    </form>
   );
 }

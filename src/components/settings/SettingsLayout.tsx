@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 import { useSettingsContext } from "@/contexts/SettingsContext";
 import { useOnboardingV2 } from "@/hooks/useOnboardingV2";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { usePermissions } from "@/hooks/usePermissions";
 
 const personalSettingsItems = [
   { title: "Profile", href: "/settings/profile", icon: User, testId: "profile-section" },
@@ -41,6 +42,18 @@ export default function SettingsLayout() {
   const location = useLocation();
   const { hasCategoryChanges } = useSettingsContext();
   const { shouldLockNavigation } = useOnboardingV2();
+  const { hasAnyPermission, hasPermission } = usePermissions();
+
+  // Permission-aware filtering for organization settings
+  const filteredOrgItems = organizationSettingsItems.filter((item) => {
+    if (item.href === '/settings/team') {
+      return hasAnyPermission(['manage_team', 'manage_roles']) || hasPermission('admin');
+    }
+    if (item.href === '/settings/general') {
+      return hasAnyPermission(['view_organization_settings', 'manage_organization_settings']);
+    }
+    return true;
+  });
   
   const isItemLocked = (itemHref: string) => {
     console.log('🔍 Settings item lock check:', {
@@ -145,7 +158,7 @@ export default function SettingsLayout() {
               Organization Settings
             </h3>
             <nav className="space-y-1">
-              {organizationSettingsItems.map((item) => {
+              {filteredOrgItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = location.pathname === item.href;
                 const hasChanges = hasCategoryChanges(item.href);

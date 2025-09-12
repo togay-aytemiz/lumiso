@@ -2156,7 +2156,7 @@ export type Database = {
         Returns: string[]
       }
       get_user_permissions: {
-        Args: { user_uuid: string }
+        Args: { org_id?: string; user_uuid?: string } | { user_uuid: string }
         Returns: string[]
       }
       get_workflow_execution_fingerprint: {

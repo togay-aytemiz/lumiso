@@ -20,6 +20,7 @@ import { InvitationErrorBoundary } from "@/components/team/InvitationErrorBounda
 import { EnhancedInvitationForm } from "@/components/team/EnhancedInvitationForm";
 import { RolesTableView } from "@/components/team/RolesTableView";
 import { useOptimizedPresence } from "@/hooks/useOptimizedPresence";
+import { ProtectedFeature } from "@/components/ProtectedFeature";
 
 export default function Team() {
   const [copiedStates, setCopiedStates] = useState<{
@@ -100,7 +101,8 @@ export default function Team() {
   }
 
   return (
-    <SettingsPageWrapper>
+    <ProtectedFeature requiredPermissions={['manage_team', 'manage_roles']} title="Team Access Denied" description="You need permission to manage team or roles to access this section.">
+      <SettingsPageWrapper>
       <SettingsHeader
         title="Team Management"
         description="Invite and manage team members, assign roles and permissions"
@@ -416,5 +418,6 @@ export default function Team() {
         />
       </div>
     </SettingsPageWrapper>
+    </ProtectedFeature>
   );
 }

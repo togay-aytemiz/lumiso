@@ -39,18 +39,6 @@ export function usePermissions() {
         return;
       }
 
-      // Wait for activeOrganizationId to be available
-      if (activeOrganizationId === null && !orgLoading) {
-        setPermissions([]);
-        setLoading(false);
-        return;
-      }
-
-      // If still loading organization, don't fetch permissions yet
-      if (orgLoading || activeOrganizationId === null) {
-        return;
-      }
-
       // Check cache first
       if (
         cachedPermissions.length > 0 &&
@@ -63,35 +51,13 @@ export function usePermissions() {
         return;
       }
 
-      // Get user's organization membership - simplified query
-      const { data: membership } = await supabase
-        .from('organization_members')
-        .select('system_role, custom_role_id')
-        .eq('user_id', user.id)
-        .eq('organization_id', activeOrganizationId)
-        .eq('status', 'active')
-        .single();
-
-      let userPermissions: string[] = [];
-
-      // If user is Owner, they have all permissions
-      if (membership?.system_role === 'Owner') {
-        const { data: allPermissions } = await supabase
-          .from('permissions')
-          .select('name');
-        
-        userPermissions = allPermissions?.map(p => p.name) || [];
-      } else if (membership?.custom_role_id) {
-        // Get permissions from custom role
-        const { data: rolePermissions } = await supabase
-          .from('role_permissions')
-          .select(`
-            permissions!inner(name)
-          `)
-          .eq('role_id', membership.custom_role_id);
-
-        userPermissions = rolePermissions?.map(rp => rp.permissions.name) || [];
+      // Use RPC to safely resolve permissions server-side (bypasses RLS pitfalls)
+      const { data, error } = await supabase.rpc('get_user_permissions', {});
+      if (error) {
+        throw error;
       }
+
+      const userPermissions: string[] = Array.isArray(data) ? (data as string[]) : [];
 
       // Update cache
       cachedPermissions = userPermissions;

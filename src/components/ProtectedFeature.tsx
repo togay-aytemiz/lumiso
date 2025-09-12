@@ -19,9 +19,9 @@ export function ProtectedFeature({
 }: ProtectedFeatureProps) {
   const { hasAnyPermission, loading } = usePermissions();
 
-  // Show loading or children while permissions are loading
+  // While loading permissions, avoid flashing protected content
   if (loading) {
-    return <>{children}</>;
+    return null;
   }
 
   // Check if user has any of the required permissions

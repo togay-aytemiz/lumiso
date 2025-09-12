@@ -93,7 +93,21 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("User created successfully:", authData.user.id);
 
-    // Add user to organization 
+    // Create user profile
+    const { error: profileError } = await supabaseAdmin
+      .from("profiles")
+      .insert({
+        user_id: authData.user.id,
+        full_name: fullName || email.split('@')[0], // Use email username as fallback
+        email: email
+      });
+
+    if (profileError) {
+      console.error("Failed to create user profile:", profileError);
+      // Don't fail the entire process if profile creation fails
+    }
+
+    // Add user to organization
     const { error: memberError } = await supabaseAdmin
       .from("organization_members")
       .insert({

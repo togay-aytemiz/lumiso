@@ -19,7 +19,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { AppSheetModal } from "@/components/ui/app-sheet-modal";
-import { ChevronDown, Loader2, X, Copy, Check, Plus, Trash2, Edit2 } from "lucide-react";
+import { ChevronDown, Loader2, X, Copy, Check, Plus, Trash2, Edit2, Wifi, WifiOff } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useTeamManagement } from "@/hooks/useTeamManagement";
 import { useRoleManagement, type Permission, type CustomRole } from "@/hooks/useRoleManagement";
@@ -27,6 +27,11 @@ import { useToast } from "@/hooks/use-toast";
 import { useSettingsCategorySection } from "@/hooks/useSettingsCategorySection";
 import { formatDistanceToNow } from "date-fns";
 import { SettingsLoadingSkeleton } from "@/components/ui/loading-presets";
+import { InvitationErrorBoundary } from "@/components/team/InvitationErrorBoundary";
+import { EnhancedInvitationForm } from "@/components/team/EnhancedInvitationForm";
+import { usePermissionPreview } from "@/hooks/usePermissionPreview";
+import { PermissionPreviewCard } from "@/components/team/PermissionPreviewCard";
+import { useOptimizedPresence } from "@/hooks/useOptimizedPresence";
 interface SystemRole {
   id: string;
   name: string;
@@ -48,6 +53,9 @@ export default function Team() {
     initialValues: {},
     onSave: async () => ({})
   });
+
+  // Initialize optimized presence tracking
+  const { isUserOnline, getUserLastSeen, totalOnline } = useOptimizedPresence();
 
   // Define presets
   const presets = [{
@@ -285,60 +293,22 @@ export default function Team() {
       <SettingsHeader title="Team Management" description="Manage your team members, roles, and permissions" helpContent={settingsHelpContent.team} />
       
       <div className="space-y-8">
-        <CategorySettingsSection title="Invite Team Member" description="Send invitations to new team members." sectionId="team">
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="invite-email">Email Address</Label>
-                <Input id="invite-email" type="email" placeholder="Enter email address" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="invite-role">Role</Label>
-                <Select value={inviteRole} onValueChange={setInviteRole}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {getAvailableRoles().filter(role => role !== "Owner").map(role => <SelectItem key={role} value={role}>
-                        {role}
-                      </SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <Button onClick={handleSendInvitation} disabled={!inviteEmail.trim()}>
-              Send Invitation
-            </Button>
+        <InvitationErrorBoundary>
+          <EnhancedInvitationForm
+            availableRoles={getAvailableRoles()}
+            onSendInvitation={async (email, role, options) => {
+              const result = await sendInvitation(email, role);
+              return result;
+            }}
+            loading={teamLoading}
+          />
+        </InvitationErrorBoundary>
 
-            {/* Pending Invitations */}
-            {invitations.length > 0 && <div className="mt-6">
-                <h4 className="text-sm font-medium mb-3">Pending Invitations</h4>
-                <div className="space-y-2">
-                  {invitations.map(invitation => <div key={invitation.id} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <div>
-                          <p className="font-medium">{invitation.email}</p>
-                          <p className="text-sm text-muted-foreground">
-                            Role: {invitation.role} • Expires: {new Date(invitation.expires_at).toLocaleDateString()}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Button variant="outline" size="sm" onClick={() => handleCopyInvitationLink(invitation.id)} className="flex items-center gap-2">
-                          {copiedStates[invitation.id] ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                          {copiedStates[invitation.id] ? "Copied!" : "Copy Link"}
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={() => cancelInvitation(invitation.id)}>
-                          Cancel
-                        </Button>
-                      </div>
-                    </div>)}
-                </div>
-              </div>}
-          </div>
-        </CategorySettingsSection>
-
-        <CategorySettingsSection title="Team Members" description="Manage existing team members and their roles." sectionId="team-members">
+        <CategorySettingsSection 
+          title={`Team Members (${teamMembers.length} total, ${totalOnline} online)`} 
+          description="Manage existing team members and their roles." 
+          sectionId="team-members"
+        >
           <div className="space-y-4">
             {teamMembers.length === 0 ? <p className="text-muted-foreground">No team members found.</p> : <div className="overflow-x-auto">
                 <Table>
@@ -354,15 +324,34 @@ export default function Team() {
                     {teamMembers.map(member => <TableRow key={member.id}>
                         <TableCell>
                           <div className="flex items-center gap-3">
-                            <Avatar className="h-8 w-8">
-                              <AvatarImage src={member.profile_photo_url || ''} alt={member.full_name || ''} />
-                              <AvatarFallback>
-                                {member.full_name?.split(' ').map(n => n[0]).join('') || (member.email ? member.email[0].toUpperCase() : '?')}
-                              </AvatarFallback>
-                            </Avatar>
+                            <div className="relative">
+                              <Avatar className="h-8 w-8">
+                                <AvatarImage src={member.profile_photo_url || ''} alt={member.full_name || ''} />
+                                <AvatarFallback>
+                                  {member.full_name?.split(' ').map(n => n[0]).join('') || (member.email ? member.email[0].toUpperCase() : '?')}
+                                </AvatarFallback>
+                              </Avatar>
+                              {/* Online status indicator */}
+                              {isUserOnline(member.user_id) && (
+                                <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 bg-green-500 border-2 border-background rounded-full" />
+                              )}
+                            </div>
                             <div>
-                              <p className="font-medium">{member.full_name || 'No name'}</p>
+                              <div className="flex items-center gap-2">
+                                <p className="font-medium">{member.full_name || 'No name'}</p>
+                                {isUserOnline(member.user_id) && (
+                                  <Badge variant="secondary" className="text-xs flex items-center gap-1">
+                                    <Wifi className="h-3 w-3" />
+                                    Online
+                                  </Badge>
+                                )}
+                              </div>
                               <p className="text-sm text-muted-foreground">{member.email}</p>
+                              {!isUserOnline(member.user_id) && member.last_active && (
+                                <p className="text-xs text-muted-foreground">
+                                  Last active: {formatLastActive(member.last_active)}
+                                </p>
+                              )}
                             </div>
                           </div>
                         </TableCell>

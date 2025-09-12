@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNotificationTriggers } from "@/hooks/useNotificationTriggers";
 import { useOrganization } from "@/contexts/OrganizationContext";
+import { useTeamManagement } from "@/hooks/useTeamManagement";
 
 interface Assignee {
   id: string;
@@ -45,7 +46,7 @@ export function AssigneesList({
 }: AssigneesListProps) {
   const [assignees, setAssignees] = useState<string[]>(initialAssignees);
   const [assigneeDetails, setAssigneeDetails] = useState<Assignee[]>([]);
-  const [organizationMembers, setOrganizationMembers] = useState<OrganizationMember[]>([]);
+  const { teamMembers } = useTeamManagement();
   const [isAddingAssignee, setIsAddingAssignee] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loadingAssignees, setLoadingAssignees] = useState(true);
@@ -66,8 +67,7 @@ export function AssigneesList({
 
   useEffect(() => {
     fetchAssigneeDetails();
-    fetchOrganizationMembers();
-  }, [assignees]);
+  }, [assignees, teamMembers]);
 
   const fetchAssigneeDetails = async () => {
     setLoadingAssignees(true);
@@ -100,61 +100,6 @@ export function AssigneesList({
     }
   };
 
-  const fetchOrganizationMembers = async () => {
-    try {
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user) return;
-
-      const { data: userSettings } = await supabase
-        .from('user_settings')
-        .select('active_organization_id')
-        .eq('user_id', userData.user.id)
-        .single();
-
-      if (!userSettings?.active_organization_id) return;
-
-      const { data, error } = await supabase
-        .from('organization_members')
-        .select(`
-          user_id,
-          role
-        `)
-        .eq('organization_id', userSettings.active_organization_id)
-        .eq('status', 'active');
-
-      if (error) throw error;
-
-      // Fetch profile data
-      if (data && data.length > 0) {
-        const userIds = data.map(member => member.user_id);
-        const { data: profiles } = await supabase
-          .from('profiles')
-          .select('user_id, full_name, profile_photo_url')
-          .in('user_id', userIds);
-
-        const membersWithProfiles = data.map(member => ({
-          ...member,
-          full_name: profiles?.find(p => p.user_id === member.user_id)?.full_name,
-          profile_photo_url: profiles?.find(p => p.user_id === member.user_id)?.profile_photo_url
-        }));
-
-        setOrganizationMembers(membersWithProfiles || []);
-        
-        // Update assignee details with actual roles
-        setAssigneeDetails(prev => prev.map(assignee => {
-          const memberWithRole = membersWithProfiles.find(m => m.user_id === assignee.id);
-          return memberWithRole ? {
-            ...assignee,
-            role: memberWithRole.role
-          } : assignee;
-        }));
-      } else {
-        setOrganizationMembers([]);
-      }
-    } catch (error) {
-      console.error('Error fetching organization members:', error);
-    }
-  };
 
   const addAssignee = async (userId: string) => {
     if (assignees.includes(userId)) return;
@@ -244,9 +189,14 @@ export function AssigneesList({
       .slice(0, 2);
   };
 
-  const availableMembers = organizationMembers.filter(
-    member => !assignees.includes(member.user_id)
-  );
+  const availableMembers = (teamMembers || [])
+    .map((member) => ({
+      user_id: member.user_id,
+      role: (member as any).role || member.system_role || 'Member',
+      full_name: member.full_name,
+      profile_photo_url: member.profile_photo_url,
+    }))
+    .filter((member) => !assignees.includes(member.user_id));
 
   return (
     <TooltipProvider>

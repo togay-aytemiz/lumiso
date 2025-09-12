@@ -301,6 +301,7 @@ export function RolesTableView({
           onOpenChange={setShowRoleDialog}
           permissions={permissions}
           editingRole={editingRole}
+          editingSystemRole={editingSystemRole}
           onSave={handleSaveRole}
           loading={loading}
         />

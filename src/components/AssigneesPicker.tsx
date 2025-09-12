@@ -27,6 +27,7 @@ export function AssigneesPicker({ value, onChange, disabled }: AssigneesPickerPr
   
   // Debug logs
   console.log('AssigneesPicker - teamMembers:', teamMembers);
+  console.log('AssigneesPicker - teamMembers count:', teamMembers.length);
   console.log('AssigneesPicker - profile:', profile);
   console.log('AssigneesPicker - value:', value);
   

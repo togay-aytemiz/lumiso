@@ -100,12 +100,14 @@ export function useTeamManagement() {
           console.error('Error fetching profiles:', profilesError);
         }
 
-        console.log('Existing profiles:', existingProfiles);
+      console.log('Existing profiles:', existingProfiles);
 
-        // Create a map of existing profiles for faster lookup
-        const profileMap = new Map(
-          (existingProfiles || []).map(profile => [profile.user_id, profile])
-        );
+      // Create a map of existing profiles for faster lookup
+      const profileMap = new Map(
+        (existingProfiles || []).map(profile => [profile.user_id, profile])
+      );
+
+      console.log('Profile map created:', Array.from(profileMap.entries()));
 
         // Try to get user emails via edge function
         let emailMap = new Map();
@@ -126,10 +128,52 @@ export function useTeamManagement() {
           console.warn('Could not fetch user emails:', emailError);
         }
 
+        console.log('Email map created:', Array.from(emailMap.entries()));
+
+        // Create profiles for users who don't have them
+        const usersWithoutProfiles = userIds.filter(id => !profileMap.has(id));
+        console.log('Users without profiles:', usersWithoutProfiles);
+        
+        if (usersWithoutProfiles.length > 0) {
+          console.log('Creating missing profiles for users:', usersWithoutProfiles);
+          
+          // Create profiles for missing users
+          const profilesToCreate = usersWithoutProfiles.map(userId => {
+            const email = emailMap.get(userId);
+            let displayName = email ? email.split('@')[0] : `User ${userId.slice(0, 8)}`;
+            
+            return {
+              user_id: userId,
+              full_name: displayName,
+            };
+          });
+
+          const { data: createdProfiles, error: createError } = await supabase
+            .from('profiles')
+            .upsert(profilesToCreate, { onConflict: 'user_id' })
+            .select('user_id, full_name, profile_photo_url');
+
+          if (createError) {
+            console.error('Error creating profiles:', createError);
+          } else {
+            console.log('Created profiles:', createdProfiles);
+            // Add the new profiles to our map
+            (createdProfiles || []).forEach(profile => {
+              profileMap.set(profile.user_id, profile);
+            });
+          }
+        }
+
         // Enrich members with profile and email data
         enrichedMembers = enrichedMembers.map(member => {
           const profile = profileMap.get(member.user_id);
           const email = emailMap.get(member.user_id);
+          
+          console.log(`Enriching member ${member.user_id}:`, {
+            profile,
+            email,
+            member
+          });
           
           // Create a display name with fallbacks
           let displayName = profile?.full_name;
@@ -141,7 +185,7 @@ export function useTeamManagement() {
             displayName = `User ${member.user_id.slice(0, 8)}`;
           }
 
-          return {
+          const enrichedMember = {
             ...member,
             full_name: displayName,
             profile_photo_url: profile?.profile_photo_url,
@@ -153,6 +197,9 @@ export function useTeamManagement() {
             formatted_joined_at: formatDateTime(member.joined_at),
             formatted_last_active: member.last_active ? formatDateTime(member.last_active) : null
           };
+
+          console.log(`Final enriched member ${member.user_id}:`, enrichedMember);
+          return enrichedMember;
         });
       }
 

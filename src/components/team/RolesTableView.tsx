@@ -143,11 +143,11 @@ export function RolesTableView({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Role Name</TableHead>
-                <TableHead>Description</TableHead>
-                <TableHead>Members</TableHead>
-                <TableHead>Permissions</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead className="w-[200px]">Name</TableHead>
+                <TableHead className="w-[300px]">Description</TableHead>
+                <TableHead className="w-[140px]">Members</TableHead>
+                <TableHead className="w-[140px]">Permissions</TableHead>
+                <TableHead className="w-[100px] text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -216,11 +216,11 @@ export function RolesTableView({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Role Name</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead>Members</TableHead>
-                  <TableHead>Permissions</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead className="w-[200px]">Name</TableHead>
+                  <TableHead className="w-[300px]">Description</TableHead>
+                  <TableHead className="w-[140px]">Members</TableHead>
+                  <TableHead className="w-[140px]">Permissions</TableHead>
+                  <TableHead className="w-[100px] text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

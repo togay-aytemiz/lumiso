@@ -124,7 +124,7 @@ export default function Team() {
               <EnhancedInvitationForm
                 onSendInvitation={handleSendInvitation}
                 loading={teamLoading}
-                availableRoles={['Photographer', 'Manager', ...customRoles.map(r => r.name)]}
+                availableRoles={[...roleTemplates.map(t => t.name), ...customRoles.map(r => r.name)]}
               />
             </InvitationErrorBoundary>
 

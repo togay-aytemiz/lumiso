@@ -58,6 +58,8 @@ export const useRoleManagement = () => {
     if (!activeOrganizationId) return;
 
     try {
+      console.log('Fetching custom roles for organization:', activeOrganizationId);
+      
       const { data, error } = await supabase
         .from('custom_roles')
         .select(`
@@ -78,13 +80,19 @@ export const useRoleManagement = () => {
         .eq('organization_id', activeOrganizationId)
         .order('sort_order');
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching custom roles:', error);
+        throw error;
+      }
+
+      console.log('Custom roles data:', data);
 
       const rolesWithPermissions = (data || []).map(role => ({
         ...role,
         permissions: role.role_permissions?.map(rp => rp.permissions).filter(Boolean) || []
       }));
 
+      console.log('Processed custom roles:', rolesWithPermissions);
       setCustomRoles(rolesWithPermissions);
     } catch (error) {
       console.error('Error fetching custom roles:', error);
@@ -138,10 +146,15 @@ export const useRoleManagement = () => {
 
   // Create new custom role
   const createCustomRole = async (name: string, description: string, permissionIds: string[]) => {
-    if (!activeOrganizationId) return;
+    if (!activeOrganizationId) {
+      console.error('No active organization ID');
+      toast.error('No active organization found');
+      return;
+    }
 
     try {
       setLoading(true);
+      console.log('Creating custom role:', { name, description, permissionIds, organizationId: activeOrganizationId });
 
       // Create the role
       const { data: roleData, error: roleError } = await supabase
@@ -155,7 +168,12 @@ export const useRoleManagement = () => {
         .select()
         .single();
 
-      if (roleError) throw roleError;
+      if (roleError) {
+        console.error('Error creating role:', roleError);
+        throw roleError;
+      }
+
+      console.log('Role created:', roleData);
 
       // Add permissions to the role
       if (permissionIds.length > 0) {
@@ -164,11 +182,16 @@ export const useRoleManagement = () => {
           permission_id: permissionId
         }));
 
+        console.log('Adding permissions to role:', rolePermissions);
+
         const { error: permissionError } = await supabase
           .from('role_permissions')
           .insert(rolePermissions);
 
-        if (permissionError) throw permissionError;
+        if (permissionError) {
+          console.error('Error adding permissions:', permissionError);
+          throw permissionError;
+        }
       }
 
       toast.success('Role created successfully');
@@ -185,6 +208,7 @@ export const useRoleManagement = () => {
   const updateRolePermissions = async (roleId: string, permissionIds: string[]) => {
     try {
       setLoading(true);
+      console.log('Updating role permissions:', { roleId, permissionIds });
 
       // Remove all existing permissions for this role
       const { error: deleteError } = await supabase
@@ -192,7 +216,10 @@ export const useRoleManagement = () => {
         .delete()
         .eq('role_id', roleId);
 
-      if (deleteError) throw deleteError;
+      if (deleteError) {
+        console.error('Error deleting existing permissions:', deleteError);
+        throw deleteError;
+      }
 
       // Add new permissions
       if (permissionIds.length > 0) {
@@ -201,11 +228,16 @@ export const useRoleManagement = () => {
           permission_id: permissionId
         }));
 
+        console.log('Inserting new permissions:', rolePermissions);
+
         const { error: insertError } = await supabase
           .from('role_permissions')
           .insert(rolePermissions);
 
-        if (insertError) throw insertError;
+        if (insertError) {
+          console.error('Error inserting new permissions:', insertError);
+          throw insertError;
+        }
       }
 
       toast.success('Role permissions updated');

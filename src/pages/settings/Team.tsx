@@ -22,22 +22,11 @@ import { AppSheetModal } from "@/components/ui/app-sheet-modal";
 import { ChevronDown, Loader2, X, Copy, Check, Plus, Trash2, Edit2 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useTeamManagement } from "@/hooks/useTeamManagement";
+import { useRoleManagement, type Permission, type CustomRole } from "@/hooks/useRoleManagement";
 import { useToast } from "@/hooks/use-toast";
 import { useSettingsCategorySection } from "@/hooks/useSettingsCategorySection";
 import { formatDistanceToNow } from "date-fns";
 import { SettingsLoadingSkeleton } from "@/components/ui/loading-presets";
-interface Permission {
-  id: string;
-  name: string;
-  description: string;
-  category: string;
-}
-interface CustomRole {
-  id: string;
-  name: string;
-  description: string;
-  permissions: Permission[];
-}
 interface SystemRole {
   id: string;
   name: string;
@@ -51,8 +40,19 @@ export default function Team() {
   const [copiedStates, setCopiedStates] = useState<{
     [key: string]: boolean;
   }>({});
-  const [permissions, setPermissions] = useState<Permission[]>([]);
-  const [customRoles, setCustomRoles] = useState<CustomRole[]>([]);
+  
+  // Use the proper role management hook
+  const {
+    permissions,
+    customRoles,
+    memberRoles,
+    loading: roleLoading,
+    createCustomRole,
+    updateRolePermissions,
+    assignRoleToMember,
+    deleteCustomRole
+  } = useRoleManagement();
+  
   const [systemRoles, setSystemRoles] = useState<SystemRole[]>([]);
   const [isCreateRoleOpen, setIsCreateRoleOpen] = useState(false);
   const [editingRole, setEditingRole] = useState<CustomRole | SystemRole | null>(null);
@@ -61,31 +61,31 @@ export default function Team() {
   const [newRoleDescription, setNewRoleDescription] = useState("");
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
   const [selectedPreset, setSelectedPreset] = useState<string>('');
+  const [roleToDelete, setRoleToDelete] = useState<string | null>(null);
 
   // Define presets
   const presets = [{
     id: 'viewer',
     name: 'Viewer',
     description: 'Can only view projects and leads',
-    permissions: ['view_projects', 'view_leads']
+    permissions: ['view_assigned_leads', 'view_assigned_projects']
   }, {
-    id: 'assistant',
+    id: 'assistant', 
     name: 'Assistant',
     description: 'Can view and edit assigned items',
-    permissions: ['view_projects', 'view_leads', 'edit_assigned_projects', 'edit_assigned_leads']
+    permissions: ['view_assigned_leads', 'view_assigned_projects', 'edit_assigned_leads', 'edit_assigned_projects']
   }, {
     id: 'photographer',
-    name: 'Photographer',
+    name: 'Photographer', 
     description: 'Can manage sessions and view projects',
-    permissions: ['view_projects', 'view_leads', 'manage_sessions', 'edit_assigned_projects']
+    permissions: ['view_assigned_leads', 'view_assigned_projects', 'manage_sessions', 'edit_assigned_projects']
   }, {
     id: 'manager',
     name: 'Project Manager',
     description: 'Can manage all projects and leads',
-    permissions: ['view_projects', 'view_leads', 'manage_all_projects', 'manage_all_leads', 'manage_sessions']
+    permissions: ['manage_all_projects', 'manage_all_leads', 'create_leads', 'create_projects', 'manage_sessions']
   }];
-  const [isLoading, setIsLoading] = useState(true);
-  const [roleToDelete, setRoleToDelete] = useState<string | null>(null);
+  
   const isMobile = useIsMobile();
   const {
     teamMembers,
@@ -97,9 +97,7 @@ export default function Team() {
     removeMember,
     updateMemberRole
   } = useTeamManagement();
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
 
   // Team management section state
   const teamSection = useSettingsCategorySection({
@@ -109,78 +107,26 @@ export default function Team() {
     onSave: async () => ({})
   });
 
-  // Load permissions and roles
+  // Set up system roles when permissions load
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        setIsLoading(true);
-
-        // Load permissions
-        const {
-          data: permissionsData,
-          error: permissionsError
-        } = await supabase.from('permissions').select('*').order('category', {
-          ascending: true
-        });
-        if (permissionsError) throw permissionsError;
-        setPermissions(permissionsData || []);
-
-        // Load custom roles for current organization
-        const {
-          data: {
-            user
-          }
-        } = await supabase.auth.getUser();
-        if (user) {
-          const {
-            data: rolesData,
-            error: rolesError
-          } = await supabase.from('custom_roles').select(`
-              *,
-              role_permissions!inner(
-                permission_id,
-                permissions(*)
-              )
-            `).eq('organization_id', user.id).order('sort_order');
-          if (rolesError) throw rolesError;
-
-          // Transform the data to include permissions array
-          const transformedRoles = (rolesData || []).map(role => ({
-            id: role.id,
-            name: role.name,
-            description: role.description || '',
-            permissions: role.role_permissions?.map((rp: any) => rp.permissions) || []
-          }));
-          setCustomRoles(transformedRoles);
-
-          // Set up system roles (Owner and Member)
-          setSystemRoles([{
-            id: 'owner',
-            name: 'Owner',
-            description: 'Full access to all features and settings',
-            permissions: permissionsData || [],
-            isEditable: false
-          }, {
-            id: 'member',
-            name: 'Member',
-            description: 'Basic team member access',
-            permissions: (permissionsData || []).filter(p => ['view_projects', 'view_sessions', 'view_clients'].includes(p.name)),
-            isEditable: true
-          }]);
-        }
-      } catch (error) {
-        console.error('Error loading team data:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load team data",
-          variant: "destructive"
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    loadData();
-  }, []);
+    if (permissions.length > 0) {
+      setSystemRoles([{
+        id: 'owner',
+        name: 'Owner',
+        description: 'Full access to all features and settings',
+        permissions: permissions,
+        isEditable: false
+      }, {
+        id: 'member',
+        name: 'Member',
+        description: 'Basic team member access',
+        permissions: permissions.filter(p => 
+          ['view_assigned_leads', 'view_assigned_projects', 'manage_sessions'].includes(p.name)
+        ),
+        isEditable: true
+      }]);
+    }
+  }, [permissions]);
   const handleSendInvitation = async () => {
     if (!inviteEmail.trim()) return;
     const result = await sendInvitation(inviteEmail, inviteRole);
@@ -219,125 +165,44 @@ export default function Team() {
   };
   const handleCreateRole = async () => {
     if (!newRoleName.trim()) return;
+    
     try {
-      const {
-        data: {
-          user
-        }
-      } = await supabase.auth.getUser();
-      if (!user) return;
-
-      // Create the role
-      const {
-        data: roleData,
-        error: roleError
-      } = await supabase.from('custom_roles').insert({
-        organization_id: user.id,
-        name: newRoleName.trim(),
-        description: newRoleDescription.trim(),
-        sort_order: customRoles.length + 1
-      }).select().single();
-      if (roleError) throw roleError;
-
-      // Add permissions to the role
-      if (selectedPermissions.length > 0) {
-        const {
-          error: permissionsError
-        } = await supabase.from('role_permissions').insert(selectedPermissions.map(permissionId => ({
-          role_id: roleData.id,
-          permission_id: permissionId
-        })));
-        if (permissionsError) throw permissionsError;
-      }
-
-      // Update local state
-      const newRole: CustomRole = {
-        id: roleData.id,
-        name: roleData.name,
-        description: roleData.description || '',
-        permissions: permissions.filter(p => selectedPermissions.includes(p.id))
-      };
-      setCustomRoles(prev => [...prev, newRole]);
-
-      // Reset form
+      await createCustomRole(
+        newRoleName.trim(), 
+        newRoleDescription.trim(), 
+        selectedPermissions
+      );
       resetRoleForm();
-      toast({
-        title: "Success",
-        description: "Role created successfully"
-      });
     } catch (error) {
       console.error('Error creating role:', error);
-      toast({
-        title: "Error",
-        description: "Failed to create role",
-        variant: "destructive"
-      });
     }
   };
   const handleEditRole = async () => {
     if (!editingRole || !newRoleName.trim()) return;
+    
     try {
       if (isEditingSystem) {
         // For system roles, just update local state (Member role)
-        setSystemRoles(prev => prev.map(role => role.id === editingRole.id ? {
-          ...role,
-          name: newRoleName.trim(),
-          description: newRoleDescription.trim(),
-          permissions: permissions.filter(p => selectedPermissions.includes(p.id))
-        } : role));
+        setSystemRoles(prev => prev.map(role => 
+          role.id === editingRole.id ? {
+            ...role,
+            name: newRoleName.trim(),
+            description: newRoleDescription.trim(),
+            permissions: permissions.filter(p => selectedPermissions.includes(p.id))
+          } : role
+        ));
         toast({
           title: "Success",
           description: "Role updated successfully"
         });
       } else {
-        // Update custom role in database
-        const {
-          error: roleError
-        } = await supabase.from('custom_roles').update({
-          name: newRoleName.trim(),
-          description: newRoleDescription.trim()
-        }).eq('id', editingRole.id);
-        if (roleError) throw roleError;
-
-        // Delete existing permissions
-        const {
-          error: deleteError
-        } = await supabase.from('role_permissions').delete().eq('role_id', editingRole.id);
-        if (deleteError) throw deleteError;
-
-        // Add new permissions
-        if (selectedPermissions.length > 0) {
-          const {
-            error: permissionsError
-          } = await supabase.from('role_permissions').insert(selectedPermissions.map(permissionId => ({
-            role_id: editingRole.id,
-            permission_id: permissionId
-          })));
-          if (permissionsError) throw permissionsError;
-        }
-
-        // Update local state
-        setCustomRoles(prev => prev.map(role => role.id === editingRole.id ? {
-          ...role,
-          name: newRoleName.trim(),
-          description: newRoleDescription.trim(),
-          permissions: permissions.filter(p => selectedPermissions.includes(p.id))
-        } : role));
-        toast({
-          title: "Success",
-          description: "Role updated successfully"
-        });
+        // Update custom role using the hook
+        await updateRolePermissions(editingRole.id, selectedPermissions);
       }
 
-      // Reset form
       resetRoleForm();
     } catch (error) {
       console.error('Error updating role:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update role",
-        variant: "destructive"
-      });
     }
   };
   const resetRoleForm = () => {
@@ -352,13 +217,16 @@ export default function Team() {
   const handlePresetChange = (presetId: string) => {
     setSelectedPreset(presetId);
     if (presetId === 'custom' || !presetId) {
-      // Keep current form values for custom
       return;
     }
+    
     const preset = presets.find(p => p.id === presetId);
     if (preset) {
       // Filter to only include permissions that exist in the system
-      const validPermissions = preset.permissions.filter(permId => permissions.some(p => p.id === permId));
+      const validPermissions = preset.permissions
+        .map(permName => permissions.find(p => p.name === permName)?.id)
+        .filter(Boolean) as string[];
+      
       setSelectedPermissions(validPermissions);
       setNewRoleName(preset.name);
       setNewRoleDescription(preset.description);
@@ -374,23 +242,10 @@ export default function Team() {
   };
   const handleDeleteRole = async (roleId: string) => {
     try {
-      const {
-        error
-      } = await supabase.from('custom_roles').delete().eq('id', roleId);
-      if (error) throw error;
-      setCustomRoles(prev => prev.filter(role => role.id !== roleId));
+      await deleteCustomRole(roleId);
       setRoleToDelete(null);
-      toast({
-        title: "Success",
-        description: "Role deleted successfully"
-      });
     } catch (error) {
       console.error('Error deleting role:', error);
-      toast({
-        title: "Error",
-        description: "Failed to delete role",
-        variant: "destructive"
-      });
     }
   };
   const handleSelectAllPermissions = () => {
@@ -418,7 +273,7 @@ export default function Team() {
     acc[permission.category].push(permission);
     return acc;
   }, {} as Record<string, Permission[]>);
-  if (isLoading || teamLoading) {
+  if (teamLoading || roleLoading) {
     return <SettingsPageWrapper>
         <SettingsHeader title="Team Management" description="Manage your team members, roles, and permissions" helpContent={settingsHelpContent.team} />
         <SettingsLoadingSkeleton rows={5} />

@@ -5,12 +5,18 @@ import { useGoogleCalendar } from "@/hooks/useGoogleCalendar";
 import SettingsPageWrapper from "@/components/settings/SettingsPageWrapper";
 import SettingsHeader from "@/components/settings/SettingsHeader";
 import { settingsHelpContent } from "@/lib/settingsHelpContent";
+import { ProtectedFeature } from "@/components/ProtectedFeature";
 
 export default function Integrations() {
   const { connection, loading, connectCalendar, disconnectCalendar } = useGoogleCalendar();
 
   return (
-    <SettingsPageWrapper>
+    <ProtectedFeature
+      requiredPermissions={['manage_integrations', 'admin']}
+      title="Integrations Access Required"
+      description="You need integration management or admin permissions to access this section."
+    >
+      <SettingsPageWrapper>
       <SettingsHeader
         title="Integrations"
         description="Connect external services and manage third-party integrations"
@@ -73,5 +79,6 @@ export default function Integrations() {
         </Card>
       </div>
     </SettingsPageWrapper>
+    </ProtectedFeature>
   );
 }

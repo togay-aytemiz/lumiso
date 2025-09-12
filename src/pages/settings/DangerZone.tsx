@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { AlertTriangle, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { ProtectedFeature } from "@/components/ProtectedFeature";
 
 export default function DangerZone() {
   const [password, setPassword] = useState("");
@@ -51,7 +52,12 @@ export default function DangerZone() {
   };
 
   return (
-    <SettingsPageWrapper>
+    <ProtectedFeature
+      requiredPermissions={['admin']}
+      title="Admin Access Required"
+      description="Only administrators can access the danger zone settings."
+    >
+      <SettingsPageWrapper>
       <SettingsHeader
         title="Danger Zone"
         description="These actions are destructive and cannot be undone. Proceed with caution."
@@ -159,5 +165,6 @@ export default function DangerZone() {
         </SettingsSection>
       </div>
     </SettingsPageWrapper>
+    </ProtectedFeature>
   );
 }

@@ -300,93 +300,201 @@ serve(async (req: Request) => {
 
     console.log("Invitation email sent successfully:", emailResponse);
 
-    // Send confirmation email to the inviter
+    // Send confirmation email to the inviter using unified modern template
+    const confirmationEmailHtml = `
+      <div style="text-align: center; margin-bottom: 32px;">
+        <div style="
+          display: inline-block;
+          background: linear-gradient(135deg, ${brandColor}, ${brandColor}dd); 
+          color: white; 
+          padding: 12px 24px; 
+          border-radius: 25px; 
+          font-weight: 600; 
+          font-size: 16px;
+          margin-bottom: 24px;
+          box-shadow: 0 4px 12px rgba(30, 178, 159, 0.25);
+        ">
+          ✓ Invitation Sent
+        </div>
+        <h2 style="
+          color: #1f2937; 
+          margin: 0 0 16px 0; 
+          font-size: 28px; 
+          font-weight: 700;
+          line-height: 1.2;
+        ">
+          Your invitation was sent successfully!
+        </h2>
+        <p style="
+          color: #6b7280; 
+          margin: 0; 
+          font-size: 16px; 
+          line-height: 1.6;
+        ">
+          We've notified your new team member about joining ${businessName}
+        </p>
+      </div>
+
+      <div style="
+        background: #f8fafc;
+        border-radius: 12px;
+        padding: 24px;
+        margin: 32px 0;
+        border: 1px solid #e5e7eb;
+      ">
+        <div style="display: flex; align-items: center; margin-bottom: 20px;">
+          <div style="
+            background: ${brandColor};
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            font-weight: bold;
+            font-size: 14px;
+          ">
+            📋
+          </div>
+          <h3 style="
+            margin: 0;
+            color: #1f2937;
+            font-size: 18px;
+            font-weight: 600;
+          ">
+            Invitation Details
+          </h3>
+        </div>
+        
+        <div style="margin-left: 44px;">
+          <div style="margin-bottom: 12px;">
+            <div style="color: #6b7280; font-size: 14px; margin-bottom: 4px;">Invited Email</div>
+            <div style="color: #1f2937; font-weight: 600;">${email}</div>
+          </div>
+          <div style="margin-bottom: 12px;">
+            <div style="color: #6b7280; font-size: 14px; margin-bottom: 4px;">Role</div>
+            <div style="color: #1f2937; font-weight: 600;">${role}</div>
+          </div>
+          <div style="margin-bottom: 0;">
+            <div style="color: #6b7280; font-size: 14px; margin-bottom: 4px;">Expires</div>
+            <div style="color: #dc2626; font-weight: 600;">${new Date(invitation.expires_at).toLocaleDateString()}</div>
+          </div>
+        </div>
+      </div>
+      
+      <div style="text-align: center; margin: 32px 0;">
+        <div style="color: #6b7280; font-size: 16px; margin-bottom: 16px;">
+          💡 <strong>What happens next?</strong>
+        </div>
+        <p style="color: #6b7280; margin: 0; font-size: 14px; line-height: 1.6;">
+          <a href="mailto:${email}" style="color: ${brandColor}; text-decoration: none; font-weight: 600;">${email}</a> will receive an invitation email with a link to join your team.<br>
+          The invitation will expire in 7 days if not accepted.
+        </p>
+      </div>
+      
+      <div style="text-align: center; margin: 32px 0;">
+        <a href="${baseUrl}/settings/team" style="
+          display: inline-block;
+          background: ${brandColor};
+          color: white;
+          padding: 12px 24px;
+          border-radius: 8px;
+          text-decoration: none;
+          font-weight: 600;
+          font-size: 14px;
+        ">
+          Manage Team
+        </a>
+      </div>
+    `;
+
+    // Use the unified email template system
     const confirmationEmailResponse = await resend.emails.send({
       from: "Lumiso <hello@updates.lumiso.app>",
       to: [user.email!],
       subject: `✅ Invitation sent to ${email}`,
       html: `
-        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
-          <!-- Header -->
-          <div style="background: linear-gradient(135deg, ${brandColor}, ${brandColor}DD); padding: 40px 32px; text-align: center;">
-            <div style="background: rgba(255, 255, 255, 0.15); padding: 16px; border-radius: 12px; display: inline-block; backdrop-filter: blur(10px);">
-              <h1 style="color: white; margin: 0; font-size: 24px; font-weight: 700;">
-                ✅ Invitation Sent
-              </h1>
-            </div>
-          </div>
-          
-          <!-- Content -->
-          <div style="padding: 40px 32px;">
-            <div style="text-align: center; margin-bottom: 32px;">
-              <h2 style="color: #1f2937; margin: 0 0 16px 0; font-size: 28px; font-weight: 700;">
-                Your invitation was sent successfully!
-              </h2>
-              <p style="color: #6b7280; margin: 0; font-size: 16px; line-height: 1.6;">
-                We've notified your new team member about joining ${businessName}
-              </p>
-            </div>
-
-            <div style="background: linear-gradient(135deg, #f0f9ff, #e0f2fe); border-radius: 16px; padding: 24px; margin: 32px 0; border-left: 4px solid ${brandColor};">
-              <div style="display: flex; align-items: center; margin-bottom: 16px;">
-                <div style="background: ${brandColor}; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 12px; font-weight: bold;">
-                  ✓
-                </div>
-                <h3 style="margin: 0; color: #1f2937; font-size: 18px;">Invitation Details</h3>
-              </div>
-              
-              <div style="background: white; border-radius: 8px; padding: 16px;">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; font-size: 14px;">
-                  <div>
-                    <span style="color: #6b7280; display: block; margin-bottom: 4px;">Invited Email</span>
-                    <strong style="color: #1f2937;">${email}</strong>
-                  </div>
-                  <div>
-                    <span style="color: #6b7280; display: block; margin-bottom: 4px;">Role</span>
-                    <strong style="color: #1f2937;">${role}</strong>
-                  </div>
-                </div>
-                <div style="margin-top: 12px;">
-                  <span style="color: #6b7280; display: block; margin-bottom: 4px; font-size: 14px;">Expires</span>
-                  <strong style="color: #dc2626;">${new Date(invitation.expires_at).toLocaleDateString()}</strong>
-                </div>
-              </div>
-            </div>
-            
-            <div style="text-align: center; padding: 20px; background: #f9fafb; border-radius: 12px; margin: 32px 0;">
-              <p style="color: #6b7280; margin: 0; font-size: 14px; line-height: 1.5;">
-                💡 <strong>What happens next?</strong><br>
-                ${email} will receive an invitation email with a link to join your team.<br>
-                The invitation will expire in 7 days if not accepted.
-              </p>
-            </div>
-            
-            <!-- Action Button -->
-            <div style="text-align: center; margin: 40px 0;">
-              <a href="${baseUrl}/settings/team" 
-                 style="background: linear-gradient(135deg, ${brandColor}, ${brandColor}CC); 
-                        color: white; 
-                        text-decoration: none; 
-                        padding: 16px 32px; 
-                        border-radius: 12px; 
-                        font-weight: 600; 
-                        font-size: 16px;
-                        display: inline-block;
-                        box-shadow: 0 8px 25px rgba(30, 178, 159, 0.3);
-                        transition: all 0.3s ease;">
-                Manage Team →
-              </a>
-            </div>
-          </div>
-          
-          <!-- Footer -->
-          <div style="background: #f8fafc; padding: 24px 32px; text-align: center; border-top: 1px solid #e5e7eb;">
-            <p style="color: #9ca3af; margin: 0; font-size: 12px;">
-              You can resend this invitation or manage your team anytime from your settings.
-            </p>
-          </div>
-        </div>
-      `,
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Invitation sent to ${email}</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f8fafc;
+      line-height: 1.6;
+    }
+    .email-container {
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: #ffffff;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+    .email-header {
+      background: linear-gradient(135deg, ${brandColor}, ${brandColor}dd);
+      padding: 24px;
+      text-align: center;
+      color: white;
+    }
+    .email-body {
+      padding: 32px 24px;
+    }
+    .email-footer {
+      background-color: #f8fafc;
+      padding: 24px;
+      text-align: center;
+      color: #6b7280;
+      font-size: 14px;
+      border-top: 1px solid #e5e7eb;
+    }
+    @media (max-width: 600px) {
+      .email-container {
+        margin: 0;
+        box-shadow: none;
+      }
+      .email-body {
+        padding: 24px 16px;
+      }
+      .email-footer {
+        padding: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="email-container">
+    <div class="email-header">
+      <h1 style="
+        margin: 0;
+        font-size: 28px;
+        font-weight: 700;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      ">Lumiso</h1>
+    </div>
+    
+    <div class="email-body">
+      ${confirmationEmailHtml}
+    </div>
+    
+    <div class="email-footer">
+      <p style="margin: 0 0 12px 0;">
+        This email was sent by <strong>${businessName}</strong>
+      </p>
+      <p style="margin: 0;">
+        <a href="${baseUrl}" style="color: ${brandColor}; text-decoration: none;">
+          Visit Dashboard
+        </a>
+      </p>
+    </div>
+  </div>
+</body>
+</html>`,
     });
 
     console.log("Confirmation email sent successfully:", confirmationEmailResponse);

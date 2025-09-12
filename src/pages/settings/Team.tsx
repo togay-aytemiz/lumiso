@@ -41,27 +41,13 @@ export default function Team() {
     [key: string]: boolean;
   }>({});
   
-  // Use the proper role management hook
-  const {
-    permissions,
-    customRoles,
-    memberRoles,
-    loading: roleLoading,
-    createCustomRole,
-    updateRolePermissions,
-    assignRoleToMember,
-    deleteCustomRole
-  } = useRoleManagement();
-  
-  const [systemRoles, setSystemRoles] = useState<SystemRole[]>([]);
-  const [isCreateRoleOpen, setIsCreateRoleOpen] = useState(false);
-  const [editingRole, setEditingRole] = useState<CustomRole | SystemRole | null>(null);
-  const [isEditingSystem, setIsEditingSystem] = useState(false);
-  const [newRoleName, setNewRoleName] = useState("");
-  const [newRoleDescription, setNewRoleDescription] = useState("");
-  const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
-  const [selectedPreset, setSelectedPreset] = useState<string>('');
-  const [roleToDelete, setRoleToDelete] = useState<string | null>(null);
+  // Team management section state
+  const teamSection = useSettingsCategorySection({
+    sectionId: "team",
+    sectionName: "Team Management",
+    initialValues: {},
+    onSave: async () => ({})
+  });
 
   // Define presets
   const presets = [{
@@ -97,19 +83,35 @@ export default function Team() {
     removeMember,
     updateMemberRole
   } = useTeamManagement();
+  
+  // Use the proper role management hook
+  const {
+    permissions,
+    customRoles,
+    memberRoles,
+    loading: roleLoading,
+    createCustomRole,
+    updateRolePermissions,
+    assignRoleToMember,
+    deleteCustomRole
+  } = useRoleManagement();
+  
+  const [systemRoles, setSystemRoles] = useState<SystemRole[]>([]);
+  const [isCreateRoleOpen, setIsCreateRoleOpen] = useState(false);
+  const [editingRole, setEditingRole] = useState<CustomRole | SystemRole | null>(null);
+  const [isEditingSystem, setIsEditingSystem] = useState(false);
+  const [newRoleName, setNewRoleName] = useState("");
+  const [newRoleDescription, setNewRoleDescription] = useState("");
+  const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
+  const [selectedPreset, setSelectedPreset] = useState<string>('');
+  const [roleToDelete, setRoleToDelete] = useState<string | null>(null);
+  
   const { toast } = useToast();
-
-  // Team management section state
-  const teamSection = useSettingsCategorySection({
-    sectionId: "team",
-    sectionName: "Team Management",
-    initialValues: {},
-    onSave: async () => ({})
-  });
 
   // Set up system roles when permissions load
   useEffect(() => {
     if (permissions.length > 0) {
+      console.log('Setting up system roles with permissions:', permissions);
       setSystemRoles([{
         id: 'owner',
         name: 'Owner',
@@ -256,9 +258,9 @@ export default function Team() {
     }
   };
   const getAvailableRoles = () => {
-    const baseRoles = ["Owner", "Member"];
+    const systemRoles = ["Owner", "Member"];
     const customRoleNames = customRoles.map(role => role.name);
-    return [...baseRoles, ...customRoleNames];
+    return [...systemRoles, ...customRoleNames];
   };
   const formatLastActive = (lastActive: string | null) => {
     if (!lastActive) return "Never";
@@ -365,16 +367,36 @@ export default function Team() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          {member.system_role === "Owner" ? <Badge variant="outline">{member.system_role}</Badge> : <Select value={member.system_role} onValueChange={newRole => updateMemberRole(member.id, newRole)}>
+                          {member.system_role === "Owner" ? (
+                            <Badge variant="outline">{member.system_role}</Badge>
+                          ) : (
+                            <Select 
+                              value={member.custom_role_id || member.system_role}
+                              onValueChange={async (newRole) => {
+                                console.log('Changing role for member:', member.user_id, 'to:', newRole);
+                                
+                                // If it's a system role, update the system_role field
+                                if (newRole === 'Owner' || newRole === 'Member') {
+                                  await updateMemberRole(member.id, newRole);
+                                } else {
+                                  // It's a custom role, assign it
+                                  await assignRoleToMember(member.id, newRole);
+                                }
+                              }}
+                            >
                               <SelectTrigger className="w-auto min-w-[100px] h-8 px-3 py-1 text-sm">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
-                                {getAvailableRoles().filter(role => role !== "Owner").map(role => <SelectItem key={role} value={role}>
-                                    {role}
-                                  </SelectItem>)}
+                                <SelectItem value="Member">Member</SelectItem>
+                                {customRoles.map(role => (
+                                  <SelectItem key={role.id} value={role.id}>
+                                    {role.name}
+                                  </SelectItem>
+                                ))}
                               </SelectContent>
-                            </Select>}
+                            </Select>
+                          )}
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">

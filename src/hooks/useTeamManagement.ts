@@ -7,6 +7,7 @@ interface TeamMember {
   user_id: string;
   organization_id: string;
   system_role: string;
+  custom_role_id?: string;
   status: string;
   joined_at: string;
   last_active: string | null;

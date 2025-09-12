@@ -2161,6 +2161,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string[]
       }
+      get_user_permissions: {
+        Args: { user_uuid: string }
+        Returns: string[]
+      }
       get_workflow_execution_fingerprint: {
         Args: {
           trigger_data_param?: Json
@@ -2181,6 +2185,10 @@ export type Database = {
       retry_failed_notifications: {
         Args: Record<PropertyKey, never>
         Returns: number
+      }
+      safe_user_has_permission: {
+        Args: { permission_name: string; user_uuid: string }
+        Returns: boolean
       }
       schedule_session_reminders: {
         Args: { session_id_param: string }

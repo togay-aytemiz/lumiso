@@ -19,7 +19,10 @@ import {
   Edit,
   Plus,
   Trash2,
-  CheckCircle2
+  CheckCircle2,
+  Zap,
+  DollarSign,
+  UserCheck
 } from 'lucide-react';
 
 interface Permission {
@@ -77,11 +80,29 @@ const PERMISSION_CATEGORIES = {
       'view_packages', 'manage_packages'
     ]
   },
+  'Automation': {
+    icon: Zap,
+    description: 'Workflow automation and templates',
+    color: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+    permissions: ['view_workflows', 'manage_workflows', 'execute_workflows', 'view_templates', 'manage_templates']
+  },
+  'Financial': {
+    icon: DollarSign,
+    description: 'Payment management and financial data',
+    color: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+    permissions: ['view_payments', 'manage_payments']
+  },
+  'Team': {
+    icon: UserCheck,
+    description: 'Team member and role management',
+    color: 'bg-indigo-100 text-indigo-800 border-indigo-200',
+    permissions: ['manage_team']
+  },
   'Administration': {
     icon: Shield,
-    description: 'Full system access and team management',
+    description: 'Full system access and administration',
     color: 'bg-red-100 text-red-800 border-red-200',
-    permissions: ['manage_team', 'manage_roles', 'admin', 'manage_integrations', 'manage_contracts', 'manage_billing', 'manage_client_messaging']
+    permissions: ['manage_roles', 'admin', 'manage_integrations', 'manage_contracts', 'manage_billing', 'manage_client_messaging']
   }
 };
 
@@ -225,7 +246,8 @@ export function StructuredRoleDialog({
               {Object.entries(PERMISSION_CATEGORIES).map(([categoryName, categoryConfig]) => {
                 const categoryPermissions = permissions.filter(p => 
                   categoryConfig.permissions.some(cp => p.name === cp) ||
-                  p.category.toLowerCase() === categoryName.toLowerCase()
+                  p.category.toLowerCase() === categoryName.toLowerCase() ||
+                  p.category.toLowerCase().replace(/s$/, '') === categoryName.toLowerCase().replace(/s$/, '')
                 );
                 
                 if (categoryPermissions.length === 0) return null;

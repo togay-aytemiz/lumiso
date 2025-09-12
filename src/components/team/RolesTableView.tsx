@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Shield, Edit, Plus, Users } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Shield, Edit, Plus, Users, Trash2 } from "lucide-react";
 import { StructuredRoleDialog } from "@/components/settings/StructuredRoleDialog";
 
 interface Permission {
@@ -59,6 +60,8 @@ export function RolesTableView({
   const [showRoleDialog, setShowRoleDialog] = useState(false);
   const [editingRole, setEditingRole] = useState<CustomRole | null>(null);
   const [editingSystemRole, setEditingSystemRole] = useState<RoleTemplate | null>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [roleToDelete, setRoleToDelete] = useState<CustomRole | null>(null);
 
   const handleEditCustomRole = (role: CustomRole) => {
     setEditingRole(role);
@@ -90,6 +93,19 @@ export function RolesTableView({
     setShowRoleDialog(false);
     setEditingRole(null);
     setEditingSystemRole(null);
+  };
+
+  const handleDeleteClick = (role: CustomRole) => {
+    setRoleToDelete(role);
+    setShowDeleteDialog(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (roleToDelete) {
+      await onDeleteRole(roleToDelete.id);
+      setShowDeleteDialog(false);
+      setRoleToDelete(null);
+    }
   };
 
   const getMemberCount = (roleId: string, isSystemRole: boolean = false) => {
@@ -254,13 +270,23 @@ export function RolesTableView({
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEditCustomRole(role)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEditCustomRole(role)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteClick(role)}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -278,6 +304,34 @@ export function RolesTableView({
           onSave={handleSaveRole}
           loading={loading}
         />
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Role</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete the "{roleToDelete?.name}" role? 
+                {getMemberCount(roleToDelete?.id || '') > 0 && (
+                  <span className="block mt-2 text-destructive font-medium">
+                    Warning: This role is currently assigned to {getMemberCount(roleToDelete?.id || '')} team member{getMemberCount(roleToDelete?.id || '') !== 1 ? 's' : ''}. 
+                    They will lose these permissions.
+                  </span>
+                )}
+                This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={handleConfirmDelete}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Delete Role
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </CardContent>
     </Card>
   );

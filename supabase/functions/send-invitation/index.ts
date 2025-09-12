@@ -195,8 +195,10 @@ serve(async (req: Request) => {
 
     const inviterName = profile?.full_name || user.email || "Team member";
     
-    // Create invitation link
-    const inviteLink = `${req.headers.get('origin') || 'http://localhost:5173'}/accept-invite?invitation_id=${invitation.id}`;
+    // Create invitation link using production domain
+    const productionDomain = Deno.env.get('PRODUCTION_DOMAIN');
+    const baseUrl = productionDomain || req.headers.get('origin') || 'http://localhost:5173';
+    const inviteLink = `${baseUrl}/accept-invite?invitation_id=${invitation.id}`;
     
     // Send invitation email using Resend
     const emailResponse = await resend.emails.send({

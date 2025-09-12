@@ -198,7 +198,7 @@ serve(async (req: Request) => {
     // Create invitation link using production domain
     const productionDomain = Deno.env.get('PRODUCTION_DOMAIN');
     const baseUrl = productionDomain || req.headers.get('origin') || 'http://localhost:5173';
-    const inviteLink = `${baseUrl}/accept-invite?invitation_id=${invitation.id}`;
+    const inviteLink = `${baseUrl}/accept-invite?invitation_id=${invitation.id}&email=${encodeURIComponent(email)}`;
     
     // Get organization settings for branding
     const { data: orgSettings } = await supabase

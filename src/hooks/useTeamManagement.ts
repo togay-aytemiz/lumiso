@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useOrganizationTimezone } from "@/hooks/useOrganizationTimezone";
+import { sendAssignmentNotification, getCurrentUserAndOrg } from "@/lib/notificationUtils";
 
 interface TeamMember {
   id: string;
@@ -36,6 +38,7 @@ export function useTeamManagement() {
   const [currentUserRole, setCurrentUserRole] = useState<string | null>(null);
   const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
   const { toast } = useToast();
+  const { formatDateTime, toOrgTimezone } = useOrganizationTimezone();
 
   const fetchTeamData = async () => {
     try {
@@ -144,7 +147,10 @@ export function useTeamManagement() {
             email: email,
             is_online: onlineUsers.has(member.user_id),
             // Flag to indicate if this is a generated name vs actual profile name
-            is_generated_name: !profile?.full_name
+            is_generated_name: !profile?.full_name,
+            // Timezone-formatted dates
+            formatted_joined_at: formatDateTime(member.joined_at),
+            formatted_last_active: member.last_active ? formatDateTime(member.last_active) : null
           };
         });
       }
@@ -206,6 +212,20 @@ export function useTeamManagement() {
       }
 
       console.log('Invitation response:', data);
+
+      // Send assignment notification for team invitation
+      const { userId, orgId } = await getCurrentUserAndOrg();
+      if (userId && orgId) {
+        await sendAssignmentNotification({
+          type: 'project', // Generic type for team management
+          entity_id: 'team-invitation',
+          entity_name: `Team invitation sent to ${email}`,
+          assignee_ids: [userId], // Notify the person who sent the invitation
+          assigned_by_id: userId,
+          organization_id: orgId,
+          action: 'assigned'
+        });
+      }
 
       toast({
         title: "Success",
@@ -294,9 +314,15 @@ export function useTeamManagement() {
 
   const updateMemberRole = async (memberId: string, newRole: string) => {
     try {
+      // Use organization timezone for last_active update
+      const currentTime = toOrgTimezone(new Date());
+      
       const { error } = await supabase
         .from('organization_members')
-        .update({ system_role: newRole as 'Owner' | 'Member' })
+        .update({ 
+          system_role: newRole as 'Owner' | 'Member',
+          last_active: currentTime.toISOString()
+        })
         .eq('id', memberId);
 
       if (error) throw error;

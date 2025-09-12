@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Trash2, Settings, Crown, UserCheck, Plus, Edit, Shield, Users, Copy, X } from "lucide-react";
+import { Trash2, Settings, Crown, UserCheck, Copy, X, Users } from "lucide-react";
 import { useTeamManagement } from "@/hooks/useTeamManagement";
 import { useRoleManagement } from "@/hooks/useRoleManagement";
 import { useToast } from "@/hooks/use-toast";
@@ -18,15 +18,13 @@ import { formatDistanceToNow } from "date-fns";
 import { SettingsLoadingSkeleton } from "@/components/ui/loading-presets";
 import { InvitationErrorBoundary } from "@/components/team/InvitationErrorBoundary";
 import { EnhancedInvitationForm } from "@/components/team/EnhancedInvitationForm";
-import { StructuredRoleDialog } from "@/components/settings/StructuredRoleDialog";
+import { RolesTableView } from "@/components/team/RolesTableView";
 import { useOptimizedPresence } from "@/hooks/useOptimizedPresence";
 
 export default function Team() {
   const [copiedStates, setCopiedStates] = useState<{
     [key: string]: boolean;
   }>({});
-  const [showCreateRoleDialog, setShowCreateRoleDialog] = useState(false);
-  const [editingRole, setEditingRole] = useState<any>(null);
 
   const { toast } = useToast();
   
@@ -81,7 +79,7 @@ export default function Team() {
     } else {
       toast({
         title: "Error",
-        description: result.error || "Failed to cancel invitation",
+        description: typeof result.error === 'string' ? result.error : "Failed to cancel invitation",
         variant: "destructive"
       });
     }
@@ -112,8 +110,7 @@ export default function Team() {
         {/* 1. Invite Team Member Section */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
+            <CardTitle>
               Invite Team Member
             </CardTitle>
             <CardDescription>
@@ -280,26 +277,37 @@ export default function Team() {
                             <Select
                               value={member.custom_role_id || (member.role || 'Photographer')}
                               onValueChange={async (roleValue) => {
-                                // Handle both system roles and custom roles
-                                if (roleValue === 'Photographer' || roleValue === 'Manager') {
-                                  // System role assignment
-                                  const { error } = await supabase
-                                    .from('organization_members')
-                                    .update({ 
-                                      role: roleValue,
-                                      custom_role_id: null 
-                                    })
-                                    .eq('id', member.id);
-                                  
-                                  if (!error) {
-                                    toast({
-                                      title: "Role updated",
-                                      description: `Member role changed to ${roleValue}`,
-                                    });
+                                try {
+                                  // Handle both system roles and custom roles
+                                  if (roleValue === 'Photographer' || roleValue === 'Manager') {
+                                    // System role assignment
+                                    const { error } = await supabase
+                                      .from('organization_members')
+                                      .update({ 
+                                        role: roleValue,
+                                        custom_role_id: null 
+                                      })
+                                      .eq('id', member.id);
+                                    
+                                    if (!error) {
+                                      toast({
+                                        title: "Role updated",
+                                        description: `Member role changed to ${roleValue}`,
+                                      });
+                                    } else {
+                                      throw error;
+                                    }
+                                  } else {
+                                    // Custom role assignment
+                                    await assignRoleToMember(member.id, roleValue);
                                   }
-                                } else {
-                                  // Custom role assignment
-                                  await assignRoleToMember(member.id, roleValue);
+                                } catch (error) {
+                                  console.error('Error updating role:', error);
+                                  toast({
+                                    title: "Error",
+                                    description: "Failed to update member role. Please try again.",
+                                    variant: "destructive"
+                                  });
                                 }
                               }}
                             >
@@ -313,23 +321,14 @@ export default function Team() {
                               </SelectTrigger>
                               <SelectContent>
                                 <SelectItem value="Photographer">
-                                  <div className="flex items-center gap-2">
-                                    <UserCheck className="h-4 w-4" />
-                                    Photographer
-                                  </div>
+                                  Photographer
                                 </SelectItem>
                                 <SelectItem value="Manager">
-                                  <div className="flex items-center gap-2">
-                                    <Settings className="h-4 w-4" />
-                                    Manager
-                                  </div>
+                                  Manager
                                 </SelectItem>
                                 {customRoles.map(role => (
                                   <SelectItem key={role.id} value={role.id}>
-                                    <div className="flex items-center gap-2">
-                                      <Shield className="h-4 w-4" />
-                                      {role.name}
-                                    </div>
+                                    {role.name}
                                   </SelectItem>
                                 ))}
                               </SelectContent>
@@ -354,14 +353,13 @@ export default function Team() {
                           {member.system_role !== "Owner" && (
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground"
-                                >
-                                  <Trash2 className="h-4 w-4 mr-1" />
-                                  Remove
-                                </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground"
+                                  >
+                                    Remove
+                                  </Button>
                               </AlertDialogTrigger>
                               <AlertDialogContent>
                                 <AlertDialogHeader>
@@ -399,206 +397,24 @@ export default function Team() {
         </Card>
 
         {/* 3. Roles and Permissions Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Roles & Permissions</CardTitle>
-            <CardDescription>
-              System roles and custom roles with specific permissions for your team
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* System Roles Subsection */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h4 className="text-sm font-medium">System Roles</h4>
-                <Badge variant="outline">Read-only</Badge>
-              </div>
-              <div className="grid gap-4 md:grid-cols-2">
-                {roleTemplates?.map((template) => (
-                  <Card key={template.id} className="border-muted">
-                    <CardHeader className="pb-3">
-                      <div className="flex items-center gap-2">
-                        <div className="p-1 rounded bg-primary/10">
-                          {template.name === 'Photographer' ? (
-                            <UserCheck className="h-4 w-4 text-primary" />
-                          ) : (
-                            <Settings className="h-4 w-4 text-primary" />
-                          )}
-                        </div>
-                        <CardTitle className="text-base">{template.name}</CardTitle>
-                      </div>
-                      <CardDescription className="text-sm">
-                        {template.description}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="pt-0">
-                      <div className="space-y-2">
-                        <p className="text-xs font-medium text-muted-foreground">PERMISSIONS</p>
-                        <div className="flex flex-wrap gap-1">
-                          {template.permissions?.slice(0, 4).map((permissionId) => {
-                            const permission = permissions.find(p => p.id === permissionId);
-                            return permission ? (
-                              <Badge 
-                                key={permissionId} 
-                                variant="secondary" 
-                                className="text-xs"
-                              >
-                                {permission.name}
-                              </Badge>
-                            ) : null;
-                          })}
-                          {(template.permissions?.length || 0) > 4 && (
-                            <Badge variant="secondary" className="text-xs">
-                              +{(template.permissions?.length || 0) - 4} more
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
-
-            {/* Custom Roles Subsection */}
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <h4 className="text-sm font-medium">Custom Roles</h4>
-                <Button onClick={() => setShowCreateRoleDialog(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Role
-                </Button>
-              </div>
-
-              {customRoles.length === 0 ? (
-                <Card className="border-dashed">
-                  <CardContent className="p-8 text-center">
-                    <Shield className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
-                    <h3 className="text-lg font-medium mb-2">No custom roles yet</h3>
-                    <p className="text-muted-foreground mb-4">
-                      Create custom roles to manage team member permissions more effectively
-                    </p>
-                    <Button onClick={() => setShowCreateRoleDialog(true)}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Create Your First Role
-                    </Button>
-                  </CardContent>
-                </Card>
-              ) : (
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                  {customRoles.map((role) => {
-                    const membersWithRole = memberRoles.filter(member => 
-                      member.custom_role_id === role.id
-                    );
-                    
-                    return (
-                      <Card key={role.id}>
-                        <CardHeader className="pb-3">
-                          <div className="flex items-start justify-between">
-                            <div className="flex items-center gap-2">
-                              <Shield className="h-5 w-5 text-primary" />
-                              <CardTitle className="text-base">{role.name}</CardTitle>
-                            </div>
-                            <div className="flex gap-1">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => {
-                                  setEditingRole(role);
-                                  setShowCreateRoleDialog(true);
-                                }}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                  <Button variant="ghost" size="sm">
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle>Delete Role</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                      Are you sure you want to delete the "{role.name}" role? 
-                                      Members with this role will lose their assigned permissions.
-                                    </AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction
-                                      onClick={() => deleteCustomRole(role.id)}
-                                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                    >
-                                      Delete Role
-                                    </AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
-                            </div>
-                          </div>
-                          {role.description && (
-                            <CardDescription className="text-sm">
-                              {role.description}
-                            </CardDescription>
-                          )}
-                        </CardHeader>
-                        <CardContent className="pt-0">
-                          <div className="space-y-3">
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                              <Users className="h-4 w-4" />
-                              {membersWithRole.length} member{membersWithRole.length !== 1 ? 's' : ''}
-                            </div>
-                            
-                            {role.permissions && role.permissions.length > 0 && (
-                              <div>
-                                <p className="text-xs font-medium text-muted-foreground mb-2">PERMISSIONS</p>
-                                <div className="flex flex-wrap gap-1">
-                                  {role.permissions.slice(0, 3).map((permission) => (
-                                    <Badge 
-                                      key={permission.id} 
-                                      variant="outline" 
-                                      className="text-xs"
-                                    >
-                                      {permission.name}
-                                    </Badge>
-                                  ))}
-                                  {role.permissions.length > 3 && (
-                                    <Badge variant="outline" className="text-xs">
-                                      +{role.permissions.length - 3} more
-                                    </Badge>
-                                  )}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+        <RolesTableView
+          roleTemplates={roleTemplates}
+          customRoles={customRoles}
+          memberRoles={memberRoles}
+          permissions={permissions}
+          onCreateRole={createCustomRole}
+          onUpdateRole={async (roleId: string, name: string, description: string, permissionIds: string[]) => {
+            // Update role details and permissions
+            await supabase
+              .from('custom_roles')
+              .update({ name, description })
+              .eq('id', roleId);
+            await updateRolePermissions(roleId, permissionIds);
+          }}
+          onDeleteRole={deleteCustomRole}
+          loading={roleLoading}
+        />
       </div>
-
-      {/* Create/Edit Role Dialog */}
-      <StructuredRoleDialog
-        open={showCreateRoleDialog}
-        onOpenChange={setShowCreateRoleDialog}
-        permissions={permissions}
-        editingRole={editingRole}
-        onSave={async (name: string, description: string, permissionIds: string[]) => {
-          if (editingRole) {
-            await updateRolePermissions(editingRole.id, permissionIds);
-          } else {
-            await createCustomRole(name, description, permissionIds);
-          }
-          setShowCreateRoleDialog(false);
-          setEditingRole(null);
-        }}
-      />
     </SettingsPageWrapper>
   );
 }

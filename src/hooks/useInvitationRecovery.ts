@@ -67,7 +67,7 @@ export function useInvitationRecovery() {
         description: "Failed to resend invitation. Please try again.",
         variant: "destructive"
       });
-      return { success: false, error };
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
     } finally {
       setLoading(false);
     }
@@ -98,7 +98,7 @@ export function useInvitationRecovery() {
         description: "Failed to cancel invitation. Please try again.",
         variant: "destructive"
       });
-      return { success: false, error };
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
     } finally {
       setLoading(false);
     }
@@ -156,7 +156,7 @@ export function useInvitationRecovery() {
         description: "Failed to recover invitation. Please try again.",
         variant: "destructive"
       });
-      return { success: false, error };
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
     } finally {
       setLoading(false);
     }

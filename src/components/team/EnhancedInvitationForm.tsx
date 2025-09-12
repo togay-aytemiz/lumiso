@@ -95,18 +95,7 @@ export function EnhancedInvitationForm({
   }, [inviteEmail, inviteRole, onSendInvitation, toast, validateEmail, checkExistingInvitation]);
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Users className="h-5 w-5" />
-          Invite Team Member
-        </CardTitle>
-        <CardDescription>
-          Send an invitation to add a new member to your team (expires in 7 days)
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="invite-email" className="flex items-center gap-2">
@@ -157,7 +146,5 @@ export function EnhancedInvitationForm({
             </Button>
           </div>
         </form>
-      </CardContent>
-    </Card>
   );
 }

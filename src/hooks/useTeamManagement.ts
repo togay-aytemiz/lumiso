@@ -255,7 +255,7 @@ export function useTeamManagement() {
         description: errorMessage,
         variant: "destructive",
       });
-      return { success: false, error };
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   };
 
@@ -282,7 +282,7 @@ export function useTeamManagement() {
         description: "Failed to cancel invitation",
         variant: "destructive",
       });
-      return { success: false, error };
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   };
 
@@ -309,7 +309,7 @@ export function useTeamManagement() {
         description: "Failed to remove member",
         variant: "destructive",
       });
-      return { success: false, error };
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   };
 
@@ -355,7 +355,7 @@ export function useTeamManagement() {
         description: "Failed to update member role",
         variant: "destructive",
       });
-      return { success: false, error };
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   };
 

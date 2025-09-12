@@ -22,6 +22,9 @@ serve(async (req: Request) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
   );
 
+  // Parse body once and reuse (avoid Body already consumed errors)
+  let requestBody: InvitationRequest | null = null;
+
   try {
     const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -39,7 +42,8 @@ serve(async (req: Request) => {
       throw new Error("Unauthorized");
     }
 
-    const { email, role }: InvitationRequest = await req.json();
+    requestBody = await req.json();
+    const { email, role }: InvitationRequest = requestBody;
 
     // Enhanced input validation with database function
     if (!email || !role) {
@@ -149,18 +153,8 @@ serve(async (req: Request) => {
       throw new Error("Only organization owners can send invitations");
     }
 
-    // Check if user is already a member or has pending invitation
-    const { data: existingMember } = await supabase
-      .from("organization_members")
-      .select("id")
-      .eq("organization_id", organizationId)
-      .eq("user_id", user.id)
-      .eq("status", "active")
-      .maybeSingle();
+    // Skip checking inviter membership. Membership-by-email is validated during acceptance.
 
-    if (existingMember) {
-      throw new Error("User is already a member of this organization");
-    }
 
     const { data: existingInvite } = await supabase
       .from("invitations")
@@ -284,6 +278,9 @@ serve(async (req: Request) => {
     // Log failed invitation attempt if we have the necessary data
     try {
       const authHeader = req.headers.get("Authorization");
+      const emailForLog = requestBody?.email?.toLowerCase?.() || 'unknown';
+      let orgIdForLog: string | null = null;
+
       if (authHeader) {
         const { data: { user } } = await supabase.auth.getUser(
           authHeader.replace("Bearer ", "")
@@ -294,16 +291,17 @@ serve(async (req: Request) => {
             .from("user_settings")
             .select("active_organization_id")
             .eq("user_id", user.id)
-            .single();
+            .maybeSingle();
 
-          if (userSettings?.active_organization_id) {
-            const requestBody = await req.json();
+          orgIdForLog = userSettings?.active_organization_id || null;
+
+          if (orgIdForLog) {
             await supabase.rpc('log_invitation_attempt', {
               user_uuid: user.id,
-              email_param: requestBody.email || 'unknown',
-              org_id: userSettings.active_organization_id,
+              email_param: emailForLog,
+              org_id: orgIdForLog,
               success: false,
-              error_message: error.message
+              error_message: error?.message || 'Unknown error'
             });
           }
         }

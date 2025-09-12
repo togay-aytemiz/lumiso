@@ -10,18 +10,24 @@ export function useInvitationRecovery() {
 
   const validateEmail = useCallback((email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
+    return emailRegex.test(email.trim().toLowerCase());
   }, []);
 
   const checkExistingInvitation = useCallback(async (email: string) => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('invitations')
-        .select('id, email, expires_at, accepted_at')
+        .select('id, email, organization_id, expires_at, accepted_at')
         .eq('email', email.toLowerCase())
         .is('accepted_at', null)
-        .gt('expires_at', new Date().toISOString())
-        .single();
+        .gt('expires_at', new Date().toISOString());
+
+      // Scope to active organization if available
+      if (activeOrganization?.id) {
+        query = query.eq('organization_id', activeOrganization.id);
+      }
+
+      const { data, error } = await query.maybeSingle();
 
       if (error && error.code !== 'PGRST116') {
         console.error('Error checking existing invitation:', error);
@@ -33,7 +39,7 @@ export function useInvitationRecovery() {
       console.error('Error checking existing invitation:', error);
       return null;
     }
-  }, []);
+  }, [activeOrganization?.id]);
 
   const resendInvitation = useCallback(async (invitationId: string) => {
     setLoading(true);

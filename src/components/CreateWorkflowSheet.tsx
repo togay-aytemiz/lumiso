@@ -49,9 +49,6 @@ const reminderDelayOptions = [{
 }, {
   value: 60,
   label: '1 hour before'
-}, {
-  value: 480,
-  label: 'Same day morning (8 AM)'
 }];
 type ChannelType = 'email' | 'sms' | 'whatsapp';
 interface ChannelConfig {

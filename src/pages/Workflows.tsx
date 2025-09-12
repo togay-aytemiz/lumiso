@@ -129,10 +129,8 @@ export default function Workflows() {
       key: 'channels',
       header: 'Channels',
       render: (workflow) => {
-        // For now, show all channels as we don't have the step data loaded
-        // This would need to be updated when we add step data fetching
-        const defaultChannels = ['email', 'sms', 'whatsapp'];
-        const icons = getChannelIcons(defaultChannels);
+        const channels = (workflow as any).channels || [];
+        const icons = getChannelIcons(channels);
         
         return (
           <div className="flex gap-1">

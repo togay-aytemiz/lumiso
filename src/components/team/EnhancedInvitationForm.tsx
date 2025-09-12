@@ -5,9 +5,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { Mail, Shield, Clock, Users } from 'lucide-react';
+import { Mail, Shield, Users } from 'lucide-react';
 import { useInvitationRecovery } from '@/hooks/useInvitationRecovery';
 
 interface EnhancedInvitationFormProps {
@@ -26,8 +25,6 @@ export function EnhancedInvitationForm({
 }: EnhancedInvitationFormProps) {
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState('Member');
-  const [sendWelcomeEmail, setSendWelcomeEmail] = useState(true);
-  const [expirationDays, setExpirationDays] = useState(7);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const { toast } = useToast();
@@ -68,10 +65,8 @@ export function EnhancedInvitationForm({
 
     setIsSubmitting(true);
     try {
-      const result = await onSendInvitation(inviteEmail, inviteRole, {
-        sendWelcomeEmail,
-        expirationDays
-      });
+      // Always send welcome email and use 7-day expiry (handled by edge function)
+      const result = await onSendInvitation(inviteEmail, inviteRole);
       
       if (result.success) {
         setInviteEmail('');
@@ -97,7 +92,7 @@ export function EnhancedInvitationForm({
     } finally {
       setIsSubmitting(false);
     }
-  }, [inviteEmail, inviteRole, sendWelcomeEmail, expirationDays, onSendInvitation, toast, validateEmail, checkExistingInvitation]);
+  }, [inviteEmail, inviteRole, onSendInvitation, toast, validateEmail, checkExistingInvitation]);
 
   return (
     <Card>
@@ -107,7 +102,7 @@ export function EnhancedInvitationForm({
           Invite Team Member
         </CardTitle>
         <CardDescription>
-          Send an invitation to add a new member to your team
+          Send an invitation to add a new member to your team (expires in 7 days)
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -148,56 +143,10 @@ export function EnhancedInvitationForm({
             </div>
           </div>
 
-          <div className="space-y-4 pt-4 border-t border-border">
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <Label className="flex items-center gap-2">
-                  <Mail className="h-4 w-4" />
-                  Send Welcome Email
-                </Label>
-                <p className="text-sm text-muted-foreground">
-                  Send an introductory email with team information
-                </p>
-              </div>
-              <Switch
-                checked={sendWelcomeEmail}
-                onCheckedChange={setSendWelcomeEmail}
-                disabled={isSubmitting || loading}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <Clock className="h-4 w-4" />
-                Invitation Expires In
-              </Label>
-              <Select 
-                value={expirationDays.toString()} 
-                onValueChange={(value) => setExpirationDays(parseInt(value))}
-                disabled={isSubmitting || loading}
-              >
-                <SelectTrigger className="w-full md:w-48">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="3">3 days</SelectItem>
-                  <SelectItem value="7">7 days</SelectItem>
-                  <SelectItem value="14">14 days</SelectItem>
-                  <SelectItem value="30">30 days</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
           <div className="flex items-center justify-between pt-4">
-            <div className="flex items-center gap-2">
-              <Badge variant="secondary">
-                Role: {inviteRole}
-              </Badge>
-              <Badge variant="outline">
-                Expires: {expirationDays} days
-              </Badge>
-            </div>
+            <Badge variant="secondary">
+              Role: {inviteRole}
+            </Badge>
             
             <Button 
               type="submit" 

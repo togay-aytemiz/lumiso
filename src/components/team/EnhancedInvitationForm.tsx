@@ -24,7 +24,7 @@ export function EnhancedInvitationForm({
   loading = false 
 }: EnhancedInvitationFormProps) {
   const [inviteEmail, setInviteEmail] = useState('');
-  const [inviteRole, setInviteRole] = useState('Member');
+  const [inviteRole, setInviteRole] = useState('Photographer');
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const { toast } = useToast();
@@ -70,7 +70,7 @@ export function EnhancedInvitationForm({
       
       if (result.success) {
         setInviteEmail('');
-        setInviteRole('Member');
+        setInviteRole('Photographer');
         toast({
           title: "Invitation sent!",
           description: `Successfully sent invitation to ${inviteEmail}`,
@@ -133,7 +133,7 @@ export function EnhancedInvitationForm({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {availableRoles.filter(role => role !== "Owner").map(role => (
+                  {availableRoles.filter(role => role !== "Owner" && role !== "Member").map(role => (
                     <SelectItem key={role} value={role}>
                       {role}
                     </SelectItem>

@@ -3,6 +3,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { toast } from "sonner";
 
+export interface RoleTemplate {
+  id: string;
+  name: string;
+  description: string;
+  permissions: string[];
+  sort_order: number;
+}
+
 export interface Permission {
   id: string;
   name: string;
@@ -33,8 +41,25 @@ export const useRoleManagement = () => {
   const { activeOrganizationId } = useOrganization();
   const [permissions, setPermissions] = useState<Permission[]>([]);
   const [customRoles, setCustomRoles] = useState<CustomRole[]>([]);
+  const [roleTemplates, setRoleTemplates] = useState<RoleTemplate[]>([]);
   const [memberRoles, setMemberRoles] = useState<MemberRole[]>([]);
   const [loading, setLoading] = useState(false);
+
+  // Fetch role templates (system roles)
+  const fetchRoleTemplates = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('role_templates')
+        .select('*')
+        .order('sort_order');
+
+      if (error) throw error;
+      setRoleTemplates(data || []);
+    } catch (error) {
+      console.error('Error fetching role templates:', error);
+      toast.error('Failed to fetch system roles');
+    }
+  };
 
   // Fetch all permissions
   const fetchPermissions = async () => {
@@ -288,6 +313,7 @@ export const useRoleManagement = () => {
 
   useEffect(() => {
     fetchPermissions();
+    fetchRoleTemplates();
   }, []);
 
   useEffect(() => {
@@ -300,6 +326,7 @@ export const useRoleManagement = () => {
   return {
     permissions,
     customRoles,
+    roleTemplates,
     memberRoles,
     loading,
     createCustomRole,
@@ -309,6 +336,7 @@ export const useRoleManagement = () => {
     refetch: () => {
       fetchCustomRoles();
       fetchMemberRoles();
+      fetchRoleTemplates();
     }
   };
 };

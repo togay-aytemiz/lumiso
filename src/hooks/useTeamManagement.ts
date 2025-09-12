@@ -10,6 +10,7 @@ interface TeamMember {
   organization_id: string;
   system_role: string;
   custom_role_id?: string;
+  role?: string; // Add role field for system roles like Photographer/Manager
   status: string;
   joined_at: string;
   last_active: string | null;
@@ -323,8 +324,9 @@ export function useTeamManagement() {
       };
 
       // If assigning a system role, clear custom_role_id
-      if (newRole === 'Owner' || newRole === 'Member') {
-        updateData.system_role = newRole as 'Owner' | 'Member';
+      if (newRole === 'Owner' || newRole === 'Photographer' || newRole === 'Manager') {
+        updateData.system_role = newRole === 'Owner' ? 'Owner' : 'Member';
+        updateData.role = newRole; // Store the actual role name
         updateData.custom_role_id = null; // Clear custom role
       } else {
         // If assigning a custom role, set custom_role_id and default system role

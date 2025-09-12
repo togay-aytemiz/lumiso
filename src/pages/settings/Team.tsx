@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Trash2, Settings, Crown, UserCheck, Eye, Plus, Edit, Shield, Users } from "lucide-react";
+import { Trash2, Settings, Crown, UserCheck, Eye, Plus, Edit, Shield, Users, Copy } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useTeamManagement } from "@/hooks/useTeamManagement";
 import { useRoleManagement } from "@/hooks/useRoleManagement";
@@ -127,7 +127,7 @@ export default function Team() {
             <EnhancedInvitationForm
               onSendInvitation={handleSendInvitation}
               loading={teamLoading}
-              availableRoles={['Member', ...customRoles.map(r => r.name)]}
+              availableRoles={['Photographer', 'Manager', ...customRoles.map(r => r.name)]}
             />
             </InvitationErrorBoundary>
 
@@ -139,8 +139,7 @@ export default function Team() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Member</TableHead>
-                      <TableHead>System Role</TableHead>
-                      <TableHead>Custom Role</TableHead>
+                      <TableHead>Role</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
@@ -172,11 +171,6 @@ export default function Team() {
                             </div>
                           </TableCell>
                           <TableCell>
-                            <Badge variant={member.system_role === 'Owner' ? 'default' : 'secondary'}>
-                              {member.system_role}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
                             {member.system_role === "Owner" ? (
                               <Badge variant="default" className="flex items-center gap-1 w-fit">
                                 <Crown className="h-3 w-3" />
@@ -184,29 +178,60 @@ export default function Team() {
                               </Badge>
                             ) : (
                               <Select
-                                value={member.custom_role_id || ''}
-                                onValueChange={async (value) => {
-                                  if (value !== member.custom_role_id) {
-                                    await assignRoleToMember(member.id, value);
+                                value={member.custom_role_id || (member.role || 'Photographer')}
+                                onValueChange={async (roleValue) => {
+                                  // Handle both system roles and custom roles
+                                  if (roleValue === 'Photographer' || roleValue === 'Manager') {
+                                    // System role assignment
+                                    const { error } = await supabase
+                                      .from('organization_members')
+                                      .update({ 
+                                        role: roleValue,
+                                        custom_role_id: null 
+                                      })
+                                      .eq('id', member.id);
+                                    
+                                    if (!error) {
+                                      toast({
+                                        title: "Role updated",
+                                        description: `Member role changed to ${roleValue}`,
+                                      });
+                                    }
+                                  } else {
+                                    // Custom role assignment
+                                    await assignRoleToMember(member.id, roleValue);
                                   }
                                 }}
                               >
                                 <SelectTrigger className="w-auto min-w-[120px] h-8 px-3 py-1 text-sm">
-                                  <SelectValue placeholder="No role assigned" />
+                                <SelectValue>
+                                    {member.custom_role_id 
+                                      ? customRoles.find(r => r.id === member.custom_role_id)?.name 
+                                      : (member.role || 'Photographer')
+                                    }
+                                  </SelectValue>
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="">No role assigned</SelectItem>
-                                  {customRoles.map(role => {
-                                    const RoleIcon = Settings;
-                                    return (
-                                      <SelectItem key={role.id} value={role.id}>
-                                        <div className="flex items-center gap-2">
-                                          <RoleIcon className="h-4 w-4" />
-                                          {role.name}
-                                        </div>
-                                      </SelectItem>
-                                    );
-                                  })}
+                                  <SelectItem value="Photographer">
+                                    <div className="flex items-center gap-2">
+                                      <UserCheck className="h-4 w-4" />
+                                      Photographer
+                                    </div>
+                                  </SelectItem>
+                                  <SelectItem value="Manager">
+                                    <div className="flex items-center gap-2">
+                                      <Settings className="h-4 w-4" />
+                                      Manager
+                                    </div>
+                                  </SelectItem>
+                                  {customRoles.map(role => (
+                                    <SelectItem key={role.id} value={role.id}>
+                                      <div className="flex items-center gap-2">
+                                        <Shield className="h-4 w-4" />
+                                        {role.name}
+                                      </div>
+                                    </SelectItem>
+                                  ))}
                                 </SelectContent>
                               </Select>
                             )}
@@ -295,14 +320,34 @@ export default function Team() {
                           <Badge variant="outline">Pending</Badge>
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleSendInvitation(invitation.email, invitation.role)}
-                            disabled={teamLoading}
-                          >
-                            Resend
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={async () => {
+                                const inviteUrl = `${window.location.origin}/accept-invite?token=${invitation.id}`;
+                                await navigator.clipboard.writeText(inviteUrl);
+                                setCopiedStates(prev => ({ ...prev, [invitation.id]: true }));
+                                toast({
+                                  title: "Link copied!",
+                                  description: "Invitation link copied to clipboard",
+                                });
+                                setTimeout(() => {
+                                  setCopiedStates(prev => ({ ...prev, [invitation.id]: false }));
+                                }, 2000);
+                              }}
+                            >
+                              {copiedStates[invitation.id] ? 'Copied!' : 'Copy Link'}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleSendInvitation(invitation.email, invitation.role)}
+                              disabled={teamLoading}
+                            >
+                              Resend
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}

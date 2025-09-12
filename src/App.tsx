@@ -7,7 +7,6 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { OrganizationProvider } from "@/contexts/OrganizationContext";
 import { ProfileProvider } from "@/contexts/ProfileContext";
 import { SettingsProvider } from "@/contexts/SettingsContext";
-import PermissionErrorBoundary from "@/components/PermissionErrorBoundary";
 import { PermissionDebugPanel } from "@/components/PermissionDebugPanel";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
@@ -54,12 +53,11 @@ const App = () => (
         <OrganizationProvider>
           <ProfileProvider>
             <SettingsProvider>
-              <PermissionErrorBoundary>
-                <TooltipProvider>
-                  <Toaster />
-                  <Sonner />
-                  <PermissionDebugPanel />
-                  <BrowserRouter>
+              <TooltipProvider>
+                <Toaster />
+                <Sonner />
+                <PermissionDebugPanel />
+                <BrowserRouter>
           <Routes>
             <Route path="/auth" element={<Auth />} />
             <Route path="/accept-invite" element={<AcceptInvite />} />
@@ -102,7 +100,6 @@ const App = () => (
                   </Routes>
                 </BrowserRouter>
               </TooltipProvider>
-            </PermissionErrorBoundary>
           </SettingsProvider>
         </ProfileProvider>
       </OrganizationProvider>

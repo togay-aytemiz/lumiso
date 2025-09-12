@@ -1376,6 +1376,7 @@ export type Database = {
           organization_id: string
           project_id: string | null
           session_date: string
+          session_name: string | null
           session_time: string
           status: string
           updated_at: string
@@ -1391,6 +1392,7 @@ export type Database = {
           organization_id: string
           project_id?: string | null
           session_date: string
+          session_name?: string | null
           session_time: string
           status?: string
           updated_at?: string
@@ -1406,6 +1408,7 @@ export type Database = {
           organization_id?: string
           project_id?: string | null
           session_date?: string
+          session_name?: string | null
           session_time?: string
           status?: string
           updated_at?: string

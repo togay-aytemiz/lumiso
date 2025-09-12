@@ -33,7 +33,8 @@ const handler = async (req: Request): Promise<Response> => {
     
     // Get current UTC time for processing
     const currentTime = new Date();
-    console.log(`Processing at UTC: ${currentTime.toISOString()}`);
+    const currentTimeString = currentTime.toISOString();
+    console.log(`Processing at UTC: ${currentTimeString}`);
     
     // We'll handle timezone conversion per user/organization basis
 
@@ -406,7 +407,8 @@ const handler = async (req: Request): Promise<Response> => {
         processed,
         errors,
         currentTime: currentTimeString,
-        message: `Processed ${processed} daily summaries${errors > 0 ? `, ${errors} failed` : ''}`
+        message: `Processed ${processed} daily summaries${errors > 0 ? `, ${errors} failed` : ''}`,
+        currentTime: currentTimeString
       }),
       { 
         headers: { 'Content-Type': 'application/json', ...corsHeaders }

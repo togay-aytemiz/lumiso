@@ -46,6 +46,7 @@ export default function Team() {
     loading: roleLoading,
     createCustomRole,
     updateRolePermissions,
+    updateSystemRolePermissions,
     assignRoleToMember,
     deleteCustomRole
   } = useRoleManagement();
@@ -411,6 +412,7 @@ export default function Team() {
               .eq('id', roleId);
             await updateRolePermissions(roleId, permissionIds);
           }}
+          onUpdateSystemRole={updateSystemRolePermissions}
           onDeleteRole={deleteCustomRole}
           loading={roleLoading}
         />

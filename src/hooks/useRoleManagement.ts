@@ -209,7 +209,30 @@ export const useRoleManagement = () => {
     }
   };
 
-  // Update role permissions
+  // Update system role permissions
+  const updateSystemRolePermissions = async (roleId: string, permissionIds: string[]) => {
+    try {
+      setLoading(true);
+
+      // Update the role template's permissions array directly
+      const { error } = await supabase
+        .from('role_templates')
+        .update({ permissions: permissionIds })
+        .eq('id', roleId);
+
+      if (error) throw error;
+
+      toast.success('System role permissions updated');
+      await fetchRoleTemplates();
+    } catch (error) {
+      console.error('Error updating system role permissions:', error);
+      toast.error('Failed to update system role permissions');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Update custom role permissions
   const updateRolePermissions = async (roleId: string, permissionIds: string[]) => {
     try {
       setLoading(true);
@@ -331,6 +354,7 @@ export const useRoleManagement = () => {
     loading,
     createCustomRole,
     updateRolePermissions,
+    updateSystemRolePermissions,
     assignRoleToMember,
     deleteCustomRole,
     refetch: () => {

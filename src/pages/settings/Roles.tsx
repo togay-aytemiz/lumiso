@@ -3,66 +3,25 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { useRoleManagement, Permission, CustomRole } from '@/hooks/useRoleManagement';
-import { SimpleRoleDialog } from '@/components/settings/SimpleRoleDialog';
-import { Plus, Edit, Trash2, Users, Shield } from 'lucide-react';
+import { useRoleTemplates } from '@/hooks/useRoleTemplates';
+import { SimpleRoleTemplateCard } from '@/components/settings/SimpleRoleTemplateCard';
+import { Trash2, Users, Sparkles, Crown, Settings as SettingsIcon, UserCheck, Eye } from 'lucide-react';
 import SettingsPageWrapper from "@/components/settings/SettingsPageWrapper";
 import SettingsHeader from "@/components/settings/SettingsHeader";
 import { settingsHelpContent } from "@/lib/settingsHelpContent";
 
-export default function Roles() {
+export default function SimpleRoles() {
   const { 
-    permissions, 
+    roleTemplates,
     customRoles, 
     memberRoles, 
     loading, 
-    createCustomRole, 
-    updateRolePermissions, 
+    createRoleFromTemplate, 
     assignRoleToMember,
     deleteCustomRole 
-  } = useRoleManagement();
-
-  const [showCreateRoleDialog, setShowCreateRoleDialog] = useState(false);
-  const [editingRole, setEditingRole] = useState<CustomRole | null>(null);
-  const [newRoleName, setNewRoleName] = useState('');
-  const [newRoleDescription, setNewRoleDescription] = useState('');
-  const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
-
-  // Group permissions by category
-  const permissionsByCategory = permissions.reduce((acc, permission) => {
-    if (!acc[permission.category]) {
-      acc[permission.category] = [];
-    }
-    acc[permission.category].push(permission);
-    return acc;
-  }, {} as Record<string, Permission[]>);
-
-  const handleCreateRole = async (name: string, description: string, permissionIds: string[]) => {
-    await createCustomRole(name, description, permissionIds);
-  };
-
-  const handleEditRole = (role: CustomRole) => {
-    setEditingRole(role);
-    setShowCreateRoleDialog(true);
-  };
-
-  const handleUpdateRole = async (name: string, description: string, permissionIds: string[]) => {
-    if (!editingRole) return;
-    await updateRolePermissions(editingRole.id, permissionIds);
-    setEditingRole(null);
-  };
-
-  const handleDeleteRole = async (roleId: string) => {
-    await deleteCustomRole(roleId);
-  };
+  } = useRoleTemplates();
 
   const getInitials = (name?: string) => {
     if (!name) return 'U';
@@ -73,69 +32,112 @@ export default function Roles() {
     return memberRoles.filter(member => member.custom_role_id === roleId);
   };
 
+  const getRoleIcon = (templateName?: string) => {
+    if (!templateName) return SettingsIcon;
+    switch (templateName.toLowerCase()) {
+      case 'full admin':
+        return Crown;
+      case 'project manager':
+        return SettingsIcon;
+      case 'team member':
+        return UserCheck;
+      case 'viewer':
+        return Eye;
+      default:
+        return SettingsIcon;
+    }
+  };
+
+  const getRoleBadgeVariant = (templateName?: string) => {
+    if (!templateName) return 'secondary';
+    switch (templateName.toLowerCase()) {
+      case 'full admin':
+        return 'default';
+      case 'project manager':
+        return 'default';
+      case 'team member':
+        return 'secondary';
+      case 'viewer':
+        return 'outline';
+      default:
+        return 'secondary';
+    }
+  };
+
   return (
     <SettingsPageWrapper>
       <SettingsHeader
         title="Role Management"
-        description="Manage team roles and permissions for your organization"
+        description="Assign roles to your team members using simple, preset role templates"
         helpContent={settingsHelpContent.roles}
       />
       
-      <div className="space-y-6">
-        <div className="flex items-center justify-end">
-          <Button onClick={() => setShowCreateRoleDialog(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Create Role
-          </Button>
+      <div className="space-y-8">
+        {/* Role Templates */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-primary" />
+            <h2 className="text-xl font-semibold">Available Role Templates</h2>
+          </div>
+          <p className="text-muted-foreground">
+            Choose from these preset roles designed for photography businesses. Each role comes with carefully selected permissions.
+          </p>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {roleTemplates.map((template) => (
+              <SimpleRoleTemplateCard
+                key={template.id}
+                template={template}
+                onCreateRole={createRoleFromTemplate}
+                loading={loading}
+              />
+            ))}
+          </div>
         </div>
 
-      {/* Custom Roles */}
-      <div className="grid gap-4">
-        <h2 className="text-lg font-semibold flex items-center">
-          <Shield className="h-5 w-5 mr-2" />
-          Custom Roles
-        </h2>
-        
-        {customRoles.length === 0 ? (
-          <Card>
-            <CardContent className="p-6 text-center">
-              <p className="text-muted-foreground">No custom roles created yet.</p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid gap-4">
-            {customRoles.map((role) => {
-              const membersWithRole = getMembersByRole(role.id);
-              
-              return (
-                <Card key={role.id}>
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <CardTitle className="flex items-center">
-                          {role.name}
-                          <Badge variant="secondary" className="ml-2">
-                            <Users className="h-3 w-3 mr-1" />
-                            {membersWithRole.length}
-                          </Badge>
-                        </CardTitle>
-                        {role.description && (
-                          <CardDescription>{role.description}</CardDescription>
-                        )}
-                      </div>
-                      
-                      <div className="flex space-x-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleEditRole(role)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
+        {/* Active Roles */}
+        {customRoles.length > 0 && (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <SettingsIcon className="h-5 w-5 text-primary" />
+              <h2 className="text-xl font-semibold">Active Roles</h2>
+            </div>
+            
+            <div className="grid gap-4">
+              {customRoles.map((role) => {
+                const membersWithRole = getMembersByRole(role.id);
+                const RoleIcon = getRoleIcon(role.template?.name);
+                
+                return (
+                  <Card key={role.id}>
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-primary/10 rounded-lg">
+                            <RoleIcon className="h-5 w-5 text-primary" />
+                          </div>
+                          <div>
+                            <CardTitle className="flex items-center gap-2">
+                              {role.name}
+                              <Badge variant="secondary" className="flex items-center gap-1">
+                                <Users className="h-3 w-3" />
+                                {membersWithRole.length}
+                              </Badge>
+                            </CardTitle>
+                            <CardDescription className="flex items-center gap-2">
+                              {role.description}
+                              {role.template && (
+                                <Badge variant="outline" className="text-xs">
+                                  Based on {role.template.name}
+                                </Badge>
+                              )}
+                            </CardDescription>
+                          </div>
+                        </div>
                         
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
-                            <Button variant="outline" size="sm">
+                            <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </AlertDialogTrigger>
@@ -143,57 +145,111 @@ export default function Roles() {
                             <AlertDialogHeader>
                               <AlertDialogTitle>Delete Role</AlertDialogTitle>
                               <AlertDialogDescription>
-                                Are you sure you want to delete the "{role.name}" role? 
-                                This will remove the role from all assigned members.
+                                Are you sure you want to delete "{role.name}"? 
+                                This will remove the role from {membersWithRole.length} team member(s).
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                               <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleDeleteRole(role.id)}>
-                                Delete
+                              <AlertDialogAction onClick={() => deleteCustomRole(role.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                Delete Role
                               </AlertDialogAction>
                             </AlertDialogFooter>
                           </AlertDialogContent>
                         </AlertDialog>
                       </div>
-                    </div>
-                  </CardHeader>
-                  
-                  <CardContent>
-                    <div className="space-y-4">
-                      {/* Permissions */}
-                      <div>
-                        <h4 className="font-medium text-sm mb-2">Permissions</h4>
-                        <div className="flex flex-wrap gap-1">
-                          {role.permissions.map((permission) => (
-                            <Badge key={permission.id} variant="outline" className="text-xs">
-                              {permission.name}
+                    </CardHeader>
+                    
+                    {membersWithRole.length > 0 && (
+                      <CardContent>
+                        <div>
+                          <h4 className="font-medium text-sm mb-3 text-muted-foreground">Team Members</h4>
+                          <div className="grid gap-2">
+                            {membersWithRole.map((member) => (
+                              <div key={member.id} className="flex items-center gap-3 p-2 rounded-lg bg-muted/50">
+                                <Avatar className="h-8 w-8">
+                                  <AvatarImage src={member.profile_photo_url} />
+                                  <AvatarFallback className="text-xs">
+                                    {getInitials(member.full_name)}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <span className="text-sm font-medium">{member.full_name || 'Unnamed User'}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </CardContent>
+                    )}
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Team Members */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Users className="h-5 w-5 text-primary" />
+            <h2 className="text-xl font-semibold">Team Members</h2>
+          </div>
+          
+          <div className="grid gap-3">
+            {memberRoles.map((member) => {
+              const memberRole = customRoles.find(role => role.id === member.custom_role_id);
+              const RoleIcon = getRoleIcon(memberRole?.template?.name);
+              
+              return (
+                <Card key={member.id}>
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage src={member.profile_photo_url} />
+                          <AvatarFallback>
+                            {getInitials(member.full_name)}
+                          </AvatarFallback>
+                        </Avatar>
+                        
+                        <div>
+                          <p className="font-medium">{member.full_name || 'Unnamed User'}</p>
+                          <div className="flex items-center gap-2">
+                            <Badge variant={member.system_role === 'Owner' ? 'default' : 'secondary'}>
+                              {member.system_role}
                             </Badge>
-                          ))}
+                            {memberRole && (
+                              <Badge variant={getRoleBadgeVariant(memberRole.template?.name)} className="flex items-center gap-1">
+                                <RoleIcon className="h-3 w-3" />
+                                {memberRole.name}
+                              </Badge>
+                            )}
+                          </div>
                         </div>
                       </div>
                       
-                      {/* Members with this role */}
-                      {membersWithRole.length > 0 && (
-                        <>
-                          <Separator />
-                          <div>
-                            <h4 className="font-medium text-sm mb-2">Members</h4>
-                            <div className="flex flex-wrap gap-2">
-                              {membersWithRole.map((member) => (
-                                <div key={member.id} className="flex items-center space-x-2">
-                                  <Avatar className="h-6 w-6">
-                                    <AvatarImage src={member.profile_photo_url} />
-                                    <AvatarFallback className="text-xs">
-                                      {getInitials(member.full_name)}
-                                    </AvatarFallback>
-                                  </Avatar>
-                                  <span className="text-sm">{member.full_name || 'Unnamed User'}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        </>
+                      {member.system_role !== 'Owner' && (
+                        <Select
+                          value={member.custom_role_id || ''}
+                          onValueChange={(value) => assignRoleToMember(member.id, value)}
+                        >
+                          <SelectTrigger className="w-48">
+                            <SelectValue placeholder="Assign role" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="">No role assigned</SelectItem>
+                            {customRoles.map((role) => {
+                              const RoleIcon = getRoleIcon(role.template?.name);
+                              return (
+                                <SelectItem key={role.id} value={role.id}>
+                                  <div className="flex items-center gap-2">
+                                    <RoleIcon className="h-4 w-4" />
+                                    {role.name}
+                                  </div>
+                                </SelectItem>
+                              );
+                            })}
+                          </SelectContent>
+                        </Select>
                       )}
                     </div>
                   </CardContent>
@@ -201,80 +257,7 @@ export default function Roles() {
               );
             })}
           </div>
-        )}
-      </div>
-
-      {/* Team Members */}
-      <div className="grid gap-4">
-        <h2 className="text-lg font-semibold flex items-center">
-          <Users className="h-5 w-5 mr-2" />
-          Team Members
-        </h2>
-        
-        <div className="grid gap-4">
-          {memberRoles.map((member) => {
-            const memberRole = customRoles.find(role => role.id === member.custom_role_id);
-            
-            return (
-              <Card key={member.id}>
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <Avatar>
-                        <AvatarImage src={member.profile_photo_url} />
-                        <AvatarFallback>
-                          {getInitials(member.full_name)}
-                        </AvatarFallback>
-                      </Avatar>
-                      
-                      <div>
-                        <p className="font-medium">{member.full_name || 'Unnamed User'}</p>
-                        <div className="flex items-center space-x-2">
-                          <Badge variant={member.system_role === 'Owner' ? 'default' : 'secondary'}>
-                            {member.system_role}
-                          </Badge>
-                          {memberRole && (
-                            <Badge variant="outline">{memberRole.name}</Badge>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {member.system_role !== 'Owner' && (
-                      <Select
-                        value={member.custom_role_id || ''}
-                        onValueChange={(value) => assignRoleToMember(member.id, value)}
-                      >
-                        <SelectTrigger className="w-48">
-                          <SelectValue placeholder="Assign role" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="">No role</SelectItem>
-                          {customRoles.map((role) => (
-                            <SelectItem key={role.id} value={role.id}>
-                              {role.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
         </div>
-      </div>
-
-      {/* Role Dialog */}
-      <SimpleRoleDialog
-        open={showCreateRoleDialog}
-        onOpenChange={setShowCreateRoleDialog}
-        permissions={permissions}
-        editingRole={editingRole}
-        onSave={editingRole ? handleUpdateRole : handleCreateRole}
-        loading={loading}
-      />
       </div>
     </SettingsPageWrapper>
   );

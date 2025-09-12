@@ -161,6 +161,7 @@ export type Database = {
           name: string
           organization_id: string
           sort_order: number
+          template_id: string | null
           updated_at: string
         }
         Insert: {
@@ -170,6 +171,7 @@ export type Database = {
           name: string
           organization_id: string
           sort_order?: number
+          template_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -179,9 +181,18 @@ export type Database = {
           name?: string
           organization_id?: string
           sort_order?: number
+          template_id?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "custom_roles_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "role_templates"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       email_templates: {
         Row: {
@@ -1220,6 +1231,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      role_templates: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          is_system: boolean
+          name: string
+          permissions: string[]
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          id?: string
+          is_system?: boolean
+          name: string
+          permissions?: string[]
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          is_system?: boolean
+          name?: string
+          permissions?: string[]
+          sort_order?: number
+        }
+        Relationships: []
       }
       scheduled_notifications: {
         Row: {

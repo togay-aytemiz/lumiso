@@ -3,19 +3,22 @@ import { supabase } from "@/integrations/supabase/client";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { toast } from "sonner";
 
-export interface Permission {
+export interface RoleTemplate {
   id: string;
   name: string;
   description: string;
-  category: string;
+  permissions: string[];
+  sort_order: number;
+  is_system: boolean;
 }
 
 export interface CustomRole {
   id: string;
   name: string;
   description: string;
+  template_id?: string;
+  template?: RoleTemplate;
   sort_order: number;
-  permissions: Permission[];
 }
 
 export interface MemberRole {
@@ -29,71 +32,62 @@ export interface MemberRole {
   profile_photo_url?: string;
 }
 
-export const useRoleManagement = () => {
+export const useRoleTemplates = () => {
   const { activeOrganizationId } = useOrganization();
-  const [permissions, setPermissions] = useState<Permission[]>([]);
+  const [roleTemplates, setRoleTemplates] = useState<RoleTemplate[]>([]);
   const [customRoles, setCustomRoles] = useState<CustomRole[]>([]);
   const [memberRoles, setMemberRoles] = useState<MemberRole[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Fetch all permissions
-  const fetchPermissions = async () => {
+  // Fetch role templates
+  const fetchRoleTemplates = async () => {
     try {
       const { data, error } = await supabase
-        .from('permissions')
+        .from('role_templates')
         .select('*')
-        .order('category', { ascending: true })
-        .order('name', { ascending: true });
+        .order('sort_order');
 
       if (error) throw error;
-      setPermissions(data || []);
+      setRoleTemplates(data || []);
     } catch (error) {
-      console.error('Error fetching permissions:', error);
-      toast.error('Failed to fetch permissions');
+      console.error('Error fetching role templates:', error);
+      toast.error('Failed to fetch role templates');
     }
   };
 
-  // Fetch custom roles with their permissions
+  // Fetch custom roles with their templates
   const fetchCustomRoles = async () => {
     if (!activeOrganizationId) return;
 
     try {
-      console.log('Fetching custom roles for organization:', activeOrganizationId);
-      
       const { data, error } = await supabase
         .from('custom_roles')
         .select(`
           id,
           name,
           description,
+          template_id,
           sort_order,
-          role_permissions (
-            permission_id,
-            permissions (
-              id,
-              name,
-              description,
-              category
-            )
+          role_templates (
+            id,
+            name,
+            description,
+            permissions,
+            sort_order,
+            is_system
           )
         `)
         .eq('organization_id', activeOrganizationId)
         .order('sort_order');
 
-      if (error) {
-        console.error('Error fetching custom roles:', error);
-        throw error;
-      }
+      if (error) throw error;
 
-      console.log('Custom roles data:', data);
-
-      const rolesWithPermissions = (data || []).map(role => ({
+      const rolesWithTemplates = (data || []).map(role => ({
         ...role,
-        permissions: role.role_permissions?.map(rp => rp.permissions).filter(Boolean) || []
+        template: role.role_templates || undefined
       }));
 
-      console.log('Processed custom roles:', rolesWithPermissions);
-      setCustomRoles(rolesWithPermissions);
+      setCustomRoles(rolesWithTemplates);
     } catch (error) {
       console.error('Error fetching custom roles:', error);
       toast.error('Failed to fetch roles');
@@ -144,107 +138,64 @@ export const useRoleManagement = () => {
     }
   };
 
-  // Create new custom role
-  const createCustomRole = async (name: string, description: string, permissionIds: string[]) => {
+  // Create new custom role from template
+  const createRoleFromTemplate = async (templateId: string, customName?: string) => {
     if (!activeOrganizationId) {
-      console.error('No active organization ID');
       toast.error('No active organization found');
+      return;
+    }
+
+    const template = roleTemplates.find(t => t.id === templateId);
+    if (!template) {
+      toast.error('Template not found');
       return;
     }
 
     try {
       setLoading(true);
-      console.log('Creating custom role:', { name, description, permissionIds, organizationId: activeOrganizationId });
 
       // Create the role
       const { data: roleData, error: roleError } = await supabase
         .from('custom_roles')
         .insert({
           organization_id: activeOrganizationId,
-          name,
-          description,
+          name: customName || template.name,
+          description: template.description,
+          template_id: templateId,
           sort_order: customRoles.length + 1
         })
         .select()
         .single();
 
-      if (roleError) {
-        console.error('Error creating role:', roleError);
-        throw roleError;
-      }
-
-      console.log('Role created:', roleData);
+      if (roleError) throw roleError;
 
       // Add permissions to the role
-      if (permissionIds.length > 0) {
-        const rolePermissions = permissionIds.map(permissionId => ({
-          role_id: roleData.id,
-          permission_id: permissionId
-        }));
+      if (template.permissions.length > 0) {
+        // Get permission IDs from permission names
+        const { data: permissions, error: permError } = await supabase
+          .from('permissions')
+          .select('id, name')
+          .in('name', template.permissions);
 
-        console.log('Adding permissions to role:', rolePermissions);
+        if (permError) throw permError;
+
+        const rolePermissions = permissions.map(permission => ({
+          role_id: roleData.id,
+          permission_id: permission.id
+        }));
 
         const { error: permissionError } = await supabase
           .from('role_permissions')
           .insert(rolePermissions);
 
-        if (permissionError) {
-          console.error('Error adding permissions:', permissionError);
-          throw permissionError;
-        }
+        if (permissionError) throw permissionError;
       }
 
       toast.success('Role created successfully');
       await fetchCustomRoles();
     } catch (error) {
-      console.error('Error creating role:', error);
+      console.error('Error creating role from template:', error);
       toast.error('Failed to create role');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Update role permissions
-  const updateRolePermissions = async (roleId: string, permissionIds: string[]) => {
-    try {
-      setLoading(true);
-      console.log('Updating role permissions:', { roleId, permissionIds });
-
-      // Remove all existing permissions for this role
-      const { error: deleteError } = await supabase
-        .from('role_permissions')
-        .delete()
-        .eq('role_id', roleId);
-
-      if (deleteError) {
-        console.error('Error deleting existing permissions:', deleteError);
-        throw deleteError;
-      }
-
-      // Add new permissions
-      if (permissionIds.length > 0) {
-        const rolePermissions = permissionIds.map(permissionId => ({
-          role_id: roleId,
-          permission_id: permissionId
-        }));
-
-        console.log('Inserting new permissions:', rolePermissions);
-
-        const { error: insertError } = await supabase
-          .from('role_permissions')
-          .insert(rolePermissions);
-
-        if (insertError) {
-          console.error('Error inserting new permissions:', insertError);
-          throw insertError;
-        }
-      }
-
-      toast.success('Role permissions updated');
-      await fetchCustomRoles();
-    } catch (error) {
-      console.error('Error updating role permissions:', error);
-      toast.error('Failed to update role permissions');
     } finally {
       setLoading(false);
     }
@@ -255,12 +206,11 @@ export const useRoleManagement = () => {
     try {
       setLoading(true);
 
-      // Enhanced role assignment - clear system role when assigning custom role
       const { error } = await supabase
         .from('organization_members')
         .update({ 
           custom_role_id: customRoleId,
-          system_role: 'Member' // Default system role when custom role is assigned
+          system_role: 'Member'
         })
         .eq('id', memberId);
 
@@ -268,10 +218,6 @@ export const useRoleManagement = () => {
 
       toast.success('Role assigned successfully');
       await fetchMemberRoles();
-      
-      // Clear permissions cache since role changed
-      // We'll need to import and use the permissions hook's clearCache
-      
     } catch (error) {
       console.error('Error assigning role:', error);
       toast.error('Failed to assign role');
@@ -285,7 +231,7 @@ export const useRoleManagement = () => {
     try {
       setLoading(true);
 
-      // First remove all permissions for this role
+      // Remove all permissions for this role
       const { error: permissionError } = await supabase
         .from('role_permissions')
         .delete()
@@ -321,7 +267,7 @@ export const useRoleManagement = () => {
   };
 
   useEffect(() => {
-    fetchPermissions();
+    fetchRoleTemplates();
   }, []);
 
   useEffect(() => {
@@ -332,12 +278,11 @@ export const useRoleManagement = () => {
   }, [activeOrganizationId]);
 
   return {
-    permissions,
+    roleTemplates,
     customRoles,
     memberRoles,
     loading,
-    createCustomRole,
-    updateRolePermissions,
+    createRoleFromTemplate,
     assignRoleToMember,
     deleteCustomRole,
     refetch: () => {

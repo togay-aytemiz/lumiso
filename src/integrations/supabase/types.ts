@@ -270,6 +270,36 @@ export type Database = {
         }
         Relationships: []
       }
+      invitation_audit_log: {
+        Row: {
+          created_at: string
+          email: string
+          error_message: string | null
+          id: string
+          organization_id: string
+          success: boolean
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          error_message?: string | null
+          id?: string
+          organization_id: string
+          success: boolean
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          error_message?: string | null
+          id?: string
+          organization_id?: string
+          success?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
       invitation_rate_limits: {
         Row: {
           created_at: string | null
@@ -2178,6 +2208,16 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      log_invitation_attempt: {
+        Args: {
+          email_param: string
+          error_message?: string
+          org_id: string
+          success: boolean
+          user_uuid: string
+        }
+        Returns: undefined
+      }
       migrate_existing_lead_data: {
         Args: { org_id: string }
         Returns: undefined
@@ -2225,6 +2265,10 @@ export type Database = {
       user_is_organization_owner: {
         Args: { org_id: string }
         Returns: boolean
+      }
+      validate_invitation_email: {
+        Args: { email_param: string }
+        Returns: Json
       }
     }
     Enums: {

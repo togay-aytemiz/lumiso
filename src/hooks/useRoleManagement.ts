@@ -255,15 +255,23 @@ export const useRoleManagement = () => {
     try {
       setLoading(true);
 
+      // Enhanced role assignment - clear system role when assigning custom role
       const { error } = await supabase
         .from('organization_members')
-        .update({ custom_role_id: customRoleId })
+        .update({ 
+          custom_role_id: customRoleId,
+          system_role: 'Member' // Default system role when custom role is assigned
+        })
         .eq('id', memberId);
 
       if (error) throw error;
 
       toast.success('Role assigned successfully');
       await fetchMemberRoles();
+      
+      // Clear permissions cache since role changed
+      // We'll need to import and use the permissions hook's clearCache
+      
     } catch (error) {
       console.error('Error assigning role:', error);
       toast.error('Failed to assign role');

@@ -317,12 +317,24 @@ export function useTeamManagement() {
       // Use organization timezone for last_active update
       const currentTime = toOrgTimezone(new Date());
       
+      // Enhanced role assignment logic - clear conflicting fields
+      const updateData: any = {
+        last_active: currentTime.toISOString()
+      };
+
+      // If assigning a system role, clear custom_role_id
+      if (newRole === 'Owner' || newRole === 'Member') {
+        updateData.system_role = newRole as 'Owner' | 'Member';
+        updateData.custom_role_id = null; // Clear custom role
+      } else {
+        // If assigning a custom role, set custom_role_id and default system role
+        updateData.custom_role_id = newRole;
+        updateData.system_role = 'Member'; // Default system role
+      }
+      
       const { error } = await supabase
         .from('organization_members')
-        .update({ 
-          system_role: newRole as 'Owner' | 'Member',
-          last_active: currentTime.toISOString()
-        })
+        .update(updateData)
         .eq('id', memberId);
 
       if (error) throw error;

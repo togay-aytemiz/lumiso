@@ -15,6 +15,15 @@ export function usePermissions() {
   const { activeOrganizationId, loading: orgLoading } = useOrganization();
 
   useEffect(() => {
+    // Clear cache when organization changes
+    if (activeOrganizationId && activeOrganizationId !== cachedOrgId && cachedOrgId !== null) {
+      console.log('Organization changed, clearing permissions cache');
+      cachedPermissions = [];
+      cachedUserId = null;
+      cachedOrgId = null;
+      cacheExpiry = 0;
+    }
+
     // Only start loading permissions when organization context is ready
     if (!orgLoading) {
       fetchUserPermissions();
@@ -141,6 +150,15 @@ export function usePermissions() {
     return false;
   };
 
+  const refreshPermissions = async () => {
+    // Clear cache and re-fetch
+    cachedPermissions = [];
+    cachedUserId = null;
+    cachedOrgId = null;
+    cacheExpiry = 0;
+    await fetchUserPermissions();
+  };
+
   return {
     permissions,
     loading,
@@ -149,11 +167,13 @@ export function usePermissions() {
     canEditLead,
     canEditProject,
     refetch: fetchUserPermissions,
+    refreshPermissions,
     clearCache: () => {
       cachedPermissions = [];
       cachedUserId = null;
       cachedOrgId = null;
       cacheExpiry = 0;
+      console.log('Permissions cache manually cleared');
     }
   };
 }

@@ -41,25 +41,44 @@ serve(async (req: Request) => {
 
     const { email, role }: InvitationRequest = await req.json();
 
-    // Enhanced input validation
+    // Enhanced input validation with database function
     if (!email || !role) {
       throw new Error("Email and role are required");
     }
 
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      throw new Error("Invalid email format");
+    // Validate email using database function
+    const { data: emailValidation, error: validationError } = await supabase
+      .rpc('validate_invitation_email', { email_param: email });
+
+    if (validationError) {
+      throw new Error("Email validation failed");
     }
 
-    // Validate role
-    const validRoles = ['Owner', 'Member'];
-    if (!validRoles.includes(role)) {
-      throw new Error("Invalid role. Must be Owner or Member");
+    if (!emailValidation.valid) {
+      throw new Error(emailValidation.error);
     }
 
-    // Normalize email
-    const normalizedEmail = email.toLowerCase().trim();
+    const normalizedEmail = emailValidation.normalized_email;
+
+    // Validate role (include custom roles)
+    const validSystemRoles = ['Owner', 'Member'];
+    let isValidRole = validSystemRoles.includes(role);
+    
+    // Check if it's a custom role by ID
+    if (!isValidRole) {
+      const { data: customRole } = await supabase
+        .from('custom_roles')
+        .select('id')
+        .eq('id', role)
+        .eq('organization_id', organizationId)
+        .maybeSingle();
+      
+      isValidRole = !!customRole;
+    }
+
+    if (!isValidRole) {
+      throw new Error("Invalid role specified");
+    }
 
     // Get user's active organization from user_settings
     const { data: userSettings, error: settingsError } = await supabase
@@ -75,12 +94,33 @@ serve(async (req: Request) => {
     const organizationId = userSettings.active_organization_id;
 
     // Check rate limiting first
-    const { data: rateLimitCheck } = await supabase.rpc('check_invitation_rate_limit', {
+    const { data: rateLimitCheck, error: rateLimitError } = await supabase.rpc('check_invitation_rate_limit', {
       user_uuid: user.id,
       org_id: organizationId
     });
 
+    if (rateLimitError) {
+      console.error('Rate limit check error:', rateLimitError);
+      // Log the failed attempt
+      await supabase.rpc('log_invitation_attempt', {
+        user_uuid: user.id,
+        email_param: normalizedEmail,
+        org_id: organizationId,
+        success: false,
+        error_message: 'Rate limit check failed'
+      });
+      throw new Error("Unable to verify rate limits. Please try again.");
+    }
+
     if (!rateLimitCheck) {
+      // Log the rate limited attempt
+      await supabase.rpc('log_invitation_attempt', {
+        user_uuid: user.id,
+        email_param: normalizedEmail,
+        org_id: organizationId,
+        success: false,
+        error_message: 'Rate limit exceeded'
+      });
       throw new Error("Rate limit exceeded. Maximum 10 invitations per hour.");
     }
 
@@ -207,6 +247,15 @@ serve(async (req: Request) => {
 
     console.log("Email sent successfully:", emailResponse);
 
+    // Log successful invitation
+    await supabase.rpc('log_invitation_attempt', {
+      user_uuid: user.id,
+      email_param: normalizedEmail,
+      org_id: organizationId,
+      success: true,
+      error_message: null
+    });
+
     return new Response(
       JSON.stringify({ 
         success: true, 
@@ -220,6 +269,38 @@ serve(async (req: Request) => {
     );
   } catch (error: any) {
     console.error("Error in send-invitation function:", error);
+    
+    // Log failed invitation attempt if we have the necessary data
+    try {
+      const authHeader = req.headers.get("Authorization");
+      if (authHeader) {
+        const { data: { user } } = await supabase.auth.getUser(
+          authHeader.replace("Bearer ", "")
+        );
+        
+        if (user) {
+          const { data: userSettings } = await supabase
+            .from("user_settings")
+            .select("active_organization_id")
+            .eq("user_id", user.id)
+            .single();
+
+          if (userSettings?.active_organization_id) {
+            const requestBody = await req.json();
+            await supabase.rpc('log_invitation_attempt', {
+              user_uuid: user.id,
+              email_param: requestBody.email || 'unknown',
+              org_id: userSettings.active_organization_id,
+              success: false,
+              error_message: error.message
+            });
+          }
+        }
+      }
+    } catch (logError) {
+      console.error("Error logging failed invitation:", logError);
+    }
+    
     return new Response(
       JSON.stringify({ error: error.message }),
       {

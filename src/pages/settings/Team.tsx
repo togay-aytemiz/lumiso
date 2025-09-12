@@ -375,12 +375,52 @@ export default function Team() {
                               onValueChange={async (newRole) => {
                                 console.log('Changing role for member:', member.user_id, 'to:', newRole);
                                 
-                                // If it's a system role, update the system_role field
+                                // If it's a system role, update the system_role field and clear custom_role_id
                                 if (newRole === 'Owner' || newRole === 'Member') {
-                                  await updateMemberRole(member.id, newRole);
+                                  const updateData = {
+                                    system_role: newRole as 'Owner' | 'Member',
+                                    custom_role_id: null // Clear custom role when assigning system role
+                                  };
+                                  
+                                  const { error } = await supabase
+                                    .from('organization_members')
+                                    .update(updateData)
+                                    .eq('id', member.id);
+                                    
+                                  if (error) {
+                                    console.error('Error updating system role:', error);
+                                    toast({
+                                      title: "Error",
+                                      description: "Failed to update member role",
+                                      variant: "destructive",
+                                    });
+                                  } else {
+                                    // Refetch team data after successful update
+                                    window.location.reload();
+                                  }
                                 } else {
-                                  // It's a custom role, assign it
-                                  await assignRoleToMember(member.id, newRole);
+                                  // It's a custom role, assign it and set default system role
+                                  const updateData = {
+                                    custom_role_id: newRole,
+                                    system_role: 'Member' as const // Default system role
+                                  };
+                                  
+                                  const { error } = await supabase
+                                    .from('organization_members')
+                                    .update(updateData)
+                                    .eq('id', member.id);
+                                    
+                                  if (error) {
+                                    console.error('Error assigning custom role:', error);
+                                    toast({
+                                      title: "Error", 
+                                      description: "Failed to assign custom role",
+                                      variant: "destructive",
+                                    });
+                                  } else {
+                                    // Refetch team data after successful update
+                                    window.location.reload();
+                                  }
                                 }
                               }}
                             >

@@ -1,120 +1,123 @@
 import React, { useEffect } from 'react';
 
-/**
- * Performance monitoring utilities
- */
+import { useRef } from 'react';
+
+// Performance monitoring utilities for team management
 
 export interface PerformanceMetric {
   name: string;
-  value: number;
+  duration: number;
   timestamp: number;
+  metadata?: Record<string, any>;
 }
 
 class PerformanceMonitor {
-  private metrics: PerformanceMetric[] = [];
-  private startTimes: Map<string, number> = new Map();
+  public metrics: PerformanceMetric[] = [];
+  private timings: Map<string, number> = new Map();
 
-  startTiming(name: string): void {
-    this.startTimes.set(name, performance.now());
+  startTiming(name: string) {
+    this.timings.set(name, performance.now());
   }
 
-  endTiming(name: string): number {
-    const startTime = this.startTimes.get(name);
-    if (!startTime) {
-      console.warn(`No start time found for metric: ${name}`);
-      return 0;
+  endTiming(name: string, metadata?: Record<string, any>) {
+    const startTime = this.timings.get(name);
+    if (startTime) {
+      const duration = performance.now() - startTime;
+      this.metrics.push({
+        name,
+        duration,
+        timestamp: Date.now(),
+        metadata
+      });
+      this.timings.delete(name);
+      
+      // Keep only last 100 metrics
+      if (this.metrics.length > 100) {
+        this.metrics = this.metrics.slice(-100);
+      }
     }
-
-    const endTime = performance.now();
-    const duration = endTime - startTime;
-    
-    this.metrics.push({
-      name,
-      value: duration,
-      timestamp: Date.now()
-    });
-
-    this.startTimes.delete(name);
-    
-    // Log slow operations in development
-    if (process.env.NODE_ENV === 'development' && duration > 100) {
-      console.warn(`Slow operation detected: ${name} took ${duration.toFixed(2)}ms`);
-    }
-
-    return duration;
   }
 
-  getMetrics(): PerformanceMetric[] {
+  getMetrics(name?: string): PerformanceMetric[] {
+    if (name) {
+      return this.metrics.filter(m => m.name === name);
+    }
     return [...this.metrics];
   }
 
-  clearMetrics(): void {
-    this.metrics = [];
+  getAverageTime(name: string): number {
+    const nameMetrics = this.getMetrics(name);
+    if (nameMetrics.length === 0) return 0;
+    
+    const total = nameMetrics.reduce((sum, metric) => sum + metric.duration, 0);
+    return total / nameMetrics.length;
   }
 
-  getAverageTime(name: string): number {
-    const relevantMetrics = this.metrics.filter(m => m.name === name);
-    if (relevantMetrics.length === 0) return 0;
-    
-    const total = relevantMetrics.reduce((sum, metric) => sum + metric.value, 0);
-    return total / relevantMetrics.length;
+  clear() {
+    this.metrics = [];
+    this.timings.clear();
   }
 }
 
 export const performanceMonitor = new PerformanceMonitor();
 
-/**
- * Decorator for measuring function execution time
- */
+// Decorator for measuring method performance
 export function measurePerformance(target: any, propertyName: string, descriptor: PropertyDescriptor) {
   const method = descriptor.value;
-
+  
   descriptor.value = function (...args: any[]) {
-    const methodName = `${target.constructor.name}.${propertyName}`;
+    const className = target.constructor.name;
+    const methodName = `${className}.${propertyName}`;
+    
     performanceMonitor.startTiming(methodName);
     
     try {
       const result = method.apply(this, args);
       
-      // Handle async functions
       if (result instanceof Promise) {
         return result.finally(() => {
           performanceMonitor.endTiming(methodName);
         });
+      } else {
+        performanceMonitor.endTiming(methodName);
+        return result;
       }
-      
-      performanceMonitor.endTiming(methodName);
-      return result;
     } catch (error) {
-      performanceMonitor.endTiming(methodName);
+      performanceMonitor.endTiming(methodName, { error: error.message });
       throw error;
     }
   };
+  
+  return descriptor;
 }
 
-/**
- * Hook for measuring component render performance
- */
+// Hook for measuring component render times
 export function useMeasureRender(componentName: string) {
-  useEffect(() => {
-    performanceMonitor.startTiming(`${componentName} render`);
-    
-    return () => {
-      performanceMonitor.endTiming(`${componentName} render`);
-    };
+  const renderStart = useRef<number>();
+  
+  // Measure render start
+  renderStart.current = performance.now();
+  
+  React.useEffect(() => {
+    if (renderStart.current) {
+      const duration = performance.now() - renderStart.current;
+      performanceMonitor.metrics.push({
+        name: `${componentName}.render`,
+        duration,
+        timestamp: Date.now()
+      });
+    }
   });
 }
 
-/**
- * Utility for detecting memory leaks
- */
-export function checkMemoryUsage() {
-  if (typeof window !== 'undefined' && 'performance' in window && 'memory' in window.performance) {
-    const memory = (window.performance as any).memory;
+// Memory usage utility
+export function checkMemoryUsage(): { used: number; total: number; percentage: number } | null {
+  if ('memory' in performance) {
+    const memory = (performance as any).memory;
     return {
-      used: Math.round(memory.usedJSHeapSize / 1048576 * 100) / 100,
-      total: Math.round(memory.totalJSHeapSize / 1048576 * 100) / 100,
-      limit: Math.round(memory.jsHeapSizeLimit / 1048576 * 100) / 100
+      used: memory.usedJSHeapSize,
+      total: memory.totalJSHeapSize,
+      percentage: (memory.usedJSHeapSize / memory.totalJSHeapSize) * 100
     };
   }
   return null;

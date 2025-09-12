@@ -41,9 +41,25 @@ serve(async (req: Request) => {
 
     const { email, role }: InvitationRequest = await req.json();
 
+    // Enhanced input validation
     if (!email || !role) {
       throw new Error("Email and role are required");
     }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      throw new Error("Invalid email format");
+    }
+
+    // Validate role
+    const validRoles = ['Owner', 'Member'];
+    if (!validRoles.includes(role)) {
+      throw new Error("Invalid role. Must be Owner or Member");
+    }
+
+    // Normalize email
+    const normalizedEmail = email.toLowerCase().trim();
 
     // Get user's active organization from user_settings
     const { data: userSettings, error: settingsError } = await supabase
@@ -57,6 +73,16 @@ serve(async (req: Request) => {
     }
 
     const organizationId = userSettings.active_organization_id;
+
+    // Check rate limiting first
+    const { data: rateLimitCheck } = await supabase.rpc('check_invitation_rate_limit', {
+      user_uuid: user.id,
+      org_id: organizationId
+    });
+
+    if (!rateLimitCheck) {
+      throw new Error("Rate limit exceeded. Maximum 10 invitations per hour.");
+    }
 
     // Check if user is owner of this organization
     const { data: orgMember, error: memberError } = await supabase
@@ -72,12 +98,24 @@ serve(async (req: Request) => {
       throw new Error("Only organization owners can send invitations");
     }
 
-    // Check if there's already a pending invitation for this email
+    // Check if user is already a member or has pending invitation
+    const { data: existingMember } = await supabase
+      .from("organization_members")
+      .select("id")
+      .eq("organization_id", organizationId)
+      .eq("user_id", user.id)
+      .eq("status", "active")
+      .maybeSingle();
+
+    if (existingMember) {
+      throw new Error("User is already a member of this organization");
+    }
+
     const { data: existingInvite } = await supabase
       .from("invitations")
       .select("id")
       .eq("organization_id", organizationId)
-      .eq("email", email)
+      .eq("email", normalizedEmail)
       .is("accepted_at", null)
       .gt("expires_at", new Date().toISOString());
 
@@ -90,7 +128,7 @@ serve(async (req: Request) => {
       .from("invitations")
       .insert({
         organization_id: organizationId,
-        email,
+        email: normalizedEmail,
         role,
         invited_by: user.id,
         expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days

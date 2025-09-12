@@ -270,6 +270,33 @@ export type Database = {
         }
         Relationships: []
       }
+      invitation_rate_limits: {
+        Row: {
+          created_at: string | null
+          id: string
+          invitation_count: number | null
+          organization_id: string
+          user_id: string
+          window_start: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          invitation_count?: number | null
+          organization_id: string
+          user_id: string
+          window_start?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          invitation_count?: number | null
+          organization_id?: string
+          user_id?: string
+          window_start?: string | null
+        }
+        Relationships: []
+      }
       invitations: {
         Row: {
           accepted_at: string | null
@@ -2002,6 +2029,10 @@ export type Database = {
     Functions: {
       check_email_not_in_any_organization: {
         Args: { email_to_check: string }
+        Returns: boolean
+      }
+      check_invitation_rate_limit: {
+        Args: { org_id: string; user_uuid: string }
         Returns: boolean
       }
       cleanup_conflicting_reminders: {

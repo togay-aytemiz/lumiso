@@ -3,6 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useOrganizationTimezone } from "@/hooks/useOrganizationTimezone";
 import { sendAssignmentNotification, getCurrentUserAndOrg } from "@/lib/notificationUtils";
+import { performanceMonitor } from "@/utils/performance";
+import { validateInvitation, validateRoleName } from "@/lib/validation";
 
 // Enhanced team member interface with timezone awareness
 interface OptimizedTeamMember {
@@ -54,8 +56,9 @@ export function useOptimizedTeamManagement() {
   const { toast } = useToast();
   const { formatDateTime, formatDate, toOrgTimezone, timezone } = useOrganizationTimezone();
 
-  // Optimized team data fetching with caching
+  // Optimized team data fetching with caching and performance monitoring
   const fetchTeamData = useCallback(async () => {
+    performanceMonitor.startTiming('fetchTeamData');
     try {
       setLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
@@ -206,13 +209,26 @@ export function useOptimizedTeamManagement() {
         description: "Failed to load team data",
         variant: "destructive",
       });
+      performanceMonitor.endTiming('fetchTeamData', { error: 'fetch_failed' });
     } finally {
       setLoading(false);
+      performanceMonitor.endTiming('fetchTeamData');
     }
   }, [onlineUsers, formatDateTime, toast]);
 
-  // Optimized invitation sending with notification
+  // Optimized invitation sending with validation and rate limiting
   const sendInvitationOptimized = useCallback(async (email: string, role: string) => {
+    // Validate input before making API call
+    if (!validateInvitation({ email, role })) {
+      toast({
+        title: "Error",
+        description: "Invalid email or role",
+        variant: "destructive",
+      });
+      return { success: false, error: new Error("Invalid input") };
+    }
+
+    performanceMonitor.startTiming('sendInvitation');
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("No session found");
@@ -274,7 +290,10 @@ export function useOptimizedTeamManagement() {
         description: errorMessage,
         variant: "destructive",
       });
+      performanceMonitor.endTiming('sendInvitation', { error: 'send_failed' });
       return { success: false, error };
+    } finally {
+      performanceMonitor.endTiming('sendInvitation');
     }
   }, [organizationId, toast, fetchTeamData]);
 

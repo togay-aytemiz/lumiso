@@ -59,6 +59,15 @@ export function useLeadStatuses() {
     queryFn: async () => {
       if (!activeOrganizationId) return [];
       
+      // Ensure default lead statuses exist
+      const { data: user } = await supabase.auth.getUser();
+      if (user.user) {
+        await supabase.rpc('ensure_default_lead_statuses_for_org', {
+          user_uuid: user.user.id,
+          org_id: activeOrganizationId
+        });
+      }
+      
       const { data, error } = await supabase
         .from('lead_statuses')
         .select('*')
@@ -80,6 +89,15 @@ export function useServices() {
     queryKey: ['services', activeOrganizationId],
     queryFn: async () => {
       if (!activeOrganizationId) return [];
+      
+      // Ensure default services exist
+      const { data: user } = await supabase.auth.getUser();
+      if (user.user) {
+        await supabase.rpc('ensure_default_services_for_org', {
+          user_uuid: user.user.id,
+          org_id: activeOrganizationId
+        });
+      }
       
       const { data, error } = await supabase
         .from('services')
@@ -133,6 +151,15 @@ export function useProjectStatuses() {
     queryKey: ['project_statuses', activeOrganizationId],
     queryFn: async () => {
       if (!activeOrganizationId) return [];
+      
+      // Ensure default project statuses exist
+      const { data: user } = await supabase.auth.getUser();
+      if (user.user) {
+        await supabase.rpc('ensure_default_project_statuses_for_org', {
+          user_uuid: user.user.id,
+          org_id: activeOrganizationId
+        });
+      }
       
       const { data, error } = await supabase
         .from('project_statuses')

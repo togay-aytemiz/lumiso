@@ -78,7 +78,7 @@ const packagesSetupSteps: TutorialStep[] = [
 ];
 
 export default function Services() {
-  const { hasPermission, loading } = usePermissions();
+  const { hasViewOrManage, loading } = usePermissions();
   const { currentStep, completeCurrentStep } = useOnboardingV2();
   const [showTutorial, setShowTutorial] = useState(false);
   const [currentTutorialStep, setCurrentTutorialStep] = useState(0);
@@ -128,8 +128,8 @@ export default function Services() {
   }
   
   // Show page if user has permission to view packages or services
-  const canViewServices = hasPermission('view_services');
-  const canViewPackages = hasPermission('view_packages');
+  const canViewServices = hasViewOrManage('services');
+  const canViewPackages = hasViewOrManage('packages');
   
   const hasAnyPermission = canViewServices || canViewPackages;
   

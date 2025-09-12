@@ -7,7 +7,7 @@ import { LeadFieldsSection } from "@/components/LeadFieldsSection";
 import { usePermissions } from "@/hooks/usePermissions";
 
 export default function Leads() {
-  const { hasPermission, loading } = usePermissions();
+  const { hasViewOrManage, loading } = usePermissions();
   
   if (loading) {
     return (
@@ -17,7 +17,7 @@ export default function Leads() {
     );
   }
   
-  if (!hasPermission('view_lead_statuses')) {
+  if (!hasViewOrManage('lead_statuses')) {
     return (
       <SettingsPageWrapper>
         <div className="text-center py-8">

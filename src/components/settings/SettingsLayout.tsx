@@ -52,6 +52,15 @@ export default function SettingsLayout() {
     if (item.href === '/settings/general') {
       return hasAnyPermission(['view_organization_settings', 'manage_organization_settings']);
     }
+    if (item.href === '/settings/projects') {
+      return hasAnyPermission(['view_project_statuses', 'manage_project_statuses', 'view_project_types', 'manage_project_types', 'view_session_statuses', 'manage_session_statuses']);
+    }
+    if (item.href === '/settings/leads') {
+      return hasAnyPermission(['view_lead_statuses', 'manage_lead_statuses']);
+    }
+    if (item.href === '/settings/services') {
+      return hasAnyPermission(['view_packages', 'manage_packages', 'view_services', 'manage_services']);
+    }
     return true;
   });
   

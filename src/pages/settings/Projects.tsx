@@ -9,7 +9,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { ProtectedFeature } from "@/components/ProtectedFeature";
 
 export default function Projects() {
-  const { hasPermission, loading } = usePermissions();
+  const { hasViewOrManage, loading } = usePermissions();
   
   // Show loading while permissions are being fetched
   if (loading) {
@@ -21,9 +21,9 @@ export default function Projects() {
   }
   
   // Show page if user has permission to view any project/session settings
-  const canViewProjectStatuses = hasPermission('view_project_statuses');
-  const canViewProjectTypes = hasPermission('view_project_types');
-  const canViewSessionStatuses = hasPermission('view_session_statuses');
+  const canViewProjectStatuses = hasViewOrManage('project_statuses');
+  const canViewProjectTypes = hasViewOrManage('project_types');
+  const canViewSessionStatuses = hasViewOrManage('session_statuses');
   
   const hasAnyPermission = canViewProjectStatuses || canViewProjectTypes || canViewSessionStatuses;
   

@@ -368,6 +368,7 @@ export function AppSidebar() {
                 'view_project_statuses', 'manage_project_statuses',
                 'view_project_types', 'manage_project_types',
                 'view_session_statuses', 'manage_session_statuses',
+                'view_lead_statuses', 'manage_lead_statuses',
                 'manage_team', 'manage_roles'
               ]) && (
                 <SidebarNavItem

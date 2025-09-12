@@ -82,6 +82,13 @@ export function usePermissions() {
     return permissionList.some(permission => permissions.includes(permission));
   };
 
+  // Helper for "manage implies view" permissions
+  const hasViewOrManage = (basePermission: string): boolean => {
+    const viewPermission = `view_${basePermission}`;
+    const managePermission = `manage_${basePermission}`;
+    return permissions.includes(viewPermission) || permissions.includes(managePermission);
+  };
+
   const canEditLead = async (leadUserId: string, leadAssignees?: string[]): Promise<boolean> => {
     const { data: { user } } = await supabase.auth.getUser();
     const currentUserId = user?.id;
@@ -130,6 +137,7 @@ export function usePermissions() {
     loading,
     hasPermission,
     hasAnyPermission,
+    hasViewOrManage,
     canEditLead,
     canEditProject,
     refetch: fetchUserPermissions,

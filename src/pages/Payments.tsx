@@ -16,6 +16,8 @@ import {
 import { DateRangePicker } from "@/components/DateRangePicker";
 import { ViewProjectDialog } from "@/components/ViewProjectDialog";
 import { toast } from "@/hooks/use-toast";
+import { usePermissions } from "@/hooks/usePermissions";
+import { PermissionDenied } from "@/components/PermissionDenied";
 import { ArrowUpDown, ArrowUp, ArrowDown, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { format, subDays, subMonths, startOfMonth, startOfQuarter, startOfYear } from "date-fns";
@@ -65,6 +67,7 @@ type SortDirection = 'asc' | 'desc';
 type DateFilterType = 'last7days' | 'last4weeks' | 'last3months' | 'last12months' | 'monthToDate' | 'quarterToDate' | 'yearToDate' | 'lastMonth' | 'allTime' | 'custom';
 
 const Payments = () => {
+  const { hasPermission, loading: permissionsLoading } = usePermissions();
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedFilter, setSelectedFilter] = useState<DateFilterType>('allTime');
@@ -78,6 +81,20 @@ const Payments = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingPayment, setEditingPayment] = useState<Payment | null>(null);
   const navigate = useNavigate();
+
+  // Check permissions
+  const canViewPayments = hasPermission("view_payments");
+
+  // Show permission denied if user doesn't have view payments permission
+  if (!permissionsLoading && !canViewPayments) {
+    return (
+      <PermissionDenied 
+        title="Payments Access Denied"
+        description="You need payment permissions to view this page. Contact your administrator to grant you the required permissions."
+        requiredPermission="view_payments"
+      />
+    );
+  }
 
   useEffect(() => {
     fetchPayments();

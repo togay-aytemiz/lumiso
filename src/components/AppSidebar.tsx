@@ -361,15 +361,25 @@ export function AppSidebar() {
           {/* SYSTEM Category */}
           <div className="mt-6">
             <SidebarCategory title="SYSTEM">
-              <SidebarNavItem
-                title="Settings"
-                url="/settings"
-                icon={Settings}
-                isActive={isActive("/settings")}
-                isLocked={isItemLocked("/settings")}
-                onLockedClick={handleLockedItemClick}
-                onClick={handleNavClick}
-              />
+              {/* Only show Settings if user has any settings permissions */}
+              {isItemVisible([
+                'view_organization_settings', 'manage_organization_settings',
+                'view_services', 'manage_services', 'view_packages', 'manage_packages',
+                'view_project_statuses', 'manage_project_statuses',
+                'view_project_types', 'manage_project_types',
+                'view_session_statuses', 'manage_session_statuses',
+                'manage_team', 'manage_custom_roles'
+              ]) && (
+                <SidebarNavItem
+                  title="Settings"
+                  url="/settings"
+                  icon={Settings}
+                  isActive={isActive("/settings")}
+                  isLocked={isItemLocked("/settings")}
+                  onLockedClick={handleLockedItemClick}
+                  onClick={handleNavClick}
+                />
+              )}
               <SidebarNavItem
                 title="Help & Support"
                 icon={HelpCircle}

@@ -6,6 +6,7 @@ import ProjectStatusesSection from "@/components/ProjectStatusesSection";
 import ProjectTypesSection from "@/components/ProjectTypesSection";
 import SessionStatusesSection from "@/components/SessionStatusesSection";
 import { usePermissions } from "@/hooks/usePermissions";
+import { ProtectedFeature } from "@/components/ProtectedFeature";
 
 export default function Projects() {
   const { hasPermission, loading } = usePermissions();
@@ -37,18 +38,24 @@ export default function Projects() {
   }
   
   return (
-    <SettingsPageWrapper>
-      <SettingsHeader
-        title="Projects & Sessions"
-        description="Manage project stages, types, and session statuses"
-        helpContent={settingsHelpContent.projects}
-      />
-      
-      <div className="space-y-8">
-        {canViewProjectStatuses && <ProjectStatusesSection />}
-        {canViewProjectTypes && <ProjectTypesSection />}
-        {canViewSessionStatuses && <SessionStatusesSection />}
-      </div>
-    </SettingsPageWrapper>
+    <ProtectedFeature
+      requiredPermissions={['view_project_statuses', 'manage_project_statuses', 'view_project_types', 'manage_project_types', 'view_session_statuses', 'manage_session_statuses']}
+      title="Projects & Sessions Settings Access Required"
+      description="You need permission to view or manage project statuses, types, or session statuses to access this section."
+    >
+      <SettingsPageWrapper>
+        <SettingsHeader
+          title="Projects & Sessions"
+          description="Manage project stages, types, and session statuses"
+          helpContent={settingsHelpContent.projects}
+        />
+        
+        <div className="space-y-8">
+          {canViewProjectStatuses && <ProjectStatusesSection />}
+          {canViewProjectTypes && <ProjectTypesSection />}
+          {canViewSessionStatuses && <SessionStatusesSection />}
+        </div>
+      </SettingsPageWrapper>
+    </ProtectedFeature>
   );
 }

@@ -4,8 +4,10 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { Shield, Edit, Plus, Users, Trash2 } from "lucide-react";
 import { StructuredRoleDialog } from "@/components/settings/StructuredRoleDialog";
+import { PermissionTooltip } from "./PermissionTooltip";
 
 interface Permission {
   id: string;
@@ -124,7 +126,8 @@ export function RolesTableView({
   };
 
   return (
-    <Card>
+    <TooltipProvider>
+      <Card>
       <CardHeader>
         <CardTitle>Roles & Permissions</CardTitle>
         <CardDescription>
@@ -171,26 +174,10 @@ export function RolesTableView({
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="flex flex-wrap gap-1 max-w-xs">
-                        {rolePermissions.length > 0 ? (
-                          <>
-                            {rolePermissions.slice(0, 2).map((permission) => (
-                              <Badge key={permission.id} variant="secondary" className="text-xs">
-                                {permission.name.replace(/_/g, ' ')}
-                              </Badge>
-                            ))}
-                            {rolePermissions.length > 2 && (
-                              <Badge variant="secondary" className="text-xs">
-                                +{rolePermissions.length - 2} more
-                              </Badge>
-                            )}
-                          </>
-                        ) : (
-                          <Badge variant="outline" className="text-xs">
-                            {template.permissions?.length || 0} permissions
-                          </Badge>
-                        )}
-                      </div>
+                      <PermissionTooltip 
+                        permissions={rolePermissions} 
+                        count={rolePermissions.length > 0 ? rolePermissions.length : template.permissions?.length || 0}
+                      />
                     </TableCell>
                     <TableCell className="text-right">
                       {onUpdateSystemRole && (
@@ -257,18 +244,7 @@ export function RolesTableView({
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="flex flex-wrap gap-1 max-w-xs">
-                        {role.permissions.slice(0, 2).map((permission) => (
-                          <Badge key={permission.id} variant="outline" className="text-xs">
-                            {permission.name.replace(/_/g, ' ')}
-                          </Badge>
-                        ))}
-                        {role.permissions.length > 2 && (
-                          <Badge variant="outline" className="text-xs">
-                            +{role.permissions.length - 2} more
-                          </Badge>
-                        )}
-                      </div>
+                      <PermissionTooltip permissions={role.permissions} />
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
@@ -336,5 +312,6 @@ export function RolesTableView({
         </AlertDialog>
       </CardContent>
     </Card>
+    </TooltipProvider>
   );
 }

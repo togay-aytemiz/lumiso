@@ -138,7 +138,6 @@ export default function Team() {
                       <TableHead>Email</TableHead>
                       <TableHead>Role</TableHead>
                       <TableHead>Sent</TableHead>
-                      <TableHead>Status</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -146,17 +145,14 @@ export default function Team() {
                     {invitations.map((invitation) => (
                       <TableRow key={invitation.id}>
                         <TableCell className="font-medium">{invitation.email}</TableCell>
-                        <TableCell>
-                          <Badge variant="secondary">{invitation.role}</Badge>
+                        <TableCell className="text-muted-foreground">
+                          {invitation.role}
                         </TableCell>
                         <TableCell className="text-muted-foreground">
                           {formatDistanceToNow(new Date(invitation.created_at), { addSuffix: true })}
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline">Pending</Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex gap-2">
+                          <div className="flex justify-end gap-2">
                             <Button
                               variant="outline"
                               size="sm"

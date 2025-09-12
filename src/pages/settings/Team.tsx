@@ -10,24 +10,41 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Trash2, Settings, Crown, UserCheck, Eye } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Trash2, Settings, Crown, UserCheck, Eye, Plus, Edit, Shield, Users } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useTeamManagement } from "@/hooks/useTeamManagement";
-import { useRoleTemplates } from "@/hooks/useRoleTemplates";
+import { useRoleManagement } from "@/hooks/useRoleManagement";
 import { useToast } from "@/hooks/use-toast";
 import { useSettingsCategorySection } from "@/hooks/useSettingsCategorySection";
 import { formatDistanceToNow } from "date-fns";
 import { SettingsLoadingSkeleton } from "@/components/ui/loading-presets";
 import { InvitationErrorBoundary } from "@/components/team/InvitationErrorBoundary";
 import { EnhancedInvitationForm } from "@/components/team/EnhancedInvitationForm";
+import { StructuredRoleDialog } from "@/components/settings/StructuredRoleDialog";
 import { useOptimizedPresence } from "@/hooks/useOptimizedPresence";
 
 export default function Team() {
   const [copiedStates, setCopiedStates] = useState<{
     [key: string]: boolean;
   }>({});
+  const [showCreateRoleDialog, setShowCreateRoleDialog] = useState(false);
+  const [editingRole, setEditingRole] = useState(null);
   
-  const teamSection = {}; // Simplified - no complex section management needed
+  // Team management section state
+  const teamSection = useSettingsCategorySection({
+    sectionId: 'team-management',
+    sectionName: 'Team Management',
+    initialValues: {},
+    onSave: async () => {}
+  });
+
+  const roleSection = useSettingsCategorySection({
+    sectionId: 'roles-permissions',
+    sectionName: 'Roles & Permissions',
+    initialValues: {},
+    onSave: async () => {}
+  });
 
   const { toast } = useToast();
   const isMobile = useIsMobile();
@@ -42,10 +59,15 @@ export default function Team() {
   } = useTeamManagement();
 
   const {
+    permissions,
     customRoles,
+    memberRoles,
+    loading: roleLoading,
+    createCustomRole,
+    updateRolePermissions,
     assignRoleToMember,
-    loading: roleLoading
-  } = useRoleTemplates();
+    deleteCustomRole
+  } = useRoleManagement();
 
   const { 
     isUserOnline,
@@ -66,46 +88,9 @@ export default function Team() {
     return result;
   };
 
-  const formatLastActive = (lastActive?: string | null) => {
-    if (!lastActive) return "Never";
-    return formatDistanceToNow(new Date(lastActive), { addSuffix: true });
-  };
-
   const getInitials = (name?: string) => {
     if (!name) return 'U';
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-  };
-
-  const getRoleIcon = (templateName?: string) => {
-    if (!templateName) return Settings;
-    switch (templateName.toLowerCase()) {
-      case 'full admin':
-        return Crown;
-      case 'project manager':
-        return Settings;
-      case 'team member':
-        return UserCheck;
-      case 'viewer':
-        return Eye;
-      default:
-        return Settings;
-    }
-  };
-
-  const getRoleBadgeVariant = (templateName?: string) => {
-    if (!templateName) return 'secondary';
-    switch (templateName.toLowerCase()) {
-      case 'full admin':
-        return 'default';
-      case 'project manager':
-        return 'default';
-      case 'team member':
-        return 'secondary';
-      case 'viewer':
-        return 'outline';
-      default:
-        return 'secondary';
-    }
   };
 
   // Subscribe to presence when component mounts
@@ -142,7 +127,7 @@ export default function Team() {
             <EnhancedInvitationForm
               onSendInvitation={handleSendInvitation}
               loading={teamLoading}
-              availableRoles={['Member']}
+              availableRoles={['Member', ...customRoles.map(r => r.name)]}
             />
             </InvitationErrorBoundary>
 
@@ -163,7 +148,7 @@ export default function Team() {
                   <TableBody>
                     {teamMembers.map((member) => {
                       const memberRole = customRoles.find(role => role.id === member.custom_role_id);
-                      const RoleIcon = getRoleIcon(memberRole?.template?.name);
+                      const RoleIcon = Settings;
                       const isOnline = isUserOnline(member.user_id || '');
                       
                       return (
@@ -212,7 +197,7 @@ export default function Team() {
                                 <SelectContent>
                                   <SelectItem value="">No role assigned</SelectItem>
                                   {customRoles.map(role => {
-                                    const RoleIcon = getRoleIcon(role.template?.name);
+                                    const RoleIcon = Settings;
                                     return (
                                       <SelectItem key={role.id} value={role.id}>
                                         <div className="flex items-center gap-2">
@@ -327,6 +312,175 @@ export default function Team() {
             )}
           </div>
         </CategorySettingsSection>
+
+        {/* Role Management Section */}
+        <CategorySettingsSection
+          {...roleSection}
+          title="Roles & Permissions"
+          description="Create custom roles and assign specific permissions to team members"
+          sectionId="roles-permissions"
+        >
+          <div className="space-y-6">
+            {/* Create Role Button */}
+            <div className="flex justify-between items-center">
+              <div>
+                <h4 className="text-sm font-medium">Custom Roles</h4>
+                <p className="text-sm text-muted-foreground">
+                  Create roles with specific permissions for different team responsibilities
+                </p>
+              </div>
+              <Button onClick={() => setShowCreateRoleDialog(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Create Role
+              </Button>
+            </div>
+
+            {/* Custom Roles Grid */}
+            {customRoles.length === 0 ? (
+              <Card>
+                <CardContent className="p-8 text-center">
+                  <Shield className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
+                  <h3 className="text-lg font-medium mb-2">No custom roles yet</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Create custom roles to give team members specific permissions
+                  </p>
+                  <Button onClick={() => setShowCreateRoleDialog(true)}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create Your First Role
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid gap-4">
+                {customRoles.map((role) => {
+                  const membersWithRole = memberRoles.filter(m => m.custom_role_id === role.id);
+                  
+                  return (
+                    <Card key={role.id} className="border-2 hover:border-primary/20 transition-colors">
+                      <CardHeader>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 bg-primary/10 rounded-lg">
+                              <Shield className="h-5 w-5 text-primary" />
+                            </div>
+                            <div>
+                              <CardTitle className="flex items-center gap-2">
+                                {role.name}
+                                <Badge variant="secondary" className="flex items-center gap-1">
+                                  <Users className="h-3 w-3" />
+                                  {membersWithRole.length}
+                                </Badge>
+                              </CardTitle>
+                              <CardDescription>
+                                {role.description || 'No description provided'}
+                              </CardDescription>
+                            </div>
+                          </div>
+                          
+                          <div className="flex space-x-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setEditingRole(role);
+                                setShowCreateRoleDialog(true);
+                              }}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Delete Role</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Are you sure you want to delete "{role.name}"? 
+                                    This will remove the role from {membersWithRole.length} team member(s).
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction 
+                                    onClick={() => deleteCustomRole(role.id)}
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  >
+                                    Delete Role
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        </div>
+                      </CardHeader>
+                      
+                      <CardContent>
+                        <div className="space-y-4">
+                          {/* Permissions */}
+                          <div>
+                            <h4 className="font-medium text-sm mb-2">Permissions ({role.permissions.length})</h4>
+                            <div className="flex flex-wrap gap-1">
+                              {role.permissions.slice(0, 8).map((permission) => (
+                                <Badge key={permission.id} variant="outline" className="text-xs">
+                                  {permission.name.replace(/_/g, ' ')}
+                                </Badge>
+                              ))}
+                              {role.permissions.length > 8 && (
+                                <Badge variant="outline" className="text-xs">
+                                  +{role.permissions.length - 8} more
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                          
+                          {/* Members with this role */}
+                          {membersWithRole.length > 0 && (
+                            <div>
+                              <h4 className="font-medium text-sm mb-2">Team Members</h4>
+                              <div className="flex flex-wrap gap-2">
+                                {membersWithRole.map((member) => (
+                                  <div key={member.id} className="flex items-center gap-2 bg-muted/50 p-2 rounded-lg">
+                                    <Avatar className="h-6 w-6">
+                                      <AvatarImage src={member.profile_photo_url} />
+                                      <AvatarFallback className="text-xs">
+                                        {getInitials(member.full_name)}
+                                      </AvatarFallback>
+                                    </Avatar>
+                                    <span className="text-sm">{member.full_name || 'Unnamed User'}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </CategorySettingsSection>
+
+        {/* Role Creation Dialog */}
+        <StructuredRoleDialog
+          open={showCreateRoleDialog}
+          onOpenChange={(open) => {
+            setShowCreateRoleDialog(open);
+            if (!open) setEditingRole(null);
+          }}
+          permissions={permissions}
+          editingRole={editingRole}
+          onSave={editingRole ? 
+            (name, description, permissionIds) => updateRolePermissions(editingRole.id, permissionIds) :
+            createCustomRole
+          }
+          loading={roleLoading}
+        />
       </div>
     </SettingsPageWrapper>
   );

@@ -159,7 +159,7 @@ export default function Team() {
                               onClick={async () => {
                                 // Use the production domain if available, otherwise fallback to current origin
                                 const baseUrl = 'https://my.lumiso.app';
-                                const inviteUrl = `${baseUrl}/accept-invite?invitation_id=${invitation.id}`;
+                                const inviteUrl = `${baseUrl}/accept-invite?invitation_id=${invitation.id}&email=${encodeURIComponent(invitation.email)}`;
                                 await navigator.clipboard.writeText(inviteUrl);
                                 setCopiedStates(prev => ({ ...prev, [invitation.id]: true }));
                                 toast({

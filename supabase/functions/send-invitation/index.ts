@@ -17,12 +17,12 @@ serve(async (req: Request) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  try {
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-    );
+  const supabase = createClient(
+    Deno.env.get("SUPABASE_URL") ?? "",
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+  );
 
+  try {
     const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
     // Get the user from the request
@@ -46,6 +46,19 @@ serve(async (req: Request) => {
       throw new Error("Email and role are required");
     }
 
+    // Get user's active organization from user_settings first (needed for validation)
+    const { data: userSettings, error: settingsError } = await supabase
+      .from("user_settings")
+      .select("active_organization_id")
+      .eq("user_id", user.id)
+      .single();
+
+    if (settingsError || !userSettings?.active_organization_id) {
+      throw new Error("No active organization found. Please contact support.");
+    }
+
+    const organizationId = userSettings.active_organization_id;
+
     // Validate email using database function
     const { data: emailValidation, error: validationError } = await supabase
       .rpc('validate_invitation_email', { email_param: email });
@@ -60,16 +73,27 @@ serve(async (req: Request) => {
 
     const normalizedEmail = emailValidation.normalized_email;
 
-    // Validate role (include custom roles)
-    const validSystemRoles = ['Owner', 'Member'];
+    // Validate role (include custom roles and role templates)
+    const validSystemRoles = ['Owner', 'Member', 'Full Admin', 'Manager', 'Photographer', 'Organizer'];
     let isValidRole = validSystemRoles.includes(role);
     
-    // Check if it's a custom role by ID
+    // Check if it's a role template
+    if (!isValidRole) {
+      const { data: roleTemplate } = await supabase
+        .from('role_templates')
+        .select('id')
+        .eq('name', role)
+        .maybeSingle();
+      
+      isValidRole = !!roleTemplate;
+    }
+    
+    // Check if it's a custom role
     if (!isValidRole) {
       const { data: customRole } = await supabase
         .from('custom_roles')
         .select('id')
-        .eq('id', role)
+        .eq('name', role)
         .eq('organization_id', organizationId)
         .maybeSingle();
       
@@ -79,19 +103,6 @@ serve(async (req: Request) => {
     if (!isValidRole) {
       throw new Error("Invalid role specified");
     }
-
-    // Get user's active organization from user_settings
-    const { data: userSettings, error: settingsError } = await supabase
-      .from("user_settings")
-      .select("active_organization_id")
-      .eq("user_id", user.id)
-      .single();
-
-    if (settingsError || !userSettings?.active_organization_id) {
-      throw new Error("No active organization found. Please contact support.");
-    }
-
-    const organizationId = userSettings.active_organization_id;
 
     // Check rate limiting first
     const { data: rateLimitCheck, error: rateLimitError } = await supabase.rpc('check_invitation_rate_limit', {

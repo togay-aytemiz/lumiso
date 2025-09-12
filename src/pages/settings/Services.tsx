@@ -10,6 +10,7 @@ import { useOnboardingV2 } from "@/hooks/useOnboardingV2";
 import { OnboardingTutorial, TutorialStep } from "@/components/shared/OnboardingTutorial";
 import { Package, DollarSign, Target } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { ProtectedFeature } from "@/components/ProtectedFeature";
 
 const packagesSetupSteps: TutorialStep[] = [
   {
@@ -143,7 +144,11 @@ export default function Services() {
   }
   
   return (
-    <>
+    <ProtectedFeature
+      requiredPermissions={['view_packages', 'view_services', 'manage_packages', 'manage_services']}
+      title="Packages & Services Access Required"
+      description="You need permission to view or manage packages and services to access this section."
+    >
       <SettingsPageWrapper>
         <SettingsHeader
           title="Packages & Services"
@@ -165,6 +170,6 @@ export default function Services() {
         isVisible={showTutorial}
         initialStepIndex={currentTutorialStep}
       />
-    </>
+    </ProtectedFeature>
   );
 }

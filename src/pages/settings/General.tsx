@@ -23,6 +23,7 @@ import { SettingsLoadingSkeleton } from "@/components/ui/loading-presets";
 import { TimezoneSelector } from "@/components/TimezoneSelector";
 import { detectBrowserTimezone } from "@/lib/dateFormatUtils";
 import { emailSchema, phoneSchema } from "@/lib/validation";
+import { ProtectedFeature } from "@/components/ProtectedFeature";
 
 export default function General() {
   const { settings, loading, uploading, updateSettings, uploadLogo, deleteLogo } = useOrganizationSettings();
@@ -242,14 +243,19 @@ export default function General() {
   }
 
   return (
-    <SettingsPageWrapper>
-      <SettingsHeader
-        title="General"
-        description="Manage your general application preferences"
-        helpContent={settingsHelpContent.general}
-      />
-      
-      <div className="space-y-8">
+    <ProtectedFeature
+      requiredPermissions={['view_organization_settings', 'manage_organization_settings']}
+      title="Settings Access Required"
+      description="You need permission to view or manage organization settings to access this section."
+    >
+      <SettingsPageWrapper>
+        <SettingsHeader
+          title="General"
+          description="Manage your general application preferences"
+          helpContent={settingsHelpContent.general}
+        />
+        
+        <div className="space-y-8">
         <CategorySettingsSection
           title="Branding"
           description="Customize your brand appearance across client-facing materials"
@@ -548,6 +554,7 @@ export default function General() {
         isVisible={showTutorial}
         initialStepIndex={0}
       />
-    </SettingsPageWrapper>
+      </SettingsPageWrapper>
+    </ProtectedFeature>
   );
 }

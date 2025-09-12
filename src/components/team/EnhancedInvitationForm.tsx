@@ -76,9 +76,11 @@ export function EnhancedInvitationForm({
           description: `Successfully sent invitation to ${inviteEmail}`,
         });
       } else {
+        // Extract actual error from result
+        const errorMsg = result.error || "Failed to send invitation";
         toast({
           title: "Failed to send invitation",
-          description: result.error || "An error occurred",
+          description: errorMsg,
           variant: "destructive"
         });
       }

@@ -8,6 +8,8 @@ import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { NavigationGuardDialog } from "./settings/NavigationGuardDialog";
+import { usePermissions } from "@/hooks/usePermissions";
+import { ProtectedFeature } from "./ProtectedFeature";
 
 interface Lead {
   id: string;
@@ -17,6 +19,8 @@ interface Lead {
   notes: string;
   status: string;
   status_id?: string;
+  user_id: string;
+  assignees?: string[];
 }
 
 interface EditLeadDialogProps {
@@ -29,6 +33,8 @@ interface EditLeadDialogProps {
 export function EditLeadDialog({ lead, open, onOpenChange, onLeadUpdated }: EditLeadDialogProps) {
   const [loading, setLoading] = useState(false);
   const [leadStatuses, setLeadStatuses] = useState<any[]>([]);
+  const [canEdit, setCanEdit] = useState(false);
+  const { canEditLead } = usePermissions();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -57,8 +63,24 @@ export function EditLeadDialog({ lead, open, onOpenChange, onLeadUpdated }: Edit
       setFormData(newFormData);
       setInitialFormData(newFormData);
       fetchLeadStatuses();
+      checkEditPermissions();
     }
   }, [lead, open]);
+
+  const checkEditPermissions = async () => {
+    if (!lead) {
+      setCanEdit(false);
+      return;
+    }
+    
+    try {
+      const hasPermission = await canEditLead(lead.user_id, lead.assignees || []);
+      setCanEdit(hasPermission);
+    } catch (error) {
+      console.error('Error checking edit permissions:', error);
+      setCanEdit(false);
+    }
+  };
 
   const fetchLeadStatuses = async () => {
     try {
@@ -164,17 +186,27 @@ export function EditLeadDialog({ lead, open, onOpenChange, onLeadUpdated }: Edit
         onDirtyClose={handleDirtyClose}
         footerActions={footerActions}
       >
-        <div className="space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="name">Name *</Label>
-            <Input
-              id="name"
-              value={formData.name}
-              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-              placeholder="Lead name"
-              className="rounded-xl border-2 border-primary/20 focus:border-primary"
-            />
-          </div>
+        <ProtectedFeature 
+          requiredPermissions={['manage_all_leads', 'edit_assigned_leads']}
+          title="Edit Lead Access Denied"
+          description="You don't have permission to edit this lead."
+        >
+          {!canEdit ? (
+            <div className="p-6 text-center">
+              <p className="text-muted-foreground">You don't have permission to edit this lead.</p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="name">Name *</Label>
+                <Input
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                  placeholder="Lead name"
+                  className="rounded-xl border-2 border-primary/20 focus:border-primary"
+                />
+              </div>
 
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
@@ -231,8 +263,10 @@ export function EditLeadDialog({ lead, open, onOpenChange, onLeadUpdated }: Edit
               rows={4}
               className="rounded-xl border-2 border-primary/20 focus:border-primary resize-none"
             />
-          </div>
-        </div>
+              </div>
+            </div>
+          )}
+        </ProtectedFeature>
       </AppSheetModal>
       
       <NavigationGuardDialog

@@ -8,6 +8,8 @@ import { toast } from "@/hooks/use-toast";
 import { SimpleProjectTypeSelect } from "./SimpleProjectTypeSelect";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { NavigationGuardDialog } from "@/components/settings/NavigationGuardDialog";
+import { usePermissions } from "@/hooks/usePermissions";
+import { ProtectedFeature } from "./ProtectedFeature";
 
 interface ProjectDialogProps {
   open: boolean;
@@ -22,6 +24,7 @@ export function ProjectDialog({ open, onOpenChange, leadId, onProjectCreated }: 
   const [projectTypeId, setProjectTypeId] = useState("");
   const [basePrice, setBasePrice] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const { hasPermission } = usePermissions();
 
   const resetForm = () => {
     setName("");
@@ -184,19 +187,24 @@ export function ProjectDialog({ open, onOpenChange, leadId, onProjectCreated }: 
       onDirtyClose={handleDirtyClose}
       footerActions={footerActions}
     >
-      <div className="space-y-6">
-        <div className="space-y-2">
-          <Label htmlFor="project-name">Project Name *</Label>
-          <Input
-            id="project-name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Enter project name"
-            disabled={isSaving}
-            autoFocus
-            className="rounded-xl border-2 border-primary/20 focus:border-primary"
-          />
-        </div>
+      <ProtectedFeature 
+        requiredPermissions={['manage_all_projects', 'edit_assigned_projects']}
+        title="Create Project Access Denied"
+        description="You don't have permission to create projects."
+      >
+        <div className="space-y-6">
+          <div className="space-y-2">
+            <Label htmlFor="project-name">Project Name *</Label>
+            <Input
+              id="project-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Enter project name"
+              disabled={isSaving}
+              autoFocus
+              className="rounded-xl border-2 border-primary/20 focus:border-primary"
+            />
+          </div>
         
         <div className="space-y-2">
           <Label htmlFor="project-type">Project Type *</Label>
@@ -236,7 +244,8 @@ export function ProjectDialog({ open, onOpenChange, leadId, onProjectCreated }: 
             className="resize-none rounded-xl border-2 border-primary/20 focus:border-primary"
           />
         </div>
-      </div>
+        </div>
+      </ProtectedFeature>
 
       <NavigationGuardDialog
         open={navigation.showGuard}

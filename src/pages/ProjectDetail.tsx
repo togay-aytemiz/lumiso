@@ -21,6 +21,8 @@ import { UnifiedClientDetails } from "@/components/UnifiedClientDetails";
 import { AssigneesList } from "@/components/AssigneesList";
 import { SessionWithStatus } from "@/lib/sessionSorting";
 import { onArchiveToggle } from "@/components/ViewProjectDialog";
+import { usePermissions } from "@/hooks/usePermissions";
+import { ProtectedFeature } from "@/components/ProtectedFeature";
 
 interface Project {
   id: string;
@@ -59,6 +61,7 @@ export default function ProjectDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { canEditProject, hasPermission } = usePermissions();
 
   const [project, setProject] = useState<Project | null>(null);
   const [lead, setLead] = useState<Lead | null>(null);
@@ -76,6 +79,7 @@ export default function ProjectDetail() {
   const [isArchived, setIsArchived] = useState(false);
   const [localStatusId, setLocalStatusId] = useState<string | null | undefined>(null);
   const [servicesVersion, setServicesVersion] = useState(0);
+  const [canEdit, setCanEdit] = useState(false);
 
   const fetchProject = async () => {
     if (!id) return;
@@ -204,9 +208,26 @@ export default function ProjectDetail() {
       fetchProjectType();
       checkArchiveStatus();
       fetchProjectSessions();
+      checkEditPermissions();
       setLoading(false);
     }
   }, [project]);
+
+  // Check edit permissions when project data loads
+  const checkEditPermissions = async () => {
+    if (!project) {
+      setCanEdit(false);
+      return;
+    }
+    
+    try {
+      const hasPermission = await canEditProject(project.user_id, project.assignees || []);
+      setCanEdit(hasPermission);
+    } catch (error) {
+      console.error('Error checking edit permissions:', error);
+      setCanEdit(false);
+    }
+  };
 
   const handleSaveProject = async () => {
     if (!project || !editName.trim() || !editProjectTypeId) return;
@@ -521,25 +542,25 @@ export default function ProjectDetail() {
                     <ChevronDown className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" side="bottom">
-                  <DropdownMenuItem onSelect={() => setIsEditing(true)}>
-                    <Pencil className="mr-2 h-4 w-4" />
-                    <span>Edit Project</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onSelect={handleArchiveAction}>
-                    {isArchived ? (
-                      <>
-                        <ArchiveRestore className="mr-2 h-4 w-4" />
-                        <span>Restore Project</span>
-                      </>
-                    ) : (
-                      <>
-                        <Archive className="mr-2 h-4 w-4" />
-                        <span>Archive Project</span>
-                      </>
-                    )}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
+                 <DropdownMenuContent align="end" side="bottom">
+                   <DropdownMenuItem onSelect={() => setIsEditing(true)} disabled={!canEdit}>
+                     <Pencil className="mr-2 h-4 w-4" />
+                     <span>Edit Project</span>
+                   </DropdownMenuItem>
+                   <DropdownMenuItem onSelect={handleArchiveAction} disabled={!canEdit}>
+                     {isArchived ? (
+                       <>
+                         <ArchiveRestore className="mr-2 h-4 w-4" />
+                         <span>Restore Project</span>
+                       </>
+                     ) : (
+                       <>
+                         <Archive className="mr-2 h-4 w-4" />
+                         <span>Archive Project</span>
+                       </>
+                     )}
+                   </DropdownMenuItem>
+                 </DropdownMenuContent>
               </DropdownMenu>
             )}
           </div>
@@ -635,20 +656,30 @@ export default function ProjectDetail() {
           ]} 
           rightFooter={
             <div className="border border-destructive/20 bg-destructive/5 rounded-lg p-6">
-              <div className="space-y-4">
-                <h3 className="font-medium text-destructive">Danger Zone</h3>
-                <Button 
-                  variant="outline" 
-                  onClick={() => setShowDeleteDialog(true)} 
-                  className="w-full border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
-                  size="lg"
-                >
-                  Delete Project
-                </Button>
-                <p className="text-sm text-muted-foreground text-center">
-                  This will permanently delete the project and ALL related data: sessions, payments, todos, services, and activities.
-                </p>
-              </div>
+               <div className="space-y-4">
+                 <h3 className="font-medium text-destructive">Danger Zone</h3>
+                 <ProtectedFeature 
+                   requiredPermissions={['manage_all_projects', 'edit_assigned_projects']}
+                   fallback={
+                     <p className="text-sm text-muted-foreground text-center">
+                       You don't have permission to delete this project.
+                     </p>
+                   }
+                 >
+                   <Button 
+                     variant="outline" 
+                     onClick={() => setShowDeleteDialog(true)} 
+                     className="w-full border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                     size="lg"
+                     disabled={!canEdit}
+                   >
+                     Delete Project
+                   </Button>
+                   <p className="text-sm text-muted-foreground text-center">
+                     This will permanently delete the project and ALL related data: sessions, payments, todos, services, and activities.
+                   </p>
+                 </ProtectedFeature>
+               </div>
             </div>
           } 
         />

@@ -214,20 +214,6 @@ export function useTeamManagement() {
 
       console.log('Invitation response:', data);
 
-      // Send assignment notification for team invitation
-      const { userId, orgId } = await getCurrentUserAndOrg();
-      if (userId && orgId) {
-        await sendAssignmentNotification({
-          type: 'project', // Generic type for team management
-          entity_id: 'team-invitation',
-          entity_name: `Team invitation sent to ${email}`,
-          assignee_ids: [userId], // Notify the person who sent the invitation
-          assigned_by_id: userId,
-          organization_id: orgId,
-          action: 'assigned'
-        });
-      }
-
       toast({
         title: "Success",
         description: `Invitation sent to ${email}`,

@@ -210,92 +210,206 @@ serve(async (req: Request) => {
     const businessName = orgSettings?.photography_business_name || "Lumiso";
     const brandColor = orgSettings?.primary_brand_color || "#1EB29F";
 
-    // Send invitation email using modern template design
+    // Send invitation email using unified modern template design
+    const invitationEmailHtml = `
+      <div style="text-align: center; margin-bottom: 32px;">
+        <div style="
+          display: inline-block;
+          background: linear-gradient(135deg, ${brandColor}, ${brandColor}dd); 
+          color: white; 
+          padding: 12px 24px; 
+          border-radius: 25px; 
+          font-weight: 600; 
+          font-size: 16px;
+          margin-bottom: 24px;
+          box-shadow: 0 4px 12px rgba(30, 178, 159, 0.25);
+        ">
+          🎉 Team Invitation
+        </div>
+        <h2 style="
+          color: #1f2937; 
+          margin: 0 0 16px 0; 
+          font-size: 28px; 
+          font-weight: 700;
+          line-height: 1.2;
+        ">
+          Welcome to the team!
+        </h2>
+        <p style="
+          color: #6b7280; 
+          margin: 0; 
+          font-size: 16px; 
+          line-height: 1.6;
+        ">
+          You've been invited to collaborate on amazing photography projects
+        </p>
+      </div>
+
+      <div style="
+        background: #f8fafc;
+        border-radius: 12px;
+        padding: 24px;
+        margin: 32px 0;
+        border: 1px solid #e5e7eb;
+      ">
+        <div style="display: flex; align-items: center; margin-bottom: 20px;">
+          <div style="
+            background: ${brandColor};
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            font-weight: bold;
+            font-size: 14px;
+          ">
+          👤
+          </div>
+          <h3 style="
+            margin: 0;
+            color: #1f2937;
+            font-size: 18px;
+            font-weight: 600;
+          ">
+            Invitation Details
+          </h3>
+        </div>
+        
+        <div style="margin-left: 44px;">
+          <div style="margin-bottom: 12px;">
+            <div style="color: #6b7280; font-size: 14px; margin-bottom: 4px;">Invited by</div>
+            <div style="color: #1f2937; font-weight: 600;">${inviterName}</div>
+          </div>
+          <div style="margin-bottom: 12px;">
+            <div style="color: #6b7280; font-size: 14px; margin-bottom: 4px;">Role</div>
+            <div style="color: #1f2937; font-weight: 600;">${role}</div>
+          </div>
+          <div style="margin-bottom: 12px;">
+            <div style="color: #6b7280; font-size: 14px; margin-bottom: 4px;">Organization</div>
+            <div style="color: #1f2937; font-weight: 600;">${businessName}</div>
+          </div>
+          <div style="margin-bottom: 0;">
+            <div style="color: #6b7280; font-size: 14px; margin-bottom: 4px;">Expires</div>
+            <div style="color: #dc2626; font-weight: 600;">${new Date(invitation.expires_at).toLocaleDateString()}</div>
+          </div>
+        </div>
+      </div>
+      
+      <div style="text-align: center; margin: 32px 0;">
+        <a href="${inviteLink}" style="
+          display: inline-block;
+          background: ${brandColor};
+          color: white;
+          padding: 16px 32px;
+          border-radius: 12px;
+          text-decoration: none;
+          font-weight: 600;
+          font-size: 16px;
+          box-shadow: 0 8px 25px rgba(30, 178, 159, 0.3);
+        ">
+          Accept Invitation →
+        </a>
+      </div>
+      
+      <div style="text-align: center; margin: 32px 0;">
+        <div style="color: #6b7280; font-size: 16px; margin-bottom: 8px;">
+          ⏰ <strong>Important</strong>
+        </div>
+        <p style="color: #6b7280; margin: 0; font-size: 14px; line-height: 1.6;">
+          This invitation expires in 7 days.<br>
+          If you didn't expect this invitation, you can safely ignore this email.
+        </p>
+      </div>
+    `;
+
     const emailResponse = await resend.emails.send({
       from: "Lumiso <hello@updates.lumiso.app>",
       to: [email],
       subject: `🎉 You're invited to join ${businessName}!`,
       html: `
-        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
-          <!-- Header -->
-          <div style="background: linear-gradient(135deg, ${brandColor}, ${brandColor}DD); padding: 40px 32px; text-align: center;">
-            <div style="background: rgba(255, 255, 255, 0.15); padding: 16px; border-radius: 12px; display: inline-block; backdrop-filter: blur(10px);">
-              <h1 style="color: white; margin: 0; font-size: 24px; font-weight: 700;">
-                🎉 Team Invitation
-              </h1>
-            </div>
-          </div>
-          
-          <!-- Content -->
-          <div style="padding: 40px 32px;">
-            <div style="text-align: center; margin-bottom: 32px;">
-              <h2 style="color: #1f2937; margin: 0 0 16px 0; font-size: 28px; font-weight: 700;">
-                Welcome to the team!
-              </h2>
-              <p style="color: #6b7280; margin: 0; font-size: 16px; line-height: 1.6;">
-                You've been invited to collaborate on amazing photography projects
-              </p>
-            </div>
-
-            <div style="background: linear-gradient(135deg, #f8fafc, #f1f5f9); border-radius: 16px; padding: 24px; margin: 32px 0; border-left: 4px solid ${brandColor};">
-              <p style="color: #374151; margin: 0 0 16px 0; font-size: 16px; line-height: 1.6;">
-                <strong style="color: ${brandColor};">${inviterName}</strong> has invited you to join <strong>${businessName}</strong> as a <strong style="color: ${brandColor};">${role}</strong>.
-              </p>
-              
-              <div style="background: white; border-radius: 8px; padding: 16px; margin-top: 16px;">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; font-size: 14px;">
-                  <div>
-                    <span style="color: #6b7280; display: block; margin-bottom: 4px;">Role</span>
-                    <strong style="color: #1f2937;">${role}</strong>
-                  </div>
-                  <div>
-                    <span style="color: #6b7280; display: block; margin-bottom: 4px;">Invited by</span>
-                    <strong style="color: #1f2937;">${inviterName}</strong>
-                  </div>
-                </div>
-                <div style="margin-top: 12px;">
-                  <span style="color: #6b7280; display: block; margin-bottom: 4px; font-size: 14px;">Expires</span>
-                  <strong style="color: #dc2626;">${new Date(invitation.expires_at).toLocaleDateString()}</strong>
-                </div>
-              </div>
-            </div>
-            
-            <!-- CTA Button -->
-            <div style="text-align: center; margin: 40px 0;">
-              <a href="${inviteLink}" 
-                 style="background: linear-gradient(135deg, ${brandColor}, ${brandColor}CC); 
-                        color: white; 
-                        text-decoration: none; 
-                        padding: 16px 32px; 
-                        border-radius: 12px; 
-                        font-weight: 600; 
-                        font-size: 16px;
-                        display: inline-block;
-                        box-shadow: 0 8px 25px rgba(30, 178, 159, 0.3);
-                        transition: all 0.3s ease;">
-                Accept Invitation →
-              </a>
-            </div>
-            
-            <div style="text-align: center; padding: 20px; background: #f9fafb; border-radius: 12px; margin: 32px 0;">
-              <p style="color: #6b7280; margin: 0; font-size: 14px; line-height: 1.5;">
-                ⏰ This invitation expires in 7 days<br>
-                If you didn't expect this invitation, you can safely ignore this email.
-              </p>
-            </div>
-          </div>
-          
-          <!-- Footer -->
-          <div style="background: #f8fafc; padding: 24px 32px; text-align: center; border-top: 1px solid #e5e7eb;">
-            <p style="color: #9ca3af; margin: 0 0 8px 0; font-size: 12px;">
-              Having trouble with the button? Copy and paste this link:
-            </p>
-            <p style="margin: 0;">
-              <a href="${inviteLink}" style="color: ${brandColor}; font-size: 12px; word-break: break-all;">${inviteLink}</a>
-            </p>
-          </div>
-        </div>
-      `,
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>You're invited to join ${businessName}!</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f8fafc;
+      line-height: 1.6;
+    }
+    .email-container {
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: #ffffff;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+    .email-header {
+      background: linear-gradient(135deg, ${brandColor}, ${brandColor}dd);
+      padding: 24px;
+      text-align: center;
+      color: white;
+    }
+    .email-body {
+      padding: 32px 24px;
+    }
+    .email-footer {
+      background-color: #f8fafc;
+      padding: 24px;
+      text-align: center;
+      color: #6b7280;
+      font-size: 14px;
+      border-top: 1px solid #e5e7eb;
+    }
+    @media (max-width: 600px) {
+      .email-container {
+        margin: 0;
+        box-shadow: none;
+      }
+      .email-body {
+        padding: 24px 16px;
+      }
+      .email-footer {
+        padding: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="email-container">
+    <div class="email-header">
+      <h1 style="
+        margin: 0;
+        font-size: 28px;
+        font-weight: 700;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      ">Lumiso</h1>
+    </div>
+    
+    <div class="email-body">
+      ${invitationEmailHtml}
+    </div>
+    
+    <div class="email-footer">
+      <p style="margin: 0 0 8px 0;">
+        Having trouble with the button? Copy and paste this link:
+      </p>
+      <p style="margin: 0 0 12px 0;">
+        <a href="${inviteLink}" style="color: ${brandColor}; font-size: 12px; word-break: break-all;">${inviteLink}</a>
+      </p>
+      <p style="margin: 0;">
+        This email was sent by <strong>${businessName}</strong>
+      </p>
+    </div>
+  </div>
+</body>
+</html>`,
     });
 
     console.log("Invitation email sent successfully:", emailResponse);

@@ -16,6 +16,8 @@ interface TeamMember {
   profile_photo_url?: string;
   // Online status
   is_online?: boolean;
+  // Flag to indicate if the name was generated vs from actual profile
+  is_generated_name?: boolean;
 }
 
 interface Invitation {
@@ -76,56 +78,77 @@ export function useTeamManagement() {
 
       console.log('Basic team members data:', membersData);
 
-      // Try to enrich with profile data
+      // Always enrich with profile data - create profiles if they don't exist
       let enrichedMembers = membersData || [];
-      try {
-        // Fetch profiles for all users
-        const userIds = membersData?.map(m => m.user_id) || [];
-        if (userIds.length > 0) {
-          const { data: profilesData, error: profilesError } = await supabase
-            .from('profiles')
-            .select('user_id, full_name, profile_photo_url')
-            .in('user_id', userIds);
+      
+      if (enrichedMembers.length > 0) {
+        const userIds = enrichedMembers.map(m => m.user_id);
+        console.log('Fetching profiles for user IDs:', userIds);
 
-          if (!profilesError && profilesData) {
-            // Merge profile data with member data
-            enrichedMembers = (membersData || []).map(member => {
-              const profile = profilesData.find(p => p.user_id === member.user_id);
-              return {
-                ...member,
-                full_name: profile?.full_name,
-                profile_photo_url: profile?.profile_photo_url,
-                is_online: onlineUsers.has(member.user_id)
-              };
-            });
-          }
+        // Fetch existing profiles
+        const { data: existingProfiles, error: profilesError } = await supabase
+          .from('profiles')
+          .select('user_id, full_name, profile_photo_url')
+          .in('user_id', userIds);
+
+        if (profilesError) {
+          console.error('Error fetching profiles:', profilesError);
         }
 
-        // Try to get user emails via edge function (optional)
+        console.log('Existing profiles:', existingProfiles);
+
+        // Create a map of existing profiles for faster lookup
+        const profileMap = new Map(
+          (existingProfiles || []).map(profile => [profile.user_id, profile])
+        );
+
+        // Try to get user emails via edge function
+        let emailMap = new Map();
         try {
           const { data: usersEmailData, error: emailError } = await supabase.functions.invoke('get-users-email', {
             body: { userIds: userIds }
           });
 
           if (!emailError && usersEmailData?.users) {
-            enrichedMembers = enrichedMembers.map(member => {
-              const userEmail = usersEmailData.users.find((u: any) => u.id === member.user_id)?.email;
-              return {
-                ...member,
-                email: userEmail
-              };
-            });
+            emailMap = new Map(
+              usersEmailData.users.map((u: any) => [u.id, u.email])
+            );
+            console.log('Email data fetched:', usersEmailData.users);
+          } else {
+            console.warn('Could not fetch user emails:', emailError);
           }
         } catch (emailError) {
           console.warn('Could not fetch user emails:', emailError);
-          // Continue without emails - not critical
         }
-      } catch (profileError) {
-        console.warn('Could not fetch profile data:', profileError);
-        // Continue with basic member data
+
+        // Enrich members with profile and email data
+        enrichedMembers = enrichedMembers.map(member => {
+          const profile = profileMap.get(member.user_id);
+          const email = emailMap.get(member.user_id);
+          
+          // Create a display name with fallbacks
+          let displayName = profile?.full_name;
+          if (!displayName && email) {
+            // Use email username as fallback
+            displayName = email.split('@')[0];
+          }
+          if (!displayName) {
+            displayName = `User ${member.user_id.slice(0, 8)}`;
+          }
+
+          return {
+            ...member,
+            full_name: displayName,
+            profile_photo_url: profile?.profile_photo_url,
+            email: email,
+            is_online: onlineUsers.has(member.user_id),
+            // Flag to indicate if this is a generated name vs actual profile name
+            is_generated_name: !profile?.full_name
+          };
+        });
       }
 
-      console.log('Final team members data:', enrichedMembers);
+      console.log('Final enriched team members:', enrichedMembers);
       setTeamMembers(enrichedMembers);
 
       // Set current user role from their membership in the active organization

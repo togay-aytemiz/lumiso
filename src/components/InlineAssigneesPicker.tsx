@@ -54,22 +54,46 @@ export function InlineAssigneesPicker({ value, onChange, disabled }: InlineAssig
         name: currentUserName,
         email: "",
         avatar: profile?.profile_photo_url || "",
-        initials: currentUserName.split(' ').map(n => n[0]).join('').toUpperCase()
+        initials: currentUserName.split(' ').map(n => n[0]).join('').toUpperCase(),
+        isLoading: profileLoading
       };
     }
     
     const member = teamMembers.find(m => m.user_id === userId);
     
-    // Don't render if we don't have member data yet - prevents "Unknown" flash
+    // Still loading team data
     if (!member && teamLoading) {
-      return null;
+      return {
+        name: "Loading...",
+        email: "",
+        avatar: "",
+        initials: "...",
+        isLoading: true
+      };
     }
     
+    // Member not found but loading is done - this is a real issue
+    if (!member) {
+      return {
+        name: `User ${userId.slice(0, 8)}`,
+        email: "Unknown user",
+        avatar: "",
+        initials: "?",
+        isLoading: false,
+        isError: true
+      };
+    }
+    
+    // Member found but no name - use fallback
+    const displayName = member.full_name || member.email?.split('@')[0] || `User ${userId.slice(0, 8)}`;
+    
     return {
-      name: member?.full_name || "Team Member",
-      email: member?.email || "",
-      avatar: member?.profile_photo_url || "",
-      initials: (member?.full_name || "T").split(' ').map(n => n[0]).join('').toUpperCase()
+      name: displayName,
+      email: member.email || "",
+      avatar: member.profile_photo_url || "",
+      initials: displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2),
+      isLoading: false,
+      isGenerated: member.is_generated_name
     };
   };
 
@@ -117,29 +141,45 @@ export function InlineAssigneesPicker({ value, onChange, disabled }: InlineAssig
               const assignee = getAssigneeDetails(userId);
               const isCreator = userId === currentUserId;
               
-              // Don't render if we don't have assignee data yet (prevents "Unknown" flash)
-              if (!assignee) {
+              // Show loading state for assignees being fetched
+              if (assignee?.isLoading) {
                 return (
-                  <div key={userId} className="flex items-center gap-2 px-3 py-2">
-                    <div className="h-6 w-6 bg-muted animate-pulse rounded-full" />
-                    <div className="h-4 w-16 bg-muted animate-pulse rounded" />
+                  <div key={userId} className="flex items-center gap-2 px-3 py-2 animate-pulse">
+                    <div className="h-6 w-6 bg-muted rounded-full" />
+                    <div className="h-4 w-16 bg-muted rounded" />
                   </div>
                 );
+              }
+              
+              // Don't render if we don't have assignee data at all
+              if (!assignee) {
+                return null;
               }
               
               return (
                 <Badge
                   key={userId}
                   variant="secondary"
-                  className="flex items-center gap-2 px-3 py-2 h-auto bg-background border animate-fade-in"
+                  className={cn(
+                    "flex items-center gap-2 px-3 py-2 h-auto bg-background border animate-fade-in",
+                    assignee.isError && "border-destructive/50 bg-destructive/5"
+                  )}
                 >
                   <Avatar className="h-6 w-6">
                     <AvatarImage src={assignee.avatar} />
-                    <AvatarFallback className="text-xs">
+                    <AvatarFallback className={cn(
+                      "text-xs",
+                      assignee.isError && "bg-destructive/20 text-destructive"
+                    )}>
                       {assignee.initials}
                     </AvatarFallback>
                   </Avatar>
-                  <span className="text-sm font-medium">{assignee.name}</span>
+                  <span className={cn(
+                    "text-sm font-medium",
+                    assignee.isGenerated && "italic opacity-75"
+                  )}>
+                    {assignee.name}
+                  </span>
                   {!isCreator && !disabled && (
                     <X
                       className="h-4 w-4 cursor-pointer hover:text-destructive transition-colors"

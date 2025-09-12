@@ -172,6 +172,13 @@ export function StructuredRoleDialog({
   const [description, setDescription] = useState('');
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
 
+  // Helper function to convert permission names to IDs
+  const convertPermissionNamesToIds = (permissionNames: string[]) => {
+    return permissionNames
+      .map(name => permissions.find(p => p.name === name)?.id)
+      .filter(Boolean) as string[];
+  };
+
   // Reset form when dialog opens/closes or editing role changes
   useEffect(() => {
     if (open) {
@@ -182,19 +189,36 @@ export function StructuredRoleDialog({
       } else if (editingSystemRole) {
         setName(editingSystemRole.name);
         setDescription(editingSystemRole.description);
-        setSelectedPermissions(editingSystemRole.permissions || []);
+        // Convert permission names to IDs for system roles
+        const permissionIds = convertPermissionNamesToIds(editingSystemRole.permissions || []);
+        setSelectedPermissions(permissionIds);
+        
+        // Debug logging
+        console.log('System role permissions (names):', editingSystemRole.permissions);
+        console.log('Converted to IDs:', permissionIds);
+        console.log('Available permissions:', permissions);
       } else {
         setName('');
         setDescription('');
         setSelectedPermissions([]);
       }
     }
-  }, [open, editingRole, editingSystemRole]);
+  }, [open, editingRole, editingSystemRole, permissions]);
 
   const handleSave = async () => {
-    if (!name.trim()) return;
+    if (!name.trim() && !editingSystemRole) return;
     
-    await onSave(name.trim(), description.trim(), selectedPermissions);
+    // For system roles, we need to convert permission IDs back to names
+    let permissionsToSave = selectedPermissions;
+    if (editingSystemRole) {
+      permissionsToSave = selectedPermissions
+        .map(id => permissions.find(p => p.id === id)?.name)
+        .filter(Boolean) as string[];
+      
+      console.log('Saving system role permissions (converted to names):', permissionsToSave);
+    }
+    
+    await onSave(name.trim(), description.trim(), permissionsToSave);
     onOpenChange(false);
   };
 

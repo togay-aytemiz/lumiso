@@ -117,8 +117,9 @@ export function RolesTableView({
   };
 
   const getSystemRolePermissions = (template: RoleTemplate) => {
+    // System roles store permission names, not IDs
     return (template.permissions || [])
-      .map(permId => permissions.find(p => p.id === permId))
+      .map(permName => permissions.find(p => p.name === permName))
       .filter(Boolean) as Permission[];
   };
 
@@ -270,7 +271,7 @@ export function RolesTableView({
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center justify-end gap-2">
                         <Button
                           variant="ghost"
                           size="sm"

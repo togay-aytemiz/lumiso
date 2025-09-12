@@ -435,15 +435,18 @@ export default function Team() {
                       <div className="space-y-2">
                         <p className="text-xs font-medium text-muted-foreground">PERMISSIONS</p>
                         <div className="flex flex-wrap gap-1">
-                          {template.permissions?.slice(0, 4).map((permission) => (
-                            <Badge 
-                              key={permission.id} 
-                              variant="secondary" 
-                              className="text-xs"
-                            >
-                              {permission.name}
-                            </Badge>
-                          ))}
+                          {template.permissions?.slice(0, 4).map((permissionId) => {
+                            const permission = permissions.find(p => p.id === permissionId);
+                            return permission ? (
+                              <Badge 
+                                key={permissionId} 
+                                variant="secondary" 
+                                className="text-xs"
+                              >
+                                {permission.name}
+                              </Badge>
+                            ) : null;
+                          })}
                           {(template.permissions?.length || 0) > 4 && (
                             <Badge variant="secondary" className="text-xs">
                               +{(template.permissions?.length || 0) - 4} more

@@ -4,10 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
-import { OrganizationProvider } from "@/contexts/OrganizationContext";
 import { ProfileProvider } from "@/contexts/ProfileContext";
-import { SettingsProvider } from "@/contexts/SettingsContext";
-import { PermissionDebugPanel } from "@/components/PermissionDebugPanel";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import GettingStarted from "./pages/GettingStarted";
@@ -50,14 +47,11 @@ const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <OrganizationProvider>
-          <ProfileProvider>
-            <SettingsProvider>
-              <TooltipProvider>
-                <Toaster />
-                <Sonner />
-                <PermissionDebugPanel />
-                <BrowserRouter>
+        <ProfileProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
           <Routes>
             <Route path="/auth" element={<Auth />} />
             <Route path="/accept-invite" element={<AcceptInvite />} />
@@ -97,14 +91,12 @@ const App = () => (
             </Route>
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </BrowserRouter>
-              </TooltipProvider>
-          </SettingsProvider>
-        </ProfileProvider>
-      </OrganizationProvider>
-    </AuthProvider>
-  </QueryClientProvider>
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </ProfileProvider>
+  </AuthProvider>
+</QueryClientProvider>
 </ErrorBoundary>
 );
 

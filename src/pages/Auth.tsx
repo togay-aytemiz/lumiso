@@ -7,10 +7,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { toast } from "sonner";
 import { Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 const Auth = () => {
-  const [searchParams] = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
@@ -19,28 +18,12 @@ const Auth = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  // Get invitation parameters from URL
-  const invitationId = searchParams.get('invitation_id');
-  const invitationEmail = searchParams.get('email');
-  const returnUrl = searchParams.get('returnUrl');
-
-  // Initialize email from invitation parameter and redirect if already logged in
+  // Redirect if already logged in
   useEffect(() => {
-    if (invitationEmail && !email) {
-      setEmail(invitationEmail);
-    }
-    
     if (user) {
-      // If user is already logged in, redirect to invitation or home
-      if (invitationId && invitationEmail) {
-        navigate(`/accept-invite?invitation_id=${invitationId}&email=${encodeURIComponent(invitationEmail)}`);
-      } else if (returnUrl) {
-        navigate(decodeURIComponent(returnUrl));
-      } else {
-        navigate("/");
-      }
+      navigate("/");
     }
-  }, [user, navigate, invitationId, invitationEmail, returnUrl, email]);
+  }, [user, navigate]);
 
   const clearAuthState = () => {
     // Clear all auth related storage
@@ -76,16 +59,8 @@ const Auth = () => {
           setLoading(false);
         } else if (data.user) {
           toast.success("Account created successfully!");
-          // Navigate to invitation page or home
-          setTimeout(() => {
-            if (invitationId && invitationEmail) {
-              navigate(`/accept-invite?invitation_id=${invitationId}&email=${encodeURIComponent(invitationEmail)}`);
-            } else if (returnUrl) {
-              navigate(decodeURIComponent(returnUrl));
-            } else {
-              navigate("/");
-            }
-          }, 1000);
+          // Navigate to home
+          setTimeout(() => navigate("/"), 1000);
         }
       } else {
         const { data, error } = await supabase.auth.signInWithPassword({
@@ -98,16 +73,8 @@ const Auth = () => {
         console.log("Sign in successful:", data.user?.id);
         toast.success("Signed in successfully!");
         
-        // Navigate to invitation page or home
-        setTimeout(() => {
-          if (invitationId && invitationEmail) {
-            navigate(`/accept-invite?invitation_id=${invitationId}&email=${encodeURIComponent(invitationEmail)}`);
-          } else if (returnUrl) {
-            navigate(decodeURIComponent(returnUrl));
-          } else {
-            navigate("/");
-          }
-        }, 1000);
+        // Navigate to home
+        setTimeout(() => navigate("/"), 1000);
       }
     } catch (error: any) {
       console.error("Auth error:", error);

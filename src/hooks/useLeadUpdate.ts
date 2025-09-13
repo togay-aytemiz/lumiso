@@ -1,13 +1,6 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { 
-  sendAssignmentNotification, 
-  sendMilestoneNotification, 
-  getCurrentUserAndOrg,
-  getAssignmentChanges,
-  isSignificantStatusChange
-} from '@/lib/notificationUtils';
 
 interface UseLeadUpdateProps {
   leadId: string;
@@ -23,13 +16,6 @@ export function useLeadUpdate({ leadId, onSuccess }: UseLeadUpdateProps) {
     
     setIsUpdating(true);
     try {
-      // Get current lead state before update for change detection
-      const { data: currentLead } = await supabase
-        .from('leads')
-        .select('name, status, assignees')
-        .eq('id', leadId)
-        .single();
-
       const updates: Record<string, any> = {
         [fieldKey]: value || null,
         updated_at: new Date().toISOString()
@@ -41,55 +27,6 @@ export function useLeadUpdate({ leadId, onSuccess }: UseLeadUpdateProps) {
         .eq('id', leadId);
 
       if (error) throw error;
-
-      // Handle notifications for specific field changes
-      const { userId, orgId } = await getCurrentUserAndOrg();
-      
-      if (userId && orgId && currentLead) {
-        // Handle status changes
-        if (fieldKey === 'status' && isSignificantStatusChange(currentLead.status, value || '')) {
-          await sendMilestoneNotification({
-            type: 'lead',
-            entity_id: leadId,
-            entity_name: currentLead.name || 'Unnamed Lead',
-            old_status: currentLead.status,
-            new_status: value || '',
-            changed_by_id: userId,
-            organization_id: orgId,
-            assignee_ids: currentLead.assignees || []
-          });
-        }
-
-        // Handle assignee changes
-        if (fieldKey === 'assignees') {
-          const newAssignees = value ? JSON.parse(value) : [];
-          const { added, removed } = getAssignmentChanges(currentLead.assignees || [], newAssignees);
-          
-          if (added.length > 0) {
-            await sendAssignmentNotification({
-              type: 'lead',
-              entity_id: leadId,
-              entity_name: currentLead.name || 'Unnamed Lead',
-              assignee_ids: added,
-              assigned_by_id: userId,
-              organization_id: orgId,
-              action: 'assigned'
-            });
-          }
-          
-          if (removed.length > 0) {
-            await sendAssignmentNotification({
-              type: 'lead',
-              entity_id: leadId,
-              entity_name: currentLead.name || 'Unnamed Lead',
-              assignee_ids: removed,
-              assigned_by_id: userId,
-              organization_id: orgId,
-              action: 'unassigned'
-            });
-          }
-        }
-      }
 
       toast({
         title: "Field updated",

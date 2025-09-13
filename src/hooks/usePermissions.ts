@@ -11,29 +11,17 @@ const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 export function usePermissions() {
   const [permissions, setPermissions] = useState<string[]>(cachedPermissions);
-  const [loading, setLoading] = useState(true);
-  const { activeOrganizationId, loading: orgLoading } = useOrganization();
+  const [loading, setLoading] = useState(cachedPermissions.length === 0);
+  const { activeOrganizationId } = useOrganization();
 
   useEffect(() => {
-    // Clear cache when organization changes
-    if (activeOrganizationId && activeOrganizationId !== cachedOrgId && cachedOrgId !== null) {
-      console.log('Organization changed, clearing permissions cache');
-      cachedPermissions = [];
-      cachedUserId = null;
-      cachedOrgId = null;
-      cacheExpiry = 0;
-    }
-
-    // Only start loading permissions when organization context is ready
-    if (!orgLoading) {
-      fetchUserPermissions();
-    }
-  }, [activeOrganizationId, orgLoading]);
+    fetchUserPermissions();
+  }, [activeOrganizationId]);
 
   const fetchUserPermissions = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+      if (!user || !activeOrganizationId) {
         setPermissions([]);
         setLoading(false);
         return;
@@ -51,33 +39,34 @@ export function usePermissions() {
         return;
       }
 
-      // Check if user is owner first
-      let userPermissions: string[] = [];
-      
-      if (activeOrganizationId) {
-        const { data: orgMember } = await supabase
-          .from('organization_members')
-          .select('role')
-          .eq('user_id', user.id)
-          .eq('organization_id', activeOrganizationId)
-          .single();
+      // Get user's organization membership - simplified query
+      const { data: membership } = await supabase
+        .from('organization_members')
+        .select('system_role, custom_role_id')
+        .eq('user_id', user.id)
+        .eq('organization_id', activeOrganizationId)
+        .eq('status', 'active')
+        .single();
 
-        // If user is owner, grant all permissions
-        if (orgMember?.role === 'Owner') {
-          // Get all available permissions
-          const { data: allPermissions } = await supabase
-            .from('permissions')
-            .select('name');
-          
-          userPermissions = allPermissions?.map(p => p.name) || [];
-        } else {
-          // Use RPC to safely resolve permissions server-side
-          const { data, error } = await supabase.rpc('get_user_permissions');
-          if (error) {
-            throw error;
-          }
-          userPermissions = Array.isArray(data) ? (data as string[]) : [];
-        }
+      let userPermissions: string[] = [];
+
+      // If user is Owner, they have all permissions
+      if (membership?.system_role === 'Owner') {
+        const { data: allPermissions } = await supabase
+          .from('permissions')
+          .select('name');
+        
+        userPermissions = allPermissions?.map(p => p.name) || [];
+      } else if (membership?.custom_role_id) {
+        // Get permissions from custom role
+        const { data: rolePermissions } = await supabase
+          .from('role_permissions')
+          .select(`
+            permissions!inner(name)
+          `)
+          .eq('role_id', membership.custom_role_id);
+
+        userPermissions = rolePermissions?.map(rp => rp.permissions.name) || [];
       }
 
       // Update cache
@@ -101,13 +90,6 @@ export function usePermissions() {
 
   const hasAnyPermission = (permissionList: string[]): boolean => {
     return permissionList.some(permission => permissions.includes(permission));
-  };
-
-  // Helper for "manage implies view" permissions
-  const hasViewOrManage = (basePermission: string): boolean => {
-    const viewPermission = `view_${basePermission}`;
-    const managePermission = `manage_${basePermission}`;
-    return permissions.includes(viewPermission) || permissions.includes(managePermission);
   };
 
   const canEditLead = async (leadUserId: string, leadAssignees?: string[]): Promise<boolean> => {
@@ -144,31 +126,19 @@ export function usePermissions() {
     return false;
   };
 
-  const refreshPermissions = async () => {
-    // Clear cache and re-fetch
-    cachedPermissions = [];
-    cachedUserId = null;
-    cachedOrgId = null;
-    cacheExpiry = 0;
-    await fetchUserPermissions();
-  };
-
   return {
     permissions,
     loading,
     hasPermission,
     hasAnyPermission,
-    hasViewOrManage,
     canEditLead,
     canEditProject,
     refetch: fetchUserPermissions,
-    refreshPermissions,
     clearCache: () => {
       cachedPermissions = [];
       cachedUserId = null;
       cachedOrgId = null;
       cacheExpiry = 0;
-      console.log('Permissions cache manually cleared');
     }
   };
 }

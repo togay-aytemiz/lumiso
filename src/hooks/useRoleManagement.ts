@@ -3,14 +3,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { toast } from "sonner";
 
-export interface RoleTemplate {
-  id: string;
-  name: string;
-  description: string;
-  permissions: string[];
-  sort_order: number;
-}
-
 export interface Permission {
   id: string;
   name: string;
@@ -41,25 +33,8 @@ export const useRoleManagement = () => {
   const { activeOrganizationId } = useOrganization();
   const [permissions, setPermissions] = useState<Permission[]>([]);
   const [customRoles, setCustomRoles] = useState<CustomRole[]>([]);
-  const [roleTemplates, setRoleTemplates] = useState<RoleTemplate[]>([]);
   const [memberRoles, setMemberRoles] = useState<MemberRole[]>([]);
   const [loading, setLoading] = useState(false);
-
-  // Fetch role templates (system roles)
-  const fetchRoleTemplates = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('role_templates')
-        .select('*')
-        .order('sort_order');
-
-      if (error) throw error;
-      setRoleTemplates(data || []);
-    } catch (error) {
-      console.error('Error fetching role templates:', error);
-      toast.error('Failed to fetch system roles');
-    }
-  };
 
   // Fetch all permissions
   const fetchPermissions = async () => {
@@ -149,7 +124,7 @@ export const useRoleManagement = () => {
             ...member,
             full_name: profile?.full_name,
             profile_photo_url: profile?.profile_photo_url,
-            email: ''
+            email: '' // We'll need to handle email separately if needed
           };
         })
       );
@@ -163,10 +138,7 @@ export const useRoleManagement = () => {
 
   // Create new custom role
   const createCustomRole = async (name: string, description: string, permissionIds: string[]) => {
-    if (!activeOrganizationId) {
-      toast.error('No active organization found');
-      return;
-    }
+    if (!activeOrganizationId) return;
 
     try {
       setLoading(true);
@@ -209,30 +181,7 @@ export const useRoleManagement = () => {
     }
   };
 
-  // Update system role permissions
-  const updateSystemRolePermissions = async (roleId: string, permissionIds: string[]) => {
-    try {
-      setLoading(true);
-
-      // Update the role template's permissions array directly
-      const { error } = await supabase
-        .from('role_templates')
-        .update({ permissions: permissionIds })
-        .eq('id', roleId);
-
-      if (error) throw error;
-
-      toast.success('System role permissions updated');
-      await fetchRoleTemplates();
-    } catch (error) {
-      console.error('Error updating system role permissions:', error);
-      toast.error('Failed to update system role permissions');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Update custom role permissions
+  // Update role permissions
   const updateRolePermissions = async (roleId: string, permissionIds: string[]) => {
     try {
       setLoading(true);
@@ -276,10 +225,7 @@ export const useRoleManagement = () => {
 
       const { error } = await supabase
         .from('organization_members')
-        .update({ 
-          custom_role_id: customRoleId,
-          system_role: 'Member'
-        })
+        .update({ custom_role_id: customRoleId })
         .eq('id', memberId);
 
       if (error) throw error;
@@ -299,7 +245,7 @@ export const useRoleManagement = () => {
     try {
       setLoading(true);
 
-      // Remove all permissions for this role
+      // First remove all permissions for this role
       const { error: permissionError } = await supabase
         .from('role_permissions')
         .delete()
@@ -336,7 +282,6 @@ export const useRoleManagement = () => {
 
   useEffect(() => {
     fetchPermissions();
-    fetchRoleTemplates();
   }, []);
 
   useEffect(() => {
@@ -349,18 +294,15 @@ export const useRoleManagement = () => {
   return {
     permissions,
     customRoles,
-    roleTemplates,
     memberRoles,
     loading,
     createCustomRole,
     updateRolePermissions,
-    updateSystemRolePermissions,
     assignRoleToMember,
     deleteCustomRole,
     refetch: () => {
       fetchCustomRoles();
       fetchMemberRoles();
-      fetchRoleTemplates();
     }
   };
 };

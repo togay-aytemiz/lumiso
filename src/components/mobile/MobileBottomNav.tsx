@@ -25,7 +25,6 @@ import { toast } from '@/hooks/use-toast';
 import { useProfile } from '@/contexts/ProfileContext';
 import { HelpModal } from '@/components/modals/HelpModal';
 import { UserMenu } from '@/components/UserMenu';
-import { usePermissions } from '@/hooks/usePermissions';
 
 interface NavTab {
   title: string;
@@ -45,14 +44,6 @@ export function MobileBottomNav({ hideForOnboarding = false }: { hideForOnboardi
   const location = useLocation();
   const navigate = useNavigate();
   const { profile } = useProfile();
-  const { hasPermission, loading: permissionsLoading } = usePermissions();
-
-  // Helper function to check if item should be visible based on permissions
-  const isItemVisible = (requiredPermissions: string[] = []): boolean => {
-    if (permissionsLoading) return true; // Show items while loading
-    if (requiredPermissions.length === 0) return true; // No permissions required
-    return requiredPermissions.some(permission => hasPermission(permission));
-  };
 
   // Get user email from auth
   useEffect(() => {
@@ -138,39 +129,34 @@ export function MobileBottomNav({ hideForOnboarding = false }: { hideForOnboardi
   ];
 
   const automationItems = [
-    // Only show Workflows if user has workflow permissions
-    ...(isItemVisible(["view_workflows", "manage_workflows"]) ? [{
+    {
       title: 'Workflows',
       icon: BarChart3,
       onClick: () => navigate('/workflows')
-    }] : []),
-    // Only show Templates if user has template permissions  
-    ...(isItemVisible(["view_templates", "manage_templates"]) ? [{
+    },
+    {
       title: 'Templates',
       icon: FileText,
       onClick: () => navigate('/templates')
-    }] : [])
+    }
   ];
 
   const moreItems = [
-    // Only show Analytics if user has view_analytics permission
-    ...(isItemVisible(["view_analytics"]) ? [{
+    {
       title: 'Analytics',
       icon: BarChart3,
       onClick: () => navigate('/analytics')
-    }] : []),
-    // Only show Automation if user has workflow or template permissions
-    ...(isItemVisible(["view_workflows", "manage_workflows", "view_templates", "manage_templates"]) ? [{
+    },
+    {
       title: 'Automation',
       icon: Zap,
       onClick: () => setAutomationOpen(true)
-    }] : []),
-    // Only show Payments if user has view_payments permission
-    ...(isItemVisible(["view_payments"]) ? [{
+    },
+    {
       title: 'Payments',
       icon: CreditCard,
       onClick: () => navigate('/payments')
-    }] : []),
+    },
     {
       title: 'Settings',
       icon: Settings,

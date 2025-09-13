@@ -8,8 +8,6 @@ import SessionSheetView from "./SessionSheetView";
 import { NewSessionDialogForProject } from "./NewSessionDialogForProject";
 import { useNavigate } from "react-router-dom";
 import { sortSessionsByLifecycle, SessionWithStatus } from "@/lib/sessionSorting";
-import { usePermissions } from "@/hooks/usePermissions";
-import { ProtectedFeature } from "./ProtectedFeature";
 interface Session extends SessionWithStatus {
   session_time: string;
   notes: string;
@@ -38,7 +36,6 @@ export function SessionsSection({
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   const [isSessionSheetOpen, setIsSessionSheetOpen] = useState(false);
   const navigate = useNavigate();
-  const { hasPermission } = usePermissions();
   const handleSessionUpdated = () => {
     onSessionUpdated();
     setEditingSessionId(null);
@@ -98,18 +95,7 @@ export function SessionsSection({
               <Calendar className="h-4 w-4" />
               Sessions
             </div>
-            <ProtectedFeature 
-              requiredPermissions={['manage_sessions', 'create_sessions']}
-              fallback={null}
-            >
-              <NewSessionDialogForProject 
-                leadId={leadId} 
-                leadName={leadName} 
-                projectName={projectName} 
-                projectId={projectId} 
-                onSessionScheduled={onSessionUpdated} 
-              />
-            </ProtectedFeature>
+            <NewSessionDialogForProject leadId={leadId} leadName={leadName} projectName={projectName} projectId={projectId} onSessionScheduled={onSessionUpdated} />
           </CardTitle>
         </CardHeader>
         <CardContent>

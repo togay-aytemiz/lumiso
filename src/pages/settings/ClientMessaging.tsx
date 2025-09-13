@@ -6,7 +6,6 @@ import SettingsSection from "@/components/SettingsSection";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { ProtectedFeature } from "@/components/ProtectedFeature";
 
 export default function ClientMessaging() {
   const [silentHours, setSilentHours] = useState({
@@ -30,12 +29,7 @@ export default function ClientMessaging() {
   const timeOptions = generateTimeOptions();
 
   return (
-    <ProtectedFeature
-      requiredPermissions={['manage_client_messaging', 'admin']}
-      title="Client Messaging Access Required"
-      description="You need client messaging management or admin permissions to access this section."
-    >
-      <SettingsPageWrapper>
+    <SettingsPageWrapper>
       <SettingsHeader
         title="Client Messaging"
         description="Manage automated message templates and delivery triggers for client communication"
@@ -134,6 +128,5 @@ export default function ClientMessaging() {
         </SettingsSection>
       </div>
     </SettingsPageWrapper>
-    </ProtectedFeature>
   );
 }

@@ -2,8 +2,6 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
-import { usePermissions } from "@/hooks/usePermissions";
-import { PermissionDenied } from "@/components/PermissionDenied";
 import {
   ChartContainer,
   ChartTooltip,
@@ -47,26 +45,11 @@ interface LeadsByMonthData {
 }
 
 const Analytics = () => {
-  const { hasPermission, loading: permissionsLoading } = usePermissions();
   const [sessionsPerDay, setSessionsPerDay] = useState<SessionsByDayData[]>([]);
   const [sessionsByStatus, setSessionsByStatus] = useState<SessionsByStatusData[]>([]);
   const [leadsByMonth, setLeadsByMonth] = useState<LeadsByMonthData[]>([]);
   const [loading, setLoading] = useState(true);
   const [sessionDateMode, setSessionDateMode] = useState<'scheduled' | 'created'>('scheduled');
-
-  // Check permissions
-  const canViewAnalytics = hasPermission("view_analytics");
-
-  // Show permission denied if user doesn't have view analytics permission
-  if (!permissionsLoading && !canViewAnalytics) {
-    return (
-      <PermissionDenied 
-        title="Analytics Access Denied"
-        description="You need analytics permissions to view this page. Contact your administrator to grant you the required permissions."
-        requiredPermission="view_analytics"
-      />
-    );
-  }
 
   useEffect(() => {
     fetchAnalyticsData();

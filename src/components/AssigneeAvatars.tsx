@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
-import { useTeamManagement } from "@/hooks/useTeamManagement";
 
 interface AssigneeProfile {
   id: string;
@@ -24,32 +24,62 @@ export function AssigneeAvatars({
   size = "sm",
   className 
 }: AssigneeAvatarsProps) {
-  const { teamMembers, loading } = useTeamManagement();
   const [assigneeProfiles, setAssigneeProfiles] = useState<AssigneeProfile[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (assigneeIds.length === 0 || !teamMembers) {
+    if (assigneeIds.length === 0) {
       setAssigneeProfiles([]);
+      setLoading(false);
       return;
     }
 
-    // Map assignee IDs to team member data
-    const profiles = assigneeIds
-      .map(assigneeId => {
-        const member = teamMembers.find(tm => tm.user_id === assigneeId);
-        if (!member) return null;
-        
-        return {
-          id: member.user_id,
-          full_name: member.full_name,
-          profile_photo_url: member.profile_photo_url,
-          role: member.role || member.system_role || 'Member'
-        };
-      })
-      .filter(Boolean) as AssigneeProfile[];
+    const fetchAssigneeProfiles = async () => {
+      try {
+        // Get the current user's organization
+        const { data: organizationId } = await supabase.rpc('get_user_active_organization_id');
+        if (!organizationId) return;
 
-    setAssigneeProfiles(profiles);
-  }, [assigneeIds, teamMembers]);
+        // Get organization members
+        const { data: members, error: membersError } = await supabase
+          .from('organization_members')
+          .select('user_id, role')
+          .eq('organization_id', organizationId)
+          .eq('status', 'active')
+          .in('user_id', assigneeIds);
+
+        if (membersError) throw membersError;
+
+        // Get profiles for the members
+        const { data: profilesData, error: profilesError } = await supabase
+          .from('profiles')
+          .select('user_id, full_name, profile_photo_url')
+          .in('user_id', assigneeIds);
+
+        if (profilesError) throw profilesError;
+
+        // Combine member roles with profile data
+        const profiles = members?.map(member => {
+          const profile = profilesData?.find(p => p.user_id === member.user_id);
+          return {
+            id: member.user_id,
+            full_name: profile?.full_name || null,
+            profile_photo_url: profile?.profile_photo_url || null,
+            role: member.role
+          };
+        }) || [];
+
+        setAssigneeProfiles(profiles);
+      } catch (error) {
+        console.error('Error fetching assignee profiles:', error);
+        setAssigneeProfiles([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAssigneeProfiles();
+  }, [assigneeIds]);
 
   const getInitials = (name: string | null) => {
     if (!name) return "?";

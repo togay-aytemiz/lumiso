@@ -54,7 +54,7 @@ export function PermissionPresets({
     },
     {
       id: "photographer",
-      name: "Photographer", 
+      name: "Photographer",
       description: "Manage assigned work and sessions with view-only settings",
       permissions: [
         "edit_assigned_leads",
@@ -65,15 +65,14 @@ export function PermissionPresets({
         "view_packages",
         "view_services",
         "view_project_statuses",
-        "view_session_statuses",
-        "view_templates"
+        "view_session_statuses"
       ],
       color: "bg-green-50 border-green-200 text-green-800"
     },
     {
       id: "lead_manager",
       name: "Lead Manager",
-      description: "Manage leads and create projects with view-only settings", 
+      description: "Manage leads and create projects with view-only settings",
       permissions: [
         "create_leads",
         "edit_assigned_leads",
@@ -87,14 +86,12 @@ export function PermissionPresets({
         "view_lead_statuses",
         "view_project_statuses",
         "view_session_statuses",
-        "view_project_types",
-        "view_workflows",
-        "view_templates"
+        "view_project_types"
       ],
       color: "bg-purple-50 border-purple-200 text-purple-800"
     },
     {
-      id: "project_manager", 
+      id: "project_manager",
       name: "Project Manager",
       description: "Manage projects and assigned leads with settings access",
       permissions: [
@@ -118,12 +115,7 @@ export function PermissionPresets({
         "view_session_statuses",
         "manage_session_statuses",
         "view_project_types",
-        "manage_project_types",
-        "manage_workflows",
-        "view_workflows",
-        "execute_workflows",
-        "manage_templates",
-        "view_templates"
+        "manage_project_types"
       ],
       color: "bg-indigo-50 border-indigo-200 text-indigo-800"
     },

@@ -6,7 +6,6 @@ import { useProfile } from "@/contexts/ProfileContext";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import OrganizationSwitcher from "@/components/OrganizationSwitcher";
 
 interface UserMenuProps {
   variant?: "sidebar" | "mobile" | "minimal";
@@ -155,8 +154,7 @@ export function UserMenu({ variant = "sidebar", onNavigate }: UserMenuProps) {
         sideOffset={8}
         avoidCollisions={false}
       >
-        <div className="flex flex-col gap-2">
-          <OrganizationSwitcher className="mb-2" />
+        <div className="flex flex-col gap-1">
           <Button
             variant="ghost"
             onClick={handleSettings}

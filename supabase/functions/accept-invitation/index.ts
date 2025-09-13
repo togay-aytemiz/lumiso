@@ -181,17 +181,25 @@ const handler = async (req: Request): Promise<Response> => {
       console.error("Failed to mark invitation as accepted:", acceptError);
     }
 
-    // Always set this organization as the user's active organization upon acceptance
-    const { error: settingsError } = await supabaseAdmin
+    // Set this as the user's active organization if they don't have one
+    const { data: currentSettings } = await supabaseAdmin
       .from("user_settings")
-      .upsert({
-        user_id: user.id,
-        active_organization_id: invitation.organization_id
-      }, { onConflict: "user_id" });
+      .select("active_organization_id")
+      .eq("user_id", user.id)
+      .maybeSingle();
 
-    if (settingsError) {
-      console.error("Failed to set active organization:", settingsError);
-      // Don't fail the process for this
+    if (!currentSettings?.active_organization_id) {
+      const { error: settingsError } = await supabaseAdmin
+        .from("user_settings")
+        .upsert({
+          user_id: user.id,
+          active_organization_id: invitation.organization_id
+        });
+
+      if (settingsError) {
+        console.error("Failed to set active organization:", settingsError);
+        // Don't fail the process for this
+      }
     }
 
     return new Response(

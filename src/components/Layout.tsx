@@ -3,7 +3,6 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { MobileBottomNav } from "@/components/mobile/MobileBottomNav";
 import { OnboardingModal } from "@/components/OnboardingModal";
 import { RestartGuidedModeButton } from "@/components/RestartGuidedModeButton";
-import { PermissionDebugPanel } from "@/components/PermissionDebugPanel";
 import { useLayoutEffect, useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { useOnboardingV2 } from "@/hooks/useOnboardingV2";
@@ -76,9 +75,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       
       {/* Restart Guided Mode Button (only for specific user) */}
       <RestartGuidedModeButton />
-      
-      {/* Permission Debug Panel (dev only) */}
-      <PermissionDebugPanel />
     </SidebarProvider>
   );
 }

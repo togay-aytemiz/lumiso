@@ -9,7 +9,6 @@ import GlobalSearch from "@/components/GlobalSearch";
 import { PageHeader, PageHeaderSearch } from "@/components/ui/page-header";
 import { OnboardingTutorial, TutorialStep } from "@/components/shared/OnboardingTutorial";
 import { useOnboardingV2 } from "@/hooks/useOnboardingV2";
-import { usePermissions } from "@/hooks/usePermissions";
 import { Calendar, MessageSquare, Users, FileText } from "lucide-react";
 import { DataTable } from "@/components/ui/data-table";
 import { useLeadsWithCustomFields } from "@/hooks/useLeadsWithCustomFields";
@@ -20,7 +19,6 @@ import { toast } from "@/hooks/use-toast";
 import { TableLoadingSkeleton } from "@/components/ui/loading-presets";
 
 const AllLeadsNew = () => {
-  const { hasPermission } = usePermissions();
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [leadStatuses, setLeadStatuses] = useState<any[]>([]);
   const [addLeadDialogOpen, setAddLeadDialogOpen] = useState(false);
@@ -29,9 +27,6 @@ const AllLeadsNew = () => {
   const [isSchedulingTutorial, setIsSchedulingTutorial] = useState(false);
   const navigate = useNavigate();
   const { currentStep, completeCurrentStep } = useOnboardingV2();
-
-  // Check permissions
-  const canCreateLeads = hasPermission("create_leads");
 
   // Use new hooks
   const { leads, loading: leadsLoading, refetch: refetchLeads } = useLeadsWithCustomFields();
@@ -268,8 +263,6 @@ const AllLeadsNew = () => {
               onClick={() => setAddLeadDialogOpen(true)}
               className="h-10 flex items-center gap-2 whitespace-nowrap flex-shrink-0 px-3 sm:px-4"
               data-testid="add-lead-button"
-              disabled={!canCreateLeads}
-              title={!canCreateLeads ? "You don't have permission to create leads" : "Add new lead"}
             >
               <Plus className="h-4 w-4" />
               <span className="hidden sm:inline">Add Lead</span>

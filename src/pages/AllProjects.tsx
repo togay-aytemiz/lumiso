@@ -18,7 +18,6 @@ import { ProjectStatusBadge } from "@/components/ProjectStatusBadge";
 import { formatDate } from "@/lib/utils";
 import { AssigneeAvatars } from "@/components/AssigneeAvatars";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { usePermissions } from "@/hooks/usePermissions";
 import { OnboardingTutorial, TutorialStep } from "@/components/shared/OnboardingTutorial";
 import { useOnboardingV2 } from "@/hooks/useOnboardingV2";
 import { Calendar, MessageSquare, CheckSquare } from "lucide-react";
@@ -80,7 +79,6 @@ type SortField = 'name' | 'lead_name' | 'project_type' | 'status' | 'created_at'
 type SortDirection = 'asc' | 'desc';
 
 const AllProjects = () => {
-  const { hasPermission } = usePermissions();
   const [projects, setProjects] = useState<Project[]>([]);
   const [archivedProjects, setArchivedProjects] = useState<Project[]>([]);
   const [projectStatuses, setProjectStatuses] = useState<ProjectStatus[]>([]);
@@ -90,9 +88,6 @@ const AllProjects = () => {
   const [viewingProject, setViewingProject] = useState<Project | null>(null);
   const [showViewDialog, setShowViewDialog] = useState(false);
   const [quickViewProject, setQuickViewProject] = useState<Project | null>(null);
-
-  // Check permissions
-  const canCreateProjects = hasPermission("create_projects");
   const [showQuickView, setShowQuickView] = useState(false);
   const [sortField, setSortField] = useState<SortField>('created_at');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');

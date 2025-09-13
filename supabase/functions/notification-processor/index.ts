@@ -392,7 +392,7 @@ async function processProjectMilestone(supabase: any, notification: any) {
   return data;
 }
 
-// Process new assignment notification using modern template
+// Process new assignment notification
 async function processNewAssignment(supabase: any, notification: any) {
   const metadata = notification.metadata || {};
   const { entity_type, entity_id, assigner_name } = metadata;
@@ -408,88 +408,26 @@ async function processNewAssignment(supabase: any, notification: any) {
   }
 
   console.log(`Processing assignment: ${entity_type}:${entity_id} to ${userData.user.email}`);
-
-  // Get organization settings for branding
-  const { data: orgSettings } = await supabase
-    .from('organization_settings')
-    .select('photography_business_name, primary_brand_color, email')
-    .eq('organization_id', notification.organization_id)
-    .maybeSingle();
-
-  // Get entity details
-  let entityData;
-  if (entity_type === 'project') {
-    const { data: project } = await supabase
-      .from('projects')
-      .select(`
-        name, description, 
-        leads(name, email)
-      `)
-      .eq('id', entity_id)
-      .maybeSingle();
-    entityData = project;
-  } else if (entity_type === 'lead') {
-    const { data: leadFieldValues } = await supabase
-      .from('lead_field_values')
-      .select('field_key, value')
-      .eq('lead_id', entity_id);
-    
-    const lead: any = { id: entity_id };
-    leadFieldValues?.forEach((field: any) => {
-      lead[field.field_key] = field.value;
-    });
-    entityData = lead;
-  }
-
-  // Prepare notification data for modern template
-  const notificationData: ProjectAssignmentData | LeadAssignmentData = entity_type === 'project' 
-    ? {
-        type: 'project-assignment',
-        project_name: entityData?.name || 'Unnamed Project',
-        project_description: entityData?.description || '',
-        assignee_name: userData.user.email?.split('@')[0] || 'User',
-        assigner_name: assigner_name || 'Team member',
-        client_name: entityData?.leads?.[0]?.name || 'Client',
-        project_url: `https://my.lumiso.app/projects/${entity_id}`
-      }
-    : {
-        type: 'lead-assignment',
-        lead_name: entityData?.name || 'Unnamed Lead',
-        lead_email: entityData?.email || '',
-        assignee_name: userData.user.email?.split('@')[0] || 'User',
-        assigner_name: assigner_name || 'Team member',
-        lead_url: `https://my.lumiso.app/leads/${entity_id}`
-      };
-
-  const emailData: ImmediateNotificationEmailData = {
-    userFullName: userData.user.email?.split('@')[0] || 'User',
-    businessName: orgSettings?.photography_business_name || 'Lumiso',
-    brandColor: orgSettings?.primary_brand_color || '#1EB29F',
-    dateFormat: 'DD/MM/YYYY',
-    timeFormat: '12-hour',
-    timezone: 'UTC',
-    baseUrl: 'https://my.lumiso.app',
-    notificationData
-  };
-
-  // Generate modern email using immediate notifications template
-  const subject = generateSubject(notificationData);
-  const emailHtml = generateImmediateNotificationEmail(emailData);
-
-  // Send email using Resend
-  const emailResponse = await resend.emails.send({
-    from: `Lumiso <assignments@lumiso.app>`,
-    to: [userData.user.email!],
-    subject,
-    html: emailHtml,
+  
+  // Use the send-reminder-notifications function for actual processing
+  const { data, error } = await supabase.functions.invoke('send-reminder-notifications', {
+    body: {
+      type: 'new-assignment',
+      entity_type,
+      entity_id,
+      assignee_id: notification.user_id,
+      assignee_email: userData.user.email,
+      assignee_name: userData.user.email?.split('@')[0] || 'User',
+      assigner_name,
+      organizationId: notification.organization_id
+    }
   });
 
-  if (emailResponse.error) {
-    throw new Error(`Failed to send assignment notification: ${emailResponse.error.message}`);
+  if (error) {
+    throw new Error(`Failed to process assignment: ${error.message}`);
   }
 
-  console.log(`Assignment notification sent successfully to ${userData.user.email}`);
-  return emailResponse.data;
+  return data;
 }
 
 // Process workflow message notification

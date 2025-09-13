@@ -1,16 +1,12 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useOrganizationTimezone } from "@/hooks/useOrganizationTimezone";
-import { sendAssignmentNotification, getCurrentUserAndOrg } from "@/lib/notificationUtils";
 
 interface TeamMember {
   id: string;
   user_id: string;
   organization_id: string;
   system_role: string;
-  custom_role_id?: string;
-  role?: string; // Add role field for system roles like Photographer/Manager
   status: string;
   joined_at: string;
   last_active: string | null;
@@ -20,8 +16,6 @@ interface TeamMember {
   profile_photo_url?: string;
   // Online status
   is_online?: boolean;
-  // Flag to indicate if the name was generated vs from actual profile
-  is_generated_name?: boolean;
 }
 
 interface Invitation {
@@ -39,7 +33,6 @@ export function useTeamManagement() {
   const [currentUserRole, setCurrentUserRole] = useState<string | null>(null);
   const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
   const { toast } = useToast();
-  const { formatDateTime, toOrgTimezone } = useOrganizationTimezone();
 
   const fetchTeamData = async () => {
     try {
@@ -83,127 +76,56 @@ export function useTeamManagement() {
 
       console.log('Basic team members data:', membersData);
 
-      // Always enrich with profile data - create profiles if they don't exist
+      // Try to enrich with profile data
       let enrichedMembers = membersData || [];
-      
-      if (enrichedMembers.length > 0) {
-        const userIds = enrichedMembers.map(m => m.user_id);
-        console.log('Fetching profiles for user IDs:', userIds);
+      try {
+        // Fetch profiles for all users
+        const userIds = membersData?.map(m => m.user_id) || [];
+        if (userIds.length > 0) {
+          const { data: profilesData, error: profilesError } = await supabase
+            .from('profiles')
+            .select('user_id, full_name, profile_photo_url')
+            .in('user_id', userIds);
 
-        // Fetch existing profiles
-        const { data: existingProfiles, error: profilesError } = await supabase
-          .from('profiles')
-          .select('user_id, full_name, profile_photo_url')
-          .in('user_id', userIds);
-
-        if (profilesError) {
-          console.error('Error fetching profiles:', profilesError);
+          if (!profilesError && profilesData) {
+            // Merge profile data with member data
+            enrichedMembers = (membersData || []).map(member => {
+              const profile = profilesData.find(p => p.user_id === member.user_id);
+              return {
+                ...member,
+                full_name: profile?.full_name,
+                profile_photo_url: profile?.profile_photo_url,
+                is_online: onlineUsers.has(member.user_id)
+              };
+            });
+          }
         }
 
-      console.log('Existing profiles:', existingProfiles);
-
-      // Create a map of existing profiles for faster lookup
-      const profileMap = new Map(
-        (existingProfiles || []).map(profile => [profile.user_id, profile])
-      );
-
-      console.log('Profile map created:', Array.from(profileMap.entries()));
-
-        // Try to get user emails via edge function
-        let emailMap = new Map();
+        // Try to get user emails via edge function (optional)
         try {
           const { data: usersEmailData, error: emailError } = await supabase.functions.invoke('get-users-email', {
             body: { userIds: userIds }
           });
 
           if (!emailError && usersEmailData?.users) {
-            emailMap = new Map(
-              usersEmailData.users.map((u: any) => [u.id, u.email])
-            );
-            console.log('Email data fetched:', usersEmailData.users);
-          } else {
-            console.warn('Could not fetch user emails:', emailError);
+            enrichedMembers = enrichedMembers.map(member => {
+              const userEmail = usersEmailData.users.find((u: any) => u.id === member.user_id)?.email;
+              return {
+                ...member,
+                email: userEmail
+              };
+            });
           }
         } catch (emailError) {
           console.warn('Could not fetch user emails:', emailError);
+          // Continue without emails - not critical
         }
-
-        console.log('Email map created:', Array.from(emailMap.entries()));
-
-        // Create profiles for users who don't have them
-        const usersWithoutProfiles = userIds.filter(id => !profileMap.has(id));
-        console.log('Users without profiles:', usersWithoutProfiles);
-        
-        if (usersWithoutProfiles.length > 0) {
-          console.log('Creating missing profiles for users:', usersWithoutProfiles);
-          
-          // Create profiles for missing users
-          const profilesToCreate = usersWithoutProfiles.map(userId => {
-            const email = emailMap.get(userId);
-            let displayName = email ? email.split('@')[0] : `User ${userId.slice(0, 8)}`;
-            
-            return {
-              user_id: userId,
-              full_name: displayName,
-            };
-          });
-
-          const { data: createdProfiles, error: createError } = await supabase
-            .from('profiles')
-            .upsert(profilesToCreate, { onConflict: 'user_id' })
-            .select('user_id, full_name, profile_photo_url');
-
-          if (createError) {
-            console.error('Error creating profiles:', createError);
-          } else {
-            console.log('Created profiles:', createdProfiles);
-            // Add the new profiles to our map
-            (createdProfiles || []).forEach(profile => {
-              profileMap.set(profile.user_id, profile);
-            });
-          }
-        }
-
-        // Enrich members with profile and email data
-        enrichedMembers = enrichedMembers.map(member => {
-          const profile = profileMap.get(member.user_id);
-          const email = emailMap.get(member.user_id);
-          
-          console.log(`Enriching member ${member.user_id}:`, {
-            profile,
-            email,
-            member
-          });
-          
-          // Create a display name with fallbacks
-          let displayName = profile?.full_name;
-          if (!displayName && email) {
-            // Use email username as fallback
-            displayName = email.split('@')[0];
-          }
-          if (!displayName) {
-            displayName = `User ${member.user_id.slice(0, 8)}`;
-          }
-
-          const enrichedMember = {
-            ...member,
-            full_name: displayName,
-            profile_photo_url: profile?.profile_photo_url,
-            email: email,
-            is_online: onlineUsers.has(member.user_id),
-            // Flag to indicate if this is a generated name vs actual profile name
-            is_generated_name: !profile?.full_name,
-            // Timezone-formatted dates
-            formatted_joined_at: formatDateTime(member.joined_at),
-            formatted_last_active: member.last_active ? formatDateTime(member.last_active) : null
-          };
-
-          console.log(`Final enriched member ${member.user_id}:`, enrichedMember);
-          return enrichedMember;
-        });
+      } catch (profileError) {
+        console.warn('Could not fetch profile data:', profileError);
+        // Continue with basic member data
       }
 
-      console.log('Final enriched team members:', enrichedMembers);
+      console.log('Final team members data:', enrichedMembers);
       setTeamMembers(enrichedMembers);
 
       // Set current user role from their membership in the active organization
@@ -288,7 +210,7 @@ export function useTeamManagement() {
         description: errorMessage,
         variant: "destructive",
       });
-      return { success: false, error: error instanceof Error ? error.message : String(error) };
+      return { success: false, error };
     }
   };
 
@@ -315,7 +237,7 @@ export function useTeamManagement() {
         description: "Failed to cancel invitation",
         variant: "destructive",
       });
-      return { success: false, error: error instanceof Error ? error.message : String(error) };
+      return { success: false, error };
     }
   };
 
@@ -342,34 +264,15 @@ export function useTeamManagement() {
         description: "Failed to remove member",
         variant: "destructive",
       });
-      return { success: false, error: error instanceof Error ? error.message : String(error) };
+      return { success: false, error };
     }
   };
 
   const updateMemberRole = async (memberId: string, newRole: string) => {
     try {
-      // Use organization timezone for last_active update
-      const currentTime = toOrgTimezone(new Date());
-      
-      // Enhanced role assignment logic - clear conflicting fields
-      const updateData: any = {
-        last_active: currentTime.toISOString()
-      };
-
-      // If assigning a system role, clear custom_role_id
-      if (newRole === 'Owner' || newRole === 'Photographer' || newRole === 'Manager') {
-        updateData.system_role = newRole === 'Owner' ? 'Owner' : 'Member';
-        updateData.role = newRole; // Store the actual role name
-        updateData.custom_role_id = null; // Clear custom role
-      } else {
-        // If assigning a custom role, set custom_role_id and default system role
-        updateData.custom_role_id = newRole;
-        updateData.system_role = 'Member'; // Default system role
-      }
-      
       const { error } = await supabase
         .from('organization_members')
-        .update(updateData)
+        .update({ system_role: newRole as 'Owner' | 'Member' })
         .eq('id', memberId);
 
       if (error) throw error;
@@ -388,7 +291,7 @@ export function useTeamManagement() {
         description: "Failed to update member role",
         variant: "destructive",
       });
-      return { success: false, error: error instanceof Error ? error.message : String(error) };
+      return { success: false, error };
     }
   };
 

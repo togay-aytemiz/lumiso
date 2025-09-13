@@ -8,8 +8,6 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DataTable, type Column } from "@/components/ui/data-table";
 import { PageLoadingSkeleton } from "@/components/ui/loading-presets";
 import { useWorkflows } from "@/hooks/useWorkflows";
-import { usePermissions } from "@/hooks/usePermissions";
-import { PermissionDenied } from "@/components/PermissionDenied";
 import { CreateWorkflowSheet } from "@/components/CreateWorkflowSheet";
 import { WorkflowDeleteDialog } from "@/components/WorkflowDeleteDialog";
 import { Workflow } from "@/types/workflow";
@@ -19,7 +17,6 @@ import { formatDistanceToNow } from "date-fns";
 
 export default function Workflows() {
   const { workflows, loading, createWorkflow, updateWorkflow, deleteWorkflow, toggleWorkflowStatus } = useWorkflows();
-  const { hasPermission, loading: permissionsLoading } = usePermissions();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "paused">("all");
 
@@ -35,21 +32,6 @@ export default function Workflows() {
   const [editingWorkflow, setEditingWorkflow] = useState<Workflow | null>(null);
   const [deletingWorkflow, setDeletingWorkflow] = useState<Workflow | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-
-  // Check permissions
-  const canViewWorkflows = hasPermission("view_workflows") || hasPermission("manage_workflows");
-  const canManageWorkflows = hasPermission("manage_workflows");
-
-  // Show permission denied if user doesn't have view workflows permission
-  if (!permissionsLoading && !canViewWorkflows) {
-    return (
-      <PermissionDenied 
-        title="Workflows Access Denied"
-        description="You need workflow permissions to access this page. Contact your administrator to grant you the required permissions."
-        requiredPermission="view_workflows or manage_workflows"
-      />
-    );
-  }
 
   const handleEditWorkflow = (workflow: Workflow) => {
     setEditingWorkflow(workflow);
@@ -185,16 +167,12 @@ export default function Workflows() {
           <Switch
             checked={workflow.is_active}
             onCheckedChange={(checked) => toggleWorkflowStatus(workflow.id, checked)}
-            disabled={!canManageWorkflows}
-            title={!canManageWorkflows ? "You don't have permission to toggle workflows" : undefined}
           />
           <Button 
             variant="ghost" 
             size="sm"
             onClick={() => handleEditWorkflow(workflow)}
             className="h-8 w-8 p-0"
-            disabled={!canManageWorkflows}
-            title={!canManageWorkflows ? "You don't have permission to edit workflows" : "Edit workflow"}
           >
             <Edit className="h-4 w-4" />
           </Button>
@@ -203,8 +181,6 @@ export default function Workflows() {
             size="sm"
             onClick={() => handleDeleteWorkflow(workflow)}
             className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-            disabled={!canManageWorkflows}
-            title={!canManageWorkflows ? "You don't have permission to delete workflows" : "Delete workflow"}
           >
             <Trash2 className="h-4 w-4" />
           </Button>
@@ -297,7 +273,7 @@ export default function Workflows() {
             onUpdateWorkflow={updateWorkflow}
             setEditingWorkflow={setEditingWorkflow}
           >
-            <Button disabled={!canManageWorkflows}>
+            <Button>
               <Plus className="h-4 w-4 mr-2" />
               Create Workflow
             </Button>
@@ -326,7 +302,7 @@ export default function Workflows() {
                     onUpdateWorkflow={updateWorkflow}
                     setEditingWorkflow={setEditingWorkflow}
                   >
-                    <Button disabled={!canManageWorkflows}>
+                    <Button>
                       <Plus className="h-4 w-4 mr-2" />
                       Create Your First Workflow
                     </Button>

@@ -18,7 +18,6 @@ import { cn } from "@/lib/utils";
 import { useSettingsContext } from "@/contexts/SettingsContext";
 import { useOnboardingV2 } from "@/hooks/useOnboardingV2";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { usePermissions } from "@/hooks/usePermissions";
 
 const personalSettingsItems = [
   { title: "Profile", href: "/settings/profile", icon: User, testId: "profile-section" },
@@ -42,27 +41,6 @@ export default function SettingsLayout() {
   const location = useLocation();
   const { hasCategoryChanges } = useSettingsContext();
   const { shouldLockNavigation } = useOnboardingV2();
-  const { hasAnyPermission, hasPermission } = usePermissions();
-
-  // Permission-aware filtering for organization settings
-  const filteredOrgItems = organizationSettingsItems.filter((item) => {
-    if (item.href === '/settings/team') {
-      return hasAnyPermission(['manage_team', 'manage_roles']);
-    }
-    if (item.href === '/settings/general') {
-      return hasAnyPermission(['view_organization_settings', 'manage_organization_settings']);
-    }
-    if (item.href === '/settings/projects') {
-      return hasAnyPermission(['view_project_statuses', 'manage_project_statuses', 'view_project_types', 'manage_project_types', 'view_session_statuses', 'manage_session_statuses']);
-    }
-    if (item.href === '/settings/leads') {
-      return hasAnyPermission(['view_lead_statuses', 'manage_lead_statuses']);
-    }
-    if (item.href === '/settings/services') {
-      return hasAnyPermission(['view_packages', 'manage_packages', 'view_services', 'manage_services']);
-    }
-    return true;
-  });
   
   const isItemLocked = (itemHref: string) => {
     console.log('🔍 Settings item lock check:', {
@@ -70,10 +48,10 @@ export default function SettingsLayout() {
       shouldLockNavigation
     });
 
-    // During guided setup, only allow general settings
+    // Simple rule: During guided setup, only allow general settings
     if (shouldLockNavigation) {
       // Allow general settings during guided setup
-      const isUnlocked = itemHref === '/settings/general' || itemHref === '/settings';
+      const isUnlocked = itemHref === '/settings';
       console.log(`🔒 Guided setup: ${itemHref} - ${isUnlocked ? 'UNLOCKED' : 'LOCKED'}`);
       return !isUnlocked;
     }
@@ -167,7 +145,7 @@ export default function SettingsLayout() {
               Organization Settings
             </h3>
             <nav className="space-y-1">
-              {filteredOrgItems.map((item) => {
+              {organizationSettingsItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = location.pathname === item.href;
                 const hasChanges = hasCategoryChanges(item.href);

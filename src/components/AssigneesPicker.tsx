@@ -10,7 +10,6 @@ import { Plus, Search, X } from "lucide-react";
 import { useTeamManagement } from "@/hooks/useTeamManagement";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useProfile } from "@/contexts/ProfileContext";
-import { cn } from "@/lib/utils";
 
 interface AssigneesPickerProps {
   value: string[];
@@ -27,7 +26,6 @@ export function AssigneesPicker({ value, onChange, disabled }: AssigneesPickerPr
   
   // Debug logs
   console.log('AssigneesPicker - teamMembers:', teamMembers);
-  console.log('AssigneesPicker - teamMembers count:', teamMembers.length);
   console.log('AssigneesPicker - profile:', profile);
   console.log('AssigneesPicker - value:', value);
   
@@ -51,35 +49,16 @@ export function AssigneesPicker({ value, onChange, disabled }: AssigneesPickerPr
         name: currentUserName,
         email: "",
         avatar: profile?.profile_photo_url || "",
-        initials: currentUserName.split(' ').map(n => n[0]).join('').toUpperCase(),
-        isLoading: false
+        initials: currentUserName.split(' ').map(n => n[0]).join('').toUpperCase()
       };
     }
     
     const member = teamMembers.find(m => m.user_id === userId);
-    
-    // Member not found but still loading
-    if (!member && loading) {
-      return {
-        name: "Loading...",
-        email: "",
-        avatar: "",
-        initials: "...",
-        isLoading: true
-      };
-    }
-    
-    // Member not found and not loading - use fallback
-    const displayName = member?.full_name || member?.email?.split('@')[0] || `User ${userId.slice(0, 8)}`;
-    
     return {
-      name: displayName,
+      name: member?.full_name || "Unknown",
       email: member?.email || "",
       avatar: member?.profile_photo_url || "",
-      initials: displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2),
-      isLoading: false,
-      isGenerated: member?.is_generated_name,
-      isError: !member
+      initials: (member?.full_name || "U").split(' ').map(n => n[0]).join('').toUpperCase()
     };
   };
 
@@ -173,11 +152,8 @@ export function AssigneesPicker({ value, onChange, disabled }: AssigneesPickerPr
                   </Avatar>
                   <div className="flex-1 min-w-0">
                     <div className="font-medium text-sm truncate">
-                      {member.full_name || member.email?.split('@')[0] || `User ${member.user_id.slice(0, 8)}`}
+                      {member.full_name || "Unknown"}
                       {isCreator && " (You)"}
-                      {member.is_generated_name && (
-                        <span className="text-xs text-muted-foreground italic ml-1">(auto-generated)</span>
-                      )}
                     </div>
                     <div className="text-xs text-muted-foreground truncate">
                       {member.email || "No email"}
@@ -263,26 +239,15 @@ export function AssigneesPicker({ value, onChange, disabled }: AssigneesPickerPr
             <Badge
               key={userId}
               variant="secondary"
-              className={cn(
-                "flex items-center gap-2 px-2 py-1 h-auto",
-                assignee.isError && "border-destructive/50 bg-destructive/5"
-              )}
+              className="flex items-center gap-2 px-2 py-1 h-auto"
             >
               <Avatar className="h-4 w-4">
                 <AvatarImage src={assignee.avatar} />
-                <AvatarFallback className={cn(
-                  "text-xs",
-                  assignee.isError && "bg-destructive/20 text-destructive"
-                )}>
+                <AvatarFallback className="text-xs">
                   {assignee.initials}
                 </AvatarFallback>
               </Avatar>
-              <span className={cn(
-                "text-xs font-medium",
-                assignee.isGenerated && "italic opacity-75"
-              )}>
-                {assignee.name}
-              </span>
+              <span className="text-xs font-medium">{assignee.name}</span>
               {!isCreator && !disabled && (
                 <X
                   className="h-3 w-3 cursor-pointer hover:text-destructive"

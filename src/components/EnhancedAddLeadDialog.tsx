@@ -18,8 +18,6 @@ import { InlineAssigneesPicker } from "./InlineAssigneesPicker";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { NavigationGuardDialog } from "./settings/NavigationGuardDialog";
-import { usePermissions } from "@/hooks/usePermissions";
-import { ProtectedFeature } from "./ProtectedFeature";
 
 interface EnhancedAddLeadDialogProps {
   open: boolean;
@@ -41,7 +39,6 @@ export function EnhancedAddLeadDialog({
   const [loading, setLoading] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
   const [assignees, setAssignees] = useState<string[]>([]);
-  const { hasPermission } = usePermissions();
 
   // Create dynamic schema based on field definitions
   const schema = createDynamicLeadSchema(fieldDefinitions);
@@ -250,33 +247,27 @@ export function EnhancedAddLeadDialog({
         onDirtyClose={handleDirtyClose}
         footerActions={footerActions}
       >
-        <ProtectedFeature 
-          requiredPermissions={['manage_all_leads', 'edit_assigned_leads']}
-          title="Create Lead Access Denied"
-          description="You don't have permission to create leads."
-        >
-          <div className="space-y-1 mb-6">
-            <p className="text-sm text-muted-foreground">
-              Create a new lead and capture custom information using your configured fields.
-            </p>
-          </div>
+        <div className="space-y-1 mb-6">
+          <p className="text-sm text-muted-foreground">
+            Create a new lead and capture custom information using your configured fields.
+          </p>
+        </div>
 
-          <Form {...form}>
-            <DynamicLeadFormFields
-              fieldDefinitions={fieldDefinitions}
-              control={form.control}
-              visibleOnly={true}
+        <Form {...form}>
+          <DynamicLeadFormFields
+            fieldDefinitions={fieldDefinitions}
+            control={form.control}
+            visibleOnly={true}
+          />
+          
+          <div className="pt-4 border-t">
+            <InlineAssigneesPicker
+              value={assignees}
+              onChange={setAssignees}
+              disabled={loading}
             />
-            
-            <div className="pt-4 border-t">
-              <InlineAssigneesPicker
-                value={assignees}
-                onChange={setAssignees}
-                disabled={loading}
-              />
-            </div>
-          </Form>
-        </ProtectedFeature>
+          </div>
+        </Form>
       </AppSheetModal>
       
       <NavigationGuardDialog

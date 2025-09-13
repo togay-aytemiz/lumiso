@@ -9,8 +9,6 @@ import { Plus, Search, Edit, Trash2, Copy, MessageSquare } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { DeleteTemplateDialog } from "@/components/template-builder/DeleteTemplateDialog";
 import { useTemplateOperations } from "@/hooks/useTemplateOperations";
-import { usePermissions } from "@/hooks/usePermissions";
-import { PermissionDenied } from "@/components/PermissionDenied";
 import { LoadingSkeleton } from "@/components/ui/loading-skeleton";
 import { TemplateErrorBoundary } from "@/components/template-builder/TemplateErrorBoundary";
 import { Template } from "@/types/template";
@@ -18,7 +16,6 @@ import { Template } from "@/types/template";
 // Optimized Templates component with memoization and error handling
 const OptimizedTemplatesContent = React.memo(() => {
   const navigate = useNavigate();
-  const { hasPermission, loading: permissionsLoading } = usePermissions();
   const {
     loading,
     error,
@@ -28,21 +25,6 @@ const OptimizedTemplatesContent = React.memo(() => {
     deleteTemplate,
     duplicateTemplate,
   } = useTemplateOperations();
-
-  // Check permissions
-  const canViewTemplates = hasPermission("view_templates") || hasPermission("manage_templates");
-  const canManageTemplates = hasPermission("manage_templates");
-
-  // Show permission denied if user doesn't have view templates permission
-  if (!permissionsLoading && !canViewTemplates) {
-    return (
-      <PermissionDenied 
-        title="Templates Access Denied"
-        description="You need template permissions to access this page. Contact your administrator to grant you the required permissions."
-        requiredPermission="view_templates or manage_templates"
-      />
-    );
-  }
 
   const [deleteDialog, setDeleteDialog] = useState<{
     open: boolean;
@@ -170,8 +152,6 @@ const OptimizedTemplatesContent = React.memo(() => {
               e.stopPropagation();
               navigate(`/template-builder?id=${template.id}`);
             }}
-            disabled={!canManageTemplates}
-            title={!canManageTemplates ? "You don't have permission to edit templates" : "Edit template"}
           >
             <Edit className="h-4 w-4 mr-1" />
             Edit
@@ -183,8 +163,7 @@ const OptimizedTemplatesContent = React.memo(() => {
               e.stopPropagation();
               handleDuplicateTemplate(template);
             }}
-            disabled={!canManageTemplates}
-            title={!canManageTemplates ? "You don't have permission to duplicate templates" : "Duplicate template"}
+            title="Duplicate template"
           >
             <Copy className="h-4 w-4" />
           </Button>
@@ -195,16 +174,15 @@ const OptimizedTemplatesContent = React.memo(() => {
               e.stopPropagation();
               handleDeleteTemplate(template);
             }}
-            disabled={!canManageTemplates}
             className="text-destructive hover:text-destructive border-destructive/20 hover:bg-destructive/10"
-            title={!canManageTemplates ? "You don't have permission to delete templates" : "Delete template"}
+            title="Delete template"
           >
             <Trash2 className="h-4 w-4" />
           </Button>
         </div>
       )
     }
-  ], [handleDeleteTemplate, handleDuplicateTemplate, navigate, canManageTemplates]);
+  ], [handleDeleteTemplate, handleDuplicateTemplate, navigate]);
 
   const emptyState = useMemo(() => (
     <div className="text-center py-12">
@@ -218,7 +196,7 @@ const OptimizedTemplatesContent = React.memo(() => {
           : 'Create your first email template to get started with automated communications.'
         }
       </p>
-      {!searchTerm && canManageTemplates && (
+      {!searchTerm && (
         <Button onClick={() => navigate('/template-builder')}>
           <Plus className="h-4 w-4 mr-2" />
           Create Your First Template
@@ -257,7 +235,7 @@ const OptimizedTemplatesContent = React.memo(() => {
               className="pl-10"
             />
           </div>
-          <Button onClick={() => navigate('/template-builder')} className="flex items-center gap-2" disabled={!canManageTemplates}>
+          <Button onClick={() => navigate('/template-builder')} className="flex items-center gap-2">
             <Plus className="h-4 w-4" />
             New Template
           </Button>

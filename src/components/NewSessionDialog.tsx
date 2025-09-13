@@ -16,8 +16,6 @@ import { cn } from "@/lib/utils";
 import { useCalendarSync } from "@/hooks/useCalendarSync";
 import { useWorkflowTriggers } from "@/hooks/useWorkflowTriggers";
 import { useSessionReminderScheduling } from "@/hooks/useSessionReminderScheduling";
-import { usePermissions } from "@/hooks/usePermissions";
-import { ProtectedFeature } from "./ProtectedFeature";
 
 interface Lead {
   id: string;
@@ -42,7 +40,6 @@ const NewSessionDialog = ({ onSessionScheduled, children }: NewSessionDialogProp
   const { createSessionEvent } = useCalendarSync();
   const { triggerSessionScheduled } = useWorkflowTriggers();
   const { scheduleSessionReminders } = useSessionReminderScheduling();
-  const { hasPermission } = usePermissions();
   
   const [sessionData, setSessionData] = useState({
     session_date: "",
@@ -426,24 +423,14 @@ const NewSessionDialog = ({ onSessionScheduled, children }: NewSessionDialogProp
   return (
     <>
       {children ? (
-        <ProtectedFeature 
-          requiredPermissions={['manage_sessions', 'create_sessions']}
-          fallback={null}
-        >
-          <div onClick={() => setOpen(true)}>
-            {children}
-          </div>
-        </ProtectedFeature>
+        <div onClick={() => setOpen(true)}>
+          {children}
+        </div>
       ) : (
-        <ProtectedFeature 
-          requiredPermissions={['manage_sessions', 'create_sessions']}
-          fallback={null}
-        >
-          <Button size="sm" className="gap-2" onClick={() => setOpen(true)}>
-            <Plus className="h-4 w-4" />
-            Add
-          </Button>
-        </ProtectedFeature>
+        <Button size="sm" className="gap-2" onClick={() => setOpen(true)}>
+          <Plus className="h-4 w-4" />
+          Add
+        </Button>
       )}
 
       <AppSheetModal
@@ -455,12 +442,7 @@ const NewSessionDialog = ({ onSessionScheduled, children }: NewSessionDialogProp
         onDirtyClose={handleDirtyClose}
         footerActions={footerActions}
       >
-        <ProtectedFeature 
-          requiredPermissions={['manage_sessions', 'create_sessions']}
-          title="Session Management Access Denied"
-          description="You don't have permission to schedule sessions."
-        >
-          <div className="grid gap-4">
+        <div className="grid gap-4">
           {/* Lead Selection */}
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
@@ -711,9 +693,8 @@ const NewSessionDialog = ({ onSessionScheduled, children }: NewSessionDialogProp
                 rows={3}
               />
             </div>
-             </div>
-           </div>
-         </ProtectedFeature>
+          </div>
+        </div>
       </AppSheetModal>
     </>
   );

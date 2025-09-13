@@ -7,16 +7,14 @@ import { User, Calendar, DollarSign, Package } from 'lucide-react';
 interface Project {
   id: string;
   name: string;
-  description?: string;
-  lead?: { name: string; email: string };
-  project_type?: { id: string; name: string };
   status?: string;
-  session_count?: number;
-  completed_sessions?: number;
+  status_id?: string;
+  project_type?: { name: string };
+  lead?: { name: string; id: string };
   todo_count?: number;
   completed_todo_count?: number;
-  total_revenue?: number;
-  assignees?: string[];
+  session_count?: number;
+  revenue?: number;
   services?: Array<{ id: string; name: string }>;
 }
 
@@ -27,7 +25,6 @@ interface KanbanSettings {
   kanban_show_todo_progress: boolean;
   kanban_show_session_count: boolean;
   kanban_show_revenue?: boolean;
-  kanban_show_assignees: boolean;
   kanban_show_service_count?: boolean;
 }
 
@@ -94,10 +91,10 @@ export const ProfessionalKanbanCard: React.FC<ProfessionalKanbanCardProps> = ({
                 </div>
               )}
               
-              {kanbanSettings.kanban_show_revenue && project.total_revenue && (
+              {kanbanSettings.kanban_show_revenue && project.revenue && (
                 <div className="flex items-center gap-1.5">
                   <DollarSign className="h-3.5 w-3.5" />
-                  <span>${project.total_revenue.toLocaleString()}</span>
+                  <span>${project.revenue.toLocaleString()}</span>
                 </div>
               )}
 
@@ -108,13 +105,6 @@ export const ProfessionalKanbanCard: React.FC<ProfessionalKanbanCardProps> = ({
                 </div>
               )}
             </div>
-
-            {/* Right Side */}
-            {kanbanSettings.kanban_show_assignees && project.assignees && project.assignees.length > 0 && (
-              <div className="text-muted-foreground text-xs">
-                {project.assignees.length} assignee{project.assignees.length !== 1 ? 's' : ''}
-              </div>
-            )}
           </div>
         </div>
       </CardContent>

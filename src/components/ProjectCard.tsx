@@ -20,7 +20,6 @@ interface Project {
   created_at: string;
   updated_at: string;
   status_id?: string | null;
-  assignees?: string[];
 }
 
 interface ProjectCardProps {
@@ -70,18 +69,13 @@ export function ProjectCard({ project, onView, refreshTrigger, onQuickView }: Pr
           onClick={() => onQuickView ? onQuickView(project) : onView(project)}
         >
           <div className="flex-1 min-w-0 space-y-3">
-            {/* Title, Archived Badge, and Assignees */}
+            {/* Title and Archived Badge */}
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 min-w-0 flex-1">
                 <h3 className="font-bold text-lg truncate">{project.name}</h3>
                 {isArchived && <Badge variant="secondary" className="text-[10px] flex-shrink-0">Archived</Badge>}
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
-                {project.assignees && project.assignees.length > 0 && (
-                  <div className="text-muted-foreground text-xs">
-                    {project.assignees.length} assignee{project.assignees.length !== 1 ? 's' : ''}
-                  </div>
-                )}
                 <div className="md:hidden">
                   <ChevronRight className="h-5 w-5 text-muted-foreground" />
                 </div>

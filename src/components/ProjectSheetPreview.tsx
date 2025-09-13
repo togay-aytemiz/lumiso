@@ -203,12 +203,6 @@ export default function ProjectSheetPreview({
                   )}
                 </div>
               </div>
-
-              {project.assignees && project.assignees.length > 0 && (
-                <div className="text-muted-foreground text-xs">
-                  {project.assignees.length} assignee{project.assignees.length !== 1 ? 's' : ''}
-                </div>
-              )}
             </div>
           </CardContent>
         </Card>

@@ -43,9 +43,10 @@ export const useOrganizationSettings = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
-      // Get user's active organization ID using the function
-      const { data: organizationId, error: orgError } = await supabase.rpc('get_user_organization_id');
-      if (orgError || !organizationId) {
+      // Get user's active organization ID using utility function
+      const { getUserOrganizationId } = await import('@/lib/organizationUtils');
+      const organizationId = await getUserOrganizationId();
+      if (!organizationId) {
         setSettings(null);
         return;
       }
@@ -102,9 +103,10 @@ export const useOrganizationSettings = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
-      // Get user's active organization ID using the function
-      const { data: organizationId, error: orgError } = await supabase.rpc('get_user_organization_id');
-      if (orgError || !organizationId) {
+      // Get user's active organization ID using utility function
+      const { getUserOrganizationId } = await import('@/lib/organizationUtils');
+      const organizationId = await getUserOrganizationId();
+      if (!organizationId) {
         throw new Error('No active organization found');
       }
 
@@ -165,9 +167,10 @@ export const useOrganizationSettings = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
-      // Get user's active organization ID using the function
-      const { data: organizationId, error: orgError } = await supabase.rpc('get_user_organization_id');
-      if (orgError || !organizationId) {
+      // Get user's active organization ID using utility function
+      const { getUserOrganizationId } = await import('@/lib/organizationUtils');
+      const organizationId = await getUserOrganizationId();
+      if (!organizationId) {
         throw new Error('No active organization found');
       }
 

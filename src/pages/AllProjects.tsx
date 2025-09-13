@@ -748,7 +748,6 @@ const AllProjects = () => {
                               <TableHead className="whitespace-nowrap">Sessions</TableHead>
                               <TableHead className="whitespace-nowrap">Progress</TableHead>
                               <TableHead className="whitespace-nowrap">Services</TableHead>
-                              <TableHead className="whitespace-nowrap">Assignees</TableHead>
                             </>
                            ) : (
                             <>
@@ -829,15 +828,11 @@ const AllProjects = () => {
                                    <TableCell>
                                      {getProgressBadge(project.completed_todo_count || 0, project.todo_count || 0)}
                                    </TableCell>
-                                    <TableCell>
-                                      {renderServicesChips(project.services || [])}
-                                    </TableCell>
                                      <TableCell>
-                                       {/* Single photographer mode - no assignees */}
-                                       <span className="text-muted-foreground text-sm">-</span>
+                                       {renderServicesChips(project.services || [])}
                                      </TableCell>
-                                  </>
-                                ) : (
+                                   </>
+                                 ) : (
                                  <>
                                    <TableCell>
                                      <span className="font-medium text-green-600">
@@ -863,7 +858,7 @@ const AllProjects = () => {
                           ))
                         ) : (
                            <TableRow>
-                             <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                             <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                               No projects found. Create your first project to get started!
                             </TableCell>
                           </TableRow>

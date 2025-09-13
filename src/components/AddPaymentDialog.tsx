@@ -10,6 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { CalendarIcon, Plus } from "lucide-react";
 import { format } from "date-fns";
 import { cn, getUserLocale } from "@/lib/utils";
+import { getUserOrganizationId } from "@/lib/organizationUtils";
 import { useToast } from "@/hooks/use-toast";
 import ReactCalendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
@@ -51,13 +52,8 @@ export function AddPaymentDialog({ projectId, onPaymentAdded }: AddPaymentDialog
       if (!user) throw new Error('User not authenticated');
 
       // Get user's active organization
-      const { data: userSettings } = await supabase
-        .from('user_settings')
-        .select('active_organization_id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (!userSettings?.active_organization_id) {
+      const organizationId = await getUserOrganizationId();
+      if (!organizationId) {
         throw new Error("Organization required");
       }
 
@@ -66,7 +62,7 @@ export function AddPaymentDialog({ projectId, onPaymentAdded }: AddPaymentDialog
         .insert({
           project_id: projectId,
           user_id: user.id,
-          organization_id: userSettings.active_organization_id,
+          organization_id: organizationId,
           amount: parseFloat(amount),
           description: description.trim() || null,
           status,

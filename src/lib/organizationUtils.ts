@@ -18,38 +18,87 @@ export async function getUserOrganizationId(): Promise<string | null> {
       return null;
     }
 
-    // First try to get the active organization from user settings
-    let { data: userSettings, error: settingsError } = await supabase
-      .from('user_settings')
-      .select('active_organization_id')
-      .eq('user_id', user.id)
-      .single();
-
-    if (!settingsError && userSettings?.active_organization_id) {
-      cachedOrganizationId = userSettings.active_organization_id;
-      cacheExpiry = Date.now() + CACHE_DURATION;
-      console.log('Found organization ID from user settings:', cachedOrganizationId);
-      return cachedOrganizationId;
-    }
-
-    // Fallback to first active membership
-    const { data: membership, error: membershipError } = await supabase
-      .from('organization_members')
-      .select('organization_id')
-      .eq('user_id', user.id)
-      .eq('status', 'active')
-      .order('joined_at', { ascending: true })
+    // For single photographer: find organization owned by this user
+    const { data: organization, error: orgError } = await supabase
+      .from('organizations')
+      .select('id')
+      .eq('owner_id', user.id)
       .limit(1)
       .single();
 
-    if (!membershipError && membership?.organization_id) {
-      cachedOrganizationId = membership.organization_id;
+    if (!orgError && organization?.id) {
+      cachedOrganizationId = organization.id;
       cacheExpiry = Date.now() + CACHE_DURATION;
-      console.log('Found organization ID from membership:', cachedOrganizationId);
+      console.log('Found organization ID for single user:', cachedOrganizationId);
       return cachedOrganizationId;
     }
 
-    console.warn('No organization found for user:', user.id);
+    // If no organization exists, create one for the single photographer
+    if (orgError?.code === 'PGRST116') { // No rows returned
+      console.log('Creating organization for single photographer:', user.id);
+      const { data: newOrg, error: createError } = await supabase
+        .from('organizations')
+        .insert({
+          name: 'My Photography Business',
+          owner_id: user.id
+        })
+        .select('id')
+        .single();
+
+      if (createError) {
+        console.error('Error creating organization:', createError);
+        return null;
+      }
+
+      // Initialize organization settings and default data
+      if (newOrg?.id) {
+        try {
+          // Create organization settings
+          await supabase.rpc('ensure_organization_settings', { 
+            org_id: newOrg.id 
+          });
+
+          // Create default lead field definitions
+          await supabase.rpc('ensure_default_lead_field_definitions', { 
+            org_id: newOrg.id, 
+            user_uuid: user.id 
+          });
+
+          // Create default lead statuses
+          await supabase.rpc('ensure_default_lead_statuses_for_org', { 
+            user_uuid: user.id, 
+            org_id: newOrg.id 
+          });
+
+          // Create default project statuses
+          await supabase.rpc('ensure_default_project_statuses_for_org', { 
+            user_uuid: user.id, 
+            org_id: newOrg.id 
+          });
+
+          // Create default session statuses
+          await supabase.rpc('ensure_default_session_statuses', { 
+            user_uuid: user.id 
+          });
+
+          // Create default project types
+          await supabase.rpc('ensure_default_project_types_for_org', { 
+            user_uuid: user.id, 
+            org_id: newOrg.id 
+          });
+
+          console.log('Initialized default data for new organization');
+        } catch (initError) {
+          console.warn('Some default data initialization failed:', initError);
+        }
+
+        cachedOrganizationId = newOrg.id;
+        cacheExpiry = Date.now() + CACHE_DURATION;
+        return newOrg.id;
+      }
+    }
+
+    console.error('Failed to find or create organization for user:', user.id, orgError);
     return null;
   } catch (error) {
     console.error('Error getting user organization ID:', error);

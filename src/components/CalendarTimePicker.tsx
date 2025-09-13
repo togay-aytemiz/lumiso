@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { TimeSlotPicker } from "@/components/TimeSlotPicker";
 import { getUserLocale, formatLongDate } from "@/lib/utils";
+import { getUserOrganizationId } from "@/lib/organizationUtils";
 import { format } from "date-fns";
 import ReactCalendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
@@ -34,13 +35,8 @@ export function CalendarTimePicker({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data: userSettings } = await supabase
-        .from('user_settings')
-        .select('active_organization_id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (!userSettings?.active_organization_id) return;
+      const organizationId = await getUserOrganizationId();
+      if (!organizationId) return;
 
       const start = new Date(month.getFullYear(), month.getMonth(), 1);
       const end = new Date(month.getFullYear(), month.getMonth() + 1, 0);
@@ -57,7 +53,7 @@ export function CalendarTimePicker({
           projects:project_id (name),
           status
         `)
-        .eq('organization_id', userSettings.active_organization_id)
+        .eq('organization_id', organizationId)
         .eq('status', 'planned')
         .gte('session_date', format(start, 'yyyy-MM-dd'))
         .lte('session_date', format(end, 'yyyy-MM-dd'));

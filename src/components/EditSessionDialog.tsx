@@ -13,6 +13,7 @@ import { ZodError } from "zod";
 import { useCalendarSync } from "@/hooks/useCalendarSync";
 import { useWorkflowTriggers } from "@/hooks/useWorkflowTriggers";
 import { useSessionReminderScheduling } from "@/hooks/useSessionReminderScheduling";
+import { getUserOrganizationId } from "@/lib/organizationUtils";
 
 interface EditSessionDialogProps {
   sessionId: string;
@@ -49,21 +50,14 @@ const EditSessionDialog = ({ sessionId, leadId, currentDate, currentTime, curren
       if (!user) return;
 
       // Get user's active organization
-      const { data: userSettings } = await supabase
-        .from('user_settings')
-        .select('active_organization_id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (!userSettings?.active_organization_id) {
-        throw new Error("Organization required");
-      }
+      const organizationId = await getUserOrganizationId();
+      if (!organizationId) return;
 
       const { data: projectsData, error } = await supabase
         .from('projects')
         .select('id, name')
         .eq('lead_id', leadId)
-        .eq('organization_id', userSettings.active_organization_id)
+        .eq('organization_id', organizationId)
         .order('name', { ascending: true });
 
       if (error) throw error;

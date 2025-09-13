@@ -15,7 +15,7 @@ import { ZodError } from "zod";
 import { useOrganizationQuickSettings } from "@/hooks/useOrganizationQuickSettings";
 // Assignee components removed - single user organization
 import { useProfile } from "@/contexts/ProfileContext";
-import { usePermissions } from "@/hooks/usePermissions";
+// Permissions removed for single photographer mode
 import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { NavigationGuardDialog } from "./settings/NavigationGuardDialog";
 
@@ -39,7 +39,7 @@ const AddLeadDialog = ({ onLeadAdded, open, onOpenChange }: AddLeadDialogProps) 
     // Assignees removed - single user organization
   });
   const { profile } = useProfile();
-  const { hasPermission } = usePermissions();
+  // Permissions removed for single photographer mode - always allow
 
   useEffect(() => {
     fetchLeadStatuses();

@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AddServiceDialog, EditServiceDialog } from "./settings/ServiceDialogs";
 import SettingsSection from "./SettingsSection";
-import { usePermissions } from "@/hooks/usePermissions";
+// Permissions removed for single photographer mode
 import { useServices } from "@/hooks/useOrganizationData";
 import { useOrganization } from "@/contexts/OrganizationContext";
 
@@ -28,7 +28,7 @@ const ServicesSection = () => {
   const [newCategoriesAdded, setNewCategoriesAdded] = useState<string[]>([]);
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { hasPermission } = usePermissions();
+  // Permissions removed for single photographer mode - always allow
   const { activeOrganizationId } = useOrganization();
 
   // Use cached services data
@@ -126,12 +126,12 @@ const ServicesSection = () => {
     );
   }
 
-  // Don't render if user doesn't have view permission
-  if (!hasPermission('view_services')) {
-    return null;
-  }
+  // Always show services in single photographer mode
+  // if (!hasPermission('view_services')) {
+  //   return null;
+  // }
 
-  const canManageServices = hasPermission('manage_services');
+  const canManageServices = true; // Always allow in single photographer mode
 
   return (
     <>

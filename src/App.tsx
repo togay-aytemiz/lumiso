@@ -32,9 +32,7 @@ import ContractsSettings from "./pages/settings/Contracts";
 import BillingSettings from "./pages/settings/Billing";
 import DangerZoneSettings from "./pages/settings/DangerZone";
 import NotFound from "./pages/NotFound";
-import AcceptInvite from "./pages/AcceptInvite";
-import AcceptInvitation from "./pages/AcceptInvitation";
-import InvitationSignup from "./pages/InvitationSignup";
+// Team invitation pages removed for single photographer mode
 import ProtectedRoute from "./components/ProtectedRoute";
 import ErrorBoundary from "./components/ErrorBoundary";
 import Workflows from "./pages/Workflows";
@@ -54,9 +52,7 @@ const App = () => (
             <BrowserRouter>
           <Routes>
             <Route path="/auth" element={<Auth />} />
-            <Route path="/accept-invite" element={<AcceptInvite />} />
-            <Route path="/accept-invitation" element={<InvitationSignup />} />
-            <Route path="/invitation-signup" element={<InvitationSignup />} />
+            {/* Team invitation routes removed for single photographer mode */}
             <Route path="/" element={<ProtectedRoute />}>
               <Route index element={<Index />} />
               <Route path="getting-started" element={<GettingStarted />} />

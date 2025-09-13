@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import SettingsSection from "./SettingsSection";
 import { FormLoadingSkeleton } from "@/components/ui/loading-presets";
 import { AddPackageDialog, EditPackageDialog } from "./settings/PackageDialogs";
-import { usePermissions } from "@/hooks/usePermissions";
+// Permissions removed for single photographer mode
 import { usePackages, useServices } from "@/hooks/useOrganizationData";
 import { useQueryClient } from "@tanstack/react-query";
 import { useOrganization } from "@/contexts/OrganizationContext";
@@ -32,7 +32,7 @@ const PackagesSection = () => {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [packageToDelete, setPackageToDelete] = useState<Package | null>(null);
   const { toast } = useToast();
-  const { hasPermission } = usePermissions();
+  // Permissions removed for single photographer mode - always allow
   const { activeOrganizationId } = useOrganization();
   const queryClient = useQueryClient();
   
@@ -131,12 +131,12 @@ const PackagesSection = () => {
     );
   }
 
-  // Don't render if user doesn't have view permission
-  if (!hasPermission('view_packages')) {
-    return null;
-  }
+  // Always show packages in single photographer mode
+  // if (!hasPermission('view_packages')) {
+  //   return null;
+  // }
 
-  const canManagePackages = hasPermission('manage_packages');
+  const canManagePackages = true; // Always allow in single photographer mode
 
   return (
     <>

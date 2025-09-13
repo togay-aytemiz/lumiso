@@ -19,7 +19,7 @@ import { InlineNumberEditor } from "@/components/fields/inline-editors/InlineNum
 import { InlineDateEditor } from "@/components/fields/inline-editors/InlineDateEditor";
 import { InlineCheckboxEditor } from "@/components/fields/inline-editors/InlineCheckboxEditor";
 import { EnhancedEditLeadDialog } from "./EnhancedEditLeadDialog";
-import { usePermissions } from "@/hooks/usePermissions";
+// Permissions removed for single photographer mode
 import { validateFieldValue } from "@/lib/leadFieldValidation";
 
 interface Lead {
@@ -82,7 +82,7 @@ export function UnifiedClientDetails({
 }: UnifiedClientDetailsProps) {
   const { fieldDefinitions, loading: fieldsLoading } = useLeadFieldDefinitions();
   const { fieldValues, loading: valuesLoading, refetch: refetchFieldValues } = useLeadFieldValues(lead.id);
-  const { hasPermission } = usePermissions();
+  // Permissions removed for single photographer mode - always allow
   const [editOpen, setEditOpen] = useState(false);
   const [editingField, setEditingField] = useState<string | null>(null);
   const navigate = useNavigate();

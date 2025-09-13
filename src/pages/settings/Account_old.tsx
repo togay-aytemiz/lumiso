@@ -18,7 +18,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Upload, ChevronDown, Loader2, X, Copy, Check } from "lucide-react";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useWorkingHours } from "@/hooks/useWorkingHours";
-import { useTeamManagement } from "@/hooks/useTeamManagement";
+// Team management removed for single photographer mode
 import { useToast } from "@/hooks/use-toast";
 import { useSettingsCategorySection } from "@/hooks/useSettingsCategorySection";
 import { trimAndNormalizeSpaces, createTrimmedBlurHandler } from "@/lib/inputUtils";
@@ -32,16 +32,15 @@ export default function Account() {
   
   const { profile, loading: profileLoading, uploading, updateProfile, uploadProfilePhoto, deleteProfilePhoto } = useProfile();
   const { workingHours, loading: workingHoursLoading, updateWorkingHour } = useWorkingHours();
-  const { 
-    teamMembers, 
-    invitations, 
-    loading: teamLoading, 
-    currentUserRole,
-    sendInvitation, 
-    cancelInvitation, 
-    removeMember, 
-    updateMemberRole 
-  } = useTeamManagement();
+  // Team management removed for single photographer mode - provide default values
+  const teamMembers = [];
+  const invitations = [];
+  const teamLoading = false;
+  const currentUserRole = 'Owner';
+  const sendInvitation = async () => ({ success: false, error: 'Team management disabled' });
+  const cancelInvitation = async () => ({ success: false, error: 'Team management disabled' });
+  const removeMember = async () => ({ success: false, error: 'Team management disabled' });
+  const updateMemberRole = async () => ({ success: false, error: 'Team management disabled' });
   const { toast } = useToast();
 
   // Profile section state
@@ -145,7 +144,8 @@ export default function Account() {
   const handleSendInvitation = async () => {
     if (!inviteEmail.trim()) return;
     
-    const result = await sendInvitation(inviteEmail, "Member");
+    // Team invitations disabled in single photographer mode
+    const result = await sendInvitation();
     if (result.success) {
       setInviteEmail("");
     }
@@ -596,10 +596,10 @@ export default function Account() {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="start">
-                                <DropdownMenuItem onClick={() => updateMemberRole(member.id, "Owner")}>
+                                <DropdownMenuItem onClick={() => updateMemberRole()}>
                                   Owner
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => updateMemberRole(member.id, "Member")}>
+                                <DropdownMenuItem onClick={() => updateMemberRole()}>
                                   Member
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
@@ -628,7 +628,7 @@ export default function Account() {
                               variant="outline" 
                               size="sm" 
                               className="text-destructive border-destructive/20 hover:bg-destructive/10"
-                              onClick={() => removeMember(member.id)}
+                              onClick={() => removeMember()}
                             >
                               Remove
                             </Button>
@@ -670,7 +670,7 @@ export default function Account() {
                             variant="outline" 
                             size="sm" 
                             className="text-muted-foreground"
-                            onClick={() => cancelInvitation(invite.id)}
+                            onClick={() => cancelInvitation()}
                           >
                             Cancel
                           </Button>

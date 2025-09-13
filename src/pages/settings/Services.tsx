@@ -5,7 +5,7 @@ import SettingsHeader from "@/components/settings/SettingsHeader";
 import { settingsHelpContent } from "@/lib/settingsHelpContent";
 import PackagesSection from "@/components/PackagesSection";
 import ServicesSection from "@/components/ServicesSection";
-import { usePermissions } from "@/hooks/usePermissions";
+// Permissions removed for single photographer mode
 import { useOnboardingV2 } from "@/hooks/useOnboardingV2";
 import { OnboardingTutorial, TutorialStep } from "@/components/shared/OnboardingTutorial";
 import { Package, DollarSign, Target } from "lucide-react";
@@ -77,7 +77,8 @@ const packagesSetupSteps: TutorialStep[] = [
 ];
 
 export default function Services() {
-  const { hasPermission, loading } = usePermissions();
+  // Permissions removed for single photographer mode - always allow
+  // const { hasPermission, loading } = usePermissions();
   const { currentStep, completeCurrentStep } = useOnboardingV2();
   const [showTutorial, setShowTutorial] = useState(false);
   const [currentTutorialStep, setCurrentTutorialStep] = useState(0);
@@ -118,29 +119,31 @@ export default function Services() {
     console.log('❌ Packages tutorial exited');
   };
   
-  if (loading) {
-    return (
-      <SettingsPageWrapper>
-        <SettingsLoadingSkeleton rows={3} />
-      </SettingsPageWrapper>
-    );
-  }
+  // Permissions removed for single photographer mode - always allow
+  // if (loading) {
+  //   return (
+  //     <SettingsPageWrapper>
+  //       <SettingsLoadingSkeleton rows={3} />
+  //     </SettingsPageWrapper>
+  //   );
+  // }
   
+  // Always show all sections in single photographer mode
   // Show page if user has permission to view packages or services
-  const canViewServices = hasPermission('view_services');
-  const canViewPackages = hasPermission('view_packages');
+  // const canViewServices = hasPermission('view_services');
+  // const canViewPackages = hasPermission('view_packages');
   
-  const hasAnyPermission = canViewServices || canViewPackages;
+  // const hasAnyPermission = canViewServices || canViewPackages;
   
-  if (!hasAnyPermission) {
-    return (
-      <SettingsPageWrapper>
-        <div className="text-center py-8">
-          <p className="text-muted-foreground">You don't have permission to view this section.</p>
-        </div>
-      </SettingsPageWrapper>
-    );
-  }
+  // if (!hasAnyPermission) {
+  //   return (
+  //     <SettingsPageWrapper>
+  //       <div className="text-center py-8">
+  //         <p className="text-muted-foreground">You don't have permission to view this section.</p>
+  //       </div>
+  //     </SettingsPageWrapper>
+  //   );
+  // }
   
   return (
     <>
@@ -152,8 +155,9 @@ export default function Services() {
         />
         
         <div className="space-y-8">
-          {canViewPackages && <PackagesSection />}
-          {canViewServices && <ServicesSection />}
+          {/* Always show all sections in single photographer mode */}
+          <PackagesSection />
+          <ServicesSection />
         </div>
       </SettingsPageWrapper>
 

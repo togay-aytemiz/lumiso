@@ -27,7 +27,7 @@ import { formatDate, cn } from "@/lib/utils";
 import { useOrganizationQuickSettings } from "@/hooks/useOrganizationQuickSettings";
 import EnhancedSessionsSection from "@/components/EnhancedSessionsSection";
 import { useLeadStatusActions } from "@/hooks/useLeadStatusActions";
-import { usePermissions } from "@/hooks/usePermissions";
+// Permissions removed for single photographer mode
 import { OnboardingTutorial, TutorialStep } from "@/components/shared/OnboardingTutorial";
 import { useOnboardingV2 } from "@/hooks/useOnboardingV2";
 import { DetailPageLoadingSkeleton } from "@/components/ui/loading-presets";
@@ -126,11 +126,12 @@ const LeadDetail = () => {
       setActivityRefreshKey(prev => prev + 1);
     }
   });
-  const {
-    hasPermission,
-    canEditLead
-  } = usePermissions();
-  const [userCanEdit, setUserCanEdit] = useState(false);
+  // Permissions removed for single photographer mode - always allow
+  // const {
+  //   hasPermission,
+  //   canEditLead
+  // } = usePermissions();
+  const [userCanEdit, setUserCanEdit] = useState(true); // Always allow editing in single photographer mode
 
   const {
     currentStep,
@@ -413,12 +414,13 @@ const LeadDetail = () => {
   useEffect(() => {
     const checkEditPermissions = async () => {
       if (lead) {
-        const canEdit = await canEditLead(lead.user_id, lead.assignees);
-        setUserCanEdit(canEdit);
+        // Always allow editing in single photographer mode
+        // const canEdit = await canEditLead(lead.user_id, lead.assignees);
+        setUserCanEdit(true);
       }
     };
     checkEditPermissions();
-  }, [lead, canEditLead]);
+  }, [lead]); // Removed canEditLead dependency
 
   // UI state for Lead Information card
   const [editOpen, setEditOpen] = useState(false);
@@ -847,7 +849,8 @@ const LeadDetail = () => {
           <div className="flex-shrink-0">
             {/* Header Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-              {hasPermission('create_sessions') && <ScheduleSessionDialog leadId={lead.id} leadName={lead.name} onSessionScheduled={handleSessionScheduled} disabled={sessions.some(s => s.status === 'planned')} disabledTooltip="A planned session already exists." />}
+              {/* Always allow session creation in single photographer mode */}
+              {true && <ScheduleSessionDialog leadId={lead.id} leadName={lead.name} onSessionScheduled={handleSessionScheduled} disabled={sessions.some(s => s.status === 'planned')} disabledTooltip="A planned session already exists." />}
 
               {!settingsLoading && userSettings.show_quick_status_buttons && completedStatus && formData.status !== completedStatus.name && <Button onClick={handleMarkAsCompleted} disabled={isUpdating} className="bg-green-600 hover:bg-green-700 text-white h-10 w-full sm:w-auto" size="sm">
                   <CheckCircle className="h-4 w-4 mr-2" />
@@ -880,7 +883,8 @@ const LeadDetail = () => {
             
             {/* Header Action Buttons - Desktop: stays in place */}
             <div className="flex items-center gap-3 flex-shrink-0">
-              {hasPermission('create_sessions') && <ScheduleSessionDialog leadId={lead.id} leadName={lead.name} onSessionScheduled={handleSessionScheduled} disabled={sessions.some(s => s.status === 'planned')} disabledTooltip="A planned session already exists." />}
+              {/* Always allow session creation in single photographer mode */}
+              {true && <ScheduleSessionDialog leadId={lead.id} leadName={lead.name} onSessionScheduled={handleSessionScheduled} disabled={sessions.some(s => s.status === 'planned')} disabledTooltip="A planned session already exists." />}
 
               {!settingsLoading && userSettings.show_quick_status_buttons && completedStatus && formData.status !== completedStatus.name && <Button onClick={handleMarkAsCompleted} disabled={isUpdating} className="bg-green-600 hover:bg-green-700 text-white h-10" size="sm">
                   <CheckCircle className="h-4 w-4 mr-2" />
@@ -925,7 +929,8 @@ const LeadDetail = () => {
               setActivityRefreshKey(prev => prev + 1);
             }} />
 
-          {hasPermission('delete_leads') && <div className="border border-destructive/20 bg-destructive/5 rounded-md p-4 max-w-full text-center">
+          {/* Always allow delete in single photographer mode */}
+          {true && <div className="border border-destructive/20 bg-destructive/5 rounded-md p-4 max-w-full text-center">
               <div className="space-y-3">
                 <Button variant="outline" onClick={() => setShowDeleteDialog(true)} className="w-full max-w-xs border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground">
                   Delete Lead

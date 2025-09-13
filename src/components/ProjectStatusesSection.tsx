@@ -17,7 +17,7 @@ import { useOrganization } from "@/contexts/OrganizationContext";
 import { cn } from "@/lib/utils";
 import SettingsSection from "./SettingsSection";
 import { FormLoadingSkeleton } from "@/components/ui/loading-presets";
-import { usePermissions } from "@/hooks/usePermissions";
+// Permissions removed for single photographer mode
 
 const projectStatusSchema = z.object({
   name: z.string().min(1, "Status name is required").max(50, "Status name must be less than 50 characters"),
@@ -61,7 +61,7 @@ const ProjectStatusesSection = () => {
   const { toast } = useToast();
   const { activeOrganizationId } = useOrganization();
   const { data: statuses = [], isLoading, refetch } = useProjectStatuses();
-  const { hasPermission } = usePermissions();
+  // Permissions removed for single photographer mode - always allow
 
   // Check for lifecycle completeness and show warnings
   useEffect(() => {
@@ -459,12 +459,12 @@ const ProjectStatusesSection = () => {
     );
   }
 
-  // Don't render if user doesn't have view permission
-  if (!hasPermission('view_project_statuses')) {
-    return null;
-  }
+  // Always show project statuses in single photographer mode
+  // if (!hasPermission('view_project_statuses')) {
+  //   return null;
+  // }
 
-  const canManageProjectStatuses = hasPermission('manage_project_statuses');
+  const canManageProjectStatuses = true; // Always allow in single photographer mode
 
   return (
     <>

@@ -59,7 +59,44 @@ export function useLeadTableColumns() {
         }
 
         if (prefs?.column_config) {
-          setColumnPreferences((prefs.column_config as any) as ColumnConfig[]);
+          const rawPrefs = (prefs.column_config as any) as ColumnConfig[];
+          // Sanitize preferences: remove deprecated/unknown columns like 'assignees'
+          const allowedKeys = new Set<string>([
+            'name', 'status', 'phone', 'email', 'updated_at',
+            ...(((fields || []) as LeadFieldDefinition[]).map(f => f.field_key))
+          ]);
+          const sanitized = rawPrefs
+            .filter(pref => pref && typeof pref.key === 'string' && allowedKeys.has(pref.key) && pref.key !== 'assignees')
+            .map((pref, index) => ({
+              ...pref,
+              order: typeof pref.order === 'number' ? pref.order : index + 1,
+              visible: !!pref.visible,
+            }));
+
+          if (sanitized.length === 0) {
+            const defaultPrefs = generateDefaultColumnPreferences((fields || []) as LeadFieldDefinition[]);
+            setColumnPreferences(defaultPrefs);
+          } else {
+            setColumnPreferences(sanitized);
+            // Persist back if changed so old users stop seeing removed columns
+            const changed = sanitized.length !== rawPrefs.length || sanitized.some((p, i) => p.key !== rawPrefs[i]?.key);
+            if (changed) {
+              try {
+                const { data: user } = await supabase.auth.getUser();
+                if (user.user?.id) {
+                  await supabase
+                    .from('user_column_preferences')
+                    .upsert({
+                      user_id: user.user.id,
+                      table_name: 'leads',
+                      column_config: sanitized as any,
+                    }, { onConflict: 'user_id,table_name' });
+                }
+              } catch (e) {
+                console.error('Error persisting sanitized preferences:', e);
+              }
+            }
+          }
         } else {
           // Set default preferences if none exist
           const defaultPrefs = generateDefaultColumnPreferences((fields || []) as LeadFieldDefinition[]);

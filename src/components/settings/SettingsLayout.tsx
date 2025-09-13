@@ -26,7 +26,6 @@ const personalSettingsItems = [
 
 const organizationSettingsItems = [
   { title: "General", href: "/settings/general", icon: Settings, testId: "general-section" },
-  { title: "Team Management", href: "/settings/team", icon: Users, testId: "team-section" },
   { title: "Client Messaging", href: "/settings/client-messaging", icon: MessageSquare, testId: "client-messaging-section" },
   { title: "Projects & Sessions", href: "/settings/projects", icon: FolderOpen, testId: "projects-section" },
   { title: "Lead Management", href: "/settings/leads", icon: UserCheck, testId: "leads-section" },

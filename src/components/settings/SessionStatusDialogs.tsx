@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { getUserOrganizationId } from "@/lib/organizationUtils";
 import { AppSheetModal } from "@/components/ui/app-sheet-modal";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -54,13 +55,8 @@ export function AddSessionStatusDialog({ open, onOpenChange, onStatusAdded }: Ad
       if (!user) throw new Error('User not authenticated');
 
       // Get user's active organization
-      const { data: userSettings } = await supabase
-        .from('user_settings')
-        .select('active_organization_id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (!userSettings?.active_organization_id) {
+      const organizationId = await getUserOrganizationId();
+      if (!organizationId) {
         throw new Error("Organization required");
       }
 
@@ -68,7 +64,7 @@ export function AddSessionStatusDialog({ open, onOpenChange, onStatusAdded }: Ad
       const { data: existingStatuses } = await supabase
         .from('session_statuses')
         .select('sort_order')
-        .eq('organization_id', userSettings.active_organization_id)
+        .eq('organization_id', organizationId)
         .order('sort_order', { ascending: false })
         .limit(1);
 
@@ -78,7 +74,7 @@ export function AddSessionStatusDialog({ open, onOpenChange, onStatusAdded }: Ad
         .from('session_statuses')
         .insert({
           user_id: user.id,
-          organization_id: userSettings.active_organization_id,
+          organization_id: organizationId,
           name: formData.name.trim(),
           color: formData.color,
           lifecycle: formData.lifecycle,

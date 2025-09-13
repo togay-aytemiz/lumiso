@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { getUserOrganizationId } from "@/lib/organizationUtils";
 import { AppSheetModal } from "@/components/ui/app-sheet-modal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,20 +41,15 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded }: AddServ
         if (!user) return;
 
         // Get user's active organization
-        const { data: userSettings } = await supabase
-          .from('user_settings')
-          .select('active_organization_id')
-          .eq('user_id', user.id)
-          .single();
-
-        if (!userSettings?.active_organization_id) {
+        const organizationId = await getUserOrganizationId();
+        if (!organizationId) {
           return;
         }
 
         const { data, error } = await supabase
           .from('services')
           .select('category')
-          .eq('organization_id', userSettings.active_organization_id)
+          .eq('organization_id', organizationId)
           .not('category', 'is', null);
 
         if (error) throw error;
@@ -98,13 +94,8 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded }: AddServ
       if (!user) throw new Error('User not authenticated');
 
       // Get user's active organization
-      const { data: userSettings } = await supabase
-        .from('user_settings')
-        .select('active_organization_id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (!userSettings?.active_organization_id) {
+      const organizationId = await getUserOrganizationId();
+      if (!organizationId) {
         throw new Error("Organization required");
       }
 
@@ -112,7 +103,7 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded }: AddServ
         .from('services')
         .insert({
           user_id: user.id,
-          organization_id: userSettings.active_organization_id,
+          organization_id: organizationId,
           name: formData.name.trim(),
           description: formData.description.trim() || null,
           category: formData.category.trim() || null,

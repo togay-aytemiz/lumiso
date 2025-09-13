@@ -11,6 +11,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { X, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { getUserOrganizationId } from "@/lib/organizationUtils";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -289,21 +290,16 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return [];
 
-      // Get user's active organization
-      const { data: userSettings } = await supabase
-        .from('user_settings')
-        .select('active_organization_id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (!userSettings?.active_organization_id) {
+      // Get user's active organization  
+      const organizationId = await getUserOrganizationId();
+      if (!organizationId) {
         return [];
       }
 
       const { data, error } = await supabase
         .from('project_types')
         .select('*')
-        .eq('organization_id', userSettings.active_organization_id)
+        .eq('organization_id', organizationId)
         .order('name', { ascending: true });
       
       if (error) throw error;
@@ -318,21 +314,16 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return [];
 
-      // Get user's active organization
-      const { data: userSettings } = await supabase
-        .from('user_settings')
-        .select('active_organization_id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (!userSettings?.active_organization_id) {
+      // Get user's active organization  
+      const organizationId = await getUserOrganizationId();
+      if (!organizationId) {
         return [];
       }
 
       const { data, error } = await supabase
         .from('services')
         .select('*')
-        .eq('organization_id', userSettings.active_organization_id)
+        .eq('organization_id', organizationId)
         .order('name', { ascending: true });
       
       if (error) throw error;
@@ -403,13 +394,8 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
       const finalDuration = packageData.duration === "Custom" ? packageData.customDuration : packageData.duration;
 
       // Get user's active organization
-      const { data: userSettings } = await supabase
-        .from('user_settings')
-        .select('active_organization_id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (!userSettings?.active_organization_id) {
+      const organizationId = await getUserOrganizationId();
+      if (!organizationId) {
         throw new Error("Organization required");
       }
 
@@ -417,7 +403,7 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
         .from('packages')
         .insert({
           user_id: user.id,
-          organization_id: userSettings.active_organization_id,
+          organization_id: organizationId,
           name: packageData.name.trim(),
           description: packageData.description.trim() || null,
           price: Number(packageData.price),

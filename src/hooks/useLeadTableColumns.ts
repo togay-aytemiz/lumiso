@@ -184,15 +184,9 @@ export function useLeadTableColumns() {
           header: 'Assignees',
           sortable: false,
           render: (lead) => (
-            lead.assignees && lead.assignees.length > 0 
-              ? React.createElement(AssigneeAvatars, {
-                  assigneeIds: lead.assignees,
-                  maxVisible: 3,
-                  size: "sm"
-                })
-              : React.createElement('span', { 
-                  className: "text-muted-foreground text-sm" 
-                }, '-')
+            React.createElement('span', { 
+              className: "text-muted-foreground text-sm" 
+            }, '-')
           ),
         };
       }

@@ -391,16 +391,14 @@ export function LeadActivitySection({
           <h3 className="text-lg font-semibold">
             Activities & History
           </h3>
-          <Tabs defaultValue="activity" className="w-auto">
-            <TabsList className="inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground">
-              <TabsTrigger value="activity">Activity</TabsTrigger>
-              <TabsTrigger value="history">History</TabsTrigger>
-            </TabsList>
-          </Tabs>
         </div>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="activity" className="w-full">
+          <TabsList className="inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground mb-6">
+            <TabsTrigger value="activity">Activity</TabsTrigger>
+            <TabsTrigger value="history">History</TabsTrigger>
+          </TabsList>
           
           <TabsContent value="activity" className="space-y-6">
             <ActivityForm 

@@ -17,7 +17,7 @@ import ScheduleSessionDialog from "@/components/ScheduleSessionDialog";
 import EditSessionDialog from "@/components/EditSessionDialog";
 import SessionSheetView from "@/components/SessionSheetView";
 import { EnhancedProjectDialog } from "@/components/EnhancedProjectDialog";
-import ActivitySection from "@/components/ActivitySection";
+import { LeadActivitySection } from "@/components/LeadActivitySection";
 import CompactSessionBanner from "@/components/project-details/Summary/CompactSessionBanner";
 import { ProjectsSection } from "@/components/ProjectsSection";
 import { getLeadStatusStyles, formatStatusText } from "@/lib/leadStatusColors";
@@ -782,7 +782,7 @@ const LeadDetail = () => {
     }
   };
   const handleActivityUpdated = () => {
-    // Force ActivitySection to refresh when activities are updated in project modal
+    // Force activity section to refresh when activities are updated in project modal
     setActivityRefreshKey(prev => prev + 1);
   };
   const handleBack = () => {
@@ -924,10 +924,14 @@ const LeadDetail = () => {
         {/* Right column - Projects and Activity Section (67%) */}
         <div className="lg:col-span-2 space-y-6 min-w-0">
           <ProjectsSection leadId={lead.id} leadName={lead.name} onProjectUpdated={handleProjectUpdated} onActivityUpdated={handleActivityUpdated} onProjectClicked={handleProjectClicked} />
-            <ActivitySection key={activityRefreshKey} entityType="lead" entityId={lead.id} onUpdate={() => {
-              fetchLead();
-              setActivityRefreshKey(prev => prev + 1);
-            }} />
+            <LeadActivitySection
+              leadId={lead.id}
+              leadName={lead.name}
+              onActivityUpdated={() => {
+                fetchLead();
+                setActivityRefreshKey(prev => prev + 1);
+              }}
+            />
 
           {/* Always allow delete in single photographer mode */}
           {true && <div className="border border-destructive/20 bg-destructive/5 rounded-md p-4 max-w-full text-center">

@@ -251,7 +251,7 @@ const ProjectKanbanBoard = ({
                 srcStatusId || "",
                 dstStatusId || "",
                 activeOrganization.id,
-                moving.assignees || []
+                [] // Single photographer mode - no assignees
               ).catch(error => console.error("Failed to trigger milestone notification:", error))
             : Promise.resolve();
 

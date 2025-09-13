@@ -21,6 +21,7 @@ interface Project {
   status_id: string | null;
   created_at: string;
   updated_at: string;
+  project_type_id?: string | null;
   lead?: {
     name: string;
     email?: string;

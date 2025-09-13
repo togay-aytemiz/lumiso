@@ -8,6 +8,7 @@ import { Plus, Search, ChevronDown, Check, X, Save } from "lucide-react";
 import { LeadStatusBadge } from "./LeadStatusBadge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { getUserOrganizationId } from "@/lib/organizationUtils";
 import { cn } from "@/lib/utils";
 import { ProjectTypeSelector } from "./ProjectTypeSelector";
 // Assignee components removed - single user organization
@@ -156,7 +157,7 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
       if (!user) return;
 
       // Get user's active organization ID
-      const { data: organizationId } = await supabase.rpc('get_user_active_organization_id');
+      const organizationId = await getUserOrganizationId();
       if (!organizationId) return;
 
       const { data: leadsData, error } = await supabase
@@ -186,7 +187,7 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
       if (!user) return;
 
       // Get user's active organization ID
-      const { data: organizationId } = await supabase.rpc('get_user_active_organization_id');
+      const organizationId = await getUserOrganizationId();
       if (!organizationId) return;
 
       const [packagesResult, typesResult, servicesResult] = await Promise.all([

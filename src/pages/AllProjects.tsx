@@ -16,7 +16,6 @@ import GlobalSearch from "@/components/GlobalSearch";
 import { PageHeader, PageHeaderSearch, PageHeaderActions } from "@/components/ui/page-header";
 import { ProjectStatusBadge } from "@/components/ProjectStatusBadge";
 import { formatDate } from "@/lib/utils";
-import { AssigneeAvatars } from "@/components/AssigneeAvatars";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { OnboardingTutorial, TutorialStep } from "@/components/shared/OnboardingTutorial";
 import { useOnboardingV2 } from "@/hooks/useOnboardingV2";

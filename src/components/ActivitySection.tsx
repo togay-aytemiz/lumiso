@@ -6,6 +6,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { TimePicker } from "@/components/ui/time-picker";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
+import { getUserOrganizationId } from "@/lib/organizationUtils";
 import { useToast } from "@/hooks/use-toast";
 import { format, addDays, isAfter, isSameDay } from "date-fns";
 import { Calendar as CalendarIcon, Clock, Plus, CheckCircle2, X, MessageSquare, MapPin, Trash2, Edit2, Filter, RotateCcw } from "lucide-react";
@@ -186,8 +187,8 @@ export default function ActivitySection({ entityType, entityId, onUpdate }: Acti
 
     setSaving(true);
     try {
-      const { data: organizationId } = await supabase.rpc('get_user_active_organization_id');
-      
+      const organizationId = await getUserOrganizationId();
+      if (!organizationId) return;
       if (!organizationId) {
         throw new Error('No organization found');
       }

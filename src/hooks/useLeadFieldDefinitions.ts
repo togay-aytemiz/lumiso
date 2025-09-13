@@ -20,6 +20,12 @@ export function useLeadFieldDefinitions() {
         throw new Error('No active organization found');
       }
 
+      // Ensure default field definitions exist
+      await supabase.rpc('ensure_default_lead_field_definitions', { 
+        org_id: organizationId, 
+        user_uuid: (await supabase.auth.getUser()).data.user?.id 
+      });
+
       const { data, error: fetchError } = await supabase
         .from('lead_field_definitions')
         .select('*')

@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { AppSheetModal } from "@/components/ui/app-sheet-modal";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { getUserOrganizationId } from "@/lib/organizationUtils";
+import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
@@ -106,8 +108,8 @@ const AddLeadDialog = ({ onLeadAdded, open, onOpenChange }: AddLeadDialogProps) 
       }
 
       // Get user's active organization ID
-      const { data: organizationId } = await supabase.rpc('get_user_active_organization_id');
-
+      const organizationId = await getUserOrganizationId();
+      if (!organizationId) return;
       if (!organizationId) {
         toast({
           title: "Organization required",

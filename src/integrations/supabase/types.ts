@@ -153,47 +153,6 @@ export type Database = {
         }
         Relationships: []
       }
-      custom_roles: {
-        Row: {
-          created_at: string
-          description: string | null
-          id: string
-          name: string
-          organization_id: string
-          sort_order: number
-          template_id: string | null
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          name: string
-          organization_id: string
-          sort_order?: number
-          template_id?: string | null
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          name?: string
-          organization_id?: string
-          sort_order?: number
-          template_id?: string | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "custom_roles_template_id_fkey"
-            columns: ["template_id"]
-            isOneToOne: false
-            referencedRelation: "role_templates"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       email_templates: {
         Row: {
           blocks: Json
@@ -281,36 +240,6 @@ export type Database = {
         }
         Relationships: []
       }
-      invitation_audit_log: {
-        Row: {
-          created_at: string
-          email: string
-          error_message: string | null
-          id: string
-          organization_id: string
-          success: boolean
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          email: string
-          error_message?: string | null
-          id?: string
-          organization_id: string
-          success: boolean
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          email?: string
-          error_message?: string | null
-          id?: string
-          organization_id?: string
-          success?: boolean
-          user_id?: string
-        }
-        Relationships: []
-      }
       invitation_rate_limits: {
         Row: {
           created_at: string | null
@@ -335,42 +264,6 @@ export type Database = {
           organization_id?: string
           user_id?: string
           window_start?: string | null
-        }
-        Relationships: []
-      }
-      invitations: {
-        Row: {
-          accepted_at: string | null
-          created_at: string
-          email: string
-          expires_at: string
-          id: string
-          invited_by: string
-          organization_id: string
-          role: string
-          updated_at: string
-        }
-        Insert: {
-          accepted_at?: string | null
-          created_at?: string
-          email: string
-          expires_at?: string
-          id?: string
-          invited_by: string
-          organization_id: string
-          role: string
-          updated_at?: string
-        }
-        Update: {
-          accepted_at?: string | null
-          created_at?: string
-          email?: string
-          expires_at?: string
-          id?: string
-          invited_by?: string
-          organization_id?: string
-          role?: string
-          updated_at?: string
         }
         Relationships: []
       }
@@ -507,7 +400,6 @@ export type Database = {
       }
       leads: {
         Row: {
-          assignees: string[] | null
           created_at: string
           due_date: string | null
           email: string | null
@@ -522,7 +414,6 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          assignees?: string[] | null
           created_at?: string
           due_date?: string | null
           email?: string | null
@@ -537,7 +428,6 @@ export type Database = {
           user_id: string
         }
         Update: {
-          assignees?: string[] | null
           created_at?: string
           due_date?: string | null
           email?: string | null
@@ -706,59 +596,6 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
-      }
-      organization_members: {
-        Row: {
-          created_at: string
-          custom_role_id: string | null
-          id: string
-          invited_by: string | null
-          joined_at: string
-          last_active: string | null
-          organization_id: string
-          role: string
-          status: string
-          system_role: Database["public"]["Enums"]["system_role"]
-          updated_at: string
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          custom_role_id?: string | null
-          id?: string
-          invited_by?: string | null
-          joined_at?: string
-          last_active?: string | null
-          organization_id: string
-          role: string
-          status?: string
-          system_role?: Database["public"]["Enums"]["system_role"]
-          updated_at?: string
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          custom_role_id?: string | null
-          id?: string
-          invited_by?: string | null
-          joined_at?: string
-          last_active?: string | null
-          organization_id?: string
-          role?: string
-          status?: string
-          system_role?: Database["public"]["Enums"]["system_role"]
-          updated_at?: string
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "organization_members_custom_role_id_fkey"
-            columns: ["custom_role_id"]
-            isOneToOne: false
-            referencedRelation: "custom_roles"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       organization_settings: {
         Row: {
@@ -958,30 +795,6 @@ export type Database = {
         }
         Relationships: []
       }
-      permissions: {
-        Row: {
-          category: string
-          created_at: string
-          description: string
-          id: string
-          name: string
-        }
-        Insert: {
-          category: string
-          created_at?: string
-          description: string
-          id?: string
-          name: string
-        }
-        Update: {
-          category?: string
-          created_at?: string
-          description?: string
-          id?: string
-          name?: string
-        }
-        Relationships: []
-      }
       profiles: {
         Row: {
           created_at: string
@@ -1125,7 +938,6 @@ export type Database = {
       }
       projects: {
         Row: {
-          assignees: string[] | null
           base_price: number | null
           created_at: string
           description: string | null
@@ -1141,7 +953,6 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          assignees?: string[] | null
           base_price?: number | null
           created_at?: string
           description?: string | null
@@ -1157,7 +968,6 @@ export type Database = {
           user_id: string
         }
         Update: {
-          assignees?: string[] | null
           base_price?: number | null
           created_at?: string
           description?: string | null
@@ -1192,42 +1002,6 @@ export type Database = {
             columns: ["status_id"]
             isOneToOne: false
             referencedRelation: "project_statuses"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      role_permissions: {
-        Row: {
-          created_at: string
-          id: string
-          permission_id: string
-          role_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          permission_id: string
-          role_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          permission_id?: string
-          role_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "role_permissions_permission_id_fkey"
-            columns: ["permission_id"]
-            isOneToOne: false
-            referencedRelation: "permissions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "role_permissions_role_id_fkey"
-            columns: ["role_id"]
-            isOneToOne: false
-            referencedRelation: "custom_roles"
             referencedColumns: ["id"]
           },
         ]
@@ -1753,7 +1527,6 @@ export type Database = {
       }
       user_settings: {
         Row: {
-          active_organization_id: string | null
           created_at: string
           current_onboarding_step: number | null
           date_format: string | null
@@ -1773,7 +1546,6 @@ export type Database = {
           welcome_modal_shown: boolean
         }
         Insert: {
-          active_organization_id?: string | null
           created_at?: string
           current_onboarding_step?: number | null
           date_format?: string | null
@@ -1793,7 +1565,6 @@ export type Database = {
           welcome_modal_shown?: boolean
         }
         Update: {
-          active_organization_id?: string | null
           created_at?: string
           current_onboarding_step?: number | null
           date_format?: string | null
@@ -2215,18 +1986,6 @@ export type Database = {
       }
       user_has_permission: {
         Args: { permission_name: string; user_uuid: string }
-        Returns: boolean
-      }
-      user_is_assigned_to_lead: {
-        Args: { lead_uuid: string; user_uuid: string }
-        Returns: boolean
-      }
-      user_is_assigned_to_project: {
-        Args: { project_uuid: string; user_uuid: string }
-        Returns: boolean
-      }
-      user_is_organization_member: {
-        Args: { org_id: string }
         Returns: boolean
       }
       user_is_organization_owner: {

@@ -10,7 +10,6 @@ import { useProjectPayments } from "@/hooks/useProjectPayments";
 import { ProjectStatusBadge } from "@/components/ProjectStatusBadge";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
-import { AssigneeAvatars } from "@/components/AssigneeAvatars";
 
 interface Project {
   id: string;
@@ -79,11 +78,9 @@ export function ProjectCard({ project, onView, refreshTrigger, onQuickView }: Pr
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
                 {project.assignees && project.assignees.length > 0 && (
-                  <AssigneeAvatars 
-                    assigneeIds={project.assignees} 
-                    maxVisible={3}
-                    size="sm"
-                  />
+                  <div className="text-muted-foreground text-xs">
+                    {project.assignees.length} assignee{project.assignees.length !== 1 ? 's' : ''}
+                  </div>
                 )}
                 <div className="md:hidden">
                   <ChevronRight className="h-5 w-5 text-muted-foreground" />

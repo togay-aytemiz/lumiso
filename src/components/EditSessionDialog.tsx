@@ -139,7 +139,7 @@ const EditSessionDialog = ({ sessionId, leadId, currentDate, currentTime, curren
       // Trigger workflow for session rescheduled if date/time changed
       if (dateTimeChanged) {
         try {
-          const { data: organizationId } = await supabase.rpc('get_user_active_organization_id');
+          const organizationId = await getUserOrganizationId();
           if (organizationId) {
             await triggerSessionRescheduled(sessionId, organizationId, oldDateTime, newDateTime, {
               session_date: formData.session_date,

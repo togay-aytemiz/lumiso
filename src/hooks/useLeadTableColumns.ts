@@ -4,7 +4,6 @@ import { LeadFieldDefinition } from '@/types/leadFields';
 import { Column } from '@/hooks/useDataTable';
 import { CustomFieldDisplay } from '@/components/fields/CustomFieldDisplay';
 import { LeadStatusBadge } from '@/components/LeadStatusBadge';
-import { AssigneeAvatars } from '@/components/AssigneeAvatars';
 import { formatDate } from '@/lib/utils';
 
 interface ColumnConfig {

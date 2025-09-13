@@ -8,7 +8,6 @@ import { ExternalLink, Calendar, CreditCard, CheckCircle2, Users } from "lucide-
 import { format } from "date-fns";
 import { AppSheetModal } from "@/components/ui/app-sheet-modal";
 import { ProjectStatusBadge } from "@/components/ProjectStatusBadge";
-import { AssigneeAvatars } from "@/components/AssigneeAvatars";
 import { useProjectProgress } from "@/hooks/useProjectProgress";
 import { useProjectPayments } from "@/hooks/useProjectPayments";
 import ClientDetailsCard from "@/components/ClientDetailsCard";
@@ -206,11 +205,9 @@ export default function ProjectSheetPreview({
               </div>
 
               {project.assignees && project.assignees.length > 0 && (
-                <AssigneeAvatars 
-                  assigneeIds={project.assignees} 
-                  maxVisible={3}
-                  size="sm"
-                />
+                <div className="text-muted-foreground text-xs">
+                  {project.assignees.length} assignee{project.assignees.length !== 1 ? 's' : ''}
+                </div>
               )}
             </div>
           </CardContent>

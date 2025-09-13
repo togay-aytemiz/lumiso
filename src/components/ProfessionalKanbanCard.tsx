@@ -3,7 +3,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ProgressBar } from '@/components/ui/progress-bar';
 import { User, Calendar, DollarSign, Package } from 'lucide-react';
-import { AssigneeAvatars } from './AssigneeAvatars';
 
 interface Project {
   id: string;
@@ -110,13 +109,11 @@ export const ProfessionalKanbanCard: React.FC<ProfessionalKanbanCardProps> = ({
               )}
             </div>
 
-            {/* Right Side - Assignees */}
+            {/* Right Side */}
             {kanbanSettings.kanban_show_assignees && project.assignees && project.assignees.length > 0 && (
-              <AssigneeAvatars 
-                assigneeIds={project.assignees}
-                maxVisible={3} 
-                size="sm"
-              />
+              <div className="text-muted-foreground text-xs">
+                {project.assignees.length} assignee{project.assignees.length !== 1 ? 's' : ''}
+              </div>
             )}
           </div>
         </div>

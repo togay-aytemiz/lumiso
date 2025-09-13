@@ -96,9 +96,30 @@ const GlobalSearch = () => {
     setStatusesLoading(true);
     (async () => {
       try {
+        // Get user's organization ID for single-user filtering
+        const { getUserOrganizationId } = await import('@/lib/organizationUtils');
+        const organizationId = await getUserOrganizationId();
+        
+        if (!organizationId) {
+          if (mounted) {
+            setLeadStatuses([]);
+            setProjectStatuses([]);
+            setStatusesLoading(false);
+          }
+          return;
+        }
+
         const [ls, ps] = await Promise.all([
-          supabase.from('lead_statuses').select('*').order('sort_order', { ascending: true }),
-          supabase.from('project_statuses').select('*').order('sort_order', { ascending: true })
+          supabase
+            .from('lead_statuses')
+            .select('*')
+            .eq('organization_id', organizationId)
+            .order('sort_order', { ascending: true }),
+          supabase
+            .from('project_statuses')
+            .select('*')
+            .eq('organization_id', organizationId)
+            .order('sort_order', { ascending: true })
         ]);
         if (!mounted) return;
         setLeadStatuses(ls.data || []);

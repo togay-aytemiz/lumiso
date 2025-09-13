@@ -78,13 +78,12 @@ export function useLeadTableColumns() {
   // Generate default column preferences
   const generateDefaultColumnPreferences = (fields: LeadFieldDefinition[]): ColumnConfig[] => {
     const defaultColumns: ColumnConfig[] = [
-      // Default order: Name, Status, Phone Number, Email address, Assignees, Last Updated
+      // Default order: Name, Status, Phone Number, Email address, Last Updated
       { key: 'name', visible: true, order: 1 },
       { key: 'status', visible: true, order: 2 },
       { key: 'phone', visible: true, order: 3 },
       { key: 'email', visible: true, order: 4 },
-      { key: 'assignees', visible: true, order: 5 },
-      { key: 'updated_at', visible: true, order: 6 },
+      { key: 'updated_at', visible: true, order: 5 },
     ];
 
     // Add other custom fields that are visible in table
@@ -93,7 +92,7 @@ export function useLeadTableColumns() {
       .map((field, index) => ({
         key: field.field_key,
         visible: false, // Default to hidden for additional custom fields
-        order: 7 + index,
+        order: 6 + index,
       }));
 
     return [...defaultColumns, ...customFieldColumns];
@@ -178,18 +177,7 @@ export function useLeadTableColumns() {
         };
       }
 
-      if (pref.key === 'assignees') {
-        return {
-          key: 'assignees',
-          header: 'Assignees',
-          sortable: false,
-          render: (lead) => (
-            React.createElement('span', { 
-              className: "text-muted-foreground text-sm" 
-            }, '-')
-          ),
-        };
-      }
+      // Remove assignees column - not applicable for single photographer mode
 
       if (pref.key === 'updated_at') {
         return {
@@ -263,7 +251,6 @@ export function useLeadTableColumns() {
       { key: 'status', label: 'Status', isCore: true },
       { key: 'phone', label: 'Phone', isCore: false },
       { key: 'email', label: 'Email', isCore: false },
-      { key: 'assignees', label: 'Assignees', isCore: true },
       { key: 'updated_at', label: 'Last Updated', isCore: true },
     ];
 

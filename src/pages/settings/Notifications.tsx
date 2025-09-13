@@ -198,11 +198,10 @@ export default function Notifications() {
       // For new assignment tests, add required mock data
       if (type === 'new-assignment') {
         const { data: { user } } = await supabase.auth.getUser();
-        const userSettings = await supabase
-          .from('user_settings')
-          .select('active_organization_id')
-          .eq('user_id', user?.id)
-          .maybeSingle();
+        
+        // Get organization ID using utility
+        const { getUserOrganizationId } = await import('@/lib/organizationUtils');
+        const organizationId = await getUserOrganizationId();
 
         requestBody = {
           ...requestBody,
@@ -211,7 +210,7 @@ export default function Notifications() {
           assignee_email: user?.email,
           assignee_name: 'Test User',
           assigner_name: 'System',
-          organizationId: userSettings.data?.active_organization_id,
+          organizationId,
         };
       }
 

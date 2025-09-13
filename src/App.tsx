@@ -21,7 +21,7 @@ import Payments from "./pages/Payments";
 import SettingsLayout from "./components/settings/SettingsLayout";
 import GeneralSettings from "./pages/settings/General";
 import ProfileSettings from "./pages/settings/Profile";
-import TeamSettings from "./pages/settings/Team";
+// Team settings removed for single photographer mode
 import NotificationsSettings from "./pages/settings/Notifications";
 import ProjectsSettings from "./pages/settings/Projects";
 import LeadsSettings from "./pages/settings/Leads";
@@ -76,7 +76,7 @@ const App = () => (
               <Route path="settings" element={<SettingsLayout />}>
                 <Route path="profile" element={<ProfileSettings />} />
                 <Route path="general" element={<GeneralSettings />} />
-                <Route path="team" element={<TeamSettings />} />
+                {/* Team management removed for single photographer mode */}
                 <Route path="notifications" element={<NotificationsSettings />} />
                 <Route path="projects" element={<ProjectsSettings />} />
                 <Route path="leads" element={<LeadsSettings />} />

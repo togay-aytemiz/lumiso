@@ -73,14 +73,11 @@ const AllSessions = () => {
       let filteredSessions = sessionsData || [];
       
       if (userId) {
-        // Get user's active organization
-        const { data: userSettings } = await supabase
-          .from('user_settings')
-          .select('active_organization_id')
-          .eq('user_id', userId)
-          .single();
+        // Get user's active organization using the utility
+        const { getUserOrganizationId } = await import('@/lib/organizationUtils');
+        const activeOrganizationId = await getUserOrganizationId();
 
-        if (!userSettings?.active_organization_id) {
+        if (!activeOrganizationId) {
           return sessionsData || [];
         }
 
@@ -88,7 +85,7 @@ const AllSessions = () => {
         const { data: archivedStatus } = await supabase
           .from('project_statuses')
           .select('id, name')
-          .eq('organization_id', userSettings.active_organization_id)
+          .eq('organization_id', activeOrganizationId)
           .ilike('name', 'archived')
           .maybeSingle();
           

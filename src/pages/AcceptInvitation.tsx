@@ -1,227 +1,32 @@
-import { useEffect, useState } from "react";
-import { useSearchParams, Navigate, useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, CheckCircle, XCircle } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { Users, ArrowLeft } from "lucide-react";
 
 export default function AcceptInvitation() {
-  const [searchParams] = useSearchParams();
-  const [loading, setLoading] = useState(true);
-  const [invitation, setInvitation] = useState<any>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [accepted, setAccepted] = useState(false);
-  const { toast } = useToast();
   const navigate = useNavigate();
-  
-  const invitationId = searchParams.get("id");
-
-  useEffect(() => {
-    if (!invitationId) {
-      setError("Invalid invitation link");
-      setLoading(false);
-      return;
-    }
-
-    fetchInvitation();
-  }, [invitationId]);
-
-  const fetchInvitation = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("invitations")
-        .select("*")
-        .eq("id", invitationId)
-        .single();
-
-      if (error) {
-        setError("Invitation not found");
-        return;
-      }
-
-      // Check if invitation is expired
-      if (new Date(data.expires_at) < new Date()) {
-        setError("This invitation has expired");
-        return;
-      }
-
-      // Check if already accepted
-      if (data.accepted_at) {
-        setError("This invitation has already been accepted");
-        return;
-      }
-
-      setInvitation(data);
-    } catch (error) {
-      setError("Failed to load invitation");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleAcceptInvitation = async () => {
-    if (!invitation) return;
-
-    try {
-      setLoading(true);
-
-      // Check if user is authenticated
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        // Navigate to dedicated invitation signup page
-        const redirectUrl = `/invitation-signup?invitation=${invitationId}&email=${encodeURIComponent(invitation.email)}`;
-        navigate(redirectUrl);
-        return;
-      }
-
-      // User is already authenticated, proceed with accepting invitation
-      await acceptInvitationForUser(user.id);
-    } catch (error) {
-      setError(error instanceof Error ? error.message : "Failed to process invitation");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const acceptInvitationForUser = async (userId: string) => {
-    try {
-      // Accept the invitation
-      const { error: acceptError } = await supabase
-        .from("invitations")
-        .update({ 
-          accepted_at: new Date().toISOString()
-        })
-        .eq("id", invitationId);
-
-      if (acceptError) {
-        throw new Error("Failed to accept invitation");
-      }
-
-      // Add user to organization
-      const { error: memberError } = await supabase
-        .from("organization_members")
-        .insert({
-          organization_id: invitation.organization_id,
-          user_id: userId,
-          role: invitation.role,
-          invited_by: invitation.invited_by
-        });
-
-      if (memberError) {
-        throw new Error("Failed to join organization");
-      }
-
-      setAccepted(true);
-      toast({
-        title: "Invitation accepted!",
-        description: "You have successfully joined the organization.",
-      });
-
-      // Navigate to dashboard after 2 seconds
-      setTimeout(() => {
-        navigate("/");
-      }, 2000);
-
-    } catch (error) {
-      throw error;
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <CardTitle>Loading Invitation</CardTitle>
-          </CardHeader>
-          <CardContent className="flex justify-center">
-            <Loader2 className="h-8 w-8 animate-spin" />
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  if (accepted) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
-            <CardTitle>Invitation Accepted!</CardTitle>
-            <CardDescription>
-              You have successfully joined the organization. Redirecting to dashboard...
-            </CardDescription>
-          </CardHeader>
-        </Card>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <XCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
-            <CardTitle>Invalid Invitation</CardTitle>
-            <CardDescription>{error}</CardDescription>
-          </CardHeader>
-          <CardContent className="text-center">
-            <Button 
-              variant="outline" 
-              onClick={() => navigate("/")}
-            >
-              Return to Home
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle>Team Invitation</CardTitle>
+          <Users className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+          <CardTitle>Team Invitations Not Available</CardTitle>
           <CardDescription>
-            You've been invited to join an organization
+            This is a single photographer application. Team management features are not available.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="text-center space-y-2">
-            <p><strong>Email:</strong> {invitation.email}</p>
-            <p><strong>Role:</strong> {invitation.role}</p>
-            <p><strong>Expires:</strong> {new Date(invitation.expires_at).toLocaleDateString()}</p>
-          </div>
-          
-          <div className="flex flex-col gap-3">
-            <Button 
-              onClick={handleAcceptInvitation}
-              disabled={loading}
-              className="w-full"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  Accepting...
-                </>
-              ) : (
-                "Accept Invitation"
-              )}
-            </Button>
-            
-            <Button 
-              variant="outline" 
-              onClick={() => navigate("/")}
-              className="w-full"
-            >
-              Decline
-            </Button>
-          </div>
+        <CardContent className="text-center space-y-4">
+          <p className="text-sm text-muted-foreground">
+            If you're looking to manage your photography business, please use the main dashboard.
+          </p>
+          <Button 
+            onClick={() => navigate("/")}
+            className="w-full"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Go to Dashboard
+          </Button>
         </CardContent>
       </Card>
     </div>

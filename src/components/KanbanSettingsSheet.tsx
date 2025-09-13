@@ -33,11 +33,7 @@ export function KanbanSettingsSheet({ children }: KanbanSettingsSheetProps) {
       label: 'Project Type',
       description: 'Show project type badges on cards',
     },
-    {
-      key: 'kanban_show_assignees' as const,
-      label: 'Assignees',
-      description: 'Show assignee avatars on cards',
-    },
+    // Assignees removed for single photographer mode
     {
       key: 'kanban_show_todo_progress' as const,
       label: 'Todo Progress',
@@ -112,7 +108,7 @@ export function KanbanSettingsSheet({ children }: KanbanSettingsSheetProps) {
               <div className="space-y-1">
                 <p className="text-xs font-medium">Pro Tip</p>
                 <p className="text-xs text-muted-foreground">
-                  Settings are saved for your entire organization. Perfect for teams who want a consistent view across all members.
+                  Customize your project cards to show exactly what you need for managing your photography business efficiently.
                 </p>
               </div>
             </div>

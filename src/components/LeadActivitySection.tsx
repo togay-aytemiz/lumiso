@@ -344,20 +344,20 @@ export function LeadActivitySection({
         </CardContent>
       </Card>;
   }
-  return <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold">
-            Activities & History
-          </h3>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <Tabs defaultValue="activity" className="w-full">
-          <TabsList className="inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground mb-6">
-            <TabsTrigger value="activity">Activity</TabsTrigger>
-            <TabsTrigger value="history">History</TabsTrigger>
-          </TabsList>
+  return <Tabs defaultValue="activity" className="w-full">
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold">
+              Activities & History
+            </h3>
+            <TabsList className="inline-flex h-8 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground">
+              <TabsTrigger value="activity">Activity</TabsTrigger>
+              <TabsTrigger value="history">History</TabsTrigger>
+            </TabsList>
+          </div>
+        </CardHeader>
+        <CardContent>
           
           <TabsContent value="activity" className="space-y-6">
             <ActivityForm onSubmit={handleSaveActivity} loading={saving} placeholder="Enter your note..." />
@@ -392,8 +392,8 @@ export function LeadActivitySection({
               </div> : <div className="text-sm text-muted-foreground text-center py-8">
                 No history available
               </div>}
-          </TabsContent>
-        </Tabs>
-      </CardContent>
-    </Card>;
+           </TabsContent>
+        </CardContent>
+      </Card>
+    </Tabs>;
 }

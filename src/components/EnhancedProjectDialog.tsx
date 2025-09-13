@@ -1206,16 +1206,9 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
             )}
 
             {/* Assignees removed - single user organization */}
-              />
             </div>
           </div>
         </AppSheetModal>
-                disabled={loading}
-              />
-            </div>
-          </div>
-        </div>
-      </AppSheetModal>
 
       <NavigationGuardDialog
         open={navigation.showGuard}

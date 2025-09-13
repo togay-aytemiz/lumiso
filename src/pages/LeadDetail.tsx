@@ -839,12 +839,8 @@ const LeadDetail = () => {
               </div>
             </div>
             
-            {/* Assignees List - Mobile: separate row */}
+            {/* Assignees removed - single user organization */}
             <div className="mt-3">
-              <AssigneesList assignees={lead.assignees || []} entityType="lead" entityId={lead.id} onUpdate={() => {
-              fetchLead();
-              setActivityRefreshKey(prev => prev + 1);
-            }} />
             </div>
           </div>
           
@@ -878,12 +874,8 @@ const LeadDetail = () => {
           </div>
           
           <div className="flex items-center gap-4 flex-shrink-0">
-            {/* Assignees List - Desktop: far right with stable container */}
+            {/* Assignees removed - single user organization */}
             <div className="min-w-0 transition-all duration-300 ease-out transform">
-              <AssigneesList assignees={lead.assignees || []} entityType="lead" entityId={lead.id} onUpdate={() => {
-              fetchLead();
-              setActivityRefreshKey(prev => prev + 1);
-            }} />
             </div>
             
             {/* Header Action Buttons - Desktop: stays in place */}

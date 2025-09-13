@@ -261,13 +261,6 @@ export function EnhancedAddLeadDialog({
           />
           
           {/* Assignees removed - single user organization */}
-            />
-          </div>
-        </Form>
-      </AppSheetModal>
-              disabled={loading}
-            />
-          </div>
         </Form>
       </AppSheetModal>
       

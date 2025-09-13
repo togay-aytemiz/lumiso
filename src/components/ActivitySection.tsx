@@ -195,16 +195,30 @@ export default function ActivitySection({ entityType, entityId, onUpdate }: Acti
       const { data: userData } = await supabase.auth.getUser();
       if (!userData.user) throw new Error('User not authenticated');
 
-      const activityData = {
-        type: activityType,
-        content,
-        reminder_date: reminderDate ? format(reminderDate, 'yyyy-MM-dd') : null,
-        reminder_time: reminderTime || null,
-        organization_id: organizationId,
-        user_id: userData.user.id,
-        [entityType === 'lead' ? 'lead_id' : 'project_id']: entityId,
-        completed: false
-      };
+      let activityData;
+      if (entityType === 'lead') {
+        activityData = {
+          type: activityType,
+          content,
+          reminder_date: reminderDate ? format(reminderDate, 'yyyy-MM-dd') : null,
+          reminder_time: reminderTime || null,
+          organization_id: organizationId,
+          user_id: userData.user.id,
+          lead_id: entityId,
+          completed: false
+        };
+      } else {
+        activityData = {
+          type: activityType,
+          content,
+          reminder_date: reminderDate ? format(reminderDate, 'yyyy-MM-dd') : null,
+          reminder_time: reminderTime || null,
+          organization_id: organizationId,
+          user_id: userData.user.id,
+          project_id: entityId,
+          completed: false
+        };
+      }
 
       const { error } = await supabase
         .from('activities')

@@ -626,25 +626,13 @@ export function ViewProjectDialog({
                             </Badge>}
                         </div>
                         
-                        {/* Assignees List for mobile */}
+                        {/* Assignees removed - single user organization */}
                         <div className="pt-2">
-                          <AssigneesList
-                            assignees={project.assignees || []}
-                            entityType="project"
-                            entityId={project.id}
-                            onUpdate={handleAssigneesUpdate}
-                          />
                         </div>
                       </div>
                       
-                      {/* Desktop Assignees row */}
+                      {/* Desktop Assignees removed - single user organization */}
                       <div className="hidden md:flex items-center gap-4 mt-16 pt-4">
-                        <AssigneesList
-                          assignees={project.assignees || []}
-                          entityType="project"
-                          entityId={project.id}
-                          onUpdate={handleAssigneesUpdate}
-                        />
                       </div>
                     </div>
                   </div>}

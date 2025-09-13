@@ -529,13 +529,7 @@ export function ProjectSheetView({
                 
                 {/* Assignees List for mobile */}
                 {/* Assignees removed - single user organization */}
-                </div>
-                    entityId={project.id}
-                    onUpdate={handleAssigneesUpdate}
-                  />
-                </div>
               </div>
-              
             </div>
           </div>
         )}
@@ -544,11 +538,6 @@ export function ProjectSheetView({
       <div className="flex items-center gap-1 shrink-0 self-start">
         {/* Desktop Assignees - moved here to be left of buttons */}
         {/* Assignees removed - single user organization */}
-        </div>
-            entityId={project.id}
-            onUpdate={handleAssigneesUpdate}
-          />
-        </div>
         
         {mode === 'sheet' && onViewFullDetails && (
           <Button 

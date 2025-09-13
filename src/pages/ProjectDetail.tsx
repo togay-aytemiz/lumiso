@@ -485,28 +485,16 @@ export default function ProjectDetail() {
                   </p>
                 )}
                 
-                {/* Mobile Assignees - shown only on mobile */}
+                {/* Mobile Assignees removed - single user organization */}
                 <div className="pt-4 md:hidden">
-                  <AssigneesList
-                    assignees={project.assignees || []}
-                    entityType="project"
-                    entityId={project.id}
-                    onUpdate={handleAssigneesUpdate}
-                  />
                 </div>
               </div>
             )}
           </div>
           
           <div className="flex items-center gap-2 shrink-0 self-start">
-            {/* Desktop Assignees - positioned left of More Actions dropdown */}
+            {/* Desktop Assignees removed - single user organization */}
             <div className="hidden md:flex items-center mr-4">
-              <AssigneesList
-                assignees={project.assignees || []}
-                entityType="project"
-                entityId={project.id}
-                onUpdate={handleAssigneesUpdate}
-              />
             </div>
             
             {!isEditing && (

@@ -161,6 +161,7 @@ export type Database = {
           name: string
           organization_id: string
           sort_order: number
+          template_id: string | null
           updated_at: string
         }
         Insert: {
@@ -170,6 +171,7 @@ export type Database = {
           name: string
           organization_id: string
           sort_order?: number
+          template_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -179,9 +181,18 @@ export type Database = {
           name?: string
           organization_id?: string
           sort_order?: number
+          template_id?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "custom_roles_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "role_templates"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       email_templates: {
         Row: {
@@ -267,6 +278,63 @@ export type Database = {
           updated_at?: string
           user_email?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      invitation_audit_log: {
+        Row: {
+          created_at: string
+          email: string
+          error_message: string | null
+          id: string
+          organization_id: string
+          success: boolean
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          error_message?: string | null
+          id?: string
+          organization_id: string
+          success: boolean
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          error_message?: string | null
+          id?: string
+          organization_id?: string
+          success?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
+      invitation_rate_limits: {
+        Row: {
+          created_at: string | null
+          id: string
+          invitation_count: number | null
+          organization_id: string
+          user_id: string
+          window_start: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          invitation_count?: number | null
+          organization_id: string
+          user_id: string
+          window_start?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          invitation_count?: number | null
+          organization_id?: string
+          user_id?: string
+          window_start?: string | null
         }
         Relationships: []
       }
@@ -1164,6 +1232,36 @@ export type Database = {
           },
         ]
       }
+      role_templates: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          is_system: boolean
+          name: string
+          permissions: string[]
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          id?: string
+          is_system?: boolean
+          name: string
+          permissions?: string[]
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          is_system?: boolean
+          name?: string
+          permissions?: string[]
+          sort_order?: number
+        }
+        Relationships: []
+      }
       scheduled_notifications: {
         Row: {
           created_at: string | null
@@ -1376,6 +1474,7 @@ export type Database = {
           organization_id: string
           project_id: string | null
           session_date: string
+          session_name: string | null
           session_time: string
           status: string
           updated_at: string
@@ -1391,6 +1490,7 @@ export type Database = {
           organization_id: string
           project_id?: string | null
           session_date: string
+          session_name?: string | null
           session_time: string
           status?: string
           updated_at?: string
@@ -1406,6 +1506,7 @@ export type Database = {
           organization_id?: string
           project_id?: string | null
           session_date?: string
+          session_name?: string | null
           session_time?: string
           status?: string
           updated_at?: string
@@ -1917,88 +2018,15 @@ export type Database = {
       }
     }
     Views: {
-      legacy_notification_logs: {
-        Row: {
-          created_at: string | null
-          email_id: string | null
-          error_message: string | null
-          id: string | null
-          metadata: Json | null
-          notification_type: string | null
-          organization_id: string | null
-          status: string | null
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          email_id?: string | null
-          error_message?: string | null
-          id?: string | null
-          metadata?: Json | null
-          notification_type?: string | null
-          organization_id?: string | null
-          status?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          email_id?: string | null
-          error_message?: string | null
-          id?: string | null
-          metadata?: Json | null
-          notification_type?: string | null
-          organization_id?: string | null
-          status?: string | null
-          user_id?: string | null
-        }
-        Relationships: []
-      }
-      legacy_scheduled_notifications: {
-        Row: {
-          created_at: string | null
-          error_message: string | null
-          id: string | null
-          last_attempt: string | null
-          notification_type: string | null
-          organization_id: string | null
-          retry_count: number | null
-          scheduled_for: string | null
-          status: string | null
-          updated_at: string | null
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          error_message?: string | null
-          id?: string | null
-          last_attempt?: string | null
-          notification_type?: string | null
-          organization_id?: string | null
-          retry_count?: number | null
-          scheduled_for?: string | null
-          status?: string | null
-          updated_at?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          error_message?: string | null
-          id?: string | null
-          last_attempt?: string | null
-          notification_type?: string | null
-          organization_id?: string | null
-          retry_count?: number | null
-          scheduled_for?: string | null
-          status?: string | null
-          updated_at?: string | null
-          user_id?: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       check_email_not_in_any_organization: {
         Args: { email_to_check: string }
+        Returns: boolean
+      }
+      check_invitation_rate_limit: {
+        Args: { org_id: string; user_uuid: string }
         Returns: boolean
       }
       cleanup_conflicting_reminders: {
@@ -2127,6 +2155,13 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string[]
       }
+      get_user_permissions: {
+        Args:
+          | Record<PropertyKey, never>
+          | { org_id?: string; user_uuid?: string }
+          | { user_uuid: string }
+        Returns: string[]
+      }
       get_workflow_execution_fingerprint: {
         Args: {
           trigger_data_param?: Json
@@ -2140,6 +2175,16 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      log_invitation_attempt: {
+        Args: {
+          email_param: string
+          error_message?: string
+          org_id: string
+          success: boolean
+          user_uuid: string
+        }
+        Returns: undefined
+      }
       migrate_existing_lead_data: {
         Args: { org_id: string }
         Returns: undefined
@@ -2147,6 +2192,10 @@ export type Database = {
       retry_failed_notifications: {
         Args: Record<PropertyKey, never>
         Returns: number
+      }
+      safe_user_has_permission: {
+        Args: { permission_name: string; user_uuid: string }
+        Returns: boolean
       }
       schedule_session_reminders: {
         Args: { session_id_param: string }
@@ -2183,6 +2232,10 @@ export type Database = {
       user_is_organization_owner: {
         Args: { org_id: string }
         Returns: boolean
+      }
+      validate_invitation_email: {
+        Args: { email_param: string }
+        Returns: Json
       }
     }
     Enums: {

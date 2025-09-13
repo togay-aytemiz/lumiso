@@ -2,21 +2,15 @@ import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { CheckCircle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import ReminderCard from "@/components/ReminderCard";
-import { formatTime, formatLongDate } from "@/lib/utils";
+import { formatLongDate, formatTime } from "@/lib/utils";
 import { useCalendarSync } from "@/hooks/useCalendarSync";
-import DateTimePicker from "@/components/ui/date-time-picker";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ActivityForm } from "@/components/shared/ActivityForm";
+import { ActivityTimeline } from "@/components/shared/ActivityTimeline";
 
 interface LeadActivity {
   id: string;
@@ -53,21 +47,12 @@ export function LeadActivitySection({
   onActivityUpdated
 }: LeadActivitySectionProps) {
   const [activities, setActivities] = useState<LeadActivity[]>([]);
+  const [projectActivities, setProjectActivities] = useState<LeadActivity[]>([]);
+  const [projects, setProjects] = useState<{id: string; name: string}[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
-  const [userProfiles, setUserProfiles] = useState<Record<string, {
-    full_name: string;
-    profile_photo_url?: string;
-  }>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-
-  // Form state
-  const [content, setContent] = useState('');
-  const [isReminderMode, setIsReminderMode] = useState(false);
-  const [reminderDateTime, setReminderDateTime] = useState('');
-  const {
-    createReminderEvent
-  } = useCalendarSync();
+  const { createReminderEvent } = useCalendarSync();
 
   useEffect(() => {
     fetchData();
@@ -78,6 +63,8 @@ export function LeadActivitySection({
     try {
       await Promise.all([
         fetchLeadActivities(),
+        fetchProjectActivities(),
+        fetchProjects(),
         fetchAuditLogs()
       ]);
     } catch (error) {
@@ -89,18 +76,50 @@ export function LeadActivitySection({
 
   const fetchLeadActivities = async () => {
     try {
-      const {
-        data,
-        error
-      } = await supabase.from('activities').select('id, type, content, reminder_date, reminder_time, created_at, completed, lead_id, user_id').eq('lead_id', leadId).order('created_at', {
-        ascending: false
-      });
+      const { data, error } = await supabase
+        .from('activities')
+        .select('id, type, content, reminder_date, reminder_time, created_at, completed, lead_id, user_id')
+        .eq('lead_id', leadId)
+        .is('project_id', null)
+        .order('created_at', { ascending: false });
+      
       if (error) throw error;
-      const activities = data || [];
-      setActivities(activities);
+      setActivities(data || []);
     } catch (error: any) {
       console.error('Error fetching lead activities:', error);
       setActivities([]);
+    }
+  };
+
+  const fetchProjectActivities = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('activities')
+        .select('id, type, content, reminder_date, reminder_time, created_at, completed, lead_id, user_id, project_id')
+        .eq('lead_id', leadId)
+        .not('project_id', 'is', null)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      setProjectActivities(data || []);
+    } catch (error: any) {
+      console.error('Error fetching project activities:', error);
+      setProjectActivities([]);
+    }
+  };
+
+  const fetchProjects = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('projects')
+        .select('id, name')
+        .eq('lead_id', leadId);
+      
+      if (error) throw error;
+      setProjects(data || []);
+    } catch (error: any) {
+      console.error('Error fetching projects:', error);
+      setProjects([]);
     }
   };
 
@@ -173,7 +192,7 @@ export function LeadActivitySection({
     }
   };
 
-  const handleSaveActivity = async () => {
+  const handleSaveActivity = async (content: string, isReminderMode: boolean, reminderDateTime?: string) => {
     if (!content.trim()) {
       toast({
         title: "Validation error",
@@ -190,11 +209,10 @@ export function LeadActivitySection({
       });
       return;
     }
+    
     setSaving(true);
     try {
-      const {
-        data: userData
-      } = await supabase.auth.getUser();
+      const { data: userData } = await supabase.auth.getUser();
       if (!userData.user) throw new Error('Not authenticated');
 
       const activityData = {
@@ -208,7 +226,6 @@ export function LeadActivitySection({
         })
       };
 
-      // Get user's active organization
       const organizationId = await getUserOrganizationId();
       if (!organizationId) {
         throw new Error("Organization required");
@@ -219,10 +236,11 @@ export function LeadActivitySection({
         organization_id: organizationId
       };
 
-      const {
-        data: newActivity,
-        error
-      } = await supabase.from('activities').insert(activityDataWithOrg).select('id').single();
+      const { data: newActivity, error } = await supabase
+        .from('activities')
+        .insert(activityDataWithOrg)
+        .select('id')
+        .single();
       if (error) throw error;
 
       // Sync reminder to Google Calendar
@@ -231,8 +249,8 @@ export function LeadActivitySection({
           id: newActivity.id,
           lead_id: leadId,
           content: content.trim(),
-          reminder_date: reminderDateTime.split('T')[0],
-          reminder_time: reminderDateTime.split('T')[1]
+          reminder_date: reminderDateTime!.split('T')[0],
+          reminder_time: reminderDateTime!.split('T')[1]
         }, {
           name: leadName
         });
@@ -243,15 +261,8 @@ export function LeadActivitySection({
         description: `${isReminderMode ? 'Reminder' : 'Note'} added successfully.`
       });
 
-      // Reset form
-      setContent('');
-      setReminderDateTime('');
-      setIsReminderMode(false);
-
       // Refresh data
       await fetchLeadActivities();
-
-      // Notify parent about activity change
       onActivityUpdated?.();
     } catch (error: any) {
       toast({
@@ -261,13 +272,6 @@ export function LeadActivitySection({
       });
     } finally {
       setSaving(false);
-    }
-  };
-
-  const handleReminderToggle = (checked: boolean) => {
-    setIsReminderMode(checked);
-    if (!checked) {
-      setReminderDateTime('');
     }
   };
 
@@ -383,151 +387,78 @@ export function LeadActivitySection({
   return (
     <Card>
       <CardHeader>
-        <h3 className="text-lg font-semibold">
-          Activities & History
-        </h3>
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold">
+            Activities & History
+          </h3>
+          <Tabs defaultValue="activity" className="w-auto">
+            <TabsList className="inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground">
+              <TabsTrigger value="activity">Activity</TabsTrigger>
+              <TabsTrigger value="history">History</TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="activity" className="w-full">
-          <TabsList className="inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground">
-            <TabsTrigger value="activity">Activity</TabsTrigger>
-            <TabsTrigger value="history">History</TabsTrigger>
-          </TabsList>
           
-          <TabsContent value="activity" className="space-y-4">
-            {/* Add Activity Form */}
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label>Note</Label>
-                  <div className="flex items-center gap-2">
-                    <Label htmlFor="reminder-toggle" className="text-sm font-medium">
-                      Set Reminder?
-                    </Label>
-                    <Switch id="reminder-toggle" checked={isReminderMode} onCheckedChange={handleReminderToggle} />
-                  </div>
-                </div>
-                <Textarea 
-                  value={content} 
-                  onChange={e => setContent(e.target.value)} 
-                  placeholder="Enter your note..." 
-                  rows={1} 
-                  className="resize-none min-h-[40px] max-h-[40px]" 
-                />
-              </div>
+          <TabsContent value="activity" className="space-y-6">
+            <ActivityForm 
+              onSubmit={handleSaveActivity}
+              loading={saving}
+              placeholder="Enter your note..."
+            />
 
-              {isReminderMode && (
-                <div className="space-y-2">
-                  <Label>Date & Time</Label>
-                  <DateTimePicker value={reminderDateTime} onChange={setReminderDateTime} />
+            <div className="space-y-4">
+              {activities.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-medium text-muted-foreground mb-3">Lead Activities</h4>
+                  <ActivityTimeline 
+                    activities={activities}
+                    leadName={leadName}
+                    onToggleCompletion={toggleCompletion}
+                  />
                 </div>
               )}
 
-              <div className="flex justify-end">
-                <Button 
-                  onClick={handleSaveActivity} 
-                  disabled={saving || !content.trim() || (isReminderMode && !reminderDateTime)} 
-                  size="sm"
-                >
-                  {saving ? "Saving..." : `Add ${isReminderMode ? 'Reminder' : 'Note'}`}
-                </Button>
-              </div>
-            </div>
-
-            {/* Activities List */}
-            {activities.length > 0 && (
-              <div className="space-y-3">
-                <Label className="text-sm text-muted-foreground">Recent activities</Label>
-                <div className="space-y-2">
-                  {activities.map(activity => (
-                    <Card key={activity.id}>
-                      <CardContent className="py-6 px-4 flex items-center">
-                        <div className="space-y-4 w-full pt-2 my-0 py-0 px-0 mx-0">
-                           {/* Row 1: Type badge */}
-                           <div className="flex items-center gap-3">
-                             <Badge variant="outline" className="text-xs">
-                               {activity.type}
-                             </Badge>
-                           </div>
-                          
-                          {/* Row 2: Main content */}
-                          <div className="pl-1">
-                            {activity.type === 'reminder' && activity.reminder_date ? (
-                              <ReminderCard 
-                                activity={activity} 
-                                leadName={leadName} 
-                                onToggleCompletion={toggleCompletion} 
-                                showCompletedBadge={false} 
-                                hideStatusBadge={activity.completed} 
-                              />
-                            ) : activity.type === 'reminder' ? (
-                              // Reminder without date - show with completion button
-                              <div className="flex items-start gap-3">
-                                <button
-                                  onClick={e => {
-                                    e.stopPropagation();
-                                    toggleCompletion(activity.id, !activity.completed);
-                                  }}
-                                  className="flex items-center justify-center w-5 h-5 rounded-full border-2 border-muted-foreground/40 hover:border-primary transition-colors mt-0.5 flex-shrink-0"
-                                >
-                                  {activity.completed ? (
-                                    <CheckCircle className="h-3 w-3 text-green-600 dark:text-green-400" />
-                                  ) : (
-                                    <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40" />
-                                  )}
-                                </button>
-                                <div className="flex-1">
-                                  <p className={`text-sm break-words ${activity.completed ? 'line-through opacity-60' : ''}`}>
-                                    {activity.content}
-                                  </p>
-                                </div>
-                              </div>
-                            ) : (
-                              // Regular note - no completion button
-                              <div>
-                                <p className="text-sm break-words">
-                                  {activity.content}
-                                </p>
-                              </div>
-                            )}
-                          </div>
-                          
-                           {/* Row 3: Date and time */}
-                           <div className="pl-1">
-                             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                               {formatLongDate(activity.created_at)} at {formatTime(new Date(activity.created_at).toTimeString().slice(0, 5))}
-                             </div>
-                           </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+              {projectActivities.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-medium text-muted-foreground mb-3">Project Activities</h4>
+                  <ActivityTimeline 
+                    activities={projectActivities}
+                    projects={projects}
+                    leadName={leadName}
+                    onToggleCompletion={toggleCompletion}
+                  />
                 </div>
-              </div>
-            )}
+              )}
+
+              {activities.length === 0 && projectActivities.length === 0 && (
+                <div className="text-sm text-muted-foreground text-center py-8">
+                  No activities yet
+                </div>
+              )}
+            </div>
           </TabsContent>
           
           <TabsContent value="history" className="space-y-4">
             {auditLogs.length > 0 ? (
-              <div className="space-y-3">
-                <Label className="text-sm text-muted-foreground">System history</Label>
-                 <div className="space-y-1">
-                   {auditLogs.map(log => (
-                     <div key={log.id} className="flex items-center justify-between py-2 px-3 hover:bg-muted/50 rounded-md">
-                       <span className="text-sm text-foreground">
-                         {getActivityDescription(log)}
-                       </span>
-                       <span className="text-xs text-muted-foreground">
-                         {formatLongDate(log.created_at)} at {formatTime(format(new Date(log.created_at), 'HH:mm'))}
-                       </span>
-                     </div>
-                   ))}
-                 </div>
+              <div className="space-y-1">
+                {auditLogs.map(log => (
+                  <div key={log.id} className="flex justify-between items-start p-2 text-sm hover:bg-muted/30 rounded">
+                    <p className="text-foreground break-words flex-1">
+                      {getActivityDescription(log)}
+                    </p>
+                    <div className="text-xs text-muted-foreground whitespace-nowrap ml-4">
+                      {formatLongDate(log.created_at)}
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : (
-               <div className="text-center py-8 text-muted-foreground">
-                 <p>No history available</p>
-               </div>
+              <div className="text-sm text-muted-foreground text-center py-8">
+                No history available
+              </div>
             )}
           </TabsContent>
         </Tabs>

@@ -18,11 +18,13 @@ interface Project {
   description: string | null;
   lead_id: string;
   user_id: string;
+  status_id: string | null;
   created_at: string;
   updated_at: string;
-  status_id?: string | null;
-  assignees?: string[];
-  project_type_id?: string | null;
+  lead?: {
+    name: string;
+    email?: string;
+  };
 }
 
 interface Lead {

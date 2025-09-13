@@ -6,7 +6,6 @@ import { toast } from '@/hooks/use-toast';
 
 export interface KanbanSettings {
   kanban_show_project_type: boolean;
-  kanban_show_assignees: boolean;
   kanban_show_todo_progress: boolean;
   kanban_show_session_count: boolean;
   kanban_show_service_count: boolean;
@@ -41,13 +40,12 @@ export function useKanbanSettings() {
       
       // Return default settings if no data found
       return data || {
-        kanban_show_project_type: true,
-        kanban_show_assignees: true,
-        kanban_show_todo_progress: true,
-        kanban_show_session_count: true,
-        kanban_show_service_count: true,
-        kanban_show_project_name: true,
-        kanban_show_client_name: true,
+      kanban_show_project_type: true,
+      kanban_show_todo_progress: true,
+      kanban_show_session_count: true,
+      kanban_show_service_count: true,
+      kanban_show_project_name: true,
+      kanban_show_client_name: true,
       };
     },
     enabled: !!activeOrganizationId,
@@ -85,13 +83,12 @@ export function useKanbanSettings() {
 
   return {
     settings: settings || {
-      kanban_show_project_type: true,
-      kanban_show_assignees: true,
-      kanban_show_todo_progress: true,
-      kanban_show_session_count: true,
-      kanban_show_service_count: true,
-      kanban_show_project_name: true,
-      kanban_show_client_name: true,
+    kanban_show_project_type: true,
+    kanban_show_todo_progress: true,
+    kanban_show_session_count: true,
+    kanban_show_service_count: true,
+    kanban_show_project_name: true,
+    kanban_show_client_name: true,
     },
     isLoading,
     updateSettings,

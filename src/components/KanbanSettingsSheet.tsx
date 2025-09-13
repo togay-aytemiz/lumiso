@@ -33,7 +33,7 @@ export function KanbanSettingsSheet({ children }: KanbanSettingsSheetProps) {
       label: 'Project Type',
       description: 'Show project type badges on cards',
     },
-    // Assignees removed for single photographer mode
+    
     {
       key: 'kanban_show_todo_progress' as const,
       label: 'Todo Progress',

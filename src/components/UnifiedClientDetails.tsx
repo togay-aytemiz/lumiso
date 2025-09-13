@@ -125,8 +125,8 @@ export function UnifiedClientDetails({
   const coreFields = allFields.filter(field => field.type === 'core');
   const customFields = allFields.filter(field => field.type === 'custom');
 
-  // Handle inline editing
-  const canEdit = hasPermission('edit_assigned_leads');
+  // Handle inline editing - Single photographer has full edit access
+  const canEdit = true;
 
   const handleFieldSave = async (fieldKey: string, value: string, isCustom: boolean) => {
     const trimmedValue = value.trim();
@@ -208,16 +208,15 @@ export function UnifiedClientDetails({
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold">{title}</h3>
-            {hasPermission('edit_assigned_leads') && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setEditOpen(true)}
-                className="text-muted-foreground h-8 px-3"
-              >
-                Edit
-              </Button>
-            )}
+            {/* Single photographer has full edit access */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setEditOpen(true)}
+              className="text-muted-foreground h-8 px-3"
+            >
+              Edit
+            </Button>
           </div>
         </CardHeader>
         <CardContent className="space-y-3">

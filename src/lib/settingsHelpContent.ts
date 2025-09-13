@@ -50,28 +50,6 @@ export const settingsHelpContent: Record<string, SettingsHelpContent> = {
     ]
   },
 
-  team: {
-    title: "Team Management Help",
-    description: "Manage your team members, roles, and permissions to ensure smooth collaboration.",
-    sections: [
-      {
-        title: "Adding Team Members",
-        content: "Invite new team members by sending email invitations. Set their initial roles and permissions before sending the invitation to ensure they have the right access level from day one."
-      },
-      {
-        title: "Roles & Permissions",
-        content: "Define different roles with specific permissions to control what team members can access and modify. Create custom roles that match your organization's workflow and hierarchy."
-      },
-      {
-        title: "Team Collaboration",
-        content: "Enable effective collaboration by setting up proper access controls, shared resources, and communication preferences for your team members."
-      },
-      {
-        title: "Coming Soon",
-        content: "We're developing advanced team features including team analytics, performance tracking, and enhanced collaboration tools to boost your team's productivity."
-      }
-    ]
-  },
 
   billing: {
     title: "Billing & Subscription Help",
@@ -257,28 +235,6 @@ export const settingsHelpContent: Record<string, SettingsHelpContent> = {
     ]
   },
 
-  roles: {
-    title: "Role Management Help",
-    description: "Define and manage user roles and permissions across your organization.",
-    sections: [
-      {
-        title: "Permission System",
-        content: "Understand our granular permission system that allows you to control access to different features and data. Create roles that align with your organizational structure and security requirements."
-      },
-      {
-        title: "Custom Roles",
-        content: "Create custom roles tailored to your specific needs beyond the standard Admin, Manager, and Member roles. Define exactly what each role can and cannot access or modify."
-      },
-      {
-        title: "Role Assignment",
-        content: "Assign roles to team members and understand how role changes affect existing permissions and access. Plan role transitions carefully to maintain security and workflow continuity."
-      },
-      {
-        title: "Advanced Security (Coming Soon)",
-        content: "Future enhancements will include role-based automation, temporary role assignments, and advanced audit logging for comprehensive security management."
-      }
-    ]
-  },
 
   dangerZone: {
     title: "Danger Zone Help",

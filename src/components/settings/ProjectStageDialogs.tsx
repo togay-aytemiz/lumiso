@@ -55,14 +55,11 @@ export function AddProjectStageDialog({ open, onOpenChange, onStageAdded }: AddP
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
-      // Get user's active organization
-      const { data: userSettings } = await supabase
-        .from('user_settings')
-        .select('active_organization_id')
-        .eq('user_id', user.id)
-        .single();
+      // Get user's organization ID
+      const { getUserOrganizationId } = await import('@/lib/organizationUtils');
+      const organizationId = await getUserOrganizationId();
 
-      if (!userSettings?.active_organization_id) {
+      if (!organizationId) {
         throw new Error("Organization required");
       }
 
@@ -70,7 +67,7 @@ export function AddProjectStageDialog({ open, onOpenChange, onStageAdded }: AddP
       const { data: existingStages } = await supabase
         .from('project_statuses')
         .select('sort_order')
-        .eq('organization_id', userSettings.active_organization_id)
+        .eq('organization_id', organizationId)
         .order('sort_order', { ascending: false })
         .limit(1);
 
@@ -80,7 +77,7 @@ export function AddProjectStageDialog({ open, onOpenChange, onStageAdded }: AddP
         .from('project_statuses')
         .insert({
           user_id: user.id,
-          organization_id: userSettings.active_organization_id,
+          organization_id: organizationId,
           name: formData.name.trim(),
           color: formData.color,
           lifecycle: formData.lifecycle,

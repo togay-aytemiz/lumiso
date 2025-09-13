@@ -371,21 +371,18 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
-        // Get user's active organization
-        const { data: userSettings } = await supabase
-          .from('user_settings')
-          .select('active_organization_id')
-          .eq('user_id', user.id)
-          .single();
+        // Get user's organization ID
+        const { getUserOrganizationId } = await import('@/lib/organizationUtils');
+        const organizationId = await getUserOrganizationId();
 
-        if (!userSettings?.active_organization_id) {
+        if (!organizationId) {
           return;
         }
 
         const { data, error } = await supabase
           .from('services')
           .select('category')
-          .eq('organization_id', userSettings.active_organization_id)
+          .eq('organization_id', organizationId)
           .not('category', 'is', null);
 
         if (error) throw error;

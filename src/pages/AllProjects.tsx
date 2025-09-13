@@ -832,17 +832,10 @@ const AllProjects = () => {
                                     <TableCell>
                                       {renderServicesChips(project.services || [])}
                                     </TableCell>
-                                    <TableCell>
-                                      {project.assignees && project.assignees.length > 0 ? (
-                                        <AssigneeAvatars 
-                                          assigneeIds={project.assignees} 
-                                          maxVisible={3}
-                                          size="sm"
-                                        />
-                                      ) : (
-                                        <span className="text-muted-foreground text-sm">-</span>
-                                      )}
-                                    </TableCell>
+                                     <TableCell>
+                                       {/* Single photographer mode - no assignees */}
+                                       <span className="text-muted-foreground text-sm">-</span>
+                                     </TableCell>
                                   </>
                                 ) : (
                                  <>

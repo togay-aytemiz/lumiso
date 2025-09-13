@@ -662,21 +662,18 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return [];
 
-      // Get user's active organization
-      const { data: userSettings } = await supabase
-        .from('user_settings')
-        .select('active_organization_id')
-        .eq('user_id', user.id)
-        .single();
+      // Get user's organization ID
+      const { getUserOrganizationId } = await import('@/lib/organizationUtils');
+      const organizationId = await getUserOrganizationId();
 
-      if (!userSettings?.active_organization_id) {
+      if (!organizationId) {
         return [];
       }
 
       const { data, error } = await supabase
         .from('project_types')
         .select('*')
-        .eq('organization_id', userSettings.active_organization_id)
+        .eq('organization_id', organizationId)
         .order('name', { ascending: true });
       
       if (error) throw error;
@@ -691,21 +688,18 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return [];
 
-      // Get user's active organization
-      const { data: userSettings } = await supabase
-        .from('user_settings')
-        .select('active_organization_id')
-        .eq('user_id', user.id)
-        .single();
+      // Get user's organization ID
+      const { getUserOrganizationId } = await import('@/lib/organizationUtils');
+      const organizationId = await getUserOrganizationId();
 
-      if (!userSettings?.active_organization_id) {
+      if (!organizationId) {
         return [];
       }
 
       const { data, error } = await supabase
         .from('services')
         .select('*')
-        .eq('organization_id', userSettings.active_organization_id)
+        .eq('organization_id', organizationId)
         .order('name', { ascending: true });
       
       if (error) throw error;
@@ -720,21 +714,18 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return [];
 
-      // Get user's active organization
-      const { data: userSettings } = await supabase
-        .from('user_settings')
-        .select('active_organization_id')
-        .eq('user_id', user.id)
-        .single();
+      // Get user's organization ID
+      const { getUserOrganizationId } = await import('@/lib/organizationUtils');
+      const organizationId = await getUserOrganizationId();
 
-      if (!userSettings?.active_organization_id) {
+      if (!organizationId) {
         return [];
       }
 
       const { data, error } = await supabase
         .from('packages')
         .select('duration')
-        .eq('organization_id', userSettings.active_organization_id)
+        .eq('organization_id', organizationId)
         .not('duration', 'is', null);
       
       if (error) throw error;

@@ -84,14 +84,11 @@ export function useSessionForm({ leadId, leadName, projectId, onSuccess }: UseSe
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("User not authenticated");
 
-      // Get user's active organization
-      const { data: userSettings } = await supabase
-        .from('user_settings')
-        .select('active_organization_id')
-        .eq('user_id', user.id)
-        .single();
+      // Get user organization
+      const { getUserOrganizationId } = await import('@/lib/organizationUtils');
+      const organizationId = await getUserOrganizationId();
 
-      if (!userSettings?.active_organization_id) {
+      if (!organizationId) {
         throw new Error("Organization required");
       }
 
@@ -120,7 +117,7 @@ export function useSessionForm({ leadId, leadName, projectId, onSuccess }: UseSe
         .from('sessions')
         .insert({
           user_id: user.id,
-          organization_id: userSettings.active_organization_id,
+      organization_id: organizationId,
           lead_id: leadId,
           session_name: formData.session_name.trim(),
           session_date: formData.session_date,
@@ -151,7 +148,7 @@ export function useSessionForm({ leadId, leadName, projectId, onSuccess }: UseSe
       // Trigger workflow for session scheduled
       try {
         console.log(`🚀 Triggering session_scheduled workflow for session: ${newSession.id}`);
-        const workflowResult = await triggerSessionScheduled(newSession.id, userSettings.active_organization_id, {
+        const workflowResult = await triggerSessionScheduled(newSession.id, organizationId, {
           session_date: formData.session_date,
           session_time: formData.session_time,
           location: formData.location,
@@ -188,7 +185,7 @@ export function useSessionForm({ leadId, leadName, projectId, onSuccess }: UseSe
           .from('activities')
           .insert({
             user_id: user.id,
-            organization_id: userSettings.active_organization_id,
+            organization_id: organizationId,
             lead_id: leadId,
             type: 'note',
             content: activityContent

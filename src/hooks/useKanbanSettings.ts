@@ -26,7 +26,6 @@ export function useKanbanSettings() {
         .from('organization_settings')
         .select(`
           kanban_show_project_type,
-          kanban_show_assignees,
           kanban_show_todo_progress,
           kanban_show_session_count,
           kanban_show_service_count,
@@ -40,12 +39,12 @@ export function useKanbanSettings() {
       
       // Return default settings if no data found
       return data || {
-      kanban_show_project_type: true,
-      kanban_show_todo_progress: true,
-      kanban_show_session_count: true,
-      kanban_show_service_count: true,
-      kanban_show_project_name: true,
-      kanban_show_client_name: true,
+        kanban_show_project_type: true,
+        kanban_show_todo_progress: true,
+        kanban_show_session_count: true,
+        kanban_show_service_count: true,
+        kanban_show_project_name: true,
+        kanban_show_client_name: true,
       };
     },
     enabled: !!activeOrganizationId,
@@ -83,12 +82,12 @@ export function useKanbanSettings() {
 
   return {
     settings: settings || {
-    kanban_show_project_type: true,
-    kanban_show_todo_progress: true,
-    kanban_show_session_count: true,
-    kanban_show_service_count: true,
-    kanban_show_project_name: true,
-    kanban_show_client_name: true,
+      kanban_show_project_type: true,
+      kanban_show_todo_progress: true,
+      kanban_show_session_count: true,
+      kanban_show_service_count: true,
+      kanban_show_project_name: true,
+      kanban_show_client_name: true,
     },
     isLoading,
     updateSettings,

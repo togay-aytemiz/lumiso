@@ -603,7 +603,6 @@ export type Database = {
           date_format: string | null
           email: string | null
           id: string
-          kanban_show_assignees: boolean | null
           kanban_show_client_name: boolean | null
           kanban_show_project_name: boolean | null
           kanban_show_project_type: boolean | null
@@ -629,7 +628,6 @@ export type Database = {
           date_format?: string | null
           email?: string | null
           id?: string
-          kanban_show_assignees?: boolean | null
           kanban_show_client_name?: boolean | null
           kanban_show_project_name?: boolean | null
           kanban_show_project_type?: boolean | null
@@ -655,7 +653,6 @@ export type Database = {
           date_format?: string | null
           email?: string | null
           id?: string
-          kanban_show_assignees?: boolean | null
           kanban_show_client_name?: boolean | null
           kanban_show_project_name?: boolean | null
           kanban_show_project_type?: boolean | null

@@ -15,6 +15,7 @@ interface SearchResult {
   projectId?: string;
   projectName?: string;
   projectStatusId?: string | null;
+  leadStatusId?: string | null;
   type: 'lead' | 'note' | 'reminder' | 'session' | 'project';
   matchedContent: string;
   status: string;
@@ -27,6 +28,7 @@ interface Lead {
   email?: string;
   phone?: string;
   status: string;
+  status_id: string | null;
 }
 
 interface Activity {
@@ -183,7 +185,7 @@ const GlobalSearch = () => {
       // Search leads with better special character handling
       const { data: leads, error: leadsError } = await supabase
         .from('leads')
-        .select('*')
+        .select('id, name, email, phone, status, status_id')
         .or(`name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%,phone.ilike.%${searchQuery}%`);
 
       console.log('GlobalSearch: Found leads:', leads?.length || 0, leads);
@@ -205,6 +207,7 @@ const GlobalSearch = () => {
           id: lead.id,
           leadId: lead.id,
           leadName: lead.name,
+          leadStatusId: lead.status_id,
           type: 'lead',
           matchedContent,
           status: lead.status,
@@ -225,7 +228,7 @@ const GlobalSearch = () => {
         const leadIds = [...new Set(activities.map((a: Activity) => a.lead_id))];
         const { data: activityLeads } = await supabase
           .from('leads')
-          .select('id, name, status')
+          .select('id, name, status, status_id')
           .in('id', leadIds);
 
         const leadMap = new Map(activityLeads?.map(l => [l.id, l]) || []);
@@ -242,6 +245,7 @@ const GlobalSearch = () => {
               id: activity.id,
               leadId: activity.lead_id,
               leadName: lead.name,
+              leadStatusId: lead.status_id,
               type: isReminder ? 'reminder' : 'note',
               matchedContent: matchedContent.length > 80 ? `${matchedContent.substring(0, 80)}...` : matchedContent,
               status: lead.status,
@@ -264,7 +268,7 @@ const GlobalSearch = () => {
         const sessionLeadIds = [...new Set(sessions.map((s: Session) => s.lead_id))];
         const { data: sessionLeads } = await supabase
           .from('leads')
-          .select('id, name, status')
+          .select('id, name, status, status_id')
           .in('id', sessionLeadIds);
 
         const sessionLeadMap = new Map(sessionLeads?.map(l => [l.id, l]) || []);
@@ -289,6 +293,7 @@ const GlobalSearch = () => {
               id: session.id,
               leadId: session.lead_id,
               leadName: lead.name,
+              leadStatusId: lead.status_id,
               type: 'session',
               matchedContent,
               status: lead.status,
@@ -311,7 +316,7 @@ const GlobalSearch = () => {
         const projectLeadIds = [...new Set(projects.map((p: any) => p.lead_id))];
         const { data: projectLeads } = await supabase
           .from('leads')
-          .select('id, name, status')
+          .select('id, name, status, status_id')
           .in('id', projectLeadIds);
 
         const projectLeadMap = new Map(projectLeads?.map(l => [l.id, l]) || []);
@@ -334,6 +339,7 @@ const GlobalSearch = () => {
             projectName: project.name,
             leadId: lead?.id,
             leadName: lead?.name,
+            leadStatusId: lead?.status_id ?? null,
             projectStatusId: project.status_id ?? null,
             type: 'project',
             matchedContent,
@@ -495,15 +501,15 @@ const GlobalSearch = () => {
                                 ) : result.leadId ? (
                                   statusesLoading ? (
                                     <div className="h-5 w-16 rounded-full bg-muted animate-pulse" />
-                                  ) : (
-                                    <LeadStatusBadge
-                                      leadId={result.leadId}
-                                      currentStatus={result.status}
-                                      editable={false}
-                                      size="sm"
-                                      statuses={leadStatuses}
-                                    />
-                                  )
+                                   ) : (
+                                     <LeadStatusBadge
+                                       leadId={result.leadId}
+                                       currentStatusId={result.leadStatusId ?? undefined}
+                                       editable={false}
+                                       size="sm"
+                                       statuses={leadStatuses}
+                                     />
+                                   )
                                 ) : null}
                                 <ChevronRight className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                               </div>

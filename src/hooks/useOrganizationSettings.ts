@@ -56,7 +56,7 @@ export const useOrganizationSettings = () => {
         .from('organization_settings')
         .select('*')
         .eq('organization_id', organizationId)
-        .single();
+        .maybeSingle();
 
       if (!existingSettings) {
         // First time setup - create settings with user's email as business email
@@ -78,9 +78,30 @@ export const useOrganizationSettings = () => {
         .from('organization_settings')
         .select('*')
         .eq('organization_id', organizationId)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
+
+      // If no org settings found, try to get from user_settings as fallback
+      if (!orgSettings) {
+        const { data: userSettings } = await supabase
+          .from('user_settings')
+          .select('photography_business_name, logo_url, primary_brand_color, date_format')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (userSettings) {
+          // Create minimal settings from user data
+          setSettings({
+            photography_business_name: userSettings.photography_business_name,
+            logo_url: userSettings.logo_url,
+            primary_brand_color: userSettings.primary_brand_color,
+            date_format: userSettings.date_format,
+            socialChannels: {}
+          });
+          return;
+        }
+      }
 
       // Ensure social_channels field exists with fallback
       const settingsWithDefaults = {

@@ -38,7 +38,7 @@ export function EnhancedAddLeadDialog({
   const { profile } = useProfile();
   const [loading, setLoading] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
-  const [assignees, setAssignees] = useState<string[]>([]);
+  // Assignees removed - single user organization
 
   // Create dynamic schema based on field definitions
   const schema = createDynamicLeadSchema(fieldDefinitions);
@@ -48,21 +48,16 @@ export function EnhancedAddLeadDialog({
     defaultValues: {},
   });
 
-  // Auto-add current user as first assignee
-  useEffect(() => {
-    if (profile?.user_id && assignees.length === 0) {
-      setAssignees([profile.user_id]);
-    }
-  }, [profile?.user_id, assignees.length]);
+  // Auto-add current user as first assignee (single photographer mode)
 
   // Track form dirty state
   const formValues = form.watch();
   useEffect(() => {
     const hasValues = Object.values(formValues).some(value => 
       value !== '' && value !== null && value !== undefined
-    ) || assignees.length > 0;
+    );
     setIsDirty(hasValues);
-  }, [formValues, assignees]);
+  }, [formValues]);
 
   useEffect(() => {
     if (open && !fieldsLoading) {
@@ -153,7 +148,7 @@ export function EnhancedAddLeadDialog({
           phone: data.field_phone || null,
           notes: data.field_notes || null,
           status_id: statusId,
-          assignees: assignees.length > 0 ? assignees : [(await supabase.auth.getUser()).data.user?.id].filter(Boolean),
+          // assignees removed - single user organization
         })
         .select()
         .single();

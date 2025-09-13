@@ -71,7 +71,7 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
     projectTypeId: "",
     basePrice: "",
     packageId: "",
-    assignees: [] as string[],
+    // assignees removed - single user organization
     selectedServices: [] as Service[],
     selectedServiceIds: [] as string[]
   });
@@ -140,15 +140,7 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
     }
   }, [open]);
 
-  // Auto-add current user as first assignee
-  useEffect(() => {
-    if (profile?.user_id && projectData.assignees.length === 0) {
-      setProjectData(prev => ({
-        ...prev,
-        assignees: [profile.user_id]
-      }));
-    }
-  }, [profile?.user_id, projectData.assignees.length]);
+  // Auto-add current user as first assignee (single photographer mode)
 
   const fetchLeads = async () => {
     setLoadingLeads(true);
@@ -247,7 +239,7 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
       packageId: "",
       selectedServices: [],
       selectedServiceIds: [],
-      assignees: profile?.user_id ? [profile.user_id] : []
+      // assignees removed - single user organization
     });
     setNewLeadData({ name: "", email: "", phone: "", notes: "" });
     setSelectedLeadId("");
@@ -348,7 +340,7 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
           status_id: statusId,
           project_type_id: projectData.projectTypeId,
           base_price: basePrice,
-          assignees: projectData.assignees.length > 0 ? projectData.assignees : [user.id]
+          // assignees removed - single user organization
         })
         .select('id')
         .single();
@@ -387,17 +379,7 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
         if (servicesError) throw servicesError;
       }
 
-      // Send notifications for assigned users
-      if (activeOrganization?.id && projectData.assignees.length > 0) {
-        console.log('🔔 Sending assignment notifications for project:', newProject.id);
-        try {
-          await triggerNewAssignment('project', newProject.id, projectData.assignees, activeOrganization.id);
-          console.log('✅ Assignment notifications sent successfully');
-        } catch (notificationError) {
-          console.error('❌ Failed to send assignment notifications:', notificationError);
-          // Don't fail the project creation if notifications fail
-        }
-      }
+      // Assignment notifications removed - single photographer mode
 
       toast({
         title: "Success",
@@ -503,15 +485,12 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
 
 
   // Check if form has meaningful changes (excluding auto-assigned values)
-  const hasInitialAssignee = profile?.user_id && projectData.assignees.length === 1 && projectData.assignees[0] === profile.user_id;
   const isDirty = Boolean(
     projectData.name.trim() ||
     projectData.description.trim() ||
     projectData.basePrice.trim() ||
     projectData.packageId ||
     projectData.selectedServiceIds.length > 0 ||
-    (projectData.assignees.length > 1) || // More than just the default creator
-    (!hasInitialAssignee && projectData.assignees.length > 0) || // Manual assignee changes
     (isNewLead && (newLeadData.name.trim() || newLeadData.email.trim() || newLeadData.phone.trim() || newLeadData.notes.trim())) ||
     (!isNewLead && selectedLeadId && selectedLeadId !== defaultLeadId)
   );

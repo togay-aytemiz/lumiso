@@ -3,7 +3,6 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { Resend } from "npm:resend@2.0.0";
 import { generateModernDailySummaryEmail } from './_templates/enhanced-daily-summary-modern.ts';
 import { generateEmptyDailySummaryEmail } from './_templates/enhanced-daily-summary-empty.ts';
-import { generateImmediateNotificationEmail, generateSubject, ImmediateNotificationEmailData, ProjectAssignmentData, LeadAssignmentData, ProjectMilestoneData } from './_templates/immediate-notifications.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -229,9 +228,6 @@ async function processSpecificNotification(supabase: any, notificationId: string
     case 'project-milestone':
       result = await processProjectMilestone(supabase, notificationData);
       break;
-    case 'new-assignment':
-      result = await processNewAssignment(supabase, notificationData);
-      break;
     case 'workflow-message':
       result = await processWorkflowMessage(supabase, notificationData);
       break;
@@ -392,43 +388,6 @@ async function processProjectMilestone(supabase: any, notification: any) {
   return data;
 }
 
-// Process new assignment notification
-async function processNewAssignment(supabase: any, notification: any) {
-  const metadata = notification.metadata || {};
-  const { entity_type, entity_id, assigner_name } = metadata;
-
-  if (!entity_type || !entity_id) {
-    throw new Error('entity_type and entity_id required in metadata for assignment notification');
-  }
-
-  // Get assignee info
-  const { data: userData, error: userError } = await supabase.auth.admin.getUserById(notification.user_id);
-  if (userError || !userData.user) {
-    throw new Error(`Failed to get assignee: ${userError?.message || 'User not found'}`);
-  }
-
-  console.log(`Processing assignment: ${entity_type}:${entity_id} to ${userData.user.email}`);
-  
-  // Use the send-reminder-notifications function for actual processing
-  const { data, error } = await supabase.functions.invoke('send-reminder-notifications', {
-    body: {
-      type: 'new-assignment',
-      entity_type,
-      entity_id,
-      assignee_id: notification.user_id,
-      assignee_email: userData.user.email,
-      assignee_name: userData.user.email?.split('@')[0] || 'User',
-      assigner_name,
-      organizationId: notification.organization_id
-    }
-  });
-
-  if (error) {
-    throw new Error(`Failed to process assignment: ${error.message}`);
-  }
-
-  return data;
-}
 
 // Process workflow message notification
 async function processWorkflowMessage(supabase: any, notification: any) {

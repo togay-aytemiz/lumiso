@@ -12,10 +12,9 @@ const defaultSettings: Partial<UserSettings> = {
   primary_brand_color: "#1EB29F",
   date_format: "DD/MM/YYYY",
   notification_global_enabled: true,
-  notification_daily_summary_enabled: true,
-  notification_new_assignment_enabled: true,
-  notification_project_milestone_enabled: true,
-  notification_scheduled_time: "12:30"
+  notification_daily_summary_enabled: false,
+  notification_project_milestone_enabled: false,
+  notification_scheduled_time: "09:00"
 };
 
 export function useUserSettings() {

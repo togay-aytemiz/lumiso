@@ -3,7 +3,6 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { Resend } from "npm:resend@2.0.0";
 import { generateModernDailySummaryEmail } from './_templates/enhanced-daily-summary-modern.ts';
 import { generateEmptyDailySummaryEmail } from './_templates/enhanced-daily-summary-empty.ts';
-import { generateImmediateNotificationEmail, generateSubject, ImmediateNotificationEmailData, ProjectAssignmentData, LeadAssignmentData, ProjectMilestoneData } from './_templates/immediate-notifications.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -17,13 +16,6 @@ interface ReminderRequest {
   isTest?: boolean;
   organizationId?: string; // For batch processing
   userId?: string; // For batch processing
-  // New assignment specific fields
-  entity_type?: 'lead' | 'project';
-  entity_id?: string;
-  assignee_id?: string;
-  assignee_email?: string;
-  assignee_name?: string;
-  assigner_name?: string;
   // Project milestone specific fields
   project_id?: string;
   old_status?: string;
@@ -46,12 +38,7 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     const requestData: ReminderRequest = await req.json();
     console.log(`Processing ${requestData.type}, test mode: ${requestData.isTest || false}`);
-    console.log('Available types: daily-summary, daily-summary-empty, new-assignment, project-milestone');
-
-    // Handle new-assignment notifications first (simpler path)
-    if (requestData.type === 'new-assignment') {
-      return await handleNewAssignmentNotification(requestData, adminSupabase);
-    }
+    console.log('Available types: daily-summary, daily-summary-empty, project-milestone');
 
     // Handle project-milestone notifications
     if (requestData.type === 'project-milestone') {
@@ -61,7 +48,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Handle daily-summary and daily-summary-empty notifications
     if (!['daily-summary', 'daily-summary-empty'].includes(requestData.type)) {
       console.log(`Unsupported type received: ${requestData.type}`);
-      return new Response(JSON.stringify({ message: 'Only daily-summary, daily-summary-empty, new-assignment and project-milestone supported' }), {
+      return new Response(JSON.stringify({ message: 'Only daily-summary, daily-summary-empty and project-milestone supported' }), {
         status: 200,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });
@@ -448,56 +435,6 @@ const handler = async (req: Request): Promise<Response> => {
   }
 };
 
-// Handler for new assignment notifications
-async function handleNewAssignmentNotification(requestData: ReminderRequest, adminSupabase: any): Promise<Response> {
-  console.log('Handling new assignment notification:', requestData);
-  
-  try {
-    let { 
-      entity_type,
-      entity_id,
-      assignee_id,
-      assignee_email,
-      assignee_name,
-      assigner_name,
-      organizationId,
-      isTest = false
-    } = requestData;
-
-    // Validate required fields
-    if (!entity_type || !entity_id || !assignee_email || !organizationId) {
-      throw new Error('Missing required fields for assignment notification');
-    }
-
-    // Initialize variables for entity details
-    let entityName = '';
-    let notes = null;
-    let projectType = null;
-    let status = null;
-    let leadName = null;
-
-    // For testing, create mock data
-    if (isTest) {
-      console.log('Test mode - creating mock assignment data');
-      
-      // Create a mock assignment for testing
-      entity_type = 'lead';
-      entity_id = 'test-lead-id';
-      assignee_name = 'Test User';
-      assigner_name = 'System';
-      entityName = 'Sarah & John Wedding - TEST';
-      notes = 'This is a test assignment notification. You can safely ignore this email.';
-      status = 'New';
-      
-      console.log(`Test notification will be sent to: ${assignee_email}`);
-    } else {
-      // Get entity details for real assignments
-      if (entity_type === 'lead') {
-        const { data: lead } = await adminSupabase
-          .from('leads')
-          .select('name, notes, status')
-          .eq('id', entity_id)
-          .maybeSingle();
         
         if (lead) {
           entityName = lead.name;

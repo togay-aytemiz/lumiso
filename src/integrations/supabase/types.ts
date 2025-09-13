@@ -613,7 +613,6 @@ export type Database = {
           logo_url: string | null
           notification_daily_summary_enabled: boolean | null
           notification_global_enabled: boolean | null
-          notification_new_assignment_enabled: boolean | null
           notification_project_milestone_enabled: boolean | null
           organization_id: string
           phone: string | null
@@ -640,7 +639,6 @@ export type Database = {
           logo_url?: string | null
           notification_daily_summary_enabled?: boolean | null
           notification_global_enabled?: boolean | null
-          notification_new_assignment_enabled?: boolean | null
           notification_project_milestone_enabled?: boolean | null
           organization_id: string
           phone?: string | null
@@ -667,7 +665,6 @@ export type Database = {
           logo_url?: string | null
           notification_daily_summary_enabled?: boolean | null
           notification_global_enabled?: boolean | null
-          notification_new_assignment_enabled?: boolean | null
           notification_project_milestone_enabled?: boolean | null
           organization_id?: string
           phone?: string | null
@@ -1534,7 +1531,6 @@ export type Database = {
           logo_url: string | null
           notification_daily_summary_enabled: boolean | null
           notification_global_enabled: boolean | null
-          notification_new_assignment_enabled: boolean | null
           notification_project_milestone_enabled: boolean | null
           notification_scheduled_time: string | null
           onboarding_stage: Database["public"]["Enums"]["onboarding_stage"]
@@ -1553,7 +1549,6 @@ export type Database = {
           logo_url?: string | null
           notification_daily_summary_enabled?: boolean | null
           notification_global_enabled?: boolean | null
-          notification_new_assignment_enabled?: boolean | null
           notification_project_milestone_enabled?: boolean | null
           notification_scheduled_time?: string | null
           onboarding_stage?: Database["public"]["Enums"]["onboarding_stage"]
@@ -1572,7 +1567,6 @@ export type Database = {
           logo_url?: string | null
           notification_daily_summary_enabled?: boolean | null
           notification_global_enabled?: boolean | null
-          notification_new_assignment_enabled?: boolean | null
           notification_project_milestone_enabled?: boolean | null
           notification_scheduled_time?: string | null
           onboarding_stage?: Database["public"]["Enums"]["onboarding_stage"]

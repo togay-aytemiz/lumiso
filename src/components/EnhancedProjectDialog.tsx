@@ -62,7 +62,7 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
   const [isNewLead, setIsNewLead] = useState(false);
   const { toast } = useToast();
   const { currentStep, shouldLockNavigation, completeCurrentStep } = useOnboardingV2();
-  const { triggerNewAssignment } = useNotificationTriggers();
+  const { triggerProjectMilestone } = useNotificationTriggers();
   const { activeOrganization } = useOrganization();
 
   const [projectData, setProjectData] = useState({

@@ -47,7 +47,7 @@ export default function SettingsLayout() {
   // Permission-aware filtering for organization settings
   const filteredOrgItems = organizationSettingsItems.filter((item) => {
     if (item.href === '/settings/team') {
-      return hasAnyPermission(['manage_team', 'manage_roles']) || hasPermission('admin');
+      return hasAnyPermission(['manage_team', 'manage_roles']);
     }
     if (item.href === '/settings/general') {
       return hasAnyPermission(['view_organization_settings', 'manage_organization_settings']);
@@ -70,10 +70,10 @@ export default function SettingsLayout() {
       shouldLockNavigation
     });
 
-    // Simple rule: During guided setup, only allow general settings
+    // During guided setup, only allow general settings
     if (shouldLockNavigation) {
       // Allow general settings during guided setup
-      const isUnlocked = itemHref === '/settings';
+      const isUnlocked = itemHref === '/settings/general' || itemHref === '/settings';
       console.log(`🔒 Guided setup: ${itemHref} - ${isUnlocked ? 'UNLOCKED' : 'LOCKED'}`);
       return !isUnlocked;
     }

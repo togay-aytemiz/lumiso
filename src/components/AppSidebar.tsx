@@ -283,7 +283,7 @@ export function AppSidebar() {
                 // Define required permissions for each tool item
                 let requiredPermissions: string[] = [];
                 if (item.title === "Analytics") requiredPermissions = ["view_analytics"];
-                if (item.title === "Payments") requiredPermissions = ["view_payments"];
+                if (item.title === "Payments") requiredPermissions = ["view_billing", "manage_billing"];
 
                 // Only render if user has required permissions
                 if (!isItemVisible(requiredPermissions)) return null;

@@ -51,13 +51,34 @@ export function usePermissions() {
         return;
       }
 
-      // Use RPC to safely resolve permissions server-side (bypasses RLS pitfalls)
-      const { data, error } = await supabase.rpc('get_user_permissions', {});
-      if (error) {
-        throw error;
-      }
+      // Check if user is owner first
+      let userPermissions: string[] = [];
+      
+      if (activeOrganizationId) {
+        const { data: orgMember } = await supabase
+          .from('organization_members')
+          .select('role')
+          .eq('user_id', user.id)
+          .eq('organization_id', activeOrganizationId)
+          .single();
 
-      const userPermissions: string[] = Array.isArray(data) ? (data as string[]) : [];
+        // If user is owner, grant all permissions
+        if (orgMember?.role === 'Owner') {
+          // Get all available permissions
+          const { data: allPermissions } = await supabase
+            .from('permissions')
+            .select('name');
+          
+          userPermissions = allPermissions?.map(p => p.name) || [];
+        } else {
+          // Use RPC to safely resolve permissions server-side
+          const { data, error } = await supabase.rpc('get_user_permissions');
+          if (error) {
+            throw error;
+          }
+          userPermissions = Array.isArray(data) ? (data as string[]) : [];
+        }
+      }
 
       // Update cache
       cachedPermissions = userPermissions;

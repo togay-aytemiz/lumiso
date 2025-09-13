@@ -20,7 +20,7 @@ import { ProjectPaymentsSection } from "./ProjectPaymentsSection";
 import ProjectDetailsLayout from "@/components/project-details/ProjectDetailsLayout";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { UnifiedClientDetails } from "@/components/UnifiedClientDetails";
-import { AssigneesList } from "@/components/AssigneesList";
+// AssigneesList removed - single user organization
 import { SessionWithStatus } from "@/lib/sessionSorting";
 import { onArchiveToggle } from "@/components/ViewProjectDialog";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -528,10 +528,8 @@ export function ProjectSheetView({
                 </div>
                 
                 {/* Assignees List for mobile */}
-                <div className="pt-2">
-                  <AssigneesList
-                    assignees={project.assignees || []}
-                    entityType="project"
+                {/* Assignees removed - single user organization */}
+                </div>
                     entityId={project.id}
                     onUpdate={handleAssigneesUpdate}
                   />
@@ -545,10 +543,8 @@ export function ProjectSheetView({
       
       <div className="flex items-center gap-1 shrink-0 self-start">
         {/* Desktop Assignees - moved here to be left of buttons */}
-        <div className="hidden md:flex items-center mr-4">
-          <AssigneesList
-            assignees={project.assignees || []}
-            entityType="project"
+        {/* Assignees removed - single user organization */}
+        </div>
             entityId={project.id}
             onUpdate={handleAssigneesUpdate}
           />

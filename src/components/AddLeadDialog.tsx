@@ -11,8 +11,7 @@ import { Plus } from "lucide-react";
 import { leadSchema, sanitizeInput, sanitizeHtml } from "@/lib/validation";
 import { ZodError } from "zod";
 import { useOrganizationQuickSettings } from "@/hooks/useOrganizationQuickSettings";
-import { AssigneesPicker } from "./AssigneesPicker";
-import { InlineAssigneesPicker } from "./InlineAssigneesPicker";
+// Assignee components removed - single user organization
 import { useProfile } from "@/contexts/ProfileContext";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
@@ -35,7 +34,7 @@ const AddLeadDialog = ({ onLeadAdded, open, onOpenChange }: AddLeadDialogProps) 
     phone: "",
     notes: "",
     status: "",
-    assignees: [] as string[],
+    // Assignees removed - single user organization
   });
   const { profile } = useProfile();
   const { hasPermission } = usePermissions();
@@ -44,15 +43,7 @@ const AddLeadDialog = ({ onLeadAdded, open, onOpenChange }: AddLeadDialogProps) 
     fetchLeadStatuses();
   }, []);
 
-  // Auto-add current user as first assignee
-  useEffect(() => {
-    if (profile?.user_id && formData.assignees.length === 0) {
-      setFormData(prev => ({
-        ...prev,
-        assignees: [profile.user_id]
-      }));
-    }
-  }, [profile?.user_id, formData.assignees.length]);
+  // Auto-assignment removed - single user organization
 
   const fetchLeadStatuses = async () => {
     try {
@@ -134,7 +125,7 @@ const AddLeadDialog = ({ onLeadAdded, open, onOpenChange }: AddLeadDialogProps) 
         phone: formData.phone ? sanitizeInput(formData.phone) : null,
         notes: formData.notes ? await sanitizeHtml(formData.notes) : null,
         status: formData.status,
-        assignees: formData.assignees.length > 0 ? formData.assignees : [user.id],
+        // assignees removed - single user organization
       };
 
       const { error } = await supabase
@@ -171,8 +162,7 @@ const AddLeadDialog = ({ onLeadAdded, open, onOpenChange }: AddLeadDialogProps) 
     formData.name.trim() || 
     formData.email.trim() || 
     formData.phone.trim() || 
-    formData.notes.trim() ||
-    (formData.assignees.length !== 1 || formData.assignees[0] !== profile?.user_id)
+    formData.notes.trim()
   );
 
   const resetForm = () => {
@@ -183,7 +173,7 @@ const AddLeadDialog = ({ onLeadAdded, open, onOpenChange }: AddLeadDialogProps) 
       phone: "",
       notes: "",
       status: defaultStatus,
-      assignees: profile?.user_id ? [profile.user_id] : [],
+      // assignees field removed - single user organization
     });
     setErrors({});
   };
@@ -309,13 +299,7 @@ const AddLeadDialog = ({ onLeadAdded, open, onOpenChange }: AddLeadDialogProps) 
             {errors.notes && <p className="text-sm text-destructive">{errors.notes}</p>}
           </div>
           
-          <div className="pt-4 border-t">
-            <InlineAssigneesPicker
-              value={formData.assignees}
-              onChange={(assignees) => handleInputChange("assignees", assignees)}
-              disabled={loading}
-            />
-          </div>
+          {/* Assignees section removed - single user organization */}
         </div>
       </AppSheetModal>
       

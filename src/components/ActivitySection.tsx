@@ -1,334 +1,164 @@
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { useState, useEffect, useCallback } from "react";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { TimePicker } from "@/components/ui/time-picker";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { format, addDays, isAfter, isSameDay } from "date-fns";
+import { Calendar as CalendarIcon, Clock, Plus, CheckCircle2, X, MessageSquare, MapPin, Trash2, Edit2, Filter, RotateCcw } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Clock, FileText, Plus, MessageSquare, Bell, CheckCircle } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
-import ReminderCard from "@/components/ReminderCard";
-import { formatLongDate, formatTime } from "@/lib/utils";
-import { useCalendarSync } from "@/hooks/useCalendarSync";
-import DateTimePicker from "@/components/ui/date-time-picker";
-import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
-import { ListLoadingSkeleton } from "@/components/ui/loading-presets";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ChevronDown, ChevronRight } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+
 interface Activity {
   id: string;
   type: string;
   content: string;
   reminder_date?: string;
   reminder_time?: string;
+  completed: boolean;
   created_at: string;
-  completed?: boolean;
-  lead_id: string;
-  user_id: string; // Add user_id field
-  project_id?: string;
-  projects?: {
-    name: string;
-  }; // Add projects relation for project name
+  updated_at: string;
 }
+
+interface Session {
+  id: string;
+  session_name?: string;
+  session_date: string;
+  session_time: string;
+  location?: string;
+  notes?: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
 interface AuditLog {
   id: string;
+  user_id: string;
   entity_type: string;
+  entity_id: string;
   action: string;
   old_values?: any;
   new_values?: any;
   created_at: string;
-  session_project_id?: string;
-  project_name?: string;
-  user_id?: string;
 }
-interface Session {
-  id: string;
-  session_date: string;
-  session_time: string;
-  notes: string;
-  status: string;
-  created_at: string;
-  user_id: string; // Add user_id field
-  project_id?: string;
-  projects?: {
-    name: string;
-  };
-}
+
 interface ActivitySectionProps {
-  leadId: string;
-  leadName?: string;
+  entityType: 'lead' | 'project';
+  entityId: string;
+  onUpdate?: () => void;
 }
-const ActivitySection = ({
-  leadId,
-  leadName
-}: ActivitySectionProps) => {
-  const [activities, setActivities] = useState<Activity[]>([]);
-  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
-  const [sessions, setSessions] = useState<Session[]>([]);
-  const [userProfiles, setUserProfiles] = useState<Record<string, { full_name: string; profile_photo_url?: string }>>({});
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
 
+export default function ActivitySection({ entityType, entityId, onUpdate }: ActivitySectionProps) {
   const [content, setContent] = useState('');
-  const [isReminderMode, setIsReminderMode] = useState(false);
-  const [reminderDateTime, setReminderDateTime] = useState('');
-  const {
-    createReminderEvent
-  } = useCalendarSync();
-  const { settings: orgSettings } = useOrganizationSettings();
-  
-  // Helper function to format date according to organization settings
-  const formatOrgDate = (date: Date): string => {
-    const dateFormat = orgSettings?.date_format || 'DD/MM/YYYY';
-    
-    if (dateFormat === 'DD/MM/YYYY') {
-      return date.toLocaleDateString('en-GB'); // UK format for DD/MM/YYYY
-    } else if (dateFormat === 'MM/DD/YYYY') {
-      return date.toLocaleDateString('en-US'); // US format for MM/DD/YYYY
-    } else {
-      return date.toLocaleDateString(); // Fallback to browser default
+  const [reminderDate, setReminderDate] = useState<Date | undefined>();
+  const [reminderTime, setReminderTime] = useState<string>('');
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [editingActivity, setEditingActivity] = useState<string | null>(null);
+  const [editContent, setEditContent] = useState('');
+  const [editReminderDate, setEditReminderDate] = useState<Date | undefined>();
+  const [editReminderTime, setEditReminderTime] = useState<string>('');
+  const [userProfiles, setUserProfiles] = useState<{ [key: string]: { full_name?: string; profile_photo_url?: string } }>({});
+  const [selectedFilter, setSelectedFilter] = useState<string>("all");
+  const [activeTab, setActiveTab] = useState<string>("activities");
+  const [openGroups, setOpenGroups] = useState<{ [key: string]: boolean }>({});
+  const { toast } = useToast();
+
+  const ACTIVITY_TYPES = [
+    { value: "call", label: "Call", icon: "📞" },
+    { value: "email", label: "Email", icon: "📧" },
+    { value: "meeting", label: "Meeting", icon: "🤝" },
+    { value: "note", label: "Note", icon: "📝" },
+    { value: "task", label: "Task", icon: "✅" },
+    { value: "follow_up", label: "Follow-up", icon: "🔄" },
+  ];
+
+  const [activityType, setActivityType] = useState('note');
+
+  useEffect(() => {
+    fetchData();
+  }, [entityType, entityId]);
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      await Promise.all([
+        fetchActivities(),
+        fetchSessions(),
+        fetchAuditLogs()
+      ]);
+    } catch (error) {
+      console.error('Error fetching activity data:', error);
+    } finally {
+      setLoading(false);
     }
   };
-  
-  // Helper function to format time according to organization settings
-  const formatOrgTime = (timeString: string): string => {
-    const timeFormat = orgSettings?.time_format || '12-hour';
-    const [hours, minutes] = timeString.split(':').map(Number);
-    const date = new Date();
-    date.setHours(hours, minutes, 0, 0);
-    
-    if (timeFormat === '24-hour') {
-      return new Intl.DateTimeFormat('en-GB', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false
-      }).format(date);
-    } else {
-      return new Intl.DateTimeFormat('en-US', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true
-      }).format(date);
-    }
-  };
-  useEffect(() => {
-    fetchActivities();
-    fetchAuditLogs();
-    fetchSessions();
-  }, [leadId]);
 
-  // Refresh audit logs when the component receives focus (useful for seeing real-time updates)
-  useEffect(() => {
-    const handleFocus = () => {
-      fetchAuditLogs();
-    };
-
-    window.addEventListener('focus', handleFocus);
-    return () => window.removeEventListener('focus', handleFocus);
-  }, [leadId]);
   const fetchActivities = async () => {
     try {
-      const {
-        data,
-        error
-      } = await supabase.from('activities').select(`
-          id, type, content, reminder_date, reminder_time, created_at, completed, lead_id, user_id, project_id,
-          projects:project_id (name)
-        `).eq('lead_id', leadId).order('created_at', {
-        ascending: false
-      });
+      const { data, error } = await supabase
+        .from('activities')
+        .select('*')
+        .eq(entityType === 'lead' ? 'lead_id' : 'project_id', entityId)
+        .order('created_at', { ascending: false });
+
       if (error) throw error;
-
-      // Exclude reminders/notes belonging to archived projects
-      const {
-        data: userData
-      } = await supabase.auth.getUser();
-      if (!userData.user) return;
-
-      // Get user's active organization ID
-      const { data: organizationId } = await supabase.rpc('get_user_active_organization_id');
-      let filtered = data || [];
-      if (organizationId) {
-        // Get archived status
-        const { data: archivedStatus } = await supabase
-          .from('project_statuses')
-          .select('id, name')
-          .eq('organization_id', organizationId)
-          .ilike('name', 'archived')
-          .maybeSingle();
-          
-        if (archivedStatus?.id) {
-          const {
-            data: archivedProjects
-          } = await supabase.from('projects').select('id').eq('lead_id', leadId).eq('status_id', archivedStatus.id);
-          const archivedIds = new Set((archivedProjects || []).map(p => p.id));
-          filtered = filtered.filter(a => !a.project_id || !archivedIds.has(a.project_id));
-        }
-      }
-      setActivities(filtered);
-      
-      // Fetch user profiles for activities
-      const userIds = [...new Set(filtered.map(a => a.user_id).filter(Boolean))];
-      await fetchUserProfiles(userIds);
-    } catch (error: any) {
+      setActivities(data || []);
+    } catch (error) {
       console.error('Error fetching activities:', error);
     }
   };
+
   const fetchSessions = async () => {
     try {
-      const {
-        data,
-        error
-      } = await supabase.from('sessions').select(`
-          id, session_date, session_time, notes, status, created_at, user_id, project_id,
-          projects:project_id (name)
-        `).eq('lead_id', leadId).order('created_at', {
-        ascending: false
-      });
+      const { data, error } = await supabase
+        .from('sessions')
+        .select('*')
+        .eq(entityType === 'lead' ? 'lead_id' : 'project_id', entityId)
+        .order('session_date', { ascending: false });
+
       if (error) throw error;
-
-      // Exclude sessions belonging to archived projects
-      const {
-        data: userData
-      } = await supabase.auth.getUser();
-      const userId = userData.user?.id;
-      let filtered = data || [];
-      if (userId) {
-        // Get user's active organization
-        const { data: userSettings } = await supabase
-          .from('user_settings')
-          .select('active_organization_id')
-          .eq('user_id', userId)
-          .single();
-
-        // Skip archived project filtering for sessions too - will implement proper fix later
-        // const {
-        //   data: archivedStatus
-        // } = await supabase.from('project_statuses').select('id, name').eq('organization_id', userSettings?.active_organization_id).ilike('name', 'archived').maybeSingle();
-        // if (archivedStatus?.id) {
-        //   const {
-        //     data: archivedProjects
-        //   } = await supabase.from('projects').select('id').eq('lead_id', leadId).eq('status_id', archivedStatus.id);
-        //   const archivedIds = new Set((archivedProjects || []).map(p => p.id));
-        //   filtered = filtered.filter(s => !s.project_id || !archivedIds.has(s.project_id));
-        // }
-      }
-      setSessions(filtered || []);
-      
-      // Fetch user profiles for sessions
-      const userIds = [...new Set((filtered || []).map(s => s.user_id).filter(Boolean))];
-      await fetchUserProfiles(userIds);
-    } catch (error: any) {
+      setSessions(data || []);
+    } catch (error) {
       console.error('Error fetching sessions:', error);
     }
   };
-  const fetchUserProfiles = async (userIds: string[]) => {
-    if (userIds.length === 0) return;
-    
+
+  const fetchAuditLogs = async () => {
     try {
       const { data, error } = await supabase
-        .from('profiles')
-        .select('user_id, full_name, profile_photo_url')
-        .in('user_id', userIds);
+        .from('audit_log')
+        .select('*')
+        .eq('entity_id', entityId)
+        .order('created_at', { ascending: false })
+        .limit(50);
 
       if (error) throw error;
 
-      const profilesMap = data?.reduce((acc, profile) => {
-        acc[profile.user_id] = {
-          full_name: profile.full_name || 'Unknown User',
-          profile_photo_url: profile.profile_photo_url
-        };
-        return acc;
-      }, {} as Record<string, { full_name: string; profile_photo_url?: string }>) || {};
-
-      setUserProfiles(prev => ({ ...prev, ...profilesMap }));
-    } catch (error) {
-      console.error('Error fetching user profiles:', error);
-    }
-  };
-  
-  const fetchAuditLogs = async () => {
-    try {
-      // Get sessions to help enrich with project names
-      const {
-        data: sessionsData
-      } = await supabase.from('sessions').select('id, project_id').eq('lead_id', leadId);
-
-      // Get projects for this lead for names and filtering project logs
-      const {
-        data: projectsForLead
-      } = await supabase.from('projects').select('id, name').eq('lead_id', leadId);
-      const projectIds = [...new Set((projectsForLead || []).map(p => p.id))];
-
-      // Session audit logs for this lead (via session new/old values)
-      const {
-        data: allSessionAuditLogs
-      } = await supabase.from('audit_log').select('*').eq('entity_type', 'session');
-      const sessionAuditLogs = (allSessionAuditLogs || []).filter(log => {
-        const sessionData = log.new_values || log.old_values;
-        return sessionData && typeof sessionData === 'object' && sessionData !== null && 'lead_id' in sessionData && sessionData.lead_id === leadId;
-      });
-
-      // Lead audit logs (including lead_field_value)
-      const {
-        data: leadAuditLogs
-      } = await supabase.from('audit_log').select('*').eq('entity_id', leadId);
-
-      // Lead field value audit logs
-      const {
-        data: fieldValueAuditLogs
-      } = await supabase.from('audit_log').select('*').eq('entity_type', 'lead_field_value').eq('entity_id', leadId);
-
-      // Project audit logs (archived/restored)
-      let projectAuditLogs: any[] = [];
-      if (projectIds.length > 0) {
-        const {
-          data: projLogs
-        } = await supabase.from('audit_log').select('*').eq('entity_type', 'project').in('entity_id', projectIds);
-        projectAuditLogs = projLogs || [];
-      }
-
-      // Combine and sort
-      const data = [...(leadAuditLogs || []), ...sessionAuditLogs, ...projectAuditLogs, ...(fieldValueAuditLogs || [])].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-
-      // Enrich logs with project names
-      const projectsMap = new Map((projectsForLead || []).map(p => [p.id, p.name]));
-      const enrichedLogs = (data || []).map(log => {
-        if (log.entity_type === 'session') {
-          const sessionData = log.new_values || log.old_values;
-          const pid = (sessionData as any)?.project_id;
-          return pid ? {
-            ...log,
-            session_project_id: pid,
-            project_name: projectsMap.get(pid)
-          } : log;
-        }
-        if (log.entity_type === 'project') {
-          const pid = log.entity_id as string;
-          return {
-            ...log,
-            project_name: projectsMap.get(pid)
-          };
-        }
-        return log;
-      });
+      const enrichedLogs = data || [];
       
-      // Extract user IDs from all audit logs to fetch their profiles
+      // Collect all user IDs from the logs
       const allUserIds = new Set<string>();
-      data.forEach(log => {
-        // Add the user who made the change
+      
+      data?.forEach(log => {
         if (log.user_id) {
           allUserIds.add(log.user_id);
         }
-        
-        // Add assignees from lead changes
-        if (log.entity_type === 'lead' && log.action === 'updated') {
-          const oldAssignees = log.old_values?.assignees || [];
-          const newAssignees = log.new_values?.assignees || [];
-          [...oldAssignees, ...newAssignees].forEach(id => allUserIds.add(id));
-        }
+        // Assignee tracking removed - single user organization
       });
       
       // Fetch user profiles for all users
@@ -343,6 +173,7 @@ const ActivitySection = ({
       setLoading(false);
     }
   };
+
   const handleSaveActivity = async () => {
     if (!content.trim()) {
       toast({
@@ -352,77 +183,49 @@ const ActivitySection = ({
       });
       return;
     }
-    if (isReminderMode && !reminderDateTime) {
-      toast({
-        title: "Validation error",
-        description: "Date and time are required for reminders.",
-        variant: "destructive"
-      });
-      return;
-    }
+
     setSaving(true);
     try {
-      const {
-        data: userData
-      } = await supabase.auth.getUser();
-      if (!userData.user) throw new Error('Not authenticated');
-      const activityData = {
-        user_id: userData.user.id,
-        lead_id: leadId,
-        type: isReminderMode ? 'reminder' : 'note',
-        content: content.trim(),
-        ...(isReminderMode && reminderDateTime && {
-          reminder_date: reminderDateTime.split('T')[0],
-          reminder_time: reminderDateTime.split('T')[1]
-        })
-      };
-      // Get user's active organization
-      const { data: userSettings } = await supabase
-        .from('user_settings')
-        .select('active_organization_id')
-        .eq('user_id', userData.user.id)
-        .single();
-
-      if (!userSettings?.active_organization_id) {
-        throw new Error("Organization required");
+      const { data: organizationId } = await supabase.rpc('get_user_active_organization_id');
+      
+      if (!organizationId) {
+        throw new Error('No organization found');
       }
 
-      const activityDataWithOrg = {
-        ...activityData,
-        organization_id: userSettings.active_organization_id
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) throw new Error('User not authenticated');
+
+      const activityData = {
+        type: activityType,
+        content,
+        reminder_date: reminderDate ? format(reminderDate, 'yyyy-MM-dd') : null,
+        reminder_time: reminderTime || null,
+        organization_id: organizationId,
+        user_id: userData.user.id,
+        [entityType === 'lead' ? 'lead_id' : 'project_id']: entityId,
+        completed: false
       };
 
-      const {
-        data: newActivity,
-        error
-      } = await supabase.from('activities').insert(activityDataWithOrg).select('id').single();
+      const { error } = await supabase
+        .from('activities')
+        .insert(activityData);
+
       if (error) throw error;
 
-      // Sync reminder to Google Calendar
-      if (isReminderMode && newActivity && leadName) {
-        createReminderEvent({
-          id: newActivity.id,
-          lead_id: leadId,
-          content: content.trim(),
-          reminder_date: reminderDateTime.split('T')[0],
-          reminder_time: reminderDateTime.split('T')[1]
-        }, {
-          name: leadName
-        });
-      }
       toast({
         title: "Success",
-        description: `${isReminderMode ? 'Reminder' : 'Note'} added successfully.`
+        description: "Activity saved successfully"
       });
 
       // Reset form
       setContent('');
-      setReminderDateTime('');
-      setIsReminderMode(false);
+      setReminderDate(undefined);
+      setReminderTime('');
+      setActivityType('note');
 
       // Refresh data
       await fetchActivities();
-      await fetchAuditLogs();
+      onUpdate?.();
     } catch (error: any) {
       toast({
         title: "Error",
@@ -433,95 +236,156 @@ const ActivitySection = ({
       setSaving(false);
     }
   };
-  const handleReminderToggle = (checked: boolean) => {
-    setIsReminderMode(checked);
-    if (!checked) {
-      setReminderDateTime('');
-    }
-  };
-  const toggleCompletion = async (activityId: string, completed: boolean) => {
+
+  const fetchUserProfiles = async (userIds: string[]) => {
     try {
-      // Update the completion status in the database
-      const {
-        error
-      } = await supabase.from('activities').update({
-        completed
-      }).eq('id', activityId);
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('user_id, full_name, profile_photo_url')
+        .in('user_id', userIds);
+
       if (error) throw error;
 
-      // Update local state to reflect the change immediately
-      setActivities(prev => prev.map(activity => activity.id === activityId ? {
-        ...activity,
-        completed
-      } : activity));
+      const profiles = (data || []).reduce((acc, profile) => {
+        acc[profile.user_id] = {
+          full_name: profile.full_name,
+          profile_photo_url: profile.profile_photo_url
+        };
+        return acc;
+      }, {} as { [key: string]: { full_name?: string; profile_photo_url?: string } });
+
+      setUserProfiles(prev => ({ ...prev, ...profiles }));
+    } catch (error) {
+      console.error('Error fetching user profiles:', error);
+    }
+  };
+
+  const handleToggleComplete = async (activityId: string, completed: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('activities')
+        .update({ completed })
+        .eq('id', activityId);
+
+      if (error) throw error;
+
+      // Update local state
+      setActivities(prev => prev.map(activity => 
+        activity.id === activityId ? { ...activity, completed } : activity
+      ));
+
       toast({
-        title: completed ? "Task marked as completed" : "Task marked as incomplete",
-        description: "Task status updated successfully."
+        title: "Success",
+        description: completed ? "Activity marked as completed" : "Activity marked as incomplete"
       });
     } catch (error: any) {
       toast({
-        title: "Error updating task",
+        title: "Error",
         description: error.message,
         variant: "destructive"
       });
     }
   };
-  const shouldShowStatusBadge = (activity: Activity) => {
-    // Never show overdue badge for completed reminders
-    if (activity.completed) return false;
-    return true;
-  };
-  // Helper component for user avatar
-  const UserAvatar = ({ userId, className = "" }: { userId?: string; className?: string }) => {
-    if (!userId || !userProfiles[userId]) {
-      return null;
+
+  const handleDeleteActivity = async (activityId: string) => {
+    try {
+      const { error } = await supabase
+        .from('activities')
+        .delete()
+        .eq('id', activityId);
+
+      if (error) throw error;
+
+      // Update local state
+      setActivities(prev => prev.filter(activity => activity.id !== activityId));
+
+      toast({
+        title: "Success",
+        description: "Activity deleted successfully"
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive"
+      });
     }
-
-    const profile = userProfiles[userId];
-    const initials = profile.full_name
-      .split(' ')
-      .map(name => name.charAt(0))
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
-
-    return (
-      <div className={`flex items-center gap-2 ${className}`}>
-        <Avatar className="h-6 w-6">
-          <AvatarImage src={profile.profile_photo_url} alt={profile.full_name} />
-          <AvatarFallback className="text-xs bg-primary/10 text-primary">
-            {initials}
-          </AvatarFallback>
-        </Avatar>
-        <span className="text-xs text-muted-foreground font-medium hidden sm:inline">
-          {profile.full_name}
-        </span>
-      </div>
-    );
   };
 
-  const formatValue = (value: any, fieldType?: string) => {
-    if (value === null || value === undefined || value === '') {
-      return 'empty';
-    }
-    
-    if (fieldType === 'date' && value) {
-      return new Date(value).toLocaleDateString();
-    }
-    
-    if (fieldType === 'checkbox') {
-      return value === 'true' || value === true ? 'checked' : 'unchecked';
-    }
-    
-    return `"${value}"`;
+  const handleEditActivity = (activity: Activity) => {
+    setEditingActivity(activity.id);
+    setEditContent(activity.content);
+    setEditReminderDate(activity.reminder_date ? new Date(activity.reminder_date) : undefined);
+    setEditReminderTime(activity.reminder_time || '');
   };
 
-  const formatAuditAction = (log: AuditLog) => {
+  const handleSaveEdit = async () => {
+    if (!editContent.trim()) {
+      toast({
+        title: "Validation error",
+        description: "Content is required.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('activities')
+        .update({
+          content: editContent,
+          reminder_date: editReminderDate ? format(editReminderDate, 'yyyy-MM-dd') : null,
+          reminder_time: editReminderTime || null,
+        })
+        .eq('id', editingActivity);
+
+      if (error) throw error;
+
+      // Update local state
+      setActivities(prev => prev.map(activity => 
+        activity.id === editingActivity ? {
+          ...activity,
+          content: editContent,
+          reminder_date: editReminderDate ? format(editReminderDate, 'yyyy-MM-dd') : null,
+          reminder_time: editReminderTime || null,
+        } : activity
+      ));
+
+      setEditingActivity(null);
+      setEditContent('');
+      setEditReminderDate(undefined);
+      setEditReminderTime('');
+
+      toast({
+        title: "Success",
+        description: "Activity updated successfully"
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  };
+
+  const formatValue = (value: any, fieldType?: string): string => {
+    if (value === null || value === undefined) return '';
+    if (typeof value === 'string') return value;
+    if (typeof value === 'boolean') return value ? 'Yes' : 'No';
+    if (typeof value === 'number') return value.toString();
+    if (Array.isArray(value)) return value.join(', ');
+    return String(value);
+  };
+
+  const getActivityDescription = (log: AuditLog): string => {
     if (log.entity_type === 'lead') {
-      if (log.action === 'created') {
-        return 'Lead created';
-      } else if (log.action === 'updated') {
-        const changes = [];
+      if (log.action === 'created') return 'Lead created';
+      if (log.action === 'archived') return 'Lead archived';
+      if (log.action === 'restored') return 'Lead restored';
+      
+      if (log.action === 'updated') {
+        const changes: string[] = [];
         
         // Check for status changes
         const oldStatus = log.old_values?.status;
@@ -530,73 +394,7 @@ const ActivitySection = ({
           changes.push(`status changed from "${oldStatus}" to "${newStatus}"`);
         }
         
-        // Check for assignee changes
-        const oldAssignees = log.old_values?.assignees || [];
-        const newAssignees = log.new_values?.assignees || [];
-        
-        if (JSON.stringify(oldAssignees.sort()) !== JSON.stringify(newAssignees.sort())) {
-          const added = newAssignees.filter(id => !oldAssignees.includes(id));
-          const removed = oldAssignees.filter(id => !newAssignees.includes(id));
-          
-          if (added.length > 0 && removed.length > 0) {
-            const addedNames = added.map(id => userProfiles[id]?.full_name || `User ${id.slice(0, 8)}`).join(', ');
-            const removedNames = removed.map(id => userProfiles[id]?.full_name || `User ${id.slice(0, 8)}`).join(', ');
-            changes.push(`assignees updated (added: ${addedNames}, removed: ${removedNames})`);
-          } else if (added.length > 0) {
-            const addedNames = added.map(id => userProfiles[id]?.full_name || `User ${id.slice(0, 8)}`).join(', ');
-            changes.push(`${addedNames} assigned`);
-          } else if (removed.length > 0) {
-            const removedNames = removed.map(id => userProfiles[id]?.full_name || `User ${id.slice(0, 8)}`).join(', ');
-            changes.push(`${removedNames} unassigned`);
-          }
-        }
-        
-        // Check for name changes
-        const oldName = log.old_values?.name;
-        const newName = log.new_values?.name;
-        if (oldName !== newName) {
-          changes.push(`name changed from ${formatValue(oldName)} to ${formatValue(newName)}`);
-        }
-        
-        // Check for email changes
-        const oldEmail = log.old_values?.email;
-        const newEmail = log.new_values?.email;
-        if (oldEmail !== newEmail) {
-          changes.push(`email changed from ${formatValue(oldEmail)} to ${formatValue(newEmail)}`);
-        }
-        
-        // Check for phone changes
-        const oldPhone = log.old_values?.phone;
-        const newPhone = log.new_values?.phone;
-        if (oldPhone !== newPhone) {
-          changes.push(`phone changed from ${formatValue(oldPhone)} to ${formatValue(newPhone)}`);
-        }
-        
-        // Check for notes changes
-        const oldNotes = log.old_values?.notes;
-        const newNotes = log.new_values?.notes;
-        if (oldNotes !== newNotes) {
-          if (!oldNotes && newNotes) {
-            changes.push('notes added');
-          } else if (oldNotes && !newNotes) {
-            changes.push('notes removed');
-          } else if (oldNotes !== newNotes) {
-            changes.push('notes updated');
-          }
-        }
-        
-        // Check for due date changes
-        const oldDueDate = log.old_values?.due_date;
-        const newDueDate = log.new_values?.due_date;
-        if (oldDueDate !== newDueDate) {
-          if (!oldDueDate && newDueDate) {
-            changes.push(`due date set to ${new Date(newDueDate).toLocaleDateString()}`);
-          } else if (oldDueDate && !newDueDate) {
-            changes.push('due date removed');
-          } else {
-            changes.push(`due date changed from ${new Date(oldDueDate).toLocaleDateString()} to ${new Date(newDueDate).toLocaleDateString()}`);
-          }
-        }
+        // Assignee tracking removed - single user organization
         
         if (changes.length > 0) {
           return `Lead updated: ${changes.join(', ')}`;
@@ -610,40 +408,29 @@ const ActivitySection = ({
       
       if (log.action === 'created') {
         const value = formatValue(log.new_values?.value, fieldType);
-        return `${fieldLabel} set to ${value}`;
-      } else if (log.action === 'updated') {
+        return `${fieldLabel} added: ${value}`;
+      }
+      
+      if (log.action === 'updated') {
         const oldValue = formatValue(log.old_values?.value, fieldType);
         const newValue = formatValue(log.new_values?.value, fieldType);
-        return `${fieldLabel} changed from ${oldValue} to ${newValue}`;
-      } else if (log.action === 'deleted') {
+        return `${fieldLabel} changed from "${oldValue}" to "${newValue}"`;
+      }
+      
+      if (log.action === 'deleted') {
         const value = formatValue(log.old_values?.value, fieldType);
-        return `${fieldLabel} removed (was ${value})`;
-      }
-    } else if (log.entity_type === 'session') {
-      if (log.action === 'created') {
-        return 'Session created';
-      } else if (log.action === 'updated') {
-        const oldStatus = log.old_values?.status;
-        const newStatus = log.new_values?.status;
-        if (oldStatus !== newStatus) {
-          return `Session status: ${oldStatus} → ${newStatus}`;
-        }
-        return 'Session updated';
-      } else if (log.action === 'deleted') {
-        return 'Session deleted';
-      }
-    } else if (log.entity_type === 'activity') {
-      const activityType = log.new_values?.type || log.old_values?.type;
-      if (log.action === 'created') {
-        return `${activityType === 'note' ? 'Note' : 'Reminder'} added`;
+        return `${fieldLabel} removed: ${value}`;
       }
     } else if (log.entity_type === 'project') {
-      const name = (log as any).project_name || log.new_values?.name || log.old_values?.name;
+      const name = log.new_values?.name || log.old_values?.name;
+      if (log.action === 'created') return name ? `Project "${name}" created` : 'Project created';
+      if (log.action === 'updated') return name ? `Project "${name}" updated` : 'Project updated';
       if (log.action === 'archived') return name ? `Project "${name}" archived` : 'Project archived';
       if (log.action === 'restored') return name ? `Project "${name}" restored` : 'Project restored';
     }
     return `${log.entity_type} ${log.action}`;
   };
+
   // Separate activities+sessions from audit logs for tabs
   const activitiesAndSessions = [...activities.map(activity => ({
     type: 'activity' as const,
@@ -653,270 +440,390 @@ const ActivitySection = ({
     type: 'session' as const,
     data: session,
     date: session.created_at
-  }))].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  const auditLogsOnly = auditLogs.map(log => ({
-    type: 'audit' as const,
-    data: log,
-    date: log.created_at
-  }))
-  .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-  .filter((item, index, array) => {
-    // Simple deduplication: remove if identical to previous item
-    if (index === 0) return true;
-    const prev = array[index - 1];
-    const current = item.data;
-    const prevData = prev.data;
-    return !(
-      current.entity_type === prevData.entity_type &&
-      current.action === prevData.action &&
-      JSON.stringify(current.old_values || {}) === JSON.stringify(prevData.old_values || {}) &&
-      JSON.stringify(current.new_values || {}) === JSON.stringify(prevData.new_values || {}) &&
-      Math.abs(new Date(current.created_at).getTime() - new Date(prevData.created_at).getTime()) < 5000 // within 5 seconds
+  }))];
+
+  // Filter logic
+  const getFilteredItems = (items: typeof activitiesAndSessions) => {
+    if (selectedFilter === "all") return items;
+    if (selectedFilter === "completed") return items.filter(item => 
+      item.type === 'activity' && item.data.completed
     );
-  });
+    if (selectedFilter === "pending") return items.filter(item => 
+      item.type === 'activity' && !item.data.completed
+    );
+    if (selectedFilter === "sessions") return items.filter(item => item.type === 'session');
+    return items.filter(item => 
+      item.type === 'activity' && item.data.type === selectedFilter
+    );
+  };
 
-  // Group activities and sessions by date
-  const groupedActivities = activitiesAndSessions.reduce((groups, item) => {
-    const date = new Date(item.date).toDateString();
-    if (!groups[date]) {
-      groups[date] = [];
-    }
-    groups[date].push(item);
-    return groups;
-  }, {} as Record<string, typeof activitiesAndSessions>);
+  const filteredActivitiesAndSessions = getFilteredItems(activitiesAndSessions);
 
-  // Group audit logs by date
-  const groupedAuditLogs = auditLogsOnly.reduce((groups, item) => {
-    const date = new Date(item.date).toDateString();
-    if (!groups[date]) {
-      groups[date] = [];
-    }
-    groups[date].push(item);
-    return groups;
-  }, {} as Record<string, typeof auditLogsOnly>);
+  // Group by date
+  const groupByDate = (items: typeof filteredActivitiesAndSessions) => {
+    const groups = items.reduce((acc, item) => {
+      const date = format(new Date(item.date), 'yyyy-MM-dd');
+      if (!acc[date]) acc[date] = [];
+      acc[date].push(item);
+      return acc;
+    }, {} as { [key: string]: typeof filteredActivitiesAndSessions });
+
+    // Sort groups by date (newest first)
+    return Object.entries(groups)
+      .sort(([a], [b]) => new Date(b).getTime() - new Date(a).getTime())
+      .reduce((acc, [date, items]) => {
+        acc[date] = items.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        return acc;
+      }, {} as { [key: string]: typeof filteredActivitiesAndSessions });
+  };
+
+  const groupedItems = groupByDate(filteredActivitiesAndSessions);
+
+  const toggleGroup = (date: string) => {
+    setOpenGroups(prev => ({ ...prev, [date]: !prev[date] }));
+  };
+
+  const formatDateHeader = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    if (isSameDay(date, today)) return 'Today';
+    if (isSameDay(date, yesterday)) return 'Yesterday';
+    return format(date, 'EEEE, MMMM d, yyyy');
+  };
+
+  const getUserName = (userId: string) => {
+    return userProfiles[userId]?.full_name || 'Unknown User';
+  };
+
+  const getUserAvatar = (userId: string) => {
+    return userProfiles[userId]?.profile_photo_url || '';
+  };
+
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(word => word.charAt(0))
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
   if (loading) {
     return (
-      <ListLoadingSkeleton rows={5} />
-    );
-  }
-  return <div className="space-y-6">
-      {/* Add Activity Section */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-xl font-semibold">
-            <Plus className="h-5 w-5" />
-            Add Activity
-          </CardTitle>
+          <CardTitle>Activity & History</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                <Label>Note</Label>
-                <div className="flex items-center gap-2">
-                  <Label htmlFor="reminder-toggle" className="text-sm font-medium">
-                    Set Reminder?
-                  </Label>
-                  <Switch id="reminder-toggle" checked={isReminderMode} onCheckedChange={handleReminderToggle} />
-                </div>
-              </div>
-              <Textarea value={content} onChange={e => setContent(e.target.value)} placeholder="Enter your note..." rows={1} className="resize-none min-h-[40px] max-h-[40px] w-full" />
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="space-y-2">
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-4 w-1/2" />
             </div>
-
-            {isReminderMode && <div className="space-y-2">
-                <Label>Date & Time</Label>
-                <DateTimePicker value={reminderDateTime} onChange={setReminderDateTime} />
-              </div>}
-
-            <div className="flex justify-end">
-              <Button onClick={handleSaveActivity} disabled={saving || !content.trim() || isReminderMode && !reminderDateTime} size="sm" className="animate-fade-in w-full sm:w-auto">
-                {saving ? "Saving..." : `Add ${isReminderMode ? 'Reminder' : 'Note'}`}
-              </Button>
-            </div>
-          </div>
+          ))}
         </CardContent>
       </Card>
+    );
+  }
 
-      {/* Timeline with Tabs */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-xl font-semibold">Activity Timeline</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Tabs defaultValue="activities" className="w-full">
-            <TabsList className="bg-transparent border-b border-border p-0 h-auto w-full justify-start">
-              <TabsTrigger value="activities" className="bg-transparent border-0 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:shadow-none px-4 py-3 md:px-4 md:py-3 px-6 py-4 font-medium text-muted-foreground hover:text-foreground transition-colors flex-1 md:flex-initial">
-                Activities
-              </TabsTrigger>
-              <TabsTrigger value="history" className="bg-transparent border-0 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:shadow-none px-4 py-3 md:px-4 md:py-3 px-6 py-4 font-medium text-muted-foreground hover:text-foreground transition-colors flex-1 md:flex-initial">
-                History
-              </TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="activities" className="mt-4">
-              {Object.keys(groupedActivities).length === 0 ? (
-                <p className="text-muted-foreground text-center py-8">No activities yet</p>
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center justify-between">
+          Activity & History
+          <div className="flex items-center gap-2">
+            <Select value={selectedFilter} onValueChange={setSelectedFilter}>
+              <SelectTrigger className="w-40 h-8">
+                <Filter className="h-4 w-4 mr-2" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Activity</SelectItem>
+                <SelectItem value="pending">Pending Tasks</SelectItem>
+                <SelectItem value="completed">Completed</SelectItem>
+                <SelectItem value="sessions">Sessions</SelectItem>
+                <Separator />
+                {ACTIVITY_TYPES.map(type => (
+                  <SelectItem key={type.value} value={type.value}>
+                    {type.icon} {type.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="activities">Activities & Sessions</TabsTrigger>
+            <TabsTrigger value="history">System History</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="activities" className="space-y-4">
+            {/* Add Activity Form */}
+            <div className="space-y-4 p-4 border rounded-lg bg-muted/30">
+              <div className="flex items-center gap-2">
+                <Select value={activityType} onValueChange={setActivityType}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ACTIVITY_TYPES.map(type => (
+                      <SelectItem key={type.value} value={type.value}>
+                        {type.icon} {type.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <Textarea 
+                placeholder="Add activity notes..."
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                className="min-h-[80px]"
+              />
+              
+              <div className="flex items-center gap-2 flex-wrap">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm" className="gap-2">
+                      <CalendarIcon className="h-4 w-4" />
+                      {reminderDate ? format(reminderDate, 'MMM d, yyyy') : 'Set reminder date'}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={reminderDate}
+                      onSelect={setReminderDate}
+                      disabled={(date) => isAfter(addDays(new Date(), -1), date)}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+
+                {reminderDate && (
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                    <TimePicker 
+                      value={reminderTime}
+                      onChange={setReminderTime}
+                    />
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => {
+                        setReminderDate(undefined);
+                        setReminderTime('');
+                      }}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+              </div>
+              
+              <Button onClick={handleSaveActivity} disabled={saving} className="w-full">
+                <Plus className="h-4 w-4 mr-2" />
+                {saving ? 'Saving...' : 'Add Activity'}
+              </Button>
+            </div>
+
+            {/* Activities and Sessions List */}
+            <div className="space-y-4">
+              {Object.keys(groupedItems).length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p className="text-lg font-medium">No activities yet</p>
+                  <p className="text-sm">Add your first activity above to get started.</p>
+                </div>
               ) : (
-                <div className="space-y-6">
-                  {Object.entries(groupedActivities).map(([date, items]) => (
-                    <div key={date}>
-                      <h4 className="font-medium text-sm text-muted-foreground mb-3 sticky top-0">
-                        {formatLongDate(date)}
-                      </h4>
-                      <div className="space-y-3 pl-2 md:pl-4 border-l-2 border-muted">
-                        {items.map((item, index) => (
-                          <div key={`${item.type}-${item.data.id}-${index}`} className="relative">
-                            <div className="absolute -left-4 md:-left-6 top-3 w-3 h-3 bg-background border-2 border-muted-foreground/40 rounded-full"></div>
-                            <div className="bg-muted/50 rounded-lg py-6 px-4 flex items-center">
-                              <div className="space-y-4 w-full pt-2">
-                                {/* Row 1: Icon + Type chip + Project/Lead chip + User attribution */}
-                                <div className="flex items-center gap-3">
-                                  <div className="flex items-center gap-2">
-                                    {item.type === 'activity' ? item.data.type === 'note' ? (
-                                      <MessageSquare className="h-4 w-4 text-blue-500" />
-                                    ) : (
-                                      <Bell className="h-4 w-4 text-orange-500" />
-                                    ) : (
-                                      <Clock className="h-4 w-4 text-green-500" />
-                                    )}
-                                    <Badge variant="outline" className="text-xs">
-                                      {item.type === 'activity' ? item.data.type : 'session'}
-                                    </Badge>
-                                    <Badge variant="secondary" className={`text-xs max-w-[120px] md:max-w-[120px] max-w-full truncate ${item.data.project_id ? 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'}`}>
-                                      {item.data.project_id ? item.data.projects?.name || 'Project' : 'Lead'}
-                                    </Badge>
-                                  </div>
-                                  <div className="flex-1" />
-                                  <UserAvatar userId={item.data.user_id} />
-                                </div>
-
-                                {/* Row 2: Main content */}
-                                <div className="pl-1">
-                                  {item.type === 'activity' && (
+                Object.entries(groupedItems).map(([date, items]) => (
+                  <Collapsible 
+                    key={date} 
+                    open={openGroups[date] !== false}
+                    onOpenChange={() => toggleGroup(date)}
+                  >
+                    <CollapsibleTrigger asChild>
+                      <Button 
+                        variant="ghost" 
+                        className="w-full justify-between p-2 h-auto font-medium text-left"
+                      >
+                        <span className="text-sm text-muted-foreground">
+                          {formatDateHeader(date)} ({items.length})
+                        </span>
+                        {openGroups[date] !== false ? (
+                          <ChevronDown className="h-4 w-4" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="space-y-2 mt-2">
+                      {items.map((item) => (
+                        <div 
+                          key={`${item.type}-${item.data.id}`} 
+                          className={cn(
+                            "p-3 border rounded-lg transition-colors",
+                            item.type === 'activity' && item.data.completed && "bg-muted/50",
+                            item.type === 'session' && "bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800"
+                          )}
+                        >
+                          {item.type === 'activity' ? (
+                            <div className="space-y-2">
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="flex-1 min-w-0">
+                                  {editingActivity === item.data.id ? (
+                                    <div className="space-y-2">
+                                      <Textarea
+                                        value={editContent}
+                                        onChange={(e) => setEditContent(e.target.value)}
+                                        className="min-h-[60px]"
+                                      />
+                                      <div className="flex items-center gap-2">
+                                        <Button size="sm" onClick={handleSaveEdit}>
+                                          Save
+                                        </Button>
+                                        <Button 
+                                          size="sm" 
+                                          variant="outline" 
+                                          onClick={() => setEditingActivity(null)}
+                                        >
+                                          Cancel
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  ) : (
                                     <>
-                                      {(item.data as Activity).type === 'reminder' ? (
-                                        <div className="mt-2">
-                                          <ReminderCard 
-                                            activity={item.data as Activity} 
-                                            leadName={leadName} 
-                                            onToggleCompletion={toggleCompletion} 
-                                            showCompletedBadge={false} 
-                                            hideStatusBadge={!shouldShowStatusBadge(item.data as Activity)} 
-                                          />
-                                        </div>
-                                      ) : (item.data as Activity).type === 'note' ? (
-                                        // Regular note - no completion button
-                                        <div className="mt-2">
-                                          <p className="text-sm break-words">
-                                            {(item.data as Activity).content}
-                                          </p>
-                                        </div>
-                                      ) : (
-                                        // Other activity types that might need completion
-                                        <div className="flex items-start gap-3">
-                                          <button 
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              toggleCompletion((item.data as Activity).id, !(item.data as Activity).completed);
-                                            }} 
-                                            className="flex items-center justify-center w-5 h-5 rounded-full border-2 border-muted-foreground/40 hover:border-primary transition-colors mt-0.5 flex-shrink-0"
-                                          >
-                                            {(item.data as Activity).completed ? (
-                                              <CheckCircle className="h-3 w-3 text-green-600 dark:text-green-400" />
-                                            ) : (
-                                              <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40" />
-                                            )}
-                                          </button>
-                                          <div className="flex-1">
-                                            <p className={`text-sm break-words ${(item.data as Activity).completed ? 'line-through opacity-60' : ''}`}>
-                                              {(item.data as Activity).content}
-                                            </p>
-                                          </div>
+                                      <div className="flex items-center gap-2 mb-1">
+                                        <Badge variant="secondary" className="text-xs">
+                                          {ACTIVITY_TYPES.find(t => t.value === item.data.type)?.icon || '📝'} 
+                                          {ACTIVITY_TYPES.find(t => t.value === item.data.type)?.label || 'Note'}
+                                        </Badge>
+                                        <span className="text-xs text-muted-foreground">
+                                          {format(new Date(item.data.created_at), 'h:mm a')}
+                                        </span>
+                                      </div>
+                                      <p className={cn(
+                                        "text-sm whitespace-pre-wrap",
+                                        item.data.completed && "line-through text-muted-foreground"
+                                      )}>
+                                        {item.data.content}
+                                      </p>
+                                      {(item.data.reminder_date || item.data.reminder_time) && (
+                                        <div className="flex items-center gap-2 mt-2 text-xs text-orange-600 dark:text-orange-400">
+                                          <Clock className="h-3 w-3" />
+                                          Reminder: {item.data.reminder_date && format(new Date(item.data.reminder_date), 'MMM d, yyyy')}
+                                          {item.data.reminder_time && ` at ${item.data.reminder_time}`}
                                         </div>
                                       )}
                                     </>
                                   )}
-                                  
-                                  {item.type === 'session' && (
-                                    <div className="mt-2">
-                                      <p className="text-sm font-medium">
-                                        Session scheduled for {formatLongDate((item.data as Session).session_date)} at {formatTime((item.data as Session).session_time)}
-                                      </p>
-                                      <p className="text-xs text-muted-foreground">
-                                        Status: {(item.data as Session).status}
-                                      </p>
-                                      {(item.data as Session).notes && (
-                                        <p className="text-sm text-muted-foreground mt-1 italic">
-                                          "{(item.data as Session).notes}"
-                                        </p>
-                                      )}
-                                    </div>
-                                  )}
                                 </div>
-
-                                {/* Row 3: Creation date and time */}
-                                <div className="pl-1">
-                                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                    <Clock className="h-3 w-3" />
-                                    <span>Created:</span>
-                                     <span>
-                                       {formatOrgDate(new Date(item.date))} at {formatOrgTime(new Date(item.date).toTimeString().slice(0, 5))}
-                                     </span>
-                                  </div>
+                                <div className="flex items-center gap-1">
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => handleToggleComplete(item.data.id, !item.data.completed)}
+                                    className={cn(
+                                      "h-6 w-6 p-0",
+                                      item.data.completed ? "text-green-600" : "text-muted-foreground"
+                                    )}
+                                  >
+                                    <CheckCircle2 className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => handleEditActivity(item.data)}
+                                    className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
+                                  >
+                                    <Edit2 className="h-3 w-3" />
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => handleDeleteActivity(item.data.id)}
+                                    className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </Button>
                                 </div>
                               </div>
                             </div>
-                          </div>
-                        ))}
+                          ) : (
+                            // Session display
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <Badge variant="outline" className="text-xs border-blue-300 text-blue-700 dark:border-blue-700 dark:text-blue-300">
+                                  📸 Session
+                                </Badge>
+                                <span className="text-xs text-muted-foreground">
+                                  {format(new Date(item.data.session_date), 'MMM d, yyyy')} at {item.data.session_time}
+                                </span>
+                              </div>
+                              <p className="text-sm font-medium">
+                                {item.data.session_name || 'Photography Session'}
+                              </p>
+                              {item.data.location && (
+                                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                  <MapPin className="h-3 w-3" />
+                                  {item.data.location}
+                                </div>
+                              )}
+                              {item.data.notes && (
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  {item.data.notes}
+                                </p>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </CollapsibleContent>
+                  </Collapsible>
+                ))
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="history" className="space-y-4">
+            <div className="space-y-2">
+              {auditLogs.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <RotateCcw className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p className="text-lg font-medium">No system history</p>
+                  <p className="text-sm">System changes will appear here automatically.</p>
+                </div>
+              ) : (
+                auditLogs.map((log) => (
+                  <div key={log.id} className="flex items-start gap-3 p-3 border rounded-lg bg-muted/20">
+                    <Avatar className="h-6 w-6 mt-0.5">
+                      <AvatarImage src={getUserAvatar(log.user_id)} />
+                      <AvatarFallback className="text-xs">
+                        {getInitials(getUserName(log.user_id))}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm">{getActivityDescription(log)}</p>
+                      <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+                        <span>{getUserName(log.user_id)}</span>
+                        <span>•</span>
+                        <span>{format(new Date(log.created_at), 'MMM d, yyyy at h:mm a')}</span>
                       </div>
                     </div>
-                  ))}
-                </div>
+                  </div>
+                ))
               )}
-            </TabsContent>
-            
-            <TabsContent value="history" className="mt-4">
-              {Object.keys(groupedAuditLogs).length === 0 ? <p className="text-muted-foreground text-center py-8">No history yet</p> : <div className="space-y-6">
-                  {Object.entries(groupedAuditLogs).map(([date, items]) => <div key={date}>
-                      <h4 className="font-medium text-sm text-muted-foreground mb-3 sticky top-0">
-                        {formatLongDate(date)}
-                      </h4>
-                       <div className="space-y-3 pl-2 md:pl-4 border-l-2 border-muted">
-                         {items.map((item, index) => <div key={`${item.type}-${item.data.id}-${index}`} className="relative">
-                             <div className="absolute -left-4 md:-left-6 top-3 w-3 h-3 bg-background border-2 border-muted-foreground/40 rounded-full"></div>
-                             <div className="bg-muted/50 rounded-lg p-2 md:p-3 space-y-1 md:space-y-2">
-                                 <div className="flex flex-col gap-1 md:gap-2">
-                                   <div className="flex items-start justify-between gap-2">
-                                     <div className="flex items-center gap-2 flex-wrap flex-1 min-w-0">
-                                       {/* Hide icon on mobile for compact view */}
-                                       <div className="hidden md:block">
-                                         <FileText className="h-4 w-4 text-gray-500" />
-                                       </div>
-                                       <span className="text-xs text-foreground font-medium break-words">
-                                         {formatAuditAction(item.data as AuditLog)}
-                                       </span>
-                                       {/* Show project badge for session audit logs */}
-                                       {(item.data as AuditLog).entity_type === 'session' && (item.data as AuditLog).project_name && <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300 max-w-[120px] md:max-w-[120px] max-w-full truncate">
-                                           {(item.data as AuditLog).project_name}
-                                         </Badge>}
-                                     </div>
-                                     <div className="flex items-center gap-2 flex-shrink-0">
-                                       <UserAvatar userId={(item.data as AuditLog).user_id} />
-                                       <span className="text-xs text-muted-foreground">
-                                         {formatTime(new Date(item.date).toTimeString().slice(0, 5))}
-                                       </span>
-                                     </div>
-                                   </div>
-                                 </div>
-                            </div>
-                          </div>)}
-                      </div>
-                    </div>)}
-                </div>}
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
-    </div>;
-};
-export default ActivitySection;
+            </div>
+          </TabsContent>
+        </Tabs>
+      </CardContent>
+    </Card>
+  );
+}

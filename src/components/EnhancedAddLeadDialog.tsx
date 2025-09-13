@@ -14,7 +14,7 @@ import { createDynamicLeadSchema } from "@/lib/leadFieldValidation";
 import { supabase } from "@/integrations/supabase/client";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
 import { useToast } from "@/hooks/use-toast";
-import { InlineAssigneesPicker } from "./InlineAssigneesPicker";
+// Assignee components removed - single user organization
 import { useProfile } from "@/contexts/ProfileContext";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { NavigationGuardDialog } from "./settings/NavigationGuardDialog";
@@ -260,10 +260,11 @@ export function EnhancedAddLeadDialog({
             visibleOnly={true}
           />
           
-          <div className="pt-4 border-t">
-            <InlineAssigneesPicker
-              value={assignees}
-              onChange={setAssignees}
+          {/* Assignees removed - single user organization */}
+            />
+          </div>
+        </Form>
+      </AppSheetModal>
               disabled={loading}
             />
           </div>

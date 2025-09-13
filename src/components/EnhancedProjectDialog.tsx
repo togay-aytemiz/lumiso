@@ -10,8 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { ProjectTypeSelector } from "./ProjectTypeSelector";
-import { AssigneesPicker } from "./AssigneesPicker";
-import { InlineAssigneesPicker } from "./InlineAssigneesPicker";
+// Assignee components removed - single user organization
 import { ServicePicker } from "./ServicePicker";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useOnboardingV2 } from "@/hooks/useOnboardingV2";
@@ -1206,10 +1205,11 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
               </div>
             )}
 
-            <div className="pt-4 border-t">
-              <InlineAssigneesPicker
-                value={projectData.assignees}
-                onChange={(assignees) => handleProjectDataChange("assignees", assignees)}
+            {/* Assignees removed - single user organization */}
+              />
+            </div>
+          </div>
+        </AppSheetModal>
                 disabled={loading}
               />
             </div>

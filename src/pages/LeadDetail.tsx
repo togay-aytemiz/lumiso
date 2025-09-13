@@ -22,7 +22,7 @@ import CompactSessionBanner from "@/components/project-details/Summary/CompactSe
 import { ProjectsSection } from "@/components/ProjectsSection";
 import { getLeadStatusStyles, formatStatusText } from "@/lib/leadStatusColors";
 import { LeadStatusBadge } from "@/components/LeadStatusBadge";
-import { AssigneesList } from "@/components/AssigneesList";
+// AssigneesList removed - single user organization
 import { formatDate, cn } from "@/lib/utils";
 import { useOrganizationQuickSettings } from "@/hooks/useOrganizationQuickSettings";
 import EnhancedSessionsSection from "@/components/EnhancedSessionsSection";
@@ -928,7 +928,10 @@ const LeadDetail = () => {
         {/* Right column - Projects and Activity Section (67%) */}
         <div className="lg:col-span-2 space-y-6 min-w-0">
           <ProjectsSection leadId={lead.id} leadName={lead.name} onProjectUpdated={handleProjectUpdated} onActivityUpdated={handleActivityUpdated} onProjectClicked={handleProjectClicked} />
-          <ActivitySection key={activityRefreshKey} leadId={lead.id} leadName={lead.name} />
+            <ActivitySection key={activityRefreshKey} entityType="lead" entityId={lead.id} onUpdate={() => {
+              fetchLead();
+              setActivityRefreshKey(prev => prev + 1);
+            }} />
 
           {hasPermission('delete_leads') && <div className="border border-destructive/20 bg-destructive/5 rounded-md p-4 max-w-full text-center">
               <div className="space-y-3">

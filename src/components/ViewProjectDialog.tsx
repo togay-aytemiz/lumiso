@@ -20,7 +20,7 @@ import { ProjectPaymentsSection } from "./ProjectPaymentsSection";
 import ProjectDetailsLayout from "@/components/project-details/ProjectDetailsLayout";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { UnifiedClientDetails } from "@/components/UnifiedClientDetails";
-import { AssigneesList } from "@/components/AssigneesList";
+// AssigneesList removed - single user organization
 interface Project {
   id: string;
   name: string;

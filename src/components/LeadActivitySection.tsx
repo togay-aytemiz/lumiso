@@ -9,10 +9,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Clock, MessageSquare, Bell, CheckCircle, FileText, History } from "lucide-react";
+import { CheckCircle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import ReminderCard from "@/components/ReminderCard";
-import { formatTime } from "@/lib/utils";
+import { formatTime, formatLongDate } from "@/lib/utils";
 import { useCalendarSync } from "@/hooks/useCalendarSync";
 import DateTimePicker from "@/components/ui/date-time-picker";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -87,30 +87,6 @@ export function LeadActivitySection({
     }
   };
 
-  const fetchUserProfiles = async (userIds: string[]) => {
-    if (userIds.length === 0) return;
-    try {
-      const {
-        data,
-        error
-      } = await supabase.from('profiles').select('user_id, full_name, profile_photo_url').in('user_id', userIds);
-      if (error) throw error;
-      const profilesMap = (data || []).reduce((acc, profile) => {
-        acc[profile.user_id] = {
-          full_name: profile.full_name || 'Unknown User',
-          profile_photo_url: profile.profile_photo_url
-        };
-        return acc;
-      }, {} as Record<string, {
-        full_name: string;
-        profile_photo_url?: string;
-      }>);
-      setUserProfiles(prev => ({ ...prev, ...profilesMap }));
-    } catch (error: any) {
-      console.error('Error fetching user profiles:', error);
-    }
-  };
-
   const fetchLeadActivities = async () => {
     try {
       const {
@@ -122,10 +98,6 @@ export function LeadActivitySection({
       if (error) throw error;
       const activities = data || [];
       setActivities(activities);
-
-      // Fetch user profiles for the activities
-      const userIds = [...new Set(activities.map(a => a.user_id).filter(Boolean))];
-      await fetchUserProfiles(userIds);
     } catch (error: any) {
       console.error('Error fetching lead activities:', error);
       setActivities([]);
@@ -194,11 +166,6 @@ export function LeadActivitySection({
           allUserIds.add(log.user_id);
         }
       });
-      
-      // Fetch user profiles for all users
-      if (allUserIds.size > 0) {
-        await fetchUserProfiles(Array.from(allUserIds));
-      }
       
       setAuditLogs(allLogs);
     } catch (error: any) {
@@ -295,32 +262,6 @@ export function LeadActivitySection({
     } finally {
       setSaving(false);
     }
-  };
-
-  // Helper component for user avatar
-  const UserAvatar = ({
-    userId,
-    className = ""
-  }: {
-    userId?: string;
-    className?: string;
-  }) => {
-    if (!userId || !userProfiles[userId]) {
-      return null;
-    }
-    const profile = userProfiles[userId];
-    const initials = profile.full_name.split(' ').map(name => name.charAt(0)).join('').toUpperCase().slice(0, 2);
-    return <div className={`flex items-center gap-2 ${className}`}>
-        <Avatar className="h-6 w-6">
-          <AvatarImage src={profile.profile_photo_url} alt={profile.full_name} />
-          <AvatarFallback className="text-xs bg-primary/10 text-primary">
-            {initials}
-          </AvatarFallback>
-        </Avatar>
-        <span className="text-xs text-muted-foreground font-medium">
-          {profile.full_name}
-        </span>
-      </div>;
   };
 
   const handleReminderToggle = (checked: boolean) => {
@@ -442,14 +383,13 @@ export function LeadActivitySection({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-xl font-semibold">
-          <FileText className="h-4 w-4" />
+        <h3 className="text-lg font-semibold">
           Activities & History
-        </CardTitle>
+        </h3>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="activity" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground">
             <TabsTrigger value="activity">Activity</TabsTrigger>
             <TabsTrigger value="history">History</TabsTrigger>
           </TabsList>
@@ -503,21 +443,12 @@ export function LeadActivitySection({
                     <Card key={activity.id}>
                       <CardContent className="py-6 px-4 flex items-center">
                         <div className="space-y-4 w-full pt-2 my-0 py-0 px-0 mx-0">
-                          {/* Row 1: Icon + Type chip + User attribution */}
-                          <div className="flex items-center gap-3">
-                            <div className="flex items-center gap-2">
-                              {activity.type === 'note' ? (
-                                <MessageSquare className="h-4 w-4 text-blue-500" />
-                              ) : (
-                                <Bell className="h-4 w-4 text-orange-500" />
-                              )}
-                              <Badge variant="outline" className="text-xs">
-                                {activity.type}
-                              </Badge>
-                            </div>
-                            <div className="flex-1" />
-                            <UserAvatar userId={activity.user_id} />
-                          </div>
+                           {/* Row 1: Type badge */}
+                           <div className="flex items-center gap-3">
+                             <Badge variant="outline" className="text-xs">
+                               {activity.type}
+                             </Badge>
+                           </div>
                           
                           {/* Row 2: Main content */}
                           <div className="pl-1">
@@ -561,13 +492,12 @@ export function LeadActivitySection({
                             )}
                           </div>
                           
-                          {/* Row 3: Date and time */}
-                          <div className="pl-1">
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                              <Clock className="h-3 w-3" />
-                              {new Date(activity.created_at).toLocaleDateString()} at {formatTime(new Date(activity.created_at).toTimeString().slice(0, 5))}
-                            </div>
-                          </div>
+                           {/* Row 3: Date and time */}
+                           <div className="pl-1">
+                             <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                               {formatLongDate(activity.created_at)} at {formatTime(new Date(activity.created_at).toTimeString().slice(0, 5))}
+                             </div>
+                           </div>
                         </div>
                       </CardContent>
                     </Card>
@@ -581,35 +511,23 @@ export function LeadActivitySection({
             {auditLogs.length > 0 ? (
               <div className="space-y-3">
                 <Label className="text-sm text-muted-foreground">System history</Label>
-                <div className="space-y-2">
-                  {auditLogs.map(log => (
-                    <Card key={log.id}>
-                      <CardContent className="py-4 px-4">
-                        <div className="flex items-start gap-3">
-                          <History className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm text-foreground">
-                              {getActivityDescription(log)}
-                            </p>
-                            <div className="flex items-center gap-2 mt-1">
-                              <UserAvatar userId={log.user_id} />
-                              <span className="text-xs text-muted-foreground">•</span>
-                              <span className="text-xs text-muted-foreground">
-                                {format(new Date(log.created_at), 'MMM d, yyyy at h:mm a')}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
+                 <div className="space-y-1">
+                   {auditLogs.map(log => (
+                     <div key={log.id} className="flex items-center justify-between py-2 px-3 hover:bg-muted/50 rounded-md">
+                       <span className="text-sm text-foreground">
+                         {getActivityDescription(log)}
+                       </span>
+                       <span className="text-xs text-muted-foreground">
+                         {formatLongDate(log.created_at)} at {formatTime(format(new Date(log.created_at), 'HH:mm'))}
+                       </span>
+                     </div>
+                   ))}
+                 </div>
               </div>
             ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                <History className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                <p>No history available</p>
-              </div>
+               <div className="text-center py-8 text-muted-foreground">
+                 <p>No history available</p>
+               </div>
             )}
           </TabsContent>
         </Tabs>

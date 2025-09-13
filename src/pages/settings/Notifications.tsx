@@ -23,7 +23,6 @@ interface NotificationSettings {
   dailySummaryEnabled: boolean;
   
   // Immediate Notifications
-  newAssignmentEnabled: boolean;
   projectMilestoneEnabled: boolean;
 }
 
@@ -34,7 +33,6 @@ export default function Notifications() {
     globalEnabled: true,
     scheduledTime: "09:00",
     dailySummaryEnabled: true,
-    newAssignmentEnabled: true,
     projectMilestoneEnabled: true,
   });
 
@@ -80,7 +78,6 @@ export default function Notifications() {
           globalEnabled: data.notification_global_enabled ?? true,
           scheduledTime: data.notification_scheduled_time ?? "09:00",
           dailySummaryEnabled: data.notification_daily_summary_enabled ?? true,
-          newAssignmentEnabled: data.notification_new_assignment_enabled ?? true,
           projectMilestoneEnabled: data.notification_project_milestone_enabled ?? true,
         };
         setSettings(loadedSettings);
@@ -104,7 +101,6 @@ export default function Notifications() {
       const updates = {
         notification_global_enabled: enabled,
         notification_daily_summary_enabled: enabled,
-        notification_new_assignment_enabled: enabled,
         notification_project_milestone_enabled: enabled,
       };
 
@@ -119,7 +115,6 @@ export default function Notifications() {
         ...prev,
         globalEnabled: enabled,
         dailySummaryEnabled: enabled,
-        newAssignmentEnabled: enabled,
         projectMilestoneEnabled: enabled,
       }));
       
@@ -148,7 +143,6 @@ export default function Notifications() {
       globalEnabled: 'notification_global_enabled',
       scheduledTime: 'notification_scheduled_time',
       dailySummaryEnabled: 'notification_daily_summary_enabled',
-      newAssignmentEnabled: 'notification_new_assignment_enabled',
       projectMilestoneEnabled: 'notification_project_milestone_enabled',
     };
 
@@ -195,24 +189,6 @@ export default function Notifications() {
         isTest: true 
       };
 
-      // For new assignment tests, add required mock data
-      if (type === 'new-assignment') {
-        const { data: { user } } = await supabase.auth.getUser();
-        
-        // Get organization ID using utility
-        const { getUserOrganizationId } = await import('@/lib/organizationUtils');
-        const organizationId = await getUserOrganizationId();
-
-        requestBody = {
-          ...requestBody,
-          entity_type: 'lead',
-          entity_id: 'test-lead-id',
-          assignee_email: user?.email,
-          assignee_name: 'Test User',
-          assigner_name: 'System',
-          organizationId,
-        };
-      }
 
       const { data, error } = await supabase.functions.invoke('send-reminder-notifications', {
         body: requestBody
@@ -387,41 +363,6 @@ export default function Notifications() {
         >
           <div className="space-y-6">
 
-            {/* New Assignment */}
-            <div className="flex items-center justify-between p-4 border rounded-lg">
-              <div className="flex-1">
-                <Label htmlFor="new-assignment" className="text-base font-medium">
-                  New Assignment
-                </Label>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Notify when you're assigned to a lead or project (includes entity name and assigner)
-                </p>
-              </div>
-              <div className="flex items-center gap-3">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => testNotification('new-assignment')}
-                  disabled={testingNotification === 'new-assignment'}
-                  className="text-primary hover:text-primary/80 hover:bg-transparent p-0 h-auto font-medium text-sm"
-                >
-                  {testingNotification === 'new-assignment' ? (
-                    <>
-                      <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                      Testing...
-                    </>
-                  ) : (
-                    'Send test'
-                  )}
-                </Button>
-                <Switch
-                  id="new-assignment"
-                  checked={settings.newAssignmentEnabled}
-                  onCheckedChange={(checked) => handleAutoSave('newAssignmentEnabled', checked)}
-                  disabled={autoSaveStates.newAssignmentEnabled === 'saving'}
-                />
-              </div>
-            </div>
 
             {/* Project Milestone */}
             <div className="flex items-center justify-between p-4 border rounded-lg">

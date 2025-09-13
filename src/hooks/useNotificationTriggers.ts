@@ -91,79 +91,6 @@ export function useNotificationTriggers() {
     }
   };
 
-  // Trigger new assignment notification
-  const triggerNewAssignment = async (
-    entityType: 'lead' | 'project',
-    entityId: string,
-    assigneeIds: string[],
-    organizationId: string,
-    assignerName?: string
-  ) => {
-    try {
-      console.log(`Triggering assignment notification: ${entityType}:${entityId} to ${assigneeIds.length} users`);
-
-      // Get current user info
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        console.error('No authenticated user for assignment notification');
-        return;
-      }
-
-      // Get assigner name if not provided
-      if (!assignerName) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('full_name')
-          .eq('user_id', user.id)
-          .maybeSingle();
-        
-        assignerName = profile?.full_name || user.email?.split('@')[0] || 'Someone';
-      }
-
-      // Create notification record for each assignee
-      const notifications = assigneeIds.map(assigneeId => ({
-        organization_id: organizationId,
-        user_id: assigneeId,
-        notification_type: 'new-assignment',
-        delivery_method: 'immediate',
-        status: 'pending',
-        metadata: {
-          entity_type: entityType,
-          entity_id: entityId,
-          assigner_id: user.id,
-          assigner_name: assignerName
-        }
-      }));
-
-      // Insert notification records
-      const { error } = await supabase
-        .from('notifications')
-        .insert(notifications);
-
-      if (error) {
-        console.error('Error creating assignment notifications:', error);
-        throw error;
-      }
-
-      console.log(`Created ${notifications.length} assignment notification records`);
-
-      // Trigger immediate processing
-      await supabase.functions.invoke('notification-processor', {
-        body: {
-          action: 'process-pending',
-          organizationId: organizationId
-        }
-      });
-
-    } catch (error: any) {
-      console.error('Error in triggerNewAssignment:', error);
-      toast({
-        title: "Notification Error",
-        description: "Failed to send assignment notification",
-        variant: "destructive",
-      });
-    }
-  };
 
   // Schedule daily summary notifications for tomorrow
   const scheduleDailySummaries = async (organizationId?: string) => {
@@ -265,7 +192,6 @@ export function useNotificationTriggers() {
 
   return {
     triggerProjectMilestone,
-    triggerNewAssignment,
     scheduleDailySummaries,
     processPendingNotifications,
     retryFailedNotifications

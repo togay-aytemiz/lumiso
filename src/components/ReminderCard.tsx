@@ -20,6 +20,7 @@ interface ReminderCardProps {
   onClick?: () => void;
   hideStatusBadge?: boolean;
   showCompletedBadge?: boolean;
+  projectName?: string;
 }
 
 const ReminderCard = ({ 
@@ -28,7 +29,8 @@ const ReminderCard = ({
   onToggleCompletion, 
   onClick,
   hideStatusBadge = false,
-  showCompletedBadge = true
+  showCompletedBadge = true,
+  projectName
 }: ReminderCardProps) => {
   const isOverdue = (reminderDate?: string) => {
     if (!reminderDate) return false;
@@ -47,7 +49,6 @@ const ReminderCard = ({
     reminder.setHours(0, 0, 0, 0);
     return reminder.getTime() === today.getTime();
   };
-
 
   const getVisualMarker = () => {
     // On mobile, only show vertical bar for non-completed items
@@ -71,135 +72,157 @@ const ReminderCard = ({
   };
 
   return (
-    <div
-      className={`relative rounded-lg border transition-all duration-200 ${onClick ? 'cursor-pointer' : ''} ${getCardBackground()}`}
-      onClick={onClick}
-    >
-      {/* Mobile Layout */}
-      <div className="md:hidden p-3 space-y-2">
-        {/* Row 1: Status badges and completion toggle */}
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex items-center gap-2 flex-wrap flex-1 min-w-0">
-            {!hideStatusBadge && !activity.completed && isOverdue(activity.reminder_date) && (
-              <Badge className="bg-red-100 text-red-700 border-red-200 dark:bg-red-950/50 dark:text-red-300 dark:border-red-800 text-xs max-w-20 truncate">
-                Overdue
-              </Badge>
-            )}
-            {!hideStatusBadge && !activity.completed && isToday(activity.reminder_date) && (
-              <Badge className="bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600 text-xs max-w-16 truncate">
-                Today
-              </Badge>
-            )}
-            {activity.completed && showCompletedBadge && (
-              <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800 text-xs max-w-24 truncate">
-                Completed
-              </Badge>
-            )}
-          </div>
-          
-          {/* Completion toggle - top right, 32px tap area */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onToggleCompletion(activity.id, !activity.completed);
-            }}
-            className="flex items-center justify-center w-8 h-8 rounded-full border-2 border-slate-300 dark:border-slate-600 hover:border-primary hover:bg-primary/5 transition-all duration-200 shrink-0"
-          >
-            {activity.completed ? (
-              <CheckCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-            ) : (
-              <div className="w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-600" />
-            )}
-          </button>
-        </div>
-
-        {/* Row 2: Card content (title, lead, date/time) */}
-        <div className="space-y-1 pr-2">
-          <h3 className={`text-sm font-medium text-slate-900 dark:text-slate-100 break-words ${activity.completed ? 'opacity-60 line-through' : ''}`}>
-            {activity.content}
-          </h3>
-          
-          <p className={`text-xs text-slate-600 dark:text-slate-400 break-words ${activity.completed ? 'opacity-60' : ''}`}>
-            Lead: {leadName}
-          </p>
-          
-          {activity.reminder_date && (
-            <p className={`text-xs text-slate-500 dark:text-slate-500 break-words ${activity.completed ? 'opacity-60' : ''}`}>
-              {formatLongDate(activity.reminder_date)}
-              {activity.reminder_time && ` – ${formatTime(activity.reminder_time)}`}
-            </p>
+    <div className="flex gap-3 py-2">
+      {/* Timeline dot */}
+      <div className="flex flex-col items-center">
+        <div className="w-2 h-2 rounded-full bg-muted-foreground/30 mt-2" />
+        <div className="w-px h-full bg-muted-foreground/20 mt-1" />
+      </div>
+      
+      {/* Card content */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-start gap-2 mb-1">
+          <Badge variant="outline" className="text-xs h-5">
+            reminder
+          </Badge>
+          {projectName && (
+            <Badge variant="secondary" className="text-xs h-5">
+              {projectName}
+            </Badge>
           )}
         </div>
-      </div>
+        
+        <div
+          className={`rounded-lg border transition-all duration-200 ${onClick ? 'cursor-pointer' : ''} ${getCardBackground()}`}
+          onClick={onClick}
+        >
+          {/* Mobile Layout */}
+          <div className="md:hidden p-3 space-y-2">
+            {/* Row 1: Status badges and completion toggle */}
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex items-center gap-2 flex-wrap flex-1 min-w-0">
+                {!hideStatusBadge && !activity.completed && isOverdue(activity.reminder_date) && (
+                  <Badge className="bg-red-100 text-red-700 border-red-200 dark:bg-red-950/50 dark:text-red-300 dark:border-red-800 text-xs max-w-20 truncate">
+                    Overdue
+                  </Badge>
+                )}
+                {!hideStatusBadge && !activity.completed && isToday(activity.reminder_date) && (
+                  <Badge className="bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600 text-xs max-w-16 truncate">
+                    Today
+                  </Badge>
+                )}
+                {activity.completed && showCompletedBadge && (
+                  <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800 text-xs max-w-24 truncate">
+                    Completed
+                  </Badge>
+                )}
+              </div>
+              
+              {/* Completion toggle - top right, 32px tap area */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleCompletion(activity.id, !activity.completed);
+                }}
+                className="flex items-center justify-center w-8 h-8 rounded-full border-2 border-slate-300 dark:border-slate-600 hover:border-primary hover:bg-primary/5 transition-all duration-200 shrink-0"
+              >
+                {activity.completed ? (
+                  <CheckCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                ) : (
+                  <div className="w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-600" />
+                )}
+              </button>
+            </div>
 
-      {/* Desktop Layout */}
-      <div className="hidden md:flex md:items-center md:gap-4 md:p-4">
-        {/* Visual Marker */}
-        <div className="flex-shrink-0">
-          {getVisualMarker()}
-        </div>
-
-        {/* Content */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex-1 min-w-0">
-              {/* Reminder Message */}
-              <h3 className={`text-base font-medium text-slate-900 dark:text-slate-100 ${activity.completed ? 'opacity-60' : ''}`}>
+            {/* Row 2: Card content (title, lead, date/time) */}
+            <div className="space-y-1 pr-2">
+              <h3 className={`text-sm font-medium text-slate-900 dark:text-slate-100 break-words ${activity.completed ? 'opacity-60 line-through' : ''}`}>
                 {activity.content}
               </h3>
               
-              {/* Lead Name */}
-              <p className={`text-sm text-slate-600 dark:text-slate-400 mt-1 ${activity.completed ? 'opacity-60' : ''}`}>
+              <p className={`text-xs text-slate-600 dark:text-slate-400 break-words ${activity.completed ? 'opacity-60' : ''}`}>
                 Lead: {leadName}
               </p>
               
-              {/* Date and Time */}
               {activity.reminder_date && (
-                <p className={`text-sm text-slate-500 dark:text-slate-500 mt-1 ${activity.completed ? 'opacity-60' : ''}`}>
+                <p className={`text-xs text-slate-500 dark:text-slate-500 break-words ${activity.completed ? 'opacity-60' : ''}`}>
                   {formatLongDate(activity.reminder_date)}
                   {activity.reminder_time && ` – ${formatTime(activity.reminder_time)}`}
                 </p>
               )}
             </div>
+          </div>
 
-            {/* Status Badge */}
-            <div className="flex items-center justify-center flex-wrap gap-1">
-              {activity.completed && showCompletedBadge ? (
-                <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800">
-                  Completed
-                </Badge>
-              ) : (
-                <>
-                  {!hideStatusBadge && isOverdue(activity.reminder_date) && (
-                    <Badge className="bg-red-100 text-red-700 border-red-200 dark:bg-red-950/50 dark:text-red-300 dark:border-red-800">
-                      Overdue
-                    </Badge>
-                  )}
-                  {!hideStatusBadge && isToday(activity.reminder_date) && (
-                    <Badge className="bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600">
-                      Today
-                    </Badge>
-                  )}
-                </>
-              )}
+          {/* Desktop Layout */}
+          <div className="hidden md:flex md:items-center md:gap-4 md:p-4">
+            {/* Visual Marker */}
+            <div className="flex-shrink-0">
+              {getVisualMarker()}
             </div>
+
+            {/* Content */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  {/* Reminder Message */}
+                  <h3 className={`text-base font-medium text-slate-900 dark:text-slate-100 ${activity.completed ? 'opacity-60' : ''}`}>
+                    {activity.content}
+                  </h3>
+                  
+                  {/* Lead Name */}
+                  <p className={`text-sm text-slate-600 dark:text-slate-400 mt-1 ${activity.completed ? 'opacity-60' : ''}`}>
+                    Lead: {leadName}
+                  </p>
+                  
+                  {/* Date and Time */}
+                  {activity.reminder_date && (
+                    <p className={`text-sm text-slate-500 dark:text-slate-500 mt-1 ${activity.completed ? 'opacity-60' : ''}`}>
+                      {formatLongDate(activity.reminder_date)}
+                      {activity.reminder_time && ` – ${formatTime(activity.reminder_time)}`}
+                    </p>
+                  )}
+                </div>
+
+                {/* Status Badge */}
+                <div className="flex items-center justify-center flex-wrap gap-1">
+                  {activity.completed && showCompletedBadge ? (
+                    <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800">
+                      Completed
+                    </Badge>
+                  ) : (
+                    <>
+                      {!hideStatusBadge && isOverdue(activity.reminder_date) && (
+                        <Badge className="bg-red-100 text-red-700 border-red-200 dark:bg-red-950/50 dark:text-red-300 dark:border-red-800">
+                          Overdue
+                        </Badge>
+                      )}
+                      {!hideStatusBadge && isToday(activity.reminder_date) && (
+                        <Badge className="bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600">
+                          Today
+                        </Badge>
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Completion Toggle */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleCompletion(activity.id, !activity.completed);
+              }}
+              className="flex items-center justify-center w-6 h-6 rounded-full border-2 border-slate-300 dark:border-slate-600 hover:border-primary hover:bg-primary/5 transition-all duration-200 flex-shrink-0"
+            >
+              {activity.completed ? (
+                <CheckCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+              ) : (
+                <div className="w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-600" />
+              )}
+            </button>
           </div>
         </div>
-
-        {/* Completion Toggle */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onToggleCompletion(activity.id, !activity.completed);
-          }}
-          className="flex items-center justify-center w-6 h-6 rounded-full border-2 border-slate-300 dark:border-slate-600 hover:border-primary hover:bg-primary/5 transition-all duration-200 flex-shrink-0"
-        >
-          {activity.completed ? (
-            <CheckCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-          ) : (
-            <div className="w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-600" />
-          )}
-        </button>
       </div>
     </div>
   );

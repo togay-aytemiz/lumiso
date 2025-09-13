@@ -8,6 +8,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Badge } from "@/components/ui/badge";
 import { Save, X, ChevronDown, Pencil, Archive, ArchiveRestore } from "lucide-react";
 import { format } from "date-fns";
+import { getUserOrganizationId } from "@/lib/organizationUtils";
 import { useToast } from "@/hooks/use-toast";
 import { ProjectActivitySection } from "./ProjectActivitySection";
 import { ProjectTodoList } from "./ProjectTodoList";
@@ -82,14 +83,8 @@ export async function onArchiveToggle(project: {
   } = await supabase.auth.getUser();
   if (userErr || !userData.user) throw new Error('User not authenticated');
 
-  // Get user's active organization
-  const { data: userSettings } = await supabase
-    .from('user_settings')
-    .select('active_organization_id')
-    .eq('user_id', userData.user.id)
-    .single();
-
-  if (!userSettings?.active_organization_id) {
+  const organizationId = await getUserOrganizationId();
+  if (!organizationId) {
     throw new Error("Organization required");
   }
 
@@ -100,7 +95,7 @@ export async function onArchiveToggle(project: {
   const { data: existingStatuses, error: statusError } = await supabase
     .from('project_statuses')
     .select('id, name')
-    .eq('organization_id', userSettings.active_organization_id)
+    .eq('organization_id', organizationId)
     .ilike('name', 'archived');
   
   if (statusError) throw statusError;
@@ -119,7 +114,7 @@ export async function onArchiveToggle(project: {
       .from('project_statuses')
       .insert({
         user_id: userData.user.id,
-        organization_id: userSettings.active_organization_id,
+        organization_id: organizationId,
         name: 'Archived',
         color: '#6B7280',
         sort_order: 9999,
@@ -134,7 +129,7 @@ export async function onArchiveToggle(project: {
         const { data: raceStatuses } = await supabase
           .from('project_statuses')
           .select('id')
-          .eq('organization_id', userSettings.active_organization_id)
+          .eq('organization_id', organizationId)
           .ilike('name', 'archived')
           .limit(1);
         
@@ -175,7 +170,7 @@ export async function onArchiveToggle(project: {
       project_id: project.id,
       lead_id: proj.lead_id,
       user_id: userData.user.id,
-      organization_id: userSettings.active_organization_id
+      organization_id: organizationId
     });
     // Log to audit history
     await supabase.from('audit_log').insert({
@@ -220,7 +215,7 @@ export async function onArchiveToggle(project: {
     project_id: project.id,
     lead_id: proj.lead_id,
     user_id: userData.user.id,
-    organization_id: userSettings.active_organization_id
+    organization_id: organizationId
   });
   // Log to audit history
   await supabase.from('audit_log').insert({

@@ -73,6 +73,7 @@ export function useLeadsWithCustomFields() {
       // Combine leads with their custom field values
       const leadsWithFields: LeadWithCustomFields[] = (leadsData || []).map(lead => ({
         ...lead,
+        assignees: [], // Single photographer mode - no assignees needed
         custom_fields: fieldValuesByLead[lead.id] || {},
       }));
 

@@ -140,12 +140,13 @@ export function ProjectActivitySection({
       const {
         data: userSettings
       } = await supabase.from('user_settings').select('active_organization_id').eq('user_id', userData.user.id).single();
-      if (!userSettings?.active_organization_id) {
+      const organizationId = await getUserOrganizationId();
+      if (!organizationId) {
         throw new Error("Organization required");
       }
       const activityDataWithOrg = {
         ...activityData,
-        organization_id: userSettings.active_organization_id
+        organization_id: organizationId
       };
       const {
         data: newActivity,

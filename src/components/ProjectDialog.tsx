@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
+import { getUserOrganizationId } from "@/lib/organizationUtils";
 import { toast } from "@/hooks/use-toast";
 import { SimpleProjectTypeSelect } from "./SimpleProjectTypeSelect";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
@@ -62,13 +63,8 @@ export function ProjectDialog({ open, onOpenChange, leadId, onProjectCreated }: 
       }
 
       // Get user's active organization
-      const { data: userSettings } = await supabase
-        .from('user_settings')
-        .select('active_organization_id')
-        .eq('user_id', userData.user.id)
-        .single();
-
-      if (!userSettings?.active_organization_id) {
+      const organizationId = await getUserOrganizationId();
+      if (!organizationId) {
         toast({
           title: "Organization required",
           description: "Please ensure you're part of an organization",
@@ -90,7 +86,7 @@ export function ProjectDialog({ open, onOpenChange, leadId, onProjectCreated }: 
           description: description.trim() || null,
           lead_id: leadId,
           user_id: userData.user.id,
-          organization_id: userSettings.active_organization_id,
+          organization_id: organizationId,
           status_id: defaultStatusId,
           project_type_id: projectTypeId,
           base_price: basePriceValue
@@ -107,7 +103,7 @@ export function ProjectDialog({ open, onOpenChange, leadId, onProjectCreated }: 
           .insert({
             project_id: newProject.id,
             user_id: userData.user.id,
-            organization_id: userSettings.active_organization_id,
+            organization_id: organizationId,
             amount: basePriceValue,
             description: 'Base Price',
             status: 'due',

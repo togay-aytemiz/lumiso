@@ -9,6 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { CompactLoadingSkeleton } from "@/components/ui/loading-presets";
 import { Save, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { getUserOrganizationId } from "@/lib/organizationUtils";
 import { useToast } from "@/hooks/use-toast";
 import { ProjectTypeSelector } from "./ProjectTypeSelector";
 
@@ -121,13 +122,8 @@ export function ProjectDialogWithLeadSelector({
       }
 
       // Get user's active organization
-      const { data: userSettings } = await supabase
-        .from('user_settings')
-        .select('active_organization_id')
-        .eq('user_id', userData.user.id)
-        .single();
-
-      if (!userSettings?.active_organization_id) {
+      const organizationId = await getUserOrganizationId();
+      if (!organizationId) {
         toast({
           title: "Organization required",
           description: "Please ensure you're part of an organization",
@@ -149,7 +145,7 @@ export function ProjectDialogWithLeadSelector({
           description: description.trim() || null,
           lead_id: selectedLeadId,
           user_id: userData.user.id,
-          organization_id: userSettings.active_organization_id,
+          organization_id: organizationId,
           status_id: defaultStatusId,
           project_type_id: projectTypeId,
           base_price: basePriceValue
@@ -166,7 +162,7 @@ export function ProjectDialogWithLeadSelector({
           .insert({
             project_id: newProject.id,
             user_id: userData.user.id,
-            organization_id: userSettings.active_organization_id,
+            organization_id: organizationId,
             amount: basePriceValue,
             description: 'Base Price',
             status: 'due',

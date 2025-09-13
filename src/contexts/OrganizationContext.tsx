@@ -76,95 +76,37 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
   };
 
   const setActiveOrganizationHandler = async (orgId: string) => {
-    try {
-      // Update user settings
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { error } = await supabase
-        .from('user_settings')
-        .update({ active_organization_id: orgId })
-        .eq('user_id', user.id);
-
-      if (error) {
-        console.error('Error updating active organization:', error);
-        toast({
-          title: "Error",
-          description: "Failed to switch organization",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Refresh the cached organization
-      await refreshOrganization();
-      
-      toast({
-        title: "Success",
-        description: "Organization switched successfully",
-      });
-    } catch (error) {
-      console.error('Error setting active organization:', error);
-      toast({
-        title: "Error",
-        description: "Failed to switch organization",
-        variant: "destructive",
-      });
-    }
+    // In single-photographer model, organization is determined by ownership
+    // No need to update user settings since getUserOrganizationId handles this
+    console.log('Organization switch not needed in single-photographer mode:', orgId);
+    
+    // Just refresh the organization data
+    await refreshOrganization();
+    
+    toast({
+      title: "Success", 
+      description: "Organization data refreshed",
+    });
   };
 
-  // Set up global presence tracking
+  // Set up simplified presence tracking for single-photographer
   useEffect(() => {
-    let presenceChannel: any = null;
     let presenceInterval: any = null;
 
     const setupPresence = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user || !activeOrganizationId) return;
 
-      const channelName = `organization_${activeOrganizationId}_presence`;
-      presenceChannel = supabase.channel(channelName);
-
-      // Track presence events
-      presenceChannel
-        .on('presence', { event: 'sync' }, () => {
-          console.log('Presence synced for organization:', activeOrganizationId);
-        })
-        .on('presence', { event: 'join' }, ({ newPresences }) => {
-          console.log('User joined:', newPresences);
-        })
-        .on('presence', { event: 'leave' }, ({ leftPresences }) => {
-          console.log('User left:', leftPresences);
-        })
-        .subscribe(async (status) => {
-          if (status === 'SUBSCRIBED') {
-            console.log('Global presence channel subscribed, tracking user:', user.id);
-            // Track current user's presence
-            await presenceChannel.track({
-              user_id: user.id,
-              online_at: new Date().toISOString(),
-            });
-          }
-        });
-
-      // Update last_active timestamp every 5 minutes
+      // Simple periodic activity update - no complex presence channels needed
       presenceInterval = setInterval(async () => {
         try {
+          // Just update user_settings to show activity
           await supabase
-            .from('organization_members')
-            .update({ last_active: new Date().toISOString() })
-            .eq('user_id', user.id)
-            .eq('organization_id', activeOrganizationId);
-          
-          // Re-track presence to keep connection alive
-          if (presenceChannel) {
-            await presenceChannel.track({
-              user_id: user.id,
-              online_at: new Date().toISOString(),
-            });
-          }
+            .from('user_settings')
+            .update({ updated_at: new Date().toISOString() })
+            .eq('user_id', user.id);
         } catch (error) {
-          console.warn('Failed to update global presence:', error);
+          console.warn('Failed to update activity timestamp:', error);
         }
       }, 300000); // Update every 5 minutes
     };
@@ -174,10 +116,6 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
     }
 
     return () => {
-      if (presenceChannel) {
-        console.log('Cleaning up global presence channel');
-        presenceChannel.unsubscribe();
-      }
       if (presenceInterval) {
         clearInterval(presenceInterval);
       }

@@ -7,8 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Plus, Search, ChevronDown, Check, X, Save } from "lucide-react";
 import { LeadStatusBadge } from "./LeadStatusBadge";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
+import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { ProjectTypeSelector } from "./ProjectTypeSelector";
 // Assignee components removed - single user organization
@@ -299,13 +299,8 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
       if (!user) throw new Error("User not authenticated");
 
       // Get user's active organization
-      const { data: userSettings } = await supabase
-        .from('user_settings')
-        .select('active_organization_id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (!userSettings?.active_organization_id) {
+      const organizationId = await getUserOrganizationId();
+      if (!organizationId) {
         throw new Error("Organization required");
       }
 
@@ -317,7 +312,7 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
           .from('leads')
           .insert({
             user_id: user.id,
-            organization_id: userSettings.active_organization_id,
+            organization_id: organizationId,
             name: newLeadData.name.trim(),
             email: newLeadData.email.trim() || null,
             phone: newLeadData.phone.trim() || null,
@@ -346,7 +341,7 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
         .from('projects')
         .insert({
           user_id: user.id,
-          organization_id: userSettings.active_organization_id,
+          organization_id: organizationId,
           lead_id: leadId,
           name: projectData.name.trim(),
           description: projectData.description.trim() || null,
@@ -367,7 +362,7 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
           .insert({
             project_id: newProject.id,
             user_id: user.id,
-            organization_id: userSettings.active_organization_id,
+            organization_id: organizationId,
             amount: basePrice,
             description: 'Base Price',
             status: 'due',

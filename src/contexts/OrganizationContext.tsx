@@ -40,14 +40,10 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
     try {
       setLoading(true);
       
-      // Use the optimized database function
-      const { data: orgId, error: orgError } = await supabase.rpc('get_user_active_organization_id');
+      // Use the organization utils function
+      const { getUserOrganizationId } = await import('@/lib/organizationUtils');
+      const orgId = await getUserOrganizationId();
       
-      if (orgError) {
-        console.error('Error getting active organization ID:', orgError);
-        return;
-      }
-
       if (!orgId) {
         setActiveOrganizationId(null);
         setActiveOrganization(null);

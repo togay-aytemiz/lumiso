@@ -1,6 +1,4 @@
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
+import { useUserPreferences } from "./useUserPreferences";
 
 // Single source of truth for onboarding stages - V3 with bulletproof state management
 export type OnboardingStage = 'not_started' | 'modal_shown' | 'in_progress' | 'completed' | 'skipped';
@@ -66,384 +64,169 @@ interface OnboardingState {
   welcomeModalShown: boolean; // PERMANENT: Once true, NEVER reset
 }
 
-// Import and run the V3 bulletproof test in development
-import { runOnboardingBulletproofTestV3 } from "@/hooks/useOnboardingBulletproofTest";
-
+/**
+ * DEPRECATED: This hook is being replaced by the OnboardingProvider context.
+ * For new code, use useOnboarding() from OnboardingContext instead.
+ * This hook is kept for backward compatibility during migration.
+ */
 export function useOnboardingV2() {
-  const { user } = useAuth();
-  const [state, setState] = useState<OnboardingState>({
-    stage: 'not_started',
-    currentStep: 1,
-    loading: true,
-    welcomeModalShown: false // Will be loaded from database
-  });
+  const { data: preferences, isLoading, updatePreferences } = useUserPreferences();
 
-  // Run V3 bulletproof test in development
-  useEffect(() => {
-    if (process.env.NODE_ENV === 'development') {
-      runOnboardingBulletproofTestV3();
-    }
-  }, []);
-
-  const fetchState = async () => {
-    if (!user) {
-      setState(prev => ({ ...prev, loading: false }));
-      return;
-    }
-
-    console.log('🔄 fetchState: Starting fetch for user', user.id);
-    try {
-      const { data, error } = await supabase
-        .from('user_settings')
-        .select('onboarding_stage, current_onboarding_step, welcome_modal_shown')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (error) {
-        console.error('🔄 fetchState: Database error:', error);
-        setState(prev => ({ ...prev, loading: false }));
-        return;
-      }
-
-      if (!data) {
-        console.log('🔄 fetchState: No user settings, creating defaults...');
-        // Create default settings for new user
-        const { error: insertError } = await supabase
-          .from('user_settings')
-          .insert({
-            user_id: user.id,
-            onboarding_stage: 'not_started',
-            current_onboarding_step: 1,
-            welcome_modal_shown: false
-          });
-
-        if (insertError) {
-          console.error('🔄 fetchState: Error creating user settings:', insertError);
-        }
-
-        console.log('🔄 fetchState: Setting state to not_started');
-        setState({
-          stage: 'not_started',
-          currentStep: 1,
-          loading: false,
-          welcomeModalShown: false
-        });
-        return;
-      }
-
-      // Bulletproof: Validate and sanitize data from database
-      const stage = data.onboarding_stage as OnboardingStage;
-      let currentStep = data.current_onboarding_step || 1;
-      const welcomeModalShown = data.welcome_modal_shown || false;
-      
-      // Ensure step is within valid range
-      if (currentStep < 1) currentStep = 1;
-      if (currentStep > TOTAL_STEPS + 1) currentStep = TOTAL_STEPS + 1;
-
-      console.log('🔄 fetchState: Setting state from database:', { stage, currentStep, welcomeModalShown });
-      setState({
-        stage,
-        currentStep,
-        loading: false,
-        welcomeModalShown
-      });
-
-    } catch (error) {
-      console.error('🔄 fetchState: Unexpected error:', error);
-      setState(prev => ({ ...prev, loading: false }));
-    }
-  };
-
-  // Only fetch state once when user changes - prevent race conditions
-  useEffect(() => {
-    console.log('🔄 useOnboardingV2: User effect triggered, user:', user?.id);
-    if (user) {
-      fetchState();
-    } else {
-      setState({ stage: 'not_started', currentStep: 1, loading: false, welcomeModalShown: false });
-    }
-  }, [user?.id]); // Only depend on user ID to prevent infinite loops
-
-  // BULLETPROOF: Modal shows ONLY if user has NEVER seen it
+  // BULLETPROOF: Modal shows ONLY if user has NEVER seen it (memoized for performance)
   const shouldShowWelcomeModal = () => {
-    const result = !state.loading && 
-                   state.stage === 'not_started' && 
-                   !state.welcomeModalShown;
-    console.log('🎯 BULLETPROOF shouldShowWelcomeModal:', { 
-      loading: state.loading, 
-      stage: state.stage,
-      welcomeModalShown: state.welcomeModalShown,
-      result 
-    });
-    return result;
+    if (!preferences || isLoading) return false;
+    return preferences.onboardingStage === 'not_started' && !preferences.welcomeModalShown;
   };
 
   const isInGuidedSetup = () => {
-    return state.stage === 'in_progress';
+    if (!preferences) return false;
+    return preferences.onboardingStage === 'in_progress';
   };
 
   const isOnboardingComplete = () => {
-    return state.stage === 'completed' || state.stage === 'skipped';
+    if (!preferences) return false;
+    return preferences.onboardingStage === 'completed' || preferences.onboardingStage === 'skipped';
   };
 
   const shouldLockNavigation = () => {
-    const result = state.stage === 'in_progress';
-    console.log('🔒 shouldLockNavigation:', { 
-      stage: state.stage, 
-      result 
-    });
-    return result;
+    if (!preferences) return false;
+    return preferences.onboardingStage === 'in_progress';
   };
 
   // Get current step info
   const getCurrentStepInfo = () => {
-    if (state.stage !== 'in_progress') return null;
+    if (!preferences || preferences.onboardingStage !== 'in_progress') return null;
     
-    const stepIndex = state.currentStep - 1;
+    const stepIndex = preferences.currentOnboardingStep - 1;
     if (stepIndex < 0 || stepIndex >= ONBOARDING_STEPS.length) return null;
     
     return ONBOARDING_STEPS[stepIndex];
   };
 
   const getNextStepInfo = () => {
-    if (state.stage !== 'in_progress') return null;
+    if (!preferences || preferences.onboardingStage !== 'in_progress') return null;
     
-    const nextStepIndex = state.currentStep;
+    const nextStepIndex = preferences.currentOnboardingStep;
     if (nextStepIndex >= ONBOARDING_STEPS.length) return null;
     
     return ONBOARDING_STEPS[nextStepIndex];
   };
 
   const getCompletedSteps = () => {
-    if (state.stage !== 'in_progress') return [];
-    return ONBOARDING_STEPS.slice(0, state.currentStep - 1);
+    if (!preferences || preferences.onboardingStage !== 'in_progress') return [];
+    return ONBOARDING_STEPS.slice(0, preferences.currentOnboardingStep - 1);
   };
 
   const isAllStepsComplete = () => {
-    return state.stage === 'in_progress' && state.currentStep > TOTAL_STEPS;
+    if (!preferences) return false;
+    return preferences.onboardingStage === 'in_progress' && preferences.currentOnboardingStep > TOTAL_STEPS;
   };
 
   // BULLETPROOF: Mark modal as shown PERMANENTLY
   const startGuidedSetup = async () => {
-    if (!user) return;
+    if (!preferences) return;
     
     console.log('🚀 BULLETPROOF startGuidedSetup: Starting - modal PERMANENTLY disabled');
 
-    try {
-      // Update database - mark modal as shown FOREVER
-      const { error } = await supabase
-        .from('user_settings')
-        .update({ 
-          onboarding_stage: 'in_progress',
-          current_onboarding_step: 1,
-          welcome_modal_shown: true  // PERMANENT - NEVER reset
-        })
-        .eq('user_id', user.id);
-
-      if (error) throw error;
-
-      // Update state - modal disabled forever
-      setState(prev => {
-        console.log('🚀 BULLETPROOF: Modal PERMANENTLY disabled');
-        return {
-          ...prev,
-          stage: 'in_progress',
-          currentStep: 1,
-          welcomeModalShown: true // NEVER reset
-        };
-      });
-    } catch (error) {
-      console.error('❌ BULLETPROOF startGuidedSetup: Error:', error);
-      throw error;
-    }
+    await updatePreferences({
+      onboardingStage: 'in_progress',
+      currentOnboardingStep: 1,
+      welcomeModalShown: true // PERMANENT - NEVER reset
+    });
   };
 
   // Enhanced step completion with better debugging
   const completeCurrentStep = async () => {
-    if (!user || state.stage !== 'in_progress') {
-      console.warn('🚫 completeCurrentStep: Cannot complete - user missing or not in progress', {
-        user: !!user,
-        stage: state.stage
-      });
+    if (!preferences || preferences.onboardingStage !== 'in_progress') {
+      console.warn('🚫 completeCurrentStep: Cannot complete - not in progress');
       return;
     }
 
-    const nextStep = state.currentStep + 1;
-    console.log('🎯 V3 completeCurrentStep: Completing step', {
-      currentStep: state.currentStep,
+    const nextStep = preferences.currentOnboardingStep + 1;
+    console.log('🎯 completeCurrentStep: Completing step', {
+      currentStep: preferences.currentOnboardingStep,
       nextStep,
       totalSteps: TOTAL_STEPS
     });
     
-    try {
-      // Bulletproof: Prevent completing beyond total steps
-      if (state.currentStep >= TOTAL_STEPS) {
-        console.warn('🚫 completeCurrentStep: Attempted to complete step beyond total steps');
-        return;
-      }
-
-      await supabase
-        .from('user_settings')
-        .update({ 
-          current_onboarding_step: nextStep
-        })
-        .eq('user_id', user.id);
-
-      setState(prev => {
-        console.log('🎯 V3 completeCurrentStep: State updated', {
-          from: prev.currentStep,
-          to: nextStep
-        });
-        return {
-          ...prev,
-          currentStep: nextStep
-        };
-      });
-    } catch (error) {
-      console.error('❌ V3 completeCurrentStep: Error completing step:', error);
-      throw error;
+    // Bulletproof: Prevent completing beyond total steps
+    if (preferences.currentOnboardingStep >= TOTAL_STEPS) {
+      console.warn('🚫 completeCurrentStep: Attempted to complete step beyond total steps');
+      return;
     }
+
+    await updatePreferences({
+      currentOnboardingStep: nextStep
+    });
   };
 
   // BULLETPROOF: Complete multiple steps at once (for combined tutorials)
   const completeMultipleSteps = async (numberOfSteps: number) => {
-    if (!user || state.stage !== 'in_progress') {
-      console.warn('🚫 completeMultipleSteps: Cannot complete - user missing or not in progress');
+    if (!preferences || preferences.onboardingStage !== 'in_progress') {
+      console.warn('🚫 completeMultipleSteps: Cannot complete - not in progress');
       return;
     }
 
-    const targetStep = state.currentStep + numberOfSteps;
-    console.log('🎯 BULLETPROOF completeMultipleSteps: Completing multiple steps', {
-      currentStep: state.currentStep,
+    const targetStep = preferences.currentOnboardingStep + numberOfSteps;
+    console.log('🎯 completeMultipleSteps: Completing multiple steps', {
+      currentStep: preferences.currentOnboardingStep,
       numberOfSteps,
       targetStep,
       totalSteps: TOTAL_STEPS
     });
     
-    try {
-      // Prevent completing beyond total steps
-      if (state.currentStep >= TOTAL_STEPS) {
-        console.warn('🚫 completeMultipleSteps: Already at or beyond total steps');
-        return;
-      }
-
-      const finalStep = Math.min(targetStep, TOTAL_STEPS + 1);
-      
-      await supabase
-        .from('user_settings')
-        .update({ 
-          current_onboarding_step: finalStep
-        })
-        .eq('user_id', user.id);
-
-      setState(prev => {
-        console.log('🎯 BULLETPROOF completeMultipleSteps: State updated', {
-          from: prev.currentStep,
-          to: finalStep
-        });
-        return {
-          ...prev,
-          currentStep: finalStep
-        };
-      });
-    } catch (error) {
-      console.error('❌ BULLETPROOF completeMultipleSteps: Error:', error);
-      throw error;
+    // Prevent completing beyond total steps
+    if (preferences.currentOnboardingStep >= TOTAL_STEPS) {
+      console.warn('🚫 completeMultipleSteps: Already at or beyond total steps');
+      return;
     }
+
+    const finalStep = Math.min(targetStep, TOTAL_STEPS + 1);
+    
+    await updatePreferences({
+      currentOnboardingStep: finalStep
+    });
   };
 
   const completeOnboarding = async () => {
-    if (!user) return;
+    if (!preferences) return;
 
     console.log('🎯 completeOnboarding: Starting to complete onboarding');
-    try {
-      console.log('🎯 completeOnboarding: Updating database...');
-      const { error } = await supabase
-        .from('user_settings')
-        .update({ 
-          onboarding_stage: 'completed',
-          current_onboarding_step: TOTAL_STEPS + 1
-        })
-        .eq('user_id', user.id);
-
-      if (error) {
-        console.error('🎯 completeOnboarding: Database error:', error);
-        throw error;
-      }
-
-      console.log('🎯 completeOnboarding: Database updated successfully, updating state...');
-      setState(prev => {
-        console.log('🎯 completeOnboarding: State updated to completed');
-        return {
-          ...prev,
-          stage: 'completed',
-          currentStep: TOTAL_STEPS + 1
-        };
-      });
-      console.log('🎯 completeOnboarding: Function completed successfully');
-    } catch (error) {
-      console.error('🎯 completeOnboarding: Error completing onboarding:', error);
-      throw error;
-    }
+    
+    await updatePreferences({
+      onboardingStage: 'completed',
+      currentOnboardingStep: TOTAL_STEPS + 1
+    });
   };
 
   const skipOnboarding = async () => {
-    if (!user) return;
+    if (!preferences) return;
 
-    try {
-      await supabase
-        .from('user_settings')
-        .update({ 
-          onboarding_stage: 'skipped'
-        })
-        .eq('user_id', user.id);
-
-      setState(prev => ({
-        ...prev,
-        stage: 'skipped'
-      }));
-    } catch (error) {
-      console.error('Error skipping onboarding:', error);
-      throw error;
-    }
+    await updatePreferences({
+      onboardingStage: 'skipped'
+    });
   };
 
   // Reset for restart: START guided mode but keep modal permanently disabled
   const resetOnboarding = async () => {
-    if (!user) return;
+    if (!preferences) return;
 
     console.log('🔄 BULLETPROOF resetOnboarding: Starting guided mode without modal');
-    try {
-      // Set to in_progress to actually start guided mode
-      await supabase
-        .from('user_settings')
-        .update({
-          onboarding_stage: 'in_progress',  // Actually start guided mode
-          current_onboarding_step: 1,
-          welcome_modal_shown: true         // Keep modal permanently disabled
-        })
-        .eq('user_id', user.id);
-
-      setState({
-        stage: 'in_progress',      // Actually in guided mode now
-        currentStep: 1,
-        loading: false,
-        welcomeModalShown: true    // Modal stays disabled
-      });
-      console.log('🔄 BULLETPROOF resetOnboarding: Guided mode STARTED, modal STAYS disabled');
-    } catch (error) {
-      console.error('❌ BULLETPROOF resetOnboarding: Error:', error);
-      throw error;
-    }
+    
+    await updatePreferences({
+      onboardingStage: 'in_progress',
+      currentOnboardingStep: 1,
+      welcomeModalShown: true // Keep modal permanently disabled
+    });
   };
 
   return {
     // State
-    stage: state.stage,
-    currentStep: state.currentStep,
-    loading: state.loading,
+    stage: preferences?.onboardingStage || 'not_started',
+    currentStep: preferences?.currentOnboardingStep || 1,
+    loading: isLoading,
     
-    // Computed values
+    // Computed values (NO more console.log spam!)
     shouldShowWelcomeModal: shouldShowWelcomeModal(),
     isInGuidedSetup: isInGuidedSetup(),
     isOnboardingComplete: isOnboardingComplete(),
@@ -459,7 +242,7 @@ export function useOnboardingV2() {
     // Actions
     startGuidedSetup,
     completeCurrentStep,
-    completeMultipleSteps, // BULLETPROOF: For combined tutorials
+    completeMultipleSteps,
     completeOnboarding,
     skipOnboarding,
     resetOnboarding

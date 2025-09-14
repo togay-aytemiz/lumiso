@@ -349,11 +349,18 @@ const GlobalSearch = () => {
         });
       }
 
-      // Sort results by type - don't limit initially
+      // Sort results by type, pushing archived projects to the end
+      const archivedStatusIds = new Set(projectStatuses.filter(s => s.name?.toLowerCase?.() === 'archived').map(s => s.id));
       const sortedResults = searchResults
         .sort((a, b) => {
           const typeOrder = { lead: 0, project: 1, note: 2, reminder: 3, session: 4 };
-          return typeOrder[a.type] - typeOrder[b.type];
+          if (a.type !== b.type) return typeOrder[a.type] - typeOrder[b.type];
+          if (a.type === 'project' && b.type === 'project') {
+            const aArchived = a.projectStatusId ? archivedStatusIds.has(a.projectStatusId) : false;
+            const bArchived = b.projectStatusId ? archivedStatusIds.has(b.projectStatusId) : false;
+            if (aArchived !== bArchived) return aArchived ? 1 : -1;
+          }
+          return 0;
         });
 
       setAllResults(sortedResults);

@@ -48,8 +48,8 @@ export function ProjectStatusBadge({
 
   useEffect(() => {
     if (passedStatuses) {
-      const filtered = passedStatuses.filter(s => s.name?.toLowerCase?.() !== 'archived');
-      setStatuses(filtered);
+      // Keep full list (including Archived) so we can display current status correctly
+      setStatuses(passedStatuses);
       setLoading(false);
     } else {
       fetchProjectStatuses();
@@ -84,7 +84,6 @@ export function ProjectStatusBadge({
       const { data, error } = await supabase
         .from('project_statuses')
         .select('*')
-        .not('name', 'ilike', 'archived')
         .order('sort_order', { ascending: true });
 
       if (error) throw error;
@@ -250,28 +249,30 @@ export function ProjectStatusBadge({
         {dropdownOpen && (
           <div className="absolute top-full left-0 mt-2 w-auto min-w-[200px] bg-background border rounded-lg shadow-lg z-50 p-2">
             <div className="space-y-1 max-h-64 overflow-y-auto">
-              {statuses.map((status) => (
-                <Button
-                  key={status.id}
-                  variant="ghost"
-                  className="w-full justify-start h-auto py-2 px-3 font-medium hover:bg-muted rounded-md"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    console.log('Setting status for first time to:', status.name);
-                    handleStatusChange(status.id);
-                  }}
-                  disabled={isUpdating}
-                >
-                  <div className="flex items-center gap-3 w-full">
-                    <div 
-                      className={cn("rounded-full flex-shrink-0", dotSize)}
-                      style={{ backgroundColor: status.color }}
-                    />
-                    <span className={cn("uppercase tracking-wide font-semibold", textSize)}>{status.name}</span>
-                  </div>
-                </Button>
-              ))}
+              {statuses
+                .filter((s) => s.name?.toLowerCase?.() !== 'archived')
+                .map((status) => (
+                  <Button
+                    key={status.id}
+                    variant="ghost"
+                    className="w-full justify-start h-auto py-2 px-3 font-medium hover:bg-muted rounded-md"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      console.log('Setting status for first time to:', status.name);
+                      handleStatusChange(status.id);
+                    }}
+                    disabled={isUpdating}
+                  >
+                    <div className="flex items-center gap-3 w-full">
+                      <div 
+                        className={cn("rounded-full flex-shrink-0", dotSize)}
+                        style={{ backgroundColor: status.color }}
+                      />
+                      <span className={cn("uppercase tracking-wide font-semibold", textSize)}>{status.name}</span>
+                    </div>
+                  </Button>
+                ))}
             </div>
           </div>
         )}
@@ -344,31 +345,33 @@ export function ProjectStatusBadge({
       {dropdownOpen && (
         <div className="absolute top-full left-0 mt-2 w-auto min-w-[200px] bg-background border rounded-lg shadow-lg z-50 p-2">
           <div className="space-y-1 max-h-64 overflow-y-auto">
-            {statuses.map((status) => (
-              <Button
-                key={status.id}
-                variant="ghost"
-                className={cn(
-                  "w-full justify-start h-auto py-2 px-3 font-medium hover:bg-muted rounded-md",
-                  currentStatus.id === status.id && "bg-muted"
-                )}
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  console.log('Status option clicked:', status.name);
-                  handleStatusChange(status.id);
-                }}
-                disabled={isUpdating}
-              >
-                <div className="flex items-center gap-3 w-full">
-                  <div 
-                    className={cn("rounded-full flex-shrink-0", dotSize)}
-                    style={{ backgroundColor: status.color }}
-                  />
-                  <span className={cn("uppercase tracking-wide font-semibold", textSize)}>{status.name}</span>
-                </div>
-              </Button>
-            ))}
+            {statuses
+              .filter((s) => s.name?.toLowerCase?.() !== 'archived')
+              .map((status) => (
+                <Button
+                  key={status.id}
+                  variant="ghost"
+                  className={cn(
+                    "w-full justify-start h-auto py-2 px-3 font-medium hover:bg-muted rounded-md",
+                    currentStatus.id === status.id && "bg-muted"
+                  )}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Status option clicked:', status.name);
+                    handleStatusChange(status.id);
+                  }}
+                  disabled={isUpdating}
+                >
+                  <div className="flex items-center gap-3 w-full">
+                    <div 
+                      className={cn("rounded-full flex-shrink-0", dotSize)}
+                      style={{ backgroundColor: status.color }}
+                    />
+                    <span className={cn("uppercase tracking-wide font-semibold", textSize)}>{status.name}</span>
+                  </div>
+                </Button>
+              ))}
           </div>
         </div>
       )}

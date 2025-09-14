@@ -41,8 +41,7 @@ export function OnboardingTutorial({
     showExitGuard,
     handleExitRequest,
     handleStay,
-    handleReturnToGettingStarted,
-    handleSkipSetup
+    handleReturnToGettingStarted
   } = useTutorialExit({
     currentStepTitle: typeof currentStep?.title === 'string' ? currentStep.title : 'Current Step',
     onExitComplete: onExit
@@ -118,7 +117,6 @@ export function OnboardingTutorial({
           currentStepTitle={typeof currentStep.title === 'string' ? currentStep.title : 'Current Step'}
           onStay={handleStay}
           onReturnToGettingStarted={handleReturnToGettingStarted}
-          onSkipSetup={handleSkipSetup}
         />
       </>
     );
@@ -164,7 +162,6 @@ export function OnboardingTutorial({
         currentStepTitle={typeof currentStep.title === 'string' ? currentStep.title : 'Current Step'}
         onStay={handleStay}
         onReturnToGettingStarted={handleReturnToGettingStarted}
-        onSkipSetup={handleSkipSetup}
       />
     </>
   );

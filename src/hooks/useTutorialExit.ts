@@ -26,19 +26,12 @@ export function useTutorialExit({ currentStepTitle, onExitComplete }: UseTutoria
     onExitComplete?.();
   };
 
-  const handleSkipSetup = () => {
-    setShowExitGuard(false);
-    skipOnboarding();
-    navigate("/");
-    onExitComplete?.();
-  };
 
   return {
     showExitGuard,
     currentStepTitle,
     handleExitRequest,
     handleStay,
-    handleReturnToGettingStarted,
-    handleSkipSetup
+    handleReturnToGettingStarted
   };
 }

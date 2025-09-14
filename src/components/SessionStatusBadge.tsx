@@ -146,7 +146,7 @@ export function SessionStatusBadge({
 
   const displayName = enumToDisplay[currentStatus];
   const color = current?.color || fallbackColorByEnum[currentStatus];
-  const textColor = getBadgeTextColor(color);
+  const textColor = getBadgeTextColor(color, displayName);
 
   if (!editable) {
     return (

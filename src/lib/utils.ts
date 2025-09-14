@@ -142,38 +142,3 @@ export const getWeekRange = (date: Date, locale?: string): { start: Date; end: D
     end: getEndOfWeek(date, locale)
   };
 };
-
-// Helper function to get proper badge text color using design tokens
-export const getBadgeTextColor = (backgroundColor: string, statusName?: string): string => {
-  // For light gray/muted backgrounds (like #A0AEC0), use dark foreground text
-  if (backgroundColor === '#A0AEC0' || backgroundColor.toLowerCase().includes('gray') || backgroundColor.toLowerCase().includes('grey')) {
-    return 'hsl(var(--foreground))';
-  }
-  
-  // For specific status names, use semantic tokens
-  const statusTokenMap: { [key: string]: string } = {
-    'new': 'hsl(var(--status-new-text))',
-    'contacted': 'hsl(var(--status-contacted-text))',
-    'qualified': 'hsl(var(--status-qualified-text))',
-    'proposal sent': 'hsl(var(--status-proposal-sent-text))',
-    'booked': 'hsl(var(--status-booked-text))',
-    'lost': 'hsl(var(--status-lost-text))',
-    'completed': 'hsl(var(--status-completed-text))'
-  };
-  
-  if (statusName) {
-    const token = statusTokenMap[statusName.toLowerCase()];
-    if (token) return token;
-  }
-  
-  // Calculate luminance for other colors
-  const hex = backgroundColor.replace('#', '');
-  const r = parseInt(hex.substr(0, 2), 16);
-  const g = parseInt(hex.substr(2, 2), 16);
-  const b = parseInt(hex.substr(4, 2), 16);
-  
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  
-  // If background is light (luminance > 0.5), return dark text, otherwise use the original color
-  return luminance > 0.5 ? 'hsl(var(--foreground))' : backgroundColor;
-};

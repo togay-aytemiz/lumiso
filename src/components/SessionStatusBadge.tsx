@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { cn, getBadgeTextColor } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { useSessionActions } from "@/hooks/useSessionActions";
 
 interface SessionStatusRow {
@@ -146,13 +146,12 @@ export function SessionStatusBadge({
 
   const displayName = enumToDisplay[currentStatus];
   const color = current?.color || fallbackColorByEnum[currentStatus];
-  const textColor = getBadgeTextColor(color, displayName);
 
   if (!editable) {
     return (
       <div
         className={cn("inline-flex items-center gap-2 rounded-full font-medium border", padding, className)}
-        style={{ backgroundColor: color + '15', color: textColor, borderColor: color + '60' }}
+        style={{ backgroundColor: color + '15', color, borderColor: color + '60' }}
       >
         <div className={cn("rounded-full", dotSize)} style={{ backgroundColor: color }} />
         <span className={cn("uppercase tracking-wide font-semibold", textSize)}>{displayName}</span>
@@ -171,7 +170,7 @@ export function SessionStatusBadge({
           isUpdating && "cursor-not-allowed opacity-50",
           className
         )}
-        style={{ backgroundColor: color + '15', color: textColor, borderColor: color + '60' }}
+        style={{ backgroundColor: color + '15', color, borderColor: color + '60' }}
         disabled={isUpdating}
         onClick={(e) => {
           e.preventDefault();

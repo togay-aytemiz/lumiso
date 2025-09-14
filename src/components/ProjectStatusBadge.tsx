@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { cn, getBadgeTextColor } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { useNotificationTriggers } from "@/hooks/useNotificationTriggers";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { useWorkflowTriggers } from "@/hooks/useWorkflowTriggers";
@@ -290,13 +290,12 @@ export function ProjectStatusBadge({
   }
 
   if (!editable) {
-    const textColor = getBadgeTextColor(currentStatus.color, currentStatus.name);
     return (
       <div 
         className={cn("inline-flex items-center gap-2 rounded-full font-medium", padding, className)}
         style={{ 
           backgroundColor: currentStatus.color + '15',
-          color: textColor,
+          color: currentStatus.color,
           border: `1px solid ${currentStatus.color}60`
         }}
       >
@@ -310,7 +309,6 @@ export function ProjectStatusBadge({
   }
 
   // Editable status badge with current status
-  const textColor = getBadgeTextColor(currentStatus.color, currentStatus.name);
   return (
     <div className="relative" ref={dropdownRef}>
       <Button
@@ -324,7 +322,7 @@ export function ProjectStatusBadge({
         )}
         style={{ 
           backgroundColor: currentStatus.color + '15',
-          color: textColor,
+          color: currentStatus.color,
           borderColor: currentStatus.color + '60'
         }}
         disabled={isUpdating}

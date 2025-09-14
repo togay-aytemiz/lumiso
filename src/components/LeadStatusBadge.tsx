@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { cn, getBadgeTextColor } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { useOrganizationQuickSettings } from "@/hooks/useOrganizationQuickSettings";
 import { useWorkflowTriggers } from "@/hooks/useWorkflowTriggers";
 import { useOrganization } from "@/contexts/OrganizationContext";
@@ -304,13 +304,12 @@ export function LeadStatusBadge({
   }
 
   if (!editable) {
-    const textColor = getBadgeTextColor(currentStatusData.color, currentStatusData.name);
     return (
       <div 
         className={cn("inline-flex items-center gap-2 rounded-full font-medium", padding, className)}
         style={{ 
           backgroundColor: currentStatusData.color + '15',
-          color: textColor,
+          color: currentStatusData.color,
           border: `1px solid ${currentStatusData.color}60`
         }}
       >
@@ -324,7 +323,6 @@ export function LeadStatusBadge({
   }
 
   // Editable status badge with current status
-  const textColor = getBadgeTextColor(currentStatusData.color, currentStatusData.name);
   return (
     <div className="relative" ref={dropdownRef}>
       <Button
@@ -338,7 +336,7 @@ export function LeadStatusBadge({
         )}
         style={{ 
           backgroundColor: currentStatusData.color + '15',
-          color: textColor,
+          color: currentStatusData.color,
           borderColor: currentStatusData.color + '60'
         }}
         disabled={isUpdating}

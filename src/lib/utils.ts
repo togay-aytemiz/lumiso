@@ -142,3 +142,18 @@ export const getWeekRange = (date: Date, locale?: string): { start: Date; end: D
     end: getEndOfWeek(date, locale)
   };
 };
+
+// Helper function to determine if a color is light and needs darker text
+export const getBadgeTextColor = (backgroundColor: string): string => {
+  // Convert hex to RGB
+  const hex = backgroundColor.replace('#', '');
+  const r = parseInt(hex.substr(0, 2), 16);
+  const g = parseInt(hex.substr(2, 2), 16);
+  const b = parseInt(hex.substr(4, 2), 16);
+  
+  // Calculate luminance
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  
+  // If background is light (luminance > 0.6), return dark text
+  return luminance > 0.6 ? 'hsl(var(--foreground))' : backgroundColor;
+};

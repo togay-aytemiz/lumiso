@@ -174,10 +174,7 @@ export default function General() {
   };
 
   const handleTutorialExit = async () => {
-    console.log('❌ General tutorial exit - going to getting started');
-    // Exit tutorial, just navigate back without completing
     setShowTutorial(false);
-    navigate('/getting-started');
   };
 
   const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {

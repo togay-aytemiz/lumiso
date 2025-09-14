@@ -588,7 +588,6 @@ const AllProjects = () => {
 
   const handleTutorialExit = () => {
     setShowTutorial(false);
-    navigate('/getting-started');
   };
 
   const formatCurrency = (amount: string | number | null) => {

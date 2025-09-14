@@ -244,10 +244,7 @@ export default function Profile() {
   };
 
   const handleTutorialExit = async () => {
-    console.log('❌ Profile tutorial exit');
-    // Just exit without completing
     setShowTutorial(false);
-    navigate('/getting-started');
   };
 
   // Show loading state until all data is loaded

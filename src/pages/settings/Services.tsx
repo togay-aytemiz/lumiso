@@ -116,7 +116,6 @@ export default function Services() {
 
   const handleTutorialExit = () => {
     setShowTutorial(false);
-    console.log('❌ Packages tutorial exited');
   };
   
   // Permissions removed for single photographer mode - always allow

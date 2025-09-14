@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useOnboardingV2 } from "./useOnboardingV2";
 
@@ -22,10 +22,16 @@ export function useTutorialExit({ currentStepTitle, onExitComplete }: UseTutoria
 
   const handleReturnToGettingStarted = () => {
     setShowExitGuard(false);
-    navigate("/getting-started");
     onExitComplete?.();
+    requestAnimationFrame(() => {
+      navigate("/getting-started", { replace: true });
+    });
   };
 
+  // Cleanup on unmount to prevent stale state
+  useEffect(() => {
+    return () => setShowExitGuard(false);
+  }, []);
 
   return {
     showExitGuard,

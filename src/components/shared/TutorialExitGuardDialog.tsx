@@ -23,7 +23,7 @@ export function TutorialExitGuardDialog({
   currentStepTitle 
 }: TutorialExitGuardDialogProps) {
   return (
-    <AlertDialog open={open} onOpenChange={(open) => !open && onStay()}>
+    <AlertDialog open={open}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Exit Tutorial?</AlertDialogTitle>

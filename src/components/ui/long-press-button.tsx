@@ -103,7 +103,7 @@ export function LongPressButton({
       {/* Progress bar */}
       <span
         aria-hidden
-        className="pointer-events-none absolute inset-y-0 left-0 bg-primary/20 transition-[width]"
+        className="pointer-events-none absolute inset-y-0 left-0 bg-destructive/20"
         style={{ width: `${progress * 100}%` }}
       />
       <span className="relative z-10">

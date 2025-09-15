@@ -13,7 +13,7 @@ import { formatDate, formatTime, formatLongDate, getWeekRange } from "@/lib/util
 import GlobalSearch from "@/components/GlobalSearch";
 import { PageHeader, PageHeaderSearch, PageHeaderActions } from "@/components/ui/page-header";
 import SessionStatusBadge from "@/components/SessionStatusBadge";
-import { ProjectSheetView } from "@/components/ProjectSheetView";
+import { ViewProjectDialog } from "@/components/ViewProjectDialog";
 import { FilterBar } from "@/components/FilterBar";
 import { ListLoadingSkeleton } from "@/components/ui/loading-presets";
 import SessionSheetView from "@/components/SessionSheetView";
@@ -557,7 +557,7 @@ const AllSessions = () => {
               </CardContent>
             </Card>
 
-            <ProjectSheetView
+            <ViewProjectDialog
               project={viewingProject}
               open={showProjectDialog}
               onOpenChange={setShowProjectDialog}

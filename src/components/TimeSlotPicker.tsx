@@ -125,9 +125,14 @@ export function TimeSlotPicker({ selectedDate, selectedTime, onTimeSelect, class
         {timeSlots.map((slot) => (
           <Button
             key={slot}
-            variant={selectedTime === slot ? "default" : "outline"}
+            variant="outline"
             size="sm"
-            className="justify-start text-xs h-8"
+            className={cn(
+              "justify-start text-xs h-8 transition-colors",
+              selectedTime === slot 
+                ? "bg-primary text-primary-foreground hover:bg-primary/90" 
+                : "hover:bg-accent hover:text-accent-foreground"
+            )}
             onClick={() => onTimeSelect(slot)}
           >
             {formatTimeSlot(slot, userLocale)}

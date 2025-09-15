@@ -182,7 +182,6 @@ export function CalendarTimePicker({
 
           {/* Time Slot Picker */}
           <div className="space-y-3">
-            <Label className="text-sm font-medium">Available Times</Label>
             <div className="rounded-lg border p-3">
               <TimeSlotPicker
                 selectedDate={selectedDate}

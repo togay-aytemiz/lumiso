@@ -11,6 +11,7 @@ import { getUserLocale, formatLongDate, formatTime } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
 import { Calendar, Clock, MapPin, User, Briefcase } from "lucide-react";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
+import { format } from "date-fns";
 
 interface Project {
   id: string;
@@ -46,7 +47,6 @@ const EditSessionDialog = ({
   open = false, 
   onOpenChange 
 }: EditSessionDialogProps) => {
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [projects, setProjects] = useState<Project[]>([]);
 
   const {
@@ -71,19 +71,13 @@ const EditSessionDialog = ({
       project_id: currentProjectId
     },
     onSuccess: () => {
-      setSelectedDate(undefined);
       onOpenChange?.(false);
       onSessionUpdated?.();
     }
   });
 
-  // Initialize selected date from form data
-  useEffect(() => {
-    if (formData.session_date) {
-      const date = new Date(formData.session_date + 'T00:00:00');
-      setSelectedDate(date);
-    }
-  }, [formData.session_date]);
+  // Get selected date from form data
+  const selectedDate = formData.session_date ? new Date(formData.session_date + 'T00:00:00') : undefined;
 
   const fetchProjects = async () => {
     try {
@@ -118,7 +112,6 @@ const EditSessionDialog = ({
     isDirty,
     onDiscard: () => {
       resetForm();
-      setSelectedDate(undefined);
       onOpenChange?.(false);
     },
   });
@@ -127,7 +120,6 @@ const EditSessionDialog = ({
     const canClose = navigation.handleModalClose();
     if (canClose) {
       resetForm();
-      setSelectedDate(undefined);
       onOpenChange?.(false);
     }
   };
@@ -180,7 +172,13 @@ const EditSessionDialog = ({
             <CalendarTimePicker
               selectedDate={selectedDate}
               selectedTime={formData.session_time}
-              onDateChange={setSelectedDate}
+              onDateChange={(date) => {
+                if (date) {
+                  handleInputChange("session_date", format(date, "yyyy-MM-dd"));
+                } else {
+                  handleInputChange("session_date", "");
+                }
+              }}
               onTimeChange={(time) => handleInputChange("session_time", time)}
               onDateStringChange={(dateString) => handleInputChange("session_date", dateString)}
             />

@@ -149,7 +149,7 @@ export function OnboardingTutorial({
   return (
     <>
       <BaseOnboardingModal
-        open={isVisible}
+        open={isVisible && !showExitGuard && !isExiting}
         onClose={handleExit}
         title={`Step ${currentStepIndex + 1} of ${steps.length}: ${typeof currentStep.title === 'string' ? currentStep.title : 'Step'}`}
         description={currentStep.description}

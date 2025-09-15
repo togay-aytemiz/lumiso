@@ -62,6 +62,8 @@ export function CalendarTimePicker({
       setPlannedSessions(data || []);
     } catch (err) {
       console.error('Failed to fetch planned sessions for calendar:', err);
+      // Don't crash on mobile, just show empty state
+      setPlannedSessions([]);
     }
   };
 
@@ -133,16 +135,24 @@ export function CalendarTimePicker({
                   next2Label={null}
                   prev2Label={null}
                   onActiveStartDateChange={({ activeStartDate, view }) => {
-                    if (view === 'month' && activeStartDate) {
-                      setVisibleMonth(activeStartDate);
+                    try {
+                      if (view === 'month' && activeStartDate) {
+                        setVisibleMonth(activeStartDate);
+                      }
+                    } catch (err) {
+                      console.error('Calendar navigation error:', err);
                     }
                   }}
                   onChange={(value) => {
-                    const d = Array.isArray(value) ? value[0] : value;
-                    const date = d instanceof Date ? d : undefined;
-                    onDateChange(date);
-                    if (date) {
-                      onDateStringChange(format(date, "yyyy-MM-dd"));
+                    try {
+                      const d = Array.isArray(value) ? value[0] : value;
+                      const date = d instanceof Date ? d : undefined;
+                      onDateChange(date);
+                      if (date) {
+                        onDateStringChange(format(date, "yyyy-MM-dd"));
+                      }
+                    } catch (err) {
+                      console.error('Date selection error:', err);
                     }
                   }}
                   value={selectedDate ?? null}

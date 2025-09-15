@@ -72,26 +72,34 @@ export function AppSheetModal({
         side={sideVariant} 
         className={cn(sheetContentClass, "[&>button]:hidden")}
         onPointerDownOutside={e => {
-          // Prevent immediate closure on mobile touch events
-          const target = e.target as HTMLElement;
-          if (target && target.closest('[data-radix-popper-content-wrapper]')) {
-            e.preventDefault();
-            return;
+          try {
+            // Prevent immediate closure on mobile touch events
+            const target = e.target as HTMLElement;
+            if (target && target.closest('[data-radix-popper-content-wrapper]')) {
+              e.preventDefault();
+              return;
+            }
+            handleOutsideInteraction();
+          } catch (err) {
+            console.error('Mobile pointer interaction error:', err);
           }
-          handleOutsideInteraction();
         }} 
         onInteractOutside={e => {
-          // Allow interactions with popover content
-          const target = e.target as HTMLElement;
-          if (target && (
-            target.closest('[data-radix-popper-content-wrapper]') ||
-            target.closest('[data-radix-select-content]') ||
-            target.closest('[data-radix-popover-content]')
-          )) {
-            e.preventDefault();
-            return;
+          try {
+            // Allow interactions with popover content
+            const target = e.target as HTMLElement;
+            if (target && (
+              target.closest('[data-radix-popper-content-wrapper]') ||
+              target.closest('[data-radix-select-content]') ||
+              target.closest('[data-radix-popover-content]')
+            )) {
+              e.preventDefault();
+              return;
+            }
+            handleOutsideInteraction();
+          } catch (err) {
+            console.error('Mobile interaction error:', err);
           }
-          handleOutsideInteraction();
         }}
       >
         <SheetHeader className="border-b pb-4">
@@ -108,7 +116,10 @@ export function AppSheetModal({
           </div>
         </SheetHeader>
 
-        <div className="flex-1 overflow-y-auto pb-6 my-0 py-0 px-[4px]">
+        <div className="flex-1 overflow-y-auto pb-6 my-0 py-0 px-[4px]" style={{ 
+          WebkitOverflowScrolling: 'touch',
+          touchAction: 'manipulation'
+        }}>
           <div className="space-y-4 [&_input]:border [&_input]:border-border [&_input]:bg-muted/50 [&_textarea]:border [&_textarea]:border-border [&_textarea]:bg-muted/50 [&_[role=combobox]]:border [&_[role=combobox]]:border-border [&_[role=combobox]]:bg-muted/50">
             {children}
           </div>

@@ -108,16 +108,6 @@ const EditSessionDialog = ({
     }
   }, [open]);
 
-  // Ensure a default session name if missing, based on current project name
-  useEffect(() => {
-    if (!formData.session_name && currentProjectId && projects.length) {
-      const p = projects.find((prj) => prj.id === currentProjectId);
-      if (p) {
-        handleInputChange("session_name", generateSessionName(p.name));
-      }
-    }
-  }, [formData.session_name, currentProjectId, projects]);
-
   const navigation = useModalNavigation({
     isDirty,
     onDiscard: () => {

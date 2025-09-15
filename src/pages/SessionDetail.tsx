@@ -33,6 +33,7 @@ import SessionGallery from '@/components/SessionGallery';
 
 interface Session {
   id: string;
+  session_name: string | null;
   session_date: string;
   session_time: string;
   notes: string | null;
@@ -124,12 +125,22 @@ export default function SessionDetail() {
   const getSessionName = () => {
     if (!session) return 'Session';
     
+    // Use existing session name if available
+    if (session.session_name?.trim()) {
+      return session.session_name.trim();
+    }
+    
     // Use project type if available
     if (session.projects?.project_types?.name) {
       return `${session.projects.project_types.name} Session`;
     }
     
-    // Fallback to generic "Session"
+    // Fallback to lead name + Session
+    if (session.leads?.name) {
+      return `${session.leads.name} Session`;
+    }
+    
+    // Final fallback
     return 'Session';
   };
 
@@ -516,6 +527,7 @@ export default function SessionDetail() {
           onOpenChange={setIsEditDialogOpen}
           sessionId={session.id}
           leadId={session.lead_id}
+          currentSessionName={session.session_name || ''}
           currentDate={session.session_date}
           currentTime={session.session_time}
           currentNotes={session.notes || ''}

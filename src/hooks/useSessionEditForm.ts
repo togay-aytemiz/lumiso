@@ -57,13 +57,21 @@ export function useSessionEditForm({
 
   // Update form data when initial data changes (using primitive dependencies)
   useEffect(() => {
-    setFormData({
-      session_name: initialData.session_name || "",
-      session_date: initialData.session_date,
-      session_time: initialData.session_time,
-      notes: initialData.notes || "",
-      location: initialData.location || "",
-      project_id: initialData.project_id || ""
+    setFormData(prev => {
+      const newData = {
+        session_name: initialData.session_name || "",
+        session_date: initialData.session_date,
+        session_time: initialData.session_time,
+        notes: initialData.notes || "",
+        location: initialData.location || "",
+        project_id: initialData.project_id || ""
+      };
+      
+      // Only update if data actually changed to prevent unnecessary rerenders
+      if (JSON.stringify(prev) !== JSON.stringify(newData)) {
+        return newData;
+      }
+      return prev;
     });
   }, [
     initialData.session_name,

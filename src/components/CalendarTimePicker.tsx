@@ -95,38 +95,51 @@ export function CalendarTimePicker({
   }, [plannedSessions]);
 
   return (
-    <div className="space-y-4">
-      {/* Selected Date & Time Display */}
-      {(selectedDate || selectedTime) && (
-        <div className="flex items-center gap-2 p-3 bg-muted/30 rounded-lg border">
-          <Badge variant="secondary" className="text-sm font-medium">
-            {selectedDate && selectedTime ? (
-              `${formatLongDate(selectedDate, browserLocale)} - ${new Intl.DateTimeFormat(browserLocale, {
-                hour: 'numeric',
-                minute: '2-digit',
-                hour12: undefined
-              }).format(new Date(`2000-01-01T${selectedTime}`))}`
-            ) : selectedDate ? (
-              formatLongDate(selectedDate, browserLocale)
-            ) : selectedTime ? (
-              `Selected time: ${new Intl.DateTimeFormat(browserLocale, {
-                hour: 'numeric',
-                minute: '2-digit',
-                hour12: undefined
-              }).format(new Date(`2000-01-01T${selectedTime}`))}`
-            ) : null}
-          </Badge>
-        </div>
-      )}
+    <div className="space-y-6">
+      {/* Unified Section Title */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold">Session Date & Time</h3>
+        
+        {/* Selected Date & Time Summary */}
+        {(selectedDate || selectedTime) && (
+          <div className="flex items-center gap-3 p-4 bg-accent/10 rounded-lg border border-accent/20">
+            <div className="flex items-center gap-2">
+              {selectedDate && (
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 text-primary rounded-md border border-primary/20">
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25m3 7.5v6a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 18.75v-6m15 0V9a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 9v6.75m15 0H3" />
+                  </svg>
+                  <span className="text-sm font-medium">
+                    {formatLongDate(selectedDate, browserLocale)}
+                  </span>
+                </div>
+              )}
+              {selectedTime && (
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-secondary/10 text-secondary-foreground rounded-md border border-secondary/20">
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className="text-sm font-medium">
+                    {new Intl.DateTimeFormat(browserLocale, {
+                      hour: 'numeric',
+                      minute: '2-digit',
+                      hour12: undefined
+                    }).format(new Date(`2000-01-01T${selectedTime}`))}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
       
-      {/* Combined Date & Time Selection */}
-      <div className="rounded-lg border p-4">
+      {/* Date & Time Selection Grid */}
+      <div className="rounded-lg border bg-card p-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Date Picker */}
-          <div className="space-y-3">
-            <Label className="text-sm font-medium">Select Date</Label>
-            <div className="rounded-lg border">
-              <div className="p-3">
+          {/* Date Picker Section */}
+          <div className="space-y-4">
+            <div className="rounded-lg border bg-background">
+              <div className="p-4">
                 <ReactCalendar
                   className="react-calendar !w-full pointer-events-auto [&_.react-calendar\_\_navigation]:!w-full [&_.react-calendar\_\_viewContainer]:!w-full [&_.react-calendar\_\_month-view]:!w-full"
                   locale={browserLocale}
@@ -173,7 +186,7 @@ export function CalendarTimePicker({
                   }}
                 />
               </div>
-              <div className="px-3 pb-3 flex items-center justify-between border-t bg-muted/20">
+              <div className="px-4 pb-4 flex items-center justify-between border-t bg-muted/10">
                 <Button
                   type="button"
                   variant="secondary"
@@ -190,14 +203,16 @@ export function CalendarTimePicker({
             </div>
           </div>
 
-          {/* Time Slot Picker */}
-          <div className="space-y-3">
-            <div className="rounded-lg border p-3">
-              <TimeSlotPicker
-                selectedDate={selectedDate}
-                selectedTime={selectedTime}
-                onTimeSelect={onTimeChange}
-              />
+          {/* Time Slot Picker Section */}
+          <div className="space-y-4">
+            <div className="rounded-lg border bg-background min-h-[320px] flex flex-col">
+              <div className="p-4 flex-1">
+                <TimeSlotPicker
+                  selectedDate={selectedDate}
+                  selectedTime={selectedTime}
+                  onTimeSelect={onTimeChange}
+                />
+              </div>
             </div>
           </div>
         </div>

@@ -6,12 +6,7 @@ import { ArrowLeft, ExternalLink, MoreVertical, Edit, Trash2, ChevronDown, X, Al
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
+import { AppSheetModal } from '@/components/ui/app-sheet-modal';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -192,264 +187,186 @@ export default function SessionSheetView({
     onOpenChange(false);
   };
 
+  const footerActions = [
+    {
+      label: "Full Details",
+      onClick: onViewFullDetails,
+      variant: "ghost" as const,
+    },
+    {
+      label: "Edit",
+      onClick: handleEdit,
+      variant: "ghost" as const,
+    },
+    {
+      label: "Delete", 
+      onClick: () => setIsDeleteDialogOpen(true),
+      variant: "ghost" as const,
+    }
+  ];
+
   return (
     <>
-      <Sheet open={isOpen} onOpenChange={onOpenChange}>
-        <SheetContent className="w-full sm:max-w-5xl h-[100vh] overflow-y-auto overscroll-contain pr-2 pt-8 sm:pt-6">
-          {loading ? (
-            <div className="p-6">
-              <div className="animate-pulse space-y-4">
-                <div className="h-6 bg-muted rounded w-1/3"></div>
-                <div className="h-4 bg-muted rounded w-1/2"></div>
-                <div className="h-32 bg-muted rounded"></div>
-              </div>
+      <AppSheetModal
+        title={loading ? "Loading..." : getSessionName()}
+        isOpen={isOpen}
+        onOpenChange={onOpenChange}
+        size="wide"
+        footerActions={footerActions}
+      >
+        {loading ? (
+          <div className="p-6">
+            <div className="animate-pulse space-y-4">
+              <div className="h-6 bg-muted rounded w-1/3"></div>
+              <div className="h-4 bg-muted rounded w-1/2"></div>
+              <div className="h-32 bg-muted rounded"></div>
             </div>
-          ) : session ? (
-            <>
-              <SheetHeader className="pb-4">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex-1 min-w-0 space-y-3">
-                    <div className="space-y-3">
-                      <div className="space-y-2">
-                        <div className="space-y-2">
-                          {/* Desktop: Name + Badges on same line */}
-                          <div className="hidden md:flex items-center gap-3 flex-wrap">
-                            <SheetTitle className="text-xl sm:text-2xl font-bold leading-tight break-words text-left">
-                              {getSessionName()}
-                            </SheetTitle>
-                            
-                            {/* Session Status and Project Type Badges next to name - Desktop only */}
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <SessionStatusBadge
-                                sessionId={session.id}
-                                currentStatus={session.status as any}
-                                editable={true}
-                                onStatusChange={handleStatusChange}
-                                className="text-sm"
-                              />
-                              
-                              {session.projects?.project_types && (
-                                <Badge variant="outline" className="text-xs">
-                                  {session.projects.project_types.name.toUpperCase()}
-                                </Badge>
-                              )}
-                            </div>
-                          </div>
-                          
-                          {/* Mobile: Name only */}
-                          <div className="md:hidden">
-                            <SheetTitle className="text-xl sm:text-2xl font-bold leading-tight break-words text-left">
-                              {getSessionName()}
-                            </SheetTitle>
-                          </div>
-                        </div>
-                        
-                        {/* Mobile Layout: Badges then Session Details */}
-                        <div className="md:hidden space-y-4 mt-6">
-                          {/* Stage and Type badges for mobile */}
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <SessionStatusBadge
-                              sessionId={session.id}
-                              currentStatus={session.status as any}
-                              editable={true}
-                              onStatusChange={handleStatusChange}
-                              className="text-sm"
-                            />
-                            
-                            {session.projects?.project_types && (
-                              <Badge variant="outline" className="text-xs">
-                                {session.projects.project_types.name.toUpperCase()}
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-1 shrink-0 self-start">
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      onClick={onViewFullDetails}
-                      className="text-muted-foreground hover:bg-accent hover:text-accent-foreground h-8 px-2 gap-1 md:h-10 md:px-3"
-                    >
-                      <ExternalLink className="h-4 w-4" />
-                      <span className="text-sm hidden md:inline">Full Details</span>
-                    </Button>
-                    
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="text-muted-foreground hover:bg-accent hover:text-accent-foreground h-8 px-2 gap-1 md:h-10 md:px-3"
-                        >
-                          <span className="text-sm hidden md:inline">More</span>
-                          <ChevronDown className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" side="bottom" className="z-50 bg-background">
-                        <DropdownMenuItem role="menuitem" onSelect={handleEdit}>
-                          <Edit className="mr-2 h-4 w-4" />
-                          <span>Edit Session</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem 
-                          role="menuitem" 
-                          onSelect={() => setIsDeleteDialogOpen(true)}
-                          className="text-destructive focus:text-destructive"
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          <span>Delete Session</span>
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                    
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      onClick={() => onOpenChange(false)} 
-                      className="text-muted-foreground hover:bg-accent hover:text-accent-foreground text-sm h-8 px-2 md:h-10 md:px-3"
-                    >
-                      <span className="hidden md:inline">Close</span>
-                      <X className="h-4 w-4 md:hidden" />
-                    </Button>
-                  </div>
-                </div>
-              </SheetHeader>
-
-              {/* Overdue Warning Bar */}
-              {session && isOverdueSession(session.session_date, session.status) && (
-                <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 mb-6">
-                  <div className="flex items-center gap-3 text-orange-800">
-                    <AlertTriangle className="h-5 w-5 text-orange-600" />
-                    <div>
-                      <p className="font-medium">This session is overdue</p>
-                      <p className="text-sm text-orange-700">Please update the session status or reschedule if needed.</p>
-                    </div>
-                  </div>
-                </div>
+          </div>
+        ) : session ? (
+          <>
+            {/* Badges section */}
+            <div className="flex items-center gap-2 flex-wrap mb-4">
+              <SessionStatusBadge
+                sessionId={session.id}
+                currentStatus={session.status as any}
+                editable={true}
+                onStatusChange={handleStatusChange}
+                className="text-sm"
+              />
+              
+              {session.projects?.project_types && (
+                <Badge variant="outline" className="text-xs">
+                  {session.projects.project_types.name.toUpperCase()}
+                </Badge>
               )}
+            </div>
 
-              {/* Session Summary Details - Above Grid */}
-              <div className="mb-6 bg-muted/30 rounded-lg p-4">
-                <div className="flex flex-col sm:flex-row sm:items-start gap-4 sm:gap-6 text-sm">
-                  <div className="flex-shrink-0">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
-                      <label className="font-medium text-muted-foreground">Date & Time</label>
-                    </div>
-                    <p>{formatLongDate(session.session_date)} at {formatTime(session.session_time)}</p>
+            {/* Overdue Warning Bar */}
+            {session && isOverdueSession(session.session_date, session.status) && (
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 mb-6">
+                <div className="flex items-center gap-3 text-orange-800">
+                  <AlertTriangle className="h-5 w-5 text-orange-600" />
+                  <div>
+                    <p className="font-medium">This session is overdue</p>
+                    <p className="text-sm text-orange-700">Please update the session status or reschedule if needed.</p>
                   </div>
-
-                  {session.projects && (
-                    <>
-                      <div className="hidden sm:block w-px h-12 bg-border"></div>
-                      <div className="flex-shrink-0">
-                        <div className="flex items-center gap-2 mb-2">
-                          <FolderOpen className="h-4 w-4 text-muted-foreground" />
-                          <label className="font-medium text-muted-foreground">Project</label>
-                        </div>
-                        <button
-                          onClick={handleProjectClick}
-                          className="text-primary hover:underline"
-                        >
-                          {session.projects.name}
-                        </button>
-                      </div>
-                    </>
-                  )}
-
-                  {(session.notes || session.location) && (
-                    <>
-                      <div className="hidden sm:block w-px h-12 bg-border"></div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex flex-col sm:flex-row sm:items-start gap-4 sm:gap-6">
-                          {session.notes && (
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-2">
-                                <FileText className="h-4 w-4 text-muted-foreground" />
-                                <label className="font-medium text-muted-foreground">Notes</label>
-                              </div>
-                              <div className="relative group">
-                                <p className="line-clamp-2 cursor-help">{session.notes}</p>
-                                <div className="absolute left-0 top-full mt-1 hidden group-hover:block z-50 bg-popover border border-border rounded-md shadow-md p-3 max-w-md whitespace-pre-wrap text-sm">
-                                  {session.notes}
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                          
-                          {session.notes && session.location && (
-                            <div className="hidden sm:block w-px h-12 bg-border"></div>
-                          )}
-                          
-                          {session.location && (
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-2">
-                                <svg className="h-4 w-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                </svg>
-                                <label className="font-medium text-muted-foreground">Location</label>
-                              </div>
-                              <div className="relative group">
-                                <p className="line-clamp-2 cursor-help">{session.location}</p>
-                                <div className="absolute left-0 top-full mt-1 hidden group-hover:block z-50 bg-popover border border-border rounded-md shadow-md p-3 max-w-md whitespace-pre-wrap text-sm">
-                                  {session.location}
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </>
-                  )}
                 </div>
               </div>
+            )}
 
-              {/* Main Content Grid */}
-              <div className="grid grid-cols-12 gap-4 md:gap-6 w-full max-w-full overflow-hidden">
-                {/* Left summary column */}
-                <aside className="col-span-12 lg:col-span-4 min-w-0">
-                  <div className="h-fit space-y-4 w-full max-w-full">
-                    {session.leads && (
-                      <UnifiedClientDetails
-                        lead={{
-                          id: session.leads.id,
-                          name: session.leads.name,
-                          email: session.leads.email,
-                          phone: session.leads.phone,
-                          notes: session.leads.notes,
-                        }}
-                        title="Client Details"
-                        showQuickActions={true}
-                        showClickableNames={true}
-                      />
-                    )}
+            {/* Session Summary Details - Above Grid */}
+            <div className="mb-6 bg-muted/30 rounded-lg p-4">
+              <div className="flex flex-col sm:flex-row sm:items-start gap-4 sm:gap-6 text-sm">
+                <div className="flex-shrink-0">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                    <label className="font-medium text-muted-foreground">Date & Time</label>
                   </div>
-                </aside>
+                  <p>{formatLongDate(session.session_date)} at {formatTime(session.session_time)}</p>
+                </div>
 
-                {/* Right detail column */}
-                <main className="col-span-12 lg:col-span-8 min-w-0">
-                  <div className="space-y-6 md:space-y-8 w-full max-w-full">
-                    <section className="scroll-mt-[88px] w-full max-w-full overflow-hidden">
-                      <div className="w-full max-w-full">
-                        <SessionGallery sessionId={session.id} />
+                {session.projects && (
+                  <>
+                    <div className="hidden sm:block w-px h-12 bg-border"></div>
+                    <div className="flex-shrink-0">
+                      <div className="flex items-center gap-2 mb-2">
+                        <FolderOpen className="h-4 w-4 text-muted-foreground" />
+                        <label className="font-medium text-muted-foreground">Project</label>
                       </div>
-                    </section>
-                  </div>
-                </main>
+                      <button
+                        onClick={handleProjectClick}
+                        className="text-primary hover:underline"
+                      >
+                        {session.projects.name}
+                      </button>
+                    </div>
+                  </>
+                )}
+
+                {(session.notes || session.location) && (
+                  <>
+                    <div className="hidden sm:block w-px h-12 bg-border"></div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-col sm:flex-row sm:items-start gap-4 sm:gap-6">
+                        {session.notes && (
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-2">
+                              <FileText className="h-4 w-4 text-muted-foreground" />
+                              <label className="font-medium text-muted-foreground">Notes</label>
+                            </div>
+                            <div className="relative group">
+                              <p className="line-clamp-2 cursor-help">{session.notes}</p>
+                              <div className="absolute left-0 top-full mt-1 hidden group-hover:block z-50 bg-popover border border-border rounded-md shadow-md p-3 max-w-md whitespace-pre-wrap text-sm">
+                                {session.notes}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {session.notes && session.location && (
+                          <div className="hidden sm:block w-px h-12 bg-border"></div>
+                        )}
+                        
+                        {session.location && (
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-2">
+                              <svg className="h-4 w-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                              </svg>
+                              <label className="font-medium text-muted-foreground">Location</label>
+                            </div>
+                            <div className="relative group">
+                              <p className="line-clamp-2 cursor-help">{session.location}</p>
+                              <div className="absolute left-0 top-full mt-1 hidden group-hover:block z-50 bg-popover border border-border rounded-md shadow-md p-3 max-w-md whitespace-pre-wrap text-sm">
+                                {session.location}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
-            </>
-          ) : (
-            <div className="p-6 text-center">
-              <h3 className="text-lg font-semibold mb-2">Session not found</h3>
-              <p className="text-muted-foreground">Unable to load session details.</p>
             </div>
-          )}
-        </SheetContent>
-      </Sheet>
+
+            {/* Main Content Grid */}
+            <div className="grid grid-cols-12 gap-4 md:gap-6 w-full max-w-full overflow-hidden">
+              {/* Left summary column */}
+              <aside className="col-span-12 lg:col-span-4 min-w-0">
+                <div className="h-fit space-y-4 w-full max-w-full">
+                  {session.leads && (
+                    <UnifiedClientDetails
+                      lead={{
+                        id: session.leads.id,
+                        name: session.leads.name,
+                        email: session.leads.email,
+                        phone: session.leads.phone,
+                        notes: session.leads.notes,
+                      }}
+                      title="Client Details"
+                      showQuickActions={true}
+                      showClickableNames={true}
+                    />
+                  )}
+                </div>
+              </aside>
+
+              {/* Right detail column */}
+              <main className="col-span-12 lg:col-span-8 min-w-0">
+                <div className="space-y-6 md:space-y-8 w-full max-w-full">
+                  <SessionGallery sessionId={session.id} />
+                </div>
+              </main>
+            </div>
+          </>
+        ) : (
+          <div className="flex items-center justify-center p-6">
+            <p className="text-muted-foreground">Session not found</p>
+          </div>
+        )}
+      </AppSheetModal>
 
       {/* Edit Dialog */}
       {session && isEditDialogOpen && (
@@ -462,13 +379,13 @@ export default function SessionSheetView({
           currentTime={session.session_time}
           currentNotes={session.notes || ''}
           currentLocation={session.location || ''}
-          currentProjectId={session.project_id}
-          leadName={session.leads?.name || ''}
+          currentProjectId={session.project_id || undefined}
+          currentSessionName={getSessionName()}
           onSessionUpdated={handleSessionUpdated}
         />
       )}
 
-      {/* Delete Confirmation Dialog */}
+      {/* Delete Dialog */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -479,10 +396,7 @@ export default function SessionSheetView({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>

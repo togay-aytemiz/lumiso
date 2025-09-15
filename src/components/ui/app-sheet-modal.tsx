@@ -71,7 +71,7 @@ export function AppSheetModal({
       <SheetContent 
         side={sideVariant} 
         className={cn(sheetContentClass, "[&>button]:hidden")}
-        onPointerDownOutside={e => {
+        onPointerDownOutside={(e) => {
           try {
             // Prevent immediate closure on mobile touch events
             const target = e.target as HTMLElement;
@@ -84,7 +84,7 @@ export function AppSheetModal({
             console.error('Mobile pointer interaction error:', err);
           }
         }} 
-        onInteractOutside={e => {
+        onInteractOutside={(e) => {
           try {
             // Allow interactions with popover content
             const target = e.target as HTMLElement;

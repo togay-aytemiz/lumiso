@@ -152,22 +152,22 @@ export function UnifiedClientDetails({
 
     switch (fieldType) {
       case 'email':
-        return <InlineEmailEditor {...commonProps} />;
+        return <InlineEmailEditor {...commonProps} showButtons={true} />;
       case 'phone':
-        return <InlinePhoneEditor {...commonProps} />;
+        return <InlinePhoneEditor {...commonProps} showButtons={true} />;
       case 'textarea':
       case 'notes':
-        return <InlineTextareaEditor {...commonProps} maxLength={field.fieldDefinition?.validation_rules?.maxLength || 1000} />;
+        return <InlineTextareaEditor {...commonProps} maxLength={field.fieldDefinition?.validation_rules?.maxLength || 1000} showButtons={true} />;
       case 'select':
-        return <InlineSelectEditor {...commonProps} options={options} />;
+        return <InlineSelectEditor {...commonProps} options={options} showButtons={true} />;
       case 'number':
-        return <InlineNumberEditor {...commonProps} min={field.fieldDefinition?.validation_rules?.min} max={field.fieldDefinition?.validation_rules?.max} />;
+        return <InlineNumberEditor {...commonProps} min={field.fieldDefinition?.validation_rules?.min} max={field.fieldDefinition?.validation_rules?.max} showButtons={true} />;
       case 'date':
-        return <InlineDateEditor {...commonProps} />;
+        return <InlineDateEditor {...commonProps} showButtons={true} />;
       case 'checkbox':
-        return <InlineCheckboxEditor {...commonProps} />;
+        return <InlineCheckboxEditor {...commonProps} showButtons={true} />;
       default:
-        return <InlineTextEditor {...commonProps} maxLength={field.fieldDefinition?.validation_rules?.maxLength || 255} />;
+        return <InlineTextEditor {...commonProps} maxLength={field.fieldDefinition?.validation_rules?.maxLength || 255} showButtons={true} />;
     }
   };
 

@@ -68,13 +68,16 @@ export function FieldTextDisplay({
       </TooltipProvider>
       
       {allowTruncation && (isTruncatable || isExpanded) && (
-        <button
-          type="button"
-          className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-4 transition-colors"
-          onClick={() => setIsExpanded(prev => !prev)}
-        >
-          {isExpanded ? "Show less" : "Show more"}
-        </button>
+              <button
+                type="button"
+                className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-4 transition-colors"
+                onClick={(e) => { 
+                  e.stopPropagation(); 
+                  setIsExpanded(prev => !prev);
+                }}
+              >
+                {isExpanded ? "Show less" : "Show more"}
+              </button>
       )}
     </div>
   );

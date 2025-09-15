@@ -52,7 +52,10 @@ export function FieldTextareaDisplay({
         <button
           type="button"
           className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-4 transition-colors inline"
-          onClick={() => setIsExpanded(prev => !prev)}
+          onClick={(e) => { 
+            e.stopPropagation(); 
+            setIsExpanded(prev => !prev);
+          }}
         >
           {isExpanded ? "Show less" : "Show more"}
         </button>

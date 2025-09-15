@@ -94,7 +94,11 @@ export function InlineEditField({
       ) : (
         <>
           <div 
-            className={cn("w-full", clickToEdit && !disabled && "cursor-pointer")}
+            className={cn(
+              "w-full", 
+              clickToEdit && !disabled && "cursor-pointer",
+              isHovered && !disabled && "bg-muted/30 rounded px-2 py-1 -mx-2 -my-1"
+            )}
             onClick={clickToEdit && !disabled ? onStartEdit : undefined}
           >
             {children}

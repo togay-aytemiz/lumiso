@@ -1799,6 +1799,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: number
       }
+      cleanup_old_onboarding_columns_v3: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       cleanup_old_session_reminders: {
         Args: Record<PropertyKey, never>
         Returns: number
@@ -1892,6 +1896,16 @@ export type Database = {
       get_lead_lifecycle: {
         Args: { status_id: string }
         Returns: string
+      }
+      get_onboarding_performance_stats: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          avg_steps_completed: number
+          completed_onboarding: number
+          in_progress: number
+          not_started: number
+          total_users: number
+        }[]
       }
       get_project_lifecycle: {
         Args: { status_id: string }

@@ -39,14 +39,9 @@ export function AppSheetModal({
   const isMobile = useIsMobile();
 
   const handleOpenChange = (open: boolean) => {
-    if (!open) {
-      // Prevent closing when not dismissible
-      if (!dismissible) return;
-      // Guard dirty state
-      if (dirty && onDirtyClose) {
-        onDirtyClose();
-        return;
-      }
+    if (!open && dirty && onDirtyClose) {
+      onDirtyClose();
+      return;
     }
     onOpenChange(open);
   };

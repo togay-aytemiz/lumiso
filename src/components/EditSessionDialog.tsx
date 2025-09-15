@@ -136,6 +136,13 @@ const EditSessionDialog = ({
     },
   });
 
+  // Ensure guard is closed when modal is programmatically closed
+  useEffect(() => {
+    if (!open) {
+      navigation.handleStayOnModal();
+    }
+  }, [open]);
+
   const handleDirtyClose = () => {
     const canClose = navigation.handleModalClose();
     if (canClose) {

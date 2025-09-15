@@ -116,38 +116,36 @@ export function AppSheetModal({
           </div>
         </SheetHeader>
 
-        <div className="flex-1 overflow-y-auto" style={{ 
+        <div className="flex-1 overflow-y-auto pb-6 my-0 py-0 px-[4px]" style={{ 
           WebkitOverflowScrolling: 'touch',
           touchAction: 'manipulation'
         }}>
-          <div className="space-y-4 p-4 pb-20 [&_input]:border [&_input]:border-border [&_input]:bg-muted/50 [&_textarea]:border [&_textarea]:border-border [&_textarea]:bg-muted/50 [&_[role=combobox]]:border [&_[role=combobox]]:border-border [&_[role=combobox]]:bg-muted/50">
+          <div className="space-y-4 [&_input]:border [&_input]:border-border [&_input]:bg-muted/50 [&_textarea]:border [&_textarea]:border-border [&_textarea]:bg-muted/50 [&_[role=combobox]]:border [&_[role=combobox]]:border-border [&_[role=combobox]]:bg-muted/50">
             {children}
           </div>
         </div>
 
         {footerActions.length > 0 && (
-          <div className="sticky bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t border-border p-4 z-20">
-            <div className="flex items-center justify-end gap-3 max-w-7xl mx-auto">
-              {footerActions.map((action, index) => (
-                <Button
-                  key={index}
-                  variant={action.variant || (index === footerActions.length - 1 ? 'default' : 'outline')}
-                  onClick={action.onClick}
-                  disabled={action.disabled || action.loading}
-                  className={cn("flex-1 min-w-[100px]", action.loading && "cursor-not-allowed")}
-                >
-                  {action.loading ? (
-                    <div className="flex items-center gap-2">
-                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                      {action.label}
-                    </div>
-                  ) : (
-                    action.label
-                  )}
-                </Button>
-              ))}
-            </div>
-          </div>
+          <SheetFooter className="border-t pt-4 gap-2 px-1 sticky bottom-0 bg-background z-10">
+            {footerActions.map((action, index) => (
+              <Button
+                key={index}
+                variant={action.variant || (index === footerActions.length - 1 ? 'default' : 'outline')}
+                onClick={action.onClick}
+                disabled={action.disabled || action.loading}
+                className={cn("flex-1", action.loading && "cursor-not-allowed")}
+              >
+                {action.loading ? (
+                  <div className="flex items-center gap-2">
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                    {action.label}
+                  </div>
+                ) : (
+                  action.label
+                )}
+              </Button>
+            ))}
+          </SheetFooter>
         )}
       </SheetContent>
     </Sheet>

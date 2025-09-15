@@ -87,7 +87,7 @@ export default function Services() {
   // Auto-start packages tutorial when we're on step 6 (currentStep = 6)
   useEffect(() => {
     if (currentStep === 6 && !showTutorial) {
-      console.log('🎯 Auto-starting packages tutorial for step 6');
+      // Auto-starting packages tutorial for final step
       setShowTutorial(true);
       setCurrentTutorialStep(0);
     }
@@ -102,7 +102,7 @@ export default function Services() {
       // Complete step 6 and mark guidance as complete
       await completeCurrentStep();
       
-      console.log('✅ Step 6 completed, navigating to getting-started');
+      // Final tutorial step completed
       
       // Small delay to ensure database update, then navigate
       setTimeout(() => {

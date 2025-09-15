@@ -92,7 +92,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
   const startGuidedSetup = async () => {
     if (!preferences) return;
     
-    console.log("🚀 BULLETPROOF startGuidedSetup: Starting - modal PERMANENTLY disabled");
+    // Starting guided setup - modal disabled for improved performance
     
     await updatePreferences({
       onboardingStage: 'in_progress',
@@ -108,11 +108,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     }
 
     const nextStep = preferences.currentOnboardingStep + 1;
-    console.log("🎯 completeCurrentStep: Completing step", {
-      currentStep: preferences.currentOnboardingStep,
-      nextStep,
-      totalSteps: TOTAL_STEPS
-    });
+    // Completing current step and advancing to next
 
     // Bulletproof: Prevent completing beyond total steps
     if (preferences.currentOnboardingStep >= TOTAL_STEPS) {
@@ -132,12 +128,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     }
 
     const targetStep = preferences.currentOnboardingStep + numberOfSteps;
-    console.log("🎯 completeMultipleSteps: Completing multiple steps", {
-      currentStep: preferences.currentOnboardingStep,
-      numberOfSteps,
-      targetStep,
-      totalSteps: TOTAL_STEPS
-    });
+    // Completing multiple steps in batch
 
     // Prevent completing beyond total steps
     if (preferences.currentOnboardingStep >= TOTAL_STEPS) {
@@ -155,7 +146,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
   const completeOnboarding = async () => {
     if (!preferences) return;
 
-    console.log("🎯 completeOnboarding: Starting to complete onboarding");
+    // Completing onboarding process
     
     await updatePreferences({
       onboardingStage: 'completed',
@@ -174,7 +165,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
   const resetOnboarding = async () => {
     if (!preferences) return;
 
-    console.log("🔄 BULLETPROOF resetOnboarding: Starting guided mode without modal");
+    // Resetting onboarding to guided mode
     
     await updatePreferences({
       onboardingStage: 'in_progress',

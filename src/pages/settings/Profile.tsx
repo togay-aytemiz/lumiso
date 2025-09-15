@@ -237,7 +237,7 @@ export default function Profile() {
   ];
 
   const handleTutorialComplete = async () => {
-    console.log('✅ Profile tutorial complete - moving to General tutorial');
+    // Profile tutorial completed, moving to general settings
     // Navigate to General tutorial instead of completing step
     setShowTutorial(false);
     navigate('/settings/general?tutorial=true');

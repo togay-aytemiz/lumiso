@@ -44,7 +44,7 @@ export function ProjectStatusBadge({
   const { activeOrganization } = useOrganization();
   const { triggerProjectStatusChange } = useWorkflowTriggers();
 
-  console.log('ProjectStatusBadge rendered:', { projectId, currentStatusId, editable });
+  // Status badge rendered for project
 
   useEffect(() => {
     if (passedStatuses) {
@@ -230,7 +230,7 @@ export function ProjectStatusBadge({
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            console.log('Status badge clicked (no current status), opening dropdown');
+            // Opening status dropdown for first-time selection
             setDropdownOpen(!dropdownOpen);
           }}
         >
@@ -256,7 +256,7 @@ export function ProjectStatusBadge({
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      console.log('Setting status for first time to:', status.name);
+                      // Setting initial project status
                       handleStatusChange(status.id);
                     }}
                     disabled={isUpdating}
@@ -326,7 +326,7 @@ export function ProjectStatusBadge({
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
-          console.log('Status badge clicked, current status:', currentStatus.name, 'dropdown open:', dropdownOpen);
+          // Status badge clicked with existing status
           setDropdownOpen(!dropdownOpen);
         }}
       >
@@ -355,7 +355,7 @@ export function ProjectStatusBadge({
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    console.log('Status option clicked:', status.name);
+                    // Status selection made
                     handleStatusChange(status.id);
                   }}
                   disabled={isUpdating}

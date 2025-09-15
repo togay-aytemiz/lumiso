@@ -131,7 +131,7 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
     setShowViewDialog(true);
     // Call tutorial callback immediately when project is clicked
     if (onProjectClicked) {
-      console.log('🚀 Project clicked, triggering tutorial callback');
+      // Project clicked, handling tutorial interaction
       onProjectClicked();
     }
   };

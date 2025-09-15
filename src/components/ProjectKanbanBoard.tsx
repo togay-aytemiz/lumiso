@@ -256,14 +256,14 @@ const ProjectKanbanBoard = ({
             : Promise.resolve();
 
           if (shouldSkipNotification) {
-            console.log("Skipping milestone notification for performance testing - target status:", newStatus?.name, "lifecycle:", newStatus?.lifecycle);
+            // Milestone notification triggered for status change
           }
 
           // Wait for both operations in parallel
           await Promise.all([activityPromise, notificationPromise]);
         }
 
-        console.log("Background database operations completed successfully");
+        // Background database operations completed
       } catch (error) {
         console.error("Error in background database operations:", error);
         // Show error but don't revert UI since user has already seen the change

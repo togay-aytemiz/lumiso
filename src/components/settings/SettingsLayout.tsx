@@ -42,21 +42,13 @@ export default function SettingsLayout() {
   const { shouldLockNavigation } = useOnboarding();
   
   const isItemLocked = (itemHref: string) => {
-    console.log('🔍 Settings item lock check:', {
-      itemHref,
-      shouldLockNavigation
-    });
-
-    // Simple rule: During guided setup, only allow general settings
+    // Settings navigation lock check for guided setup
     if (shouldLockNavigation) {
-      // Allow general settings during guided setup
       const isUnlocked = itemHref === '/settings';
-      console.log(`🔒 Guided setup: ${itemHref} - ${isUnlocked ? 'UNLOCKED' : 'LOCKED'}`);
       return !isUnlocked;
     }
     
     // Not in guided setup - everything is unlocked
-    console.log(`📊 Normal mode: ${itemHref} - UNLOCKED`);
     return false;
   };
 

@@ -275,11 +275,11 @@ export function ProjectServicesSection({
           </div> : <div>
             {services.length > 0 ? <div className="flex flex-wrap gap-2">
                 {services.map(service => {
-              console.log('Service data:', service); // Debug log
+              // Service data rendered
               const costPrice = service.cost_price ?? 0;
               const sellingPrice = service.selling_price ?? service.price ?? 0;
               const hasPrices = costPrice > 0 || sellingPrice > 0;
-              console.log('Prices:', { costPrice, sellingPrice, hasPrices }); // Debug log
+              // Price information processed
               return <Badge 
                       key={service.id} 
                       variant="secondary" 

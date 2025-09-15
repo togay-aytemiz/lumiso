@@ -162,10 +162,10 @@ export default function General() {
 
   // Remove the old hardcoded tutorial steps - using dynamic ones above
   const handleTutorialComplete = async () => {
-    console.log('✅ General tutorial complete');
+    // Settings tutorial completed successfully
     try {
       await completeCurrentStep();
-      console.log('✅ Step completed, navigating to getting started');
+      // Navigating to next tutorial step
       setShowTutorial(false);
       navigate('/getting-started');
     } catch (error) {

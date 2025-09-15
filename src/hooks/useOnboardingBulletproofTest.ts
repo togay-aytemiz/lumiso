@@ -4,8 +4,8 @@
 import { ONBOARDING_STEPS, TOTAL_STEPS } from "@/constants/onboarding";
 
 export const runOnboardingBulletproofTestV3 = () => {
-  console.log('🔍 V3 ONBOARDING SYSTEM BULLETPROOF TEST');
-  console.log('==========================================');
+  // Development-only test suite for onboarding system
+  if (process.env.NODE_ENV !== 'development') return;
   
   // Test 1: Verify step definitions
   console.log(`✅ Step Count: ${TOTAL_STEPS} steps defined`);

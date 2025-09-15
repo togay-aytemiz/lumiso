@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, ExternalLink, MoreVertical, Edit, Trash2, ChevronDown, X, AlertTriangle, Calendar, FolderOpen, FileText } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Edit, X, AlertTriangle, Calendar, FolderOpen, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -12,12 +12,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -269,32 +263,15 @@ export default function SessionSheetView({
                       <span className="text-sm hidden md:inline">Full Details</span>
                     </Button>
                     
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="text-muted-foreground hover:bg-accent hover:text-accent-foreground h-8 px-2 gap-1 md:h-10 md:px-3"
-                        >
-                          <span className="text-sm hidden md:inline">More</span>
-                          <ChevronDown className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" side="bottom" className="z-50 bg-background">
-                        <DropdownMenuItem role="menuitem" onSelect={handleEdit}>
-                          <Edit className="mr-2 h-4 w-4" />
-                          <span>Edit Session</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem 
-                          role="menuitem" 
-                          onSelect={() => setIsDeleteDialogOpen(true)}
-                          className="text-destructive focus:text-destructive"
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          <span>Delete Session</span>
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={handleEdit}
+                      className="text-muted-foreground hover:bg-accent hover:text-accent-foreground h-8 px-2 gap-1 md:h-10 md:px-3"
+                    >
+                      <Edit className="h-4 w-4" />
+                      <span className="text-sm hidden md:inline">Edit</span>
+                    </Button>
                     
                     <Button 
                       variant="ghost" 
@@ -427,6 +404,26 @@ export default function SessionSheetView({
                     <section className="scroll-mt-[88px] w-full max-w-full overflow-hidden">
                       <div className="w-full max-w-full">
                         <SessionGallery sessionId={session.id} />
+                      </div>
+                    </section>
+
+                    {/* Danger Zone */}
+                    <section className="scroll-mt-[88px] w-full max-w-full overflow-hidden">
+                      <div className="border border-destructive/20 bg-destructive/5 rounded-lg p-6">
+                        <div className="space-y-4">
+                          <h3 className="font-medium text-destructive">Danger Zone</h3>
+                          <Button 
+                            variant="outline" 
+                            onClick={() => setIsDeleteDialogOpen(true)}
+                            className="w-full border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                            size="lg"
+                          >
+                            Delete Session
+                          </Button>
+                          <p className="text-sm text-muted-foreground text-center">
+                            This will permanently delete the session and all related data.
+                          </p>
+                        </div>
                       </div>
                     </section>
                   </div>

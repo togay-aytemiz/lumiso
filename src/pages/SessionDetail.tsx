@@ -2,16 +2,10 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, MoreVertical, Edit, Trash2, ExternalLink, ChevronDown, Calendar, User, FolderOpen, FileText, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Edit, ExternalLink, Calendar, User, FolderOpen, FileText, AlertTriangle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -270,32 +264,15 @@ export default function SessionDetail() {
           </div>
           
           <div className="flex items-center gap-1 shrink-0 self-start">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button 
-                        variant="outline" 
-                        size="lg"
-                        className="gap-2"
-                      >
-                        <span>More Actions</span>
-                        <ChevronDown className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" side="bottom" className="z-50 bg-background">
-                <DropdownMenuItem role="menuitem" onSelect={handleEdit}>
-                  <Edit className="mr-2 h-4 w-4" />
-                  <span>Edit Session</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  role="menuitem" 
-                  onSelect={() => setIsDeleteDialogOpen(true)}
-                  className="text-destructive focus:text-destructive"
-                >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  <span>Delete Session</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Button 
+              variant="outline" 
+              size="lg"
+              onClick={handleEdit}
+              className="gap-2"
+            >
+              <Edit className="h-4 w-4" />
+              <span>Edit Session</span>
+            </Button>
           </div>
         </div>
       </div>
@@ -396,6 +373,25 @@ export default function SessionDetail() {
       content: <SessionGallery sessionId={session.id} />
     }
   ];
+
+  const dangerZone = (
+    <div className="border border-destructive/20 bg-destructive/5 rounded-lg p-6">
+      <div className="space-y-4">
+        <h3 className="font-medium text-destructive">Danger Zone</h3>
+        <Button 
+          variant="outline" 
+          onClick={() => setIsDeleteDialogOpen(true)}
+          className="w-full border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+          size="lg"
+        >
+          Delete Session
+        </Button>
+        <p className="text-sm text-muted-foreground text-center">
+          This will permanently delete the session and all related data.
+        </p>
+      </div>
+    </div>
+  );
 
   const isOverdue = isOverdueSession(session.session_date, session.status);
 
@@ -498,6 +494,7 @@ export default function SessionDetail() {
           header={<></>}
           left={leftContent}
           sections={sections}
+          rightFooter={dangerZone}
         />
       </div>
 

@@ -1,13 +1,19 @@
 import { ReactNode } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { LongPressButton } from "@/components/ui/long-press-button";
 
 export interface OnboardingAction {
   label: string;
-  onClick: () => void;
+  onClick: () => void; // used as onConfirm when longPress is provided
   variant?: "default" | "outline" | "secondary" | "destructive" | "ghost" | "link" | "cta" | "dangerOutline";
   disabled?: boolean;
   icon?: ReactNode;
+  longPress?: {
+    duration?: number;
+    holdingLabel?: string;
+    completeLabel?: string;
+  };
 }
 
 interface BaseOnboardingModalProps {
@@ -28,12 +34,12 @@ export function BaseOnboardingModal({
   actions 
 }: BaseOnboardingModalProps) {
   return (
-    <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
+    <Dialog open={open} onOpenChange={() => { /* ignore external close */ }}>
       <DialogContent 
         className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto md:max-h-none md:h-auto h-full md:rounded-lg rounded-none" 
         hideClose 
-        onEscapeKeyDown={(e) => { e.preventDefault(); onClose(); }} 
-        onPointerDownOutside={(e) => { e.preventDefault(); onClose(); }}
+        onEscapeKeyDown={(e) => { e.preventDefault(); }} 
+        onPointerDownOutside={(e) => { e.preventDefault(); }}
       >
         <DialogHeader className="text-center space-y-4">
           <DialogTitle className="text-2xl font-bold text-primary">
@@ -52,16 +58,30 @@ export function BaseOnboardingModal({
 
         <div className="flex flex-col gap-3 pt-6 pb-8">
           {actions.map((action, index) => (
-            <Button
-              key={index}
-              onClick={action.onClick}
-              variant={action.variant || (index === actions.length - 1 ? "default" : "outline")}
-              disabled={action.disabled}
-              className="w-full h-11"
-            >
-              {action.icon && <span className="mr-2">{action.icon}</span>}
-              {action.label}
-            </Button>
+            action.longPress ? (
+              <LongPressButton
+                key={index}
+                onConfirm={action.onClick}
+                label={action.label}
+                duration={action.longPress.duration}
+                holdingLabel={action.longPress.holdingLabel}
+                completeLabel={action.longPress.completeLabel}
+                variant={action.variant || (index === actions.length - 1 ? "default" : "outline")}
+                disabled={action.disabled}
+                className="w-full h-11"
+              />
+            ) : (
+              <Button
+                key={index}
+                onClick={action.onClick}
+                variant={action.variant || (index === actions.length - 1 ? "default" : "outline")}
+                disabled={action.disabled}
+                className="w-full h-11"
+              >
+                {action.icon && <span className="mr-2">{action.icon}</span>}
+                {action.label}
+              </Button>
+            )
           ))}
         </div>
       </DialogContent>

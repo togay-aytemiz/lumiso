@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { X } from "lucide-react";
+import { LongPressButton } from "@/components/ui/long-press-button";
 
 interface TutorialFloatingCardProps {
   stepNumber: number;
@@ -57,14 +57,6 @@ export function TutorialFloatingCard({
             <div className="text-xs text-muted-foreground font-medium">
               Step {stepNumber} of {totalSteps}
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6"
-              onClick={onExit}
-            >
-              <X className="h-4 w-4" />
-            </Button>
           </div>
           <CardTitle className="text-lg">{title}</CardTitle>
         </CardHeader>
@@ -81,9 +73,15 @@ export function TutorialFloatingCard({
           )}
           
           <div className="flex gap-2 pt-2">
-            <Button variant="outline" onClick={onExit} className="flex-1">
-              Exit Tutorial
-            </Button>
+            <LongPressButton
+              variant="outline"
+              onConfirm={onExit}
+              label="Exit Tutorial"
+              duration={3000}
+              holdingLabel="Hold to exit…"
+              completeLabel="Exiting…"
+              className="flex-1"
+            />
             
             {requiresAction && !canProceed ? (
               <TooltipProvider>

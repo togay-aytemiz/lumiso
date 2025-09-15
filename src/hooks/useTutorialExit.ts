@@ -1,6 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useOnboarding } from "@/contexts/OnboardingContext";
 import { usePortalReset } from "@/contexts/PortalResetContext";
 
 interface UseTutorialExitOptions {
@@ -9,54 +8,37 @@ interface UseTutorialExitOptions {
 }
 
 export function useTutorialExit({ currentStepTitle, onExitComplete }: UseTutorialExitOptions = {}) {
-  const [showExitGuard, setShowExitGuard] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { skipOnboarding } = useOnboarding();
   const { reset } = usePortalReset();
 
-  const handleExitRequest = () => {
-    if (isExiting) return;
-    setShowExitGuard(true);
-  };
-
-  const handleStay = () => {
-    setShowExitGuard(false);
-  };
-
-  const handleReturnToGettingStarted = () => {
+  const handleExitNow = useCallback(() => {
     if (isExiting) return;
     setIsExiting(true);
-    setShowExitGuard(false);
-    console.debug("[useTutorialExit] Exiting tutorial and returning to /getting-started");
+    console.debug("[useTutorialExit] Long-press confirmed, exiting tutorial");
     try {
       onExitComplete?.();
     } finally {
-      // Force remount of all Radix portals before navigating
       try { reset(); } catch {}
-      // Defer navigation to allow all portals to unmount cleanly
-      setTimeout(() => {
-        if (location.pathname !== "/getting-started") {
-          navigate("/getting-started", { replace: true });
-        }
-        // Release the lock on the next tick to avoid double-actions
-        setTimeout(() => setIsExiting(false), 0);
-      }, 0);
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          if (location.pathname !== "/getting-started") {
+            navigate("/getting-started", { replace: true });
+          }
+          setTimeout(() => setIsExiting(false), 0);
+        });
+      });
     }
-  };
+  }, [isExiting, onExitComplete, reset, location.pathname, navigate]);
 
-  // Cleanup on unmount to prevent stale state
   useEffect(() => {
-    return () => setShowExitGuard(false);
+    return () => setIsExiting(false);
   }, []);
 
   return {
-    showExitGuard,
     currentStepTitle,
     isExiting,
-    handleExitRequest,
-    handleStay,
-    handleReturnToGettingStarted
+    handleExitNow
   };
 }

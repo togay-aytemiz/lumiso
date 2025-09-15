@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { BaseOnboardingModal, OnboardingAction } from "./BaseOnboardingModal";
 import { TutorialFloatingCard } from "./TutorialFloatingCard";
-import { TutorialExitGuardDialog } from "./TutorialExitGuardDialog";
+import { useTutorialExit } from "@/hooks/useTutorialExit";
 import { useTutorialExit } from "@/hooks/useTutorialExit";
 
 export interface TutorialStep {
@@ -37,13 +37,7 @@ export function OnboardingTutorial({
   const currentStep = steps[currentStepIndex];
   const isLastStep = currentStepIndex === steps.length - 1;
 
-  const {
-    showExitGuard,
-    isExiting,
-    handleExitRequest,
-    handleStay,
-    handleReturnToGettingStarted
-  } = useTutorialExit({
+  const { isExiting, handleExitNow } = useTutorialExit({
     currentStepTitle: typeof currentStep?.title === 'string' ? currentStep.title : 'Current Step',
     onExitComplete: onExit
   });
@@ -72,7 +66,7 @@ export function OnboardingTutorial({
   };
 
   const handleExit = () => {
-    handleExitRequest();
+    handleExitNow();
   };
 
   if (!isVisible || !currentStep) {
@@ -112,17 +106,6 @@ export function OnboardingTutorial({
           onExit={handleExit}
           position={getFloatingPosition()}
         />
-        
-        <TutorialExitGuardDialog
-          open={showExitGuard}
-          currentStepTitle={typeof currentStep.title === 'string' ? currentStep.title : 'Current Step'}
-          onStay={handleStay}
-          onReturnToGettingStarted={handleReturnToGettingStarted}
-          onOpenChange={(open) => {
-            if (!open) handleStay();
-          }}
-          isProcessing={isExiting}
-        />
       </>
     );
   }
@@ -134,8 +117,9 @@ export function OnboardingTutorial({
   if (!isLastStep) {
     actions.push({
       label: "Exit Tutorial",
-      onClick: handleExit,
-      variant: "outline"
+      onClick: handleExitNow,
+      variant: "outline",
+      longPress: { duration: 3000, holdingLabel: "Hold to exit…", completeLabel: "Exiting…" }
     });
   }
   
@@ -149,7 +133,7 @@ export function OnboardingTutorial({
   return (
     <>
       <BaseOnboardingModal
-        open={isVisible && !showExitGuard && !isExiting}
+        open={isVisible && !isExiting}
         onClose={handleExit}
         title={`Step ${currentStepIndex + 1} of ${steps.length}: ${typeof currentStep.title === 'string' ? currentStep.title : 'Step'}`}
         description={currentStep.description}
@@ -161,17 +145,6 @@ export function OnboardingTutorial({
           </div>
         )}
       </BaseOnboardingModal>
-      
-      <TutorialExitGuardDialog
-        open={showExitGuard}
-        currentStepTitle={typeof currentStep.title === 'string' ? currentStep.title : 'Current Step'}
-        onStay={handleStay}
-        onReturnToGettingStarted={handleReturnToGettingStarted}
-        onOpenChange={(open) => {
-          if (!open) handleStay();
-        }}
-        isProcessing={isExiting}
-      />
     </>
   );
 }

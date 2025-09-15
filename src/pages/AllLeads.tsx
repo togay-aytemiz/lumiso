@@ -8,7 +8,7 @@ import { useNavigate } from "react-router-dom";
 import GlobalSearch from "@/components/GlobalSearch";
 import { PageHeader, PageHeaderSearch } from "@/components/ui/page-header";
 import { OnboardingTutorial, TutorialStep } from "@/components/shared/OnboardingTutorial";
-import { useOnboardingV2 } from "@/hooks/useOnboardingV2";
+import { useOnboarding } from "@/contexts/OnboardingContext";
 import { Calendar, MessageSquare, Users, FileText } from "lucide-react";
 import { DataTable } from "@/components/ui/data-table";
 import { useLeadsWithCustomFields } from "@/hooks/useLeadsWithCustomFields";
@@ -26,7 +26,7 @@ const AllLeadsNew = () => {
   const [currentTutorialStep, setCurrentTutorialStep] = useState(0);
   const [isSchedulingTutorial, setIsSchedulingTutorial] = useState(false);
   const navigate = useNavigate();
-  const { currentStep, completeCurrentStep } = useOnboardingV2();
+  const { currentStep, completeCurrentStep } = useOnboarding();
 
   // Use new hooks
   const { leads, loading: leadsLoading, refetch: refetchLeads } = useLeadsWithCustomFields();

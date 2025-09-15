@@ -8,7 +8,7 @@ import { ExitGuidanceModeButton } from "@/components/ExitGuidanceModeButton";
 import { GuidedStepProgress } from "@/components/GuidedStepProgress";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { useOnboardingV2 } from "@/hooks/useOnboardingV2";
+import { useOnboarding } from "@/contexts/OnboardingContext";
 
 // Remove duplicate step definitions - now using centralized ones from hook
 
@@ -28,7 +28,7 @@ const GettingStarted = () => {
     totalSteps,
     currentStep,
     completeOnboarding
-  } = useOnboardingV2();
+  } = useOnboarding();
 
   // If guided setup is complete, redirect to dashboard
   useEffect(() => {

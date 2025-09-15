@@ -14,7 +14,7 @@ import { ProjectTypeSelector } from "./ProjectTypeSelector";
 // Assignee components removed - single user organization
 import { ServicePicker } from "./ServicePicker";
 import { useProfile } from "@/contexts/ProfileContext";
-import { useOnboardingV2 } from "@/hooks/useOnboardingV2";
+import { useOnboarding } from "@/contexts/OnboardingContext";
 import { useNotificationTriggers } from "@/hooks/useNotificationTriggers";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
@@ -61,7 +61,7 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
   const [loadingLeads, setLoadingLeads] = useState(false);
   const [isNewLead, setIsNewLead] = useState(false);
   const { toast } = useToast();
-  const { currentStep, shouldLockNavigation, completeCurrentStep } = useOnboardingV2();
+  const { currentStep, shouldLockNavigation, completeCurrentStep } = useOnboarding();
   const { triggerProjectMilestone } = useNotificationTriggers();
   const { activeOrganization } = useOrganization();
 

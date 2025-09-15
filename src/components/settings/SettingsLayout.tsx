@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSettingsContext } from "@/contexts/SettingsContext";
-import { useOnboardingV2 } from "@/hooks/useOnboardingV2";
+import { useOnboarding } from "@/contexts/OnboardingContext";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 const personalSettingsItems = [
@@ -39,7 +39,7 @@ const organizationSettingsItems = [
 export default function SettingsLayout() {
   const location = useLocation();
   const { hasCategoryChanges } = useSettingsContext();
-  const { shouldLockNavigation } = useOnboardingV2();
+  const { shouldLockNavigation } = useOnboarding();
   
   const isItemLocked = (itemHref: string) => {
     console.log('🔍 Settings item lock check:', {

@@ -18,7 +18,7 @@ import { ProjectStatusBadge } from "@/components/ProjectStatusBadge";
 import { formatDate } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { OnboardingTutorial, TutorialStep } from "@/components/shared/OnboardingTutorial";
-import { useOnboardingV2 } from "@/hooks/useOnboardingV2";
+import { useOnboarding } from "@/contexts/OnboardingContext";
 import { Calendar, MessageSquare, CheckSquare } from "lucide-react";
 import { PageLoadingSkeleton } from "@/components/ui/loading-presets";
 import { KanbanSettingsSheet } from "@/components/KanbanSettingsSheet";
@@ -92,7 +92,7 @@ const AllProjects = () => {
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { completeCurrentStep } = useOnboardingV2();
+  const { completeCurrentStep } = useOnboarding();
   const isMobile = useIsMobile();
 
   // Tutorial state
@@ -140,7 +140,7 @@ const AllProjects = () => {
   }, [searchParams]);
 
   // Check if user is in guided mode but missing tutorial parameter
-  const { shouldLockNavigation, currentStepInfo } = useOnboardingV2();
+  const { shouldLockNavigation, currentStepInfo } = useOnboarding();
   useEffect(() => {
     if (shouldLockNavigation && currentStepInfo?.id === 4 && !showTutorial) {
       console.log('🔧 User in guided mode step 4 but no tutorial - redirecting with tutorial param');

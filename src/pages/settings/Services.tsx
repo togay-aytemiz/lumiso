@@ -6,7 +6,7 @@ import { settingsHelpContent } from "@/lib/settingsHelpContent";
 import PackagesSection from "@/components/PackagesSection";
 import ServicesSection from "@/components/ServicesSection";
 // Permissions removed for single photographer mode
-import { useOnboardingV2 } from "@/hooks/useOnboardingV2";
+import { useOnboarding } from "@/contexts/OnboardingContext";
 import { OnboardingTutorial, TutorialStep } from "@/components/shared/OnboardingTutorial";
 import { Package, DollarSign, Target } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -79,7 +79,7 @@ const packagesSetupSteps: TutorialStep[] = [
 export default function Services() {
   // Permissions removed for single photographer mode - always allow
   // const { hasPermission, loading } = usePermissions();
-  const { currentStep, completeCurrentStep } = useOnboardingV2();
+  const { currentStep, completeCurrentStep } = useOnboarding();
   const [showTutorial, setShowTutorial] = useState(false);
   const [currentTutorialStep, setCurrentTutorialStep] = useState(0);
   const navigate = useNavigate();

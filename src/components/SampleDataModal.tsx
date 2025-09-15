@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { CheckCircle, Users, FolderOpen, Calendar, Package } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useOnboardingV2 } from "@/hooks/useOnboardingV2";
+import { useOnboarding } from "@/contexts/OnboardingContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
@@ -40,7 +40,7 @@ export function SampleDataModal({ open, onClose, onCloseAll }: SampleDataModalPr
   const { user } = useAuth();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
-  const { startGuidedSetup, skipOnboarding } = useOnboardingV2();
+  const { startGuidedSetup, skipOnboarding } = useOnboarding();
 
   const handleSkipWithSampleData = async () => {
     if (!user) return;

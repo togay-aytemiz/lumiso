@@ -22,7 +22,7 @@ import { useSettingsCategorySection } from "@/hooks/useSettingsCategorySection";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { trimAndNormalizeSpaces, createTrimmedBlurHandler } from "@/lib/inputUtils";
 import { OnboardingTutorial, TutorialStep } from "@/components/shared/OnboardingTutorial";
-import { useOnboardingV2 } from "@/hooks/useOnboardingV2";
+import { useOnboarding } from "@/contexts/OnboardingContext";
 
 export default function Profile() {
   const [emailAddress, setEmailAddress] = useState("");
@@ -34,7 +34,7 @@ export default function Profile() {
   const { profile, loading: profileLoading, uploading, updateProfile, uploadProfilePhoto, deleteProfilePhoto } = useProfile();
   const { workingHours, loading: workingHoursLoading, updateWorkingHour } = useWorkingHours();
   const { activeOrganization } = useOrganization();
-  const { completeCurrentStep } = useOnboardingV2();
+  const { completeCurrentStep } = useOnboarding();
   const { toast } = useToast();
 
   // Check if we're in tutorial mode

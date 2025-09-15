@@ -1,11 +1,11 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { useOnboardingV2 } from "@/hooks/useOnboardingV2";
+import { useOnboarding } from "@/contexts/OnboardingContext";
 import Layout from "./Layout";
 
 const ProtectedRoute = () => {
   const { user, loading } = useAuth();
-  const { shouldLockNavigation, loading: onboardingLoading } = useOnboardingV2();
+  const { shouldLockNavigation, loading: onboardingLoading } = useOnboarding();
   const location = useLocation();
 
   if (loading || onboardingLoading) {

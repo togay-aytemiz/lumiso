@@ -29,7 +29,7 @@ import EnhancedSessionsSection from "@/components/EnhancedSessionsSection";
 import { useLeadStatusActions } from "@/hooks/useLeadStatusActions";
 // Permissions removed for single photographer mode
 import { OnboardingTutorial, TutorialStep } from "@/components/shared/OnboardingTutorial";
-import { useOnboardingV2 } from "@/hooks/useOnboardingV2";
+import { useOnboarding } from "@/contexts/OnboardingContext";
 import { DetailPageLoadingSkeleton } from "@/components/ui/loading-presets";
 interface Lead {
   id: string;
@@ -137,7 +137,7 @@ const LeadDetail = () => {
     currentStep,
     completeCurrentStep,
     completeMultipleSteps // BULLETPROOF: For combined tutorials
-  } = useOnboardingV2();
+  } = useOnboarding();
   const [showTutorial, setShowTutorial] = useState(false);
   const [currentTutorialStep, setCurrentTutorialStep] = useState(0);
   const [hasProjects, setHasProjects] = useState(false);

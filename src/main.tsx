@@ -8,6 +8,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { OrganizationProvider } from "@/contexts/OrganizationContext";
 import { SettingsProvider } from "@/contexts/SettingsContext";
 import { OnboardingProvider } from "@/contexts/OnboardingContext";
+import { PerformanceMonitor } from "@/components/PerformanceMonitor";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -25,6 +26,7 @@ createRoot(document.getElementById("root")!).render(
         <ProfileProvider>
           <SettingsProvider>
             <OnboardingProvider>
+              <PerformanceMonitor />
               <App />
               <Toaster />
             </OnboardingProvider>

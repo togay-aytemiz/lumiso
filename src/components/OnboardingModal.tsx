@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { useOnboardingV2, ONBOARDING_STEPS } from "@/hooks/useOnboardingV2";
+import { useOnboarding } from "@/contexts/OnboardingContext";
+import { ONBOARDING_STEPS } from "@/constants/onboarding";
 import { toast } from "@/hooks/use-toast";
 import { BaseOnboardingModal, type OnboardingAction } from "./shared/BaseOnboardingModal";
 import { SampleDataModal } from "./SampleDataModal";
@@ -19,12 +20,12 @@ export function OnboardingModal({ open, onClose }: OnboardingModalProps) {
   const [showSampleDataModal, setShowSampleDataModal] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { startGuidedSetup } = useOnboardingV2();
+  const { startGuidedSetup } = useOnboarding();
 
   const handleStartLearning = async () => {
     if (!user) return;
     
-    console.log('🚀 BULLETPROOF OnboardingModal: Starting guided setup - MODAL DISABLED FOREVER');
+    console.log('🚀 OnboardingModal: Starting guided setup');
     setIsLoading(true);
     try {
       await startGuidedSetup(); // This sets welcome_modal_shown = true PERMANENTLY
@@ -36,7 +37,7 @@ export function OnboardingModal({ open, onClose }: OnboardingModalProps) {
         description: "Let's get you set up step by step.",
       });
     } catch (error) {
-      console.error('❌ BULLETPROOF OnboardingModal: Error:', error);
+      console.error('❌ OnboardingModal: Error:', error);
       toast({
         title: "Error",
         description: "Failed to start guided setup. Please try again.",

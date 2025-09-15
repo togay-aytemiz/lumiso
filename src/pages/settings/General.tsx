@@ -15,7 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useSettingsCategorySection } from "@/hooks/useSettingsCategorySection";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
-import { useOnboardingV2 } from "@/hooks/useOnboardingV2";
+import { useOnboarding } from "@/contexts/OnboardingContext";
 import { OnboardingTutorial, TutorialStep } from "@/components/shared/OnboardingTutorial";
 import { SocialChannelsSection } from "@/components/settings/SocialChannelsSection";
 import { useOrganization } from "@/contexts/OrganizationContext";
@@ -30,7 +30,7 @@ export default function General() {
   const [isLogoModalOpen, setIsLogoModalOpen] = useState(false);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { completeCurrentStep } = useOnboardingV2();
+  const { completeCurrentStep } = useOnboarding();
 
   // Check if we're in tutorial mode from Profile onboarding
   const isInTutorial = searchParams.get('tutorial') === 'true';

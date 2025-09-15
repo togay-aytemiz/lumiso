@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useMemo } from "react";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
-import { ONBOARDING_STEPS, TOTAL_STEPS, OnboardingStage } from "@/hooks/useOnboardingV2";
+import { ONBOARDING_STEPS, TOTAL_STEPS, OnboardingStage } from "@/constants/onboarding";
 
 interface OnboardingContextValue {
   // State

@@ -1,7 +1,7 @@
 // V3 BULLETPROOF TEST FOR ONBOARDING SYSTEM
 // This file comprehensively tests all critical paths and edge cases
 
-import { useOnboardingV2, ONBOARDING_STEPS, TOTAL_STEPS } from "./useOnboardingV2";
+import { ONBOARDING_STEPS, TOTAL_STEPS } from "@/constants/onboarding";
 
 export const runOnboardingBulletproofTestV3 = () => {
   console.log('🔍 V3 ONBOARDING SYSTEM BULLETPROOF TEST');

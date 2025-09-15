@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { OnboardingStage } from "./useOnboardingV2";
+import { OnboardingStage } from "@/constants/onboarding";
 
 export interface UserPreferences {
   // User Settings

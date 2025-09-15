@@ -2,13 +2,13 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { RotateCcw } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useOnboardingV2 } from "@/hooks/useOnboardingV2";
+import { useOnboarding } from "@/contexts/OnboardingContext";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 
 export function RestartGuidedModeButton() {
   const { user } = useAuth();
-  const { resetOnboarding } = useOnboardingV2();
+  const { resetOnboarding } = useOnboarding();
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -18,7 +18,6 @@ export function RestartGuidedModeButton() {
   }
 
   const handleRestart = async () => {
-    console.log('🔄 BULLETPROOF RestartButton: Restart (no modal will show)');
     setIsLoading(true);
     try {
       await resetOnboarding(); // This keeps modal permanently disabled
@@ -26,10 +25,9 @@ export function RestartGuidedModeButton() {
         title: "Guided mode restarted",
         description: "Starting over from step 1...",
       });
-      // Navigate to getting-started directly
       navigate('/getting-started');
     } catch (error) {
-      console.error('❌ BULLETPROOF RestartButton: Error:', error);
+      console.error('❌ RestartButton: Error:', error);
       toast({
         title: "Error",
         description: "Failed to restart guided mode. Please try again.",

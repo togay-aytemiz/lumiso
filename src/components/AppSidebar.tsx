@@ -18,7 +18,7 @@ import {
   Zap
 } from "lucide-react";
 import logo from "@/assets/Logo.png";
-import { useOnboardingV2 } from "@/hooks/useOnboardingV2";
+import { useOnboarding } from "@/contexts/OnboardingContext";
 import {
   Sidebar,
   SidebarContent,
@@ -65,26 +65,16 @@ export function AppSidebar() {
   const navigate = useNavigate();
   const currentPath = location.pathname;
   const isMobile = useIsMobile();
-  const { shouldLockNavigation, loading } = useOnboardingV2();
+  const { shouldLockNavigation, loading } = useOnboarding();
   const [helpModalOpen, setHelpModalOpen] = useState(false);
 
   // Mobile sheet states
   const [bookingsSheetOpen, setBookingsSheetOpen] = useState(false);
   const [automationSheetOpen, setAutomationSheetOpen] = useState(false);
 
-  // Debug logging
-  useEffect(() => {
-    console.log('🚨 SIDEBAR STATE CHANGE:', {
-      shouldLockNavigation,
-      loading,
-      currentPath: location.pathname,
-      timestamp: new Date().toISOString()
-    });
-  }, [shouldLockNavigation, loading, location.pathname]);
-
   // Show loading state while onboarding data is being fetched
   if (loading) {
-    console.log('⏳ AppSidebar: Still loading onboarding state...');
+    // Removed console.log spam
   }
 
   const isActive = (path: string) => {

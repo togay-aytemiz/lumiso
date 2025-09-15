@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useOnboardingV2 } from "./useOnboardingV2";
+import { useOnboarding } from "@/contexts/OnboardingContext";
 
 interface UseTutorialExitOptions {
   currentStepTitle?: string;
@@ -10,7 +10,7 @@ interface UseTutorialExitOptions {
 export function useTutorialExit({ currentStepTitle, onExitComplete }: UseTutorialExitOptions = {}) {
   const [showExitGuard, setShowExitGuard] = useState(false);
   const navigate = useNavigate();
-  const { skipOnboarding } = useOnboardingV2();
+  const { skipOnboarding } = useOnboarding();
 
   const handleExitRequest = () => {
     setShowExitGuard(true);

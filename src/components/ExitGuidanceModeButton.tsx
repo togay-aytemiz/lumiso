@@ -2,13 +2,13 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useOnboardingV2 } from "@/hooks/useOnboardingV2";
+import { useOnboarding } from "@/contexts/OnboardingContext";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 
 export function ExitGuidanceModeButton() {
   const { user } = useAuth();
-  const { completeOnboarding, shouldLockNavigation } = useOnboardingV2();
+  const { completeOnboarding, shouldLockNavigation } = useOnboarding();
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -18,18 +18,13 @@ export function ExitGuidanceModeButton() {
   }
 
   const handleExit = async () => {
-    console.log('🚪 Exit guidance mode clicked');
     setIsLoading(true);
     try {
-      console.log('🚪 Calling completeOnboarding...');
       await completeOnboarding();
-      console.log('✅ completeOnboarding finished successfully');
       toast({
         title: "Exited guidance mode",
         description: "You can now access all features.",
       });
-      // Don't navigate manually - let the app's redirect logic handle it
-      console.log('🚪 Onboarding completed, app will redirect automatically');
     } catch (error) {
       console.error('❌ Error exiting guidance mode:', error);
       toast({
@@ -38,7 +33,6 @@ export function ExitGuidanceModeButton() {
         variant: "destructive"
       });
     } finally {
-      console.log('🚪 Setting loading to false');
       setIsLoading(false);
     }
   };

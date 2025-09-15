@@ -115,7 +115,7 @@ export function AppSheetModal({
         </div>
 
         {footerActions.length > 0 && (
-          <SheetFooter className="border-t pt-4 gap-2 px-1">
+          <SheetFooter className="border-t pt-4 gap-2 px-1 sticky bottom-0 bg-background z-10">
             {footerActions.map((action, index) => (
               <Button
                 key={index}

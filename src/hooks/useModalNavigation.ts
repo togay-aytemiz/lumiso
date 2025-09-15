@@ -24,8 +24,11 @@ export function useModalNavigation({
   };
 
   const handleDiscardChanges = () => {
-    onDiscard();
+    // Close the guard first to avoid overlay/focus traps, then discard
     setShowGuard(false);
+    setTimeout(() => {
+      onDiscard();
+    }, 0);
   };
 
   const handleStayOnModal = () => {

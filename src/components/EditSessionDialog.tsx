@@ -169,6 +169,7 @@ const EditSessionDialog = ({
         dirty={isDirty}
         onDirtyClose={handleDirtyClose}
         footerActions={footerActions}
+        dismissible={false}
       >
         {initError ? (
           <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">

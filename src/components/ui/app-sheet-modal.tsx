@@ -22,6 +22,7 @@ interface AppSheetModalProps {
   footerActions?: FooterAction[];
   dirty?: boolean;
   onDirtyClose?: () => void;
+  dismissible?: boolean;
 }
 
 export function AppSheetModal({
@@ -32,14 +33,20 @@ export function AppSheetModal({
   size = 'default',
   footerActions = [],
   dirty = false,
-  onDirtyClose
+  onDirtyClose,
+  dismissible = true
 }: AppSheetModalProps) {
   const isMobile = useIsMobile();
 
   const handleOpenChange = (open: boolean) => {
-    if (!open && dirty && onDirtyClose) {
-      onDirtyClose();
-      return;
+    if (!open) {
+      // Prevent closing when not dismissible
+      if (!dismissible) return;
+      // Guard dirty state
+      if (dirty && onDirtyClose) {
+        onDirtyClose();
+        return;
+      }
     }
     onOpenChange(open);
   };
@@ -73,6 +80,10 @@ export function AppSheetModal({
         className={cn(sheetContentClass, "[&>button]:hidden")}
         onPointerDownOutside={e => {
           try {
+            if (!dismissible) {
+              e.preventDefault();
+              return;
+            }
             // Prevent immediate closure on mobile touch events
             const target = e.target as HTMLElement;
             if (target && target.closest('[data-radix-popper-content-wrapper]')) {
@@ -90,6 +101,10 @@ export function AppSheetModal({
         }}
         onInteractOutside={e => {
           try {
+            if (!dismissible) {
+              e.preventDefault();
+              return;
+            }
             // Allow interactions with popover content
             const target = e.target as HTMLElement;
             if (target && (

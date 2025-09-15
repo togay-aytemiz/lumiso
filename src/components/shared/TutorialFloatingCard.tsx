@@ -74,7 +74,7 @@ export function TutorialFloatingCard({
           
           <div className="flex gap-2 pt-2">
             <LongPressButton
-              variant="outline"
+              variant="dangerOutline"
               onConfirm={onExit}
               label="Exit Tutorial"
               duration={3000}

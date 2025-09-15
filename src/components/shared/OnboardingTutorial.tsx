@@ -117,7 +117,7 @@ export function OnboardingTutorial({
     actions.push({
       label: "Exit Tutorial",
       onClick: handleExitNow,
-      variant: "outline",
+      variant: "dangerOutline",
       longPress: { duration: 3000, holdingLabel: "Hold to exit…", completeLabel: "Exiting…" }
     });
   }

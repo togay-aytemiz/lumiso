@@ -39,6 +39,7 @@ export function OnboardingTutorial({
 
   const {
     showExitGuard,
+    isExiting,
     handleExitRequest,
     handleStay,
     handleReturnToGettingStarted
@@ -120,6 +121,7 @@ export function OnboardingTutorial({
           onOpenChange={(open) => {
             if (!open) handleStay();
           }}
+          isProcessing={isExiting}
         />
       </>
     );
@@ -168,6 +170,7 @@ export function OnboardingTutorial({
         onOpenChange={(open) => {
           if (!open) handleStay();
         }}
+        isProcessing={isExiting}
       />
     </>
   );

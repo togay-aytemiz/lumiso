@@ -15,6 +15,7 @@ interface TutorialExitGuardDialogProps {
   onReturnToGettingStarted: () => void;
   currentStepTitle?: string;
   onOpenChange?: (open: boolean) => void;
+  isProcessing?: boolean;
 }
 
 export function TutorialExitGuardDialog({ 
@@ -22,7 +23,8 @@ export function TutorialExitGuardDialog({
   onStay, 
   onReturnToGettingStarted, 
   currentStepTitle,
-  onOpenChange
+  onOpenChange,
+  isProcessing
 }: TutorialExitGuardDialogProps) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -40,6 +42,8 @@ export function TutorialExitGuardDialog({
           <AlertDialogAction 
             onClick={onReturnToGettingStarted}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            disabled={isProcessing}
+            aria-disabled={isProcessing}
           >
             Return to Getting Started
           </AlertDialogAction>

@@ -28,8 +28,13 @@ export function BaseOnboardingModal({
   actions 
 }: BaseOnboardingModalProps) {
   return (
-    <Dialog open={open}>
-      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto md:max-h-none md:h-auto h-full md:rounded-lg rounded-none" hideClose>
+    <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DialogContent 
+        className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto md:max-h-none md:h-auto h-full md:rounded-lg rounded-none" 
+        hideClose 
+        onEscapeKeyDown={(e) => { e.preventDefault(); onClose(); }} 
+        onPointerDownOutside={(e) => { e.preventDefault(); onClose(); }}
+      >
         <DialogHeader className="text-center space-y-4">
           <DialogTitle className="text-2xl font-bold text-primary">
             {title}

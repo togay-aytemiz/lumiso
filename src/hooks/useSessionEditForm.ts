@@ -7,6 +7,7 @@ import { useSessionReminderScheduling } from "@/hooks/useSessionReminderScheduli
 import { sessionSchema, sanitizeInput, sanitizeHtml } from "@/lib/validation";
 import { ZodError } from "zod";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
+import { generateSessionName } from "@/lib/sessionUtils";
 
 interface SessionEditFormData {
   session_name: string;
@@ -54,7 +55,7 @@ export function useSessionEditForm({
   const { triggerSessionRescheduled } = useWorkflowTriggers();
   const { rescheduleSessionReminders } = useSessionReminderScheduling();
 
-  // Update form data when initial data changes
+  // Update form data when initial data changes (using primitive dependencies)
   useEffect(() => {
     setFormData({
       session_name: initialData.session_name || "",
@@ -64,7 +65,24 @@ export function useSessionEditForm({
       location: initialData.location || "",
       project_id: initialData.project_id || ""
     });
-  }, [initialData]);
+  }, [
+    initialData.session_name,
+    initialData.session_date,
+    initialData.session_time,
+    initialData.notes,
+    initialData.location,
+    initialData.project_id
+  ]);
+
+  // Auto-generate session name if it's empty
+  useEffect(() => {
+    if (!formData.session_name.trim() && leadName) {
+      setFormData(prev => ({
+        ...prev,
+        session_name: `${leadName} Session`
+      }));
+    }
+  }, [formData.session_name, leadName]);
 
   const handleInputChange = (field: keyof SessionEditFormData, value: string) => {
     setFormData(prev => ({

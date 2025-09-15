@@ -1,19 +1,21 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppSheetModal } from "@/components/ui/app-sheet-modal";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { useModalNavigation } from "@/hooks/useModalNavigation";
+import { NavigationGuardDialog } from "@/components/settings/NavigationGuardDialog";
+import { generateSessionName } from "@/lib/sessionUtils";
+import { useSessionEditForm } from "@/hooks/useSessionEditForm";
+import { CalendarTimePicker } from "@/components/CalendarTimePicker";
+import { SessionFormFields } from "@/components/SessionFormFields";
+import { getUserLocale, formatLongDate, formatTime } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Edit, Save } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
-import { sessionSchema, sanitizeInput, sanitizeHtml } from "@/lib/validation";
-import { ZodError } from "zod";
-import { useCalendarSync } from "@/hooks/useCalendarSync";
-import { useWorkflowTriggers } from "@/hooks/useWorkflowTriggers";
-import { useSessionReminderScheduling } from "@/hooks/useSessionReminderScheduling";
+import { Calendar, Clock, MapPin, User, Briefcase } from "lucide-react";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
+
+interface Project {
+  id: string;
+  name: string;
+}
 
 interface EditSessionDialogProps {
   sessionId: string;
@@ -23,33 +25,71 @@ interface EditSessionDialogProps {
   currentNotes: string;
   currentLocation?: string;
   currentProjectId?: string;
+  currentSessionName?: string;
   leadName?: string;
   onSessionUpdated?: () => void;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 }
 
-const EditSessionDialog = ({ sessionId, leadId, currentDate, currentTime, currentNotes, currentLocation, currentProjectId, leadName, onSessionUpdated, open = false, onOpenChange }: EditSessionDialogProps) => {
-  const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [formData, setFormData] = useState({
-    session_date: currentDate,
-    session_time: currentTime,
-    notes: currentNotes || "",
-    location: currentLocation || "",
-    project_id: currentProjectId || "no-project"
+const EditSessionDialog = ({ 
+  sessionId, 
+  leadId, 
+  currentDate, 
+  currentTime, 
+  currentNotes, 
+  currentLocation, 
+  currentProjectId, 
+  currentSessionName, 
+  leadName, 
+  onSessionUpdated, 
+  open = false, 
+  onOpenChange 
+}: EditSessionDialogProps) => {
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>();
+  const [projects, setProjects] = useState<Project[]>([]);
+
+  const {
+    formData,
+    loading,
+    errors,
+    isDirty,
+    isValid,
+    handleInputChange,
+    resetForm,
+    submitForm
+  } = useSessionEditForm({
+    sessionId,
+    leadId,
+    leadName: leadName || "",
+    initialData: {
+      session_name: currentSessionName,
+      session_date: currentDate,
+      session_time: currentTime,
+      notes: currentNotes,
+      location: currentLocation,
+      project_id: currentProjectId
+    },
+    onSuccess: () => {
+      setSelectedDate(undefined);
+      onOpenChange?.(false);
+      onSessionUpdated?.();
+    }
   });
-  const [projects, setProjects] = useState<{id: string, name: string}[]>([]);
-  const { updateSessionEvent } = useCalendarSync();
-  const { triggerSessionRescheduled } = useWorkflowTriggers();
-  const { rescheduleSessionReminders } = useSessionReminderScheduling();
+
+  // Initialize selected date from form data
+  useEffect(() => {
+    if (formData.session_date) {
+      const date = new Date(formData.session_date + 'T00:00:00');
+      setSelectedDate(date);
+    }
+  }, [formData.session_date]);
 
   const fetchProjects = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Get user's active organization
       const organizationId = await getUserOrganizationId();
       if (!organizationId) return;
 
@@ -69,242 +109,151 @@ const EditSessionDialog = ({ sessionId, leadId, currentDate, currentTime, curren
   };
 
   useEffect(() => {
-    setFormData({
-      session_date: currentDate,
-      session_time: currentTime,
-      notes: currentNotes || "",
-      location: currentLocation || "",
-      project_id: currentProjectId || "no-project"
-    });
-  }, [currentDate, currentTime, currentNotes, currentLocation, currentProjectId]);
-
-  useEffect(() => {
     if (open) {
       fetchProjects();
     }
   }, [open]);
 
-  const validateForm = async () => {
-    setErrors({});
-    
-    try {
-      await sessionSchema.parseAsync({
-        session_date: sanitizeInput(formData.session_date),
-        session_time: sanitizeInput(formData.session_time),
-        notes: formData.notes ? await sanitizeHtml(formData.notes) : undefined
-      });
-      return true;
-    } catch (error) {
-      if (error instanceof ZodError) {
-        const newErrors: Record<string, string> = {};
-        error.issues.forEach((err) => {
-          const field = err.path[0] as string;
-          newErrors[field] = err.message;
-        });
-        setErrors(newErrors);
-      }
-      return false;
-    }
-  };
-
-  const handleSubmit = async () => {
-    if (!(await validateForm())) return;
-
-    setLoading(true);
-    try {
-      // Check if date/time changed for workflow trigger
-      const dateTimeChanged = formData.session_date !== currentDate || formData.session_time !== currentTime;
-      const oldDateTime = `${currentDate} ${currentTime}`;
-      const newDateTime = `${formData.session_date} ${formData.session_time}`;
-
-      const { error } = await supabase
-        .from('sessions')
-        .update({
-          session_date: sanitizeInput(formData.session_date),
-          session_time: sanitizeInput(formData.session_time),
-          notes: formData.notes ? await sanitizeHtml(formData.notes) : null,
-          location: formData.location.trim() || null,
-          project_id: formData.project_id === "no-project" ? null : formData.project_id || null
-        })
-        .eq('id', sessionId);
-
-      if (error) throw error;
-
-      // Trigger workflow for session rescheduled if date/time changed
-      if (dateTimeChanged) {
-        try {
-          const organizationId = await getUserOrganizationId();
-          if (organizationId) {
-            await triggerSessionRescheduled(sessionId, organizationId, oldDateTime, newDateTime, {
-              session_date: formData.session_date,
-              session_time: formData.session_time,
-              location: formData.location,
-              client_name: leadName,
-              lead_id: leadId,
-              project_id: formData.project_id === "no-project" ? null : formData.project_id
-            });
-          }
-        } catch (workflowError) {
-          console.error('Error triggering rescheduled workflow:', workflowError);
-          // Don't block session update if workflow fails
-        }
-      }
-
-      // Sync to Google Calendar
-      if (leadName) {
-        updateSessionEvent(
-          {
-            id: sessionId,
-            lead_id: '', // Not needed for update
-            session_date: sanitizeInput(formData.session_date),
-            session_time: sanitizeInput(formData.session_time),
-            notes: formData.notes ? await sanitizeHtml(formData.notes) : undefined
-          },
-          { name: leadName }
-        );
-      }
-
-      // Reschedule session reminders if date/time changed
-      if (dateTimeChanged) {
-        try {
-          await rescheduleSessionReminders(sessionId);
-        } catch (reminderError) {
-          console.error('Error rescheduling session reminders:', reminderError);
-          // Don't block session update if reminder scheduling fails
-        }
-      }
-
-      toast({
-        title: "Success",
-        description: "Session updated successfully."
-      });
-
+  const navigation = useModalNavigation({
+    isDirty,
+    onDiscard: () => {
+      resetForm();
+      setSelectedDate(undefined);
       onOpenChange?.(false);
-      onSessionUpdated?.();
-    } catch (error: any) {
-      toast({
-        title: "Error updating session",
-        description: error.message,
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleInputChange = (field: keyof typeof formData, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
-  const isDirty = Boolean(
-    formData.session_date !== currentDate ||
-    formData.session_time !== currentTime ||
-    formData.notes !== (currentNotes || "") ||
-    formData.location !== (currentLocation || "") ||
-    formData.project_id !== (currentProjectId || "no-project")
-  );
+    },
+  });
 
   const handleDirtyClose = () => {
-    if (window.confirm("Are you sure you want to discard your changes? Any unsaved information will be lost.")) {
-      if (onOpenChange) {
-        onOpenChange(false);
-      }
+    const canClose = navigation.handleModalClose();
+    if (canClose) {
+      resetForm();
+      setSelectedDate(undefined);
+      onOpenChange?.(false);
     }
   };
 
   const footerActions = [
     {
       label: "Cancel",
-      onClick: () => onOpenChange && onOpenChange(false),
+      onClick: handleDirtyClose,
       variant: "outline" as const,
       disabled: loading
     },
     {
       label: loading ? "Updating..." : "Update Session",
-      onClick: handleSubmit,
-      disabled: loading || !formData.session_date.trim() || !formData.session_time.trim(),
+      onClick: submitForm,
+      disabled: loading || !isValid,
       loading: loading
     }
   ];
 
   return (
-    <AppSheetModal
-      title="Edit Session"
-      isOpen={open}
-      onOpenChange={onOpenChange || (() => {})}
-      size="content"
-      dirty={isDirty}
-      onDirtyClose={handleDirtyClose}
-      footerActions={footerActions}
-    >
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="session_date">Date *</Label>
-          <Input
-            id="session_date"
-            type="date"
-            value={formData.session_date}
-            onChange={(e) => handleInputChange("session_date", e.target.value)}
-            className="w-full"
+    <>
+      <AppSheetModal
+        title="Edit Session"
+        isOpen={open}
+        onOpenChange={onOpenChange || (() => {})}
+        size="wide"
+        dirty={isDirty}
+        onDirtyClose={handleDirtyClose}
+        footerActions={footerActions}
+      >
+        <div className="space-y-6">
+          {/* Form Fields */}
+          <SessionFormFields
+            leadName={leadName || ""}
+            sessionName={formData.session_name}
+            location={formData.location}
+            notes={formData.notes}
+            projectId={formData.project_id}
+            showProjectSelector={true}
+            availableProjects={projects}
+            onSessionNameChange={(value) => handleInputChange("session_name", value)}
+            onLocationChange={(value) => handleInputChange("location", value)}
+            onNotesChange={(value) => handleInputChange("notes", value)}
+            onProjectChange={(value) => handleInputChange("project_id", value)}
           />
-          {errors.session_date && <p className="text-sm text-destructive">{errors.session_date}</p>}
-        </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="session_time">Time *</Label>
-          <Input
-            id="session_time"
-            type="time"
-            value={formData.session_time}
-            onChange={(e) => handleInputChange("session_time", e.target.value)}
-            className="w-full"
-          />
-          {errors.session_time && <p className="text-sm text-destructive">{errors.session_time}</p>}
-        </div>
+          {/* Date & Time Selection */}
+          <div className="space-y-4">
+            <Label>Reschedule Session *</Label>
+            <CalendarTimePicker
+              selectedDate={selectedDate}
+              selectedTime={formData.session_time}
+              onDateChange={setSelectedDate}
+              onTimeChange={(time) => handleInputChange("session_time", time)}
+              onDateStringChange={(dateString) => handleInputChange("session_date", dateString)}
+            />
+            {errors.session_date && <p className="text-sm text-destructive">{errors.session_date}</p>}
+            {errors.session_time && <p className="text-sm text-destructive">{errors.session_time}</p>}
+          </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="location">Location / Address</Label>
-          <Textarea
-            id="location"
-            value={formData.location}
-            onChange={(e) => handleInputChange("location", e.target.value)}
-            placeholder="Enter session location or address..."
-            rows={2}
-          />
+          {/* Session Summary */}
+          {(formData.session_name || formData.session_date || formData.session_time) && (
+            <div className="space-y-3 p-4 bg-gradient-to-br from-primary/5 to-primary/10 rounded-lg border border-primary/20">
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-primary" />
+                <Label className="text-sm font-medium text-primary">Session Summary</Label>
+              </div>
+              
+              <div className="space-y-2 text-sm">
+                {formData.session_name && (
+                  <div className="flex items-center gap-2">
+                    <Briefcase className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                    <span className="font-medium">{formData.session_name}</span>
+                  </div>
+                )}
+                
+                {(formData.session_date || formData.session_time) && (
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                     <span>
+                       {formData.session_date ? 
+                         formatLongDate(formData.session_date, getUserLocale()) : 'Date not set'
+                       }
+                       {formData.session_time && formData.session_date ? (
+                         <> at {formatTime(formData.session_time, getUserLocale())}</>
+                       ) : formData.session_time ? (
+                         <> Time: {formatTime(formData.session_time, getUserLocale())}</>
+                       ) : null}
+                     </span>
+                   </div>
+                 )}
+                
+                {formData.location && (
+                  <div className="flex items-center gap-2">
+                    <MapPin className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                    <span>{formData.location}</span>
+                  </div>
+                )}
+                
+                {projects.find(p => p.id === formData.project_id)?.name && (
+                  <div className="flex items-center gap-2">
+                    <Briefcase className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                    <span className="text-muted-foreground">
+                      Project: {projects.find(p => p.id === formData.project_id)?.name}
+                    </span>
+                  </div>
+                )}
+                
+                <div className="flex items-center gap-2">
+                  <User className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                  <span className="text-muted-foreground">Client: {leadName}</span>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
+      </AppSheetModal>
 
-        <div className="space-y-2">
-          <Label htmlFor="project_id">Project</Label>
-          <Select value={formData.project_id} onValueChange={(value) => handleInputChange("project_id", value)} disabled={projects.length === 0}>
-            <SelectTrigger>
-              <SelectValue placeholder={projects.length === 0 ? "No projects available" : "Select a project"} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="no-project">No specific project</SelectItem>
-              {projects.map((project) => (
-                <SelectItem key={project.id} value={project.id}>
-                  {project.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="notes">Notes</Label>
-          <Textarea
-            id="notes"
-            value={formData.notes}
-            onChange={(e) => handleInputChange("notes", e.target.value)}
-            placeholder="Session notes..."
-            rows={3}
-          />
-        </div>
-      </div>
-    </AppSheetModal>
+      <NavigationGuardDialog
+        open={navigation.showGuard}
+        message={navigation.message}
+        onDiscard={navigation.handleDiscardChanges}
+        onStay={navigation.handleStayOnModal}
+        onSaveAndExit={navigation.handleSaveAndExit}
+      />
+    </>
   );
 };
 

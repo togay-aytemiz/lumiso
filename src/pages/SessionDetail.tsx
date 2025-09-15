@@ -552,7 +552,7 @@ export default function SessionDetail() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Session</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the session and remove it from your records.
+              Are you sure you want to delete this session? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -136,13 +136,6 @@ const EditSessionDialog = ({
     },
   });
 
-  // Ensure guard is closed when modal is programmatically closed
-  useEffect(() => {
-    if (!open) {
-      navigation.handleStayOnModal();
-    }
-  }, [open]);
-
   const handleDirtyClose = () => {
     const canClose = navigation.handleModalClose();
     if (canClose) {
@@ -176,7 +169,6 @@ const EditSessionDialog = ({
         dirty={isDirty}
         onDirtyClose={handleDirtyClose}
         footerActions={footerActions}
-        dismissible={false}
       >
         {initError ? (
           <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">

@@ -169,11 +169,6 @@ const LeadDetail = () => {
         if (error) throw error;
         const projectsExist = (data || []).length > 0;
         setHasProjects(projectsExist);
-        console.log('🔍 Projects check:', {
-          leadId: lead.id,
-          projectsExist,
-          projectCount: (data || []).length
-        });
       } catch (error) {
         console.error("Error checking projects:", error);
       }
@@ -315,32 +310,20 @@ const LeadDetail = () => {
     const tutorialStep = location.state?.tutorialStep;
     const tutorialType = location.state?.tutorialType;
     
-    console.log('🔍 LeadDetail tutorial check:', {
-      continueTutorial,
-      tutorialStep,
-      tutorialType,
-      locationState: location.state,
-      currentStep,
-      pathname: location.pathname
-    });
-
     // Check if we should show tutorial either from navigation state OR onboarding progress
     const shouldShowFromState = continueTutorial && tutorialStep;
     const shouldShowFromProgress = currentStep === 2; // User completed first step, now on leads
 
     if (shouldShowFromState) {
       if (tutorialType === 'scheduling') {
-        console.log('🚀 Starting scheduling tutorial from navigation state at step:', tutorialStep);
         setIsSchedulingTutorial(true);
         setShowTutorial(true);
         setCurrentTutorialStep(tutorialStep - 3); // Convert to 0-based index for scheduling steps
       } else {
-        console.log('🚀 Starting lead details tutorial from navigation state at step:', tutorialStep);
         setShowTutorial(true);
         setCurrentTutorialStep(tutorialStep - 4); // Convert to 0-based index for our steps array
       }
     } else if (shouldShowFromProgress) {
-      console.log('🚀 Starting lead details tutorial from onboarding progress');
       setShowTutorial(true);
       setCurrentTutorialStep(0); // Start with first lead details step
     }
@@ -391,12 +374,10 @@ const LeadDetail = () => {
 
   // Handle project clicked during tutorial
   const handleProjectClicked = () => {
-    console.log('🔍 Project clicked - enabling Next button');
     setHasViewedProject(true);
   };
 
   const handleSessionScheduled = () => {
-    console.log('🔍 Session scheduled - advancing tutorial');
     setHasScheduledSession(true);
     setActivityRefreshKey(prev => prev + 1); // Refresh activities to show new session
     fetchSessions();
@@ -404,10 +385,7 @@ const LeadDetail = () => {
 
   // Debug tutorial step changes
   useEffect(() => {
-    console.log('🔍 Tutorial step changed to:', currentTutorialStep, 'showTutorial:', showTutorial, 'step array length:', leadDetailsTutorialSteps.length);
-    if (showTutorial && leadDetailsTutorialSteps[currentTutorialStep]) {
-      console.log('🎯 Current tutorial step details:', leadDetailsTutorialSteps[currentTutorialStep]);
-    }
+    // Development only debug logging would go here if needed
   }, [currentTutorialStep, showTutorial]);
 
   // Check edit permissions when lead data loads
@@ -771,14 +749,10 @@ const LeadDetail = () => {
 
     // If tutorial is active and we're on the project creation step (Step 5 = index 1), advance to project exploration step
     if (showTutorial && currentTutorialStep === 1) {
-      console.log('🚀 Project created! Advancing tutorial from step', currentTutorialStep, 'to step 2 (Step 6)');
       // Use setTimeout to ensure state update happens after component re-render
       setTimeout(() => {
         setCurrentTutorialStep(2); // Move to "Now Explore Your Project" step (Step 6)
-        console.log('✅ Tutorial step updated to:', 2);
       }, 100);
-    } else {
-      console.log('🔍 Not advancing tutorial. showTutorial:', showTutorial, 'currentTutorialStep:', currentTutorialStep, '(expected: 1 for Step 5)');
     }
   };
   const handleActivityUpdated = () => {

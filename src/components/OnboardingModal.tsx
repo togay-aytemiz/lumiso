@@ -25,7 +25,6 @@ export function OnboardingModal({ open, onClose }: OnboardingModalProps) {
   const handleStartLearning = async () => {
     if (!user) return;
     
-    console.log('🚀 OnboardingModal: Starting guided setup');
     setIsLoading(true);
     try {
       await startGuidedSetup(); // This sets welcome_modal_shown = true PERMANENTLY

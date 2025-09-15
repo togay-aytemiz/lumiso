@@ -60,7 +60,6 @@ export function ProjectStatusBadge({
     if (currentStatusId && statuses.length > 0) {
       const status = statuses.find(s => s.id === currentStatusId);
       setCurrentStatus(status || null);
-      console.log('Current status set:', status);
     }
   }, [currentStatusId, statuses]);
 
@@ -79,7 +78,6 @@ export function ProjectStatusBadge({
   }, [dropdownOpen]);
 
   const fetchProjectStatuses = async () => {
-    console.log('Fetching project statuses...');
     try {
       const { data, error } = await supabase
         .from('project_statuses')
@@ -87,7 +85,6 @@ export function ProjectStatusBadge({
         .order('sort_order', { ascending: true });
 
       if (error) throw error;
-      console.log('Fetched statuses:', data);
       setStatuses(data || []);
     } catch (error: any) {
       console.error('Error fetching project statuses:', error);

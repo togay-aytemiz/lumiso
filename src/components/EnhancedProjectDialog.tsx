@@ -388,10 +388,8 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
 
       // Check if we're in onboarding step 3 and complete it
       if (shouldLockNavigation && currentStep === 3) {
-        console.log('🎯 Project created during onboarding step 3 - completing step automatically');
         try {
           await completeCurrentStep();
-          console.log('✅ Onboarding step 3 completed successfully');
         } catch (error) {
           console.error('❌ Failed to complete onboarding step:', error);
           // Don't fail the project creation if step completion fails

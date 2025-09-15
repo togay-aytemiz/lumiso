@@ -43,10 +43,7 @@ export const NewServiceDialog = ({ open, onOpenChange, existingCategories, onCat
 
   const createServiceMutation = useMutation({
     mutationFn: async (serviceData: { name: string; category?: string; description?: string; costPrice?: number; sellingPrice?: number }) => {
-      console.log('Creating service with data:', serviceData);
-      
       const { data: { user } } = await supabase.auth.getUser();
-      console.log('Current user:', user?.id);
       
       if (!user) throw new Error('User not authenticated');
 
@@ -59,15 +56,11 @@ export const NewServiceDialog = ({ open, onOpenChange, existingCategories, onCat
         user_id: user.id,
       };
       
-      console.log('Inserting data:', insertData);
-
       const { data, error } = await supabase
         .from('services')
         .insert(insertData)
         .select()
         .single();
-      
-      console.log('Insert result:', { data, error });
       
       if (error) {
         console.error('Supabase error:', error);
@@ -144,7 +137,6 @@ export const NewServiceDialog = ({ open, onOpenChange, existingCategories, onCat
 
   const handleNewCategorySubmit = () => {
     const trimmedCategory = newCategoryInput.trim();
-    console.log('handleNewCategorySubmit called:', { trimmedCategory, newCategoryInput });
     
     if (trimmedCategory) {
       // Check for duplicates (case-insensitive)
@@ -154,25 +146,19 @@ export const NewServiceDialog = ({ open, onOpenChange, existingCategories, onCat
         cat => cat.toLowerCase() === trimmedCategory.toLowerCase()
       );
       
-      console.log('Duplicate check:', { isDuplicate, existingCategories });
-      
       if (!isDuplicate) {
-        console.log('Setting category:', trimmedCategory);
         setCategory(trimmedCategory);
         setIsCreatingNewCategory(false);
         setNewCategoryInput("");
         // Notify parent component about the new category
         onCategoryAdded?.(trimmedCategory);
       } else {
-        console.log('Category is duplicate, showing toast');
         toast({
           title: "Category already exists",
           description: "This category name is already in use. Please choose a different name.",
           variant: "destructive",
         });
       }
-    } else {
-      console.log('Empty category name');
     }
   };
 

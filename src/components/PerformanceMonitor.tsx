@@ -8,12 +8,11 @@ interface PerformanceMetrics {
   cacheMisses: number;
 }
 
-const performanceMetrics: PerformanceMetrics = {
-  hookCallCount: 0,
-  lastCallTime: 0,
-  cacheHits: 0,
-  cacheMisses: 0
-};
+  // Disable performance monitor logs
+  const performanceMonitor = {
+    clearMetrics: () => {},
+    getMetrics: () => []
+  };
 
 export function PerformanceMonitor() {
   const renderCountRef = useRef(0);
@@ -26,14 +25,11 @@ export function PerformanceMonitor() {
 
   useEffect(() => {
     renderCountRef.current++;
-    performanceMetrics.hookCallCount++;
-    performanceMetrics.lastCallTime = Date.now();
     
-    // Warn if excessive re-renders
-    if (renderCountRef.current > 20) {
+    // Warn if excessive re-renders (reduced threshold for prod)
+    if (renderCountRef.current > 50) {
       console.warn('🚨 PerformanceMonitor: Excessive onboarding re-renders detected:', {
         renderCount: renderCountRef.current,
-        hookCalls: performanceMetrics.hookCallCount,
         stage,
         currentStep,
         loading
@@ -43,7 +39,7 @@ export function PerformanceMonitor() {
     // Reset counter periodically
     const resetTimer = setTimeout(() => {
       renderCountRef.current = 0;
-    }, 5000);
+    }, 10000);
     
     return () => clearTimeout(resetTimer);
   }, [stage, currentStep, loading]);
@@ -51,7 +47,7 @@ export function PerformanceMonitor() {
   return null;
 }
 
-// Expose metrics for debugging
-if (typeof window !== 'undefined') {
-  (window as any).onboardingMetrics = performanceMetrics;
+// Development-only metrics exposure
+if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+  (window as any).onboardingMetrics = { renderCount: 0 };
 }

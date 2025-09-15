@@ -91,18 +91,13 @@ const ProjectTypesSection = () => {
       return;
     }
 
-    console.log('=== PROJECT TYPE SUBMIT START ===');
-    console.log('Form data:', data);
-    console.log('Editing type:', editingType);
     setSubmitting(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
-      console.log('User authenticated:', user.id);
 
       if (editingType) {
         // Update existing type
-        console.log('Updating type:', editingType.id, 'with data:', data);
         const { error } = await supabase
           .from('project_types')
           .update({ name: data.name, is_default: data.is_default })
@@ -113,7 +108,6 @@ const ProjectTypesSection = () => {
           console.error('Error updating type:', error);
           throw error;
         }
-        console.log('Successfully updated type');
 
         // Show appropriate message based on what changed
         if (data.is_default && !editingType.is_default) {

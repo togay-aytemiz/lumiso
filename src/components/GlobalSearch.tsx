@@ -178,7 +178,6 @@ const GlobalSearch = () => {
 
   const performSearch = async (searchQuery: string) => {
     setLoading(true);
-    console.log('GlobalSearch: Searching for:', searchQuery);
     try {
       const searchResults: SearchResult[] = [];
 
@@ -188,7 +187,6 @@ const GlobalSearch = () => {
         .select('id, name, email, phone, status, status_id')
         .or(`name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%,phone.ilike.%${searchQuery}%`);
 
-      console.log('GlobalSearch: Found leads:', leads?.length || 0, leads);
       if (leadsError) {
         console.error('GlobalSearch: Leads error:', leadsError);
         throw leadsError;

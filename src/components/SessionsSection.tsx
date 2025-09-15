@@ -9,6 +9,7 @@ import { NewSessionDialogForProject } from "./NewSessionDialogForProject";
 import { useNavigate } from "react-router-dom";
 import { sortSessionsByLifecycle, SessionWithStatus } from "@/lib/sessionSorting";
 interface Session extends SessionWithStatus {
+  session_name?: string | null;
   session_time: string;
   notes: string;
 }
@@ -106,10 +107,7 @@ export function SessionsSection({
               {sortSessionsByLifecycle(sessions).map(session => (
                 <DeadSimpleSessionBanner 
                   key={session.id} 
-                   session={{
-                     ...session, 
-                     projects: { name: projectName, project_types: { name: projectName.split(' ')[0] } }
-                   } as any}
+                  session={session as any}
                   onClick={() => handleSessionClick(session.id)}
                 />
               ))}
@@ -127,22 +125,23 @@ export function SessionsSection({
       {editingSessionId && (() => {
         const session = sessions.find(s => s.id === editingSessionId);
         return session ? (
-          <EditSessionDialog 
-            sessionId={session.id} 
-            leadId={session.lead_id} 
-            currentDate={session.session_date} 
-            currentTime={session.session_time} 
-            currentNotes={session.notes} 
-            currentProjectId={session.project_id} 
-            leadName={leadName} 
-            open={!!editingSessionId} 
-            onOpenChange={open => {
-              if (!open) {
-                setEditingSessionId(null);
-              }
-            }} 
-            onSessionUpdated={handleSessionUpdated} 
-          />
+           <EditSessionDialog 
+             sessionId={session.id} 
+             leadId={session.lead_id} 
+             currentDate={session.session_date} 
+             currentTime={session.session_time} 
+             currentNotes={session.notes} 
+             currentProjectId={session.project_id} 
+             currentSessionName={session.session_name}
+             leadName={leadName} 
+             open={!!editingSessionId} 
+             onOpenChange={open => {
+               if (!open) {
+                 setEditingSessionId(null);
+               }
+             }} 
+             onSessionUpdated={handleSessionUpdated} 
+           />
         ) : null;
       })()}
 

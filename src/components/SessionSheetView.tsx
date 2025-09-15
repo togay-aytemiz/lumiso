@@ -35,9 +35,11 @@ import EditSessionDialog from '@/components/EditSessionDialog';
 import { useSessionActions } from '@/hooks/useSessionActions';
 import { UnifiedClientDetails } from '@/components/UnifiedClientDetails';
 import SessionGallery from '@/components/SessionGallery';
+import { getDisplaySessionName } from '@/lib/sessionUtils';
 
 interface Session {
   id: string;
+  session_name?: string | null;
   session_date: string;
   session_time: string;
   notes: string | null;
@@ -137,17 +139,6 @@ export default function SessionSheetView({
     }
   }, [isOpen, sessionId]);
 
-  const getSessionName = () => {
-    if (!session) return 'Session';
-    
-    // Use project type if available
-    if (session.projects?.project_types?.name) {
-      return `${session.projects.project_types.name} Session`;
-    }
-    
-    // Fallback to generic "Session"
-    return 'Session';
-  };
 
   const handleEdit = () => {
     setIsEditDialogOpen(true);
@@ -214,9 +205,9 @@ export default function SessionSheetView({
                         <div className="space-y-2">
                           {/* Desktop: Name + Badges on same line */}
                           <div className="hidden md:flex items-center gap-3 flex-wrap">
-                            <SheetTitle className="text-xl sm:text-2xl font-bold leading-tight break-words text-left">
-                              {getSessionName()}
-                            </SheetTitle>
+                             <SheetTitle className="text-xl sm:text-2xl font-bold leading-tight break-words text-left">
+                               {getDisplaySessionName(session)}
+                             </SheetTitle>
                             
                             {/* Session Status and Project Type Badges next to name - Desktop only */}
                             <div className="flex items-center gap-2 flex-wrap">
@@ -238,9 +229,9 @@ export default function SessionSheetView({
                           
                           {/* Mobile: Name only */}
                           <div className="md:hidden">
-                            <SheetTitle className="text-xl sm:text-2xl font-bold leading-tight break-words text-left">
-                              {getSessionName()}
-                            </SheetTitle>
+                             <SheetTitle className="text-xl sm:text-2xl font-bold leading-tight break-words text-left">
+                               {getDisplaySessionName(session)}
+                             </SheetTitle>
                           </div>
                         </div>
                         
@@ -463,6 +454,7 @@ export default function SessionSheetView({
           currentNotes={session.notes || ''}
           currentLocation={session.location || ''}
           currentProjectId={session.project_id}
+          currentSessionName={session.session_name}
           leadName={session.leads?.name || ''}
           onSessionUpdated={handleSessionUpdated}
         />

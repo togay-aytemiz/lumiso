@@ -7,6 +7,7 @@ import { useSessionReminderScheduling } from "@/hooks/useSessionReminderScheduli
 import { sessionSchema, sanitizeInput, sanitizeHtml } from "@/lib/validation";
 import { ZodError } from "zod";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
+import { generateSessionName } from "@/lib/sessionUtils";
 
 
 interface SessionEditFormData {
@@ -121,7 +122,6 @@ export function useSessionEditForm({
   );
 
   const isValid = Boolean(
-    formData.session_name.trim() &&
     formData.session_date &&
     formData.session_time &&
     Object.keys(errors).length === 0
@@ -163,7 +163,7 @@ export function useSessionEditForm({
     if (!isValid) {
       toast({
         title: "Validation error",
-        description: "Session name, date and time are required.",
+        description: "Date and time are required.",
         variant: "destructive"
       });
       return false;
@@ -178,10 +178,14 @@ export function useSessionEditForm({
       const oldDateTime = `${initialData.session_date} ${initialData.session_time}`;
       const newDateTime = `${formData.session_date} ${formData.session_time}`;
 
+      // Generate session name if empty
+      const finalSessionName = formData.session_name.trim() || 
+        generateSessionName(leadName || "Client");
+
       const { error } = await supabase
         .from('sessions')
         .update({
-          session_name: sanitizeInput(formData.session_name.trim()),
+          session_name: sanitizeInput(finalSessionName),
           session_date: sanitizeInput(formData.session_date),
           session_time: sanitizeInput(formData.session_time),
           notes: formData.notes ? await sanitizeHtml(formData.notes) : null,

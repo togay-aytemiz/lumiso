@@ -4,11 +4,13 @@ import { formatTime, cn, getUserLocale, formatLongDate } from "@/lib/utils";
 import { getRelativeDate, isOverdueSession } from "@/lib/dateUtils";
 import { SessionStatusBadge } from "@/components/SessionStatusBadge";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
+import { getDisplaySessionName } from "@/lib/sessionUtils";
 
 type SessionStatus = "planned" | "completed" | "cancelled" | "no_show" | "rescheduled" | "in_post_processing" | "delivered";
 
 interface Session {
   id: string;
+  session_name?: string | null;
   session_date: string;
   session_time?: string;
   notes?: string;
@@ -21,6 +23,9 @@ interface Session {
       name: string;
     };
   };
+  leads?: {
+    name?: string;
+  };
 }
 
 interface DeadSimpleSessionBannerProps {
@@ -32,12 +37,6 @@ const DeadSimpleSessionBanner = ({ session, onClick }: DeadSimpleSessionBannerPr
   const { settings: orgSettings } = useOrganizationSettings();
   const userLocale = getUserLocale();
 
-  const getSessionName = (session: Session): string => {
-    if (session.projects?.project_types?.name) {
-      return `${session.projects.project_types.name} Session`;
-    }
-    return "Session";
-  };
 
   const formatSessionTime = (timeString: string): string => {
     return formatTime(timeString, userLocale, orgSettings?.time_format || undefined);
@@ -119,7 +118,7 @@ const DeadSimpleSessionBanner = ({ session, onClick }: DeadSimpleSessionBannerPr
         <div className="flex-1 min-w-0 space-y-1">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-sm font-semibold text-gray-900">
-              {getSessionName(session)}
+              {getDisplaySessionName(session)}
             </span>
             {timeIndicator.label && (
               <Badge variant="secondary" className={cn("text-xs px-2 py-1", timeIndicator.labelBg)}>

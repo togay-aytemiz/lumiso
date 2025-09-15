@@ -31,6 +31,7 @@ import { useSessionActions } from '@/hooks/useSessionActions';
 import ProjectDetailsLayout from '@/components/project-details/ProjectDetailsLayout';
 import { UnifiedClientDetails } from '@/components/UnifiedClientDetails';
 import SessionGallery from '@/components/SessionGallery';
+import { getDisplaySessionName } from '@/lib/sessionUtils';
 
 interface Session {
   id: string;
@@ -123,27 +124,6 @@ export default function SessionDetail() {
     fetchSession();
   }, [id]);
 
-  const getSessionName = () => {
-    if (!session) return 'Session';
-    
-    // Use existing session name if available
-    if (session.session_name?.trim()) {
-      return session.session_name.trim();
-    }
-    
-    // Use project type if available
-    if (session.projects?.project_types?.name) {
-      return `${session.projects.project_types.name} Session`;
-    }
-    
-    // Fallback to lead name + Session
-    if (session.leads?.name) {
-      return `${session.leads.name} Session`;
-    }
-    
-    // Final fallback
-    return 'Session';
-  };
 
   const handleEdit = () => {
     setIsEditDialogOpen(true);
@@ -229,9 +209,9 @@ export default function SessionDetail() {
                       strokeWidth={2.5}
                       onClick={() => navigate('/sessions')}
                     />
-                    <h1 className="text-xl sm:text-2xl font-bold leading-tight break-words text-left">
-                      {getSessionName()}
-                    </h1>
+                     <h1 className="text-xl sm:text-2xl font-bold leading-tight break-words text-left">
+                       {getDisplaySessionName(session)}
+                     </h1>
                     
                     {/* Session Status and Project Type Badges next to name - Desktop only */}
                     <div className="flex items-center gap-2 flex-wrap">
@@ -259,9 +239,9 @@ export default function SessionDetail() {
                         strokeWidth={2.5}
                         onClick={() => navigate('/sessions')}
                       />
-                      <h1 className="text-xl sm:text-2xl font-bold leading-tight break-words text-left">
-                        {getSessionName()}
-                      </h1>
+                       <h1 className="text-xl sm:text-2xl font-bold leading-tight break-words text-left">
+                         {getDisplaySessionName(session)}
+                       </h1>
                     </div>
                   </div>
                 </div>

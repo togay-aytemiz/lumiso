@@ -923,16 +923,30 @@ const LeadDetail = () => {
 
       {/* Edit Session Dialog */}
       {editingSessionId && (() => {
-      const session = sessions.find(s => s.id === editingSessionId);
-      return session ? <EditSessionDialog sessionId={session.id} leadId={lead.id} currentDate={session.session_date} currentTime={session.session_time} currentNotes={session.notes} currentProjectId={session.project_id} leadName={lead.name} open={!!editingSessionId} onOpenChange={open => {
-        if (!open) {
-          setEditingSessionId(null);
-        }
-      }} onSessionUpdated={() => {
-        handleSessionUpdated();
-        setEditingSessionId(null);
-      }} /> : null;
-    })()}
+        const session = sessions.find(s => s.id === editingSessionId);
+        return session ? (
+          <EditSessionDialog 
+            sessionId={session.id} 
+            leadId={lead.id} 
+            currentDate={session.session_date} 
+            currentTime={session.session_time} 
+            currentNotes={session.notes} 
+            currentProjectId={session.project_id} 
+            currentSessionName={(session as any).session_name}
+            leadName={lead.name} 
+            open={!!editingSessionId} 
+            onOpenChange={open => {
+              if (!open) {
+                setEditingSessionId(null);
+              }
+            }} 
+            onSessionUpdated={() => {
+              handleSessionUpdated();
+              setEditingSessionId(null);
+            }} 
+          />
+        ) : null;
+      })()}
 
       {/* Delete Session Dialog */}
       <AlertDialog open={!!deletingSessionId} onOpenChange={open => !open && setDeletingSessionId(null)}>

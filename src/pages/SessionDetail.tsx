@@ -26,6 +26,7 @@ import SessionStatusBadge from '@/components/SessionStatusBadge';
 import { formatLongDate, formatTime } from '@/lib/utils';
 import { isOverdueSession } from '@/lib/dateUtils';
 import EditSessionDialog from '@/components/EditSessionDialog';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { useSessionActions } from '@/hooks/useSessionActions';
 import ProjectDetailsLayout from '@/components/project-details/ProjectDetailsLayout';
 import { UnifiedClientDetails } from '@/components/UnifiedClientDetails';
@@ -522,20 +523,27 @@ export default function SessionDetail() {
 
       {/* Edit Dialog */}
       {isEditDialogOpen && (
-        <EditSessionDialog
-          open={isEditDialogOpen}
-          onOpenChange={setIsEditDialogOpen}
-          sessionId={session.id}
-          leadId={session.lead_id}
-          currentSessionName={session.session_name || ''}
-          currentDate={session.session_date}
-          currentTime={session.session_time}
-          currentNotes={session.notes || ''}
-          currentLocation={session.location || ''}
-          currentProjectId={session.project_id}
-          leadName={session.leads?.name || ''}
-          onSessionUpdated={handleSessionUpdated}
-        />
+        <ErrorBoundary 
+          onError={(error) => {
+            console.error('Error in EditSessionDialog:', error);
+            setIsEditDialogOpen(false);
+          }}
+        >
+          <EditSessionDialog
+            open={isEditDialogOpen}
+            onOpenChange={setIsEditDialogOpen}
+            sessionId={session.id}
+            leadId={session.lead_id}
+            currentSessionName={session.session_name || ''}
+            currentDate={session.session_date}
+            currentTime={session.session_time}
+            currentNotes={session.notes || ''}
+            currentLocation={session.location || ''}
+            currentProjectId={session.project_id}
+            leadName={session.leads?.name || ''}
+            onSessionUpdated={handleSessionUpdated}
+          />
+        </ErrorBoundary>
       )}
 
       {/* Delete Confirmation Dialog */}

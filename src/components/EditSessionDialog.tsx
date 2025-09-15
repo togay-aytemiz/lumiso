@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppSheetModal } from "@/components/ui/app-sheet-modal";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Calendar, Clock, MapPin, User, Briefcase } from "lucide-react";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
 import { format } from "date-fns";
+import { Button } from "@/components/ui/button";
 
 interface Project {
   id: string;
@@ -48,6 +49,32 @@ const EditSessionDialog = ({
   onOpenChange 
 }: EditSessionDialogProps) => {
   const [projects, setProjects] = useState<Project[]>([]);
+  const [initError, setInitError] = useState<string | null>(null);
+
+  // Create initial data with error handling
+  const initialData = React.useMemo(() => {
+    try {
+      return {
+        session_name: currentSessionName || "",
+        session_date: currentDate || "",
+        session_time: currentTime || "",
+        notes: currentNotes || "",
+        location: currentLocation || "",
+        project_id: currentProjectId || ""
+      };
+    } catch (error) {
+      console.error('Error creating initial data:', error);
+      setInitError('Failed to initialize form data');
+      return {
+        session_name: "",
+        session_date: "",
+        session_time: "",
+        notes: "",
+        location: "",
+        project_id: ""
+      };
+    }
+  }, [currentSessionName, currentDate, currentTime, currentNotes, currentLocation, currentProjectId]);
 
   const {
     formData,
@@ -62,14 +89,7 @@ const EditSessionDialog = ({
     sessionId,
     leadId,
     leadName: leadName || "",
-    initialData: {
-      session_name: currentSessionName,
-      session_date: currentDate,
-      session_time: currentTime,
-      notes: currentNotes,
-      location: currentLocation,
-      project_id: currentProjectId
-    },
+    initialData,
     onSuccess: () => {
       onOpenChange?.(false);
       onSessionUpdated?.();
@@ -150,7 +170,23 @@ const EditSessionDialog = ({
         onDirtyClose={handleDirtyClose}
         footerActions={footerActions}
       >
-        <div className="space-y-6">
+        {initError ? (
+          <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
+            <p className="text-sm text-destructive">{initError}</p>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="mt-2"
+              onClick={() => {
+                setInitError(null);
+                onOpenChange?.(false);
+              }}
+            >
+              Close
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-6">
           {/* Form Fields */}
           <SessionFormFields
             leadName={leadName || ""}
@@ -242,6 +278,7 @@ const EditSessionDialog = ({
             </div>
           )}
         </div>
+        )}
       </AppSheetModal>
 
       <NavigationGuardDialog

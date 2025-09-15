@@ -44,7 +44,7 @@ export function AppSheetModal({
     onOpenChange(open);
   };
 
-  const handleOutsideInteraction = () => {
+  const handleOutsideInteraction = (e?: Event) => {    
     if (dirty && onDirtyClose) {
       onDirtyClose();
     } else {
@@ -79,11 +79,15 @@ export function AppSheetModal({
               e.preventDefault();
               return;
             }
-            handleOutsideInteraction();
+            
+            // Add small delay to prevent race conditions during initialization
+            setTimeout(() => handleOutsideInteraction(e), 50);
           } catch (err) {
             console.error('Mobile pointer interaction error:', err);
+            // Fallback: just prevent the interaction
+            e.preventDefault();
           }
-        }} 
+        }}
         onInteractOutside={e => {
           try {
             // Allow interactions with popover content
@@ -96,7 +100,7 @@ export function AppSheetModal({
               e.preventDefault();
               return;
             }
-            handleOutsideInteraction();
+            handleOutsideInteraction(e);
           } catch (err) {
             console.error('Mobile interaction error:', err);
           }

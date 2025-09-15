@@ -117,6 +117,9 @@ export function OnboardingTutorial({
           currentStepTitle={typeof currentStep.title === 'string' ? currentStep.title : 'Current Step'}
           onStay={handleStay}
           onReturnToGettingStarted={handleReturnToGettingStarted}
+          onOpenChange={(open) => {
+            if (!open) handleStay();
+          }}
         />
       </>
     );
@@ -162,6 +165,9 @@ export function OnboardingTutorial({
         currentStepTitle={typeof currentStep.title === 'string' ? currentStep.title : 'Current Step'}
         onStay={handleStay}
         onReturnToGettingStarted={handleReturnToGettingStarted}
+        onOpenChange={(open) => {
+          if (!open) handleStay();
+        }}
       />
     </>
   );

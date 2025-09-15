@@ -14,16 +14,18 @@ interface TutorialExitGuardDialogProps {
   onStay: () => void;
   onReturnToGettingStarted: () => void;
   currentStepTitle?: string;
+  onOpenChange?: (open: boolean) => void;
 }
 
 export function TutorialExitGuardDialog({ 
   open, 
   onStay, 
   onReturnToGettingStarted, 
-  currentStepTitle 
+  currentStepTitle,
+  onOpenChange
 }: TutorialExitGuardDialogProps) {
   return (
-    <AlertDialog open={open}>
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Exit Tutorial?</AlertDialogTitle>

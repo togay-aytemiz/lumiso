@@ -2,7 +2,8 @@ import { createRoot } from 'react-dom/client'
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import App from './App.tsx'
 import './index.css'
-import { Toaster } from "@/components/ui/sonner";
+import { Toaster as SonnerToaster } from "@/components/ui/sonner";
+import { Toaster as ShadToaster } from "@/components/ui/toaster";
 import { ProfileProvider } from "@/contexts/ProfileContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { OrganizationProvider } from "@/contexts/OrganizationContext";
@@ -28,7 +29,8 @@ createRoot(document.getElementById("root")!).render(
             <OnboardingProvider>
               <PerformanceMonitor />
               <App />
-              <Toaster />
+              <SonnerToaster />
+              <ShadToaster />
             </OnboardingProvider>
           </SettingsProvider>
         </ProfileProvider>

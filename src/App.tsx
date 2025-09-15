@@ -1,10 +1,5 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "@/contexts/AuthContext";
-import { ProfileProvider } from "@/contexts/ProfileContext";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import GettingStarted from "./pages/GettingStarted";
@@ -39,61 +34,53 @@ import Workflows from "./pages/Workflows";
 import Templates from "./pages/Templates";
 import TemplateBuilder from "./pages/TemplateBuilder";
 
-const queryClient = new QueryClient();
+
 
 const App = () => (
   <ErrorBoundary>
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <ProfileProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-          <Routes>
-            <Route path="/auth" element={<Auth />} />
-            {/* Team invitation routes removed for single photographer mode */}
-            <Route path="/" element={<ProtectedRoute />}>
-              <Route index element={<Index />} />
-              <Route path="getting-started" element={<GettingStarted />} />
-              <Route path="leads" element={<AllLeads />} />
-              <Route path="projects" element={<AllProjects />} />
-              <Route path="leads/:id" element={<LeadDetail />} />
-              <Route path="projects/:id" element={<ProjectDetail />} />
-              <Route path="sessions" element={<UpcomingSessions />} />
-              <Route path="sessions/:id" element={<SessionDetail />} />
-              <Route path="calendar" element={<Calendar />} />
-              <Route path="reminders" element={<ReminderDetails />} />
-              <Route path="analytics" element={<Analytics />} />
-              <Route path="payments" element={<Payments />} />
-              <Route path="workflows" element={<Workflows />} />
-              <Route path="templates" element={<Templates />} />
-              <Route path="template-builder" element={<TemplateBuilder />} />
-              <Route path="settings" element={<SettingsLayout />}>
-                <Route path="profile" element={<ProfileSettings />} />
-                <Route path="general" element={<GeneralSettings />} />
-                {/* Team management removed for single photographer mode */}
-                <Route path="notifications" element={<NotificationsSettings />} />
-                <Route path="projects" element={<ProjectsSettings />} />
-                <Route path="leads" element={<LeadsSettings />} />
-                <Route path="services" element={<ServicesSettings />} />
-                <Route path="integrations" element={<IntegrationsSettings />} />
-                <Route path="client-messaging" element={<ClientMessagingSettings />} />
-                <Route path="contracts" element={<ContractsSettings />} />
-                <Route path="billing" element={<BillingSettings />} />
-                <Route path="danger-zone" element={<DangerZoneSettings />} />
-                <Route index element={<Navigate to="/settings/profile" replace />} />
-              </Route>
+    <TooltipProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/auth" element={<Auth />} />
+          {/* Team invitation routes removed for single photographer mode */}
+          <Route path="/" element={<ProtectedRoute />}>
+            <Route index element={<Index />} />
+            <Route path="getting-started" element={<GettingStarted />} />
+            <Route path="leads" element={<AllLeads />} />
+            <Route path="projects" element={<AllProjects />} />
+            <Route path="leads/:id" element={<LeadDetail />} />
+            <Route path="projects/:id" element={<ProjectDetail />} />
+            <Route path="sessions" element={<UpcomingSessions />} />
+            <Route path="sessions/:id" element={<SessionDetail />} />
+            <Route path="calendar" element={<Calendar />} />
+            <Route path="reminders" element={<ReminderDetails />} />
+            <Route path="analytics" element={<Analytics />} />
+            <Route path="payments" element={<Payments />} />
+            <Route path="workflows" element={<Workflows />} />
+            <Route path="templates" element={<Templates />} />
+            <Route path="template-builder" element={<TemplateBuilder />} />
+            <Route path="settings" element={<SettingsLayout />}>
+              <Route path="profile" element={<ProfileSettings />} />
+              <Route path="general" element={<GeneralSettings />} />
+              {/* Team management removed for single photographer mode */}
+              <Route path="notifications" element={<NotificationsSettings />} />
+              <Route path="projects" element={<ProjectsSettings />} />
+              <Route path="leads" element={<LeadsSettings />} />
+              <Route path="services" element={<ServicesSettings />} />
+              <Route path="integrations" element={<IntegrationsSettings />} />
+              <Route path="client-messaging" element={<ClientMessagingSettings />} />
+              <Route path="contracts" element={<ContractsSettings />} />
+              <Route path="billing" element={<BillingSettings />} />
+              <Route path="danger-zone" element={<DangerZoneSettings />} />
+              <Route index element={<Navigate to="/settings/profile" replace />} />
             </Route>
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </ProfileProvider>
-  </AuthProvider>
-</QueryClientProvider>
-</ErrorBoundary>
+          </Route>
+          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </BrowserRouter>
+    </TooltipProvider>
+  </ErrorBoundary>
 );
 
 export default App;

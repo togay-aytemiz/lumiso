@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { BaseOnboardingModal, OnboardingAction } from "./BaseOnboardingModal";
 import { TutorialFloatingCard } from "./TutorialFloatingCard";
 import { useTutorialExit } from "@/hooks/useTutorialExit";
-import { useTutorialExit } from "@/hooks/useTutorialExit";
 
 export interface TutorialStep {
   id: number;

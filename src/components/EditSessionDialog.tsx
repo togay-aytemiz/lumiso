@@ -204,7 +204,6 @@ const EditSessionDialog = ({
 
           {/* Date & Time Selection */}
           <div className="space-y-4">
-            <Label>Reschedule Session *</Label>
             <CalendarTimePicker
               selectedDate={selectedDate}
               selectedTime={formData.session_time}

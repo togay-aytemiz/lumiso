@@ -121,7 +121,7 @@ export function TimeSlotPicker({ selectedDate, selectedTime, onTimeSelect, class
         </Badge>
       </div>
       
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-60 overflow-y-auto">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
         {timeSlots.map((slot) => (
           <Button
             key={slot}

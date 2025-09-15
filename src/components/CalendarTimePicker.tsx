@@ -105,7 +105,7 @@ export function CalendarTimePicker({
           <div className="flex items-center gap-3 p-4 bg-accent/10 rounded-lg border border-accent/20">
             <div className="flex items-center gap-2">
               {selectedDate && (
-                <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 text-primary rounded-md border border-primary/20">
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 text-emerald-700 rounded-md border border-emerald-500/20">
                   <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25m3 7.5v6a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 18.75v-6m15 0V9a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 9v6.75m15 0H3" />
                   </svg>

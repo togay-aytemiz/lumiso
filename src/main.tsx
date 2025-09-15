@@ -10,8 +10,9 @@ import { OrganizationProvider } from "@/contexts/OrganizationContext";
 import { SettingsProvider } from "@/contexts/SettingsContext";
 import { OnboardingProvider } from "@/contexts/OnboardingContext";
 import { PerformanceMonitor } from "@/components/PerformanceMonitor";
-
-const queryClient = new QueryClient({
+import { PortalResetProvider } from "@/contexts/PortalResetContext";
+ 
+ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 5 * 60 * 1000, // 5 minutes
@@ -22,19 +23,21 @@ const queryClient = new QueryClient({
 
 createRoot(document.getElementById("root")!).render(
   <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <OrganizationProvider>
-        <ProfileProvider>
-          <SettingsProvider>
-            <OnboardingProvider>
-              <PerformanceMonitor />
-              <App />
-              <SonnerToaster />
-              <ShadToaster />
-            </OnboardingProvider>
-          </SettingsProvider>
-        </ProfileProvider>
-      </OrganizationProvider>
-    </AuthProvider>
+    <PortalResetProvider>
+      <AuthProvider>
+        <OrganizationProvider>
+          <ProfileProvider>
+            <SettingsProvider>
+              <OnboardingProvider>
+                <PerformanceMonitor />
+                <App />
+                <SonnerToaster />
+                <ShadToaster />
+              </OnboardingProvider>
+            </SettingsProvider>
+          </ProfileProvider>
+        </OrganizationProvider>
+      </AuthProvider>
+    </PortalResetProvider>
   </QueryClientProvider>
 );

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useOnboarding } from "@/contexts/OnboardingContext";
+import { usePortalReset } from "@/contexts/PortalResetContext";
 
 interface UseTutorialExitOptions {
   currentStepTitle?: string;
@@ -13,6 +14,7 @@ export function useTutorialExit({ currentStepTitle, onExitComplete }: UseTutoria
   const navigate = useNavigate();
   const location = useLocation();
   const { skipOnboarding } = useOnboarding();
+  const { reset } = usePortalReset();
 
   const handleExitRequest = () => {
     if (isExiting) return;
@@ -31,6 +33,8 @@ export function useTutorialExit({ currentStepTitle, onExitComplete }: UseTutoria
     try {
       onExitComplete?.();
     } finally {
+      // Force remount of all Radix portals before navigating
+      try { reset(); } catch {}
       // Defer navigation to allow all portals to unmount cleanly
       setTimeout(() => {
         if (location.pathname !== "/getting-started") {

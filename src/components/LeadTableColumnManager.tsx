@@ -5,6 +5,7 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Settings2, RotateCcw, GripVertical } from 'lucide-react';
 import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
+import { useTranslation } from 'react-i18next';
 
 interface ColumnConfig {
   key: string;
@@ -35,6 +36,7 @@ export function LeadTableColumnManager({
   const [open, setOpen] = useState(false);
   const [localPreferences, setLocalPreferences] = useState<ColumnConfig[]>(columnPreferences);
   const [saving, setSaving] = useState(false);
+  const { t } = useTranslation('common');
 
   // Update local preferences when props change
   useEffect(() => {
@@ -112,13 +114,13 @@ export function LeadTableColumnManager({
 
   const footerActions = [
     {
-      label: 'Cancel',
+      label: t('buttons.cancel'),
       onClick: () => setOpen(false),
       variant: 'outline' as const,
       disabled: saving,
     },
     {
-      label: saving ? 'Saving...' : 'Save Changes',
+      label: saving ? t('actions.saving') : t('buttons.save_changes'),
       onClick: handleSave,
       disabled: saving,
       loading: saving,
@@ -129,8 +131,8 @@ export function LeadTableColumnManager({
     <>
       <Button variant="outline" size="sm" className="flex items-center gap-2" onClick={() => setOpen(true)}>
         <Settings2 className="h-4 w-4" />
-        <span className="hidden sm:inline">Customize Columns</span>
-        <span className="sm:hidden">Columns</span>
+        <span className="hidden sm:inline">{t('buttons.customize_columns')}</span>
+        <span className="sm:hidden">{t('buttons.columns')}</span>
         <Badge variant="secondary" className="ml-1">
           {visibleCount}
         </Badge>
@@ -139,17 +141,17 @@ export function LeadTableColumnManager({
       <AppSheetModal
         isOpen={open}
         onOpenChange={setOpen}
-        title="Customize Table Columns"
+        title={t('table.customizeTableColumns')}
         footerActions={footerActions}
       >
         <div className="space-y-3">
           <p className="text-sm text-muted-foreground">
-            Choose which columns to display and arrange their order. Drag to reorder columns.
+            {t('table.chooseColumnsDescription')}
           </p>
           
           <div className="flex items-center justify-between">
             <p className="text-sm text-muted-foreground">
-              {visibleCount} of {availableColumns.length} columns visible
+              {t('labels.visible_columns', { visible: visibleCount, total: availableColumns.length })}
             </p>
             <Button
               variant="ghost"
@@ -159,7 +161,7 @@ export function LeadTableColumnManager({
               className="text-muted-foreground hover:text-foreground h-8"
             >
               <RotateCcw className="h-3 w-3 mr-1" />
-              Reset
+              {t('buttons.reset')}
             </Button>
           </div>
 
@@ -197,11 +199,11 @@ export function LeadTableColumnManager({
                             <div className="min-w-0 flex-1">
                               <div className="flex items-center gap-1.5">
                                 <span className="font-medium truncate">{column.label}</span>
-                                {column.isCore && (
-                                  <Badge variant="outline" className="text-[10px] px-1 py-0 h-4">
-                                    Core
-                                  </Badge>
-                                )}
+                                 {column.isCore && (
+                                   <Badge variant="outline" className="text-[10px] px-1 py-0 h-4">
+                                     {t('table.core')}
+                                   </Badge>
+                                 )}
                               </div>
                               {column.fieldDefinition && (
                                 <div className="text-[10px] text-muted-foreground">
@@ -227,7 +229,7 @@ export function LeadTableColumnManager({
           </DragDropContext>
 
           <div className="text-[10px] text-muted-foreground bg-muted/30 p-2 rounded text-center">
-            Core columns are always visible and can be reordered but not hidden.
+            {t('table.coreColumnsNote')}
           </div>
         </div>
       </AppSheetModal>

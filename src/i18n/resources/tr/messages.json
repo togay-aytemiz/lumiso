@@ -7,7 +7,10 @@
     "uploaded": "Başarıyla yüklendi",
     "sent": "Başarıyla gönderildi",
     "imported": "Başarıyla içe aktarıldı",
-    "exported": "Başarıyla dışa aktarıldı"
+    "exported": "Başarıyla dışa aktarıldı",
+    "projectUpdated": "Proje başarıyla güncellendi.",
+    "projectDeleted": "Proje ve tüm ilgili veriler başarıyla silindi.",
+    "sessionDeleted": "Seans başarıyla silindi."
   },
   "error": {
     "generic": "Bir şeyler ters gitti. Lütfen tekrar deneyin.",
@@ -17,13 +20,21 @@
     "validation": "Lütfen formdaki hataları kontrol edin.",
     "upload": "Dosya yükleme başarısız. Lütfen tekrar deneyin.",
     "delete": "Silme işlemi başarısız. Lütfen tekrar deneyin.",
-    "save": "Kaydetme işlemi başarısız. Lütfen tekrar deneyin."
+    "save": "Kaydetme işlemi başarısız. Lütfen tekrar deneyin.",
+    "loadingSessions": "Seanslar yüklenirken hata",
+    "updatingProject": "Proje güncellenirken hata",
+    "deletingProject": "Proje silinirken hata",
+    "deletingSession": "Seans silinirken hata",
+    "actionFailed": "İşlem başarısız",
+    "archiveUpdateFailed": "Arşiv durumu güncellenemedi"
   },
   "confirm": {
     "delete": "Bu öğeyi silmek istediğinizden emin misiniz?",
     "cancel": "İptal etmek istediğinizden emin misiniz?",
     "unsavedChanges": "Kaydedilmemiş değişiklikleriniz var. Devam etmek istiyor musunuz?",
-    "permanent": "Bu işlem geri alınamaz."
+    "permanent": "Bu işlem geri alınamaz.",
+    "deleteProject": "Bu projeyi silmek istediğinizden emin misiniz?",
+    "deleteProjectWarning": "Bu, projeyi ve seanslar, aktiviteler, yapılacaklar ve ödemeler dahil tüm ilişkili verileri kalıcı olarak silecektir. Bu işlem geri alınamaz."
   },
   "info": {
     "noData": "Veri yok",
@@ -31,6 +42,7 @@
     "loading": "Veri yükleniyor...",
     "processing": "İstek işleniyor...",
     "selectItem": "Lütfen bir öğe seçin",
-    "allFieldsOptional": "Tüm alanlar isteğe bağlıdır"
+    "allFieldsOptional": "Tüm alanlar isteğe bağlıdır",
+    "userNotAuthenticated": "Kullanıcı kimlik doğrulaması yapılmadı"
   }
 }

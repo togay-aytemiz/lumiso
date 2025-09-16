@@ -24,7 +24,13 @@
     "filter": "Filter",
     "export": "Export",
     "import": "Import",
-    "get_started": "Get Started"
+    "get_started": "Get Started",
+    "customize_columns": "Customize Columns",
+    "columns": "Columns",
+    "save_changes": "Save Changes",
+    "view_details": "View Details",
+    "archive": "Archive",
+    "restore": "Restore"
   },
   "labels": {
     "name": "Name",
@@ -43,7 +49,11 @@
     "total": "Total",
     "subtotal": "Subtotal",
     "tax": "Tax",
-    "discount": "Discount"
+    "discount": "Discount",
+    "project_name": "Project name",
+    "project_description": "Project description (optional)",
+    "showing_results": "Showing {{start}} to {{end}} of {{total}} results",
+    "visible_columns": "{{visible}} of {{total}} columns visible"
   },
   "status": {
     "active": "Active",
@@ -61,5 +71,12 @@
     "processing": "Processing...",
     "uploading": "Uploading...",
     "downloading": "Downloading..."
+  },
+  "table": {
+    "noDataAvailable": "No data available",
+    "customizeTableColumns": "Customize Table Columns",
+    "chooseColumnsDescription": "Choose which columns to display and arrange their order. Drag to reorder columns.",
+    "coreColumnsNote": "Core columns are always visible and can be reordered but not hidden.",
+    "core": "Core"
   }
 }

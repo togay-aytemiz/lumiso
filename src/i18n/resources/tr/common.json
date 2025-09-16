@@ -24,7 +24,13 @@
     "filter": "Filtrele",
     "export": "Dışa Aktar",
     "import": "İçe Aktar",
-    "get_started": "Başla"
+    "get_started": "Başla",
+    "customize_columns": "Sütunları Özelleştir",
+    "columns": "Sütunlar",
+    "save_changes": "Değişiklikleri Kaydet",
+    "view_details": "Detayları Görüntüle",
+    "archive": "Arşivle",
+    "restore": "Geri Yükle"
   },
   "labels": {
     "name": "Ad",
@@ -43,7 +49,11 @@
     "total": "Toplam",
     "subtotal": "Ara Toplam",
     "tax": "Vergi",
-    "discount": "İndirim"
+    "discount": "İndirim",
+    "project_name": "Proje adı",
+    "project_description": "Proje açıklaması (isteğe bağlı)",
+    "showing_results": "{{total}} sonucun {{start}} - {{end}} arası gösteriliyor",
+    "visible_columns": "{{total}} sütunun {{visible}} tanesi görünür"
   },
   "status": {
     "active": "Aktif",
@@ -61,5 +71,12 @@
     "processing": "İşleniyor...",
     "uploading": "Yükleniyor...",
     "downloading": "İndiriliyor..."
+  },
+  "table": {
+    "noDataAvailable": "Veri yok",
+    "customizeTableColumns": "Tablo Sütunlarını Özelleştir",
+    "chooseColumnsDescription": "Hangi sütunların görüntüleneceğini seçin ve sıralarını düzenleyin. Sütunları yeniden sıralamak için sürükleyin.",
+    "coreColumnsNote": "Temel sütunlar her zaman görünür ve yeniden sıralanabilir ancak gizlenemez.",
+    "core": "Temel"
   }
 }

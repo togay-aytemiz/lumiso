@@ -5,6 +5,7 @@ import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useDataTable, type Column } from "@/hooks/useDataTable";
 import { DataTableContainer } from "./data-table-container";
+import { useTranslation } from "react-i18next";
 export type { Column } from "@/hooks/useDataTable";
 interface DataTableProps<T> {
   data: T[];
@@ -22,6 +23,7 @@ export function DataTable<T>({
   emptyState,
   className
 }: DataTableProps<T>) {
+  const { t } = useTranslation('common');
   const {
     paginatedData,
     totalItems,
@@ -46,7 +48,7 @@ export function DataTable<T>({
   return <div className={className}>
       {/* Results info */}
       {totalItems > 0 && <div className="mb-4 text-sm text-muted-foreground my-[20px] mx-[12px] px-0">
-          Showing {startIndex} to {endIndex} of {totalItems} results
+          {t('labels.showing_results', { start: startIndex, end: endIndex, total: totalItems })}
         </div>}
 
       {/* Table */}
@@ -75,7 +77,7 @@ export function DataTable<T>({
                   </TableRow>) : <TableRow>
                   <TableCell colSpan={columns.length} className="h-24">
                     {emptyState || <div className="text-center text-muted-foreground">
-                        No data available
+                        {t('table.noDataAvailable')}
                       </div>}
                   </TableCell>
                 </TableRow>}

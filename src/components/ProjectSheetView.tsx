@@ -24,6 +24,7 @@ import { UnifiedClientDetails } from "@/components/UnifiedClientDetails";
 import { SessionWithStatus } from "@/lib/sessionSorting";
 import { onArchiveToggle } from "@/components/ViewProjectDialog";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useTranslation } from "react-i18next";
 
 interface Project {
   id: string;
@@ -95,6 +96,7 @@ export function ProjectSheetView({
   const [localStatusId, setLocalStatusId] = useState<string | null | undefined>(null);
   const { toast } = useToast();
   const isMobile = useIsMobile();
+  const { t } = useTranslation(['common', 'messages']);
 
   const fetchProjectSessions = async () => {
     if (!project) return;
@@ -245,7 +247,7 @@ export function ProjectSheetView({
     setIsSaving(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
+      if (!user) throw new Error(t('messages:info.userNotAuthenticated'));
 
       const { error: projectError } = await supabase
         .from('projects')
@@ -260,7 +262,7 @@ export function ProjectSheetView({
 
       toast({
         title: "Success",
-        description: "Project updated successfully."
+        description: t('messages:success.projectUpdated')
       });
 
       if (editProjectTypeId) {
@@ -335,7 +337,7 @@ export function ProjectSheetView({
 
       toast({
         title: "Success",
-        description: "Project and all related data deleted successfully."
+        description: t('messages:success.projectDeleted')
       });
 
       onOpenChange(false);
@@ -369,14 +371,14 @@ export function ProjectSheetView({
       
       toast({
         title: "Success",
-        description: "Session deleted successfully."
+        description: t('messages:success.sessionDeleted')
       });
       
       fetchProjectSessions();
       onProjectUpdated();
     } catch (error: any) {
       toast({
-        title: "Error deleting session",
+        title: t('messages:error.deletingSession'),
         description: error.message,
         variant: "destructive"
       });
@@ -402,8 +404,8 @@ export function ProjectSheetView({
       onProjectUpdated();
     } catch (e: any) {
       toast({
-        title: 'Action failed',
-        description: e.message || 'Could not update archive state',
+        title: t('messages:error.actionFailed'),
+        description: e.message || t('messages:error.archiveUpdateFailed'),
         variant: 'destructive'
       });
     }
@@ -420,13 +422,13 @@ export function ProjectSheetView({
             <Input 
               value={editName} 
               onChange={e => setEditName(e.target.value)} 
-              placeholder="Project name" 
+              placeholder={t('labels.project_name')} 
               className="text-2xl font-bold border rounded-md px-3 py-2" 
             />
             <Textarea 
               value={editDescription} 
               onChange={e => setEditDescription(e.target.value)} 
-              placeholder="Project description (optional)" 
+              placeholder={t('labels.project_description')} 
               className="text-base border rounded-md px-3 py-2 resize-none" 
               rows={2} 
             />
@@ -443,7 +445,7 @@ export function ProjectSheetView({
                 disabled={isSaving || !editName.trim() || !editProjectTypeId}
               >
                 <Save className="h-4 w-4 mr-1" />
-                {isSaving ? "Saving..." : "Save"}
+                {isSaving ? t('actions.saving') : t('buttons.save')}
               </Button>
               <Button 
                 size="sm" 
@@ -457,7 +459,7 @@ export function ProjectSheetView({
                 disabled={isSaving}
               >
                 <X className="h-4 w-4 mr-1" />
-                Cancel
+                {t('buttons.cancel')}
               </Button>
             </div>
           </div>

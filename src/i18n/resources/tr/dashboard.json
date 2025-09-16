@@ -1,0 +1,18 @@
+{
+  "title": "Gösterge Paneli",
+  "welcome": "Tekrar hoşgeldiniz",
+  "stats": {
+    "totalProjects": "Toplam Proje",
+    "activeLeads": "Aktif Müşteri Adayı",
+    "upcomingSessions": "Yaklaşan Seans",
+    "revenue": "Gelir"
+  },
+  "quickActions": {
+    "newProject": "Yeni Proje",
+    "addLead": "Müşteri Adayı Ekle",
+    "scheduleSession": "Seans Planla",
+    "viewCalendar": "Takvimi Görüntüle"
+  },
+  "recentActivity": "Son Aktiviteler",
+  "upcomingTasks": "Yaklaşan Görevler"
+}

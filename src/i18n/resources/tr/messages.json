@@ -1,0 +1,36 @@
+{
+  "success": {
+    "saved": "Başarıyla kaydedildi",
+    "created": "Başarıyla oluşturuldu",
+    "updated": "Başarıyla güncellendi",
+    "deleted": "Başarıyla silindi",
+    "uploaded": "Başarıyla yüklendi",
+    "sent": "Başarıyla gönderildi",
+    "imported": "Başarıyla içe aktarıldı",
+    "exported": "Başarıyla dışa aktarıldı"
+  },
+  "error": {
+    "generic": "Bir şeyler ters gitti. Lütfen tekrar deneyin.",
+    "network": "Ağ hatası. Lütfen bağlantınızı kontrol edin.",
+    "unauthorized": "Bu işlemi gerçekleştirme yetkiniz yok.",
+    "notFound": "İstenen kaynak bulunamadı.",
+    "validation": "Lütfen formdaki hataları kontrol edin.",
+    "upload": "Dosya yükleme başarısız. Lütfen tekrar deneyin.",
+    "delete": "Silme işlemi başarısız. Lütfen tekrar deneyin.",
+    "save": "Kaydetme işlemi başarısız. Lütfen tekrar deneyin."
+  },
+  "confirm": {
+    "delete": "Bu öğeyi silmek istediğinizden emin misiniz?",
+    "cancel": "İptal etmek istediğinizden emin misiniz?",
+    "unsavedChanges": "Kaydedilmemiş değişiklikleriniz var. Devam etmek istiyor musunuz?",
+    "permanent": "Bu işlem geri alınamaz."
+  },
+  "info": {
+    "noData": "Veri yok",
+    "empty": "Bu liste boş",
+    "loading": "Veri yükleniyor...",
+    "processing": "İstek işleniyor...",
+    "selectItem": "Lütfen bir öğe seçin",
+    "allFieldsOptional": "Tüm alanlar isteğe bağlıdır"
+  }
+}

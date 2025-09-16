@@ -1,0 +1,59 @@
+{
+  "buttons": {
+    "save": "Kaydet",
+    "cancel": "İptal",
+    "delete": "Sil",
+    "edit": "Düzenle",
+    "add": "Ekle",
+    "create": "Oluştur",
+    "update": "Güncelle",
+    "close": "Kapat",
+    "confirm": "Onayla",
+    "back": "Geri",
+    "next": "İleri",
+    "previous": "Önceki",
+    "submit": "Gönder",
+    "reset": "Sıfırla",
+    "clear": "Temizle",
+    "search": "Ara",
+    "filter": "Filtrele",
+    "export": "Dışa Aktar",
+    "import": "İçe Aktar"
+  },
+  "labels": {
+    "name": "Ad",
+    "email": "E-posta",
+    "phone": "Telefon",
+    "address": "Adres",
+    "date": "Tarih",
+    "time": "Saat",
+    "status": "Durum",
+    "description": "Açıklama",
+    "notes": "Notlar",
+    "type": "Tür",
+    "category": "Kategori",
+    "price": "Fiyat",
+    "amount": "Tutar",
+    "total": "Toplam",
+    "subtotal": "Ara Toplam",
+    "tax": "Vergi",
+    "discount": "İndirim"
+  },
+  "status": {
+    "active": "Aktif",
+    "inactive": "Pasif",
+    "pending": "Beklemede",
+    "completed": "Tamamlandı",
+    "cancelled": "İptal Edildi",
+    "draft": "Taslak",
+    "published": "Yayınlandı"
+  },
+  "actions": {
+    "loading": "Yükleniyor...",
+    "saving": "Kaydediliyor...",
+    "deleting": "Siliniyor...",
+    "processing": "İşleniyor...",
+    "uploading": "Yükleniyor...",
+    "downloading": "İndiriliyor..."
+  }
+}

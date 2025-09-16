@@ -2,6 +2,7 @@ import { createRoot } from 'react-dom/client'
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import App from './App.tsx'
 import './index.css'
+import './i18n'; // Initialize i18n
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import { Toaster as ShadToaster } from "@/components/ui/toaster";
 import { ProfileProvider } from "@/contexts/ProfileContext";

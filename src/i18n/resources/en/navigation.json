@@ -1,0 +1,40 @@
+{
+  "menu": {
+    "dashboard": "Dashboard",
+    "projects": "Projects",
+    "leads": "Leads",
+    "sessions": "Sessions",
+    "calendar": "Calendar",
+    "payments": "Payments",
+    "analytics": "Analytics",
+    "templates": "Templates",
+    "workflows": "Workflows",
+    "settings": "Settings",
+    "help": "Help & Support",
+    "administration": "Administration"
+  },
+  "sections": {
+    "main": "MAIN",
+    "management": "MANAGEMENT",
+    "tools": "TOOLS",
+    "system": "SYSTEM"
+  },
+  "settings": {
+    "profile": "Profile",
+    "general": "General",
+    "notifications": "Notifications",
+    "billing": "Billing",
+    "integrations": "Integrations",
+    "services": "Services",
+    "projects": "Projects",
+    "leads": "Leads",
+    "clientMessaging": "Client Messaging",
+    "contracts": "Contracts",
+    "dangerZone": "Danger Zone"
+  },
+  "admin": {
+    "localization": "Localization",
+    "users": "Users",
+    "system": "System"
+  }
+}

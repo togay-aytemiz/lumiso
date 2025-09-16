@@ -1,0 +1,34 @@
+{
+  "validation": {
+    "required": "This field is required",
+    "email": "Please enter a valid email address",
+    "phone": "Please enter a valid phone number",
+    "minLength": "Minimum {{count}} characters required",
+    "maxLength": "Maximum {{count}} characters allowed",
+    "numeric": "Please enter a valid number",
+    "date": "Please enter a valid date",
+    "time": "Please enter a valid time"
+  },
+  "placeholders": {
+    "enterName": "Enter name",
+    "enterEmail": "Enter email address",
+    "enterPhone": "Enter phone number",
+    "selectDate": "Select date",
+    "selectTime": "Select time",
+    "selectStatus": "Select status",
+    "enterNotes": "Enter notes or description",
+    "search": "Search..."
+  },
+  "labels": {
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "fullName": "Full Name",
+    "emailAddress": "Email Address",
+    "phoneNumber": "Phone Number",
+    "dateOfBirth": "Date of Birth",
+    "address": "Address",
+    "city": "City",
+    "country": "Country",
+    "postalCode": "Postal Code"
+  }
+}

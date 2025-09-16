@@ -1,0 +1,40 @@
+{
+  "menu": {
+    "dashboard": "Gösterge Paneli",
+    "projects": "Projeler",
+    "leads": "Müşteri Adayları",
+    "sessions": "Seanslar",
+    "calendar": "Takvim",
+    "payments": "Ödemeler",
+    "analytics": "Analizler",
+    "templates": "Şablonlar",
+    "workflows": "İş Akışları",
+    "settings": "Ayarlar",
+    "help": "Yardım ve Destek",
+    "administration": "Yönetim"
+  },
+  "sections": {
+    "main": "ANA",
+    "management": "YÖNETİM",
+    "tools": "ARAÇLAR",
+    "system": "SİSTEM"
+  },
+  "settings": {
+    "profile": "Profil",
+    "general": "Genel",
+    "notifications": "Bildirimler",
+    "billing": "Faturalandırma",
+    "integrations": "Entegrasyonlar",
+    "services": "Hizmetler",
+    "projects": "Projeler",
+    "leads": "Müşteri Adayları",
+    "clientMessaging": "Müşteri Mesajlaşma",
+    "contracts": "Sözleşmeler",
+    "dangerZone": "Tehlikeli Bölge"
+  },
+  "admin": {
+    "localization": "Yerelleştirme",
+    "users": "Kullanıcılar",
+    "system": "Sistem"
+  }
+}

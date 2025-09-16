@@ -1,0 +1,56 @@
+import i18n from 'i18next';
+import { initReactI18next } from 'react-i18next';
+import LanguageDetector from 'i18next-browser-languagedetector';
+
+// Import translation resources
+import enCommon from './resources/en/common.json';
+import enDashboard from './resources/en/dashboard.json';
+import enForms from './resources/en/forms.json';
+import enNavigation from './resources/en/navigation.json';
+import enMessages from './resources/en/messages.json';
+
+import trCommon from './resources/tr/common.json';
+import trDashboard from './resources/tr/dashboard.json';
+import trForms from './resources/tr/forms.json';
+import trNavigation from './resources/tr/navigation.json';
+import trMessages from './resources/tr/messages.json';
+
+const resources = {
+  en: {
+    common: enCommon,
+    dashboard: enDashboard,
+    forms: enForms,
+    navigation: enNavigation,
+    messages: enMessages,
+  },
+  tr: {
+    common: trCommon,
+    dashboard: trDashboard,
+    forms: trForms,
+    navigation: trNavigation,
+    messages: trMessages,
+  },
+};
+
+i18n
+  .use(LanguageDetector)
+  .use(initReactI18next)
+  .init({
+    resources,
+    fallbackLng: 'en',
+    debug: false,
+    
+    detection: {
+      order: ['localStorage', 'navigator', 'htmlTag'],
+      caches: ['localStorage'],
+    },
+
+    interpolation: {
+      escapeValue: false,
+    },
+
+    defaultNS: 'common',
+    ns: ['common', 'dashboard', 'forms', 'navigation', 'messages'],
+  });
+
+export default i18n;

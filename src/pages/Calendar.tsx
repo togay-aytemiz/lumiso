@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -11,6 +11,10 @@ import { formatDate, formatTime, getUserLocale, getStartOfWeek, getEndOfWeek } f
 import { addDays, startOfMonth, endOfMonth, eachDayOfInterval, format, isToday, isSameMonth, startOfWeek, endOfWeek, addMonths, subMonths, addWeeks, subWeeks, isSameDay, startOfDay, endOfDay } from "date-fns";
 import { PageHeader, PageHeaderSearch, PageHeaderActions } from "@/components/ui/page-header";
 import SessionSheetView from "@/components/SessionSheetView";
+import { useOptimizedCalendarData } from "@/hooks/useOptimizedCalendarData";
+import { useOptimizedCalendarEvents } from "@/hooks/useOptimizedCalendarEvents";
+import { CalendarErrorWrapper } from "@/components/calendar/CalendarErrorBoundary";
+import { CalendarLoadingSpinner } from "@/components/calendar/CalendarLoadingSpinner";
 
 type ViewMode = "day" | "week" | "month";
 
@@ -49,177 +53,17 @@ export default function Calendar() {
     localStorage.setItem("calendar:viewMode", viewMode);
   }, [viewMode]);
 
-  // Fetch sessions
-  const { data: sessions = [] } = useQuery({
-    queryKey: ["sessions"],
-    queryFn: async () => {
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user) return [];
-
-      // Get user's active organization ID
-      const { data: organizationId } = await supabase.rpc('get_user_active_organization_id');
-      if (!organizationId) return [];
-
-      const { data, error } = await supabase
-        .from("sessions")
-        .select(`
-          id,
-          session_date,
-          session_time,
-          status,
-          notes,
-          lead_id,
-          project_id,
-          leads!inner(id, name),
-          projects(id, name, status_id)
-        `)
-        .eq('organization_id', organizationId)
-        .order("session_date", { ascending: true });
-      if (error) throw error;
-      
-      // Get archived status
-      const { data: archivedStatus } = await supabase
-        .from('project_statuses')
-        .select('id, name')
-        .eq('organization_id', organizationId)
-        .ilike('name', 'archived')
-        .maybeSingle();
-      
-      const filteredSessions = (data || []).filter(session => {
-        // Must have a valid lead reference (inner join ensures this)
-        if (!session.leads) return false;
-        
-        // If session has a project, check if it's archived
-        if (session.project_id && session.projects) {
-          if (archivedStatus?.id && session.projects.status_id === archivedStatus.id) {
-            return false;
-          }
-        }
-        
-        return true;
-      });
-
-      return filteredSessions.map(s => ({
-        id: s.id,
-        session_date: s.session_date,
-        session_time: s.session_time,
-        status: s.status,
-        notes: s.notes,
-        lead_id: s.lead_id,
-        project_id: s.project_id
-      })) as Session[];
-    },
-  });
-
-  // Fetch activities (reminders)
-  const { data: activities = [] } = useQuery({
-    queryKey: ["activities"],
-    queryFn: async () => {
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user) return [];
-
-      // Get user's active organization ID
-      const { data: organizationId } = await supabase.rpc('get_user_active_organization_id');
-      if (!organizationId) return [];
-
-      const { data, error } = await supabase
-        .from("activities")
-        .select("*")
-        .eq('organization_id', organizationId)
-        .order("reminder_date", { ascending: true });
-      
-      if (error) throw error;
-      
-      // Get archived project status
-      const { data: archivedStatus } = await supabase
-        .from('project_statuses')
-        .select('id, name')
-        .eq('organization_id', organizationId)
-        .ilike('name', 'archived')
-        .maybeSingle();
-
-      // Get all projects with their statuses to check for archived ones
-      const { data: projects } = await supabase
-        .from('projects')
-        .select('id, status_id')
-        .eq('organization_id', organizationId);
-      
-      const archivedProjectIds = projects?.filter(project => 
-        project.status_id === archivedStatus?.id
-      ).map(project => project.id) || [];
-
-      const filteredActivities = (data || []).filter(activity => {
-        // Must have reminder_date
-        if (!activity.reminder_date) {
-          return false;
-        }
-        
-        // If activity has a project, check if it's archived
-        if (activity.project_id && archivedProjectIds.includes(activity.project_id)) {
-          return false; // Filter out activities from archived projects
-        }
-        
-        return true;
-      });
-
-      return filteredActivities.map(a => ({
-        id: a.id,
-        content: a.content,
-        reminder_date: a.reminder_date,
-        reminder_time: a.reminder_time,
-        type: a.type,
-        lead_id: a.lead_id,
-        project_id: a.project_id,
-        completed: a.completed
-      })) as Activity[];
-    },
-  });
-
-  // Minimal data for display
-  const { data: projects = [] } = useQuery({
-    queryKey: ["projects-min"],
-    queryFn: async () => {
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user) return [];
-
-      // Get user's active organization ID
-      const { data: organizationId } = await supabase.rpc('get_user_active_organization_id');
-      if (!organizationId) return [];
-
-      const { data, error } = await supabase
-        .from("projects")
-        .select("id,name,lead_id")
-        .eq('organization_id', organizationId);
-      if (error) throw error;
-      return data as { id: string; name: string; lead_id: string }[];
-    },
-  });
-
-  const { data: leads = [] } = useQuery({
-    queryKey: ["leads-min"],
-    queryFn: async () => {
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user) return [];
-
-      // Get user's active organization ID
-      const { data: organizationId } = await supabase.rpc('get_user_active_organization_id');
-      if (!organizationId) return [];
-
-      const { data, error } = await supabase
-        .from("leads")
-        .select("id,name")
-        .eq('organization_id', organizationId);
-      if (error) throw error;
-      return data as { id: string; name: string }[];
-    },
-  });
-
-  const projectsMap = useMemo(() =>
-    Object.fromEntries(projects.map((p) => [p.id, p])),
-  [projects]);
-  const leadsMap = useMemo(() =>
-    Object.fromEntries(leads.map((l) => [l.id, l])),
-  [leads]);
+  // Use optimized calendar data hook
+  const { 
+    sessions, 
+    activities, 
+    projects, 
+    leads, 
+    projectsMap, 
+    leadsMap, 
+    isLoading, 
+    error 
+  } = useOptimizedCalendarData(currentDate, viewMode);
 
   const [projectDialogOpen, setProjectDialogOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<any | null>(null);
@@ -230,8 +74,9 @@ export default function Calendar() {
   const queryClient = useQueryClient();
 
   const refreshCalendar = () => {
-    queryClient.invalidateQueries({ queryKey: ["sessions"] });
-    queryClient.invalidateQueries({ queryKey: ["activities"] });
+    queryClient.invalidateQueries({ queryKey: ["optimized-sessions"] });
+    queryClient.invalidateQueries({ queryKey: ["optimized-activities"] });
+    queryClient.invalidateQueries({ queryKey: ["calendar-reference-data"] });
   };
 
   const [showSessions, setShowSessions] = useState<boolean>(() => localStorage.getItem("calendar:showSessions") !== "false");
@@ -240,6 +85,19 @@ export default function Calendar() {
     localStorage.setItem("calendar:showSessions", String(showSessions));
     localStorage.setItem("calendar:showReminders", String(showReminders));
   }, [showSessions, showReminders]);
+
+  // Use optimized events processing
+  const { getEventsForDate, eventStats } = useOptimizedCalendarEvents(
+    sessions,
+    activities,
+    showSessions,
+    showReminders
+  );
+
+  // Show loading state while data is being fetched
+  if (isLoading) {
+    return <CalendarLoadingSpinner />;
+  }
   const openProjectById = async (projectId?: string | null) => {
     if (!projectId) return;
     const { data, error } = await supabase
@@ -297,35 +155,7 @@ export default function Calendar() {
     }
   };
 
-  // Get events for current view
-  const getEventsForDate = (date: Date) => {
-    const dateStr = format(date, "yyyy-MM-dd");
-    
-    const daySessions = sessions
-      .filter(session => session.session_date === dateStr)
-      .sort((a, b) => a.session_time.localeCompare(b.session_time));
-      
-  const dayActivities = activities
-    .filter(activity => {
-      if (!activity.reminder_date) return false;
-      try {
-        const activityDate = format(new Date(activity.reminder_date), "yyyy-MM-dd");
-        console.log('Activity date:', activityDate, 'Target date:', dateStr, 'Match:', activityDate === dateStr);
-        return activityDate === dateStr;
-      } catch (error) {
-        console.error('Error parsing activity date:', activity.reminder_date, error);
-        return false;
-      }
-    })
-    .sort((a, b) => {
-      if (!a.reminder_time && !b.reminder_time) return 0;
-      if (!a.reminder_time) return 1;
-      if (!b.reminder_time) return -1;
-      return a.reminder_time.localeCompare(b.reminder_time);
-    });
-    
-    return { sessions: daySessions, activities: dayActivities };
-  };
+  // getEventsForDate is now provided by useOptimizedCalendarEvents hook
 
   // Add touch/swipe handlers
   const [touchStart, setTouchStart] = useState<number | null>(null);
@@ -865,11 +695,12 @@ export default function Calendar() {
   };
 
   return (
-    <>
-      <PageHeader 
-        title="Calendar"
-        subtitle="Manage your sessions and reminders"
-      />
+    <CalendarErrorWrapper error={error} retry={refreshCalendar}>
+      <>
+        <PageHeader 
+          title="Calendar"
+          subtitle="Manage your sessions and reminders"
+        />
 
       {/* Desktop controls in separate row */}
       <div className="hidden lg:block px-4 sm:px-6 lg:px-6">
@@ -1046,6 +877,7 @@ export default function Calendar() {
             onNavigateToProject={(projectId) => openProjectById(projectId)}
           />
         )}
-    </>
+      </>
+    </CalendarErrorWrapper>
   );
 }

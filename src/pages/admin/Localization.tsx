@@ -182,8 +182,17 @@ export default function AdminLocalization() {
     const files = event.target.files;
     if (!files || files.length === 0) return;
 
+    // Process files with file writing capability
     const results = await Promise.all(
-      Array.from(files).map(file => uploadTranslationFile(file))
+      Array.from(files).map(async (file) => {
+        // Create a file writer function that will write files immediately
+        const fileWriter = async (filePath: string, content: string) => {
+          // Create a promise that will be resolved when the file is written
+          await writeTranslationFile(filePath, content);
+        };
+        
+        return uploadTranslationFile(file, fileWriter);
+      })
     );
 
     const successCount = results.filter(Boolean).length;
@@ -192,19 +201,42 @@ export default function AdminLocalization() {
     if (successCount === totalCount) {
       toast({
         title: "Success",
-        description: `Successfully processed ${totalCount} file${totalCount > 1 ? 's' : ''}`,
+        description: `Successfully uploaded ${successCount} translation file(s)`,
       });
-    } else if (successCount > 0) {
+    } else {
       toast({
         title: "Partial Success",
-        description: `Processed ${successCount} of ${totalCount} files successfully`,
+        description: `Uploaded ${successCount}/${totalCount} files successfully`,
         variant: "destructive",
       });
     }
 
-    // Reset the file input
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+    // Reset the input and reload data
+    event.target.value = '';
+    await loadData();
+  };
+
+  // Function to handle actual file writing
+  const writeTranslationFile = async (filePath: string, content: string) => {
+    // Store the file write request for batch processing
+    const pendingWrites = JSON.parse(localStorage.getItem('pendingTranslationWrites') || '[]');
+    pendingWrites.push({ filePath, content, timestamp: Date.now() });
+    localStorage.setItem('pendingTranslationWrites', JSON.stringify(pendingWrites));
+    
+    // Trigger immediate processing
+    processPendingWrites();
+  };
+
+  // Process pending file writes
+  const processPendingWrites = () => {
+    const pendingWrites = JSON.parse(localStorage.getItem('pendingTranslationWrites') || '[]');
+    if (pendingWrites.length > 0) {
+      // Emit custom event that parent component can listen to
+      window.dispatchEvent(new CustomEvent('processPendingTranslationWrites', {
+        detail: { writes: pendingWrites }
+      }));
+      // Clear pending writes
+      localStorage.removeItem('pendingTranslationWrites');
     }
   };
 

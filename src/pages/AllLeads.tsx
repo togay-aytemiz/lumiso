@@ -17,6 +17,7 @@ import { LeadTableColumnManager } from "@/components/LeadTableColumnManager";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { TableLoadingSkeleton } from "@/components/ui/loading-presets";
+import { useTranslation } from "react-i18next";
 
 const AllLeadsNew = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -27,6 +28,7 @@ const AllLeadsNew = () => {
   const [isSchedulingTutorial, setIsSchedulingTutorial] = useState(false);
   const navigate = useNavigate();
   const { currentStep, completeCurrentStep } = useOnboarding();
+  const { t } = useTranslation('pages');
 
   // Use new hooks
   const { leads, loading: leadsLoading, refetch: refetchLeads } = useLeadsWithCustomFields();
@@ -44,29 +46,29 @@ const AllLeadsNew = () => {
   const leadsTutorialSteps: TutorialStep[] = [
     {
       id: 1,
-      title: "Welcome to Lead Management",
-      description: "This is your leads dashboard where you can track and manage all your potential clients. Here's what you can do:",
+      title: t('leads.tutorial.welcome.title'),
+      description: t('leads.tutorial.welcome.description'),
       content: (
         <div className="space-y-4">
           <div className="flex items-start gap-3">
             <Users className="w-5 h-5 text-primary mt-0.5" />
             <div>
-              <h4 className="font-medium">Track Leads</h4>
-              <p className="text-sm text-muted-foreground">View all your leads in one organized table with contact information and status.</p>
+              <h4 className="font-medium">{t('leads.tutorial.welcome.trackLeads.title')}</h4>
+              <p className="text-sm text-muted-foreground">{t('leads.tutorial.welcome.trackLeads.description')}</p>
             </div>
           </div>
           <div className="flex items-start gap-3">
             <Filter className="w-5 h-5 text-primary mt-0.5" />
             <div>
-              <h4 className="font-medium">Filter & Sort</h4>
-              <p className="text-sm text-muted-foreground">Filter by lead status and sort by any column to find exactly what you need.</p>
+              <h4 className="font-medium">{t('leads.tutorial.welcome.filterSort.title')}</h4>
+              <p className="text-sm text-muted-foreground">{t('leads.tutorial.welcome.filterSort.description')}</p>
             </div>
           </div>
           <div className="flex items-start gap-3">
             <FileText className="w-5 h-5 text-primary mt-0.5" />
             <div>
-              <h4 className="font-medium">Customize Columns</h4>
-              <p className="text-sm text-muted-foreground">Customize which columns to show and arrange them to match your workflow.</p>
+              <h4 className="font-medium">{t('leads.tutorial.welcome.customizeColumns.title')}</h4>
+              <p className="text-sm text-muted-foreground">{t('leads.tutorial.welcome.customizeColumns.description')}</p>
             </div>
           </div>
         </div>
@@ -76,52 +78,52 @@ const AllLeadsNew = () => {
     },
     {
       id: 2,
-      title: "Add Your First Lead",
-      description: "Now let's add your first lead! Click the 'Add Lead' button (or + icon on mobile) in the top right corner to get started.",
+      title: t('leads.tutorial.addFirstLead.title'),
+      description: t('leads.tutorial.addFirstLead.description'),
       content: null,
       mode: "floating",
       canProceed: leads.length > 0,
       requiresAction: leads.length === 0,
-      disabledTooltip: "Add at least 1 lead to continue"
+      disabledTooltip: t('leads.tutorial.addFirstLead.disabledTooltip')
     },
     {
       id: 3,
-      title: "Great! Now Let's Explore Lead Details",
-      description: "Perfect! Now that you have a lead, let's see what you can do with it. Click on your lead in the table below to view its detailed information.",
+      title: t('leads.tutorial.exploreDetails.title'),
+      description: t('leads.tutorial.exploreDetails.description'),
       content: null,
       mode: "floating",
       canProceed: false,
       requiresAction: true,
-      disabledTooltip: "Click on your lead to continue"
+      disabledTooltip: t('leads.tutorial.exploreDetails.disabledTooltip')
     }
   ];
 
   const schedulingTutorialSteps: TutorialStep[] = [
     {
       id: 1,
-      title: "Schedule Your First Photo Session",
-      description: "Let's walk through scheduling a photo session for your client. This process will help you organize your photography workflow.",
+      title: t('leads.tutorial.scheduling.title'),
+      description: t('leads.tutorial.scheduling.description'),
       content: (
         <div className="space-y-4">
           <div className="flex items-start gap-3">
             <Calendar className="w-5 h-5 text-primary mt-0.5" />
             <div>
-              <h4 className="font-medium">Choose Date & Time</h4>
-              <p className="text-sm text-muted-foreground">Pick a convenient time that works for both you and your client.</p>
+              <h4 className="font-medium">{t('leads.tutorial.scheduling.chooseDateTime.title')}</h4>
+              <p className="text-sm text-muted-foreground">{t('leads.tutorial.scheduling.chooseDateTime.description')}</p>
             </div>
           </div>
           <div className="flex items-start gap-3">
             <Users className="w-5 h-5 text-primary mt-0.5" />
             <div>
-              <h4 className="font-medium">Select Your Client</h4>
-              <p className="text-sm text-muted-foreground">Choose the lead/client you want to photograph from your list.</p>
+              <h4 className="font-medium">{t('leads.tutorial.scheduling.selectClient.title')}</h4>
+              <p className="text-sm text-muted-foreground">{t('leads.tutorial.scheduling.selectClient.description')}</p>
             </div>
           </div>
           <div className="flex items-start gap-3">
             <MessageSquare className="w-5 h-5 text-primary mt-0.5" />
             <div>
-              <h4 className="font-medium">Add Session Details</h4>
-              <p className="text-sm text-muted-foreground">Include notes, special requirements, and optional project association.</p>
+              <h4 className="font-medium">{t('leads.tutorial.scheduling.addDetails.title')}</h4>
+              <p className="text-sm text-muted-foreground">{t('leads.tutorial.scheduling.addDetails.description')}</p>
             </div>
           </div>
         </div>
@@ -131,13 +133,13 @@ const AllLeadsNew = () => {
     },
     {
       id: 2,
-      title: "Select a Lead to Schedule Session",
-      description: "Great! Now click on one of your leads in the table below to open their details page where you can schedule a session.",
+      title: t('leads.tutorial.selectLeadForSession.title'),
+      description: t('leads.tutorial.selectLeadForSession.description'),
       content: null,
       mode: "floating",
       canProceed: false,
       requiresAction: true,
-      disabledTooltip: "Click on a lead to continue"
+      disabledTooltip: t('leads.tutorial.selectLeadForSession.disabledTooltip')
     }
   ];
 
@@ -169,13 +171,13 @@ const AllLeadsNew = () => {
       // Complete Step 2 (leads) since this tutorial was accessed from leads page
       await completeCurrentStep();
       setShowTutorial(false);
-      console.log('🎉 Lead tutorial completed! Step 2 completed, navigating back to getting-started');
+      console.log(t('leads.messages.tutorialCompleted'));
       navigate('/getting-started');
     } catch (error) {
-      console.error('Error completing tutorial:', error);
+      console.error(t('leads.messages.errorCompletingTutorial'), error);
       toast({
         title: "Error", 
-        description: "Failed to save progress. Please try again.",
+        description: t('leads.messages.failedToSaveProgress'),
         variant: "destructive"
       });
     }
@@ -203,7 +205,7 @@ const AllLeadsNew = () => {
       if (error) throw error;
       setLeadStatuses(data || []);
     } catch (error: any) {
-      console.error('Error fetching lead statuses:', error);
+      console.error(t('leads.messages.errorFetchingStatuses'), error);
     }
   };
 
@@ -231,7 +233,7 @@ const AllLeadsNew = () => {
   };
 
   const statusOptions = [
-    { value: "all", label: "All Statuses" },
+    { value: "all", label: t('leads.allStatuses') },
     ...leadStatuses.map(status => ({
       value: status.name,
       label: status.name
@@ -241,8 +243,8 @@ const AllLeadsNew = () => {
   const emptyState = (
     <div className="text-center py-8 text-muted-foreground">
       {statusFilter === "all" 
-        ? "No leads found. Add your first lead to get started!"
-        : `No leads found with status "${statusFilter}".`
+        ? t('leads.noLeadsAllStatuses')
+        : t('leads.noLeadsWithStatus', { status: statusFilter })
       }
     </div>
   );
@@ -250,8 +252,8 @@ const AllLeadsNew = () => {
   return (
     <div className="min-h-screen">
       <PageHeader
-        title="Leads"
-        subtitle="Track and manage your potential clients"
+        title={t('leads.title')}
+        subtitle={t('leads.description')}
       >
         <PageHeaderSearch>
           <div className="flex items-center gap-2 w-full">
@@ -265,7 +267,7 @@ const AllLeadsNew = () => {
               data-testid="add-lead-button"
             >
               <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">Add Lead</span>
+              <span className="hidden sm:inline">{t('leads.addLead')}</span>
             </Button>
           </div>
         </PageHeaderSearch>
@@ -276,7 +278,7 @@ const AllLeadsNew = () => {
           <CardHeader>
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                <span className="text-sm text-muted-foreground whitespace-nowrap">Filter by status:</span>
+                <span className="text-sm text-muted-foreground whitespace-nowrap">{t('leads.filterByStatus')}</span>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                   <SelectTrigger className="w-full sm:w-48 min-w-0">
                     <SelectValue />

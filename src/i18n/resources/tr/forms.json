@@ -7,7 +7,11 @@
     "maxLength": "En fazla {{count}} karakter kullanılabilir",
     "numeric": "Lütfen geçerli bir sayı girin",
     "date": "Lütfen geçerli bir tarih girin",
-    "time": "Lütfen geçerli bir saat girin"
+    "time": "Lütfen geçerli bir saat girin",
+    "nameRequired": "Proje adı zorunludur.",
+    "typeRequired": "Lütfen bir proje türü seçin.",
+    "validEmail": "Lütfen geçerli bir e-posta adresi girin",
+    "validPhone": "Lütfen geçerli bir telefon numarası girin"
   },
   "placeholders": {
     "enterName": "Ad girin",
@@ -19,7 +23,10 @@
     "enterNotes": "Not veya açıklama girin",
     "search": "Ara...",
     "clientFullName": "Müşterinin tam adı",
-    "additionalNotes": "Bu müşteri adayı hakkında ek notlar..."
+    "additionalNotes": "Bu müşteri adayı hakkında ek notlar...",
+    "enterProjectName": "Proje adı girin",
+    "enterProjectDescription": "Proje açıklaması girin (isteğe bağlı)",
+    "basePrice": "0"
   },
   "labels": {
     "firstName": "Ad",
@@ -36,7 +43,11 @@
     "email": "E-posta",
     "phone": "Telefon",
     "status": "Durum",
-    "notes": "Notlar"
+    "notes": "Notlar",
+    "projectName": "Proje Adı",
+    "projectType": "Proje Türü",
+    "basePrice": "Temel Fiyat (TL)",
+    "description": "Açıklama"
   },
   "buttons": {
     "cancel": "İptal",
@@ -47,11 +58,19 @@
     "addLead": "Müşteri Adayı Ekle",
     "adding": "Ekleniyor...",
     "saving": "Kaydediliyor...",
-    "loading": "Yükleniyor..."
+    "loading": "Yükleniyor...",
+    "updating": "Güncelleniyor...",
+    "updateLead": "Müşteri Adayını Güncelle",
+    "createProject": "Proje Oluştur",
+    "creating": "Oluşturuluyor..."
   },
   "dialogs": {
     "addNewLead": "Yeni Müşteri Adayı Ekle",
-    "unsavedChanges": "Kaydedilmemiş müşteri adayı değişiklikleriniz var."
+    "editLead": "Müşteri Adayını Düzenle",
+    "addProject": "PROJE EKLE",
+    "unsavedChanges": "Kaydedilmemiş müşteri adayı değişiklikleriniz var.",
+    "unsavedProjectChanges": "Kaydedilmemiş proje değişiklikleriniz var.",
+    "updateLeadInfo": "Müşteri adayı bilgilerini ve özel alan verilerini güncelleyin."
   },
   "messages": {
     "authRequired": "Kimlik doğrulama gerekli",
@@ -60,6 +79,12 @@
     "ensureOrganization": "Lütfen bir organizasyonun üyesi olduğunuzdan emin olun",
     "leadAddedSuccessfully": "Müşteri adayı başarıyla eklendi",
     "leadAddedDesc": "{{name}} müşteri adaylarınıza eklendi",
-    "errorAddingLead": "Müşteri adayı eklenirken hata"
+    "errorAddingLead": "Müşteri adayı eklenirken hata",
+    "leadUpdated": "Müşteri adayı güncellendi",
+    "leadUpdatedDesc": "Müşteri adayı özel alan verileriyle birlikte başarıyla güncellendi.",
+    "projectCreated": "Proje başarıyla oluşturuldu.",
+    "errorCreatingProject": "Proje oluştururken hata",
+    "loginToCreateProject": "Proje oluşturmak için lütfen giriş yapın.",
+    "validationError": "Doğrulama Hatası"
   }
 }

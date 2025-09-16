@@ -34,6 +34,8 @@ interface EnhancedEditLeadDialogProps {
   onSuccess?: () => void;
 }
 
+import { useTranslation } from "react-i18next";
+
 export function EnhancedEditLeadDialog({ 
   open, 
   onOpenChange, 
@@ -46,6 +48,7 @@ export function EnhancedEditLeadDialog({
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
+  const { t } = useTranslation('forms');
 
   // Create dynamic schema based on field definitions
   const schema = createDynamicLeadSchema(fieldDefinitions);
@@ -162,8 +165,8 @@ export function EnhancedEditLeadDialog({
       await upsertFieldValues(lead.id, fieldValuesData);
 
       toast({
-        title: "Lead updated",
-        description: "The lead has been updated successfully with custom field data.",
+        title: t('messages.leadUpdated'),
+        description: t('messages.leadUpdatedDesc'),
       });
 
       onSuccess?.();
@@ -196,12 +199,12 @@ export function EnhancedEditLeadDialog({
 
   const footerActions = [
     {
-      label: "Cancel",
+      label: t('buttons.cancel'),
       onClick: onClose,
       variant: "outline" as const,
     },
     {
-      label: loading ? "Updating..." : "Update Lead",
+      label: loading ? t('buttons.updating') : t('buttons.updateLead'),
       onClick: form.handleSubmit(onSubmit),
       loading,
       disabled: loading || fieldsLoading || valuesLoading,
@@ -225,7 +228,7 @@ export function EnhancedEditLeadDialog({
   return (
     <>
       <AppSheetModal
-        title="Edit Lead"
+        title={t('dialogs.editLead')}
         isOpen={open}
         onOpenChange={onOpenChange}
         size="lg"
@@ -235,7 +238,7 @@ export function EnhancedEditLeadDialog({
       >
         <div className="space-y-1 mb-6">
           <p className="text-sm text-muted-foreground">
-            Update lead information and custom field data.
+            {t('dialogs.updateLeadInfo')}
           </p>
         </div>
 

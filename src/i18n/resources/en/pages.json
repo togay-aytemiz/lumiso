@@ -2,6 +2,11 @@
   "leads": {
     "title": "Lead Management",
     "description": "Manage and track all your potential clients",
+    "filterByStatus": "Filter by status:",
+    "allStatuses": "All Statuses",
+    "noLeadsAllStatuses": "No leads found. Add your first lead to get started!",
+    "noLeadsWithStatus": "No leads found with status \"{{status}}\".",
+    "addLead": "Add Lead",
     "tutorial": {
       "welcome": {
         "title": "Welcome to Lead Management",
@@ -66,7 +71,9 @@
       "active": "Active Projects",
       "archived": "Archived Projects",
       "kanban": "Kanban View",
-      "table": "Table View"
+      "table": "Table View",
+      "board": "Board",
+      "list": "List"
     },
     "sorting": {
       "name": "Name",
@@ -75,6 +82,116 @@
       "status": "Status",
       "createdAt": "Created",
       "updatedAt": "Updated"
+    },
+    "tutorial": {
+      "welcome": {
+        "title": "Welcome to Your Project Management Hub",
+        "description": "Let's explore the three powerful ways to view and organize your photography projects.",
+        "subtitle": "In this tutorial, you'll master the art of project management for photographers:",
+        "boardView": "Board View - Visual workflow management with drag & drop",
+        "listView": "List View - Detailed table with sorting and filtering",
+        "archivedView": "Archived View - Completed projects for reference"
+      },
+      "exploreViews": {
+        "title": "Explore Different Views",
+        "description": "Let's try out the different view modes. Click between Board, List, and Archived views to see how each one works.",
+        "tip": "Try moving a project between different stages in board view!"
+      },
+      "completion": {
+        "title": "Perfect! You're Ready to Manage Projects",
+        "description": "You've mastered the project management interface. Now you can efficiently organize your photography business using these powerful views.",
+        "features": "Key features you've learned:",
+        "dragDrop": "Drag & drop projects between stages",
+        "tableView": "Detailed table view with sorting",
+        "archivedProjects": "Archive completed projects"
+      }
+    },
+    "messages": {
+      "errorLoading": "Failed to load projects",
+      "tutorialCompleted": "Projects tutorial completed! Navigating to next step.",
+      "errorCompletingTutorial": "Error completing tutorial:"
+    }
+  },
+  "calendar": {
+    "title": "Calendar",
+    "description": "Manage your sessions and reminders",
+    "viewModes": {
+      "day": "Day",
+      "week": "Week",
+      "month": "Month"
+    },
+    "navigation": {
+      "previous": "Previous",
+      "next": "Next",
+      "today": "Today"
+    },
+    "filters": {
+      "sessions": "Sessions",
+      "reminders": "Reminders"
+    }
+  },
+  "settings": {
+    "general": {
+      "title": "General",
+      "description": "Manage your general application preferences",
+      "branding": {
+        "title": "Branding",
+        "description": "Customize your brand appearance across client-facing materials",
+        "businessName": "Photography Business Name",
+        "businessNamePlaceholder": "Enter your photography business name",
+        "businessNameHelp": "This will appear on invoices, contracts, and client communications",
+        "businessEmail": "Business Email",
+        "businessEmailPlaceholder": "Enter your business email",
+        "businessEmailHelp": "Used for client communications and appears on invoices",
+        "businessPhone": "Business Phone",
+        "businessPhonePlaceholder": "Enter your business phone number",
+        "businessPhoneHelp": "Optional contact number for client communications",
+        "logoUpload": "Logo Upload",
+        "currentLogo": "Current Logo",
+        "logoCurrentlySet": "Logo is currently set",
+        "noLogoSet": "No logo set",
+        "chooseNewLogo": "Choose New Logo",
+        "uploading": "Uploading...",
+        "supportedFormats": "Supported formats: PNG, JPG, SVG",
+        "deleteLogo": "Delete Logo",
+        "deleteLogoConfirm": "Are you sure you want to delete your logo? This action cannot be undone.",
+        "deleteLogoButton": "Delete Logo",
+        "brandColor": "Brand Color",
+        "brandColorHelp": "Choose your primary brand color for the interface"
+      },
+      "regional": {
+        "title": "Regional Settings",
+        "description": "Configure date, time, and regional preferences",
+        "dateFormat": "Date Format",
+        "timeFormat": "Time Format",
+        "timezone": "Timezone"
+      },
+      "language": {
+        "title": "Language",
+        "description": "Choose your preferred language for the interface",
+        "current": "Current Language"
+      },
+      "tutorial": {
+        "businessInfo": {
+          "title": "Business Information & Branding",
+          "description": "This is where you can customize your business information and branding. Let's explore what you can do here.",
+          "setBusinessName": "Set your photography business name",
+          "uploadLogo": "Upload your business logo",
+          "chooseBrandColors": "Choose your brand colors",
+          "help": "All this information will appear on client communications, invoices, and contracts."
+        },
+        "addBusinessName": {
+          "title": "Add Your Business Name",
+          "description": "Please enter your photography business name below. This is required to continue and will be used in all client communications.",
+          "required": "Required for professional communications",
+          "appearsOn": "Appears on invoices, contracts, and emails",
+          "canChange": "Can be changed later if needed"
+        },
+        "setupComplete": {
+          "title": "Business Setup Complete!",
+          "description": "Congratulations! You've successfully set up your business information. You're ready to move on to the next step of your photography CRM setup."
+        }
+      }
     }
   }
 }

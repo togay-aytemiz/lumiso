@@ -7,7 +7,11 @@
     "maxLength": "Maximum {{count}} characters allowed",
     "numeric": "Please enter a valid number",
     "date": "Please enter a valid date",
-    "time": "Please enter a valid time"
+    "time": "Please enter a valid time",
+    "nameRequired": "Project name is required.",
+    "typeRequired": "Please select a project type.",
+    "validEmail": "Please enter a valid email address",
+    "validPhone": "Please enter a valid phone number"
   },
   "placeholders": {
     "enterName": "Enter name",
@@ -19,7 +23,10 @@
     "enterNotes": "Enter notes or description",
     "search": "Search...",
     "clientFullName": "Client's full name",
-    "additionalNotes": "Any additional notes about this lead..."
+    "additionalNotes": "Any additional notes about this lead...",
+    "enterProjectName": "Enter project name",
+    "enterProjectDescription": "Enter project description (optional)",
+    "basePrice": "0"
   },
   "labels": {
     "firstName": "First Name",
@@ -36,7 +43,11 @@
     "email": "Email",
     "phone": "Phone",
     "status": "Status",
-    "notes": "Notes"
+    "notes": "Notes",
+    "projectName": "Project Name",
+    "projectType": "Project Type",
+    "basePrice": "Base Price (TRY)",
+    "description": "Description"
   },
   "buttons": {
     "cancel": "Cancel",
@@ -47,11 +58,19 @@
     "addLead": "Add Lead",
     "adding": "Adding...",
     "saving": "Saving...",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "updating": "Updating...",
+    "updateLead": "Update Lead",
+    "createProject": "Create Project",
+    "creating": "Creating..."
   },
   "dialogs": {
     "addNewLead": "Add New Lead",
-    "unsavedChanges": "You have unsaved lead changes."
+    "editLead": "Edit Lead",
+    "addProject": "ADD PROJECT",
+    "unsavedChanges": "You have unsaved lead changes.",
+    "unsavedProjectChanges": "You have unsaved project changes.",
+    "updateLeadInfo": "Update lead information and custom field data."
   },
   "messages": {
     "authRequired": "Authentication required",
@@ -60,6 +79,12 @@
     "ensureOrganization": "Please ensure you're part of an organization",
     "leadAddedSuccessfully": "Lead added successfully",
     "leadAddedDesc": "{{name}} has been added to your leads",
-    "errorAddingLead": "Error adding lead"
+    "errorAddingLead": "Error adding lead",
+    "leadUpdated": "Lead updated",
+    "leadUpdatedDesc": "The lead has been updated successfully with custom field data.",
+    "projectCreated": "Project created successfully.",
+    "errorCreatingProject": "Error creating project",
+    "loginToCreateProject": "Please log in to create a project.",
+    "validationError": "Validation Error"
   }
 }

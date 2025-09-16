@@ -2,6 +2,11 @@
   "leads": {
     "title": "Müşteri Adayı Yönetimi",
     "description": "Tüm potansiyel müşterilerinizi yönetin ve takip edin",
+    "filterByStatus": "Duruma göre filtrele:",
+    "allStatuses": "Tüm Durumlar",
+    "noLeadsAllStatuses": "Müşteri adayı bulunamadı. Başlamak için ilk müşteri adayınızı ekleyin!",
+    "noLeadsWithStatus": "\"{{status}}\" durumunda müşteri adayı bulunamadı.",
+    "addLead": "Müşteri Adayı Ekle",
     "tutorial": {
       "welcome": {
         "title": "Müşteri Adayı Yönetimine Hoş Geldiniz",
@@ -66,7 +71,9 @@
       "active": "Aktif Projeler",
       "archived": "Arşivlenen Projeler",
       "kanban": "Kanban Görünümü",
-      "table": "Tablo Görünümü"
+      "table": "Tablo Görünümü",
+      "board": "Tahta",
+      "list": "Liste"
     },
     "sorting": {
       "name": "Ad",
@@ -75,6 +82,116 @@
       "status": "Durum",
       "createdAt": "Oluşturulma",
       "updatedAt": "Güncellenme"
+    },
+    "tutorial": {
+      "welcome": {
+        "title": "Proje Yönetim Merkezinize Hoş Geldiniz",
+        "description": "Fotoğrafçılık projelerinizi görüntülemenin ve düzenlemenin üç güçlü yolunu keşfedelim.",
+        "subtitle": "Bu eğitimde, fotoğrafçılar için proje yönetimi sanatında ustalaşacaksınız:",
+        "boardView": "Tahta Görünümü - Sürükle bırak ile görsel iş akışı yönetimi",
+        "listView": "Liste Görünümü - Sıralama ve filtreleme ile detaylı tablo",
+        "archivedView": "Arşiv Görünümü - Referans için tamamlanmış projeler"
+      },
+      "exploreViews": {
+        "title": "Farklı Görünümleri Keşfedin",
+        "description": "Farklı görünüm modlarını deneyelim. Tahta, Liste ve Arşiv görünümleri arasında tıklayarak her birinin nasıl çalıştığını görün.",
+        "tip": "Tahta görünümünde bir projeyi farklı aşamalar arasında taşımayı deneyin!"
+      },
+      "completion": {
+        "title": "Mükemmel! Projeleri Yönetmeye Hazırsınız",
+        "description": "Proje yönetimi arayüzünde ustalaştınız. Artık bu güçlü görünümleri kullanarak fotoğrafçılık işinizi verimli bir şekilde organize edebilirsiniz.",
+        "features": "Öğrendiğiniz temel özellikler:",
+        "dragDrop": "Projeleri aşamalar arasında sürükle bırak",
+        "tableView": "Sıralama ile detaylı tablo görünümü",
+        "archivedProjects": "Tamamlanan projeleri arşivle"
+      }
+    },
+    "messages": {
+      "errorLoading": "Projeler yüklenemedi",
+      "tutorialCompleted": "Projeler eğitimi tamamlandı! Sonraki adıma geçiliyor.",
+      "errorCompletingTutorial": "Eğitimi tamamlarken hata:"
+    }
+  },
+  "calendar": {
+    "title": "Takvim",
+    "description": "Seanslarınızı ve hatırlatmalarınızı yönetin",
+    "viewModes": {
+      "day": "Gün",
+      "week": "Hafta",
+      "month": "Ay"
+    },
+    "navigation": {
+      "previous": "Önceki",
+      "next": "Sonraki",
+      "today": "Bugün"
+    },
+    "filters": {
+      "sessions": "Seanslar",
+      "reminders": "Hatırlatmalar"
+    }
+  },
+  "settings": {
+    "general": {
+      "title": "Genel",
+      "description": "Genel uygulama tercihlerinizi yönetin",
+      "branding": {
+        "title": "Markalaşma",
+        "description": "Müşteriye yönelik materyallerde marka görünümünüzü özelleştirin",
+        "businessName": "Fotoğrafçılık İşletme Adı",
+        "businessNamePlaceholder": "Fotoğrafçılık işletme adınızı girin",
+        "businessNameHelp": "Bu, faturalar, sözleşmeler ve müşteri iletişimlerinde görünecektir",
+        "businessEmail": "İşletme E-postası",
+        "businessEmailPlaceholder": "İşletme e-postanızı girin",
+        "businessEmailHelp": "Müşteri iletişimleri için kullanılır ve faturalarda görünür",
+        "businessPhone": "İşletme Telefonu",
+        "businessPhonePlaceholder": "İşletme telefon numaranızı girin",
+        "businessPhoneHelp": "Müşteri iletişimleri için isteğe bağlı iletişim numarası",
+        "logoUpload": "Logo Yükleme",
+        "currentLogo": "Mevcut Logo",
+        "logoCurrentlySet": "Logo şu anda ayarlı",
+        "noLogoSet": "Logo ayarlanmamış",
+        "chooseNewLogo": "Yeni Logo Seç",
+        "uploading": "Yükleniyor...",
+        "supportedFormats": "Desteklenen formatlar: PNG, JPG, SVG",
+        "deleteLogo": "Logo Sil",
+        "deleteLogoConfirm": "Logonuzu silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
+        "deleteLogoButton": "Logo Sil",
+        "brandColor": "Marka Rengi",
+        "brandColorHelp": "Arayüz için birincil marka renginizi seçin"
+      },
+      "regional": {
+        "title": "Bölgesel Ayarlar",
+        "description": "Tarih, saat ve bölgesel tercihleri yapılandırın",
+        "dateFormat": "Tarih Formatı",
+        "timeFormat": "Saat Formatı",
+        "timezone": "Saat Dilimi"
+      },
+      "language": {
+        "title": "Dil",
+        "description": "Arayüz için tercih ettiğiniz dili seçin",
+        "current": "Mevcut Dil"
+      },
+      "tutorial": {
+        "businessInfo": {
+          "title": "İşletme Bilgileri ve Markalaşma",
+          "description": "Burası işletme bilgilerinizi ve markalaşmanızı özelleştirebileceğiniz yerdir. Burada yapabileceklerinizi keşfedelim.",
+          "setBusinessName": "Fotoğrafçılık işletme adınızı belirleyin",
+          "uploadLogo": "İşletme logonuzu yükleyin",
+          "chooseBrandColors": "Marka renklerinizi seçin",
+          "help": "Tüm bu bilgiler müşteri iletişimleri, faturalar ve sözleşmelerde görünecektir."
+        },
+        "addBusinessName": {
+          "title": "İşletme Adınızı Ekleyin",
+          "description": "Lütfen aşağıya fotoğrafçılık işletme adınızı girin. Bu devam etmek için gereklidir ve tüm müşteri iletişimlerinde kullanılacaktır.",
+          "required": "Profesyonel iletişimler için gereklidir",
+          "appearsOn": "Faturalar, sözleşmeler ve e-postalarda görünür",
+          "canChange": "Gerekirse daha sonra değiştirilebilir"
+        },
+        "setupComplete": {
+          "title": "İşletme Kurulumu Tamamlandı!",
+          "description": "Tebrikler! İşletme bilgilerinizi başarıyla kurdunuz. Fotoğrafçılık CRM kurulumunuzun bir sonraki adımına geçmeye hazırsınız."
+        }
+      }
     }
   }
 }

@@ -230,7 +230,7 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
               <div className={`p-2 text-xs text-muted-foreground text-right bg-muted/20 border-r border-border ${
                 isHalfHour ? 'bg-muted/10' : ''
               }`}>
-                {isHourMark ? slot.display : ''}
+                {slot.display}
               </div>
               
               {/* Day columns */}

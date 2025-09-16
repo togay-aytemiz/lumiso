@@ -80,7 +80,7 @@ export function useSmartTimeRange(sessions: Session[], activities: Activity[]) {
         
         slots.push({
           time: timeString,
-          display: displayTime, // Show all time labels for proper visibility
+          display: minute === 0 ? displayTime : '', // Only show time labels for hour marks
           hour,
           minute
         });

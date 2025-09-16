@@ -70,17 +70,28 @@ export function useSmartTimeRange(sessions: Session[], activities: Activity[]) {
       latestHour = Math.min(23, midPoint + 4);
     }
     
+    // Create time formatter function that works with hour/minute numbers
+    const formatTimeLabel = (hour: number, minute: number) => {
+      if (timeFormat === '12-hour') {
+        const period = hour >= 12 ? 'PM' : 'AM';
+        const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+        return `${displayHour}:${minute.toString().padStart(2, '0')} ${period}`;
+      } else {
+        return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+      }
+    };
+    
     // Generate 30-minute time slots
-        const slots: TimeSlot[] = [];
+    const slots: TimeSlot[] = [];
     
     for (let hour = earliestHour; hour <= latestHour; hour++) {
       for (let minute = 0; minute < 60; minute += 30) {
         const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-        const displayTime = formatTime(timeString);
+        const displayTime = minute === 0 ? formatTimeLabel(hour, minute) : '';
         
         slots.push({
           time: timeString,
-          display: minute === 0 ? displayTime : '', // Only show time labels for hour marks
+          display: displayTime, // Only show time labels for hour marks
           hour,
           minute
         });
@@ -88,7 +99,7 @@ export function useSmartTimeRange(sessions: Session[], activities: Activity[]) {
     }
     
     return slots;
-  }, [sessions, activities, formatTime]);
+  }, [sessions, activities, timeFormat]);
   
   // Function to get the slot index for a given time
   const getSlotIndex = useMemo(() => {

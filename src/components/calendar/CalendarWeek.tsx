@@ -234,7 +234,7 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
           return (
             <div
               key={`slot-${slotIndex}`}
-              className="grid grid-cols-8 border-b border-border/40 min-h-8"
+              className="grid grid-cols-8 border-b border-border/80 min-h-8"
             >
               <div className={`w-16 shrink-0 text-xs text-muted-foreground sticky left-0 z-10 bg-card flex items-center justify-end pr-3 ${isHour ? 'font-medium' : ''}`}>
                 {labelText || '\u00A0'}

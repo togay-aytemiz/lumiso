@@ -49,6 +49,7 @@
     "total": "Total",
     "subtotal": "Subtotal",
     "tax": "Tax",
+    "error": "Error",
     "discount": "Discount",
     "project_name": "Project name",
     "project_description": "Project description (optional)",

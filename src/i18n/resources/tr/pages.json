@@ -193,5 +193,18 @@
         }
       }
     }
+  },
+  "projects": {
+    "title": "Projeler",
+    "showArchived": "Arşivlenenleri göster",
+    "addProject": "Proje Ekle",
+    "archivedProjects": "Arşivlenmiş Projeler",
+    "noProjectsYet": "Henüz proje oluşturulmamış.",
+    "deleteProject": "Projeyi Sil",
+    "deleteProjectConfirm": "Bu projeyi silmek istediğinizden emin misiniz? Bu işlem seansları veya notları etkilemeyecektir.",
+    "projectDeletedSuccess": "Proje başarıyla silindi.",
+    "errorDeletingProject": "Proje silinirken hata",
+    "failedToLoadProjects": "Projeler yüklenemedi.",
+    "deleting": "Siliniyor..."
   }
 }

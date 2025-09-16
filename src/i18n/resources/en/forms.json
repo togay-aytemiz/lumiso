@@ -85,6 +85,14 @@
     "projectCreated": "Project created successfully.",
     "errorCreatingProject": "Error creating project",
     "loginToCreateProject": "Please log in to create a project.",
-    "validationError": "Validation Error"
+    "validationError": "Validation Error",
+    "nameRequired": "Name is required.",
+    "unsavedLeadChanges": "You have unsaved lead changes.",
+    "errorUpdatingLead": "Error updating lead",
+    "authenticationRequired": "Authentication required",
+    "pleaseSignInToAdd": "Please sign in to add leads",
+    "ensurePartOfOrg": "Please ensure you're part of an organization",
+    "success": "Success",
+    "leadUpdateSuccess": "Lead updated successfully."
   }
 }

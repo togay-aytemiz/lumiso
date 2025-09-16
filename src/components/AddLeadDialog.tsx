@@ -101,11 +101,11 @@ const AddLeadDialog = ({ onLeadAdded, open, onOpenChange }: AddLeadDialogProps) 
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
-        toast({
-          title: "Authentication required",
-          description: "Please sign in to add leads",
-          variant: "destructive"
-        });
+      toast({
+        title: t('forms:messages.authenticationRequired'),
+        description: t('forms:messages.pleaseSignInToAdd'),
+        variant: "destructive"
+      });
         return;
       }
 
@@ -114,8 +114,8 @@ const AddLeadDialog = ({ onLeadAdded, open, onOpenChange }: AddLeadDialogProps) 
       if (!organizationId) return;
       if (!organizationId) {
         toast({
-          title: "Organization required",
-          description: "Please ensure you're part of an organization",
+          title: t('forms:messages.organizationRequired'),
+          description: t('forms:messages.ensurePartOfOrg'),
           variant: "destructive"
         });
         return;
@@ -149,7 +149,7 @@ const AddLeadDialog = ({ onLeadAdded, open, onOpenChange }: AddLeadDialogProps) 
       onLeadAdded();
     } catch (error: any) {
       toast({
-        title: "Error adding lead",
+        title: t('forms:messages.errorAddingLead'),
         description: error.message,
         variant: "destructive"
       });
@@ -203,13 +203,13 @@ const AddLeadDialog = ({ onLeadAdded, open, onOpenChange }: AddLeadDialogProps) 
 
   const footerActions = [
     {
-      label: "Cancel",
+      label: t('common:buttons.cancel'),
       onClick: () => onOpenChange(false),
       variant: "outline" as const,
       disabled: loading
     },
     {
-      label: loading ? "Adding..." : "Add Lead",
+      label: loading ? t('forms:buttons.adding') : t('forms:buttons.add_lead'),
       onClick: handleSubmit,
       disabled: loading || !formData.name.trim(),
       loading: loading
@@ -219,7 +219,7 @@ const AddLeadDialog = ({ onLeadAdded, open, onOpenChange }: AddLeadDialogProps) 
   return (
     <>
       <AppSheetModal
-        title="Add New Lead"
+        title={t('forms:dialogs.add_new_lead')}
         isOpen={open}
         onOpenChange={onOpenChange}
         size="default"
@@ -229,12 +229,12 @@ const AddLeadDialog = ({ onLeadAdded, open, onOpenChange }: AddLeadDialogProps) 
       >
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Name *</Label>
+            <Label htmlFor="name">{t('forms:labels.name')} *</Label>
             <Input
               id="name"
               value={formData.name}
               onChange={(e) => handleInputChange("name", e.target.value)}
-              placeholder="Client's full name"
+              placeholder={t('forms:placeholders.name')}
               maxLength={100}
               required
             />
@@ -242,35 +242,35 @@ const AddLeadDialog = ({ onLeadAdded, open, onOpenChange }: AddLeadDialogProps) 
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{t('forms:labels.email')}</Label>
             <Input
               id="email"
               type="email"
               value={formData.email}
               onChange={(e) => handleInputChange("email", e.target.value)}
-              placeholder="client@example.com"
+              placeholder={t('forms:placeholders.email')}
               maxLength={254}
             />
             {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="phone">Phone</Label>
+            <Label htmlFor="phone">{t('forms:labels.phone')}</Label>
             <Input
               id="phone"
               value={formData.phone}
               onChange={(e) => handleInputChange("phone", e.target.value)}
-              placeholder="(555) 123-4567"
+              placeholder={t('forms:placeholders.phone')}
               maxLength={20}
             />
             {errors.phone && <p className="text-sm text-destructive">{errors.phone}</p>}
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="status">Status</Label>
+            <Label htmlFor="status">{t('forms:labels.status')}</Label>
             <Select value={formData.status} onValueChange={(value) => handleInputChange("status", value)}>
               <SelectTrigger>
-                <SelectValue placeholder="Select status" />
+                <SelectValue placeholder={t('forms:placeholders.status')} />
               </SelectTrigger>
               <SelectContent>
                 {leadStatuses
@@ -291,12 +291,12 @@ const AddLeadDialog = ({ onLeadAdded, open, onOpenChange }: AddLeadDialogProps) 
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="notes">Notes</Label>
+            <Label htmlFor="notes">{t('forms:labels.notes')}</Label>
             <Textarea
               id="notes"
               value={formData.notes}
               onChange={(e) => handleInputChange("notes", e.target.value)}
-              placeholder="Any additional notes about this lead..."
+              placeholder={t('forms:placeholders.notes')}
               maxLength={1000}
               rows={3}
             />
@@ -312,7 +312,7 @@ const AddLeadDialog = ({ onLeadAdded, open, onOpenChange }: AddLeadDialogProps) 
         onDiscard={navigation.handleDiscardChanges}
         onStay={navigation.handleStayOnModal}
         onSaveAndExit={navigation.handleSaveAndExit}
-        message="You have unsaved lead changes."
+        message={t('forms:messages.unsavedLeadChanges')}
       />
     </>
   );

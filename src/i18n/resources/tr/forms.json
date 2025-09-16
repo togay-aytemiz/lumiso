@@ -85,6 +85,14 @@
     "projectCreated": "Proje başarıyla oluşturuldu.",
     "errorCreatingProject": "Proje oluştururken hata",
     "loginToCreateProject": "Proje oluşturmak için lütfen giriş yapın.",
-    "validationError": "Doğrulama Hatası"
+    "validationError": "Doğrulama Hatası",
+    "nameRequired": "Ad gereklidir.",
+    "unsavedLeadChanges": "Kaydedilmemiş müşteri adayı değişiklikleriniz var.",
+    "errorUpdatingLead": "Müşteri adayı güncellenirken hata",
+    "authenticationRequired": "Kimlik doğrulama gerekli",
+    "pleaseSignInToAdd": "Müşteri adayı eklemek için lütfen oturum açın",
+    "ensurePartOfOrg": "Lütfen bir organizasyonun parçası olduğunuzdan emin olun",
+    "success": "Başarılı",
+    "leadUpdateSuccess": "Müşteri adayı başarıyla güncellendi."
   }
 }

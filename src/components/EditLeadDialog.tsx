@@ -8,6 +8,7 @@ import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { NavigationGuardDialog } from "./settings/NavigationGuardDialog";
+import { useTranslation } from "react-i18next";
 
 interface Lead {
   id: string;
@@ -27,6 +28,7 @@ interface EditLeadDialogProps {
 }
 
 export function EditLeadDialog({ lead, open, onOpenChange, onLeadUpdated }: EditLeadDialogProps) {
+  const { t } = useTranslation(['forms', 'common']);
   const [loading, setLoading] = useState(false);
   const [leadStatuses, setLeadStatuses] = useState<any[]>([]);
   const [formData, setFormData] = useState({
@@ -77,8 +79,8 @@ export function EditLeadDialog({ lead, open, onOpenChange, onLeadUpdated }: Edit
   const handleSubmit = async () => {
     if (!lead || !formData.name.trim()) {
       toast({
-        title: "Validation error",
-        description: "Name is required.",
+        title: t('forms:messages.validationError'),
+        description: t('forms:messages.nameRequired'),
         variant: "destructive"
       });
       return;
@@ -104,15 +106,15 @@ export function EditLeadDialog({ lead, open, onOpenChange, onLeadUpdated }: Edit
       if (error) throw error;
 
       toast({
-        title: "Success",
-        description: "Lead updated successfully."
+        title: t('forms:messages.success'),
+        description: t('forms:messages.leadUpdateSuccess')
       });
 
       onOpenChange(false);
       onLeadUpdated();
     } catch (error: any) {
       toast({
-        title: "Error updating lead",
+        title: t('forms:messages.errorUpdatingLead'),
         description: error.message,
         variant: "destructive"
       });
@@ -141,13 +143,13 @@ export function EditLeadDialog({ lead, open, onOpenChange, onLeadUpdated }: Edit
 
   const footerActions = [
     {
-      label: "Cancel",
+      label: t('common:buttons.cancel'),
       onClick: () => onOpenChange(false),
       variant: "outline" as const,
       disabled: loading
     },
     {
-      label: loading ? "Saving..." : "Save",
+      label: loading ? t('common:actions.saving') : t('common:buttons.save'),
       onClick: handleSubmit,
       disabled: loading || !formData.name.trim(),
       loading: loading
@@ -157,7 +159,7 @@ export function EditLeadDialog({ lead, open, onOpenChange, onLeadUpdated }: Edit
   return (
     <>
       <AppSheetModal
-        title="EDIT LEAD"
+        title={t('forms:dialogs.edit_lead')}
         isOpen={open}
         onOpenChange={onOpenChange}
         dirty={isDirty}
@@ -166,44 +168,44 @@ export function EditLeadDialog({ lead, open, onOpenChange, onLeadUpdated }: Edit
       >
         <div className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="name">Name *</Label>
+            <Label htmlFor="name">{t('forms:labels.name')} *</Label>
             <Input
               id="name"
               value={formData.name}
               onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-              placeholder="Lead name"
+              placeholder={t('forms:placeholders.name')}
               className="rounded-xl border-2 border-primary/20 focus:border-primary"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{t('forms:labels.email')}</Label>
             <Input
               id="email"
               type="email"
               value={formData.email}
               onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-              placeholder="email@example.com"
+              placeholder={t('forms:placeholders.email')}
               className="rounded-xl border-2 border-primary/20 focus:border-primary"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="phone">Phone</Label>
+            <Label htmlFor="phone">{t('forms:labels.phone')}</Label>
             <Input
               id="phone"
               value={formData.phone}
               onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-              placeholder="+90 555 123 4567"
+              placeholder={t('forms:placeholders.phone')}
               className="rounded-xl border-2 border-primary/20 focus:border-primary"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="status">Status</Label>
+            <Label htmlFor="status">{t('forms:labels.status')}</Label>
             <Select value={formData.status} onValueChange={(value) => setFormData(prev => ({ ...prev, status: value }))}>
               <SelectTrigger className="rounded-xl border-2 border-primary/20 focus:border-primary">
-                <SelectValue placeholder="Select status" />
+                <SelectValue placeholder={t('forms:placeholders.status')} />
               </SelectTrigger>
               <SelectContent>
                 {leadStatuses.map((status) => (
@@ -222,12 +224,12 @@ export function EditLeadDialog({ lead, open, onOpenChange, onLeadUpdated }: Edit
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="notes">Notes</Label>
+            <Label htmlFor="notes">{t('forms:labels.notes')}</Label>
             <Textarea
               id="notes"
               value={formData.notes}
               onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-              placeholder="Additional notes about this lead"
+              placeholder={t('forms:placeholders.notes')}
               rows={4}
               className="rounded-xl border-2 border-primary/20 focus:border-primary resize-none"
             />

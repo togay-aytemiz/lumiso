@@ -49,6 +49,7 @@
     "total": "Toplam",
     "subtotal": "Ara Toplam",
     "tax": "Vergi",
+    "error": "Hata",
     "discount": "İndirim",
     "project_name": "Proje adı",
     "project_description": "Proje açıklaması (isteğe bağlı)",

@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 
 interface Project {
   id: string;
@@ -40,6 +41,7 @@ interface ProjectsSectionProps {
 }
 
 export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onActivityUpdated, onProjectClicked }: ProjectsSectionProps) {
+  const { t } = useTranslation(['pages', 'common']);
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -93,8 +95,8 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
       console.error("Error fetching projects:", error);
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "Failed to load projects.",
+        title: t('common:labels.error'),
+        description: t('pages:projects.failedToLoadProjects'),
       });
     } finally {
       setIsLoading(false);
@@ -161,14 +163,14 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
       if (error) throw error;
 
       toast({
-        title: "Success",
-        description: "Project deleted successfully.",
+        title: t('messages:success.saved'),
+        description: t('pages:projects.projectDeletedSuccess'),
       });
 
       fetchProjects();
     } catch (error: any) {
       toast({
-        title: "Error deleting project",
+        title: t('pages:projects.errorDeletingProject'),
         description: error.message,
         variant: "destructive"
       });
@@ -186,11 +188,11 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
   return (
     <Card className="w-full">
       <CardHeader className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between space-y-0 pb-4">
-        <CardTitle className="text-xl font-semibold">Projects</CardTitle>
+        <CardTitle className="text-xl font-semibold">{t('pages:projects.title')}</CardTitle>
         <div className="flex flex-col gap-3 w-full md:w-auto md:flex-row md:items-center">
           {hasArchived && (
             <div className="flex items-center justify-between md:justify-start gap-2 text-sm text-muted-foreground">
-              <span className="flex-shrink-0">Show archived</span>
+              <span className="flex-shrink-0">{t('pages:projects.showArchived')}</span>
               <Switch checked={showArchived} onCheckedChange={(v) => setShowArchived(v)} />
             </div>
           )}
@@ -205,7 +207,7 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
             >
               <Button size="sm" className="w-full md:w-auto">
                 <Plus className="h-4 w-4 mr-2" />
-                Add Project
+                {t('pages:projects.addProject')}
               </Button>
             </EnhancedProjectDialog>
           )}
@@ -224,7 +226,7 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
           </div>
         ) : projects.length === 0 ? (
           <div className="text-center text-muted-foreground py-8">
-            <p className="mb-4">No projects created yet.</p>
+            <p className="mb-4">{t('pages:projects.noProjectsYet')}</p>
             <EnhancedProjectDialog
               defaultLeadId={leadId}
               onProjectCreated={() => {
@@ -235,7 +237,7 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
             >
               <Button variant="outline">
                 <Plus className="h-4 w-4 mr-2" />
-                Add Project
+                {t('pages:projects.addProject')}
               </Button>
             </EnhancedProjectDialog>
           </div>
@@ -254,7 +256,7 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
             </div>
             {hasArchived && showArchived && archivedProjects.length > 0 && (
               <div className="space-y-3">
-                <h3 className="text-sm font-medium text-muted-foreground">Archived Projects</h3>
+                <h3 className="text-sm font-medium text-muted-foreground">{t('pages:projects.archivedProjects')}</h3>
                 <div className="space-y-4">
                   {archivedProjects.map((project) => (
                     <ProjectCard
@@ -294,19 +296,19 @@ export function ProjectsSection({ leadId, leadName = "", onProjectUpdated, onAct
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Project</AlertDialogTitle>
+            <AlertDialogTitle>{t('pages:projects.deleteProject')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this project? This will not affect any sessions or notes.
+              {t('pages:projects.deleteProjectConfirm')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting}>{t('common:buttons.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDelete}
               disabled={isDeleting}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {isDeleting ? "Deleting..." : "Delete"}
+              {isDeleting ? t('pages:projects.deleting') : t('common:buttons.delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

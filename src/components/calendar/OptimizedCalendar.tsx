@@ -191,6 +191,12 @@ const OptimizedCalendar = React.memo(() => {
     setSelectedSession(session);
   }, []);
 
+  const refreshCalendar = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ["calendar-sessions"] });
+    queryClient.invalidateQueries({ queryKey: ["calendar-activities"] });
+    announce("Calendar refreshed");
+  }, [queryClient, announce]);
+
   const handleActivityClick = useCallback((activity: Activity) => {
     if (activity.project_id) {
       const project = projectsMap[activity.project_id];
@@ -202,11 +208,9 @@ const OptimizedCalendar = React.memo(() => {
     }
   }, [projectsMap, navigate]);
 
-  const refreshCalendar = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: ["calendar-sessions"] });
-    queryClient.invalidateQueries({ queryKey: ["calendar-activities"] });
-    announce("Calendar refreshed");
-  }, [queryClient, announce]);
+  const handleProjectUpdated = useCallback(() => {
+    refreshCalendar();
+  }, [refreshCalendar]);
 
   const isLoading = sessionsLoading || activitiesLoading;
 
@@ -276,6 +280,8 @@ const OptimizedCalendar = React.memo(() => {
           }}
           open={!!selectedProject}
           onOpenChange={(open) => !open && setSelectedProject(null)}
+          onProjectUpdated={handleProjectUpdated}
+          leadName="Unknown Lead"
         />
       )}
 

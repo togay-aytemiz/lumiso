@@ -87,11 +87,11 @@ export function useSmartTimeRange(sessions: Session[], activities: Activity[]) {
     for (let hour = earliestHour; hour <= latestHour; hour++) {
       for (let minute = 0; minute < 60; minute += 30) {
         const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-        const displayTime = minute === 0 ? formatTimeLabel(hour, minute) : '';
+        const displayTime = formatTimeLabel(hour, minute); // Show labels for both hour and half-hour marks
         
         slots.push({
           time: timeString,
-          display: displayTime, // Only show time labels for hour marks
+          display: displayTime, // Show time labels for all slots
           hour,
           minute
         });

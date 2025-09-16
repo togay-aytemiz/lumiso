@@ -4,6 +4,7 @@ import { formatTime, getUserLocale, getStartOfWeek } from '@/lib/utils';
 import { CalendarDay } from './CalendarDay';
 import { useSmartTimeRange } from '@/hooks/useSmartTimeRange';
 import { useOrganizationTimezone } from '@/hooks/useOrganizationTimezone';
+import { Badge } from '@/components/ui/badge';
 
 interface Session {
   id: string;
@@ -110,47 +111,90 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
         <div className="space-y-4">
           {showSessions && daySessions.length > 0 && (
             <div>
-              <h3 className="text-base font-medium mb-3">Sessions</h3>
-              <div className="space-y-2">
-                {daySessions.map(session => (
-                  <button
-                    key={session.id}
-                    className="w-full text-left p-3 rounded-lg bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors"
-                    onClick={() => onSessionClick(session)}
-                  >
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="font-semibold">{formatOrgTime(session.session_time)}</span>
-                      <span>•</span>
-                      <span>{leadsMap[session.lead_id]?.name || 'Lead'}</span>
-                    </div>
-                  </button>
-                ))}
+              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-primary"></div>
+                Sessions ({daySessions.length})
+              </h3>
+              <div className="space-y-3">
+                {daySessions.map(session => {
+                  const leadName = leadsMap[session.lead_id]?.name || "Lead";
+                  const projectName = session.project_id ? projectsMap[session.project_id]?.name : undefined;
+                  
+                  return (
+                    <button
+                      key={session.id}
+                      className="w-full p-4 bg-card rounded-lg border border-primary/20 hover:border-primary/40 hover:bg-primary/5 transition-colors text-left"
+                      onClick={() => onSessionClick(session)}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-primary mb-1">
+                            {projectName || "Session"}
+                          </div>
+                          <div className="text-sm text-muted-foreground mb-2">
+                            {leadName}
+                          </div>
+                          <div className="text-sm font-medium">
+                            {formatOrgTime(session.session_time)}
+                          </div>
+                          {session.notes && (
+                            <div className="text-sm text-muted-foreground mt-2 line-clamp-2">
+                              {session.notes}
+                            </div>
+                          )}
+                        </div>
+                        <div className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-md">
+                          {session.status}
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
 
           {showReminders && dayActivities.length > 0 && (
             <div>
-              <h3 className="text-base font-medium mb-3">Reminders</h3>
-              <div className="space-y-2">
-                {dayActivities.map(activity => (
-                  <button
-                    key={activity.id}
-                    className={`w-full text-left p-3 rounded-lg bg-muted border border-border hover:bg-accent transition-colors ${
-                      activity.completed ? 'opacity-60 line-through' : ''
-                    }`}
-                    onClick={() => onActivityClick(activity)}
-                  >
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="font-semibold">
-                        {activity.reminder_time ? formatOrgTime(activity.reminder_time) : 'All day'}
-                      </span>
-                      <span>•</span>
-                      <span>{leadsMap[activity.lead_id]?.name || 'Lead'}</span>
-                    </div>
-                    {activity.content && <div className="text-xs text-muted-foreground mt-1">{activity.content}</div>}
-                  </button>
-                ))}
+              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-muted-foreground/60"></div>
+                Reminders ({dayActivities.length})
+              </h3>
+              <div className="space-y-3">
+                {dayActivities.map(activity => {
+                  const leadName = leadsMap[activity.lead_id]?.name || "Lead";
+                  const projectName = activity.project_id ? projectsMap[activity.project_id]?.name : undefined;
+                  const timeText = activity.reminder_time ? formatOrgTime(activity.reminder_time) : "All day";
+                  
+                  return (
+                    <button
+                      key={activity.id}
+                      className={`w-full p-4 bg-card rounded-lg border hover:bg-accent/50 transition-colors text-left ${
+                        activity.completed ? 'opacity-60' : ''
+                      }`}
+                      onClick={() => onActivityClick(activity)}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className={`font-medium mb-1 ${activity.completed ? 'line-through' : ''}`}>
+                            {activity.content}
+                          </div>
+                          <div className="text-sm text-muted-foreground mb-2">
+                            {projectName ? `Project: ${projectName}` : `Lead: ${leadName}`}
+                          </div>
+                          <div className="text-sm font-medium">
+                            {timeText}
+                          </div>
+                        </div>
+                        <div className={`px-2 py-1 text-xs rounded-md ${
+                          activity.completed ? 'bg-muted text-muted-foreground' : 'bg-secondary text-secondary-foreground'
+                        }`}>
+                          {activity.completed ? 'Completed' : activity.type}
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -166,9 +210,9 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
   }
 
   return (
-    <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+      <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
       <div className="grid grid-cols-8 border-b border-border bg-muted/30 relative">
-        <div className="p-3 w-16 shrink-0 sticky left-0 z-20 bg-card"></div>
+        <div className="p-3 w-16 shrink-0 sticky left-0 z-20 bg-card border-r border-border"></div>
         {weekDays.map((day, index) => {
           const today = isToday(day);
           return (
@@ -185,7 +229,7 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
           const isHour = slot.minute === 0;
           const isHalf = slot.minute === 30;
 
-          const labelText = isHour ? slot.display || '' : '';
+          const labelText = slot.display || '';
 
           return (
             <div
@@ -204,7 +248,7 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
                 return (
                   <div
                     key={dayIndex}
-                    className={`relative p-1 hover:bg-accent/30 transition-colors border-r border-border/30 ${isHour ? 'bg-background' : 'bg-background/50'}`}
+                    className="relative p-1 hover:bg-accent/30 transition-colors border-r border-border/30"
                   >
                     {events && (
                       <div className="space-y-1">

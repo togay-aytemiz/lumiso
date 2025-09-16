@@ -61,6 +61,31 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
   const { formatTime: formatOrgTime, loading: timezoneLoading } = useOrganizationTimezone();
   const { timeSlots, getSlotIndex } = useSmartTimeRange(sessions, activities);
 
+  const weekDays = useMemo(() => {
+    const weekStart = getStartOfWeek(currentDate, userLocale);
+    return Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+  }, [currentDate, userLocale]);
+
+  const eventsByDayAndSlot = useMemo(() => {
+    const eventMap = new Map<string, { sessions: Session[]; activities: Activity[] }>();
+    weekDays.forEach(day => {
+      const dayKey = format(day, 'yyyy-MM-dd');
+      const dayEvents = getEventsForDate(day);
+      timeSlots.forEach((_, slotIndex) => {
+        const key = `${dayKey}-${slotIndex}`;
+        const sessionsInSlot = dayEvents.sessions.filter(s => getSlotIndex(s.session_time) === slotIndex);
+        const activitiesInSlot = dayEvents.activities.filter(a => {
+          if (!a.reminder_time) return slotIndex === 0;
+          return getSlotIndex(a.reminder_time) === slotIndex;
+        });
+        if (sessionsInSlot.length || activitiesInSlot.length) {
+          eventMap.set(key, { sessions: sessionsInSlot, activities: activitiesInSlot });
+        }
+      });
+    });
+    return eventMap;
+  }, [weekDays, getEventsForDate, timeSlots, getSlotIndex]);
+
   // Show loading skeleton while timezone settings are loading to prevent format switching
   if (timezoneLoading) {
     return (
@@ -93,31 +118,6 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
       </div>
     );
   }
-
-  const weekDays = useMemo(() => {
-    const weekStart = getStartOfWeek(currentDate, userLocale);
-    return Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
-  }, [currentDate, userLocale]);
-
-  const eventsByDayAndSlot = useMemo(() => {
-    const eventMap = new Map<string, { sessions: Session[]; activities: Activity[] }>();
-    weekDays.forEach(day => {
-      const dayKey = format(day, 'yyyy-MM-dd');
-      const dayEvents = getEventsForDate(day);
-      timeSlots.forEach((_, slotIndex) => {
-        const key = `${dayKey}-${slotIndex}`;
-        const sessionsInSlot = dayEvents.sessions.filter(s => getSlotIndex(s.session_time) === slotIndex);
-        const activitiesInSlot = dayEvents.activities.filter(a => {
-          if (!a.reminder_time) return slotIndex === 0;
-          return getSlotIndex(a.reminder_time) === slotIndex;
-        });
-        if (sessionsInSlot.length || activitiesInSlot.length) {
-          eventMap.set(key, { sessions: sessionsInSlot, activities: activitiesInSlot });
-        }
-      });
-    });
-    return eventMap;
-  }, [weekDays, getEventsForDate, timeSlots, getSlotIndex]);
 
   if (isMobile) {
     const { sessions: daySessions, activities: dayActivities } = getEventsForDate(currentDate);

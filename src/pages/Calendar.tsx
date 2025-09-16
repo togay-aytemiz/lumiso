@@ -14,10 +14,14 @@ import SessionSheetView from "@/components/SessionSheetView";
 import { useOptimizedCalendarData } from "@/hooks/useOptimizedCalendarData";
 import { useOptimizedCalendarEvents } from "@/hooks/useOptimizedCalendarEvents";
 import { CalendarErrorWrapper } from "@/components/calendar/CalendarErrorBoundary";
-import { CalendarLoadingSpinner } from "@/components/calendar/CalendarLoadingSpinner";
+import { CalendarSkeleton, CalendarWeekSkeleton, CalendarDaySkeleton } from "@/components/calendar/CalendarSkeleton";
 import { CalendarDay } from "@/components/calendar/CalendarDay";
+import { CalendarWeek } from "@/components/calendar/CalendarWeek";
 import { useOptimizedCalendarViewport } from "@/hooks/useOptimizedCalendarViewport";
 import { useOptimizedCalendarNavigation } from "@/hooks/useOptimizedCalendarNavigation";
+import { useOptimizedTouchHandlers } from "@/hooks/useOptimizedTouchHandlers";
+import { useCalendarPerformanceMonitor } from "@/hooks/useCalendarPerformanceMonitor";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type ViewMode = "day" | "week" | "month";
 
@@ -51,7 +55,7 @@ export default function Calendar() {
     return window.innerWidth <= 768 ? "day" : "month";
   });
   
-  // Use optimized viewport and navigation hooks
+  // Use optimized hooks for performance and interaction
   const { isMobile, isTablet, isDesktop, viewConfig, handleDayClick } = useOptimizedCalendarViewport(
     viewMode, 
     setViewMode, 
@@ -63,12 +67,34 @@ export default function Calendar() {
     viewMode,
     setCurrentDate
   );
+
+  // Performance monitoring
+  const { 
+    startRenderTiming, 
+    endRenderTiming, 
+    startQueryTiming, 
+    endQueryTiming,
+    startEventProcessing,
+    endEventProcessing,
+    getPerformanceSummary 
+  } = useCalendarPerformanceMonitor();
+
+  // Optimized touch handlers using event delegation
+  const { handleTouchStart, handleTouchMove, handleTouchEnd } = useOptimizedTouchHandlers({
+    onSwipeLeft: navigateNext,
+    onSwipeRight: navigatePrevious,
+    enabled: viewConfig.enableSwipeNavigation
+  });
   
   useEffect(() => {
     localStorage.setItem("calendar:viewMode", viewMode);
   }, [viewMode]);
 
-  // Use optimized calendar data hook
+  // Use optimized calendar data hook with performance monitoring
+  useEffect(() => {
+    startQueryTiming();
+  }, []);
+
   const { 
     sessions, 
     activities, 
@@ -79,6 +105,12 @@ export default function Calendar() {
     isLoading, 
     error 
   } = useOptimizedCalendarData(currentDate, viewMode);
+
+  useEffect(() => {
+    if (!isLoading) {
+      endQueryTiming();
+    }
+  }, [isLoading, endQueryTiming]);
 
   const [projectDialogOpen, setProjectDialogOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<any | null>(null);
@@ -102,13 +134,25 @@ export default function Calendar() {
     localStorage.setItem("calendar:showReminders", String(showReminders));
   }, [showSessions, showReminders]);
 
-  // Use optimized events processing
+  // Use optimized events processing with performance monitoring
   const { getEventsForDate, eventStats } = useOptimizedCalendarEvents(
     sessions,
     activities,
     showSessions,
     showReminders
   );
+
+  // Monitor event processing performance
+  useEffect(() => {
+    if (sessions.length > 0 || activities.length > 0) {
+      startEventProcessing();
+      // Processing happens in the hook, so we end timing after a tick
+      const timeout = setTimeout(() => {
+        endEventProcessing(eventStats.totalEvents);
+      }, 0);
+      return () => clearTimeout(timeout);
+    }
+  }, [sessions, activities, startEventProcessing, endEventProcessing, eventStats.totalEvents]);
   // Memoized event handlers for better performance
   const openProjectById = useCallback(async (projectId?: string | null) => {
     if (!projectId) return;
@@ -136,38 +180,22 @@ export default function Calendar() {
       navigate(`/leads/${activity.lead_id}`);
     }
   }, [openProjectById, navigate]);
-  // getEventsForDate is now provided by useOptimizedCalendarEvents hook
+  // Performance monitoring for renders
+  useEffect(() => {
+    startRenderTiming();
+    
+    return () => {
+      endRenderTiming();
+    };
+  });
 
-  // Add touch/swipe handlers
-  const [touchStart, setTouchStart] = useState<number | null>(null);
-  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  // Keyboard navigation support
+  useEffect(() => {
+    document.addEventListener('keydown', handleKeyboardNavigation);
+    return () => document.removeEventListener('keydown', handleKeyboardNavigation);
+  }, [handleKeyboardNavigation]);
 
-  const handleTouchStart = (e: React.TouchEvent) => {
-    setTouchEnd(null);
-    setTouchStart(e.targetTouches[0].clientX);
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    setTouchEnd(e.targetTouches[0].clientX);
-  };
-
-  const handleTouchEnd = () => {
-    if (!touchStart || !touchEnd) return;
-    const distance = touchStart - touchEnd;
-    const minSwipeDistance = 50;
-
-    if (Math.abs(distance) > minSwipeDistance) {
-      if (distance > 0) {
-        // Swipe left - next
-        navigateNext();
-      } else {
-        // Swipe right - previous  
-        navigatePrevious();
-      }
-    }
-  };
-
-  // Render view content
+  // Render month view using optimized CalendarDay components
   const renderMonthView = () => {
     const monthStart = startOfMonth(currentDate);
     const monthEnd = endOfMonth(currentDate);
@@ -668,7 +696,46 @@ export default function Calendar() {
 
   // Show loading state while data is being fetched
   if (isLoading) {
-    return <CalendarLoadingSpinner />;
+    return (
+      <CalendarErrorWrapper error={error} retry={refreshCalendar}>
+        <>
+          <PageHeader 
+            title="Calendar"
+            subtitle="Manage your sessions and reminders"
+          />
+
+          {/* Desktop controls in separate row */}
+          <div className="hidden lg:block px-4 sm:px-6 lg:px-6">
+            <div className="flex items-center gap-4 justify-between w-full pb-4">
+              {/* Filter chips skeleton */}
+              <div className="flex items-center gap-2">
+                <Skeleton className="h-8 w-20" />
+                <Skeleton className="h-8 w-24" />
+              </div>
+              
+              {/* Navigation skeleton */}
+              <div className="flex items-center gap-2">
+                <Skeleton className="h-8 w-8" />
+                <Skeleton className="h-8 w-32" />
+                <Skeleton className="h-8 w-8" />
+              </div>
+              
+              {/* View mode skeleton */}
+              <div className="flex items-center gap-1">
+                <Skeleton className="h-8 w-16" />
+                <Skeleton className="h-8 w-16" />
+                <Skeleton className="h-8 w-16" />
+              </div>
+            </div>
+          </div>
+
+          {/* Calendar content skeleton */}
+          <div className="flex-1 px-4 sm:px-6 lg:px-6 pb-4">
+            <CalendarSkeleton />
+          </div>
+        </>
+      </CalendarErrorWrapper>
+    );
   }
 
   return (

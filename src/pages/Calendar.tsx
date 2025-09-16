@@ -21,6 +21,7 @@ import { useOptimizedCalendarViewport } from "@/hooks/useOptimizedCalendarViewpo
 import { useOptimizedCalendarNavigation } from "@/hooks/useOptimizedCalendarNavigation";
 import { useOptimizedTouchHandlers } from "@/hooks/useOptimizedTouchHandlers";
 import { useCalendarPerformanceMonitor } from "@/hooks/useCalendarPerformanceMonitor";
+import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { Skeleton } from "@/components/ui/skeleton";
 
 type ViewMode = "day" | "week" | "month";
@@ -78,6 +79,9 @@ export default function Calendar() {
     endEventProcessing,
     getPerformanceSummary 
   } = useCalendarPerformanceMonitor();
+
+  // Organization settings to prevent time format switching during load
+  const { loading: orgSettingsLoading } = useOrganizationSettings();
 
   // Optimized touch handlers using event delegation
   const touchHandlers = useOptimizedTouchHandlers({
@@ -232,6 +236,9 @@ export default function Calendar() {
         projectsMap={projectsMap}
         onSessionClick={handleSessionClick}
         onActivityClick={handleActivityClick}
+        onDayClick={isMobile ? (date) => {
+          setCurrentDate(date);
+        } : undefined}
         isMobile={isMobile}
         getEventsForDate={getEventsForDate}
       />
@@ -259,8 +266,8 @@ export default function Calendar() {
     return viewTitle; // Use optimized viewTitle from hook
   };
 
-  // Show loading state while data is being fetched
-  if (isLoading) {
+  // Show loading state while data is being fetched OR organization settings are loading
+  if (isLoading || orgSettingsLoading) {
     return (
       <CalendarErrorWrapper error={error} retry={refreshCalendar}>
         <>

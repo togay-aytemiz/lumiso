@@ -64,24 +64,35 @@ export function CalendarSkeleton() {
  */
 export function CalendarWeekSkeleton() {
   return (
-    <div className="space-y-4">
-      {/* Time slots with skeleton events */}
-      {Array.from({ length: 24 }).map((_, hour) => (
-        <div key={hour} className="flex gap-4">
-          <div className="w-16 text-right">
-            <Skeleton className="h-4 w-12" />
+    <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+      {/* Week header skeleton */}
+      <div className="grid grid-cols-8 border-b border-border bg-muted/30">
+        <div className="p-3 w-16 shrink-0"></div>
+        {Array.from({ length: 7 }).map((_, day) => (
+          <div key={day} className="p-3 text-center">
+            <Skeleton className="h-4 w-8 mx-auto mb-1" />
+            <Skeleton className="h-5 w-6 mx-auto" />
           </div>
-          <div className="flex-1 grid grid-cols-7 gap-2 min-h-12">
+        ))}
+      </div>
+
+      {/* Time slots skeleton */}
+      <div className="max-h-[70vh] overflow-hidden">
+        {Array.from({ length: 16 }).map((_, slot) => (
+          <div key={slot} className="grid grid-cols-8 border-b border-border/10 min-h-12">
+            <div className="p-2 w-16 shrink-0 text-right border-r border-border">
+              {slot % 2 === 0 && <Skeleton className="h-3 w-12 ml-auto" />}
+            </div>
             {Array.from({ length: 7 }).map((_, day) => (
-              <div key={day} className="relative">
+              <div key={day} className="relative p-1 border-r border-border/30">
                 {Math.random() > 0.85 && (
-                  <Skeleton className="h-8 w-full rounded absolute top-0" />
+                  <Skeleton className="h-6 w-full rounded" />
                 )}
               </div>
             ))}
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }

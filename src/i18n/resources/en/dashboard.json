@@ -1,18 +1,48 @@
 {
-  "title": "Dashboard",
-  "welcome": "Welcome back",
+  "page": {
+    "title": "Dashboard",
+    "subtitle": "Welcome back! Here's an overview of your photography business"
+  },
   "stats": {
-    "totalProjects": "Total Projects",
-    "activeLeads": "Active Leads",
-    "upcomingSessions": "Upcoming Sessions",
-    "revenue": "Revenue"
+    "total_leads": "Total Leads",
+    "this_weeks_sessions": "This Week's Sessions", 
+    "booked_leads": "Booked Leads",
+    "completed_leads": "Completed Leads",
+    "lost_leads": "Lost Leads",
+    "this_week": "this week",
+    "this_month": "This month",
+    "ready_for_shoots": "Ready for shoots",
+    "marked_lost_month": "Marked as lost this month",
+    "week_format_us": "Sun-Sat",
+    "week_format_intl": "Mon-Sun"
   },
-  "quickActions": {
-    "newProject": "New Project",
-    "addLead": "Add Lead",
-    "scheduleSession": "Schedule Session",
-    "viewCalendar": "View Calendar"
+  "sections": {
+    "reminders": {
+      "title": "Reminders",
+      "description": "Task reminders and notifications",
+      "no_tasks": "No tasks scheduled. Enjoy your day 👏",
+      "today": "Today",
+      "overdue": "Overdue", 
+      "upcoming": "Upcoming",
+      "more_tasks": "more"
+    },
+    "recent_leads": {
+      "title": "Recent Leads",
+      "description": "Your latest potential clients",
+      "no_leads": "No leads yet. Add your first lead to get started!",
+      "due_label": "Due"
+    },
+    "sessions": {
+      "title": "This Week's Sessions",
+      "description": "Sessions scheduled for this week",
+      "no_sessions": "No upcoming sessions",
+      "unknown_client": "Unknown Client"
+    }
   },
-  "recentActivity": "Recent Activity",
-  "upcomingTasks": "Upcoming Tasks"
+  "buttons": {
+    "add_lead": "Add Lead",
+    "view_all": "View All",
+    "see_all_leads": "See All Leads",
+    "view_all_sessions": "View All Sessions"
+  }
 }

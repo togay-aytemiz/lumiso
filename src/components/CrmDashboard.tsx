@@ -13,6 +13,7 @@ import GlobalSearch from "@/components/GlobalSearch";
 import { getLeadStatusStyles, formatStatusText } from "@/lib/leadStatusColors";
 import { getWeekRange, getUserLocale, formatLongDate, formatTime, formatDate } from "@/lib/utils";
 import { DashboardLoadingSkeleton } from "@/components/ui/loading-presets";
+import { useDashboardTranslation } from "@/hooks/useTypedTranslation";
 
 interface Lead {
   id: string;
@@ -63,6 +64,7 @@ const CrmDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [addLeadDialogOpen, setAddLeadDialogOpen] = useState(false);
   const navigate = useNavigate();
+  const { t } = useDashboardTranslation();
 
   useEffect(() => {
     fetchData();
@@ -205,8 +207,8 @@ const CrmDashboard = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 dark:from-gray-900 dark:to-slate-800 overflow-x-hidden">
       <PageHeader
-        title="Dashboard"
-        subtitle="Welcome back! Here's an overview of your photography business"
+        title={t('page.title')}
+        subtitle={t('page.subtitle')}
       >
         <PageHeaderSearch>
           <GlobalSearch />
@@ -221,20 +223,20 @@ const CrmDashboard = () => {
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 mb-8">
           <Card className={`${getStatCardGradient('leads')} border-0 shadow-md hover:shadow-lg transition-shadow`}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-slate-700 dark:text-slate-300">Total Leads</CardTitle>
+              <CardTitle className="text-sm font-medium text-slate-700 dark:text-slate-300">{t('stats.total_leads')}</CardTitle>
               <Users className={`h-5 w-5 ${getIconColor('leads')}`} />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-slate-800 dark:text-slate-200">{leads.length}</div>
               <p className="text-xs text-slate-600 dark:text-slate-400">
-                +{leads.filter(lead => new Date(lead.created_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)).length} this week
+                +{leads.filter(lead => new Date(lead.created_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)).length} {t('stats.this_week')}
               </p>
             </CardContent>
           </Card>
 
           <Card className={`${getStatCardGradient('sessions')} border-0 shadow-md hover:shadow-lg transition-shadow`}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-slate-700 dark:text-slate-300">This Week's Sessions</CardTitle>
+              <CardTitle className="text-sm font-medium text-slate-700 dark:text-slate-300">{t('stats.this_weeks_sessions')}</CardTitle>
               <Calendar className={`h-5 w-5 ${getIconColor('sessions')}`} />
             </CardHeader>
             <CardContent>
@@ -242,14 +244,14 @@ const CrmDashboard = () => {
                 {upcomingSessions.length}
               </div>
               <p className="text-xs text-slate-600 dark:text-slate-400">
-                This week ({getUserLocale().startsWith('tr') ? 'Mon-Sun' : 'Sun-Sat'})
+                {t('stats.this_week')} ({getUserLocale().startsWith('tr') ? t('stats.week_format_intl') : t('stats.week_format_us')})
               </p>
             </CardContent>
           </Card>
 
           <Card className={`${getStatCardGradient('booked')} border-0 shadow-md hover:shadow-lg transition-shadow`}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-slate-700 dark:text-slate-300">Booked Leads</CardTitle>
+              <CardTitle className="text-sm font-medium text-slate-700 dark:text-slate-300">{t('stats.booked_leads')}</CardTitle>
               <Users className={`h-5 w-5 ${getIconColor('booked')}`} />
             </CardHeader>
             <CardContent>
@@ -257,14 +259,14 @@ const CrmDashboard = () => {
                 {leads.filter(lead => lead.status === 'booked').length}
               </div>
               <p className="text-xs text-slate-600 dark:text-slate-400">
-                Ready for shoots
+                {t('stats.ready_for_shoots')}
               </p>
             </CardContent>
           </Card>
 
           <Card className={`${getStatCardGradient('completed')} border-0 shadow-md hover:shadow-lg transition-shadow`}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-slate-700 dark:text-slate-300">Completed Leads</CardTitle>
+              <CardTitle className="text-sm font-medium text-slate-700 dark:text-slate-300">{t('stats.completed_leads')}</CardTitle>
               <CheckCircle className={`h-5 w-5 ${getIconColor('completed')}`} />
             </CardHeader>
             <CardContent>
@@ -277,14 +279,14 @@ const CrmDashboard = () => {
                 }).length}
               </div>
               <p className="text-xs text-slate-600 dark:text-slate-400">
-                This month
+                {t('stats.this_month')}
               </p>
             </CardContent>
           </Card>
 
           <Card className={`${getStatCardGradient('lost')} border-0 shadow-md hover:shadow-lg transition-shadow`}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-slate-700 dark:text-slate-300">Lost Leads</CardTitle>
+              <CardTitle className="text-sm font-medium text-slate-700 dark:text-slate-300">{t('stats.lost_leads')}</CardTitle>
               <XCircle className={`h-5 w-5 ${getIconColor('lost')}`} />
             </CardHeader>
             <CardContent>
@@ -297,7 +299,7 @@ const CrmDashboard = () => {
                 }).length}
               </div>
               <p className="text-xs text-slate-600 dark:text-slate-400">
-                Marked as lost this month
+                {t('stats.marked_lost_month')}
               </p>
             </CardContent>
           </Card>
@@ -308,8 +310,8 @@ const CrmDashboard = () => {
           <CardHeader className="bg-gradient-to-r from-slate-50 to-gray-50 dark:from-slate-800 dark:to-gray-800 rounded-t-lg pb-4">
             <div className="flex flex-row items-center justify-between">
               <div>
-                <CardTitle className="text-slate-800 dark:text-slate-200">Reminders</CardTitle>
-                <CardDescription className="text-slate-600 dark:text-slate-400">Task reminders and notifications</CardDescription>
+                <CardTitle className="text-slate-800 dark:text-slate-200">{t('sections.reminders.title')}</CardTitle>
+                <CardDescription className="text-slate-600 dark:text-slate-400">{t('sections.reminders.description')}</CardDescription>
               </div>
               <Button 
                 variant="secondary" 
@@ -317,7 +319,7 @@ const CrmDashboard = () => {
                 className="hover:shadow-md transition-shadow"
                 onClick={() => navigate("/reminders")}
               >
-                View All
+                {t('buttons.view_all')}
               </Button>
             </div>
           </CardHeader>
@@ -330,7 +332,7 @@ const CrmDashboard = () => {
                 return (
                   <div className="text-center py-6">
                     <p className="text-slate-600 dark:text-slate-400">
-                      No tasks scheduled. Enjoy your day 👏
+                      {t('sections.reminders.no_tasks')}
                     </p>
                   </div>
                 );
@@ -364,7 +366,7 @@ const CrmDashboard = () => {
                         ))}
                         {hasMore && (
                           <div className="text-xs text-slate-500 dark:text-slate-500 italic">
-                            +{reminders.length - 3} more
+                            +{reminders.length - 3} {t('sections.reminders.more_tasks')}
                           </div>
                         )}
                       </div>
@@ -377,7 +379,7 @@ const CrmDashboard = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   {renderReminderSummary(
                     today, 
-                    "Today", 
+                    t('sections.reminders.today'), 
                     "bg-blue-50/50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800",
                     "text-blue-700 dark:text-blue-300",
                     "text-blue-600 dark:text-blue-400",
@@ -386,7 +388,7 @@ const CrmDashboard = () => {
                   
                   {renderReminderSummary(
                     overdue, 
-                    "Overdue", 
+                    t('sections.reminders.overdue'), 
                     "bg-red-50/50 dark:bg-red-950/20 border-red-200 dark:border-red-800",
                     "text-red-700 dark:text-red-300",
                     "text-red-600 dark:text-red-400",
@@ -395,7 +397,7 @@ const CrmDashboard = () => {
                   
                   {renderReminderSummary(
                     upcoming, 
-                    "Upcoming", 
+                    t('sections.reminders.upcoming'), 
                     "bg-slate-50/50 dark:bg-slate-950/20 border-slate-200 dark:border-slate-700",
                     "text-slate-700 dark:text-slate-300",
                     "text-slate-600 dark:text-slate-400",
@@ -412,8 +414,8 @@ const CrmDashboard = () => {
             <CardHeader className="bg-gradient-to-r from-slate-50 to-gray-50 dark:from-slate-800 dark:to-gray-800 rounded-t-lg">
               <div className="flex flex-row items-center justify-between">
                 <div>
-                  <CardTitle className="text-slate-800 dark:text-slate-200">Recent Leads</CardTitle>
-                  <CardDescription className="text-slate-600 dark:text-slate-400">Your latest potential clients</CardDescription>
+                  <CardTitle className="text-slate-800 dark:text-slate-200">{t('sections.recent_leads.title')}</CardTitle>
+                  <CardDescription className="text-slate-600 dark:text-slate-400">{t('sections.recent_leads.description')}</CardDescription>
                 </div>
                 <Button 
                   size="sm"
@@ -421,7 +423,7 @@ const CrmDashboard = () => {
                   className="flex items-center gap-2 whitespace-nowrap"
                 >
                   <Plus className="h-4 w-4" />
-                  Add Lead
+                  {t('buttons.add_lead')}
                 </Button>
               </div>
               {leads.length > 0 && (
@@ -431,7 +433,7 @@ const CrmDashboard = () => {
                   className="w-fit mt-4 hover:shadow-md transition-shadow"
                   onClick={() => navigate("/leads")}
                 >
-                  See All Leads
+                  {t('buttons.see_all_leads')}
                 </Button>
               )}
             </CardHeader>
@@ -446,11 +448,11 @@ const CrmDashboard = () => {
                     <div className="space-y-1">
                       <h4 className="font-medium text-slate-800 dark:text-slate-200">{lead.name}</h4>
                       <p className="text-sm text-slate-600 dark:text-slate-400">{lead.email}</p>
-                       {lead.due_date && (
-                         <p className="text-xs text-slate-500 dark:text-slate-500">
-                           Due: {formatDate(lead.due_date)}
-                         </p>
-                       )}
+                        {lead.due_date && (
+                          <p className="text-xs text-slate-500 dark:text-slate-500">
+                            {t('sections.recent_leads.due_label')}: {formatDate(lead.due_date)}
+                          </p>
+                        )}
                     </div>
                     <span className={`px-2 py-1 text-xs rounded-full font-medium shadow-sm ${getLeadStatusStyles(lead.status).className}`}>
                       {formatStatusText(lead.status)}
@@ -460,7 +462,7 @@ const CrmDashboard = () => {
                 {leads.length === 0 && (
                   <div className="text-center py-8 text-slate-500 dark:text-slate-400">
                     <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>No leads yet. Add your first lead to get started!</p>
+                    <p>{t('sections.recent_leads.no_leads')}</p>
                   </div>
                 )}
               </div>
@@ -471,8 +473,8 @@ const CrmDashboard = () => {
             <CardHeader className="bg-gradient-to-r from-slate-50 to-gray-50 dark:from-slate-800 dark:to-gray-800 rounded-t-lg">
               <div className="flex flex-row items-center justify-between">
                 <div>
-                  <CardTitle className="text-slate-800 dark:text-slate-200">This Week's Sessions</CardTitle>
-                  <CardDescription className="text-slate-600 dark:text-slate-400">Sessions scheduled for this week ({getUserLocale().startsWith('tr') ? 'Mon-Sun' : 'Sun-Sat'})</CardDescription>
+                  <CardTitle className="text-slate-800 dark:text-slate-200">{t('sections.sessions.title')}</CardTitle>
+                  <CardDescription className="text-slate-600 dark:text-slate-400">{t('sections.sessions.description')} ({getUserLocale().startsWith('tr') ? t('stats.week_format_intl') : t('stats.week_format_us')})</CardDescription>
                 </div>
                 <NewSessionDialog onSessionScheduled={fetchData} />
               </div>
@@ -482,7 +484,7 @@ const CrmDashboard = () => {
                 className="w-fit mt-4 hover:shadow-md transition-shadow"
                 onClick={() => navigate("/sessions")}
               >
-                View All Sessions
+                {t('buttons.view_all_sessions')}
               </Button>
             </CardHeader>
             <CardContent>
@@ -490,7 +492,7 @@ const CrmDashboard = () => {
                 {upcomingSessions.length === 0 ? (
                   <div className="text-center py-8 text-slate-500 dark:text-slate-400">
                     <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>No upcoming sessions</p>
+                    <p>{t('sections.sessions.no_sessions')}</p>
                   </div>
                 ) : (
                   upcomingSessions.slice(0, 3).map((session) => (
@@ -500,7 +502,7 @@ const CrmDashboard = () => {
                       onClick={() => navigate(`/leads/${session.lead_id}`, { state: { from: 'dashboard' } })}
                     >
                        <div className="space-y-1">
-                         <h4 className="font-medium text-slate-800 dark:text-slate-200 hover:text-primary transition-colors">{session.lead_name || 'Unknown Client'}</h4>
+                         <h4 className="font-medium text-slate-800 dark:text-slate-200 hover:text-primary transition-colors">{session.lead_name || t('sections.sessions.unknown_client')}</h4>
                          <p className="text-sm text-slate-600 dark:text-slate-400">
                            {formatLongDate(session.session_date)} – {formatTime(session.session_time)}
                          </p>

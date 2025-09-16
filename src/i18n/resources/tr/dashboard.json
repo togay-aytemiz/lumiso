@@ -1,18 +1,48 @@
 {
-  "title": "Gösterge Paneli",
-  "welcome": "Tekrar hoşgeldiniz",
+  "page": {
+    "title": "Gösterge Paneli",
+    "subtitle": "Hoş geldiniz! Fotoğrafçılık işinizin genel görünümü"
+  },
   "stats": {
-    "totalProjects": "Toplam Proje",
-    "activeLeads": "Aktif Müşteri Adayı",
-    "upcomingSessions": "Yaklaşan Seans",
-    "revenue": "Gelir"
+    "total_leads": "Toplam Müşteri Adayları",
+    "this_weeks_sessions": "Bu Haftanın Seansları",
+    "booked_leads": "Rezerve Edilen Müşteri Adayları",
+    "completed_leads": "Tamamlanan Müşteri Adayları", 
+    "lost_leads": "Kaybedilen Müşteri Adayları",
+    "this_week": "bu hafta",
+    "this_month": "Bu ay",
+    "ready_for_shoots": "Çekimlere hazır",
+    "marked_lost_month": "Bu ay kayıp olarak işaretlendi",
+    "week_format_us": "Paz-Cmt",
+    "week_format_intl": "Pzt-Paz"
   },
-  "quickActions": {
-    "newProject": "Yeni Proje",
-    "addLead": "Müşteri Adayı Ekle",
-    "scheduleSession": "Seans Planla",
-    "viewCalendar": "Takvimi Görüntüle"
+  "sections": {
+    "reminders": {
+      "title": "Hatırlatmalar",
+      "description": "Görev hatırlatmaları ve bildirimler",
+      "no_tasks": "Zamanlanmış görev yok. Gününüzün keyfini çıkarın 👏",
+      "today": "Bugün",
+      "overdue": "Geciken",
+      "upcoming": "Yaklaşan",
+      "more_tasks": "daha fazla"
+    },
+    "recent_leads": {
+      "title": "Son Müşteri Adayları",
+      "description": "En son potansiyel müşterileriniz",
+      "no_leads": "Henüz müşteri adayı yok. Başlamak için ilk müşteri adayınızı ekleyin!",
+      "due_label": "Teslim"
+    },
+    "sessions": {
+      "title": "Bu Haftanın Seansları",
+      "description": "Bu hafta için planlanan seanslar",
+      "no_sessions": "Yaklaşan seans yok",
+      "unknown_client": "Bilinmeyen Müşteri"
+    }
   },
-  "recentActivity": "Son Aktiviteler",
-  "upcomingTasks": "Yaklaşan Görevler"
+  "buttons": {
+    "add_lead": "Müşteri Adayı Ekle",
+    "view_all": "Tümünü Görüntüle",
+    "see_all_leads": "Tüm Müşteri Adaylarını Gör",
+    "view_all_sessions": "Tüm Seansları Görüntüle"
+  }
 }

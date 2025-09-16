@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { useFormsTranslation, useMessagesTranslation } from "@/hooks/useTypedTranslation";
 
 const Auth = () => {
   const [email, setEmail] = useState("");
@@ -17,6 +18,8 @@ const Auth = () => {
   const [showPassword, setShowPassword] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { t: tForm } = useFormsTranslation();
+  const { t: tMsg } = useMessagesTranslation();
 
   // Redirect if already logged in
   useEffect(() => {
@@ -55,10 +58,10 @@ const Auth = () => {
         if (error) throw error;
 
         if (data.user && !data.user.email_confirmed_at) {
-          toast.success("Check your email for the confirmation link!");
+          toast.success(tMsg('auth.email_confirmation'));
           setLoading(false);
         } else if (data.user) {
-          toast.success("Account created successfully!");
+          toast.success(tMsg('auth.account_created'));
           // Navigate to home
           setTimeout(() => navigate("/"), 1000);
         }
@@ -71,7 +74,7 @@ const Auth = () => {
         if (error) throw error;
 
         console.log("Sign in successful:", data.user?.id);
-        toast.success("Signed in successfully!");
+        toast.success(tMsg('auth.signed_in'));
         
         // Navigate to home
         setTimeout(() => navigate("/"), 1000);
@@ -88,23 +91,23 @@ const Auth = () => {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl text-center">
-            {isSignUp ? "Create an account" : "Welcome back"}
+            {isSignUp ? tForm('auth.sign_up.title') : tForm('auth.sign_in.title')}
           </CardTitle>
           <CardDescription className="text-center">
             {isSignUp 
-              ? "Enter your details to create your account" 
-              : "Enter your credentials to sign in"
+              ? tForm('auth.sign_up.subtitle')
+              : tForm('auth.sign_in.subtitle')
             }
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{tForm('labels.email')}</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="Enter your email"
+                placeholder={tForm('placeholders.enter_email')}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -112,12 +115,12 @@ const Auth = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{tForm('labels.password')}</Label>
               <div className="relative">
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
-                  placeholder="Enter your password"
+                  placeholder={tForm('placeholders.enter_password')}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -144,7 +147,7 @@ const Auth = () => {
               className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700" 
               disabled={loading}
             >
-              {loading ? "Loading..." : (isSignUp ? "Create Account" : "Sign In")}
+              {loading ? tMsg('info.loading') + "..." : (isSignUp ? tForm('auth.sign_up.button') : tForm('auth.sign_in.button'))}
             </Button>
           </form>
           <div className="mt-4 text-center">
@@ -155,8 +158,8 @@ const Auth = () => {
               className="text-sm"
             >
               {isSignUp 
-                ? "Already have an account? Sign in" 
-                : "Don't have an account? Sign up"
+                ? tForm('auth.sign_in.link')
+                : tForm('auth.sign_up.link')
               }
             </Button>
           </div>

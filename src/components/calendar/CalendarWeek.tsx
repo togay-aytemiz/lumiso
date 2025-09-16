@@ -234,9 +234,9 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
           return (
             <div
               key={`slot-${slotIndex}`}
-              className={`grid grid-cols-8 ${isHour ? 'border-b border-border' : 'border-b border-border/10'} min-h-12`}
+              className="grid grid-cols-8 border-b border-border/20 min-h-8"
             >
-              <div className={`p-2 w-16 shrink-0 text-xs text-muted-foreground text-right sticky left-0 z-10 bg-card border-r border-border ${isHour ? 'font-medium' : ''}`}>
+              <div className={`w-16 shrink-0 text-xs text-muted-foreground sticky left-0 z-10 bg-card flex items-center justify-end pr-3 ${isHour ? 'font-medium' : ''}`}>
                 {labelText || '\u00A0'}
               </div>
 
@@ -248,7 +248,7 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
                 return (
                   <div
                     key={dayIndex}
-                    className="relative p-1 hover:bg-accent/30 transition-colors border-r border-border/30"
+                    className="relative p-1 hover:bg-accent/30 transition-colors border-r border-border"
                   >
                     {events && (
                       <div className="space-y-1">

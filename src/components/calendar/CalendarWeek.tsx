@@ -58,8 +58,41 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
   onDayClick
 }) {
   const userLocale = getUserLocale();
-  const { formatTime: formatOrgTime } = useOrganizationTimezone();
+  const { formatTime: formatOrgTime, loading: timezoneLoading } = useOrganizationTimezone();
   const { timeSlots, getSlotIndex } = useSmartTimeRange(sessions, activities);
+
+  // Show loading skeleton while timezone settings are loading to prevent format switching
+  if (timezoneLoading) {
+    return (
+      <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+        <div className="grid grid-cols-8 border-b border-border bg-muted/30 relative">
+          <div className="p-3 w-16 shrink-0 sticky left-0 z-20 bg-card border-r border-border animate-pulse">
+            <div className="h-4 bg-muted rounded"></div>
+          </div>
+          {Array.from({ length: 7 }).map((_, index) => (
+            <div key={index} className="p-3 text-center animate-pulse">
+              <div className="h-4 bg-muted rounded mb-1"></div>
+              <div className="h-6 bg-muted rounded"></div>
+            </div>
+          ))}
+        </div>
+        <div className="flex-1 max-h-[70vh] overflow-y-auto relative">
+          {Array.from({ length: 24 }).map((_, index) => (
+            <div key={index} className="grid grid-cols-8 border-b border-border/80 min-h-8 relative">
+              <div className="w-16 shrink-0 sticky left-0 z-20 bg-card border-r border-border animate-pulse">
+                <div className="h-6 bg-muted rounded m-1"></div>
+              </div>
+              {Array.from({ length: 7 }).map((_, dayIndex) => (
+                <div key={dayIndex} className="p-1 border-r border-border animate-pulse">
+                  <div className="h-6 bg-muted rounded"></div>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   const weekDays = useMemo(() => {
     const weekStart = getStartOfWeek(currentDate, userLocale);

@@ -12,7 +12,7 @@ import {
  * Hook for timezone-aware date/time operations within the organization context
  */
 export function useOrganizationTimezone() {
-  const { settings } = useOrganizationSettings();
+  const { settings, loading } = useOrganizationSettings();
   
   const timezone = settings?.timezone || detectBrowserTimezone();
   const dateFormat = settings?.date_format || 'DD/MM/YYYY';
@@ -67,6 +67,7 @@ export function useOrganizationTimezone() {
     fromOrgTimezone,
     getCurrentTime,
     getCurrentTimeString,
-    settings
+    settings,
+    loading
   };
 }

@@ -247,9 +247,91 @@ export default function ProjectDetailRefactored() {
         actions={actions}
       >
         <ProjectDetailsLayout 
-          project={project}
-          onProjectUpdated={fetchProjectData}
-          onStatusChange={handleStatusChange}
+          header={
+            <div className="space-y-2">
+              <h2 className="text-lg font-semibold">Project Overview</h2>
+              <UnifiedClientDetails 
+                lead={lead}
+              />
+            </div>
+          }
+          left={
+            <div className="space-y-4">
+              <ProjectStatusBadge 
+                projectId={project.id}
+                currentStatusId={project.status_id}
+                onStatusChange={handleStatusChange}
+                editable={!isArchived}
+                className="text-sm w-full justify-center"
+              />
+            </div>
+          }
+          sections={[
+            {
+              id: "activities",
+              title: "Activities",
+              content: (
+                <ProjectActivitySection
+                  projectId={project.id}
+                  leadId={project.lead_id}
+                  leadName={lead?.name || ""}
+                  projectName={project.name}
+                  onActivityUpdated={fetchProjectData}
+                />
+              )
+            },
+            {
+              id: "todos", 
+              title: "Todos",
+              content: (
+                <ProjectTodoListEnhanced
+                  projectId={project.id}
+                />
+              )
+            },
+            {
+              id: "services",
+              title: "Services", 
+              content: (
+                <ProjectServicesSection
+                  projectId={project.id}
+                  onServicesUpdated={() => {
+                    setServicesVersion(prev => prev + 1);
+                    fetchProjectData();
+                  }}
+                />
+              )
+            },
+            {
+              id: "sessions",
+              title: "Sessions",
+              content: (
+                <SessionsSection
+                  sessions={[]}
+                  loading={false}
+                  leadId={project.lead_id}
+                  projectId={project.id}
+                  leadName={lead?.name || ""}
+                  projectName={project.name}
+                  onSessionUpdated={fetchProjectData}
+                  onDeleteSession={async (sessionId: string) => {
+                    // Handle session deletion
+                    fetchProjectData();
+                  }}
+                />
+              )
+            },
+            {
+              id: "payments",
+              title: "Payments",
+              content: (
+                <ProjectPaymentsSection
+                  projectId={project.id}
+                  onPaymentsUpdated={fetchProjectData}
+                />
+              )
+            }
+          ]}
         />
       </EntityDetailLayout>
 

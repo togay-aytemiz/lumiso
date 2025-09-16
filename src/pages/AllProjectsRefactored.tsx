@@ -232,30 +232,31 @@ const AllProjectsRefactored = () => {
             {viewModeButtons}
           </div>
           
-          <ProjectKanbanBoard 
-            projects={projects}
-            onProjectClick={handleProjectClick}
-            onQuickView={handleQuickView}
-            onProjectUpdate={handleProjectUpdate}
-          />
+        <ProjectKanbanBoard
+          projects={projects}
+          onProjectsChange={refetchProjects}
+          onProjectUpdate={handleProjectUpdate}
+          onQuickView={handleQuickView}
+        />
         </div>
 
-        <EnhancedProjectDialog onProjectAdded={refetchProjects} />
+        <EnhancedProjectDialog onProjectCreated={refetchProjects} />
         <ViewProjectDialog 
           project={viewingProject}
           open={showViewDialog}
           onOpenChange={setShowViewDialog}
+          onProjectUpdated={refetchProjects}
+          leadName={viewingProject?.lead?.name || ""}
         />
         <ProjectSheetView 
           project={quickViewProject}
           open={showQuickView}
           onOpenChange={setShowQuickView}
+          onProjectUpdated={refetchProjects}
+          leadName={quickViewProject?.lead?.name || ""}
           onViewFullDetails={handleViewFullDetails}
         />
-        <KanbanSettingsSheet 
-          open={showKanbanSettings}
-          onOpenChange={setShowKanbanSettings}
-        />
+        <KanbanSettingsSheet />
       </ErrorBoundary>
     );
   }
@@ -276,22 +277,23 @@ const AllProjectsRefactored = () => {
         itemsPerPage={20}
       />
 
-      <EnhancedProjectDialog onProjectAdded={refetchProjects} />
+      <EnhancedProjectDialog onProjectCreated={refetchProjects} />
       <ViewProjectDialog 
         project={viewingProject}
         open={showViewDialog}
         onOpenChange={setShowViewDialog}
+        onProjectUpdated={refetchProjects}
+        leadName={viewingProject?.lead?.name || ""}
       />
       <ProjectSheetView 
         project={quickViewProject}
         open={showQuickView}
         onOpenChange={setShowQuickView}
+        onProjectUpdated={refetchProjects}
+        leadName={quickViewProject?.lead?.name || ""}
         onViewFullDetails={handleViewFullDetails}
       />
-      <KanbanSettingsSheet 
-        open={showKanbanSettings}
-        onOpenChange={setShowKanbanSettings}
-      />
+      <KanbanSettingsSheet />
     </ErrorBoundary>
   );
 };

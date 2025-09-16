@@ -36,6 +36,7 @@ import { SidebarNavItem } from "@/components/sidebar/SidebarNavItem";
 import { SidebarSubItem } from "@/components/sidebar/SidebarSubItem";
 import { HelpModal } from "@/components/modals/HelpModal";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useNavigationTranslation } from "@/hooks/useTypedTranslation";
 
 // Module items - main navigation
 const moduleItems = [
@@ -72,6 +73,7 @@ export function AppSidebar() {
   const { shouldLockNavigation, loading } = useOnboarding();
   const { isAdminOrSupport } = useUserRole();
   const [helpModalOpen, setHelpModalOpen] = useState(false);
+  const { t } = useNavigationTranslation();
 
   // Mobile sheet states
   const [bookingsSheetOpen, setBookingsSheetOpen] = useState(false);
@@ -205,23 +207,40 @@ export function AppSidebar() {
           )}
 
           {/* MODULES Category */}
-          <SidebarCategory title="MODULES">
-            {moduleItems.map((item) => (
-              <SidebarNavItem
-                key={item.title}
-                title={item.title}
-                url={item.url}
-                icon={item.icon}
-                isActive={isActive(item.url)}
-                isLocked={isItemLocked(item.url)}
-                onLockedClick={handleLockedItemClick}
-                onClick={handleNavClick}
-              />
-            ))}
+          <SidebarCategory title={t('sections.main')}>
+            {moduleItems.map((item) => {
+              let translationKey: string;
+              switch(item.title) {
+                case 'Dashboard':
+                  translationKey = t('menu.dashboard');
+                  break;
+                case 'Leads':
+                  translationKey = t('menu.leads');
+                  break;
+                case 'Projects':
+                  translationKey = t('menu.projects');
+                  break;
+                default:
+                  translationKey = item.title;
+              }
+              
+              return (
+                <SidebarNavItem
+                  key={item.title}
+                  title={translationKey}
+                  url={item.url}
+                  icon={item.icon}
+                  isActive={isActive(item.url)}
+                  isLocked={isItemLocked(item.url)}
+                  onLockedClick={handleLockedItemClick}
+                  onClick={handleNavClick}
+                />
+              );
+            })}
 
             {/* Bookings with submenu */}
             <SidebarNavItem
-              title="Bookings"
+              title={t('menu.sessions')}
               icon={CalendarRange}
               isActive={isBookingsChildActive}
               isLocked={isItemLocked('/calendar')}
@@ -245,18 +264,35 @@ export function AppSidebar() {
                 }`}
               >
                 <SidebarMenu className="space-y-1 pt-1">
-                  {bookingItems.map((item) => (
-                    <SidebarSubItem
-                      key={item.title}
-                      title={item.title}
-                      url={item.url}
-                      icon={item.icon}
-                      isActive={isActive(item.url)}
-                      isLocked={isItemLocked(item.url)}
-                      onLockedClick={handleLockedItemClick}
-                      onClick={handleNavClick}
-                    />
-                  ))}
+                  {bookingItems.map((item) => {
+                    let translationKey: string;
+                    switch(item.title) {
+                      case 'Calendar':
+                        translationKey = t('menu.calendar');
+                        break;
+                      case 'Sessions':
+                        translationKey = t('menu.sessions');
+                        break;
+                      case 'Reminders':
+                        translationKey = 'Reminders'; // Keep as is since not in translations yet
+                        break;
+                      default:
+                        translationKey = item.title;
+                    }
+                    
+                    return (
+                      <SidebarSubItem
+                        key={item.title}
+                        title={translationKey}
+                        url={item.url}
+                        icon={item.icon}
+                        isActive={isActive(item.url)}
+                        isLocked={isItemLocked(item.url)}
+                        onLockedClick={handleLockedItemClick}
+                        onClick={handleNavClick}
+                      />
+                    );
+                  })}
                 </SidebarMenu>
               </div>
             </SidebarNavItem>
@@ -264,22 +300,36 @@ export function AppSidebar() {
 
           {/* TOOLS Category */}
           <div className="mt-6">
-            <SidebarCategory title="TOOLS">
-              {toolItems.map((item) => (
-                <SidebarNavItem
-                  key={item.title}
-                  title={item.title}
-                  url={item.url}
-                  icon={item.icon}
-                  isActive={isActive(item.url)}
-                  isLocked={isItemLocked(item.url)}
-                  onLockedClick={handleLockedItemClick}
-                  onClick={handleNavClick}
-                />
-              ))}
+            <SidebarCategory title={t('sections.tools')}>
+              {toolItems.map((item) => {
+                let translationKey: string;
+                switch(item.title) {
+                  case 'Analytics':
+                    translationKey = t('menu.analytics');
+                    break;
+                  case 'Payments':
+                    translationKey = t('menu.payments');
+                    break;
+                  default:
+                    translationKey = item.title;
+                }
+                
+                return (
+                  <SidebarNavItem
+                    key={item.title}
+                    title={translationKey}
+                    url={item.url}
+                    icon={item.icon}
+                    isActive={isActive(item.url)}
+                    isLocked={isItemLocked(item.url)}
+                    onLockedClick={handleLockedItemClick}
+                    onClick={handleNavClick}
+                  />
+                );
+              })}
 
               <SidebarNavItem
-                title="Automation"
+                title={t('menu.workflows')}
                 icon={Zap}
                 isActive={isAutomationChildActive}
                 isLocked={isItemLocked('/workflows')}
@@ -303,18 +353,32 @@ export function AppSidebar() {
                   }`}
                 >
                   <SidebarMenu className="space-y-1 pt-1">
-                    {automationItems.map((item) => (
-                      <SidebarSubItem
-                        key={item.title}
-                        title={item.title}
-                        url={item.url}
-                        icon={item.icon}
-                        isActive={isActive(item.url)}
-                        isLocked={isItemLocked(item.url)}
-                        onLockedClick={handleLockedItemClick}
-                        onClick={handleNavClick}
-                      />
-                    ))}
+                    {automationItems.map((item) => {
+                      let translationKey: string;
+                      switch(item.title) {
+                        case 'Workflows':
+                          translationKey = t('menu.workflows');
+                          break;
+                        case 'Templates':
+                          translationKey = t('menu.templates');
+                          break;
+                        default:
+                          translationKey = item.title;
+                      }
+                      
+                      return (
+                        <SidebarSubItem
+                          key={item.title}
+                          title={translationKey}
+                          url={item.url}
+                          icon={item.icon}
+                          isActive={isActive(item.url)}
+                          isLocked={isItemLocked(item.url)}
+                          onLockedClick={handleLockedItemClick}
+                          onClick={handleNavClick}
+                        />
+                      );
+                    })}
                   </SidebarMenu>
                 </div>
               </SidebarNavItem>
@@ -323,9 +387,9 @@ export function AppSidebar() {
 
           {/* SYSTEM Category */}
           <div className="mt-6">
-            <SidebarCategory title="SYSTEM">
+            <SidebarCategory title={t('sections.system')}>
               <SidebarNavItem
-                title="Settings"
+                title={t('menu.settings')}
                 url="/settings"
                 icon={Settings}
                 isActive={isActive("/settings")}
@@ -334,14 +398,14 @@ export function AppSidebar() {
                 onClick={handleNavClick}
               />
               <SidebarNavItem
-                title="Help & Support"
+                title={t('menu.help')}
                 icon={HelpCircle}
                 onClick={() => setHelpModalOpen(true)}
               />
               {/* Administration - Only for admin/support users */}
               {isAdminOrSupport() && (
                 <SidebarNavItem
-                  title="Administration"
+                  title={t('menu.administration')}
                   url="/admin"
                   icon={Shield}
                   isActive={isActive("/admin")}

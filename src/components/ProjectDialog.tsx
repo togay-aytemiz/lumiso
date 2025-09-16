@@ -9,6 +9,7 @@ import { toast } from "@/hooks/use-toast";
 import { SimpleProjectTypeSelect } from "./SimpleProjectTypeSelect";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { NavigationGuardDialog } from "@/components/settings/NavigationGuardDialog";
+import { useTranslation } from "react-i18next";
 
 interface ProjectDialogProps {
   open: boolean;
@@ -23,6 +24,7 @@ export function ProjectDialog({ open, onOpenChange, leadId, onProjectCreated }: 
   const [projectTypeId, setProjectTypeId] = useState("");
   const [basePrice, setBasePrice] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const { t } = useTranslation('forms');
 
   const resetForm = () => {
     setName("");
@@ -34,8 +36,8 @@ export function ProjectDialog({ open, onOpenChange, leadId, onProjectCreated }: 
   const handleSave = async () => {
     if (!name.trim()) {
       toast({
-        title: "Validation Error",
-        description: "Project name is required.",
+        title: t('messages.validationError'),
+        description: t('validation.nameRequired'),
         variant: "destructive"
       });
       return;
@@ -43,8 +45,8 @@ export function ProjectDialog({ open, onOpenChange, leadId, onProjectCreated }: 
 
     if (!projectTypeId) {
       toast({
-        title: "Validation Error",
-        description: "Please select a project type.",
+        title: t('messages.validationError'),
+        description: t('validation.typeRequired'),
         variant: "destructive"
       });
       return;
@@ -55,8 +57,8 @@ export function ProjectDialog({ open, onOpenChange, leadId, onProjectCreated }: 
       const { data: userData } = await supabase.auth.getUser();
       if (!userData.user) {
         toast({
-          title: "Authentication required",
-          description: "Please log in to create a project.",
+          title: t('messages.authRequired'),
+          description: t('messages.loginToCreateProject'),
           variant: "destructive"
         });
         return;
@@ -66,8 +68,8 @@ export function ProjectDialog({ open, onOpenChange, leadId, onProjectCreated }: 
       const organizationId = await getUserOrganizationId();
       if (!organizationId) {
         toast({
-          title: "Organization required",
-          description: "Please ensure you're part of an organization",
+          title: t('messages.organizationRequired'),
+          description: t('messages.ensureOrganization'),
           variant: "destructive"
         });
         return;
@@ -114,8 +116,8 @@ export function ProjectDialog({ open, onOpenChange, leadId, onProjectCreated }: 
       }
 
       toast({
-        title: "Success",
-        description: "Project created successfully."
+           title: "Success",
+        description: t('messages.projectCreated')
       });
 
       resetForm();
@@ -123,7 +125,7 @@ export function ProjectDialog({ open, onOpenChange, leadId, onProjectCreated }: 
       onProjectCreated();
     } catch (error: any) {
       toast({
-        title: "Error creating project",
+        title: t('messages.errorCreatingProject'),
         description: error.message,
         variant: "destructive"
       });
@@ -155,7 +157,7 @@ export function ProjectDialog({ open, onOpenChange, leadId, onProjectCreated }: 
 
   const footerActions = [
     {
-      label: "Cancel",
+      label: t('buttons.cancel'),
       onClick: () => {
         resetForm();
         onOpenChange(false);
@@ -164,7 +166,7 @@ export function ProjectDialog({ open, onOpenChange, leadId, onProjectCreated }: 
       disabled: isSaving
     },
     {
-      label: isSaving ? "Creating..." : "Create Project",
+      label: isSaving ? t('buttons.creating') : t('buttons.createProject'),
       onClick: handleSave,
       disabled: isSaving || !name.trim() || !projectTypeId,
       loading: isSaving
@@ -173,7 +175,7 @@ export function ProjectDialog({ open, onOpenChange, leadId, onProjectCreated }: 
 
   return (
     <AppSheetModal
-      title="ADD PROJECT"
+      title={t('dialogs.addProject')}
       isOpen={open}
       onOpenChange={onOpenChange}
       dirty={isDirty}
@@ -182,12 +184,12 @@ export function ProjectDialog({ open, onOpenChange, leadId, onProjectCreated }: 
     >
       <div className="space-y-6">
         <div className="space-y-2">
-          <Label htmlFor="project-name">Project Name *</Label>
+          <Label htmlFor="project-name">{t('labels.projectName')} *</Label>
           <Input
             id="project-name"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Enter project name"
+            placeholder={t('placeholders.enterProjectName')}
             disabled={isSaving}
             autoFocus
             className="rounded-xl border-2 border-primary/20 focus:border-primary"
@@ -195,7 +197,7 @@ export function ProjectDialog({ open, onOpenChange, leadId, onProjectCreated }: 
         </div>
         
         <div className="space-y-2">
-          <Label htmlFor="project-type">Project Type *</Label>
+          <Label htmlFor="project-type">{t('labels.projectType')} *</Label>
           <SimpleProjectTypeSelect
             value={projectTypeId}
             onValueChange={setProjectTypeId}
@@ -206,7 +208,7 @@ export function ProjectDialog({ open, onOpenChange, leadId, onProjectCreated }: 
         </div>
         
         <div className="space-y-2">
-          <Label htmlFor="base-price">Base Price (TRY)</Label>
+          <Label htmlFor="base-price">{t('labels.basePrice')}</Label>
           <Input
             id="base-price"
             type="number"
@@ -214,19 +216,19 @@ export function ProjectDialog({ open, onOpenChange, leadId, onProjectCreated }: 
             min="0"
             value={basePrice}
             onChange={(e) => setBasePrice(e.target.value)}
-            placeholder="0"
+            placeholder={t('placeholders.basePrice')}
             disabled={isSaving}
             className="rounded-xl border-2 border-primary/20 focus:border-primary"
           />
         </div>
         
         <div className="space-y-2">
-          <Label htmlFor="project-description">Description</Label>
+          <Label htmlFor="project-description">{t('labels.description')}</Label>
           <Textarea
             id="project-description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Enter project description (optional)"
+            placeholder={t('placeholders.enterProjectDescription')}
             rows={4}
             disabled={isSaving}
             className="resize-none rounded-xl border-2 border-primary/20 focus:border-primary"
@@ -239,7 +241,7 @@ export function ProjectDialog({ open, onOpenChange, leadId, onProjectCreated }: 
         onDiscard={navigation.handleDiscardChanges}
         onStay={navigation.handleStayOnModal}
         onSaveAndExit={navigation.handleSaveAndExit}
-        message="You have unsaved project changes."
+        message={t('dialogs.unsavedProjectChanges')}
       />
     </AppSheetModal>
   );

@@ -23,6 +23,7 @@ import { useOptimizedTouchHandlers } from "@/hooks/useOptimizedTouchHandlers";
 import { useCalendarPerformanceMonitor } from "@/hooks/useCalendarPerformanceMonitor";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useTranslation } from "react-i18next";
 
 type ViewMode = "day" | "week" | "month";
 
@@ -55,6 +56,7 @@ export default function Calendar() {
     if (saved) return saved;
     return window.innerWidth <= 768 ? "day" : "month";
   });
+  const { t } = useTranslation('pages');
   
   // Use optimized hooks for performance and interaction
   const { isMobile, isTablet, isDesktop, viewConfig, handleDayClick } = useOptimizedCalendarViewport(
@@ -270,11 +272,11 @@ export default function Calendar() {
   if (isLoading || orgSettingsLoading) {
     return (
       <CalendarErrorWrapper error={error} retry={refreshCalendar}>
-        <>
-          <PageHeader 
-            title="Calendar"
-            subtitle="Manage your sessions and reminders"
-          />
+          <>
+            <PageHeader 
+              title={t('calendar.title')}
+              subtitle={t('calendar.description')}
+            />
 
           {/* Desktop controls in separate row */}
           <div className="hidden lg:block px-4 sm:px-6 lg:px-6">
@@ -314,11 +316,11 @@ export default function Calendar() {
 
   return (
     <CalendarErrorWrapper error={error} retry={refreshCalendar}>
-      <>
-        <PageHeader 
-          title="Calendar"
-          subtitle="Manage your sessions and reminders"
-        />
+        <>
+          <PageHeader 
+            title={t('calendar.title')}
+            subtitle={t('calendar.description')}
+          />
 
         {/* Desktop controls in separate row */}
         <div className="hidden lg:block px-4 sm:px-6 lg:px-6">
@@ -333,7 +335,7 @@ export default function Calendar() {
                   ${showSessions ? 'bg-primary/10 border-primary/30 text-foreground' : 'bg-muted border-border text-muted-foreground hover:bg-accent'}`}
               >
                 <span className={`h-2.5 w-2.5 rounded-full ${showSessions ? 'bg-primary' : 'bg-muted-foreground/40'}`} />
-                <span>Sessions</span>
+                <span>{t('calendar.filters.sessions')}</span>
               </button>
               <button
                 type="button"
@@ -343,7 +345,7 @@ export default function Calendar() {
                   ${showReminders ? 'bg-primary/10 border-primary/30 text-foreground' : 'bg-muted border-border text-muted-foreground hover:bg-accent'}`}
               >
                 <span className={`h-2.5 w-2.5 rounded-full ${showReminders ? 'bg-muted-foreground/60' : 'bg-muted-foreground/40'}`} />
-                <span>Reminders</span>
+                <span>{t('calendar.filters.reminders')}</span>
               </button>
             </div>
             
@@ -353,7 +355,7 @@ export default function Calendar() {
                 <ChevronLeft className="h-4 w-4" />
               </Button>
               <Button variant="outline" size="sm" onClick={goToToday}>
-                Today
+                {t('calendar.navigation.today')}
               </Button>
               <Button variant="outline" size="sm" onClick={navigateNext}>
                 <ChevronRight className="h-4 w-4" />
@@ -369,7 +371,7 @@ export default function Calendar() {
                 onClick={() => setViewMode("day")}
                 className="text-xs"
               >
-                Day
+                {t('calendar.viewModes.day')}
               </Button>
               <Button
                 variant={viewMode === "week" ? "default" : "ghost"}
@@ -377,7 +379,7 @@ export default function Calendar() {
                 onClick={() => setViewMode("week")}
                 className="text-xs"
               >
-                Week
+                {t('calendar.viewModes.week')}
               </Button>
               <Button
                 variant={viewMode === "month" ? "default" : "ghost"}
@@ -385,7 +387,7 @@ export default function Calendar() {
                 onClick={() => setViewMode("month")}
                 className="text-xs"
               >
-                Month
+                {t('calendar.viewModes.month')}
               </Button>
             </div>
           </div>
@@ -402,7 +404,7 @@ export default function Calendar() {
                 onClick={() => setViewMode("day")}
                 className="text-xs px-2"
               >
-                Day
+                {t('calendar.viewModes.day')}
               </Button>
               <Button
                 variant={viewMode === "week" ? "default" : "ghost"}
@@ -410,7 +412,7 @@ export default function Calendar() {
                 onClick={() => setViewMode("week")}
                 className="text-xs px-2"
               >
-                Week
+                {t('calendar.viewModes.week')}
               </Button>
               <Button
                 variant={viewMode === "month" ? "default" : "ghost"}
@@ -418,7 +420,7 @@ export default function Calendar() {
                 onClick={() => setViewMode("month")}
                 className="text-xs px-2"
               >
-                Month
+                {t('calendar.viewModes.month')}
               </Button>
             </div>
             
@@ -428,7 +430,7 @@ export default function Calendar() {
                 <ChevronLeft className="h-4 w-4" />
               </Button>
               <Button variant="outline" size="sm" onClick={goToToday} className="text-xs">
-                Today
+                {t('calendar.navigation.today')}
               </Button>
               <Button variant="outline" size="sm" onClick={navigateNext}>
                 <ChevronRight className="h-4 w-4" />
@@ -451,7 +453,7 @@ export default function Calendar() {
                 ${showSessions ? 'bg-primary/10 border-primary/30 text-foreground' : 'bg-muted border-border text-muted-foreground hover:bg-accent'}`}
             >
               <span className={`h-2.5 w-2.5 rounded-full ${showSessions ? 'bg-primary' : 'bg-muted-foreground/40'}`} />
-              <span>Sessions</span>
+              <span>{t('calendar.filters.sessions')}</span>
             </button>
             <button
               type="button"
@@ -461,7 +463,7 @@ export default function Calendar() {
                 ${showReminders ? 'bg-primary/10 border-primary/30 text-foreground' : 'bg-muted border-border text-muted-foreground hover:bg-accent'}`}
             >
               <span className={`h-2.5 w-2.5 rounded-full ${showReminders ? 'bg-muted-foreground/60' : 'bg-muted-foreground/40'}`} />
-              <span>Reminders</span>
+              <span>{t('calendar.filters.reminders')}</span>
             </button>
           </div>
         </div>

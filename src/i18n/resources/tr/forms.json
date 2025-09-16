@@ -17,7 +17,9 @@
     "selectTime": "Saat seçin",
     "selectStatus": "Durum seçin",
     "enterNotes": "Not veya açıklama girin",
-    "search": "Ara..."
+    "search": "Ara...",
+    "clientFullName": "Müşterinin tam adı",
+    "additionalNotes": "Bu müşteri adayı hakkında ek notlar..."
   },
   "labels": {
     "firstName": "Ad",
@@ -29,6 +31,35 @@
     "address": "Adres",
     "city": "Şehir",
     "country": "Ülke",
-    "postalCode": "Posta Kodu"
+    "postalCode": "Posta Kodu",
+    "name": "Ad",
+    "email": "E-posta",
+    "phone": "Telefon",
+    "status": "Durum",
+    "notes": "Notlar"
+  },
+  "buttons": {
+    "cancel": "İptal",
+    "save": "Kaydet",
+    "add": "Ekle",
+    "edit": "Düzenle",
+    "delete": "Sil",
+    "addLead": "Müşteri Adayı Ekle",
+    "adding": "Ekleniyor...",
+    "saving": "Kaydediliyor...",
+    "loading": "Yükleniyor..."
+  },
+  "dialogs": {
+    "addNewLead": "Yeni Müşteri Adayı Ekle",
+    "unsavedChanges": "Kaydedilmemiş müşteri adayı değişiklikleriniz var."
+  },
+  "messages": {
+    "authRequired": "Kimlik doğrulama gerekli",
+    "pleaseSignIn": "Müşteri adayları eklemek için lütfen giriş yapın",
+    "organizationRequired": "Organizasyon gerekli",
+    "ensureOrganization": "Lütfen bir organizasyonun üyesi olduğunuzdan emin olun",
+    "leadAddedSuccessfully": "Müşteri adayı başarıyla eklendi",
+    "leadAddedDesc": "{{name}} müşteri adaylarınıza eklendi",
+    "errorAddingLead": "Müşteri adayı eklenirken hata"
   }
 }

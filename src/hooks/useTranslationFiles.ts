@@ -7,12 +7,14 @@ import enDashboard from '@/i18n/resources/en/dashboard.json';
 import enForms from '@/i18n/resources/en/forms.json';
 import enNavigation from '@/i18n/resources/en/navigation.json';
 import enMessages from '@/i18n/resources/en/messages.json';
+import enPages from '@/i18n/resources/en/pages.json';
 
 import trCommon from '@/i18n/resources/tr/common.json';
 import trDashboard from '@/i18n/resources/tr/dashboard.json';
 import trForms from '@/i18n/resources/tr/forms.json';
 import trNavigation from '@/i18n/resources/tr/navigation.json';
 import trMessages from '@/i18n/resources/tr/messages.json';
+import trPages from '@/i18n/resources/tr/pages.json';
 
 const translations = {
   en: {
@@ -21,6 +23,7 @@ const translations = {
     forms: enForms,
     navigation: enNavigation,
     messages: enMessages,
+    pages: enPages,
   },
   tr: {
     common: trCommon,
@@ -28,6 +31,7 @@ const translations = {
     forms: trForms,
     navigation: trNavigation,
     messages: trMessages,
+    pages: trPages,
   },
 };
 
@@ -168,8 +172,8 @@ export const useTranslationFiles = () => {
               throw new Error(`Invalid language code: ${languageCode}. Supported: en, tr`);
             }
             
-            if (!['common', 'dashboard', 'forms', 'navigation', 'messages'].includes(namespace)) {
-              throw new Error(`Invalid namespace: ${namespace}. Supported: common, dashboard, forms, navigation, messages`);
+            if (!['common', 'dashboard', 'forms', 'navigation', 'messages', 'pages'].includes(namespace)) {
+              throw new Error(`Invalid namespace: ${namespace}. Supported: common, dashboard, forms, navigation, messages, pages`);
             }
 
             // Write individual file
@@ -206,7 +210,7 @@ export const useTranslationFiles = () => {
                   if (fileKey.endsWith('.json')) {
                     const ns = fileKey.replace('.json', '');
                     
-                    if (!['common', 'dashboard', 'forms', 'navigation', 'messages'].includes(ns)) {
+                    if (!['common', 'dashboard', 'forms', 'navigation', 'messages', 'pages'].includes(ns)) {
                       console.warn(`Skipping invalid namespace: ${ns}`);
                       continue;
                     }

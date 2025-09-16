@@ -17,7 +17,9 @@
     "selectTime": "Select time",
     "selectStatus": "Select status",
     "enterNotes": "Enter notes or description",
-    "search": "Search..."
+    "search": "Search...",
+    "clientFullName": "Client's full name",
+    "additionalNotes": "Any additional notes about this lead..."
   },
   "labels": {
     "firstName": "First Name",
@@ -29,6 +31,35 @@
     "address": "Address",
     "city": "City",
     "country": "Country",
-    "postalCode": "Postal Code"
+    "postalCode": "Postal Code",
+    "name": "Name",
+    "email": "Email",
+    "phone": "Phone",
+    "status": "Status",
+    "notes": "Notes"
+  },
+  "buttons": {
+    "cancel": "Cancel",
+    "save": "Save",
+    "add": "Add",
+    "edit": "Edit",
+    "delete": "Delete",
+    "addLead": "Add Lead",
+    "adding": "Adding...",
+    "saving": "Saving...",
+    "loading": "Loading..."
+  },
+  "dialogs": {
+    "addNewLead": "Add New Lead",
+    "unsavedChanges": "You have unsaved lead changes."
+  },
+  "messages": {
+    "authRequired": "Authentication required",
+    "pleaseSignIn": "Please sign in to add leads",
+    "organizationRequired": "Organization required",
+    "ensureOrganization": "Please ensure you're part of an organization",
+    "leadAddedSuccessfully": "Lead added successfully",
+    "leadAddedDesc": "{{name}} has been added to your leads",
+    "errorAddingLead": "Error adding lead"
   }
 }

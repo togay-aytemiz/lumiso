@@ -1,0 +1,80 @@
+{
+  "leads": {
+    "title": "Müşteri Adayı Yönetimi",
+    "description": "Tüm potansiyel müşterilerinizi yönetin ve takip edin",
+    "tutorial": {
+      "welcome": {
+        "title": "Müşteri Adayı Yönetimine Hoş Geldiniz",
+        "description": "Bu, tüm potansiyel müşterilerinizi takip edebileceğiniz ve yönetebileceğiniz müşteri adayları panelinizdir. Yapabilecekleriniz:",
+        "trackLeads": {
+          "title": "Müşteri Adaylarını Takip Et",
+          "description": "Tüm müşteri adaylarınızı iletişim bilgileri ve durumlarıyla birlikte düzenli bir tabloda görün."
+        },
+        "filterSort": {
+          "title": "Filtrele ve Sırala",
+          "description": "Müşteri adayı durumuna göre filtreleyin ve tam olarak ihtiyacınız olanı bulmak için herhangi bir sütuna göre sıralayın."
+        },
+        "customizeColumns": {
+          "title": "Sütunları Özelleştir",
+          "description": "Hangi sütunların gösterileceğini özelleştirin ve iş akışınıza uyacak şekilde düzenleyin."
+        }
+      },
+      "addFirstLead": {
+        "title": "İlk Müşteri Adayınızı Ekleyin",
+        "description": "Şimdi ilk müşteri adayınızı ekleyelim! Başlamak için sağ üst köşedeki 'Müşteri Adayı Ekle' düğmesine (veya mobilde + simgesine) tıklayın.",
+        "disabledTooltip": "Devam etmek için en az 1 müşteri adayı ekleyin"
+      },
+      "exploreDetails": {
+        "title": "Harika! Şimdi Müşteri Adayı Detaylarını Keşfedelim",
+        "description": "Mükemmel! Artık bir müşteri adayınız var, onunla neler yapabileceğinizi görelim. Detaylı bilgilerini görüntülemek için aşağıdaki tabloda müşteri adayınıza tıklayın.",
+        "disabledTooltip": "Devam etmek için müşteri adayınıza tıklayın"
+      },
+      "scheduling": {
+        "title": "İlk Fotoğraf Seansınızı Planlayın",
+        "description": "Müşteriniz için bir fotoğraf seansı planlama sürecini inceleyelim. Bu süreç fotoğrafçılık iş akışınızı düzenlemenize yardımcı olacak.",
+        "chooseDateTime": {
+          "title": "Tarih ve Saat Seçin",
+          "description": "Hem sizin hem de müşteriniz için uygun bir zaman seçin."
+        },
+        "selectClient": {
+          "title": "Müşterinizi Seçin",
+          "description": "Listenizden fotoğrafını çekmek istediğiniz müşteri adayı/müşteriyi seçin."
+        },
+        "addDetails": {
+          "title": "Seans Detaylarını Ekleyin",
+          "description": "Notlar, özel gereksinimler ve isteğe bağlı proje ilişkilendirmesi ekleyin."
+        }
+      },
+      "selectLeadForSession": {
+        "title": "Seans Planlamak İçin Müşteri Adayı Seçin",
+        "description": "Harika! Şimdi seans planlayabileceğiniz detay sayfasını açmak için aşağıdaki tabloda müşteri adaylarınızdan birine tıklayın.",
+        "disabledTooltip": "Devam etmek için bir müşteri adayına tıklayın"
+      }
+    },
+    "messages": {
+      "tutorialCompleted": "Müşteri adayı eğitimi tamamlandı! Adım 2 tamamlandı, başlangıç sayfasına dönülüyor",
+      "errorCompletingTutorial": "Eğitimi tamamlarken hata:",
+      "failedToSaveProgress": "İlerleme kaydedilemedi. Lütfen tekrar deneyin.",
+      "errorFetchingStatuses": "Müşteri adayı durumları getirilirken hata:",
+      "failedToLoadProjects": "Projeler yüklenemedi"
+    }
+  },
+  "projects": {
+    "title": "Projeler",
+    "description": "Fotoğrafçılık projelerinizi yönetin",
+    "viewModes": {
+      "active": "Aktif Projeler",
+      "archived": "Arşivlenen Projeler",
+      "kanban": "Kanban Görünümü",
+      "table": "Tablo Görünümü"
+    },
+    "sorting": {
+      "name": "Ad",
+      "leadName": "Müşteri Adı",
+      "projectType": "Proje Türü",
+      "status": "Durum",
+      "createdAt": "Oluşturulma",
+      "updatedAt": "Güncellenme"
+    }
+  }
+}

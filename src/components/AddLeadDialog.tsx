@@ -18,6 +18,7 @@ import { useProfile } from "@/contexts/ProfileContext";
 // Permissions removed for single photographer mode
 import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { NavigationGuardDialog } from "./settings/NavigationGuardDialog";
+import { useTranslation } from "react-i18next";
 
 interface AddLeadDialogProps {
   onLeadAdded: () => void;
@@ -26,6 +27,7 @@ interface AddLeadDialogProps {
 }
 
 const AddLeadDialog = ({ onLeadAdded, open, onOpenChange }: AddLeadDialogProps) => {
+  const { t } = useTranslation(['forms', 'common']);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [leadStatuses, setLeadStatuses] = useState<any[]>([]);
@@ -137,8 +139,8 @@ const AddLeadDialog = ({ onLeadAdded, open, onOpenChange }: AddLeadDialogProps) 
       if (error) throw error;
 
       toast({
-        title: "Lead added successfully",
-        description: `${formData.name} has been added to your leads`
+        title: t('forms:messages.leadAddedSuccessfully'),
+        description: t('forms:messages.leadAddedDesc', { name: formData.name })
       });
 
       // Reset form and close dialog

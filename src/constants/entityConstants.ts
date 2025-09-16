@@ -3,10 +3,28 @@
  */
 
 // Pagination constants
-export const PAGINATION_CONSTANTS = {
+export const PAGINATION = {
   DEFAULT_PAGE_SIZE: 20,
   PAGE_SIZE_OPTIONS: [10, 20, 50, 100],
   MOBILE_PAGE_SIZE: 10,
+} as const;
+
+export const LEAD_STATUS = {
+  NEW: 'new',
+  CONTACTED: 'contacted', 
+  QUALIFIED: 'qualified',
+  BOOKED: 'booked',
+  COMPLETED: 'completed',
+  LOST: 'lost'
+} as const;
+
+export const PROJECT_STATUS = {
+  PLANNED: 'planned',
+  IN_PROGRESS: 'in_progress', 
+  ON_HOLD: 'on_hold',
+  COMPLETED: 'completed',
+  CANCELLED: 'cancelled',
+  ARCHIVED: 'archived'
 } as const;
 
 // Status options for different entities

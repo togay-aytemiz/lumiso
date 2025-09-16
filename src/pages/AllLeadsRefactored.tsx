@@ -1,0 +1,313 @@
+import { useState, useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
+import { EntityListView } from "@/components/common/EntityListView";
+import { EntityFilters } from "@/components/common/EntityFilters";
+import { ErrorBoundary } from "@/components/common/ErrorBoundary";
+import { EnhancedAddLeadDialog } from "@/components/EnhancedAddLeadDialog";
+import { OnboardingTutorial, TutorialStep } from "@/components/shared/OnboardingTutorial";
+import { useOnboarding } from "@/contexts/OnboardingContext";
+import { LeadService, LeadWithCustomFields } from "@/services/LeadService";
+import { useEntityData } from "@/hooks/useEntityData";
+import { useLeadTableColumns } from "@/hooks/useLeadTableColumns";
+import { LeadTableColumnManager } from "@/components/LeadTableColumnManager";
+import { Calendar, MessageSquare, Users, FileText, Filter } from "lucide-react";
+import { LEAD_STATUS } from "@/constants/entityConstants";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
+
+const AllLeadsRefactored = () => {
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [leadStatuses, setLeadStatuses] = useState<any[]>([]);
+  const [addLeadDialogOpen, setAddLeadDialogOpen] = useState(false);
+  const [showTutorial, setShowTutorial] = useState(false);
+  const [currentTutorialStep, setCurrentTutorialStep] = useState(0);
+  const [isSchedulingTutorial, setIsSchedulingTutorial] = useState(false);
+  const navigate = useNavigate();
+  const { currentStep, completeCurrentStep } = useOnboarding();
+
+  // Services
+  const leadService = new LeadService();
+
+  // Data hooks
+  const { 
+    data: leads, 
+    loading: leadsLoading, 
+    refetch: refetchLeads 
+  } = useEntityData<LeadWithCustomFields>({
+    fetchFn: () => leadService.fetchLeadsWithCustomFields()
+  });
+
+  const { 
+    columns, 
+    columnPreferences, 
+    availableColumns, 
+    loading: columnsLoading, 
+    saveColumnPreferences, 
+    resetToDefault 
+  } = useLeadTableColumns();
+
+  const loading = leadsLoading || columnsLoading;
+
+  // Tutorial steps
+  const leadsTutorialSteps: TutorialStep[] = [
+    {
+      id: 1,
+      title: "Welcome to Lead Management",
+      description: "This is your leads dashboard where you can track and manage all your potential clients. Here's what you can do:",
+      content: (
+        <div className="space-y-4">
+          <div className="flex items-start gap-3">
+            <Users className="w-5 h-5 text-primary mt-0.5" />
+            <div>
+              <h4 className="font-medium">Track Leads</h4>
+              <p className="text-sm text-muted-foreground">View all your leads in one organized table with contact information and status.</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-3">
+            <Filter className="w-5 h-5 text-primary mt-0.5" />
+            <div>
+              <h4 className="font-medium">Filter & Sort</h4>
+              <p className="text-sm text-muted-foreground">Filter by lead status and sort by any column to find exactly what you need.</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-3">
+            <FileText className="w-5 h-5 text-primary mt-0.5" />
+            <div>
+              <h4 className="font-medium">Customize Columns</h4>
+              <p className="text-sm text-muted-foreground">Customize which columns to show and arrange them to match your workflow.</p>
+            </div>
+          </div>
+        </div>
+      ),
+      mode: "modal",
+      canProceed: true
+    },
+    {
+      id: 2,
+      title: "Add Your First Lead",
+      description: "Now let's add your first lead! Click the 'Add Lead' button (or + icon on mobile) in the top right corner to get started.",
+      content: null,
+      mode: "floating",
+      canProceed: leads.length > 0,
+      requiresAction: leads.length === 0,
+      disabledTooltip: "Add at least 1 lead to continue"
+    },
+    {
+      id: 3,
+      title: "Great! Now Let's Explore Lead Details",
+      description: "Perfect! Now that you have a lead, let's see what you can do with it. Click on your lead in the table below to view its detailed information.",
+      content: null,
+      mode: "floating",
+      canProceed: false,
+      requiresAction: true,
+      disabledTooltip: "Click on your lead to continue"
+    }
+  ];
+
+  const schedulingTutorialSteps: TutorialStep[] = [
+    {
+      id: 1,
+      title: "Schedule Your First Photo Session",
+      description: "Let's walk through scheduling a photo session for your client. This process will help you organize your photography workflow.",
+      content: (
+        <div className="space-y-4">
+          <div className="flex items-start gap-3">
+            <Calendar className="w-5 h-5 text-primary mt-0.5" />
+            <div>
+              <h4 className="font-medium">Choose Date & Time</h4>
+              <p className="text-sm text-muted-foreground">Pick a convenient time that works for both you and your client.</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-3">
+            <Users className="w-5 h-5 text-primary mt-0.5" />
+            <div>
+              <h4 className="font-medium">Select Your Client</h4>
+              <p className="text-sm text-muted-foreground">Choose the lead/client you want to photograph from your list.</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-3">
+            <MessageSquare className="w-5 h-5 text-primary mt-0.5" />
+            <div>
+              <h4 className="font-medium">Add Session Details</h4>
+              <p className="text-sm text-muted-foreground">Include notes, special requirements, and optional project association.</p>
+            </div>
+          </div>
+        </div>
+      ),
+      mode: "modal",
+      canProceed: true
+    },
+    {
+      id: 2,
+      title: "Select a Lead to Schedule Session",
+      description: "Great! Now click on one of your leads in the table below to open their details page where you can schedule a session.",
+      content: null,
+      mode: "floating",
+      canProceed: false,
+      requiresAction: true,
+      disabledTooltip: "Click on a lead to continue"
+    }
+  ];
+
+  // Effects
+  useEffect(() => {
+    fetchLeadStatuses();
+  }, []);
+
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const isSchedulingTutorialParam = urlParams.get('tutorial') === 'scheduling';
+    
+    if (isSchedulingTutorialParam) {
+      setIsSchedulingTutorial(true);
+      setShowTutorial(true);
+      setCurrentTutorialStep(0);
+    } else if (currentStep === 2) {
+      setShowTutorial(true);
+      setCurrentTutorialStep(0);
+    }
+  }, [currentStep]);
+
+  useEffect(() => {
+    if (showTutorial && !addLeadDialogOpen && currentTutorialStep === 1) {
+      setCurrentTutorialStep(2);
+    }
+  }, [addLeadDialogOpen, showTutorial, currentTutorialStep]);
+
+  // Functions
+  const fetchLeadStatuses = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('lead_statuses')
+        .select('*')
+        .order('sort_order', { ascending: true });
+
+      if (error) throw error;
+      setLeadStatuses(data || []);
+    } catch (error: any) {
+      console.error('Error fetching lead statuses:', error);
+    }
+  };
+
+  const handleTutorialComplete = async () => {
+    try {
+      await completeCurrentStep();
+      setShowTutorial(false);
+      console.log('🎉 Lead tutorial completed! Step 2 completed, navigating back to getting-started');
+      navigate('/getting-started');
+    } catch (error) {
+      console.error('Error completing tutorial:', error);
+      toast({
+        title: "Error", 
+        description: "Failed to save progress. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleTutorialExit = () => {
+    setShowTutorial(false);
+  };
+
+  const handleRowClick = (lead: LeadWithCustomFields) => {
+    const state: any = { from: 'all-leads' };
+    
+    if (showTutorial) {
+      if (isSchedulingTutorial && currentTutorialStep === 1) {
+        state.continueTutorial = true;
+        state.tutorialType = 'scheduling';
+        state.tutorialStep = 3;
+      } else if (currentTutorialStep === 2) {
+        state.continueTutorial = true;
+        state.tutorialStep = 4;
+      }
+    }
+    
+    navigate(`/leads/${lead.id}`, { state });
+  };
+
+  // Filter and prepare data
+  const filteredLeads = useMemo(() => {
+    if (statusFilter === "all") return leads;
+    return leads.filter(lead => lead.lead_statuses?.name === statusFilter);
+  }, [leads, statusFilter]);
+
+  const statusOptions = [
+    { value: "all", label: "All Statuses" },
+    ...leadStatuses.map(status => ({
+      value: status.name,
+      label: status.name
+    }))
+  ];
+
+  const clearFilters = () => {
+    setStatusFilter("all");
+  };
+
+  const emptyState = (
+    <div className="text-center py-8 text-muted-foreground">
+      {statusFilter === "all" 
+        ? "No leads found. Add your first lead to get started!"
+        : `No leads found with status "${statusFilter}".`
+      }
+    </div>
+  );
+
+  const filters = (
+    <EntityFilters
+      filters={[
+        {
+          label: "Filter by status",
+          value: statusFilter,
+          options: statusOptions,
+          onValueChange: setStatusFilter,
+          placeholder: "Select status"
+        }
+      ]}
+      onClearFilters={statusFilter !== "all" ? clearFilters : undefined}
+      actions={
+        <LeadTableColumnManager
+          columnPreferences={columnPreferences}
+          availableColumns={availableColumns}
+          onSave={saveColumnPreferences}
+          onReset={resetToDefault}
+        />
+      }
+    />
+  );
+
+  return (
+    <ErrorBoundary>
+      <EntityListView
+        title="Leads"
+        subtitle="Track and manage your potential clients"
+        data={filteredLeads}
+        columns={columns}
+        loading={loading}
+        onRowClick={handleRowClick}
+        onAddClick={() => setAddLeadDialogOpen(true)}
+        addButtonText="Add Lead"
+        emptyState={emptyState}
+        filters={filters}
+        itemsPerPage={20}
+      />
+      
+      <EnhancedAddLeadDialog 
+        onSuccess={refetchLeads} 
+        open={addLeadDialogOpen}
+        onOpenChange={setAddLeadDialogOpen}
+        onClose={() => setAddLeadDialogOpen(false)}
+      />
+
+      <OnboardingTutorial
+        steps={isSchedulingTutorial ? schedulingTutorialSteps : leadsTutorialSteps}
+        isVisible={showTutorial}
+        onComplete={handleTutorialComplete}
+        onExit={handleTutorialExit}
+        initialStepIndex={currentTutorialStep}
+      />
+    </ErrorBoundary>
+  );
+};
+
+export default AllLeadsRefactored;

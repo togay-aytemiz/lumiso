@@ -1,7 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { BaseEntityService } from './BaseEntityService';
 
-export interface Project {
+export interface ProjectWithDetails {
   id: string;
   name: string;
   description: string | null;

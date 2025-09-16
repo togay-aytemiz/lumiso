@@ -5,19 +5,25 @@
     "leads": "Leads",
     "sessions": "Sessions",
     "calendar": "Calendar",
+    "reminders": "Reminders",
     "payments": "Payments",
     "analytics": "Analytics",
     "templates": "Templates",
     "workflows": "Workflows",
     "settings": "Settings",
     "help": "Help & Support",
-    "administration": "Administration"
+    "administration": "Administration",
+    "getting_started": "Getting Started"
   },
   "sections": {
     "main": "MAIN",
     "management": "MANAGEMENT",
     "tools": "TOOLS",
     "system": "SYSTEM"
+  },
+  "mobile_sheets": {
+    "bookings": "Bookings",
+    "automation": "Automation"
   },
   "settings": {
     "profile": "Profile",

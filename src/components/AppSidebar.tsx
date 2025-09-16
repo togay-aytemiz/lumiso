@@ -196,7 +196,7 @@ export function AppSidebar() {
             <div className="mb-6">
               <SidebarMenu>
                 <SidebarNavItem
-                  title="Getting Started"
+                  title={t('menu.getting_started')}
                   url="/getting-started"
                   icon={BookOpen}
                   isActive={isActive("/getting-started")}
@@ -273,9 +273,9 @@ export function AppSidebar() {
                       case 'Sessions':
                         translationKey = t('menu.sessions');
                         break;
-                      case 'Reminders':
-                        translationKey = 'Reminders'; // Keep as is since not in translations yet
-                        break;
+                        case 'Reminders':
+                          translationKey = t('menu.reminders');
+                          break;
                       default:
                         translationKey = item.title;
                     }
@@ -434,7 +434,7 @@ export function AppSidebar() {
       <Sheet open={bookingsSheetOpen} onOpenChange={setBookingsSheetOpen}>
         <SheetContent side="left" className="w-80 p-0">
           <SheetHeader className="p-6 pb-4">
-            <SheetTitle>Bookings</SheetTitle>
+            <SheetTitle>{t('mobile_sheets.bookings')}</SheetTitle>
           </SheetHeader>
           <div className="px-3">
             <SidebarMenu className="space-y-1">
@@ -458,7 +458,7 @@ export function AppSidebar() {
       <Sheet open={automationSheetOpen} onOpenChange={setAutomationSheetOpen}>
         <SheetContent side="left" className="w-80 p-0">
           <SheetHeader className="p-6 pb-4">
-            <SheetTitle>Automation</SheetTitle>
+            <SheetTitle>{t('mobile_sheets.automation')}</SheetTitle>
           </SheetHeader>
           <div className="px-3">
             <SidebarMenu className="space-y-1">

@@ -1,4 +1,9 @@
 {
+  "branding": {
+    "app_name": "Lumiso",
+    "tagline": "Where precious moments become lasting memories",
+    "description": "Manage your photography business with ease"
+  },
   "buttons": {
     "save": "Save",
     "cancel": "Cancel",
@@ -18,7 +23,8 @@
     "search": "Search",
     "filter": "Filter",
     "export": "Export",
-    "import": "Import"
+    "import": "Import",
+    "get_started": "Get Started"
   },
   "labels": {
     "name": "Name",

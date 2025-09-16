@@ -5,19 +5,25 @@
     "leads": "Müşteri Adayları",
     "sessions": "Seanslar",
     "calendar": "Takvim",
+    "reminders": "Hatırlatmalar",
     "payments": "Ödemeler",
     "analytics": "Analizler",
     "templates": "Şablonlar",
     "workflows": "İş Akışları",
     "settings": "Ayarlar",
     "help": "Yardım ve Destek",
-    "administration": "Yönetim"
+    "administration": "Yönetim",
+    "getting_started": "Başlarken"
   },
   "sections": {
     "main": "ANA",
     "management": "YÖNETİM",
     "tools": "ARAÇLAR",
     "system": "SİSTEM"
+  },
+  "mobile_sheets": {
+    "bookings": "Rezervasyonlar",
+    "automation": "Otomasyon"
   },
   "settings": {
     "profile": "Profil",

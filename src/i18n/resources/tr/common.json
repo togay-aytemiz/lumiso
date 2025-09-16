@@ -1,4 +1,9 @@
 {
+  "branding": {
+    "app_name": "Lumiso",
+    "tagline": "Değerli anlar kalıcı anılar haline gelir",
+    "description": "Fotoğrafçılık işinizi kolaylıkla yönetin"
+  },
   "buttons": {
     "save": "Kaydet",
     "cancel": "İptal",
@@ -18,7 +23,8 @@
     "search": "Ara",
     "filter": "Filtrele",
     "export": "Dışa Aktar",
-    "import": "İçe Aktar"
+    "import": "İçe Aktar",
+    "get_started": "Başla"
   },
   "labels": {
     "name": "Ad",

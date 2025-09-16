@@ -5,12 +5,14 @@ import { useNavigate } from "react-router-dom";
 import CrmDashboard from "@/components/CrmDashboard";
 import { Button } from "@/components/ui/button";
 import { PageLoadingSkeleton } from "@/components/ui/loading-presets";
+import { useTranslation } from "react-i18next";
 
 const Index = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const { t } = useTranslation('common');
 
   useEffect(() => {
     // Set up auth state listener FIRST
@@ -57,20 +59,20 @@ const Index = () => {
         
         <div className="relative z-10 text-center animate-fade-in">
           <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-pink-600 via-purple-600 to-blue-600 bg-clip-text text-transparent font-serif">
-            Lumiso
+            {t('branding.app_name', 'Lumiso')}
           </h1>
           <p className="text-xl md:text-2xl text-slate-600 dark:text-slate-300 font-light mb-4">
-            Where precious moments become lasting memories
+            {t('branding.tagline', 'Where precious moments become lasting memories')}
           </p>
           <p className="text-lg text-slate-500 dark:text-slate-400 mb-12">
-            Manage your photography business with ease
+            {t('branding.description', 'Manage your photography business with ease')}
           </p>
           <Button 
             onClick={() => navigate("/auth")} 
             size="lg"
             className="h-14 px-12 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-semibold text-lg rounded-xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105"
           >
-            Get Started
+            {t('buttons.get_started')}
           </Button>
         </div>
       </div>

@@ -71,7 +71,7 @@ export function useSmartTimeRange(sessions: Session[], activities: Activity[]) {
     }
     
     // Generate 30-minute time slots
-    const slots: TimeSlot[] = [];
+        const slots: TimeSlot[] = [];
     
     for (let hour = earliestHour; hour <= latestHour; hour++) {
       for (let minute = 0; minute < 60; minute += 30) {
@@ -80,7 +80,7 @@ export function useSmartTimeRange(sessions: Session[], activities: Activity[]) {
         
         slots.push({
           time: timeString,
-          display: minute === 0 ? displayTime : '', // Only show hour labels, not 30-minute marks
+          display: displayTime, // Show all time labels for proper visibility
           hour,
           minute
         });

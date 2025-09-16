@@ -54,7 +54,7 @@ export function useOptimizedCalendarNavigation(
   const viewTitle = useMemo(() => {
     switch (viewMode) {
       case "day":
-        return format(currentDate, "MMMM d, yyyy", { locale: undefined });
+        return format(currentDate, "EEEE, MMMM d, yyyy", { locale: undefined });
       case "week":
         const weekStart = getStartOfWeek(currentDate, userLocale);
         const weekEnd = getEndOfWeek(currentDate, userLocale);

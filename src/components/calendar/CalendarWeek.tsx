@@ -213,20 +213,24 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
         })}
       </div>
       
-      {/* Time slots and events - 30-minute precision */}
-      <div className="flex-1">
+      {/* Time slots and events - 30-minute precision with scroll */}
+      <div className="flex-1 max-h-[70vh] overflow-y-auto">
         {timeSlots.map((slot, slotIndex) => {
-          // Only show time labels for hour marks (not 30-minute marks)
-          const showTimeLabel = slot.display !== '';
+          const isHourMark = slot.minute === 0;
+          const isHalfHour = slot.minute === 30;
           
           return (
             <div 
               key={`${slot.time}-${slotIndex}`} 
-              className={`grid grid-cols-8 border-b border-border ${showTimeLabel ? 'min-h-12' : 'min-h-6'} ${slot.minute === 30 ? 'border-b-dashed border-b-border/40' : ''}`}
+              className={`grid grid-cols-8 border-b ${
+                isHourMark ? 'border-border min-h-12' : 'border-border/30 min-h-8'
+              }`}
             >
-              {/* Time label - only for hour marks */}
-              <div className={`p-2 text-xs text-muted-foreground text-right bg-muted/20 border-r border-border ${!showTimeLabel ? 'border-r-dashed border-r-border/40' : ''}`}>
-                {slot.display}
+              {/* Time label */}
+              <div className={`p-2 text-xs text-muted-foreground text-right bg-muted/20 border-r border-border ${
+                isHalfHour ? 'bg-muted/10' : ''
+              }`}>
+                {isHourMark ? slot.display : ''}
               </div>
               
               {/* Day columns */}
@@ -238,7 +242,9 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
                 return (
                   <div 
                     key={dayIndex} 
-                    className={`relative p-1 hover:bg-accent/30 transition-colors border-r border-border ${slot.minute === 30 ? 'border-r-dashed border-r-border/40' : ''}`}
+                    className={`relative p-1 hover:bg-accent/30 transition-colors border-r border-border ${
+                      isHalfHour ? 'bg-accent/5' : ''
+                    }`}
                   >
                     {events && (
                       <div className="space-y-1">

@@ -6,6 +6,7 @@ import { useSmartTimeRange } from '@/hooks/useSmartTimeRange';
 import { useOrganizationTimezone } from '@/hooks/useOrganizationTimezone';
 import { Badge } from '@/components/ui/badge';
 
+
 interface Session {
   id: string;
   session_date: string;
@@ -117,9 +118,9 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
               </h3>
               <div className="space-y-3">
                 {daySessions.map(session => {
-                  const leadName = leadsMap[session.lead_id]?.name || "Lead";
+                  const leadName = leadsMap[session.lead_id]?.name || 'Lead';
                   const projectName = session.project_id ? projectsMap[session.project_id]?.name : undefined;
-                  
+
                   return (
                     <button
                       key={session.id}
@@ -129,7 +130,7 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex-1 min-w-0">
                           <div className="font-medium text-primary mb-1">
-                            {projectName || "Session"}
+                            {projectName || 'Session'}
                           </div>
                           <div className="text-sm text-muted-foreground mb-2">
                             {leadName}
@@ -162,10 +163,10 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
               </h3>
               <div className="space-y-3">
                 {dayActivities.map(activity => {
-                  const leadName = leadsMap[activity.lead_id]?.name || "Lead";
+                  const leadName = leadsMap[activity.lead_id]?.name || 'Lead';
                   const projectName = activity.project_id ? projectsMap[activity.project_id]?.name : undefined;
-                  const timeText = activity.reminder_time ? formatOrgTime(activity.reminder_time) : "All day";
-                  
+                  const timeText = activity.reminder_time ? formatOrgTime(activity.reminder_time) : 'All day';
+
                   return (
                     <button
                       key={activity.id}
@@ -210,7 +211,7 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
   }
 
   return (
-      <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+    <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
       <div className="grid grid-cols-8 border-b border-border bg-muted/30 relative">
         <div className="p-3 w-16 shrink-0 sticky left-0 z-20 bg-card border-r border-border"></div>
         {weekDays.map((day, index) => {
@@ -227,16 +228,17 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
       <div className="flex-1 max-h-[70vh] overflow-y-auto relative">
         {timeSlots.map((slot, slotIndex) => {
           const isHour = slot.minute === 0;
-          const isHalf = slot.minute === 30;
-
           const labelText = slot.display || '';
 
           return (
             <div
               key={`slot-${slotIndex}`}
-              className="grid grid-cols-8 border-b border-border/80 min-h-8"
+              className="grid grid-cols-8 border-b border-border/80 min-h-8 relative"
             >
-              <div className={`w-16 shrink-0 text-xs text-muted-foreground sticky left-0 z-10 bg-card flex items-center justify-end pr-3 ${isHour ? 'font-medium' : ''}`}>
+              {/* FIX 1 add right border and matching bottom border on sticky time column to remove the visual gap and continue the horizontal divider */}
+              <div
+                className={`w-16 shrink-0 text-xs text-muted-foreground sticky left-0 z-20 bg-card flex items-center justify-end pr-3 border-r border-border border-b border-border/80 ${isHour ? 'font-medium' : ''}`}
+              >
                 {labelText || '\u00A0'}
               </div>
 

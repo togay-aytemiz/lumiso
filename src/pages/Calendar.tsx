@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useNavigate } from "react-router-dom";
-import { ViewProjectDialog } from "@/components/ViewProjectDialog";
+import { ProjectSheetView } from "@/components/ProjectSheetView";
 import { formatDate, formatTime, getUserLocale } from "@/lib/utils";
 import { isToday } from "date-fns";
 import { PageHeader, PageHeaderSearch, PageHeaderActions } from "@/components/ui/page-header";
@@ -340,7 +340,7 @@ export default function Calendar() {
               </button>
             </div>
             
-            {/* Navigation controls */}
+            {/* Navigation controls with title */}
             <div className="flex items-center gap-2">
               <Button variant="outline" size="sm" onClick={navigatePrevious}>
                 <ChevronLeft className="h-4 w-4" />
@@ -351,7 +351,7 @@ export default function Calendar() {
               <Button variant="outline" size="sm" onClick={navigateNext}>
                 <ChevronRight className="h-4 w-4" />
               </Button>
-              <h2 className="text-lg font-semibold ml-4">{getViewTitle()}</h2>
+              <div className="text-lg font-semibold ml-2">{getViewTitle()}</div>
             </div>
             
             {/* View mode toggle */}
@@ -430,8 +430,8 @@ export default function Calendar() {
           </div>
           
           {/* Title for mobile */}
-          <div className="text-center pb-4">
-            <h2 className="text-lg font-semibold">{getViewTitle()}</h2>
+          <div className="text-center pb-2">
+            <div className="text-lg font-semibold">{getViewTitle()}</div>
           </div>
           
           {/* Filter chips for mobile */}
@@ -475,13 +475,14 @@ export default function Calendar() {
 
           {/* Dialogs and modals */}
           {selectedProject && (
-            <ViewProjectDialog
+            <ProjectSheetView
               project={selectedProject}
+              leadName={selectedProjectLeadName}
               open={projectDialogOpen}
               onOpenChange={(open) => { setProjectDialogOpen(open); if (!open) { refreshCalendar(); } }}
               onProjectUpdated={refreshCalendar}
               onActivityUpdated={refreshCalendar}
-              leadName={selectedProjectLeadName}
+              mode="sheet"
             />
           )}
 

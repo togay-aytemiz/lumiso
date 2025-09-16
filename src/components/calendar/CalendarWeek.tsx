@@ -219,7 +219,7 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
       </div>
       
       {/* Time slots and events */}
-      <div className="max-h-96 overflow-y-auto">
+      <div className="flex-1">
         {timeSlots.map(({ time, display }) => {
           const hour = parseInt(time.split(':')[0]);
           

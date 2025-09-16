@@ -3,25 +3,24 @@ import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useNavigate } from "react-router-dom";
 import { ViewProjectDialog } from "@/components/ViewProjectDialog";
-import { formatDate, formatTime, getUserLocale, getStartOfWeek, getEndOfWeek } from "@/lib/utils";
-import { addDays, startOfMonth, endOfMonth, eachDayOfInterval, format, isToday, isSameMonth, startOfWeek, endOfWeek, addMonths, subMonths, addWeeks, subWeeks, isSameDay, startOfDay, endOfDay } from "date-fns";
+import { formatDate, formatTime, getUserLocale } from "@/lib/utils";
+import { isToday } from "date-fns";
 import { PageHeader, PageHeaderSearch, PageHeaderActions } from "@/components/ui/page-header";
 import SessionSheetView from "@/components/SessionSheetView";
 import { useOptimizedCalendarData } from "@/hooks/useOptimizedCalendarData";
 import { useOptimizedCalendarEvents } from "@/hooks/useOptimizedCalendarEvents";
 import { CalendarErrorWrapper } from "@/components/calendar/CalendarErrorBoundary";
 import { CalendarSkeleton, CalendarWeekSkeleton, CalendarDaySkeleton } from "@/components/calendar/CalendarSkeleton";
-import { CalendarDay } from "@/components/calendar/CalendarDay";
 import { CalendarWeek } from "@/components/calendar/CalendarWeek";
+import { CalendarMonthView } from "@/components/calendar/CalendarMonthView";
+import { CalendarDayView } from "@/components/calendar/CalendarDayView";
 import { useOptimizedCalendarViewport } from "@/hooks/useOptimizedCalendarViewport";
 import { useOptimizedCalendarNavigation } from "@/hooks/useOptimizedCalendarNavigation";
 import { useOptimizedTouchHandlers } from "@/hooks/useOptimizedTouchHandlers";
 import { useCalendarPerformanceMonitor } from "@/hooks/useCalendarPerformanceMonitor";
-import { Skeleton } from "@/components/ui/skeleton";
 
 type ViewMode = "day" | "week" | "month";
 
@@ -80,7 +79,7 @@ export default function Calendar() {
   } = useCalendarPerformanceMonitor();
 
   // Optimized touch handlers using event delegation
-  const { handleTouchStart, handleTouchMove, handleTouchEnd } = useOptimizedTouchHandlers({
+  const touchHandlers = useOptimizedTouchHandlers({
     onSwipeLeft: navigateNext,
     onSwipeRight: navigatePrevious,
     enabled: viewConfig.enableSwipeNavigation
@@ -195,8 +194,27 @@ export default function Calendar() {
     return () => document.removeEventListener('keydown', handleKeyboardNavigation);
   }, [handleKeyboardNavigation]);
 
-  // Render month view using optimized CalendarDay components
+  // Render month view using optimized components
   const renderMonthView = () => {
+    return (
+      <CalendarMonthView
+        currentDate={currentDate}
+        getEventsForDate={getEventsForDate}
+        showSessions={showSessions}
+        showReminders={showReminders}
+        leadsMap={leadsMap}
+        projectsMap={projectsMap}
+        onSessionClick={handleSessionClick}
+        onActivityClick={handleActivityClick}
+        onDayClick={isMobile ? (date) => {
+          setCurrentDate(date);
+          setViewMode("day");
+        } : undefined}
+        isMobile={isMobile}
+        touchHandlers={touchHandlers}
+      />
+    );
+  };
     const monthStart = startOfMonth(currentDate);
     const monthEnd = endOfMonth(currentDate);
     const calendarStart = startOfWeek(monthStart, { weekStartsOn: userLocale === 'en-US' ? 0 : 1 });
@@ -592,101 +610,18 @@ export default function Calendar() {
   };
 
   const renderDayView = () => {
-    const { sessions: daySessions, activities: dayActivities } = getEventsForDate(currentDate);
-    const isDayToday = isToday(currentDate);
-    
     return (
-      <div 
-        className="bg-card rounded-xl border border-border shadow-sm p-4 md:p-6"
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-      >
-        
-        <div className="space-y-4">
-          {showSessions && (
-            <div>
-              <h3 className="text-base md:text-lg font-medium mb-3 text-primary">Sessions</h3>
-              {daySessions.length > 0 ? (
-                <div className="space-y-2">
-                  {daySessions.map((session) => {
-                    const leadName = leadsMap[session.lead_id]?.name || "Lead";
-                    const projectName = session.project_id ? projectsMap[session.project_id]?.name : undefined;
-                    return (
-                      <button
-                        key={session.id}
-                        className="w-full text-left p-3 rounded-lg bg-primary/10 border border-primary/20 hover:bg-primary/15 min-h-11"
-                        onClick={() => handleSessionClick(session)}
-                      >
-                        <div className="flex items-center gap-2 text-sm md:text-base">
-                          <span className="font-semibold">{formatTime(session.session_time, userLocale)}</span>
-                          <span className="text-muted-foreground">•</span>
-                          <span className="truncate">{leadName}</span>
-                          {projectName && (
-                            <>
-                              <span className="text-muted-foreground">•</span>
-                              <span className="truncate text-sm">{projectName}</span>
-                            </>
-                          )}
-                        </div>
-                        {session.notes && (
-                          <div className="text-xs text-muted-foreground mt-1">{session.notes}</div>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="p-4 text-center text-muted-foreground bg-muted/50 rounded-lg">
-                  <p className="text-sm">No sessions scheduled</p>
-                </div>
-              )}
-            </div>
-          )}
-          
-          {showReminders && (
-            <div>
-              <h3 className="text-base md:text-lg font-medium mb-3">Reminders</h3>
-              {dayActivities.length > 0 ? (
-                <div className="space-y-2">
-                  {dayActivities.map((activity) => {
-                    const isProjectReminder = !!activity.project_id;
-                    const leadName = leadsMap[activity.lead_id]?.name || "Lead";
-                    const projectName = isProjectReminder ? projectsMap[activity.project_id!]?.name : undefined;
-                    const timeText = activity.reminder_time ? formatTime(activity.reminder_time, userLocale) : "All day";
-                    return (
-                       <button
-                         key={activity.id}
-                         className={`w-full text-left p-3 rounded-lg bg-muted border border-border hover:bg-accent hover:text-accent-foreground min-h-11 ${activity.completed ? 'line-through opacity-60' : ''}`}
-                         onClick={() => handleActivityClick(activity)}
-                      >
-                        <div className="flex items-center gap-2 text-sm md:text-base">
-                          <span className="font-semibold">{timeText}</span>
-                          <span className="text-muted-foreground">•</span>
-                          <span className="truncate">{leadName}</span>
-                          {projectName && (
-                            <>
-                              <span className="text-muted-foreground">•</span>
-                              <span className="truncate text-sm">{projectName}</span>
-                            </>
-                          )}
-                        </div>
-                        {activity.content && (
-                          <div className="text-xs text-muted-foreground mt-1">{activity.content}</div>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="p-4 text-center text-muted-foreground bg-muted/50 rounded-lg">
-                  <p className="text-sm">No reminders</p>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
+      <CalendarDayView
+        currentDate={currentDate}
+        getEventsForDate={getEventsForDate}
+        showSessions={showSessions}
+        showReminders={showReminders}
+        leadsMap={leadsMap}
+        projectsMap={projectsMap}
+        onSessionClick={handleSessionClick}
+        onActivityClick={handleActivityClick}
+        touchHandlers={touchHandlers}
+      />
     );
   };
 
@@ -887,9 +822,9 @@ export default function Calendar() {
         {/* Calendar content */}
         <div 
           className="min-h-96"
-          onTouchStart={viewMode !== 'month' ? handleTouchStart : undefined}
-          onTouchMove={viewMode !== 'month' ? handleTouchMove : undefined}
-          onTouchEnd={viewMode !== 'month' ? handleTouchEnd : undefined}
+          onTouchStart={viewMode !== 'month' ? touchHandlers.handleTouchStart : undefined}
+          onTouchMove={viewMode !== 'month' ? touchHandlers.handleTouchMove : undefined}
+          onTouchEnd={viewMode !== 'month' ? touchHandlers.handleTouchEnd : undefined}
         >
           {viewMode === "month" && renderMonthView()}
           {viewMode === "week" && renderWeekView()}

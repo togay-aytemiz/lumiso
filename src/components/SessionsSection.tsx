@@ -8,6 +8,7 @@ import SessionSheetView from "./SessionSheetView";
 import { NewSessionDialogForProject } from "./NewSessionDialogForProject";
 import { useNavigate } from "react-router-dom";
 import { sortSessionsByLifecycle, SessionWithStatus } from "@/lib/sessionSorting";
+import { useFormsTranslation } from "@/hooks/useTypedTranslation";
 interface Session extends SessionWithStatus {
   session_name?: string | null;
   session_time: string;
@@ -37,6 +38,7 @@ export function SessionsSection({
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   const [isSessionSheetOpen, setIsSessionSheetOpen] = useState(false);
   const navigate = useNavigate();
+  const { t } = useFormsTranslation();
   const handleSessionUpdated = () => {
     onSessionUpdated();
     setEditingSessionId(null);
@@ -76,7 +78,7 @@ export function SessionsSection({
     return <Card>
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
-            Sessions
+            {t('sessions.title')}
             <div className="w-6 h-6 bg-muted animate-pulse rounded" />
           </CardTitle>
         </CardHeader>
@@ -94,7 +96,7 @@ export function SessionsSection({
           <CardTitle className="flex items-center justify-between text-xl font-semibold">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
-              Sessions
+              {t('sessions.title')}
             </div>
             <NewSessionDialogForProject leadId={leadId} leadName={leadName} projectName={projectName} projectId={projectId} onSessionScheduled={onSessionUpdated} />
           </CardTitle>
@@ -102,7 +104,10 @@ export function SessionsSection({
         <CardContent>
           {sessions.length > 0 ? <div className="space-y-3">
               {!loading && <p className="text-sm text-muted-foreground mb-3">
-                  This project includes {sessions.length} session{sessions.length !== 1 ? 's' : ''}
+                  {sessions.length === 1 
+                    ? t('sessions.project_sessions_count', { count: sessions.length })
+                    : t('sessions.project_sessions_count_plural', { count: sessions.length })
+                  }
                 </p>}
               {sortSessionsByLifecycle(sessions).map(session => (
                 <DeadSimpleSessionBanner 
@@ -113,9 +118,9 @@ export function SessionsSection({
               ))}
             </div> : <div className="text-center py-4">
               <Calendar className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-              <p className="text-muted-foreground text-sm">No sessions linked to this project</p>
+              <p className="text-muted-foreground text-sm">{t('sessions.no_sessions')}</p>
               <p className="text-xs text-muted-foreground mt-1">
-                Click the + button to add sessions to this project
+                {t('sessions.add_sessions_hint')}
               </p>
             </div>}
         </CardContent>

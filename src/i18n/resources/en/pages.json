@@ -96,9 +96,7 @@
     "archived_projects": "View completed and archived projects",
     "drag_drop_organize": "Drag and drop projects between columns to update their status",
     "switch_views": "Switch between Board, List, and Archived views",
-    "explore_features": "Explore the different features and find your preferred workflow"
-  }
-}
+    "explore_features": "Explore the different features and find your preferred workflow",
     "sorting": {
       "name": "Name",
       "leadName": "Client Name",
@@ -217,18 +215,5 @@
         }
       }
     }
-  },
-  "projects": {
-    "title": "Projects",
-    "showArchived": "Show archived",
-    "addProject": "Add Project",
-    "archivedProjects": "Archived Projects",
-    "noProjectsYet": "No projects created yet.",
-    "deleteProject": "Delete Project",
-    "deleteProjectConfirm": "Are you sure you want to delete this project? This will not affect any sessions or notes.",
-    "projectDeletedSuccess": "Project deleted successfully.",
-    "errorDeletingProject": "Error deleting project",
-    "failedToLoadProjects": "Failed to load projects.",
-    "deleting": "Deleting..."
   }
 }

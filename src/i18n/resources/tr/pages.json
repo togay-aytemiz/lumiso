@@ -96,9 +96,7 @@
     "archived_projects": "Tamamlanan ve arşivlenen projeleri görüntüle",
     "drag_drop_organize": "Durumlarını güncellemek için projeleri sütunlar arasında sürükleyip bırakın",
     "switch_views": "Pano, Liste ve Arşiv görünümleri arasında geçiş yapın",
-    "explore_features": "Farklı özellikleri keşfedin ve tercih ettiğiniz iş akışını bulun"
-  }
-}
+    "explore_features": "Farklı özellikleri keşfedin ve tercih ettiğiniz iş akışını bulun",
     "sorting": {
       "name": "Ad",
       "leadName": "Müşteri Adı",
@@ -217,18 +215,5 @@
         }
       }
     }
-  },
-  "projects": {
-    "title": "Projeler",
-    "showArchived": "Arşivlenenleri göster",
-    "addProject": "Proje Ekle",
-    "archivedProjects": "Arşivlenmiş Projeler",
-    "noProjectsYet": "Henüz proje oluşturulmamış.",
-    "deleteProject": "Projeyi Sil",
-    "deleteProjectConfirm": "Bu projeyi silmek istediğinizden emin misiniz? Bu işlem seansları veya notları etkilemeyecektir.",
-    "projectDeletedSuccess": "Proje başarıyla silindi.",
-    "errorDeletingProject": "Proje silinirken hata",
-    "failedToLoadProjects": "Projeler yüklenemedi.",
-    "deleting": "Siliniyor..."
   }
 }

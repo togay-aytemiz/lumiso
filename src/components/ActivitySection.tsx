@@ -19,6 +19,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { useFormsTranslation, useCommonTranslation } from "@/hooks/useTypedTranslation";
 
 interface Activity {
   id: string;
@@ -78,14 +79,16 @@ export default function ActivitySection({ entityType, entityId, onUpdate }: Acti
   const [activeTab, setActiveTab] = useState<string>("activities");
   const [openGroups, setOpenGroups] = useState<{ [key: string]: boolean }>({});
   const { toast } = useToast();
+  const { t: tForms } = useFormsTranslation();
+  const { t: tCommon } = useCommonTranslation();
 
   const ACTIVITY_TYPES = [
-    { value: "call", label: "Call", icon: "📞" },
-    { value: "email", label: "Email", icon: "📧" },
-    { value: "meeting", label: "Meeting", icon: "🤝" },
-    { value: "note", label: "Note", icon: "📝" },
-    { value: "task", label: "Task", icon: "✅" },
-    { value: "follow_up", label: "Follow-up", icon: "🔄" },
+    { value: "call", label: tForms('activities.types.call'), icon: "📞" },
+    { value: "email", label: tForms('activities.types.email'), icon: "📧" },
+    { value: "meeting", label: tForms('activities.types.meeting'), icon: "🤝" },
+    { value: "note", label: tForms('activities.types.note'), icon: "📝" },
+    { value: "task", label: tForms('activities.types.task'), icon: "✅" },
+    { value: "follow_up", label: tForms('activities.types.follow_up'), icon: "🔄" },
   ];
 
   const [activityType, setActivityType] = useState('note');
@@ -178,8 +181,8 @@ export default function ActivitySection({ entityType, entityId, onUpdate }: Acti
   const handleSaveActivity = async () => {
     if (!content.trim()) {
       toast({
-        title: "Validation error",
-        description: "Content is required.",
+        title: tCommon('status.error'),
+        description: tForms('validation.content_required'),
         variant: "destructive"
       });
       return;
@@ -228,8 +231,8 @@ export default function ActivitySection({ entityType, entityId, onUpdate }: Acti
       if (error) throw error;
 
       toast({
-        title: "Success",
-        description: "Activity saved successfully"
+        title: tCommon('actions.success'),
+        description: tCommon('messages.success.save')
       });
 
       // Reset form
@@ -243,7 +246,7 @@ export default function ActivitySection({ entityType, entityId, onUpdate }: Acti
       onUpdate?.();
     } catch (error: any) {
       toast({
-        title: "Error",
+        title: tCommon('status.error'),
         description: error.message,
         variant: "destructive"
       });
@@ -290,12 +293,12 @@ export default function ActivitySection({ entityType, entityId, onUpdate }: Acti
       ));
 
       toast({
-        title: "Success",
-        description: completed ? "Activity marked as completed" : "Activity marked as incomplete"
+        title: tCommon('actions.success'),
+        description: completed ? tCommon('status.completed') : tCommon('status.active')
       });
     } catch (error: any) {
       toast({
-        title: "Error",
+        title: tCommon('status.error'),
         description: error.message,
         variant: "destructive"
       });
@@ -315,12 +318,12 @@ export default function ActivitySection({ entityType, entityId, onUpdate }: Acti
       setActivities(prev => prev.filter(activity => activity.id !== activityId));
 
       toast({
-        title: "Success",
-        description: "Activity deleted successfully"
+        title: tCommon('actions.success'),
+        description: tCommon('messages.success.delete')
       });
     } catch (error: any) {
       toast({
-        title: "Error",
+        title: tCommon('status.error'),
         description: error.message,
         variant: "destructive"
       });
@@ -337,8 +340,8 @@ export default function ActivitySection({ entityType, entityId, onUpdate }: Acti
   const handleSaveEdit = async () => {
     if (!editContent.trim()) {
       toast({
-        title: "Validation error",
-        description: "Content is required.",
+        title: tCommon('status.error'),
+        description: tForms('validation.content_required'),
         variant: "destructive"
       });
       return;
@@ -372,12 +375,12 @@ export default function ActivitySection({ entityType, entityId, onUpdate }: Acti
       setEditReminderTime('');
 
       toast({
-        title: "Success",
-        description: "Activity updated successfully"
+        title: tCommon('actions.success'),
+        description: tCommon('messages.success.update')
       });
     } catch (error: any) {
       toast({
-        title: "Error",
+        title: tCommon('status.error'),
         description: error.message,
         variant: "destructive"
       });
@@ -530,7 +533,7 @@ export default function ActivitySection({ entityType, entityId, onUpdate }: Acti
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Activity & History</CardTitle>
+          <CardTitle>tForms('activities.activities_sessions_tab')</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {[...Array(3)].map((_, i) => (
@@ -548,7 +551,7 @@ export default function ActivitySection({ entityType, entityId, onUpdate }: Acti
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
-          Activity & History
+          {tForms('activities.activities_sessions_tab')}
           <div className="flex items-center gap-2">
             <Select value={selectedFilter} onValueChange={setSelectedFilter}>
               <SelectTrigger className="w-40 h-8">
@@ -556,10 +559,10 @@ export default function ActivitySection({ entityType, entityId, onUpdate }: Acti
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Activity</SelectItem>
-                <SelectItem value="pending">Pending Tasks</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="sessions">Sessions</SelectItem>
+                <SelectItem value="all">{tForms('activities.filter_all')}</SelectItem>
+                <SelectItem value="pending">{tForms('activities.filter_pending')}</SelectItem>
+                <SelectItem value="completed">{tForms('activities.filter_completed')}</SelectItem>
+                <SelectItem value="sessions">{tForms('activities.filter_sessions')}</SelectItem>
                 <Separator />
                 {ACTIVITY_TYPES.map(type => (
                   <SelectItem key={type.value} value={type.value}>
@@ -574,8 +577,8 @@ export default function ActivitySection({ entityType, entityId, onUpdate }: Acti
       <CardContent>
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="activities">Activities & Sessions</TabsTrigger>
-            <TabsTrigger value="history">System History</TabsTrigger>
+            <TabsTrigger value="activities">{tForms('activities.activities_sessions_tab')}</TabsTrigger>
+            <TabsTrigger value="history">{tForms('activities.system_history_tab')}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="activities" className="space-y-4">
@@ -597,7 +600,7 @@ export default function ActivitySection({ entityType, entityId, onUpdate }: Acti
               </div>
               
               <Textarea 
-                placeholder="Add activity notes..."
+                placeholder={tForms('placeholders.enter_activity_content')}
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 className="min-h-[80px]"
@@ -608,7 +611,7 @@ export default function ActivitySection({ entityType, entityId, onUpdate }: Acti
                   <PopoverTrigger asChild>
                     <Button variant="outline" size="sm" className="gap-2">
                       <CalendarIcon className="h-4 w-4" />
-                      {reminderDate ? format(reminderDate, 'MMM d, yyyy') : 'Set reminder date'}
+                      {reminderDate ? format(reminderDate, 'MMM d, yyyy') : tForms('labels.reminder_date')}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
@@ -645,7 +648,7 @@ export default function ActivitySection({ entityType, entityId, onUpdate }: Acti
               
               <Button onClick={handleSaveActivity} disabled={saving} className="w-full">
                 <Plus className="h-4 w-4 mr-2" />
-                {saving ? 'Saving...' : 'Add Activity'}
+                {saving ? tCommon('actions.saving') : tForms('activities.add_activity')}
               </Button>
             </div>
 
@@ -654,8 +657,8 @@ export default function ActivitySection({ entityType, entityId, onUpdate }: Acti
               {Object.keys(groupedItems).length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p className="text-lg font-medium">No activities yet</p>
-                  <p className="text-sm">Add your first activity above to get started.</p>
+                  <p className="text-lg font-medium">{tCommon('messages.info.no_data')}</p>
+                  <p className="text-sm">{tCommon('messages.info.select_item')}</p>
                 </div>
               ) : (
                 Object.entries(groupedItems).map(([date, items]) => (
@@ -701,15 +704,15 @@ export default function ActivitySection({ entityType, entityId, onUpdate }: Acti
                                         className="min-h-[60px]"
                                       />
                                       <div className="flex items-center gap-2">
-                                        <Button size="sm" onClick={handleSaveEdit}>
-                                          Save
+                                       <Button size="sm" onClick={handleSaveEdit}>
+                                          {tCommon('buttons.save')}
                                         </Button>
                                         <Button 
                                           size="sm" 
                                           variant="outline" 
                                           onClick={() => setEditingActivity(null)}
                                         >
-                                          Cancel
+                                          {tCommon('buttons.cancel')}
                                         </Button>
                                       </div>
                                     </div>
@@ -731,11 +734,11 @@ export default function ActivitySection({ entityType, entityId, onUpdate }: Acti
                                         {item.data.content}
                                       </p>
                                       {(item.data.reminder_date || item.data.reminder_time) && (
-                                        <div className="flex items-center gap-2 mt-2 text-xs text-orange-600 dark:text-orange-400">
-                                          <Clock className="h-3 w-3" />
-                                          Reminder: {item.data.reminder_date && format(new Date(item.data.reminder_date), 'MMM d, yyyy')}
-                                          {item.data.reminder_time && ` at ${item.data.reminder_time}`}
-                                        </div>
+                                         <div className="flex items-center gap-2 mt-2 text-xs text-orange-600 dark:text-orange-400">
+                                           <Clock className="h-3 w-3" />
+                                           {tForms('labels.reminder_date')}: {item.data.reminder_date && format(new Date(item.data.reminder_date), 'MMM d, yyyy')}
+                                           {item.data.reminder_time && ` ${tCommon('labels.at')} ${item.data.reminder_time}`}
+                                         </div>
                                       )}
                                     </>
                                   )}
@@ -812,8 +815,8 @@ export default function ActivitySection({ entityType, entityId, onUpdate }: Acti
               {auditLogs.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <RotateCcw className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p className="text-lg font-medium">No system history</p>
-                  <p className="text-sm">System changes will appear here automatically.</p>
+                  <p className="text-lg font-medium">{tCommon('messages.info.no_data')}</p>
+                  <p className="text-sm">{tCommon('messages.info.loading')}</p>
                 </div>
               ) : (
                 auditLogs.map((log) => (

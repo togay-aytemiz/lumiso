@@ -11,7 +11,21 @@
     "nameRequired": "Project name is required.",
     "typeRequired": "Please select a project type.",
     "validEmail": "Please enter a valid email address",
-    "validPhone": "Please enter a valid phone number"
+    "validPhone": "Please enter a valid phone number",
+    "required_field": "This field is required",
+    "invalid_email": "Please enter a valid email address",
+    "invalid_phone": "Please enter a valid phone number",
+    "invalid_url": "Please enter a valid URL",
+    "min_length": "Minimum {{count}} characters required",
+    "max_length": "Maximum {{count}} characters allowed",
+    "invalid_date": "Please enter a valid date",
+    "invalid_time": "Please enter a valid time",
+    "future_date_required": "Date must be in the future",
+    "positive_number": "Must be a positive number",
+    "session_date_time_required": "Session date and time are required.",
+    "lead_required": "Please select a lead or create a new one.",
+    "lead_name_required": "Lead name is required when creating a new lead.",
+    "content_required": "Content is required."
   },
   "placeholders": {
     "enterName": "Enter name",
@@ -26,7 +40,16 @@
     "additionalNotes": "Any additional notes about this lead...",
     "enterProjectName": "Enter project name",
     "enterProjectDescription": "Enter project description (optional)",
-    "basePrice": "0"
+    "basePrice": "0",
+    "enter_location": "Enter location",
+    "select_project_type": "Select project type",
+    "select_service": "Select service",
+    "search_clients": "Search clients...",
+    "search_projects": "Search projects...",
+    "no_results": "No results found",
+    "search_by_name_or_email": "Search by name or email...",
+    "select_client_placeholder": "Search and select a client...",
+    "enter_activity_content": "Enter activity details..."
   },
   "labels": {
     "firstName": "First Name",
@@ -47,7 +70,29 @@
     "projectName": "Project Name",
     "projectType": "Project Type",
     "basePrice": "Base Price (TRY)",
-    "description": "Description"
+    "description": "Description",
+    "location": "Location",
+    "date": "Date",
+    "time": "Time",
+    "session_date": "Session Date",
+    "session_time": "Session Time",
+    "project_status": "Project Status",
+    "lead_name": "Client Name",
+    "lead_email": "Client Email",
+    "lead_phone": "Client Phone",
+    "custom_fields": "Custom Fields",
+    "reminder_date": "Reminder Date",
+    "reminder_time": "Reminder Time",
+    "service": "Service",
+    "amount": "Amount",
+    "due_date": "Due Date",
+    "price": "Price",
+    "url": "URL",
+    "optional": "Optional",
+    "required": "Required",
+    "select_client": "Select client",
+    "activity_type": "Activity Type",
+    "content": "Content"
   },
   "buttons": {
     "cancel": "Cancel",
@@ -94,5 +139,37 @@
     "ensurePartOfOrg": "Please ensure you're part of an organization",
     "success": "Success",
     "leadUpdateSuccess": "Lead updated successfully."
+  },
+  "sessions": {
+    "schedule_new": "Schedule New Session",
+    "select_existing_client": "Select existing client",
+    "create_new_client": "Create new client",
+    "loading_clients": "Loading clients...",
+    "no_clients_match": "No clients match your search",
+    "no_clients_found": "No clients found",
+    "available": "Available",
+    "scheduled": "Scheduled",
+    "completed": "Completed",
+    "select_project": "Select project (optional)",
+    "no_projects": "No projects available for this client"
+  },
+  "activities": {
+    "types": {
+      "call": "Call",
+      "email": "Email",
+      "meeting": "Meeting",
+      "note": "Note",
+      "task": "Task",
+      "follow_up": "Follow-up"
+    },
+    "add_activity": "Add Activity",
+    "edit_activity": "Edit Activity",
+    "activity_filter": "Filter activities",
+    "filter_all": "All",
+    "filter_completed": "Completed",
+    "filter_pending": "Pending",
+    "filter_sessions": "Sessions",
+    "activities_sessions_tab": "Activities & Sessions",
+    "system_history_tab": "System History"
   }
 }

@@ -438,18 +438,35 @@ export function AppSidebar() {
           </SheetHeader>
           <div className="px-3">
             <SidebarMenu className="space-y-1">
-              {bookingItems.map((item) => (
-                <SidebarSubItem
-                  key={item.title}
-                  title={item.title}
-                  url={item.url}
-                  icon={item.icon}
-                  isActive={isActive(item.url)}
-                  isLocked={isItemLocked(item.url)}
-                  onLockedClick={handleLockedItemClick}
-                  onClick={handleNavClick}
-                />
-              ))}
+                    {bookingItems.map((item) => {
+                      let translationKey: string;
+                      switch(item.title) {
+                        case 'Calendar':
+                          translationKey = t('menu.calendar');
+                          break;
+                        case 'Sessions':
+                          translationKey = t('menu.sessions');
+                          break;
+                        case 'Reminders':
+                          translationKey = t('menu.reminders');
+                          break;
+                        default:
+                          translationKey = item.title;
+                      }
+                      
+                      return (
+                        <SidebarSubItem
+                          key={item.title}
+                          title={translationKey}
+                          url={item.url}
+                          icon={item.icon}
+                          isActive={isActive(item.url)}
+                          isLocked={isItemLocked(item.url)}
+                          onLockedClick={handleLockedItemClick}
+                          onClick={handleNavClick}
+                        />
+                      );
+                    })}
             </SidebarMenu>
           </div>
         </SheetContent>
@@ -462,18 +479,32 @@ export function AppSidebar() {
           </SheetHeader>
           <div className="px-3">
             <SidebarMenu className="space-y-1">
-              {automationItems.map((item) => (
-                <SidebarSubItem
-                  key={item.title}
-                  title={item.title}
-                  url={item.url}
-                  icon={item.icon}
-                  isActive={isActive(item.url)}
-                  isLocked={isItemLocked(item.url)}
-                  onLockedClick={handleLockedItemClick}
-                  onClick={handleNavClick}
-                />
-              ))}
+              {automationItems.map((item) => {
+                let translationKey: string;
+                switch(item.title) {
+                  case 'Workflows':
+                    translationKey = t('menu.workflows');
+                    break;
+                  case 'Templates':
+                    translationKey = t('menu.templates');
+                    break;
+                  default:
+                    translationKey = item.title;
+                }
+                
+                return (
+                  <SidebarSubItem
+                    key={item.title}
+                    title={translationKey}
+                    url={item.url}
+                    icon={item.icon}
+                    isActive={isActive(item.url)}
+                    isLocked={isItemLocked(item.url)}
+                    onLockedClick={handleLockedItemClick}
+                    onClick={handleNavClick}
+                  />
+                );
+              })}
             </SidebarMenu>
           </div>
         </SheetContent>

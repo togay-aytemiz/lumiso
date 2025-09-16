@@ -11,7 +11,21 @@
     "nameRequired": "Proje adı zorunludur.",
     "typeRequired": "Lütfen bir proje türü seçin.",
     "validEmail": "Lütfen geçerli bir e-posta adresi girin",
-    "validPhone": "Lütfen geçerli bir telefon numarası girin"
+    "validPhone": "Lütfen geçerli bir telefon numarası girin",
+    "required_field": "Bu alan gerekli",
+    "invalid_email": "Lütfen geçerli bir e-posta adresi girin",
+    "invalid_phone": "Lütfen geçerli bir telefon numarası girin",
+    "invalid_url": "Lütfen geçerli bir URL girin",
+    "min_length": "En az {{count}} karakter gerekli",
+    "max_length": "En fazla {{count}} karakter izinli",
+    "invalid_date": "Lütfen geçerli bir tarih girin",
+    "invalid_time": "Lütfen geçerli bir saat girin",
+    "future_date_required": "Tarih gelecekte olmalı",
+    "positive_number": "Pozitif bir sayı olmalı",
+    "session_date_time_required": "Seans tarihi ve saati gerekli.",
+    "lead_required": "Lütfen bir müşteri adayı seçin veya yeni bir tane oluşturun.",
+    "lead_name_required": "Yeni müşteri adayı oluştururken isim gerekli.",
+    "content_required": "İçerik gerekli."
   },
   "placeholders": {
     "enterName": "Ad girin",
@@ -26,7 +40,16 @@
     "additionalNotes": "Bu müşteri adayı hakkında ek notlar...",
     "enterProjectName": "Proje adı girin",
     "enterProjectDescription": "Proje açıklaması girin (isteğe bağlı)",
-    "basePrice": "0"
+    "basePrice": "0",
+    "enter_location": "Konum girin",
+    "select_project_type": "Proje türü seçin",
+    "select_service": "Hizmet seçin",
+    "search_clients": "Müşteri ara...",
+    "search_projects": "Proje ara...",
+    "no_results": "Sonuç bulunamadı",
+    "search_by_name_or_email": "İsim veya e-posta ile ara...",
+    "select_client_placeholder": "Müşteri ara ve seç...",
+    "enter_activity_content": "Faaliyet detaylarını girin..."
   },
   "labels": {
     "firstName": "Ad",
@@ -47,7 +70,29 @@
     "projectName": "Proje Adı",
     "projectType": "Proje Türü",
     "basePrice": "Temel Fiyat (TL)",
-    "description": "Açıklama"
+    "description": "Açıklama",
+    "location": "Konum",
+    "date": "Tarih",
+    "time": "Saat",
+    "session_date": "Seans Tarihi",
+    "session_time": "Seans Saati",
+    "project_status": "Proje Durumu",
+    "lead_name": "Müşteri Adayı Adı",
+    "lead_email": "Müşteri Adayı E-postası",
+    "lead_phone": "Müşteri Adayı Telefonu",
+    "custom_fields": "Özel Alanlar",
+    "reminder_date": "Hatırlatma Tarihi",
+    "reminder_time": "Hatırlatma Saati",
+    "service": "Hizmet",
+    "amount": "Tutar",
+    "due_date": "Vade Tarihi",
+    "price": "Fiyat",
+    "url": "URL",
+    "optional": "İsteğe Bağlı",
+    "required": "Gerekli",
+    "select_client": "Müşteri seç",
+    "activity_type": "Faaliyet Türü",
+    "content": "İçerik"
   },
   "buttons": {
     "cancel": "İptal",
@@ -94,5 +139,37 @@
     "ensurePartOfOrg": "Lütfen bir organizasyonun parçası olduğunuzdan emin olun",
     "success": "Başarılı",
     "leadUpdateSuccess": "Müşteri adayı başarıyla güncellendi."
+  },
+  "sessions": {
+    "schedule_new": "Yeni Seans Planla",
+    "select_existing_client": "Mevcut müşteri seç",
+    "create_new_client": "Yeni müşteri oluştur",
+    "loading_clients": "Müşteriler yükleniyor...",
+    "no_clients_match": "Aramanızla eşleşen müşteri yok",
+    "no_clients_found": "Müşteri bulunamadı",
+    "available": "Müsait",
+    "scheduled": "Planlanmış",
+    "completed": "Tamamlanmış",
+    "select_project": "Proje seç (isteğe bağlı)",
+    "no_projects": "Bu müşteri için proje mevcut değil"
+  },
+  "activities": {
+    "types": {
+      "call": "Arama",
+      "email": "E-posta",
+      "meeting": "Toplantı",
+      "note": "Not",
+      "task": "Görev",
+      "follow_up": "Takip"
+    },
+    "add_activity": "Faaliyet Ekle",
+    "edit_activity": "Faaliyet Düzenle",
+    "activity_filter": "Faaliyetleri filtrele",
+    "filter_all": "Tümü",
+    "filter_completed": "Tamamlanmış",
+    "filter_pending": "Beklemede",
+    "filter_sessions": "Seanslar",
+    "activities_sessions_tab": "Faaliyetler ve Seanslar",
+    "system_history_tab": "Sistem Geçmişi"
   }
 }

@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import { useCalendarSync } from "@/hooks/useCalendarSync";
 import { useWorkflowTriggers } from "@/hooks/useWorkflowTriggers";
 import { useSessionReminderScheduling } from "@/hooks/useSessionReminderScheduling";
+import { useFormsTranslation, useCommonTranslation } from "@/hooks/useTypedTranslation";
 
 interface Lead {
   id: string;
@@ -40,6 +41,8 @@ const NewSessionDialog = ({ onSessionScheduled, children }: NewSessionDialogProp
   const { createSessionEvent } = useCalendarSync();
   const { triggerSessionScheduled } = useWorkflowTriggers();
   const { scheduleSessionReminders } = useSessionReminderScheduling();
+  const { t: tForms } = useFormsTranslation();
+  const { t: tCommon } = useCommonTranslation();
   
   const [sessionData, setSessionData] = useState({
     session_date: "",
@@ -121,7 +124,7 @@ const NewSessionDialog = ({ onSessionScheduled, children }: NewSessionDialogProp
       setLeads(processedLeads);
     } catch (error: any) {
       toast({
-        title: "Error fetching leads",
+        title: tCommon('status.error'),
         description: error.message,
         variant: "destructive"
       });
@@ -157,8 +160,8 @@ const NewSessionDialog = ({ onSessionScheduled, children }: NewSessionDialogProp
   const handleSubmit = async () => {
     if (!sessionData.session_date || !sessionData.session_time) {
       toast({
-        title: "Validation error",
-        description: "Session date and time are required.",
+        title: tCommon('status.error'),
+        description: tForms('validation.session_date_time_required'),
         variant: "destructive"
       });
       return;
@@ -166,8 +169,8 @@ const NewSessionDialog = ({ onSessionScheduled, children }: NewSessionDialogProp
 
     if (!isNewLead && !selectedLeadId) {
       toast({
-        title: "Validation error",
-        description: "Please select a lead or create a new one.",
+        title: tCommon('status.error'),
+        description: tForms('validation.lead_required'),
         variant: "destructive"
       });
       return;
@@ -175,8 +178,8 @@ const NewSessionDialog = ({ onSessionScheduled, children }: NewSessionDialogProp
 
     if (isNewLead && !newLeadData.name.trim()) {
       toast({
-        title: "Validation error",
-        description: "Lead name is required when creating a new lead.",
+        title: tCommon('status.error'),
+        description: tForms('validation.lead_name_required'),
         variant: "destructive"
       });
       return;
@@ -288,8 +291,8 @@ const NewSessionDialog = ({ onSessionScheduled, children }: NewSessionDialogProp
       }
 
       toast({
-        title: "Success",
-        description: "Session scheduled successfully.",
+        title: tCommon('actions.success'),
+        description: tCommon('messages.success.save'),
       });
 
       // Reset form and close dialog
@@ -325,7 +328,7 @@ const NewSessionDialog = ({ onSessionScheduled, children }: NewSessionDialogProp
       });
       
       toast({
-        title: "Error scheduling session",
+        title: tCommon('status.error'),
         description: error.message,
         variant: "destructive"
       });
@@ -364,7 +367,7 @@ const NewSessionDialog = ({ onSessionScheduled, children }: NewSessionDialogProp
   );
 
   const handleDirtyClose = () => {
-    if (window.confirm("Discard changes?")) {
+    if (window.confirm(tCommon('messages.confirm.unsaved_changes'))) {
       setSessionData({
         session_date: "",
         session_time: "",
@@ -386,13 +389,13 @@ const NewSessionDialog = ({ onSessionScheduled, children }: NewSessionDialogProp
 
   const footerActions = [
     {
-      label: "Cancel",
+      label: tCommon('buttons.cancel'),
       onClick: () => setOpen(false),
       variant: "outline" as const,
       disabled: loading
     },
     {
-      label: loading ? "Scheduling..." : "Schedule Session",
+      label: loading ? tCommon('actions.saving') : tCommon('buttons.save'),
       onClick: handleSubmit,
       disabled: loading || !sessionData.session_date || !sessionData.session_time || (!selectedLeadId && !newLeadData.name.trim()),
       loading: loading
@@ -408,12 +411,12 @@ const NewSessionDialog = ({ onSessionScheduled, children }: NewSessionDialogProp
       ) : (
         <Button size="sm" className="gap-2" onClick={() => setOpen(true)}>
           <Plus className="h-4 w-4" />
-          Add
+          {tCommon('buttons.add')}
         </Button>
       )}
 
       <AppSheetModal
-        title="Schedule New Session"
+        title={tForms('sessions.schedule_new')}
         isOpen={open}
         onOpenChange={setOpen}
         size="lg"
@@ -433,12 +436,12 @@ const NewSessionDialog = ({ onSessionScheduled, children }: NewSessionDialogProp
                 onChange={() => setIsNewLead(false)}
                 className="h-4 w-4"
               />
-              <Label htmlFor="existing-lead">Select existing client</Label>
+              <Label htmlFor="existing-lead">{tForms('sessions.select_existing_client')}</Label>
             </div>
             
             {!isNewLead && (
               <div className="space-y-2">
-                <Label htmlFor="lead-search">Select client</Label>
+                <Label htmlFor="lead-search">{tForms('labels.select_client')}</Label>
                 <Popover open={dropdownOpen} onOpenChange={setDropdownOpen}>
                   <PopoverTrigger asChild>
                     <Button
@@ -464,14 +467,17 @@ const NewSessionDialog = ({ onSessionScheduled, children }: NewSessionDialogProp
                               }
                               className="text-xs"
                             >
-                              {leads.find(lead => lead.id === selectedLeadId)?.sessionStatus === 'none' ? 'Available' : leads.find(lead => lead.id === selectedLeadId)?.sessionStatus}
+                             {leads.find(lead => lead.id === selectedLeadId)?.sessionStatus === 'none' ? tForms('sessions.available') : 
+                              leads.find(lead => lead.id === selectedLeadId)?.sessionStatus === 'planned' ? tForms('sessions.scheduled') :
+                              leads.find(lead => lead.id === selectedLeadId)?.sessionStatus === 'completed' ? tForms('sessions.completed') :
+                              leads.find(lead => lead.id === selectedLeadId)?.sessionStatus}
                             </Badge>
                           )}
                         </div>
                       ) : loadingLeads ? (
-                        "Loading clients..."
+                        tForms('sessions.loading_clients')
                       ) : (
-                        "Search and select a client..."
+                        tForms('placeholders.select_client_placeholder')
                       )}
                       <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
@@ -481,7 +487,7 @@ const NewSessionDialog = ({ onSessionScheduled, children }: NewSessionDialogProp
                       <div className="relative">
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                         <Input
-                          placeholder="Search by name or email..."
+                          placeholder={tForms('placeholders.search_by_name_or_email')}
                           value={searchTerm}
                           onChange={(e) => setSearchTerm(e.target.value)}
                           className="pl-10"
@@ -492,11 +498,11 @@ const NewSessionDialog = ({ onSessionScheduled, children }: NewSessionDialogProp
                     <div className="max-h-64 overflow-y-auto">
                       {loadingLeads ? (
                         <div className="p-4 text-center text-sm text-muted-foreground">
-                          Loading clients...
+                          {tForms('sessions.loading_clients')}
                         </div>
                       ) : filteredLeads.length === 0 ? (
                         <div className="p-4 text-center text-sm text-muted-foreground">
-                          {searchTerm ? 'No clients match your search' : 'No clients found'}
+                          {searchTerm ? tForms('sessions.no_clients_match') : tForms('sessions.no_clients_found')}
                         </div>
                       ) : (
                         filteredLeads.map((lead) => (
@@ -537,7 +543,10 @@ const NewSessionDialog = ({ onSessionScheduled, children }: NewSessionDialogProp
                                  }
                                  className="text-xs"
                                >
-                                 {lead.sessionStatus === 'none' ? 'Available' : lead.sessionStatus}
+                                 {lead.sessionStatus === 'none' ? tForms('sessions.available') : 
+                                  lead.sessionStatus === 'planned' ? tForms('sessions.scheduled') :
+                                  lead.sessionStatus === 'completed' ? tForms('sessions.completed') :
+                                  lead.sessionStatus}
                                </Badge>
                             </div>
                           </div>
@@ -558,46 +567,46 @@ const NewSessionDialog = ({ onSessionScheduled, children }: NewSessionDialogProp
                 onChange={() => setIsNewLead(true)}
                 className="h-4 w-4"
               />
-              <Label htmlFor="new-lead">Create new client</Label>
+              <Label htmlFor="new-lead">{tForms('sessions.create_new_client')}</Label>
             </div>
 
             {isNewLead && (
               <div className="space-y-3 pl-6 border-l-2 border-muted">
                 <div className="space-y-2">
-                  <Label htmlFor="new-name">Name *</Label>
+                  <Label htmlFor="new-name">{tForms('labels.name')} *</Label>
                   <Input
                     id="new-name"
                     value={newLeadData.name}
                     onChange={(e) => handleNewLeadDataChange("name", e.target.value)}
-                    placeholder="Enter client name"
+                    placeholder={tForms('placeholders.enterName')}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="new-email">Email</Label>
+                  <Label htmlFor="new-email">{tForms('labels.email')}</Label>
                   <Input
                     id="new-email"
                     type="email"
                     value={newLeadData.email}
                     onChange={(e) => handleNewLeadDataChange("email", e.target.value)}
-                    placeholder="Enter email address"
+                    placeholder={tForms('placeholders.enterEmail')}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="new-phone">Phone</Label>
+                  <Label htmlFor="new-phone">{tForms('labels.phone')}</Label>
                   <Input
                     id="new-phone"
                     value={newLeadData.phone}
                     onChange={(e) => handleNewLeadDataChange("phone", e.target.value)}
-                    placeholder="Enter phone number"
+                    placeholder={tForms('placeholders.enterPhone')}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="new-notes">Client Notes</Label>
+                  <Label htmlFor="new-notes">{tForms('labels.notes')}</Label>
                   <Textarea
                     id="new-notes"
                     value={newLeadData.notes}
                     onChange={(e) => handleNewLeadDataChange("notes", e.target.value)}
-                    placeholder="Any notes about this client..."
+                    placeholder={tForms('placeholders.additionalNotes')}
                     rows={2}
                   />
                 </div>
@@ -609,10 +618,10 @@ const NewSessionDialog = ({ onSessionScheduled, children }: NewSessionDialogProp
 
           {/* Session Details */}
           <div className="space-y-4">
-            <h4 className="text-sm font-medium">Session Details</h4>
+            <h4 className="text-sm font-medium">{tForms('labels.session_date')} & {tForms('labels.session_time')}</h4>
             
             <div className="space-y-2">
-              <Label htmlFor="session_date">Session Date *</Label>
+              <Label htmlFor="session_date">{tForms('labels.session_date')} *</Label>
               <Input
                 id="session_date"
                 type="date"
@@ -623,7 +632,7 @@ const NewSessionDialog = ({ onSessionScheduled, children }: NewSessionDialogProp
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="session_time">Session Time *</Label>
+              <Label htmlFor="session_time">{tForms('labels.session_time')} *</Label>
               <Input
                 id="session_time"
                 type="time"
@@ -633,12 +642,12 @@ const NewSessionDialog = ({ onSessionScheduled, children }: NewSessionDialogProp
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="session_location">Location / Address</Label>
+              <Label htmlFor="session_location">{tForms('labels.location')}</Label>
               <Textarea
                 id="session_location"
                 value={sessionData.location}
                 onChange={(e) => handleSessionDataChange("location", e.target.value)}
-                placeholder="Enter session location or address..."
+                placeholder={tForms('placeholders.enter_location')}
                 rows={2}
               />
             </div>
@@ -646,10 +655,10 @@ const NewSessionDialog = ({ onSessionScheduled, children }: NewSessionDialogProp
             {/* Project selection - only show for existing leads */}
             {!isNewLead && selectedLeadId && (
               <div className="space-y-2">
-                <Label htmlFor="project">Project (Optional)</Label>
+                <Label htmlFor="project">{tForms('sessions.select_project')}</Label>
                 <Select value={selectedProjectId} onValueChange={setSelectedProjectId} disabled={projects.length === 0}>
                   <SelectTrigger>
-                    <SelectValue placeholder={projects.length === 0 ? "No projects created yet" : "Select a project"} />
+                    <SelectValue placeholder={projects.length === 0 ? tForms('sessions.no_projects') : tForms('sessions.select_project')} />
                   </SelectTrigger>
                   <SelectContent>
                     {projects.map((project) => (
@@ -663,12 +672,12 @@ const NewSessionDialog = ({ onSessionScheduled, children }: NewSessionDialogProp
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="session_notes">Session Notes</Label>
+              <Label htmlFor="session_notes">{tForms('labels.notes')}</Label>
               <Textarea
                 id="session_notes"
                 value={sessionData.notes}
                 onChange={(e) => handleSessionDataChange("notes", e.target.value)}
-                placeholder="Any special requirements or notes for this session..."
+                placeholder={tForms('placeholders.enterNotes')}
                 rows={3}
               />
             </div>

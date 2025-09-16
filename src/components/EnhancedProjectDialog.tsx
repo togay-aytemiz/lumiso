@@ -19,6 +19,7 @@ import { useNotificationTriggers } from "@/hooks/useNotificationTriggers";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { NavigationGuardDialog } from "@/components/settings/NavigationGuardDialog";
+import { useFormsTranslation, useCommonTranslation } from "@/hooks/useTypedTranslation";
 
 interface Lead {
   id: string;
@@ -64,6 +65,8 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
   const { currentStep, shouldLockNavigation, completeCurrentStep } = useOnboarding();
   const { triggerProjectMilestone } = useNotificationTriggers();
   const { activeOrganization } = useOrganization();
+  const { t: tForms } = useFormsTranslation();
+  const { t: tCommon } = useCommonTranslation();
 
   const [projectData, setProjectData] = useState({
     name: "",
@@ -163,7 +166,7 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
       setLeads(leadsData || []);
     } catch (error: any) {
       toast({
-        title: "Error fetching leads",
+        title: tCommon('labels.error'),
         description: error.message,
         variant: "destructive"
       });
@@ -220,7 +223,7 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
       }
     } catch (error: any) {
       toast({
-        title: "Error fetching data",
+        title: tCommon('labels.error'),
         description: error.message,
         variant: "destructive"
       });
@@ -251,8 +254,8 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
 
     if (!projectData.name.trim()) {
       toast({
-        title: "Validation error",
-        description: "Project name is required.",
+        title: tCommon('labels.error'),
+        description: tForms('project_validation.name_required'),
         variant: "destructive"
       });
       return;
@@ -260,8 +263,8 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
 
     if (!isNewLead && !selectedLeadId) {
       toast({
-        title: "Validation error",
-        description: "Please select a lead or create a new one.",
+        title: tCommon('labels.error'),
+        description: tForms('project_validation.lead_required'),
         variant: "destructive"
       });
       return;
@@ -269,8 +272,8 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
 
     if (isNewLead && !newLeadData.name.trim()) {
       toast({
-        title: "Validation error",
-        description: "Lead name is required when creating a new lead.",
+        title: tCommon('labels.error'),
+        description: tForms('project_validation.lead_name_required'),
         variant: "destructive"
       });
       return;
@@ -278,8 +281,8 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
 
     if (!projectData.projectTypeId) {
       toast({
-        title: "Validation error",
-        description: "Please select a project type.",
+        title: tCommon('labels.error'),
+        description: tForms('project_validation.type_required'),
         variant: "destructive"
       });
       return;
@@ -382,8 +385,8 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
       // Assignment notifications removed - single photographer mode
 
       toast({
-        title: "Success",
-        description: "Project created successfully."
+        title: tCommon('actions.success'),
+        description: tCommon('messages.success.project_created')
       });
 
       // Check if we're in onboarding step 3 and complete it
@@ -404,7 +407,7 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
       }
     } catch (error: any) {
       toast({
-        title: "Error creating project",
+        title: tCommon('labels.error'),
         description: error.message,
         variant: "destructive"
       });

@@ -62,19 +62,43 @@
       "failedToSaveProgress": "Failed to save progress. Please try again.",
       "errorFetchingStatuses": "Error fetching lead statuses:",
       "failedToLoadProjects": "Failed to load projects"
-    }
   },
   "projects": {
     "title": "Projects",
-    "description": "Manage your photography projects",
-    "viewModes": {
-      "active": "Active Projects",
-      "archived": "Archived Projects",
-      "kanban": "Kanban View",
-      "table": "Table View",
-      "board": "Board",
-      "list": "List"
-    },
+    "all_projects": "All Projects",
+    "project_management_hub": "Project Management Hub",
+    "board_view": "Board View",
+    "list_view": "List View",
+    "archived_view": "Archived View",
+    "addProject": "Add Project",
+    "showArchived": "Show Archived",
+    "archivedProjects": "Archived Projects",
+    "noProjectsYet": "No projects yet for this lead.",
+    "deleteProject": "Delete Project",
+    "deleteProjectConfirm": "This action cannot be undone. This will permanently delete the project and all associated data.",
+    "deleting": "Deleting...",
+    "errorDeletingProject": "Error deleting project",
+    "projectDeletedSuccess": "Project deleted successfully",
+    "failedToLoadProjects": "Failed to load projects",
+    "project_name": "Project Name",
+    "client": "Client",
+    "project_type": "Project Type", 
+    "status": "Status",
+    "sessions": "Sessions",
+    "todos": "Todos",
+    "services": "Services",
+    "created": "Created",
+    "updated": "Updated",
+    "no_projects_found": "No projects found",
+    "create_first_project": "Create your first project to get started",
+    "visual_workflow": "Visual workflow management with drag & drop",
+    "detailed_table": "Detailed table view with sorting and filtering",
+    "archived_projects": "View completed and archived projects",
+    "drag_drop_organize": "Drag and drop projects between columns to update their status",
+    "switch_views": "Switch between Board, List, and Archived views",
+    "explore_features": "Explore the different features and find your preferred workflow"
+  }
+}
     "sorting": {
       "name": "Name",
       "leadName": "Client Name",

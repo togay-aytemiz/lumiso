@@ -171,5 +171,11 @@
     "filter_sessions": "Sessions",
     "activities_sessions_tab": "Activities & Sessions",
     "system_history_tab": "System History"
+  },
+  "project_validation": {
+    "name_required": "Project name is required",
+    "type_required": "Please select a project type", 
+    "lead_required": "Please select a lead or create a new one",
+    "lead_name_required": "Lead name is required when creating a new lead"
   }
 }

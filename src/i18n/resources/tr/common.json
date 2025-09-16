@@ -79,5 +79,22 @@
     "chooseColumnsDescription": "Hangi sütunların görüntüleneceğini seçin ve sıralarını düzenleyin. Sütunları yeniden sıralamak için sürükleyin.",
     "coreColumnsNote": "Temel sütunlar her zaman görünür ve yeniden sıralanabilir ancak gizlenemez.",
     "core": "Temel"
+  },
+  "messages": {
+    "info": {
+      "no_data": "Henüz veri yok",
+      "select_item": "Başlamak için bir öğe seçin",
+      "loading": "Sistem değişiklikleri burada otomatik olarak görünecek"
+    },
+    "success": {
+      "project_created": "Proje başarıyla oluşturuldu",
+      "project_updated": "Proje başarıyla güncellendi",
+      "project_deleted": "Proje başarıyla silindi",
+      "lead_fetching_error": "Müşteri adayları alınırken hata",
+      "data_fetching_error": "Veri alınırken hata"
+    },
+    "confirm": {
+      "unsaved_changes": "Değişiklikler iptal edilsin mi?"
+    }
   }
 }

@@ -22,6 +22,7 @@ import { useOnboarding } from "@/contexts/OnboardingContext";
 import { Calendar, MessageSquare, CheckSquare } from "lucide-react";
 import { PageLoadingSkeleton } from "@/components/ui/loading-presets";
 import { KanbanSettingsSheet } from "@/components/KanbanSettingsSheet";
+import { useTranslation } from 'react-i18next';
 
 interface ProjectStatus {
   id: string;
@@ -94,6 +95,7 @@ const AllProjects = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { completeCurrentStep } = useOnboarding();
   const isMobile = useIsMobile();
+  const { t } = useTranslation(['pages', 'common']);
 
   // Tutorial state
   const [showTutorial, setShowTutorial] = useState(false);
@@ -374,8 +376,8 @@ const AllProjects = () => {
     } catch (error) {
       console.error('Error fetching projects:', error);
       toast({
-        title: "Error",
-        description: "Failed to load projects",
+        title: t('common:labels.error'),
+        description: t('pages:projects.failedToLoadProjects'),
         variant: "destructive",
       });
     } finally {

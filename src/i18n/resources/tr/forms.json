@@ -171,5 +171,11 @@
     "filter_sessions": "Seanslar",
     "activities_sessions_tab": "Faaliyetler ve Seanslar",
     "system_history_tab": "Sistem Geçmişi"
+  },
+  "project_validation": {
+    "name_required": "Proje adı gerekli",
+    "type_required": "Lütfen bir proje türü seçin",
+    "lead_required": "Lütfen bir müşteri adayı seçin veya yeni bir tane oluşturun",
+    "lead_name_required": "Yeni müşteri adayı oluştururken isim gerekli"
   }
 }

@@ -62,19 +62,43 @@
       "failedToSaveProgress": "İlerleme kaydedilemedi. Lütfen tekrar deneyin.",
       "errorFetchingStatuses": "Müşteri adayı durumları getirilirken hata:",
       "failedToLoadProjects": "Projeler yüklenemedi"
-    }
   },
   "projects": {
     "title": "Projeler",
-    "description": "Fotoğrafçılık projelerinizi yönetin",
-    "viewModes": {
-      "active": "Aktif Projeler",
-      "archived": "Arşivlenen Projeler",
-      "kanban": "Kanban Görünümü",
-      "table": "Tablo Görünümü",
-      "board": "Tahta",
-      "list": "Liste"
-    },
+    "all_projects": "Tüm Projeler", 
+    "project_management_hub": "Proje Yönetim Merkezi",
+    "board_view": "Pano Görünümü",
+    "list_view": "Liste Görünümü",
+    "archived_view": "Arşiv Görünümü",
+    "addProject": "Proje Ekle",
+    "showArchived": "Arşivleri Göster",
+    "archivedProjects": "Arşivlenmiş Projeler",
+    "noProjectsYet": "Bu müşteri adayı için henüz proje yok.",
+    "deleteProject": "Projeyi Sil",
+    "deleteProjectConfirm": "Bu işlem geri alınamaz. Bu, projeyi ve tüm ilgili verileri kalıcı olarak silecektir.",
+    "deleting": "Siliniyor...",
+    "errorDeletingProject": "Proje silinirken hata",
+    "projectDeletedSuccess": "Proje başarıyla silindi",
+    "failedToLoadProjects": "Projeler yüklenemedi",
+    "project_name": "Proje Adı",
+    "client": "Müşteri",
+    "project_type": "Proje Türü",
+    "status": "Durum", 
+    "sessions": "Seanslar",
+    "todos": "Görevler",
+    "services": "Hizmetler",
+    "created": "Oluşturuldu",
+    "updated": "Güncellendi",
+    "no_projects_found": "Proje bulunamadı",
+    "create_first_project": "Başlamak için ilk projenizi oluşturun",
+    "visual_workflow": "Sürükle-bırak ile görsel iş akışı yönetimi",
+    "detailed_table": "Sıralama ve filtreleme ile detaylı tablo görünümü",
+    "archived_projects": "Tamamlanan ve arşivlenen projeleri görüntüle",
+    "drag_drop_organize": "Durumlarını güncellemek için projeleri sütunlar arasında sürükleyip bırakın",
+    "switch_views": "Pano, Liste ve Arşiv görünümleri arasında geçiş yapın",
+    "explore_features": "Farklı özellikleri keşfedin ve tercih ettiğiniz iş akışını bulun"
+  }
+}
     "sorting": {
       "name": "Ad",
       "leadName": "Müşteri Adı",

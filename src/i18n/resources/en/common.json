@@ -79,5 +79,22 @@
     "chooseColumnsDescription": "Choose which columns to display and arrange their order. Drag to reorder columns.",
     "coreColumnsNote": "Core columns are always visible and can be reordered but not hidden.",
     "core": "Core"
+  },
+  "messages": {
+    "info": {
+      "no_data": "No data yet",
+      "select_item": "Select an item to get started",
+      "loading": "System changes will appear here automatically"
+    },
+    "success": {
+      "project_created": "Project created successfully",
+      "project_updated": "Project updated successfully", 
+      "project_deleted": "Project deleted successfully",
+      "lead_fetching_error": "Error fetching leads",
+      "data_fetching_error": "Error fetching data"
+    },
+    "confirm": {
+      "unsaved_changes": "Discard changes?"
+    }
   }
 }

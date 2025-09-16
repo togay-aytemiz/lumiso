@@ -31,7 +31,7 @@ import { UnifiedClientDetails } from '@/components/UnifiedClientDetails';
 import SessionGallery from '@/components/SessionGallery';
 import { getDisplaySessionName } from '@/lib/sessionUtils';
 
-interface Session {
+interface SessionData {
   id: string;
   session_name?: string | null;
   session_date: string;
@@ -42,7 +42,7 @@ interface Session {
   lead_id: string;
   project_id: string | null;
   user_id: string;
-  google_event_id: string | null;
+  google_event_id?: string | null; // Make optional since it's not always returned
   leads?: {
     id: string;
     name: string;
@@ -82,7 +82,7 @@ export default function SessionSheetView({
   const { deleteSession } = useSessionActions();
   const navigate = useNavigate();
   
-  const [session, setSession] = useState<Session | null>(null);
+  const [session, setSession] = useState<SessionData | null>(null);
   const [loading, setLoading] = useState(true);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);

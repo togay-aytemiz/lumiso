@@ -19,7 +19,6 @@ export type Database = {
           completed: boolean | null
           content: string
           created_at: string
-          google_event_id: string | null
           id: string
           lead_id: string
           organization_id: string | null
@@ -34,7 +33,6 @@ export type Database = {
           completed?: boolean | null
           content: string
           created_at?: string
-          google_event_id?: string | null
           id?: string
           lead_id: string
           organization_id?: string | null
@@ -49,7 +47,6 @@ export type Database = {
           completed?: boolean | null
           content?: string
           created_at?: string
-          google_event_id?: string | null
           id?: string
           lead_id?: string
           organization_id?: string | null
@@ -200,42 +197,6 @@ export type Database = {
           status?: string
           subject?: string | null
           updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      google_calendar_tokens: {
-        Row: {
-          access_token: string
-          created_at: string
-          id: string
-          refresh_token: string | null
-          scope: string
-          token_expiry: string
-          updated_at: string
-          user_email: string
-          user_id: string
-        }
-        Insert: {
-          access_token: string
-          created_at?: string
-          id?: string
-          refresh_token?: string | null
-          scope: string
-          token_expiry: string
-          updated_at?: string
-          user_email: string
-          user_id: string
-        }
-        Update: {
-          access_token?: string
-          created_at?: string
-          id?: string
-          refresh_token?: string | null
-          scope?: string
-          token_expiry?: string
-          updated_at?: string
-          user_email?: string
           user_id?: string
         }
         Relationships: []
@@ -1234,7 +1195,6 @@ export type Database = {
       sessions: {
         Row: {
           created_at: string
-          google_event_id: string | null
           id: string
           lead_id: string
           location: string | null
@@ -1250,7 +1210,6 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          google_event_id?: string | null
           id?: string
           lead_id: string
           location?: string | null
@@ -1266,7 +1225,6 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          google_event_id?: string | null
           id?: string
           lead_id?: string
           location?: string | null
@@ -1514,6 +1472,30 @@ export type Database = {
           created_at?: string
           id?: string
           table_name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string
           user_id?: string
         }
@@ -1938,6 +1920,10 @@ export type Database = {
           | { user_uuid: string }
         Returns: string[]
       }
+      get_user_roles: {
+        Args: { user_uuid: string }
+        Returns: Database["public"]["Enums"]["app_role"][]
+      }
       get_workflow_execution_fingerprint: {
         Args: {
           trigger_data_param?: Json
@@ -1946,6 +1932,13 @@ export type Database = {
           workflow_id_param: string
         }
         Returns: string
+      }
+      has_role: {
+        Args: {
+          role_name: Database["public"]["Enums"]["app_role"]
+          user_uuid: string
+        }
+        Returns: boolean
       }
       initialize_all_organization_field_definitions: {
         Args: Record<PropertyKey, never>
@@ -2003,6 +1996,7 @@ export type Database = {
       }
     }
     Enums: {
+      app_role: "admin" | "support" | "user"
       appointment_status:
         | "scheduled"
         | "confirmed"
@@ -2146,6 +2140,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_role: ["admin", "support", "user"],
       appointment_status: [
         "scheduled",
         "confirmed",

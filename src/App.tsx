@@ -33,6 +33,8 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import Workflows from "./pages/Workflows";
 import Templates from "./pages/Templates";
 import TemplateBuilder from "./pages/TemplateBuilder";
+import AdminUsers from "./pages/admin/Users";
+import AdminSystem from "./pages/admin/System";
 
 
 
@@ -59,6 +61,8 @@ const App = () => (
             <Route path="workflows" element={<Workflows />} />
             <Route path="templates" element={<Templates />} />
             <Route path="template-builder" element={<TemplateBuilder />} />
+            <Route path="admin/users" element={<AdminUsers />} />
+            <Route path="admin/system" element={<AdminSystem />} />
             <Route path="settings" element={<SettingsLayout />}>
               <Route path="profile" element={<ProfileSettings />} />
               <Route path="general" element={<GeneralSettings />} />

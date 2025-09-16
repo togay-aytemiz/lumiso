@@ -2,9 +2,12 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
+type UserRole = 'admin' | 'support' | 'user';
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
+  userRoles: UserRole[];
   loading: boolean;
   signOut: () => Promise<void>;
 }
@@ -14,8 +17,26 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
+  const [userRoles, setUserRoles] = useState<UserRole[]>([]);
   const [loading, setLoading] = useState(true);
   const [initialized, setInitialized] = useState(false);
+
+  const fetchUserRoles = async (userId: string) => {
+    try {
+      const { data: roles, error } = await supabase
+        .rpc('get_user_roles', { user_uuid: userId });
+      
+      if (error) {
+        console.error('Error fetching user roles:', error);
+        return [];
+      }
+      
+      return roles || [];
+    } catch (error) {
+      console.error('Error fetching user roles:', error);
+      return [];
+    }
+  };
 
   const signOut = async () => {
     try {
@@ -23,6 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.clear();
       setUser(null);
       setSession(null);
+      setUserRoles([]);
       
       // Then sign out
       await supabase.auth.signOut({ scope: 'global' });
@@ -54,6 +76,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           console.log('Setting initial auth state:', session?.user?.id || 'no user');
           setSession(session);
           setUser(session?.user ?? null);
+          
+          // Fetch user roles if user exists
+          if (session?.user) {
+            setTimeout(async () => {
+              const roles = await fetchUserRoles(session.user.id);
+              if (isMounted) {
+                setUserRoles(roles);
+              }
+            }, 0);
+          }
+          
           setLoading(false);
           setInitialized(true);
         }
@@ -75,6 +108,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setSession(session);
           setUser(session?.user ?? null);
           
+          // Fetch user roles if user exists
+          if (session?.user) {
+            setTimeout(async () => {
+              const roles = await fetchUserRoles(session.user.id);
+              if (isMounted) {
+                setUserRoles(roles);
+              }
+            }, 0);
+          } else {
+            setUserRoles([]);
+          }
+          
           // Only set loading to false if we haven't initialized yet
           if (!initialized) {
             setLoading(false);
@@ -95,7 +140,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [initialized]);
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signOut }}>
+    <AuthContext.Provider value={{ user, session, userRoles, loading, signOut }}>
       {children}
     </AuthContext.Provider>
   );

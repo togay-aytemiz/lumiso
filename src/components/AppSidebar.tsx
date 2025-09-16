@@ -15,7 +15,9 @@ import {
   HelpCircle,
   ChevronDown,
   FileText,
-  Zap
+  Zap,
+  Shield,
+  Activity
 } from "lucide-react";
 import logo from "@/assets/Logo.png";
 import { useOnboarding } from "@/contexts/OnboardingContext";
@@ -33,6 +35,7 @@ import { SidebarCategory } from "@/components/sidebar/SidebarCategory";
 import { SidebarNavItem } from "@/components/sidebar/SidebarNavItem";
 import { SidebarSubItem } from "@/components/sidebar/SidebarSubItem";
 import { HelpModal } from "@/components/modals/HelpModal";
+import { useUserRole } from "@/hooks/useUserRole";
 
 // Module items - main navigation
 const moduleItems = [
@@ -60,12 +63,19 @@ const automationItems = [
   { title: "Templates", url: "/templates", icon: FileText },
 ];
 
+// Administration items - only visible to admin/support users
+const adminItems = [
+  { title: "User Management", url: "/admin/users", icon: Users },
+  { title: "System Overview", url: "/admin/system", icon: Activity },
+];
+
 export function AppSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const currentPath = location.pathname;
   const isMobile = useIsMobile();
   const { shouldLockNavigation, loading } = useOnboarding();
+  const { isAdminOrSupport } = useUserRole();
   const [helpModalOpen, setHelpModalOpen] = useState(false);
 
   // Mobile sheet states
@@ -315,6 +325,26 @@ export function AppSidebar() {
               </SidebarNavItem>
             </SidebarCategory>
           </div>
+
+          {/* ADMINISTRATION Category - Only for admin/support users */}
+          {isAdminOrSupport() && (
+            <div className="mt-6">
+              <SidebarCategory title="ADMINISTRATION">
+                {adminItems.map((item) => (
+                  <SidebarNavItem
+                    key={item.title}
+                    title={item.title}
+                    url={item.url}
+                    icon={item.icon}
+                    isActive={isActive(item.url)}
+                    isLocked={isItemLocked(item.url)}
+                    onLockedClick={handleLockedItemClick}
+                    onClick={handleNavClick}
+                  />
+                ))}
+              </SidebarCategory>
+            </div>
+          )}
 
           {/* SYSTEM Category */}
           <div className="mt-6">

@@ -17,6 +17,7 @@ import "react-calendar/dist/Calendar.css";
 import "@/components/react-calendar.css";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { NavigationGuardDialog } from "./settings/NavigationGuardDialog";
+import { useTranslation } from "react-i18next";
 
 interface AddPaymentDialogProps {
   projectId: string;
@@ -32,6 +33,7 @@ export function AddPaymentDialog({ projectId, onPaymentAdded }: AddPaymentDialog
   const [isLoading, setIsLoading] = useState(false);
   
   const { toast } = useToast();
+  const { t } = useTranslation(['forms', 'common']);
   const browserLocale = getUserLocale();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -39,8 +41,8 @@ export function AddPaymentDialog({ projectId, onPaymentAdded }: AddPaymentDialog
     
     if (!amount.trim()) {
       toast({
-        title: "Error",
-        description: "Amount is required",
+        title: t('common:status.error'),
+        description: t('payments.amount_required'),
         variant: "destructive"
       });
       return;
@@ -49,12 +51,12 @@ export function AddPaymentDialog({ projectId, onPaymentAdded }: AddPaymentDialog
     setIsLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
+      if (!user) throw new Error(t('payments.user_not_authenticated'));
 
       // Get user's active organization
       const organizationId = await getUserOrganizationId();
       if (!organizationId) {
-        throw new Error("Organization required");
+        throw new Error(t('payments.organization_required'));
       }
 
       const { error } = await supabase
@@ -73,8 +75,8 @@ export function AddPaymentDialog({ projectId, onPaymentAdded }: AddPaymentDialog
       if (error) throw error;
 
       toast({
-        title: "Success",
-        description: "Payment added successfully"
+        title: t('common:messages.success.project_created'),
+        description: t('payments.payment_added_success')
       });
 
       // Reset form
@@ -83,7 +85,7 @@ export function AddPaymentDialog({ projectId, onPaymentAdded }: AddPaymentDialog
       onPaymentAdded();
     } catch (error: any) {
       toast({
-        title: "Error adding payment",
+        title: t('payments.error_adding_payment'),
         description: error.message,
         variant: "destructive"
       });
@@ -124,13 +126,13 @@ export function AddPaymentDialog({ projectId, onPaymentAdded }: AddPaymentDialog
 
   const footerActions = [
     {
-      label: "Cancel",
+      label: t('common:buttons.cancel'),
       onClick: () => setOpen(false),
       variant: "outline" as const,
       disabled: isLoading
     },
     {
-      label: isLoading ? "Adding..." : "Add Payment",
+      label: isLoading ? t('payments.adding') : t('payments.add_payment'),
       onClick: handleSubmitClick,
       disabled: isLoading || !amount.trim(),
       loading: isLoading
@@ -141,11 +143,11 @@ export function AddPaymentDialog({ projectId, onPaymentAdded }: AddPaymentDialog
     <>
       <Button size="sm" className="gap-2" onClick={() => setOpen(true)}>
         <Plus className="h-4 w-4" />
-        Add
+        {t('common:buttons.add')}
       </Button>
 
       <AppSheetModal
-        title="Add Payment"
+        title={t('payments.add_payment')}
         isOpen={open}
         onOpenChange={setOpen}
         size="content"
@@ -155,7 +157,7 @@ export function AddPaymentDialog({ projectId, onPaymentAdded }: AddPaymentDialog
       >
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="amount">Amount (TRY) *</Label>
+            <Label htmlFor="amount">{t('payments.amount_try')} *</Label>
             <Input
               id="amount"
               type="number"
@@ -168,10 +170,10 @@ export function AddPaymentDialog({ projectId, onPaymentAdded }: AddPaymentDialog
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
+            <Label htmlFor="description">{t('payments.description')}</Label>
             <Textarea
               id="description"
-              placeholder="e.g., Deposit, Final Payment, Balance"
+              placeholder={t('payments.description_placeholder')}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={2}
@@ -179,21 +181,21 @@ export function AddPaymentDialog({ projectId, onPaymentAdded }: AddPaymentDialog
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="status">Payment Status</Label>
+            <Label htmlFor="status">{t('payments.payment_status')}</Label>
             <Select value={status} onValueChange={(value: "paid" | "due") => setStatus(value)}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="paid">Paid</SelectItem>
-                <SelectItem value="due">Due</SelectItem>
+                <SelectItem value="paid">{t('payments.paid')}</SelectItem>
+                <SelectItem value="due">{t('payments.due')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           {status === 'paid' && (
             <div className="space-y-2">
-              <Label>Date Paid</Label>
+              <Label>{t('payments.date_paid')}</Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
@@ -204,7 +206,7 @@ export function AddPaymentDialog({ projectId, onPaymentAdded }: AddPaymentDialog
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {datePaid ? format(datePaid, "PPP") : <span>Pick a date</span>}
+                    {datePaid ? format(datePaid, "PPP") : <span>{t('payments.pick_date')}</span>}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto min-w-[18rem] p-0 rounded-xl border border-border shadow-md" align="start">

@@ -13,6 +13,7 @@ import { AddPackageDialog, EditPackageDialog } from "./settings/PackageDialogs";
 import { usePackages, useServices } from "@/hooks/useOrganizationData";
 import { useQueryClient } from "@tanstack/react-query";
 import { useOrganization } from "@/contexts/OrganizationContext";
+import { useTranslation } from "react-i18next";
 
 interface Package {
   id: string;
@@ -32,6 +33,7 @@ const PackagesSection = () => {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [packageToDelete, setPackageToDelete] = useState<Package | null>(null);
   const { toast } = useToast();
+  const { t } = useTranslation('forms');
   // Permissions removed for single photographer mode - always allow
   const { activeOrganizationId } = useOrganization();
   const queryClient = useQueryClient();
@@ -60,8 +62,8 @@ const PackagesSection = () => {
       queryClient.invalidateQueries({ queryKey: ['packages', activeOrganizationId] });
       
       toast({
-        title: "Package deleted",
-        description: `Package "${packageToDelete.name}" has been removed successfully.`,
+        title: t('packages.package_deleted'),
+        description: t('packages.package_deleted_desc', { name: packageToDelete.name }),
       });
       
       setDeleteConfirmOpen(false);
@@ -69,8 +71,8 @@ const PackagesSection = () => {
     } catch (error) {
       console.error('Error deleting package:', error);
       toast({
-        title: "Error",
-        description: "Failed to delete package",
+        title: t('common:status.error'),
+        description: t('packages.error_deleting'),
         variant: "destructive",
       });
     }
@@ -110,8 +112,8 @@ const PackagesSection = () => {
   if (isLoading) {
     return (
       <SettingsSection 
-        title="Packages" 
-        description="Create comprehensive packages that bundle services together for your clients."
+        title={t('packages.title')} 
+        description={t('packages.description')}
       >
         <FormLoadingSkeleton rows={2} />
       </SettingsSection>
@@ -121,11 +123,11 @@ const PackagesSection = () => {
   if (error) {
     return (
       <SettingsSection 
-        title="Packages" 
-        description="Create comprehensive packages that bundle services together for your clients."
+        title={t('packages.title')} 
+        description={t('packages.description')}
       >
         <div className="text-center py-8">
-          <p className="text-destructive">Failed to load packages</p>
+          <p className="text-destructive">{t('packages.failed_to_load')}</p>
         </div>
       </SettingsSection>
     );
@@ -141,21 +143,21 @@ const PackagesSection = () => {
   return (
     <>
       <SettingsSection 
-        title="Packages" 
-        description="Create comprehensive packages that bundle services together for your clients."
+        title={t('packages.title')} 
+        description={t('packages.description')}
         action={(packages.length > 0 && canManagePackages) ? {
-          label: "Add Package",
+          label: t('packages.add_package'),
           onClick: () => setShowNewPackageDialog(true),
           icon: <Plus className="h-4 w-4" />
         } : undefined}
       >
         {packages.length === 0 ? (
           <div className="text-center py-8">
-            <p className="text-muted-foreground mb-4">No packages yet</p>
+            <p className="text-muted-foreground mb-4">{t('packages.no_packages')}</p>
             {canManagePackages && (
               <Button onClick={() => setShowNewPackageDialog(true)} variant="outline" data-testid="add-package-button">
                 <Plus className="h-4 w-4 mr-2" />
-                Create your first package
+                {t('packages.create_first')}
               </Button>
             )}
           </div>
@@ -170,7 +172,7 @@ const PackagesSection = () => {
                   data-testid="add-package-button"
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  Add Package
+                  {t('packages.add_package')}
                 </Button>
               </div>
             )}
@@ -182,13 +184,13 @@ const PackagesSection = () => {
                   <table className="w-full">
                     <thead>
                       <tr className="border-b bg-muted/50">
-                        <th className="px-4 py-3 text-left text-sm font-medium">Package</th>
-                        <th className="px-4 py-3 text-left text-sm font-medium">Price</th>
-                        <th className="px-4 py-3 text-left text-sm font-medium">Duration</th>
-                        <th className="px-4 py-3 text-left text-sm font-medium">Applicable Types</th>
-                        <th className="px-4 py-3 text-left text-sm font-medium">Default Add-ons</th>
-                        <th className="px-4 py-3 text-left text-sm font-medium">Visibility</th>
-                        <th className="px-4 py-3 text-left text-sm font-medium">Actions</th>
+                        <th className="px-4 py-3 text-left text-sm font-medium">{t('packages.package_name')}</th>
+                        <th className="px-4 py-3 text-left text-sm font-medium">{t('packages.price')}</th>
+                        <th className="px-4 py-3 text-left text-sm font-medium">{t('packages.duration')}</th>
+                        <th className="px-4 py-3 text-left text-sm font-medium">{t('packages.applicable_types')}</th>
+                        <th className="px-4 py-3 text-left text-sm font-medium">{t('packages.default_addons')}</th>
+                        <th className="px-4 py-3 text-left text-sm font-medium">{t('packages.visibility')}</th>
+                        <th className="px-4 py-3 text-left text-sm font-medium">{t('packages.actions')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -210,64 +212,64 @@ const PackagesSection = () => {
                           <td className="px-4 py-3">
                             <span className="text-sm">{formatDuration(pkg.duration)}</span>
                           </td>
-                           <td className="px-4 py-3">
-                             <div className="flex flex-wrap gap-1">
-                               {pkg.applicable_types.length === 0 ? (
-                                 <Badge variant="outline" className="text-xs">All types</Badge>
-                               ) : (
-                                 pkg.applicable_types.map((type) => (
-                                   <Badge key={type} variant="secondary" className="text-xs">
-                                     {type}
-                                   </Badge>
-                                 ))
-                               )}
-                             </div>
-                           </td>
-                            <td className="px-4 py-3">
+                             <td className="px-4 py-3">
                               <div className="flex flex-wrap gap-1">
-                                {pkg.default_add_ons.length === 0 ? (
-                                  <span className="text-sm text-muted-foreground">None</span>
+                                {pkg.applicable_types.length === 0 ? (
+                                  <Badge variant="outline" className="text-xs">{t('packages.all_types')}</Badge>
                                 ) : (
-                                  <TooltipProvider>
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <div className="cursor-help">
-                                          <Badge variant="outline" className="text-xs">
-                                            {pkg.default_add_ons.length} add-on{pkg.default_add_ons.length !== 1 ? 's' : ''}
-                                          </Badge>
-                                        </div>
-                                      </TooltipTrigger>
-                                      <TooltipContent>
-                                        <div className="max-w-xs">
-                                          <p className="font-medium">Default Add-ons:</p>
-                                          {pkg.default_add_ons.length > 0 ? (
-                                            <ul className="mt-1 text-sm">
-                                              {pkg.default_add_ons.map(serviceId => {
-                                                const service = services.find(s => s.id === serviceId);
-                                                return (
-                                                  <li key={serviceId}>
-                                                    • {service?.name || 'Unknown Service'}
-                                                  </li>
-                                                );
-                                              })}
-                                            </ul>
-                                          ) : (
-                                            <p className="text-sm text-muted-foreground">No services selected</p>
-                                          )}
-                                        </div>
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  </TooltipProvider>
+                                  pkg.applicable_types.map((type) => (
+                                    <Badge key={type} variant="secondary" className="text-xs">
+                                      {type}
+                                    </Badge>
+                                  ))
                                 )}
                               </div>
                             </td>
-                           <td className="px-4 py-3">
-                             <Badge variant={pkg.is_active ? "default" : "secondary"}>
-                               {pkg.is_active ? "Active" : "Inactive"}
-                             </Badge>
-                           </td>
-                           <td className="px-4 py-3">
-                             {canManagePackages ? (
+                             <td className="px-4 py-3">
+                               <div className="flex flex-wrap gap-1">
+                                 {pkg.default_add_ons.length === 0 ? (
+                                   <span className="text-sm text-muted-foreground">{t('packages.none')}</span>
+                                 ) : (
+                                   <TooltipProvider>
+                                     <Tooltip>
+                                       <TooltipTrigger asChild>
+                                         <div className="cursor-help">
+                                           <Badge variant="outline" className="text-xs">
+                                             {t('packages.addons_count', { count: pkg.default_add_ons.length })}
+                                           </Badge>
+                                         </div>
+                                       </TooltipTrigger>
+                                       <TooltipContent>
+                                         <div className="max-w-xs">
+                                           <p className="font-medium">{t('packages.default_addons_tooltip')}</p>
+                                           {pkg.default_add_ons.length > 0 ? (
+                                             <ul className="mt-1 text-sm">
+                                               {pkg.default_add_ons.map(serviceId => {
+                                                 const service = services.find(s => s.id === serviceId);
+                                                 return (
+                                                   <li key={serviceId}>
+                                                     • {service?.name || t('packages.unknown_service')}
+                                                   </li>
+                                                 );
+                                               })}
+                                             </ul>
+                                           ) : (
+                                             <p className="text-sm text-muted-foreground">{t('packages.no_services_selected')}</p>
+                                           )}
+                                         </div>
+                                       </TooltipContent>
+                                     </Tooltip>
+                                   </TooltipProvider>
+                                 )}
+                               </div>
+                             </td>
+                            <td className="px-4 py-3">
+                              <Badge variant={pkg.is_active ? "default" : "secondary"}>
+                                {pkg.is_active ? t('packages.active') : t('packages.inactive')}
+                              </Badge>
+                            </td>
+                            <td className="px-4 py-3">
+                              {canManagePackages ? (
                                <div className="flex gap-2">
                                  <Button
                                    variant="ghost"
@@ -289,10 +291,10 @@ const PackagesSection = () => {
                                    <Trash2 className="h-4 w-4" />
                                  </Button>
                                </div>
-                             ) : (
-                               <span className="text-sm text-muted-foreground">View only</span>
-                             )}
-                           </td>
+                              ) : (
+                                <span className="text-sm text-muted-foreground">{t('packages.view_only')}</span>
+                              )}
+                            </td>
                         </tr>
                       ))}
                     </tbody>
@@ -328,37 +330,37 @@ const PackagesSection = () => {
                     </Badge>
 
                      {/* Add-ons count badge */}
-                     <div 
-                       className="cursor-help inline-block"
-                       title={pkg.default_add_ons.length > 0 ? `Services: ${pkg.default_add_ons.join(', ')}` : 'No add-on services'}
-                     >
-                       <Badge variant="outline" className="text-xs">
-                         {pkg.default_add_ons.length === 0 
-                           ? "No add-ons" 
-                           : `${pkg.default_add_ons.length} add-on${pkg.default_add_ons.length !== 1 ? 's' : ''}`
-                         }
-                       </Badge>
-                     </div>
+                      <div 
+                        className="cursor-help inline-block"
+                        title={pkg.default_add_ons.length > 0 ? `Services: ${pkg.default_add_ons.join(', ')}` : t('packages.no_addons')}
+                      >
+                        <Badge variant="outline" className="text-xs">
+                          {pkg.default_add_ons.length === 0 
+                            ? t('packages.no_addons')
+                            : t('packages.addons_count', { count: pkg.default_add_ons.length })
+                          }
+                        </Badge>
+                      </div>
 
                      {/* Visibility pill */}
                      <Badge variant={pkg.is_active ? "default" : "secondary"} className="text-xs">
-                       {pkg.is_active ? "Active" : "Inactive"}
+                       {pkg.is_active ? t('packages.active') : t('packages.inactive')}
                      </Badge>
                   </div>
 
-                   {/* Applicable Types (separate row for better wrapping) */}
-                   {pkg.applicable_types.length > 0 && (
-                     <div className="space-y-1">
-                       <span className="text-xs text-muted-foreground">Applicable Types:</span>
-                       <div className="flex flex-wrap gap-1">
-                         {pkg.applicable_types.map((type) => (
-                           <Badge key={type} variant="secondary" className="text-xs">
-                             {type}
-                           </Badge>
-                         ))}
-                       </div>
-                     </div>
-                   )}
+                    {/* Applicable Types (separate row for better wrapping) */}
+                    {pkg.applicable_types.length > 0 && (
+                      <div className="space-y-1">
+                        <span className="text-xs text-muted-foreground">{t('packages.applicable_types')}:</span>
+                        <div className="flex flex-wrap gap-1">
+                          {pkg.applicable_types.map((type) => (
+                            <Badge key={type} variant="secondary" className="text-xs">
+                              {type}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
                     {/* Actions row */}
                     {canManagePackages && (
@@ -413,15 +415,15 @@ const PackagesSection = () => {
       <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Package</AlertDialogTitle>
+            <AlertDialogTitle>{t('packages.delete_package')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{packageToDelete?.name}"? This action cannot be undone.
+              {t('packages.delete_confirm', { name: packageToDelete?.name })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t('common:buttons.cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeletePackage} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Delete Package
+              {t('packages.delete_package')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

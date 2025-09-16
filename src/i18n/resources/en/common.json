@@ -96,5 +96,9 @@
     "confirm": {
       "unsaved_changes": "Discard changes?"
     }
+  },
+  "client": {
+    "title": "Client Details",
+    "created_on": "Created on"
   }
 }

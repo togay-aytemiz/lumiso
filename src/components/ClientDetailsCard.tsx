@@ -1,5 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import ClientDetailsList from "@/components/ClientDetailsList";
+import { useTranslation } from "react-i18next";
 
 interface ClientDetailsCardProps {
   title?: string;
@@ -16,7 +17,7 @@ interface ClientDetailsCardProps {
 }
 
 export default function ClientDetailsCard({
-  title = "Client Details",
+  title,
   createdAt,
   name,
   email,
@@ -28,14 +29,15 @@ export default function ClientDetailsCard({
   clampNotes = true,
   onNameClick,
 }: ClientDetailsCardProps) {
+  const { t } = useTranslation('common');
   return (
     <Card className="w-full">
       <CardHeader className="pb-3">
         <div>
-          <CardTitle>{title}</CardTitle>
+          <CardTitle>{title || t('client.title')}</CardTitle>
           {createdAt && (
             <CardDescription className="text-xs">
-              Created on {new Date(createdAt).toLocaleDateString('tr-TR')}
+              {t('client.created_on')} {new Date(createdAt).toLocaleDateString('tr-TR')}
             </CardDescription>
           )}
         </div>

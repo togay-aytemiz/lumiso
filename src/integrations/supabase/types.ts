@@ -19,7 +19,6 @@ export type Database = {
           completed: boolean | null
           content: string
           created_at: string
-          google_event_id: string | null
           id: string
           lead_id: string
           organization_id: string | null
@@ -34,7 +33,6 @@ export type Database = {
           completed?: boolean | null
           content: string
           created_at?: string
-          google_event_id?: string | null
           id?: string
           lead_id: string
           organization_id?: string | null
@@ -49,7 +47,6 @@ export type Database = {
           completed?: boolean | null
           content?: string
           created_at?: string
-          google_event_id?: string | null
           id?: string
           lead_id?: string
           organization_id?: string | null
@@ -200,42 +197,6 @@ export type Database = {
           status?: string
           subject?: string | null
           updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      google_calendar_tokens: {
-        Row: {
-          access_token: string
-          created_at: string
-          id: string
-          refresh_token: string | null
-          scope: string
-          token_expiry: string
-          updated_at: string
-          user_email: string
-          user_id: string
-        }
-        Insert: {
-          access_token: string
-          created_at?: string
-          id?: string
-          refresh_token?: string | null
-          scope: string
-          token_expiry: string
-          updated_at?: string
-          user_email: string
-          user_id: string
-        }
-        Update: {
-          access_token?: string
-          created_at?: string
-          id?: string
-          refresh_token?: string | null
-          scope?: string
-          token_expiry?: string
-          updated_at?: string
-          user_email?: string
           user_id?: string
         }
         Relationships: []
@@ -1234,7 +1195,6 @@ export type Database = {
       sessions: {
         Row: {
           created_at: string
-          google_event_id: string | null
           id: string
           lead_id: string
           location: string | null
@@ -1250,7 +1210,6 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          google_event_id?: string | null
           id?: string
           lead_id: string
           location?: string | null
@@ -1266,7 +1225,6 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          google_event_id?: string | null
           id?: string
           lead_id?: string
           location?: string | null

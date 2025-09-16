@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { formatLongDate, formatTime } from "@/lib/utils";
-import { useCalendarSync } from "@/hooks/useCalendarSync";
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ActivityForm } from "@/components/shared/ActivityForm";
@@ -51,9 +51,6 @@ export function LeadActivitySection({
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const {
-    createReminderEvent
-  } = useCalendarSync();
   useEffect(() => {
     fetchData();
   }, [leadId]);
@@ -217,18 +214,6 @@ export function LeadActivitySection({
       } = await supabase.from('activities').insert(activityDataWithOrg).select('id').single();
       if (error) throw error;
 
-      // Sync reminder to Google Calendar
-      if (isReminderMode && newActivity) {
-        createReminderEvent({
-          id: newActivity.id,
-          lead_id: leadId,
-          content: content.trim(),
-          reminder_date: reminderDateTime!.split('T')[0],
-          reminder_time: reminderDateTime!.split('T')[1]
-        }, {
-          name: leadName
-        });
-      }
       toast({
         title: "Success",
         description: `${isReminderMode ? 'Reminder' : 'Note'} added successfully.`

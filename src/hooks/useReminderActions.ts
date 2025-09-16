@@ -1,10 +1,8 @@
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { useCalendarSync } from './useCalendarSync';
 
 export const useReminderActions = () => {
   const { toast } = useToast();
-  const { deleteReminderEvent, updateReminderEvent } = useCalendarSync();
 
   const deleteReminder = async (reminderId: string) => {
     try {
@@ -14,9 +12,6 @@ export const useReminderActions = () => {
         .eq('id', reminderId);
 
       if (error) throw error;
-
-      // Delete from Google Calendar
-      await deleteReminderEvent(reminderId);
 
       toast({
         title: "Reminder deleted",
@@ -53,23 +48,9 @@ export const useReminderActions = () => {
 
       if (error) throw error;
 
-      // Update in Google Calendar
-      if (leadName) {
-        await updateReminderEvent(
-          {
-            id: reminderId,
-            lead_id: '', // Not needed for update
-            content,
-            reminder_date: reminderDate,
-            reminder_time: reminderTime,
-          },
-          { name: leadName }
-        );
-      }
-
       toast({
         title: "Reminder updated",
-        description: "Reminder has been updated in your calendar.",
+        description: "Reminder has been updated successfully.",
       });
 
       return true;

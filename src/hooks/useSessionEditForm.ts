@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { useCalendarSync } from "@/hooks/useCalendarSync";
 import { useWorkflowTriggers } from "@/hooks/useWorkflowTriggers";
 import { useSessionReminderScheduling } from "@/hooks/useSessionReminderScheduling";
 import { sessionSchema, sanitizeInput, sanitizeHtml } from "@/lib/validation";
@@ -52,7 +51,6 @@ export function useSessionEditForm({
     project_id: initialData.project_id || ""
   });
 
-  const { updateSessionEvent } = useCalendarSync();
   const { triggerSessionRescheduled } = useWorkflowTriggers();
   const { rescheduleSessionReminders } = useSessionReminderScheduling();
 
@@ -216,17 +214,6 @@ export function useSessionEditForm({
         }
       }
 
-      // Sync to Google Calendar
-      updateSessionEvent(
-        {
-          id: sessionId,
-          lead_id: leadId,
-          session_date: sanitizeInput(formData.session_date),
-          session_time: sanitizeInput(formData.session_time),
-          notes: formData.notes ? await sanitizeHtml(formData.notes) : undefined
-        },
-        { name: leadName }
-      );
 
       // Reschedule session reminders if date/time changed
       if (dateTimeChanged) {

@@ -89,7 +89,7 @@ export class ProjectService extends BaseEntityService {
   /**
    * Fetch projects with all related data
    */
-  async fetchProjects(includeArchived: boolean = false): Promise<{ active: Project[], archived: Project[] }> {
+  async fetchProjects(includeArchived: boolean = false): Promise<{ active: ProjectWithDetails[], archived: ProjectWithDetails[] }> {
     const organizationId = await this.getOrganizationId();
     if (!organizationId) return { active: [], archived: [] };
 
@@ -169,7 +169,7 @@ export class ProjectService extends BaseEntityService {
     const typesMap = this.createTypesMap(projectTypesData.data || []);
 
     // Merge all data
-    const mapProjectData = (project: any): Project => ({
+    const mapProjectData = (project: any): ProjectWithDetails => ({
       ...project,
       lead: leadsMap[project.lead_id] || null,
       project_status: statusesMap[project.status_id] || null,
@@ -196,7 +196,7 @@ export class ProjectService extends BaseEntityService {
   async fetchFilteredProjects(
     filters?: ProjectFilters,
     sort?: ProjectSort
-  ): Promise<Project[]> {
+  ): Promise<ProjectWithDetails[]> {
     const { active, archived } = await this.fetchProjects(true);
     let projects = filters?.archived ? archived : active;
 
@@ -277,7 +277,7 @@ export class ProjectService extends BaseEntityService {
   /**
    * Create a new project
    */
-  async createProject(data: CreateProjectData): Promise<Project> {
+  async createProject(data: CreateProjectData): Promise<ProjectWithDetails> {
     const organizationId = await this.getOrganizationId();
     if (!organizationId) throw new Error('No organization ID found');
 
@@ -307,7 +307,7 @@ export class ProjectService extends BaseEntityService {
   /**
    * Update an existing project
    */
-  async updateProject(id: string, data: UpdateProjectData): Promise<Project | null> {
+  async updateProject(id: string, data: UpdateProjectData): Promise<ProjectWithDetails | null> {
     const { data: result, error } = await supabase
       .from('projects')
       .update(data)
@@ -434,5 +434,121 @@ export class ProjectService extends BaseEntityService {
       acc[type.id] = type;
       return acc;
     }, {});
+  }
+
+  /**
+   * Fetch projects with all related details (alias for new components)
+   */
+  async fetchProjectsWithDetails(): Promise<ProjectWithDetails[]> {
+    const { active, archived } = await this.fetchProjects(true);
+    return [...active, ...archived];
+  }
+
+  /**
+   * Fetch a single project by ID
+   */
+  async fetchProjectById(id: string): Promise<ProjectWithDetails> {
+    const { data, error } = await supabase
+      .from('projects')
+      .select(`
+        *,
+        lead:leads(id, name, status, email, phone),
+        project_status:project_statuses(id, name, color),
+        project_type:project_types(id, name)
+      `)
+      .eq('id', id)
+      .single();
+
+    if (error || !data) throw new Error('Project not found');
+    
+    // Transform the data to match our interface
+    const transformedProject: ProjectWithDetails = {
+      ...data,
+      lead: Array.isArray(data.lead) ? data.lead[0] : data.lead,
+      project_status: Array.isArray(data.project_status) ? data.project_status[0] : data.project_status,
+      project_type: Array.isArray(data.project_type) ? data.project_type[0] : data.project_type
+    };
+    
+    return transformedProject;
+  }
+
+  /**
+   * Fetch lead by ID
+   */
+  async fetchLeadById(id: string): Promise<any> {
+    const { data, error } = await supabase
+      .from('leads')
+      .select('id, name, email, phone, status, notes')
+      .eq('id', id)
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
+
+  /**
+   * Fetch project type by ID
+   */
+  async fetchProjectTypeById(id: string): Promise<any> {
+    const { data, error } = await supabase
+      .from('project_types')
+      .select('id, name')
+      .eq('id', id)
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
+
+  /**
+   * Toggle archive status of a project
+   */
+  async toggleArchiveStatus(projectId: string, currentlyArchived: boolean): Promise<void> {
+    // First get the archived status ID
+    const organizationId = await this.getOrganizationId();
+    const { data: archivedStatus } = await supabase
+      .from('project_statuses')
+      .select('id')
+      .eq('organization_id', organizationId)
+      .eq('name', 'Archived')
+      .single();
+
+    if (!archivedStatus) throw new Error('Archived status not found');
+
+    if (currentlyArchived) {
+      // Restore: get previous status from project
+      const { data: project } = await supabase
+        .from('projects')
+        .select('previous_status_id')
+        .eq('id', projectId)
+        .single();
+
+      const { error } = await supabase
+        .from('projects')
+        .update({ 
+          status_id: project?.previous_status_id || null,
+          previous_status_id: null
+        })
+        .eq('id', projectId);
+
+      if (error) throw error;
+    } else {
+      // Archive: save current status as previous
+      const { data: project } = await supabase
+        .from('projects')
+        .select('status_id')
+        .eq('id', projectId)
+        .single();
+
+      const { error } = await supabase
+        .from('projects')
+        .update({ 
+          status_id: archivedStatus.id,
+          previous_status_id: project?.status_id
+        })
+        .eq('id', projectId);
+
+      if (error) throw error;
+    }
   }
 }

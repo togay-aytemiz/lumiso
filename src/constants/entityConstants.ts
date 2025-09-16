@@ -174,7 +174,7 @@ export const ENTITY_NAMES = {
 } as const;
 
 // Export types for TypeScript
-export type PaginationConstant = typeof PAGINATION_CONSTANTS;
+export type PaginationConstant = typeof PAGINATION;
 export type LeadStatusOption = typeof LEAD_STATUS_OPTIONS[number];
 export type SessionStatusOption = typeof SESSION_STATUS_OPTIONS[number];
 export type ProjectStatusOption = typeof PROJECT_STATUS_OPTIONS[number];

@@ -23,6 +23,7 @@ import { SettingsLoadingSkeleton } from "@/components/ui/loading-presets";
 import { TimezoneSelector } from "@/components/TimezoneSelector";
 import { detectBrowserTimezone } from "@/lib/dateFormatUtils";
 import { emailSchema, phoneSchema } from "@/lib/validation";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 export default function General() {
   const { settings, loading, uploading, updateSettings, uploadLogo, deleteLogo } = useOrganizationSettings();
@@ -515,6 +516,17 @@ export default function General() {
               value={regionalSection.values.timezone}
               onValueChange={(value) => regionalSection.updateValue("timezone", value)}
             />
+
+            {/* Language Preference */}
+            <div className="space-y-2">
+              <Label>Language</Label>
+              <div className="max-w-xs">
+                <LanguageSwitcher variant="button" className="w-full justify-start" />
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Choose your preferred language for the interface
+              </p>
+            </div>
           </div>
         </CategorySettingsSection>
       </div>

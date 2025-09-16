@@ -22,6 +22,8 @@ export default function AdminLocalization() {
   const [translations, setTranslations] = useState<Translation[]>([]);
   const [selectedNamespace, setSelectedNamespace] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
+  const [editingTranslation, setEditingTranslation] = useState<{keyId: string, languageCode: string} | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     loadData();
@@ -105,8 +107,61 @@ export default function AdminLocalization() {
     ? keys.filter(key => key.namespace_id === selectedNamespace)
     : keys;
 
+  const searchFilteredKeys = searchQuery 
+    ? filteredKeys.filter(key => 
+        key.key_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        translations.some(t => 
+          t.key_id === key.id && 
+          t.value.toLowerCase().includes(searchQuery.toLowerCase())
+        )
+      )
+    : filteredKeys;
+
   const getTranslation = (keyId: string, languageCode: string) => {
     return translations.find(t => t.key_id === keyId && t.language_code === languageCode);
+  };
+
+  const updateTranslation = async (keyId: string, languageCode: string, value: string) => {
+    try {
+      const existingTranslation = getTranslation(keyId, languageCode);
+      
+      if (existingTranslation) {
+        // Update existing translation
+        const { error } = await supabase
+          .from('translations')
+          .update({ value, updated_at: new Date().toISOString() })
+          .eq('id', existingTranslation.id);
+          
+        if (error) throw error;
+        
+        setTranslations(prev => prev.map(t => 
+          t.id === existingTranslation.id ? { ...t, value } : t
+        ));
+      } else {
+        // Create new translation
+        const { data, error } = await supabase
+          .from('translations')
+          .insert({ key_id: keyId, language_code: languageCode, value })
+          .select()
+          .single();
+          
+        if (error) throw error;
+        
+        setTranslations(prev => [...prev, data]);
+      }
+      
+      toast({
+        title: "Success",
+        description: "Translation updated successfully",
+      });
+    } catch (error) {
+      console.error('Error updating translation:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update translation",
+        variant: "destructive",
+      });
+    }
   };
 
   if (isLoading) {
@@ -213,20 +268,32 @@ export default function AdminLocalization() {
 
         <TabsContent value="translations" className="space-y-4">
           <div className="flex items-center justify-between">
-            <div>
-              <Label htmlFor="namespace">Namespace</Label>
-              <Select value={selectedNamespace} onValueChange={setSelectedNamespace}>
-                <SelectTrigger className="w-[200px] mt-1">
-                  <SelectValue placeholder="Select namespace" />
-                </SelectTrigger>
-                <SelectContent>
-                  {namespaces.map((namespace) => (
-                    <SelectItem key={namespace.id} value={namespace.id}>
-                      {namespace.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="flex gap-4 items-end">
+              <div>
+                <Label htmlFor="namespace">Namespace</Label>
+                <Select value={selectedNamespace} onValueChange={setSelectedNamespace}>
+                  <SelectTrigger className="w-[200px] mt-1">
+                    <SelectValue placeholder="Select namespace" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {namespaces.map((namespace) => (
+                      <SelectItem key={namespace.id} value={namespace.id}>
+                        {namespace.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="search">Search</Label>
+                <Input
+                  id="search"
+                  placeholder="Search keys or translations..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-[250px] mt-1"
+                />
+              </div>
             </div>
             <Button size="sm">
               <Plus className="w-4 h-4 mr-2" />
@@ -261,21 +328,40 @@ export default function AdminLocalization() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredKeys.slice(0, 10).map((key) => (
+                    {searchFilteredKeys.map((key) => (
                       <TableRow key={key.id}>
                         <TableCell className="font-medium">{key.key_name}</TableCell>
                         {languages
                           .filter(lang => lang.is_active)
                           .map(language => {
                             const translation = getTranslation(key.id, language.code);
+                            const isEditing = editingTranslation?.keyId === key.id && editingTranslation?.languageCode === language.code;
                             return (
                               <TableCell key={language.code}>
                                 <div className="space-y-1">
-                                  <Input
-                                    value={translation?.value || ''}
-                                    placeholder={`Enter ${language.native_name} translation`}
-                                    className="text-sm"
-                                  />
+                                  {isEditing ? (
+                                    <Textarea
+                                      value={translation?.value || ''}
+                                      onChange={(e) => {
+                                        updateTranslation(key.id, language.code, e.target.value);
+                                      }}
+                                      onBlur={() => setEditingTranslation(null)}
+                                      placeholder={`Enter ${language.native_name} translation`}
+                                      className="text-sm min-h-[60px] resize-none"
+                                      autoFocus
+                                    />
+                                  ) : (
+                                    <div
+                                      className="min-h-[40px] p-2 border rounded cursor-pointer hover:bg-muted/50 text-sm"
+                                      onClick={() => setEditingTranslation({keyId: key.id, languageCode: language.code})}
+                                    >
+                                      {translation?.value || (
+                                        <span className="text-muted-foreground italic">
+                                          Click to add translation...
+                                        </span>
+                                      )}
+                                    </div>
+                                  )}
                                   {translation && !translation.is_approved && (
                                     <Badge variant="outline" className="text-xs">
                                       Pending
@@ -301,10 +387,19 @@ export default function AdminLocalization() {
                 </Table>
               </div>
               
-              {filteredKeys.length > 10 && (
+              {searchFilteredKeys.length === 0 && (
+                <div className="mt-4 text-center py-8">
+                  <p className="text-muted-foreground">
+                    {searchQuery ? 'No translation keys match your search.' : 'No translation keys found.'}
+                  </p>
+                </div>
+              )}
+              
+              {searchFilteredKeys.length > 0 && (
                 <div className="mt-4 text-center">
                   <Badge variant="secondary">
-                    Showing 10 of {filteredKeys.length} keys
+                    Showing {searchFilteredKeys.length} keys
+                    {searchQuery && ` (filtered from ${filteredKeys.length})`}
                   </Badge>
                 </div>
               )}

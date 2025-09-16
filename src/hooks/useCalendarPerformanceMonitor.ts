@@ -77,7 +77,12 @@ export function useCalendarPerformanceMonitor() {
 
   // Update memory usage
   const updateMemoryUsage = () => {
-    const memoryUsage = require('@/utils/performance').checkMemoryUsage();
+    // Browser-compatible memory usage check
+    const memoryUsage = (performance as any).memory ? {
+      used: Math.round((performance as any).memory.usedJSHeapSize / 1024 / 1024),
+      total: Math.round((performance as any).memory.totalJSHeapSize / 1024 / 1024),
+      limit: Math.round((performance as any).memory.jsHeapSizeLimit / 1024 / 1024)
+    } : null;
     
     setMetrics(prev => ({
       ...prev,

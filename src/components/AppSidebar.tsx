@@ -63,11 +63,6 @@ const automationItems = [
   { title: "Templates", url: "/templates", icon: FileText },
 ];
 
-// Administration items - only visible to admin/support users
-const adminItems = [
-  { title: "User Management", url: "/admin/users", icon: Users },
-  { title: "System Overview", url: "/admin/system", icon: Activity },
-];
 
 export function AppSidebar() {
   const location = useLocation();
@@ -326,26 +321,6 @@ export function AppSidebar() {
             </SidebarCategory>
           </div>
 
-          {/* ADMINISTRATION Category - Only for admin/support users */}
-          {isAdminOrSupport() && (
-            <div className="mt-6">
-              <SidebarCategory title="ADMINISTRATION">
-                {adminItems.map((item) => (
-                  <SidebarNavItem
-                    key={item.title}
-                    title={item.title}
-                    url={item.url}
-                    icon={item.icon}
-                    isActive={isActive(item.url)}
-                    isLocked={isItemLocked(item.url)}
-                    onLockedClick={handleLockedItemClick}
-                    onClick={handleNavClick}
-                  />
-                ))}
-              </SidebarCategory>
-            </div>
-          )}
-
           {/* SYSTEM Category */}
           <div className="mt-6">
             <SidebarCategory title="SYSTEM">
@@ -363,6 +338,18 @@ export function AppSidebar() {
                 icon={HelpCircle}
                 onClick={() => setHelpModalOpen(true)}
               />
+              {/* Administration - Only for admin/support users */}
+              {isAdminOrSupport() && (
+                <SidebarNavItem
+                  title="Administration"
+                  url="/admin"
+                  icon={Shield}
+                  isActive={isActive("/admin")}
+                  isLocked={isItemLocked("/admin")}
+                  onLockedClick={handleLockedItemClick}
+                  onClick={handleNavClick}
+                />
+              )}
             </SidebarCategory>
           </div>
         </SidebarContent>

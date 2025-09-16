@@ -1,15 +1,7 @@
-import { useUserRole } from "@/hooks/useUserRole";
-import { Navigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
 export default function AdminUsers() {
-  const { isAdminOrSupport } = useUserRole();
-
-  // Redirect if user doesn't have admin/support role
-  if (!isAdminOrSupport()) {
-    return <Navigate to="/" replace />;
-  }
 
   return (
     <div className="container mx-auto py-6 space-y-6">

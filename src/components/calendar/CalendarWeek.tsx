@@ -43,6 +43,8 @@ interface CalendarWeekProps {
   onDayClick?: (date: Date) => void;
 }
 
+const TIME_COL_PX = 64; // matches Tailwind w-16
+
 export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
   currentDate,
   sessions,
@@ -86,30 +88,38 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
     return eventMap;
   }, [weekDays, getEventsForDate, timeSlots, getSlotIndex]);
 
-  // Show loading skeleton while timezone settings are loading to prevent format switching
+  // loading skeleton that uses the same grid template to avoid layout jump
   if (timezoneLoading) {
     return (
       <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
-        <div className="grid grid-cols-8 border-b border-border bg-muted/30 relative">
-          <div className="p-3 w-16 shrink-0 sticky left-0 z-20 bg-card border-r border-border animate-pulse">
-            <div className="h-4 bg-muted rounded"></div>
+        <div
+          className="grid border-b border-border bg-muted/30 relative"
+          style={{ gridTemplateColumns: `${TIME_COL_PX}px repeat(7, minmax(0, 1fr))` }}
+        >
+          <div className="p-3 sticky left-0 z-30 bg-card border-r border-border animate-pulse">
+            <div className="h-4 bg-muted rounded" />
           </div>
-          {Array.from({ length: 7 }).map((_, index) => (
-            <div key={index} className="p-3 text-center animate-pulse">
-              <div className="h-4 bg-muted rounded mb-1"></div>
-              <div className="h-6 bg-muted rounded"></div>
+          {Array.from({ length: 7 }).map((_, i) => (
+            <div key={i} className="p-3 text-center animate-pulse">
+              <div className="h-4 bg-muted rounded mb-1" />
+              <div className="h-6 bg-muted rounded" />
             </div>
           ))}
         </div>
+
         <div className="flex-1 max-h-[70vh] overflow-y-auto relative">
-          {Array.from({ length: 24 }).map((_, index) => (
-            <div key={index} className="grid grid-cols-8 border-b border-border/80 min-h-8 relative">
-              <div className="w-16 shrink-0 sticky left-0 z-20 bg-card border-r border-border animate-pulse">
-                <div className="h-6 bg-muted rounded m-1"></div>
+          {Array.from({ length: 24 }).map((_, r) => (
+            <div
+              key={r}
+              className="grid border-b border-border/80 min-h-8 relative"
+              style={{ gridTemplateColumns: `${TIME_COL_PX}px repeat(7, minmax(0, 1fr))` }}
+            >
+              <div className="sticky left-0 z-30 bg-card border-r border-border border-b border-border/80">
+                <div className="h-6 bg-muted rounded m-1" />
               </div>
-              {Array.from({ length: 7 }).map((_, dayIndex) => (
-                <div key={dayIndex} className="p-1 border-r border-border animate-pulse">
-                  <div className="h-6 bg-muted rounded"></div>
+              {Array.from({ length: 7 }).map((_, c) => (
+                <div key={c} className="p-1 border-r border-border animate-pulse">
+                  <div className="h-6 bg-muted rounded" />
                 </div>
               ))}
             </div>
@@ -146,7 +156,7 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
           {showSessions && daySessions.length > 0 && (
             <div>
               <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-primary"></div>
+                <div className="w-3 h-3 rounded-full bg-primary" />
                 Sessions ({daySessions.length})
               </h3>
               <div className="space-y-3">
@@ -191,7 +201,7 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
           {showReminders && dayActivities.length > 0 && (
             <div>
               <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-muted-foreground/60"></div>
+                <div className="w-3 h-3 rounded-full bg-muted-foreground/60" />
                 Reminders ({dayActivities.length})
               </h3>
               <div className="space-y-3">
@@ -245,8 +255,12 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
 
   return (
     <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
-      <div className="grid grid-cols-8 border-b border-border bg-muted/30 relative">
-        <div className="p-3 w-16 shrink-0 sticky left-0 z-20 bg-card border-r border-border"></div>
+      {/* header uses the same grid template as body */}
+      <div
+        className="grid border-b border-border bg-muted/30 relative"
+        style={{ gridTemplateColumns: `${TIME_COL_PX}px repeat(7, minmax(0, 1fr))` }}
+      >
+        <div className="p-3 sticky left-0 z-30 bg-card border-r border-border" />
         {weekDays.map((day, index) => {
           const today = isToday(day);
           return (
@@ -266,11 +280,12 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
           return (
             <div
               key={`slot-${slotIndex}`}
-              className="grid grid-cols-8 border-b border-border/80 min-h-8 relative"
+              className="grid border-b border-border/80 min-h-8 relative"
+              style={{ gridTemplateColumns: `${TIME_COL_PX}px repeat(7, minmax(0, 1fr))` }}
             >
-              {/* FIX 1 add right border and matching bottom border on sticky time column to remove the visual gap and continue the horizontal divider */}
+              {/* time rail cell, sticky and with matching bottom border */}
               <div
-                className={`w-16 shrink-0 text-xs text-muted-foreground sticky left-0 z-20 bg-card flex items-center justify-end pr-3 border-r border-border border-b border-border/80 ${isHour ? 'font-medium' : ''}`}
+                className={`sticky left-0 z-30 bg-card flex items-center justify-end pr-3 text-xs text-muted-foreground border-r border-border border-b border-border/80 ${isHour ? 'font-medium' : ''}`}
               >
                 {labelText || '\u00A0'}
               </div>

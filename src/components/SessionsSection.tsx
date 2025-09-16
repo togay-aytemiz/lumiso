@@ -78,7 +78,7 @@ export function SessionsSection({
     return <Card>
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
-            {t('sessions.title')}
+            {t('sessions_form.title')}
             <div className="w-6 h-6 bg-muted animate-pulse rounded" />
           </CardTitle>
         </CardHeader>
@@ -96,7 +96,7 @@ export function SessionsSection({
           <CardTitle className="flex items-center justify-between text-xl font-semibold">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
-              {t('sessions.title')}
+              {t('sessions_form.title')}
             </div>
             <NewSessionDialogForProject leadId={leadId} leadName={leadName} projectName={projectName} projectId={projectId} onSessionScheduled={onSessionUpdated} />
           </CardTitle>
@@ -105,8 +105,8 @@ export function SessionsSection({
           {sessions.length > 0 ? <div className="space-y-3">
               {!loading && <p className="text-sm text-muted-foreground mb-3">
                   {sessions.length === 1 
-                    ? t('sessions.project_sessions_count', { count: sessions.length })
-                    : t('sessions.project_sessions_count_plural', { count: sessions.length })
+                    ? t('sessions_form.project_sessions_count', { count: sessions.length })
+                    : t('sessions_form.project_sessions_count_plural', { count: sessions.length })
                   }
                 </p>}
               {sortSessionsByLifecycle(sessions).map(session => (
@@ -118,9 +118,9 @@ export function SessionsSection({
               ))}
             </div> : <div className="text-center py-4">
               <Calendar className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-              <p className="text-muted-foreground text-sm">{t('sessions.no_sessions')}</p>
+              <p className="text-muted-foreground text-sm">{t('sessions_form.no_sessions')}</p>
               <p className="text-xs text-muted-foreground mt-1">
-                {t('sessions.add_sessions_hint')}
+                {t('sessions_form.add_sessions_hint')}
               </p>
             </div>}
         </CardContent>

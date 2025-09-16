@@ -62,6 +62,7 @@
       "failedToSaveProgress": "İlerleme kaydedilemedi. Lütfen tekrar deneyin.",
       "errorFetchingStatuses": "Müşteri adayı durumları getirilirken hata:",
       "failedToLoadProjects": "Projeler yüklenemedi"
+    }
   },
   "projects": {
     "title": "Projeler",

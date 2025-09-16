@@ -177,5 +177,39 @@
     "type_required": "Please select a project type", 
     "lead_required": "Please select a lead or create a new one",
     "lead_name_required": "Lead name is required when creating a new lead"
+  },
+  "activity": {
+    "type": "Activity Type",
+    "type_placeholder": "Select activity type",
+    "content": "Activity Content", 
+    "content_placeholder": "Enter activity details",
+    "reminder_date": "Reminder Date",
+    "reminder_time": "Reminder Time",
+    "create_activity": "Create Activity",
+    "update_activity": "Update Activity",
+    "add_activity": "Add Activity",
+    "edit_activity": "Edit Activity",
+    "activity_created": "Activity created successfully",
+    "activity_updated": "Activity updated successfully",
+    "activity_deleted": "Activity deleted successfully",
+    "error_creating": "Error creating activity",
+    "error_updating": "Error updating activity",
+    "error_deleting": "Error deleting activity",
+    "types": {
+      "call": "Call",
+      "email": "Email",
+      "meeting": "Meeting", 
+      "note": "Note",
+      "task": "Task",
+      "follow_up": "Follow-up"
+    }
+  },
+  "sessions_form": {
+    "title": "Sessions",
+    "project_sessions_count": "This project includes {{count}} session",
+    "project_sessions_count_plural": "This project includes {{count}} sessions",
+    "no_sessions": "No sessions linked to this project",
+    "add_sessions_hint": "Click the + button to add sessions to this project",
+    "loading": "Loading sessions..."
   }
 }

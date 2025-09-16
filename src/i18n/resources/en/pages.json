@@ -62,6 +62,7 @@
       "failedToSaveProgress": "Failed to save progress. Please try again.",
       "errorFetchingStatuses": "Error fetching lead statuses:",
       "failedToLoadProjects": "Failed to load projects"
+    }
   },
   "projects": {
     "title": "Projects",

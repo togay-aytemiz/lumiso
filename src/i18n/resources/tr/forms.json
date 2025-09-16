@@ -177,5 +177,39 @@
     "type_required": "Lütfen bir proje türü seçin",
     "lead_required": "Lütfen bir müşteri adayı seçin veya yeni bir tane oluşturun",
     "lead_name_required": "Yeni müşteri adayı oluştururken isim gerekli"
+  },
+  "activity": {
+    "type": "Etkinlik Türü",
+    "type_placeholder": "Etkinlik türünü seçin",
+    "content": "Etkinlik İçeriği", 
+    "content_placeholder": "Etkinlik detaylarını girin",
+    "reminder_date": "Hatırlatma Tarihi",
+    "reminder_time": "Hatırlatma Saati",
+    "create_activity": "Etkinlik Oluştur",
+    "update_activity": "Etkinliği Güncelle",
+    "add_activity": "Etkinlik Ekle",
+    "edit_activity": "Etkinliği Düzenle",
+    "activity_created": "Etkinlik başarıyla oluşturuldu",
+    "activity_updated": "Etkinlik başarıyla güncellendi",
+    "activity_deleted": "Etkinlik başarıyla silindi",
+    "error_creating": "Etkinlik oluşturulurken hata",
+    "error_updating": "Etkinlik güncellenirken hata",
+    "error_deleting": "Etkinlik silinirken hata",
+    "types": {
+      "call": "Arama",
+      "email": "E-posta",
+      "meeting": "Toplantı", 
+      "note": "Not",
+      "task": "Görev",
+      "follow_up": "Takip"
+    }
+  },
+  "sessions_form": {
+    "title": "Seanslar",
+    "project_sessions_count": "Bu proje {{count}} seans içeriyor",
+    "project_sessions_count_plural": "Bu proje {{count}} seans içeriyor",
+    "no_sessions": "Bu projeye bağlı seans yok",
+    "add_sessions_hint": "Bu projeye seans eklemek için + düğmesine tıklayın",
+    "loading": "Seanslar yükleniyor..."
   }
 }

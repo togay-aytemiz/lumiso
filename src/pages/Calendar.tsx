@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,9 @@ import { useOptimizedCalendarData } from "@/hooks/useOptimizedCalendarData";
 import { useOptimizedCalendarEvents } from "@/hooks/useOptimizedCalendarEvents";
 import { CalendarErrorWrapper } from "@/components/calendar/CalendarErrorBoundary";
 import { CalendarLoadingSpinner } from "@/components/calendar/CalendarLoadingSpinner";
+import { CalendarDay } from "@/components/calendar/CalendarDay";
+import { useOptimizedCalendarViewport } from "@/hooks/useOptimizedCalendarViewport";
+import { useOptimizedCalendarNavigation } from "@/hooks/useOptimizedCalendarNavigation";
 
 type ViewMode = "day" | "week" | "month";
 
@@ -47,7 +50,19 @@ export default function Calendar() {
     if (saved) return saved;
     return window.innerWidth <= 768 ? "day" : "month";
   });
-  const userLocale = getUserLocale();
+  
+  // Use optimized viewport and navigation hooks
+  const { isMobile, isTablet, isDesktop, viewConfig, handleDayClick } = useOptimizedCalendarViewport(
+    viewMode, 
+    setViewMode, 
+    setCurrentDate
+  );
+  
+  const { navigatePrevious, navigateNext, goToToday, viewTitle, handleKeyboardNavigation } = useOptimizedCalendarNavigation(
+    currentDate,
+    viewMode,
+    setCurrentDate
+  );
   
   useEffect(() => {
     localStorage.setItem("calendar:viewMode", viewMode);
@@ -72,6 +87,7 @@ export default function Calendar() {
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const userLocale = getUserLocale();
 
   const refreshCalendar = () => {
     queryClient.invalidateQueries({ queryKey: ["optimized-sessions"] });
@@ -93,12 +109,8 @@ export default function Calendar() {
     showSessions,
     showReminders
   );
-
-  // Show loading state while data is being fetched
-  if (isLoading) {
-    return <CalendarLoadingSpinner />;
-  }
-  const openProjectById = async (projectId?: string | null) => {
+  // Memoized event handlers for better performance
+  const openProjectById = useCallback(async (projectId?: string | null) => {
     if (!projectId) return;
     const { data, error } = await supabase
       .from("projects")
@@ -110,51 +122,20 @@ export default function Calendar() {
       setSelectedProjectLeadName(leadsMap[data.lead_id]?.name || "");
       setProjectDialogOpen(true);
     }
-  };
+  }, [leadsMap]);
 
-  const handleSessionClick = (session: Session) => {
+  const handleSessionClick = useCallback((session: Session) => {
     setSelectedSessionId(session.id);
     setSessionSheetOpen(true);
-  };
+  }, []);
 
-  const handleActivityClick = (activity: Activity) => {
+  const handleActivityClick = useCallback((activity: Activity) => {
     if (activity.project_id) {
       openProjectById(activity.project_id);
     } else {
       navigate(`/leads/${activity.lead_id}`);
     }
-  };
-  // Navigation functions
-  const goToToday = () => setCurrentDate(new Date());
-  
-  const navigatePrevious = () => {
-    switch (viewMode) {
-      case "day":
-        setCurrentDate(prev => addDays(prev, -1));
-        break;
-      case "week":
-        setCurrentDate(prev => addWeeks(prev, -1));
-        break;
-      case "month":
-        setCurrentDate(prev => addMonths(prev, -1));
-        break;
-    }
-  };
-
-  const navigateNext = () => {
-    switch (viewMode) {
-      case "day":
-        setCurrentDate(prev => addDays(prev, 1));
-        break;
-      case "week":
-        setCurrentDate(prev => addWeeks(prev, 1));
-        break;
-      case "month":
-        setCurrentDate(prev => addMonths(prev, 1));
-        break;
-    }
-  };
-
+  }, [openProjectById, navigate]);
   // getEventsForDate is now provided by useOptimizedCalendarEvents hook
 
   // Add touch/swipe handlers
@@ -682,17 +663,13 @@ export default function Calendar() {
   };
 
   const getViewTitle = () => {
-    switch (viewMode) {
-      case "day":
-        return format(currentDate, "MMMM d, yyyy", { locale: undefined });
-      case "week":
-        const weekStart = getStartOfWeek(currentDate, userLocale);
-        const weekEnd = getEndOfWeek(currentDate, userLocale);
-        return `${format(weekStart, "MMM d", { locale: undefined })} - ${format(weekEnd, "MMM d, yyyy", { locale: undefined })}`;
-      case "month":
-        return format(currentDate, "MMMM yyyy", { locale: undefined });
-    }
+    return viewTitle; // Use optimized viewTitle from hook
   };
+
+  // Show loading state while data is being fetched
+  if (isLoading) {
+    return <CalendarLoadingSpinner />;
+  }
 
   return (
     <CalendarErrorWrapper error={error} retry={refreshCalendar}>

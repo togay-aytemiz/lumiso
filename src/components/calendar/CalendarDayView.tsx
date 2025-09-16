@@ -2,6 +2,7 @@ import { memo } from "react";
 import { format, isToday } from "date-fns";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { formatTime, formatDate, getUserLocale } from "@/lib/utils";
+import { useOrganizationTimezone } from "@/hooks/useOrganizationTimezone";
 import { Badge } from "@/components/ui/badge";
 
 interface Session {
@@ -57,6 +58,7 @@ export const CalendarDayView = memo<CalendarDayViewProps>(({
   touchHandlers
 }) => {
   const userLocale = getUserLocale();
+  const { formatTime: formatOrgTime } = useOrganizationTimezone();
   const { sessions, activities } = getEventsForDate(currentDate);
   const isDayToday = isToday(currentDate);
 
@@ -77,17 +79,14 @@ export const CalendarDayView = memo<CalendarDayViewProps>(({
       onTouchEnd={touchHandlers.handleTouchEnd}
       onTouchCancel={touchHandlers.handleTouchCancel}
     >
-      {/* Day header */}
-      <div className="text-center py-4">
-        <h2 className="text-2xl font-bold">
-          {format(currentDate, "EEEE, MMMM d, yyyy")}
-        </h2>
-        {isDayToday && (
-          <Badge variant="secondary" className="mt-2">
+      {/* Today badge only - date is shown in navigation */}
+      {isDayToday && (
+        <div className="text-center pb-4">
+          <Badge variant="secondary">
             Today
           </Badge>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Sessions section */}
       {showSessions && (
@@ -123,7 +122,7 @@ export const CalendarDayView = memo<CalendarDayViewProps>(({
                               {leadName}
                             </div>
                             <div className="text-sm font-medium">
-                              {formatTime(session.session_time, userLocale)}
+                              {formatOrgTime(session.session_time)}
                             </div>
                             {session.notes && (
                               <div className="text-sm text-muted-foreground mt-2 line-clamp-2">
@@ -168,7 +167,7 @@ export const CalendarDayView = memo<CalendarDayViewProps>(({
               {sortedActivities.map((activity) => {
                 const leadName = leadsMap[activity.lead_id]?.name || "Lead";
                 const projectName = activity.project_id ? projectsMap[activity.project_id]?.name : undefined;
-                const timeText = activity.reminder_time ? formatTime(activity.reminder_time, userLocale) : "All day";
+                const timeText = activity.reminder_time ? formatOrgTime(activity.reminder_time) : "All day";
                 
                 return (
                   <Tooltip key={activity.id}>

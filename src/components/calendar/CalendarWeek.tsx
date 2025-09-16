@@ -2,6 +2,8 @@ import React, { memo, useMemo } from 'react';
 import { format, addDays, startOfWeek, isToday, isSameDay } from 'date-fns';
 import { formatTime, getUserLocale, getStartOfWeek } from '@/lib/utils';
 import { CalendarDay } from './CalendarDay';
+import { useSmartTimeRange } from '@/hooks/useSmartTimeRange';
+import { useOrganizationTimezone } from '@/hooks/useOrganizationTimezone';
 
 interface Session {
   id: string;
@@ -41,7 +43,7 @@ interface CalendarWeekProps {
 
 /**
  * Optimized calendar week component with memoization
- * Handles week view rendering with time slots and events
+ * Handles week view rendering with 30-minute time slots and events
  */
 export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
   currentDate,
@@ -58,6 +60,8 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
   onDayClick
 }) {
   const userLocale = getUserLocale();
+  const { formatTime: formatOrgTime } = useOrganizationTimezone();
+  const { timeSlots, getSlotIndex } = useSmartTimeRange(sessions, activities);
   
   // Memoized week calculation
   const weekDays = useMemo(() => {
@@ -65,52 +69,43 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
     return Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
   }, [currentDate, userLocale]);
 
-  // Memoized time slots (8 AM to 10 PM for better UX)
-  const timeSlots = useMemo(() => {
-    return Array.from({ length: 14 }, (_, i) => {
-      const hour = i + 8;
-      return {
-        time: `${hour.toString().padStart(2, '0')}:00`,
-        display: format(new Date(2000, 0, 1, hour), 'h a')
-      };
-    });
-  }, []);
-
-  // Memoized events by day and time slot
-  const eventsByDayAndHour = useMemo(() => {
+  // Memoized events by day and 30-minute time slot
+  const eventsByDayAndSlot = useMemo(() => {
     const eventMap = new Map<string, { sessions: Session[]; activities: Activity[] }>();
     
     weekDays.forEach(day => {
       const dayKey = format(day, 'yyyy-MM-dd');
       const dayEvents = getEventsForDate(day);
       
-      // Group events by hour
-      timeSlots.forEach(({ time }) => {
-        const hour = parseInt(time.split(':')[0]);
-        const key = `${dayKey}-${hour}`;
+      // Group events by 30-minute slots
+      timeSlots.forEach((slot, slotIndex) => {
+        const key = `${dayKey}-${slotIndex}`;
         
-        const sessionsInHour = dayEvents.sessions.filter(session => {
-          const sessionHour = parseInt(session.session_time.split(':')[0]);
-          return sessionHour === hour;
+        const sessionsInSlot = dayEvents.sessions.filter(session => {
+          const sessionSlotIndex = getSlotIndex(session.session_time);
+          return sessionSlotIndex === slotIndex;
         });
         
-        const activitiesInHour = dayEvents.activities.filter(activity => {
-          if (!activity.reminder_time) return hour === 8; // Default to 8 AM for all-day
-          const activityHour = parseInt(activity.reminder_time.split(':')[0]);
-          return activityHour === hour;
+        const activitiesInSlot = dayEvents.activities.filter(activity => {
+          if (!activity.reminder_time) {
+            // All-day activities go in first slot of the day
+            return slotIndex === 0;
+          }
+          const activitySlotIndex = getSlotIndex(activity.reminder_time);
+          return activitySlotIndex === slotIndex;
         });
         
-        if (sessionsInHour.length > 0 || activitiesInHour.length > 0) {
+        if (sessionsInSlot.length > 0 || activitiesInSlot.length > 0) {
           eventMap.set(key, {
-            sessions: sessionsInHour,
-            activities: activitiesInHour
+            sessions: sessionsInSlot,
+            activities: activitiesInSlot
           });
         }
       });
     });
     
     return eventMap;
-  }, [weekDays, getEventsForDate, timeSlots]);
+  }, [weekDays, getEventsForDate, timeSlots, getSlotIndex]);
 
   if (isMobile) {
     // Mobile: Show simplified day view for current date
@@ -155,7 +150,7 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
                     onClick={() => onSessionClick(session)}
                   >
                     <div className="flex items-center gap-2 text-sm">
-                      <span className="font-semibold">{formatTime(session.session_time, userLocale)}</span>
+                      <span className="font-semibold">{formatOrgTime(session.session_time)}</span>
                       <span>•</span>
                       <span>{leadsMap[session.lead_id]?.name || "Lead"}</span>
                     </div>
@@ -177,7 +172,7 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
                   >
                     <div className="flex items-center gap-2 text-sm">
                       <span className="font-semibold">
-                        {activity.reminder_time ? formatTime(activity.reminder_time, userLocale) : 'All day'}
+                        {activity.reminder_time ? formatOrgTime(activity.reminder_time) : 'All day'}
                       </span>
                       <span>•</span>
                       <span>{leadsMap[activity.lead_id]?.name || "Lead"}</span>
@@ -201,7 +196,7 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
     );
   }
 
-  // Desktop: Show full week grid
+  // Desktop: Show full week grid with 30-minute precision
   return (
     <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
       {/* Week header */}
@@ -218,26 +213,33 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
         })}
       </div>
       
-      {/* Time slots and events */}
+      {/* Time slots and events - 30-minute precision */}
       <div className="flex-1">
-        {timeSlots.map(({ time, display }) => {
-          const hour = parseInt(time.split(':')[0]);
+        {timeSlots.map((slot, slotIndex) => {
+          // Only show time labels for hour marks (not 30-minute marks)
+          const showTimeLabel = slot.display !== '';
           
           return (
-            <div key={time} className="grid grid-cols-8 border-b border-border min-h-12">
-              {/* Time label */}
-              <div className="p-2 text-xs text-muted-foreground text-right bg-muted/20 border-r border-border">
-                {display}
+            <div 
+              key={`${slot.time}-${slotIndex}`} 
+              className={`grid grid-cols-8 border-b border-border ${showTimeLabel ? 'min-h-12' : 'min-h-6'} ${slot.minute === 30 ? 'border-b-dashed border-b-border/40' : ''}`}
+            >
+              {/* Time label - only for hour marks */}
+              <div className={`p-2 text-xs text-muted-foreground text-right bg-muted/20 border-r border-border ${!showTimeLabel ? 'border-r-dashed border-r-border/40' : ''}`}>
+                {slot.display}
               </div>
               
               {/* Day columns */}
               {weekDays.map((day, dayIndex) => {
                 const dayKey = format(day, 'yyyy-MM-dd');
-                const key = `${dayKey}-${hour}`;
-                const events = eventsByDayAndHour.get(key);
+                const key = `${dayKey}-${slotIndex}`;
+                const events = eventsByDayAndSlot.get(key);
                 
                 return (
-                  <div key={dayIndex} className="relative p-1 hover:bg-accent/30 transition-colors border-r border-border">
+                  <div 
+                    key={dayIndex} 
+                    className={`relative p-1 hover:bg-accent/30 transition-colors border-r border-border ${slot.minute === 30 ? 'border-r-dashed border-r-border/40' : ''}`}
+                  >
                     {events && (
                       <div className="space-y-1">
                         {/* Sessions */}

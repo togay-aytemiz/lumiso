@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { useCalendarSync } from "@/hooks/useCalendarSync";
 import { useWorkflowTriggers } from "@/hooks/useWorkflowTriggers";
 import { useSessionReminderScheduling } from "@/hooks/useSessionReminderScheduling";
 import { formatDate, formatTime } from "@/lib/utils";
@@ -32,6 +33,7 @@ export function useSessionForm({ leadId, leadName, projectId, onSuccess }: UseSe
     project_id: projectId || ""
   });
 
+  const { createSessionEvent } = useCalendarSync();
   const { triggerSessionScheduled } = useWorkflowTriggers();
   const { scheduleSessionReminders } = useSessionReminderScheduling();
 
@@ -129,6 +131,19 @@ export function useSessionForm({ leadId, leadName, projectId, onSuccess }: UseSe
 
       if (sessionError) throw sessionError;
 
+      // Sync to Google Calendar
+      if (newSession) {
+        createSessionEvent(
+          {
+            id: newSession.id,
+            lead_id: leadId,
+            session_date: formData.session_date,
+            session_time: formData.session_time,
+            notes: formData.notes.trim() || undefined
+          },
+          { name: leadName }
+        );
+      }
 
       // Trigger workflow for session scheduled
       try {

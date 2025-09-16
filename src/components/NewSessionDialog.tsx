@@ -13,7 +13,7 @@ import { Plus, Calendar, Search, ChevronDown, Check } from "lucide-react";
 import { getLeadStatusStyles, formatStatusText } from "@/lib/leadStatusColors";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-
+import { useCalendarSync } from "@/hooks/useCalendarSync";
 import { useWorkflowTriggers } from "@/hooks/useWorkflowTriggers";
 import { useSessionReminderScheduling } from "@/hooks/useSessionReminderScheduling";
 
@@ -37,7 +37,7 @@ const NewSessionDialog = ({ onSessionScheduled, children }: NewSessionDialogProp
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loadingLeads, setLoadingLeads] = useState(false);
   const [isNewLead, setIsNewLead] = useState(false);
-  
+  const { createSessionEvent } = useCalendarSync();
   const { triggerSessionScheduled } = useWorkflowTriggers();
   const { scheduleSessionReminders } = useSessionReminderScheduling();
   
@@ -245,6 +245,19 @@ const NewSessionDialog = ({ onSessionScheduled, children }: NewSessionDialogProp
       // Get lead name for calendar sync
       const leadName = isNewLead ? newLeadData.name : leads.find(l => l.id === leadId)?.name || 'Unknown Client';
       
+      // Sync to Google Calendar
+      if (newSession) {
+        createSessionEvent(
+          {
+            id: newSession.id,
+            lead_id: leadId,
+            session_date: sessionData.session_date,
+            session_time: sessionData.session_time,
+            notes: sessionData.notes.trim() || undefined
+          },
+          { name: leadName }
+        );
+      }
 
       // Trigger workflow for session scheduled
       try {

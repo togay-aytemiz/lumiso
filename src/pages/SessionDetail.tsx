@@ -38,7 +38,7 @@ interface Session {
   lead_id: string;
   project_id: string | null;
   user_id: string;
-  google_event_id?: string | null;
+  google_event_id: string | null;
   leads?: {
     id: string;
     name: string;

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,10 +10,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Language, TranslationNamespace, TranslationKey, Translation } from "@/i18n/types";
-import { Globe, Languages, FileText, Upload, Download, Plus, Edit, Trash } from "lucide-react";
+import { useTranslationFiles } from "@/hooks/useTranslationFiles";
+import { Globe, Languages, FileText, Upload, Download, Plus, Edit, Trash, Info, FileDown, Package } from "lucide-react";
 
 export default function AdminLocalization() {
   const [languages, setLanguages] = useState<Language[]>([]);
@@ -24,6 +26,18 @@ export default function AdminLocalization() {
   const [isLoading, setIsLoading] = useState(true);
   const [editingTranslation, setEditingTranslation] = useState<{keyId: string, languageCode: string} | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const {
+    downloadLanguageFile,
+    downloadLanguagePack,
+    downloadAllTranslations,
+    uploadTranslationFile,
+    getAvailableLanguages,
+    getAvailableNamespaces,
+    getTranslationStats,
+    isProcessing,
+  } = useTranslationFiles();
 
   useEffect(() => {
     loadData();
@@ -164,6 +178,36 @@ export default function AdminLocalization() {
     }
   };
 
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    const results = await Promise.all(
+      Array.from(files).map(file => uploadTranslationFile(file))
+    );
+
+    const successCount = results.filter(Boolean).length;
+    const totalCount = results.length;
+
+    if (successCount === totalCount) {
+      toast({
+        title: "Success",
+        description: `Successfully processed ${totalCount} file${totalCount > 1 ? 's' : ''}`,
+      });
+    } else if (successCount > 0) {
+      toast({
+        title: "Partial Success",
+        description: `Processed ${successCount} of ${totalCount} files successfully`,
+        variant: "destructive",
+      });
+    }
+
+    // Reset the file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="container mx-auto py-6 space-y-6">
@@ -187,32 +231,262 @@ export default function AdminLocalization() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".json"
+            multiple
+            onChange={handleFileUpload}
+            className="hidden"
+          />
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isProcessing}
+          >
             <Upload className="w-4 h-4 mr-2" />
-            Import
+            {isProcessing ? "Processing..." : "Upload"}
           </Button>
-          <Button variant="outline" size="sm">
-            <Download className="w-4 h-4 mr-2" />
-            Export
-          </Button>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm">
+                <Download className="w-4 h-4 mr-2" />
+                Download
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Download Translation Files</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <h4 className="font-medium">Individual Files</h4>
+                  <div className="grid grid-cols-2 gap-2">
+                    {getAvailableLanguages().map(lang => 
+                      getAvailableNamespaces().map(ns => (
+                        <Button
+                          key={`${lang}-${ns}`}
+                          variant="outline"
+                          size="sm"
+                          onClick={() => downloadLanguageFile(lang, ns)}
+                          className="text-xs"
+                        >
+                          <FileDown className="w-3 h-3 mr-1" />
+                          {lang}/{ns}
+                        </Button>
+                      ))
+                    )}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <h4 className="font-medium">Language Packs</h4>
+                  <div className="space-y-1">
+                    {getAvailableLanguages().map(lang => (
+                      <Button
+                        key={lang}
+                        variant="outline"
+                        size="sm"
+                        onClick={() => downloadLanguagePack(lang)}
+                        className="w-full justify-start"
+                      >
+                        <Package className="w-4 h-4 mr-2" />
+                        {lang.toUpperCase()} Complete Pack
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+                <Button
+                  variant="default"
+                  onClick={downloadAllTranslations}
+                  className="w-full"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Download All Translations
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
-      <Tabs defaultValue="languages" className="space-y-4">
+      <Alert className="mb-6">
+        <Info className="h-4 w-4" />
+        <AlertDescription>
+          <strong>Translation Workflow:</strong> This system uses JSON files for translations. 
+          Download existing files, translate them in your preferred tool, and upload the updated files back. 
+          File format: <code className="bg-muted px-1 rounded">{`{"key": "value", "nested": {"key": "value"}}`}</code>
+        </AlertDescription>
+      </Alert>
+
+      <Tabs defaultValue="json-manager" className="space-y-4">
         <TabsList>
+          <TabsTrigger value="json-manager" className="flex items-center gap-2">
+            <FileText className="w-4 h-4" />
+            JSON Translation Manager
+          </TabsTrigger>
           <TabsTrigger value="languages" className="flex items-center gap-2">
             <Globe className="w-4 h-4" />
-            Languages
+            Languages (DB)
           </TabsTrigger>
           <TabsTrigger value="translations" className="flex items-center gap-2">
             <FileText className="w-4 h-4" />
-            Translations
+            Translations (DB)
           </TabsTrigger>
           <TabsTrigger value="settings" className="flex items-center gap-2">
             <Languages className="w-4 h-4" />
             Settings
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="json-manager" className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Translation Status</CardTitle>
+                <CardDescription>Current translation file statistics</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {Object.entries(getTranslationStats()).map(([lang, namespaces]) => (
+                    <div key={lang} className="border rounded-lg p-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-medium">{lang.toUpperCase()}</h4>
+                        <Badge variant="outline">{Object.values(namespaces).reduce((a, b) => a + b, 0)} keys</Badge>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        {Object.entries(namespaces).map(([ns, count]) => (
+                          <div key={ns} className="flex justify-between">
+                            <span className="text-muted-foreground">{ns}:</span>
+                            <span>{count}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Quick Actions</CardTitle>
+                <CardDescription>Common translation management tasks</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="space-y-2">
+                  <h4 className="font-medium text-sm">Download Individual Files</h4>
+                  <div className="grid grid-cols-2 gap-2">
+                    {getAvailableLanguages().map(lang => 
+                      getAvailableNamespaces().slice(0, 4).map(ns => (
+                        <Button
+                          key={`${lang}-${ns}`}
+                          variant="outline"
+                          size="sm"
+                          onClick={() => downloadLanguageFile(lang, ns)}
+                          className="text-xs justify-start"
+                        >
+                          <FileDown className="w-3 h-3 mr-1" />
+                          {lang}/{ns}
+                        </Button>
+                      ))
+                    )}
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <h4 className="font-medium text-sm">Download Language Packs</h4>
+                  {getAvailableLanguages().map(lang => (
+                    <Button
+                      key={lang}
+                      variant="outline"
+                      size="sm"
+                      onClick={() => downloadLanguagePack(lang)}
+                      className="w-full justify-start"
+                    >
+                      <Package className="w-4 h-4 mr-2" />
+                      {lang.toUpperCase()} Complete Pack
+                    </Button>
+                  ))}
+                </div>
+
+                <Button
+                  onClick={downloadAllTranslations}
+                  className="w-full"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Download All Translations
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Translation Workflow Guide</CardTitle>
+              <CardDescription>Step-by-step guide for managing translations</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="border rounded-lg p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">1</div>
+                      <h4 className="font-medium">Download</h4>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Download the translation file(s) you want to work with. Choose individual files or complete language packs.
+                    </p>
+                  </div>
+                  
+                  <div className="border rounded-lg p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">2</div>
+                      <h4 className="font-medium">Translate</h4>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Edit the JSON files using any text editor or translation tool. Maintain the structure and only change the values.
+                    </p>
+                  </div>
+                  
+                  <div className="border rounded-lg p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">3</div>
+                      <h4 className="font-medium">Upload</h4>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Upload the modified files back to the system. The changes will be validated and applied.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="border-l-4 border-primary pl-4">
+                  <h4 className="font-medium mb-2">Example JSON Structure:</h4>
+                  <pre className="bg-muted p-3 rounded text-sm overflow-x-auto">
+{`{
+  "buttons": {
+    "save": "Save",
+    "cancel": "Cancel"
+  },
+  "labels": {
+    "name": "Name",
+    "email": "Email"
+  }
+}`}
+                  </pre>
+                </div>
+
+                <Alert>
+                  <Info className="h-4 w-4" />
+                  <AlertDescription>
+                    <strong>Pro Tips:</strong> Use translation tools like Crowdin, Weblate, or even Google Translate for bulk translations. 
+                    Always test your translations in the app after uploading to ensure proper formatting.
+                  </AlertDescription>
+                </Alert>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         <TabsContent value="languages" className="space-y-4">
           <Card>

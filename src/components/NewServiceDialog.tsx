@@ -21,6 +21,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useFormsTranslation, useCommonTranslation } from "@/hooks/useTypedTranslation";
 
 interface NewServiceDialogProps {
   open: boolean;
@@ -40,6 +41,8 @@ export const NewServiceDialog = ({ open, onOpenChange, existingCategories, onCat
   const [errors, setErrors] = useState<Record<string, string>>({});
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { t: tForms } = useFormsTranslation();
+  const { t: tCommon } = useCommonTranslation();
 
   const createServiceMutation = useMutation({
     mutationFn: async (serviceData: { name: string; category?: string; description?: string; costPrice?: number; sellingPrice?: number }) => {
@@ -71,15 +74,15 @@ export const NewServiceDialog = ({ open, onOpenChange, existingCategories, onCat
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['services'] });
       toast({
-        title: "Service created",
-        description: "The new service has been added successfully.",
+        title: tForms('services.service_created'),
+        description: tForms('services.service_created_desc'),
       });
       handleClose();
     },
     onError: (error) => {
       toast({
-        title: "Error",
-        description: "Failed to create service. Please try again.",
+        title: tCommon('labels.error'),
+        description: tForms('services.error_creating'),
         variant: "destructive",
       });
       console.error('Create service error:', error);
@@ -91,19 +94,19 @@ export const NewServiceDialog = ({ open, onOpenChange, existingCategories, onCat
 
     // Category validation
     if (!category || category.trim().length === 0) {
-      newErrors.category = "Category is required";
+      newErrors.category = tForms('services.category_required');
     }
 
     // Name validation
     if (!name || name.trim().length === 0) {
-      newErrors.name = "Name is required";
+      newErrors.name = tForms('services.name_required');
     } else if (name.trim().length > 100) {
-      newErrors.name = "Name is too long (max 100 characters)";
+      newErrors.name = tForms('services.name_too_long');
     }
 
     // Description validation (optional)
     if (description && description.trim().length > 1000) {
-      newErrors.description = "Description is too long (max 1000 characters)";
+      newErrors.description = tForms('services.description_too_long');
     }
 
     setErrors(newErrors);
@@ -154,8 +157,8 @@ export const NewServiceDialog = ({ open, onOpenChange, existingCategories, onCat
         onCategoryAdded?.(trimmedCategory);
       } else {
         toast({
-          title: "Category already exists",
-          description: "This category name is already in use. Please choose a different name.",
+          title: tForms('services.category_exists'),
+          description: tForms('services.category_exists_desc'),
           variant: "destructive",
         });
       }
@@ -184,21 +187,21 @@ export const NewServiceDialog = ({ open, onOpenChange, existingCategories, onCat
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>New Service</DialogTitle>
+          <DialogTitle>{tForms('services.new_service')}</DialogTitle>
           <DialogDescription>
-            Add a new photography service to your offerings.
+            {tForms('services.new_service_desc')}
           </DialogDescription>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="category">Category *</Label>
+            <Label htmlFor="category">{tForms('services.category')} *</Label>
             {isCreatingNewCategory ? (
               <div className="space-y-2">
                 <Input
                   value={newCategoryInput}
                   onChange={(e) => setNewCategoryInput(e.target.value)}
-                  placeholder="Enter new category name"
+                  placeholder={tForms('services.enter_new_category')}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       e.preventDefault();
@@ -216,7 +219,7 @@ export const NewServiceDialog = ({ open, onOpenChange, existingCategories, onCat
                     onClick={handleNewCategorySubmit}
                     disabled={!newCategoryInput.trim()}
                   >
-                    Add Category
+                    {tForms('services.add_category')}
                   </Button>
                   <Button
                     type="button"
@@ -224,22 +227,22 @@ export const NewServiceDialog = ({ open, onOpenChange, existingCategories, onCat
                     variant="outline"
                     onClick={handleNewCategoryCancel}
                   >
-                    Cancel
+                    {tCommon('buttons.cancel')}
                   </Button>
                 </div>
               </div>
             ) : (
               <Select value={category} onValueChange={handleCategoryChange}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select or create a category" />
+                  <SelectValue placeholder={tForms('services.select_create_category')} />
                 </SelectTrigger>
                 <SelectContent>
                   {/* Pre-defined common categories */}
-                  <SelectItem value="Albums">Albums</SelectItem>
-                  <SelectItem value="Prints">Prints</SelectItem>
-                  <SelectItem value="Extras">Extras</SelectItem>
-                  <SelectItem value="Digital">Digital</SelectItem>
-                  <SelectItem value="Packages">Packages</SelectItem>
+                  <SelectItem value="Albums">{tForms('services.predefined_categories.albums')}</SelectItem>
+                  <SelectItem value="Prints">{tForms('services.predefined_categories.prints')}</SelectItem>
+                  <SelectItem value="Extras">{tForms('services.predefined_categories.extras')}</SelectItem>
+                  <SelectItem value="Digital">{tForms('services.predefined_categories.digital')}</SelectItem>
+                  <SelectItem value="Packages">{tForms('services.predefined_categories.packages')}</SelectItem>
                   
                   {/* Separator if there are existing categories */}
                   {existingCategories.length > 0 && (
@@ -264,7 +267,7 @@ export const NewServiceDialog = ({ open, onOpenChange, existingCategories, onCat
                   
                   {/* Create new category option */}
                   <SelectItem value="__create_new__" className="text-primary">
-                    + Create new category
+                    {tForms('services.create_new_category')}
                   </SelectItem>
                 </SelectContent>
               </Select>
@@ -275,12 +278,12 @@ export const NewServiceDialog = ({ open, onOpenChange, existingCategories, onCat
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="name">Name *</Label>
+            <Label htmlFor="name">{tCommon('labels.name')} *</Label>
             <Input
               id="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g., Wedding Album, Photo Prints"
+              placeholder={tForms('services.placeholder_service_name')}
               required
             />
             {errors.name && (
@@ -290,7 +293,7 @@ export const NewServiceDialog = ({ open, onOpenChange, existingCategories, onCat
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="costPrice">Cost Price (TRY)</Label>
+              <Label htmlFor="costPrice">{tForms('services.cost_price')}</Label>
               <Input
                 id="costPrice"
                 type="number"
@@ -302,7 +305,7 @@ export const NewServiceDialog = ({ open, onOpenChange, existingCategories, onCat
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="sellingPrice">Selling Price (TRY)</Label>
+              <Label htmlFor="sellingPrice">{tForms('services.selling_price')}</Label>
               <Input
                 id="sellingPrice"
                 type="number"
@@ -316,12 +319,12 @@ export const NewServiceDialog = ({ open, onOpenChange, existingCategories, onCat
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
+            <Label htmlFor="description">{tCommon('labels.description')}</Label>
             <Textarea
               id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Optional description of the service..."
+              placeholder={tForms('services.placeholder_description')}
               rows={3}
             />
             {errors.description && (
@@ -331,10 +334,10 @@ export const NewServiceDialog = ({ open, onOpenChange, existingCategories, onCat
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={handleClose}>
-              Cancel
+              {tCommon('buttons.cancel')}
             </Button>
             <Button type="submit" disabled={createServiceMutation.isPending}>
-              {createServiceMutation.isPending ? "Saving..." : "Save Service"}
+              {createServiceMutation.isPending ? tCommon('actions.saving') : tCommon('buttons.save')}
             </Button>
           </DialogFooter>
         </form>

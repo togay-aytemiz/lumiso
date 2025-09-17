@@ -10,6 +10,7 @@ import SettingsSection from "./SettingsSection";
 // Permissions removed for single photographer mode
 import { useServices } from "@/hooks/useOrganizationData";
 import { useOrganization } from "@/contexts/OrganizationContext";
+import { useFormsTranslation, useCommonTranslation } from "@/hooks/useTypedTranslation";
 
 interface Service {
   id: string;
@@ -28,6 +29,8 @@ const ServicesSection = () => {
   const [newCategoriesAdded, setNewCategoriesAdded] = useState<string[]>([]);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { t: tForms } = useFormsTranslation();
+  const { t: tCommon } = useCommonTranslation();
   // Permissions removed for single photographer mode - always allow
   const { activeOrganizationId } = useOrganization();
 
@@ -47,14 +50,14 @@ const ServicesSection = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['services', activeOrganizationId] });
       toast({
-        title: "Service deleted",
-        description: "The service has been removed successfully.",
+        title: tForms('services.service_deleted'),
+        description: tForms('services.service_deleted_desc'),
       });
     },
     onError: (error) => {
       toast({
-        title: "Error",
-        description: "Failed to delete service. Please try again.",
+        title: tCommon('labels.error'),
+        description: tForms('services.error_deleting'),
         variant: "destructive",
       });
       console.error('Delete service error:', error);
@@ -63,7 +66,7 @@ const ServicesSection = () => {
 
   // Group services by category
   const groupedServices = services.reduce((acc, service) => {
-    const category = service.category || 'Uncategorized';
+    const category = service.category || tForms('services.uncategorized');
     if (!acc[category]) {
       acc[category] = [];
     }
@@ -108,8 +111,8 @@ const ServicesSection = () => {
   if (isLoading) {
     return (
       <SettingsSection 
-        title="Services" 
-        description="Define the photography services you offer, like albums, prints, and extras."
+        title={tForms('services.title')}
+        description={tForms('services.description')}
       >
         <div className="space-y-4">
           {[1, 2].map((i) => (
@@ -136,21 +139,21 @@ const ServicesSection = () => {
   return (
     <>
       <SettingsSection 
-        title="Services" 
-        description="Define the photography services you offer, like albums, prints, and extras."
+        title={tForms('services.title')}
+        description={tForms('services.description')}
         action={(Object.keys(groupedServices).length > 0 && canManageServices) ? {
-          label: "Add Service",
+          label: tForms('services.add_service'),
           onClick: () => setShowNewServiceDialog(true),
           icon: <Plus className="h-4 w-4" />
         } : undefined}
       >
         {Object.keys(groupedServices).length === 0 ? (
           <div className="text-center py-8">
-            <p className="text-muted-foreground mb-4">No services defined yet.</p>
+            <p className="text-muted-foreground mb-4">{tForms('services.no_services')}</p>
             {canManageServices && (
               <Button onClick={() => setShowNewServiceDialog(true)} variant="outline">
                 <Plus className="h-4 w-4 mr-2" />
-                Add your first service
+                {tForms('services.add_first_service')}
               </Button>
             )}
           </div>
@@ -164,7 +167,7 @@ const ServicesSection = () => {
                   className="w-full"
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  Add Service
+                  {tForms('services.add_service')}
                 </Button>
               </div>
             )}
@@ -207,14 +210,14 @@ const ServicesSection = () => {
                               </p>
                             )}
                             <div className="flex gap-4 mt-2">
-                              {(service.cost_price || 0) > 0 && (
+                             {(service.cost_price || 0) > 0 && (
                                 <span className="text-xs text-muted-foreground">
-                                  Cost: TRY {service.cost_price}
+                                  {tForms('services.cost')}: TRY {service.cost_price}
                                 </span>
                               )}
                               {(service.selling_price || 0) > 0 && (
                                 <span className="text-xs text-muted-foreground">
-                                  Selling: TRY {service.selling_price}
+                                  {tForms('services.selling')}: TRY {service.selling_price}
                                 </span>
                               )}
                             </div>
@@ -244,21 +247,21 @@ const ServicesSection = () => {
                                >
                                  <Trash2 className="h-4 w-4" />
                                </Button>
-                             </div>
-                           ) : (
-                             <span className="text-sm text-muted-foreground">View only</span>
-                           )}
+                              </div>
+                            ) : (
+                              <span className="text-sm text-muted-foreground">{tForms('services.view_only')}</span>
+                            )}
                         </div>
                       ))}
                     </div>
 
                     {/* Mobile view - card layout */}
                     <div className="md:hidden space-y-3 pl-3">
-                      {categoryServices.length === 0 ? (
-                        <div className="text-center py-6 text-muted-foreground">
-                          <p className="text-sm">No services in this category</p>
-                        </div>
-                      ) : (
+                       {categoryServices.length === 0 ? (
+                         <div className="text-center py-6 text-muted-foreground">
+                           <p className="text-sm">{tForms('services.no_services_in_category')}</p>
+                         </div>
+                       ) : (
                         categoryServices.map((service) => (
                           <div
                             key={service.id}
@@ -277,16 +280,16 @@ const ServicesSection = () => {
                             {/* Pricing information */}
                             {((service.cost_price || 0) > 0 || (service.selling_price || 0) > 0) && (
                               <div className="space-y-1">
-                                {(service.cost_price || 0) > 0 && (
-                                  <div className="text-sm text-muted-foreground">
-                                    Cost: TRY {service.cost_price}
-                                  </div>
-                                )}
-                                {(service.selling_price || 0) > 0 && (
-                                  <div className="text-sm font-medium">
-                                    Selling: TRY {service.selling_price}
-                                  </div>
-                                )}
+                                 {(service.cost_price || 0) > 0 && (
+                                   <div className="text-sm text-muted-foreground">
+                                     {tForms('services.cost')}: TRY {service.cost_price}
+                                   </div>
+                                 )}
+                                 {(service.selling_price || 0) > 0 && (
+                                   <div className="text-sm font-medium">
+                                     {tForms('services.selling')}: TRY {service.selling_price}
+                                   </div>
+                                 )}
                               </div>
                             )}
 

@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { NavigationGuardDialog } from "./settings/NavigationGuardDialog";
+import { useTranslation } from "react-i18next";
 
 interface Payment {
   id: string;
@@ -41,6 +42,7 @@ export function EditPaymentDialog({ payment, open, onOpenChange, onPaymentUpdate
   const [isLoading, setIsLoading] = useState(false);
   
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   // Reset form when payment changes
   useEffect(() => {
@@ -55,8 +57,8 @@ export function EditPaymentDialog({ payment, open, onOpenChange, onPaymentUpdate
   const handleSubmit = async () => {
     if (!payment || !amount.trim()) {
       toast({
-        title: "Error",
-        description: "Amount is required",
+        title: t("messages.error.generic"),
+        description: t("forms.edit_payment.amount_required"),
         variant: "destructive"
       });
       return;
@@ -92,15 +94,15 @@ export function EditPaymentDialog({ payment, open, onOpenChange, onPaymentUpdate
       }
 
       toast({
-        title: "Success",
-        description: "Payment updated successfully"
+        title: t("messages.success.updated"),
+        description: t("forms.edit_payment.payment_updated")
       });
 
       onOpenChange(false);
       onPaymentUpdated();
     } catch (error: any) {
       toast({
-        title: "Error updating payment",
+        title: t("messages.error.save"),
         description: error.message,
         variant: "destructive"
       });
@@ -139,13 +141,13 @@ export function EditPaymentDialog({ payment, open, onOpenChange, onPaymentUpdate
 
   const footerActions = [
     {
-      label: "Cancel",
+      label: t("common.buttons.cancel"),
       onClick: () => onOpenChange(false),
       variant: "outline" as const,
       disabled: isLoading
     },
     {
-      label: isLoading ? "Updating..." : "Update Payment",
+      label: isLoading ? t("forms.edit_payment.updating") : t("forms.edit_payment.update_payment"),
       onClick: handleSubmit,
       disabled: isLoading || !amount.trim(),
       loading: isLoading
@@ -155,7 +157,7 @@ export function EditPaymentDialog({ payment, open, onOpenChange, onPaymentUpdate
   return (
     <>
       <AppSheetModal
-        title="Edit Payment"
+        title={t("forms.edit_payment.title")}
         isOpen={open}
         onOpenChange={onOpenChange}
         size="content"
@@ -165,7 +167,7 @@ export function EditPaymentDialog({ payment, open, onOpenChange, onPaymentUpdate
       >
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="amount">Amount (TRY) *</Label>
+            <Label htmlFor="amount">{t("forms.edit_payment.amount_try")} *</Label>
             <Input
               id="amount"
               type="number"
@@ -178,10 +180,10 @@ export function EditPaymentDialog({ payment, open, onOpenChange, onPaymentUpdate
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
+            <Label htmlFor="description">{t("forms.edit_payment.description")}</Label>
             <Textarea
               id="description"
-              placeholder="e.g., Deposit, Final Payment, Balance"
+              placeholder={t("forms.edit_payment.description_placeholder")}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={2}
@@ -189,21 +191,21 @@ export function EditPaymentDialog({ payment, open, onOpenChange, onPaymentUpdate
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="status">Payment Status</Label>
+            <Label htmlFor="status">{t("forms.edit_payment.payment_status")}</Label>
             <Select value={status} onValueChange={(value: "paid" | "due") => setStatus(value)}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="paid">Paid</SelectItem>
-                <SelectItem value="due">Due</SelectItem>
+                <SelectItem value="paid">{t("forms.edit_payment.paid")}</SelectItem>
+                <SelectItem value="due">{t("forms.edit_payment.due")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           {status === 'paid' && (
             <div className="space-y-2">
-              <Label>Date Paid</Label>
+              <Label>{t("forms.edit_payment.date_paid")}</Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
@@ -214,7 +216,7 @@ export function EditPaymentDialog({ payment, open, onOpenChange, onPaymentUpdate
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {datePaid ? format(datePaid, "PPP") : <span>Pick a date</span>}
+                    {datePaid ? format(datePaid, "PPP") : <span>{t("forms.edit_payment.pick_date")}</span>}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">

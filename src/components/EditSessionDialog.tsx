@@ -13,6 +13,7 @@ import { Calendar, Clock, MapPin, User, Briefcase } from "lucide-react";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "react-i18next";
 
 interface Project {
   id: string;
@@ -50,6 +51,7 @@ const EditSessionDialog = ({
 }: EditSessionDialogProps) => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [initError, setInitError] = useState<string | null>(null);
+  const { t } = useTranslation();
 
   // Create initial data with error handling
   const initialData = React.useMemo(() => {
@@ -146,13 +148,13 @@ const EditSessionDialog = ({
 
   const footerActions = [
     {
-      label: "Cancel",
+      label: t("common.buttons.cancel"),
       onClick: handleDirtyClose,
       variant: "outline" as const,
       disabled: loading
     },
     {
-      label: loading ? "Updating..." : "Update Session",
+      label: loading ? t("forms.edit_session.updating") : t("forms.edit_session.update_session"),
       onClick: submitForm,
       disabled: loading || !isValid,
       loading: loading
@@ -162,7 +164,7 @@ const EditSessionDialog = ({
   return (
     <>
       <AppSheetModal
-        title="Edit Session"
+        title={t("forms.edit_session.title")}
         isOpen={open}
         onOpenChange={onOpenChange || (() => {})}
         size="wide"
@@ -182,7 +184,7 @@ const EditSessionDialog = ({
                 onOpenChange?.(false);
               }}
             >
-              Close
+              {t("common.buttons.close")}
             </Button>
           </div>
         ) : (
@@ -226,7 +228,7 @@ const EditSessionDialog = ({
             <div className="space-y-3 p-4 bg-gradient-to-br from-primary/5 to-primary/10 rounded-lg border border-primary/20">
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-primary" />
-                <Label className="text-sm font-medium text-primary">Session Summary</Label>
+                <Label className="text-sm font-medium text-primary">{t("forms.edit_session.session_summary")}</Label>
               </div>
               
               <div className="space-y-2 text-sm">
@@ -241,15 +243,15 @@ const EditSessionDialog = ({
                   <div className="flex items-center gap-2">
                     <Clock className="h-3 w-3 text-muted-foreground flex-shrink-0" />
                      <span>
-                       {formData.session_date ? 
-                         formatLongDate(formData.session_date, getUserLocale()) : 'Date not set'
-                       }
-                       {formData.session_time && formData.session_date ? (
-                         <> at {formatTime(formData.session_time, getUserLocale())}</>
-                       ) : formData.session_time ? (
-                         <> Time: {formatTime(formData.session_time, getUserLocale())}</>
-                       ) : null}
-                     </span>
+                        {formData.session_date ? 
+                          formatLongDate(formData.session_date, getUserLocale()) : t("forms.edit_session.date_not_set")
+                        }
+                        {formData.session_time && formData.session_date ? (
+                          <> at {formatTime(formData.session_time, getUserLocale())}</>
+                        ) : formData.session_time ? (
+                          <> {t("forms.edit_session.time")}: {formatTime(formData.session_time, getUserLocale())}</>
+                        ) : null}
+                      </span>
                    </div>
                  )}
                 
@@ -263,15 +265,15 @@ const EditSessionDialog = ({
                 {projects.find(p => p.id === formData.project_id)?.name && (
                   <div className="flex items-center gap-2">
                     <Briefcase className="h-3 w-3 text-muted-foreground flex-shrink-0" />
-                    <span className="text-muted-foreground">
-                      Project: {projects.find(p => p.id === formData.project_id)?.name}
-                    </span>
+                     <span className="text-muted-foreground">
+                       {t("forms.edit_session.project")}: {projects.find(p => p.id === formData.project_id)?.name}
+                     </span>
                   </div>
                 )}
                 
                 <div className="flex items-center gap-2">
                   <User className="h-3 w-3 text-muted-foreground flex-shrink-0" />
-                  <span className="text-muted-foreground">Client: {leadName}</span>
+                  <span className="text-muted-foreground">{t("forms.edit_session.client")}: {leadName}</span>
                 </div>
               </div>
             </div>

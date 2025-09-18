@@ -32,6 +32,7 @@ import {
   FIELD_TYPE_CONFIG,
   CreateLeadFieldDefinition 
 } from "@/types/leadFields";
+import { useTranslation } from "react-i18next";
 
 const fieldSchema = z.object({
   label: z.string().min(1, "Field label is required").max(100, "Label is too long"),
@@ -59,6 +60,7 @@ export function LeadFieldDialog({ open, onOpenChange, field, onClose }: LeadFiel
   const { createFieldDefinition, updateFieldDefinition } = useLeadFieldDefinitions();
   const [loading, setLoading] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
+  const { t } = useTranslation();
   
   const isEdit = !!field;
   const isSystemField = field?.is_system || false;
@@ -160,7 +162,7 @@ export function LeadFieldDialog({ open, onOpenChange, field, onClose }: LeadFiel
 
   const handleClose = () => {
     if (isDirty) {
-      if (confirm('You have unsaved changes. Are you sure you want to close?')) {
+      if (confirm(t("forms.lead_field.unsaved_changes"))) {
         onClose();
       }
     } else {
@@ -170,12 +172,12 @@ export function LeadFieldDialog({ open, onOpenChange, field, onClose }: LeadFiel
 
   const footerActions = [
     {
-      label: "Cancel",
+      label: t("common.buttons.cancel"),
       onClick: onClose,
       variant: "outline" as const,
     },
     {
-      label: loading ? "Saving..." : isEdit ? "Update Field" : "Create Field",
+      label: loading ? t("forms.lead_field.saving") : isEdit ? t("forms.lead_field.update_field") : t("forms.lead_field.create_field"),
       onClick: form.handleSubmit(onSubmit),
       loading,
       disabled: loading,
@@ -184,7 +186,7 @@ export function LeadFieldDialog({ open, onOpenChange, field, onClose }: LeadFiel
 
   return (
     <AppSheetModal
-      title={isEdit ? "Edit Field" : "Add Custom Field"}
+      title={isEdit ? t("forms.lead_field.edit_field") : t("forms.lead_field.add_custom_field")}
       isOpen={open}
       onOpenChange={onOpenChange}
       size="lg"
@@ -195,8 +197,8 @@ export function LeadFieldDialog({ open, onOpenChange, field, onClose }: LeadFiel
       <div className="space-y-1 mb-6">
         <p className="text-sm text-muted-foreground">
           {isEdit 
-            ? "Modify the field configuration. System fields have limited editing options."
-            : "Create a new custom field to capture additional lead information."
+            ? t("forms.lead_field.edit_description")
+            : t("forms.lead_field.create_description")
           }
         </p>
       </div>
@@ -209,16 +211,16 @@ export function LeadFieldDialog({ open, onOpenChange, field, onClose }: LeadFiel
                 name="label"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Field Label *</FormLabel>
+                    <FormLabel>{t("forms.lead_field.field_label")} *</FormLabel>
                     <FormControl>
                       <Input 
-                        placeholder="e.g., Budget Range" 
+                        placeholder={t("forms.lead_field.field_label_placeholder")} 
                         {...field}
                         disabled={isSystemField}
                       />
                     </FormControl>
                     <FormDescription>
-                      The display name for this field
+                      {t("forms.lead_field.field_label_description")}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -230,7 +232,7 @@ export function LeadFieldDialog({ open, onOpenChange, field, onClose }: LeadFiel
                 name="field_type"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Field Type *</FormLabel>
+                    <FormLabel>{t("forms.lead_field.field_type")} *</FormLabel>
                     <Select 
                       onValueChange={field.onChange} 
                       defaultValue={field.value}
@@ -238,7 +240,7 @@ export function LeadFieldDialog({ open, onOpenChange, field, onClose }: LeadFiel
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select field type" />
+                          <SelectValue placeholder={t("forms.lead_field.select_field_type")} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -250,7 +252,7 @@ export function LeadFieldDialog({ open, onOpenChange, field, onClose }: LeadFiel
                       </SelectContent>
                     </Select>
                     <FormDescription>
-                      The data type for this field
+                      {t("forms.lead_field.field_type_description")}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -264,16 +266,16 @@ export function LeadFieldDialog({ open, onOpenChange, field, onClose }: LeadFiel
                 name="options"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Options</FormLabel>
+                    <FormLabel>{t("forms.lead_field.options")}</FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder="Option 1, Option 2, Option 3"
+                        placeholder={t("forms.lead_field.options_placeholder")}
                         {...field}
                         disabled={isSystemField}
                       />
                     </FormControl>
                     <FormDescription>
-                      Comma-separated list of options for this field
+                      {t("forms.lead_field.options_description")}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -283,9 +285,9 @@ export function LeadFieldDialog({ open, onOpenChange, field, onClose }: LeadFiel
 
             <div className="flex items-center justify-between p-4 border rounded-lg">
               <div className="space-y-1">
-                <h4 className="text-sm font-medium">Field Settings</h4>
+                <h4 className="text-sm font-medium">{t("forms.lead_field.field_settings")}</h4>
                 <p className="text-sm text-muted-foreground">
-                  Configure how this field behaves in your forms
+                  {t("forms.lead_field.field_settings_description")}
                 </p>
               </div>
               <div className="flex items-center gap-6">
@@ -301,12 +303,12 @@ export function LeadFieldDialog({ open, onOpenChange, field, onClose }: LeadFiel
                           disabled={isSystemField}
                         />
                       </FormControl>
-                      <FormLabel className="text-sm font-normal">Required</FormLabel>
+                      <FormLabel className="text-sm font-normal">{t("forms.lead_field.required")}</FormLabel>
                     </FormItem>
                   )}
                 />
                 <FormField
-                  control={form.control}
+                  control={form.control}  
                   name="is_visible_in_form"
                   render={({ field }) => (
                     <FormItem className="flex items-center gap-2 space-y-0">
@@ -316,7 +318,7 @@ export function LeadFieldDialog({ open, onOpenChange, field, onClose }: LeadFiel
                           onCheckedChange={field.onChange}
                         />
                       </FormControl>
-                      <FormLabel className="text-sm font-normal">Visible in Form</FormLabel>
+                      <FormLabel className="text-sm font-normal">{t("forms.lead_field.visible_in_form")}</FormLabel>
                     </FormItem>
                   )}
                 />
@@ -325,9 +327,9 @@ export function LeadFieldDialog({ open, onOpenChange, field, onClose }: LeadFiel
 
             {isSystemField && (
               <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
-                <Badge variant="secondary">System Field</Badge>
+                <Badge variant="secondary">{t("forms.lead_field.system_field")}</Badge>
                 <p className="text-sm text-muted-foreground">
-                  This is a system field. Some properties cannot be modified.
+                  {t("forms.lead_field.system_field_description")}
                 </p>
               </div>
             )}

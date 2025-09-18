@@ -11,6 +11,7 @@ import { ProjectStatusBadge } from "@/components/ProjectStatusBadge";
 import { useProjectProgress } from "@/hooks/useProjectProgress";
 import { useProjectPayments } from "@/hooks/useProjectPayments";
 import ClientDetailsCard from "@/components/ClientDetailsCard";
+import { useTranslation } from "react-i18next";
 
 interface Project {
   id: string;
@@ -60,6 +61,7 @@ export default function ProjectSheetPreview({
   const [projectType, setProjectType] = useState<ProjectType | null>(null);
   const [isArchived, setIsArchived] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const { t } = useTranslation();
   
   const { progress, loading: progressLoading } = useProjectProgress(project?.id || "", refreshTrigger);
   const { paymentSummary, loading: paymentsLoading } = useProjectPayments(project?.id || "", refreshTrigger);
@@ -160,7 +162,7 @@ export default function ProjectSheetPreview({
 
   const footerActions = [
     {
-      label: "View Full Details",
+      label: t("forms.project_preview.view_full_details"),
       onClick: handleViewFullDetails,
       variant: "default" as const
     }
@@ -183,7 +185,7 @@ export default function ProjectSheetPreview({
                   <h2 className="text-lg font-semibold">{project.name}</h2>
                   {isArchived && (
                     <Badge variant="secondary" className="text-xs">
-                      Archived
+                      {t("forms.project_preview.archived")}
                     </Badge>
                   )}
                   {projectType && (
@@ -200,9 +202,9 @@ export default function ProjectSheetPreview({
                 )}
 
                 <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                  <span>Created {format(new Date(project.created_at), "MMM d, yyyy")}</span>
+                  <span>{t("forms.project_preview.created")} {format(new Date(project.created_at), "MMM d, yyyy")}</span>
                   {project.updated_at !== project.created_at && (
-                    <span>Updated {format(new Date(project.updated_at), "MMM d, yyyy")}</span>
+                    <span>{t("forms.project_preview.updated")} {format(new Date(project.updated_at), "MMM d, yyyy")}</span>
                   )}
                 </div>
               </div>
@@ -217,12 +219,12 @@ export default function ProjectSheetPreview({
               <div className="space-y-2">
                 <div className="flex items-center gap-2 text-sm font-medium">
                   <CheckCircle2 className="h-4 w-4" />
-                  Progress
+                  {t("forms.project_preview.progress")}
                 </div>
                 {!progressLoading && progress.total > 0 ? (
                   <div className="space-y-1">
                     <div className="flex justify-between text-sm">
-                      <span>{progress.completed}/{progress.total} tasks</span>
+                      <span>{progress.completed}/{progress.total} {t("forms.project_preview.tasks")}</span>
                       <span className="font-medium">{progress.percentage}%</span>
                     </div>
                     <div className="w-full bg-muted rounded-full h-2">
@@ -233,7 +235,7 @@ export default function ProjectSheetPreview({
                     </div>
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground">No tasks yet</p>
+                  <p className="text-sm text-muted-foreground">{t("forms.project_preview.no_tasks_yet")}</p>
                 )}
               </div>
             </CardContent>
@@ -244,7 +246,7 @@ export default function ProjectSheetPreview({
               <div className="space-y-2">
                 <div className="flex items-center gap-2 text-sm font-medium">
                   <Users className="h-4 w-4" />
-                  Status
+                  {t("forms.project_preview.status")}
                 </div>
                 {!isArchived && (
                   <ProjectStatusBadge 
@@ -267,24 +269,24 @@ export default function ProjectSheetPreview({
               <div className="space-y-2">
                 <div className="flex items-center gap-2 text-sm font-medium">
                   <CreditCard className="h-4 w-4" />
-                  Payments
+                  {t("forms.project_preview.payments")}
                 </div>
                 <div className="space-y-1">
                   <div className="flex justify-between text-sm">
-                    <span>Paid</span>
+                    <span>{t("forms.project_preview.paid")}</span>
                     <span className="font-medium text-green-600">
                       {formatCurrency(paymentSummary.totalPaid)}
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span>Total</span>
+                    <span>{t("forms.project_preview.total")}</span>
                     <span className="font-medium">
                       {formatCurrency(paymentSummary.totalProject)}
                     </span>
                   </div>
                   {paymentSummary.remaining > 0 && (
                     <div className="flex justify-between text-sm">
-                      <span>Remaining</span>
+                      <span>{t("forms.project_preview.remaining")}</span>
                       <span className="font-medium text-orange-600">
                         {formatCurrency(paymentSummary.remaining)}
                       </span>
@@ -299,7 +301,7 @@ export default function ProjectSheetPreview({
         {/* Client Details */}
         {lead && (
           <ClientDetailsCard
-            title="Client Information"
+            title={t("forms.project_preview.client_information")}
             name={lead.name}
             email={lead.email}
             phone={lead.phone}
@@ -314,7 +316,7 @@ export default function ProjectSheetPreview({
         <Card>
           <CardContent className="p-4">
             <div className="space-y-3">
-              <h3 className="text-sm font-medium">Quick Actions</h3>
+              <h3 className="text-sm font-medium">{t("forms.project_preview.quick_actions")}</h3>
               <div className="grid grid-cols-2 gap-2">
                 <Button 
                   variant="outline" 
@@ -323,7 +325,7 @@ export default function ProjectSheetPreview({
                   className="justify-start"
                 >
                   <Calendar className="h-4 w-4 mr-2" />
-                  Schedule Session
+                  {t("forms.project_preview.schedule_session")}
                 </Button>
                 <Button 
                   variant="outline" 
@@ -332,7 +334,7 @@ export default function ProjectSheetPreview({
                   className="justify-start"
                 >
                   <CreditCard className="h-4 w-4 mr-2" />
-                  Add Payment
+                  {t("forms.project_preview.add_payment")}
                 </Button>
               </div>
             </div>

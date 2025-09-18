@@ -12,6 +12,7 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 
 interface UnifiedActivityAreaProps {
   projectId: string;
@@ -31,6 +32,7 @@ export function UnifiedActivityArea({
   const [activeTab, setActiveTab] = useState("note");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   // Note form state
   const [noteContent, setNoteContent] = useState("");
@@ -65,15 +67,15 @@ export function UnifiedActivityArea({
       if (error) throw error;
 
       toast({
-        title: "Success",
-        description: "Note added successfully."
+        title: t("messages.success.created"),
+        description: t("forms.unified_activity.note_added")
       });
 
       setNoteContent("");
       onActivityUpdated?.();
     } catch (error: any) {
       toast({
-        title: "Error adding note",
+        title: t("forms.unified_activity.error_adding_note"),
         description: error.message,
         variant: "destructive"
       });
@@ -105,8 +107,8 @@ export function UnifiedActivityArea({
       if (error) throw error;
 
       toast({
-        title: "Success",
-        description: "Reminder created successfully."
+        title: t("messages.success.created"),
+        description: t("forms.unified_activity.reminder_created")
       });
 
       setReminderContent("");
@@ -115,7 +117,7 @@ export function UnifiedActivityArea({
       onActivityUpdated?.();
     } catch (error: any) {
       toast({
-        title: "Error creating reminder",
+        title: t("forms.unified_activity.error_creating_reminder"),
         description: error.message,
         variant: "destructive"
       });
@@ -143,15 +145,15 @@ export function UnifiedActivityArea({
       if (error) throw error;
 
       toast({
-        title: "Success",
-        description: "Todo added successfully."
+        title: t("messages.success.created"),
+        description: t("forms.unified_activity.todo_added")
       });
 
       setTodoContent("");
       onActivityUpdated?.();
     } catch (error: any) {
       toast({
-        title: "Error adding todo",
+        title: t("forms.unified_activity.error_adding_todo"),
         description: error.message,
         variant: "destructive"
       });
@@ -167,22 +169,22 @@ export function UnifiedActivityArea({
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="note" className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
-              Note
+              {t("forms.unified_activity.note")}
             </TabsTrigger>
             <TabsTrigger value="reminder" className="flex items-center gap-2">
               <Bell className="h-4 w-4" />
-              Reminder
+              {t("forms.unified_activity.reminder")}
             </TabsTrigger>
             <TabsTrigger value="todo" className="flex items-center gap-2">
               <CheckSquare className="h-4 w-4" />
-              Todo
+              {t("forms.unified_activity.todo")}
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="note" className="space-y-4 mt-4">
             <div className="space-y-3">
               <Input
-                placeholder="Add a note about this project..."
+                placeholder={t("forms.unified_activity.add_note_placeholder")}
                 value={noteContent}
                 onChange={(e) => setNoteContent(e.target.value)}
                 onKeyDown={(e) => {
@@ -199,7 +201,7 @@ export function UnifiedActivityArea({
                 className="w-full"
               >
                 <Plus className="h-4 w-4 mr-2" />
-                {isSubmitting ? "Adding..." : "Add Note"}
+                {isSubmitting ? t("forms.unified_activity.adding") : t("forms.unified_activity.add_note")}
               </Button>
             </div>
           </TabsContent>
@@ -207,7 +209,7 @@ export function UnifiedActivityArea({
           <TabsContent value="reminder" className="space-y-4 mt-4">
             <div className="space-y-3">
               <Input
-                placeholder="What would you like to be reminded about?"
+                placeholder={t("forms.unified_activity.reminder_placeholder")}
                 value={reminderContent}
                 onChange={(e) => setReminderContent(e.target.value)}
               />
@@ -223,7 +225,7 @@ export function UnifiedActivityArea({
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {reminderDate ? format(reminderDate, "MMM d, yyyy") : "Pick date"}
+                      {reminderDate ? format(reminderDate, "MMM d, yyyy") : t("forms.unified_activity.pick_date")}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
@@ -249,10 +251,10 @@ export function UnifiedActivityArea({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="call">Call</SelectItem>
-                  <SelectItem value="email">Email</SelectItem>
-                  <SelectItem value="task">Task</SelectItem>
-                  <SelectItem value="follow_up">Follow Up</SelectItem>
+                  <SelectItem value="call">{t("forms.activity.types.call")}</SelectItem>
+                  <SelectItem value="email">{t("forms.activity.types.email")}</SelectItem>
+                  <SelectItem value="task">{t("forms.activity.types.task")}</SelectItem>
+                  <SelectItem value="follow_up">{t("forms.activity.types.follow_up")}</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -263,7 +265,7 @@ export function UnifiedActivityArea({
                 className="w-full"
               >
                 <Plus className="h-4 w-4 mr-2" />
-                {isSubmitting ? "Creating..." : "Create Reminder"}
+                {isSubmitting ? t("forms.unified_activity.creating") : t("forms.unified_activity.create_reminder")}
               </Button>
             </div>
           </TabsContent>
@@ -271,7 +273,7 @@ export function UnifiedActivityArea({
           <TabsContent value="todo" className="space-y-4 mt-4">
             <div className="space-y-3">
               <Input
-                placeholder="Add a todo item for this project..."
+                placeholder={t("forms.unified_activity.add_todo_placeholder")}
                 value={todoContent}
                 onChange={(e) => setTodoContent(e.target.value)}
                 onKeyDown={(e) => {
@@ -288,7 +290,7 @@ export function UnifiedActivityArea({
                 className="w-full"
               >
                 <Plus className="h-4 w-4 mr-2" />
-                {isSubmitting ? "Adding..." : "Add Todo"}
+                {isSubmitting ? t("forms.unified_activity.adding") : t("forms.unified_activity.add_todo")}
               </Button>
             </div>
           </TabsContent>

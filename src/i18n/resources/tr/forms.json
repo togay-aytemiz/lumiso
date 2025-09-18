@@ -442,5 +442,44 @@
     "error_adding_note": "Not eklenirken hata",
     "error_creating_reminder": "Hatırlatıcı oluşturulurken hata",
     "error_adding_todo": "Yapılacak eklenirken hata"
+  },
+  "project_preview": {
+    "view_full_details": "Tüm Detayları Görüntüle",
+    "archived": "Arşivlendi",
+    "progress": "İlerleme",
+    "status": "Durum",
+    "payments": "Ödemeler",
+    "paid": "Ödendi",
+    "total": "Toplam",
+    "remaining": "Kalan",
+    "no_tasks_yet": "Henüz görev yok",
+    "tasks": "görev",
+    "client_information": "Müşteri Bilgileri",
+    "quick_actions": "Hızlı İşlemler",
+    "schedule_session": "Seans Planla",
+    "add_payment": "Ödeme Ekle",
+    "created": "Oluşturuldu",
+    "updated": "Güncellendi"
+  },
+  "client_details": {
+    "name": "Ad:",
+    "email": "E-posta:",
+    "phone": "Telefon:",
+    "notes": "Notlar:",
+    "created_on": "Oluşturulma tarihi",
+    "show_more": "Daha fazla göster",
+    "show_less": "Daha az göster",
+    "whatsapp": "WhatsApp",
+    "call": "Ara",
+    "email_action": "E-posta"
+  },
+  "filter_bar": {
+    "show_completed": "Tamamlananları Göster",
+    "filters": "Filtreler",
+    "status": "Durum",
+    "date_range": "Tarih Aralığı",
+    "options": "Seçenekler",
+    "clear_all": "Tümünü temizle",
+    "apply": "Uygula"
   }
 }

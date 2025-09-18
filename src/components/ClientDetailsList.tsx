@@ -4,6 +4,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { MessageCircle, Phone, Mail } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 interface ClientDetailsListProps {
   name?: string | null;
@@ -46,6 +47,7 @@ export function ClientDetailsList({ name, email, phone, notes, createdAt, clicka
   const [notesExpanded, setNotesExpanded] = useState(false);
   const [isNotesTruncatable, setIsNotesTruncatable] = useState(false);
   const notesRef = useRef<HTMLDivElement>(null);
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (!clampNotes) { setIsNotesTruncatable(false); return; }
@@ -65,7 +67,7 @@ export function ClientDetailsList({ name, email, phone, notes, createdAt, clicka
       <div className="space-y-1">
         <TooltipProvider delayDuration={200}>
           <div className="flex items-baseline min-w-0">
-            <span className="text-xs text-muted-foreground flex-shrink-0">Name:</span>
+            <span className="text-xs text-muted-foreground flex-shrink-0">{t("forms.client_details.name")}</span>
             {(() => { const v = (name && name.trim()) ? name : null; return v ? (
               clickableNameHref ? (
                 <Button
@@ -96,7 +98,7 @@ export function ClientDetailsList({ name, email, phone, notes, createdAt, clicka
           </div>
 
           <div className="flex items-baseline min-w-0">
-            <span className="text-xs text-muted-foreground flex-shrink-0">Email:</span>
+            <span className="text-xs text-muted-foreground flex-shrink-0">{t("forms.client_details.email")}</span>
             {(() => { const v = (email && email.trim()) ? email : null; return v ? (
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -110,7 +112,7 @@ export function ClientDetailsList({ name, email, phone, notes, createdAt, clicka
           </div>
 
           <div className="flex items-baseline min-w-0">
-            <span className="text-xs text-muted-foreground flex-shrink-0">Phone:</span>
+            <span className="text-xs text-muted-foreground flex-shrink-0">{t("forms.client_details.phone")}</span>
             {(() => { const v = normalized ? normalized.e164 : ((phone && phone.trim()) ? phone : null); return v ? (
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -124,7 +126,7 @@ export function ClientDetailsList({ name, email, phone, notes, createdAt, clicka
           </div>
 
           <div className="flex items-start min-w-0">
-            <span className="text-xs text-muted-foreground mt-[2px] flex-shrink-0">Notes:</span>
+            <span className="text-xs text-muted-foreground mt-[2px] flex-shrink-0">{t("forms.client_details.notes")}</span>
             {notes ? (
               <div className="ml-1 flex-1 min-w-0">
                 <div className="relative">
@@ -144,7 +146,7 @@ export function ClientDetailsList({ name, email, phone, notes, createdAt, clicka
                     className="text-xs text-muted-foreground underline underline-offset-4 mt-1"
                     onClick={() => setNotesExpanded((v) => !v)}
                   >
-                    {notesExpanded ? "Show less" : "Show more"}
+                    {notesExpanded ? t("forms.client_details.show_less") : t("forms.client_details.show_more")}
                   </button>
                 )}
               </div>
@@ -159,7 +161,7 @@ export function ClientDetailsList({ name, email, phone, notes, createdAt, clicka
       {createdAt && (
         <div className="mt-3 text-center">
           <span className="text-[10px] text-muted-foreground/60 font-normal">
-            Created on {new Date(createdAt).toLocaleDateString('tr-TR', { 
+            {t("forms.client_details.created_on")} {new Date(createdAt).toLocaleDateString('tr-TR', { 
               year: 'numeric', 
               month: 'short', 
               day: 'numeric' 
@@ -182,7 +184,7 @@ export function ClientDetailsList({ name, email, phone, notes, createdAt, clicka
                   <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-muted">
                     <MessageCircle className="h-4 w-4" />
                   </span>
-                  WhatsApp
+                  {t("forms.client_details.whatsapp")}
                 </a>
               </Button>
             )}
@@ -192,7 +194,7 @@ export function ClientDetailsList({ name, email, phone, notes, createdAt, clicka
                   <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-muted">
                     <Phone className="h-4 w-4" />
                   </span>
-                  Call
+                  {t("forms.client_details.call")}
                 </a>
               </Button>
             )}
@@ -202,7 +204,7 @@ export function ClientDetailsList({ name, email, phone, notes, createdAt, clicka
                   <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-muted">
                     <Mail className="h-4 w-4" />
                   </span>
-                  Email
+                  {t("forms.client_details.email_action")}
                 </a>
               </Button>
             )}

@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Filter, X } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useTranslation } from "react-i18next";
 
 interface FilterOption {
   key: string;
@@ -58,6 +59,7 @@ export function FilterBar({
 }: FilterBarProps) {
   const isMobile = useIsMobile();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const { t } = useTranslation();
   
   // Calculate active filter count for badge
   const getActiveFilterCount = () => {
@@ -96,7 +98,7 @@ export function FilterBar({
       {/* Status Filter */}
       {statusOptions && onStatusChange && (
         <div className="space-y-3">
-          <Label className="text-sm font-medium">Status</Label>
+          <Label className="text-sm font-medium">{t("forms.filter_bar.status")}</Label>
           <Select value={activeStatus} onValueChange={onStatusChange}>
             <SelectTrigger>
               <SelectValue />
@@ -115,7 +117,7 @@ export function FilterBar({
       {/* Date Filters */}
       {allDateFilters && onDateFilterChange && (
         <div className="space-y-3">
-          <Label className="text-sm font-medium">Date Range</Label>
+          <Label className="text-sm font-medium">{t("forms.filter_bar.date_range")}</Label>
           <div className="grid grid-cols-2 gap-2">
             {allDateFilters.map((option) => (
               <Button
@@ -140,10 +142,10 @@ export function FilterBar({
       {/* Show Completed Toggle */}
       {onShowCompletedChange && (
         <div className="space-y-3">
-          <Label className="text-sm font-medium">Options</Label>
+          <Label className="text-sm font-medium">{t("forms.filter_bar.options")}</Label>
           <div className="flex items-center justify-between">
             <Label htmlFor="show-completed" className="text-sm">
-              {showCompletedLabel}
+              {showCompletedLabel || t("forms.filter_bar.show_completed")}
             </Label>
             <Switch
               id="show-completed"
@@ -189,7 +191,7 @@ export function FilterBar({
               <SheetTrigger asChild>
                 <Button variant="outline" size="sm" className="relative flex-shrink-0">
                   <Filter className="h-4 w-4" />
-                  <span className="ml-1">Filters</span>
+                  <span className="ml-1">{t("forms.filter_bar.filters")}</span>
                   {activeFilterCount > 0 && (
                     <Badge 
                       variant="destructive" 
@@ -202,17 +204,17 @@ export function FilterBar({
               </SheetTrigger>
               <SheetContent side="bottom" className="max-h-[80vh]">
                 <SheetHeader>
-                  <SheetTitle>Filters</SheetTitle>
+                  <SheetTitle>{t("forms.filter_bar.filters")}</SheetTitle>
                 </SheetHeader>
                 <div className="py-6">
                   <FilterContent />
                 </div>
                 <SheetFooter className="gap-2">
                   <Button variant="ghost" onClick={handleClearFilters} className="flex-1">
-                    Clear all
+                    {t("forms.filter_bar.clear_all")}
                   </Button>
                   <Button onClick={handleApplyFilters} className="flex-1">
-                    Apply
+                    {t("forms.filter_bar.apply")}
                   </Button>
                 </SheetFooter>
               </SheetContent>

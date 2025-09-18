@@ -356,5 +356,44 @@
     "default_addons_tooltip": "Default Add-ons:",
     "no_services_selected": "No services selected",
     "unknown_service": "Unknown Service"
+  },
+  "project_preview": {
+    "view_full_details": "View Full Details",
+    "archived": "Archived",
+    "progress": "Progress",
+    "status": "Status",
+    "payments": "Payments",
+    "paid": "Paid",
+    "total": "Total",
+    "remaining": "Remaining",
+    "no_tasks_yet": "No tasks yet",
+    "tasks": "tasks",
+    "client_information": "Client Information",
+    "quick_actions": "Quick Actions",
+    "schedule_session": "Schedule Session",
+    "add_payment": "Add Payment",
+    "created": "Created",
+    "updated": "Updated"
+  },
+  "client_details": {
+    "name": "Name:",
+    "email": "Email:",
+    "phone": "Phone:",
+    "notes": "Notes:",
+    "created_on": "Created on",
+    "show_more": "Show more",
+    "show_less": "Show less",
+    "whatsapp": "WhatsApp",
+    "call": "Call",
+    "email_action": "Email"
+  },
+  "filter_bar": {
+    "show_completed": "Show Completed",
+    "filters": "Filters",
+    "status": "Status",
+    "date_range": "Date Range",
+    "options": "Options",
+    "clear_all": "Clear all",
+    "apply": "Apply"
   }
 }

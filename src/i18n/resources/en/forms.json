@@ -395,5 +395,21 @@
     "options": "Options",
     "clear_all": "Clear all",
     "apply": "Apply"
+  },
+  "template_builder": {
+    "title": "Template Editor",
+    "description": "Add and customize blocks to build your template",
+    "add_blocks": "Add blocks to build your template",
+    "hello_customer": "Hello {{name}}! 👋",
+    "excited_message": "We're excited to capture your special moments",
+    "looking_forward": "Looking forward to our session! 🎉"
+  },
+  "social_channels": {
+    "no_channels": "No social channels added yet",
+    "add_links_description": "Add your social media links to display in email footers",
+    "add_platform": "Add Platform"
+  },
+  "kanban": {
+    "add_project": "Add Project"
   }
 }

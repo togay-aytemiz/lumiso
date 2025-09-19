@@ -5,6 +5,7 @@ import { Plus, GripVertical, Eye, EyeOff } from "lucide-react";
 import { TemplateBlock, BlockData, TextBlockData, SessionDetailsBlockData, CTABlockData, ImageBlockData, FooterBlockData } from "@/types/templateBuilder";
 import { BlockEditor } from "./BlockEditor";
 import { AddBlockSheet } from "./AddBlockSheet";
+import { useTranslation } from 'react-i18next';
 
 import { cn } from "@/lib/utils";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
@@ -130,6 +131,7 @@ export const OptimizedTemplateEditor = React.memo(({
   blocks, 
   onBlocksChange
 }: OptimizedTemplateEditorProps) => {
+  const { t } = useTranslation('forms');
   const [activeBlock, setActiveBlock] = useState<string | null>(null);
   const [showAddBlock, setShowAddBlock] = useState(false);
 
@@ -237,8 +239,8 @@ export const OptimizedTemplateEditor = React.memo(({
       {/* Header */}
       <div className="border-b px-6 py-4">
         <div>
-          <h2 className="font-semibold">Template Editor</h2>
-          <p className="text-sm text-muted-foreground">Add and customize blocks to build your template</p>
+          <h2 className="font-semibold">{t('template_builder.title')}</h2>
+          <p className="text-sm text-muted-foreground">{t('template_builder.description')}</p>
         </div>
       </div>
 

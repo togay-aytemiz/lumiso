@@ -4,6 +4,7 @@ import { useOrganization } from "@/contexts/OrganizationContext";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { SocialChannel, useOrganizationSettings } from "@/hooks/useOrganizationSettings";
+import { useTranslation } from 'react-i18next';
 
 interface EmailPreviewProps {
   blocks: TemplateBlock[];
@@ -14,6 +15,7 @@ interface EmailPreviewProps {
 }
 
 export function EmailPreview({ blocks, mockData, device, emailSubject, preheader }: EmailPreviewProps) {
+  const { t } = useTranslation('forms');
   const { activeOrganization } = useOrganization();
   const [organizationSettings, setOrganizationSettings] = useState<any>(null);
 
@@ -88,9 +90,9 @@ export function EmailPreview({ blocks, mockData, device, emailSubject, preheader
 
         {blocks.length === 0 && (
           <div className="text-center py-12 text-muted-foreground">
-            <h3 className="font-semibold mb-2">Hello {mockData.customer_name}! 👋</h3>
-            <p>We're excited to capture your special moments</p>
-            <p className="mt-8 text-sm">Add blocks to build your template</p>
+            <h3 className="font-semibold mb-2">{t('template_builder.hello_customer', { name: mockData.customer_name })}</h3>
+            <p>{t('template_builder.excited_message')}</p>
+            <p className="mt-8 text-sm">{t('template_builder.add_blocks')}</p>
           </div>
         )}
       </div>

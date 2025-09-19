@@ -7,6 +7,7 @@ import { BlockEditor } from "./BlockEditor";
 import { AddBlockSheet } from "./AddBlockSheet";
 import { cn } from "@/lib/utils";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
+import { useTranslation } from 'react-i18next';
 
 interface TemplateEditorProps {
   blocks: TemplateBlock[];
@@ -14,6 +15,7 @@ interface TemplateEditorProps {
 }
 
 export function TemplateEditor({ blocks, onBlocksChange }: TemplateEditorProps) {
+  const { t } = useTranslation('forms');
   const [activeBlock, setActiveBlock] = useState<string | null>(null);
   const [showAddBlock, setShowAddBlock] = useState(false);
 
@@ -92,8 +94,8 @@ export function TemplateEditor({ blocks, onBlocksChange }: TemplateEditorProps) 
     <div className="h-full flex flex-col">
       {/* Header */}
       <div className="border-b px-6 py-4">
-        <h2 className="font-semibold">Template Editor</h2>
-        <p className="text-sm text-muted-foreground">Add and customize blocks to build your template</p>
+        <h2 className="font-semibold">{t('template_builder.title')}</h2>
+        <p className="text-sm text-muted-foreground">{t('template_builder.description')}</p>
       </div>
 
       {/* Blocks List */}

@@ -20,6 +20,7 @@ import {
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { SocialChannel } from '@/hooks/useOrganizationSettings';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 interface SocialChannelsSectionProps {
   socialChannels: Record<string, SocialChannel>;
@@ -38,6 +39,7 @@ const PREDEFINED_PLATFORMS = [
 ];
 
 export function SocialChannelsSection({ socialChannels, onUpdate, isDirty }: SocialChannelsSectionProps) {
+  const { t } = useTranslation('forms');
   const [customPlatformName, setCustomPlatformName] = useState('');
 
   const addPredefinedPlatform = (platformKey: string) => {
@@ -245,15 +247,15 @@ export function SocialChannelsSection({ socialChannels, onUpdate, isDirty }: Soc
           {channelEntries.length === 0 && (
             <div className="text-center py-6 text-muted-foreground">
               <Globe className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">No social channels added yet</p>
-              <p className="text-xs">Add your social media links to display in email footers</p>
+              <p className="text-sm">{t('social_channels.no_channels')}</p>
+              <p className="text-xs">{t('social_channels.add_links_description')}</p>
             </div>
           )}
 
           {/* Add Platform Buttons */}
           {availablePlatforms.length > 0 && (
             <div>
-              <Label className="text-sm font-medium mb-2 block">Add Platform</Label>
+              <Label className="text-sm font-medium mb-2 block">{t('social_channels.add_platform')}</Label>
               <div className="flex flex-wrap gap-2">
                 {availablePlatforms.map((platform) => {
                   const Icon = platform.icon;

@@ -14,6 +14,7 @@ import { KanbanLoadingSkeleton } from "@/components/ui/loading-presets";
 import { useNotificationTriggers } from "@/hooks/useNotificationTriggers";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { useKanbanSettings } from "@/hooks/useKanbanSettings";
+import { useTranslation } from 'react-i18next';
 
 interface ProjectStatus {
   id: string;
@@ -125,6 +126,7 @@ const ProjectKanbanBoard = ({
   onProjectUpdate,
   onQuickView
 }: ProjectKanbanBoardProps) => {
+  const { t } = useTranslation('forms');
   const [statuses, setStatuses] = useState<ProjectStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedStatusId, setSelectedStatusId] = useState<string | null>(null);
@@ -425,7 +427,7 @@ const ProjectKanbanBoard = ({
           setSelectedStatusId(null);
         }}
       >
-        <Button id="kanban-add-project-trigger" className="hidden">Add Project</Button>
+        <Button id="kanban-add-project-trigger" className="hidden">{t('kanban.add_project')}</Button>
       </EnhancedProjectDialog>
 
       <ViewProjectDialog

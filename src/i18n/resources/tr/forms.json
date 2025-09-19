@@ -481,5 +481,21 @@
     "options": "Seçenekler",
     "clear_all": "Tümünü temizle",
     "apply": "Uygula"
+  },
+  "template_builder": {
+    "title": "Şablon Editörü",
+    "description": "Şablonunuzu oluşturmak için blok ekleyin ve özelleştirin",
+    "add_blocks": "Şablonunuzu oluşturmak için blok ekleyin",
+    "hello_customer": "Merhaba {{name}}! 👋",
+    "excited_message": "Özel anlarınızı yakalamak için heyecanlıyız",
+    "looking_forward": "Seansımızı dört gözle bekliyoruz! 🎉"
+  },
+  "social_channels": {
+    "no_channels": "Henüz sosyal kanal eklenmedi",
+    "add_links_description": "E-posta alt bilgilerinde görüntülemek için sosyal medya bağlantılarınızı ekleyin",
+    "add_platform": "Platform Ekle"
+  },
+  "kanban": {
+    "add_project": "Proje Ekle"
   }
 }

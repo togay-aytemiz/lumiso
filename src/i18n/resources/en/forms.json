@@ -411,5 +411,31 @@
   },
   "kanban": {
     "add_project": "Add Project"
+  },
+  "todos": {
+    "title": "Project Todos",
+    "loading": "Loading todos...",
+    "add_todo": "Add todo",
+    "enter_todo": "Enter todo...",
+    "no_todos": "No todos yet. Add one above to get started!",
+    "todo_added": "Todo added successfully",
+    "todo_updated": "Todo updated successfully",
+    "todo_deleted": "Todo deleted successfully",
+    "error_load": "Failed to load todos",
+    "error_add": "Failed to add todo",
+    "error_update": "Failed to update todo",
+    "error_delete": "Failed to delete todo",
+    "completed_status": "completed"
+  },
+  "progress": {
+    "tasks_complete": "Tasks Complete",
+    "todos_completed": "todos completed"
+  },
+  "kanban_settings": {
+    "todo_progress": "Todo Progress",
+    "todo_progress_description": "Show todo progress bars on cards"
+  },
+  "project_sheet": {
+    "todos_tab": "Todos"
   }
 }

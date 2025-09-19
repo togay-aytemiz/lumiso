@@ -18,6 +18,7 @@ import { ProjectStatusBadge } from "./ProjectStatusBadge";
 import { SimpleProjectTypeSelect } from "./SimpleProjectTypeSelect";
 import { ProjectPaymentsSection } from "./ProjectPaymentsSection";
 import ProjectDetailsLayout from "@/components/project-details/ProjectDetailsLayout";
+import { useFormsTranslation } from '@/hooks/useTypedTranslation';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { UnifiedClientDetails } from "@/components/UnifiedClientDetails";
 // AssigneesList removed - single user organization
@@ -96,7 +97,7 @@ export function ProjectSheetView({
   const [localStatusId, setLocalStatusId] = useState<string | null | undefined>(null);
   const { toast } = useToast();
   const isMobile = useIsMobile();
-  const { t } = useTranslation(['common', 'messages']);
+  const { t } = useFormsTranslation();
 
   const fetchProjectSessions = async () => {
     if (!project) return;
@@ -692,7 +693,7 @@ export function ProjectSheetView({
             }, 
             {
               id: 'todos',
-              title: 'Todos',
+              title: t("project_sheet.todos_tab"),
               content: <ProjectTodoListEnhanced projectId={project!.id} />
             }
           ]} 

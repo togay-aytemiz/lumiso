@@ -5,6 +5,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useKanbanSettings } from "@/hooks/useKanbanSettings";
+import { useFormsTranslation } from '@/hooks/useTypedTranslation';
 
 interface KanbanSettingsSheetProps {
   children?: React.ReactNode;
@@ -12,6 +13,7 @@ interface KanbanSettingsSheetProps {
 
 export function KanbanSettingsSheet({ children }: KanbanSettingsSheetProps) {
   const { settings, updateSettings, isUpdating } = useKanbanSettings();
+  const { t } = useFormsTranslation();
 
   const handleToggle = (key: keyof typeof settings) => {
     updateSettings({ [key]: !settings[key] });
@@ -36,8 +38,8 @@ export function KanbanSettingsSheet({ children }: KanbanSettingsSheetProps) {
     
     {
       key: 'kanban_show_todo_progress' as const,
-      label: 'Todo Progress',
-      description: 'Show todo progress bars on cards',
+      label: t("kanban_settings.todo_progress"),
+      description: t("kanban_settings.todo_progress_description"),
     },
     {
       key: 'kanban_show_session_count' as const,

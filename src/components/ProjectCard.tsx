@@ -10,6 +10,7 @@ import { useProjectPayments } from "@/hooks/useProjectPayments";
 import { ProjectStatusBadge } from "@/components/ProjectStatusBadge";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
+import { useFormsTranslation } from '@/hooks/useTypedTranslation';
 
 interface Project {
   id: string;
@@ -32,6 +33,7 @@ interface ProjectCardProps {
 export function ProjectCard({ project, onView, refreshTrigger, onQuickView }: ProjectCardProps) {
   const { progress, loading } = useProjectProgress(project.id, refreshTrigger);
   const { paymentSummary, loading: paymentsLoading } = useProjectPayments(project.id, refreshTrigger);
+  const { t } = useFormsTranslation();
 
   const [isArchived, setIsArchived] = useState(false);
   useEffect(() => {
@@ -91,7 +93,7 @@ export function ProjectCard({ project, onView, refreshTrigger, onQuickView }: Pr
             {!loading && progress.total > 0 && (
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <CheckCircle2 className="h-3 w-3 flex-shrink-0" />
-                <span>{progress.completed}/{progress.total} todos completed</span>
+                <span>{progress.completed}/{progress.total} {t("progress.todos_completed")}</span>
               </div>
             )}
 

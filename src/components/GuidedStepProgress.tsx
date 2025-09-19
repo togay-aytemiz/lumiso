@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Progress } from "@/components/ui/progress";
+import { useFormsTranslation } from '@/hooks/useTypedTranslation';
 
 interface GuidedStepProgressProps {
   currentValue: number;
@@ -15,6 +16,7 @@ export function GuidedStepProgress({
   animate = true 
 }: GuidedStepProgressProps) {
   const [displayValue, setDisplayValue] = useState(currentValue);
+  const { t } = useFormsTranslation();
 
   useEffect(() => {
     if (!animate) {
@@ -54,7 +56,7 @@ export function GuidedStepProgress({
       <div className="text-sm text-muted-foreground">
         <span className="tabular-nums font-medium text-foreground">
           {Math.round(displayValue)}/{totalSteps}
-        </span> Tasks Complete
+        </span> {t("progress.tasks_complete")}
       </div>
     </div>
   );

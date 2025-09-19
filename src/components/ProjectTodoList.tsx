@@ -7,6 +7,7 @@ import { ProgressBar } from '@/components/ui/progress-bar';
 import { Trash2, Plus, Check } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useFormsTranslation } from '@/hooks/useTypedTranslation';
 
 interface Todo {
   id: string;
@@ -27,6 +28,7 @@ export const ProjectTodoList: React.FC<ProjectTodoListProps> = ({ projectId }) =
   const [editingTodoId, setEditingTodoId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
   const { toast } = useToast();
+  const { t } = useFormsTranslation();
 
   useEffect(() => {
     fetchTodos();
@@ -46,7 +48,7 @@ export const ProjectTodoList: React.FC<ProjectTodoListProps> = ({ projectId }) =
       console.error('Error fetching todos:', error);
       toast({
         title: "Error",
-        description: "Failed to load todos",
+        description: t("todos.error_load"),
         variant: "destructive",
       });
     } finally {
@@ -79,13 +81,13 @@ export const ProjectTodoList: React.FC<ProjectTodoListProps> = ({ projectId }) =
       
       toast({
         title: "Success",
-        description: "Todo added successfully",
+        description: t("todos.todo_added"),
       });
     } catch (error) {
       console.error('Error adding todo:', error);
       toast({
         title: "Error",
-        description: "Failed to add todo",
+        description: t("todos.error_add"),
         variant: "destructive",
       });
     }
@@ -107,7 +109,7 @@ export const ProjectTodoList: React.FC<ProjectTodoListProps> = ({ projectId }) =
       console.error('Error updating todo:', error);
       toast({
         title: "Error",
-        description: "Failed to update todo",
+        description: t("todos.error_update"),
         variant: "destructive",
       });
     }
@@ -126,13 +128,13 @@ export const ProjectTodoList: React.FC<ProjectTodoListProps> = ({ projectId }) =
       
       toast({
         title: "Success",
-        description: "Todo deleted successfully",
+        description: t("todos.todo_deleted"),
       });
     } catch (error) {
       console.error('Error deleting todo:', error);
       toast({
         title: "Error",
-        description: "Failed to delete todo",
+        description: t("todos.error_delete"),
         variant: "destructive",
       });
     }
@@ -163,13 +165,13 @@ export const ProjectTodoList: React.FC<ProjectTodoListProps> = ({ projectId }) =
       
       toast({
         title: "Success",
-        description: "Todo updated successfully",
+        description: t("todos.todo_updated"),
       });
     } catch (error) {
       console.error('Error updating todo:', error);
       toast({
         title: "Error",
-        description: "Failed to update todo",
+        description: t("todos.error_update"),
         variant: "destructive",
       });
     }
@@ -188,10 +190,10 @@ export const ProjectTodoList: React.FC<ProjectTodoListProps> = ({ projectId }) =
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Project Todos</CardTitle>
+          <CardTitle className="text-lg">{t("todos.title")}</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-sm text-muted-foreground">Loading todos...</div>
+          <div className="text-sm text-muted-foreground">{t("todos.loading")}</div>
         </CardContent>
       </Card>
     );
@@ -201,7 +203,7 @@ export const ProjectTodoList: React.FC<ProjectTodoListProps> = ({ projectId }) =
     <Card>
       <CardHeader>
         <CardTitle className="text-lg">
-          Project Todos {totalCount > 0 && `(${completedCount}/${totalCount})`}
+          {t("todos.title")} {totalCount > 0 && `(${completedCount}/${totalCount})`}
         </CardTitle>
         {totalCount > 0 && (
           <div className="mt-3">
@@ -222,7 +224,7 @@ export const ProjectTodoList: React.FC<ProjectTodoListProps> = ({ projectId }) =
             <Input
               value={newTodoContent}
               onChange={(e) => setNewTodoContent(e.target.value)}
-              placeholder="Enter todo..."
+              placeholder={t("todos.enter_todo")}
               className="flex-1"
               autoFocus
               onKeyDown={(e) => {
@@ -254,14 +256,14 @@ export const ProjectTodoList: React.FC<ProjectTodoListProps> = ({ projectId }) =
             className="flex items-center gap-2 w-full p-3 text-left text-muted-foreground hover:bg-muted/50 rounded-lg border border-dashed transition-colors"
           >
             <Plus className="h-4 w-4" />
-            <span>Add todo</span>
+            <span>{t("todos.add_todo")}</span>
           </button>
         )}
 
         {/* Todo List */}
         {todos.length === 0 ? (
           <div className="text-sm text-muted-foreground text-center py-4">
-            No todos yet. Add one above to get started!
+            {t("todos.no_todos")}
           </div>
         ) : (
           <div className="space-y-1">

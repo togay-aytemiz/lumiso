@@ -497,5 +497,31 @@
   },
   "kanban": {
     "add_project": "Proje Ekle"
+  },
+  "todos": {
+    "title": "Proje Görevleri",
+    "loading": "Görevler yükleniyor...",
+    "add_todo": "Görev ekle",
+    "enter_todo": "Görev girin...",
+    "no_todos": "Henüz görev yok. Başlamak için yukarıdan bir tane ekleyin!",
+    "todo_added": "Görev başarıyla eklendi",
+    "todo_updated": "Görev başarıyla güncellendi",
+    "todo_deleted": "Görev başarıyla silindi",
+    "error_load": "Görevler yüklenemedi",
+    "error_add": "Görev eklenemedi",
+    "error_update": "Görev güncellenemedi",
+    "error_delete": "Görev silinemedi",
+    "completed_status": "tamamlandı"
+  },
+  "progress": {
+    "tasks_complete": "Görev Tamamlandı",
+    "todos_completed": "görev tamamlandı"
+  },
+  "kanban_settings": {
+    "todo_progress": "Görev İlerlemesi",
+    "todo_progress_description": "Kartlarda görev ilerleme çubuklarını göster"
+  },
+  "project_sheet": {
+    "todos_tab": "Görevler"
   }
 }

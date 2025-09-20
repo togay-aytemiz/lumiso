@@ -517,7 +517,7 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
 
   const footerActions = [
     {
-      label: "Cancel",
+      label: tForms('buttons.cancel'),
       onClick: () => {
         resetForm();
         setOpen(false);
@@ -526,7 +526,7 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
       disabled: loading
     },
     {
-      label: loading ? "Creating..." : "Create Project",
+      label: loading ? tForms('buttons.creating') : tForms('buttons.createProject'),
       onClick: handleSubmit,
       disabled: loading || !projectData.name.trim() || (!isNewLead && !selectedLeadId) || (isNewLead && !newLeadData.name.trim()) || !projectData.projectTypeId,
       loading: loading
@@ -598,9 +598,9 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
                           }
                         </div>
                       ) : loadingLeads ? (
-                        "Loading clients..."
+                        tForms('placeholders.loadingClients')
                       ) : (
-                        "Search and select a client..."
+                        tForms('placeholders.select_client_placeholder')
                       )}
                       <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
@@ -611,7 +611,7 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
                           <div className="relative">
                             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                             <Input
-                              placeholder="Search by name..."
+                              placeholder={tForms('placeholders.searchByName')}
                               value={searchTerm}
                               onChange={(e) => setSearchTerm(e.target.value)}
                               className="pl-10"
@@ -622,11 +622,11 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
                         <div className="overflow-y-auto max-h-48">
                           {loadingLeads ? (
                             <div className="p-4 text-center text-sm text-muted-foreground">
-                              Loading clients...
+                              {tForms('placeholders.loadingClients')}
                             </div>
                           ) : filteredLeads.length === 0 ? (
                             <div className="p-4 text-center text-sm text-muted-foreground">
-                              {searchTerm ? 'No clients match your search' : 'No active clients found'}
+                              {searchTerm ? tForms('placeholders.noClientsMatch') : tForms('placeholders.noActiveClients')}
                             </div>
                           ) : (
                             filteredLeads.map((lead) => (
@@ -679,7 +679,7 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
                   onChange={() => setIsNewLead(true)}
                   className="h-4 w-4"
                 />
-                <Label htmlFor="new-lead">Create new client</Label>
+                <Label htmlFor="new-lead">{tForms('buttons.createNewClient')}</Label>
               </div>
 
               {isNewLead && (
@@ -690,7 +690,7 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
                       id="new-name"
                       value={newLeadData.name}
                       onChange={(e) => handleNewLeadDataChange("name", e.target.value)}
-                      placeholder="Enter client name"
+                      placeholder={tForms('placeholders.enterClientName')}
                     />
                   </div>
                   <div className="space-y-2">
@@ -700,7 +700,7 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
                       type="email"
                       value={newLeadData.email}
                       onChange={(e) => handleNewLeadDataChange("email", e.target.value)}
-                      placeholder="Enter email address"
+                      placeholder={tForms('placeholders.enterEmail')}
                     />
                   </div>
                   <div className="space-y-2">
@@ -709,7 +709,7 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
                       id="new-phone"
                       value={newLeadData.phone}
                       onChange={(e) => handleNewLeadDataChange("phone", e.target.value)}
-                      placeholder="Enter phone number"
+                      placeholder={tForms('placeholders.enterPhone')}
                     />
                   </div>
                   <div className="space-y-2">
@@ -735,7 +735,7 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
                 id="project-name"
                 value={projectData.name}
                 onChange={(e) => handleProjectDataChange("name", e.target.value)}
-                placeholder="Enter project name"
+                placeholder={tForms('placeholders.enterProjectName')}
                 disabled={loading}
               />
             </div>
@@ -1026,7 +1026,7 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
                   id="project-description"
                   value={projectData.description}
                   onChange={(e) => handleProjectDataChange("description", e.target.value)}
-                  placeholder="Enter project description (optional)"
+                  placeholder={tForms('placeholders.enterProjectDescription')}
                   rows={3}
                   disabled={loading}
                   className="resize-none"
@@ -1051,7 +1051,7 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
                        }}
                        className="h-auto py-1 px-3 text-xs"
                      >
-                       Clear All
+                       {tForms('buttons.clearAll')}
                      </Button>
                      <Button
                        type="button"
@@ -1060,7 +1060,7 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
                        onClick={() => setShowServicesEditor(!showServicesEditor)}
                        className="h-auto py-1 px-2 text-xs"
                      >
-                       {showServicesEditor ? "Done" : "Edit Services"}
+                       {showServicesEditor ? tForms('buttons.done') : tForms('buttons.editServices')}
                      </Button>
                    </div>
                  )}

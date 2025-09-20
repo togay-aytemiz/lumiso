@@ -70,7 +70,12 @@
     "no_results": "Sonuç bulunamadı",
     "search_by_name_or_email": "İsim veya e-posta ile ara...",
     "select_client_placeholder": "Müşteri ara ve seç...",
-    "enter_activity_content": "Faaliyet detaylarını girin..."
+    "enter_activity_content": "Faaliyet detaylarını girin...",
+    "searchByName": "İsim ile ara...",
+    "loadingClients": "Müşteriler yükleniyor...",
+    "noClientsMatch": "Aramanızla eşleşen müşteri bulunamadı",
+    "noActiveClients": "Aktif müşteri bulunamadı",
+    "enterClientName": "Müşteri adı girin"
   },
   "buttons": {
     "cancel": "İptal",
@@ -78,14 +83,21 @@
     "add": "Ekle",
     "edit": "Düzenle",
     "delete": "Sil",
+    "clearAll": "Tümünü Temizle",
+    "done": "Bitti",
+    "editServices": "Hizmetleri Düzenle",
+    "scheduleSession": "Seans Planla",
+    "createProject": "Proje Oluştur",
+    "createNewClient": "Yeni müşteri oluştur",
     "addLead": "Müşteri Adayı Ekle",
     "adding": "Ekleniyor...",
     "saving": "Kaydediliyor...",
     "loading": "Yükleniyor...",
     "updating": "Güncelleniyor...",
-    "updateLead": "Müşteri Adayını Güncelle",
-    "createProject": "Proje Oluştur",
-    "creating": "Oluşturuluyor..."
+    "creating": "Oluşturuluyor...",
+    "scheduling": "Planlanıyor...",
+    "deleting": "Siliniyor...",
+    "updateLead": "Müşteri Adayını Güncelle"
   },
   "dialogs": {
     "addNewLead": "Yeni Müşteri Adayı Ekle",

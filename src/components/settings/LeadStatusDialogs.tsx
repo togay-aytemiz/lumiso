@@ -8,6 +8,7 @@ import { toast } from "@/hooks/use-toast";
 import { Plus } from "lucide-react";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 interface AddLeadStatusDialogProps {
   open: boolean;
@@ -16,6 +17,7 @@ interface AddLeadStatusDialogProps {
 }
 
 export function AddLeadStatusDialog({ open, onOpenChange, onStatusAdded }: AddLeadStatusDialogProps) {
+  const { t } = useTranslation('forms');
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -114,13 +116,13 @@ export function AddLeadStatusDialog({ open, onOpenChange, onStatusAdded }: AddLe
 
   const footerActions = [
     {
-      label: "Cancel",
+      label: t('buttons.cancel'),
       onClick: () => onOpenChange(false),
       variant: "outline" as const,
       disabled: loading
     },
     {
-      label: loading ? "Adding..." : "Add",
+      label: loading ? t('buttons.adding') : t('buttons.add'),
       onClick: handleSubmit,
       disabled: loading || !formData.name.trim(),
       loading: loading
@@ -216,6 +218,7 @@ interface EditLeadStatusDialogProps {
 }
 
 export function EditLeadStatusDialog({ status, open, onOpenChange, onStatusUpdated }: EditLeadStatusDialogProps) {
+  const { t } = useTranslation('forms');
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -343,19 +346,19 @@ export function EditLeadStatusDialog({ status, open, onOpenChange, onStatusUpdat
   const footerActions = [
     // Only show delete for non-system-required statuses  
     ...(!isSystemRequired ? [{
-      label: "Delete",
+      label: t('buttons.delete'),
       onClick: handleDelete,
       variant: "destructive" as const,
       disabled: loading
     }] : []),
     {
-      label: "Cancel",
+      label: t('buttons.cancel'),
       onClick: () => onOpenChange(false),
       variant: "outline" as const,
       disabled: loading
     },
     {
-      label: loading ? "Saving..." : "Save",
+      label: loading ? t('buttons.saving') : t('buttons.save'),
       onClick: handleSubmit,
       disabled: loading || !formData.name.trim(),
       loading: loading

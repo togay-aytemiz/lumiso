@@ -70,7 +70,12 @@
     "no_results": "No results found",
     "search_by_name_or_email": "Search by name or email...",
     "select_client_placeholder": "Search and select a client...",
-    "enter_activity_content": "Enter activity details..."
+    "enter_activity_content": "Enter activity details...",
+    "searchByName": "Search by name...",
+    "loadingClients": "Loading clients...",
+    "noClientsMatch": "No clients match your search",
+    "noActiveClients": "No active clients found",
+    "enterClientName": "Enter client name"
   },
   "buttons": {
     "cancel": "Cancel",
@@ -78,14 +83,21 @@
     "add": "Add",
     "edit": "Edit",
     "delete": "Delete",
+    "clearAll": "Clear All",
+    "done": "Done",
+    "editServices": "Edit Services",
+    "scheduleSession": "Schedule Session",
+    "createProject": "Create Project",
+    "createNewClient": "Create new client",
     "addLead": "Add Lead",
     "adding": "Adding...",
     "saving": "Saving...",
     "loading": "Loading...",
     "updating": "Updating...",
-    "updateLead": "Update Lead",
-    "createProject": "Create Project",
-    "creating": "Creating..."
+    "creating": "Creating...",
+    "scheduling": "Scheduling...",
+    "deleting": "Deleting...",
+    "updateLead": "Update Lead"
   },
   "dialogs": {
     "addNewLead": "Add New Lead",

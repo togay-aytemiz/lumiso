@@ -5,6 +5,7 @@ import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { NavigationGuardDialog } from "@/components/settings/NavigationGuardDialog";
 import { generateSessionName } from "@/lib/sessionUtils";
 import { useSessionForm } from "@/hooks/useSessionForm";
+import { useTranslation } from "react-i18next";
 import { CalendarTimePicker } from "@/components/CalendarTimePicker";
 import { SessionFormFields } from "@/components/SessionFormFields";
 import { getUserLocale, formatLongDate, formatTime } from "@/lib/utils";
@@ -35,6 +36,7 @@ export function SessionSchedulingSheet({
   onOpenChange,
   onSessionScheduled
 }: SessionSchedulingSheetProps) {
+  const { t } = useTranslation('forms');
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [projects, setProjects] = useState<Project[]>([]);
   
@@ -133,13 +135,13 @@ export function SessionSchedulingSheet({
 
   const footerActions = [
     {
-      label: "Cancel",
+      label: t('buttons.cancel'),
       onClick: handleDirtyClose,
       variant: "outline" as const,
       disabled: loading
     },
     {
-      label: loading ? "Scheduling..." : "Schedule Session",
+      label: loading ? t('buttons.scheduling') : t('buttons.scheduleSession'),
       onClick: submitForm,
       disabled: loading || !isValid,
       loading: loading

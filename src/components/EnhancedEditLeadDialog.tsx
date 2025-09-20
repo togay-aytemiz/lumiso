@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Settings } from "lucide-react";
 import { AppSheetModal } from "@/components/ui/app-sheet-modal";
+import { useTranslation } from "react-i18next";
 import {
   Form,
 } from "@/components/ui/form";
@@ -34,21 +35,19 @@ interface EnhancedEditLeadDialogProps {
   onSuccess?: () => void;
 }
 
-import { useTranslation } from "react-i18next";
-
-export function EnhancedEditLeadDialog({ 
+export function EnhancedEditLeadDialog({
   open, 
   onOpenChange, 
   lead,
   onClose, 
   onSuccess 
 }: EnhancedEditLeadDialogProps) {
+  const { t } = useTranslation('forms');
   const { fieldDefinitions, loading: fieldsLoading } = useLeadFieldDefinitions();
   const { fieldValues, loading: valuesLoading, upsertFieldValues } = useLeadFieldValues(lead?.id || "");
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
-  const { t } = useTranslation('forms');
 
   // Create dynamic schema based on field definitions
   const schema = createDynamicLeadSchema(fieldDefinitions);
@@ -199,12 +198,12 @@ export function EnhancedEditLeadDialog({
 
   const footerActions = [
     {
-      label: t('buttons.cancel'),
+      label: t('leadDialog.cancel'),
       onClick: onClose,
       variant: "outline" as const,
     },
     {
-      label: loading ? t('buttons.updating') : t('buttons.updateLead'),
+      label: loading ? t('buttons.updating') : t('leadDialog.updateButton'),
       onClick: form.handleSubmit(onSubmit),
       loading,
       disabled: loading || fieldsLoading || valuesLoading,
@@ -214,7 +213,7 @@ export function EnhancedEditLeadDialog({
   if (fieldsLoading || valuesLoading) {
     return (
       <AppSheetModal
-        title="Edit Lead"
+        title={t('leadDialog.editTitle')}
         isOpen={open}
         onOpenChange={onOpenChange}
         size="lg"
@@ -228,7 +227,7 @@ export function EnhancedEditLeadDialog({
   return (
     <>
       <AppSheetModal
-        title={t('dialogs.editLead')}
+        title={t('leadDialog.editTitle')}
         isOpen={open}
         onOpenChange={onOpenChange}
         size="lg"

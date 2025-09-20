@@ -6,6 +6,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { useTranslation } from "react-i18next";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -39,6 +40,7 @@ export function DynamicLeadFormFields({
   control, 
   visibleOnly = true 
 }: DynamicLeadFormFieldsProps) {
+  const { t } = useTranslation('forms');
   const fieldsToRender = visibleOnly 
     ? fieldDefinitions.filter(field => field.is_visible_in_form)
     : fieldDefinitions;
@@ -52,7 +54,7 @@ export function DynamicLeadFormFields({
         control={control}
         name={fieldName}
         rules={{
-          required: field.is_required ? `${field.label} is required` : false,
+          required: field.is_required ? `${field.label} ${t('dynamicFields.required')}` : false,
         }}
         render={({ field: formField }) => (
           <FormItem>
@@ -75,7 +77,7 @@ export function DynamicLeadFormFields({
       case 'text':
         return (
           <Input
-            placeholder={`Enter ${fieldDef.label.toLowerCase()}`}
+            placeholder={t('dynamicFields.enterField', { field: fieldDef.label.toLowerCase() })}
             {...formField}
           />
         );
@@ -83,7 +85,7 @@ export function DynamicLeadFormFields({
       case 'textarea':
         return (
           <Textarea
-            placeholder={`Enter ${fieldDef.label.toLowerCase()}`} 
+            placeholder={t('dynamicFields.enterField', { field: fieldDef.label.toLowerCase() })}
             rows={3}
             {...formField}
           />
@@ -93,7 +95,7 @@ export function DynamicLeadFormFields({
         return (
           <Input
             type="email"
-            placeholder={`Enter ${fieldDef.label.toLowerCase()}`}
+            placeholder={t('dynamicFields.enterField', { field: fieldDef.label.toLowerCase() })}
             {...formField}
           />
         );
@@ -102,7 +104,7 @@ export function DynamicLeadFormFields({
         return (
           <Input
             type="tel"
-            placeholder={`Enter ${fieldDef.label.toLowerCase()}`}
+            placeholder={t('dynamicFields.enterField', { field: fieldDef.label.toLowerCase() })}
             {...formField}
           />
         );
@@ -111,7 +113,7 @@ export function DynamicLeadFormFields({
         return (
           <Input
             type="number"
-            placeholder={`Enter ${fieldDef.label.toLowerCase()}`}
+            placeholder={t('dynamicFields.enterField', { field: fieldDef.label.toLowerCase() })}
             {...formField}
             onChange={(e) => formField.onChange(e.target.value ? Number(e.target.value) : '')}
           />
@@ -132,7 +134,7 @@ export function DynamicLeadFormFields({
                 {formField.value ? (
                   format(new Date(formField.value), "PPP")
                 ) : (
-                  <span>Pick a date</span>
+                  <span>{t('dynamicFields.pickDate')}</span>
                 )}
               </Button>
             </PopoverTrigger>
@@ -153,7 +155,7 @@ export function DynamicLeadFormFields({
         return (
           <Select onValueChange={formField.onChange} value={formField.value}>
             <SelectTrigger>
-              <SelectValue placeholder={`Select ${fieldDef.label.toLowerCase()}`} />
+              <SelectValue placeholder={t('dynamicFields.selectField', { field: fieldDef.label.toLowerCase() })} />
             </SelectTrigger>
             <SelectContent>
               {options.map((option, index) => (
@@ -181,7 +183,7 @@ export function DynamicLeadFormFields({
       default:
         return (
           <Input
-            placeholder={`Enter ${fieldDef.label.toLowerCase()}`}
+            placeholder={t('dynamicFields.enterField', { field: fieldDef.label.toLowerCase() })}
             {...formField}
           />
         );
@@ -191,7 +193,7 @@ export function DynamicLeadFormFields({
   if (fieldsToRender.length === 0) {
     return (
       <div className="text-center py-4">
-        <p className="text-muted-foreground text-sm">No form fields available</p>
+        <p className="text-muted-foreground text-sm">{t('dynamicFields.noFieldsAvailable')}</p>
       </div>
     );
   }

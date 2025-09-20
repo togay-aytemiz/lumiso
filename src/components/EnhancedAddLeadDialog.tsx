@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus } from "lucide-react";
 import { AppSheetModal } from "@/components/ui/app-sheet-modal";
+import { useTranslation } from "react-i18next";
 import {
   Form,
 } from "@/components/ui/form";
@@ -32,6 +33,7 @@ export function EnhancedAddLeadDialog({
   onClose, 
   onSuccess 
 }: EnhancedAddLeadDialogProps) {
+  const { t } = useTranslation('forms');
   const { fieldDefinitions, loading: fieldsLoading } = useLeadFieldDefinitions();
   const { upsertFieldValues } = useLeadFieldValues("");
   const { toast } = useToast();
@@ -205,7 +207,7 @@ export function EnhancedAddLeadDialog({
 
   const footerActions = [
     {
-      label: "Cancel",
+      label: t('leadDialog.cancel'),
       onClick: onClose,
       variant: "outline" as const,
     },
@@ -234,7 +236,7 @@ export function EnhancedAddLeadDialog({
   return (
     <>
       <AppSheetModal
-        title="Add New Lead"
+        title={t('leadDialog.addTitle')}
         isOpen={open}
         onOpenChange={onOpenChange}
         size="lg"

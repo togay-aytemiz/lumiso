@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Filter, X } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useTranslation } from "react-i18next";
+import { useFormsTranslation } from '@/hooks/useTypedTranslation';
 
 interface FilterOption {
   key: string;
@@ -53,13 +54,17 @@ export function FilterBar({
   onStatusChange,
   showCompleted,
   onShowCompletedChange,
-  showCompletedLabel = "Show Completed",
+  showCompletedLabel,
   isSticky = true,
   className = ""
 }: FilterBarProps) {
+  const { t: tForms } = useFormsTranslation();
   const isMobile = useIsMobile();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const { t } = useTranslation();
+  
+  // Use translation as default if no label provided
+  const completedLabel = showCompletedLabel || tForms('filterBar.showCompleted');
   
   // Calculate active filter count for badge
   const getActiveFilterCount = () => {
@@ -145,7 +150,7 @@ export function FilterBar({
           <Label className="text-sm font-medium">{t("forms.filter_bar.options")}</Label>
           <div className="flex items-center justify-between">
             <Label htmlFor="show-completed" className="text-sm">
-              {showCompletedLabel || t("forms.filter_bar.show_completed")}
+              {completedLabel}
             </Label>
             <Switch
               id="show-completed"

@@ -44,5 +44,8 @@
     "view_all": "View All",
     "see_all_leads": "See All Leads",
     "view_all_sessions": "View All Sessions"
+  },
+  "errors": {
+    "errorFetchingData": "Error fetching data"
   }
 }

@@ -8,6 +8,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { useFormsTranslation } from '@/hooks/useTypedTranslation';
 
 interface TutorialExitGuardDialogProps {
   open: boolean;
@@ -26,18 +27,20 @@ export function TutorialExitGuardDialog({
   onOpenChange,
   isProcessing
 }: TutorialExitGuardDialogProps) {
+  const { t } = useFormsTranslation();
+  
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Exit Tutorial?</AlertDialogTitle>
+          <AlertDialogTitle>{t('tutorial.exitTitle')}</AlertDialogTitle>
           <AlertDialogDescription>
-            You'll return to the Getting Started page without completing this step. You can continue the tutorial later.
+            {t('tutorial.exitMessage')}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter className="gap-2">
           <AlertDialogCancel onClick={onStay}>
-            Stay
+            {t('tutorial.stay')}
           </AlertDialogCancel>
           <AlertDialogAction 
             onClick={onReturnToGettingStarted}
@@ -45,7 +48,7 @@ export function TutorialExitGuardDialog({
             disabled={isProcessing}
             aria-disabled={isProcessing}
           >
-            Return to Getting Started
+            {t('tutorial.returnToGettingStarted')}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

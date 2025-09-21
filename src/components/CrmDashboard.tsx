@@ -134,7 +134,7 @@ const CrmDashboard = () => {
       setActivities(activitiesData || []);
     } catch (error: any) {
       toast({
-        title: "Error fetching data",
+        title: t('errors.errorFetchingData'),
         description: error.message,
         variant: "destructive"
       });

@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import { LeadStatusBadge } from "@/components/LeadStatusBadge";
 import { ProjectStatusBadge } from "@/components/ProjectStatusBadge";
+import { useFormsTranslation } from '@/hooks/useTypedTranslation';
 
 interface SearchResult {
   id: string;
@@ -63,6 +64,7 @@ interface Project {
 }
 
 const GlobalSearch = () => {
+  const { t } = useFormsTranslation();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [allResults, setAllResults] = useState<SearchResult[]>([]);
@@ -367,7 +369,7 @@ const GlobalSearch = () => {
       setActiveIndex(-1);
     } catch (error: any) {
       toast({
-        title: "Search error",
+        title: t('search.searchError'),
         description: error.message,
         variant: "destructive"
       });
@@ -431,7 +433,7 @@ const GlobalSearch = () => {
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground z-10 pointer-events-none" />
         <Input
           ref={inputRef}
-          placeholder="Search everything..."
+          placeholder={t('search.placeholder')}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={handleKeyDown}
@@ -444,7 +446,7 @@ const GlobalSearch = () => {
           <button
             onClick={handleClearSearch}
             className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-            aria-label="Clear search"
+            aria-label={t('search.clearSearch')}
           >
             <X className="h-4 w-4" />
           </button>
@@ -458,8 +460,8 @@ const GlobalSearch = () => {
           ) : results.length === 0 ? (
             <div className="p-6 text-center text-muted-foreground">
               <Search className="h-10 w-10 mx-auto mb-3 opacity-50" />
-              <p className="text-sm font-medium">No results found</p>
-              <p className="text-xs mt-2 opacity-75">Try different keywords or check your spelling</p>
+              <p className="text-sm font-medium">{t('search.noResults')}</p>
+              <p className="text-xs mt-2 opacity-75">{t('search.tryDifferent')}</p>
             </div>
           ) : (
             <div className="py-3">

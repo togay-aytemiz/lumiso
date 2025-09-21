@@ -44,5 +44,8 @@
     "view_all": "Tümünü Görüntüle",
     "see_all_leads": "Tüm Müşteri Adaylarını Gör",
     "view_all_sessions": "Tüm Seansları Görüntüle"
+  },
+  "errors": {
+    "errorFetchingData": "Veri getirme hatası"
   }
 }

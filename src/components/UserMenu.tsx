@@ -4,6 +4,7 @@ import { Settings, LogOut, ChevronUp, User } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/contexts/ProfileContext";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { useFormsTranslation } from '@/hooks/useTypedTranslation';
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
@@ -13,6 +14,7 @@ interface UserMenuProps {
 }
 
 export function UserMenu({ variant = "sidebar", onNavigate }: UserMenuProps) {
+  const { t } = useFormsTranslation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { profile } = useProfile();
@@ -161,7 +163,7 @@ export function UserMenu({ variant = "sidebar", onNavigate }: UserMenuProps) {
             className="justify-start h-9 gap-3 px-3 hover:bg-sidebar-accent"
           >
             <User className="h-4 w-4" />
-            <span>Profile settings</span>
+            <span>{t('userMenu.profileSettings')}</span>
           </Button>
           
           <Button
@@ -170,7 +172,7 @@ export function UserMenu({ variant = "sidebar", onNavigate }: UserMenuProps) {
             className="justify-start h-9 gap-3 px-3 text-destructive hover:text-destructive hover:bg-destructive/10"
           >
             <LogOut className="h-4 w-4" />
-            <span>Sign out</span>
+            <span>{t('userMenu.signOut')}</span>
           </Button>
         </div>
       </PopoverContent>

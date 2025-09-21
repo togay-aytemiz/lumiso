@@ -107,6 +107,48 @@
     "unsavedProjectChanges": "Kaydedilmemiş proje değişiklikleriniz var.",
     "updateLeadInfo": "Müşteri adayı bilgilerini ve özel alan verilerini güncelleyin."
   },
+  "search": {
+    "placeholder": "Her şeyi ara...",
+    "clearSearch": "Aramayı temizle",
+    "noResults": "Sonuç bulunamadı",
+    "tryDifferent": "Farklı anahtar kelimeler deneyin veya yazımınızı kontrol edin",
+    "searchError": "Arama hatası"
+  },
+  "userMenu": {
+    "profileSettings": "Profil ayarları",
+    "signOut": "Çıkış yap"
+  },
+  "project": {
+    "archived": "Arşivlendi",
+    "progressTooltip": "{{completed}} tamamlandı, {{remaining}} kalan"
+  },
+  "sessions": {
+    "schedule_new": "Yeni Seans Planla",
+    "select_existing_client": "Mevcut müşteri seç",
+    "available": "Müsait",
+    "scheduled": "Planlandı",
+    "completed": "Tamamlandı", 
+    "loading_clients": "Müşteriler yükleniyor...",
+    "warningTitle": "Uyarı",
+    "sessionCreatedWarning": "Seans başarıyla oluşturuldu, ancak bildirimler gönderilemeyebilir.",
+    "photoSession": "Fotoğraf Seansı",
+    "projectLabel": "Proje",
+    "editSession": "Seansı Düzenle",
+    "canOnlyEditPlanned": "Yalnızca planlanan seanslar düzenlenebilir",
+    "deleteSession": "Seansı Sil"
+  },
+  "tutorial": {
+    "exitTitle": "Eğitimden Çık?",
+    "exitMessage": "Bu adımı tamamlamadan Başlangıç sayfasına döneceksiniz. Eğitime daha sonra devam edebilirsiniz.",
+    "stay": "Kal",
+    "returnToGettingStarted": "Başlangıç Sayfasına Dön"
+  },
+  "dashboard": {
+    "errorFetchingData": "Veri getirme hatası"
+  },
+  "filterBar": {
+    "showCompleted": "Tamamlananları Göster"
+  },
   "messages": {
     "authRequired": "Kimlik doğrulama gerekli",
     "pleaseSignIn": "Müşteri adayları eklemek için lütfen giriş yapın",

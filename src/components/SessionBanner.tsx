@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { formatLongDate, formatTime } from "@/lib/utils";
 import { useSessionActions } from "@/hooks/useSessionActions";
 import SessionStatusBadge from "@/components/SessionStatusBadge";
+import { useFormsTranslation } from '@/hooks/useTypedTranslation';
 
 interface Session {
   id: string;
@@ -29,6 +30,7 @@ interface SessionBannerProps {
 }
 
 const SessionBanner = ({ session, leadName, projectName, onStatusUpdate, onEdit, onDelete, showActions = true }: SessionBannerProps) => {
+  const { t } = useFormsTranslation();
   const { updateSessionStatus } = useSessionActions();
 
   const getStatusBadgeColor = (status: string) => {
@@ -74,10 +76,10 @@ const SessionBanner = ({ session, leadName, projectName, onStatusUpdate, onEdit,
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="flex items-center gap-4">
             <div className="min-w-0 flex-1">
-              <h3 className="font-semibold text-lg">Photo Session</h3>
+              <h3 className="font-semibold text-lg">{t('sessions.photoSession')}</h3>
               {projectName && (
                 <Badge variant="secondary" className="text-xs mt-1 w-fit">
-                  Project: {projectName}
+                  {t('sessions.projectLabel')}: {projectName}
                 </Badge>
               )}
               {session.status === 'planned' ? (
@@ -134,7 +136,7 @@ const SessionBanner = ({ session, leadName, projectName, onStatusUpdate, onEdit,
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p>{session.status === 'planned' ? 'Edit Session' : 'Can only edit planned sessions'}</p>
+                        <p>{session.status === 'planned' ? t('sessions.editSession') : t('sessions.canOnlyEditPlanned')}</p>
                       </TooltipContent>
                     </Tooltip>
                   )}
@@ -156,7 +158,7 @@ const SessionBanner = ({ session, leadName, projectName, onStatusUpdate, onEdit,
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p>Delete Session</p>
+                        <p>{t('sessions.deleteSession')}</p>
                       </TooltipContent>
                     </Tooltip>
                   )}

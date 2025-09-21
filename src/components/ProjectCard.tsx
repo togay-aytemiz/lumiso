@@ -75,7 +75,7 @@ export function ProjectCard({ project, onView, refreshTrigger, onQuickView }: Pr
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 min-w-0 flex-1">
                 <h3 className="font-bold text-lg truncate">{project.name}</h3>
-                {isArchived && <Badge variant="secondary" className="text-[10px] flex-shrink-0">Archived</Badge>}
+                {isArchived && <Badge variant="secondary" className="text-[10px] flex-shrink-0">{t('project.archived')}</Badge>}
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
                 <div className="md:hidden">
@@ -114,7 +114,7 @@ export function ProjectCard({ project, onView, refreshTrigger, onQuickView }: Pr
                   </TooltipTrigger>
                   <TooltipContent>
                     <p>
-                      {progress.completed} done, {progress.total - progress.completed} remaining
+                      {t('project.progressTooltip', { completed: progress.completed, remaining: progress.total - progress.completed })}
                     </p>
                   </TooltipContent>
                 </Tooltip>

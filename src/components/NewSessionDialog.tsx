@@ -276,8 +276,8 @@ const NewSessionDialog = ({ onSessionScheduled, children }: NewSessionDialogProp
       } catch (workflowError) {
         console.error('❌ Error triggering session_scheduled workflow:', workflowError);
         toast({
-          title: "Warning",
-          description: "Session created successfully, but notifications may not be sent.",
+          title: tForms('sessions.warningTitle'),
+          description: tForms('sessions.sessionCreatedWarning'),
           variant: "default"
         });
       }

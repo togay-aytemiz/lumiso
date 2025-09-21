@@ -107,6 +107,48 @@
     "unsavedProjectChanges": "You have unsaved project changes.",
     "updateLeadInfo": "Update lead information and custom field data."
   },
+  "search": {
+    "placeholder": "Search everything...",
+    "clearSearch": "Clear search",
+    "noResults": "No results found",
+    "tryDifferent": "Try different keywords or check your spelling",
+    "searchError": "Search error"
+  },
+  "userMenu": {
+    "profileSettings": "Profile settings",
+    "signOut": "Sign out"
+  },
+  "project": {
+    "archived": "Archived",
+    "progressTooltip": "{{completed}} done, {{remaining}} remaining"
+  },
+  "sessions": {
+    "schedule_new": "Schedule New Session",
+    "select_existing_client": "Select existing client",
+    "available": "Available",
+    "scheduled": "Scheduled", 
+    "completed": "Completed",
+    "loading_clients": "Loading clients...",
+    "warningTitle": "Warning",
+    "sessionCreatedWarning": "Session created successfully, but notifications may not be sent.",
+    "photoSession": "Photo Session",
+    "projectLabel": "Project",
+    "editSession": "Edit Session",
+    "canOnlyEditPlanned": "Can only edit planned sessions",
+    "deleteSession": "Delete Session"
+  },
+  "tutorial": {
+    "exitTitle": "Exit Tutorial?",
+    "exitMessage": "You'll return to the Getting Started page without completing this step. You can continue the tutorial later.",
+    "stay": "Stay",
+    "returnToGettingStarted": "Return to Getting Started"
+  },
+  "dashboard": {
+    "errorFetchingData": "Error fetching data"
+  },
+  "filterBar": {
+    "showCompleted": "Show Completed"
+  },
   "messages": {
     "authRequired": "Authentication required",
     "pleaseSignIn": "Please sign in to add leads",

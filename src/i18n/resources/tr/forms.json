@@ -149,6 +149,50 @@
   "filterBar": {
     "showCompleted": "Tamamlananları Göster"
   },
+  "projects": {
+    "welcomeTutorialTitle": "Proje Yönetim Merkezinize Hoş Geldiniz",
+    "welcomeTutorialDescription": "Fotoğrafçılık projelerinizi görüntüleme ve organize etmenin üç güçlü yolunu keşfedelim.",
+    "boardViewTitle": "Kanban Görünümü",
+    "boardViewDescription": "Kanban görünümünün nasıl çalıştığını görmek için bir projeyi sürükleyip başka bir sütuna bırakmayı deneyin.",
+    "boardViewTooltip": "Devam etmek için bir projeyi sürükleyip başka bir sütuna bırakın",
+    "listViewTitle": "Liste Görünümü",
+    "listViewDescription": "Proje bilgilerini tablo formatında görmek için yukarıdaki 'Liste' sekmesine tıklayın.",
+    "listViewContent": "Liste görünümü, birden fazla proje hakkında detaylı bilgileri aynı anda görmek, sıralama ve filtreleme yetenekleriyle birlikte görmeniz gerektiğinde mükemmeldir. Bu görünüm veri analizi yapmak ve bilinçli kararlar almak için harikadır.",
+    "listViewTooltip": "Devam etmek için yukarıdaki Liste sekmesine tıklayın",
+    "archivedTitle": "Arşivlenmiş Projeler",
+    "archivedDescription": "Tamamlanan projelerin nasıl organize edildiğini görmek için yukarıdaki 'Arşivlendi' sekmesine tıklayın.",
+    "archivedContent": "Arşivlenmiş görünüm, tamamlanan projeleri aktif olanlardan ayırarak çalışma alanınızı temiz tutar. Bu, referans ve portföy oluşturma için geçmiş projeleri erişilebilir tutarken mevcut işe odaklanmanıza yardımcı olur.",
+    "archivedTooltip": "Devam etmek için yukarıdaki Arşivlendi sekmesine tıklayın",
+    "completionTitle": "Hazırsınız!",
+    "completionContent": "Artık farklı proje görünümleri arasında nasıl gezineceğinizi biliyorsunuz. Her görünümün güçlü yanları var - iş akışı yönetimi için kanbanı, detaylı analiz için listeyi ve tamamlanan projeler için arşivlenmiş görünümü kullanın.",
+    "boardSettings": "Kanban Ayarları",
+    "pageTitle": "Projeler",
+    "pageSubtitle": "Tüm projelerinizi tek yerde yönetin",
+    "success": "Başarılı",
+    "projectName": "Proje adı",
+    "save": "Kaydet",
+    "saving": "Kaydediliyor...",
+    "cancel": "İptal",
+    "archive": "Arşivle",
+    "delete": "Sil",
+    "edit": "Düzenle",
+    "close": "Kapat"
+  },
+  "reminders": {
+    "reminderBadge": "hatırlatma"
+  },
+  "viewProject": {
+    "errorLoadingSessions": "Seanslar yüklenirken hata",
+    "errorUpdatingProject": "Proje güncellenirken hata",
+    "errorDeletingProject": "Proje silinirken hata", 
+    "errorDeletingSession": "Seans silinirken hata",
+    "success": "Başarılı",
+    "projectUpdated": "Proje başarıyla güncellendi",
+    "projectDeleted": "Proje başarıyla silindi",
+    "sessionDeleted": "Seans başarıyla silindi",
+    "deleting": "Siliniyor...",
+    "deleteProject": "Projeyi Sil"
+  },
   "messages": {
     "authRequired": "Kimlik doğrulama gerekli",
     "pleaseSignIn": "Müşteri adayları eklemek için lütfen giriş yapın",

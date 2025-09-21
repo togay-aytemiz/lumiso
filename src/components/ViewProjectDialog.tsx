@@ -277,7 +277,7 @@ export function ViewProjectDialog({
     } catch (error: any) {
       console.error('Error fetching project sessions:', error);
       toast({
-        title: "Error loading sessions",
+        title: tForms('viewProject.errorLoadingSessions'),
         description: error.message,
         variant: "destructive"
       });
@@ -435,7 +435,7 @@ export function ViewProjectDialog({
       onProjectUpdated();
     } catch (error: any) {
       toast({
-        title: "Error updating project",
+        title: tForms('viewProject.errorUpdatingProject'),
         description: error.message,
         variant: "destructive"
       });
@@ -492,7 +492,7 @@ export function ViewProjectDialog({
       onProjectUpdated();
     } catch (error: any) {
       toast({
-        title: "Error deleting project",
+        title: tForms('viewProject.errorDeletingProject'),
         description: error.message,
         variant: "destructive"
       });
@@ -521,7 +521,7 @@ export function ViewProjectDialog({
       onProjectUpdated(); // Notify parent component to refresh sessions
     } catch (error: any) {
       toast({
-        title: "Error deleting session",
+        title: tForms('viewProject.errorDeletingSession'),
         description: error.message,
         variant: "destructive"
       });
@@ -559,13 +559,13 @@ export function ViewProjectDialog({
             <div className="flex items-center justify-between gap-2">
               <div className="flex-1 min-w-0 space-y-3">
                 {isEditing ? <div className="space-y-3 text-2xl font-bold text-left">
-                      <Input value={editName} onChange={e => setEditName(e.target.value)} placeholder="Project name" className="text-2xl font-bold border rounded-md px-3 py-2" />
+                      <Input value={editName} onChange={e => setEditName(e.target.value)} placeholder={tForms('projects.projectName')} className="text-2xl font-bold border rounded-md px-3 py-2" />
                       <Textarea value={editDescription} onChange={e => setEditDescription(e.target.value)} placeholder="Project description (optional)" className="text-base border rounded-md px-3 py-2 resize-none" rows={2} />
                       <ProjectTypeSelector value={editProjectTypeId} onValueChange={setEditProjectTypeId} disabled={isSaving} required />
                     <div className="flex gap-2">
                       <Button size="sm" onClick={handleSaveProject} disabled={isSaving || !editName.trim() || !editProjectTypeId}>
                         <Save className="h-4 w-4 mr-1" />
-                        {isSaving ? "Saving..." : "Save"}
+                        {isSaving ? tForms('projects.saving') : tForms('projects.save')}
                       </Button>
                       <Button size="sm" variant="outline" onClick={() => {
                       setIsEditing(false);
@@ -574,7 +574,7 @@ export function ViewProjectDialog({
                       setEditProjectTypeId(project?.project_type_id || "");
                     }} disabled={isSaving}>
                         <X className="h-4 w-4 mr-1" />
-                        Cancel
+                        {tForms('projects.cancel')}
                       </Button>
                     </div>
                   </div> : 
@@ -667,7 +667,7 @@ export function ViewProjectDialog({
                     </svg>}
                 </Button>
                 <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)} className="text-muted-foreground hover:text-foreground text-sm h-8 px-2 md:h-10 md:px-3">
-                  <span className="hidden md:inline">Close</span>
+                  <span className="hidden md:inline">{tForms('projects.close')}</span>
                   <X className="h-4 w-4 md:hidden" />
                 </Button>
               </div>
@@ -739,7 +739,7 @@ export function ViewProjectDialog({
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Project</AlertDialogTitle>
+            <AlertDialogTitle>{tForms('viewProject.deleteProject')}</AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to delete "{project?.name}"? This action cannot be undone.
               This will permanently delete the project and ALL related data including sessions, payments, todos, services, and activities.
@@ -748,7 +748,7 @@ export function ViewProjectDialog({
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteProject} disabled={isDeleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              {isDeleting ? "Deleting..." : "Delete Project"}
+              {isDeleting ? tForms('viewProject.deleting') : tForms('viewProject.deleteProject')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

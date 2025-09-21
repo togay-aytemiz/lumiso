@@ -10,6 +10,7 @@ import { SimpleProjectTypeSelect } from "./SimpleProjectTypeSelect";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { NavigationGuardDialog } from "@/components/settings/NavigationGuardDialog";
 import { useTranslation } from "react-i18next";
+import { useFormsTranslation } from '@/hooks/useTypedTranslation';
 
 interface ProjectDialogProps {
   open: boolean;
@@ -25,6 +26,7 @@ export function ProjectDialog({ open, onOpenChange, leadId, onProjectCreated }: 
   const [basePrice, setBasePrice] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const { t } = useTranslation('forms');
+  const { t: tForms } = useFormsTranslation();
 
   const resetForm = () => {
     setName("");
@@ -116,7 +118,7 @@ export function ProjectDialog({ open, onOpenChange, leadId, onProjectCreated }: 
       }
 
       toast({
-           title: "Success",
+        title: tForms('projects.success'),
         description: t('messages.projectCreated')
       });
 

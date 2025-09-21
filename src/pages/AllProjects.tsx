@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useFormsTranslation } from "@/hooks/useTypedTranslation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -23,6 +24,7 @@ import { Calendar, MessageSquare, CheckSquare } from "lucide-react";
 import { PageLoadingSkeleton } from "@/components/ui/loading-presets";
 import { KanbanSettingsSheet } from "@/components/KanbanSettingsSheet";
 import { useTranslation } from 'react-i18next';
+import { useDashboardTranslation } from '@/hooks/useTypedTranslation';
 
 interface ProjectStatus {
   id: string;
@@ -479,8 +481,8 @@ const AllProjects = () => {
   const tutorialSteps = [
     {
       id: 1,
-      title: "Welcome to Your Project Management Hub",
-      description: "Let's explore the three powerful ways to view and organize your photography projects.",
+      title: tForms('projects.welcomeTutorialTitle'),
+      description: tForms('projects.welcomeTutorialDescription'),
       content: <div className="space-y-4">
         <p className="text-sm text-muted-foreground">
           In this tutorial, you'll master the art of project management for photographers:
@@ -521,32 +523,32 @@ const AllProjects = () => {
         : "The board view is perfect for visual project management. You can drag projects between columns to update their status. Try moving at least one project to a different stage to continue the tutorial.",
       canProceed: isMobile || hasMovedProject,
       requiresAction: !isMobile,
-      disabledTooltip: isMobile ? undefined : "Drag a project from one column to another to continue",
+      disabledTooltip: isMobile ? undefined : tForms('projects.boardViewTooltip'),
       mode: "floating" as const,
     },
     {
       id: 3,
-      title: "List View",
-      description: "Click the 'List' tab above to see detailed project information in a table format.",
-      content: "The list view is perfect when you need to see detailed information about multiple projects at once, with sorting and filtering capabilities. This view is great for analyzing project data and making informed decisions.",
+      title: tForms('projects.listViewTitle'),
+      description: tForms('projects.listViewDescription'),
+      content: tForms('projects.listViewContent'),
       canProceed: hasClickedListView,
       requiresAction: true,
-      disabledTooltip: "Click on the List tab above to continue",
+      disabledTooltip: tForms('projects.listViewTooltip'),
       mode: "floating" as const,
     },
     {
       id: 4,
-      title: "Archived Projects",
-      description: "Click the 'Archived' tab above to see how completed projects are organized.",
-      content: "The archived view keeps your workspace clean by separating completed projects from active ones. This helps you focus on current work while keeping past projects accessible for reference and portfolio building.",
+      title: tForms('projects.archivedTitle'),
+      description: tForms('projects.archivedDescription'),
+      content: tForms('projects.archivedContent'),
       canProceed: hasClickedArchivedView,
       requiresAction: true,
-      disabledTooltip: "Click on the Archived tab above to continue",
+      disabledTooltip: tForms('projects.archivedTooltip'),
       mode: "floating" as const,
     },
     {
       id: 5,
-      title: "You're All Set!",
+      title: tForms('projects.completionTitle'),
       description: "Congratulations! You now understand all three project views and how to use them effectively.",
       content: <div className="space-y-4">
         <p className="text-sm text-muted-foreground">
@@ -606,8 +608,8 @@ const AllProjects = () => {
       {/* Header */}
       <div className="flex-shrink-0">
         <PageHeader
-          title="Projects"
-          subtitle="Manage all your projects in one place"
+          title={tForms('projects.pageTitle')}
+          subtitle={tForms('projects.pageSubtitle')}
         >
           <PageHeaderSearch>
             <div className="flex items-center gap-2 w-full">
@@ -625,7 +627,7 @@ const AllProjects = () => {
                   data-testid="add-project-button"
                 >
                   <Plus className="h-4 w-4" />
-                  <span className="hidden sm:inline">Add Project</span>
+                  <span className="hidden sm:inline">{tDashboard('buttons.add_project')}</span>
                 </Button>
               </EnhancedProjectDialog>
             </div>
@@ -680,7 +682,7 @@ const AllProjects = () => {
               <KanbanSettingsSheet>
                 <Button variant="ghost" size="sm" className="flex items-center gap-2 h-8 px-2 text-muted-foreground hover:bg-accent/5 hover:text-accent">
                   <Settings className="h-4 w-4" />
-                  <span className="hidden md:inline text-sm">Board Settings</span>
+                  <span className="hidden md:inline text-sm">{tForms('projects.boardSettings')}</span>
                 </Button>
               </KanbanSettingsSheet>
             )}

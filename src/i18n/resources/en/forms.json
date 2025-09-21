@@ -149,6 +149,50 @@
   "filterBar": {
     "showCompleted": "Show Completed"
   },
+  "projects": {
+    "welcomeTutorialTitle": "Welcome to Your Project Management Hub",
+    "welcomeTutorialDescription": "Let's explore the three powerful ways to view and organize your photography projects.",
+    "boardViewTitle": "Board View",
+    "boardViewDescription": "Try dragging a project from one column to another to see how the board view works.",
+    "boardViewTooltip": "Drag a project from one column to another to continue",
+    "listViewTitle": "List View", 
+    "listViewDescription": "Click the 'List' tab above to see detailed project information in a table format.",
+    "listViewContent": "The list view is perfect when you need to see detailed information about multiple projects at once, with sorting and filtering capabilities. This view is great for analyzing project data and making informed decisions.",
+    "listViewTooltip": "Click on the List tab above to continue",
+    "archivedTitle": "Archived Projects",
+    "archivedDescription": "Click the 'Archived' tab above to see how completed projects are organized.",
+    "archivedContent": "The archived view keeps your workspace clean by separating completed projects from active ones. This helps you focus on current work while keeping past projects accessible for reference and portfolio building.",
+    "archivedTooltip": "Click on the Archived tab above to continue",
+    "completionTitle": "You're All Set!",
+    "completionContent": "You now know how to navigate between different project views. Each view has its strengths - use the board for workflow management, the list for detailed analysis, and archived for completed projects.",
+    "boardSettings": "Board Settings",
+    "pageTitle": "Projects",
+    "pageSubtitle": "Manage all your projects in one place",
+    "success": "Success",
+    "projectName": "Project name",
+    "save": "Save",
+    "saving": "Saving...",
+    "cancel": "Cancel",
+    "archive": "Archive",
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close"
+  },
+  "reminders": {
+    "reminderBadge": "reminder"
+  },
+  "viewProject": {
+    "errorLoadingSessions": "Error loading sessions",
+    "errorUpdatingProject": "Error updating project", 
+    "errorDeletingProject": "Error deleting project",
+    "errorDeletingSession": "Error deleting session",
+    "success": "Success",
+    "projectUpdated": "Project updated successfully",
+    "projectDeleted": "Project deleted successfully",
+    "sessionDeleted": "Session deleted successfully",
+    "deleting": "Deleting...",
+    "deleteProject": "Delete Project"
+  },
   "messages": {
     "authRequired": "Authentication required",
     "pleaseSignIn": "Please sign in to add leads",

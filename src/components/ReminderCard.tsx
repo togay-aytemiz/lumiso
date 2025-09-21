@@ -72,7 +72,7 @@ const ReminderCard = ({
       <div className="flex-1 min-w-0">
         <div className="flex items-start gap-2 mb-1">
           <Badge variant="outline" className="text-xs h-5">
-            reminder
+            {tForms('reminders.reminderBadge')}
           </Badge>
           {projectName && <Badge variant="secondary" className="text-xs h-5">
               {projectName}

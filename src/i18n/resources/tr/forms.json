@@ -135,7 +135,16 @@
     "projectLabel": "Proje",
     "editSession": "Seansı Düzenle",
     "canOnlyEditPlanned": "Yalnızca planlanan seanslar düzenlenebilir",
-    "deleteSession": "Seansı Sil"
+    "deleteSession": "Seansı Sil",
+    "noSessionsFound": "Seans bulunamadı",
+    "noSessionsYet": "Henüz hiç seansınız yok.",
+    "noSessionsWithStatus": "\"{{status}}\" durumunda seans bulunamadı.",
+    "clickToSchedule": "İlk seansınızı eklemek için \"Seans Planla\" düğmesine tıklayın.",
+    "no_clients_found": "Aktif müşteri bulunamadı",
+    "sessionNotFound": "Seans bulunamadı",
+    "unableToLoadDetails": "Seans detayları yüklenemiyor.",
+    "sessionNotFoundDescription": "Aradığınız seans mevcut değil.",
+    "returnToSessions": "Seanslara Dön"
   },
   "tutorial": {
     "exitTitle": "Eğitimden Çık?",
@@ -215,5 +224,29 @@
     "ensurePartOfOrg": "Lütfen bir organizasyonun parçası olduğunuzdan emin olun",
     "success": "Başarılı",
     "leadUpdateSuccess": "Müşteri adayı başarıyla güncellendi."
+  },
+  "status": {
+    "loading": "Yükleniyor...",
+    "selectStatus": "DURUM SEÇ",
+    "noStatusAvailable": "Mevcut durum yok",
+    "statusUpdated": "Durum Güncellendi",
+    "errorUpdatingStatus": "Durum güncellenirken hata",
+    "statusNotFound": "Durum bulunamadı"
+  },
+  "table": {
+    "customizeTableColumns": "Tablo Sütunlarını Özelleştir",
+    "chooseColumnsDescription": "Hangi sütunların görüntüleneceğini seçin ve sürükleyerek yeniden sıralayın.",
+    "core": "TEMEL",
+    "coreColumnsNote": "Temel sütunlar temel bilgileri içerdiği için gizlenemez."
+  },
+  "activities": {
+    "types": {
+      "call": "Arama",
+      "email": "E-posta",
+      "meeting": "Toplantı", 
+      "note": "Not",
+      "task": "Görev",
+      "follow_up": "Takip"
+    }
   }
 }

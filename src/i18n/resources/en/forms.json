@@ -135,7 +135,17 @@
     "projectLabel": "Project",
     "editSession": "Edit Session",
     "canOnlyEditPlanned": "Can only edit planned sessions",
-    "deleteSession": "Delete Session"
+    "deleteSession": "Delete Session",
+    "noSessionsFound": "No sessions found",
+    "noSessionsYet": "You don't have any sessions yet.",
+    "noSessionsWithStatus": "No sessions found with status \"{{status}}\".",
+    "clickToSchedule": "Click \"Schedule Session\" to add your first session.",
+    "no_clients_found": "No active clients found",
+    "no_clients_match": "No clients match your search",
+    "sessionNotFound": "Session not found",
+    "unableToLoadDetails": "Unable to load session details.",
+    "sessionNotFoundDescription": "The session you're looking for doesn't exist.",
+    "returnToSessions": "Return to Sessions"
   },
   "tutorial": {
     "exitTitle": "Exit Tutorial?",
@@ -215,5 +225,29 @@
     "ensurePartOfOrg": "Please ensure you're part of an organization",
     "success": "Success",
     "leadUpdateSuccess": "Lead updated successfully."
+  },
+  "status": {
+    "loading": "Loading...",
+    "selectStatus": "SELECT STATUS",
+    "noStatusAvailable": "No status available",
+    "statusUpdated": "Status Updated",
+    "errorUpdatingStatus": "Error updating status",
+    "statusNotFound": "Status not found"
+  },
+  "table": {
+    "customizeTableColumns": "Customize Table Columns",
+    "chooseColumnsDescription": "Choose which columns to display and reorder them by dragging.",
+    "core": "CORE",
+    "coreColumnsNote": "Core columns cannot be hidden as they contain essential information."
+  },
+  "activities": {
+    "types": {
+      "call": "Call",
+      "email": "Email", 
+      "meeting": "Meeting",
+      "note": "Note",
+      "task": "Task",
+      "follow_up": "Follow Up"
+    }
   }
 }

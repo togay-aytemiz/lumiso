@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useFormsTranslation } from "@/hooks/useTypedTranslation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -36,6 +37,7 @@ type SortField = 'session_date' | 'session_time' | 'status' | 'lead_name' | 'cre
 type SortDirection = 'asc' | 'desc';
 
 const AllSessions = () => {
+  const { t: tForms } = useFormsTranslation();
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>("planned");
@@ -543,14 +545,14 @@ const AllSessions = () => {
                   ) : (
                     <div className="text-center py-12 text-muted-foreground">
                       <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                      <h3 className="text-lg font-medium mb-2">No sessions found</h3>
+                      <h3 className="text-lg font-medium mb-2">{tForms('sessions.noSessionsFound')}</h3>
                       <p>
                         {statusFilter === "all" 
-                          ? "You don't have any sessions yet."
-                          : `No sessions found with status "${statusFilter}".`
+                          ? tForms('sessions.noSessionsYet')
+                          : tForms('sessions.noSessionsWithStatus', { status: statusFilter })
                         }
                       </p>
-                      <p className="text-sm mt-2">Click "Schedule Session" to add your first session.</p>
+                      <p className="text-sm mt-2">{tForms('sessions.clickToSchedule')}</p>
                     </div>
                   )}
                 </div>

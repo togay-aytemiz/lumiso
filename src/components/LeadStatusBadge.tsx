@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { useOrganizationQuickSettings } from "@/hooks/useOrganizationQuickSettings";
 import { useWorkflowTriggers } from "@/hooks/useWorkflowTriggers";
 import { useOrganization } from "@/contexts/OrganizationContext";
+import { useFormsTranslation } from "@/hooks/useTypedTranslation";
 
 interface LeadStatus {
   id: string;
@@ -46,6 +47,7 @@ export function LeadStatusBadge({
   const { settings: userSettings } = useOrganizationQuickSettings();
   const { triggerLeadStatusChange } = useWorkflowTriggers();
   const { activeOrganization } = useOrganization();
+  const { t: tForms } = useFormsTranslation();
 
   useEffect(() => {
     if (passedStatuses) {
@@ -135,7 +137,7 @@ export function LeadStatusBadge({
       if (!userData.user) throw new Error('User not authenticated');
 
       const newStatus = statuses.find(s => s.id === newStatusId);
-      if (!newStatus) throw new Error('Status not found');
+      if (!newStatus) throw new Error(tForms('status.statusNotFound'));
 
       // Update lead status using status_id
       const { error: updateError } = await supabase
@@ -183,7 +185,7 @@ export function LeadStatusBadge({
       onStatusChange?.();
 
       toast({
-        title: "Status Updated",
+        title: tForms('status.statusUpdated'),
         description: `Lead status ${currentStatusData ? 'changed' : 'set'} to "${newStatus.name}"`
       });
 
@@ -202,7 +204,7 @@ export function LeadStatusBadge({
       }
     } catch (error: any) {
       toast({
-        title: "Error updating status",
+        title: tForms('status.errorUpdatingStatus'),
         description: error.message,
         variant: "destructive"
       });
@@ -220,7 +222,7 @@ export function LeadStatusBadge({
     return (
       <div className={cn("inline-flex items-center gap-2 bg-muted text-muted-foreground rounded-full", padding, className)}>
         <div className={cn("bg-muted-foreground/30 rounded-full animate-pulse", dotSize)} />
-        <span className={textSize}>Loading...</span>
+        <span className={textSize}>{tForms('status.loading')}</span>
       </div>
     );
   }
@@ -256,7 +258,7 @@ export function LeadStatusBadge({
             className={cn("rounded-full border-2", dotSize)}
             style={{ borderColor: defaultColor }}
           />
-          <span className={cn("uppercase tracking-wide font-semibold", textSize)}>SELECT STATUS</span>
+          <span className={cn("uppercase tracking-wide font-semibold", textSize)}>{tForms('status.selectStatus')}</span>
           <ChevronDown className={cn("ml-1 transition-transform", isSmall ? "w-3 h-3" : "w-4 h-4", dropdownOpen && "rotate-180")} />
         </Button>
 
@@ -298,7 +300,7 @@ export function LeadStatusBadge({
     return (
       <div className={cn("inline-flex items-center gap-2 bg-muted text-muted-foreground rounded-full", padding, className)}>
         <div className={cn("bg-muted-foreground/30 rounded-full", dotSize)} />
-        <span className={textSize}>No status available</span>
+        <span className={textSize}>{tForms('status.noStatusAvailable')}</span>
       </div>
     );
   }

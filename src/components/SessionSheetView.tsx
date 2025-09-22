@@ -30,6 +30,7 @@ import { useSessionActions } from '@/hooks/useSessionActions';
 import { UnifiedClientDetails } from '@/components/UnifiedClientDetails';
 import SessionGallery from '@/components/SessionGallery';
 import { getDisplaySessionName } from '@/lib/sessionUtils';
+import { useFormsTranslation } from '@/hooks/useTypedTranslation';
 
 interface SessionData {
   id: string;
@@ -81,6 +82,7 @@ export default function SessionSheetView({
   const { toast } = useToast();
   const { deleteSession } = useSessionActions();
   const navigate = useNavigate();
+  const { t: tForms } = useFormsTranslation();
   
   const [session, setSession] = useState<SessionData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -432,8 +434,8 @@ export default function SessionSheetView({
             </>
           ) : (
             <div className="p-6 text-center">
-              <h3 className="text-lg font-semibold mb-2">Session not found</h3>
-              <p className="text-muted-foreground">Unable to load session details.</p>
+              <h3 className="text-lg font-semibold mb-2">{tForms('sessions.sessionNotFound')}</h3>
+              <p className="text-muted-foreground">{tForms('sessions.unableToLoadDetails')}</p>
             </div>
           )}
         </SheetContent>

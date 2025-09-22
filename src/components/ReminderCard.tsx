@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle } from "lucide-react";
 import { formatLongDate, formatTime } from "@/lib/utils";
+import { useFormsTranslation } from "@/hooks/useTypedTranslation";
 interface ReminderActivity {
   id: string;
   content: string;
@@ -29,6 +30,7 @@ const ReminderCard = ({
   showCompletedBadge = true,
   projectName
 }: ReminderCardProps) => {
+  const { t: tForms } = useFormsTranslation();
   const isOverdue = (reminderDate?: string) => {
     if (!reminderDate) return false;
     const today = new Date();

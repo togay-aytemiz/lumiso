@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useFormsTranslation } from "@/hooks/useTypedTranslation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -242,6 +243,7 @@ export function ViewProjectDialog({
   onActivityUpdated,
   leadName
 }: ViewProjectDialogProps) {
+  const { t: tForms } = useFormsTranslation();
   const [sessions, setSessions] = useState<Session[]>([]);
   const [lead, setLead] = useState<Lead | null>(null);
   const [loading, setLoading] = useState(false);

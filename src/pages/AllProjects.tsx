@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useFormsTranslation } from "@/hooks/useTypedTranslation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -24,7 +23,7 @@ import { Calendar, MessageSquare, CheckSquare } from "lucide-react";
 import { PageLoadingSkeleton } from "@/components/ui/loading-presets";
 import { KanbanSettingsSheet } from "@/components/KanbanSettingsSheet";
 import { useTranslation } from 'react-i18next';
-import { useDashboardTranslation } from '@/hooks/useTypedTranslation';
+import { useDashboardTranslation, useFormsTranslation } from '@/hooks/useTypedTranslation';
 
 interface ProjectStatus {
   id: string;
@@ -98,6 +97,8 @@ const AllProjects = () => {
   const { completeCurrentStep } = useOnboarding();
   const isMobile = useIsMobile();
   const { t } = useTranslation(['pages', 'common']);
+  const { t: tForms } = useFormsTranslation();
+  const { t: tDashboard } = useDashboardTranslation();
 
   // Tutorial state
   const [showTutorial, setShowTutorial] = useState(false);

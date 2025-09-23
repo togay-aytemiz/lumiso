@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { formatTime, cn } from "@/lib/utils";
 import { getRelativeDate, isOverdueSession, getDateDisplayClasses } from "@/lib/dateUtils";
 import SessionStatusBadge from "@/components/SessionStatusBadge";
+import { useFormsTranslation } from "@/hooks/useTypedTranslation";
 
 interface Session {
   id: string;
@@ -31,12 +32,13 @@ const CompactSessionBanner = ({
   session, 
   onClick
 }: CompactSessionBannerProps) => {
+  const { t: tForms } = useFormsTranslation();
   
   const getSessionName = () => {
     if (session.projects?.project_types?.name) {
-      return `${session.projects.project_types.name} Session`;
+      return `${session.projects.project_types.name} ${tForms('sessionBanner.session')}`;
     }
-    return "Session";
+    return tForms('sessionBanner.session');
   };
 
   const relativeDate = getRelativeDate(session.session_date);
@@ -61,7 +63,7 @@ const CompactSessionBanner = ({
             {isOverdue && (
               <div className="flex items-center gap-1 text-orange-600">
                 <AlertTriangle className="h-4 w-4 flex-shrink-0" />
-                <span className="text-xs font-medium hidden md:inline">Past due</span>
+                <span className="text-xs font-medium hidden md:inline">{tForms('sessionBanner.pastDue')}</span>
               </div>
             )}
           </div>
@@ -99,7 +101,7 @@ const CompactSessionBanner = ({
             onStatusChange={() => {}}
           />
           {isOverdue && (
-            <span className="text-xs text-orange-600 font-medium">Needs attention</span>
+            <span className="text-xs text-orange-600 font-medium">{tForms('sessionBanner.needsAttention')}</span>
           )}
         </div>
       </CardContent>

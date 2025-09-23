@@ -248,5 +248,77 @@
       "task": "Görev",
       "follow_up": "Takip"
     }
+  },
+  "clientDetails": {
+    "title": "Müşteri Detayları",
+    "fullName": "Ad Soyad",
+    "email": "E-posta",
+    "phone": "Telefon",
+    "notes": "Notlar",
+    "edit": "Düzenle",
+    "whatsApp": "WhatsApp",
+    "call": "Ara",
+    "createdOn": "Oluşturulma tarihi",
+    "noInfoAvailable": "Müşteri bilgisi mevcut değil."
+  },
+  "projectBanner": {
+    "progress": "İlerleme",
+    "payments": "Ödemeler",
+    "sessions": "Seanslar",
+    "session": "seans",
+    "sessionsPlural": "seans",
+    "complete": "tamamlandı"
+  },
+  "sessionBanner": {
+    "session": "Seans",
+    "pastDue": "Süresi geçmiş",
+    "needsAttention": "Dikkat gerekli"
+  },
+  "projectValidation": {
+    "name_required": "Proje adı zorunludur.",
+    "lead_required": "Lütfen bir müşteri adayı seçin veya yeni bir tane oluşturun.",
+    "lead_name_required": "Yeni müşteri adayı oluştururken isim gerekli.",
+    "type_required": "Lütfen bir proje türü seçin."
+  },
+  "projectDialog": {
+    "title": "Yeni Proje Oluştur",
+    "addProject": "Proje Ekle",
+    "selectExistingClient": "Mevcut müşteri seç",
+    "selectClient": "Müşteri seç",
+    "name": "Ad *",
+    "phone": "Telefon",
+    "notes": "Notlar",
+    "additionalNotes": "Ek notlar...",
+    "projectName": "Proje Adı *",
+    "projectType": "Proje Türü *",
+    "selectProjectType": "Proje türü seç...",
+    "searchProjectTypes": "Proje türlerinde ara...",
+    "noTypesMatch": "Aramanızla eşleşen tür bulunamadı",
+    "noProjectTypesFound": "Proje türü bulunamadı",
+    "packageOptional": "Paket (İsteğe Bağlı)",
+    "selectPackage": "Paket seç...",
+    "noPackage": "Paket yok",
+    "noPackagesAvailable": "Bu proje türü için paket mevcut değil.",
+    "createPackagesSuggestion": "Önceden tanımlanmış hizmet paketleri ve fiyatlandırma sunmak için paketler oluşturun.",
+    "createPackage": "Paket Oluştur",
+    "duration": "Süre:",
+    "description": "Açıklama:",
+    "includes": "İçerir:",
+    "services": "hizmet",
+    "noPackageSelected": "Paket seçilmedi. Özel fiyatlandırma ve hizmetler ekleyebilirsiniz.",
+    "setCustomDetails": "Özel Detayları Ayarla",
+    "basePrice": "Temel Fiyat (TL)",
+    "packageBasePrice": "Paket temel fiyatı: TL",
+    "customizeNote": "(bunu özelleştirebilirsiniz)",
+    "servicesAddons": "Hizmetler ve Eklentiler",
+    "unsavedChanges": "Kaydedilmemiş proje değişiklikleriniz var.",
+    "selectServicesToAdd": "Eklenecek hizmetleri seçin:",
+    "addOrRemoveServices": "Hizmet ekleyin veya kaldırın:",
+    "addServices": "Hizmet Ekle",
+    "projectSummary": "Proje Özeti",
+    "basePackage": "Temel Paket:",
+    "addOns": "Eklentiler:",
+    "servicesTotal": "Hizmetler Toplamı:",
+    "finalPrice": "Nihai Fiyat:"
   }
 }

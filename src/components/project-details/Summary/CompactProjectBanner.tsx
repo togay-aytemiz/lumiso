@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { ProjectStatusBadge } from "@/components/ProjectStatusBadge";
 import { Progress } from "@/components/ui/progress";
 import { Calendar, DollarSign, CheckCircle } from "lucide-react";
+import { useFormsTranslation } from "@/hooks/useTypedTranslation";
 
 interface CompactProjectBannerProps {
   projectId: string;
@@ -29,6 +30,7 @@ export default function CompactProjectBanner({
   completedSessions = 0,
   onStatusChange 
 }: CompactProjectBannerProps) {
+  const { t: tForms } = useFormsTranslation();
   const progressPercentage = Math.round(progress);
   const paymentPercentage = totalAmount > 0 ? Math.round((paidAmount / totalAmount) * 100) : 0;
   const sessionProgress = sessionCount > 0 ? Math.round((completedSessions / sessionCount) * 100) : 0;
@@ -63,7 +65,7 @@ export default function CompactProjectBanner({
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
                   <CheckCircle className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span className="text-xs font-medium text-muted-foreground">Progress</span>
+                  <span className="text-xs font-medium text-muted-foreground">{tForms('projectBanner.progress')}</span>
                 </div>
                 <span className="text-xs font-medium">{progressPercentage}%</span>
               </div>
@@ -76,7 +78,7 @@ export default function CompactProjectBanner({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
                     <DollarSign className="h-3.5 w-3.5 text-muted-foreground" />
-                    <span className="text-xs font-medium text-muted-foreground">Payments</span>
+                    <span className="text-xs font-medium text-muted-foreground">{tForms('projectBanner.payments')}</span>
                   </div>
                   <span className="text-xs font-medium">{paymentPercentage}%</span>
                 </div>
@@ -90,7 +92,7 @@ export default function CompactProjectBanner({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
                     <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
-                    <span className="text-xs font-medium text-muted-foreground">Sessions</span>
+                    <span className="text-xs font-medium text-muted-foreground">{tForms('projectBanner.sessions')}</span>
                   </div>
                   <span className="text-xs font-medium">
                     {completedSessions}/{sessionCount}
@@ -104,12 +106,12 @@ export default function CompactProjectBanner({
           {/* Summary Stats */}
           <div className="flex items-center gap-4 text-xs text-muted-foreground">
             {sessionCount > 0 && (
-              <span>{sessionCount} session{sessionCount === 1 ? '' : 's'}</span>
+              <span>{sessionCount} {sessionCount === 1 ? tForms('projectBanner.session') : tForms('projectBanner.sessionsPlural')}</span>
             )}
             {totalAmount > 0 && (
               <span>${paidAmount.toLocaleString()} / ${totalAmount.toLocaleString()}</span>
             )}
-            <span>{progressPercentage}% complete</span>
+            <span>{progressPercentage}% {tForms('projectBanner.complete')}</span>
           </div>
         </div>
       </CardContent>

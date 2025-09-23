@@ -249,5 +249,77 @@
       "task": "Task",
       "follow_up": "Follow Up"
     }
+  },
+  "clientDetails": {
+    "title": "Client Details",
+    "fullName": "Full Name",
+    "email": "Email",
+    "phone": "Phone",
+    "notes": "Notes",
+    "edit": "Edit",
+    "whatsApp": "WhatsApp",
+    "call": "Call",
+    "createdOn": "Created on",
+    "noInfoAvailable": "No client information available."
+  },
+  "projectBanner": {
+    "progress": "Progress",
+    "payments": "Payments",
+    "sessions": "Sessions",
+    "session": "session",
+    "sessionsPlural": "sessions",
+    "complete": "complete"
+  },
+  "sessionBanner": {
+    "session": "Session",
+    "pastDue": "Past due",
+    "needsAttention": "Needs attention"
+  },
+  "projectValidation": {
+    "name_required": "Project name is required.",
+    "lead_required": "Please select a lead or create a new one.",
+    "lead_name_required": "Lead name is required when creating a new lead.",
+    "type_required": "Please select a project type."
+  },
+  "projectDialog": {
+    "title": "Create New Project",
+    "addProject": "Add Project",
+    "selectExistingClient": "Select existing client",
+    "selectClient": "Select client",
+    "name": "Name *",
+    "phone": "Phone",
+    "notes": "Notes",
+    "additionalNotes": "Any additional notes...",
+    "projectName": "Project Name *",
+    "projectType": "Project Type *",
+    "selectProjectType": "Select project type...",
+    "searchProjectTypes": "Search project types...",
+    "noTypesMatch": "No types match your search",
+    "noProjectTypesFound": "No project types found",
+    "packageOptional": "Package (Optional)",
+    "selectPackage": "Select a package...",
+    "noPackage": "No package",
+    "noPackagesAvailable": "No packages available for this project type.",
+    "createPackagesSuggestion": "Create packages to offer predefined service bundles with pricing.",
+    "createPackage": "Create Package",
+    "duration": "Duration:",
+    "description": "Description:",
+    "includes": "Includes:",
+    "services": "services",
+    "noPackageSelected": "No package selected. You can add custom pricing and services.",
+    "setCustomDetails": "Set Custom Details",
+    "basePrice": "Base Price (TRY)",
+    "packageBasePrice": "Package base price: TRY",
+    "customizeNote": "(you can customize this)",
+    "servicesAddons": "Services & Add-ons",
+    "unsavedChanges": "You have unsaved project changes.",
+    "selectServicesToAdd": "Select services to add:",
+    "addOrRemoveServices": "Add or remove services:",
+    "addServices": "Add Services",
+    "projectSummary": "Project Summary",
+    "basePackage": "Base Package:",
+    "addOns": "Add-ons:",
+    "servicesTotal": "Services Total:",
+    "finalPrice": "Final Price:"
   }
 }

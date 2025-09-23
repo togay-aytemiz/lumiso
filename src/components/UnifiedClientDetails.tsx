@@ -21,6 +21,7 @@ import { InlineCheckboxEditor } from "@/components/fields/inline-editors/InlineC
 import { EnhancedEditLeadDialog } from "./EnhancedEditLeadDialog";
 // Permissions removed for single photographer mode
 import { validateFieldValue } from "@/lib/leadFieldValidation";
+import { useFormsTranslation } from "@/hooks/useTypedTranslation";
 
 interface Lead {
   id: string;
@@ -73,7 +74,7 @@ function normalizeTRPhone(phone?: string | null): null | { e164: string; e164NoP
 
 export function UnifiedClientDetails({ 
   lead, 
-  title = "Client Details",
+  title,
   showQuickActions = true,
   onLeadUpdated,
   className,
@@ -86,6 +87,7 @@ export function UnifiedClientDetails({
   const [editOpen, setEditOpen] = useState(false);
   const [editingField, setEditingField] = useState<string | null>(null);
   const navigate = useNavigate();
+  const { t: tForms } = useFormsTranslation();
 
   const { updateCoreField, updateCustomField } = useLeadUpdate({
     leadId: lead.id,
@@ -105,10 +107,10 @@ export function UnifiedClientDetails({
     type: 'core' | 'custom';
     fieldDefinition?: any;
   }> = [
-    { key: 'name', label: 'Full Name', value: lead.name, type: 'core' },
-    { key: 'email', label: 'Email', value: lead.email, type: 'core' },
-    { key: 'phone', label: 'Phone', value: lead.phone, type: 'core' },
-    { key: 'notes', label: 'Notes', value: lead.notes, type: 'core' },
+    { key: 'name', label: tForms('clientDetails.fullName'), value: lead.name, type: 'core' },
+    { key: 'email', label: tForms('clientDetails.email'), value: lead.email, type: 'core' },
+    { key: 'phone', label: tForms('clientDetails.phone'), value: lead.phone, type: 'core' },
+    { key: 'notes', label: tForms('clientDetails.notes'), value: lead.notes, type: 'core' },
     ...fieldDefinitions
       .filter(field => !['name', 'email', 'phone', 'notes', 'status'].includes(field.field_key))
       .sort((a, b) => a.sort_order - b.sort_order)
@@ -186,7 +188,7 @@ export function UnifiedClientDetails({
     return (
       <Card className={className}>
         <CardHeader>
-          <h3 className="text-lg font-semibold">{title}</h3>
+          <h3 className="text-lg font-semibold">{title || tForms('clientDetails.title')}</h3>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
@@ -207,7 +209,7 @@ export function UnifiedClientDetails({
       <Card className={className}>
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold">{title}</h3>
+            <h3 className="text-lg font-semibold">{title || tForms('clientDetails.title')}</h3>
             {/* Single photographer has full edit access */}
             <Button
               variant="ghost"
@@ -215,13 +217,13 @@ export function UnifiedClientDetails({
               onClick={() => setEditOpen(true)}
               className="text-muted-foreground h-8 px-3"
             >
-              Edit
+              {tForms('clientDetails.edit')}
             </Button>
           </div>
         </CardHeader>
         <CardContent className="space-y-3">
           {coreFields.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No client information available.</p>
+            <p className="text-sm text-muted-foreground">{tForms('clientDetails.noInfoAvailable')}</p>
           ) : (
             <div className="space-y-3">
               {coreFields.map(field => (
@@ -278,7 +280,7 @@ export function UnifiedClientDetails({
                   >
                     <a href={`https://wa.me/${normalizedPhone.e164NoPlus}`} target="_blank" rel="noopener noreferrer">
                       <MessageCircle className="h-3 w-3 mr-1" />
-                      WhatsApp
+                      {tForms('clientDetails.whatsApp')}
                     </a>
                   </Button>
                   <Button
@@ -289,7 +291,7 @@ export function UnifiedClientDetails({
                   >
                     <a href={`tel:${normalizedPhone.e164}`}>
                       <Phone className="h-3 w-3 mr-1" />
-                      Call
+                      {tForms('clientDetails.call')}
                     </a>
                   </Button>
                 </>
@@ -303,7 +305,7 @@ export function UnifiedClientDetails({
                 >
                   <a href={`mailto:${emailField.value}`}>
                     <Mail className="h-3 w-3 mr-1" />
-                    Email
+                    {tForms('clientDetails.email')}
                   </a>
                 </Button>
               )}
@@ -348,7 +350,7 @@ export function UnifiedClientDetails({
           {createdAt && (
             <div className="mt-3 text-center">
               <span className="text-[10px] text-muted-foreground/60 font-normal">
-                Created on {new Date(createdAt).toLocaleDateString('tr-TR', { 
+                {tForms('clientDetails.createdOn')} {new Date(createdAt).toLocaleDateString('tr-TR', { 
                   year: 'numeric', 
                   month: 'short', 
                   day: 'numeric' 

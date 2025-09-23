@@ -542,12 +542,12 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
       ) : (
         <Button onClick={() => setOpen(true)}>
           <Plus className="h-4 w-4 mr-2" />
-          Add Project
+          {tForms('projectDialog.addProject')}
         </Button>
       )}
 
       <AppSheetModal
-        title="Create New Project"
+        title={tForms('projectDialog.title')}
         isOpen={open}
         onOpenChange={setOpen}
         size="lg"
@@ -568,12 +568,12 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
                   onChange={() => setIsNewLead(false)}
                   className="h-4 w-4"
                 />
-                <Label htmlFor="existing-lead">Select existing client</Label>
+                <Label htmlFor="existing-lead">{tForms('projectDialog.selectExistingClient')}</Label>
               </div>
               
               {!isNewLead && (
                 <div className="space-y-2">
-                  <Label htmlFor="lead-search">Select client</Label>
+                  <Label htmlFor="lead-search">{tForms('projectDialog.selectClient')}</Label>
                   <div className="relative" data-dropdown-container>
                     <Button
                       variant="outline"
@@ -685,7 +685,7 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
               {isNewLead && (
                 <div className="space-y-3 pl-6 border-l-2 border-muted">
                   <div className="space-y-2">
-                    <Label htmlFor="new-name">Name *</Label>
+                    <Label htmlFor="new-name">{tForms('projectDialog.name')}</Label>
                     <Input
                       id="new-name"
                       value={newLeadData.name}
@@ -694,7 +694,7 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="new-email">Email</Label>
+                    <Label htmlFor="new-email">{tForms('clientDetails.email')}</Label>
                     <Input
                       id="new-email"
                       type="email"
@@ -704,7 +704,7 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="new-phone">Phone</Label>
+                    <Label htmlFor="new-phone">{tForms('projectDialog.phone')}</Label>
                     <Input
                       id="new-phone"
                       value={newLeadData.phone}
@@ -713,12 +713,12 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="new-notes">Notes</Label>
+                    <Label htmlFor="new-notes">{tForms('projectDialog.notes')}</Label>
                     <Textarea
                       id="new-notes"
                       value={newLeadData.notes}
                       onChange={(e) => handleNewLeadDataChange("notes", e.target.value)}
-                      placeholder="Any additional notes..."
+                      placeholder={tForms('projectDialog.additionalNotes')}
                       rows={2}
                     />
                   </div>
@@ -730,7 +730,7 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
           {/* Project Details */}
           <div className="space-y-4 pt-4 border-t">
             <div className="space-y-2">
-              <Label htmlFor="project-name">Project Name *</Label>
+              <Label htmlFor="project-name">{tForms('projectDialog.projectName')}</Label>
               <Input
                 id="project-name"
                 value={projectData.name}
@@ -741,7 +741,7 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="project-type">Project Type *</Label>
+              <Label htmlFor="project-type">{tForms('projectDialog.projectType')}</Label>
               <div className="relative" data-projecttype-dropdown>
                 <Button
                   variant="outline"
@@ -758,7 +758,7 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
                       {projectTypes.find(type => type.id === projectData.projectTypeId)?.name}
                     </span>
                   ) : (
-                    <span className="text-muted-foreground">Select project type...</span>
+                    <span className="text-muted-foreground">{tForms('projectDialog.selectProjectType')}</span>
                   )}
                   <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
@@ -769,7 +769,7 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
                       <div className="relative">
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                         <Input
-                          placeholder="Search project types..."
+                          placeholder={tForms('projectDialog.searchProjectTypes')}
                           value={searchTerm}
                           onChange={(e) => setSearchTerm(e.target.value)}
                           className="pl-10"
@@ -782,7 +782,7 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
                         type.name.toLowerCase().includes(searchTerm.toLowerCase())
                       ).length === 0 ? (
                         <div className="p-4 text-center text-sm text-muted-foreground">
-                          {searchTerm ? 'No types match your search' : 'No project types found'}
+                          {searchTerm ? tForms('projectDialog.noTypesMatch') : tForms('projectDialog.noProjectTypesFound')}
                         </div>
                       ) : (
                         projectTypes
@@ -827,7 +827,7 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
             {/* Package Selection */}
             {projectData.projectTypeId && (
               <div className="space-y-2">
-                <Label htmlFor="package">Package (Optional)</Label>
+                <Label htmlFor="package">{tForms('projectDialog.packageOptional')}</Label>
                 <div className="relative" data-package-dropdown>
                   <Button
                     variant="outline"
@@ -849,7 +849,7 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
                         </span>
                       </div>
                     ) : (
-                      <span className="text-muted-foreground">Select a package...</span>
+                      <span className="text-muted-foreground">{tForms('projectDialog.selectPackage')}</span>
                     )}
                     <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
@@ -878,16 +878,16 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
                                   !projectData.packageId ? "opacity-100" : "opacity-0"
                                 )}
                               />
-                              <span className="text-muted-foreground">No package</span>
+                              <span className="text-muted-foreground">{tForms('projectDialog.noPackage')}</span>
                             </div>
                           </button>
                           {availablePackages.length === 0 ? (
                             <div className="p-4 text-center space-y-3">
                               <div className="text-sm text-muted-foreground">
-                                No packages available for this project type.
+                                {tForms('projectDialog.noPackagesAvailable')}
                               </div>
                               <div className="text-xs text-muted-foreground">
-                                Create packages to offer predefined service bundles with pricing.
+                                {tForms('projectDialog.createPackagesSuggestion')}
                               </div>
                               <Button
                                 variant="outline"
@@ -910,7 +910,7 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
                                 }}
                               >
                                 <Plus className="h-4 w-4 mr-2" />
-                                Create Package
+                                {tForms('projectDialog.createPackage')}
                               </Button>
                             </div>
                           ) : (
@@ -948,9 +948,9 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
                                         {pkg.description}
                                       </p>
                                     )}
-                                    <p className="text-xs text-muted-foreground">
-                                      {pkg.duration} • {pkg.default_add_ons.length} services
-                                    </p>
+                                      <p className="text-xs text-muted-foreground">
+                                        {pkg.duration} • {pkg.default_add_ons.length} {tForms('projectDialog.services')}
+                                      </p>
                                   </div>
                                 </div>
                               </button>
@@ -963,12 +963,12 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
                 </div>
                 {selectedPackage && (
                   <div className="text-sm text-muted-foreground space-y-1">
-                    <p><strong>Duration:</strong> {selectedPackage.duration}</p>
+                    <p><strong>{tForms('projectDialog.duration')}</strong> {selectedPackage.duration}</p>
                     {selectedPackage.description && (
-                      <p><strong>Description:</strong> {selectedPackage.description}</p>
+                      <p><strong>{tForms('projectDialog.description')}</strong> {selectedPackage.description}</p>
                     )}
                     {selectedPackage.default_add_ons.length > 0 && (
-                      <p><strong>Includes:</strong> {selectedPackage.default_add_ons.length} default services</p>
+                      <p><strong>{tForms('projectDialog.includes')}</strong> {selectedPackage.default_add_ons.length} default {tForms('projectDialog.services')}</p>
                     )}
                   </div>
                 )}
@@ -980,7 +980,7 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
               <div className="space-y-3 p-4 bg-muted/10 rounded-lg border border-dashed">
                 <div className="text-center space-y-2">
                   <p className="text-sm text-muted-foreground">
-                    No package selected. You can add custom pricing and services.
+                    {tForms('projectDialog.noPackageSelected')}
                   </p>
                   <Button
                     type="button"
@@ -990,7 +990,7 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
                     className="w-full"
                   >
                     <Plus className="h-4 w-4 mr-2" />
-                    Set Custom Details
+                    {tForms('projectDialog.setCustomDetails')}
                   </Button>
                 </div>
               </div>
@@ -999,7 +999,7 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
             {/* Base Price - Show if package selected or custom setup enabled */}
             {(projectData.packageId || showCustomSetup) && (
               <div className="space-y-2">
-                <Label htmlFor="base-price">Base Price (TRY)</Label>
+                <Label htmlFor="base-price">{tForms('projectDialog.basePrice')}</Label>
                 <Input
                   id="base-price"
                   type="number"
@@ -1012,7 +1012,7 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
                 />
                 {selectedPackage && (
                   <p className="text-xs text-muted-foreground">
-                    Package base price: TRY {selectedPackage.price.toLocaleString()} (you can customize this)
+                    {tForms('projectDialog.packageBasePrice')} {selectedPackage.price.toLocaleString()} {tForms('projectDialog.customizeNote')}
                   </p>
                 )}
               </div>
@@ -1021,7 +1021,7 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
             {/* Description - Show if package selected or custom setup enabled */}
             {(projectData.packageId || showCustomSetup) && (
               <div className="space-y-2">
-                <Label htmlFor="project-description">Description</Label>
+                <Label htmlFor="project-description">{tForms('labels.description')}</Label>
                 <Textarea
                   id="project-description"
                   value={projectData.description}
@@ -1038,7 +1038,7 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
             {(projectData.packageId || showCustomSetup) && (
              <div className="space-y-2">
                <div className="flex items-center justify-between">
-                 <Label>Services & Add-ons {projectData.selectedServiceIds.length > 0 && `(${projectData.selectedServiceIds.length})`}</Label>
+                 <Label>{tForms('projectDialog.servicesAddons')} {projectData.selectedServiceIds.length > 0 && `(${projectData.selectedServiceIds.length})`}</Label>
                  {projectData.selectedServiceIds.length > 0 && (
                    <div className="flex gap-2">
                      <Button
@@ -1105,7 +1105,7 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
                   className="w-full"
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  Add Services
+                  {tForms('projectDialog.addServices')}
                 </Button>
               )}
 
@@ -1114,7 +1114,7 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-muted-foreground">
-                      {projectData.selectedServiceIds.length === 0 ? "Select services to add:" : "Add or remove services:"}
+                      {projectData.selectedServiceIds.length === 0 ? tForms('projectDialog.selectServicesToAdd') : tForms('projectDialog.addOrRemoveServices')}
                     </span>
                     <Button
                       type="button"
@@ -1123,7 +1123,7 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
                       onClick={() => setShowServicesEditor(false)}
                       className="h-auto py-1 px-2 text-xs"
                     >
-                      Done
+                      {tForms('buttons.done')}
                     </Button>
                   </div>
                   <ServicePicker
@@ -1145,18 +1145,18 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
             {/* Project Summary */}
             {(projectData.name || projectData.basePrice || projectData.selectedServiceIds.length > 0) && (
               <div className="space-y-3 p-4 bg-muted/20 rounded-lg border">
-                <h4 className="font-medium text-primary">Project Summary</h4>
+                <h4 className="font-medium text-primary">{tForms('projectDialog.projectSummary')}</h4>
                 
                 {selectedPackage && (
                   <div className="space-y-1 text-sm">
-                    <p><strong>Base Package:</strong> {selectedPackage.name}</p>
-                    <p><strong>Duration:</strong> {selectedPackage.duration}</p>
+                    <p><strong>{tForms('projectDialog.basePackage')}</strong> {selectedPackage.name}</p>
+                    <p><strong>{tForms('projectDialog.duration')}</strong> {selectedPackage.duration}</p>
                   </div>
                 )}
                 
                 <div className="space-y-1 text-sm">
                   <div className="flex justify-between">
-                    <span>Base Price:</span>
+                    <span>{tForms('projectDialog.basePrice')}</span>
                     <span className="font-medium">TRY {(parseFloat(projectData.basePrice) || 0).toLocaleString()}</span>
                   </div>
                   
@@ -1167,14 +1167,14 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
                         <span>{projectData.selectedServiceIds.length} items</span>
                       </div>
                       <div className="flex justify-between">
-                        <span>Services Total:</span>
+                        <span>{tForms('projectDialog.servicesTotal')}</span>
                         <span className="font-medium">TRY {servicesTotal.toLocaleString()}</span>
                        </div>
                      </>
                    )}
                    
                    <div className="flex justify-between pt-2 border-t border-border font-medium text-primary">
-                    <span>Final Price:</span>
+                    <span>{tForms('projectDialog.finalPrice')}</span>
                     <span>TRY {totalEstimatedCost.toLocaleString()}</span>
                   </div>
                 </div>
@@ -1191,7 +1191,7 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
         onDiscard={navigation.handleDiscardChanges}
         onStay={navigation.handleStayOnModal}
         onSaveAndExit={navigation.handleSaveAndExit}
-        message="You have unsaved project changes."
+        message={tForms('projectDialog.unsavedChanges')}
       />
     </>
   );

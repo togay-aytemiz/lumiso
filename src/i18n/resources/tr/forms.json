@@ -368,6 +368,46 @@
     "email": "E-posta girin",
     "phone": "Telefon girin",
     "status": "Durum seçin",
-    "notes": "Not girin"
+    "notes": "Notlar girin"
+  },
+  "sessionScheduling": {
+    "client": "Müşteri",
+    "project_optional": "Proje (İsteğe Bağlı)",
+    "select_project": "Bir proje seçin",
+    "session_name": "Seans Adı",
+    "location_address": "Konum / Adres",
+    "enter_location": "Seans konumu veya adresini girin...",
+    "session_notes_optional": "Seans Notları (İsteğe Bağlı)",
+    "special_requirements": "Bu seans için özel gereksinimler veya notlar...",
+    "session_date_time": "Seans Tarih ve Saati"
+  },
+  "activityLogs": {
+    "lead_created": "Müşteri adayı oluşturuldu",
+    "lead_updated": "Müşteri adayı güncellendi",
+    "lead_archived": "Müşteri adayı arşivlendi",
+    "lead_restored": "Müşteri adayı geri yüklendi", 
+    "status_changed_from_to": "durum \"{{oldStatus}}\" den \"{{newStatus}}\" olarak değiştirildi",
+    "lead_updated_with_changes": "Müşteri adayı güncellendi: {{changes}}",
+    "field_added": "{{field}} eklendi: {{value}}",
+    "field_updated": "{{field}} güncellendi: {{value}}",
+    "field_removed": "{{field}} kaldırıldı: {{value}}",
+    "status_added": "Durum eklendi: {{status}}"
+  },
+  "leadFormFields": {
+    "status": "Durum",
+    "full_name": "Tam Ad",
+    "email_address": "E-posta Adresi",
+    "phone_number": "Telefon Numarası", 
+    "notes": "Notlar"
+  },
+  "relativeDates": {
+    "today": "Bugün",
+    "tomorrow": "Yarın",
+    "yesterday": "Dün",
+    "past_due": "Gecikmiş",
+    "needs_attention": "Dikkat gerektiriyor"
+  },
+  "sessionLabels": {
+    "project": "Proje"
   }
 }

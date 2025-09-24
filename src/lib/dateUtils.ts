@@ -1,6 +1,7 @@
 import { formatDate, formatTime } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
-export const getRelativeDate = (dateString: string): string => {
+export const getRelativeDate = (dateString: string, t?: any): string => {
   const sessionDate = new Date(dateString);
   const today = new Date();
   const tomorrow = new Date(today);
@@ -15,11 +16,11 @@ export const getRelativeDate = (dateString: string): string => {
   const yesterdayOnly = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate());
 
   if (sessionDateOnly.getTime() === todayOnly.getTime()) {
-    return "Today";
+    return t ? t('relativeDates.today') : "Today";
   } else if (sessionDateOnly.getTime() === tomorrowOnly.getTime()) {
-    return "Tomorrow";
+    return t ? t('relativeDates.tomorrow') : "Tomorrow";
   } else if (sessionDateOnly.getTime() === yesterdayOnly.getTime()) {
-    return "Yesterday";
+    return t ? t('relativeDates.yesterday') : "Yesterday";
   }
 
   return formatDate(dateString);
@@ -36,10 +37,13 @@ export const isOverdueSession = (dateString: string, status: string): boolean =>
   return sessionDateOnly < todayOnly && status === 'planned';
 };
 
-export const getDateDisplayClasses = (dateString: string): string => {
-  const relativeDate = getRelativeDate(dateString);
+export const getDateDisplayClasses = (dateString: string, t?: any): string => {
+  const relativeDate = getRelativeDate(dateString, t);
   
-  if (relativeDate === "Today" || relativeDate === "Tomorrow") {
+  const todayText = t ? t('relativeDates.today') : "Today";
+  const tomorrowText = t ? t('relativeDates.tomorrow') : "Tomorrow";
+  
+  if (relativeDate === todayText || relativeDate === tomorrowText) {
     return "text-primary font-medium";
   }
   

@@ -286,9 +286,9 @@ export function LeadActivitySection({
   };
   const getActivityDescription = (log: AuditLog): string => {
     if (log.entity_type === 'lead') {
-      if (log.action === 'created') return 'Lead created';
-      if (log.action === 'archived') return 'Lead archived';
-      if (log.action === 'restored') return 'Lead restored';
+      if (log.action === 'created') return t('activityLogs.lead_created');
+      if (log.action === 'archived') return t('activityLogs.lead_archived');
+      if (log.action === 'restored') return t('activityLogs.lead_restored');
       if (log.action === 'updated') {
         const changes: string[] = [];
 
@@ -296,19 +296,19 @@ export function LeadActivitySection({
         const oldStatus = log.old_values?.status;
         const newStatus = log.new_values?.status;
         if (oldStatus !== newStatus) {
-          changes.push(`status changed from "${oldStatus}" to "${newStatus}"`);
+          changes.push(t('activityLogs.status_changed_from_to', { oldStatus, newStatus }));
         }
         if (changes.length > 0) {
-          return `Lead updated: ${changes.join(', ')}`;
+          return t('activityLogs.lead_updated_with_changes', { changes: changes.join(', ') });
         }
-        return 'Lead updated';
+        return t('activityLogs.lead_updated');
       }
     } else if (log.entity_type === 'lead_field_value') {
       const fieldLabel = log.new_values?.field_label || log.old_values?.field_label || 'Field';
       const fieldType = log.new_values?.field_type || log.old_values?.field_type;
       if (log.action === 'created') {
         const value = formatValue(log.new_values?.value, fieldType);
-        return `${fieldLabel} added: ${value}`;
+        return t('activityLogs.field_added', { field: fieldLabel, value });
       }
       if (log.action === 'updated') {
         const oldValue = formatValue(log.old_values?.value, fieldType);
@@ -317,7 +317,7 @@ export function LeadActivitySection({
       }
       if (log.action === 'deleted') {
         const value = formatValue(log.old_values?.value, fieldType);
-        return `${fieldLabel} removed: ${value}`;
+        return t('activityLogs.field_removed', { field: fieldLabel, value });
       }
     } else if (log.entity_type === 'project') {
       const name = log.new_values?.name || log.old_values?.name;

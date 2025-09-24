@@ -370,5 +370,45 @@
     "phone": "Enter phone",
     "status": "Select status",
     "notes": "Enter notes"
+  },
+  "sessionScheduling": {
+    "client": "Client",
+    "project_optional": "Project (Optional)",
+    "select_project": "Select a project",
+    "session_name": "Session Name",
+    "location_address": "Location / Address",
+    "enter_location": "Enter session location or address...",
+    "session_notes_optional": "Session Notes (Optional)",
+    "special_requirements": "Any special requirements or notes for this session...",
+    "session_date_time": "Session Date & Time"
+  },
+  "activityLogs": {
+    "lead_created": "Lead created",
+    "lead_updated": "Lead updated",
+    "lead_archived": "Lead archived", 
+    "lead_restored": "Lead restored",
+    "status_changed_from_to": "status changed from \"{{oldStatus}}\" to \"{{newStatus}}\"",
+    "lead_updated_with_changes": "Lead updated: {{changes}}",
+    "field_added": "{{field}} added: {{value}}",
+    "field_updated": "{{field}} updated: {{value}}",
+    "field_removed": "{{field}} removed: {{value}}",
+    "status_added": "Status added: {{status}}"
+  },
+  "leadFormFields": {
+    "status": "Status",
+    "full_name": "Full Name",
+    "email_address": "Email Address", 
+    "phone_number": "Phone Number",
+    "notes": "Notes"
+  },
+  "relativeDates": {
+    "today": "Today",
+    "tomorrow": "Tomorrow",
+    "yesterday": "Yesterday", 
+    "past_due": "Past Due",
+    "needs_attention": "Needs attention"
+  },
+  "sessionLabels": {
+    "project": "Project"
   }
 }

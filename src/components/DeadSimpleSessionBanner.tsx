@@ -5,6 +5,7 @@ import { getRelativeDate, isOverdueSession } from "@/lib/dateUtils";
 import { SessionStatusBadge } from "@/components/SessionStatusBadge";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { getDisplaySessionName } from "@/lib/sessionUtils";
+import { useFormsTranslation } from '@/hooks/useTypedTranslation';
 
 type SessionStatus = "planned" | "completed" | "cancelled" | "no_show" | "rescheduled" | "in_post_processing" | "delivered";
 
@@ -36,15 +37,19 @@ interface DeadSimpleSessionBannerProps {
 const DeadSimpleSessionBanner = ({ session, onClick }: DeadSimpleSessionBannerProps) => {
   const { settings: orgSettings } = useOrganizationSettings();
   const userLocale = getUserLocale();
-
+  const { t } = useFormsTranslation();
 
   const formatSessionTime = (timeString: string): string => {
     return formatTime(timeString, userLocale, orgSettings?.time_format || undefined);
   };
 
   const formatSessionDate = (dateString: string): string => {
-    const relativeDate = getRelativeDate(dateString);
-    if (relativeDate === "Today" || relativeDate === "Tomorrow" || relativeDate === "Yesterday") {
+    const relativeDate = getRelativeDate(dateString, t);
+    const todayText = t('relativeDates.today');
+    const tomorrowText = t('relativeDates.tomorrow');
+    const yesterdayText = t('relativeDates.yesterday');
+    
+    if (relativeDate === todayText || relativeDate === tomorrowText || relativeDate === yesterdayText) {
       return relativeDate;
     }
     // Use browser locale for long date format (e.g., "22 Ağu 2025 Cum")
@@ -52,28 +57,28 @@ const DeadSimpleSessionBanner = ({ session, onClick }: DeadSimpleSessionBannerPr
   };
 
   const getTimeIndicator = (session: Session) => {
-    const relativeDate = getRelativeDate(session.session_date);
+    const relativeDate = getRelativeDate(session.session_date, t);
     const isOverdue = isOverdueSession(session.session_date, session.status);
     
     if (isOverdue) {
       return {
-        label: "Past Due",
+        label: t('relativeDates.past_due'),
         leftBorder: "border-l-4 border-l-orange-500",
         labelBg: "bg-orange-100 text-orange-800"
       };
     }
     
-    if (relativeDate === "Today") {
+    if (relativeDate === t('relativeDates.today')) {
       return {
-        label: "Today",
+        label: t('relativeDates.today'),
         leftBorder: "border-l-4 border-l-blue-500",
         labelBg: "bg-blue-100 text-blue-800"
       };
     }
     
-    if (relativeDate === "Tomorrow") {
+    if (relativeDate === t('relativeDates.tomorrow')) {
       return {
-        label: "Tomorrow",
+        label: t('relativeDates.tomorrow'),
         leftBorder: "border-l-4 border-l-green-500",
         labelBg: "bg-green-100 text-green-800"
       };
@@ -132,7 +137,7 @@ const DeadSimpleSessionBanner = ({ session, onClick }: DeadSimpleSessionBannerPr
           
           {session.projects?.name && (
             <div className="text-xs text-gray-500">
-              Project: {session.projects.name}
+              {t('sessionLabels.project')}: {session.projects.name}
             </div>
           )}
           

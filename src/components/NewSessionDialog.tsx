@@ -440,8 +440,8 @@ const NewSessionDialog = ({ onSessionScheduled, children }: NewSessionDialogProp
             </div>
             
             {!isNewLead && (
-              <div className="space-y-2">
-                <Label htmlFor="lead-search">{tForms('labels.select_client')}</Label>
+            <div className="space-y-2">
+                <Label htmlFor="lead-search">{tForms('sessionScheduling.client')}</Label>
                 <Popover open={dropdownOpen} onOpenChange={setDropdownOpen}>
                   <PopoverTrigger asChild>
                     <Button

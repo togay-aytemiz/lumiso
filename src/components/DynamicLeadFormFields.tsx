@@ -45,8 +45,27 @@ export function DynamicLeadFormFields({
     ? fieldDefinitions.filter(field => field.is_visible_in_form)
     : fieldDefinitions;
 
+  const getFieldLabel = (field: LeadFieldDefinition) => {
+    // Use translated labels for core fields
+    switch (field.field_key) {
+      case 'status':
+        return t('leadFormFields.status');
+      case 'name':
+        return t('leadFormFields.full_name');
+      case 'email':
+        return t('leadFormFields.email_address');
+      case 'phone':
+        return t('leadFormFields.phone_number');
+      case 'notes':
+        return t('leadFormFields.notes');
+      default:
+        return field.label;
+    }
+  };
+
   const renderField = (field: LeadFieldDefinition) => {
     const fieldName = `field_${field.field_key}`;
+    const fieldLabel = getFieldLabel(field);
     
     return (
       <FormField
@@ -54,12 +73,12 @@ export function DynamicLeadFormFields({
         control={control}
         name={fieldName}
         rules={{
-          required: field.is_required ? `${field.label} ${t('dynamicFields.required')}` : false,
+          required: field.is_required ? `${fieldLabel} ${t('dynamicFields.required')}` : false,
         }}
         render={({ field: formField }) => (
           <FormItem>
             <FormLabel>
-              {field.label}
+              {fieldLabel}
               {field.is_required && <span className="text-destructive ml-1">*</span>}
             </FormLabel>
             <FormControl>

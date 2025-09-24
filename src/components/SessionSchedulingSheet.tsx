@@ -151,7 +151,7 @@ export function SessionSchedulingSheet({
   return (
     <>
       <AppSheetModal
-        title="Schedule Session"
+        title={t('sessionScheduling.title')}
         isOpen={isOpen}
         onOpenChange={onOpenChange}
         size="wide"
@@ -178,7 +178,7 @@ export function SessionSchedulingSheet({
 
           {/* Date & Time Selection */}
           <div className="space-y-4">
-            <Label>Schedule Session *</Label>
+            <Label>{t('sessionScheduling.scheduleSessionLabel')}</Label>
             <CalendarTimePicker
               selectedDate={selectedDate}
               selectedTime={formData.session_time}
@@ -193,7 +193,7 @@ export function SessionSchedulingSheet({
             <div className="space-y-3 p-4 bg-gradient-to-br from-primary/5 to-primary/10 rounded-lg border border-primary/20">
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-primary" />
-                <Label className="text-sm font-medium text-primary">Session Summary</Label>
+                <Label className="text-sm font-medium text-primary">{t('sessionScheduling.sessionSummary')}</Label>
               </div>
               
               <div className="space-y-2 text-sm">
@@ -209,12 +209,12 @@ export function SessionSchedulingSheet({
                     <Clock className="h-3 w-3 text-muted-foreground flex-shrink-0" />
                      <span>
                        {formData.session_date ? 
-                         formatLongDate(formData.session_date, getUserLocale()) : 'Date not set'
+                         formatLongDate(formData.session_date, getUserLocale()) : t('sessionScheduling.dateNotSet')
                        }
                        {formData.session_time && formData.session_date ? (
                          <> at {formatTime(formData.session_time, getUserLocale())}</>
                        ) : formData.session_time ? (
-                         <> Time: {formatTime(formData.session_time, getUserLocale())}</>
+                         <> {t('sessionScheduling.time')}: {formatTime(formData.session_time, getUserLocale())}</>
                        ) : null}
                      </span>
                   </div>
@@ -230,15 +230,15 @@ export function SessionSchedulingSheet({
                 {(projectName || projects.find(p => p.id === formData.project_id)?.name) && (
                   <div className="flex items-center gap-2">
                     <Briefcase className="h-3 w-3 text-muted-foreground flex-shrink-0" />
-                    <span className="text-muted-foreground">
-                      Project: {projectName || projects.find(p => p.id === formData.project_id)?.name}
-                    </span>
+                     <span className="text-muted-foreground">
+                       {t('sessionScheduling.project')}: {projectName || projects.find(p => p.id === formData.project_id)?.name}
+                     </span>
                   </div>
                 )}
                 
                 <div className="flex items-center gap-2">
                   <User className="h-3 w-3 text-muted-foreground flex-shrink-0" />
-                  <span className="text-muted-foreground">Client: {leadName}</span>
+                  <span className="text-muted-foreground">{t('sessionScheduling.client')}: {leadName}</span>
                 </div>
               </div>
             </div>

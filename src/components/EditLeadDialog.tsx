@@ -159,7 +159,7 @@ export function EditLeadDialog({ lead, open, onOpenChange, onLeadUpdated }: Edit
   return (
     <>
       <AppSheetModal
-        title={t('forms:dialogs.edit_lead')}
+        title={t('leadDialog.edit_lead')}
         isOpen={open}
         onOpenChange={onOpenChange}
         dirty={isDirty}
@@ -168,44 +168,44 @@ export function EditLeadDialog({ lead, open, onOpenChange, onLeadUpdated }: Edit
       >
         <div className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="name">{t('forms:labels.name')} *</Label>
+            <Label htmlFor="name">{t('labels.name')} *</Label>
             <Input
               id="name"
               value={formData.name}
               onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-              placeholder={t('forms:placeholders.name')}
+              placeholder={t('placeholders.name')}
               className="rounded-xl border-2 border-primary/20 focus:border-primary"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="email">{t('forms:labels.email')}</Label>
+            <Label htmlFor="email">{t('labels.email')}</Label>
             <Input
               id="email"
               type="email"
               value={formData.email}
               onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-              placeholder={t('forms:placeholders.email')}
+              placeholder={t('placeholders.email')}
               className="rounded-xl border-2 border-primary/20 focus:border-primary"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="phone">{t('forms:labels.phone')}</Label>
+            <Label htmlFor="phone">{t('labels.phone')}</Label>
             <Input
               id="phone"
               value={formData.phone}
               onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-              placeholder={t('forms:placeholders.phone')}
+              placeholder={t('placeholders.phone')}
               className="rounded-xl border-2 border-primary/20 focus:border-primary"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="status">{t('forms:labels.status')}</Label>
+            <Label htmlFor="status">{t('labels.status')}</Label>
             <Select value={formData.status} onValueChange={(value) => setFormData(prev => ({ ...prev, status: value }))}>
               <SelectTrigger className="rounded-xl border-2 border-primary/20 focus:border-primary">
-                <SelectValue placeholder={t('forms:placeholders.status')} />
+                <SelectValue placeholder={t('placeholders.status')} />
               </SelectTrigger>
               <SelectContent>
                 {leadStatuses.map((status) => (
@@ -224,12 +224,12 @@ export function EditLeadDialog({ lead, open, onOpenChange, onLeadUpdated }: Edit
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="notes">{t('forms:labels.notes')}</Label>
+            <Label htmlFor="notes">{t('labels.notes')}</Label>
             <Textarea
               id="notes"
               value={formData.notes}
               onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-              placeholder={t('forms:placeholders.notes')}
+              placeholder={t('placeholders.notes')}
               rows={4}
               className="rounded-xl border-2 border-primary/20 focus:border-primary resize-none"
             />

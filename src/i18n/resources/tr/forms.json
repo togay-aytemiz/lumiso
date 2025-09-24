@@ -320,5 +320,54 @@
     "addOns": "Eklentiler:",
     "servicesTotal": "Hizmetler Toplamı:",
     "finalPrice": "Nihai Fiyat:"
+  },
+  "projectCard": {
+    "created": "Oluşturuldu",
+    "updated": "Güncellendi",
+    "remaining": "kalan"
+  },
+  "activitiesHistory": {
+    "title": "Aktiviteler ve Geçmiş",
+    "activity": "Aktivite",
+    "history": "Geçmiş",
+    "leadActivities": "Potansiyel Müşteri Aktiviteleri",
+    "projectActivities": "Proje Aktiviteleri",
+    "noActivitiesYet": "Henüz aktivite yok",
+    "noHistoryAvailable": "Geçmiş bulunmuyor",
+    "enterNote": "Notunuzu girin...",
+    "addActivity": "Aktivite Ekle",
+    "scheduleSession": "Seans Planla"
+  },
+  "sessionScheduling": {
+    "title": "Seans Planla",
+    "scheduleSessionLabel": "Seans Planla *",
+    "sessionSummary": "Seans Özeti",
+    "project": "Proje",
+    "client": "Müşteri",
+    "dateNotSet": "Tarih belirlenmedi",
+    "time": "Saat"
+  },
+  "timeRelative": {
+    "today": "Bugün",
+    "tomorrow": "Yarın",
+    "yesterday": "Dün",
+    "pastDue": "Gecikmiş"
+  },
+  "leadDialog": {
+    "edit_lead": "Potansiyel Müşteriyi Düzenle"
+  },
+  "labels": {
+    "name": "İsim",
+    "email": "E-posta",
+    "phone": "Telefon",
+    "status": "Durum",
+    "notes": "Notlar"
+  },
+  "placeholders": {
+    "name": "İsim girin",
+    "email": "E-posta girin",
+    "phone": "Telefon girin",
+    "status": "Durum seçin",
+    "notes": "Not girin"
   }
 }

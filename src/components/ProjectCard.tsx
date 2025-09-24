@@ -133,9 +133,9 @@ export function ProjectCard({ project, onView, refreshTrigger, onQuickView }: Pr
                     className="text-xs"
                   />
                 )}
-                <span className="whitespace-nowrap">Created {format(new Date(project.created_at), "M/d/yy")}</span>
+                <span className="whitespace-nowrap">{t('projectCard.created')} {format(new Date(project.created_at), "M/d/yy")}</span>
                 {project.updated_at !== project.created_at && (
-                  <span className="whitespace-nowrap">Updated {format(new Date(project.updated_at), "M/d/yy")}</span>
+                  <span className="whitespace-nowrap">{t('projectCard.updated')} {format(new Date(project.updated_at), "M/d/yy")}</span>
                 )}
               </div>
             </div>
@@ -154,7 +154,7 @@ export function ProjectCard({ project, onView, refreshTrigger, onQuickView }: Pr
                 </div>
                 {paymentSummary.remaining > 0 && (
                   <span className="text-orange-600">
-                    ({formatCurrency(paymentSummary.remaining)} remaining)
+                    ({formatCurrency(paymentSummary.remaining)} {t('projectCard.remaining')})
                   </span>
                 )}
               </div>

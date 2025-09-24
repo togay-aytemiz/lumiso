@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { SessionSchedulingSheet } from "@/components/SessionSchedulingSheet";
+import { useFormsTranslation } from '@/hooks/useTypedTranslation';
 
 interface NewSessionDialogForProjectProps {
   leadId: string;
@@ -18,13 +19,14 @@ export function NewSessionDialogForProject({
   projectId, 
   onSessionScheduled 
 }: NewSessionDialogForProjectProps) {
+  const { t } = useFormsTranslation();
   const [open, setOpen] = useState(false);
 
   return (
     <>
       <Button size="sm" className="gap-2" onClick={() => setOpen(true)}>
         <Plus className="h-4 w-4" />
-        Add
+        {t('buttons.add')}
       </Button>
 
       <SessionSchedulingSheet

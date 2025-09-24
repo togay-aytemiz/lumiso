@@ -1,5 +1,6 @@
 import { CheckCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useFormsTranslation } from '@/hooks/useTypedTranslation';
 interface ActivityTimelineItemProps {
   id: string;
   type: 'note' | 'reminder';
@@ -16,6 +17,8 @@ export function ActivityTimelineItem({
   projectName,
   onToggleCompletion
 }: ActivityTimelineItemProps) {
+  const { t } = useFormsTranslation();
+  
   return <div className="flex gap-3 py-2">
       {/* Timeline dot */}
       
@@ -24,7 +27,7 @@ export function ActivityTimelineItem({
       <div className="flex-1 min-w-0 pb-2">
         <div className="flex items-start gap-2 mb-1">
           <Badge variant="outline" className="text-xs h-5">
-            {type}
+            {t(`activities.types.${type}`)}
           </Badge>
           {projectName && <Badge variant="secondary" className="text-xs h-5">
               {projectName}

@@ -321,5 +321,54 @@
     "addOns": "Add-ons:",
     "servicesTotal": "Services Total:",
     "finalPrice": "Final Price:"
+  },
+  "projectCard": {
+    "created": "Created",
+    "updated": "Updated",
+    "remaining": "remaining"
+  },
+  "activitiesHistory": {
+    "title": "Activities & History",
+    "activity": "Activity",
+    "history": "History",
+    "leadActivities": "Lead Activities",
+    "projectActivities": "Project Activities",
+    "noActivitiesYet": "No activities yet",
+    "noHistoryAvailable": "No history available",
+    "enterNote": "Enter your note...",
+    "addActivity": "Add Activity",
+    "scheduleSession": "Schedule Session"
+  },
+  "sessionScheduling": {
+    "title": "Schedule Session",
+    "scheduleSessionLabel": "Schedule Session *",
+    "sessionSummary": "Session Summary",
+    "project": "Project",
+    "client": "Client",
+    "dateNotSet": "Date not set",
+    "time": "Time"
+  },
+  "timeRelative": {
+    "today": "Today",
+    "tomorrow": "Tomorrow",
+    "yesterday": "Yesterday",
+    "pastDue": "Past Due"
+  },
+  "leadDialog": {
+    "edit_lead": "Edit Lead"
+  },
+  "labels": {
+    "name": "Name",
+    "email": "Email", 
+    "phone": "Phone",
+    "status": "Status",
+    "notes": "Notes"
+  },
+  "placeholders": {
+    "name": "Enter name",
+    "email": "Enter email",
+    "phone": "Enter phone",
+    "status": "Select status",
+    "notes": "Enter notes"
   }
 }

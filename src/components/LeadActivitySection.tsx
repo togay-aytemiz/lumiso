@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ActivityForm } from "@/components/shared/ActivityForm";
 import { ActivityTimeline } from "@/components/shared/ActivityTimeline";
+import { useFormsTranslation } from '@/hooks/useTypedTranslation';
 interface LeadActivity {
   id: string;
   type: string;
@@ -42,6 +43,7 @@ export function LeadActivitySection({
   leadName,
   onActivityUpdated
 }: LeadActivitySectionProps) {
+  const { t } = useFormsTranslation();
   const [activities, setActivities] = useState<LeadActivity[]>([]);
   const [projectActivities, setProjectActivities] = useState<LeadActivity[]>([]);
   const [projects, setProjects] = useState<{
@@ -349,32 +351,32 @@ export function LeadActivitySection({
         <CardHeader>
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold">
-              Activities & History
+              {t('activitiesHistory.title')}
             </h3>
             <TabsList className="inline-flex h-8 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground">
-              <TabsTrigger value="activity">Activity</TabsTrigger>
-              <TabsTrigger value="history">History</TabsTrigger>
+              <TabsTrigger value="activity">{t('activitiesHistory.activity')}</TabsTrigger>
+              <TabsTrigger value="history">{t('activitiesHistory.history')}</TabsTrigger>
             </TabsList>
           </div>
         </CardHeader>
         <CardContent>
           
           <TabsContent value="activity" className="space-y-6">
-            <ActivityForm onSubmit={handleSaveActivity} loading={saving} placeholder="Enter your note..." />
+            <ActivityForm onSubmit={handleSaveActivity} loading={saving} placeholder={t('activitiesHistory.enterNote')} />
 
             <div className="space-y-4">
               {activities.length > 0 && <div>
-                  <h4 className="text-sm mb-3 text-gray-900 font-semibold">Lead Activities</h4>
+                  <h4 className="text-sm mb-3 text-gray-900 font-semibold">{t('activitiesHistory.leadActivities')}</h4>
                   <ActivityTimeline activities={activities} leadName={leadName} onToggleCompletion={toggleCompletion} />
                 </div>}
 
               {projectActivities.length > 0 && <div>
-                  <h4 className="text-sm mb-3 font-bold text-gray-900">Project Activities</h4>
+                  <h4 className="text-sm mb-3 font-bold text-gray-900">{t('activitiesHistory.projectActivities')}</h4>
                   <ActivityTimeline activities={projectActivities} projects={projects} leadName={leadName} onToggleCompletion={toggleCompletion} />
                 </div>}
 
               {activities.length === 0 && projectActivities.length === 0 && <div className="text-sm text-muted-foreground text-center py-8">
-                  No activities yet
+                  {t('activitiesHistory.noActivitiesYet')}
                 </div>}
             </div>
           </TabsContent>
@@ -390,7 +392,7 @@ export function LeadActivitySection({
                     </div>
                   </div>)}
               </div> : <div className="text-sm text-muted-foreground text-center py-8">
-                No history available
+                {t('activitiesHistory.noHistoryAvailable')}
               </div>}
            </TabsContent>
         </CardContent>

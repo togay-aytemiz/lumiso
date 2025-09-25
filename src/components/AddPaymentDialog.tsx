@@ -17,7 +17,7 @@ import "react-calendar/dist/Calendar.css";
 import "@/components/react-calendar.css";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { NavigationGuardDialog } from "./settings/NavigationGuardDialog";
-import { useTranslation } from "react-i18next";
+import { useFormsTranslation } from '@/hooks/useTypedTranslation';
 
 interface AddPaymentDialogProps {
   projectId: string;
@@ -33,7 +33,7 @@ export function AddPaymentDialog({ projectId, onPaymentAdded }: AddPaymentDialog
   const [isLoading, setIsLoading] = useState(false);
   
   const { toast } = useToast();
-  const { t } = useTranslation(['forms', 'common']);
+  const { t } = useFormsTranslation();
   const browserLocale = getUserLocale();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -41,7 +41,7 @@ export function AddPaymentDialog({ projectId, onPaymentAdded }: AddPaymentDialog
     
     if (!amount.trim()) {
       toast({
-        title: t('common:status.error'),
+        title: t('messages.error.generic'),
         description: t('payments.amount_required'),
         variant: "destructive"
       });
@@ -75,7 +75,7 @@ export function AddPaymentDialog({ projectId, onPaymentAdded }: AddPaymentDialog
       if (error) throw error;
 
       toast({
-        title: t('common:messages.success.project_created'),
+        title: t('messages.success.created'),
         description: t('payments.payment_added_success')
       });
 
@@ -126,7 +126,7 @@ export function AddPaymentDialog({ projectId, onPaymentAdded }: AddPaymentDialog
 
   const footerActions = [
     {
-      label: t('common:buttons.cancel'),
+      label: t('buttons.cancel'),
       onClick: () => setOpen(false),
       variant: "outline" as const,
       disabled: isLoading
@@ -143,7 +143,7 @@ export function AddPaymentDialog({ projectId, onPaymentAdded }: AddPaymentDialog
     <>
       <Button size="sm" className="gap-2" onClick={() => setOpen(true)}>
         <Plus className="h-4 w-4" />
-        {t('common:buttons.add')}
+        {t('buttons.add')}
       </Button>
 
       <AppSheetModal

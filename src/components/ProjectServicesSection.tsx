@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Edit2, Save, X, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ServicePicker, type PickerService } from "./ServicePicker";
+import { useFormsTranslation } from '@/hooks/useTypedTranslation';
 interface Service {
   id: string;
   name: string;
@@ -32,6 +33,7 @@ export function ProjectServicesSection({
   const {
     toast
   } = useToast();
+  const { t } = useFormsTranslation();
   const sectionRef = useRef<HTMLDivElement>(null);
   const fetchProjectServices = async () => {
     try {
@@ -184,14 +186,14 @@ export function ProjectServicesSection({
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
             </svg>
-            Services
+            {t('services.title')}
           </div>
           {!isEditing && (services.length === 0 ? <Button size="sm" onClick={() => setIsEditing(true)} className="gap-2">
                 <Plus className="h-4 w-4" />
-                Add
+                {t('services.add')}
               </Button> : <Button size="sm" onClick={() => setIsEditing(true)} className="gap-2">
                 <Edit2 className="h-4 w-4" />
-                Edit
+                {t('services.edit')}
               </Button>)}
         </CardTitle>
       </CardHeader>

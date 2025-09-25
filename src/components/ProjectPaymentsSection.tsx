@@ -12,6 +12,7 @@ import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { AddPaymentDialog } from "./AddPaymentDialog";
 import { EditPaymentDialog } from "./EditPaymentDialog";
+import { useFormsTranslation } from '@/hooks/useTypedTranslation';
 interface Payment {
   id: string;
   project_id: string;
@@ -58,6 +59,7 @@ export function ProjectPaymentsSection({
   const {
     toast
   } = useToast();
+  const { t } = useFormsTranslation();
   const fetchProject = async () => {
     try {
       const {
@@ -88,7 +90,7 @@ export function ProjectPaymentsSection({
     } catch (error: any) {
       console.error('Error fetching payments:', error);
       toast({
-        title: "Error loading payments",
+        title: t('payments.error_loading'),
         description: error.message,
         variant: "destructive"
       });
@@ -150,7 +152,7 @@ export function ProjectPaymentsSection({
             user_id: user.id,
             organization_id: organizationId,
             amount: project.base_price || 0,
-            description: 'Base Price',
+            description: t('payments.base_price'),
             status: 'due',
             type: 'base_price'
           });
@@ -183,14 +185,14 @@ export function ProjectPaymentsSection({
       } = await supabase.from('payments').delete().eq('id', paymentToDelete.id);
       if (error) throw error;
       toast({
-        title: "Success",
-        description: "Payment deleted successfully"
+        title: t('messages.success.deleted'),
+        description: t('payments.payment_deleted')
       });
       fetchPayments();
       onPaymentsUpdated?.();
     } catch (error: any) {
       toast({
-        title: "Error deleting payment",
+        title: t('payments.error_deleting'),
         description: error.message,
         variant: "destructive"
       });
@@ -212,7 +214,7 @@ export function ProjectPaymentsSection({
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2 text-xl font-semibold"><CreditCard className="h-4 w-4" />Payments</CardTitle>
+            <CardTitle className="flex items-center gap-2 text-xl font-semibold"><CreditCard className="h-4 w-4" />{t('payments.title')}</CardTitle>
             <AddPaymentDialog projectId={projectId} onPaymentAdded={handlePaymentUpdated} />
           </div>
         </CardHeader>
@@ -223,7 +225,7 @@ export function ProjectPaymentsSection({
             <div className="md:text-center col-span-3 md:col-span-1">
               <div className="flex items-center gap-2 mb-1 md:justify-center">
                 <div className="w-2 h-2 rounded-full bg-green-500 shrink-0"></div>
-                <span className="text-sm font-medium text-muted-foreground flex-1 md:flex-none">Total paid</span>
+                <span className="text-sm font-medium text-muted-foreground flex-1 md:flex-none">{t('payments.total_paid')}</span>
                 <div className="text-lg font-semibold md:hidden">TRY {Math.round(totalPaid)}</div>
               </div>
               <div className="text-xl font-semibold hidden md:block">TRY {Math.round(totalPaid)}</div>
@@ -231,7 +233,7 @@ export function ProjectPaymentsSection({
             <div className="md:text-center col-span-3 md:col-span-1">
               <div className="flex items-center gap-2 mb-1 md:justify-center">
                 <div className="w-2 h-2 rounded-full bg-gray-500 shrink-0"></div>
-                <span className="text-sm font-medium text-muted-foreground flex-1 md:flex-none">Extra services</span>
+                <span className="text-sm font-medium text-muted-foreground flex-1 md:flex-none">{t('payments.extra_services')}</span>
                 <div className="text-lg font-semibold md:hidden">TRY {Math.round(extraServices)}</div>
               </div>
               <div className="text-xl font-semibold hidden md:block">TRY {Math.round(extraServices)}</div>
@@ -239,7 +241,7 @@ export function ProjectPaymentsSection({
             <div className="md:text-center col-span-3 md:col-span-1">
               <div className="flex items-center gap-2 mb-1 md:justify-center">
                 <div className="w-2 h-2 rounded-full bg-yellow-500 shrink-0"></div>
-                <span className="text-sm font-medium text-muted-foreground flex-1 md:flex-none">Remaining balance</span>
+                <span className="text-sm font-medium text-muted-foreground flex-1 md:flex-none">{t('payments.remaining_balance')}</span>
                 <div className="text-lg font-semibold md:hidden">TRY {Math.round(remainingBalance)}</div>
               </div>
               <div className="text-xl font-semibold hidden md:block">TRY {Math.round(remainingBalance)}</div>
@@ -250,7 +252,7 @@ export function ProjectPaymentsSection({
           {loading ? <div className="space-y-3">
               {[1, 2, 3].map(i => <div key={i} className="h-12 bg-muted rounded-md animate-pulse" />)}
             </div> : payments.length === 0 && (project?.base_price || 0) === 0 ? <div className="text-center py-8 text-muted-foreground">
-              No payments recorded yet. Set a base price to get started.
+              {t('payments.no_payments')}
             </div> : <div className="space-y-3">
               {payments.map(payment => <div key={payment.id} className={`border rounded-lg transition-colors ${payment.type === 'base_price' ? 'bg-muted/30 border-muted-foreground/20' : 'hover:bg-muted/50'}`}>
                   {/* Desktop Layout */}
@@ -266,12 +268,12 @@ export function ProjectPaymentsSection({
                       </div>
                       <div className="flex-1 min-w-0 flex items-center gap-2">
                         <div className="text-sm text-muted-foreground truncate">
-                          {payment.description || "No description"}
+                          {payment.description || t('payments.no_description')}
                         </div>
                       </div>
                       <div>
                         <Badge variant={payment.status === 'paid' ? 'default' : 'secondary'} className={payment.status === 'paid' ? 'bg-green-100 text-green-800 hover:bg-green-100' : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100'}>
-                          {payment.status === 'paid' ? 'Paid' : 'Due'}
+                          {payment.status === 'paid' ? t('payments.paid') : t('payments.due')}
                         </Badge>
                       </div>
                     </div>
@@ -306,7 +308,7 @@ export function ProjectPaymentsSection({
                     {/* Row 3: Status + Actions */}
                     <div className="flex items-center justify-between">
                       <Badge variant={payment.status === 'paid' ? 'default' : 'secondary'} className={payment.status === 'paid' ? 'bg-green-100 text-green-800 hover:bg-green-100' : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100'}>
-                        {payment.status === 'paid' ? 'Paid' : 'Due'}
+                        {payment.status === 'paid' ? t('payments.paid') : t('payments.due')}
                       </Badge>
                       <div className="flex items-center gap-1">
                         <Button variant="ghost" size="sm" onClick={() => handleEditPayment(payment)} className="h-8 w-8 p-0">
@@ -333,15 +335,15 @@ export function ProjectPaymentsSection({
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Payment</AlertDialogTitle>
+            <AlertDialogTitle>{t('payments.delete_payment')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this payment? This action cannot be undone.
+              {t('payments.delete_payment_confirm')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting}>{t('buttons.cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeletePayment} disabled={isDeleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              {isDeleting ? "Deleting..." : "Delete Payment"}
+              {isDeleting ? t('payments.deleting') : t('payments.delete_payment')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

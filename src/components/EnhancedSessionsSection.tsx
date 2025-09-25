@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import DeadSimpleSessionBanner from "@/components/DeadSimpleSessionBanner";
 import { sortSessionsByLifecycle, SessionWithStatus } from "@/lib/sessionSorting";
+import { useFormsTranslation } from '@/hooks/useTypedTranslation';
 
 type SessionStatus = "planned" | "completed" | "cancelled" | "no_show" | "rescheduled" | "in_post_processing" | "delivered";
 
@@ -17,6 +18,8 @@ interface EnhancedSessionsSectionProps {
 }
 
 const EnhancedSessionsSection = ({ sessions, loading, onSessionClick }: EnhancedSessionsSectionProps) => {
+  const { t } = useFormsTranslation();
+  
   if (loading) {
     return (
       <div className="w-full bg-blue-50/50 border border-blue-100 rounded-lg p-6">
@@ -42,7 +45,7 @@ const EnhancedSessionsSection = ({ sessions, loading, onSessionClick }: Enhanced
   return (
     <div className="w-full bg-blue-50/50 border border-blue-100 rounded-lg p-6 mb-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold">Sessions</h3>
+        <h3 className="text-lg font-semibold">{t('sessions_section.title')}</h3>
         <Badge variant="secondary">
           {sessions.length}
         </Badge>

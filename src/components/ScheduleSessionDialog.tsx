@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Calendar } from "lucide-react";
 import { SessionSchedulingSheet } from "@/components/SessionSchedulingSheet";
+import { useFormsTranslation } from "@/hooks/useTypedTranslation";
 
 interface ScheduleSessionDialogProps {
   leadId: string;
@@ -13,6 +14,7 @@ interface ScheduleSessionDialogProps {
 }
 
 const ScheduleSessionDialog = ({ leadId, leadName, onSessionScheduled, disabled = false, disabledTooltip }: ScheduleSessionDialogProps) => {
+  const { t } = useFormsTranslation();
   const [open, setOpen] = useState(false);
 
   return (
@@ -23,7 +25,7 @@ const ScheduleSessionDialog = ({ leadId, leadName, onSessionScheduled, disabled 
             <TooltipTrigger asChild>
               <Button disabled className="opacity-50 cursor-not-allowed">
                 <Calendar className="h-4 w-4 mr-2" />
-                Schedule Session
+                {t("sessions_form.add_session")}
               </Button>
             </TooltipTrigger>
             <TooltipContent>
@@ -34,7 +36,7 @@ const ScheduleSessionDialog = ({ leadId, leadName, onSessionScheduled, disabled 
       ) : (
         <Button onClick={() => setOpen(true)}>
           <Calendar className="h-4 w-4 mr-2" />
-          Schedule Session
+          {t("sessions_form.add_session")}
         </Button>
       )}
 

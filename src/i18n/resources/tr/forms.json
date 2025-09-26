@@ -25,7 +25,8 @@
     "session_date_time_required": "Seans tarihi ve saati gerekli.",
     "lead_required": "Lütfen bir müşteri adayı seçin veya yeni bir tane oluşturun.",
     "lead_name_required": "Yeni müşteri adayı oluştururken isim gerekli.",
-    "content_required": "İçerik gerekli."
+    "content_required": "İçerik gerekli.",
+    "datetime_required_for_reminders": "Hatırlatıcılar için tarih ve saat gereklidir"
   },
   "navigationGuard": {
     "title": "Kaydedilmemiş değişiklikleriniz var",
@@ -488,6 +489,69 @@
     "error_add": "Görev eklenirken hata",
     "error_update": "Görev güncellenirken hata",
     "error_delete": "Görev silinirken hata"
+  },
+  "projectDetails": {
+    "header": {
+      "fullDetails": "Tüm Detaylar",
+      "more": "Daha Fazla",
+      "close": "Kapat",
+      "edit": "Projeyi Düzenle",
+      "archive": "Projeyi Arşivle",
+      "restore": "Projeyi Geri Yükle",
+      "delete": "Projeyi Sil"
+    },
+    "sections": {
+      "activities": "Proje Aktiviteleri",
+      "services": "Hizmetler",
+      "sessions": "Seanslar",
+      "payments": "Ödemeler",
+      "todos": "Yapılacaklar Listesi",
+      "dangerZone": "Tehlike Bölgesi"
+    },
+    "activities": {
+      "title": "Proje Aktiviteleri",
+      "placeholder": "Proje notunuzu girin...",
+      "noActivities": "Henüz aktivite yok",
+      "addFirstActivity": "Başlamak için ilk notunuzu veya hatırlatıcınızı ekleyin"
+    },
+    "services": {
+      "title": "Hizmetler",
+      "emptyState": "Henüz hizmet eklenmedi",
+      "addHint": "Proje çıktılarını takip etmek için hizmet ekleyin"
+    }
+  },
+  "sessionScheduling": {
+    "title": "Seans Planla",
+    "client": "Müşteri",
+    "project": "Proje",
+    "sessionName": "Seans Adı",
+    "locationAddress": "Konum / Adres",
+    "sessionNotes": "Seans Notları (Opsiyonel)",
+    "scheduleSessionLabel": "Seans Tarihi ve Saati",
+    "selectDateHint": "Müsait saatleri görmek için bir tarih seçin"
+  },
+  "success": {
+    "saved": "Başarıyla kaydedildi",
+    "created": "Başarıyla oluşturuldu",
+    "updated": "Başarıyla güncellendi",
+    "deleted": "Başarıyla silindi",
+    "imported": "Başarıyla içe aktarıldı",
+    "exported": "Başarıyla dışa aktarıldı"
+  },
+  "activity": {
+    "reminder": "Hatırlatıcı",
+    "note": "Not",
+    "added_to_project": "projeye başarıyla eklendi",
+    "task_completed": "Görev tamamlandı olarak işaretlendi",
+    "task_incomplete": "Görev tamamlanmadı olarak işaretlendi",
+    "task_status_updated": "Görev durumu başarıyla güncellendi",
+    "error_updating_task": "Görev güncellenirken hata"
+  },
+  "error": {
+    "generic": "Bir hata oluştu",
+    "validation": "Doğrulama hatası",
+    "network": "Ağ hatası",
+    "save": "Kaydetme hatası"
   },
   "dangerZone": {
     "title": "Tehlikeli Bölge",

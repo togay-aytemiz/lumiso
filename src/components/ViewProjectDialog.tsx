@@ -415,8 +415,8 @@ export function ViewProjectDialog({
       }).eq('id', project.id);
       if (projectError) throw projectError;
       toast({
-        title: "Success",
-        description: "Project updated successfully."
+        title: tForms("success.saved"),
+        description: tForms("viewProject.projectUpdated")
       });
 
       // Update the project type display immediately with the new data
@@ -487,8 +487,8 @@ export function ViewProjectDialog({
       } = await supabase.from('projects').delete().eq('id', project.id);
       if (error) throw error;
       toast({
-        title: "Success",
-        description: "Project and all related data deleted successfully."
+        title: tForms("success.saved"),
+        description: tForms("viewProject.projectDeleted")
       });
       onOpenChange(false);
       onProjectUpdated();
@@ -516,8 +516,8 @@ export function ViewProjectDialog({
       } = await supabase.from('sessions').delete().eq('id', sessionId);
       if (error) throw error;
       toast({
-        title: "Success",
-        description: "Session deleted successfully."
+        title: tForms("success.saved"),
+        description: tForms("viewProject.sessionDeleted")
       });
       fetchProjectSessions();
       onProjectUpdated(); // Notify parent component to refresh sessions
@@ -640,24 +640,24 @@ export function ViewProjectDialog({
                 {!isEditing && <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" size="sm" aria-label="More actions" className="text-muted-foreground hover:text-foreground h-8 px-2 gap-1 md:h-10 md:px-3">
-                        <span className="text-sm hidden md:inline">More</span>
+                        <span className="text-sm hidden md:inline">{tForms("projectDetails.header.more")}</span>
                         <ChevronDown className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" side="bottom" className="z-50 bg-background">
-                      <DropdownMenuItem role="menuitem" onSelect={() => setIsEditing(true)}>
-                        <Pencil className="mr-2 h-4 w-4" />
-                        <span>Edit Project</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem role="menuitem" onSelect={handleArchiveAction}>
-                        {isArchived ? <>
-                            <ArchiveRestore className="mr-2 h-4 w-4" />
-                            <span>Restore Project</span>
-                          </> : <>
-                            <Archive className="mr-2 h-4 w-4" />
-                            <span>Archive Project</span>
-                          </>}
-                      </DropdownMenuItem>
+                       <DropdownMenuItem role="menuitem" onSelect={() => setIsEditing(true)}>
+                         <Pencil className="mr-2 h-4 w-4" />
+                         <span>{tForms("projectDetails.header.edit")}</span>
+                       </DropdownMenuItem>
+                       <DropdownMenuItem role="menuitem" onSelect={handleArchiveAction}>
+                         {isArchived ? <>
+                             <ArchiveRestore className="mr-2 h-4 w-4" />
+                             <span>{tForms("projectDetails.header.restore")}</span>
+                           </> : <>
+                             <Archive className="mr-2 h-4 w-4" />
+                             <span>{tForms("projectDetails.header.archive")}</span>
+                           </>}
+                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>}
                 {/* Hide fullscreen toggle on mobile since it's always fullscreen */}
@@ -668,10 +668,10 @@ export function ViewProjectDialog({
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
                     </svg>}
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)} className="text-muted-foreground hover:text-foreground text-sm h-8 px-2 md:h-10 md:px-3">
-                  <span className="hidden md:inline">{tForms('projects.close')}</span>
-                  <X className="h-4 w-4 md:hidden" />
-                </Button>
+                 <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)} className="text-muted-foreground hover:text-foreground text-sm h-8 px-2 md:h-10 md:px-3">
+                   <span className="hidden md:inline">{tForms("projectDetails.header.close")}</span>
+                   <X className="h-4 w-4 md:hidden" />
+                 </Button>
               </div>
             </div>
           </DialogHeader>
@@ -681,57 +681,57 @@ export function ViewProjectDialog({
             </div>}
 
           <div className={isArchived ? 'opacity-60 pointer-events-none select-none' : ''}>
-            <ProjectDetailsLayout header={<></>} left={<div className="space-y-4">
-                  {lead && <UnifiedClientDetails 
-                    lead={lead} 
-                    showClickableNames={true}
-                    onLeadUpdated={() => {
-                      fetchLead();
-                      onProjectUpdated();
-                    }} 
-                  />}
-                </div>} sections={[{
-              id: 'payments',
-              title: 'Payments',
-              content: <ProjectPaymentsSection projectId={project!.id} onPaymentsUpdated={() => {
-                onProjectUpdated();
-                onActivityUpdated?.();
-              }} refreshToken={servicesVersion} />
-            }, {
-              id: 'services',
-              title: 'Services',
-              content: <ProjectServicesSection projectId={project!.id} onServicesUpdated={() => {
-                setServicesVersion(v => v + 1);
-                onProjectUpdated();
-                onActivityUpdated?.();
-              }} />
-            }, {
-              id: 'sessions',
-              title: 'Sessions',
-              content: <SessionsSection sessions={sessions} loading={loading} leadId={project!.lead_id} projectId={project!.id} leadName={leadName} projectName={project!.name} onSessionUpdated={() => {
-                handleSessionUpdated();
-                onActivityUpdated?.();
-              }} onDeleteSession={handleDeleteSession} />
-            }, {
-              id: 'activities',
-              title: 'Activities',
-              content: <ProjectActivitySection projectId={project!.id} leadId={project!.lead_id} leadName={leadName} projectName={project!.name} onActivityUpdated={() => {
-                onActivityUpdated?.();
-              }} />
-            }, {
-              id: 'todos',
-              title: 'Todos',
-              content: <ProjectTodoListEnhanced projectId={project!.id} />
-            }]} rightFooter={<div className="border border-destructive/20 bg-destructive/5 rounded-md p-4">
-                  <div className="space-y-3">
-                    <Button variant="outline" onClick={() => setShowDeleteDialog(true)} className="w-full border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground">
-                      Delete Project
-                    </Button>
-                     <p className="text-xs text-muted-foreground text-center">
-                       This will permanently delete the project and ALL related data: sessions, payments, todos, services, and activities.
-                     </p>
-                  </div>
-                </div>} />
+             <ProjectDetailsLayout header={<></>} left={<div className="space-y-4">
+                   {lead && <UnifiedClientDetails 
+                     lead={lead} 
+                     showClickableNames={true}
+                     onLeadUpdated={() => {
+                       fetchLead();
+                       onProjectUpdated();
+                     }} 
+                   />}
+                 </div>} sections={[{
+               id: 'payments',
+               title: tForms('projectDetails.sections.payments'),
+               content: <ProjectPaymentsSection projectId={project!.id} onPaymentsUpdated={() => {
+                 onProjectUpdated();
+                 onActivityUpdated?.();
+               }} refreshToken={servicesVersion} />
+             }, {
+               id: 'services',
+               title: tForms('projectDetails.sections.services'),
+               content: <ProjectServicesSection projectId={project!.id} onServicesUpdated={() => {
+                 setServicesVersion(v => v + 1);
+                 onProjectUpdated();
+                 onActivityUpdated?.();
+               }} />
+             }, {
+               id: 'sessions',
+               title: tForms('projectDetails.sections.sessions'),
+               content: <SessionsSection sessions={sessions} loading={loading} leadId={project!.lead_id} projectId={project!.id} leadName={leadName} projectName={project!.name} onSessionUpdated={() => {
+                 handleSessionUpdated();
+                 onActivityUpdated?.();
+               }} onDeleteSession={handleDeleteSession} />
+             }, {
+               id: 'activities',
+               title: tForms('projectDetails.sections.activities'),
+               content: <ProjectActivitySection projectId={project!.id} leadId={project!.lead_id} leadName={leadName} projectName={project!.name} onActivityUpdated={() => {
+                 onActivityUpdated?.();
+               }} />
+             }, {
+               id: 'todos',
+               title: tForms('projectDetails.sections.todos'),
+               content: <ProjectTodoListEnhanced projectId={project!.id} />
+             }]} rightFooter={<div className="border border-destructive/20 bg-destructive/5 rounded-md p-4">
+                   <div className="space-y-3">
+                     <Button variant="outline" onClick={() => setShowDeleteDialog(true)} className="w-full border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground">
+                       {tForms('projectDetails.header.delete')}
+                     </Button>
+                      <p className="text-xs text-muted-foreground text-center">
+                        {tForms('projectDetails.dangerZone.description')}
+                      </p>
+                   </div>
+                 </div>} />
           </div>
           </div>
         </DialogContent>
@@ -743,14 +743,13 @@ export function ViewProjectDialog({
           <AlertDialogHeader>
             <AlertDialogTitle>{tForms('viewProject.deleteProject')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{project?.name}"? This action cannot be undone.
-              This will permanently delete the project and ALL related data including sessions, payments, todos, services, and activities.
+              {tForms('projectDetails.dangerZone.confirmDescription')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting}>{tForms('projectDetails.dangerZone.confirmCancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteProject} disabled={isDeleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              {isDeleting ? tForms('viewProject.deleting') : tForms('viewProject.deleteProject')}
+              {isDeleting ? tForms('viewProject.deleting') : tForms('projectDetails.dangerZone.confirmDelete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

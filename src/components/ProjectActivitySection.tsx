@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
 import { toast } from "@/hooks/use-toast";
 import { useCalendarSync } from "@/hooks/useCalendarSync";
+import { useFormsTranslation } from "@/hooks/useTypedTranslation";
 
 interface ProjectActivity {
   id: string;
@@ -35,6 +36,7 @@ export function ProjectActivitySection({
   projectName,
   onActivityUpdated
 }: ProjectActivitySectionProps) {
+  const { t } = useFormsTranslation();
   const [activities, setActivities] = useState<ProjectActivity[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -66,16 +68,16 @@ export function ProjectActivitySection({
   const handleSaveActivity = async (content: string, isReminderMode: boolean, reminderDateTime?: string) => {
     if (!content.trim()) {
       toast({
-        title: "Validation error",
-        description: "Content is required.",
+        title: t("validation.required_field"),
+        description: t("validation.content_required"),
         variant: "destructive"
       });
       return;
     }
     if (isReminderMode && !reminderDateTime) {
       toast({
-        title: "Validation error",
-        description: "Date and time are required for reminders.",
+        title: t("validation.required_field"),
+        description: t("validation.datetime_required_for_reminders"),
         variant: "destructive"
       });
       return;
@@ -129,8 +131,8 @@ export function ProjectActivitySection({
       }
 
       toast({
-        title: "Success",
-        description: `${isReminderMode ? 'Reminder' : 'Note'} added to project successfully.`
+        title: t("success.saved"),
+        description: `${isReminderMode ? t("activity.reminder") : t("activity.note")} ${t("activity.added_to_project")}.`
       });
 
       // Refresh data
@@ -138,7 +140,7 @@ export function ProjectActivitySection({
       onActivityUpdated?.();
     } catch (error: any) {
       toast({
-        title: "Error",
+        title: t("error.generic"),
         description: error.message,
         variant: "destructive"
       });
@@ -160,14 +162,14 @@ export function ProjectActivitySection({
       ));
       
       toast({
-        title: completed ? "Task marked as completed" : "Task marked as incomplete",
-        description: "Task status updated successfully."
+        title: completed ? t("activity.task_completed") : t("activity.task_incomplete"),
+        description: t("activity.task_status_updated")
       });
 
       onActivityUpdated?.();
     } catch (error: any) {
       toast({
-        title: "Error updating task",
+        title: t("activity.error_updating_task"),
         description: error.message,
         variant: "destructive"
       });
@@ -192,14 +194,14 @@ export function ProjectActivitySection({
     <Card>
       <CardHeader>
         <h3 className="text-lg font-semibold">
-          Project Activities
+          {t("projectDetails.activities.title")}
         </h3>
       </CardHeader>
       <CardContent className="space-y-6">
         <ActivityForm 
           onSubmit={handleSaveActivity}
           loading={saving}
-          placeholder="Enter your project note..."
+          placeholder={t("projectDetails.activities.placeholder")}
         />
 
         <div>

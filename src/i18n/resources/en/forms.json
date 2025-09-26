@@ -25,7 +25,8 @@
     "session_date_time_required": "Session date and time are required.",
     "lead_required": "Please select a lead or create a new one.",
     "lead_name_required": "Lead name is required when creating a new lead.",
-    "content_required": "Content is required."
+    "content_required": "Content is required.",
+    "datetime_required_for_reminders": "Date and time are required for reminders"
   },
   "navigationGuard": {
     "title": "You have unsaved changes",
@@ -489,6 +490,69 @@
     "error_add": "Error adding task",
     "error_update": "Error updating task",
     "error_delete": "Error deleting task"
+  },
+  "projectDetails": {
+    "header": {
+      "fullDetails": "Full Details",
+      "more": "More",
+      "close": "Close",
+      "edit": "Edit Project",
+      "archive": "Archive Project",
+      "restore": "Restore Project",
+      "delete": "Delete Project"
+    },
+    "sections": {
+      "activities": "Project Activities",
+      "services": "Services",
+      "sessions": "Sessions",
+      "payments": "Payments",
+      "todos": "To-Do List",
+      "dangerZone": "Danger Zone"
+    },
+    "activities": {
+      "title": "Project Activities",
+      "placeholder": "Enter your project note...",
+      "noActivities": "No activities yet",
+      "addFirstActivity": "Add your first note or reminder to get started"
+    },
+    "services": {
+      "title": "Services",
+      "emptyState": "No services added yet",
+      "addHint": "Add services to track project deliverables"
+    }
+  },
+  "sessionScheduling": {
+    "title": "Schedule Session",
+    "client": "Client",
+    "project": "Project",
+    "sessionName": "Session Name",
+    "locationAddress": "Location / Address",
+    "sessionNotes": "Session Notes (Optional)",
+    "scheduleSessionLabel": "Session Date & Time",
+    "selectDateHint": "Select a date to view available times"
+  },
+  "success": {
+    "saved": "Saved successfully",
+    "created": "Created successfully",
+    "updated": "Updated successfully",
+    "deleted": "Deleted successfully",
+    "imported": "Imported successfully",
+    "exported": "Exported successfully"
+  },
+  "activity": {
+    "reminder": "Reminder",
+    "note": "Note",
+    "added_to_project": "added to project successfully",
+    "task_completed": "Task marked as completed",
+    "task_incomplete": "Task marked as incomplete", 
+    "task_status_updated": "Task status updated successfully",
+    "error_updating_task": "Error updating task"
+  },
+  "error": {
+    "generic": "An error occurred",
+    "validation": "Validation error",
+    "network": "Network error",
+    "save": "Error saving"
   },
   "dangerZone": {
     "title": "Danger Zone",

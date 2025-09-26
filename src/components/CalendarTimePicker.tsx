@@ -10,6 +10,7 @@ import { format } from "date-fns";
 import ReactCalendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import "@/components/react-calendar.css";
+import { useFormsTranslation } from "@/hooks/useTypedTranslation";
 
 interface CalendarTimePickerProps {
   selectedDate?: Date;
@@ -26,6 +27,7 @@ export function CalendarTimePicker({
   onTimeChange,
   onDateStringChange
 }: CalendarTimePickerProps) {
+  const { t } = useFormsTranslation();
   const [visibleMonth, setVisibleMonth] = useState<Date>(new Date());
   const [plannedSessions, setPlannedSessions] = useState<any[]>([]);
   const browserLocale = getUserLocale();
@@ -98,7 +100,7 @@ export function CalendarTimePicker({
     <div className="space-y-6">
       {/* Unified Section Title */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold">Session Date & Time</h3>
+        <h3 className="text-lg font-semibold">{t('sessionScheduling.session_date_time')}</h3>
         
         {/* Selected Date & Time Summary */}
         {(selectedDate || selectedTime) && (
@@ -197,7 +199,7 @@ export function CalendarTimePicker({
                     onDateStringChange(format(today, "yyyy-MM-dd"));
                   }}
                 >
-                  Today
+                  {t('buttons.today')}
                 </Button>
               </div>
             </div>
@@ -223,7 +225,7 @@ export function CalendarTimePicker({
             <div className="space-y-3">
               <div className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 <span className="h-2 w-2 rounded-full bg-primary/60"></span>
-                Planned sessions on {selectedDate ? formatLongDate(selectedDate, browserLocale) : 'this day'}
+                {t('sessionScheduling.planned_sessions_on')} {selectedDate ? formatLongDate(selectedDate, browserLocale) : t('sessionScheduling.this_day')}
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                 {sortedSessionsForDay.map((s: any) => (
@@ -236,15 +238,15 @@ export function CalendarTimePicker({
                     }}
                   >
                     <div className="text-xs text-muted-foreground min-w-[3.5rem]">
-                      {s.session_time ? new Intl.DateTimeFormat(browserLocale, {
-                        hour: 'numeric',
-                        minute: '2-digit',
-                        hour12: undefined
-                      }).format(new Date(`2000-01-01T${s.session_time}`)) : 'No time'}
+                       {s.session_time ? new Intl.DateTimeFormat(browserLocale, {
+                         hour: 'numeric',
+                         minute: '2-digit',
+                         hour12: undefined
+                       }).format(new Date(`2000-01-01T${s.session_time}`)) : t('sessionScheduling.no_time')}
                     </div>
                     <div className="flex-1 truncate">
                       <div className="font-medium truncate">
-                        {s.leads?.name || 'Unknown client'}
+                        {s.leads?.name || t('sessionScheduling.unknown_client')}
                       </div>
                       {s.projects?.name && (
                         <div className="text-xs text-muted-foreground truncate">

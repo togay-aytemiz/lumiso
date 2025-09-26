@@ -2,6 +2,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useFormsTranslation } from "@/hooks/useTypedTranslation";
 
 interface Project {
   id: string;
@@ -37,11 +38,13 @@ export function SessionFormFields({
   onNotesChange,
   onProjectChange
 }: SessionFormFieldsProps) {
+  const { t } = useFormsTranslation();
+  
   return (
     <div className="space-y-4">
       {/* Client Field */}
       <div className="space-y-2">
-        <Label htmlFor="client">Client</Label>
+        <Label htmlFor="client">{t('sessionScheduling.client')}</Label>
         <Input
           id="client"
           value={leadName}
@@ -53,7 +56,7 @@ export function SessionFormFields({
       {/* Project Field - Either Fixed or Selector */}
       {projectName && !showProjectSelector ? (
         <div className="space-y-2">
-          <Label htmlFor="project">Project</Label>
+          <Label htmlFor="project">{t('sessionScheduling.project')}</Label>
           <Input
             id="project"
             value={projectName}
@@ -63,14 +66,14 @@ export function SessionFormFields({
         </div>
       ) : showProjectSelector && onProjectChange ? (
         <div className="space-y-2">
-          <Label htmlFor="project">Project (Optional)</Label>
+          <Label htmlFor="project">{t('sessionScheduling.project_optional')}</Label>
           <Select 
             value={projectId || ""} 
             onValueChange={onProjectChange} 
             disabled={availableProjects.length === 0}
           >
             <SelectTrigger>
-              <SelectValue placeholder={availableProjects.length === 0 ? "No projects created yet" : "Select a project"} />
+              <SelectValue placeholder={availableProjects.length === 0 ? t('sessionScheduling.no_projects_yet') : t('sessionScheduling.select_project')} />
             </SelectTrigger>
             <SelectContent>
               {availableProjects.map((project) => (
@@ -85,35 +88,35 @@ export function SessionFormFields({
 
       {/* Session Name Field */}
       <div className="space-y-2">
-        <Label htmlFor="session_name">Session Name *</Label>
+        <Label htmlFor="session_name">{t('sessionScheduling.session_name')} *</Label>
         <Input
           id="session_name"
           value={sessionName}
           onChange={(e) => onSessionNameChange(e.target.value)}
-          placeholder="Enter session name..."
+          placeholder={t('sessionScheduling.enter_session_name')}
         />
       </div>
 
       {/* Location Field */}
       <div className="space-y-2">
-        <Label htmlFor="location">Location / Address</Label>
+        <Label htmlFor="location">{t('sessionScheduling.location_address')}</Label>
         <Textarea
           id="location"
           value={location}
           onChange={(e) => onLocationChange(e.target.value)}
-          placeholder="Enter session location or address..."
+          placeholder={t('sessionScheduling.enter_location')}
           rows={2}
         />
       </div>
 
       {/* Notes Field */}
       <div className="space-y-2">
-        <Label htmlFor="notes">Session Notes (Optional)</Label>
+        <Label htmlFor="notes">{t('sessionScheduling.session_notes_optional')}</Label>
         <Textarea
           id="notes"
           value={notes}
           onChange={(e) => onNotesChange(e.target.value)}
-          placeholder="Any special requirements or notes for this session..."
+          placeholder={t('sessionScheduling.special_requirements')}
           rows={3}
         />
       </div>

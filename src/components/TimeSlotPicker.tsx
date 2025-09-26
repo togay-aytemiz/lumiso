@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Clock } from "lucide-react";
 import { useWorkingHours } from "@/hooks/useWorkingHours";
 import { cn } from "@/lib/utils";
+import { useFormsTranslation } from "@/hooks/useTypedTranslation";
 
 interface TimeSlotPickerProps {
   selectedDate?: Date;
@@ -56,6 +57,7 @@ const formatTimeSlot = (time: string, locale?: string): string => {
 };
 
 export function TimeSlotPicker({ selectedDate, selectedTime, onTimeSelect, className }: TimeSlotPickerProps) {
+  const { t } = useFormsTranslation();
   const { workingHours, loading } = useWorkingHours();
   const userLocale = navigator.language;
   
@@ -64,7 +66,7 @@ export function TimeSlotPicker({ selectedDate, selectedTime, onTimeSelect, class
       <div className={cn("flex items-center justify-center py-8", className)}>
         <div className="flex items-center gap-2 text-muted-foreground">
           <Clock className="h-4 w-4 animate-spin" />
-          <span className="text-sm">Loading available times...</span>
+          <span className="text-sm">{t('sessionScheduling.loading_times')}</span>
         </div>
       </div>
     );
@@ -75,7 +77,7 @@ export function TimeSlotPicker({ selectedDate, selectedTime, onTimeSelect, class
       <div className={cn("flex items-center justify-center py-8", className)}>
         <div className="text-center text-muted-foreground">
           <Clock className="h-8 w-8 mx-auto mb-2 opacity-50" />
-          <p className="text-sm">Select a date to view available times</p>
+          <p className="text-sm">{t('sessionScheduling.selectDateHint')}</p>
         </div>
       </div>
     );
@@ -92,8 +94,8 @@ export function TimeSlotPicker({ selectedDate, selectedTime, onTimeSelect, class
       <div className={cn("flex items-center justify-center py-8", className)}>
         <div className="text-center text-muted-foreground">
           <Clock className="h-8 w-8 mx-auto mb-2 opacity-50" />
-          <p className="text-sm">No working hours set for this day</p>
-          <p className="text-xs mt-1">Configure working hours in settings to see available times</p>
+          <p className="text-sm">{t('sessionScheduling.no_working_hours')}</p>
+          <p className="text-xs mt-1">{t('sessionScheduling.configure_working_hours')}</p>
         </div>
       </div>
     );
@@ -106,7 +108,7 @@ export function TimeSlotPicker({ selectedDate, selectedTime, onTimeSelect, class
       <div className={cn("flex items-center justify-center py-8", className)}>
         <div className="text-center text-muted-foreground">
           <Clock className="h-8 w-8 mx-auto mb-2 opacity-50" />
-          <p className="text-sm">No available time slots</p>
+          <p className="text-sm">{t('sessionScheduling.no_time_slots')}</p>
         </div>
       </div>
     );
@@ -115,9 +117,9 @@ export function TimeSlotPicker({ selectedDate, selectedTime, onTimeSelect, class
   return (
     <div className={cn("space-y-3", className)}>
       <div className="flex items-center justify-between">
-        <Label className="text-sm font-medium">Available Times</Label>
+        <Label className="text-sm font-medium">{t('sessionScheduling.available_times')}</Label>
         <Badge variant="secondary" className="text-xs">
-          {timeSlots.length} slots
+          {timeSlots.length} {t('sessionScheduling.slots')}
         </Badge>
       </div>
       

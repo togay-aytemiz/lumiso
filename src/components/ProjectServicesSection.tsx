@@ -56,7 +56,7 @@ export function ProjectServicesSection({
     } catch (error: any) {
       console.error('Error fetching project services:', error);
       toast({
-        title: "Error loading services",
+        title: t('error.generic'),
         description: error.message,
         variant: "destructive"
       });
@@ -144,12 +144,12 @@ export function ProjectServicesSection({
         });
       }, 50);
       toast({
-        title: "Success",
-        description: "Project services updated successfully."
+        title: t('success.saved'),
+        description: t('services.services_updated')
       });
     } catch (error: any) {
       toast({
-        title: "Error updating services",
+        title: t('services.error_updating'),
         description: error.message,
         variant: "destructive"
       });
@@ -165,7 +165,7 @@ export function ProjectServicesSection({
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
-              Services
+              {t('services.title')}
             </div>
             <div className="w-6 h-6 bg-muted animate-pulse rounded" />
           </CardTitle>
@@ -211,7 +211,7 @@ export function ProjectServicesSection({
             {services.length > 0 && (
               <div className="rounded-md border p-3">
                 <div className="mb-2 flex items-center justify-between">
-                  <span className="text-sm font-medium">Selected Services ({services.length})</span>
+                  <span className="text-sm font-medium">{t('services.selected_services')} ({services.length})</span>
                   <Button
                     variant="outline"
                     size="sm"
@@ -219,7 +219,7 @@ export function ProjectServicesSection({
                     disabled={saving}
                     className="h-8"
                   >
-                    Clear All
+                    {t('buttons.clearAll')}
                   </Button>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -264,14 +264,14 @@ export function ProjectServicesSection({
             <div className="flex gap-2">
               <Button size="sm" onClick={() => handleSaveServices(services)} disabled={saving}>
                 <Save className="h-4 w-4 mr-1" />
-                {saving ? "Saving..." : "Save"}
+                {saving ? t('buttons.saving') : t('buttons.save')}
               </Button>
               <Button size="sm" variant="outline" onClick={() => {
               setIsEditing(false);
               fetchProjectServices(); // Reset to original services
             }} disabled={saving}>
                 <X className="h-4 w-4 mr-1" />
-                Cancel
+                {t('buttons.cancel')}
               </Button>
             </div>
           </div> : <div>
@@ -291,9 +291,9 @@ export function ProjectServicesSection({
                        <div className="flex flex-col gap-0.5 w-full">
                          <span className="font-medium leading-tight">{service.name}</span>
                          {hasPrices && (
-                           <span className="text-xs text-foreground/60 leading-tight">
-                             Cost: ₺{costPrice} · Selling: ₺{sellingPrice}
-                           </span>
+                            <span className="text-xs text-foreground/60 leading-tight">
+                              {t('services.cost')}: ₺{costPrice} · {t('services.selling')}: ₺{sellingPrice}
+                            </span>
                          )}
                        </div>
                      </Badge>;
@@ -302,10 +302,10 @@ export function ProjectServicesSection({
                 <svg className="h-8 w-8 text-muted-foreground mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
-                <p className="text-muted-foreground text-sm">No services assigned</p>
-                 <p className="text-xs text-muted-foreground mt-1">
-                   Click Add Service to add services to this project
-                 </p>
+                 <p className="text-muted-foreground text-sm">{t('projectDetails.services.emptyState')}</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {t('projectDetails.services.addHint')}
+                  </p>
               </div>}
           </div>}
       </CardContent>

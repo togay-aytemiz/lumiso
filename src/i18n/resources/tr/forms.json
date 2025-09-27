@@ -477,19 +477,10 @@
     "sessions_count": "{count} seans",
     "no_sessions": "Seans bulunamadı"
   },
-  "todos": {
-    "title": "Yapılacaklar Listesi",
-    "add_todo": "Yeni görev ekle",
-    "enter_todo": "Yeni görev girin...",
-    "no_todos": "Henüz görev yok",
-    "loading": "Görevler yükleniyor...",
-    "todo_added": "Görev başarıyla eklendi",
-    "todo_updated": "Görev başarıyla güncellendi",
-    "todo_deleted": "Görev başarıyla silindi",
-    "error_load": "Görevler yüklenirken hata",
-    "error_add": "Görev eklenirken hata",
-    "error_update": "Görev güncellenirken hata",
-    "error_delete": "Görev silinirken hata"
+  "sessions_section": {
+    "title": "Seanslar",
+    "sessions_count": "{count} seans",
+    "no_sessions": "Seans bulunamadı"
   },
   "projectDetails": {
     "header": {
@@ -623,6 +614,17 @@
     "error_adding": "Yapılacak öğe eklenirken hata",
     "error_updating": "Yapılacak öğe güncellenirken hata",
     "error_deleting": "Yapılacak öğe silinirken hata"
+  },
+  "archivedProject": {
+    "banner": "Bu proje arşivlenmiş durumda. Çoğu işlem devre dışı bırakılmıştır. Arşivlenmiş durumdayken seansları ve hatırlatıcıları takvimlerden, Seanslar sayfasından ve aktivite listelerinden gizlenir. Düzenleme ve görünürlüğü yeniden etkinleştirmek için Daha Fazla → Geri Yükle'yi kullanın.",
+    "actions_disabled": "Arşivlenmiş proje - işlemler devre dışı"
+  },
+  "deleteDialog": {
+    "title": "Projeyi Sil",
+    "description": "'{name}' projesini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz. Bu işlem projeyi ve seanslar, ödemeler, görevler, hizmetler ve aktiviteler dahil TÜM ilgili verileri kalıcı olarak silecektir.",
+    "cancel": "İptal",
+    "delete": "Projeyi Sil",
+    "deleting": "Siliniyor..."
   },
   "dangerZone": {
     "title": "Tehlikeli Bölge",

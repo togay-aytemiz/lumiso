@@ -677,7 +677,7 @@ export function ViewProjectDialog({
           </DialogHeader>
           
           {isArchived && <div className="mb-3 rounded-md border border-border bg-muted/40 text-muted-foreground text-sm px-3 py-2">
-              This project is archived. Most actions are disabled. While archived, its sessions and reminders are hidden from calendars, the Sessions page, and activity lists. Use More → Restore to re-enable editing and visibility.
+              {tForms("archivedProject.banner")}
             </div>}
 
           <div className={isArchived ? 'opacity-60 pointer-events-none select-none' : ''}>

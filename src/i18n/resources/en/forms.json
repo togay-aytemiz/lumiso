@@ -625,6 +625,17 @@
     "error_updating": "Error updating to-do item",
     "error_deleting": "Error deleting to-do item"
   },
+  "archivedProject": {
+    "banner": "This project is archived. Most actions are disabled. While archived, its sessions and reminders are hidden from calendars, the Sessions page, and activity lists. Use More → Restore to re-enable editing and visibility.",
+    "actions_disabled": "Archived project - actions disabled"
+  },
+  "deleteDialog": {
+    "title": "Delete Project",
+    "description": "Are you sure you want to delete '{name}'? This action cannot be undone. This will permanently delete the project and ALL related data including sessions, payments, todos, services, and activities.",
+    "cancel": "Cancel",
+    "delete": "Delete Project",
+    "deleting": "Deleting..."
+  },
   "dangerZone": {
     "title": "Danger Zone",
     "description": "These actions are destructive and cannot be undone. Proceed with caution.",

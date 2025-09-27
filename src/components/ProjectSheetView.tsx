@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useFormsTranslation } from "@/hooks/useTypedTranslation";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -18,7 +19,6 @@ import { ProjectStatusBadge } from "./ProjectStatusBadge";
 import { SimpleProjectTypeSelect } from "./SimpleProjectTypeSelect";
 import { ProjectPaymentsSection } from "./ProjectPaymentsSection";
 import ProjectDetailsLayout from "@/components/project-details/ProjectDetailsLayout";
-import { useFormsTranslation } from '@/hooks/useTypedTranslation';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { UnifiedClientDetails } from "@/components/UnifiedClientDetails";
 // AssigneesList removed - single user organization
@@ -76,6 +76,7 @@ export function ProjectSheetView({
   mode = 'sheet',
   onViewFullDetails
 }: ProjectSheetViewProps) {
+  const { t: tForms } = useFormsTranslation();
   const [sessions, setSessions] = useState<Session[]>([]);
   const [lead, setLead] = useState<Lead | null>(null);
   const [loading, setLoading] = useState(false);
@@ -97,7 +98,6 @@ export function ProjectSheetView({
   const [localStatusId, setLocalStatusId] = useState<string | null | undefined>(null);
   const { toast } = useToast();
   const isMobile = useIsMobile();
-  const { t } = useFormsTranslation();
 
   const fetchProjectSessions = async () => {
     if (!project) return;
@@ -747,13 +747,13 @@ export function ProjectSheetView({
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+              <AlertDialogCancel disabled={isDeleting}>{tForms("deleteDialog.cancel")}</AlertDialogCancel>
               <AlertDialogAction 
                 onClick={handleDeleteProject} 
                 disabled={isDeleting} 
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
-                {isDeleting ? "Deleting..." : "Delete Project"}
+                {isDeleting ? tForms("deleteDialog.deleting") : tForms("deleteDialog.delete")}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -789,13 +789,13 @@ export function ProjectSheetView({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting}>{tForms("deleteDialog.cancel")}</AlertDialogCancel>
             <AlertDialogAction 
               onClick={handleDeleteProject} 
               disabled={isDeleting} 
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {isDeleting ? "Deleting..." : "Delete Project"}
+              {isDeleting ? tForms("deleteDialog.deleting") : tForms("deleteDialog.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

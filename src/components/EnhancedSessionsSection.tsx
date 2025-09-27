@@ -45,7 +45,7 @@ const EnhancedSessionsSection = ({ sessions, loading, onSessionClick }: Enhanced
   return (
     <div className="w-full bg-blue-50/50 border border-blue-100 rounded-lg p-6 mb-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold">{t('sessions_section.title')}</h3>
+        <h3 className="text-lg font-semibold">{t('sessions_form.title')}</h3>
         <Badge variant="secondary">
           {sessions.length}
         </Badge>

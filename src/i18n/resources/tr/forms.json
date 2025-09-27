@@ -590,6 +590,40 @@
     "network": "Ağ hatası",
     "save": "Kaydetme hatası"
   },
+  "sessions_form": {
+    "title": "Seanslar",
+    "no_sessions": "Henüz planlanmış seans yok",
+    "add_sessions_hint": "Başlamak için ilk seansınızı planlayın",
+    "project_sessions_count": "Bu proje için {{count}} seans",
+    "project_sessions_count_plural": "Bu proje için {{count}} seans"
+  },
+  "activities": {
+    "note_label": "Not",
+    "set_reminder_label": "Hatırlatıcı Kur?",
+    "add_note": "Not Ekle",
+    "add_reminder": "Hatırlatıcı Ekle",
+    "no_activities": "Henüz aktivite yok",
+    "date_time_label": "Tarih ve Saat",
+    "saving": "Kaydediliyor...",
+    "enter_note_placeholder": "Notunuzu girin..."
+  },
+  "todos": {
+    "title": "Yapılacaklar Listesi",
+    "add_placeholder": "Yeni yapılacak öğe ekle...",
+    "no_todos": "Henüz yapılacak öğe yok",
+    "add_first_todo": "Başlamak için ilk yapılacağınızı ekleyin",
+    "add_todo": "Yapılacak ekle",
+    "todo": "Yapılacak",
+    "completed": "tamamlandı",
+    "reopened": "yeniden açıldı",
+    "todo_added": "Yapılacak öğe başarıyla eklendi",
+    "todo_updated": "Yapılacak öğe başarıyla güncellendi",
+    "todo_deleted": "Yapılacak öğe başarıyla silindi",
+    "error_loading": "Yapılacaklar yüklenirken hata",
+    "error_adding": "Yapılacak öğe eklenirken hata",
+    "error_updating": "Yapılacak öğe güncellenirken hata",
+    "error_deleting": "Yapılacak öğe silinirken hata"
+  },
   "dangerZone": {
     "title": "Tehlikeli Bölge",
     "description": "Bu işlemler yıkıcıdır ve geri alınamaz. Dikkatli ilerleyin.",

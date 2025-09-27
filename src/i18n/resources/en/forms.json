@@ -591,6 +591,40 @@
     "network": "Network error",
     "save": "Error saving"
   },
+  "sessions_form": {
+    "title": "Sessions",
+    "no_sessions": "No sessions scheduled yet",
+    "add_sessions_hint": "Schedule your first session to get started",
+    "project_sessions_count": "{{count}} session for this project",
+    "project_sessions_count_plural": "{{count}} sessions for this project"
+  },
+  "activities": {
+    "note_label": "Note",
+    "set_reminder_label": "Set Reminder?",
+    "add_note": "Add Note",
+    "add_reminder": "Add Reminder",
+    "no_activities": "No activities yet",
+    "date_time_label": "Date & Time",
+    "saving": "Saving...",
+    "enter_note_placeholder": "Enter your note..."
+  },
+  "todos": {
+    "title": "To-Do List",
+    "add_placeholder": "Add a new to-do item...",
+    "no_todos": "No to-do items yet",
+    "add_first_todo": "Add your first to-do to get started",
+    "add_todo": "Add to-do",
+    "todo": "To-do",
+    "completed": "completed",
+    "reopened": "reopened",
+    "todo_added": "To-do item added successfully",
+    "todo_updated": "To-do item updated successfully",
+    "todo_deleted": "To-do item deleted successfully",
+    "error_loading": "Error loading to-do items",
+    "error_adding": "Error adding to-do item",
+    "error_updating": "Error updating to-do item",
+    "error_deleting": "Error deleting to-do item"
+  },
   "dangerZone": {
     "title": "Danger Zone",
     "description": "These actions are destructive and cannot be undone. Proceed with caution.",

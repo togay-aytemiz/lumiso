@@ -1,6 +1,8 @@
 import { ActivityTimelineItem } from "./ActivityTimelineItem";
 import ReminderCard from "@/components/ReminderCard";
 import { format, isToday, isYesterday, parseISO } from "date-fns";
+import { useFormsTranslation } from '@/hooks/useTypedTranslation';
+
 interface Activity {
   id: string;
   type: string;
@@ -13,25 +15,30 @@ interface Activity {
   user_id: string;
   project_id?: string;
 }
+
 interface Project {
   id: string;
   name: string;
 }
+
 interface ActivityTimelineProps {
   activities: Activity[];
   projects?: Project[];
   leadName: string;
   onToggleCompletion: (activityId: string, completed: boolean) => void;
 }
+
 export function ActivityTimeline({
   activities,
   projects = [],
   leadName,
   onToggleCompletion
 }: ActivityTimelineProps) {
+  const { t } = useFormsTranslation();
+  
   if (activities.length === 0) {
     return <div className="text-sm text-muted-foreground text-center py-8">
-        No activities yet
+        {t('activities.no_activities')}
       </div>;
   }
   const getProjectName = (projectId?: string) => {

@@ -8,15 +8,18 @@ import { useToast } from "@/hooks/use-toast";
 import { CheckSquare, Trash2, Plus, Edit, Check, X } from "lucide-react";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { useTranslation } from "react-i18next";
+
 interface Todo {
   id: string;
   content: string;
   is_completed: boolean;
   created_at: string;
 }
+
 interface ProjectTodoListEnhancedProps {
   projectId: string;
 }
+
 export function ProjectTodoListEnhanced({
   projectId
 }: ProjectTodoListEnhancedProps) {
@@ -30,6 +33,7 @@ export function ProjectTodoListEnhanced({
     toast
   } = useToast();
   const { t } = useTranslation();
+
   useEffect(() => {
     fetchTodos();
   }, [projectId]);
@@ -67,8 +71,8 @@ export function ProjectTodoListEnhanced({
         is_completed: !isCompleted
       } : todo));
       toast({
-        title: t("messages.success.updated"),
-        description: `${t("forms.todos.todo")} ${!isCompleted ? t("forms.todos.completed") : t("forms.todos.reopened")} ${t("messages.success.suffix")}.`
+        title: t("common.success"),
+        description: `${t("forms.todos.todo")} ${!isCompleted ? t("forms.todos.completed") : t("forms.todos.reopened")}.`
       });
     } catch (error: any) {
       toast({
@@ -100,7 +104,7 @@ export function ProjectTodoListEnhanced({
       setTodos([data, ...todos]);
       setNewTodoContent("");
       toast({
-        title: t("messages.success.created"),
+        title: t("common.success"),
         description: t("forms.todos.todo_added")
       });
     } catch (error: any) {
@@ -129,7 +133,7 @@ export function ProjectTodoListEnhanced({
       setEditingId(null);
       setEditContent("");
       toast({
-        title: t("messages.success.updated"),
+        title: t("common.success"),
         description: t("forms.todos.todo_updated")
       });
     } catch (error: any) {
@@ -156,7 +160,7 @@ export function ProjectTodoListEnhanced({
       if (error) throw error;
       setTodos(todos.filter(todo => todo.id !== todoId));
       toast({
-        title: t("messages.success.deleted"),
+        title: t("common.success"),
         description: t("forms.todos.todo_deleted")
       });
     } catch (error: any) {

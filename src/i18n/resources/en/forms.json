@@ -636,6 +636,27 @@
     "delete": "Delete Project",
     "deleting": "Deleting..."
   },
+  "todos": {
+    "title": "Todos",
+    "add_placeholder": "Add a new todo...",
+    "add_todo": "Add Todo",
+    "no_todos": "No todos yet",
+    "add_first_todo": "Add your first todo to get started",
+    "todo": "Todo",
+    "completed": "completed",
+    "reopened": "reopened",
+    "todo_added": "Todo added successfully",
+    "todo_updated": "Todo updated successfully",
+    "todo_deleted": "Todo deleted successfully",
+    "error_loading": "Error loading todos",
+    "error_adding": "Error adding todo",
+    "error_updating": "Error updating todo",
+    "error_deleting": "Error deleting todo"
+  },
+  "danger_zone": {
+    "title": "Danger Zone",
+    "description": "These actions are destructive and cannot be undone. Proceed with caution."
+  },
   "dangerZone": {
     "title": "Danger Zone",
     "description": "These actions are destructive and cannot be undone. Proceed with caution.",

@@ -626,6 +626,27 @@
     "delete": "Projeyi Sil",
     "deleting": "Siliniyor..."
   },
+  "todos": {
+    "title": "Yapılacaklar",
+    "add_placeholder": "Yeni yapılacak ekle...",
+    "add_todo": "Yapılacak Ekle",
+    "no_todos": "Henüz yapılacak yok",
+    "add_first_todo": "Başlamak için ilk yapılacağınızı ekleyin",
+    "todo": "Yapılacak",
+    "completed": "tamamlandı",
+    "reopened": "yeniden açıldı",
+    "todo_added": "Yapılacak başarıyla eklendi",
+    "todo_updated": "Yapılacak başarıyla güncellendi",
+    "todo_deleted": "Yapılacak başarıyla silindi",
+    "error_loading": "Yapılacaklar yüklenirken hata",
+    "error_adding": "Yapılacak eklenirken hata",
+    "error_updating": "Yapılacak güncellenirken hata",
+    "error_deleting": "Yapılacak silinirken hata"
+  },
+  "danger_zone": {
+    "title": "Tehlikeli Bölge",
+    "description": "Bu işlemler yıkıcıdır ve geri alınamaz. Dikkatli ilerleyin."
+  },
   "dangerZone": {
     "title": "Tehlikeli Bölge",
     "description": "Bu işlemler yıkıcıdır ve geri alınamaz. Dikkatli ilerleyin.",

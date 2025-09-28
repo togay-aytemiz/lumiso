@@ -97,6 +97,7 @@
       "unsaved_changes": "Değişiklikler iptal edilsin mi?"
     }
   },
+  "success": "Başarılı",
   "client": {
     "title": "Müşteri Bilgileri",
     "created_on": "Oluşturulma tarihi"

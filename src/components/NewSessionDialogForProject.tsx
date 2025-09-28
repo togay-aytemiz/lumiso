@@ -26,7 +26,7 @@ export function NewSessionDialogForProject({
     <>
       <Button size="sm" className="gap-2" onClick={() => setOpen(true)}>
         <Plus className="h-4 w-4" />
-        {t('buttons.add')}
+        {t('forms:buttons.add')}
       </Button>
 
       <SessionSchedulingSheet

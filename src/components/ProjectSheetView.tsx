@@ -562,25 +562,25 @@ export function ProjectSheetView({
                 size="sm" 
             className="text-muted-foreground hover:bg-accent hover:text-accent-foreground h-8 px-2 gap-1 md:h-10 md:px-3"
               >
-                <span className="text-sm hidden md:inline">More</span>
+                <span className="text-sm hidden md:inline">{tForms('dangerZone.project_sheet.more')}</span>
                 <ChevronDown className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" side="bottom" className="z-50 bg-background">
               <DropdownMenuItem role="menuitem" onSelect={() => setIsEditing(true)}>
                 <Pencil className="mr-2 h-4 w-4" />
-                <span>Edit Project</span>
+                <span>{tForms('dangerZone.project_sheet.edit_project')}</span>
               </DropdownMenuItem>
               <DropdownMenuItem role="menuitem" onSelect={handleArchiveAction}>
                 {isArchived ? (
                   <>
                     <ArchiveRestore className="mr-2 h-4 w-4" />
-                    <span>Restore Project</span>
+                    <span>{tForms('dangerZone.project_sheet.restore_project')}</span>
                   </>
                 ) : (
                   <>
                     <Archive className="mr-2 h-4 w-4" />
-                    <span>Archive Project</span>
+                    <span>{tForms('dangerZone.project_sheet.archive_project')}</span>
                   </>
                 )}
               </DropdownMenuItem>
@@ -595,7 +595,7 @@ export function ProjectSheetView({
           onClick={() => onOpenChange(false)} 
           className="text-muted-foreground hover:bg-accent hover:text-accent-foreground text-sm h-8 px-2 md:h-10 md:px-3"
         >
-          <span className="hidden md:inline">Close</span>
+          <span className="hidden md:inline">{tForms('dangerZone.project_sheet.close')}</span>
           <X className="h-4 w-4 md:hidden" />
         </Button>
       </div>
@@ -607,7 +607,7 @@ export function ProjectSheetView({
     <>
       {isArchived && (
         <div className="mb-3 rounded-md border border-border bg-muted/40 text-muted-foreground text-sm px-3 py-2">
-          {tForms('project_sheet.archived_banner')}
+          {tForms('dangerZone.project_sheet.archived_banner')}
         </div>
       )}
 
@@ -631,7 +631,7 @@ export function ProjectSheetView({
           sections={[
             {
               id: 'payments',
-              title: tForms('project_sheet.payments_tab'),
+              title: tForms('dangerZone.project_sheet.payments_tab'),
               content: (
                 <ProjectPaymentsSection 
                   projectId={project!.id} 
@@ -645,7 +645,7 @@ export function ProjectSheetView({
             }, 
             {
               id: 'services',
-              title: tForms('project_sheet.services_tab'),
+              title: tForms('dangerZone.project_sheet.services_tab'),
               content: (
                 <ProjectServicesSection 
                   projectId={project!.id} 
@@ -659,7 +659,7 @@ export function ProjectSheetView({
             }, 
             {
               id: 'sessions',
-              title: tForms('project_sheet.sessions_tab'),
+              title: tForms('dangerZone.project_sheet.sessions_tab'),
               content: (
                 <SessionsSection 
                   sessions={sessions} 
@@ -693,7 +693,7 @@ export function ProjectSheetView({
             }, 
             {
               id: 'todos',
-              title: tForms("project_sheet.todos_tab"),
+              title: tForms('dangerZone.project_sheet.todos_tab'),
               content: <ProjectTodoListEnhanced projectId={project!.id} />
             }
           ]} 

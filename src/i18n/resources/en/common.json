@@ -97,6 +97,7 @@
       "unsaved_changes": "Discard changes?"
     }
   },
+  "success": "Success",
   "client": {
     "title": "Client Details",
     "created_on": "Created on"

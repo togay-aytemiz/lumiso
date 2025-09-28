@@ -650,6 +650,30 @@
     "delete_complete": "Veri Silme Tamamlandı",
     "delete_complete_desc": "Tüm verileriniz kalıcı olarak silindi.",
     "deletion_failed": "Silme Başarısız",
-    "deletion_error": "Verileriniz silinirken bir hata oluştu. Lütfen tekrar deneyin."
+    "deletion_error": "Verileriniz silinirken bir hata oluştu. Lütfen tekrar deneyin.",
+    "project_sheet": {
+      "todos_tab": "Yapılacaklar",
+      "payments_tab": "Ödemeler",
+      "services_tab": "Hizmetler", 
+      "sessions_tab": "Seanslar",
+      "activities_tab": "Etkinlikler",
+      "archived_banner": "Bu proje arşivlendi. Çoğu işlem devre dışı. Arşivlenmiş durumda, seansları ve hatırlatmaları takvimlerden, Seanslar sayfasından ve etkinlik listelerinden gizlenir. Düzenleme ve görünürlüğü yeniden etkinleştirmek için Daha Fazla → Geri Yükle'yi kullanın.",
+      "full_details": "Tam Detaylar",
+      "more": "Daha Fazla",
+      "edit_project": "Projeyi Düzenle",
+      "archive_project": "Projeyi Arşivle",
+      "restore_project": "Projeyi Geri Yükle", 
+      "close": "Kapat"
+    },
+    "deleteDialog": {
+      "title": "Projeyi Sil",
+      "description": "\"{{name}}\" projesini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz. Bu, projeyi ve TÜM ilgili verileri kalıcı olarak silecektir: seanslar, ödemeler, yapılacaklar, hizmetler ve etkinlikler.",
+      "confirm": "Projeyi Sil",
+      "cancel": "İptal"
+    },
+    "danger_zone": {
+      "title": "Projeyi Sil", 
+      "description": "Bu, projeyi ve TÜM ilgili verileri kalıcı olarak silecektir: seanslar, ödemeler, yapılacaklar, hizmetler ve etkinlikler."
+    }
   }
 }

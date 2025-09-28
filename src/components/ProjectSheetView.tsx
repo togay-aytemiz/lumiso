@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useFormsTranslation } from "@/hooks/useTypedTranslation";
+import { useFormsTranslation, useMessagesTranslation } from "@/hooks/useTypedTranslation";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -25,7 +25,6 @@ import { UnifiedClientDetails } from "@/components/UnifiedClientDetails";
 import { SessionWithStatus } from "@/lib/sessionSorting";
 import { onArchiveToggle } from "@/components/ViewProjectDialog";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useTranslation } from "react-i18next";
 
 interface Project {
   id: string;
@@ -77,6 +76,7 @@ export function ProjectSheetView({
   onViewFullDetails
 }: ProjectSheetViewProps) {
   const { t: tForms } = useFormsTranslation();
+  const { t: tMessages } = useMessagesTranslation();
   const [sessions, setSessions] = useState<Session[]>([]);
   const [lead, setLead] = useState<Lead | null>(null);
   const [loading, setLoading] = useState(false);
@@ -248,7 +248,7 @@ export function ProjectSheetView({
     setIsSaving(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error(t('messages:info.userNotAuthenticated'));
+      if (!user) throw new Error(tMessages('info.userNotAuthenticated'));
 
       const { error: projectError } = await supabase
         .from('projects')
@@ -263,7 +263,7 @@ export function ProjectSheetView({
 
       toast({
         title: "Success",
-        description: t('messages:success.projectUpdated')
+        description: tMessages('success.projectUpdated')
       });
 
       if (editProjectTypeId) {
@@ -338,7 +338,7 @@ export function ProjectSheetView({
 
       toast({
         title: "Success",
-        description: t('messages:success.projectDeleted')
+        description: tMessages('success.projectDeleted')
       });
 
       onOpenChange(false);
@@ -372,14 +372,14 @@ export function ProjectSheetView({
       
       toast({
         title: "Success",
-        description: t('messages:success.sessionDeleted')
+        description: tMessages('success.sessionDeleted')
       });
       
       fetchProjectSessions();
       onProjectUpdated();
     } catch (error: any) {
       toast({
-        title: t('messages:error.deletingSession'),
+        title: tMessages('error.deletingSession'),
         description: error.message,
         variant: "destructive"
       });
@@ -405,8 +405,8 @@ export function ProjectSheetView({
       onProjectUpdated();
     } catch (e: any) {
       toast({
-        title: t('messages:error.actionFailed'),
-        description: e.message || t('messages:error.archiveUpdateFailed'),
+        title: tMessages('error.actionFailed'),
+        description: e.message || tMessages('error.archiveUpdateFailed'),
         variant: 'destructive'
       });
     }
@@ -423,13 +423,13 @@ export function ProjectSheetView({
             <Input 
               value={editName} 
               onChange={e => setEditName(e.target.value)} 
-              placeholder={t('labels.project_name')} 
+              placeholder={tForms('labels.project_name')} 
               className="text-2xl font-bold border rounded-md px-3 py-2" 
             />
             <Textarea 
               value={editDescription} 
               onChange={e => setEditDescription(e.target.value)} 
-              placeholder={t('labels.project_description')} 
+              placeholder={tForms('labels.project_description')} 
               className="text-base border rounded-md px-3 py-2 resize-none" 
               rows={2} 
             />
@@ -446,7 +446,7 @@ export function ProjectSheetView({
                 disabled={isSaving || !editName.trim() || !editProjectTypeId}
               >
                 <Save className="h-4 w-4 mr-1" />
-                {isSaving ? t('actions.saving') : t('buttons.save')}
+                {isSaving ? tForms('actions.saving') : tForms('buttons.save')}
               </Button>
               <Button 
                 size="sm" 
@@ -460,7 +460,7 @@ export function ProjectSheetView({
                 disabled={isSaving}
               >
                 <X className="h-4 w-4 mr-1" />
-                {t('buttons.cancel')}
+                {tForms('buttons.cancel')}
               </Button>
             </div>
           </div>
@@ -607,7 +607,7 @@ export function ProjectSheetView({
     <>
       {isArchived && (
         <div className="mb-3 rounded-md border border-border bg-muted/40 text-muted-foreground text-sm px-3 py-2">
-          This project is archived. Most actions are disabled. While archived, its sessions and reminders are hidden from calendars, the Sessions page, and activity lists. Use More → Restore to re-enable editing and visibility.
+          {tForms('project_sheet.archived_banner')}
         </div>
       )}
 
@@ -631,7 +631,7 @@ export function ProjectSheetView({
           sections={[
             {
               id: 'payments',
-              title: 'Payments',
+              title: tForms('project_sheet.payments_tab'),
               content: (
                 <ProjectPaymentsSection 
                   projectId={project!.id} 
@@ -645,7 +645,7 @@ export function ProjectSheetView({
             }, 
             {
               id: 'services',
-              title: 'Services',
+              title: tForms('project_sheet.services_tab'),
               content: (
                 <ProjectServicesSection 
                   projectId={project!.id} 
@@ -659,7 +659,7 @@ export function ProjectSheetView({
             }, 
             {
               id: 'sessions',
-              title: 'Sessions',
+              title: tForms('project_sheet.sessions_tab'),
               content: (
                 <SessionsSection 
                   sessions={sessions} 
@@ -678,7 +678,7 @@ export function ProjectSheetView({
             }, 
             {
               id: 'activities',
-              title: 'Activities',
+              title: tForms('project_sheet.activities_tab'),
               content: (
                 <ProjectActivitySection 
                   projectId={project!.id} 
@@ -693,7 +693,7 @@ export function ProjectSheetView({
             }, 
             {
               id: 'todos',
-              title: t("project_sheet.todos_tab"),
+              title: tForms("project_sheet.todos_tab"),
               content: <ProjectTodoListEnhanced projectId={project!.id} />
             }
           ]} 
@@ -705,10 +705,10 @@ export function ProjectSheetView({
                   onClick={() => setShowDeleteDialog(true)} 
                   className="w-full border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
                 >
-                  Delete Project
+                  {tForms('danger_zone.title')}
                 </Button>
                 <p className="text-xs text-muted-foreground text-center">
-                  This will permanently delete the project and ALL related data: sessions, payments, todos, services, and activities.
+                  {tForms('danger_zone.description')}
                 </p>
               </div>
             </div>
@@ -740,10 +740,9 @@ export function ProjectSheetView({
         <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Delete Project</AlertDialogTitle>
+              <AlertDialogTitle>{tForms("deleteDialog.title")}</AlertDialogTitle>
               <AlertDialogDescription>
-                Are you sure you want to delete "{project?.name}"? This action cannot be undone.
-                This will permanently delete the project and ALL related data including sessions, payments, todos, services, and activities.
+                {tForms('deleteDialog.description', { name: project?.name })}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -753,7 +752,7 @@ export function ProjectSheetView({
                 disabled={isDeleting} 
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
-                {isDeleting ? tForms("deleteDialog.deleting") : tForms("deleteDialog.delete")}
+                {isDeleting ? tForms("actions.deleting") : tForms("deleteDialog.confirm")}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

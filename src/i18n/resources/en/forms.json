@@ -660,6 +660,30 @@
     "delete_complete": "Data Deletion Complete",
     "delete_complete_desc": "All your data has been permanently deleted.",
     "deletion_failed": "Deletion Failed",
-    "deletion_error": "An error occurred while deleting your data. Please try again."
+    "deletion_error": "An error occurred while deleting your data. Please try again.",
+    "project_sheet": {
+      "todos_tab": "Todos",
+      "payments_tab": "Payments", 
+      "services_tab": "Services",
+      "sessions_tab": "Sessions",
+      "activities_tab": "Activities",
+      "archived_banner": "This project is archived. Most actions are disabled. While archived, its sessions and reminders are hidden from calendars, the Sessions page, and activity lists. Use More → Restore to re-enable editing and visibility.",
+      "full_details": "Full Details",
+      "more": "More",
+      "edit_project": "Edit Project",
+      "archive_project": "Archive Project", 
+      "restore_project": "Restore Project",
+      "close": "Close"
+    },
+    "deleteDialog": {
+      "title": "Delete Project",
+      "description": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone. This will permanently delete the project and ALL related data including sessions, payments, todos, services, and activities.",
+      "confirm": "Delete Project",
+      "cancel": "Cancel"
+    },
+    "danger_zone": {
+      "title": "Delete Project",
+      "description": "This will permanently delete the project and ALL related data: sessions, payments, todos, services, and activities."
+    }
   }
 }

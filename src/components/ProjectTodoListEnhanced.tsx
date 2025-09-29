@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { CheckSquare, Trash2, Plus, Edit, Check, X } from "lucide-react";
 import { ProgressBar } from "@/components/ui/progress-bar";
-import { useTranslation } from "react-i18next";
+import { useFormsTranslation, useCommonTranslation } from '@/hooks/useTypedTranslation';
 
 interface Todo {
   id: string;
@@ -32,7 +32,8 @@ export function ProjectTodoListEnhanced({
   const {
     toast
   } = useToast();
-  const { t } = useTranslation();
+  const { t: tForms } = useFormsTranslation();
+  const { t: tCommon } = useCommonTranslation();
 
   useEffect(() => {
     fetchTodos();
@@ -50,7 +51,7 @@ export function ProjectTodoListEnhanced({
     } catch (error: any) {
       console.error('Error fetching todos:', error);
       toast({
-        title: t("forms.todos.error_loading"),
+        title: tForms('todos.error_loading'),
         description: error.message,
         variant: "destructive"
       });
@@ -71,12 +72,12 @@ export function ProjectTodoListEnhanced({
         is_completed: !isCompleted
       } : todo));
       toast({
-        title: t("common.success"),
-        description: `${t("forms.todos.todo")} ${!isCompleted ? t("forms.todos.completed") : t("forms.todos.reopened")}.`
+         title: tCommon('success'),
+         description: `${tForms('todos.todo')} ${!isCompleted ? tForms('todos.completed') : tForms('todos.reopened')}.`
       });
     } catch (error: any) {
       toast({
-        title: t("forms.todos.error_updating"),
+         title: tForms('todos.error_updating'),
         description: error.message,
         variant: "destructive"
       });
@@ -104,8 +105,8 @@ export function ProjectTodoListEnhanced({
       setTodos([data, ...todos]);
       setNewTodoContent("");
       toast({
-        title: t("common.success"),
-        description: t("forms.todos.todo_added")
+         title: tCommon('success'),
+         description: tForms('todos.todo_added')
       });
     } catch (error: any) {
       toast({
@@ -133,12 +134,12 @@ export function ProjectTodoListEnhanced({
       setEditingId(null);
       setEditContent("");
       toast({
-        title: t("common.success"),
-        description: t("forms.todos.todo_updated")
+         title: tCommon('success'),
+         description: tForms('todos.todo_updated')
       });
     } catch (error: any) {
       toast({
-        title: t("forms.todos.error_updating"),
+        title: tForms('todos.error_updating'),
         description: error.message,
         variant: "destructive"
       });
@@ -160,12 +161,12 @@ export function ProjectTodoListEnhanced({
       if (error) throw error;
       setTodos(todos.filter(todo => todo.id !== todoId));
       toast({
-        title: t("common.success"),
-        description: t("forms.todos.todo_deleted")
+         title: tCommon('success'),
+         description: tForms('todos.todo_deleted')
       });
     } catch (error: any) {
       toast({
-        title: t("forms.todos.error_deleting"),
+        title: tForms('todos.error_deleting'),
         description: error.message,
         variant: "destructive"
       });
@@ -174,10 +175,10 @@ export function ProjectTodoListEnhanced({
   if (loading) {
     return <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-lg font-medium">
-          <CheckSquare className="h-4 w-4" />
-          {t("forms.todos.title")}
-        </CardTitle>
+         <CardTitle className="flex items-center gap-2 text-lg font-medium">
+           <CheckSquare className="h-4 w-4" />
+           {tForms('todos.title')}
+         </CardTitle>
       </CardHeader>
         <CardContent>
           <div className="space-y-3">
@@ -193,10 +194,10 @@ export function ProjectTodoListEnhanced({
   const progressPercentage = totalCount > 0 ? Math.round(completedCount / totalCount * 100) : 0;
   return <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-xl font-semibold">
-          <CheckSquare className="h-4 w-4" />
-          {t("forms.todos.title")}
-        </CardTitle>
+         <CardTitle className="flex items-center gap-2 text-xl font-semibold">
+           <CheckSquare className="h-4 w-4" />
+           {tForms('todos.title')}
+         </CardTitle>
         {todos.length > 0 && <div className="pt-2">
             <ProgressBar value={progressPercentage} total={totalCount} completed={completedCount} size="md" />
           </div>}
@@ -204,13 +205,13 @@ export function ProjectTodoListEnhanced({
       <CardContent className="space-y-4">
         {/* Add Todo Input */}
         <div className="flex gap-2">
-          <Input placeholder={t("forms.todos.add_placeholder")} value={newTodoContent} onChange={e => setNewTodoContent(e.target.value)} onKeyDown={e => {
+          <Input placeholder={tForms('todos.add_placeholder')} value={newTodoContent} onChange={e => setNewTodoContent(e.target.value)} onKeyDown={e => {
           if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             handleAddTodo();
           }
         }} className="flex-1" />
-          <Button onClick={handleAddTodo} disabled={!newTodoContent.trim() || isAdding} className="h-11 w-11 p-0" aria-label={t("forms.todos.add_todo")}>
+          <Button onClick={handleAddTodo} disabled={!newTodoContent.trim() || isAdding} className="h-11 w-11 p-0" aria-label={tForms('todos.add_todo')}>
             <Plus className="h-5 w-5" />
           </Button>
         </div>
@@ -250,9 +251,9 @@ export function ProjectTodoListEnhanced({
             </div>
           </> : <div className="text-center py-6">
             <CheckSquare className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-            <p className="text-muted-foreground text-sm">{t("forms.todos.no_todos")}</p>
+            <p className="text-muted-foreground text-sm">{tForms('todos.no_todos')}</p>
             <p className="text-xs text-muted-foreground mt-1">
-              {t("forms.todos.add_first_todo")}
+              {tForms('todos.add_first_todo')}
             </p>
           </div>}
       </CardContent>

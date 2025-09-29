@@ -21,6 +21,7 @@ import { UnifiedClientDetails } from "@/components/UnifiedClientDetails";
 // AssigneesList removed - single user organization
 import { SessionWithStatus } from "@/lib/sessionSorting";
 import { onArchiveToggle } from "@/components/ViewProjectDialog";
+import { useFormsTranslation } from "@/hooks/useTypedTranslation";
 
 interface Project {
   id: string;
@@ -59,6 +60,7 @@ export default function ProjectDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useFormsTranslation();
 
   const [project, setProject] = useState<Project | null>(null);
   const [lead, setLead] = useState<Lead | null>(null);
@@ -505,25 +507,25 @@ export default function ProjectDetail() {
                     size="lg"
                     className="gap-2"
                   >
-                    <span>More Actions</span>
+                    <span>{t('project_sheet.more')}</span>
                     <ChevronDown className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" side="bottom">
                   <DropdownMenuItem onSelect={() => setIsEditing(true)}>
                     <Pencil className="mr-2 h-4 w-4" />
-                    <span>Edit Project</span>
+                    <span>{t('project_sheet.edit_project')}</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem onSelect={handleArchiveAction}>
                     {isArchived ? (
                       <>
                         <ArchiveRestore className="mr-2 h-4 w-4" />
-                        <span>Restore Project</span>
+                        <span>{t('project_sheet.restore_project')}</span>
                       </>
                     ) : (
                       <>
                         <Archive className="mr-2 h-4 w-4" />
-                        <span>Archive Project</span>
+                        <span>{t('project_sheet.archive_project')}</span>
                       </>
                     )}
                   </DropdownMenuItem>
@@ -537,7 +539,7 @@ export default function ProjectDetail() {
       {/* Archive Warning */}
       {isArchived && (
         <div className="mb-6 rounded-lg border border-border bg-muted/40 text-muted-foreground text-sm px-4 py-3">
-          This project is archived. Most actions are disabled. While archived, its sessions and reminders are hidden from calendars, the Sessions page, and activity lists. Use More Actions → Restore to re-enable editing and visibility.
+          {t('project_sheet.archived_banner')}
         </div>
       )}
 
@@ -561,7 +563,7 @@ export default function ProjectDetail() {
           sections={[
             {
               id: 'payments',
-              title: 'Payments',
+              title: t('project_sheet.payments_tab'),
               content: (
                 <ProjectPaymentsSection 
                   projectId={project!.id} 
@@ -574,7 +576,7 @@ export default function ProjectDetail() {
             }, 
             {
               id: 'services',
-              title: 'Services',
+              title: t('project_sheet.services_tab'),
               content: (
                 <ProjectServicesSection 
                   projectId={project!.id} 
@@ -586,7 +588,7 @@ export default function ProjectDetail() {
             }, 
             {
               id: 'sessions',
-              title: 'Sessions',
+              title: t('project_sheet.sessions_tab'),
               content: (
                 <SessionsSection 
                   sessions={sessions} 
@@ -602,7 +604,7 @@ export default function ProjectDetail() {
             }, 
             {
               id: 'activities',
-              title: 'Activities',
+              title: t('project_sheet.activities_tab'),
               content: (
                 <ProjectActivitySection 
                   projectId={project!.id} 
@@ -617,24 +619,23 @@ export default function ProjectDetail() {
             }, 
             {
               id: 'todos',
-              title: 'Todos',
+              title: t('project_sheet.todos_tab'),
               content: <ProjectTodoListEnhanced projectId={project!.id} />
             }
           ]} 
           rightFooter={
-            <div className="border border-destructive/20 bg-destructive/5 rounded-lg p-6">
-              <div className="space-y-4">
-                <h3 className="font-medium text-destructive">Danger Zone</h3>
+            <div className="border border-destructive/20 bg-destructive/5 rounded-md p-4">
+              <div className="space-y-3">
                 <Button 
                   variant="outline" 
                   onClick={() => setShowDeleteDialog(true)} 
                   className="w-full border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
                   size="lg"
                 >
-                  Delete Project
+                  {t('danger_zone.title')}
                 </Button>
                 <p className="text-sm text-muted-foreground text-center">
-                  This will permanently delete the project and ALL related data: sessions, payments, todos, services, and activities.
+                  {t('danger_zone.description')}
                 </p>
               </div>
             </div>
@@ -646,20 +647,19 @@ export default function ProjectDetail() {
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Project</AlertDialogTitle>
+            <AlertDialogTitle>{t('deleteDialog.title')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{project?.name}"? This action cannot be undone.
-              This will permanently delete the project and ALL related data including sessions, payments, todos, services, and activities.
+              {t('deleteDialog.description', { name: project?.name })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting}>{t('deleteDialog.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteProject}
               disabled={isDeleting}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {isDeleting ? "Deleting..." : "Delete Project"}
+              {isDeleting ? t('actions.deleting') : t('deleteDialog.confirm')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

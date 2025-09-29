@@ -550,7 +550,7 @@ export function ProjectSheetView({
             className="text-muted-foreground hover:bg-accent hover:text-accent-foreground h-8 px-2 gap-1 md:h-10 md:px-3"
           >
             <ExternalLink className="h-4 w-4" />
-            <span className="text-sm hidden md:inline">Full Details</span>
+            <span className="text-sm hidden md:inline">{tForms('project_sheet.full_details')}</span>
           </Button>
         )}
         
@@ -562,25 +562,25 @@ export function ProjectSheetView({
                 size="sm" 
             className="text-muted-foreground hover:bg-accent hover:text-accent-foreground h-8 px-2 gap-1 md:h-10 md:px-3"
               >
-                <span className="text-sm hidden md:inline">{tForms('dangerZone.project_sheet.more')}</span>
+                <span className="text-sm hidden md:inline">{tForms('project_sheet.more')}</span>
                 <ChevronDown className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" side="bottom" className="z-50 bg-background">
               <DropdownMenuItem role="menuitem" onSelect={() => setIsEditing(true)}>
                 <Pencil className="mr-2 h-4 w-4" />
-                <span>{tForms('dangerZone.project_sheet.edit_project')}</span>
+                <span>{tForms('project_sheet.edit_project')}</span>
               </DropdownMenuItem>
               <DropdownMenuItem role="menuitem" onSelect={handleArchiveAction}>
                 {isArchived ? (
                   <>
                     <ArchiveRestore className="mr-2 h-4 w-4" />
-                    <span>{tForms('dangerZone.project_sheet.restore_project')}</span>
+                    <span>{tForms('project_sheet.restore_project')}</span>
                   </>
                 ) : (
                   <>
                     <Archive className="mr-2 h-4 w-4" />
-                    <span>{tForms('dangerZone.project_sheet.archive_project')}</span>
+                    <span>{tForms('project_sheet.archive_project')}</span>
                   </>
                 )}
               </DropdownMenuItem>
@@ -595,7 +595,7 @@ export function ProjectSheetView({
           onClick={() => onOpenChange(false)} 
           className="text-muted-foreground hover:bg-accent hover:text-accent-foreground text-sm h-8 px-2 md:h-10 md:px-3"
         >
-          <span className="hidden md:inline">{tForms('dangerZone.project_sheet.close')}</span>
+          <span className="hidden md:inline">{tForms('project_sheet.close')}</span>
           <X className="h-4 w-4 md:hidden" />
         </Button>
       </div>
@@ -607,7 +607,7 @@ export function ProjectSheetView({
     <>
       {isArchived && (
         <div className="mb-3 rounded-md border border-border bg-muted/40 text-muted-foreground text-sm px-3 py-2">
-          {tForms('dangerZone.project_sheet.archived_banner')}
+          {tForms('project_sheet.archived_banner')}
         </div>
       )}
 
@@ -631,7 +631,7 @@ export function ProjectSheetView({
           sections={[
             {
               id: 'payments',
-              title: tForms('dangerZone.project_sheet.payments_tab'),
+              title: tForms('project_sheet.payments_tab'),
               content: (
                 <ProjectPaymentsSection 
                   projectId={project!.id} 
@@ -645,7 +645,7 @@ export function ProjectSheetView({
             }, 
             {
               id: 'services',
-              title: tForms('dangerZone.project_sheet.services_tab'),
+              title: tForms('project_sheet.services_tab'),
               content: (
                 <ProjectServicesSection 
                   projectId={project!.id} 
@@ -659,7 +659,7 @@ export function ProjectSheetView({
             }, 
             {
               id: 'sessions',
-              title: tForms('dangerZone.project_sheet.sessions_tab'),
+              title: tForms('project_sheet.sessions_tab'),
               content: (
                 <SessionsSection 
                   sessions={sessions} 
@@ -693,7 +693,7 @@ export function ProjectSheetView({
             }, 
             {
               id: 'todos',
-              title: tForms('dangerZone.project_sheet.todos_tab'),
+              title: tForms('project_sheet.todos_tab'),
               content: <ProjectTodoListEnhanced projectId={project!.id} />
             }
           ]} 
@@ -739,22 +739,22 @@ export function ProjectSheetView({
         {/* Delete Confirmation Dialog */}
         <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
           <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>{tForms("deleteDialog.title")}</AlertDialogTitle>
-              <AlertDialogDescription>
-                {tForms('deleteDialog.description', { name: project?.name })}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel disabled={isDeleting}>{tForms("deleteDialog.cancel")}</AlertDialogCancel>
-              <AlertDialogAction 
-                onClick={handleDeleteProject} 
-                disabled={isDeleting} 
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              >
-                {isDeleting ? tForms("actions.deleting") : tForms("deleteDialog.confirm")}
-              </AlertDialogAction>
-            </AlertDialogFooter>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{tForms('deleteDialog.title')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {tForms('deleteDialog.description', { name: project?.name })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>{tForms('deleteDialog.cancel')}</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteProject} 
+              disabled={isDeleting} 
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? tForms('actions.deleting') : tForms('deleteDialog.confirm')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
       </>
@@ -781,20 +781,19 @@ export function ProjectSheetView({
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Project</AlertDialogTitle>
+            <AlertDialogTitle>{tForms('deleteDialog.title')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{project?.name}"? This action cannot be undone.
-              This will permanently delete the project and ALL related data including sessions, payments, todos, services, and activities.
+              {tForms('deleteDialog.description', { name: project?.name })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>{tForms("deleteDialog.cancel")}</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting}>{tForms('deleteDialog.cancel')}</AlertDialogCancel>
             <AlertDialogAction 
               onClick={handleDeleteProject} 
               disabled={isDeleting} 
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {isDeleting ? tForms("deleteDialog.deleting") : tForms("deleteDialog.delete")}
+              {isDeleting ? tForms('actions.deleting') : tForms('deleteDialog.confirm')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

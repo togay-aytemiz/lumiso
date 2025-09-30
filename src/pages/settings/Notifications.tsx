@@ -12,6 +12,7 @@ import { Loader2, TestTube, Power, PowerOff, Clock, Zap } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { SettingsLoadingSkeleton } from "@/components/ui/loading-presets";
+import { useTranslation } from "react-i18next";
 
 
 interface NotificationSettings {
@@ -28,6 +29,7 @@ interface NotificationSettings {
 
 export default function Notifications() {
   const { toast } = useToast();
+  const { t } = useTranslation('pages');
   const [loading, setLoading] = useState(true);
   const [settings, setSettings] = useState<NotificationSettings>({
     globalEnabled: true,
@@ -121,15 +123,15 @@ export default function Notifications() {
       setAutoSaveStates(prev => ({ ...prev, globalEnabled: 'idle' }));
       
       toast({
-        title: enabled ? "All Notifications Enabled" : "All Notifications Disabled",
-        description: `All notification types have been ${enabled ? 'enabled' : 'disabled'}`,
+        title: enabled ? t('settings.notifications.toasts.allEnabled') : t('settings.notifications.toasts.allDisabled'),
+        description: `${t('settings.notifications.toasts.' + (enabled ? 'allEnabledDesc' : 'allDisabledDesc'))}`,
       });
     } catch (error) {
       console.error('Error toggling all notifications:', error);
       setAutoSaveStates(prev => ({ ...prev, globalEnabled: 'idle' }));
       toast({
-        title: "Error",
-        description: "Failed to update notification settings",
+        title: t('settings.notifications.toasts.error'),
+        description: t('settings.notifications.toasts.errorDesc'),
         variant: "destructive",
       });
     }
@@ -164,15 +166,15 @@ export default function Notifications() {
       setAutoSaveStates(prev => ({ ...prev, [field]: 'idle' }));
       
       toast({
-        title: "Updated",
-        description: "Notification setting saved successfully",
+        title: t('settings.notifications.toasts.updated'),
+        description: t('settings.notifications.toasts.updatedDesc'),
       });
     } catch (error) {
       console.error('Error saving setting:', error);
       setAutoSaveStates(prev => ({ ...prev, [field]: 'idle' }));
       toast({
-        title: "Error",
-        description: "Failed to save notification setting",
+        title: t('settings.notifications.toasts.error'),
+        description: t('settings.notifications.toasts.errorDesc'),
         variant: "destructive",
       });
     }
@@ -197,14 +199,14 @@ export default function Notifications() {
       if (error) throw error;
 
       toast({
-        title: "Test Email Sent",
-        description: `${type} notification test email has been sent!`,
+        title: t('settings.notifications.toasts.testSent'),
+        description: `${type} ${t('settings.notifications.toasts.testSentDesc')}`,
       });
     } catch (error) {
       console.error('Error testing notification:', error);
       toast({
-        title: "Test Failed",
-        description: "Failed to send test notification. Please check your settings.",
+        title: t('settings.notifications.toasts.testFailed'),
+        description: t('settings.notifications.toasts.testFailedDesc'),
         variant: "destructive",
       });
     } finally {
@@ -217,8 +219,8 @@ export default function Notifications() {
     return (
       <SettingsPageWrapper>
         <SettingsHeader
-          title="Notifications"
-          description="Configure your notification preferences and delivery times"
+          title={t('settings.notifications.title')}
+          description={t('settings.notifications.description')}
           helpContent={settingsHelpContent.notifications}
         />
         <SettingsLoadingSkeleton rows={4} />
@@ -229,16 +231,16 @@ export default function Notifications() {
   return (
     <SettingsPageWrapper>
       <SettingsHeader
-        title="Notifications"
-        description="Streamlined notification system for your photography business"
+        title={t('settings.notifications.title')}
+        description={t('settings.notifications.description')}
         helpContent={settingsHelpContent.notifications}
       />
       
       <div className="space-y-8">
         {/* Master Controls */}
         <CategorySettingsSection
-          title="Master Controls"
-          description="Global notification settings and timing"
+          title={t('settings.notifications.masterControls.title')}
+          description={t('settings.notifications.masterControls.description')}
           sectionId="master-controls"
         >
           <div className="space-y-6">
@@ -247,10 +249,10 @@ export default function Notifications() {
               <div className="flex-1">
                 <Label htmlFor="global-notifications" className="text-base font-medium flex items-center gap-2">
                   {settings.globalEnabled ? <Power className="h-4 w-4" /> : <PowerOff className="h-4 w-4" />}
-                  All Notifications
+                  {t('settings.notifications.masterControls.allNotifications')}
                 </Label>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Master switch to enable or disable all notification types
+                  {t('settings.notifications.masterControls.allNotificationsHelp')}
                 </p>
               </div>
               <Switch
@@ -266,10 +268,10 @@ export default function Notifications() {
               <div className="flex-1">
                 <Label htmlFor="scheduled-time" className="text-base font-medium flex items-center gap-2">
                   <Clock className="h-4 w-4" />
-                  Scheduled Notification Time
+                  {t('settings.notifications.masterControls.scheduledTime')}
                 </Label>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Time when daily summaries are sent each morning
+                  {t('settings.notifications.masterControls.scheduledTimeHelp')}
                 </p>
               </div>
               <Select
@@ -294,8 +296,8 @@ export default function Notifications() {
 
         {/* Scheduled Notifications */}
         <CategorySettingsSection
-          title="Scheduled Notifications"
-          description={`Daily digest sent automatically at ${settings.scheduledTime}`}
+          title={t('settings.notifications.scheduled.title')}
+          description={`${t('settings.notifications.scheduled.description')} ${settings.scheduledTime}`}
           sectionId="scheduled"
         >
           <div className="space-y-6">
@@ -304,10 +306,10 @@ export default function Notifications() {
             <div className="flex items-center justify-between p-4 border rounded-lg">
               <div className="flex-1">
                 <Label htmlFor="daily-summary" className="text-base font-medium">
-                  Daily Summary
+                  {t('settings.notifications.scheduled.dailySummary')}
                 </Label>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Morning digest with today's sessions, overdue items, reminders, and pending tasks
+                  {t('settings.notifications.scheduled.dailySummaryHelp')}
                 </p>
               </div>
               <div className="flex items-center gap-3">
@@ -321,10 +323,10 @@ export default function Notifications() {
                   {testingNotification === 'daily-summary-empty' ? (
                     <>
                       <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                      Testing...
+                      {t('settings.notifications.testing')}
                     </>
                   ) : (
-                    'Send empty test'
+                    t('settings.notifications.sendEmptyTest')
                   )}
                 </Button>
                 <Button
@@ -337,10 +339,10 @@ export default function Notifications() {
                   {testingNotification === 'daily-summary' ? (
                     <>
                       <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                      Testing...
+                      {t('settings.notifications.testing')}
                     </>
                   ) : (
-                    'Send test'
+                    t('settings.notifications.sendTest')
                   )}
                 </Button>
                 <Switch
@@ -357,8 +359,8 @@ export default function Notifications() {
 
         {/* Immediate Notifications */}
         <CategorySettingsSection
-          title="Immediate Notifications"
-          description="Real-time alerts sent when events occur"
+          title={t('settings.notifications.immediate.title')}
+          description={t('settings.notifications.immediate.description')}
           sectionId="immediate"
         >
           <div className="space-y-6">
@@ -368,10 +370,10 @@ export default function Notifications() {
             <div className="flex items-center justify-between p-4 border rounded-lg">
               <div className="flex-1">
                 <Label htmlFor="project-milestone" className="text-base font-medium">
-                  Project Milestone Reached
+                  {t('settings.notifications.immediate.projectMilestone')}
                 </Label>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Notify when a project transitions to Completed or Cancelled lifecycle
+                  {t('settings.notifications.immediate.projectMilestoneHelp')}
                 </p>
               </div>
               <div className="flex items-center gap-3">
@@ -385,10 +387,10 @@ export default function Notifications() {
                   {testingNotification === 'project-milestone' ? (
                     <>
                       <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                      Testing...
+                      {t('settings.notifications.testing')}
                     </>
                   ) : (
-                    'Send test'
+                    t('settings.notifications.sendTest')
                   )}
                 </Button>
                 <Switch

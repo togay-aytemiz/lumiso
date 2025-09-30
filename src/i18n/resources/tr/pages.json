@@ -334,6 +334,37 @@
         "friday": "Cuma",
         "saturday": "Cumartesi",
         "sunday": "Pazar"
+      },
+      "tutorial": {
+        "welcome": {
+          "title": "Profil Ayarlarınıza Hoş Geldiniz",
+          "description": "Burada kişisel bilgilerinizi yönetebilir, profil fotoğrafı yükleyebilir ve planlama için çalışma saatlerinizi ayarlayabilirsiniz.",
+          "updateInfo": "Adınızı, telefonunuzu ve profil fotoğrafınızı güncelleyin",
+          "configureHours": "Planlama için çalışma saatlerini yapılandırın"
+        },
+        "completeInfo": {
+          "title": "Profil Bilgilerinizi Tamamlayın",
+          "description": "Lütfen ad soyadınızı ve telefon numaranızı doldurun ve bir profil fotoğrafı yüklemeyi düşünün. Devam etmek için ad soyadınız gereklidir.",
+          "fullNameRequired": "• Ad Soyad: Müşteri iletişimleri için gereklidir",
+          "phoneOptional": "• Telefon Numarası: İsteğe bağlı ancak önerilir",
+          "profilePhoto": "• Profil Fotoğrafı: Yönetici görünümlerinde ve müşteri mesajlarında gösterilir"
+        },
+        "businessInfo": {
+          "title": "İşletme Bilgilerinizi Ayarlayın",
+          "description": "Genel ayarlarda işletme adınızı ekleyelim. Bu, müşteri iletişimlerinde ve faturalarda görünecektir.",
+          "businessNameRequired": "• İşletme Adı: Profesyonel iletişimler için gereklidir",
+          "usedIn": "• Müşteri e-postalarında, faturalarda ve sözleşmelerde kullanılır",
+          "canChange": "• Daha sonra Genel ayarlardan değiştirilebilir"
+        },
+        "setupComplete": {
+          "title": "Profil Kurulumu Tamamlandı!",
+          "description": "Tebrikler! Profil ve işletme bilgilerinizi başarıyla kurdunuz. Fotoğrafçılık CRM kurulumunuzun bir sonraki adımına geçmeye hazırsınız.",
+          "success": "Profil kurulumu başarıyla tamamlandı!"
+        }
+      },
+      "toasts": {
+        "success": "Başarılı",
+        "workingHoursUpdated": "Çalışma saatleri başarıyla güncellendi"
       }
     },
     "billing": {

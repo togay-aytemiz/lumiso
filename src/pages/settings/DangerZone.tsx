@@ -9,17 +9,19 @@ import { Label } from "@/components/ui/label";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { AlertTriangle, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 
 export default function DangerZone() {
   const [password, setPassword] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
+  const { t } = useTranslation('pages');
 
   const handleDeleteAllData = async () => {
     if (!password) {
       toast({
-        title: "Password Required",
-        description: "Please enter your password to confirm this action.",
+        title: t('settings.dangerZone.deleteData.passwordRequired'),
+        description: t('settings.dangerZone.deleteData.passwordRequiredDesc'),
         variant: "destructive",
       });
       return;
@@ -28,21 +30,19 @@ export default function DangerZone() {
     setIsDeleting(true);
     
     try {
-      // Here you would implement the actual deletion logic
-      // For now, we'll just simulate the process
       await new Promise(resolve => setTimeout(resolve, 2000));
       
       toast({
-        title: "Data Deletion Complete",
-        description: "All your data has been permanently deleted.",
+        title: t('settings.dangerZone.deleteData.deleteComplete'),
+        description: t('settings.dangerZone.deleteData.deleteCompleteDesc'),
         variant: "destructive",
       });
       
       setPassword("");
     } catch (error) {
       toast({
-        title: "Deletion Failed",
-        description: "An error occurred while deleting your data. Please try again.",
+        title: t('settings.dangerZone.deleteData.deleteFailed'),
+        description: t('settings.dangerZone.deleteData.deleteFailedDesc'),
         variant: "destructive",
       });
     } finally {
@@ -53,15 +53,15 @@ export default function DangerZone() {
   return (
     <SettingsPageWrapper>
       <SettingsHeader
-        title="Danger Zone"
-        description="These actions are destructive and cannot be undone. Proceed with caution."
+        title={t('settings.dangerZone.title')}
+        description={t('settings.dangerZone.description')}
         helpContent={settingsHelpContent.dangerZone}
       />
       
       <div className="space-y-6">
         <SettingsSection
-          title="Delete All Data"
-          description="Permanently remove all your data from our servers"
+          title={t('settings.dangerZone.deleteData.title')}
+          description={t('settings.dangerZone.deleteData.description')}
         >
           <div className="space-y-4">
             <div className="rounded-lg border border-destructive/20 bg-destructive/10 p-4 md:p-6">
@@ -69,12 +69,10 @@ export default function DangerZone() {
                 <AlertTriangle className="h-5 w-5 md:h-6 md:w-6 text-destructive flex-shrink-0" />
                 <div className="space-y-3 flex-1 min-w-0">
                   <h3 className="font-semibold text-destructive text-sm md:text-base">
-                    Permanently Delete All Data
+                    {t('settings.dangerZone.deleteData.warning')}
                   </h3>
                   <p className="text-xs md:text-sm text-muted-foreground leading-relaxed">
-                    This action will permanently delete all of your leads, projects, sessions, 
-                    reminders, payments, and associated data. This action cannot be undone and 
-                    all data will be lost forever.
+                    {t('settings.dangerZone.deleteData.warningDesc')}
                   </p>
                   
                   <AlertDialog>
@@ -86,39 +84,37 @@ export default function DangerZone() {
                         size="default"
                       >
                         <Trash2 className="h-4 w-4 mr-2" />
-                        Delete All Data
+                        {t('settings.dangerZone.deleteData.button')}
                       </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent className="mx-4 max-w-md">
                       <AlertDialogHeader className="space-y-3">
                         <AlertDialogTitle className="flex items-center gap-2 text-destructive text-base">
                           <AlertTriangle className="h-5 w-5" />
-                          Confirm Data Deletion
+                          {t('settings.dangerZone.deleteData.confirmTitle')}
                         </AlertDialogTitle>
                         <AlertDialogDescription className="space-y-3 text-sm">
-                          <p>
-                            This action will permanently delete all of your data including:
-                          </p>
+                          <p>{t('settings.dangerZone.deleteData.confirmDesc')}</p>
                           <ul className="list-disc list-inside space-y-1 text-xs">
-                            <li>All leads and their information</li>
-                            <li>All projects and their details</li>
-                            <li>All sessions and appointments</li>
-                            <li>All reminders and activities</li>
-                            <li>All payment records</li>
-                            <li>All custom settings and configurations</li>
+                            <li>{t('settings.dangerZone.deleteData.leads')}</li>
+                            <li>{t('settings.dangerZone.deleteData.projects')}</li>
+                            <li>{t('settings.dangerZone.deleteData.sessions')}</li>
+                            <li>{t('settings.dangerZone.deleteData.reminders')}</li>
+                            <li>{t('settings.dangerZone.deleteData.payments')}</li>
+                            <li>{t('settings.dangerZone.deleteData.settings')}</li>
                           </ul>
                           <p className="text-destructive font-medium text-sm">
-                            This action cannot be undone. Please enter your account password to confirm.
+                            {t('settings.dangerZone.deleteData.passwordPrompt')}
                           </p>
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       
                       <div className="space-y-2">
-                        <Label htmlFor="confirm-password" className="text-sm">Account Password</Label>
+                        <Label htmlFor="confirm-password" className="text-sm">{t('settings.dangerZone.deleteData.passwordLabel')}</Label>
                         <Input
                           id="confirm-password"
                           type="password"
-                          placeholder="Enter your password"
+                          placeholder={t('settings.dangerZone.deleteData.passwordPlaceholder')}
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
                           className="border-destructive/30 focus:border-destructive h-10"
@@ -130,7 +126,7 @@ export default function DangerZone() {
                           onClick={() => setPassword("")}
                           className="w-full order-2 sm:order-1 sm:w-auto"
                         >
-                          Cancel
+                          {t('settings.dangerZone.deleteData.cancel')}
                         </AlertDialogCancel>
                         <AlertDialogAction
                           onClick={handleDeleteAllData}
@@ -140,12 +136,12 @@ export default function DangerZone() {
                           {isDeleting ? (
                             <>
                               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                              Deleting...
+                              {t('settings.dangerZone.deleteData.deleting')}
                             </>
                           ) : (
                             <>
                               <Trash2 className="h-4 w-4 mr-2" />
-                              Delete All Data
+                              {t('settings.dangerZone.deleteData.button')}
                             </>
                           )}
                         </AlertDialogAction>

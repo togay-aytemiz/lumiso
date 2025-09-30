@@ -5,6 +5,7 @@ import { Column } from '@/hooks/useDataTable';
 import { CustomFieldDisplay } from '@/components/fields/CustomFieldDisplay';
 import { LeadStatusBadge } from '@/components/LeadStatusBadge';
 import { formatDate } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 interface ColumnConfig {
   key: string;
@@ -29,6 +30,7 @@ interface LeadWithCustomFields {
 }
 
 export function useLeadTableColumns() {
+  const { t } = useTranslation('forms');
   const [fieldDefinitions, setFieldDefinitions] = useState<LeadFieldDefinition[]>([]);
   const [columnPreferences, setColumnPreferences] = useState<ColumnConfig[]>([]);
   const [loading, setLoading] = useState(true);
@@ -149,7 +151,7 @@ export function useLeadTableColumns() {
         const nameFieldDef = fieldDefinitions.find(f => f.field_key === 'name');
         return {
           key: 'name',
-          header: nameFieldDef?.label || 'Name',
+          header: nameFieldDef?.label || t('lead_table_columns.name'),
           sortable: true,
           accessor: (lead) => lead.custom_fields['name'] || lead.name,
           render: (lead) => React.createElement('span', {
@@ -162,7 +164,7 @@ export function useLeadTableColumns() {
         const emailFieldDef = fieldDefinitions.find(f => f.field_key === 'email');
         return {
           key: 'email',
-          header: emailFieldDef?.label || 'Email',
+          header: emailFieldDef?.label || t('lead_table_columns.email'),
           sortable: true,
           accessor: (lead) => lead.custom_fields['email'] || lead.email,
           render: (lead) => {
@@ -182,7 +184,7 @@ export function useLeadTableColumns() {
         const phoneFieldDef = fieldDefinitions.find(f => f.field_key === 'phone');
         return {
           key: 'phone',
-          header: phoneFieldDef?.label || 'Phone',
+          header: phoneFieldDef?.label || t('lead_table_columns.phone'),
           sortable: true,
           accessor: (lead) => lead.custom_fields['phone'] || lead.phone,
           render: (lead) => {
@@ -201,7 +203,7 @@ export function useLeadTableColumns() {
       if (pref.key === 'status') {
         return {
           key: 'status',
-          header: 'Status',
+          header: t('lead_table_columns.status'),
           sortable: true,
           render: (lead) => React.createElement(LeadStatusBadge, {
             leadId: lead.id,
@@ -219,7 +221,7 @@ export function useLeadTableColumns() {
       if (pref.key === 'updated_at') {
         return {
           key: 'updated_at',
-          header: 'Last Updated',
+          header: t('lead_table_columns.last_updated'),
           sortable: true,
           render: (lead) => React.createElement('span', {
             className: "text-sm text-muted-foreground"
@@ -284,11 +286,11 @@ export function useLeadTableColumns() {
   // Get available columns for configuration
   const availableColumns = useMemo(() => {
     const coreColumns = [
-      { key: 'name', label: 'Name', isCore: false },
-      { key: 'status', label: 'Status', isCore: true },
-      { key: 'phone', label: 'Phone', isCore: false },
-      { key: 'email', label: 'Email', isCore: false },
-      { key: 'updated_at', label: 'Last Updated', isCore: true },
+      { key: 'name', label: t('lead_table_columns.name'), isCore: false },
+      { key: 'status', label: t('lead_table_columns.status'), isCore: true },
+      { key: 'phone', label: t('lead_table_columns.phone'), isCore: false },
+      { key: 'email', label: t('lead_table_columns.email'), isCore: false },
+      { key: 'updated_at', label: t('lead_table_columns.last_updated'), isCore: true },
     ];
 
     const customColumns = fieldDefinitions

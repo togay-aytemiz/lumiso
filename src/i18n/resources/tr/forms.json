@@ -864,5 +864,39 @@
     "selling": "Satış",
     "view_only": "Sadece Görüntüle",
     "no_services_in_category": "Bu kategoride hizmet yok"
+  },
+  "lead_fields": {
+    "title": "Özel Müşteri Adayı Alanları",
+    "description": "Müşteri adaylarınız için yakalamak istediğiniz alanları özelleştirin. İş akışınıza uyacak şekilde özel alanlar ekleyebilir, düzenleyebilir veya kaldırabilirsiniz.",
+    "add_field": "Özel Alan Ekle",
+    "no_fields": "Henüz özel alan yapılandırılmamış.",
+    "no_fields_description": "Ek müşteri adayı bilgilerini toplamaya başlamak için ilk özel alanınızı ekleyin.",
+    "table": {
+      "field_name": "Alan Adı",
+      "type": "Tür",
+      "required": "Zorunlu",
+      "visible_in_form": "Formda Görünür",
+      "status": "Durum",
+      "actions": "İşlemler",
+      "required_value": "Zorunlu",
+      "optional_value": "İsteğe Bağlı",
+      "visible_value": "Görünür",
+      "hidden_value": "Gizli",
+      "system_value": "Sistem",
+      "custom_value": "Özel"
+    },
+    "delete_dialog": {
+      "title": "Özel Alanı Sil",
+      "description": "\"{{fieldName}}\" alanını silmek istediğinizden emin misiniz? Bu, alan tanımını ve mevcut müşteri adayları için bu alanda depolanan tüm verileri kalıcı olarak kaldıracaktır. Bu eylem geri alınamaz.",
+      "cancel": "İptal",
+      "confirm": "Alanı Sil"
+    }
+  },
+  "lead_table_columns": {
+    "name": "Ad",
+    "email": "E-posta",
+    "phone": "Telefon",
+    "status": "Durum",
+    "last_updated": "Son Güncelleme"
   }
 }

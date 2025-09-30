@@ -874,5 +874,39 @@
     "selling": "Selling",
     "view_only": "View Only",
     "no_services_in_category": "No services in this category"
+  },
+  "lead_fields": {
+    "title": "Custom Lead Fields",
+    "description": "Customize the fields you want to capture for your leads. You can add, edit, or remove custom fields to match your workflow.",
+    "add_field": "Add Custom Field",
+    "no_fields": "No custom fields configured yet.",
+    "no_fields_description": "Add your first custom field to start collecting additional lead information.",
+    "table": {
+      "field_name": "Field Name",
+      "type": "Type",
+      "required": "Required",
+      "visible_in_form": "Visible in Form",
+      "status": "Status",
+      "actions": "Actions",
+      "required_value": "Required",
+      "optional_value": "Optional",
+      "visible_value": "Visible",
+      "hidden_value": "Hidden",
+      "system_value": "System",
+      "custom_value": "Custom"
+    },
+    "delete_dialog": {
+      "title": "Delete Custom Field",
+      "description": "Are you sure you want to delete \"{{fieldName}}\"? This will permanently remove the field definition and all data stored in this field for existing leads. This action cannot be undone.",
+      "cancel": "Cancel",
+      "confirm": "Delete Field"
+    }
+  },
+  "lead_table_columns": {
+    "name": "Name",
+    "email": "Email",
+    "phone": "Phone",
+    "status": "Status",
+    "last_updated": "Last Updated"
   }
 }

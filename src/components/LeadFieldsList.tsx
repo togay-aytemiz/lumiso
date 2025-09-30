@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useLeadFieldDefinitions } from "@/hooks/useLeadFieldDefinitions";
 import { LeadFieldDefinition, FIELD_TYPE_CONFIG } from "@/types/leadFields";
+import { useTranslation } from "react-i18next";
 
 interface LeadFieldsListProps {
   fields: LeadFieldDefinition[];
@@ -32,6 +33,7 @@ interface LeadFieldsListProps {
 export function LeadFieldsList({ fields, onEdit }: LeadFieldsListProps) {
   const { deleteFieldDefinition, reorderFieldDefinitions } = useLeadFieldDefinitions();
   const [deleteField, setDeleteField] = useState<LeadFieldDefinition | null>(null);
+  const { t } = useTranslation('forms');
 
   const handleDragEnd = async (result: any) => {
     if (!result.destination) return;
@@ -65,9 +67,9 @@ export function LeadFieldsList({ fields, onEdit }: LeadFieldsListProps) {
   if (fields.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-muted-foreground">No custom fields configured yet.</p>
+        <p className="text-muted-foreground">{t('lead_fields.no_fields')}</p>
         <p className="text-sm text-muted-foreground mt-1">
-          Add your first custom field to start collecting additional lead information.
+          {t('lead_fields.no_fields_description')}
         </p>
       </div>
     );
@@ -82,12 +84,12 @@ export function LeadFieldsList({ fields, onEdit }: LeadFieldsListProps) {
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-12"></TableHead>
-                  <TableHead>Field Name</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Required</TableHead>
-                  <TableHead>Visible in Form</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="w-24">Actions</TableHead>
+                  <TableHead>{t('lead_fields.table.field_name')}</TableHead>
+                  <TableHead>{t('lead_fields.table.type')}</TableHead>
+                  <TableHead>{t('lead_fields.table.required')}</TableHead>
+                  <TableHead>{t('lead_fields.table.visible_in_form')}</TableHead>
+                  <TableHead>{t('lead_fields.table.status')}</TableHead>
+                  <TableHead className="w-24">{t('lead_fields.table.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody {...provided.droppableProps} ref={provided.innerRef}>
@@ -124,7 +126,7 @@ export function LeadFieldsList({ fields, onEdit }: LeadFieldsListProps) {
                         </TableCell>
                         <TableCell>
                           <span className="text-sm text-muted-foreground">
-                            {field.is_required ? "Required" : "Optional"}
+                            {field.is_required ? t('lead_fields.table.required_value') : t('lead_fields.table.optional_value')}
                           </span>
                         </TableCell>
                         <TableCell>
@@ -135,13 +137,13 @@ export function LeadFieldsList({ fields, onEdit }: LeadFieldsListProps) {
                               <EyeOff className="h-4 w-4 text-muted-foreground" />
                             )}
                             <span className="text-sm text-muted-foreground">
-                              {field.is_visible_in_form ? "Visible" : "Hidden"}
+                              {field.is_visible_in_form ? t('lead_fields.table.visible_value') : t('lead_fields.table.hidden_value')}
                             </span>
                           </div>
                         </TableCell>
                         <TableCell>
                           <span className="text-sm text-muted-foreground">
-                            {field.is_system ? "System" : "Custom"}
+                            {field.is_system ? t('lead_fields.table.system_value') : t('lead_fields.table.custom_value')}
                           </span>
                         </TableCell>
                         <TableCell>
@@ -180,21 +182,19 @@ export function LeadFieldsList({ fields, onEdit }: LeadFieldsListProps) {
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <AlertCircle className="h-5 w-5 text-destructive" />
-              Delete Custom Field
+              {t('lead_fields.delete_dialog.title')}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{deleteField?.label}"? This will permanently 
-              remove the field definition and all data stored in this field for existing leads.
-              This action cannot be undone.
+              {t('lead_fields.delete_dialog.description', { fieldName: deleteField?.label })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t('lead_fields.delete_dialog.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Delete Field
+              {t('lead_fields.delete_dialog.confirm')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

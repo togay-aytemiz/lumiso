@@ -557,6 +557,18 @@
       "addPreheader": "Click to add preheader"
     },
     "preview": {
+      "title": "Live Preview",
+      "description": "See how your template looks across channels",
+      "desktop": "Desktop",
+      "mobile": "Mobile",
+      "testSend": "Test Send",
+      "sending": "Sending...",
+      "channels": {
+        "email": "Email",
+        "whatsapp": "WhatsApp",
+        "sms": "SMS",
+        "plain": "Plain"
+      },
       "emailPreview": "Email Preview",
       "subject": "Subject:",
       "previewText": "Preview:",
@@ -565,6 +577,22 @@
       "excitedMessage": "We're excited to capture your special moments",
       "lookingForward": "Looking forward to your session!",
       "addBlocks": "Add blocks to build your template",
+      "toast": {
+        "errorTitle": "Error",
+        "noUserEmail": "User email not found. Please make sure you're logged in.",
+        "noBlocks": "No blocks to send. Add some blocks to your template first.",
+        "successTitle": "Success",
+        "testEmailSent": "Test email sent to {{email}}",
+        "sendFailed": "Failed to send test email. Please try again."
+      },
+      "mockData": {
+        "customerName": "Sarah Johnson",
+        "sessionDate": "March 15, 2024",
+        "sessionTime": "2:00 PM",
+        "sessionLocation": "Studio Downtown",
+        "businessName": "Radiant Photography",
+        "businessPhone": "(555) 123-4567"
+      },
       "whatsapp": {
         "online": "online"
       },

@@ -112,16 +112,18 @@ function WhatsAppTextBlock({
 }
 
 function WhatsAppSessionDetails({ data, mockData }: { data: SessionDetailsBlockData; mockData: Record<string, string> }) {
+  const { t } = useTranslation('pages');
+  
   return (
     <div className="text-sm">
       <div className="font-medium mb-2">
-        📅 {data.customLabel || "Session Details"}
+        📅 {data.customLabel || t('templateBuilder.preview.sessionDetails.defaultLabel')}
       </div>
       <div className="space-y-1">
-        {data.showDate && <div>📅 Date: {mockData.session_date}</div>}
-        {data.showTime && <div>🕐 Time: {mockData.session_time}</div>}
-        {data.showLocation && <div>📍 Location: {mockData.session_location}</div>}
-        {data.showNotes && <div>📝 Please arrive 10 minutes early!</div>}
+        {data.showDate && <div>📅 {t('templateBuilder.preview.sessionDetails.date')} {mockData.session_date}</div>}
+        {data.showTime && <div>🕐 {t('templateBuilder.preview.sessionDetails.time')} {mockData.session_time}</div>}
+        {data.showLocation && <div>📍 {t('templateBuilder.preview.sessionDetails.location')} {mockData.session_location}</div>}
+        {data.showNotes && <div>📝 {t('templateBuilder.preview.sessionDetails.defaultNote')}</div>}
       </div>
     </div>
   );

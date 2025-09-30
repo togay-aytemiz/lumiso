@@ -27,12 +27,12 @@ export function SMSPreview({ blocks, mockData }: SMSPreviewProps) {
 
         case "session-details":
           const sessionData = block.data as SessionDetailsBlockData;
-          smsContent += sessionData.customLabel || "Session Details";
+          smsContent += sessionData.customLabel || t('templateBuilder.preview.sessionDetails.defaultLabel');
           smsContent += "\n";
-          if (sessionData.showDate) smsContent += `Date: ${mockData.session_date}\n`;
-          if (sessionData.showTime) smsContent += `Time: ${mockData.session_time}\n`;
-          if (sessionData.showLocation) smsContent += `Location: ${mockData.session_location}\n`;
-          if (sessionData.showNotes) smsContent += "Please arrive 10 minutes early!";
+          if (sessionData.showDate) smsContent += `${t('templateBuilder.preview.sessionDetails.date')} ${mockData.session_date}\n`;
+          if (sessionData.showTime) smsContent += `${t('templateBuilder.preview.sessionDetails.time')} ${mockData.session_time}\n`;
+          if (sessionData.showLocation) smsContent += `${t('templateBuilder.preview.sessionDetails.location')} ${mockData.session_location}\n`;
+          if (sessionData.showNotes) smsContent += t('templateBuilder.preview.sessionDetails.defaultNote');
           break;
 
         case "cta":

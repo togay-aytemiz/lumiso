@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 
 interface TemplatePreviewProps {
   blocks: TemplateBlock[];
@@ -25,14 +26,15 @@ export function TemplatePreview({ blocks, activeChannel, onChannelChange, emailS
   const [previewDevice, setPreviewDevice] = useState<"desktop" | "mobile">("desktop");
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
+  const { t, i18n } = useTranslation('pages');
 
   const defaultMockData = {
-    customer_name: "Sarah Johnson",
-    session_date: "March 15, 2024",
-    session_time: "2:00 PM",
-    session_location: "Studio Downtown",
-    business_name: "Radiant Photography",
-    business_phone: "(555) 123-4567",
+    customer_name: t('templateBuilder.preview.mockData.customerName'),
+    session_date: t('templateBuilder.preview.mockData.sessionDate'),
+    session_time: t('templateBuilder.preview.mockData.sessionTime'),
+    session_location: t('templateBuilder.preview.mockData.sessionLocation'),
+    business_name: t('templateBuilder.preview.mockData.businessName'),
+    business_phone: t('templateBuilder.preview.mockData.businessPhone'),
   };
 
   const mockData = previewData || defaultMockData;
@@ -40,8 +42,8 @@ export function TemplatePreview({ blocks, activeChannel, onChannelChange, emailS
   const sendTestEmail = async () => {
     if (!user?.email) {
       toast({
-        title: "Error",
-        description: "User email not found. Please make sure you're logged in.",
+        title: t('templateBuilder.preview.toast.errorTitle'),
+        description: t('templateBuilder.preview.toast.noUserEmail'),
         variant: "destructive",
       });
       return;
@@ -49,8 +51,8 @@ export function TemplatePreview({ blocks, activeChannel, onChannelChange, emailS
 
     if (blocks.length === 0) {
       toast({
-        title: "Error", 
-        description: "No blocks to send. Add some blocks to your template first.",
+        title: t('templateBuilder.preview.toast.errorTitle'), 
+        description: t('templateBuilder.preview.toast.noBlocks'),
         variant: "destructive",
       });
       return;
@@ -75,14 +77,14 @@ export function TemplatePreview({ blocks, activeChannel, onChannelChange, emailS
       }
 
       toast({
-        title: "Success",
-        description: `Test email sent to ${user.email}`,
+        title: t('templateBuilder.preview.toast.successTitle'),
+        description: t('templateBuilder.preview.toast.testEmailSent', { email: user.email }),
       });
     } catch (error: any) {
       console.error('Error sending test email:', error);
       toast({
-        title: "Error",
-        description: error.message || "Failed to send test email. Please try again.",
+        title: t('templateBuilder.preview.toast.errorTitle'),
+        description: error.message || t('templateBuilder.preview.toast.sendFailed'),
         variant: "destructive",
       });
     } finally {
@@ -96,8 +98,8 @@ export function TemplatePreview({ blocks, activeChannel, onChannelChange, emailS
       <div className="border-b px-6 py-4">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="font-semibold">Live Preview</h2>
-            <p className="text-sm text-muted-foreground">See how your template looks across channels</p>
+            <h2 className="font-semibold">{t('templateBuilder.preview.title')}</h2>
+            <p className="text-sm text-muted-foreground">{t('templateBuilder.preview.description')}</p>
           </div>
           
           <div className="flex items-center gap-2">
@@ -109,7 +111,7 @@ export function TemplatePreview({ blocks, activeChannel, onChannelChange, emailS
                   onClick={() => setPreviewDevice("desktop")}
                 >
                   <Monitor className="h-4 w-4" />
-                  Desktop
+                  {t('templateBuilder.preview.desktop')}
                 </Button>
                 <Button
                   size="sm"
@@ -117,7 +119,7 @@ export function TemplatePreview({ blocks, activeChannel, onChannelChange, emailS
                   onClick={() => setPreviewDevice("mobile")}
                 >
                   <Smartphone className="h-4 w-4" />
-                  Mobile
+                  {t('templateBuilder.preview.mobile')}
                 </Button>
               </>
             )}
@@ -128,7 +130,7 @@ export function TemplatePreview({ blocks, activeChannel, onChannelChange, emailS
               disabled={isLoading || blocks.length === 0}
             >
               <Send className="h-4 w-4" />
-              {isLoading ? "Sending..." : "Test Send"}
+              {isLoading ? t('templateBuilder.preview.sending') : t('templateBuilder.preview.testSend')}
             </Button>
           </div>
         </div>
@@ -139,16 +141,16 @@ export function TemplatePreview({ blocks, activeChannel, onChannelChange, emailS
         <Tabs value={activeChannel} onValueChange={(value) => onChannelChange(value as any)}>
           <TabsList className="grid grid-cols-4 w-full max-w-lg">
             <TabsTrigger value="email" className="flex items-center gap-2">
-              📧 Email
+              📧 {t('templateBuilder.preview.channels.email')}
             </TabsTrigger>
             <TabsTrigger value="whatsapp" className="flex items-center gap-2">
-              💬 WhatsApp
+              💬 {t('templateBuilder.preview.channels.whatsapp')}
             </TabsTrigger>
             <TabsTrigger value="sms" className="flex items-center gap-2">
-              📱 SMS
+              📱 {t('templateBuilder.preview.channels.sms')}
             </TabsTrigger>
             <TabsTrigger value="plaintext" className="flex items-center gap-2">
-              📄 Plain
+              📄 {t('templateBuilder.preview.channels.plain')}
             </TabsTrigger>
           </TabsList>
         </Tabs>

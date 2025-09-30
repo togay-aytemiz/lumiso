@@ -158,34 +158,36 @@ function TextBlockPreview({ data, replacePlaceholders }: { data: TextBlockData; 
 }
 
 function SessionDetailsPreview({ data, mockData }: { data: SessionDetailsBlockData; mockData: Record<string, string> }) {
+  const { t } = useTranslation('pages');
+  
   return (
     <div className="bg-slate-50 p-4 rounded-lg border">
       <h3 className="font-semibold mb-3 text-slate-900">
-        {data.customLabel || "Session Details"}
+        {data.customLabel || t('templateBuilder.preview.sessionDetails.defaultLabel')}
       </h3>
       <div className="space-y-2">
         {data.showDate && (
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-slate-600 w-16">Date:</span>
+            <span className="text-sm font-medium text-slate-600 w-16">{t('templateBuilder.preview.sessionDetails.date')}</span>
             <span className="text-sm">{mockData.session_date}</span>
           </div>
         )}
         {data.showTime && (
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-slate-600 w-16">Time:</span>
+            <span className="text-sm font-medium text-slate-600 w-16">{t('templateBuilder.preview.sessionDetails.time')}</span>
             <span className="text-sm">{mockData.session_time}</span>
           </div>
         )}
         {data.showLocation && (
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-slate-600 w-16">Location:</span>
+            <span className="text-sm font-medium text-slate-600 w-16">{t('templateBuilder.preview.sessionDetails.location')}</span>
             <span className="text-sm">{mockData.session_location}</span>
           </div>
         )}
         {data.showNotes && (
           <div className="flex items-start gap-2">
-            <span className="text-sm font-medium text-slate-600 w-16">Notes:</span>
-            <span className="text-sm">{data.customNotes || "Please arrive 10 minutes early. Bring comfortable outfits!"}</span>
+            <span className="text-sm font-medium text-slate-600 w-16">{t('templateBuilder.preview.sessionDetails.notes')}</span>
+            <span className="text-sm">{data.customNotes || t('templateBuilder.preview.sessionDetails.defaultNote')}</span>
           </div>
         )}
       </div>

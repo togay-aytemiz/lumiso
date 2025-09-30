@@ -13,7 +13,7 @@ import { InlineSubjectEditor } from '@/components/template-builder/InlineSubject
 import { InlinePreheaderEditor } from '@/components/template-builder/InlinePreheaderEditor';
 import { useTemplateBuilder } from '@/hooks/useTemplateBuilder';
 import { useTemplateVariables } from '@/hooks/useTemplateVariables';
-import { getCharacterCount, checkSpamWords, previewDataSets } from '@/lib/templateUtils';
+import { getCharacterCount, checkSpamWords, getPreviewDataSets } from '@/lib/templateUtils';
 import { NavigationGuardDialog } from '@/components/settings/NavigationGuardDialog';
 import { useSettingsNavigation } from '@/hooks/useSettingsNavigation';
 import { TemplateNameDialog } from '@/components/template-builder/TemplateNameDialog';
@@ -23,7 +23,7 @@ import { useTranslation } from "react-i18next";
 
 // Optimized TemplateBuilder component
 const OptimizedTemplateBuilderContent = React.memo(() => {
-  const { t } = useTranslation("pages");
+  const { t, i18n } = useTranslation("pages");
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
@@ -234,7 +234,8 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
   // Memoize expensive calculations
   const subjectCharCount = useMemo(() => getCharacterCount(subject), [subject]);
   const spamWords = useMemo(() => checkSpamWords(subject), [subject]);
-  const selectedData = useMemo(() => previewDataSets[selectedPreviewData], [selectedPreviewData]);
+  const previewDataSets = useMemo(() => getPreviewDataSets(i18n.language), [i18n.language]);
+  const selectedData = useMemo(() => previewDataSets[selectedPreviewData], [selectedPreviewData, previewDataSets]);
 
   if (loading) {
     return (

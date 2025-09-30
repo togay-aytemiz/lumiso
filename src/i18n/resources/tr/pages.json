@@ -557,6 +557,18 @@
       "addPreheader": "Ön başlık eklemek için tıklayın"
     },
     "preview": {
+      "title": "Canlı Önizleme",
+      "description": "Şablonunuzun tüm kanallarda nasıl göründüğünü görün",
+      "desktop": "Masaüstü",
+      "mobile": "Mobil",
+      "testSend": "Test Gönder",
+      "sending": "Gönderiliyor...",
+      "channels": {
+        "email": "E-posta",
+        "whatsapp": "WhatsApp",
+        "sms": "SMS",
+        "plain": "Düz Metin"
+      },
       "emailPreview": "E-posta Önizleme",
       "subject": "Konu:",
       "previewText": "Önizleme:",
@@ -565,6 +577,22 @@
       "excitedMessage": "Özel anlarınızı ölümsüzleştirmek için sabırsızlanıyoruz",
       "lookingForward": "Seansınız için sabırsızlanıyoruz!",
       "addBlocks": "Şablonunuzu oluşturmak için bloklar ekleyin",
+      "toast": {
+        "errorTitle": "Hata",
+        "noUserEmail": "Kullanıcı e-postası bulunamadı. Lütfen giriş yaptığınızdan emin olun.",
+        "noBlocks": "Gönderilecek blok yok. Önce şablonunuza bloklar ekleyin.",
+        "successTitle": "Başarılı",
+        "testEmailSent": "Test e-postası {{email}} adresine gönderildi",
+        "sendFailed": "Test e-postası gönderilemedi. Lütfen tekrar deneyin."
+      },
+      "mockData": {
+        "customerName": "Elif & Mert",
+        "sessionDate": "15 Mart 2024",
+        "sessionTime": "14:00",
+        "sessionLocation": "Merkez Stüdyo",
+        "businessName": "Parlak Fotoğrafçılık",
+        "businessPhone": "(555) 123-4567"
+      },
       "whatsapp": {
         "online": "çevrimiçi"
       },

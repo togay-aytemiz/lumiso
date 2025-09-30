@@ -12,9 +12,11 @@ import { useTemplateOperations } from "@/hooks/useTemplateOperations";
 import { LoadingSkeleton } from "@/components/ui/loading-skeleton";
 import { TemplateErrorBoundary } from "@/components/template-builder/TemplateErrorBoundary";
 import { Template } from "@/types/template";
+import { useTranslation } from "react-i18next";
 
 // Optimized Templates component with memoization and error handling
 const OptimizedTemplatesContent = React.memo(() => {
+  const { t } = useTranslation("pages");
   const navigate = useNavigate();
   const {
     loading,
@@ -93,7 +95,7 @@ const OptimizedTemplatesContent = React.memo(() => {
   const columns: Column<Template>[] = useMemo(() => [
     {
       key: 'name',
-      header: 'Template Name',
+      header: t("templates.table.templateName"),
       sortable: true,
       render: (template) => (
         <div className="min-w-0">
@@ -108,7 +110,7 @@ const OptimizedTemplatesContent = React.memo(() => {
     },
     {
       key: 'preview',
-      header: 'Preview',
+      header: t("templates.table.preview"),
       render: (template) => (
         <div className="max-w-xs min-w-0">
           <div className="text-sm text-muted-foreground line-clamp-2">
@@ -119,20 +121,20 @@ const OptimizedTemplatesContent = React.memo(() => {
     },
     {
       key: 'status',
-      header: 'Status',
+      header: t("templates.table.status"),
       sortable: true,
       render: (template) => {
         const isPublished = template.is_active;
         return (
           <Badge variant={isPublished ? 'default' : 'secondary'}>
-            {isPublished ? 'Published' : 'Draft'}
+            {isPublished ? t("templates.status.published") : t("templates.status.draft")}
           </Badge>
         );
       }
     },
     {
       key: 'updated_at',
-      header: 'Last Updated',
+      header: t("templates.table.lastUpdated"),
       sortable: true,
       render: (template) => (
         <div className="text-sm text-muted-foreground whitespace-nowrap">
@@ -142,7 +144,7 @@ const OptimizedTemplatesContent = React.memo(() => {
     },
     {
       key: 'actions',
-      header: 'Actions',
+      header: t("templates.table.actions"),
       render: (template) => (
         <div className="flex items-center gap-2">
           <Button
@@ -154,7 +156,7 @@ const OptimizedTemplatesContent = React.memo(() => {
             }}
           >
             <Edit className="h-4 w-4 mr-1" />
-            Edit
+            {t("templates.buttons.edit")}
           </Button>
           <Button
             size="sm"
@@ -163,7 +165,7 @@ const OptimizedTemplatesContent = React.memo(() => {
               e.stopPropagation();
               handleDuplicateTemplate(template);
             }}
-            title="Duplicate template"
+            title={t("templates.buttons.duplicate")}
           >
             <Copy className="h-4 w-4" />
           </Button>
@@ -175,41 +177,41 @@ const OptimizedTemplatesContent = React.memo(() => {
               handleDeleteTemplate(template);
             }}
             className="text-destructive hover:text-destructive border-destructive/20 hover:bg-destructive/10"
-            title="Delete template"
+            title={t("templates.buttons.delete")}
           >
             <Trash2 className="h-4 w-4" />
           </Button>
         </div>
       )
     }
-  ], [handleDeleteTemplate, handleDuplicateTemplate, navigate]);
+  ], [handleDeleteTemplate, handleDuplicateTemplate, navigate, t]);
 
   const emptyState = useMemo(() => (
     <div className="text-center py-12">
       <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
       <h3 className="text-lg font-medium mb-2">
-        {searchTerm ? 'No templates found' : 'No templates created yet'}
+        {searchTerm ? t("templates.emptyState.noTemplatesFound") : t("templates.emptyState.noTemplatesYet")}
       </h3>
       <p className="text-muted-foreground mb-6">
         {searchTerm 
-          ? 'Try adjusting your search terms to find what you\'re looking for.' 
-          : 'Create your first email template to get started with automated communications.'
+          ? t("templates.emptyState.adjustSearch")
+          : t("templates.emptyState.createFirstMessage")
         }
       </p>
       {!searchTerm && (
         <Button onClick={() => navigate('/template-builder')}>
           <Plus className="h-4 w-4 mr-2" />
-          Create Your First Template
+          {t("templates.buttons.createFirstTemplate")}
         </Button>
       )}
     </div>
-  ), [searchTerm, navigate]);
+  ), [searchTerm, navigate, t]);
 
   if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="text-lg font-semibold text-destructive mb-2">Error Loading Templates</div>
+          <div className="text-lg font-semibold text-destructive mb-2">{t("templates.error.loadingTemplates")}</div>
           <p className="text-muted-foreground">{error}</p>
         </div>
       </div>
@@ -219,8 +221,8 @@ const OptimizedTemplatesContent = React.memo(() => {
   return (
     <div className="min-h-screen">
       <PageHeader 
-        title="Message Templates" 
-        subtitle="Design and manage reusable email templates"
+        title={t("templates.title")}
+        subtitle={t("templates.subtitle")}
       />
       
       <div className="p-4 sm:p-6 space-y-6">
@@ -229,7 +231,7 @@ const OptimizedTemplatesContent = React.memo(() => {
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input 
-              placeholder="Search templates..."
+              placeholder={t("templates.search")}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -237,7 +239,7 @@ const OptimizedTemplatesContent = React.memo(() => {
           </div>
           <Button onClick={() => navigate('/template-builder')} className="flex items-center gap-2">
             <Plus className="h-4 w-4" />
-            New Template
+            {t("templates.buttons.newTemplate")}
           </Button>
         </div>
 

@@ -19,9 +19,11 @@ import { useSettingsNavigation } from '@/hooks/useSettingsNavigation';
 import { TemplateNameDialog } from '@/components/template-builder/TemplateNameDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { TemplateErrorBoundary } from "@/components/template-builder/TemplateErrorBoundary";
+import { useTranslation } from "react-i18next";
 
 // Optimized TemplateBuilder component
 const OptimizedTemplateBuilderContent = React.memo(() => {
+  const { t } = useTranslation("pages");
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
@@ -43,7 +45,7 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
   const [existingTemplateNames, setExistingTemplateNames] = useState<string[]>([]);
 
   // Template data from backend or defaults
-  const templateName = template?.name || 'Untitled Template';
+  const templateName = template?.name || t("templateBuilder.untitledTemplate");
   const subject = template?.subject || '';
   const preheader = template?.preheader || '';
   const blocks = template?.blocks || [];
@@ -98,7 +100,7 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
     onSaveAndExit: async () => {
       await handleSaveTemplate();
     },
-    message: "You have unsaved changes to this template."
+    message: t("templateBuilder.navigationGuard.unsavedChanges")
   });
 
   const handleSaveTemplate = useCallback(async (customName?: string) => {
@@ -238,7 +240,7 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
     return (
       <div className="h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="text-lg font-semibold">Loading template...</div>
+          <div className="text-lg font-semibold">{t("templateBuilder.loading")}</div>
         </div>
       </div>
     );
@@ -284,26 +286,26 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-2">
               <Badge variant={isDraft ? "secondary" : "default"}>
-                {isDraft ? "Draft" : "Published"}
+                {isDraft ? t("templateBuilder.badges.draft") : t("templateBuilder.badges.published")}
               </Badge>
               {isDirty && (
                 <Badge variant="outline" className="text-amber-600 border-amber-600">
-                  Unsaved Changes
+                  {t("templateBuilder.badges.unsavedChanges")}
                 </Badge>
               )}
               {lastSaved && !isDirty && (
                 <span className="text-xs text-muted-foreground">
-                  Saved {lastSaved.toLocaleTimeString()}
+                  {t("templateBuilder.saved", { time: lastSaved.toLocaleTimeString() })}
                 </span>
               )}
             </div>
             <Button variant="outline" onClick={() => handleSaveTemplate()} disabled={saving}>
               <Save className="h-4 w-4" />
-              {saving ? "Saving..." : "Save Draft"}
+              {saving ? t("templateBuilder.buttons.saving") : t("templateBuilder.buttons.saveDraft")}
             </Button>
             <Button onClick={() => handlePublishTemplate()} disabled={saving}>
               <Eye className="h-4 w-4" />
-              {isDraft ? "Publish" : "Published"}
+              {isDraft ? t("templateBuilder.buttons.publish") : t("templateBuilder.buttons.published")}
             </Button>
           </div>
         </div>
@@ -322,14 +324,14 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
               ) : (
                 <div className="flex items-center gap-3 pl-1">
                   <Label className="text-sm text-muted-foreground w-20 flex-shrink-0">
-                    Subject:
+                    {t("templateBuilder.email.subject")}
                   </Label>
                   <button
                     onClick={() => setIsEditingSubject(true)}
                     className="flex-1 flex items-center gap-2 text-left hover:bg-muted/50 rounded px-2 py-1 -mx-2 -my-1 cursor-pointer group"
                   >
                     <span className={`text-sm flex-1 ${!subject ? 'text-muted-foreground' : 'text-foreground'}`}>
-                      {subject || "Click to add subject"}
+                      {subject || t("templateBuilder.email.addSubject")}
                     </span>
                     <Button
                       variant="ghost"
@@ -349,14 +351,14 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
                     <div className="flex items-center gap-1">
                       <span className="text-amber-600">⚠️</span>
                       <span className="text-amber-600">
-                        {subjectCharCount}/60 characters (too long)
+                        {t("templateBuilder.warnings.tooLong", { count: subjectCharCount })}
                       </span>
                     </div>
                   )}
                   {spamWords.length > 0 && (
                     <div className="flex items-center gap-1">
                       <span className="text-amber-600">⚠️</span>
-                      <span>Spam words:</span>
+                      <span>{t("templateBuilder.warnings.spamWords")}</span>
                       <div className="flex gap-1">
                         {spamWords.slice(0, 2).map(word => (
                           <Badge key={word} variant="secondary" className="text-xs px-1 py-0">
@@ -384,14 +386,14 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
               ) : (
                 <div className="flex items-center gap-3 pl-1">
                   <Label className="text-sm text-muted-foreground w-20 flex-shrink-0">
-                    Preheader:
+                    {t("templateBuilder.email.preheader")}
                   </Label>
                   <button
                     onClick={() => setIsEditingPreheader(true)}
                     className="flex-1 flex items-center gap-2 text-left hover:bg-muted/50 rounded px-2 py-1 -mx-2 -my-1 cursor-pointer group"
                   >
                     <span className={`text-sm flex-1 ${!preheader ? 'text-muted-foreground' : 'text-foreground'}`}>
-                      {preheader || "Click to add preheader"}
+                      {preheader || t("templateBuilder.email.addPreheader")}
                     </span>
                     <Button
                       variant="ghost"

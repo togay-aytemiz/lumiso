@@ -363,5 +363,118 @@
       "leads": "Müşteri Adayları"
     },
     "errorFetching": "Analitik verileri alınırken hata oluştu"
+  },
+  "workflows": {
+    "title": "İş Akışları",
+    "subtitle": "Müşteri iletişimlerinizi akıllı iş akışlarıyla otomatikleştirin",
+    "stats": {
+      "totalWorkflows": "Toplam İş Akışları",
+      "active": "Aktif",
+      "paused": "Duraklatılmış"
+    },
+    "search": "İş akışlarını ara...",
+    "tabs": {
+      "all": "Tümü",
+      "active": "Aktif",
+      "paused": "Duraklatılmış"
+    },
+    "buttons": {
+      "createWorkflow": "İş Akışı Oluştur",
+      "createFirstWorkflow": "İlk İş Akışınızı Oluşturun"
+    },
+    "table": {
+      "workflowName": "İş Akışı Adı",
+      "trigger": "Tetikleyici",
+      "channels": "Kanallar",
+      "status": "Durum",
+      "created": "Oluşturuldu",
+      "actions": "İşlemler"
+    },
+    "triggers": {
+      "session_scheduled": "Seans Planlandı",
+      "session_completed": "Seans Tamamlandı",
+      "session_cancelled": "Seans İptal Edildi",
+      "session_rescheduled": "Seans Yeniden Planlandı",
+      "session_reminder": "Seans Hatırlatması",
+      "project_status_change": "Proje Durumu Değişti",
+      "lead_status_change": "Müşteri Adayı Durumu Değişti"
+    },
+    "status": {
+      "active": "Aktif",
+      "paused": "Duraklatılmış"
+    },
+    "channels": {
+      "noChannels": "Kanal yok"
+    },
+    "emptyState": {
+      "noWorkflowsYet": "Henüz iş akışı yok",
+      "createFirstMessage": "Müşteri iletişimlerinizi kolaylaştırmak için ilk otomatik iş akışınızı oluşturun.",
+      "noMatchingFilters": "Hiçbir iş akışı filtrelerinizle eşleşmiyor",
+      "adjustFilters": "Arama veya filtre kriterlerinizi ayarlamayı deneyin."
+    }
+  },
+  "templates": {
+    "title": "Mesaj Şablonları",
+    "subtitle": "Yeniden kullanılabilir e-posta şablonları tasarlayın ve yönetin",
+    "search": "Şablonları ara...",
+    "buttons": {
+      "newTemplate": "Yeni Şablon",
+      "createFirstTemplate": "İlk Şablonunuzu Oluşturun",
+      "edit": "Düzenle",
+      "duplicate": "Şablonu kopyala",
+      "delete": "Şablonu sil"
+    },
+    "table": {
+      "templateName": "Şablon Adı",
+      "preview": "Önizleme",
+      "status": "Durum",
+      "lastUpdated": "Son Güncelleme",
+      "actions": "İşlemler"
+    },
+    "status": {
+      "published": "Yayınlandı",
+      "draft": "Taslak"
+    },
+    "preview": {
+      "noPreview": "Önizleme mevcut değil"
+    },
+    "emptyState": {
+      "noTemplatesFound": "Şablon bulunamadı",
+      "noTemplatesYet": "Henüz şablon oluşturulmadı",
+      "adjustSearch": "Aradığınızı bulmak için arama terimlerinizi ayarlamayı deneyin.",
+      "createFirstMessage": "Otomatik iletişimlere başlamak için ilk e-posta şablonunuzu oluşturun."
+    },
+    "error": {
+      "loadingTemplates": "Şablonlar Yüklenirken Hata"
+    }
+  },
+  "templateBuilder": {
+    "loading": "Şablon yükleniyor...",
+    "untitledTemplate": "Başlıksız Şablon",
+    "badges": {
+      "draft": "Taslak",
+      "published": "Yayınlandı",
+      "unsavedChanges": "Kaydedilmemiş Değişiklikler"
+    },
+    "saved": "{{time}} kaydedildi",
+    "buttons": {
+      "saveDraft": "Taslağı Kaydet",
+      "saving": "Kaydediliyor...",
+      "publish": "Yayınla",
+      "published": "Yayınlandı"
+    },
+    "email": {
+      "subject": "Konu:",
+      "preheader": "Ön Başlık:",
+      "addSubject": "Konu eklemek için tıklayın",
+      "addPreheader": "Ön başlık eklemek için tıklayın"
+    },
+    "warnings": {
+      "tooLong": "{{count}}/60 karakter (çok uzun)",
+      "spamWords": "Spam kelimeler:"
+    },
+    "navigationGuard": {
+      "unsavedChanges": "Bu şablonda kaydedilmemiş değişiklikleriniz var."
+    }
   }
 }

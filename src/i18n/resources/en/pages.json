@@ -363,5 +363,118 @@
       "leads": "Leads"
     },
     "errorFetching": "Error fetching analytics data"
+  },
+  "workflows": {
+    "title": "Workflows",
+    "subtitle": "Automate your client communications with smart workflows",
+    "stats": {
+      "totalWorkflows": "Total Workflows",
+      "active": "Active",
+      "paused": "Paused"
+    },
+    "search": "Search workflows...",
+    "tabs": {
+      "all": "All",
+      "active": "Active",
+      "paused": "Paused"
+    },
+    "buttons": {
+      "createWorkflow": "Create Workflow",
+      "createFirstWorkflow": "Create Your First Workflow"
+    },
+    "table": {
+      "workflowName": "Workflow Name",
+      "trigger": "Trigger",
+      "channels": "Channels",
+      "status": "Status",
+      "created": "Created",
+      "actions": "Actions"
+    },
+    "triggers": {
+      "session_scheduled": "Session Scheduled",
+      "session_completed": "Session Completed",
+      "session_cancelled": "Session Cancelled",
+      "session_rescheduled": "Session Rescheduled",
+      "session_reminder": "Session Reminder",
+      "project_status_change": "Project Status Change",
+      "lead_status_change": "Lead Status Change"
+    },
+    "status": {
+      "active": "Active",
+      "paused": "Paused"
+    },
+    "channels": {
+      "noChannels": "No channels"
+    },
+    "emptyState": {
+      "noWorkflowsYet": "No workflows yet",
+      "createFirstMessage": "Create your first automated workflow to streamline your client communications.",
+      "noMatchingFilters": "No workflows match your filters",
+      "adjustFilters": "Try adjusting your search or filter criteria."
+    }
+  },
+  "templates": {
+    "title": "Message Templates",
+    "subtitle": "Design and manage reusable email templates",
+    "search": "Search templates...",
+    "buttons": {
+      "newTemplate": "New Template",
+      "createFirstTemplate": "Create Your First Template",
+      "edit": "Edit",
+      "duplicate": "Duplicate template",
+      "delete": "Delete template"
+    },
+    "table": {
+      "templateName": "Template Name",
+      "preview": "Preview",
+      "status": "Status",
+      "lastUpdated": "Last Updated",
+      "actions": "Actions"
+    },
+    "status": {
+      "published": "Published",
+      "draft": "Draft"
+    },
+    "preview": {
+      "noPreview": "No preview available"
+    },
+    "emptyState": {
+      "noTemplatesFound": "No templates found",
+      "noTemplatesYet": "No templates created yet",
+      "adjustSearch": "Try adjusting your search terms to find what you're looking for.",
+      "createFirstMessage": "Create your first email template to get started with automated communications."
+    },
+    "error": {
+      "loadingTemplates": "Error Loading Templates"
+    }
+  },
+  "templateBuilder": {
+    "loading": "Loading template...",
+    "untitledTemplate": "Untitled Template",
+    "badges": {
+      "draft": "Draft",
+      "published": "Published",
+      "unsavedChanges": "Unsaved Changes"
+    },
+    "saved": "Saved {{time}}",
+    "buttons": {
+      "saveDraft": "Save Draft",
+      "saving": "Saving...",
+      "publish": "Publish",
+      "published": "Published"
+    },
+    "email": {
+      "subject": "Subject:",
+      "preheader": "Preheader:",
+      "addSubject": "Click to add subject",
+      "addPreheader": "Click to add preheader"
+    },
+    "warnings": {
+      "tooLong": "{{count}}/60 characters (too long)",
+      "spamWords": "Spam words:"
+    },
+    "navigationGuard": {
+      "unsavedChanges": "You have unsaved changes to this template."
+    }
   }
 }

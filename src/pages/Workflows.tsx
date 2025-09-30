@@ -14,8 +14,10 @@ import { Workflow } from "@/types/workflow";
 import { Plus, Search, Zap, CheckCircle, Clock, AlertTriangle, Edit, Trash2, Mail, MessageCircle, Phone } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { formatDistanceToNow } from "date-fns";
+import { useTranslation } from "react-i18next";
 
 export default function Workflows() {
+  const { t } = useTranslation("pages");
   const { workflows, loading, createWorkflow, updateWorkflow, deleteWorkflow, toggleWorkflowStatus } = useWorkflows();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "paused">("all");
@@ -68,16 +70,8 @@ export default function Workflows() {
   };
 
   const getTriggerLabel = (triggerType: string) => {
-    const labels = {
-      session_scheduled: 'Session Scheduled',
-      session_completed: 'Session Completed',
-      session_cancelled: 'Session Cancelled',
-      session_rescheduled: 'Session Rescheduled',
-      session_reminder: 'Session Reminder',
-      project_status_change: 'Project Status Change',
-      lead_status_change: 'Lead Status Change',
-    };
-    return labels[triggerType as keyof typeof labels] || triggerType;
+    const triggerKey = `workflows.triggers.${triggerType}` as const;
+    return t(triggerKey, { defaultValue: triggerType });
   };
 
   const getChannelIcons = (channels: string[]) => {
@@ -102,7 +96,7 @@ export default function Workflows() {
   const columns: Column<Workflow>[] = [
     {
       key: 'name',
-      header: 'Workflow Name',
+      header: t("workflows.table.workflowName"),
       sortable: true,
       render: (workflow) => (
         <div>
@@ -117,7 +111,7 @@ export default function Workflows() {
     },
     {
       key: 'trigger_type',
-      header: 'Trigger',
+      header: t("workflows.table.trigger"),
       sortable: true,
       render: (workflow) => (
         <div className="text-sm">
@@ -127,31 +121,31 @@ export default function Workflows() {
     },
     {
       key: 'channels',
-      header: 'Channels',
+      header: t("workflows.table.channels"),
       render: (workflow) => {
         const channels = (workflow as any).channels || [];
         const icons = getChannelIcons(channels);
         
         return (
           <div className="flex gap-1">
-            {icons.length > 0 ? icons : <span className="text-muted-foreground text-xs">No channels</span>}
+            {icons.length > 0 ? icons : <span className="text-muted-foreground text-xs">{t("workflows.channels.noChannels")}</span>}
           </div>
         );
       },
     },
     {
       key: 'is_active',
-      header: 'Status',
+      header: t("workflows.table.status"),
       sortable: true,
       render: (workflow) => (
         <Badge variant={workflow.is_active ? "default" : "secondary"}>
-          {workflow.is_active ? 'Active' : 'Paused'}
+          {workflow.is_active ? t("workflows.status.active") : t("workflows.status.paused")}
         </Badge>
       ),
     },
     {
       key: 'created_at',
-      header: 'Created',
+      header: t("workflows.table.created"),
       sortable: true,
       render: (workflow) => (
         <div className="text-sm text-muted-foreground">
@@ -161,7 +155,7 @@ export default function Workflows() {
     },
     {
       key: 'actions',
-      header: 'Actions',
+      header: t("workflows.table.actions"),
       render: (workflow) => (
         <div className="flex items-center gap-2">
           <Switch
@@ -193,8 +187,8 @@ export default function Workflows() {
     return (
       <div className="min-h-screen overflow-x-hidden">
         <PageHeader 
-          title="Workflows" 
-          subtitle="Automate your client communications with smart workflows"
+          title={t("workflows.title")}
+          subtitle={t("workflows.subtitle")}
         />
         <PageLoadingSkeleton />
       </div>
@@ -204,8 +198,8 @@ export default function Workflows() {
   return (
     <div className="min-h-screen overflow-x-hidden">
       <PageHeader 
-        title="Workflows" 
-        subtitle="Automate your client communications with smart workflows"
+        title={t("workflows.title")}
+        subtitle={t("workflows.subtitle")}
       />
       
       <div className="p-4 space-y-6">
@@ -217,7 +211,7 @@ export default function Workflows() {
                 <Zap className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Total Workflows</p>
+                <p className="text-sm text-muted-foreground">{t("workflows.stats.totalWorkflows")}</p>
                 <p className="text-2xl font-bold">{stats.total}</p>
               </div>
             </CardContent>
@@ -228,7 +222,7 @@ export default function Workflows() {
                 <CheckCircle className="h-5 w-5 text-green-600" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Active</p>
+                <p className="text-sm text-muted-foreground">{t("workflows.stats.active")}</p>
                 <p className="text-2xl font-bold">{stats.active}</p>
               </div>
             </CardContent>
@@ -239,7 +233,7 @@ export default function Workflows() {
                 <Clock className="h-5 w-5 text-orange-600" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Paused</p>
+                <p className="text-sm text-muted-foreground">{t("workflows.stats.paused")}</p>
                 <p className="text-2xl font-bold">{stats.paused}</p>
               </div>
             </CardContent>
@@ -252,7 +246,7 @@ export default function Workflows() {
             <div className="relative flex-1 max-w-sm">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search workflows..."
+                placeholder={t("workflows.search")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"
@@ -260,9 +254,9 @@ export default function Workflows() {
             </div>
             <Tabs value={statusFilter} onValueChange={(value) => setStatusFilter(value as any)}>
               <TabsList>
-                <TabsTrigger value="all">All</TabsTrigger>
-                <TabsTrigger value="active">Active</TabsTrigger>
-                <TabsTrigger value="paused">Paused</TabsTrigger>
+                <TabsTrigger value="all">{t("workflows.tabs.all")}</TabsTrigger>
+                <TabsTrigger value="active">{t("workflows.tabs.active")}</TabsTrigger>
+                <TabsTrigger value="paused">{t("workflows.tabs.paused")}</TabsTrigger>
               </TabsList>
             </Tabs>
           </div>
@@ -275,7 +269,7 @@ export default function Workflows() {
           >
             <Button>
               <Plus className="h-4 w-4 mr-2" />
-              Create Workflow
+              {t("workflows.buttons.createWorkflow")}
             </Button>
           </CreateWorkflowSheet>
         </div>
@@ -292,9 +286,9 @@ export default function Workflows() {
                   <div className="p-4 bg-primary/10 rounded-full mb-4">
                     <Zap className="h-8 w-8 text-primary" />
                   </div>
-                  <h3 className="text-lg font-semibold mb-2">No workflows yet</h3>
+                  <h3 className="text-lg font-semibold mb-2">{t("workflows.emptyState.noWorkflowsYet")}</h3>
                   <p className="text-muted-foreground mb-6 max-w-sm">
-                    Create your first automated workflow to streamline your client communications.
+                    {t("workflows.emptyState.createFirstMessage")}
                   </p>
                   <CreateWorkflowSheet 
                     onCreateWorkflow={createWorkflow} 
@@ -304,16 +298,16 @@ export default function Workflows() {
                   >
                     <Button>
                       <Plus className="h-4 w-4 mr-2" />
-                      Create Your First Workflow
+                      {t("workflows.buttons.createFirstWorkflow")}
                     </Button>
                   </CreateWorkflowSheet>
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center p-8 text-center">
                   <AlertTriangle className="h-8 w-8 text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">No workflows match your filters</h3>
+                  <h3 className="text-lg font-semibold mb-2">{t("workflows.emptyState.noMatchingFilters")}</h3>
                   <p className="text-muted-foreground">
-                    Try adjusting your search or filter criteria.
+                    {t("workflows.emptyState.adjustFilters")}
                   </p>
                 </div>
               )

@@ -18,17 +18,17 @@ interface OptimizedTemplateEditorProps {
 // Helper function to get block title translation key
 function getBlockTitleKey(type: TemplateBlock["type"]): string {
   switch (type) {
-    case "text": return 'template_builder.blockTitles.text';
-    case "session-details": return 'template_builder.blockTitles.sessionDetails';
-    case "cta": return 'template_builder.blockTitles.cta';
-    case "image": return 'template_builder.blockTitles.image';
-    case "footer": return 'template_builder.blockTitles.footer';
-    case "divider": return 'template_builder.blockTitles.divider';
-    case "columns": return 'template_builder.blockTitles.columns';
-    case "social-links": return 'template_builder.blockTitles.socialLinks';
-    case "header": return 'template_builder.blockTitles.header';
-    case "raw-html": return 'template_builder.blockTitles.rawHtml';
-    default: return 'template_builder.blockTitles.unknown';
+    case "text": return 'templateBuilder.blockTitles.text';
+    case "session-details": return 'templateBuilder.blockTitles.sessionDetails';
+    case "cta": return 'templateBuilder.blockTitles.cta';
+    case "image": return 'templateBuilder.blockTitles.image';
+    case "footer": return 'templateBuilder.blockTitles.footer';
+    case "divider": return 'templateBuilder.blockTitles.divider';
+    case "columns": return 'templateBuilder.blockTitles.columns';
+    case "social-links": return 'templateBuilder.blockTitles.socialLinks';
+    case "header": return 'templateBuilder.blockTitles.header';
+    case "raw-html": return 'templateBuilder.blockTitles.rawHtml';
+    default: return 'templateBuilder.blockTitles.unknown';
   }
 }
 
@@ -258,8 +258,8 @@ export const OptimizedTemplateEditor = React.memo(({
       {/* Header */}
       <div className="border-b px-6 py-4">
         <div>
-          <h2 className="font-semibold">{t('template_builder.editor.title')}</h2>
-          <p className="text-sm text-muted-foreground">{t('template_builder.editor.description')}</p>
+          <h2 className="font-semibold">{t('templateBuilder.editor.title')}</h2>
+          <p className="text-sm text-muted-foreground">{t('templateBuilder.editor.description')}</p>
         </div>
       </div>
 
@@ -287,7 +287,7 @@ export const OptimizedTemplateEditor = React.memo(({
           onClick={handleShowAddBlock}
         >
           <Plus className="h-4 w-4" />
-          {t('template_builder.editor.addBlock')}
+          {t('templateBuilder.editor.addBlock')}
         </Button>
       </div>
 

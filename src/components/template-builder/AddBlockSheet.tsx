@@ -19,8 +19,8 @@ export function AddBlockSheet({ open, onOpenChange, onAddBlock }: AddBlockSheetP
     {
       type: "text" as const,
       icon: Type,
-      title: t('pages:template_builder.addBlockSheet.blocks.text.title'),
-      description: t('pages:template_builder.addBlockSheet.blocks.text.description'),
+      title: t('pages:templateBuilder.addBlockSheet.blocks.text.title'),
+      description: t('pages:templateBuilder.addBlockSheet.blocks.text.description'),
     },
     {
       type: "session-details" as const,

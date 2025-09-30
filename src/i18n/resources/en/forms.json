@@ -188,7 +188,13 @@
     "archive": "Archive",
     "delete": "Delete",
     "edit": "Edit",
-    "close": "Close"
+    "close": "Close",
+    "board": "Board",
+    "list": "List",
+    "archived": "Archived",
+    "sessions": "sessions",
+    "services": "services",
+    "no_lead": "No Lead"
   },
   "reminders": {
     "reminderBadge": "reminder"
@@ -443,6 +449,24 @@
     "delete_payment_confirm": "Are you sure you want to delete this payment? This action cannot be undone.",
     "deleting": "Deleting...",
     "payment_deleted": "Payment deleted successfully"
+  },
+  "kanban_settings": {
+    "title": "Kanban Card Settings",
+    "description": "Customize what information appears on your project cards. Perfect for solo photographers who want a cleaner view.",
+    "project_name": "Project Name",
+    "project_name_description": "Show project names on cards",
+    "client_name": "Client Name",
+    "client_name_description": "Show client names on cards",
+    "project_type": "Project Type",
+    "project_type_description": "Show project type badges on cards",
+    "todo_progress": "Todo Progress",
+    "todo_progress_description": "Show todo progress bars on cards",
+    "session_count": "Session Count",
+    "session_count_description": "Show session count icons on cards",
+    "service_count": "Service Count",
+    "service_count_description": "Show service count icons on cards",
+    "pro_tip": "Pro Tip",
+    "pro_tip_description": "Customize your project cards to show exactly what you need for managing your photography business efficiently."
   },
   "edit_payment": {
     "title": "Edit Payment",

@@ -3,6 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ProgressBar } from '@/components/ui/progress-bar';
 import { User, Calendar, DollarSign, Package } from 'lucide-react';
+import { useFormsTranslation } from '@/hooks/useTypedTranslation';
 
 interface Project {
   id: string;
@@ -39,6 +40,8 @@ export const ProfessionalKanbanCard: React.FC<ProfessionalKanbanCardProps> = ({
   kanbanSettings,
   onClick
 }) => {
+  const { t } = useFormsTranslation();
+  
   return (
     <Card 
       className="cursor-pointer hover:shadow-md transition-shadow bg-card border border-border" 
@@ -64,7 +67,7 @@ export const ProfessionalKanbanCard: React.FC<ProfessionalKanbanCardProps> = ({
           {kanbanSettings.kanban_show_client_name && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <User className="h-4 w-4 flex-shrink-0" />
-              <span className="truncate">{project.lead?.name || 'No Lead'}</span>
+              <span className="truncate">{project.lead?.name || t('projects.no_lead')}</span>
             </div>
           )}
 
@@ -87,7 +90,7 @@ export const ProfessionalKanbanCard: React.FC<ProfessionalKanbanCardProps> = ({
               {kanbanSettings.kanban_show_session_count && (
                 <div className="flex items-center gap-1.5">
                   <Calendar className="h-3.5 w-3.5" />
-                  <span>{project.session_count || 0} sessions</span>
+                  <span>{project.session_count || 0} {t('projects.sessions')}</span>
                 </div>
               )}
               
@@ -101,7 +104,7 @@ export const ProfessionalKanbanCard: React.FC<ProfessionalKanbanCardProps> = ({
               {kanbanSettings.kanban_show_service_count && project.services && project.services.length > 0 && (
                 <div className="flex items-center gap-1.5">
                   <Package className="h-3.5 w-3.5" />
-                  <span>{project.services.length} services</span>
+                  <span>{project.services.length} {t('projects.services')}</span>
                 </div>
               )}
             </div>

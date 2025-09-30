@@ -22,18 +22,18 @@ export function KanbanSettingsSheet({ children }: KanbanSettingsSheetProps) {
   const settingsOptions = [
     {
       key: 'kanban_show_project_name' as const,
-      label: 'Project Name',
-      description: 'Show project names on cards',
+      label: t('kanban_settings.project_name'),
+      description: t('kanban_settings.project_name_description'),
     },
     {
       key: 'kanban_show_client_name' as const,
-      label: 'Client Name',
-      description: 'Show client names on cards',
+      label: t('kanban_settings.client_name'),
+      description: t('kanban_settings.client_name_description'),
     },
     {
       key: 'kanban_show_project_type' as const,
-      label: 'Project Type',
-      description: 'Show project type badges on cards',
+      label: t('kanban_settings.project_type'),
+      description: t('kanban_settings.project_type_description'),
     },
     
     {
@@ -43,13 +43,13 @@ export function KanbanSettingsSheet({ children }: KanbanSettingsSheetProps) {
     },
     {
       key: 'kanban_show_session_count' as const,
-      label: 'Session Count',
-      description: 'Show session count icons on cards',
+      label: t('kanban_settings.session_count'),
+      description: t('kanban_settings.session_count_description'),
     },
     {
       key: 'kanban_show_service_count' as const,
-      label: 'Service Count',
-      description: 'Show service count icons on cards',
+      label: t('kanban_settings.service_count'),
+      description: t('kanban_settings.service_count_description'),
     },
   ];
 
@@ -66,13 +66,13 @@ export function KanbanSettingsSheet({ children }: KanbanSettingsSheetProps) {
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
             <Settings className="h-5 w-5" />
-            Kanban Card Settings
+            {t('kanban_settings.title')}
           </SheetTitle>
         </SheetHeader>
 
         <div className="mt-6 space-y-1">
           <p className="text-sm text-muted-foreground mb-4">
-            Customize what information appears on your project cards. Perfect for solo photographers who want a cleaner view.
+            {t('kanban_settings.description')}
           </p>
 
           <div className="space-y-4">
@@ -108,9 +108,9 @@ export function KanbanSettingsSheet({ children }: KanbanSettingsSheetProps) {
             <div className="flex items-start gap-2">
               <Eye className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
               <div className="space-y-1">
-                <p className="text-xs font-medium">Pro Tip</p>
+                <p className="text-xs font-medium">{t('kanban_settings.pro_tip')}</p>
                 <p className="text-xs text-muted-foreground">
-                  Customize your project cards to show exactly what you need for managing your photography business efficiently.
+                  {t('kanban_settings.pro_tip_description')}
                 </p>
               </div>
             </div>

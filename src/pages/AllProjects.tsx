@@ -650,7 +650,7 @@ const AllProjects = () => {
                 }`}
               >
                 <LayoutGrid className="h-4 w-4" />
-                <span className="hidden sm:inline">Board</span>
+                <span className="hidden sm:inline">{tForms('projects.board')}</span>
               </button>
               <button
                 onClick={() => handleViewChange('list')}
@@ -661,7 +661,7 @@ const AllProjects = () => {
                 }`}
               >
                 <List className="h-4 w-4" />
-                <span className="hidden sm:inline">List</span>
+                <span className="hidden sm:inline">{tForms('projects.list')}</span>
               </button>
               <button
                 onClick={() => handleViewChange('archived')}
@@ -672,7 +672,7 @@ const AllProjects = () => {
                 }`}
               >
                 <Archive className="h-4 w-4" />
-                <span className="hidden sm:inline">Archived</span>
+                <span className="hidden sm:inline">{tForms('projects.archived')}</span>
                 <span className="text-xs bg-muted text-muted-foreground px-1.5 py-0.5 rounded ml-1">
                   {archivedProjects.length}
                 </span>

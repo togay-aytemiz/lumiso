@@ -187,7 +187,13 @@
     "archive": "Arşivle",
     "delete": "Sil",
     "edit": "Düzenle",
-    "close": "Kapat"
+    "close": "Kapat",
+    "board": "Kanban",
+    "list": "Liste",
+    "archived": "Arşivlendi",
+    "sessions": "seans",
+    "services": "hizmet",
+    "no_lead": "Müşteri Yok"
   },
   "reminders": {
     "reminderBadge": "hatırlatma"
@@ -442,6 +448,24 @@
     "delete_payment_confirm": "Bu ödemeyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
     "deleting": "Siliniyor...",
     "payment_deleted": "Ödeme başarıyla silindi"
+  },
+  "kanban_settings": {
+    "title": "Kanban Kart Ayarları",
+    "description": "Proje kartlarınızda hangi bilgilerin görüneceğini özelleştirin. Daha temiz bir görünüm isteyen solo fotoğrafçılar için mükemmel.",
+    "project_name": "Proje Adı",
+    "project_name_description": "Kartlarda proje adlarını göster",
+    "client_name": "Müşteri Adı",
+    "client_name_description": "Kartlarda müşteri adlarını göster",
+    "project_type": "Proje Türü",
+    "project_type_description": "Kartlarda proje türü rozetlerini göster",
+    "todo_progress": "Yapılacaklar İlerlemesi",
+    "todo_progress_description": "Kartlarda yapılacaklar ilerleme çubuğunu göster",
+    "session_count": "Seans Sayısı",
+    "session_count_description": "Kartlarda seans sayısı ikonlarını göster",
+    "service_count": "Hizmet Sayısı",
+    "service_count_description": "Kartlarda hizmet sayısı ikonlarını göster",
+    "pro_tip": "İpucu",
+    "pro_tip_description": "Fotoğrafçılık işinizi verimli bir şekilde yönetmek için ihtiyacınız olan şeyleri tam olarak göstermek üzere proje kartlarınızı özelleştirin."
   },
   "edit_payment": {
     "title": "Ödemeyi Düzenle",

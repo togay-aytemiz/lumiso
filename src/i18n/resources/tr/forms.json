@@ -730,8 +730,53 @@
       "cancel": "İptal"
     },
     "danger_zone": {
-      "title": "Projeyi Sil", 
+      "title": "Projeyi Sil",
       "description": "Bu, projeyi ve TÜM ilgili verileri kalıcı olarak silecektir: seanslar, ödemeler, yapılacaklar, hizmetler ve etkinlikler."
     }
+  },
+  "packages": {
+    "title": "Paketler",
+    "description": "Fotoğrafçılık işletmeniz için hizmet paketleri oluşturun ve yönetin",
+    "package_deleted": "Paket Silindi",
+    "package_deleted_desc": "\"{{name}}\" paketi başarıyla silindi",
+    "error_deleting": "Paket silinirken hata oluştu",
+    "failed_to_load": "Paketler yüklenemedi",
+    "add_package": "Paket Ekle",
+    "no_packages": "Henüz paket yok",
+    "create_first": "Başlamak için ilk paketinizi oluşturun",
+    "package_name": "Paket Adı",
+    "price": "Fiyat",
+    "duration": "Süre",
+    "applicable_types": "Uygulanabilir Türler",
+    "default_addons": "Varsayılan Eklentiler",
+    "visibility": "Görünürlük",
+    "actions": "İşlemler",
+    "all_types": "Tüm Türler",
+    "none": "Yok",
+    "addons_count": "{{count}} eklenti",
+    "default_addons_tooltip": "Bu paket için varsayılan eklentiler:",
+    "unknown_service": "Bilinmeyen Hizmet",
+    "no_services_selected": "Hizmet seçilmedi",
+    "active": "Aktif",
+    "inactive": "Pasif",
+    "view_only": "Sadece Görüntüle",
+    "no_addons": "Eklenti yok",
+    "delete_package": "Paketi Sil",
+    "delete_confirm": "\"{{name}}\" paketini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz."
+  },
+  "services": {
+    "title": "Hizmetler",
+    "description": "Paketlere dahil edilebilecek bireysel hizmetleri yönetin",
+    "service_deleted": "Hizmet Silindi",
+    "service_deleted_desc": "Hizmet başarıyla silindi",
+    "error_deleting": "Hizmet silinirken hata oluştu",
+    "uncategorized": "Kategorisiz",
+    "add_service": "Hizmet Ekle",
+    "no_services": "Henüz hizmet yok",
+    "add_first_service": "İlk hizmetinizi ekleyin",
+    "cost": "Maliyet",
+    "selling": "Satış",
+    "view_only": "Sadece Görüntüle",
+    "no_services_in_category": "Bu kategoride hizmet yok"
   }
 }

@@ -6,8 +6,10 @@ import SettingsSection from "@/components/SettingsSection";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { useTranslation } from "react-i18next";
 
 export default function ClientMessaging() {
+  const { t } = useTranslation("pages");
   const [silentHours, setSilentHours] = useState({
     startTime: "22:00",
     endTime: "08:00",
@@ -31,25 +33,25 @@ export default function ClientMessaging() {
   return (
     <SettingsPageWrapper>
       <SettingsHeader
-        title="Client Messaging"
-        description="Manage automated message templates and delivery triggers for client communication"
+        title={t("settings.clientMessaging.title")}
+        description={t("settings.clientMessaging.description")}
         helpContent={settingsHelpContent.clientMessaging}
       />
       
       <div className="space-y-8">
         <SettingsSection
-          title="Silent Hours"
-          description="Messages will not be sent during this time window. Any messages triggered at night will be delayed until the next morning."
+          title={t("settings.clientMessaging.silentHours.title")}
+          description={t("settings.clientMessaging.silentHours.description")}
         >
           <div className="space-y-6">
             {/* Enable/Disable Toggle */}
             <div className="flex items-center justify-between">
               <div className="space-y-1">
-                <Label className="text-base font-medium">Enable Silent Hours</Label>
+                <Label className="text-base font-medium">{t("settings.clientMessaging.silentHours.enable")}</Label>
                 <p className="text-sm text-muted-foreground">
                   {silentHours.enabled 
-                    ? "Messages triggered during silent hours will be delayed until the next morning"
-                    : "When disabled, messages will be sent immediately regardless of the time of day"
+                    ? t("settings.clientMessaging.silentHours.enabledDesc")
+                    : t("settings.clientMessaging.silentHours.disabledDesc")
                   }
                 </p>
               </div>
@@ -61,14 +63,14 @@ export default function ClientMessaging() {
 
             {/* Time Configuration */}
             <div className={`space-y-4 transition-opacity ${silentHours.enabled ? "opacity-100" : "opacity-50"}`}>
-              <Label className="text-base font-medium">Time Window</Label>
+              <Label className="text-base font-medium">{t("settings.clientMessaging.silentHours.timeWindow")}</Label>
               
               {/* Mobile-responsive layout: compact inline layout */}
               <div className="flex items-center gap-3 flex-wrap">
                 {/* Start Time */}
                 <div className="space-y-2">
                   <Label htmlFor="startTime" className="text-sm text-muted-foreground">
-                    Start Time
+                    {t("settings.clientMessaging.silentHours.startTime")}
                   </Label>
                   <Select
                     value={silentHours.startTime}
@@ -90,13 +92,13 @@ export default function ClientMessaging() {
 
                 {/* "to" connector */}
                 <div className="pt-6">
-                  <span className="text-muted-foreground">to</span>
+                  <span className="text-muted-foreground">{t("settings.clientMessaging.silentHours.to")}</span>
                 </div>
 
                 {/* End Time */}
                 <div className="space-y-2">
                   <Label htmlFor="endTime" className="text-sm text-muted-foreground">
-                    End Time
+                    {t("settings.clientMessaging.silentHours.endTime")}
                   </Label>
                   <Select
                     value={silentHours.endTime}
@@ -120,7 +122,10 @@ export default function ClientMessaging() {
               {/* Helper text */}
               {silentHours.enabled && (
                 <p className="text-sm text-muted-foreground">
-                  Messages triggered between {silentHours.startTime} and {silentHours.endTime} will be sent after silent hours end.
+                  {t("settings.clientMessaging.silentHours.helpText", { 
+                    startTime: silentHours.startTime, 
+                    endTime: silentHours.endTime 
+                  })}
                 </p>
               )}
             </div>

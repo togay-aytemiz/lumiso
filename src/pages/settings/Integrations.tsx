@@ -5,15 +5,17 @@ import { useGoogleCalendar } from "@/hooks/useGoogleCalendar";
 import SettingsPageWrapper from "@/components/settings/SettingsPageWrapper";
 import SettingsHeader from "@/components/settings/SettingsHeader";
 import { settingsHelpContent } from "@/lib/settingsHelpContent";
+import { useTranslation } from "react-i18next";
 
 export default function Integrations() {
+  const { t } = useTranslation("pages");
   const { connection, loading, connectCalendar, disconnectCalendar } = useGoogleCalendar();
 
   return (
     <SettingsPageWrapper>
       <SettingsHeader
-        title="Integrations"
-        description="Connect external services and manage third-party integrations"
+        title={t("settings.integrations.title")}
+        description={t("settings.integrations.description")}
         helpContent={settingsHelpContent.integrations}
       />
       
@@ -21,9 +23,9 @@ export default function Integrations() {
         {/* Calendar Integration Section */}
         <Card>
           <CardHeader>
-            <CardTitle>Calendar Integration</CardTitle>
+            <CardTitle>{t("settings.integrations.calendar.title")}</CardTitle>
             <CardDescription>
-              Connect your Google Calendar to sync sessions and reminders
+              {t("settings.integrations.calendar.description")}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -31,14 +33,14 @@ export default function Integrations() {
               <div className="space-y-4">
                 <div className="flex items-center gap-2 text-green-600">
                   <CheckCircle className="h-5 w-5" />
-                  <span className="font-medium">Connected to Google Calendar</span>
+                  <span className="font-medium">{t("settings.integrations.calendar.connected")}</span>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Connected as: <span className="font-medium">{connection.email}</span>
+                  {t("settings.integrations.calendar.connectedAs")} <span className="font-medium">{connection.email}</span>
                 </p>
                 {connection.expired && (
                   <p className="text-sm text-destructive">
-                    Session expired. Please reconnect your calendar.
+                    {t("settings.integrations.calendar.expired")}
                   </p>
                 )}
                 <Button 
@@ -52,7 +54,7 @@ export default function Integrations() {
                   ) : (
                     <Calendar className="h-4 w-4" />
                   )}
-                  Disconnect Google Calendar
+                  {t("settings.integrations.calendar.disconnect")}
                 </Button>
               </div>
             ) : (
@@ -66,7 +68,7 @@ export default function Integrations() {
                 ) : (
                   <Calendar className="h-4 w-4" />
                 )}
-                Connect Google Calendar
+                {t("settings.integrations.calendar.connect")}
               </Button>
             )}
           </CardContent>

@@ -17,6 +17,7 @@ import { useOrganization } from "@/contexts/OrganizationContext";
 import { cn } from "@/lib/utils";
 import SettingsSection from "./SettingsSection";
 import { FormLoadingSkeleton } from "@/components/ui/loading-presets";
+import { useTranslation } from "react-i18next";
 
 const sessionStatusSchema = z.object({
   name: z.string().min(1, "Status name is required").max(50, "Status name must be less than 50 characters"),
@@ -60,6 +61,7 @@ const SessionStatusesSection = () => {
   const { toast } = useToast();
   const { activeOrganizationId } = useOrganization();
   const { data: statuses = [], isLoading, refetch } = useSessionStatuses();
+  const { t } = useTranslation('forms');
 
   // Check for lifecycle completeness and show warnings
   useEffect(() => {
@@ -345,7 +347,7 @@ const SessionStatusesSection = () => {
 
   if (isLoading) {
     return (
-      <SettingsSection title="Session Stages" description="Add, rename and reorder session stages.">
+      <SettingsSection title={t('session_stages.title')} description={t('session_stages.description')}>
         <FormLoadingSkeleton rows={3} />
       </SettingsSection>
     );
@@ -353,20 +355,20 @@ const SessionStatusesSection = () => {
 
   return (
     <SettingsSection
-      title="Session Stages"
-      description="Add, rename and reorder session stages."
-      action={{ label: "Add Stage", onClick: handleAdd, icon: <Plus className="h-4 w-4" /> }}
+      title={t('session_stages.title')}
+      description={t('session_stages.description')}
+      action={{ label: t('session_stages.add_stage'), onClick: handleAdd, icon: <Plus className="h-4 w-4" /> }}
     >
       {/* Mobile CTA */}
       <div className="mb-4 md:hidden">
         <Button onClick={handleAdd} className="w-full">
           <Plus className="h-4 w-4 mr-2" />
-          Add Stage
+          {t('session_stages.add_stage')}
         </Button>
       </div>
 
       <div className="mb-4 p-3 bg-muted/30 rounded-lg border border-dashed border-muted-foreground/20">
-        <p className="text-sm text-muted-foreground leading-relaxed">Drag (⋮⋮) to reorder • Click to edit stage names and colors.</p>
+        <p className="text-sm text-muted-foreground leading-relaxed">{t('session_stages.drag_instructions')}</p>
       </div>
 
       <DragDropContext onDragEnd={handleDragEnd}>

@@ -17,6 +17,7 @@ import { useOrganization } from "@/contexts/OrganizationContext";
 import { cn } from "@/lib/utils";
 import SettingsSection from "./SettingsSection";
 import { FormLoadingSkeleton } from "@/components/ui/loading-presets";
+import { useTranslation } from "react-i18next";
 // Permissions removed for single photographer mode
 
 const projectStatusSchema = z.object({
@@ -448,11 +449,13 @@ const ProjectStatusesSection = () => {
     createDefaultStatuses();
   }
 
+  const { t } = useTranslation('forms');
+
   if (isLoading) {
     return (
       <SettingsSection 
-        title="Project Stages" 
-        description="Add, rename and reorder stages to customize your workflow."
+        title={t('project_stages.title')}
+        description={t('project_stages.description')}
       >
         <FormLoadingSkeleton rows={3} />
       </SettingsSection>
@@ -469,10 +472,10 @@ const ProjectStatusesSection = () => {
   return (
     <>
     <SettingsSection 
-      title="Project Stages" 
-      description="Add, rename and reorder stages to customize your workflow."
+      title={t('project_stages.title')}
+      description={t('project_stages.description')}
       action={canManageProjectStatuses ? {
-        label: "Add Stage",
+        label: t('project_stages.add_stage'),
         onClick: handleAdd,
         icon: <Plus className="h-4 w-4" />
       } : undefined}
@@ -482,14 +485,14 @@ const ProjectStatusesSection = () => {
         <div className="mb-4 md:hidden">
           <Button onClick={handleAdd} className="w-full">
             <Plus className="h-4 w-4 mr-2" />
-            Add Stage
+            {t('project_stages.add_stage')}
           </Button>
         </div>
       )}
 
       <div className="mb-4 p-3 bg-muted/30 rounded-lg border border-dashed border-muted-foreground/20">
         <p className="text-sm text-muted-foreground leading-relaxed">
-          Drag (⋮⋮) to reorder • Click to edit stage names and colors.
+          {t('project_stages.drag_instructions')}
         </p>
       </div>
 

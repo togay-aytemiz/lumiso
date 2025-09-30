@@ -17,6 +17,7 @@ import SettingsSection from "./SettingsSection";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { useProjectTypes } from "@/hooks/useOrganizationData";
 import { FormLoadingSkeleton } from "@/components/ui/loading-presets";
+import { useTranslation } from "react-i18next";
 
 const projectTypeSchema = z.object({
   name: z.string().min(1, "Type name is required").max(50, "Type name must be less than 50 characters"),
@@ -41,6 +42,7 @@ const ProjectTypesSection = () => {
   const { toast } = useToast();
   const { activeOrganizationId, loading: orgLoading } = useOrganization();
   const { data: types = [], isLoading, refetch } = useProjectTypes();
+  const { t } = useTranslation('forms');
 
   const form = useForm<ProjectTypeForm>({
     resolver: zodResolver(projectTypeSchema),
@@ -336,8 +338,8 @@ const ProjectTypesSection = () => {
   if (orgLoading || isLoading) {
     return (
       <SettingsSection 
-        title="Project Types" 
-        description="Customize your project types to reflect the type of work you offer."
+        title={t('project_types.title')}
+        description={t('project_types.description')}
       >
         <FormLoadingSkeleton rows={3} />
       </SettingsSection>
@@ -347,10 +349,10 @@ const ProjectTypesSection = () => {
   return (
     <>
       <SettingsSection 
-        title="Project Types" 
-        description="Customize your project types to reflect the type of work you offer."
+        title={t('project_types.title')}
+        description={t('project_types.description')}
         action={{
-          label: "Add Type",
+          label: t('project_types.add_type'),
           onClick: handleAdd,
           icon: <Plus className="h-4 w-4" />
         }}
@@ -359,7 +361,7 @@ const ProjectTypesSection = () => {
         <div className="mb-4 md:hidden">
           <Button onClick={handleAdd} className="w-full">
             <Plus className="h-4 w-4 mr-2" />
-            Add Type
+            {t('project_types.add_type')}
           </Button>
         </div>
         <div className="flex flex-wrap gap-3 p-2">

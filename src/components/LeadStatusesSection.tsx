@@ -20,6 +20,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 const leadStatusSchema = z.object({
   name: z.string().min(1, "Status name is required").max(50, "Status name must be less than 50 characters"),
@@ -67,6 +68,7 @@ const LeadStatusesSection = () => {
   const { toast } = useToast();
   const { activeOrganizationId } = useOrganization();
   const queryClient = useQueryClient();
+  const { t } = useTranslation('forms');
   
   // Use cached data
   const { data: statuses = [], isLoading } = useLeadStatuses();
@@ -122,7 +124,7 @@ const LeadStatusesSection = () => {
 
       toast({
         title: "Success",
-        description: "Preferences updated"
+        description: t('lead_statuses.preferences_updated')
       });
     } catch (error: any) {
       console.error('Error updating setting:', error);
@@ -244,8 +246,8 @@ const LeadStatusesSection = () => {
   if (isLoading) {
     return (
       <SettingsSection 
-        title="Lead Statuses" 
-        description="Add, rename and reorder statuses to customize your lead workflow."
+        title={t('lead_statuses.title')}
+        description={t('lead_statuses.description')}
       >
         <div className="space-y-4">
           <div className="h-8 bg-muted rounded animate-pulse" />
@@ -264,23 +266,23 @@ const LeadStatusesSection = () => {
   const customStatuses = statuses.filter(status => !status.is_system_final);
   const systemStatusNames = systemStatuses.map(s => s.name).join(' and ');
   const dynamicDescription = systemStatusNames 
-    ? `Used for quick actions like marking leads as ${systemStatusNames.toLowerCase()}.`
-    : "Used for quick actions like marking leads as completed or lost.";
+    ? t('lead_statuses.show_quick_buttons_help', { systemStatuses: systemStatusNames.toLowerCase() })
+    : t('lead_statuses.show_quick_buttons_help_default');
 
   const showQuickButtons = organizationSettings?.show_quick_status_buttons ?? true;
 
   return (
     <>
       <SettingsSection 
-        title="Lead Statuses" 
-        description="Configure your lead workflow and system status preferences."
+        title={t('lead_statuses.title')}
+        description={t('lead_statuses.description')}
       >
         {/* Settings Toggle Section */}
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label htmlFor="quick-status-buttons" className="text-base">
-                Show quick system status buttons on lead details
+                {t('lead_statuses.show_quick_buttons')}
               </Label>
               <p className="text-sm text-muted-foreground">
                 {dynamicDescription}
@@ -297,7 +299,7 @@ const LeadStatusesSection = () => {
           {/* System Statuses Section */}
           {showQuickButtons && (
             <div className="space-y-3">
-              <h4 className="text-sm font-medium">System Statuses</h4>
+              <h4 className="text-sm font-medium">{t('lead_statuses.system_statuses')}</h4>
               
               <div className="flex flex-wrap gap-3">
                 {systemStatuses.map((status) => (
@@ -332,16 +334,16 @@ const LeadStatusesSection = () => {
           {/* Custom Statuses Section */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <h4 className="text-sm font-medium">Custom Statuses</h4>
+              <h4 className="text-sm font-medium">{t('lead_statuses.custom_statuses')}</h4>
               <Button onClick={handleAdd} size="sm" className="gap-2">
                 <Plus className="h-4 w-4" />
-                Add Status
+                {t('lead_statuses.add_status')}
               </Button>
             </div>
             
             <div className="p-3 bg-muted/30 rounded-lg border border-dashed border-muted-foreground/20">
               <p className="text-sm text-muted-foreground leading-relaxed">
-                Drag (⋮⋮) to reorder • Click to edit status names and colors.
+                {t('lead_statuses.drag_instructions')}
               </p>
             </div>
 

@@ -24,6 +24,7 @@ import { TimezoneSelector } from "@/components/TimezoneSelector";
 import { detectBrowserTimezone } from "@/lib/dateFormatUtils";
 import { emailSchema, phoneSchema } from "@/lib/validation";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { useTranslation } from "react-i18next";
 
 export default function General() {
   const { settings, loading, uploading, updateSettings, uploadLogo, deleteLogo } = useOrganizationSettings();
@@ -32,6 +33,7 @@ export default function General() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { completeCurrentStep } = useOnboarding();
+  const { t } = useTranslation("pages");
 
   // Check if we're in tutorial mode from Profile onboarding
   const isInTutorial = searchParams.get('tutorial') === 'true';
@@ -230,8 +232,8 @@ export default function General() {
     return (
       <SettingsPageWrapper>
         <SettingsHeader
-          title="General"
-          description="Manage your general application preferences"
+          title={t("settings.general.title")}
+          description={t("settings.general.description")}
           helpContent={settingsHelpContent.general}
         />
         <SettingsLoadingSkeleton rows={4} />
@@ -242,37 +244,37 @@ export default function General() {
   return (
     <SettingsPageWrapper>
       <SettingsHeader
-        title="General"
-        description="Manage your general application preferences"
+        title={t("settings.general.title")}
+        description={t("settings.general.description")}
         helpContent={settingsHelpContent.general}
       />
       
       <div className="space-y-8">
         <CategorySettingsSection
-          title="Branding"
-          description="Customize your brand appearance across client-facing materials"
+          title={t("settings.general.branding.title")}
+          description={t("settings.general.branding.description")}
           sectionId="branding"
           data-walkthrough="business-form"
         >
           <div className="space-y-6">
             {/* Company Name */}
             <div className="space-y-2">
-              <Label htmlFor="company-name">Photography Business Name</Label>
+              <Label htmlFor="company-name">{t("settings.general.branding.company_name")}</Label>
               <Input
                 id="company-name"
                 value={brandingSection.values.companyName}
                 onChange={(e) => brandingSection.updateValue("companyName", e.target.value)}
-                placeholder="Enter your photography business name"
+                placeholder={t("settings.general.branding.company_name_placeholder")}
                 className="max-w-md"
               />
               <p className="text-sm text-muted-foreground">
-                This will appear on invoices, contracts, and client communications
+                {t("settings.general.branding.company_name_help")}
               </p>
             </div>
 
             {/* Business Email */}
             <div className="space-y-2">
-              <Label htmlFor="business-email">Business Email</Label>
+              <Label htmlFor="business-email">{t("settings.general.branding.business_email")}</Label>
               <Input
                 id="business-email"
                 type="email"
@@ -287,17 +289,17 @@ export default function General() {
                     e.target.setCustomValidity("");
                   }
                 }}
-                placeholder="Enter your business email"
+                placeholder={t("settings.general.branding.business_email_placeholder")}
                 className="max-w-md"
               />
               <p className="text-sm text-muted-foreground">
-                Used for client communications and appears on invoices
+                {t("settings.general.branding.business_email_help")}
               </p>
             </div>
 
             {/* Business Phone */}
             <div className="space-y-2">
-              <Label htmlFor="business-phone">Business Phone</Label>
+              <Label htmlFor="business-phone">{t("settings.general.branding.business_phone")}</Label>
               <Input
                 id="business-phone"
                 type="tel"
@@ -312,17 +314,17 @@ export default function General() {
                     e.target.setCustomValidity("");
                   }
                 }}
-                placeholder="Enter your business phone number"
+                placeholder={t("settings.general.branding.business_phone_placeholder")}
                 className="max-w-md"
               />
               <p className="text-sm text-muted-foreground">
-                Optional contact number for client communications
+                {t("settings.general.branding.business_phone_help")}
               </p>
             </div>
 
             {/* Logo Upload */}
             <div className="space-y-2">
-              <Label htmlFor="logo-upload">Logo Upload</Label>
+              <Label htmlFor="logo-upload">{t("settings.general.branding.logo_upload")}</Label>
               
               {/* Current Logo Preview - Always show container to prevent layout shift */}
               <div className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 border rounded-lg bg-muted/30 max-w-md min-h-[80px]">
@@ -416,7 +418,7 @@ export default function General() {
                     ) : (
                       <Upload className="h-4 w-4" />
                     )}
-                    {uploading ? "Uploading..." : "Choose New Logo"}
+                    {uploading ? t("settings.general.branding.uploading") : t("settings.general.branding.choose_new_logo")}
                   </Button>
                 </div>
 
@@ -430,7 +432,7 @@ export default function General() {
               </div>
               
               <p className="text-sm text-muted-foreground">
-                Supported formats: PNG, JPG, SVG
+                {t("settings.general.branding.logo_formats")}
               </p>
             </div>
 

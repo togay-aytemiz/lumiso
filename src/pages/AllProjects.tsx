@@ -628,7 +628,7 @@ const AllProjects = () => {
                   data-testid="add-project-button"
                 >
                   <Plus className="h-4 w-4" />
-                  <span className="hidden sm:inline">{tDashboard('buttons.add_project')}</span>
+                  <span className="hidden sm:inline">{t('common:buttons.add_project')}</span>
                 </Button>
               </EnhancedProjectDialog>
             </div>

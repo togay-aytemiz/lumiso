@@ -492,6 +492,14 @@
     "error_update": "Error updating task",
     "error_delete": "Error deleting task"
   },
+  "project_sheet": {
+    "full_details": "Full Details",
+    "more": "More",
+    "close": "Close",
+    "edit_project": "Edit Project",
+    "archive_project": "Archive Project",
+    "restore_project": "Restore Project"
+  },
   "projectDetails": {
     "header": {
       "fullDetails": "Full Details",

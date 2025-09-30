@@ -110,7 +110,7 @@ export function ProjectTodoListEnhanced({
       });
     } catch (error: any) {
       toast({
-        title: t("forms.todos.error_adding"),
+        title: tForms('todos.error_adding'),
         description: error.message,
         variant: "destructive"
       });

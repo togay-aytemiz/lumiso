@@ -30,7 +30,8 @@
     "save_changes": "Save Changes",
     "view_details": "View Details",
     "archive": "Archive",
-    "restore": "Restore"
+    "restore": "Restore",
+    "add_project": "Add Project"
   },
   "labels": {
     "name": "Name",

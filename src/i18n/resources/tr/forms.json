@@ -482,6 +482,14 @@
     "sessions_count": "{count} seans",
     "no_sessions": "Seans bulunamadı"
   },
+  "project_sheet": {
+    "full_details": "Tam Detaylar",
+    "more": "Daha Fazla",
+    "close": "Kapat",
+    "edit_project": "Projeyi Düzenle",
+    "archive_project": "Projeyi Arşivle",
+    "restore_project": "Projeyi Geri Yükle"
+  },
   "projectDetails": {
     "header": {
       "fullDetails": "Tüm Detaylar",

@@ -30,7 +30,8 @@
     "save_changes": "Değişiklikleri Kaydet",
     "view_details": "Detayları Görüntüle",
     "archive": "Arşivle",
-    "restore": "Geri Yükle"
+    "restore": "Geri Yükle",
+    "add_project": "Proje Ekle"
   },
   "labels": {
     "name": "Ad",

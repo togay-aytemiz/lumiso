@@ -370,7 +370,7 @@ const ProjectKanbanBoard = ({
                         className="flex items-center gap-2 border-dashed"
                       >
                         <Plus className="h-4 w-4" />
-                        Add Project
+                        {t('common:buttons.add_project')}
                       </Button>
                     </div>
                   ) : (
@@ -380,7 +380,7 @@ const ProjectKanbanBoard = ({
                       className="w-full flex items-center gap-2 border-dashed"
                     >
                       <Plus className="h-4 w-4" />
-                      Add Project
+                      {t('common:buttons.add_project')}
                     </Button>
                   )}
                 </div>

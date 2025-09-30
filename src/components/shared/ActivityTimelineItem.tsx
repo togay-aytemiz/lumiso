@@ -19,6 +19,11 @@ export function ActivityTimelineItem({
 }: ActivityTimelineItemProps) {
   const { t } = useFormsTranslation();
   
+  // Map type to translation key safely
+  const typeLabel = type === 'note' 
+    ? t('activities.types.note') 
+    : t('activities.types.reminder');
+  
   return <div className="flex gap-3 py-2">
       {/* Timeline dot */}
       
@@ -27,7 +32,7 @@ export function ActivityTimelineItem({
       <div className="flex-1 min-w-0 pb-2">
         <div className="flex items-start gap-2 mb-1">
           <Badge variant="outline" className="text-xs h-5">
-            {t(`activities.types.${type}`)}
+            {typeLabel}
           </Badge>
           {projectName && <Badge variant="secondary" className="text-xs h-5">
               {projectName}

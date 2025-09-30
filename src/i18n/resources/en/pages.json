@@ -291,5 +291,77 @@
         }
       }
     }
+  },
+  "payments": {
+    "title": "Payments",
+    "subtitle": "Track and manage all payments across projects",
+    "selectPeriod": "Select period",
+    "filterByLabel": "Filter by label:",
+    "filterByLabelPlaceholder": "Filter by label...",
+    "dateFilters": {
+      "last7days": "Last 7 days",
+      "last4weeks": "Last 4 weeks",
+      "last3months": "Last 3 months",
+      "last12months": "Last 12 months",
+      "monthToDate": "Month to date",
+      "quarterToDate": "Quarter to date",
+      "yearToDate": "Year to date",
+      "lastMonth": "Last month",
+      "allTime": "All time",
+      "customRange": "Custom range"
+    },
+    "metrics": {
+      "totalPaid": "Total Paid",
+      "extraServices": "Extra Services",
+      "remainingBalance": "Remaining Balance"
+    },
+    "table": {
+      "date": "Date",
+      "amount": "Amount",
+      "project": "Project",
+      "lead": "Lead",
+      "label": "Label",
+      "status": "Status",
+      "type": "Type"
+    },
+    "status": {
+      "paid": "Paid",
+      "due": "Due"
+    },
+    "type": {
+      "base": "Base",
+      "extra": "Extra",
+      "manual": "Manual"
+    },
+    "emptyState": {
+      "noPaymentsWithLabel": "No payments found with label containing \"{{labelFilter}}\".",
+      "noPaymentsForPeriod": "No payments found for selected period."
+    },
+    "defaultLabel": "Payment",
+    "errorFetching": "Error fetching payments"
+  },
+  "analytics": {
+    "title": "Analytics",
+    "subtitle": "View insights and performance metrics",
+    "sessionsPerDay": {
+      "title": "Sessions per Day",
+      "scheduled": "Showing sessions scheduled in the next 30 days",
+      "created": "Showing sessions created in the last 30 days"
+    },
+    "sessionsByStatus": {
+      "title": "Sessions by Status"
+    },
+    "leadsByMonth": {
+      "title": "New Leads per Month (Last 6 Months)"
+    },
+    "toggle": {
+      "scheduled": "Scheduled",
+      "created": "Created"
+    },
+    "chartLabels": {
+      "sessions": "Sessions",
+      "leads": "Leads"
+    },
+    "errorFetching": "Error fetching analytics data"
   }
 }

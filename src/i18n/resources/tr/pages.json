@@ -291,5 +291,77 @@
         }
       }
     }
+  },
+  "payments": {
+    "title": "Ödemeler",
+    "subtitle": "Tüm projelerdeki ödemeleri takip edin ve yönetin",
+    "selectPeriod": "Dönem seçin",
+    "filterByLabel": "Etikete göre filtrele:",
+    "filterByLabelPlaceholder": "Etikete göre filtrele...",
+    "dateFilters": {
+      "last7days": "Son 7 gün",
+      "last4weeks": "Son 4 hafta",
+      "last3months": "Son 3 ay",
+      "last12months": "Son 12 ay",
+      "monthToDate": "Bu ay",
+      "quarterToDate": "Bu çeyrek",
+      "yearToDate": "Bu yıl",
+      "lastMonth": "Geçen ay",
+      "allTime": "Tüm zamanlar",
+      "customRange": "Özel aralık"
+    },
+    "metrics": {
+      "totalPaid": "Toplam Ödenen",
+      "extraServices": "Ekstra Hizmetler",
+      "remainingBalance": "Kalan Bakiye"
+    },
+    "table": {
+      "date": "Tarih",
+      "amount": "Tutar",
+      "project": "Proje",
+      "lead": "Müşteri Adayı",
+      "label": "Etiket",
+      "status": "Durum",
+      "type": "Tür"
+    },
+    "status": {
+      "paid": "Ödendi",
+      "due": "Bekliyor"
+    },
+    "type": {
+      "base": "Temel",
+      "extra": "Ekstra",
+      "manual": "Manuel"
+    },
+    "emptyState": {
+      "noPaymentsWithLabel": "\"{{labelFilter}}\" içeren etiketle ödeme bulunamadı.",
+      "noPaymentsForPeriod": "Seçili dönem için ödeme bulunamadı."
+    },
+    "defaultLabel": "Ödeme",
+    "errorFetching": "Ödemeler alınırken hata oluştu"
+  },
+  "analytics": {
+    "title": "Analitik",
+    "subtitle": "İçgörüleri ve performans metriklerini görüntüleyin",
+    "sessionsPerDay": {
+      "title": "Günlük Seanslar",
+      "scheduled": "Önümüzdeki 30 gün için planlanan seanslar gösteriliyor",
+      "created": "Son 30 günde oluşturulan seanslar gösteriliyor"
+    },
+    "sessionsByStatus": {
+      "title": "Duruma Göre Seanslar"
+    },
+    "leadsByMonth": {
+      "title": "Aylık Yeni Müşteri Adayları (Son 6 Ay)"
+    },
+    "toggle": {
+      "scheduled": "Planlanmış",
+      "created": "Oluşturulmuş"
+    },
+    "chartLabels": {
+      "sessions": "Seanslar",
+      "leads": "Müşteri Adayları"
+    },
+    "errorFetching": "Analitik verileri alınırken hata oluştu"
   }
 }

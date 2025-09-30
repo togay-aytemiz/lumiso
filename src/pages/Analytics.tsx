@@ -28,6 +28,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import GlobalSearch from "@/components/GlobalSearch";
 import { PageHeader, PageHeaderSearch } from "@/components/ui/page-header";
 import { PageLoadingSkeleton } from "@/components/ui/loading-presets";
+import { useTranslation } from "react-i18next";
 
 interface SessionsByDayData {
   date: string;
@@ -46,6 +47,7 @@ interface LeadsByMonthData {
 }
 
 const Analytics = () => {
+  const { t } = useTranslation("pages");
   const [sessionsPerDay, setSessionsPerDay] = useState<SessionsByDayData[]>([]);
   const [sessionsByStatus, setSessionsByStatus] = useState<SessionsByStatusData[]>([]);
   const [leadsByMonth, setLeadsByMonth] = useState<LeadsByMonthData[]>([]);
@@ -71,7 +73,7 @@ const Analytics = () => {
       ]);
     } catch (error: any) {
       toast({
-        title: "Error fetching analytics data",
+        title: t("analytics.errorFetching"),
         description: error.message,
         variant: "destructive"
       });
@@ -212,11 +214,11 @@ const Analytics = () => {
 
   const chartConfig = {
     sessions: {
-      label: "Sessions",
+      label: t("analytics.chartLabels.sessions"),
       color: "#3b82f6",
     },
     leads: {
-      label: "Leads",
+      label: t("analytics.chartLabels.leads"),
       color: "#22c55e",
     },
   };
@@ -224,8 +226,8 @@ const Analytics = () => {
   return (
     <div className="min-h-screen overflow-x-hidden">
       <PageHeader
-        title="Analytics"
-        subtitle="View insights and performance metrics"
+        title={t("analytics.title")}
+        subtitle={t("analytics.subtitle")}
       >
         <PageHeaderSearch>
           <GlobalSearch />
@@ -241,11 +243,11 @@ const Analytics = () => {
             <Card>
               <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
                 <div className="space-y-1">
-                  <CardTitle>Sessions per Day</CardTitle>
+                  <CardTitle>{t("analytics.sessionsPerDay.title")}</CardTitle>
                   <p className="text-sm text-muted-foreground">
                     {sessionDateMode === 'scheduled' 
-                      ? "Showing sessions scheduled in the next 30 days"
-                      : "Showing sessions created in the last 30 days"
+                      ? t("analytics.sessionsPerDay.scheduled")
+                      : t("analytics.sessionsPerDay.created")
                     }
                   </p>
                 </div>
@@ -257,10 +259,10 @@ const Analytics = () => {
                   size="sm"
                 >
                   <ToggleGroupItem value="scheduled" className="text-xs px-3">
-                    Scheduled
+                    {t("analytics.toggle.scheduled")}
                   </ToggleGroupItem>
                   <ToggleGroupItem value="created" className="text-xs px-3">
-                    Created
+                    {t("analytics.toggle.created")}
                   </ToggleGroupItem>
                 </ToggleGroup>
               </CardHeader>
@@ -288,10 +290,10 @@ const Analytics = () => {
             </Card>
 
             {/* Sessions by Status Chart */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Sessions by Status</CardTitle>
-              </CardHeader>
+        <Card>
+          <CardHeader>
+            <CardTitle>{t("analytics.sessionsByStatus.title")}</CardTitle>
+          </CardHeader>
               <CardContent>
                 <ChartContainer config={chartConfig} className="h-[300px]">
                   <PieChart>
@@ -320,7 +322,7 @@ const Analytics = () => {
             {/* New Leads per Month Chart */}
             <Card className="lg:col-span-2">
               <CardHeader>
-                <CardTitle>New Leads per Month (Last 6 Months)</CardTitle>
+                <CardTitle>{t("analytics.leadsByMonth.title")}</CardTitle>
               </CardHeader>
               <CardContent>
                 <ChartContainer config={chartConfig} className="h-[300px]">

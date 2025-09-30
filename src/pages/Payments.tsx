@@ -26,6 +26,7 @@ import { PageHeader, PageHeaderSearch } from "@/components/ui/page-header";
 import { PageLoadingSkeleton, TableLoadingSkeleton } from "@/components/ui/loading-presets";
 import { AddPaymentDialog } from "@/components/AddPaymentDialog";
 import { EditPaymentDialog } from "@/components/EditPaymentDialog";
+import { useTranslation } from "react-i18next";
 
 interface Payment {
   id: string;
@@ -65,6 +66,7 @@ type SortDirection = 'asc' | 'desc';
 type DateFilterType = 'last7days' | 'last4weeks' | 'last3months' | 'last12months' | 'monthToDate' | 'quarterToDate' | 'yearToDate' | 'lastMonth' | 'allTime' | 'custom';
 
 const Payments = () => {
+  const { t } = useTranslation("pages");
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedFilter, setSelectedFilter] = useState<DateFilterType>('allTime');
@@ -132,7 +134,7 @@ const Payments = () => {
       setPayments(paymentsWithProjects);
     } catch (error: any) {
       toast({
-        title: "Error fetching payments",
+        title: t("payments.errorFetching"),
         description: error.message,
         variant: "destructive"
       });
@@ -190,7 +192,7 @@ const Payments = () => {
     // Apply label filter
     if (labelFilter.trim()) {
       filtered = filtered.filter(payment => {
-        const label = payment.description || 'Payment';
+        const label = payment.description || t("payments.defaultLabel");
         return label.toLowerCase().includes(labelFilter.toLowerCase());
       });
     }
@@ -295,8 +297,8 @@ const Payments = () => {
   return (
     <div className="min-h-screen overflow-x-hidden">
       <PageHeader
-        title="Payments"
-        subtitle="Track and manage all payments across projects"
+        title={t("payments.title")}
+        subtitle={t("payments.subtitle")}
       >
         <PageHeaderSearch>
           <GlobalSearch />
@@ -319,19 +321,19 @@ const Payments = () => {
             }}
           >
             <SelectTrigger className="w-48">
-              <SelectValue placeholder="Select period" />
+              <SelectValue placeholder={t("payments.selectPeriod")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="last7days">Last 7 days</SelectItem>
-              <SelectItem value="last4weeks">Last 4 weeks</SelectItem>
-              <SelectItem value="last3months">Last 3 months</SelectItem>
-              <SelectItem value="last12months">Last 12 months</SelectItem>
-              <SelectItem value="monthToDate">Month to date</SelectItem>
-              <SelectItem value="quarterToDate">Quarter to date</SelectItem>
-              <SelectItem value="yearToDate">Year to date</SelectItem>
-              <SelectItem value="lastMonth">Last month</SelectItem>
-              <SelectItem value="allTime">All time</SelectItem>
-              <SelectItem value="custom">Custom range</SelectItem>
+              <SelectItem value="last7days">{t("payments.dateFilters.last7days")}</SelectItem>
+              <SelectItem value="last4weeks">{t("payments.dateFilters.last4weeks")}</SelectItem>
+              <SelectItem value="last3months">{t("payments.dateFilters.last3months")}</SelectItem>
+              <SelectItem value="last12months">{t("payments.dateFilters.last12months")}</SelectItem>
+              <SelectItem value="monthToDate">{t("payments.dateFilters.monthToDate")}</SelectItem>
+              <SelectItem value="quarterToDate">{t("payments.dateFilters.quarterToDate")}</SelectItem>
+              <SelectItem value="yearToDate">{t("payments.dateFilters.yearToDate")}</SelectItem>
+              <SelectItem value="lastMonth">{t("payments.dateFilters.lastMonth")}</SelectItem>
+              <SelectItem value="allTime">{t("payments.dateFilters.allTime")}</SelectItem>
+              <SelectItem value="custom">{t("payments.dateFilters.customRange")}</SelectItem>
             </SelectContent>
           </Select>
           
@@ -350,7 +352,7 @@ const Payments = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <Card className="bg-muted/20">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Paid</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("payments.metrics.totalPaid")}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(metrics.totalPaid)}</div>
@@ -359,7 +361,7 @@ const Payments = () => {
 
         <Card className="bg-muted/20">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Extra Services</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("payments.metrics.extraServices")}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(metrics.extraServices)}</div>
@@ -368,7 +370,7 @@ const Payments = () => {
 
         <Card className="bg-muted/20">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Remaining Balance</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("payments.metrics.remainingBalance")}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(metrics.remainingBalance)}</div>
@@ -382,9 +384,9 @@ const Payments = () => {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                <span className="text-sm text-muted-foreground whitespace-nowrap">Filter by label:</span>
+                <span className="text-sm text-muted-foreground whitespace-nowrap">{t("payments.filterByLabel")}</span>
                 <Input
-                  placeholder="Filter by label..."
+                  placeholder={t("payments.filterByLabelPlaceholder")}
                   value={labelFilter}
                   onChange={(e) => setLabelFilter(e.target.value)}
                   className="w-full sm:w-48 min-w-0"
@@ -404,7 +406,7 @@ const Payments = () => {
                   onClick={() => handleSort('date_paid')}
                 >
                   <div className="flex items-center gap-2">
-                    Date
+                    {t("payments.table.date")}
                     {getSortIcon('date_paid')}
                   </div>
                 </TableHead>
@@ -413,7 +415,7 @@ const Payments = () => {
                   onClick={() => handleSort('amount')}
                 >
                   <div className="flex items-center gap-2">
-                    Amount
+                    {t("payments.table.amount")}
                     {getSortIcon('amount')}
                   </div>
                 </TableHead>
@@ -422,7 +424,7 @@ const Payments = () => {
                   onClick={() => handleSort('project_name')}
                 >
                   <div className="flex items-center gap-2">
-                    Project
+                    {t("payments.table.project")}
                     {getSortIcon('project_name')}
                   </div>
                 </TableHead>
@@ -431,7 +433,7 @@ const Payments = () => {
                   onClick={() => handleSort('lead_name')}
                 >
                   <div className="flex items-center gap-2">
-                    Lead
+                    {t("payments.table.lead")}
                     {getSortIcon('lead_name')}
                   </div>
                 </TableHead>
@@ -440,7 +442,7 @@ const Payments = () => {
                   onClick={() => handleSort('description')}
                 >
                   <div className="flex items-center gap-2">
-                    Label
+                    {t("payments.table.label")}
                     {getSortIcon('description')}
                   </div>
                 </TableHead>
@@ -449,7 +451,7 @@ const Payments = () => {
                   onClick={() => handleSort('status')}
                 >
                   <div className="flex items-center gap-2">
-                    Status
+                    {t("payments.table.status")}
                     {getSortIcon('status')}
                   </div>
                 </TableHead>
@@ -458,7 +460,7 @@ const Payments = () => {
                   onClick={() => handleSort('type')}
                 >
                   <div className="flex items-center gap-2">
-                    Type
+                    {t("payments.table.type")}
                     {getSortIcon('type')}
                   </div>
                 </TableHead>
@@ -511,20 +513,20 @@ const Payments = () => {
                       )}
                     </TableCell>
                     <TableCell>
-                      {payment.description || 'Payment'}
+                      {payment.description || t("payments.defaultLabel")}
                     </TableCell>
                     <TableCell>
                       <Badge 
                         variant={payment.status === 'paid' ? 'default' : 'secondary'}
                         className={payment.status === 'paid' ? 'bg-green-100 text-green-800 hover:bg-green-100' : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100'}
                       >
-                        {payment.status === 'paid' ? 'Paid' : 'Due'}
+                        {payment.status === 'paid' ? t("payments.status.paid") : t("payments.status.due")}
                       </Badge>
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline">
-                        {payment.type === 'base_price' ? 'Base' : 
-                         payment.type === 'extra' ? 'Extra' : 'Manual'}
+                        {payment.type === 'base_price' ? t("payments.type.base") : 
+                         payment.type === 'extra' ? t("payments.type.extra") : t("payments.type.manual")}
                       </Badge>
                     </TableCell>
                   </TableRow>
@@ -533,8 +535,8 @@ const Payments = () => {
                 <TableRow>
                   <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                     {labelFilter 
-                      ? `No payments found with label containing "${labelFilter}".`
-                      : "No payments found for selected period."
+                      ? t("payments.emptyState.noPaymentsWithLabel", { labelFilter })
+                      : t("payments.emptyState.noPaymentsForPeriod")
                     }
                   </TableCell>
                 </TableRow>

@@ -14,11 +14,13 @@ import { Workflow } from "@/types/workflow";
 import { Plus, Search, Zap, CheckCircle, Clock, AlertTriangle, Edit, Trash2, Mail, MessageCircle, Phone } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { formatDistanceToNow } from "date-fns";
+import { enUS, tr } from 'date-fns/locale';
 import { useTranslation } from "react-i18next";
 
 export default function Workflows() {
-  const { t } = useTranslation("pages");
+  const { t, i18n } = useTranslation("pages");
   const { workflows, loading, createWorkflow, updateWorkflow, deleteWorkflow, toggleWorkflowStatus } = useWorkflows();
+  const dateLocale = i18n.language === 'tr' ? tr : enUS;
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "paused">("all");
 
@@ -149,7 +151,7 @@ export default function Workflows() {
       sortable: true,
       render: (workflow) => (
         <div className="text-sm text-muted-foreground">
-          {formatDistanceToNow(new Date(workflow.created_at), { addSuffix: true })}
+          {formatDistanceToNow(new Date(workflow.created_at), { addSuffix: true, locale: dateLocale })}
         </div>
       ),
     },

@@ -411,6 +411,69 @@
       "createFirstMessage": "Müşteri iletişimlerinizi kolaylaştırmak için ilk otomatik iş akışınızı oluşturun.",
       "noMatchingFilters": "Hiçbir iş akışı filtrelerinizle eşleşmiyor",
       "adjustFilters": "Arama veya filtre kriterlerinizi ayarlamayı deneyin."
+    },
+    "createDialog": {
+      "titleCreate": "Yeni İş Akışı Oluştur",
+      "titleEdit": "İş Akışını Düzenle",
+      "fields": {
+        "name": {
+          "label": "İş Akışı Adı *",
+          "placeholder": "örn., Seans Onay Bildirimleri"
+        },
+        "description": {
+          "label": "Açıklama",
+          "placeholder": "Bu iş akışının ne yaptığını açıklayın..."
+        },
+        "trigger": {
+          "label": "Tetikleyici Olay *",
+          "placeholder": "Bir tetikleyici olay seçin"
+        },
+        "reminderTiming": {
+          "label": "Hatırlatma Zamanlaması *"
+        },
+        "template": {
+          "label": "Mesaj Şablonu *",
+          "placeholder": "Bir şablon seçin...",
+          "loading": "Şablonlar yükleniyor...",
+          "emptyState": "Yayınlanmış şablon bulunamadı. Lütfen önce Şablonlar bölümünde bir şablon oluşturun ve yayınlayın."
+        },
+        "channels": {
+          "label": "Bildirim Kanalları",
+          "description": "Bildirimlerin hangi kanallardan gönderileceğini seçin",
+          "sendVia": "{{channel}} ile gönder",
+          "error": "Lütfen en az bir bildirim kanalını etkinleştirin"
+        },
+        "startActive": {
+          "label": "Aktif Başlat",
+          "description": "İş akışı tetikleyicileri hemen işlemeye başlayacak"
+        }
+      },
+      "triggers": {
+        "session_scheduled": "Seans Planlandı",
+        "session_completed": "Seans Tamamlandı",
+        "session_cancelled": "Seans İptal Edildi",
+        "session_rescheduled": "Seans Yeniden Planlandı",
+        "session_reminder": "Seans Hatırlatıcısı"
+      },
+      "reminderDelays": {
+        "1440": "1 gün önce",
+        "4320": "3 gün önce",
+        "10080": "1 hafta önce",
+        "60": "1 saat önce"
+      },
+      "channels": {
+        "email": "E-posta",
+        "whatsapp": "WhatsApp",
+        "sms": "SMS"
+      },
+      "buttons": {
+        "cancel": "İptal",
+        "create": "İş Akışı Oluştur",
+        "update": "İş Akışını Güncelle"
+      },
+      "navigationGuard": {
+        "message": "Bu iş akışında kaydedilmemiş değişiklikleriniz var."
+      }
     }
   },
   "templates": {
@@ -475,6 +538,69 @@
     },
     "navigationGuard": {
       "unsavedChanges": "Bu şablonda kaydedilmemiş değişiklikleriniz var."
+    },
+    "addBlockSheet": {
+      "title": "Blok Kütüphanesi",
+      "description": "Şablonunuza eklemek için bir blok seçin. Bloklar ekledikten sonra yeniden sıralanabilir ve özelleştirilebilir.",
+      "blocks": {
+        "text": {
+          "title": "Metin Bloğu",
+          "description": "Biçimlendirme, bağlantılar ve yer tutucularla zengin metin"
+        },
+        "sessionDetails": {
+          "title": "Seans Detayları",
+          "description": "Tarih, saat, konum isteğe bağlı notlarla düzgün bir şekilde görüntülenir"
+        },
+        "cta": {
+          "title": "Harekete Geçirme",
+          "description": "Birincil ve ikincil eylem düğmeleri"
+        },
+        "image": {
+          "title": "Resim Bloğu",
+          "description": "Marka resmi, yüklenen dosya veya başlık + bağlantı seçeneği ile kapak ekleyin"
+        },
+        "divider": {
+          "title": "Ayırıcı/Boşluk",
+          "description": "İçerik arasında çizgiler veya boşluklarla görsel ayırma ekleyin"
+        },
+        "socialLinks": {
+          "title": "Sosyal Bağlantılar",
+          "description": "Platform simgeleriyle sosyal medya bağlantıları ekleyin"
+        },
+        "header": {
+          "title": "Başlık Bloğu",
+          "description": "Özel stil ile logo ve slogan başlık bölümü"
+        },
+        "footer": {
+          "title": "Alt Bilgi Bloğu",
+          "description": "Logo, stüdyo adı, iletişim bilgileri ve uyumluluk seçenekleri"
+        }
+      }
+    },
+    "nameDialog": {
+      "titleSave": "Şablonu Kaydet",
+      "titlePublish": "Şablonu Yayınla",
+      "descriptionSave": "Kaydetmeden önce şablonunuz için bir ad belirtin.",
+      "descriptionPublish": "Yayınlamadan önce şablonunuz için bir ad belirtin.",
+      "fields": {
+        "name": {
+          "label": "Şablon Adı",
+          "placeholder": "Şablon adını girin..."
+        }
+      },
+      "buttons": {
+        "cancel": "İptal",
+        "save": "Kaydet",
+        "publish": "Yayınla",
+        "saving": "Kaydediliyor...",
+        "publishing": "Yayınlanıyor..."
+      },
+      "validation": {
+        "required": "Şablon adı gereklidir",
+        "minLength": "Şablon adı en az 2 karakter uzunluğunda olmalıdır",
+        "maxLength": "Şablon adı 100 karakterden az olmalıdır",
+        "duplicate": "Bu adda bir şablon zaten var. Lütfen farklı bir ad seçin."
+      }
     }
   }
 }

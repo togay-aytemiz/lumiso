@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { DataTable, type Column } from "@/components/ui/data-table";
 import { Plus, Search, Edit, Trash2, Copy, MessageSquare } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { enUS, tr } from 'date-fns/locale';
 import { DeleteTemplateDialog } from "@/components/template-builder/DeleteTemplateDialog";
 import { useTemplateOperations } from "@/hooks/useTemplateOperations";
 import { LoadingSkeleton } from "@/components/ui/loading-skeleton";
@@ -16,8 +17,9 @@ import { useTranslation } from "react-i18next";
 
 // Optimized Templates component with memoization and error handling
 const OptimizedTemplatesContent = React.memo(() => {
-  const { t } = useTranslation("pages");
+  const { t, i18n } = useTranslation("pages");
   const navigate = useNavigate();
+  const dateLocale = i18n.language === 'tr' ? tr : enUS;
   const {
     loading,
     error,
@@ -138,7 +140,7 @@ const OptimizedTemplatesContent = React.memo(() => {
       sortable: true,
       render: (template) => (
         <div className="text-sm text-muted-foreground whitespace-nowrap">
-          {formatDistanceToNow(new Date(template.updated_at), { addSuffix: true })}
+          {formatDistanceToNow(new Date(template.updated_at), { addSuffix: true, locale: dateLocale })}
         </div>
       )
     },

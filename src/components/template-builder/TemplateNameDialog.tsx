@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertTriangle, Save, Eye } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface TemplateNameDialogProps {
   open: boolean;
@@ -25,6 +26,7 @@ export function TemplateNameDialog({
   action,
   loading = false
 }: TemplateNameDialogProps) {
+  const { t } = useTranslation();
   const [name, setName] = useState('');
   const [error, setError] = useState('');
 
@@ -43,15 +45,15 @@ export function TemplateNameDialog({
     const trimmedName = inputName.trim();
     
     if (!trimmedName) {
-      return 'Template name is required';
+      return t('pages:template_builder.nameDialog.validation.required');
     }
 
     if (trimmedName.length < 2) {
-      return 'Template name must be at least 2 characters long';
+      return t('pages:template_builder.nameDialog.validation.minLength');
     }
 
     if (trimmedName.length > 100) {
-      return 'Template name must be less than 100 characters';
+      return t('pages:template_builder.nameDialog.validation.maxLength');
     }
 
     // Check for duplicates (case-insensitive)
@@ -61,7 +63,7 @@ export function TemplateNameDialog({
     );
 
     if (isDuplicate) {
-      return 'A template with this name already exists. Please choose a different name.';
+      return t('pages:template_builder.nameDialog.validation.duplicate');
     }
 
     return '';
@@ -96,25 +98,25 @@ export function TemplateNameDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             {action === 'publish' ? <Eye className="h-5 w-5" /> : <Save className="h-5 w-5" />}
-            {action === 'publish' ? 'Publish Template' : 'Save Template'}
+            {action === 'publish' ? t('pages:template_builder.nameDialog.titlePublish') : t('pages:template_builder.nameDialog.titleSave')}
           </DialogTitle>
           <DialogDescription>
             {action === 'publish' 
-              ? 'Please provide a name for your template before publishing.' 
-              : 'Please provide a name for your template before saving.'
+              ? t('pages:template_builder.nameDialog.descriptionPublish')
+              : t('pages:template_builder.nameDialog.descriptionSave')
             }
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="template-name">Template Name</Label>
+            <Label htmlFor="template-name">{t('pages:template_builder.nameDialog.fields.name.label')}</Label>
             <Input
               id="template-name"
               value={name}
               onChange={(e) => handleInputChange(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Enter template name..."
+              placeholder={t('pages:template_builder.nameDialog.fields.name.placeholder')}
               className={error ? 'border-red-500' : ''}
               disabled={loading}
               autoFocus
@@ -135,7 +137,7 @@ export function TemplateNameDialog({
             onClick={onClose}
             disabled={loading}
           >
-            Cancel
+            {t('pages:template_builder.nameDialog.buttons.cancel')}
           </Button>
           <Button 
             onClick={handleConfirm}
@@ -145,12 +147,12 @@ export function TemplateNameDialog({
             {loading ? (
               <div className="flex items-center gap-2">
                 <div className="h-4 w-4 animate-spin rounded-full border-2 border-background border-t-transparent" />
-                {action === 'publish' ? 'Publishing...' : 'Saving...'}
+                {action === 'publish' ? t('pages:template_builder.nameDialog.buttons.publishing') : t('pages:template_builder.nameDialog.buttons.saving')}
               </div>
             ) : (
               <>
                 {action === 'publish' ? <Eye className="h-4 w-4 mr-2" /> : <Save className="h-4 w-4 mr-2" />}
-                {action === 'publish' ? 'Publish' : 'Save'}
+                {action === 'publish' ? t('pages:template_builder.nameDialog.buttons.publish') : t('pages:template_builder.nameDialog.buttons.save')}
               </>
             )}
           </Button>

@@ -14,6 +14,7 @@ import { useTemplates } from "@/hooks/useTemplates";
 import { cn } from "@/lib/utils";
 import { NavigationGuardDialog } from "@/components/settings/NavigationGuardDialog";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
+import { useTranslation } from "react-i18next";
 interface CreateWorkflowSheetProps {
   onCreateWorkflow: (data: WorkflowFormData) => Promise<void>;
   editWorkflow?: any;
@@ -21,64 +22,7 @@ interface CreateWorkflowSheetProps {
   setEditingWorkflow?: (workflow: any) => void;
   children?: React.ReactNode;
 }
-const triggerOptions = [{
-  value: 'session_scheduled',
-  label: 'Session Scheduled'
-}, {
-  value: 'session_completed',
-  label: 'Session Completed'
-}, {
-  value: 'session_cancelled',
-  label: 'Session Cancelled'
-}, {
-  value: 'session_rescheduled',
-  label: 'Session Rescheduled'
-}, {
-  value: 'session_reminder',
-  label: 'Session Reminder'
-}];
-const reminderDelayOptions = [{
-  value: 1440,
-  label: '1 day before'
-}, {
-  value: 4320,
-  label: '3 days before'
-}, {
-  value: 10080,
-  label: '1 week before'
-}, {
-  value: 60,
-  label: '1 hour before'
-}];
 type ChannelType = 'email' | 'sms' | 'whatsapp';
-interface ChannelConfig {
-  enabled: boolean;
-  icon: React.ComponentType<{
-    className?: string;
-  }>;
-  label: string;
-  color: string;
-}
-const channelConfigs: Record<ChannelType, ChannelConfig> = {
-  email: {
-    enabled: true,
-    icon: Mail,
-    label: 'Email',
-    color: 'bg-blue-500'
-  },
-  whatsapp: {
-    enabled: true,
-    icon: MessageCircle,
-    label: 'WhatsApp',
-    color: 'bg-green-600'
-  },
-  sms: {
-    enabled: true,
-    icon: Phone,
-    label: 'SMS',
-    color: 'bg-green-500'
-  }
-};
 export function CreateWorkflowSheet({
   onCreateWorkflow,
   editWorkflow,
@@ -86,6 +30,7 @@ export function CreateWorkflowSheet({
   setEditingWorkflow,
   children
 }: CreateWorkflowSheetProps) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const {
@@ -93,6 +38,27 @@ export function CreateWorkflowSheet({
     loading: templatesLoading
   } = useTemplates();
   const isEditing = !!editWorkflow;
+
+  const triggerOptions = [
+    { value: 'session_scheduled', label: t('pages:workflows.createDialog.triggers.session_scheduled') },
+    { value: 'session_completed', label: t('pages:workflows.createDialog.triggers.session_completed') },
+    { value: 'session_cancelled', label: t('pages:workflows.createDialog.triggers.session_cancelled') },
+    { value: 'session_rescheduled', label: t('pages:workflows.createDialog.triggers.session_rescheduled') },
+    { value: 'session_reminder', label: t('pages:workflows.createDialog.triggers.session_reminder') }
+  ];
+
+  const reminderDelayOptions = [
+    { value: 1440, label: t('pages:workflows.createDialog.reminderDelays.1440') },
+    { value: 4320, label: t('pages:workflows.createDialog.reminderDelays.4320') },
+    { value: 10080, label: t('pages:workflows.createDialog.reminderDelays.10080') },
+    { value: 60, label: t('pages:workflows.createDialog.reminderDelays.60') }
+  ];
+
+  const channelConfigs: Record<ChannelType, { enabled: boolean; icon: React.ComponentType<{ className?: string }>; label: string; color: string }> = {
+    email: { enabled: true, icon: Mail, label: t('pages:workflows.createDialog.channels.email'), color: 'bg-blue-500' },
+    whatsapp: { enabled: true, icon: MessageCircle, label: t('pages:workflows.createDialog.channels.whatsapp'), color: 'bg-green-600' },
+    sms: { enabled: true, icon: Phone, label: t('pages:workflows.createDialog.channels.sms'), color: 'bg-green-500' }
+  };
 
   // Initialize form data based on edit workflow
   const [formData, setFormData] = useState<WorkflowFormData>({
@@ -273,7 +239,7 @@ export function CreateWorkflowSheet({
     onSaveAndExit: async () => {
       await handleSubmit();
     },
-    message: "You have unsaved changes to this workflow."
+    message: t('pages:workflows.createDialog.navigationGuard.message')
   });
 
   const handleDirtyClose = () => {
@@ -283,11 +249,11 @@ export function CreateWorkflowSheet({
     }
   };
   const footerActions = [{
-    label: 'Cancel',
+    label: t('pages:workflows.createDialog.buttons.cancel'),
     onClick: handleClose,
     variant: 'outline' as const
   }, {
-    label: isEditing ? 'Update Workflow' : 'Create Workflow',
+    label: isEditing ? t('pages:workflows.createDialog.buttons.update') : t('pages:workflows.createDialog.buttons.create'),
     onClick: handleSubmit,
     disabled: loading || !formData.name.trim() || !selectedTemplate || !hasEnabledChannels || !isTemplateValid,
     loading
@@ -297,7 +263,7 @@ export function CreateWorkflowSheet({
           {children}
         </div>}
       
-      <AppSheetModal title={isEditing ? 'Edit Workflow' : 'Create New Workflow'} isOpen={open} onOpenChange={newOpen => {
+      <AppSheetModal title={isEditing ? t('pages:workflows.createDialog.titleEdit') : t('pages:workflows.createDialog.titleCreate')} isOpen={open} onOpenChange={newOpen => {
       if (!newOpen) {
         handleDirtyClose();
       } else {
@@ -308,20 +274,20 @@ export function CreateWorkflowSheet({
           {/* Basic Info */}
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Workflow Name *</Label>
-              <Input id="name" placeholder="e.g., Session Confirmation Notifications" value={formData.name} onChange={e => updateFormData('name', e.target.value)} required />
+              <Label htmlFor="name">{t('pages:workflows.createDialog.fields.name.label')}</Label>
+              <Input id="name" placeholder={t('pages:workflows.createDialog.fields.name.placeholder')} value={formData.name} onChange={e => updateFormData('name', e.target.value)} required />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea id="description" placeholder="Describe what this workflow does..." value={formData.description} onChange={e => updateFormData('description', e.target.value)} rows={3} />
+              <Label htmlFor="description">{t('pages:workflows.createDialog.fields.description.label')}</Label>
+              <Textarea id="description" placeholder={t('pages:workflows.createDialog.fields.description.placeholder')} value={formData.description} onChange={e => updateFormData('description', e.target.value)} rows={3} />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="trigger">Trigger Event *</Label>
+              <Label htmlFor="trigger">{t('pages:workflows.createDialog.fields.trigger.label')}</Label>
               <Select value={formData.trigger_type} onValueChange={value => updateFormData('trigger_type', value as TriggerType)}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select a trigger event" />
+                  <SelectValue placeholder={t('pages:workflows.createDialog.fields.trigger.placeholder')} />
                 </SelectTrigger>
                 <SelectContent>
                   {triggerOptions.map(option => <SelectItem key={option.value} value={option.value}>
@@ -335,7 +301,7 @@ export function CreateWorkflowSheet({
           {/* Reminder Timing - Only for session_reminder */}
           {formData.trigger_type === 'session_reminder' && <div className="space-y-4">
               <div className="space-y-2">
-                <Label>Reminder Timing *</Label>
+                <Label>{t('pages:workflows.createDialog.fields.reminderTiming.label')}</Label>
                 <Select value={reminderDelay.toString()} onValueChange={value => setReminderDelay(Number(value))}>
                   <SelectTrigger>
                     <SelectValue />
@@ -357,18 +323,18 @@ export function CreateWorkflowSheet({
           {/* Template Selection */}
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Message Template *</Label>
+              <Label>{t('pages:workflows.createDialog.fields.template.label')}</Label>
               
               {templatesLoading ? (
-                <div className="text-sm text-muted-foreground">Loading templates...</div>
+                <div className="text-sm text-muted-foreground">{t('pages:workflows.createDialog.fields.template.loading')}</div>
               ) : sessionTemplates.length === 0 ? (
                 <div className="text-sm text-muted-foreground p-4 border border-dashed rounded-lg text-center">
-                  No published templates found. Please create and publish a template first in the Templates section.
+                  {t('pages:workflows.createDialog.fields.template.emptyState')}
                 </div>
               ) : (
                 <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select a template..." />
+                    <SelectValue placeholder={t('pages:workflows.createDialog.fields.template.placeholder')} />
                   </SelectTrigger>
                   <SelectContent>
                     {sessionTemplates.map(template => (
@@ -385,9 +351,9 @@ export function CreateWorkflowSheet({
           {/* Channel Selection */}
           <div className="space-y-4">
             <div>
-              <Label>Notification Channels</Label>
+              <Label>{t('pages:workflows.createDialog.fields.channels.label')}</Label>
               <p className="text-sm text-muted-foreground mt-1">
-                Choose which channels to send notifications through
+                {t('pages:workflows.createDialog.fields.channels.description')}
               </p>
             </div>
 
@@ -403,7 +369,7 @@ export function CreateWorkflowSheet({
                       <div>
                         <p className="font-medium text-sm">{config.label}</p>
                         <p className="text-xs text-muted-foreground">
-                          Send via {config.label.toLowerCase()}
+                          {t('pages:workflows.createDialog.fields.channels.sendVia', { channel: config.label.toLowerCase() })}
                         </p>
                       </div>
                     </div>
@@ -413,16 +379,16 @@ export function CreateWorkflowSheet({
             </div>
 
             {!hasEnabledChannels && <div className="text-sm text-destructive">
-                Please enable at least one notification channel
+                {t('pages:workflows.createDialog.fields.channels.error')}
               </div>}
           </div>
 
           {/* Status Toggle */}
           <div className="flex items-center justify-between p-3 border border-border rounded-lg">
             <div className="space-y-1">
-              <Label htmlFor="active">Start Active</Label>
+              <Label htmlFor="active">{t('pages:workflows.createDialog.fields.startActive.label')}</Label>
               <p className="text-sm text-muted-foreground">
-                Workflow will start processing triggers immediately
+                {t('pages:workflows.createDialog.fields.startActive.description')}
               </p>
             </div>
             <Switch id="active" checked={formData.is_active} onCheckedChange={checked => updateFormData('is_active', checked)} />
@@ -442,7 +408,7 @@ export function CreateWorkflowSheet({
       
       {!children && <Button onClick={() => setOpen(true)}>
           <Plus className="h-4 w-4 mr-2" />
-          Create Workflow
+          {t('pages:workflows.buttons.createWorkflow')}
         </Button>}
     </>;
 }

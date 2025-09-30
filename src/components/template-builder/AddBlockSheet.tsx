@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Type, Calendar, MousePointer, Image, Columns3, Minus, Link, Layout, Code } from "lucide-react";
 import { TemplateBlock } from "@/types/templateBuilder";
+import { useTranslation } from "react-i18next";
 
 
 interface AddBlockSheetProps {
@@ -11,65 +12,67 @@ interface AddBlockSheetProps {
   onAddBlock: (type: TemplateBlock["type"]) => void;
 }
 
-const blockTypes = [
-  {
-    type: "text" as const,
-    icon: Type,
-    title: "Text Block",
-    description: "Rich text with formatting, links, and placeholders",
-  },
-  {
-    type: "session-details" as const,
-    icon: Calendar,
-    title: "Session Details",
-    description: "Date, time, location displayed cleanly with optional notes",
-  },
-  {
-    type: "cta" as const,
-    icon: MousePointer,
-    title: "Call to Action",
-    description: "Primary and secondary action buttons",
-  },
-  {
-    type: "image" as const,
-    icon: Image,
-    title: "Image Block",
-    description: "Insert brand image, uploaded file, or cover with caption + link option",
-  },
-  {
-    type: "divider" as const,
-    icon: Minus,
-    title: "Divider/Spacer",
-    description: "Add visual separation with lines or spacing between content",
-  },
-  {
-    type: "social-links" as const,
-    icon: Link,
-    title: "Social Links",
-    description: "Add social media links with platform icons",
-  },
-  {
-    type: "header" as const,
-    icon: Layout,
-    title: "Header Block",
-    description: "Logo and tagline header section with custom styling",
-  },
-  {
-    type: "footer" as const,
-    icon: Columns3,
-    title: "Footer Block",
-    description: "Logo, studio name, contact info, and compliance options",
-  },
-];
-
 export function AddBlockSheet({ open, onOpenChange, onAddBlock }: AddBlockSheetProps) {
+  const { t } = useTranslation();
+
+  const blockTypes = [
+    {
+      type: "text" as const,
+      icon: Type,
+      title: t('pages:template_builder.addBlockSheet.blocks.text.title'),
+      description: t('pages:template_builder.addBlockSheet.blocks.text.description'),
+    },
+    {
+      type: "session-details" as const,
+      icon: Calendar,
+      title: t('pages:template_builder.addBlockSheet.blocks.sessionDetails.title'),
+      description: t('pages:template_builder.addBlockSheet.blocks.sessionDetails.description'),
+    },
+    {
+      type: "cta" as const,
+      icon: MousePointer,
+      title: t('pages:template_builder.addBlockSheet.blocks.cta.title'),
+      description: t('pages:template_builder.addBlockSheet.blocks.cta.description'),
+    },
+    {
+      type: "image" as const,
+      icon: Image,
+      title: t('pages:template_builder.addBlockSheet.blocks.image.title'),
+      description: t('pages:template_builder.addBlockSheet.blocks.image.description'),
+    },
+    {
+      type: "divider" as const,
+      icon: Minus,
+      title: t('pages:template_builder.addBlockSheet.blocks.divider.title'),
+      description: t('pages:template_builder.addBlockSheet.blocks.divider.description'),
+    },
+    {
+      type: "social-links" as const,
+      icon: Link,
+      title: t('pages:template_builder.addBlockSheet.blocks.socialLinks.title'),
+      description: t('pages:template_builder.addBlockSheet.blocks.socialLinks.description'),
+    },
+    {
+      type: "header" as const,
+      icon: Layout,
+      title: t('pages:template_builder.addBlockSheet.blocks.header.title'),
+      description: t('pages:template_builder.addBlockSheet.blocks.header.description'),
+    },
+    {
+      type: "footer" as const,
+      icon: Columns3,
+      title: t('pages:template_builder.addBlockSheet.blocks.footer.title'),
+      description: t('pages:template_builder.addBlockSheet.blocks.footer.description'),
+    },
+  ];
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-[45vw] min-w-[600px]">
         <SheetHeader>
-          <SheetTitle>Block Library</SheetTitle>
+          <SheetTitle>{t('pages:template_builder.addBlockSheet.title')}</SheetTitle>
           <SheetDescription>
-            Choose a block to add to your template. Blocks can be reordered and customized after adding.
+            {t('pages:template_builder.addBlockSheet.description')}
           </SheetDescription>
         </SheetHeader>
         

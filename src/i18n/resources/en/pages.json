@@ -411,6 +411,69 @@
       "createFirstMessage": "Create your first automated workflow to streamline your client communications.",
       "noMatchingFilters": "No workflows match your filters",
       "adjustFilters": "Try adjusting your search or filter criteria."
+    },
+    "createDialog": {
+      "titleCreate": "Create New Workflow",
+      "titleEdit": "Edit Workflow",
+      "fields": {
+        "name": {
+          "label": "Workflow Name *",
+          "placeholder": "e.g., Session Confirmation Notifications"
+        },
+        "description": {
+          "label": "Description",
+          "placeholder": "Describe what this workflow does..."
+        },
+        "trigger": {
+          "label": "Trigger Event *",
+          "placeholder": "Select a trigger event"
+        },
+        "reminderTiming": {
+          "label": "Reminder Timing *"
+        },
+        "template": {
+          "label": "Message Template *",
+          "placeholder": "Select a template...",
+          "loading": "Loading templates...",
+          "emptyState": "No published templates found. Please create and publish a template first in the Templates section."
+        },
+        "channels": {
+          "label": "Notification Channels",
+          "description": "Choose which channels to send notifications through",
+          "sendVia": "Send via {{channel}}",
+          "error": "Please enable at least one notification channel"
+        },
+        "startActive": {
+          "label": "Start Active",
+          "description": "Workflow will start processing triggers immediately"
+        }
+      },
+      "triggers": {
+        "session_scheduled": "Session Scheduled",
+        "session_completed": "Session Completed",
+        "session_cancelled": "Session Cancelled",
+        "session_rescheduled": "Session Rescheduled",
+        "session_reminder": "Session Reminder"
+      },
+      "reminderDelays": {
+        "1440": "1 day before",
+        "4320": "3 days before",
+        "10080": "1 week before",
+        "60": "1 hour before"
+      },
+      "channels": {
+        "email": "Email",
+        "whatsapp": "WhatsApp",
+        "sms": "SMS"
+      },
+      "buttons": {
+        "cancel": "Cancel",
+        "create": "Create Workflow",
+        "update": "Update Workflow"
+      },
+      "navigationGuard": {
+        "message": "You have unsaved changes to this workflow."
+      }
     }
   },
   "templates": {
@@ -475,6 +538,69 @@
     },
     "navigationGuard": {
       "unsavedChanges": "You have unsaved changes to this template."
+    },
+    "addBlockSheet": {
+      "title": "Block Library",
+      "description": "Choose a block to add to your template. Blocks can be reordered and customized after adding.",
+      "blocks": {
+        "text": {
+          "title": "Text Block",
+          "description": "Rich text with formatting, links, and placeholders"
+        },
+        "sessionDetails": {
+          "title": "Session Details",
+          "description": "Date, time, location displayed cleanly with optional notes"
+        },
+        "cta": {
+          "title": "Call to Action",
+          "description": "Primary and secondary action buttons"
+        },
+        "image": {
+          "title": "Image Block",
+          "description": "Insert brand image, uploaded file, or cover with caption + link option"
+        },
+        "divider": {
+          "title": "Divider/Spacer",
+          "description": "Add visual separation with lines or spacing between content"
+        },
+        "socialLinks": {
+          "title": "Social Links",
+          "description": "Add social media links with platform icons"
+        },
+        "header": {
+          "title": "Header Block",
+          "description": "Logo and tagline header section with custom styling"
+        },
+        "footer": {
+          "title": "Footer Block",
+          "description": "Logo, studio name, contact info, and compliance options"
+        }
+      }
+    },
+    "nameDialog": {
+      "titleSave": "Save Template",
+      "titlePublish": "Publish Template",
+      "descriptionSave": "Please provide a name for your template before saving.",
+      "descriptionPublish": "Please provide a name for your template before publishing.",
+      "fields": {
+        "name": {
+          "label": "Template Name",
+          "placeholder": "Enter template name..."
+        }
+      },
+      "buttons": {
+        "cancel": "Cancel",
+        "save": "Save",
+        "publish": "Publish",
+        "saving": "Saving...",
+        "publishing": "Publishing..."
+      },
+      "validation": {
+        "required": "Template name is required",
+        "minLength": "Template name must be at least 2 characters long",
+        "maxLength": "Template name must be less than 100 characters",
+        "duplicate": "A template with this name already exists. Please choose a different name."
+      }
     }
   }
 }

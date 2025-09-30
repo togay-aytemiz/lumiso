@@ -137,7 +137,7 @@
   },
   "calendar": {
     "title": "Calendar",
-    "description": "Manage your sessions and reminders",
+    "description": "View your scheduled sessions and reminders",
     "viewModes": {
       "day": "Day",
       "week": "Week",
@@ -151,6 +151,81 @@
     "filters": {
       "sessions": "Sessions",
       "reminders": "Reminders"
+    },
+    "emptyStates": {
+      "noSessions": "No sessions scheduled for this day",
+      "noReminders": "No reminders for this day",
+      "noEvents": "No events to display",
+      "noEventsDay": "No events for this day",
+      "enableFilters": "Enable sessions or reminders in the filters above"
+    },
+    "sections": {
+      "sessions": "Sessions",
+      "reminders": "Reminders"
+    },
+    "tooltips": {
+      "clickSession": "Click to view session details",
+      "clickLead": "Click to view lead details",
+      "clickProject": "Click to view project details"
+    },
+    "labels": {
+      "today": "Today",
+      "allDay": "All day",
+      "completed": "Completed",
+      "lead": "Lead",
+      "session": "Session",
+      "project": "Project",
+      "status": "Status",
+      "moreEvents": "+{{count}} more"
+    }
+  },
+  "sessions": {
+    "title": "Sessions",
+    "description": "Manage your photo sessions and appointments",
+    "addButton": "Add Session",
+    "filters": {
+      "statusLabel": "Filter by status:",
+      "allStatuses": "All Statuses",
+      "dateFilters": {
+        "all": "All",
+        "past": "Past",
+        "today": "Today",
+        "tomorrow": "Tomorrow",
+        "thisWeek": "This Week",
+        "nextWeek": "Next Week",
+        "thisMonth": "This Month",
+        "nextMonth": "Next Month"
+      }
+    },
+    "table": {
+      "project": "Project",
+      "clientName": "Client Name",
+      "date": "Date",
+      "time": "Time",
+      "status": "Status",
+      "notes": "Notes"
+    },
+    "emptyState": {
+      "title": "No sessions found",
+      "description": "Try adjusting your filters to find sessions"
+    }
+  },
+  "reminders": {
+    "title": "Reminders",
+    "description": "Manage your activities and reminders",
+    "filters": {
+      "all": "All",
+      "overdue": "Overdue",
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "thisWeek": "This Week",
+      "nextWeek": "Next Week",
+      "thisMonth": "This Month"
+    },
+    "showCompleted": "Show Completed",
+    "emptyState": {
+      "title": "No reminders found",
+      "description": "You don't have any reminders for the selected filter"
     }
   },
   "settings": {

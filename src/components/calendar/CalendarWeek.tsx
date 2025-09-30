@@ -5,6 +5,7 @@ import { CalendarDay } from './CalendarDay';
 import { useSmartTimeRange } from '@/hooks/useSmartTimeRange';
 import { useOrganizationTimezone } from '@/hooks/useOrganizationTimezone';
 import { Badge } from '@/components/ui/badge';
+import { useTranslation } from 'react-i18next';
 
 
 interface Session {
@@ -59,6 +60,7 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
   onActivityClick,
   onDayClick
 }) {
+  const { t } = useTranslation('pages');
   const userLocale = getUserLocale();
   const { formatTime: formatOrgTime, loading: timezoneLoading } = useOrganizationTimezone();
   const { timeSlots, getSlotIndex } = useSmartTimeRange(sessions, activities);
@@ -157,11 +159,11 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
             <div>
               <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-primary" />
-                Sessions ({daySessions.length})
+                {t('calendar.sections.sessions')} ({daySessions.length})
               </h3>
               <div className="space-y-3">
                 {daySessions.map(session => {
-                  const leadName = leadsMap[session.lead_id]?.name || 'Lead';
+                  const leadName = leadsMap[session.lead_id]?.name || t('calendar.labels.lead');
                   const projectName = session.project_id ? projectsMap[session.project_id]?.name : undefined;
 
                   return (
@@ -173,7 +175,7 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex-1 min-w-0">
                           <div className="font-medium text-primary mb-1">
-                            {projectName || 'Session'}
+                            {projectName || t('calendar.labels.session')}
                           </div>
                           <div className="text-sm text-muted-foreground mb-2">
                             {leadName}
@@ -202,13 +204,13 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
             <div>
               <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-muted-foreground/60" />
-                Reminders ({dayActivities.length})
+                {t('calendar.sections.reminders')} ({dayActivities.length})
               </h3>
               <div className="space-y-3">
                 {dayActivities.map(activity => {
-                  const leadName = leadsMap[activity.lead_id]?.name || 'Lead';
+                  const leadName = leadsMap[activity.lead_id]?.name || t('calendar.labels.lead');
                   const projectName = activity.project_id ? projectsMap[activity.project_id]?.name : undefined;
-                  const timeText = activity.reminder_time ? formatOrgTime(activity.reminder_time) : 'All day';
+                  const timeText = activity.reminder_time ? formatOrgTime(activity.reminder_time) : t('calendar.labels.allDay');
 
                   return (
                     <button
@@ -224,7 +226,7 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
                             {activity.content}
                           </div>
                           <div className="text-sm text-muted-foreground mb-2">
-                            {projectName ? `Project: ${projectName}` : `Lead: ${leadName}`}
+                            {projectName ? `${t('calendar.labels.project')}: ${projectName}` : `${t('calendar.labels.lead')}: ${leadName}`}
                           </div>
                           <div className="text-sm font-medium">
                             {timeText}
@@ -233,7 +235,7 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
                         <div className={`px-2 py-1 text-xs rounded-md ${
                           activity.completed ? 'bg-muted text-muted-foreground' : 'bg-secondary text-secondary-foreground'
                         }`}>
-                          {activity.completed ? 'Completed' : activity.type}
+                          {activity.completed ? t('calendar.labels.completed') : activity.type}
                         </div>
                       </div>
                     </button>
@@ -245,7 +247,7 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
 
           {daySessions.length === 0 && dayActivities.length === 0 && (
             <div className="text-center py-8 text-muted-foreground">
-              <p>No events for this day</p>
+              <p>{t('calendar.emptyStates.noEventsDay')}</p>
             </div>
           )}
         </div>
@@ -309,7 +311,7 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
                               className="w-full text-left px-2 py-1 text-xs bg-primary/20 text-primary rounded hover:bg-primary/30 transition-colors truncate"
                               onClick={() => onSessionClick(session)}
                             >
-                              {leadsMap[session.lead_id]?.name || 'Lead'}
+                              {leadsMap[session.lead_id]?.name || t('calendar.labels.lead')}
                             </button>
                           ))}
 
@@ -322,7 +324,7 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
                               }`}
                               onClick={() => onActivityClick(activity)}
                             >
-                              {leadsMap[activity.lead_id]?.name || 'Lead'}
+                              {leadsMap[activity.lead_id]?.name || t('calendar.labels.lead')}
                             </button>
                           ))}
                       </div>

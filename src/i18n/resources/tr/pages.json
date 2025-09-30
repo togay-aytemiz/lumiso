@@ -137,7 +137,7 @@
   },
   "calendar": {
     "title": "Takvim",
-    "description": "Seanslarınızı ve hatırlatmalarınızı yönetin",
+    "description": "Planlanmış seanslarınızı ve hatırlatmalarınızı görüntüleyin",
     "viewModes": {
       "day": "Gün",
       "week": "Hafta",
@@ -151,6 +151,81 @@
     "filters": {
       "sessions": "Seanslar",
       "reminders": "Hatırlatmalar"
+    },
+    "emptyStates": {
+      "noSessions": "Bu gün için planlanmış seans yok",
+      "noReminders": "Bu gün için hatırlatma yok",
+      "noEvents": "Gösterilecek etkinlik yok",
+      "noEventsDay": "Bu gün için etkinlik yok",
+      "enableFilters": "Yukarıdaki filtrelerden seansları veya hatırlatmaları etkinleştirin"
+    },
+    "sections": {
+      "sessions": "Seanslar",
+      "reminders": "Hatırlatmalar"
+    },
+    "tooltips": {
+      "clickSession": "Seans detaylarını görüntülemek için tıklayın",
+      "clickLead": "Potansiyel müşteri detaylarını görüntülemek için tıklayın",
+      "clickProject": "Proje detaylarını görüntülemek için tıklayın"
+    },
+    "labels": {
+      "today": "Bugün",
+      "allDay": "Tüm gün",
+      "completed": "Tamamlandı",
+      "lead": "Potansiyel Müşteri",
+      "session": "Seans",
+      "project": "Proje",
+      "status": "Durum",
+      "moreEvents": "+{{count}} daha"
+    }
+  },
+  "sessions": {
+    "title": "Seanslar",
+    "description": "Fotoğraf seanslarınızı ve randevularınızı yönetin",
+    "addButton": "Seans Ekle",
+    "filters": {
+      "statusLabel": "Duruma göre filtrele:",
+      "allStatuses": "Tüm Durumlar",
+      "dateFilters": {
+        "all": "Tümü",
+        "past": "Geçmiş",
+        "today": "Bugün",
+        "tomorrow": "Yarın",
+        "thisWeek": "Bu Hafta",
+        "nextWeek": "Gelecek Hafta",
+        "thisMonth": "Bu Ay",
+        "nextMonth": "Gelecek Ay"
+      }
+    },
+    "table": {
+      "project": "Proje",
+      "clientName": "Müşteri Adı",
+      "date": "Tarih",
+      "time": "Saat",
+      "status": "Durum",
+      "notes": "Notlar"
+    },
+    "emptyState": {
+      "title": "Seans bulunamadı",
+      "description": "Seansları bulmak için filtrelerinizi ayarlayın"
+    }
+  },
+  "reminders": {
+    "title": "Hatırlatmalar",
+    "description": "Etkinliklerinizi ve hatırlatmalarınızı yönetin",
+    "filters": {
+      "all": "Tümü",
+      "overdue": "Gecikmiş",
+      "today": "Bugün",
+      "tomorrow": "Yarın",
+      "thisWeek": "Bu Hafta",
+      "nextWeek": "Gelecek Hafta",
+      "thisMonth": "Bu Ay"
+    },
+    "showCompleted": "Tamamlananları Göster",
+    "emptyState": {
+      "title": "Hatırlatma bulunamadı",
+      "description": "Seçili filtre için herhangi bir hatırlatmanız yok"
     }
   },
   "settings": {

@@ -4,6 +4,7 @@ import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip
 import { formatTime, formatDate, getUserLocale } from "@/lib/utils";
 import { useOrganizationTimezone } from "@/hooks/useOrganizationTimezone";
 import { Badge } from "@/components/ui/badge";
+import { useTranslation } from "react-i18next";
 
 interface Session {
   id: string;
@@ -57,6 +58,7 @@ export const CalendarDayView = memo<CalendarDayViewProps>(({
   onActivityClick,
   touchHandlers
 }) => {
+  const { t } = useTranslation('pages');
   const userLocale = getUserLocale();
   const { formatTime: formatOrgTime } = useOrganizationTimezone();
   const { sessions, activities } = getEventsForDate(currentDate);
@@ -83,7 +85,7 @@ export const CalendarDayView = memo<CalendarDayViewProps>(({
       {isDayToday && (
         <div className="text-center pb-4">
           <Badge variant="secondary">
-            Today
+            {t('calendar.labels.today')}
           </Badge>
         </div>
       )}
@@ -93,17 +95,17 @@ export const CalendarDayView = memo<CalendarDayViewProps>(({
         <div>
           <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-primary"></div>
-            Sessions ({sortedSessions.length})
+            {t('calendar.sections.sessions')} ({sortedSessions.length})
           </h3>
           
           {sortedSessions.length === 0 ? (
             <div className="text-muted-foreground text-center py-8 bg-card rounded-lg border border-dashed">
-              No sessions scheduled for this day
+              {t('calendar.emptyStates.noSessions')}
             </div>
           ) : (
             <div className="space-y-3">
               {sortedSessions.map((session) => {
-                const leadName = leadsMap[session.lead_id]?.name || "Lead";
+                const leadName = leadsMap[session.lead_id]?.name || t('calendar.labels.lead');
                 const projectName = session.project_id ? projectsMap[session.project_id]?.name : undefined;
                 
                 return (
@@ -116,7 +118,7 @@ export const CalendarDayView = memo<CalendarDayViewProps>(({
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex-1 min-w-0">
                             <div className="font-medium text-primary mb-1">
-                              {projectName || "Session"}
+                              {projectName || t('calendar.labels.session')}
                             </div>
                             <div className="text-sm text-muted-foreground mb-2">
                               {leadName}
@@ -140,7 +142,7 @@ export const CalendarDayView = memo<CalendarDayViewProps>(({
                       </button>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <div className="text-sm">Click to view session details</div>
+                      <div className="text-sm">{t('calendar.tooltips.clickSession')}</div>
                     </TooltipContent>
                   </Tooltip>
                 );
@@ -155,19 +157,19 @@ export const CalendarDayView = memo<CalendarDayViewProps>(({
         <div>
           <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-muted-foreground/60"></div>
-            Reminders ({sortedActivities.length})
+            {t('calendar.sections.reminders')} ({sortedActivities.length})
           </h3>
           
           {sortedActivities.length === 0 ? (
             <div className="text-muted-foreground text-center py-8 bg-card rounded-lg border border-dashed">
-              No reminders for this day
+              {t('calendar.emptyStates.noReminders')}
             </div>
           ) : (
             <div className="space-y-3">
               {sortedActivities.map((activity) => {
-                const leadName = leadsMap[activity.lead_id]?.name || "Lead";
+                const leadName = leadsMap[activity.lead_id]?.name || t('calendar.labels.lead');
                 const projectName = activity.project_id ? projectsMap[activity.project_id]?.name : undefined;
-                const timeText = activity.reminder_time ? formatOrgTime(activity.reminder_time) : "All day";
+                const timeText = activity.reminder_time ? formatOrgTime(activity.reminder_time) : t('calendar.labels.allDay');
                 
                 return (
                   <Tooltip key={activity.id}>
@@ -184,7 +186,7 @@ export const CalendarDayView = memo<CalendarDayViewProps>(({
                               {activity.content}
                             </div>
                             <div className="text-sm text-muted-foreground mb-2">
-                              {projectName ? `Project: ${projectName}` : `Lead: ${leadName}`}
+                              {projectName ? `${t('calendar.labels.project')}: ${projectName}` : `${t('calendar.labels.lead')}: ${leadName}`}
                             </div>
                             <div className="text-sm font-medium">
                               {timeText}
@@ -194,14 +196,14 @@ export const CalendarDayView = memo<CalendarDayViewProps>(({
                             variant={activity.completed ? 'default' : 'secondary'}
                             className="text-xs"
                           >
-                            {activity.completed ? 'Completed' : activity.type}
+                            {activity.completed ? t('calendar.labels.completed') : activity.type}
                           </Badge>
                         </div>
                       </button>
                     </TooltipTrigger>
                     <TooltipContent>
                       <div className="text-sm">
-                        Click to view {activity.project_id ? 'project' : 'lead'} details
+                        {activity.project_id ? t('calendar.tooltips.clickProject') : t('calendar.tooltips.clickLead')}
                       </div>
                     </TooltipContent>
                   </Tooltip>
@@ -215,8 +217,8 @@ export const CalendarDayView = memo<CalendarDayViewProps>(({
       {/* Empty state when both are disabled */}
       {!showSessions && !showReminders && (
         <div className="text-center py-12 text-muted-foreground">
-          <div className="text-lg font-medium mb-2">No events to display</div>
-          <div className="text-sm">Enable sessions or reminders in the filters above</div>
+          <div className="text-lg font-medium mb-2">{t('calendar.emptyStates.noEvents')}</div>
+          <div className="text-sm">{t('calendar.emptyStates.enableFilters')}</div>
         </div>
       )}
     </div>

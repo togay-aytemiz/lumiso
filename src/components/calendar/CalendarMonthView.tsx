@@ -2,6 +2,7 @@ import { memo } from "react";
 import { format, eachDayOfInterval, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isToday } from "date-fns";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { formatTime, formatDate, getUserLocale } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 interface Session {
   id: string;
@@ -59,6 +60,7 @@ export const CalendarMonthView = memo<CalendarMonthViewProps>(({
   isMobile,
   touchHandlers
 }) => {
+  const { t } = useTranslation('pages');
   const userLocale = getUserLocale();
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
@@ -177,7 +179,7 @@ export const CalendarMonthView = memo<CalendarMonthViewProps>(({
                         {shown.map((entry) => {
                           if (entry.kind === 'session') {
                             const session = entry.item as Session;
-                            const leadName = leadsMap[session.lead_id]?.name || "Lead";
+                            const leadName = leadsMap[session.lead_id]?.name || t('calendar.labels.lead');
                             const projectName = session.project_id ? projectsMap[session.project_id]?.name : undefined;
                             const line = `${formatTime(session.session_time, userLocale)} ${leadName}${projectName ? " • " + projectName : ""}`;
                             return (
@@ -194,19 +196,19 @@ export const CalendarMonthView = memo<CalendarMonthViewProps>(({
                                   </button>
                                 </TooltipTrigger>
                                 <TooltipContent className="max-w-xs">
-                                  <div className="text-sm font-medium">{projectName || "Session"}</div>
+                                  <div className="text-sm font-medium">{projectName || t('calendar.labels.session')}</div>
                                   <div className="text-xs text-muted-foreground">{leadName}</div>
                                   <div className="text-xs text-muted-foreground">{formatDate(session.session_date)} • {formatTime(session.session_time, userLocale)}</div>
                                   {session.notes && <div className="mt-1 text-xs">{session.notes}</div>}
-                                  <div className="text-xs">Status: <span className="capitalize">{session.status}</span></div>
+                                  <div className="text-xs">{t('calendar.labels.status')}: <span className="capitalize">{session.status}</span></div>
                                 </TooltipContent>
                               </Tooltip>
                             );
                           } else {
                             const activity = entry.item as Activity;
-                            const leadName = leadsMap[activity.lead_id]?.name || "Lead";
+                            const leadName = leadsMap[activity.lead_id]?.name || t('calendar.labels.lead');
                             const projectName = activity.project_id ? projectsMap[activity.project_id!]?.name : undefined;
-                            const timeText = activity.reminder_time ? formatTime(activity.reminder_time, userLocale) : "All day";
+                            const timeText = activity.reminder_time ? formatTime(activity.reminder_time, userLocale) : t('calendar.labels.allDay');
                             const line = `${timeText} ${leadName}${projectName ? " • " + projectName : ""}`;
                             return (
                               <Tooltip key={`a-${activity.id}`}>
@@ -224,7 +226,7 @@ export const CalendarMonthView = memo<CalendarMonthViewProps>(({
                                 <TooltipContent className="max-w-xs">
                                   <div className="text-sm font-medium">{activity.content}</div>
                                   <div className="text-xs text-muted-foreground">{formatDate(activity.reminder_date)} • {timeText}</div>
-                                  <div className="text-xs text-muted-foreground">{projectName ? `Project: ${projectName}` : `Lead: ${leadName}`}</div>
+                                  <div className="text-xs text-muted-foreground">{projectName ? `${t('calendar.labels.project')}: ${projectName}` : `${t('calendar.labels.lead')}: ${leadName}`}</div>
                                 </TooltipContent>
                               </Tooltip>
                             );
@@ -237,16 +239,16 @@ export const CalendarMonthView = memo<CalendarMonthViewProps>(({
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <div className="text-xs text-muted-foreground cursor-help text-left">
-                              +{extras.length} more
+                              {t('calendar.labels.moreEvents', { count: extras.length })}
                             </div>
                           </TooltipTrigger>
                           <TooltipContent className="max-w-xs">
                             {sessionExtras.length > 0 && (
                               <div className="mb-1">
-                                <div className="text-xs font-medium mb-1">Sessions</div>
+                                <div className="text-xs font-medium mb-1">{t('calendar.sections.sessions')}</div>
                                 <ul className="space-y-0.5">
                                   {sessionExtras.map((session) => {
-                                    const leadName = leadsMap[session.lead_id]?.name || "Lead";
+                                    const leadName = leadsMap[session.lead_id]?.name || t('calendar.labels.lead');
                                     const projectName = session.project_id ? projectsMap[session.project_id]?.name : undefined;
                                     const timeText = formatTime(session.session_time, userLocale);
                                     return (
@@ -260,12 +262,12 @@ export const CalendarMonthView = memo<CalendarMonthViewProps>(({
                             )}
                             {activityExtras.length > 0 && (
                               <div>
-                                <div className="text-xs font-medium mb-1">Reminders</div>
+                                <div className="text-xs font-medium mb-1">{t('calendar.sections.reminders')}</div>
                                 <ul className="space-y-0.5">
                                   {activityExtras.map((activity) => {
-                                    const leadName = leadsMap[activity.lead_id]?.name || "Lead";
+                                    const leadName = leadsMap[activity.lead_id]?.name || t('calendar.labels.lead');
                                     const projectName = activity.project_id ? projectsMap[activity.project_id!]?.name : undefined;
-                                    const timeText = activity.reminder_time ? formatTime(activity.reminder_time, userLocale) : "All day";
+                                    const timeText = activity.reminder_time ? formatTime(activity.reminder_time, userLocale) : t('calendar.labels.allDay');
                                     return (
                                       <li key={activity.id} className="text-xs">
                                         {timeText} {leadName}{projectName ? ` • ${projectName}` : ""}

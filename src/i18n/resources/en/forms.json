@@ -249,7 +249,8 @@
       "meeting": "Meeting",
       "note": "Note",
       "task": "Task",
-      "follow_up": "Follow Up"
+      "follow_up": "Follow Up",
+      "reminder": "Reminder"
     }
   },
   "clientDetails": {

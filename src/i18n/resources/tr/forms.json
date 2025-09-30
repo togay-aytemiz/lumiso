@@ -248,7 +248,8 @@
       "meeting": "Toplantı", 
       "note": "Not",
       "task": "Görev",
-      "follow_up": "Takip"
+      "follow_up": "Takip",
+      "reminder": "Hatırlatıcı"
     }
   },
   "clientDetails": {

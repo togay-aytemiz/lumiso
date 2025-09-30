@@ -594,7 +594,11 @@
     "no_sessions": "Henüz planlanmış seans yok",
     "add_sessions_hint": "Başlamak için ilk seansınızı planlayın",
     "project_sessions_count": "Bu proje için {{count}} seans",
-    "project_sessions_count_plural": "Bu proje için {{count}} seans"
+    "project_sessions_count_plural": "Bu proje için {{count}} seans",
+    "add_session": "Seans Ekle"
+  },
+  "progress": {
+    "todos_completed": "yapılacak tamamlandı"
   },
   "activities": {
     "note_label": "Not",

@@ -37,7 +37,7 @@ export default function Profile() {
   const { activeOrganization } = useOrganization();
   const { completeCurrentStep } = useOnboarding();
   const { toast } = useToast();
-  const { t } = useTranslation('pages');
+  const { t } = useTranslation(['pages', 'common']);
 
   // Check if we're in tutorial mode
   const isInTutorial = searchParams.get('tutorial') === 'true';
@@ -506,7 +506,7 @@ export default function Profile() {
                   {workingHour.enabled && (
                     <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 flex-1">
                       <div className="flex items-center gap-2">
-                        <Label className="text-sm text-muted-foreground w-12">{t('common:common.labels.from')}</Label>
+                        <Label className="text-sm text-muted-foreground w-12">{t('common.labels.from', { ns: 'common' })}</Label>
                         <Select 
                           value={workingHour.start_time} 
                           onValueChange={(value) => handleWorkingHourUpdate(dayOfWeek, 'start_time', value)}
@@ -525,7 +525,7 @@ export default function Profile() {
                       </div>
                       
                       <div className="flex items-center gap-2">
-                        <Label className="text-sm text-muted-foreground w-12">{t('common:common.labels.to')}</Label>
+                        <Label className="text-sm text-muted-foreground w-12">{t('common.labels.to', { ns: 'common' })}</Label>
                         <Select 
                           value={workingHour.end_time} 
                           onValueChange={(value) => handleWorkingHourUpdate(dayOfWeek, 'end_time', value)}

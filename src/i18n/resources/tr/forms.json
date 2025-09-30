@@ -159,6 +159,25 @@
     "drag_instructions": "Yeniden sıralamak için sürükleyin (⋮⋮) • Durum adlarını ve renklerini düzenlemek için tıklayın.",
     "preferences_updated": "Tercihler güncellendi"
   },
+  "social_channels": {
+    "title": "Sosyal Kanallar",
+    "description": "E-posta alt bilgilerinde gösterilecek sosyal medya ve web sitesi bağlantılarınızı ekleyin",
+    "unsaved_changes": "Kaydedilmemiş Değişiklikler",
+    "no_channels": "Henüz sosyal kanal eklenmedi",
+    "add_links_description": "E-posta alt bilgilerinde gösterilecek sosyal medya ve web sitesi bağlantıları ekleyin",
+    "add_platform": "Platform Ekle",
+    "add_custom": "Özel Ekle",
+    "custom_platform_placeholder": "Özel platform adı (örn., TikTok, Behance)",
+    "url_invalid": "Lütfen geçerli bir URL girin",
+    "remove_channel_title": "Sosyal Kanalı Kaldır",
+    "remove_channel_description": "{name} kanalını kaldırmak istediğinizden emin misiniz? Bu işlem geri alınamaz.",
+    "remove_button": "Kaldır",
+    "help_text": {
+      "appear_in_emails": "Sosyal bağlantılar etkinleştirildiğinde e-posta şablonu alt bilgilerinde görünecektir",
+      "drag_to_reorder": "E-postalarda nasıl görüneceğini değiştirmek için sürükleyin",
+      "valid_urls_only": "Yalnızca geçerli URL'lere sahip kanallar görüntülenecektir"
+    }
+  },
   "lead_fields": {
     "title": "Özel Müşteri Adayı Alanları",
     "description": "Ek müşteri adayı bilgilerini yakalamak için özel alanları yapılandırın",

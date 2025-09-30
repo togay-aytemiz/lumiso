@@ -159,6 +159,25 @@
     "drag_instructions": "Drag (⋮⋮) to reorder • Click to edit status names and colors.",
     "preferences_updated": "Preferences updated"
   },
+  "social_channels": {
+    "title": "Social Channels",
+    "description": "Add your social media and website links to display in email footers",
+    "unsaved_changes": "Unsaved Changes",
+    "no_channels": "No social channels added yet",
+    "add_links_description": "Add social media and website links to display in email footers",
+    "add_platform": "Add Platform",
+    "add_custom": "Add Custom",
+    "custom_platform_placeholder": "Custom platform name (e.g., TikTok, Behance)",
+    "url_invalid": "Please enter a valid URL",
+    "remove_channel_title": "Remove Social Channel",
+    "remove_channel_description": "Are you sure you want to remove {name}? This action cannot be undone.",
+    "remove_button": "Remove",
+    "help_text": {
+      "appear_in_emails": "Social links will appear in email template footers when enabled",
+      "drag_to_reorder": "Drag to reorder how they appear in emails",
+      "valid_urls_only": "Only channels with valid URLs will be displayed"
+    }
+  },
   "lead_fields": {
     "title": "Custom Lead Fields",
     "description": "Configure custom fields to capture additional lead information",

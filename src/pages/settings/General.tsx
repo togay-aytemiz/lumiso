@@ -438,7 +438,7 @@ export default function General() {
 
             {/* Brand Color */}
             <div className="space-y-2">
-              <Label htmlFor="brand-color">Primary Brand Color</Label>
+              <Label htmlFor="brand-color">{t("settings.general.branding.primaryBrandColor")}</Label>
               <div className="flex items-center gap-4">
                 <Input
                   id="brand-color"
@@ -456,7 +456,7 @@ export default function General() {
                 />
               </div>
               <p className="text-sm text-muted-foreground">
-                Used in client-facing UI and outgoing messages. Must be a valid hex color (e.g., #1EB29F)
+                {t("settings.general.branding.brandColorHelp")}
               </p>
             </div>
           </div>
@@ -504,11 +504,11 @@ export default function General() {
               >
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="12-hour" id="12-hour" />
-                  <Label htmlFor="12-hour">12-hour (e.g. 2:00 PM)</Label>
+                  <Label htmlFor="12-hour">{t("settings.general.regional.timeFormat12Hour")}</Label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="24-hour" id="24-hour" />
-                  <Label htmlFor="24-hour">24-hour (e.g. 14:00)</Label>
+                  <Label htmlFor="24-hour">{t("settings.general.regional.timeFormat24Hour")}</Label>
                 </div>
               </RadioGroup>
             </div>

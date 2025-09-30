@@ -138,11 +138,11 @@ export function SocialChannelsSection({ socialChannels, onUpdate, isDirty }: Soc
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Globe className="h-5 w-5" />
-          Social Channels
-          {isDirty && <Badge variant="secondary">Unsaved Changes</Badge>}
+          {t('social_channels.title')}
+          {isDirty && <Badge variant="secondary">{t('social_channels.unsaved_changes')}</Badge>}
         </CardTitle>
         <p className="text-sm text-muted-foreground">
-          Add your social media and website links to display in email footers
+          {t('social_channels.description')}
         </p>
       </CardHeader>
       <CardContent>
@@ -197,11 +197,11 @@ export function SocialChannelsSection({ socialChannels, onUpdate, isDirty }: Soc
                                     "h-9 text-sm",
                                     !hasValidUrl && channel.url && "border-destructive focus:ring-destructive"
                                   )}
-                                />
-                                {!hasValidUrl && channel.url && (
-                                  <p className="text-xs text-destructive mt-1">Please enter a valid URL</p>
-                                )}
-                              </div>
+                                 />
+                                 {!hasValidUrl && channel.url && (
+                                   <p className="text-xs text-destructive mt-1">{t('social_channels.url_invalid')}</p>
+                                 )}
+                               </div>
                               
                               <AlertDialog>
                                 <AlertDialogTrigger asChild>
@@ -213,23 +213,23 @@ export function SocialChannelsSection({ socialChannels, onUpdate, isDirty }: Soc
                                     <Trash2 className="h-4 w-4" />
                                   </Button>
                                 </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle>Remove Social Channel</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                      Are you sure you want to remove {channel.customPlatformName || channel.name}? This action cannot be undone.
-                                    </AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction 
-                                      onClick={() => removeChannel(key)}
-                                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                    >
-                                      Remove
-                                    </AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
+                                 <AlertDialogContent>
+                                   <AlertDialogHeader>
+                                     <AlertDialogTitle>{t('social_channels.remove_channel_title')}</AlertDialogTitle>
+                                     <AlertDialogDescription>
+                                       {t('social_channels.remove_channel_description', { name: channel.customPlatformName || channel.name })}
+                                     </AlertDialogDescription>
+                                   </AlertDialogHeader>
+                                   <AlertDialogFooter>
+                                     <AlertDialogCancel>{t('common:common.buttons.cancel')}</AlertDialogCancel>
+                                     <AlertDialogAction 
+                                       onClick={() => removeChannel(key)}
+                                       className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                     >
+                                       {t('social_channels.remove_button')}
+                                     </AlertDialogAction>
+                                   </AlertDialogFooter>
+                                 </AlertDialogContent>
                               </AlertDialog>
                             </div>
                           )}
@@ -279,7 +279,7 @@ export function SocialChannelsSection({ socialChannels, onUpdate, isDirty }: Soc
           {/* Add Custom Platform */}
           <div className="flex gap-2">
             <Input
-              placeholder="Custom platform name (e.g., TikTok, Behance)"
+              placeholder={t('social_channels.custom_platform_placeholder')}
               value={customPlatformName}
               onChange={(e) => setCustomPlatformName(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && addCustomPlatform()}
@@ -293,15 +293,15 @@ export function SocialChannelsSection({ socialChannels, onUpdate, isDirty }: Soc
               className="flex items-center gap-2 h-9"
             >
               <Plus className="h-4 w-4" />
-              Add Custom
+              {t('social_channels.add_custom')}
             </Button>
           </div>
 
           {/* Helper Text */}
           <div className="text-xs text-muted-foreground space-y-1">
-            <p>• Social links will appear in email template footers when enabled</p>
-            <p>• Drag to reorder how they appear in emails</p>
-            <p>• Only channels with valid URLs will be displayed</p>
+            <p>• {t('social_channels.help_text.appear_in_emails')}</p>
+            <p>• {t('social_channels.help_text.drag_to_reorder')}</p>
+            <p>• {t('social_channels.help_text.valid_urls_only')}</p>
           </div>
         </div>
       </CardContent>

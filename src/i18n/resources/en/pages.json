@@ -255,13 +255,32 @@
         "deleteLogoConfirm": "Are you sure you want to delete your logo? This action cannot be undone.",
         "deleteLogoButton": "Delete Logo",
         "brandColor": "Brand Color",
-        "brandColorHelp": "Choose your primary brand color for the interface"
+        "brandColorHelp": "Choose your primary brand color for the interface",
+        "company_name": "Company Name",
+        "company_name_placeholder": "e.g., Sweet Dreams Photography",
+        "company_name_help": "Your business name as it appears to clients",
+        "business_email": "Business Email",
+        "business_email_placeholder": "contact@yourbusiness.com",
+        "business_email_help": "Primary email for business communications",
+        "business_phone": "Business Phone",
+        "business_phone_placeholder": "+1 (555) 123-4567",
+        "business_phone_help": "Contact number displayed to clients",
+        "logo_upload": "Logo Upload",
+        "current_logo": "Current Logo",
+        "logo_set": "Logo is currently set",
+        "choose_new_logo": "Choose New Logo",
+        "logo_formats": "Supported: JPG, PNG, SVG (Max: 2MB)",
+        "deleteLogoConfirm": "Are you sure you want to delete your logo? This action cannot be undone.",
+        "primaryBrandColor": "Primary Brand Color",
+        "brandColorHelp": "Used in client-facing UI and outgoing messages. Must be a valid hex color (e.g., #1EB29F)"
       },
       "regional": {
         "title": "Regional Settings",
         "description": "Configure date, time, and regional preferences",
         "dateFormat": "Date Format",
         "timeFormat": "Time Format",
+        "timeFormat12Hour": "12-hour (e.g. 2:00 PM)",
+        "timeFormat24Hour": "24-hour (e.g. 14:00)",
         "timezone": "Timezone"
       },
       "language": {

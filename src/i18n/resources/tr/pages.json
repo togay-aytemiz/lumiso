@@ -255,13 +255,31 @@
         "deleteLogoConfirm": "Logonuzu silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
         "deleteLogoButton": "Logo Sil",
         "brandColor": "Marka Rengi",
-        "brandColorHelp": "Arayüz için birincil marka renginizi seçin"
+        "brandColorHelp": "Arayüz için birincil marka renginizi seçin",
+        "company_name": "Şirket Adı",
+        "company_name_placeholder": "örn., Tatlı Rüyalar Fotoğrafçılık",
+        "company_name_help": "Müşterilere göründüğü şekliyle işletme adınız",
+        "business_email": "İşletme E-postası",
+        "business_email_placeholder": "iletisim@isletmeniz.com",
+        "business_email_help": "İşletme iletişimi için birincil e-posta",
+        "business_phone": "İşletme Telefonu",
+        "business_phone_placeholder": "+90 (555) 123-4567",
+        "business_phone_help": "Müşterilere gösterilen iletişim numarası",
+        "logo_upload": "Logo Yükleme",
+        "current_logo": "Mevcut Logo",
+        "logo_set": "Logo şu anda ayarlanmış",
+        "choose_new_logo": "Yeni Logo Seç",
+        "logo_formats": "Desteklenen: JPG, PNG, SVG (Maks: 2MB)",
+        "primaryBrandColor": "Birincil Marka Rengi",
+        "brandColorHelp": "Müşteriye yönelik arayüzde ve giden mesajlarda kullanılır. Geçerli bir hex renk olmalıdır (örn., #1EB29F)"
       },
       "regional": {
         "title": "Bölgesel Ayarlar",
         "description": "Tarih, saat ve bölgesel tercihleri yapılandırın",
         "dateFormat": "Tarih Formatı",
         "timeFormat": "Saat Formatı",
+        "timeFormat12Hour": "12-saat (örn. 14:00)",
+        "timeFormat24Hour": "24-saat (örn. 14:00)",
         "timezone": "Saat Dilimi"
       },
       "language": {

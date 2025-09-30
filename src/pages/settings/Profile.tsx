@@ -23,6 +23,7 @@ import { useOrganization } from "@/contexts/OrganizationContext";
 import { trimAndNormalizeSpaces, createTrimmedBlurHandler } from "@/lib/inputUtils";
 import { OnboardingTutorial, TutorialStep } from "@/components/shared/OnboardingTutorial";
 import { useOnboarding } from "@/contexts/OnboardingContext";
+import { useTranslation } from "react-i18next";
 
 export default function Profile() {
   const [emailAddress, setEmailAddress] = useState("");
@@ -36,6 +37,7 @@ export default function Profile() {
   const { activeOrganization } = useOrganization();
   const { completeCurrentStep } = useOnboarding();
   const { toast } = useToast();
+  const { t } = useTranslation('pages');
 
   // Check if we're in tutorial mode
   const isInTutorial = searchParams.get('tutorial') === 'true';
@@ -80,7 +82,15 @@ export default function Profile() {
   });
 
   const days = [1, 2, 3, 4, 5, 6, 0]; // Monday=1, Sunday=0
-  const dayLabels = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+  const dayLabels = [
+    t('settings.profile.workingHours.monday'),
+    t('settings.profile.workingHours.tuesday'),
+    t('settings.profile.workingHours.wednesday'),
+    t('settings.profile.workingHours.thursday'),
+    t('settings.profile.workingHours.friday'),
+    t('settings.profile.workingHours.saturday'),
+    t('settings.profile.workingHours.sunday')
+  ];
 
   // Get current user info
   const getCurrentUser = async () => {
@@ -119,8 +129,8 @@ export default function Profile() {
       const result = await updateWorkingHour(dayOfWeek, { [field]: value });
       if (result.success) {
         toast({
-          title: "Success",
-          description: "Working hours updated successfully",
+          title: t('settings.profile.toasts.success'),
+          description: t('settings.profile.toasts.workingHoursUpdated'),
         });
       }
       // Mark working hours section as dirty to show save button
@@ -252,8 +262,8 @@ export default function Profile() {
     return (
       <SettingsPageWrapper>
         <SettingsHeader
-          title="Profile"
-          description="Manage your personal information and working hours"
+          title={t('settings.profile.title')}
+          description={t('settings.profile.description')}
           helpContent={settingsHelpContent.profile}
         />
         <SettingsLoadingSkeleton rows={4} />
@@ -264,22 +274,22 @@ export default function Profile() {
   return (
     <SettingsPageWrapper>
       <SettingsHeader
-        title="Profile"
-        description="Manage your personal information and working hours"
+        title={t('settings.profile.title')}
+        description={t('settings.profile.description')}
         helpContent={settingsHelpContent.profile}
       />
       
       <div className="space-y-8">
         <CategorySettingsSection
-          title="Profile Information"
-          description="Update your personal information and photo."
+          title={t('settings.profile.profileInfo.title')}
+          description={t('settings.profile.profileInfo.description')}
           sectionId="profile"
           data-walkthrough="profile-form"
         >
           <div className="space-y-6">
             {/* Avatar Upload */}
             <div className="space-y-2">
-              <Label htmlFor="avatar-upload">Profile Photo</Label>
+              <Label htmlFor="avatar-upload">{t('settings.profile.profileInfo.profilePhoto')}</Label>
               
               {/* Current Photo Preview - Always show container to prevent layout shift */}
               <div className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 border rounded-lg bg-muted/30 max-w-md min-h-[80px]">
@@ -296,8 +306,8 @@ export default function Profile() {
                         />
                       </div>
                       <div className="flex-1">
-                        <p className="text-sm font-medium">Current Photo</p>
-                        <p className="text-xs text-muted-foreground">Photo is currently set</p>
+                        <p className="text-sm font-medium">{t('settings.profile.profileInfo.currentPhoto')}</p>
+                        <p className="text-xs text-muted-foreground">{t('settings.profile.profileInfo.photoCurrentlySet')}</p>
                       </div>
                     </div>
                     
@@ -312,8 +322,8 @@ export default function Profile() {
                         />
                       </div>
                       <div className="flex-1">
-                        <p className="text-sm font-medium">Current Photo</p>
-                        <p className="text-xs text-muted-foreground">Photo is currently set</p>
+                        <p className="text-sm font-medium">{t('settings.profile.profileInfo.currentPhoto')}</p>
+                        <p className="text-xs text-muted-foreground">{t('settings.profile.profileInfo.photoCurrentlySet')}</p>
                       </div>
                     </div>
 
@@ -321,30 +331,30 @@ export default function Profile() {
                     <div className="w-full sm:w-auto">
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            className="w-full sm:w-auto flex items-center justify-center gap-2 text-destructive hover:text-destructive"
-                          >
-                            <X className="h-4 w-4" />
-                            Delete
-                          </Button>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="w-full sm:w-auto flex items-center justify-center gap-2 text-destructive hover:text-destructive"
+                            >
+                              <X className="h-4 w-4" />
+                              {t('common.delete')}
+                            </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
-                            <AlertDialogTitle>Delete Profile Photo</AlertDialogTitle>
+                            <AlertDialogTitle>{t('settings.profile.profileInfo.deletePhoto')}</AlertDialogTitle>
                             <AlertDialogDescription>
-                              Are you sure you want to delete your profile photo? This action cannot be undone.
+                              {t('settings.profile.profileInfo.deletePhotoConfirm')}
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
                             <AlertDialogAction
                               onClick={handleDeleteProfilePhoto}
                               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                             >
-                              Delete Photo
+                              {t('settings.profile.profileInfo.deletePhotoButton')}
                             </AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
@@ -364,8 +374,8 @@ export default function Profile() {
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1">
-                        <p className="text-sm font-medium">Default Avatar</p>
-                        <p className="text-xs text-muted-foreground">Used in admin views and client messages</p>
+                        <p className="text-sm font-medium">{t('settings.profile.profileInfo.defaultAvatar')}</p>
+                        <p className="text-xs text-muted-foreground">{t('settings.profile.profileInfo.defaultAvatarHelp')}</p>
                       </div>
                     </div>
                     
@@ -380,8 +390,8 @@ export default function Profile() {
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1">
-                        <p className="text-sm font-medium">Default Avatar</p>
-                        <p className="text-xs text-muted-foreground">Used in admin views and client messages when no photo is uploaded</p>
+                        <p className="text-sm font-medium">{t('settings.profile.profileInfo.defaultAvatar')}</p>
+                        <p className="text-xs text-muted-foreground">{t('settings.profile.profileInfo.defaultAvatarLongHelp')}</p>
                       </div>
                     </div>
                   </>
@@ -408,21 +418,21 @@ export default function Profile() {
                   ) : (
                     <Upload className="h-4 w-4" />
                   )}
-                  {uploading ? "Uploading..." : profile?.profile_photo_url ? "Choose New File" : "Choose File"}
+                  {uploading ? t('settings.profile.profileInfo.uploading') : profile?.profile_photo_url ? t('settings.profile.profileInfo.chooseNewFile') : t('settings.profile.profileInfo.chooseFile')}
                 </Button>
               </div>
 
               <p className="text-sm text-muted-foreground">
-                Used in admin views and client messages. Accepts JPG, PNG, SVG. Max file size: 2 MB
+                {t('settings.profile.profileInfo.fileFormatsHelp')}
               </p>
             </div>
 
             {/* Full Name */}
             <div className="space-y-2">
-              <Label htmlFor="full-name">Full Name</Label>
+              <Label htmlFor="full-name">{t('settings.profile.profileInfo.fullName')}</Label>
               <Input
                 id="full-name"
-                placeholder="Enter your full name"
+                placeholder={t('settings.profile.profileInfo.fullNamePlaceholder')}
                 value={profileSection.values.fullName}
                 onChange={(e) => profileSection.updateValue("fullName", e.target.value)}
                 onBlur={createTrimmedBlurHandler(profileSection.values.fullName, (value) => profileSection.updateValue("fullName", value))}
@@ -432,11 +442,11 @@ export default function Profile() {
 
             {/* Phone Number */}
             <div className="space-y-2">
-              <Label htmlFor="phone">Phone Number</Label>
+              <Label htmlFor="phone">{t('settings.profile.profileInfo.phoneNumber')}</Label>
               <Input
                 id="phone"
                 type="tel"
-                placeholder="Enter your phone number"
+                placeholder={t('settings.profile.profileInfo.phoneNumberPlaceholder')}
                 value={profileSection.values.phoneNumber}
                 onChange={(e) => profileSection.updateValue("phoneNumber", e.target.value)}
                 onBlur={createTrimmedBlurHandler(profileSection.values.phoneNumber, (value) => profileSection.updateValue("phoneNumber", value))}
@@ -446,7 +456,7 @@ export default function Profile() {
 
             {/* Email Address */}
             <div className="space-y-2">
-              <Label htmlFor="email">Email Address</Label>
+              <Label htmlFor="email">{t('settings.profile.profileInfo.emailAddress')}</Label>
               <Input
                 id="email"
                 type="email"
@@ -455,15 +465,15 @@ export default function Profile() {
                 className="max-w-md"
               />
               <p className="text-sm text-muted-foreground">
-                Contact support to change your email address
+                {t('settings.profile.profileInfo.emailHelp')}
               </p>
             </div>
           </div>
         </CategorySettingsSection>
 
         <CategorySettingsSection
-          title="Working Hours"
-          description="Define your available times for bookings and scheduling."
+          title={t('settings.profile.workingHours.title')}
+          description={t('settings.profile.workingHours.helpText')}
           sectionId="working-hours"
         >
           <div className="space-y-4">
@@ -496,7 +506,7 @@ export default function Profile() {
                   {workingHour.enabled && (
                     <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 flex-1">
                       <div className="flex items-center gap-2">
-                        <Label className="text-sm text-muted-foreground w-12">From</Label>
+                        <Label className="text-sm text-muted-foreground w-12">{t('common.labels.from')}</Label>
                         <Select 
                           value={workingHour.start_time} 
                           onValueChange={(value) => handleWorkingHourUpdate(dayOfWeek, 'start_time', value)}
@@ -515,7 +525,7 @@ export default function Profile() {
                       </div>
                       
                       <div className="flex items-center gap-2">
-                        <Label className="text-sm text-muted-foreground w-12">To</Label>
+                        <Label className="text-sm text-muted-foreground w-12">{t('common.labels.to')}</Label>
                         <Select 
                           value={workingHour.end_time} 
                           onValueChange={(value) => handleWorkingHourUpdate(dayOfWeek, 'end_time', value)}
@@ -545,7 +555,7 @@ export default function Profile() {
       <Dialog open={isProfilePhotoModalOpen} onOpenChange={setIsProfilePhotoModalOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Profile Photo</DialogTitle>
+            <DialogTitle>{t('settings.profile.profileInfo.profilePhoto')}</DialogTitle>
           </DialogHeader>
           <div className="flex justify-center">
             {profile?.profile_photo_url && (

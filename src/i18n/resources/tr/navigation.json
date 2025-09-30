@@ -26,17 +26,21 @@
     "automation": "Otomasyon"
   },
   "settings": {
+    "title": "Ayarlar",
+    "personalSettings": "Kişisel Ayarlar",
+    "organizationSettings": "Kuruluş Ayarları",
+    "completeGuidedSetup": "Önce rehberli kurulumu tamamlayın",
     "profile": "Profil",
     "general": "Genel",
     "notifications": "Bildirimler",
-    "billing": "Faturalandırma",
+    "billing": "Faturalandırma ve Ödemeler",
     "integrations": "Entegrasyonlar",
-    "services": "Hizmetler",
-    "projects": "Projeler",
-    "leads": "Müşteri Adayları",
+    "services": "Paketler ve Hizmetler",
+    "projects": "Projeler ve Seanslar",
+    "leads": "Müşteri Yönetimi",
     "clientMessaging": "Müşteri Mesajlaşma",
     "contracts": "Sözleşmeler",
-    "dangerZone": "Tehlikeli Bölge"
+    "dangerZone": "Tehlike Bölgesi"
   },
   "admin": {
     "localization": "Yerelleştirme",

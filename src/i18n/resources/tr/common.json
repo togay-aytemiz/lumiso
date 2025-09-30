@@ -55,7 +55,9 @@
     "project_name": "Proje adı",
     "project_description": "Proje açıklaması (isteğe bağlı)",
     "showing_results": "{{total}} sonucun {{start}} - {{end}} arası gösteriliyor",
-    "visible_columns": "{{total}} sütunun {{visible}} tanesi görünür"
+    "visible_columns": "{{total}} sütunun {{visible}} tanesi görünür",
+    "from": "Başlangıç",
+    "to": "Bitiş"
   },
   "status": {
     "active": "Aktif",

@@ -373,23 +373,23 @@ export default function General() {
                             className="w-full sm:w-auto flex items-center justify-center gap-2 text-destructive hover:text-destructive"
                           >
                             <X className="h-4 w-4" />
-                            Delete
+                            {t('common.buttons.delete')}
                           </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
-                            <AlertDialogTitle>Delete Logo</AlertDialogTitle>
+                            <AlertDialogTitle>{t('settings.general.branding.deleteLogo')}</AlertDialogTitle>
                             <AlertDialogDescription>
-                              Are you sure you want to delete your logo? This action cannot be undone.
+                              {t('settings.general.branding.deleteLogoConfirm')}
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogCancel>{t('common.buttons.cancel')}</AlertDialogCancel>
                             <AlertDialogAction
                               onClick={handleDeleteLogo}
                               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                             >
-                              Delete Logo
+                              {t('settings.general.branding.deleteLogoButton')}
                             </AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
@@ -398,7 +398,7 @@ export default function General() {
                   </>
                 ) : (
                   <div className="flex items-center justify-center">
-                    <p className="text-sm text-muted-foreground">No logo set</p>
+                    <p className="text-sm text-muted-foreground">{t('settings.general.branding.noLogoSet')}</p>
                   </div>
                 )}
               </div>

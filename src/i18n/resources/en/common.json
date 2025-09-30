@@ -55,7 +55,9 @@
     "project_name": "Project name",
     "project_description": "Project description (optional)",
     "showing_results": "Showing {{start}} to {{end}} of {{total}} results",
-    "visible_columns": "{{visible}} of {{total}} columns visible"
+    "visible_columns": "{{visible}} of {{total}} columns visible",
+    "from": "From",
+    "to": "To"
   },
   "status": {
     "active": "Active",

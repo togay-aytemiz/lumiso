@@ -26,14 +26,18 @@
     "automation": "Automation"
   },
   "settings": {
+    "title": "Settings",
+    "personalSettings": "Personal Settings",
+    "organizationSettings": "Organization Settings",
+    "completeGuidedSetup": "Complete the guided setup first",
     "profile": "Profile",
     "general": "General",
     "notifications": "Notifications",
-    "billing": "Billing",
+    "billing": "Billing & Payments",
     "integrations": "Integrations",
-    "services": "Services",
-    "projects": "Projects",
-    "leads": "Leads",
+    "services": "Packages & Services",
+    "projects": "Projects & Sessions",
+    "leads": "Lead Management",
     "clientMessaging": "Client Messaging",
     "contracts": "Contracts",
     "dangerZone": "Danger Zone"

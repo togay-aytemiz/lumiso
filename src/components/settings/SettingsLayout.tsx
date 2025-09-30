@@ -18,28 +18,30 @@ import { cn } from "@/lib/utils";
 import { useSettingsContext } from "@/contexts/SettingsContext";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useTranslation } from "react-i18next";
 
 const personalSettingsItems = [
-  { title: "Profile", href: "/settings/profile", icon: User, testId: "profile-section" },
-  { title: "Notifications", href: "/settings/notifications", icon: Bell, testId: "notifications-section" },
+  { title: "profile", href: "/settings/profile", icon: User, testId: "profile-section" },
+  { title: "notifications", href: "/settings/notifications", icon: Bell, testId: "notifications-section" },
 ];
 
 const organizationSettingsItems = [
-  { title: "General", href: "/settings/general", icon: Settings, testId: "general-section" },
-  { title: "Client Messaging", href: "/settings/client-messaging", icon: MessageSquare, testId: "client-messaging-section" },
-  { title: "Projects & Sessions", href: "/settings/projects", icon: FolderOpen, testId: "projects-section" },
-  { title: "Lead Management", href: "/settings/leads", icon: UserCheck, testId: "leads-section" },
-  { title: "Packages & Services", href: "/settings/services", icon: Package, testId: "services-section" },
-  { title: "Integrations", href: "/settings/integrations", icon: Plug, testId: "integrations-section" },
-  { title: "Contracts", href: "/settings/contracts", icon: FileText, testId: "contracts-section" },
-  { title: "Billing & Payments", href: "/settings/billing", icon: CreditCard, testId: "billing-section" },
-  { title: "Danger Zone", href: "/settings/danger-zone", icon: AlertTriangle, testId: "danger-section" },
+  { title: "general", href: "/settings/general", icon: Settings, testId: "general-section" },
+  { title: "clientMessaging", href: "/settings/client-messaging", icon: MessageSquare, testId: "client-messaging-section" },
+  { title: "projects", href: "/settings/projects", icon: FolderOpen, testId: "projects-section" },
+  { title: "leads", href: "/settings/leads", icon: UserCheck, testId: "leads-section" },
+  { title: "services", href: "/settings/services", icon: Package, testId: "services-section" },
+  { title: "integrations", href: "/settings/integrations", icon: Plug, testId: "integrations-section" },
+  { title: "contracts", href: "/settings/contracts", icon: FileText, testId: "contracts-section" },
+  { title: "billing", href: "/settings/billing", icon: CreditCard, testId: "billing-section" },
+  { title: "dangerZone", href: "/settings/danger-zone", icon: AlertTriangle, testId: "danger-section" },
 ];
 
 export default function SettingsLayout() {
   const location = useLocation();
   const { hasCategoryChanges } = useSettingsContext();
   const { shouldLockNavigation } = useOnboarding();
+  const { t } = useTranslation('navigation');
   
   const isItemLocked = (itemHref: string) => {
     // Settings navigation lock check for guided setup
@@ -63,12 +65,12 @@ export default function SettingsLayout() {
       {/* Settings Navigation - Left sidebar for all screen sizes */}
       <div className="w-16 md:w-80 border-r bg-muted/10 flex-shrink-0">
         <div className="p-2 md:p-6">
-          <h2 className="text-xl font-bold mb-6 hidden md:block">Settings</h2>
+          <h2 className="text-xl font-bold mb-6 hidden md:block">{t('settings.title')}</h2>
           
           {/* Personal Settings */}
           <div className="mb-8">
             <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-4 hidden md:block">
-              Personal Settings
+              {t('settings.personalSettings')}
             </h3>
             <nav className="space-y-1">
               {personalSettingsItems.map((item) => {
@@ -93,7 +95,7 @@ export default function SettingsLayout() {
                     isActive && "text-[hsl(var(--sidebar-active-icon))]"
                   )} />
                   <span className="hidden md:flex md:items-center md:gap-2">
-                    {item.title}
+                    {t(`settings.${item.title}`)}
                     {hasChanges && (
                       <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse" />
                     )}
@@ -114,7 +116,7 @@ export default function SettingsLayout() {
                       </div>
                     </TooltipTrigger>
                     <TooltipContent side="right">
-                      <p>Complete the guided setup first</p>
+                      <p>{t('settings.completeGuidedSetup')}</p>
                     </TooltipContent>
                   </Tooltip>
                 ) : (
@@ -133,7 +135,7 @@ export default function SettingsLayout() {
           {/* Organization Settings */}
           <div>
             <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-4 hidden md:block">
-              Organization Settings
+              {t('settings.organizationSettings')}
             </h3>
             <nav className="space-y-1">
               {organizationSettingsItems.map((item) => {
@@ -141,7 +143,7 @@ export default function SettingsLayout() {
                 const isActive = location.pathname === item.href;
                 const hasChanges = hasCategoryChanges(item.href);
                 const locked = isItemLocked(item.href);
-                const isDangerZone = item.title === "Danger Zone";
+                const isDangerZone = item.title === "dangerZone";
                 
                 const linkContent = (
                 <div className={cn(
@@ -162,7 +164,7 @@ export default function SettingsLayout() {
                     isDangerZone && "text-red-600"
                   )} />
                   <span className="hidden md:flex md:items-center md:gap-2">
-                    {item.title}
+                    {t(`settings.${item.title}`)}
                     {hasChanges && (
                       <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse" />
                     )}
@@ -183,7 +185,7 @@ export default function SettingsLayout() {
                       </div>
                     </TooltipTrigger>
                     <TooltipContent side="right">
-                      <p>Complete the guided setup first</p>
+                      <p>{t('settings.completeGuidedSetup')}</p>
                     </TooltipContent>
                   </Tooltip>
                 ) : (

@@ -43,24 +43,24 @@ export default function General() {
   const tutorialSteps: TutorialStep[] = [
     {
       id: 3,
-      title: "Business Information & Branding",
-      description: "This is where you can customize your business information and branding. Let's explore what you can do here.",
+      title: t("settings.general.tutorial.businessInfo.title"),
+      description: t("settings.general.tutorial.businessInfo.description"),
       content: (
         <div className="space-y-3">
           <div className="flex items-center gap-2 text-sm">
             <Building className="h-4 w-4 text-primary" />
-            <span>Set your photography business name</span>
+            <span>{t("settings.general.tutorial.businessInfo.setBusinessName")}</span>
           </div>
           <div className="flex items-center gap-2 text-sm">
             <Upload className="h-4 w-4 text-primary" />
-            <span>Upload your business logo</span>
+            <span>{t("settings.general.tutorial.businessInfo.uploadLogo")}</span>
           </div>
           <div className="flex items-center gap-2 text-sm">
             <Settings className="h-4 w-4 text-primary" />
-            <span>Choose your brand colors</span>
+            <span>{t("settings.general.tutorial.businessInfo.chooseBrandColors")}</span>
           </div>
           <div className="text-xs text-muted-foreground mt-2">
-            All this information will appear on client communications, invoices, and contracts.
+            {t("settings.general.tutorial.businessInfo.help")}
           </div>
         </div>
       ),
@@ -69,13 +69,13 @@ export default function General() {
     },
     {
       id: 4,
-      title: "Add Your Business Name",
-      description: "Please enter your photography business name below. This is required to continue and will be used in all client communications.",
+      title: t("settings.general.tutorial.addBusinessName.title"),
+      description: t("settings.general.tutorial.addBusinessName.description"),
       content: (
         <div className="space-y-2 text-sm text-muted-foreground">
-          <p>• Required for professional communications</p>
-          <p>• Appears on invoices, contracts, and emails</p>
-          <p>• Can be changed later if needed</p>
+          <p>• {t("settings.general.tutorial.addBusinessName.required")}</p>
+          <p>• {t("settings.general.tutorial.addBusinessName.appearsOn")}</p>
+          <p>• {t("settings.general.tutorial.addBusinessName.canChange")}</p>
         </div>
       ),
       canProceed: !!settings?.photography_business_name?.trim(),
@@ -86,11 +86,11 @@ export default function General() {
       title: (
         <div className="flex items-center gap-2">
           <CheckCircle className="h-5 w-5 text-green-600" />
-          <span>Business Setup Complete!</span>
+          <span>{t("settings.general.tutorial.setupComplete.title")}</span>
         </div>
       ),
-      description: "Congratulations! You've successfully set up your business information. You're ready to move on to the next step of your photography CRM setup.",
-      content: null, // No additional content needed
+      description: t("settings.general.tutorial.setupComplete.description"),
+      content: null,
       canProceed: true,
       mode: 'modal'
     }
@@ -99,7 +99,7 @@ export default function General() {
   // Branding section state
   const brandingSection = useSettingsCategorySection({
     sectionId: "branding",
-    sectionName: "Branding",
+    sectionName: t("settings.general.branding.title"),
     initialValues: {
       companyName: settings?.photography_business_name || "",
       businessEmail: settings?.email || "",
@@ -125,7 +125,7 @@ export default function General() {
   // Regional settings section state
   const regionalSection = useSettingsCategorySection({
     sectionId: "regional",
-    sectionName: "Regional Settings", 
+    sectionName: t("settings.general.regional.title"),
     initialValues: {
       dateFormat: settings?.date_format || "DD/MM/YYYY",
       timeFormat: settings?.time_format || "12-hour",
@@ -472,14 +472,14 @@ export default function General() {
         )}
 
         <CategorySettingsSection
-          title="Regional Settings"
-          description="Configure date, time, and timezone preferences for your organization"
+          title={t("settings.general.regional.title")}
+          description={t("settings.general.regional.description")}
           sectionId="regional"
         >
           <div className="space-y-6">
             {/* Date Format */}
             <div className="space-y-2">
-              <Label>Date Format</Label>
+              <Label>{t("settings.general.regional.dateFormat")}</Label>
               <Select 
                 value={regionalSection.values.dateFormat} 
                 onValueChange={(value) => regionalSection.updateValue("dateFormat", value)}
@@ -497,7 +497,7 @@ export default function General() {
 
             {/* Time Format */}
             <div className="space-y-3">
-              <Label>Time Format</Label>
+              <Label>{t("settings.general.regional.timeFormat")}</Label>
               <RadioGroup 
                 value={regionalSection.values.timeFormat} 
                 onValueChange={(value) => regionalSection.updateValue("timeFormat", value)}
@@ -521,12 +521,12 @@ export default function General() {
 
             {/* Language Preference */}
             <div className="space-y-2">
-              <Label>Language</Label>
+              <Label>{t("settings.general.language.title")}</Label>
               <div className="max-w-xs">
                 <LanguageSwitcher variant="button" className="w-full justify-start" />
               </div>
               <p className="text-sm text-muted-foreground">
-                Choose your preferred language for the interface
+                {t("settings.general.language.description")}
               </p>
             </div>
           </div>
@@ -537,7 +537,7 @@ export default function General() {
       <Dialog open={isLogoModalOpen} onOpenChange={setIsLogoModalOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Logo Preview</DialogTitle>
+            <DialogTitle>{t("settings.general.branding.logoUpload")}</DialogTitle>
           </DialogHeader>
           <div className="flex justify-center p-6">
             {settings?.logo_url && (

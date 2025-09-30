@@ -51,7 +51,7 @@ export default function Profile() {
   // Profile section state
   const profileSection = useSettingsCategorySection({
     sectionId: "profile",
-    sectionName: "Profile",
+    sectionName: t('settings.profile.title'),
     initialValues: {
       fullName: profile?.full_name || "",
       phoneNumber: profile?.phone_number || "",
@@ -71,7 +71,7 @@ export default function Profile() {
   // Working hours section state
   const workingHoursSection = useSettingsCategorySection({
     sectionId: "working-hours",
-    sectionName: "Working Hours",
+    sectionName: t('settings.profile.workingHours.title'),
     initialValues: {
       workingHours: workingHours
     },
@@ -185,17 +185,17 @@ export default function Profile() {
   const tutorialSteps: TutorialStep[] = [
     {
       id: 1,
-      title: "Welcome to Your Profile Settings",
-      description: "Here you can manage your personal information, upload a profile photo, and set your working hours for scheduling.",
+      title: t('settings.profile.tutorial.welcome.title'),
+      description: t('settings.profile.tutorial.welcome.description'),
       content: (
         <div className="space-y-3">
           <div className="flex items-center gap-2 text-sm">
             <User className="h-4 w-4 text-primary" />
-            <span>Update your name, phone, and profile photo</span>
+            <span>{t('settings.profile.tutorial.welcome.updateInfo')}</span>
           </div>
           <div className="flex items-center gap-2 text-sm">
             <Settings className="h-4 w-4 text-primary" />
-            <span>Configure working hours for scheduling</span>
+            <span>{t('settings.profile.tutorial.welcome.configureHours')}</span>
           </div>
         </div>
       ),
@@ -204,13 +204,13 @@ export default function Profile() {
     },
     {
       id: 2,
-      title: "Complete Your Profile Information",
-      description: "Please fill in your full name and phone number, and consider uploading a profile photo. Your full name is required to continue.",
+      title: t('settings.profile.tutorial.completeInfo.title'),
+      description: t('settings.profile.tutorial.completeInfo.description'),
       content: (
         <div className="space-y-2 text-sm text-muted-foreground">
-          <p>• Full Name: Required for client communications</p>
-          <p>• Phone Number: Optional but recommended</p>
-          <p>• Profile Photo: Shows in admin views and client messages</p>
+          <p>{t('settings.profile.tutorial.completeInfo.fullNameRequired')}</p>
+          <p>{t('settings.profile.tutorial.completeInfo.phoneOptional')}</p>
+          <p>{t('settings.profile.tutorial.completeInfo.profilePhoto')}</p>
         </div>
       ),
       canProceed: !!profileSection.values.fullName?.trim(),
@@ -218,13 +218,13 @@ export default function Profile() {
     },
     {
       id: 3,
-      title: "Set Up Your Business Information",
-      description: "Let's add your business name in the General settings. This will appear on client communications and invoices.",
+      title: t('settings.profile.tutorial.businessInfo.title'),
+      description: t('settings.profile.tutorial.businessInfo.description'),
       content: (
         <div className="space-y-2 text-sm text-muted-foreground">
-          <p>• Business Name: Required for professional communications</p>
-          <p>• Used in client emails, invoices, and contracts</p>
-          <p>• Can be changed later in General settings</p>
+          <p>{t('settings.profile.tutorial.businessInfo.businessNameRequired')}</p>
+          <p>{t('settings.profile.tutorial.businessInfo.usedIn')}</p>
+          <p>{t('settings.profile.tutorial.businessInfo.canChange')}</p>
         </div>
       ),
       route: "/settings/general",
@@ -233,12 +233,12 @@ export default function Profile() {
     },
     {
       id: 4,
-      title: "Profile Setup Complete!",
-      description: "Congratulations! You've successfully set up your profile and business information. You're ready to move on to the next step of your photography CRM setup.",
+      title: t('settings.profile.tutorial.setupComplete.title'),
+      description: t('settings.profile.tutorial.setupComplete.description'),
       content: (
         <div className="flex items-center gap-2 text-green-600">
           <CheckCircle className="h-5 w-5" />
-          <span className="font-medium">Profile setup completed successfully!</span>
+          <span className="font-medium">{t('settings.profile.tutorial.setupComplete.success')}</span>
         </div>
       ),
       canProceed: true,

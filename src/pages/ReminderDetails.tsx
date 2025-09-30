@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { ArrowLeft, Bell, CheckSquare } from "lucide-react";
@@ -35,6 +36,7 @@ interface Lead {
 type FilterType = 'all' | 'overdue' | 'today' | 'tomorrow' | 'thisWeek' | 'nextWeek' | 'thisMonth';
 
 const ReminderDetails = () => {
+  const { t } = useTranslation('pages');
   const [activities, setActivities] = useState<Activity[]>([]);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
@@ -262,26 +264,26 @@ const ReminderDetails = () => {
 
   // Prepare filter options for FilterBar
   const quickFilters = [
-    { key: 'all', label: 'All', count: getReminderCountForFilter('all') },
-    { key: 'today', label: 'Today', count: getReminderCountForFilter('today') },
-    { key: 'tomorrow', label: 'Tomorrow', count: getReminderCountForFilter('tomorrow') }
+    { key: 'all', label: t('reminders.filters.all'), count: getReminderCountForFilter('all') },
+    { key: 'today', label: t('reminders.filters.today'), count: getReminderCountForFilter('today') },
+    { key: 'tomorrow', label: t('reminders.filters.tomorrow'), count: getReminderCountForFilter('tomorrow') }
   ];
 
   const allDateFilters = [
-    { key: 'all', label: 'All', count: getReminderCountForFilter('all') },
-    { key: 'overdue', label: 'Overdue', count: getReminderCountForFilter('overdue') },
-    { key: 'today', label: 'Today', count: getReminderCountForFilter('today') },
-    { key: 'tomorrow', label: 'Tomorrow', count: getReminderCountForFilter('tomorrow') },
-    { key: 'thisWeek', label: 'This Week', count: getReminderCountForFilter('thisWeek') },
-    { key: 'nextWeek', label: 'Next Week', count: getReminderCountForFilter('nextWeek') },
-    { key: 'thisMonth', label: 'This Month', count: getReminderCountForFilter('thisMonth') }
+    { key: 'all', label: t('reminders.filters.all'), count: getReminderCountForFilter('all') },
+    { key: 'overdue', label: t('reminders.filters.overdue'), count: getReminderCountForFilter('overdue') },
+    { key: 'today', label: t('reminders.filters.today'), count: getReminderCountForFilter('today') },
+    { key: 'tomorrow', label: t('reminders.filters.tomorrow'), count: getReminderCountForFilter('tomorrow') },
+    { key: 'thisWeek', label: t('reminders.filters.thisWeek'), count: getReminderCountForFilter('thisWeek') },
+    { key: 'nextWeek', label: t('reminders.filters.nextWeek'), count: getReminderCountForFilter('nextWeek') },
+    { key: 'thisMonth', label: t('reminders.filters.thisMonth'), count: getReminderCountForFilter('thisMonth') }
   ];
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
       <PageHeader
-        title="Reminders"
-        subtitle="Manage your activities and reminders"
+        title={t('reminders.title')}
+        subtitle={t('reminders.description')}
       >
         <PageHeaderSearch>
           <div className="flex items-center gap-2 w-full">
@@ -306,9 +308,9 @@ const ReminderDetails = () => {
                 allDateFilters={allDateFilters}
                 activeDateFilter={selectedFilter}
                 onDateFilterChange={(filter) => setSelectedFilter(filter as FilterType)}
-                showCompleted={showCompleted}
-                onShowCompletedChange={setShowCompleted}
-                showCompletedLabel="Show Completed"
+                  showCompleted={showCompleted}
+                  onShowCompletedChange={setShowCompleted}
+                  showCompletedLabel={t('reminders.showCompleted')}
                 isSticky={true}
               />
             </div>
@@ -334,7 +336,7 @@ const ReminderDetails = () => {
                   {/* Show Completed Toggle */}
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <CheckSquare className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground whitespace-nowrap">Show Completed</span>
+                    <span className="text-sm text-muted-foreground whitespace-nowrap">{t('reminders.showCompleted')}</span>
                     <Switch
                       checked={showCompleted}
                       onCheckedChange={setShowCompleted}
@@ -354,8 +356,8 @@ const ReminderDetails = () => {
                   return (
                     <div className="text-center py-12 text-slate-500 dark:text-slate-400">
                       <Bell className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                      <h3 className="text-lg font-medium mb-2">No reminders found</h3>
-                      <p>You don't have any reminders for the selected filter.</p>
+                      <h3 className="text-lg font-medium mb-2">{t('reminders.emptyState.title')}</h3>
+                      <p>{t('reminders.emptyState.description')}</p>
                     </div>
                   );
                 }

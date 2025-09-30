@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useFormsTranslation } from "@/hooks/useTypedTranslation";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -38,6 +39,7 @@ type SortDirection = 'asc' | 'desc';
 
 const AllSessions = () => {
   const { t: tForms } = useFormsTranslation();
+  const { t } = useTranslation('pages');
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>("planned");
@@ -313,7 +315,7 @@ const AllSessions = () => {
   };
 
   const statusOptions = [
-    { value: "all", label: "All Statuses" },
+    { value: "all", label: t('sessions.filters.allStatuses') },
     { value: "planned", label: "Planned" },
     { value: "completed", label: "Completed" },
     { value: "in_post_processing", label: "Editing" },
@@ -324,8 +326,8 @@ const AllSessions = () => {
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
       <PageHeader
-        title="Sessions"
-        subtitle="Manage your photo sessions and appointments"
+        title={t('sessions.title')}
+        subtitle={t('sessions.description')}
       >
         <PageHeaderSearch>
           <div className="flex items-center gap-2 w-full">
@@ -338,7 +340,7 @@ const AllSessions = () => {
                 className="h-10 flex items-center gap-2 whitespace-nowrap flex-shrink-0 px-3 sm:px-4"
               >
                 <Plus className="h-4 w-4" />
-                <span className="hidden sm:inline">Add Session</span>
+                <span className="hidden sm:inline">{t('sessions.addButton')}</span>
               </Button>
             </NewSessionDialog>
           </div>
@@ -354,20 +356,20 @@ const AllSessions = () => {
             <div className="md:hidden">
               {(() => {
                 const quickFilters = [
-                  { key: "all", label: "All", count: getSessionCountForDateFilter("all") },
-                  { key: "today", label: "Today", count: getSessionCountForDateFilter("today") },
-                  { key: "tomorrow", label: "Tomorrow", count: getSessionCountForDateFilter("tomorrow") }
+                  { key: "all", label: t('sessions.filters.dateFilters.all'), count: getSessionCountForDateFilter("all") },
+                  { key: "today", label: t('sessions.filters.dateFilters.today'), count: getSessionCountForDateFilter("today") },
+                  { key: "tomorrow", label: t('sessions.filters.dateFilters.tomorrow'), count: getSessionCountForDateFilter("tomorrow") }
                 ];
 
                 const allDateFilters = [
-                  { key: "all", label: "All", count: getSessionCountForDateFilter("all") },
-                  { key: "past", label: "Past", count: getSessionCountForDateFilter("past") },
-                  { key: "today", label: "Today", count: getSessionCountForDateFilter("today") },
-                  { key: "tomorrow", label: "Tomorrow", count: getSessionCountForDateFilter("tomorrow") },
-                  { key: "thisweek", label: "This Week", count: getSessionCountForDateFilter("thisweek") },
-                  { key: "nextweek", label: "Next Week", count: getSessionCountForDateFilter("nextweek") },
-                  { key: "thismonth", label: "This Month", count: getSessionCountForDateFilter("thismonth") },
-                  { key: "nextmonth", label: "Next Month", count: getSessionCountForDateFilter("nextmonth") }
+                  { key: "all", label: t('sessions.filters.dateFilters.all'), count: getSessionCountForDateFilter("all") },
+                  { key: "past", label: t('sessions.filters.dateFilters.past'), count: getSessionCountForDateFilter("past") },
+                  { key: "today", label: t('sessions.filters.dateFilters.today'), count: getSessionCountForDateFilter("today") },
+                  { key: "tomorrow", label: t('sessions.filters.dateFilters.tomorrow'), count: getSessionCountForDateFilter("tomorrow") },
+                  { key: "thisweek", label: t('sessions.filters.dateFilters.thisWeek'), count: getSessionCountForDateFilter("thisweek") },
+                  { key: "nextweek", label: t('sessions.filters.dateFilters.nextWeek'), count: getSessionCountForDateFilter("nextweek") },
+                  { key: "thismonth", label: t('sessions.filters.dateFilters.thisMonth'), count: getSessionCountForDateFilter("thismonth") },
+                  { key: "nextmonth", label: t('sessions.filters.dateFilters.nextMonth'), count: getSessionCountForDateFilter("nextmonth") }
                 ];
 
                 const statusOptionsForFilter = statusOptions.map(option => ({
@@ -398,7 +400,7 @@ const AllSessions = () => {
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   {/* Desktop Status Filter (≥768px only) */}
                   <div className="hidden md:flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                    <span className="text-sm text-muted-foreground whitespace-nowrap">Filter by status:</span>
+                    <span className="text-sm text-muted-foreground whitespace-nowrap">{t('sessions.filters.statusLabel')}</span>
                     <Select value={statusFilter} onValueChange={setStatusFilter}>
                       <SelectTrigger className="w-full sm:w-48 min-w-0">
                         <SelectValue />
@@ -426,14 +428,14 @@ const AllSessions = () => {
                           size="sm"
                           onClick={() => setDateFilter(filter)}
                         >
-                          {filter === "all" ? "All" :
-                           filter === "past" ? "Past" :
-                           filter === "today" ? "Today" :
-                           filter === "tomorrow" ? "Tomorrow" :
-                           filter === "thisweek" ? "This Week" :
-                           filter === "nextweek" ? "Next Week" :
-                           filter === "thismonth" ? "This Month" :
-                           "Next Month"} ({getSessionCountForDateFilter(filter)})
+                          {filter === "all" ? t('sessions.filters.dateFilters.all') :
+                           filter === "past" ? t('sessions.filters.dateFilters.past') :
+                           filter === "today" ? t('sessions.filters.dateFilters.today') :
+                           filter === "tomorrow" ? t('sessions.filters.dateFilters.tomorrow') :
+                           filter === "thisweek" ? t('sessions.filters.dateFilters.thisWeek') :
+                           filter === "nextweek" ? t('sessions.filters.dateFilters.nextWeek') :
+                           filter === "thismonth" ? t('sessions.filters.dateFilters.thisMonth') :
+                           t('sessions.filters.dateFilters.nextMonth')} ({getSessionCountForDateFilter(filter)})
                         </Button>
                       ))}
                     </div>
@@ -445,13 +447,13 @@ const AllSessions = () => {
                         <Table style={{ minWidth: '700px' }}>
                           <TableHeader>
                             <TableRow>
-                              <TableHead className="whitespace-nowrap">Project</TableHead>
+                              <TableHead className="whitespace-nowrap">{t('sessions.table.project')}</TableHead>
                               <TableHead 
                                 className="cursor-pointer hover:bg-muted/50 whitespace-nowrap"
                                 onClick={() => handleSort('lead_name')}
                               >
                                 <div className="flex items-center gap-2">
-                                  Client Name
+                                  {t('sessions.table.clientName')}
                                   {getSortIcon('lead_name')}
                                 </div>
                               </TableHead>
@@ -460,7 +462,7 @@ const AllSessions = () => {
                                 onClick={() => handleSort('session_date')}
                               >
                                 <div className="flex items-center gap-2">
-                                  Date
+                                  {t('sessions.table.date')}
                                   {getSortIcon('session_date')}
                                 </div>
                               </TableHead>
@@ -469,7 +471,7 @@ const AllSessions = () => {
                                 onClick={() => handleSort('session_time')}
                               >
                                 <div className="flex items-center gap-2">
-                                  Time
+                                  {t('sessions.table.time')}
                                   {getSortIcon('session_time')}
                                 </div>
                               </TableHead>
@@ -478,11 +480,11 @@ const AllSessions = () => {
                                 onClick={() => handleSort('status')}
                               >
                                 <div className="flex items-center gap-2">
-                                  Status
+                                  {t('sessions.table.status')}
                                   {getSortIcon('status')}
                                 </div>
                               </TableHead>
-                              <TableHead className="whitespace-nowrap">Notes</TableHead>
+                              <TableHead className="whitespace-nowrap">{t('sessions.table.notes')}</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>

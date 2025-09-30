@@ -10,6 +10,7 @@ import { useOnboarding } from "@/contexts/OnboardingContext";
 import { OnboardingTutorial, TutorialStep } from "@/components/shared/OnboardingTutorial";
 import { Package, DollarSign, Target } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 const packagesSetupSteps: TutorialStep[] = [
   {
@@ -77,6 +78,7 @@ const packagesSetupSteps: TutorialStep[] = [
 ];
 
 export default function Services() {
+  const { t } = useTranslation("pages");
   // Permissions removed for single photographer mode - always allow
   // const { hasPermission, loading } = usePermissions();
   const { currentStep, completeCurrentStep } = useOnboarding();
@@ -148,8 +150,8 @@ export default function Services() {
     <>
       <SettingsPageWrapper>
         <SettingsHeader
-          title="Packages & Services"
-          description="Create service packages and manage individual services for your business"
+          title={t("settings.services.title")}
+          description={t("settings.services.description")}
           helpContent={settingsHelpContent.services}
         />
         

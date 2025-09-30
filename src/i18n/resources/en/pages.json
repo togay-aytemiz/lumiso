@@ -290,6 +290,173 @@
           "description": "Congratulations! You've successfully set up your business information. You're ready to move on to the next step of your photography CRM setup."
         }
       }
+    },
+    "profile": {
+      "title": "Profile",
+      "description": "Manage your personal information and working hours",
+      "profileInfo": {
+        "title": "Profile Information",
+        "description": "Update your personal information and photo.",
+        "profilePhoto": "Profile Photo",
+        "currentPhoto": "Current Photo",
+        "photoCurrentlySet": "Photo is currently set",
+        "defaultAvatar": "Default Avatar",
+        "defaultAvatarHelp": "Used in admin views and client messages",
+        "defaultAvatarLongHelp": "Used in admin views and client messages when no photo is uploaded",
+        "chooseFile": "Choose File",
+        "chooseNewFile": "Choose New File",
+        "uploading": "Uploading...",
+        "fileFormatsHelp": "Used in admin views and client messages. Accepts JPG, PNG, SVG. Max file size: 2 MB",
+        "fullName": "Full Name",
+        "fullNamePlaceholder": "Enter your full name",
+        "fullNameHelp": "Your full name as it will appear in client communications",
+        "phoneNumber": "Phone Number",
+        "phoneNumberPlaceholder": "Enter your phone number",
+        "phoneNumberHelp": "Your contact number for scheduling and client communications",
+        "emailAddress": "Email Address",
+        "emailHelp": "Your login email address (cannot be changed here)",
+        "deletePhoto": "Delete Profile Photo",
+        "deletePhotoConfirm": "Are you sure you want to delete your profile photo? This action cannot be undone.",
+        "deletePhotoButton": "Delete Photo"
+      },
+      "workingHours": {
+        "title": "Working Hours",
+        "description": "Set your availability for scheduling sessions",
+        "day": "Day",
+        "enabled": "Enabled",
+        "startTime": "Start Time",
+        "endTime": "End Time",
+        "helpText": "These hours will be used as defaults when scheduling sessions",
+        "monday": "Monday",
+        "tuesday": "Tuesday",
+        "wednesday": "Wednesday",
+        "thursday": "Thursday",
+        "friday": "Friday",
+        "saturday": "Saturday",
+        "sunday": "Sunday"
+      }
+    },
+    "billing": {
+      "title": "Billing & Payments",
+      "description": "Manage your subscription, payment methods, and billing information",
+      "comingSoon": "Coming soon..."
+    },
+    "integrations": {
+      "title": "Integrations",
+      "description": "Connect external services and manage third-party integrations",
+      "calendar": {
+        "title": "Calendar Integration",
+        "description": "Connect your Google Calendar to sync sessions and reminders",
+        "connected": "Connected to Google Calendar",
+        "connectedAs": "Connected as:",
+        "expired": "Session expired. Please reconnect your calendar.",
+        "connect": "Connect Google Calendar",
+        "disconnect": "Disconnect Google Calendar"
+      }
+    },
+    "notifications": {
+      "title": "Notifications",
+      "description": "Streamlined notification system for your photography business",
+      "masterControls": {
+        "title": "Master Controls",
+        "description": "Global notification settings and timing",
+        "allNotifications": "All Notifications",
+        "allNotificationsHelp": "Master switch to enable or disable all notification types",
+        "scheduledTime": "Scheduled Notification Time",
+        "scheduledTimeHelp": "Time when daily summaries are sent each morning"
+      },
+      "scheduled": {
+        "title": "Scheduled Notifications",
+        "description": "Daily digest sent automatically at",
+        "dailySummary": "Daily Summary",
+        "dailySummaryHelp": "Morning digest with today's sessions, overdue items, reminders, and pending tasks"
+      },
+      "immediate": {
+        "title": "Immediate Notifications",
+        "description": "Real-time alerts sent when events occur",
+        "projectMilestone": "Project Milestone Reached",
+        "projectMilestoneHelp": "Notify when a project transitions to Completed or Cancelled lifecycle"
+      },
+      "sendTest": "Send test",
+      "sendEmptyTest": "Send empty test",
+      "testing": "Testing...",
+      "toasts": {
+        "allEnabled": "All Notifications Enabled",
+        "allDisabled": "All Notifications Disabled",
+        "allEnabledDesc": "All notification types have been enabled",
+        "allDisabledDesc": "All notification types have been disabled",
+        "updated": "Updated",
+        "updatedDesc": "Notification setting saved successfully",
+        "testSent": "Test Email Sent",
+        "testSentDesc": "notification test email has been sent!",
+        "testFailed": "Test Failed",
+        "testFailedDesc": "Failed to send test notification. Please check your settings.",
+        "error": "Error",
+        "errorDesc": "Failed to update notification settings"
+      }
+    },
+    "dangerZone": {
+      "title": "Danger Zone",
+      "description": "These actions are destructive and cannot be undone. Proceed with caution.",
+      "deleteData": {
+        "title": "Delete All Data",
+        "description": "Permanently remove all your data from our servers",
+        "warning": "Permanently Delete All Data",
+        "warningDesc": "This action will permanently delete all of your leads, projects, sessions, reminders, payments, and associated data. This action cannot be undone and all data will be lost forever.",
+        "button": "Delete All Data",
+        "confirmTitle": "Confirm Data Deletion",
+        "confirmDesc": "This action will permanently delete all of your data including:",
+        "leads": "All leads and their information",
+        "projects": "All projects and their details",
+        "sessions": "All sessions and appointments",
+        "reminders": "All reminders and activities",
+        "payments": "All payment records",
+        "settings": "All custom settings and configurations",
+        "passwordPrompt": "This action cannot be undone. Please enter your account password to confirm.",
+        "passwordLabel": "Account Password",
+        "passwordPlaceholder": "Enter your password",
+        "cancel": "Cancel",
+        "deleting": "Deleting...",
+        "deleteComplete": "Data Deletion Complete",
+        "deleteCompleteDesc": "All your data has been permanently deleted.",
+        "deleteFailed": "Deletion Failed",
+        "deleteFailedDesc": "An error occurred while deleting your data. Please try again.",
+        "passwordRequired": "Password Required",
+        "passwordRequiredDesc": "Please enter your password to confirm this action."
+      }
+    },
+    "leads": {
+      "title": "Lead Management",
+      "description": "Configure lead statuses and management settings"
+    },
+    "projects": {
+      "title": "Projects & Sessions",
+      "description": "Manage project stages, types, and session statuses"
+    },
+    "services": {
+      "title": "Packages & Services",
+      "description": "Create service packages and manage individual services for your business"
+    },
+    "clientMessaging": {
+      "title": "Client Messaging",
+      "description": "Manage automated message templates and delivery triggers for client communication",
+      "silentHours": {
+        "title": "Silent Hours",
+        "description": "Messages will not be sent during this time window. Any messages triggered at night will be delayed until the next morning.",
+        "enable": "Enable Silent Hours",
+        "enabledDesc": "Messages triggered during silent hours will be delayed until the next morning",
+        "disabledDesc": "When disabled, messages will be sent immediately regardless of the time of day",
+        "timeWindow": "Time Window",
+        "startTime": "Start Time",
+        "endTime": "End Time",
+        "to": "to",
+        "helpText": "Messages triggered between {{startTime}} and {{endTime}} will be sent after silent hours end."
+      }
+    },
+    "contracts": {
+      "title": "Contracts",
+      "description": "Manage contract templates and legal documents",
+      "comingSoon": "Coming soon..."
     }
   },
   "payments": {

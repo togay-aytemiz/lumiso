@@ -290,6 +290,173 @@
           "description": "Tebrikler! İşletme bilgilerinizi başarıyla kurdunuz. Fotoğrafçılık CRM kurulumunuzun bir sonraki adımına geçmeye hazırsınız."
         }
       }
+    },
+    "profile": {
+      "title": "Profil",
+      "description": "Kişisel bilgilerinizi ve çalışma saatlerinizi yönetin",
+      "profileInfo": {
+        "title": "Profil Bilgileri",
+        "description": "Kişisel bilgilerinizi ve fotoğrafınızı güncelleyin.",
+        "profilePhoto": "Profil Fotoğrafı",
+        "currentPhoto": "Mevcut Fotoğraf",
+        "photoCurrentlySet": "Fotoğraf şu anda ayarlı",
+        "defaultAvatar": "Varsayılan Avatar",
+        "defaultAvatarHelp": "Yönetici görünümlerinde ve müşteri mesajlarında kullanılır",
+        "defaultAvatarLongHelp": "Fotoğraf yüklenmediğinde yönetici görünümlerinde ve müşteri mesajlarında kullanılır",
+        "chooseFile": "Dosya Seç",
+        "chooseNewFile": "Yeni Dosya Seç",
+        "uploading": "Yükleniyor...",
+        "fileFormatsHelp": "Yönetici görünümlerinde ve müşteri mesajlarında kullanılır. JPG, PNG, SVG kabul eder. Maksimum dosya boyutu: 2 MB",
+        "fullName": "Ad Soyad",
+        "fullNamePlaceholder": "Ad soyadınızı girin",
+        "fullNameHelp": "Müşteri iletişimlerinde görünecek ad soyadınız",
+        "phoneNumber": "Telefon Numarası",
+        "phoneNumberPlaceholder": "Telefon numaranızı girin",
+        "phoneNumberHelp": "Randevu ve müşteri iletişimleri için iletişim numaranız",
+        "emailAddress": "E-posta Adresi",
+        "emailHelp": "Giriş e-posta adresiniz (burada değiştirilemez)",
+        "deletePhoto": "Profil Fotoğrafını Sil",
+        "deletePhotoConfirm": "Profil fotoğrafınızı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
+        "deletePhotoButton": "Fotoğraf Sil"
+      },
+      "workingHours": {
+        "title": "Çalışma Saatleri",
+        "description": "Seans planlama için müsaitliğinizi ayarlayın",
+        "day": "Gün",
+        "enabled": "Etkin",
+        "startTime": "Başlangıç Saati",
+        "endTime": "Bitiş Saati",
+        "helpText": "Bu saatler seans planlarken varsayılan olarak kullanılacak",
+        "monday": "Pazartesi",
+        "tuesday": "Salı",
+        "wednesday": "Çarşamba",
+        "thursday": "Perşembe",
+        "friday": "Cuma",
+        "saturday": "Cumartesi",
+        "sunday": "Pazar"
+      }
+    },
+    "billing": {
+      "title": "Faturalandırma ve Ödemeler",
+      "description": "Aboneliğinizi, ödeme yöntemlerinizi ve faturalandırma bilgilerinizi yönetin",
+      "comingSoon": "Yakında geliyor..."
+    },
+    "integrations": {
+      "title": "Entegrasyonlar",
+      "description": "Harici servisleri bağlayın ve üçüncü parti entegrasyonları yönetin",
+      "calendar": {
+        "title": "Takvim Entegrasyonu",
+        "description": "Seansları ve hatırlatıcıları senkronize etmek için Google Takvim'inizi bağlayın",
+        "connected": "Google Takvim'e bağlandı",
+        "connectedAs": "Şu hesapla bağlandı:",
+        "expired": "Oturum süresi doldu. Lütfen takviminizi yeniden bağlayın.",
+        "connect": "Google Takvim'i Bağla",
+        "disconnect": "Google Takvim Bağlantısını Kes"
+      }
+    },
+    "notifications": {
+      "title": "Bildirimler",
+      "description": "Fotoğraf işletmeniz için özelleştirilmiş bildirim sistemi",
+      "masterControls": {
+        "title": "Ana Kontroller",
+        "description": "Genel bildirim ayarları ve zamanlama",
+        "allNotifications": "Tüm Bildirimler",
+        "allNotificationsHelp": "Tüm bildirim türlerini etkinleştirmek veya devre dışı bırakmak için ana anahtar",
+        "scheduledTime": "Zamanlanmış Bildirim Saati",
+        "scheduledTimeHelp": "Günlük özetlerin her sabah gönderildiği saat"
+      },
+      "scheduled": {
+        "title": "Zamanlanmış Bildirimler",
+        "description": "Günlük özet otomatik olarak şu saatte gönderilir:",
+        "dailySummary": "Günlük Özet",
+        "dailySummaryHelp": "Bugünkü seanslar, gecikmiş öğeler, hatırlatıcılar ve bekleyen görevlerle sabah özeti"
+      },
+      "immediate": {
+        "title": "Anında Bildirimler",
+        "description": "Olaylar gerçekleştiğinde gönderilen gerçek zamanlı uyarılar",
+        "projectMilestone": "Proje Kilometre Taşına Ulaşıldı",
+        "projectMilestoneHelp": "Bir proje Tamamlandı veya İptal Edildi yaşam döngüsüne geçtiğinde bildir"
+      },
+      "sendTest": "Test gönder",
+      "sendEmptyTest": "Boş test gönder",
+      "testing": "Test ediliyor...",
+      "toasts": {
+        "allEnabled": "Tüm Bildirimler Etkinleştirildi",
+        "allDisabled": "Tüm Bildirimler Devre Dışı Bırakıldı",
+        "allEnabledDesc": "Tüm bildirim türleri etkinleştirildi",
+        "allDisabledDesc": "Tüm bildirim türleri devre dışı bırakıldı",
+        "updated": "Güncellendi",
+        "updatedDesc": "Bildirim ayarı başarıyla kaydedildi",
+        "testSent": "Test E-postası Gönderildi",
+        "testSentDesc": "bildirim test e-postası gönderildi!",
+        "testFailed": "Test Başarısız",
+        "testFailedDesc": "Test bildirimi gönderilemedi. Lütfen ayarlarınızı kontrol edin.",
+        "error": "Hata",
+        "errorDesc": "Bildirim ayarları güncellenemedi"
+      }
+    },
+    "dangerZone": {
+      "title": "Tehlike Bölgesi",
+      "description": "Bu işlemler yıkıcıdır ve geri alınamaz. Dikkatli ilerleyin.",
+      "deleteData": {
+        "title": "Tüm Verileri Sil",
+        "description": "Tüm verilerinizi sunucularımızdan kalıcı olarak kaldırın",
+        "warning": "Tüm Verileri Kalıcı Olarak Sil",
+        "warningDesc": "Bu işlem tüm müşterilerinizi, projelerinizi, seanslarınızı, hatırlatıcılarınızı, ödemelerinizi ve ilişkili verileri kalıcı olarak silecektir. Bu işlem geri alınamaz ve tüm veriler sonsuza kadar kaybolacaktır.",
+        "button": "Tüm Verileri Sil",
+        "confirmTitle": "Veri Silmeyi Onayla",
+        "confirmDesc": "Bu işlem aşağıdakiler dahil olmak üzere tüm verilerinizi kalıcı olarak silecektir:",
+        "leads": "Tüm müşteriler ve bilgileri",
+        "projects": "Tüm projeler ve detayları",
+        "sessions": "Tüm seanslar ve randevular",
+        "reminders": "Tüm hatırlatıcılar ve etkinlikler",
+        "payments": "Tüm ödeme kayıtları",
+        "settings": "Tüm özel ayarlar ve yapılandırmalar",
+        "passwordPrompt": "Bu işlem geri alınamaz. Lütfen onaylamak için hesap şifrenizi girin.",
+        "passwordLabel": "Hesap Şifresi",
+        "passwordPlaceholder": "Şifrenizi girin",
+        "cancel": "İptal",
+        "deleting": "Siliniyor...",
+        "deleteComplete": "Veri Silme Tamamlandı",
+        "deleteCompleteDesc": "Tüm verileriniz kalıcı olarak silindi.",
+        "deleteFailed": "Silme Başarısız",
+        "deleteFailedDesc": "Verilerinizi silerken bir hata oluştu. Lütfen tekrar deneyin.",
+        "passwordRequired": "Şifre Gerekli",
+        "passwordRequiredDesc": "Bu işlemi onaylamak için şifrenizi girin."
+      }
+    },
+    "leads": {
+      "title": "Müşteri Yönetimi",
+      "description": "Müşteri durumlarını ve yönetim ayarlarını yapılandırın"
+    },
+    "projects": {
+      "title": "Projeler ve Seanslar",
+      "description": "Proje aşamalarını, türlerini ve seans durumlarını yönetin"
+    },
+    "services": {
+      "title": "Paketler ve Hizmetler",
+      "description": "İşletmeniz için hizmet paketleri oluşturun ve bireysel hizmetleri yönetin"
+    },
+    "clientMessaging": {
+      "title": "Müşteri Mesajlaşması",
+      "description": "Müşteri iletişimi için otomatik mesaj şablonlarını ve dağıtım tetikleyicilerini yönetin",
+      "silentHours": {
+        "title": "Sessiz Saatler",
+        "description": "Bu zaman aralığında mesajlar gönderilmeyecektir. Gece tetiklenen mesajlar ertesi sabaha ertelenecektir.",
+        "enable": "Sessiz Saatleri Etkinleştir",
+        "enabledDesc": "Sessiz saatlerde tetiklenen mesajlar ertesi sabaha ertelenecek",
+        "disabledDesc": "Devre dışı bırakıldığında, mesajlar günün saatine bakılmaksızın hemen gönderilir",
+        "timeWindow": "Zaman Aralığı",
+        "startTime": "Başlangıç Saati",
+        "endTime": "Bitiş Saati",
+        "to": "ile",
+        "helpText": "{{startTime}} ile {{endTime}} arasında tetiklenen mesajlar sessiz saatler bittikten sonra gönderilir."
+      }
+    },
+    "contracts": {
+      "title": "Sözleşmeler",
+      "description": "Sözleşme şablonlarını ve yasal belgeleri yönetin",
+      "comingSoon": "Yakında geliyor..."
     }
   },
   "payments": {

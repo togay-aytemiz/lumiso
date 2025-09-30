@@ -5,9 +5,11 @@ import { settingsHelpContent } from "@/lib/settingsHelpContent";
 import ProjectStatusesSection from "@/components/ProjectStatusesSection";
 import ProjectTypesSection from "@/components/ProjectTypesSection";
 import SessionStatusesSection from "@/components/SessionStatusesSection";
+import { useTranslation } from "react-i18next";
 // Permissions removed for single photographer mode
 
 export default function Projects() {
+  const { t } = useTranslation("pages");
   // Permissions removed for single photographer mode - always allow
   // const { hasPermission, loading } = usePermissions();
   
@@ -41,8 +43,8 @@ export default function Projects() {
   return (
     <SettingsPageWrapper>
       <SettingsHeader
-        title="Projects & Sessions"
-        description="Manage project stages, types, and session statuses"
+        title={t("settings.projects.title")}
+        description={t("settings.projects.description")}
         helpContent={settingsHelpContent.projects}
       />
       

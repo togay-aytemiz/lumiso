@@ -4,9 +4,11 @@ import SettingsHeader from "@/components/settings/SettingsHeader";
 import { settingsHelpContent } from "@/lib/settingsHelpContent";
 import LeadStatusesSection from "@/components/LeadStatusesSection";
 import { LeadFieldsSection } from "@/components/LeadFieldsSection";
+import { useTranslation } from "react-i18next";
 // Permissions removed for single photographer mode
 
 export default function Leads() {
+  const { t } = useTranslation("pages");
   // Permissions removed for single photographer mode - always allow
   // const { hasPermission, loading } = usePermissions();
   
@@ -32,8 +34,8 @@ export default function Leads() {
   return (
     <SettingsPageWrapper>
       <SettingsHeader
-        title="Lead Management"
-        description="Configure lead statuses and management settings"
+        title={t("settings.leads.title")}
+        description={t("settings.leads.description")}
         helpContent={settingsHelpContent.leads}
       />
       

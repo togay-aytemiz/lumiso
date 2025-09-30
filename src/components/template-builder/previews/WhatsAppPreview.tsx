@@ -7,7 +7,7 @@ interface WhatsAppPreviewProps {
 }
 
 export function WhatsAppPreview({ blocks, mockData }: WhatsAppPreviewProps) {
-  const { t } = useTranslation('forms');
+  const { t } = useTranslation('pages');
   
   const replacePlaceholders = (text: string) => {
     return text.replace(/\{(\w+)\}/g, (match, key) => mockData[key] || match);
@@ -24,10 +24,10 @@ export function WhatsAppPreview({ blocks, mockData }: WhatsAppPreviewProps) {
     if (blocks.length === 0) {
       return (
         <div className="text-sm">
-          <div className="mb-2">{t('template_builder.hello_customer', { name: mockData.customer_name })}</div>
-          <div>{t('template_builder.excited_message')} ✨📸</div>
-          <div className="mt-2">{t('template_builder.looking_forward')}</div>
-          <div className="mt-3 text-gray-500 text-xs">{t('template_builder.add_blocks')}</div>
+          <div className="mb-2">{t('template_builder.preview.helloCustomer', { name: mockData.customer_name })}</div>
+          <div>{t('template_builder.preview.excitedMessage')} ✨📸</div>
+          <div className="mt-2">{t('template_builder.preview.lookingForward')}</div>
+          <div className="mt-3 text-gray-500 text-xs">{t('template_builder.preview.addBlocks')}</div>
         </div>
       );
     }

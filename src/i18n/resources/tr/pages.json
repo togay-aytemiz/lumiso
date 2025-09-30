@@ -526,6 +526,30 @@
       "publish": "Yayınla",
       "published": "Yayınlandı"
     },
+    "editor": {
+      "title": "Şablon Oluşturucu",
+      "description": "E-posta şablonunuzu oluşturmak için blokları sürükleyip bırakın",
+      "addBlock": "Blok Ekle"
+    },
+    "preview": {
+      "helloCustomer": "Merhaba {{name}}!",
+      "excitedMessage": "Özel anlarınızı ölümsüzleştirmek için sabırsızlanıyoruz",
+      "lookingForward": "Seansınız için sabırsızlanıyoruz!",
+      "addBlocks": "Şablonunuzu oluşturmak için bloklar ekleyin"
+    },
+    "blockTitles": {
+      "text": "Metin Bloğu",
+      "sessionDetails": "Seans Detayları",
+      "cta": "Harekete Geçirici Mesaj",
+      "image": "Resim Bloğu",
+      "footer": "Alt Bilgi",
+      "divider": "Ayırıcı",
+      "columns": "Sütunlar",
+      "socialLinks": "Sosyal Bağlantılar",
+      "header": "Başlık",
+      "rawHtml": "Ham HTML",
+      "unknown": "Bilinmeyen Blok"
+    },
     "email": {
       "subject": "Konu:",
       "preheader": "Ön Başlık:",

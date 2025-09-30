@@ -526,6 +526,30 @@
       "publish": "Publish",
       "published": "Published"
     },
+    "editor": {
+      "title": "Template Builder",
+      "description": "Drag and drop blocks to build your email template",
+      "addBlock": "Add Block"
+    },
+    "preview": {
+      "helloCustomer": "Hello {{name}}!",
+      "excitedMessage": "We're excited to capture your special moments",
+      "lookingForward": "Looking forward to your session!",
+      "addBlocks": "Add blocks to build your template"
+    },
+    "blockTitles": {
+      "text": "Text Block",
+      "sessionDetails": "Session Details",
+      "cta": "Call to Action",
+      "image": "Image Block",
+      "footer": "Footer",
+      "divider": "Divider",
+      "columns": "Columns",
+      "socialLinks": "Social Links",
+      "header": "Header",
+      "rawHtml": "Raw HTML",
+      "unknown": "Unknown Block"
+    },
     "email": {
       "subject": "Subject:",
       "preheader": "Preheader:",

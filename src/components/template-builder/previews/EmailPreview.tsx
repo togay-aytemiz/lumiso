@@ -15,7 +15,7 @@ interface EmailPreviewProps {
 }
 
 export function EmailPreview({ blocks, mockData, device, emailSubject, preheader }: EmailPreviewProps) {
-  const { t } = useTranslation('forms');
+  const { t } = useTranslation('pages');
   const { activeOrganization } = useOrganization();
   const [organizationSettings, setOrganizationSettings] = useState<any>(null);
 
@@ -90,9 +90,9 @@ export function EmailPreview({ blocks, mockData, device, emailSubject, preheader
 
         {blocks.length === 0 && (
           <div className="text-center py-12 text-muted-foreground">
-            <h3 className="font-semibold mb-2">{t('template_builder.hello_customer', { name: mockData.customer_name })}</h3>
-            <p>{t('template_builder.excited_message')}</p>
-            <p className="mt-8 text-sm">{t('template_builder.add_blocks')}</p>
+            <h3 className="font-semibold mb-2">{t('template_builder.preview.helloCustomer', { name: mockData.customer_name })}</h3>
+            <p>{t('template_builder.preview.excitedMessage')}</p>
+            <p className="mt-8 text-sm">{t('template_builder.preview.addBlocks')}</p>
           </div>
         )}
       </div>

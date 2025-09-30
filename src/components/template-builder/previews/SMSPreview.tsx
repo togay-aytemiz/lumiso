@@ -1,4 +1,5 @@
 import { TemplateBlock, TextBlockData, SessionDetailsBlockData, CTABlockData, ImageBlockData, FooterBlockData } from "@/types/templateBuilder";
+import { useTranslation } from 'react-i18next';
 
 interface SMSPreviewProps {
   blocks: TemplateBlock[];
@@ -6,6 +7,7 @@ interface SMSPreviewProps {
 }
 
 export function SMSPreview({ blocks, mockData }: SMSPreviewProps) {
+  const { t } = useTranslation('pages');
   const replacePlaceholders = (text: string) => {
     return text.replace(/\{(\w+)\}/g, (match, key) => mockData[key] || match);
   };
@@ -102,9 +104,9 @@ export function SMSPreview({ blocks, mockData }: SMSPreviewProps) {
           </div>
         ) : (
           <div className="text-sm">
-            Hello {mockData.customer_name}! We're excited to capture your special moments.
+            {t('template_builder.preview.helloCustomer', { name: mockData.customer_name })} {t('template_builder.preview.excitedMessage')}.
             
-            Add blocks to build your template.
+            {t('template_builder.preview.addBlocks')}.
           </div>
         )}
       </div>

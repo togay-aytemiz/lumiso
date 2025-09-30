@@ -15,6 +15,23 @@ interface OptimizedTemplateEditorProps {
   onBlocksChange: (blocks: TemplateBlock[]) => void;
 }
 
+// Helper function to get block title translation key
+function getBlockTitleKey(type: TemplateBlock["type"]): string {
+  switch (type) {
+    case "text": return 'template_builder.blockTitles.text';
+    case "session-details": return 'template_builder.blockTitles.sessionDetails';
+    case "cta": return 'template_builder.blockTitles.cta';
+    case "image": return 'template_builder.blockTitles.image';
+    case "footer": return 'template_builder.blockTitles.footer';
+    case "divider": return 'template_builder.blockTitles.divider';
+    case "columns": return 'template_builder.blockTitles.columns';
+    case "social-links": return 'template_builder.blockTitles.socialLinks';
+    case "header": return 'template_builder.blockTitles.header';
+    case "raw-html": return 'template_builder.blockTitles.rawHtml';
+    default: return 'template_builder.blockTitles.unknown';
+  }
+}
+
 // Memoized block component to prevent unnecessary re-renders
 const MemoizedBlockCard = React.memo(({ 
   block, 
@@ -41,6 +58,8 @@ const MemoizedBlockCard = React.memo(({
   canMoveDown: boolean;
   totalBlocks: number;
 }) => {
+  const { t } = useTranslation('pages');
+  
   const handleClick = useCallback(() => {
     onActivate(block.id);
   }, [block.id, onActivate]);
@@ -89,7 +108,7 @@ const MemoizedBlockCard = React.memo(({
                 >
                   <GripVertical className="h-4 w-4 text-muted-foreground" />
                 </div>
-                {getBlockTitle(block.type)}
+                {t(getBlockTitleKey(block.type))}
               </CardTitle>
               <div className="flex items-center gap-1">
                 <Button
@@ -131,7 +150,7 @@ export const OptimizedTemplateEditor = React.memo(({
   blocks, 
   onBlocksChange
 }: OptimizedTemplateEditorProps) => {
-  const { t } = useTranslation('forms');
+  const { t } = useTranslation('pages');
   const [activeBlock, setActiveBlock] = useState<string | null>(null);
   const [showAddBlock, setShowAddBlock] = useState(false);
 
@@ -239,8 +258,8 @@ export const OptimizedTemplateEditor = React.memo(({
       {/* Header */}
       <div className="border-b px-6 py-4">
         <div>
-          <h2 className="font-semibold">{t('template_builder.title')}</h2>
-          <p className="text-sm text-muted-foreground">{t('template_builder.description')}</p>
+          <h2 className="font-semibold">{t('template_builder.editor.title')}</h2>
+          <p className="text-sm text-muted-foreground">{t('template_builder.editor.description')}</p>
         </div>
       </div>
 
@@ -268,7 +287,7 @@ export const OptimizedTemplateEditor = React.memo(({
           onClick={handleShowAddBlock}
         >
           <Plus className="h-4 w-4" />
-          Add Block
+          {t('template_builder.editor.addBlock')}
         </Button>
       </div>
 
@@ -283,22 +302,6 @@ export const OptimizedTemplateEditor = React.memo(({
 });
 
 OptimizedTemplateEditor.displayName = 'OptimizedTemplateEditor';
-
-function getBlockTitle(type: TemplateBlock["type"]) {
-  switch (type) {
-    case "text": return "Text Block";
-    case "session-details": return "Session Details";
-    case "cta": return "Call to Action";
-    case "image": return "Image Block";
-    case "footer": return "Footer";
-    case "divider": return "Divider";
-    case "columns": return "Columns";
-    case "social-links": return "Social Links";
-    case "header": return "Header";
-    case "raw-html": return "Raw HTML";
-    default: return "Unknown Block";
-  }
-}
 
 function getDefaultBlockData(type: TemplateBlock["type"]): BlockData {
   switch (type) {

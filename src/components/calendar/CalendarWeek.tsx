@@ -1,6 +1,6 @@
 import React, { memo, useMemo } from 'react';
 import { format, addDays, startOfWeek, isToday, isSameDay } from 'date-fns';
-import { formatTime, getUserLocale, getStartOfWeek } from '@/lib/utils';
+import { formatTime, getUserLocale, getStartOfWeek, getDateFnsLocale } from '@/lib/utils';
 import { CalendarDay } from './CalendarDay';
 import { useSmartTimeRange } from '@/hooks/useSmartTimeRange';
 import { useOrganizationTimezone } from '@/hooks/useOrganizationTimezone';
@@ -62,6 +62,7 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
 }) {
   const { t } = useTranslation('pages');
   const userLocale = getUserLocale();
+  const dateFnsLocale = getDateFnsLocale();
   const { formatTime: formatOrgTime, loading: timezoneLoading } = useOrganizationTimezone();
   const { timeSlots, getSlotIndex } = useSmartTimeRange(sessions, activities);
 
@@ -147,7 +148,7 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
                   selected ? 'bg-primary text-primary-foreground' : today ? 'bg-primary/10 text-primary' : 'hover:bg-accent'
                 }`}
               >
-                <div className="text-xs font-medium">{format(day, 'EEE')}</div>
+                <div className="text-xs font-medium">{format(day, 'EEE', { locale: dateFnsLocale })}</div>
                 <div className="text-sm">{format(day, 'd')}</div>
               </button>
             );
@@ -267,7 +268,7 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
           const today = isToday(day);
           return (
             <div key={index} className={`p-3 text-center ${today ? 'text-primary font-medium' : ''}`}>
-              <div className="text-sm font-medium">{format(day, 'EEE')}</div>
+              <div className="text-sm font-medium">{format(day, 'EEE', { locale: dateFnsLocale })}</div>
               <div className={`text-lg ${today ? 'text-primary' : ''}`}>{format(day, 'd')}</div>
             </div>
           );

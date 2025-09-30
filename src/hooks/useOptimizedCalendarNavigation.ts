@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { addDays, addWeeks, addMonths, format } from 'date-fns';
-import { getUserLocale, getStartOfWeek, getEndOfWeek } from '@/lib/utils';
+import { getUserLocale, getStartOfWeek, getEndOfWeek, getDateFnsLocale } from '@/lib/utils';
 
 type ViewMode = 'day' | 'week' | 'month';
 
@@ -14,6 +14,7 @@ export function useOptimizedCalendarNavigation(
   setCurrentDate: (date: Date | ((prev: Date) => Date)) => void
 ) {
   const userLocale = getUserLocale();
+  const dateFnsLocale = getDateFnsLocale();
 
   // Memoized navigation functions to prevent re-creation on every render
   const navigatePrevious = useCallback(() => {
@@ -54,17 +55,17 @@ export function useOptimizedCalendarNavigation(
   const viewTitle = useMemo(() => {
     switch (viewMode) {
       case "day":
-        return format(currentDate, "EEEE, MMMM d, yyyy", { locale: undefined });
+        return format(currentDate, "EEEE, MMMM d, yyyy", { locale: dateFnsLocale });
       case "week":
         const weekStart = getStartOfWeek(currentDate, userLocale);
         const weekEnd = getEndOfWeek(currentDate, userLocale);
-        return `${format(weekStart, "MMM d", { locale: undefined })} - ${format(weekEnd, "MMM d, yyyy", { locale: undefined })}`;
+        return `${format(weekStart, "MMM d", { locale: dateFnsLocale })} - ${format(weekEnd, "MMM d, yyyy", { locale: dateFnsLocale })}`;
       case "month":
-        return format(currentDate, "MMMM yyyy", { locale: undefined });
+        return format(currentDate, "MMMM yyyy", { locale: dateFnsLocale });
       default:
         return '';
     }
-  }, [currentDate, viewMode, userLocale]);
+  }, [currentDate, viewMode, userLocale, dateFnsLocale]);
 
   // Memoized keyboard navigation handler
   const handleKeyboardNavigation = useCallback((e: KeyboardEvent) => {

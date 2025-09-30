@@ -10,7 +10,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
-import { cn } from "@/lib/utils";
+import { cn, getDateFnsLocale } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { NavigationGuardDialog } from "./settings/NavigationGuardDialog";
@@ -216,7 +216,7 @@ export function EditPaymentDialog({ payment, open, onOpenChange, onPaymentUpdate
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {datePaid ? format(datePaid, "PPP") : <span>{t('edit_payment.pick_date')}</span>}
+                    {datePaid ? format(datePaid, "PPP", { locale: getDateFnsLocale() }) : <span>{t('edit_payment.pick_date')}</span>}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">

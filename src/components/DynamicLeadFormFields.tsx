@@ -26,7 +26,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
-import { cn } from "@/lib/utils";
+import { cn, getDateFnsLocale } from "@/lib/utils";
 import { LeadFieldDefinition } from "@/types/leadFields";
 
 interface DynamicLeadFormFieldsProps {
@@ -151,7 +151,7 @@ export function DynamicLeadFormFields({
               >
                 <CalendarIcon className="mr-2 h-4 w-4" />
                 {formField.value ? (
-                  format(new Date(formField.value), "PPP")
+                  format(new Date(formField.value), "PPP", { locale: getDateFnsLocale() })
                 ) : (
                   <span>{t('dynamicFields.pickDate')}</span>
                 )}

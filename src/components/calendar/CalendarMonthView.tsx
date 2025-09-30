@@ -1,7 +1,7 @@
 import { memo } from "react";
 import { format, eachDayOfInterval, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isToday } from "date-fns";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
-import { formatTime, formatDate, getUserLocale } from "@/lib/utils";
+import { formatTime, formatDate, getUserLocale, getDateFnsLocale } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 
 interface Session {
@@ -62,6 +62,7 @@ export const CalendarMonthView = memo<CalendarMonthViewProps>(({
 }) => {
   const { t } = useTranslation('pages');
   const userLocale = getUserLocale();
+  const dateFnsLocale = getDateFnsLocale();
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
   const calendarStart = startOfWeek(monthStart, { weekStartsOn: userLocale === 'en-US' ? 0 : 1 });
@@ -70,7 +71,7 @@ export const CalendarMonthView = memo<CalendarMonthViewProps>(({
   const days = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
   const weekDays = Array.from({ length: 7 }, (_, i) => {
     const day = addDays(calendarStart, i);
-    return format(day, "EEE", { locale: undefined });
+    return format(day, "EEE", { locale: dateFnsLocale });
   });
 
   return (

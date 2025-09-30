@@ -23,6 +23,7 @@ import {
   Bar,
 } from "recharts";
 import { format, subDays, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, eachMonthOfInterval, addDays } from "date-fns";
+import { getDateFnsLocale } from "@/lib/utils";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import GlobalSearch from "@/components/GlobalSearch";
 import { PageHeader, PageHeaderSearch } from "@/components/ui/page-header";
@@ -201,7 +202,7 @@ const Analytics = () => {
       }).length || 0;
       
       return {
-        month: format(month, 'MMM'),
+        month: format(month, 'MMM', { locale: getDateFnsLocale() }),
         leads: count
       };
     });

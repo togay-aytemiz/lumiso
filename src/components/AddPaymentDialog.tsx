@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarIcon, Plus } from "lucide-react";
 import { format } from "date-fns";
-import { cn, getUserLocale } from "@/lib/utils";
+import { cn, getUserLocale, getDateFnsLocale } from "@/lib/utils";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
 import { useToast } from "@/hooks/use-toast";
 import ReactCalendar from "react-calendar";
@@ -206,7 +206,7 @@ export function AddPaymentDialog({ projectId, onPaymentAdded }: AddPaymentDialog
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {datePaid ? format(datePaid, "PPP") : <span>{t('payments.pick_date')}</span>}
+                    {datePaid ? format(datePaid, "PPP", { locale: getDateFnsLocale() }) : <span>{t('payments.pick_date')}</span>}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto min-w-[18rem] p-0 rounded-xl border border-border shadow-md" align="start">

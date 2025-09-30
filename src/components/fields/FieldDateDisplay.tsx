@@ -1,5 +1,6 @@
 import { Calendar } from "lucide-react";
 import { format } from "date-fns";
+import { getDateFnsLocale } from "@/lib/utils";
 
 interface FieldDateDisplayProps {
   value: string;
@@ -16,7 +17,7 @@ export function FieldDateDisplay({
 
   const formatDate = (dateValue: string) => {
     try {
-      return format(new Date(dateValue), formatString);
+      return format(new Date(dateValue), formatString, { locale: getDateFnsLocale() });
     } catch {
       return dateValue;
     }

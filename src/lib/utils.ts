@@ -1,5 +1,7 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
+import { enUS, tr } from "date-fns/locale"
+import type { Locale } from "date-fns"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -8,6 +10,17 @@ export function cn(...inputs: ClassValue[]) {
 // Locale utilities for consistent date/time formatting
 export const getUserLocale = (): string => {
   return navigator.language || "en-US";
+};
+
+// Get date-fns locale object based on user's locale
+export const getDateFnsLocale = (): Locale => {
+  const userLocale = getUserLocale();
+  
+  if (userLocale.startsWith('tr')) {
+    return tr;
+  }
+  
+  return enUS;
 };
 
 export const formatDate = (dateString: string | Date, locale?: string): string => {

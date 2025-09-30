@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { cn, getUserLocale } from "@/lib/utils";
+import { cn, getUserLocale, getDateFnsLocale } from "@/lib/utils";
 import ReactCalendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import "@/components/react-calendar.css";
@@ -48,7 +48,7 @@ const displayFormat = (date?: Date, h?: number, m?: number) => {
   if (!date) return undefined;
   const withTime = new Date(date);
   withTime.setHours(h ?? 0, m ?? 0, 0, 0);
-  return format(withTime, "PP p");
+  return format(withTime, "PP p", { locale: getDateFnsLocale() });
 };
 
 export const DateTimePicker: React.FC<DateTimePickerProps> = ({

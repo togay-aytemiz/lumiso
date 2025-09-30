@@ -46,8 +46,8 @@ export function AddLeadStatusDialog({ open, onOpenChange, onStatusAdded }: AddLe
   const handleSubmit = async () => {
     if (!formData.name.trim()) {
       toast({
-        title: "Error",
-        description: "Status name is required",
+        title: t('errors.title', { defaultValue: 'Error' }),
+        description: t('lead_status.errors.name_required'),
         variant: "destructive"
       });
       return;
@@ -87,8 +87,8 @@ export function AddLeadStatusDialog({ open, onOpenChange, onStatusAdded }: AddLe
       if (error) throw error;
 
       toast({
-        title: "Success",
-        description: "Lead status added successfully"
+        title: t('success.created'),
+        description: t('lead_status.success.added')
       });
 
       setFormData({ name: "", color: "#3B82F6", lifecycle: "active" });
@@ -136,7 +136,7 @@ export function AddLeadStatusDialog({ open, onOpenChange, onStatusAdded }: AddLe
 
   return (
     <AppSheetModal
-      title="ADD STATUS"
+      title={t('lead_status.add_title')}
       isOpen={open}
       onOpenChange={onOpenChange}
       size="content"
@@ -146,65 +146,65 @@ export function AddLeadStatusDialog({ open, onOpenChange, onStatusAdded }: AddLe
     >
       <div className="space-y-6">
         <div className="space-y-2">
-          <Label htmlFor="name">Name</Label>
+          <Label htmlFor="name">{t('lead_status.name_label')}</Label>
           <Input
             id="name"
             value={formData.name}
             onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-            placeholder="e.g. Qualified, Proposal Sent, Won"
+            placeholder={t('lead_status.name_placeholder')}
             maxLength={50}
             className="rounded-xl"
           />
-          <p className="text-sm text-muted-foreground">Organise your lead workflow in statuses.</p>
+          <p className="text-sm text-muted-foreground">{t('lead_status.name_help')}</p>
         </div>
 
-        <div className="space-y-3">
-          <Label>Status Color</Label>
-          <div className="grid grid-cols-6 gap-3 p-2">
-            {colorOptions.map((color) => (
-              <button
-                key={color}
-                type="button"
-                onClick={() => setFormData(prev => ({ ...prev, color }))}
-                className={`w-10 h-10 rounded-full border-4 transition-all ${
-                  formData.color === color 
-                    ? 'border-gray-900 scale-110' 
-                    : 'border-transparent hover:scale-105'
-                }`}
-                style={{ backgroundColor: color }}
-              />
-            ))}
-          </div>
+      <div className="space-y-3">
+        <Label>{t('lead_status.color_label')}</Label>
+        <div className="grid grid-cols-6 gap-3 p-2">
+          {colorOptions.map((color) => (
+            <button
+              key={color}
+              type="button"
+              onClick={() => setFormData(prev => ({ ...prev, color }))}
+              className={`w-10 h-10 rounded-full border-4 transition-all ${
+                formData.color === color 
+                  ? 'border-gray-900 scale-110' 
+                  : 'border-transparent hover:scale-105'
+              }`}
+              style={{ backgroundColor: color }}
+            />
+          ))}
         </div>
+      </div>
 
-        <div className="space-y-3">
-          <Label>Lifecycle</Label>
-          <div className="grid grid-cols-3 gap-2 p-1 bg-muted rounded-lg">
-            {(["active", "completed", "cancelled"] as const).map((lifecycle) => (
-              <button
-                key={lifecycle}
-                type="button"
-                onClick={() => setFormData(prev => ({ ...prev, lifecycle }))}
-                className={cn(
-                  "px-3 py-2 text-sm font-medium rounded-md transition-all capitalize",
-                  formData.lifecycle === lifecycle
-                    ? "bg-background shadow-sm text-foreground"
-                    : "text-muted-foreground hover:text-foreground hover:bg-background/50"
-                )}
-              >
-                {lifecycle}
-              </button>
-            ))}
-          </div>
-          <div className="space-y-1 text-sm text-muted-foreground">
-            <p>Lifecycle drives automations and reporting:</p>
-            <ul className="space-y-1 ml-4">
-              <li>• <strong>Active:</strong> Status is in progress</li>
-              <li>• <strong>Completed:</strong> Lead successfully converted</li>
-              <li>• <strong>Cancelled:</strong> Lead lost or rejected</li>
-            </ul>
-          </div>
+      <div className="space-y-3">
+        <Label>{t('lead_status.lifecycle.label')}</Label>
+        <div className="grid grid-cols-3 gap-2 p-1 bg-muted rounded-lg">
+          {(["active", "completed", "cancelled"] as const).map((lifecycle) => (
+            <button
+              key={lifecycle}
+              type="button"
+              onClick={() => setFormData(prev => ({ ...prev, lifecycle }))}
+              className={cn(
+                "px-3 py-2 text-sm font-medium rounded-md transition-all capitalize",
+                formData.lifecycle === lifecycle
+                  ? "bg-background shadow-sm text-foreground"
+                  : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+              )}
+            >
+              {lifecycle}
+            </button>
+          ))}
         </div>
+        <div className="space-y-1 text-sm text-muted-foreground">
+          <p>{t('lead_status.lifecycle.help.title')}</p>
+          <ul className="space-y-1 ml-4">
+            <li>• <strong>{t('lead_status.lifecycle.active')}</strong>: {t('lead_status.lifecycle.help.active')}</li>
+            <li>• <strong>{t('lead_status.lifecycle.completed')}</strong>: {t('lead_status.lifecycle.help.completed')}</li>
+            <li>• <strong>{t('lead_status.lifecycle.cancelled')}</strong>: {t('lead_status.lifecycle.help.cancelled')}</li>
+          </ul>
+        </div>
+      </div>
       </div>
     </AppSheetModal>
   );

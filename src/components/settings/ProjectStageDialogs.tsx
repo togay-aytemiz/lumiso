@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 interface AddProjectStageDialogProps {
   open: boolean;
@@ -15,6 +16,7 @@ interface AddProjectStageDialogProps {
 }
 
 export function AddProjectStageDialog({ open, onOpenChange, onStageAdded }: AddProjectStageDialogProps) {
+  const { t } = useTranslation('forms');
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -43,8 +45,8 @@ export function AddProjectStageDialog({ open, onOpenChange, onStageAdded }: AddP
   const handleSubmit = async () => {
     if (!formData.name.trim()) {
       toast({
-        title: "Error",
-        description: "Stage name is required",
+        title: t('errors.title', { defaultValue: 'Error' }),
+        description: t('project_stage.errors.name_required'),
         variant: "destructive"
       });
       return;
@@ -87,8 +89,8 @@ export function AddProjectStageDialog({ open, onOpenChange, onStageAdded }: AddP
       if (error) throw error;
 
       toast({
-        title: "Success",
-        description: "Project stage added successfully"
+        title: t('success.created'),
+        description: t('project_stage.success.added')
       });
 
       setFormData({ name: "", color: "#EF4444", lifecycle: "active" });
@@ -96,7 +98,7 @@ export function AddProjectStageDialog({ open, onOpenChange, onStageAdded }: AddP
       onStageAdded();
     } catch (error: any) {
       toast({
-        title: "Error adding project stage",
+        title: t('project_stage.errors.add_failed'),
         description: error.message,
         variant: "destructive"
       });
@@ -108,7 +110,7 @@ export function AddProjectStageDialog({ open, onOpenChange, onStageAdded }: AddP
   const isDirty = Boolean(formData.name.trim() || formData.color !== "#EF4444" || formData.lifecycle !== "active");
 
   const handleDirtyClose = () => {
-    if (window.confirm("Are you sure you want to discard your changes? Any unsaved information will be lost.")) {
+    if (window.confirm(t('project_stage.confirm.discard_changes'))) {
       setFormData({ name: "", color: "#EF4444", lifecycle: "active" });
       onOpenChange(false);
     }
@@ -116,13 +118,13 @@ export function AddProjectStageDialog({ open, onOpenChange, onStageAdded }: AddP
 
   const footerActions = [
     {
-      label: "Cancel",
+      label: t('buttons.cancel'),
       onClick: () => onOpenChange(false),
       variant: "outline" as const,
       disabled: loading
     },
     {
-      label: loading ? "Adding..." : "Add",
+      label: loading ? t('buttons.adding') : t('buttons.add'),
       onClick: handleSubmit,
       disabled: loading || !formData.name.trim(),
       loading: loading
@@ -136,7 +138,7 @@ export function AddProjectStageDialog({ open, onOpenChange, onStageAdded }: AddP
 
   return (
     <AppSheetModal
-      title="ADD STAGE"
+      title={t('project_stage.add_title')}
       isOpen={open}
       onOpenChange={onOpenChange}
       size="content"
@@ -146,20 +148,20 @@ export function AddProjectStageDialog({ open, onOpenChange, onStageAdded }: AddP
     >
       <div className="space-y-6">
         <div className="space-y-2">
-          <Label htmlFor="name">Name</Label>
+          <Label htmlFor="name">{t('project_stage.name_label')}</Label>
           <Input
             id="name"
             value={formData.name}
             onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-            placeholder="e.g. Inquiry, Post Production, Completed"
+            placeholder={t('project_stage.name_placeholder')}
             maxLength={50}
             className="rounded-xl"
           />
-          <p className="text-sm text-muted-foreground">Organise your workflow in stages.</p>
+          <p className="text-sm text-muted-foreground">{t('project_stage.name_help')}</p>
         </div>
 
         <div className="space-y-3">
-          <Label>Stage Color</Label>
+          <Label>{t('project_stage.color_label')}</Label>
           <div className="grid grid-cols-6 gap-3 p-2">
             {colorOptions.map((color) => (
               <button
@@ -178,7 +180,7 @@ export function AddProjectStageDialog({ open, onOpenChange, onStageAdded }: AddP
         </div>
 
         <div className="space-y-3">
-          <Label>Lifecycle</Label>
+          <Label>{t('project_stage.lifecycle.label')}</Label>
           <div className="grid grid-cols-3 gap-2 p-1 bg-muted rounded-lg">
             {(["active", "completed", "cancelled"] as const).map((lifecycle) => (
               <button
@@ -192,16 +194,16 @@ export function AddProjectStageDialog({ open, onOpenChange, onStageAdded }: AddP
                     : "text-muted-foreground hover:text-foreground hover:bg-background/50"
                 )}
               >
-                {lifecycle}
+                {t(`project_stage.lifecycle.${lifecycle}`)}
               </button>
             ))}
           </div>
           <div className="space-y-1 text-sm text-muted-foreground">
-            <p>Lifecycle drives automations and reporting:</p>
+            <p>{t('project_stage.lifecycle.help.title')}</p>
             <ul className="space-y-1 ml-4">
-              <li>• <strong>Active:</strong> Stage is in progress</li>
-              <li>• <strong>Completed:</strong> Project successfully finished</li>
-              <li>• <strong>Cancelled:</strong> Project stopped or cancelled</li>
+              <li>• <strong>{t('project_stage.lifecycle.active')}</strong>: {t('project_stage.lifecycle.help.active')}</li>
+              <li>• <strong>{t('project_stage.lifecycle.completed')}</strong>: {t('project_stage.lifecycle.help.completed')}</li>
+              <li>• <strong>{t('project_stage.lifecycle.cancelled')}</strong>: {t('project_stage.lifecycle.help.cancelled')}</li>
             </ul>
           </div>
         </div>
@@ -227,6 +229,7 @@ interface EditProjectStageDialogProps {
 }
 
 export function EditProjectStageDialog({ stage, open, onOpenChange, onStageUpdated }: EditProjectStageDialogProps) {
+  const { t } = useTranslation('forms');
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -247,8 +250,8 @@ export function EditProjectStageDialog({ stage, open, onOpenChange, onStageUpdat
   const handleSubmit = async () => {
     if (!formData.name.trim()) {
       toast({
-        title: "Error",
-        description: "Stage name is required",
+        title: t('errors.title', { defaultValue: 'Error' }),
+        description: t('project_stage.errors.name_required'),
         variant: "destructive"
       });
       return;
@@ -268,15 +271,15 @@ export function EditProjectStageDialog({ stage, open, onOpenChange, onStageUpdat
       if (error) throw error;
 
       toast({
-        title: "Success",
-        description: "Project stage updated successfully"
+        title: t('success.updated'),
+        description: t('project_stage.success.updated')
       });
 
       onOpenChange(false);
       onStageUpdated();
     } catch (error: any) {
       toast({
-        title: "Error updating project stage",
+        title: t('project_stage.errors.update_failed'),
         description: error.message,
         variant: "destructive"
       });
@@ -291,14 +294,14 @@ export function EditProjectStageDialog({ stage, open, onOpenChange, onStageUpdat
     // Check if it's a system required stage
     if (stage.is_system_required) {
       toast({
-        title: "Cannot Delete",
-        description: "This stage is required and cannot be deleted. You may rename it.",
+        title: t('errors.title', { defaultValue: 'Cannot Delete' }),
+        description: t('project_stage.errors.cannot_delete'),
         variant: "destructive"
       });
       return;
     }
     
-    if (!window.confirm("Are you sure you want to delete this stage?")) return;
+    if (!window.confirm(t('project_stage.confirm.delete'))) return;
     
     setLoading(true);
     try {
@@ -310,15 +313,15 @@ export function EditProjectStageDialog({ stage, open, onOpenChange, onStageUpdat
       if (error) throw error;
 
       toast({
-        title: "Success",
-        description: "Project stage deleted successfully"
+        title: t('success.deleted'),
+        description: t('project_stage.success.deleted')
       });
 
       onOpenChange(false);
       onStageUpdated();
     } catch (error: any) {
       toast({
-        title: "Error deleting project stage",
+        title: t('project_stage.errors.delete_failed'),
         description: error.message,
         variant: "destructive"
       });
@@ -337,7 +340,7 @@ export function EditProjectStageDialog({ stage, open, onOpenChange, onStageUpdat
   );
 
   const handleDirtyClose = () => {
-    if (window.confirm("Are you sure you want to discard your changes? Any unsaved information will be lost.")) {
+    if (window.confirm(t('project_stage.confirm.discard_changes'))) {
       onOpenChange(false);
     }
   };
@@ -345,19 +348,19 @@ export function EditProjectStageDialog({ stage, open, onOpenChange, onStageUpdat
   const footerActions = [
     // Only show delete for non-system-required stages
     ...(!isSystemRequired ? [{
-      label: "Delete",
+      label: t('buttons.delete'),
       onClick: handleDelete,
       variant: "destructive" as const,
       disabled: loading
     }] : []),
     {
-      label: "Cancel",
+      label: t('buttons.cancel'),
       onClick: () => onOpenChange(false),
       variant: "outline" as const,
       disabled: loading
     },
     {
-      label: loading ? "Saving..." : "Save",
+      label: loading ? t('buttons.saving') : t('buttons.save'),
       onClick: handleSubmit,
       disabled: loading || !formData.name.trim(),
       loading: loading
@@ -371,7 +374,7 @@ export function EditProjectStageDialog({ stage, open, onOpenChange, onStageUpdat
 
   return (
     <AppSheetModal
-      title="EDIT STAGE"
+      title={t('project_stage.edit_title')}
       isOpen={open}
       onOpenChange={onOpenChange}
       size="content"
@@ -381,24 +384,24 @@ export function EditProjectStageDialog({ stage, open, onOpenChange, onStageUpdat
     >
       <div className="space-y-6">
         <div className="space-y-2">
-          <Label htmlFor="name">Name</Label>
+          <Label htmlFor="name">{t('project_stage.name_label')}</Label>
           <Input
             id="name"
             value={formData.name}
             onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-            placeholder="e.g., Planning, In Progress, Completed"
+            placeholder={t('project_stage.name_placeholder')}
             maxLength={50}
             className="rounded-xl"
           />
           {isSystemRequired && (
             <p className="text-sm text-muted-foreground">
-              This is a system-required stage for new projects.
+              {t('project_stage.system_required_note')}
             </p>
           )}
         </div>
 
         <div className="space-y-3">
-          <Label>Stage Color</Label>
+          <Label>{t('project_stage.color_label')}</Label>
           <div className="grid grid-cols-6 gap-3 p-2">
             {colorOptions.map((color) => (
               <button
@@ -419,7 +422,7 @@ export function EditProjectStageDialog({ stage, open, onOpenChange, onStageUpdat
         {/* Only show lifecycle selector for non-system-required stages */}
         {!isSystemRequired && (
           <div className="space-y-3">
-            <Label>Lifecycle</Label>
+            <Label>{t('project_stage.lifecycle.label')}</Label>
             <div className="grid grid-cols-3 gap-2 p-1 bg-muted rounded-lg">
               {(["active", "completed", "cancelled"] as const).map((lifecycle) => (
                 <button
@@ -433,16 +436,16 @@ export function EditProjectStageDialog({ stage, open, onOpenChange, onStageUpdat
                       : "text-muted-foreground hover:text-foreground hover:bg-background/50"
                   )}
                 >
-                  {lifecycle}
+                  {t(`project_stage.lifecycle.${lifecycle}`)}
                 </button>
               ))}
             </div>
             <div className="space-y-1 text-sm text-muted-foreground">
-              <p>Lifecycle drives automations and reporting:</p>
+              <p>{t('project_stage.lifecycle.help.title')}</p>
               <ul className="space-y-1 ml-4">
-                <li>• <strong>Active:</strong> Stage is in progress</li>
-                <li>• <strong>Completed:</strong> Project successfully finished</li>
-                <li>• <strong>Cancelled:</strong> Project stopped or cancelled</li>
+                <li>• <strong>{t('project_stage.lifecycle.active')}</strong>: {t('project_stage.lifecycle.help.active')}</li>
+                <li>• <strong>{t('project_stage.lifecycle.completed')}</strong>: {t('project_stage.lifecycle.help.completed')}</li>
+                <li>• <strong>{t('project_stage.lifecycle.cancelled')}</strong>: {t('project_stage.lifecycle.help.cancelled')}</li>
               </ul>
             </div>
           </div>
@@ -452,7 +455,7 @@ export function EditProjectStageDialog({ stage, open, onOpenChange, onStageUpdat
         {isSystemRequired && (
           <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
             <p className="text-sm text-blue-800">
-              <strong>System Required Stage:</strong> This stage is essential for project workflows and must remain Active. You can rename it but cannot delete it or change its lifecycle.
+              {t('project_stage.system_required_info')}
             </p>
           </div>
         )}

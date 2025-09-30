@@ -178,6 +178,82 @@
       "valid_urls_only": "Only channels with valid URLs will be displayed"
     }
   },
+  "lead_status": {
+    "add_title": "ADD STATUS",
+    "edit_title": "EDIT STATUS",
+    "name_label": "Name",
+    "name_placeholder": "e.g. Qualified, Proposal Sent, Won",
+    "name_help": "Organise your lead workflow in statuses.",
+    "color_label": "Status Color",
+    "lifecycle": {
+      "label": "Lifecycle",
+      "active": "Active",
+      "completed": "Completed",
+      "cancelled": "Cancelled",
+      "help": {
+        "title": "Lifecycle drives automations and reporting:",
+        "active": "Status is in progress",
+        "completed": "Lead successfully converted",
+        "cancelled": "Lead lost or rejected"
+      }
+    },
+    "system_required_info": "System Required Status: This status is essential for lead workflows and must remain Active. You can rename it but cannot delete it or change its lifecycle.",
+    "system_required_note": "This is a system-required status for new leads.",
+    "errors": {
+      "name_required": "Status name is required",
+      "cannot_delete": "This status is required and cannot be deleted. You may rename it.",
+      "add_failed": "Error adding lead status",
+      "update_failed": "Error updating lead status",
+      "delete_failed": "Error deleting lead status"
+    },
+    "success": {
+      "added": "Lead status added successfully",
+      "updated": "Lead status updated successfully",
+      "deleted": "Lead status deleted successfully"
+    },
+    "confirm": {
+      "discard_changes": "Are you sure you want to discard your changes? Any unsaved information will be lost.",
+      "delete": "Are you sure you want to delete this status?"
+    }
+  },
+  "project_stage": {
+    "add_title": "ADD STAGE",
+    "edit_title": "EDIT STAGE",
+    "name_label": "Name",
+    "name_placeholder": "e.g. Inquiry, Post Production, Completed",
+    "name_help": "Organise your workflow in stages.",
+    "color_label": "Stage Color",
+    "lifecycle": {
+      "label": "Lifecycle",
+      "active": "Active",
+      "completed": "Completed",
+      "cancelled": "Cancelled",
+      "help": {
+        "title": "Lifecycle drives automations and reporting:",
+        "active": "Stage is in progress",
+        "completed": "Project successfully finished",
+        "cancelled": "Project stopped or cancelled"
+      }
+    },
+    "system_required_info": "System Required Stage: This stage is essential for project workflows and must remain Active. You can rename it but cannot delete it or change its lifecycle.",
+    "system_required_note": "This is a system-required stage for new projects.",
+    "errors": {
+      "name_required": "Stage name is required",
+      "cannot_delete": "This stage is required and cannot be deleted. You may rename it.",
+      "add_failed": "Error adding project stage",
+      "update_failed": "Error updating project stage",
+      "delete_failed": "Error deleting project stage"
+    },
+    "success": {
+      "added": "Project stage added successfully",
+      "updated": "Project stage updated successfully",
+      "deleted": "Project stage deleted successfully"
+    },
+    "confirm": {
+      "discard_changes": "Are you sure you want to discard your changes? Any unsaved information will be lost.",
+      "delete": "Are you sure you want to delete this stage?"
+    }
+  },
   "lead_fields": {
     "title": "Custom Lead Fields",
     "description": "Configure custom fields to capture additional lead information",

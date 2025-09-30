@@ -178,6 +178,82 @@
       "valid_urls_only": "Yalnızca geçerli URL'lere sahip kanallar görüntülenecektir"
     }
   },
+  "lead_status": {
+    "add_title": "DURUM EKLE",
+    "edit_title": "DURUMU DÜZENLE",
+    "name_label": "Ad",
+    "name_placeholder": "örn. Nitelikli, Teklif Gönderildi, Kazanıldı",
+    "name_help": "Müşteri adayı iş akışınızı durumlarda düzenleyin.",
+    "color_label": "Durum Rengi",
+    "lifecycle": {
+      "label": "Yaşam Döngüsü",
+      "active": "Aktif",
+      "completed": "Tamamlandı",
+      "cancelled": "İptal Edildi",
+      "help": {
+        "title": "Yaşam döngüsü otomasyonları ve raporlamayı yönlendirir:",
+        "active": "Durum devam ediyor",
+        "completed": "Müşteri adayı başarıyla dönüştürüldü",
+        "cancelled": "Müşteri adayı kaybedildi veya reddedildi"
+      }
+    },
+    "system_required_info": "Sistem Gerekli Durum: Bu durum müşteri adayı iş akışları için gereklidir ve Aktif kalmalıdır. Yeniden adlandırabilirsiniz ancak silemez veya yaşam döngüsünü değiştiremezsiniz.",
+    "system_required_note": "Bu, yeni müşteri adayları için sistem gerekli bir durumdur.",
+    "errors": {
+      "name_required": "Durum adı gereklidir",
+      "cannot_delete": "Bu durum gereklidir ve silinemez. Yeniden adlandırabilirsiniz.",
+      "add_failed": "Müşteri adayı durumu eklenirken hata",
+      "update_failed": "Müşteri adayı durumu güncellenirken hata",
+      "delete_failed": "Müşteri adayı durumu silinirken hata"
+    },
+    "success": {
+      "added": "Müşteri adayı durumu başarıyla eklendi",
+      "updated": "Müşteri adayı durumu başarıyla güncellendi",
+      "deleted": "Müşteri adayı durumu başarıyla silindi"
+    },
+    "confirm": {
+      "discard_changes": "Değişikliklerinizi iptal etmek istediğinizden emin misiniz? Kaydedilmemiş tüm bilgiler kaybolacaktır.",
+      "delete": "Bu durumu silmek istediğinizden emin misiniz?"
+    }
+  },
+  "project_stage": {
+    "add_title": "AŞAMA EKLE",
+    "edit_title": "AŞAMAYI DÜZENLE",
+    "name_label": "Ad",
+    "name_placeholder": "örn. Sorgu, Üretim Sonrası, Tamamlandı",
+    "name_help": "İş akışınızı aşamalarda düzenleyin.",
+    "color_label": "Aşama Rengi",
+    "lifecycle": {
+      "label": "Yaşam Döngüsü",
+      "active": "Aktif",
+      "completed": "Tamamlandı",
+      "cancelled": "İptal Edildi",
+      "help": {
+        "title": "Yaşam döngüsü otomasyonları ve raporlamayı yönlendirir:",
+        "active": "Aşama devam ediyor",
+        "completed": "Proje başarıyla tamamlandı",
+        "cancelled": "Proje durduruldu veya iptal edildi"
+      }
+    },
+    "system_required_info": "Sistem Gerekli Aşama: Bu aşama proje iş akışları için gereklidir ve Aktif kalmalıdır. Yeniden adlandırabilirsiniz ancak silemez veya yaşam döngüsünü değiştiremezsiniz.",
+    "system_required_note": "Bu, yeni projeler için sistem gerekli bir aşamadır.",
+    "errors": {
+      "name_required": "Aşama adı gereklidir",
+      "cannot_delete": "Bu aşama gereklidir ve silinemez. Yeniden adlandırabilirsiniz.",
+      "add_failed": "Proje aşaması eklenirken hata",
+      "update_failed": "Proje aşaması güncellenirken hata",
+      "delete_failed": "Proje aşaması silinirken hata"
+    },
+    "success": {
+      "added": "Proje aşaması başarıyla eklendi",
+      "updated": "Proje aşaması başarıyla güncellendi",
+      "deleted": "Proje aşaması başarıyla silindi"
+    },
+    "confirm": {
+      "discard_changes": "Değişikliklerinizi iptal etmek istediğinizden emin misiniz? Kaydedilmemiş tüm bilgiler kaybolacaktır.",
+      "delete": "Bu aşamayı silmek istediğinizden emin misiniz?"
+    }
+  },
   "lead_fields": {
     "title": "Özel Müşteri Adayı Alanları",
     "description": "Ek müşteri adayı bilgilerini yakalamak için özel alanları yapılandırın",

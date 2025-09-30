@@ -96,7 +96,7 @@ export function AddLeadStatusDialog({ open, onOpenChange, onStatusAdded }: AddLe
       onStatusAdded();
     } catch (error: any) {
       toast({
-        title: "Error adding lead status",
+        title: t('lead_status.errors.add_failed'),
         description: error.message,
         variant: "destructive"
       });
@@ -108,7 +108,7 @@ export function AddLeadStatusDialog({ open, onOpenChange, onStatusAdded }: AddLe
   const isDirty = Boolean(formData.name.trim() || formData.color !== "#3B82F6" || formData.lifecycle !== "active");
 
   const handleDirtyClose = () => {
-    if (window.confirm("Are you sure you want to discard your changes? Any unsaved information will be lost.")) {
+    if (window.confirm(t('lead_status.confirm.discard_changes'))) {
       setFormData({ name: "", color: "#3B82F6", lifecycle: "active" });
       onOpenChange(false);
     }
@@ -239,8 +239,8 @@ export function EditLeadStatusDialog({ status, open, onOpenChange, onStatusUpdat
   const handleSubmit = async () => {
     if (!formData.name.trim()) {
       toast({
-        title: "Error",
-        description: "Status name is required",
+        title: t('errors.title', { defaultValue: 'Error' }),
+        description: t('lead_status.errors.name_required'),
         variant: "destructive"
       });
       return;
@@ -264,15 +264,15 @@ export function EditLeadStatusDialog({ status, open, onOpenChange, onStatusUpdat
       if (error) throw error;
 
       toast({
-        title: "Success",
-        description: "Lead status updated successfully"
+        title: t('success.updated'),
+        description: t('lead_status.success.updated')
       });
 
       onOpenChange(false);
       onStatusUpdated();
     } catch (error: any) {
       toast({
-        title: "Error updating lead status",
+        title: t('lead_status.errors.update_failed'),
         description: error.message,
         variant: "destructive"
       });
@@ -290,7 +290,7 @@ export function EditLeadStatusDialog({ status, open, onOpenChange, onStatusUpdat
   );
 
   const handleDirtyClose = () => {
-    if (window.confirm("Are you sure you want to discard your changes? Any unsaved information will be lost.")) {
+    if (window.confirm(t('lead_status.confirm.discard_changes'))) {
       onOpenChange(false);
     }
   };
@@ -301,14 +301,14 @@ export function EditLeadStatusDialog({ status, open, onOpenChange, onStatusUpdat
     // Check if it's a system required status
     if (status.is_system_required) {
       toast({
-        title: "Cannot Delete",
-        description: "This status is required and cannot be deleted. You may rename it.",
+        title: t('errors.title', { defaultValue: 'Cannot Delete' }),
+        description: t('lead_status.errors.cannot_delete'),
         variant: "destructive"
       });
       return;
     }
     
-    if (!window.confirm("Are you sure you want to delete this status?")) return;
+    if (!window.confirm(t('lead_status.confirm.delete'))) return;
     
     setLoading(true);
     try {
@@ -324,15 +324,15 @@ export function EditLeadStatusDialog({ status, open, onOpenChange, onStatusUpdat
       if (error) throw error;
 
       toast({
-        title: "Success",
-        description: "Lead status deleted successfully"
+        title: t('success.deleted'),
+        description: t('lead_status.success.deleted')
       });
 
       onOpenChange(false);
       onStatusUpdated();
     } catch (error: any) {
       toast({
-        title: "Error deleting lead status",
+        title: t('lead_status.errors.delete_failed'),
         description: error.message,
         variant: "destructive"
       });
@@ -372,7 +372,7 @@ export function EditLeadStatusDialog({ status, open, onOpenChange, onStatusUpdat
 
   return (
     <AppSheetModal
-      title="EDIT STATUS"
+      title={t('lead_status.edit_title')}
       isOpen={open}
       onOpenChange={onOpenChange}
       size="content"
@@ -382,24 +382,24 @@ export function EditLeadStatusDialog({ status, open, onOpenChange, onStatusUpdat
     >
       <div className="space-y-6">
         <div className="space-y-2">
-          <Label htmlFor="name">Name</Label>
+          <Label htmlFor="name">{t('lead_status.name_label')}</Label>
           <Input
             id="name"
             value={formData.name}
             onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-            placeholder="e.g., Interested, Follow Up"
+            placeholder={t('lead_status.name_placeholder')}
             maxLength={50}
             className="rounded-xl"
           />
           {isSystemRequired && (
             <p className="text-sm text-muted-foreground">
-              This is a system-required status for new leads.
+              {t('lead_status.system_required_note')}
             </p>
           )}
         </div>
 
         <div className="space-y-3">
-          <Label>Status Color</Label>
+          <Label>{t('lead_status.color_label')}</Label>
           <div className="grid grid-cols-6 gap-3 p-2">
             {colorOptions.map((color) => (
               <button
@@ -420,7 +420,7 @@ export function EditLeadStatusDialog({ status, open, onOpenChange, onStatusUpdat
         {/* Only show lifecycle selector for non-system-required statuses */}
         {!isSystemRequired && (
           <div className="space-y-3">
-            <Label>Lifecycle</Label>
+            <Label>{t('lead_status.lifecycle.label')}</Label>
             <div className="grid grid-cols-3 gap-2 p-1 bg-muted rounded-lg">
               {(["active", "completed", "cancelled"] as const).map((lifecycle) => (
                 <button
@@ -434,16 +434,16 @@ export function EditLeadStatusDialog({ status, open, onOpenChange, onStatusUpdat
                       : "text-muted-foreground hover:text-foreground hover:bg-background/50"
                   )}
                 >
-                  {lifecycle}
+                  {t(`lead_status.lifecycle.${lifecycle}`)}
                 </button>
               ))}
             </div>
             <div className="space-y-1 text-sm text-muted-foreground">
-              <p>Lifecycle drives automations and reporting:</p>
+              <p>{t('lead_status.lifecycle.help.title')}</p>
               <ul className="space-y-1 ml-4">
-                <li>• <strong>Active:</strong> Status is in progress</li>
-                <li>• <strong>Completed:</strong> Lead successfully converted</li>
-                <li>• <strong>Cancelled:</strong> Lead lost or rejected</li>
+                <li>• <strong>{t('lead_status.lifecycle.active')}</strong>: {t('lead_status.lifecycle.help.active')}</li>
+                <li>• <strong>{t('lead_status.lifecycle.completed')}</strong>: {t('lead_status.lifecycle.help.completed')}</li>
+                <li>• <strong>{t('lead_status.lifecycle.cancelled')}</strong>: {t('lead_status.lifecycle.help.cancelled')}</li>
               </ul>
             </div>
           </div>
@@ -453,7 +453,7 @@ export function EditLeadStatusDialog({ status, open, onOpenChange, onStatusUpdat
         {isSystemRequired && (
           <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
             <p className="text-sm text-blue-800">
-              <strong>System Required Status:</strong> This status is essential for lead workflows and must remain Active. You can rename it but cannot delete it or change its lifecycle.
+              {t('lead_status.system_required_info')}
             </p>
           </div>
         )}

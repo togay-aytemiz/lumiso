@@ -506,8 +506,8 @@ export default function Profile() {
                   {workingHour.enabled && (
                     <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 flex-1">
                       <div className="flex items-center gap-2">
-                        <Label className="text-sm text-muted-foreground w-12">{t('labels.from', { ns: 'common' })}</Label>
-                        <Select 
+                        <Label className="text-sm text-muted-foreground min-w-20">{t('labels.from', { ns: 'common' })}</Label>
+                        <Select
                           value={workingHour.start_time} 
                           onValueChange={(value) => handleWorkingHourUpdate(dayOfWeek, 'start_time', value)}
                         >
@@ -525,8 +525,8 @@ export default function Profile() {
                       </div>
                       
                       <div className="flex items-center gap-2">
-                        <Label className="text-sm text-muted-foreground w-12">{t('labels.to', { ns: 'common' })}</Label>
-                        <Select 
+                        <Label className="text-sm text-muted-foreground min-w-20">{t('labels.to', { ns: 'common' })}</Label>
+                        <Select
                           value={workingHour.end_time} 
                           onValueChange={(value) => handleWorkingHourUpdate(dayOfWeek, 'end_time', value)}
                         >

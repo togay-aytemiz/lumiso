@@ -446,7 +446,7 @@ export function ProjectSheetView({
                 disabled={isSaving || !editName.trim() || !editProjectTypeId}
               >
                 <Save className="h-4 w-4 mr-1" />
-                {isSaving ? tForms('actions.saving') : tForms('buttons.save')}
+                {isSaving ? tForms('common:actions.saving') : tForms('common:buttons.save')}
               </Button>
               <Button 
                 size="sm" 
@@ -460,7 +460,7 @@ export function ProjectSheetView({
                 disabled={isSaving}
               >
                 <X className="h-4 w-4 mr-1" />
-                {tForms('buttons.cancel')}
+                {tForms('common:buttons.cancel')}
               </Button>
             </div>
           </div>

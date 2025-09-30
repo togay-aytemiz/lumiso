@@ -264,14 +264,14 @@ export function ProjectServicesSection({
             <div className="flex gap-2">
               <Button size="sm" onClick={() => handleSaveServices(services)} disabled={saving}>
                 <Save className="h-4 w-4 mr-1" />
-                {saving ? t('buttons.saving') : t('buttons.save')}
+                {saving ? t('common:actions.saving') : t('common:buttons.save')}
               </Button>
               <Button size="sm" variant="outline" onClick={() => {
               setIsEditing(false);
               fetchProjectServices(); // Reset to original services
             }} disabled={saving}>
                 <X className="h-4 w-4 mr-1" />
-                {t('buttons.cancel')}
+                {t('common:buttons.cancel')}
               </Button>
             </div>
           </div> : <div>

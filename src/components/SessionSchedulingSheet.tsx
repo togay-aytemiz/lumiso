@@ -135,7 +135,7 @@ export function SessionSchedulingSheet({
 
   const footerActions = [
     {
-      label: t('buttons.cancel'),
+      label: t('common:buttons.cancel'),
       onClick: handleDirtyClose,
       variant: "outline" as const,
       disabled: loading

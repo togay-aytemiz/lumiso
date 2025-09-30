@@ -556,6 +556,35 @@
       "addSubject": "Click to add subject",
       "addPreheader": "Click to add preheader"
     },
+    "preview": {
+      "emailPreview": "Email Preview",
+      "subject": "Subject:",
+      "previewText": "Preview:",
+      "defaultSubject": "📸 Your photography session is confirmed!",
+      "helloCustomer": "Hello {{name}}!",
+      "excitedMessage": "We're excited to capture your special moments",
+      "lookingForward": "Looking forward to your session!",
+      "addBlocks": "Add blocks to build your template",
+      "whatsapp": {
+        "online": "online"
+      },
+      "sms": {
+        "label": "SMS",
+        "now": "now",
+        "characters": "characters",
+        "message": "message",
+        "messages": "messages",
+        "longMessageWarning": "Long messages may be split"
+      },
+      "sessionDetails": {
+        "defaultLabel": "Session Details",
+        "date": "Date:",
+        "time": "Time:",
+        "location": "Location:",
+        "notes": "Notes:",
+        "defaultNote": "Please arrive 10 minutes early. Bring comfortable outfits!"
+      }
+    },
     "warnings": {
       "tooLong": "{{count}}/60 characters (too long)",
       "spamWords": "Spam words:"

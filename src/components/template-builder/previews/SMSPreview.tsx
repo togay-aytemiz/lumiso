@@ -88,11 +88,11 @@ export function SMSPreview({ blocks, mockData }: SMSPreviewProps) {
           </div>
           <div>
             <div className="font-medium text-sm">{mockData.business_name}</div>
-            <div className="text-xs text-gray-600">SMS</div>
+            <div className="text-xs text-gray-600">{t('templateBuilder.preview.sms.label')}</div>
           </div>
         </div>
         <div className="text-xs text-gray-500">
-          now
+          {t('templateBuilder.preview.sms.now')}
         </div>
       </div>
 
@@ -104,22 +104,22 @@ export function SMSPreview({ blocks, mockData }: SMSPreviewProps) {
           </div>
         ) : (
           <div className="text-sm">
-            {t('template_builder.preview.helloCustomer', { name: mockData.customer_name })} {t('template_builder.preview.excitedMessage')}.
+            {t('templateBuilder.preview.helloCustomer', { name: mockData.customer_name })} {t('templateBuilder.preview.excitedMessage')}.
             
-            {t('template_builder.preview.addBlocks')}.
+            {t('templateBuilder.preview.addBlocks')}.
           </div>
         )}
       </div>
 
       {/* Character Counter */}
       <div className="text-xs text-gray-500 text-right space-y-1">
-        <div>{characterCount} characters</div>
+        <div>{characterCount} {t('templateBuilder.preview.sms.characters')}</div>
         <div className={characterCount > 160 ? "text-orange-600" : ""}>
-          {messageCount} message{messageCount !== 1 ? 's' : ''}
+          {messageCount} {messageCount !== 1 ? t('templateBuilder.preview.sms.messages') : t('templateBuilder.preview.sms.message')}
         </div>
         {characterCount > 160 && (
           <div className="text-orange-600 text-[10px]">
-            Long messages may be split
+            {t('templateBuilder.preview.sms.longMessageWarning')}
           </div>
         )}
       </div>

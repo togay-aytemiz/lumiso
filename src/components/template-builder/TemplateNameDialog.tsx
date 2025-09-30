@@ -45,15 +45,15 @@ export function TemplateNameDialog({
     const trimmedName = inputName.trim();
     
     if (!trimmedName) {
-      return t('pages:template_builder.nameDialog.validation.required');
+      return t('pages:templateBuilder.nameDialog.validation.required');
     }
 
     if (trimmedName.length < 2) {
-      return t('pages:template_builder.nameDialog.validation.minLength');
+      return t('pages:templateBuilder.nameDialog.validation.minLength');
     }
 
     if (trimmedName.length > 100) {
-      return t('pages:template_builder.nameDialog.validation.maxLength');
+      return t('pages:templateBuilder.nameDialog.validation.maxLength');
     }
 
     // Check for duplicates (case-insensitive)
@@ -63,7 +63,7 @@ export function TemplateNameDialog({
     );
 
     if (isDuplicate) {
-      return t('pages:template_builder.nameDialog.validation.duplicate');
+      return t('pages:templateBuilder.nameDialog.validation.duplicate');
     }
 
     return '';
@@ -98,25 +98,25 @@ export function TemplateNameDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             {action === 'publish' ? <Eye className="h-5 w-5" /> : <Save className="h-5 w-5" />}
-            {action === 'publish' ? t('pages:template_builder.nameDialog.titlePublish') : t('pages:template_builder.nameDialog.titleSave')}
+            {action === 'publish' ? t('pages:templateBuilder.nameDialog.titlePublish') : t('pages:templateBuilder.nameDialog.titleSave')}
           </DialogTitle>
           <DialogDescription>
             {action === 'publish' 
-              ? t('pages:template_builder.nameDialog.descriptionPublish')
-              : t('pages:template_builder.nameDialog.descriptionSave')
+              ? t('pages:templateBuilder.nameDialog.descriptionPublish')
+              : t('pages:templateBuilder.nameDialog.descriptionSave')
             }
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="template-name">{t('pages:template_builder.nameDialog.fields.name.label')}</Label>
+            <Label htmlFor="template-name">{t('pages:templateBuilder.nameDialog.fields.name.label')}</Label>
             <Input
               id="template-name"
               value={name}
               onChange={(e) => handleInputChange(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder={t('pages:template_builder.nameDialog.fields.name.placeholder')}
+              placeholder={t('pages:templateBuilder.nameDialog.fields.name.placeholder')}
               className={error ? 'border-red-500' : ''}
               disabled={loading}
               autoFocus
@@ -137,7 +137,7 @@ export function TemplateNameDialog({
             onClick={onClose}
             disabled={loading}
           >
-            {t('pages:template_builder.nameDialog.buttons.cancel')}
+            {t('pages:templateBuilder.nameDialog.buttons.cancel')}
           </Button>
           <Button 
             onClick={handleConfirm}
@@ -147,12 +147,12 @@ export function TemplateNameDialog({
             {loading ? (
               <div className="flex items-center gap-2">
                 <div className="h-4 w-4 animate-spin rounded-full border-2 border-background border-t-transparent" />
-                {action === 'publish' ? t('pages:template_builder.nameDialog.buttons.publishing') : t('pages:template_builder.nameDialog.buttons.saving')}
+                {action === 'publish' ? t('pages:templateBuilder.nameDialog.buttons.publishing') : t('pages:templateBuilder.nameDialog.buttons.saving')}
               </div>
             ) : (
               <>
                 {action === 'publish' ? <Eye className="h-4 w-4 mr-2" /> : <Save className="h-4 w-4 mr-2" />}
-                {action === 'publish' ? t('pages:template_builder.nameDialog.buttons.publish') : t('pages:template_builder.nameDialog.buttons.save')}
+                {action === 'publish' ? t('pages:templateBuilder.nameDialog.buttons.publish') : t('pages:templateBuilder.nameDialog.buttons.save')}
               </>
             )}
           </Button>

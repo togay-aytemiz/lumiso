@@ -49,14 +49,14 @@ export function EmailPreview({ blocks, mockData, device, emailSubject, preheader
           <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
           <div className="w-3 h-3 bg-green-400 rounded-full"></div>
         </div>
-        <span className="text-sm font-medium">Email Preview</span>
+        <span className="text-sm font-medium">{t('templateBuilder.preview.emailPreview')}</span>
       </div>
 
       {/* Email Meta */}
       <div className="p-4 border-b bg-gray-50 text-sm">
-        <div><strong>Subject:</strong> {emailSubject ? replacePlaceholders(emailSubject) : "📸 Your photography session is confirmed!"}</div>
+        <div><strong>{t('templateBuilder.preview.subject')}</strong> {emailSubject ? replacePlaceholders(emailSubject) : t('templateBuilder.preview.defaultSubject')}</div>
         {preheader && (
-          <div><strong>Preview:</strong> <span className="text-muted-foreground">{replacePlaceholders(preheader)}</span></div>
+          <div><strong>{t('templateBuilder.preview.previewText')}</strong> <span className="text-muted-foreground">{replacePlaceholders(preheader)}</span></div>
         )}
       </div>
 
@@ -90,9 +90,9 @@ export function EmailPreview({ blocks, mockData, device, emailSubject, preheader
 
         {blocks.length === 0 && (
           <div className="text-center py-12 text-muted-foreground">
-            <h3 className="font-semibold mb-2">{t('template_builder.preview.helloCustomer', { name: mockData.customer_name })}</h3>
-            <p>{t('template_builder.preview.excitedMessage')}</p>
-            <p className="mt-8 text-sm">{t('template_builder.preview.addBlocks')}</p>
+            <h3 className="font-semibold mb-2">{t('templateBuilder.preview.helloCustomer', { name: mockData.customer_name })}</h3>
+            <p>{t('templateBuilder.preview.excitedMessage')}</p>
+            <p className="mt-8 text-sm">{t('templateBuilder.preview.addBlocks')}</p>
           </div>
         )}
       </div>

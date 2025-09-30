@@ -25,44 +25,44 @@ export function AddBlockSheet({ open, onOpenChange, onAddBlock }: AddBlockSheetP
     {
       type: "session-details" as const,
       icon: Calendar,
-      title: t('pages:template_builder.addBlockSheet.blocks.sessionDetails.title'),
-      description: t('pages:template_builder.addBlockSheet.blocks.sessionDetails.description'),
+      title: t('pages:templateBuilder.addBlockSheet.blocks.sessionDetails.title'),
+      description: t('pages:templateBuilder.addBlockSheet.blocks.sessionDetails.description'),
     },
     {
       type: "cta" as const,
       icon: MousePointer,
-      title: t('pages:template_builder.addBlockSheet.blocks.cta.title'),
-      description: t('pages:template_builder.addBlockSheet.blocks.cta.description'),
+      title: t('pages:templateBuilder.addBlockSheet.blocks.cta.title'),
+      description: t('pages:templateBuilder.addBlockSheet.blocks.cta.description'),
     },
     {
       type: "image" as const,
       icon: Image,
-      title: t('pages:template_builder.addBlockSheet.blocks.image.title'),
-      description: t('pages:template_builder.addBlockSheet.blocks.image.description'),
+      title: t('pages:templateBuilder.addBlockSheet.blocks.image.title'),
+      description: t('pages:templateBuilder.addBlockSheet.blocks.image.description'),
     },
     {
       type: "divider" as const,
       icon: Minus,
-      title: t('pages:template_builder.addBlockSheet.blocks.divider.title'),
-      description: t('pages:template_builder.addBlockSheet.blocks.divider.description'),
+      title: t('pages:templateBuilder.addBlockSheet.blocks.divider.title'),
+      description: t('pages:templateBuilder.addBlockSheet.blocks.divider.description'),
     },
     {
       type: "social-links" as const,
       icon: Link,
-      title: t('pages:template_builder.addBlockSheet.blocks.socialLinks.title'),
-      description: t('pages:template_builder.addBlockSheet.blocks.socialLinks.description'),
+      title: t('pages:templateBuilder.addBlockSheet.blocks.socialLinks.title'),
+      description: t('pages:templateBuilder.addBlockSheet.blocks.socialLinks.description'),
     },
     {
       type: "header" as const,
       icon: Layout,
-      title: t('pages:template_builder.addBlockSheet.blocks.header.title'),
-      description: t('pages:template_builder.addBlockSheet.blocks.header.description'),
+      title: t('pages:templateBuilder.addBlockSheet.blocks.header.title'),
+      description: t('pages:templateBuilder.addBlockSheet.blocks.header.description'),
     },
     {
       type: "footer" as const,
       icon: Columns3,
-      title: t('pages:template_builder.addBlockSheet.blocks.footer.title'),
-      description: t('pages:template_builder.addBlockSheet.blocks.footer.description'),
+      title: t('pages:templateBuilder.addBlockSheet.blocks.footer.title'),
+      description: t('pages:templateBuilder.addBlockSheet.blocks.footer.description'),
     },
   ];
 
@@ -70,9 +70,9 @@ export function AddBlockSheet({ open, onOpenChange, onAddBlock }: AddBlockSheetP
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-[45vw] min-w-[600px]">
         <SheetHeader>
-          <SheetTitle>{t('pages:template_builder.addBlockSheet.title')}</SheetTitle>
+          <SheetTitle>{t('pages:templateBuilder.addBlockSheet.title')}</SheetTitle>
           <SheetDescription>
-            {t('pages:template_builder.addBlockSheet.description')}
+            {t('pages:templateBuilder.addBlockSheet.description')}
           </SheetDescription>
         </SheetHeader>
         

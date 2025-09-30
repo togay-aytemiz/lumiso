@@ -556,6 +556,35 @@
       "addSubject": "Konu eklemek için tıklayın",
       "addPreheader": "Ön başlık eklemek için tıklayın"
     },
+    "preview": {
+      "emailPreview": "E-posta Önizleme",
+      "subject": "Konu:",
+      "previewText": "Önizleme:",
+      "defaultSubject": "📸 Fotoğraf seansınız onaylandı!",
+      "helloCustomer": "Merhaba {{name}}!",
+      "excitedMessage": "Özel anlarınızı ölümsüzleştirmek için sabırsızlanıyoruz",
+      "lookingForward": "Seansınız için sabırsızlanıyoruz!",
+      "addBlocks": "Şablonunuzu oluşturmak için bloklar ekleyin",
+      "whatsapp": {
+        "online": "çevrimiçi"
+      },
+      "sms": {
+        "label": "SMS",
+        "now": "şimdi",
+        "characters": "karakter",
+        "message": "mesaj",
+        "messages": "mesaj",
+        "longMessageWarning": "Uzun mesajlar bölünebilir"
+      },
+      "sessionDetails": {
+        "defaultLabel": "Seans Detayları",
+        "date": "Tarih:",
+        "time": "Saat:",
+        "location": "Konum:",
+        "notes": "Notlar:",
+        "defaultNote": "Lütfen 10 dakika erken gelin. Rahat kıyafetler getirin!"
+      }
+    },
     "warnings": {
       "tooLong": "{{count}}/60 karakter (çok uzun)",
       "spamWords": "Spam kelimeler:"

@@ -110,8 +110,8 @@ export function TemplateEditor({ blocks, onBlocksChange }: TemplateEditorProps) 
     <div className="h-full flex flex-col">
       {/* Header */}
       <div className="border-b px-6 py-4">
-        <h2 className="font-semibold">{t('template_builder.editor.title')}</h2>
-        <p className="text-sm text-muted-foreground">{t('template_builder.editor.description')}</p>
+        <h2 className="font-semibold">{t('templateBuilder.editor.title')}</h2>
+        <p className="text-sm text-muted-foreground">{t('templateBuilder.editor.description')}</p>
       </div>
 
       {/* Blocks List */}
@@ -208,7 +208,7 @@ export function TemplateEditor({ blocks, onBlocksChange }: TemplateEditorProps) 
           onClick={() => setShowAddBlock(true)}
         >
           <Plus className="h-4 w-4 mr-2" />
-          {t('template_builder.editor.addBlock')}
+          {t('templateBuilder.editor.addBlock')}
         </Button>
       </div>
 

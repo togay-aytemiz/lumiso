@@ -24,10 +24,10 @@ export function WhatsAppPreview({ blocks, mockData }: WhatsAppPreviewProps) {
     if (blocks.length === 0) {
       return (
         <div className="text-sm">
-          <div className="mb-2">{t('template_builder.preview.helloCustomer', { name: mockData.customer_name })}</div>
-          <div>{t('template_builder.preview.excitedMessage')} ✨📸</div>
-          <div className="mt-2">{t('template_builder.preview.lookingForward')}</div>
-          <div className="mt-3 text-gray-500 text-xs">{t('template_builder.preview.addBlocks')}</div>
+          <div className="mb-2">{t('templateBuilder.preview.helloCustomer', { name: mockData.customer_name })}</div>
+          <div>{t('templateBuilder.preview.excitedMessage')} ✨📸</div>
+          <div className="mt-2">{t('templateBuilder.preview.lookingForward')}</div>
+          <div className="mt-3 text-gray-500 text-xs">{t('templateBuilder.preview.addBlocks')}</div>
         </div>
       );
     }
@@ -63,7 +63,7 @@ export function WhatsAppPreview({ blocks, mockData }: WhatsAppPreviewProps) {
         </div>
         <div>
           <div className="font-semibold text-sm">{mockData.business_name}</div>
-          <div className="text-xs text-gray-600">online</div>
+          <div className="text-xs text-gray-600">{t('templateBuilder.preview.whatsapp.online')}</div>
         </div>
       </div>
 

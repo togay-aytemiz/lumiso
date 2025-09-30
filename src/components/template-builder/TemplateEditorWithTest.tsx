@@ -24,17 +24,17 @@ export function TemplateEditorWithTest({
 
   const getBlockTitle = (type: TemplateBlock["type"]) => {
     switch (type) {
-      case "text": return t('template_builder.blockTitles.text');
-      case "session-details": return t('template_builder.blockTitles.sessionDetails');
-      case "cta": return t('template_builder.blockTitles.cta');
-      case "image": return t('template_builder.blockTitles.image');
-      case "footer": return t('template_builder.blockTitles.footer');
-      case "divider": return t('template_builder.blockTitles.divider');
-      case "columns": return t('template_builder.blockTitles.columns');
-      case "social-links": return t('template_builder.blockTitles.socialLinks');
-      case "header": return t('template_builder.blockTitles.header');
-      case "raw-html": return t('template_builder.blockTitles.rawHtml');
-      default: return t('template_builder.blockTitles.unknown');
+      case "text": return t('templateBuilder.blockTitles.text');
+      case "session-details": return t('templateBuilder.blockTitles.sessionDetails');
+      case "cta": return t('templateBuilder.blockTitles.cta');
+      case "image": return t('templateBuilder.blockTitles.image');
+      case "footer": return t('templateBuilder.blockTitles.footer');
+      case "divider": return t('templateBuilder.blockTitles.divider');
+      case "columns": return t('templateBuilder.blockTitles.columns');
+      case "social-links": return t('templateBuilder.blockTitles.socialLinks');
+      case "header": return t('templateBuilder.blockTitles.header');
+      case "raw-html": return t('templateBuilder.blockTitles.rawHtml');
+      default: return t('templateBuilder.blockTitles.unknown');
     }
   };
 
@@ -114,8 +114,8 @@ export function TemplateEditorWithTest({
       {/* Header */}
       <div className="border-b px-6 py-4">
         <div>
-          <h2 className="font-semibold">{t('template_builder.editor.title')}</h2>
-          <p className="text-sm text-muted-foreground">{t('template_builder.editor.description')}</p>
+          <h2 className="font-semibold">{t('templateBuilder.editor.title')}</h2>
+          <p className="text-sm text-muted-foreground">{t('templateBuilder.editor.description')}</p>
         </div>
       </div>
 
@@ -202,7 +202,7 @@ export function TemplateEditorWithTest({
           onClick={() => setShowAddBlock(true)}
         >
           <Plus className="h-4 w-4" />
-          {t('template_builder.editor.addBlock')}
+          {t('templateBuilder.editor.addBlock')}
         </Button>
       </div>
 

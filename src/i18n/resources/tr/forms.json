@@ -254,6 +254,63 @@
       "delete": "Bu aşamayı silmek istediğinizden emin misiniz?"
     }
   },
+  "project_type": {
+    "add_title": "TÜR EKLE",
+    "edit_title": "TÜRÜ DÜZENLE",
+    "name_label": "Ad",
+    "name_placeholder": "örn. Kurumsal, Düğün, Portre",
+    "name_help": "Sunduğunuz iş türünü yansıtmak için proje türlerini özelleştirin.",
+    "set_as_default": "Varsayılan olarak ayarla",
+    "set_as_default_help": "Bu tür, yeni projeler oluştururken önceden seçili olacaktır.",
+    "errors": {
+      "name_required": "Tür adı gereklidir",
+      "cannot_delete_default": "Varsayılan tür silinemez. Önce başka bir türü varsayılan olarak ayarlayın."
+    },
+    "success": {
+      "added": "Proje türü başarıyla eklendi",
+      "updated": "Proje türü başarıyla güncellendi",
+      "deleted": "Proje türü başarıyla silindi"
+    },
+    "confirm": {
+      "discard_changes": "Değişiklikler iptal edilsin mi?",
+      "delete": "Bu proje türünü silmek istediğinizden emin misiniz?"
+    }
+  },
+  "session_status": {
+    "add_title": "AŞAMA EKLE",
+    "edit_title": "AŞAMAYI DÜZENLE",
+    "name_label": "Ad",
+    "name_placeholder": "örn. Onaylandı, Tamamlandı, Teslim Edildi",
+    "name_help": "Seans aşamalarını ekleyin, yeniden adlandırın ve sıralayın.",
+    "color_label": "Aşama Rengi",
+    "lifecycle": {
+      "label": "Yaşam Döngüsü",
+      "active": "Aktif",
+      "completed": "Tamamlandı",
+      "cancelled": "İptal Edildi",
+      "help": {
+        "title": "Yaşam döngüsü otomasyonları ve raporlamayı yönlendirir:",
+        "active": "Seans devam ediyor",
+        "completed": "Seans tamamlandı ve teslim edildi",
+        "cancelled": "Seans iptal edildi veya ertelendi"
+      }
+    },
+    "system_required_info": "Sistem Gerekli Aşama: Bu aşama seans iş akışları için gereklidir ve Aktif kalmalıdır. Yeniden adlandırabilirsiniz ancak silemez veya yaşam döngüsünü değiştiremezsiniz.",
+    "system_required_note": "Bu, yeni seanslar için sistem gerekli bir aşamadır.",
+    "errors": {
+      "name_required": "Durum adı gereklidir",
+      "cannot_delete": "Bu aşama gereklidir ve silinemez. Yeniden adlandırabilirsiniz."
+    },
+    "success": {
+      "added": "Seans aşaması başarıyla eklendi",
+      "updated": "Seans aşaması başarıyla güncellendi",
+      "deleted": "Seans aşaması başarıyla silindi"
+    },
+    "confirm": {
+      "discard_changes": "Değişikliklerinizi iptal etmek istediğinizden emin misiniz? Kaydedilmemiş tüm bilgiler kaybolacaktır.",
+      "delete": "Bu aşamayı silmek istediğinizden emin misiniz?"
+    }
+  },
   "lead_fields": {
     "title": "Özel Müşteri Adayı Alanları",
     "description": "Ek müşteri adayı bilgilerini yakalamak için özel alanları yapılandırın",

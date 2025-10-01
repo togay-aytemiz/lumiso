@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 interface AddSessionStatusDialogProps {
   open: boolean;
@@ -14,6 +15,7 @@ interface AddSessionStatusDialogProps {
 }
 
 export function AddSessionStatusDialog({ open, onOpenChange, onStatusAdded }: AddSessionStatusDialogProps) {
+  const { t } = useTranslation('forms');
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -42,8 +44,8 @@ export function AddSessionStatusDialog({ open, onOpenChange, onStatusAdded }: Ad
   const handleSubmit = async () => {
     if (!formData.name.trim()) {
       toast({
-        title: "Error",
-        description: "Status name is required",
+        title: t('common:errors.validation'),
+        description: t('session_status.errors.name_required'),
         variant: "destructive"
       });
       return;
@@ -85,8 +87,8 @@ export function AddSessionStatusDialog({ open, onOpenChange, onStatusAdded }: Ad
       if (error) throw error;
 
       toast({
-        title: "Success",
-        description: "Session stage added successfully"
+        title: t('common:success.created'),
+        description: t('session_status.success.added')
       });
 
       setFormData({ name: "", color: "#3B82F6", lifecycle: "active" });
@@ -94,7 +96,7 @@ export function AddSessionStatusDialog({ open, onOpenChange, onStatusAdded }: Ad
       onStatusAdded();
     } catch (error: any) {
       toast({
-        title: "Error adding session stage",
+        title: t('common:errors.save'),
         description: error.message,
         variant: "destructive"
       });
@@ -106,7 +108,7 @@ export function AddSessionStatusDialog({ open, onOpenChange, onStatusAdded }: Ad
   const isDirty = Boolean(formData.name.trim() || formData.color !== "#3B82F6" || formData.lifecycle !== "active");
 
   const handleDirtyClose = () => {
-    if (window.confirm("Are you sure you want to discard your changes? Any unsaved information will be lost.")) {
+    if (window.confirm(t('session_status.confirm.discard_changes'))) {
       setFormData({ name: "", color: "#3B82F6", lifecycle: "active" });
       onOpenChange(false);
     }
@@ -114,13 +116,13 @@ export function AddSessionStatusDialog({ open, onOpenChange, onStatusAdded }: Ad
 
   const footerActions = [
     {
-      label: "Cancel",
+      label: t('common:buttons.cancel'),
       onClick: () => onOpenChange(false),
       variant: "outline" as const,
       disabled: loading
     },
     {
-      label: loading ? "Adding..." : "Add",
+      label: loading ? t('buttons.adding') : t('common:buttons.add'),
       onClick: handleSubmit,
       disabled: loading || !formData.name.trim(),
       loading: loading
@@ -134,7 +136,7 @@ export function AddSessionStatusDialog({ open, onOpenChange, onStatusAdded }: Ad
 
   return (
     <AppSheetModal
-      title="ADD STAGE"
+      title={t('session_status.add_title')}
       isOpen={open}
       onOpenChange={onOpenChange}
       size="content"
@@ -144,20 +146,20 @@ export function AddSessionStatusDialog({ open, onOpenChange, onStatusAdded }: Ad
     >
       <div className="space-y-6">
         <div className="space-y-2">
-          <Label htmlFor="name">Name</Label>
+          <Label htmlFor="name">{t('session_status.name_label')}</Label>
           <Input
             id="name"
             value={formData.name}
             onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-            placeholder="e.g. Confirmed, Completed, Delivered"
+            placeholder={t('session_status.name_placeholder')}
             maxLength={50}
             className="rounded-xl"
           />
-          <p className="text-sm text-muted-foreground">Add, rename and reorder session stages.</p>
+          <p className="text-sm text-muted-foreground">{t('session_status.name_help')}</p>
         </div>
 
         <div className="space-y-3">
-          <Label>Stage Color</Label>
+          <Label>{t('session_status.color_label')}</Label>
           <div className="grid grid-cols-6 gap-3 p-4">
             {colorOptions.map((color) => (
               <button
@@ -176,7 +178,7 @@ export function AddSessionStatusDialog({ open, onOpenChange, onStatusAdded }: Ad
         </div>
 
         <div className="space-y-3">
-          <Label>Lifecycle</Label>
+          <Label>{t('session_status.lifecycle.label')}</Label>
           <div className="grid grid-cols-3 gap-2 p-1 bg-muted rounded-lg">
             {(["active", "completed", "cancelled"] as const).map((lifecycle) => (
               <button
@@ -190,16 +192,16 @@ export function AddSessionStatusDialog({ open, onOpenChange, onStatusAdded }: Ad
                     : "text-muted-foreground hover:text-foreground hover:bg-background/50"
                 )}
               >
-                {lifecycle}
+                {t(`session_status.lifecycle.${lifecycle}`)}
               </button>
             ))}
           </div>
           <div className="space-y-1 text-sm text-muted-foreground">
-            <p>Lifecycle drives automations and reporting:</p>
+            <p>{t('session_status.lifecycle.help.title')}</p>
             <ul className="space-y-1 ml-4">
-              <li>• <strong>Active:</strong> Session is in progress</li>
-              <li>• <strong>Completed:</strong> Session finished and delivered</li>
-              <li>• <strong>Cancelled:</strong> Session cancelled or postponed</li>
+              <li>• <strong>{t('session_status.lifecycle.active')}:</strong> {t('session_status.lifecycle.help.active')}</li>
+              <li>• <strong>{t('session_status.lifecycle.completed')}:</strong> {t('session_status.lifecycle.help.completed')}</li>
+              <li>• <strong>{t('session_status.lifecycle.cancelled')}:</strong> {t('session_status.lifecycle.help.cancelled')}</li>
             </ul>
           </div>
         </div>
@@ -216,6 +218,7 @@ interface EditSessionStatusDialogProps {
 }
 
 export function EditSessionStatusDialog({ status, open, onOpenChange, onStatusUpdated }: EditSessionStatusDialogProps) {
+  const { t } = useTranslation('forms');
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -236,8 +239,8 @@ export function EditSessionStatusDialog({ status, open, onOpenChange, onStatusUp
   const handleSubmit = async () => {
     if (!formData.name.trim()) {
       toast({
-        title: "Error",
-        description: "Status name is required",
+        title: t('common:errors.validation'),
+        description: t('session_status.errors.name_required'),
         variant: "destructive"
       });
       return;
@@ -257,15 +260,15 @@ export function EditSessionStatusDialog({ status, open, onOpenChange, onStatusUp
       if (error) throw error;
 
       toast({
-        title: "Success",
-        description: "Session stage updated successfully"
+        title: t('common:success.updated'),
+        description: t('session_status.success.updated')
       });
 
       onOpenChange(false);
       onStatusUpdated();
     } catch (error: any) {
       toast({
-        title: "Error updating session stage",
+        title: t('common:errors.save'),
         description: error.message,
         variant: "destructive"
       });
@@ -283,7 +286,7 @@ export function EditSessionStatusDialog({ status, open, onOpenChange, onStatusUp
   );
 
   const handleDirtyClose = () => {
-    if (window.confirm("Are you sure you want to discard your changes? Any unsaved information will be lost.")) {
+    if (window.confirm(t('session_status.confirm.discard_changes'))) {
       onOpenChange(false);
     }
   };
@@ -294,14 +297,14 @@ export function EditSessionStatusDialog({ status, open, onOpenChange, onStatusUp
     // Check if it's a system required status
     if (status.is_system_required) {
       toast({
-        title: "Cannot Delete",
-        description: "This stage is required and cannot be deleted. You may rename it.",
+        title: t('common:errors.delete'),
+        description: t('session_status.errors.cannot_delete'),
         variant: "destructive"
       });
       return;
     }
     
-    if (!window.confirm("Are you sure you want to delete this stage?")) return;
+    if (!window.confirm(t('session_status.confirm.delete'))) return;
     
     setLoading(true);
     try {
@@ -313,15 +316,15 @@ export function EditSessionStatusDialog({ status, open, onOpenChange, onStatusUp
       if (error) throw error;
 
       toast({
-        title: "Success",
-        description: "Session stage deleted successfully"
+        title: t('common:success.deleted'),
+        description: t('session_status.success.deleted')
       });
 
       onOpenChange(false);
       onStatusUpdated();
     } catch (error: any) {
       toast({
-        title: "Error deleting session stage",
+        title: t('common:errors.delete'),
         description: error.message,
         variant: "destructive"
       });
@@ -335,19 +338,19 @@ export function EditSessionStatusDialog({ status, open, onOpenChange, onStatusUp
   const footerActions = [
     // Only show delete for non-system-required stages
     ...(!isSystemRequired ? [{
-      label: "Delete",
+      label: t('common:buttons.delete'),
       onClick: handleDelete,
       variant: "destructive" as const,
       disabled: loading
     }] : []),
     {
-      label: "Cancel",
+      label: t('common:buttons.cancel'),
       onClick: () => onOpenChange(false),
       variant: "outline" as const,
       disabled: loading
     },
     {
-      label: loading ? "Saving..." : "Save",
+      label: loading ? t('buttons.saving') : t('common:buttons.save'),
       onClick: handleSubmit,
       disabled: loading || !formData.name.trim(),
       loading: loading
@@ -361,7 +364,7 @@ export function EditSessionStatusDialog({ status, open, onOpenChange, onStatusUp
 
   return (
     <AppSheetModal
-      title="EDIT STAGE"
+      title={t('session_status.edit_title')}
       isOpen={open}
       onOpenChange={onOpenChange}
       size="content"
@@ -371,24 +374,24 @@ export function EditSessionStatusDialog({ status, open, onOpenChange, onStatusUp
     >
       <div className="space-y-6">
         <div className="space-y-2">
-          <Label htmlFor="name">Name</Label>
+          <Label htmlFor="name">{t('session_status.name_label')}</Label>
           <Input
             id="name"
             value={formData.name}
             onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-            placeholder="e.g., Confirmed, Completed"
+            placeholder={t('session_status.name_placeholder')}
             maxLength={50}
             className="rounded-xl"
           />
           {isSystemRequired && (
             <p className="text-sm text-muted-foreground">
-              This is a system-required stage for new sessions.
+              {t('session_status.system_required_note')}
             </p>
           )}
         </div>
 
         <div className="space-y-3">
-          <Label>Stage Color</Label>
+          <Label>{t('session_status.color_label')}</Label>
           <div className="grid grid-cols-6 gap-3 p-2">
             {colorOptions.map((color) => (
               <button
@@ -409,7 +412,7 @@ export function EditSessionStatusDialog({ status, open, onOpenChange, onStatusUp
         {/* Only show lifecycle selector for non-system-required stages */}
         {!isSystemRequired && (
           <div className="space-y-3">
-            <Label>Lifecycle</Label>
+            <Label>{t('session_status.lifecycle.label')}</Label>
             <div className="grid grid-cols-3 gap-2 p-1 bg-muted rounded-lg">
               {(["active", "completed", "cancelled"] as const).map((lifecycle) => (
                 <button
@@ -423,16 +426,16 @@ export function EditSessionStatusDialog({ status, open, onOpenChange, onStatusUp
                       : "text-muted-foreground hover:text-foreground hover:bg-background/50"
                   )}
                 >
-                  {lifecycle}
+                  {t(`session_status.lifecycle.${lifecycle}`)}
                 </button>
               ))}
             </div>
             <div className="space-y-1 text-sm text-muted-foreground">
-              <p>Lifecycle drives automations and reporting:</p>
+              <p>{t('session_status.lifecycle.help.title')}</p>
               <ul className="space-y-1 ml-4">
-                <li>• <strong>Active:</strong> Session is in progress</li>
-                <li>• <strong>Completed:</strong> Session finished and delivered</li>
-                <li>• <strong>Cancelled:</strong> Session cancelled or postponed</li>
+                <li>• <strong>{t('session_status.lifecycle.active')}:</strong> {t('session_status.lifecycle.help.active')}</li>
+                <li>• <strong>{t('session_status.lifecycle.completed')}:</strong> {t('session_status.lifecycle.help.completed')}</li>
+                <li>• <strong>{t('session_status.lifecycle.cancelled')}:</strong> {t('session_status.lifecycle.help.cancelled')}</li>
               </ul>
             </div>
           </div>
@@ -442,7 +445,7 @@ export function EditSessionStatusDialog({ status, open, onOpenChange, onStatusUp
         {isSystemRequired && (
           <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
             <p className="text-sm text-blue-800">
-              <strong>System Required Stage:</strong> This stage is essential for session workflows and must remain Active. You can rename it but cannot delete it or change its lifecycle.
+              <strong>{t('session_status.lifecycle.active')}:</strong> {t('session_status.system_required_info')}
             </p>
           </div>
         )}

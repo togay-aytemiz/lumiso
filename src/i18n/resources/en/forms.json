@@ -254,6 +254,63 @@
       "delete": "Are you sure you want to delete this stage?"
     }
   },
+  "project_type": {
+    "add_title": "ADD TYPE",
+    "edit_title": "EDIT TYPE",
+    "name_label": "Name",
+    "name_placeholder": "e.g. Corporate, Wedding, Portrait",
+    "name_help": "Customize your project types to reflect the type of work you offer.",
+    "set_as_default": "Set as default",
+    "set_as_default_help": "This type will be pre-selected when creating new projects.",
+    "errors": {
+      "name_required": "Type name is required",
+      "cannot_delete_default": "Cannot delete the default type. Set another type as default first."
+    },
+    "success": {
+      "added": "Project type added successfully",
+      "updated": "Project type updated successfully",
+      "deleted": "Project type deleted successfully"
+    },
+    "confirm": {
+      "discard_changes": "Discard changes?",
+      "delete": "Are you sure you want to delete this project type?"
+    }
+  },
+  "session_status": {
+    "add_title": "ADD STAGE",
+    "edit_title": "EDIT STAGE",
+    "name_label": "Name",
+    "name_placeholder": "e.g. Confirmed, Completed, Delivered",
+    "name_help": "Add, rename and reorder session stages.",
+    "color_label": "Stage Color",
+    "lifecycle": {
+      "label": "Lifecycle",
+      "active": "Active",
+      "completed": "Completed",
+      "cancelled": "Cancelled",
+      "help": {
+        "title": "Lifecycle drives automations and reporting:",
+        "active": "Session is in progress",
+        "completed": "Session finished and delivered",
+        "cancelled": "Session cancelled or postponed"
+      }
+    },
+    "system_required_info": "System Required Stage: This stage is essential for session workflows and must remain Active. You can rename it but cannot delete it or change its lifecycle.",
+    "system_required_note": "This is a system-required stage for new sessions.",
+    "errors": {
+      "name_required": "Status name is required",
+      "cannot_delete": "This stage is required and cannot be deleted. You may rename it."
+    },
+    "success": {
+      "added": "Session stage added successfully",
+      "updated": "Session stage updated successfully",
+      "deleted": "Session stage deleted successfully"
+    },
+    "confirm": {
+      "discard_changes": "Are you sure you want to discard your changes? Any unsaved information will be lost.",
+      "delete": "Are you sure you want to delete this stage?"
+    }
+  },
   "lead_fields": {
     "title": "Custom Lead Fields",
     "description": "Configure custom fields to capture additional lead information",

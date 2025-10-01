@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { Plus } from "lucide-react";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
+import { useTranslation } from "react-i18next";
 
 interface AddProjectTypeDialogProps {
   open: boolean;
@@ -15,6 +16,7 @@ interface AddProjectTypeDialogProps {
 }
 
 export function AddProjectTypeDialog({ open, onOpenChange, onTypeAdded }: AddProjectTypeDialogProps) {
+  const { t } = useTranslation('forms');
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -24,8 +26,8 @@ export function AddProjectTypeDialog({ open, onOpenChange, onTypeAdded }: AddPro
   const handleSubmit = async () => {
     if (!formData.name.trim()) {
       toast({
-        title: "Error",
-        description: "Project type name is required",
+        title: t('common:errors.validation'),
+        description: t('project_type.errors.name_required'),
         variant: "destructive"
       });
       return;
@@ -70,8 +72,8 @@ export function AddProjectTypeDialog({ open, onOpenChange, onTypeAdded }: AddPro
       if (error) throw error;
 
       toast({
-        title: "Success",
-        description: "Project type added successfully"
+        title: t('common:success.created'),
+        description: t('project_type.success.added')
       });
 
       setFormData({ name: "", is_default: false });
@@ -79,7 +81,7 @@ export function AddProjectTypeDialog({ open, onOpenChange, onTypeAdded }: AddPro
       onTypeAdded();
     } catch (error: any) {
       toast({
-        title: "Error adding project type",
+        title: t('common:errors.save'),
         description: error.message,
         variant: "destructive"
       });
@@ -91,7 +93,7 @@ export function AddProjectTypeDialog({ open, onOpenChange, onTypeAdded }: AddPro
   const isDirty = Boolean(formData.name.trim() || formData.is_default);
 
   const handleDirtyClose = () => {
-    if (window.confirm("Discard changes?")) {
+    if (window.confirm(t('project_type.confirm.discard_changes'))) {
       setFormData({ name: "", is_default: false });
       onOpenChange(false);
     }
@@ -99,13 +101,13 @@ export function AddProjectTypeDialog({ open, onOpenChange, onTypeAdded }: AddPro
 
   const footerActions = [
     {
-      label: "Cancel",
+      label: t('common:buttons.cancel'),
       onClick: () => onOpenChange(false),
       variant: "outline" as const,
       disabled: loading
     },
     {
-      label: loading ? "Adding..." : "Add",
+      label: loading ? t('buttons.adding') : t('common:buttons.add'),
       onClick: handleSubmit,
       disabled: loading || !formData.name.trim(),
       loading: loading
@@ -114,7 +116,7 @@ export function AddProjectTypeDialog({ open, onOpenChange, onTypeAdded }: AddPro
 
   return (
     <AppSheetModal
-      title="ADD TYPE"
+      title={t('project_type.add_title')}
       isOpen={open}
       onOpenChange={onOpenChange}
       size="content"
@@ -124,16 +126,16 @@ export function AddProjectTypeDialog({ open, onOpenChange, onTypeAdded }: AddPro
     >
       <div className="space-y-6">
         <div className="space-y-2">
-          <Label htmlFor="name">Name</Label>
+          <Label htmlFor="name">{t('project_type.name_label')}</Label>
           <Input
             id="name"
             value={formData.name}
             onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-            placeholder="e.g. Corporate, Wedding, Portrait"
+            placeholder={t('project_type.name_placeholder')}
             maxLength={50}
             className="rounded-xl"
           />
-          <p className="text-sm text-muted-foreground">Customize your project types to reflect the type of work you offer.</p>
+          <p className="text-sm text-muted-foreground">{t('project_type.name_help')}</p>
         </div>
 
         <div className="flex items-center space-x-3">
@@ -148,8 +150,8 @@ export function AddProjectTypeDialog({ open, onOpenChange, onTypeAdded }: AddPro
             className="cursor-pointer flex-1"
             onClick={() => setFormData(prev => ({ ...prev, is_default: !prev.is_default }))}
           >
-            <Label htmlFor="is_default" className="text-sm font-medium cursor-pointer">Set as default</Label>
-            <p className="text-sm text-muted-foreground cursor-pointer">This type will be pre-selected when creating new projects.</p>
+            <Label htmlFor="is_default" className="text-sm font-medium cursor-pointer">{t('project_type.set_as_default')}</Label>
+            <p className="text-sm text-muted-foreground cursor-pointer">{t('project_type.set_as_default_help')}</p>
           </div>
         </div>
       </div>
@@ -165,6 +167,7 @@ interface EditProjectTypeDialogProps {
 }
 
 export function EditProjectTypeDialog({ type, open, onOpenChange, onTypeUpdated }: EditProjectTypeDialogProps) {
+  const { t } = useTranslation('forms');
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -183,8 +186,8 @@ export function EditProjectTypeDialog({ type, open, onOpenChange, onTypeUpdated 
   const handleSubmit = async () => {
     if (!formData.name.trim()) {
       toast({
-        title: "Error",
-        description: "Type name is required",
+        title: t('common:errors.validation'),
+        description: t('project_type.errors.name_required'),
         variant: "destructive"
       });
       return;
@@ -220,15 +223,15 @@ export function EditProjectTypeDialog({ type, open, onOpenChange, onTypeUpdated 
       if (error) throw error;
 
       toast({
-        title: "Success",
-        description: "Project type updated successfully"
+        title: t('common:success.updated'),
+        description: t('project_type.success.updated')
       });
 
       onOpenChange(false);
       onTypeUpdated();
     } catch (error: any) {
       toast({
-        title: "Error updating project type",
+        title: t('common:errors.save'),
         description: error.message,
         variant: "destructive"
       });
@@ -242,7 +245,7 @@ export function EditProjectTypeDialog({ type, open, onOpenChange, onTypeUpdated 
   const isDirty = Boolean(formData.name !== type.name || formData.is_default !== (type.is_default || false));
 
   const handleDirtyClose = () => {
-    if (window.confirm("Discard changes?")) {
+    if (window.confirm(t('project_type.confirm.discard_changes'))) {
       onOpenChange(false);
     }
   };
@@ -251,14 +254,14 @@ export function EditProjectTypeDialog({ type, open, onOpenChange, onTypeUpdated 
     // Prevent deleting the default type
     if (type.is_default) {
       toast({
-        title: "Cannot delete default type",
-        description: "Set another project type as default first, then you can delete this one.",
+        title: t('common:errors.delete'),
+        description: t('project_type.errors.cannot_delete_default'),
         variant: "destructive"
       });
       return;
     }
 
-    if (!window.confirm("Are you sure you want to delete this project type?")) return;
+    if (!window.confirm(t('project_type.confirm.delete'))) return;
     
     setLoading(true);
     try {
@@ -274,15 +277,15 @@ export function EditProjectTypeDialog({ type, open, onOpenChange, onTypeUpdated 
       if (error) throw error;
 
       toast({
-        title: "Success",
-        description: "Project type deleted successfully"
+        title: t('common:success.deleted'),
+        description: t('project_type.success.deleted')
       });
 
       onOpenChange(false);
       onTypeUpdated();
     } catch (error: any) {
       toast({
-        title: "Error deleting project type",
+        title: t('common:errors.delete'),
         description: error.message,
         variant: "destructive"
       });
@@ -293,19 +296,19 @@ export function EditProjectTypeDialog({ type, open, onOpenChange, onTypeUpdated 
 
   const footerActions = [
     {
-      label: "Delete",
+      label: t('common:buttons.delete'),
       onClick: handleDelete,
       variant: "destructive" as const,
       disabled: loading
     },
     {
-      label: "Cancel",
+      label: t('common:buttons.cancel'),
       onClick: () => onOpenChange(false),
       variant: "outline" as const,
       disabled: loading
     },
     {
-      label: loading ? "Saving..." : "Save",
+      label: loading ? t('buttons.saving') : t('common:buttons.save'),
       onClick: handleSubmit,
       disabled: loading || !formData.name.trim(),
       loading: loading
@@ -314,7 +317,7 @@ export function EditProjectTypeDialog({ type, open, onOpenChange, onTypeUpdated 
 
   return (
     <AppSheetModal
-      title="EDIT TYPE"
+      title={t('project_type.edit_title')}
       isOpen={open}
       onOpenChange={onOpenChange}
       size="content"
@@ -324,12 +327,12 @@ export function EditProjectTypeDialog({ type, open, onOpenChange, onTypeUpdated 
     >
       <div className="space-y-6">
         <div className="space-y-2">
-          <Label htmlFor="name">Name</Label>
+          <Label htmlFor="name">{t('project_type.name_label')}</Label>
           <Input
             id="name"
             value={formData.name}
             onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-            placeholder="e.g., Wedding, Portrait, Event"
+            placeholder={t('project_type.name_placeholder')}
             maxLength={50}
             className="rounded-xl"
           />
@@ -347,8 +350,8 @@ export function EditProjectTypeDialog({ type, open, onOpenChange, onTypeUpdated 
             className="cursor-pointer flex-1"
             onClick={() => setFormData(prev => ({ ...prev, is_default: !prev.is_default }))}
           >
-            <Label htmlFor="is_default_edit" className="text-sm font-medium cursor-pointer">Set as default</Label>
-            <p className="text-sm text-muted-foreground cursor-pointer">This type will be pre-selected when creating new projects.</p>
+            <Label htmlFor="is_default_edit" className="text-sm font-medium cursor-pointer">{t('project_type.set_as_default')}</Label>
+            <p className="text-sm text-muted-foreground cursor-pointer">{t('project_type.set_as_default_help')}</p>
           </div>
         </div>
       </div>

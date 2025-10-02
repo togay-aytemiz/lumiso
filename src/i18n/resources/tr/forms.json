@@ -1050,5 +1050,100 @@
     "phone": "Telefon",
     "status": "Durum",
     "last_updated": "Son Güncelleme"
+  },
+  "lead_field": {
+    "add_custom_field": "Özel Alan Ekle",
+    "edit_field": "Özel Alanı Düzenle",
+    "create_field": "Alan Oluştur",
+    "update_field": "Alanı Güncelle",
+    "saving": "Kaydediliyor...",
+    "field_label": "Alan Etiketi",
+    "field_label_placeholder": "örn., Düğün Tarihi",
+    "field_label_description": "Bu, kullanıcılara gösterilen addır",
+    "field_type": "Alan Tipi",
+    "select_field_type": "Alan tipi seçin",
+    "field_type_description": "Bu alanın içereceği veri tipini seçin",
+    "options": "Seçenekler",
+    "options_placeholder": "Seçenekleri virgülle ayırarak girin (örn., Seçenek 1, Seçenek 2, Seçenek 3)",
+    "options_description": "Açılır menü için virgülle ayrılmış seçenek listesi",
+    "field_settings": "Alan Ayarları",
+    "field_settings_description": "Alan görünürlüğünü ve gereksinimlerini yapılandırın",
+    "required": "Zorunlu",
+    "visible_in_form": "Formda Görünür",
+    "system_field": "Sistem Alanı",
+    "system_field_description": "Sistem alanları düzenlenemez veya silinemez",
+    "create_description": "Ek müşteri adayı bilgilerini yakalamak için yeni bir özel alan ekleyin",
+    "edit_description": "Özel alan yapılandırmasını değiştirin",
+    "unsaved_changes": "Kaydedilmemiş değişiklikleriniz var. Kapatmak istediğinizden emin misiniz?"
+  },
+  "service": {
+    "add_title": "Hizmet Ekle",
+    "edit_title": "Hizmeti Düzenle",
+    "name": "Hizmet Adı",
+    "name_placeholder": "örn., Düğün Fotoğrafçılığı",
+    "description": "Açıklama",
+    "description_placeholder": "Hizmetin kısa açıklaması",
+    "category": "Kategori",
+    "category_placeholder": "Kategori seçin veya oluşturun",
+    "cost_price": "Maliyet Fiyatı",
+    "selling_price": "Satış Fiyatı",
+    "price": "Fiyat",
+    "extra": "Ekstra/Ek Hizmet Olarak İşaretle",
+    "extra_help": "Ekstralar projelere isteğe bağlı ek hizmetler olarak eklenebilir",
+    "categories": {
+      "albums": "Albümler",
+      "prints": "Baskılar",
+      "digital": "Dijital",
+      "retouching": "Rötuş",
+      "frames": "Çerçeveler"
+    },
+    "new_category": "Yeni kategori oluştur: ",
+    "errors": {
+      "name_required": "Hizmet adı zorunludur",
+      "delete_failed": "Hizmet silinirken hata oluştu"
+    },
+    "success": {
+      "added": "Hizmet başarıyla eklendi",
+      "updated": "Hizmet başarıyla güncellendi",
+      "deleted": "Hizmet başarıyla silindi"
+    },
+    "delete_confirmation": {
+      "title": "Hizmeti Sil",
+      "description": "Bu hizmeti silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
+      "cancel": "İptal",
+      "confirm": "Sil"
+    },
+    "unsaved_changes": {
+      "title": "Kaydedilmemiş Değişiklikler",
+      "description": "Kaydedilmemiş değişiklikleriniz var. Kapatmak istediğinizden emin misiniz?",
+      "cancel": "Düzenlemeye Devam Et",
+      "confirm": "Değişiklikleri İptal Et"
+    }
+  },
+  "package": {
+    "add_title": "Paket Ekle",
+    "edit_title": "Paketi Düzenle",
+    "name": "Paket Adı",
+    "description": "Açıklama",
+    "price": "Fiyat",
+    "duration": "Süre",
+    "applicable_types": "Geçerli Türler",
+    "default_add_ons": "Varsayılan Ek Hizmetler",
+    "is_active": "Aktif",
+    "errors": {
+      "name_required": "Paket adı zorunludur",
+      "delete_failed": "Paket silinirken hata oluştu"
+    },
+    "success": {
+      "added": "Paket başarıyla eklendi",
+      "updated": "Paket başarıyla güncellendi",
+      "deleted": "Paket başarıyla silindi"
+    },
+    "delete_confirmation": {
+      "title": "Paketi Sil",
+      "description": "Bu paketi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
+      "cancel": "İptal",
+      "confirm": "Sil"
+    }
   }
 }

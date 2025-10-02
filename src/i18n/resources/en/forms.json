@@ -1060,5 +1060,100 @@
     "phone": "Phone",
     "status": "Status",
     "last_updated": "Last Updated"
+  },
+  "lead_field": {
+    "add_custom_field": "Add Custom Field",
+    "edit_field": "Edit Custom Field",
+    "create_field": "Create Field",
+    "update_field": "Update Field",
+    "saving": "Saving...",
+    "field_label": "Field Label",
+    "field_label_placeholder": "e.g., Wedding Date",
+    "field_label_description": "This is the name displayed to users",
+    "field_type": "Field Type",
+    "select_field_type": "Select field type",
+    "field_type_description": "Choose the type of data this field will contain",
+    "options": "Options",
+    "options_placeholder": "Enter options separated by commas (e.g., Option 1, Option 2, Option 3)",
+    "options_description": "Comma-separated list of options for dropdown",
+    "field_settings": "Field Settings",
+    "field_settings_description": "Configure field visibility and requirements",
+    "required": "Required",
+    "visible_in_form": "Visible in Form",
+    "system_field": "System Field",
+    "system_field_description": "System fields cannot be edited or deleted",
+    "create_description": "Add a new custom field to capture additional lead information",
+    "edit_description": "Modify the custom field configuration",
+    "unsaved_changes": "You have unsaved changes. Are you sure you want to close?"
+  },
+  "service": {
+    "add_title": "Add Service",
+    "edit_title": "Edit Service",
+    "name": "Service Name",
+    "name_placeholder": "e.g., Wedding Photography",
+    "description": "Description",
+    "description_placeholder": "Brief description of the service",
+    "category": "Category",
+    "category_placeholder": "Select or create category",
+    "cost_price": "Cost Price",
+    "selling_price": "Selling Price",
+    "price": "Price",
+    "extra": "Mark as Extra/Add-on",
+    "extra_help": "Extras can be added to projects as optional add-ons",
+    "categories": {
+      "albums": "Albums",
+      "prints": "Prints",
+      "digital": "Digital",
+      "retouching": "Retouching",
+      "frames": "Frames"
+    },
+    "new_category": "Create new category: ",
+    "errors": {
+      "name_required": "Service name is required",
+      "delete_failed": "Failed to delete service"
+    },
+    "success": {
+      "added": "Service added successfully",
+      "updated": "Service updated successfully",
+      "deleted": "Service deleted successfully"
+    },
+    "delete_confirmation": {
+      "title": "Delete Service",
+      "description": "Are you sure you want to delete this service? This action cannot be undone.",
+      "cancel": "Cancel",
+      "confirm": "Delete"
+    },
+    "unsaved_changes": {
+      "title": "Unsaved Changes",
+      "description": "You have unsaved changes. Are you sure you want to close?",
+      "cancel": "Keep Editing",
+      "confirm": "Discard Changes"
+    }
+  },
+  "package": {
+    "add_title": "Add Package",
+    "edit_title": "Edit Package",
+    "name": "Package Name",
+    "description": "Description",
+    "price": "Price",
+    "duration": "Duration",
+    "applicable_types": "Applicable Types",
+    "default_add_ons": "Default Add-ons",
+    "is_active": "Active",
+    "errors": {
+      "name_required": "Package name is required",
+      "delete_failed": "Failed to delete package"
+    },
+    "success": {
+      "added": "Package added successfully",
+      "updated": "Package updated successfully",
+      "deleted": "Package deleted successfully"
+    },
+    "delete_confirmation": {
+      "title": "Delete Package",
+      "description": "Are you sure you want to delete this package? This action cannot be undone.",
+      "cancel": "Cancel",
+      "confirm": "Delete"
+    }
   }
 }

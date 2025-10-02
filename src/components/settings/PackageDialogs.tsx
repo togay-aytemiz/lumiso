@@ -15,6 +15,7 @@ import { getUserOrganizationId } from "@/lib/organizationUtils";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 interface Package {
   id: string;
@@ -268,6 +269,7 @@ const staticDurationOptions = [
 ];
 
 export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPackageDialogProps) {
+  const { t } = useTranslation('forms');
   const [packageData, setPackageData] = useState({
     name: "",
     description: "",
@@ -364,19 +366,19 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
     const newErrors: Record<string, string> = {};
 
     if (!packageData.name.trim()) {
-      newErrors.name = "Package name is required";
+      newErrors.name = t('package.errors.name_required');
     }
 
     if (!packageData.price || isNaN(Number(packageData.price)) || Number(packageData.price) <= 0) {
-      newErrors.price = "Valid price is required";
+      newErrors.price = t('common.errors.price_required');
     }
 
     if (!packageData.duration) {
-      newErrors.duration = "Duration is required";
+      newErrors.duration = t('common.errors.duration_required');
     }
 
     if (packageData.duration === "Custom" && !packageData.customDuration.trim()) {
-      newErrors.customDuration = "Custom duration is required";
+      newErrors.customDuration = t('common.errors.custom_duration_required');
     }
 
     setErrors(newErrors);
@@ -416,16 +418,16 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
       if (error) throw error;
 
       toast({
-        title: "Package created",
-        description: `Package "${packageData.name}" has been created successfully.`,
+        title: t('common.success.success'),
+        description: t('package.success.added'),
       });
 
       onPackageAdded();
     } catch (error) {
       console.error('Error creating package:', error);
       toast({
-        title: "Error",
-        description: "Failed to create package",
+        title: t('common.errors.error'),
+        description: t('package.errors.name_required'),
         variant: "destructive",
       });
     } finally {
@@ -434,7 +436,7 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
   };
 
   const handleDirtyClose = () => {
-    if (window.confirm("Are you sure you want to discard your changes? Any unsaved information will be lost.")) {
+    if (window.confirm(t('package.delete_confirmation.description'))) {
       resetForm();
       onOpenChange(false);
     }
@@ -442,13 +444,13 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
 
   const footerActions = [
     {
-      label: "Cancel",
+      label: t('common.buttons.cancel'),
       onClick: () => onOpenChange(false),
       variant: "outline" as const,
       disabled: loading
     },
     {
-      label: loading ? "Creating..." : "Save Package",
+      label: loading ? t('common.buttons.creating') : t('common.buttons.save'),
       onClick: handleSubmit,
       disabled: loading || !packageData.name.trim(),
       loading: loading
@@ -467,7 +469,7 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
 
   return (
     <AppSheetModal
-      title="Add Package"
+      title={t('package.add_title')}
       isOpen={open}
       onOpenChange={onOpenChange}
       size="default"
@@ -478,7 +480,7 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
       <div className="space-y-6">
         {/* Package Name */}
         <div className="space-y-2">
-          <Label htmlFor="name">Package Name *</Label>
+          <Label htmlFor="name">{t('package.name')} *</Label>
           <Input
             id="name"
             value={packageData.name}
@@ -490,12 +492,12 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
 
         {/* Description */}
         <div className="space-y-2">
-          <Label htmlFor="description">Description</Label>
+          <Label htmlFor="description">{t('package.description')}</Label>
           <Textarea
             id="description"
             value={packageData.description}
             onChange={(e) => setPackageData(prev => ({ ...prev, description: e.target.value }))}
-            placeholder="Brief description of the package"
+            placeholder={t('package.description')}
             rows={2}
           />
         </div>
@@ -640,6 +642,7 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
 }
 
 export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageUpdated }: EditPackageDialogProps) {
+  const { t } = useTranslation('forms');
   const [packageData, setPackageData] = useState({
     name: "",
     description: "",

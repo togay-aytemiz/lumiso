@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import { Plus } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectSeparator } from "@/components/ui/select";
+import { useTranslation } from "react-i18next";
 
 interface AddServiceDialogProps {
   open: boolean;
@@ -17,6 +18,7 @@ interface AddServiceDialogProps {
 }
 
 export function AddServiceDialog({ open, onOpenChange, onServiceAdded }: AddServiceDialogProps) {
+  const { t } = useTranslation('forms');
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<string[]>([]);
   const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
@@ -81,8 +83,8 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded }: AddServ
   const handleSubmit = async () => {
     if (!formData.name.trim()) {
       toast({
-        title: "Error",
-        description: "Service name is required",
+        title: t('common.errors.error'),
+        description: t('service.errors.name_required'),
         variant: "destructive"
       });
       return;
@@ -116,8 +118,8 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded }: AddServ
       if (error) throw error;
 
       toast({
-        title: "Success",
-        description: "Service added successfully"
+        title: t('common.success.success'),
+        description: t('service.success.added')
       });
 
       setFormData({
@@ -133,7 +135,7 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded }: AddServ
       onServiceAdded();
     } catch (error: any) {
       toast({
-        title: "Error adding service",
+        title: t('common.errors.error'),
         description: error.message,
         variant: "destructive"
       });
@@ -153,7 +155,7 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded }: AddServ
   );
 
   const handleDirtyClose = () => {
-    if (window.confirm("Are you sure you want to discard your changes? Any unsaved information will be lost.")) {
+    if (window.confirm(t('service.unsaved_changes.description'))) {
       setFormData({
         name: "",
         description: "",
@@ -169,13 +171,13 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded }: AddServ
 
   const footerActions = [
     {
-      label: "Cancel",
+      label: t('common.buttons.cancel'),
       onClick: () => onOpenChange(false),
       variant: "outline" as const,
       disabled: loading
     },
     {
-      label: loading ? "Saving..." : "Save Service",
+      label: loading ? t('common.buttons.saving') : t('common.buttons.save'),
       onClick: handleSubmit,
       disabled: loading || !formData.name.trim(),
       loading: loading
@@ -184,7 +186,7 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded }: AddServ
 
   return (
     <AppSheetModal
-      title="New Service"
+      title={t('service.add_title')}
       isOpen={open}
       onOpenChange={onOpenChange}
       size="default"
@@ -193,10 +195,10 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded }: AddServ
       footerActions={footerActions}
     >
       <div className="space-y-4">
-        <p className="text-sm text-muted-foreground">Add a new photography service to your offerings.</p>
+        <p className="text-sm text-muted-foreground">{t('service.description_placeholder')}</p>
         
         <div className="space-y-2">
-          <Label htmlFor="category">Category *</Label>
+          <Label htmlFor="category">{t('service.category')} *</Label>
           {showNewCategoryInput ? (
             <div className="flex gap-2">
               <Input
@@ -245,7 +247,7 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded }: AddServ
               }
             }}>
               <SelectTrigger className="rounded-xl">
-                <SelectValue placeholder="Select or create a category" />
+                <SelectValue placeholder={t('service.category_placeholder')} />
               </SelectTrigger>
               <SelectContent className="bg-popover border border-border shadow-lg z-50">
                 {/* Default Categories */}
@@ -278,7 +280,7 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded }: AddServ
                 <SelectItem value="create-new" className="text-primary hover:bg-accent hover:text-accent-foreground">
                   <div className="flex items-center">
                     <Plus className="mr-2 h-4 w-4" />
-                    Create new category
+                    {t('service.new_category')}
                   </div>
                 </SelectItem>
               </SelectContent>
@@ -287,12 +289,12 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded }: AddServ
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="name">Name *</Label>
+          <Label htmlFor="name">{t('service.name')} *</Label>
           <Input
             id="name"
             value={formData.name}
             onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-            placeholder="e.g., Wedding Album, Photo Prints"
+            placeholder={t('service.name_placeholder')}
             maxLength={100}
             className="rounded-xl"
           />
@@ -300,7 +302,7 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded }: AddServ
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="cost_price">Cost Price (TRY)</Label>
+            <Label htmlFor="cost_price">{t('service.cost_price')} (TRY)</Label>
             <Input
               id="cost_price"
               type="number"
@@ -312,7 +314,7 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded }: AddServ
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="selling_price">Selling Price (TRY)</Label>
+            <Label htmlFor="selling_price">{t('service.selling_price')} (TRY)</Label>
             <Input
               id="selling_price"
               type="number"
@@ -325,12 +327,12 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded }: AddServ
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="description">Description</Label>
+          <Label htmlFor="description">{t('service.description')}</Label>
           <Textarea
             id="description"
             value={formData.description}
             onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-            placeholder="Optional description of the service..."
+            placeholder={t('service.description_placeholder')}
             rows={4}
             className="resize-none"
           />
@@ -348,6 +350,7 @@ interface EditServiceDialogProps {
 }
 
 export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdated }: EditServiceDialogProps) {
+  const { t } = useTranslation('forms');
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<string[]>([]);
   const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
@@ -428,8 +431,8 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
   const handleSubmit = async () => {
     if (!formData.name.trim()) {
       toast({
-        title: "Error",
-        description: "Service name is required",
+        title: t('common.errors.error'),
+        description: t('service.errors.name_required'),
         variant: "destructive"
       });
       return;
@@ -453,15 +456,15 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
       if (error) throw error;
 
       toast({
-        title: "Success",
-        description: "Service updated successfully"
+        title: t('common.success.success'),
+        description: t('service.success.updated')
       });
 
       onOpenChange(false);
       onServiceUpdated();
     } catch (error: any) {
       toast({
-        title: "Error updating service",
+        title: t('common.errors.error'),
         description: error.message,
         variant: "destructive"
       });
@@ -483,20 +486,20 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
   );
 
   const handleDirtyClose = () => {
-    if (window.confirm("Are you sure you want to discard your changes? Any unsaved information will be lost.")) {
+    if (window.confirm(t('service.unsaved_changes.description'))) {
       onOpenChange(false);
     }
   };
 
   const footerActions = [
     {
-      label: "Cancel",
+      label: t('common.buttons.cancel'),
       onClick: () => onOpenChange(false),
       variant: "outline" as const,
       disabled: loading
     },
     {
-      label: loading ? "Updating..." : "Update Service",
+      label: loading ? t('common.buttons.updating') : t('common.buttons.update'),
       onClick: handleSubmit,
       disabled: loading || !formData.name.trim(),
       loading: loading
@@ -505,7 +508,7 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
 
   return (
     <AppSheetModal
-      title="Edit Service"
+      title={t('service.edit_title')}
       isOpen={open}
       onOpenChange={onOpenChange}
       size="default"
@@ -515,7 +518,7 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
     >
       <div className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="category">Category</Label>
+          <Label htmlFor="category">{t('service.category')}</Label>
           {showNewCategoryInput ? (
             <div className="flex gap-2">
               <Input
@@ -564,7 +567,7 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
               }
             }}>
               <SelectTrigger className="rounded-xl">
-                <SelectValue placeholder="Select or create a category" />
+                <SelectValue placeholder={t('service.category_placeholder')} />
               </SelectTrigger>
               <SelectContent className="bg-popover border border-border shadow-lg z-50">
                 {/* Default Categories */}
@@ -597,7 +600,7 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
                 <SelectItem value="create-new" className="text-primary hover:bg-accent hover:text-accent-foreground">
                   <div className="flex items-center">
                     <Plus className="mr-2 h-4 w-4" />
-                    Create new category
+                    {t('service.new_category')}
                   </div>
                 </SelectItem>
               </SelectContent>
@@ -606,12 +609,12 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="name">Name *</Label>
+          <Label htmlFor="name">{t('service.name')} *</Label>
           <Input
             id="name"
             value={formData.name}
             onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-            placeholder="e.g., Wedding Album, Photo Prints"
+            placeholder={t('service.name_placeholder')}
             maxLength={100}
             className="rounded-xl"
           />
@@ -619,7 +622,7 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="cost_price">Cost Price (TRY)</Label>
+            <Label htmlFor="cost_price">{t('service.cost_price')} (TRY)</Label>
             <Input
               id="cost_price"
               type="number"
@@ -632,7 +635,7 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="selling_price">Selling Price (TRY)</Label>
+            <Label htmlFor="selling_price">{t('service.selling_price')} (TRY)</Label>
             <Input
               id="selling_price"
               type="number"
@@ -646,12 +649,12 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="description">Description</Label>
+          <Label htmlFor="description">{t('service.description')}</Label>
           <Textarea
             id="description"
             value={formData.description}
             onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-            placeholder="Optional description of the service..."
+            placeholder={t('service.description_placeholder')}
             rows={4}
             className="resize-none rounded-xl"
           />

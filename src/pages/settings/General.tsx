@@ -488,9 +488,9 @@ export default function General() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="DD/MM/YYYY">DD/MM/YYYY</SelectItem>
-                  <SelectItem value="MM/DD/YYYY">MM/DD/YYYY</SelectItem>
-                  <SelectItem value="YYYY-MM-DD">YYYY-MM-DD</SelectItem>
+                  <SelectItem value="DD/MM/YYYY">{t("date_formats.DD/MM/YYYY", { ns: "forms" })}</SelectItem>
+                  <SelectItem value="MM/DD/YYYY">{t("date_formats.MM/DD/YYYY", { ns: "forms" })}</SelectItem>
+                  <SelectItem value="YYYY-MM-DD">{t("date_formats.YYYY-MM-DD", { ns: "forms" })}</SelectItem>
                 </SelectContent>
               </Select>
             </div>

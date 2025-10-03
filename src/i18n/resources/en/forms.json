@@ -1272,5 +1272,10 @@
       "cancel": "Cancel",
       "confirm": "Delete"
     }
+  },
+  "date_formats": {
+    "DD/MM/YYYY": "DD/MM/YYYY (e.g., 31/12/2024)",
+    "MM/DD/YYYY": "MM/DD/YYYY (e.g., 12/31/2024)",
+    "YYYY-MM-DD": "YYYY-MM-DD (e.g., 2024-12-31)"
   }
 }

@@ -27,11 +27,9 @@ const personalSettingsItems = [
 
 const organizationSettingsItems = [
   { title: "general", href: "/settings/general", icon: Settings, testId: "general-section" },
-  { title: "clientMessaging", href: "/settings/client-messaging", icon: MessageSquare, testId: "client-messaging-section" },
   { title: "projects", href: "/settings/projects", icon: FolderOpen, testId: "projects-section" },
   { title: "leads", href: "/settings/leads", icon: UserCheck, testId: "leads-section" },
   { title: "services", href: "/settings/services", icon: Package, testId: "services-section" },
-  { title: "integrations", href: "/settings/integrations", icon: Plug, testId: "integrations-section" },
   { title: "contracts", href: "/settings/contracts", icon: FileText, testId: "contracts-section" },
   { title: "billing", href: "/settings/billing", icon: CreditCard, testId: "billing-section" },
   { title: "dangerZone", href: "/settings/danger-zone", icon: AlertTriangle, testId: "danger-section" },

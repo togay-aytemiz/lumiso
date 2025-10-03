@@ -60,7 +60,7 @@ export function LeadFieldDialog({ open, onOpenChange, field, onClose }: LeadFiel
   const { createFieldDefinition, updateFieldDefinition } = useLeadFieldDefinitions();
   const [loading, setLoading] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
-  const { t } = useTranslation();
+  const { t } = useTranslation('forms');
   
   const isEdit = !!field;
   const isSystemField = field?.is_system || false;

@@ -824,11 +824,11 @@ const AllProjects = () => {
                                )}
                                {viewMode !== 'archived' ? (
                                  <>
-                                    <TableCell>
-                                      <div className="text-sm">
-                                        <div>{project.session_count || 0} planned</div>
-                                      </div>
-                                    </TableCell>
+                                     <TableCell>
+                                       <div className="text-sm">
+                                         <div>{project.session_count || 0} {tForms('projects.table_columns.sessions_planned')}</div>
+                                       </div>
+                                     </TableCell>
                                    <TableCell>
                                      {getProgressBadge(project.completed_todo_count || 0, project.todo_count || 0)}
                                    </TableCell>

@@ -546,7 +546,8 @@
       "remaining": "Kalan",
       "last_update": "Son Güncelleme",
       "no_value": "-",
-      "no_projects_found": "Proje bulunamadı"
+      "no_projects_found": "Proje bulunamadı",
+      "sessions_planned": "planlandı"
     },
     "success": "Başarılı",
     "projectName": "Proje adı",

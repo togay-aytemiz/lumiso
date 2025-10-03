@@ -292,7 +292,8 @@
       "remaining": "Remaining",
       "last_update": "Last Update",
       "no_value": "-",
-      "no_projects_found": "No projects found"
+      "no_projects_found": "No projects found",
+      "sessions_planned": "planned"
     }
   }
 }

@@ -83,6 +83,7 @@ export default function SessionSheetView({
   const { deleteSession } = useSessionActions();
   const navigate = useNavigate();
   const { t: tForms } = useFormsTranslation();
+  const { t: tMessages } = useMessagesTranslation();
   
   const [session, setSession] = useState<SessionData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -465,7 +466,7 @@ export default function SessionSheetView({
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Session</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this session? This action cannot be undone.
+              {tMessages('confirm.deleteSession')} {tMessages('confirm.cannotUndo')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

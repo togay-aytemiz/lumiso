@@ -1,3 +1,4 @@
+import { useMessagesTranslation } from '@/hooks/useTypedTranslation';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,6 +27,8 @@ export function WorkflowDeleteDialog({
   onCancel,
   isDeleting = false
 }: WorkflowDeleteDialogProps) {
+  const { t: tMessages } = useMessagesTranslation();
+  
   return (
     <AlertDialog open={open} onOpenChange={(open) => !open && onCancel()}>
       <AlertDialogContent>
@@ -37,7 +40,7 @@ export function WorkflowDeleteDialog({
             <div>
               <AlertDialogTitle>Delete Workflow</AlertDialogTitle>
               <AlertDialogDescription>
-                Are you sure you want to delete "{workflow?.name}"?
+                {tMessages('confirm.deleteWithName', { name: workflow?.name })}
               </AlertDialogDescription>
             </div>
           </div>

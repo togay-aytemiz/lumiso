@@ -67,6 +67,7 @@ export function SessionStatusBadge({
   const { toast } = useToast();
   const { updateSessionStatus } = useSessionActions();
   const { t: tForms } = useFormsTranslation();
+  const { t: tMessages } = useMessagesTranslation();
 
   const isSmall = size === 'sm';
   const dotSize = isSmall ? 'w-2 h-2' : 'w-2.5 h-2.5';
@@ -130,7 +131,7 @@ export function SessionStatusBadge({
         setCurrent(newRow);
         setDropdownOpen(false);
         onStatusChange?.();
-        toast({ title: tForms('status.sessionUpdated'), description: `Status set to "${newRow.name}"` });
+        toast({ title: tForms('status.sessionUpdated'), description: tMessages('toast.statusSetTo', { status: newRow.name }) });
       }
     } finally {
       setIsUpdating(false);

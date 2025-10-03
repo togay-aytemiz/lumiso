@@ -63,6 +63,7 @@ const SessionStatusesSection = () => {
   const { activeOrganizationId } = useOrganization();
   const { data: statuses = [], isLoading, refetch } = useSessionStatuses();
   const { t } = useTranslation('forms');
+  const { t: tMessages } = useMessagesTranslation();
 
   // Check for lifecycle completeness and show warnings
   useEffect(() => {
@@ -299,7 +300,7 @@ const SessionStatusesSection = () => {
                   <AlertDialogHeader>
                     <AlertDialogTitle>Delete Session Stage</AlertDialogTitle>
                     <AlertDialogDescription>
-                      Are you sure you want to delete "{editingStatus?.name}"? This action cannot be undone.
+                      {tMessages('confirm.deleteWithName', { name: editingStatus?.name })} {tMessages('confirm.cannotUndo')}
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>

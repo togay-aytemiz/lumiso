@@ -39,6 +39,7 @@ export function ImageManager({ onImageSelect, templateId, className }: ImageMana
   const [editingAlt, setEditingAlt] = useState<string | null>(null);
   const [altText, setAltText] = useState('');
   const { toast } = useToast();
+  const { t: tMessages } = useMessagesTranslation();
   const { activeOrganization } = useOrganization();
 
   const loadAssets = async () => {
@@ -221,7 +222,7 @@ export function ImageManager({ onImageSelect, templateId, className }: ImageMana
                       <AlertDialogHeader>
                         <AlertDialogTitle>Delete Image</AlertDialogTitle>
                         <AlertDialogDescription>
-                          Are you sure you want to delete this image? This action cannot be undone.
+                          {tMessages('confirm.deleteImage')} {tMessages('confirm.cannotUndo')}
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>

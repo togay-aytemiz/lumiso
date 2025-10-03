@@ -42,6 +42,8 @@ export default function Account() {
   const removeMember = async () => ({ success: false, error: 'Team management disabled' });
   const updateMemberRole = async () => ({ success: false, error: 'Team management disabled' });
   const { toast } = useToast();
+  const { t } = useTranslation(['pages']);
+  const { t: tMessages } = useMessagesTranslation();
 
   // Profile section state
   const profileSection = useSettingsCategorySection({
@@ -301,7 +303,7 @@ export default function Account() {
                           <AlertDialogHeader>
                             <AlertDialogTitle>Delete Profile Photo</AlertDialogTitle>
                             <AlertDialogDescription>
-                              Are you sure you want to delete your profile photo? This action cannot be undone.
+                              {tMessages('confirm.deleteProfilePhoto')} {tMessages('confirm.cannotUndo')}
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>

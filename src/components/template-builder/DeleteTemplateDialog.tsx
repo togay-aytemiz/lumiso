@@ -1,3 +1,4 @@
+import { useMessagesTranslation } from '@/hooks/useTypedTranslation';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -18,6 +19,8 @@ export function DeleteTemplateDialog({
   templateName,
   loading = false
 }: DeleteTemplateDialogProps) {
+  const { t: tMessages } = useMessagesTranslation();
+  
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
@@ -27,7 +30,7 @@ export function DeleteTemplateDialog({
             Delete Template
           </DialogTitle>
           <DialogDescription>
-            Are you sure you want to delete this template? This action cannot be undone.
+            {tMessages('confirm.deleteTemplate')} {tMessages('confirm.cannotUndo')}
           </DialogDescription>
         </DialogHeader>
 

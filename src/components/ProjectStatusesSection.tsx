@@ -60,7 +60,10 @@ const ProjectStatusesSection = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const toast = useI18nToast();
+  const { t } = useTranslation();
+  const { t: tMessages } = useMessagesTranslation();
   const { activeOrganizationId } = useOrganization();
+
   const { data: statuses = [], isLoading, refetch } = useProjectStatuses();
   // Permissions removed for single photographer mode - always allow
 
@@ -355,7 +358,7 @@ const ProjectStatusesSection = () => {
                   <AlertDialogHeader>
                     <AlertDialogTitle>Delete Project Status</AlertDialogTitle>
                     <AlertDialogDescription>
-                      Are you sure you want to delete "{editingStatus?.name}"? This action cannot be undone.
+                      {tMessages('confirm.deleteWithName', { name: editingStatus?.name })} {tMessages('confirm.cannotUndo')}
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>

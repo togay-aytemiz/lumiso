@@ -33,6 +33,8 @@ export function ImageLibrarySheet({ open, onOpenChange, onImageSelect, templateI
   const [editingAltText, setEditingAltText] = useState<string | null>(null);
   const [tempAltText, setTempAltText] = useState('');
   const { toast } = useToast();
+  const { t } = useTranslation();
+  const { t: tMessages } = useMessagesTranslation();
   const { activeOrganization } = useOrganization();
 
   const loadAssets = async () => {
@@ -243,7 +245,7 @@ export function ImageLibrarySheet({ open, onOpenChange, onImageSelect, templateI
                           <AlertDialogHeader>
                             <AlertDialogTitle>Delete Image</AlertDialogTitle>
                             <AlertDialogDescription>
-                              Are you sure you want to delete "{asset.file_name}"? This action cannot be undone.
+                              {tMessages('confirm.deleteWithName', { name: asset.file_name })} {tMessages('confirm.cannotUndo')}
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>

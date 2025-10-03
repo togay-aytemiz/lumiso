@@ -30,11 +30,20 @@
   },
   "confirm": {
     "delete": "Bu öğeyi silmek istediğinizden emin misiniz?",
+    "deleteWithName": "\"{name}\" öğesini silmek istediğinizden emin misiniz?",
+    "deleteSession": "Bu seansı silmek istediğinizden emin misiniz?",
+    "deleteImage": "Bu görseli silmek istediğinizden emin misiniz?",
+    "deleteProfilePhoto": "Profil fotoğrafınızı silmek istediğinizden emin misiniz?",
+    "deleteTemplate": "Bu şablonu silmek istediğinizden emin misiniz?",
     "cancel": "İptal etmek istediğinizden emin misiniz?",
     "unsavedChanges": "Kaydedilmemiş değişiklikleriniz var. Devam etmek istiyor musunuz?",
+    "cannotUndo": "Bu işlem geri alınamaz.",
     "permanent": "Bu işlem geri alınamaz.",
     "deleteProject": "Bu projeyi silmek istediğinizden emin misiniz?",
     "deleteProjectWarning": "Bu, projeyi ve seanslar, aktiviteler, yapılacaklar ve ödemeler dahil tüm ilişkili verileri kalıcı olarak silecektir. Bu işlem geri alınamaz."
+  },
+  "toast": {
+    "statusSetTo": "Durum \"{status}\" olarak ayarlandı"
   },
   "info": {
     "noData": "Veri yok",

@@ -529,7 +529,7 @@ export default function SessionDetail() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Session</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this session? This action cannot be undone.
+              {tMessages('confirm.deleteSession')} {tMessages('confirm.cannotUndo')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -43,6 +43,7 @@ const ProjectTypesSection = () => {
   const { activeOrganizationId, loading: orgLoading } = useOrganization();
   const { data: types = [], isLoading, refetch } = useProjectTypes();
   const { t } = useTranslation('forms');
+  const { t: tMessages } = useMessagesTranslation();
 
   const form = useForm<ProjectTypeForm>({
     resolver: zodResolver(projectTypeSchema),
@@ -251,7 +252,7 @@ const ProjectTypesSection = () => {
                   <AlertDialogHeader>
                     <AlertDialogTitle>Delete Project Type</AlertDialogTitle>
                     <AlertDialogDescription>
-                      Are you sure you want to delete "{editingType?.name}"? This action cannot be undone.
+                      {tMessages('confirm.deleteWithName', { name: editingType?.name })} {tMessages('confirm.cannotUndo')}
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>

@@ -8,6 +8,8 @@ import { toast } from "@/hooks/use-toast";
 import { Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
+import { useModalNavigation } from "@/hooks/useModalNavigation";
+import { NavigationGuardDialog } from "./NavigationGuardDialog";
 
 interface AddProjectStageDialogProps {
   open: boolean;
@@ -109,8 +111,20 @@ export function AddProjectStageDialog({ open, onOpenChange, onStageAdded }: AddP
 
   const isDirty = Boolean(formData.name.trim() || formData.color !== "#EF4444" || formData.lifecycle !== "active");
 
+  const navigation = useModalNavigation({
+    isDirty,
+    onDiscard: () => {
+      setFormData({ name: "", color: "#EF4444", lifecycle: "active" });
+      onOpenChange(false);
+    },
+    onSaveAndExit: async () => {
+      await handleSubmit();
+    }
+  });
+
   const handleDirtyClose = () => {
-    if (window.confirm(t('project_stage.confirm.discard_changes'))) {
+    const canClose = navigation.handleModalClose();
+    if (canClose) {
       setFormData({ name: "", color: "#EF4444", lifecycle: "active" });
       onOpenChange(false);
     }
@@ -208,6 +222,14 @@ export function AddProjectStageDialog({ open, onOpenChange, onStageAdded }: AddP
           </div>
         </div>
       </div>
+
+      <NavigationGuardDialog
+        open={navigation.showGuard}
+        onDiscard={navigation.handleDiscardChanges}
+        onStay={navigation.handleStayOnModal}
+        onSaveAndExit={navigation.handleSaveAndExit}
+        message={navigation.message}
+      />
     </AppSheetModal>
   );
 }
@@ -339,8 +361,19 @@ export function EditProjectStageDialog({ stage, open, onOpenChange, onStageUpdat
     formData.lifecycle !== (stage.lifecycle || "active")
   );
 
+  const navigation = useModalNavigation({
+    isDirty,
+    onDiscard: () => {
+      onOpenChange(false);
+    },
+    onSaveAndExit: async () => {
+      await handleSubmit();
+    }
+  });
+
   const handleDirtyClose = () => {
-    if (window.confirm(t('project_stage.confirm.discard_changes'))) {
+    const canClose = navigation.handleModalClose();
+    if (canClose) {
       onOpenChange(false);
     }
   };
@@ -460,6 +493,14 @@ export function EditProjectStageDialog({ stage, open, onOpenChange, onStageUpdat
           </div>
         )}
       </div>
+
+      <NavigationGuardDialog
+        open={navigation.showGuard}
+        onDiscard={navigation.handleDiscardChanges}
+        onStay={navigation.handleStayOnModal}
+        onSaveAndExit={navigation.handleSaveAndExit}
+        message={navigation.message}
+      />
     </AppSheetModal>
   );
 }

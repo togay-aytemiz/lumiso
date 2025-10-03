@@ -547,7 +547,7 @@ const ProjectStatusesSection = () => {
                          </span>
                          {status.lifecycle && status.lifecycle !== 'active' && (
                            <span className="text-xs opacity-60 font-normal capitalize">
-                             · {status.lifecycle}
+                             · {t(`project_stage.lifecycle.${status.lifecycle}`)}
                            </span>
                          )}
                       </div>

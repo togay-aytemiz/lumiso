@@ -416,7 +416,7 @@ const SessionStatusesSection = () => {
                       </span>
                       {status.lifecycle && status.lifecycle !== 'active' && (
                         <span className="text-xs opacity-60 font-normal capitalize">
-                          · {status.lifecycle}
+                          · {t(`session_status.lifecycle.${status.lifecycle}`)}
                         </span>
                       )}
                     </div>

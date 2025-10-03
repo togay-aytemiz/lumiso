@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
+import { useModalNavigation } from "@/hooks/useModalNavigation";
+import { NavigationGuardDialog } from "./NavigationGuardDialog";
 
 interface AddSessionStatusDialogProps {
   open: boolean;
@@ -107,8 +109,20 @@ export function AddSessionStatusDialog({ open, onOpenChange, onStatusAdded }: Ad
 
   const isDirty = Boolean(formData.name.trim() || formData.color !== "#3B82F6" || formData.lifecycle !== "active");
 
+  const navigation = useModalNavigation({
+    isDirty,
+    onDiscard: () => {
+      setFormData({ name: "", color: "#3B82F6", lifecycle: "active" });
+      onOpenChange(false);
+    },
+    onSaveAndExit: async () => {
+      await handleSubmit();
+    }
+  });
+
   const handleDirtyClose = () => {
-    if (window.confirm(t('session_status.confirm.discard_changes'))) {
+    const canClose = navigation.handleModalClose();
+    if (canClose) {
       setFormData({ name: "", color: "#3B82F6", lifecycle: "active" });
       onOpenChange(false);
     }
@@ -206,6 +220,14 @@ export function AddSessionStatusDialog({ open, onOpenChange, onStatusAdded }: Ad
           </div>
         </div>
       </div>
+
+      <NavigationGuardDialog
+        open={navigation.showGuard}
+        onDiscard={navigation.handleDiscardChanges}
+        onStay={navigation.handleStayOnModal}
+        onSaveAndExit={navigation.handleSaveAndExit}
+        message={navigation.message}
+      />
     </AppSheetModal>
   );
 }
@@ -285,8 +307,19 @@ export function EditSessionStatusDialog({ status, open, onOpenChange, onStatusUp
     formData.lifecycle !== (status.lifecycle || "active")
   );
 
+  const navigation = useModalNavigation({
+    isDirty,
+    onDiscard: () => {
+      onOpenChange(false);
+    },
+    onSaveAndExit: async () => {
+      await handleSubmit();
+    }
+  });
+
   const handleDirtyClose = () => {
-    if (window.confirm(t('session_status.confirm.discard_changes'))) {
+    const canClose = navigation.handleModalClose();
+    if (canClose) {
       onOpenChange(false);
     }
   };
@@ -450,6 +483,14 @@ export function EditSessionStatusDialog({ status, open, onOpenChange, onStatusUp
           </div>
         )}
       </div>
+
+      <NavigationGuardDialog
+        open={navigation.showGuard}
+        onDiscard={navigation.handleDiscardChanges}
+        onStay={navigation.handleStayOnModal}
+        onSaveAndExit={navigation.handleSaveAndExit}
+        message={navigation.message}
+      />
     </AppSheetModal>
   );
 }

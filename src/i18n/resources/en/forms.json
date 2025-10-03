@@ -294,6 +294,10 @@
       "no_value": "-",
       "no_projects_found": "No projects found",
       "sessions_planned": "planned"
-    }
+    },
+    "no_lead": "No Lead",
+    "sessions": "sessions",
+    "services": "services",
+    "tasks_completed": "tasks completed"
   }
 }

@@ -3,6 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ProgressBar } from '@/components/ui/progress-bar';
 import { User, Calendar, DollarSign, Package } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface Project {
   id: string;
@@ -43,6 +44,8 @@ export const MemoizedKanbanCard = memo<MemoizedKanbanCardProps>(({
   kanbanSettings,
   onClick
 }) => {
+  const { t } = useTranslation('forms');
+  
   // Memoize progress calculation
   const progressValue = React.useMemo(() => {
     if (!project.todo_count || project.todo_count === 0) return 0;
@@ -83,7 +86,7 @@ export const MemoizedKanbanCard = memo<MemoizedKanbanCardProps>(({
           {kanbanSettings.kanban_show_client_name && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <User className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
-              <span className="truncate">{project.lead?.name || 'No Lead'}</span>
+              <span className="truncate">{project.lead?.name || t('projects.no_lead')}</span>
             </div>
           )}
 
@@ -96,7 +99,7 @@ export const MemoizedKanbanCard = memo<MemoizedKanbanCardProps>(({
               className="w-full" 
               showLabel={true} 
               size="sm"
-              aria-label={`Progress: ${project.completed_todo_count || 0} of ${project.todo_count || 0} tasks completed`}
+              aria-label={`${t('projects.tasks_completed')}: ${project.completed_todo_count || 0} / ${project.todo_count || 0}`}
             />
           )}
 
@@ -105,9 +108,9 @@ export const MemoizedKanbanCard = memo<MemoizedKanbanCardProps>(({
             {/* Left Side - Session Count, Revenue, Service Count */}
             <div className="flex items-center gap-4">
               {kanbanSettings.kanban_show_session_count && (
-                <div className="flex items-center gap-1.5" aria-label={`${project.session_count || 0} sessions`}>
+                <div className="flex items-center gap-1.5" aria-label={`${project.session_count || 0} ${t('projects.sessions')}`}>
                   <Calendar className="h-3.5 w-3.5" aria-hidden="true" />
-                  <span>{project.session_count || 0} sessions</span>
+                  <span>{project.session_count || 0} {t('projects.sessions')}</span>
                 </div>
               )}
               
@@ -119,9 +122,9 @@ export const MemoizedKanbanCard = memo<MemoizedKanbanCardProps>(({
               )}
 
               {kanbanSettings.kanban_show_service_count && project.services && project.services.length > 0 && (
-                <div className="flex items-center gap-1.5" aria-label={`${project.services.length} services`}>
+                <div className="flex items-center gap-1.5" aria-label={`${project.services.length} ${t('projects.services')}`}>
                   <Package className="h-3.5 w-3.5" aria-hidden="true" />
-                  <span>{project.services.length} services</span>
+                  <span>{project.services.length} {t('projects.services')}</span>
                 </div>
               )}
             </div>

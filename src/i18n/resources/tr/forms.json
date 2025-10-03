@@ -549,6 +549,10 @@
       "no_projects_found": "Proje bulunamadı",
       "sessions_planned": "planlandı"
     },
+    "no_lead": "Müşteri Yok",
+    "sessions": "seans",
+    "services": "hizmetler",
+    "tasks_completed": "görev tamamlandı",
     "success": "Başarılı",
     "projectName": "Proje adı",
     "save": "Kaydet",

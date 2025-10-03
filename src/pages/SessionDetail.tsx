@@ -26,6 +26,7 @@ import ProjectDetailsLayout from '@/components/project-details/ProjectDetailsLay
 import { UnifiedClientDetails } from '@/components/UnifiedClientDetails';
 import SessionGallery from '@/components/SessionGallery';
 import { getDisplaySessionName } from '@/lib/sessionUtils';
+import { useMessagesTranslation } from '@/hooks/useTypedTranslation';
 
 interface SessionData {
   id: string;
@@ -60,6 +61,7 @@ export default function SessionDetail() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { deleteSession } = useSessionActions();
+  const { t: tMessages } = useMessagesTranslation();
   
   const [session, setSession] = useState<SessionData | null>(null);
   const [loading, setLoading] = useState(true);

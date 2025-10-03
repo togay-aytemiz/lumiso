@@ -9,6 +9,8 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { CompactStorageIndicator } from './CompactStorageIndicator';
+import { useTranslation } from 'react-i18next';
+import { useMessagesTranslation } from '@/hooks/useTypedTranslation';
 
 interface TemplateAsset {
   id: string;

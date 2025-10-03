@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 import SettingsSection from "./SettingsSection";
 import { FormLoadingSkeleton } from "@/components/ui/loading-presets";
 import { useTranslation } from "react-i18next";
+import { useMessagesTranslation } from "@/hooks/useTypedTranslation";
 // Permissions removed for single photographer mode
 
 const projectStatusSchema = z.object({
@@ -414,8 +415,6 @@ const ProjectStatusesSection = () => {
   if (!isLoading && activeOrganizationId && statuses.length === 0) {
     createDefaultStatuses();
   }
-
-  const { t } = useTranslation('forms');
 
   if (isLoading) {
     return (

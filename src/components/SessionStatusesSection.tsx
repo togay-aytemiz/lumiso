@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import SettingsSection from "./SettingsSection";
 import { FormLoadingSkeleton } from "@/components/ui/loading-presets";
 import { useTranslation } from "react-i18next";
+import { useMessagesTranslation } from "@/hooks/useTypedTranslation";
 
 const sessionStatusSchema = z.object({
   name: z.string().min(1, "Status name is required").max(50, "Status name must be less than 50 characters"),

@@ -18,6 +18,7 @@ import { useOrganization } from "@/contexts/OrganizationContext";
 import { useProjectTypes } from "@/hooks/useOrganizationData";
 import { FormLoadingSkeleton } from "@/components/ui/loading-presets";
 import { useTranslation } from "react-i18next";
+import { useMessagesTranslation } from "@/hooks/useTypedTranslation";
 
 const projectTypeSchema = z.object({
   name: z.string().min(1, "Type name is required").max(50, "Type name must be less than 50 characters"),

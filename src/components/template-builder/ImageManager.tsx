@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganization } from '@/contexts/OrganizationContext';
+import { useMessagesTranslation } from '@/hooks/useTypedTranslation';
 import {
   AlertDialog,
   AlertDialogAction,

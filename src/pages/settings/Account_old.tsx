@@ -18,6 +18,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Upload, ChevronDown, Loader2, X, Copy, Check } from "lucide-react";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useWorkingHours } from "@/hooks/useWorkingHours";
+import { useTranslation } from "react-i18next";
+import { useMessagesTranslation } from "@/hooks/useTypedTranslation";
 // Team management removed for single photographer mode
 import { useToast } from "@/hooks/use-toast";
 import { useSettingsCategorySection } from "@/hooks/useSettingsCategorySection";

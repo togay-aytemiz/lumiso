@@ -30,7 +30,7 @@ import { useSessionActions } from '@/hooks/useSessionActions';
 import { UnifiedClientDetails } from '@/components/UnifiedClientDetails';
 import SessionGallery from '@/components/SessionGallery';
 import { getDisplaySessionName } from '@/lib/sessionUtils';
-import { useFormsTranslation } from '@/hooks/useTypedTranslation';
+import { useFormsTranslation, useMessagesTranslation } from '@/hooks/useTypedTranslation';
 
 interface SessionData {
   id: string;

@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useSessionActions } from "@/hooks/useSessionActions";
-import { useFormsTranslation } from "@/hooks/useTypedTranslation";
+import { useFormsTranslation, useMessagesTranslation } from "@/hooks/useTypedTranslation";
 
 interface SessionStatusRow {
   id: string;

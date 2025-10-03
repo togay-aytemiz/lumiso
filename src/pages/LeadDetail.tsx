@@ -31,6 +31,7 @@ import { useLeadStatusActions } from "@/hooks/useLeadStatusActions";
 import { OnboardingTutorial, TutorialStep } from "@/components/shared/OnboardingTutorial";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { DetailPageLoadingSkeleton } from "@/components/ui/loading-presets";
+import { useMessagesTranslation } from "@/hooks/useTypedTranslation";
 interface Lead {
   id: string;
   name: string;
@@ -98,6 +99,7 @@ const LeadDetail = () => {
   }>();
   const navigate = useNavigate();
   const location = useLocation();
+  const { t: tMessages } = useMessagesTranslation();
   const [lead, setLead] = useState<Lead | null>(null);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);

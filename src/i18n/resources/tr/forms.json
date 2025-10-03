@@ -318,6 +318,17 @@
       "adding": "Ekleniyor..."
     }
   },
+  "status": {
+    "loading": "Yükleniyor...",
+    "selectStatus": "DURUM SEÇİN",
+    "noStatusAvailable": "Durum mevcut değil",
+    "statusNotFound": "Durum bulunamadı",
+    "statusUpdated": "Durum Güncellendi",
+    "errorUpdatingStatus": "Durum güncellenirken hata",
+    "sessionUpdated": "Seans Güncellendi",
+    "unsupportedStage": "Desteklenmeyen aşama",
+    "unsupportedStageDesc": "Bu aşama henüz seanslara uygulanamıyor."
+  },
   "project_stage": {
     "add_title": "AŞAMA EKLE",
     "edit_title": "AŞAMAYI DÜZENLE",

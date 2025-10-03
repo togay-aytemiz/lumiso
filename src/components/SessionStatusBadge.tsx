@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useSessionActions } from "@/hooks/useSessionActions";
+import { useFormsTranslation } from "@/hooks/useTypedTranslation";
 
 interface SessionStatusRow {
   id: string;
@@ -65,6 +66,7 @@ export function SessionStatusBadge({
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { updateSessionStatus } = useSessionActions();
+  const { t: tForms } = useFormsTranslation();
 
   const isSmall = size === 'sm';
   const dotSize = isSmall ? 'w-2 h-2' : 'w-2.5 h-2.5';
@@ -114,7 +116,7 @@ export function SessionStatusBadge({
     if (!newRow) return;
     const mapped = nameToEnum(newRow.name);
     if (!mapped) {
-      toast({ title: 'Unsupported stage', description: 'This stage cannot be applied to sessions yet.', variant: 'destructive' });
+      toast({ title: tForms('status.unsupportedStage'), description: tForms('status.unsupportedStageDesc'), variant: 'destructive' });
       return;
     }
     if (enumToDisplay[currentStatus].toLowerCase() === newRow.name.toLowerCase()) {
@@ -128,7 +130,7 @@ export function SessionStatusBadge({
         setCurrent(newRow);
         setDropdownOpen(false);
         onStatusChange?.();
-        toast({ title: 'Session Updated', description: `Status set to "${newRow.name}"` });
+        toast({ title: tForms('status.sessionUpdated'), description: `Status set to "${newRow.name}"` });
       }
     } finally {
       setIsUpdating(false);
@@ -139,7 +141,7 @@ export function SessionStatusBadge({
     return (
       <div className={cn("inline-flex items-center gap-2 bg-muted text-muted-foreground rounded-full", padding, className)}>
         <div className={cn("bg-muted-foreground/30 rounded-full animate-pulse", dotSize)} />
-        <span className={textSize}>Loading...</span>
+        <span className={textSize}>{tForms('status.loading')}</span>
       </div>
     );
   }

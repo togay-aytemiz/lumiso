@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { useNotificationTriggers } from "@/hooks/useNotificationTriggers";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { useWorkflowTriggers } from "@/hooks/useWorkflowTriggers";
+import { useFormsTranslation } from "@/hooks/useTypedTranslation";
 
 interface ProjectStatus {
   id: string;
@@ -43,6 +44,7 @@ export function ProjectStatusBadge({
   const { triggerProjectMilestone } = useNotificationTriggers();
   const { activeOrganization } = useOrganization();
   const { triggerProjectStatusChange } = useWorkflowTriggers();
+  const { t: tForms } = useFormsTranslation();
 
   // Status badge rendered for project
 
@@ -158,7 +160,7 @@ export function ProjectStatusBadge({
       onStatusChange?.();
 
       toast({
-        title: "Status Updated",
+        title: tForms('status.statusUpdated'),
         description: `Project status ${currentStatus ? 'changed' : 'set'} to "${newStatus.name}"`
       });
 
@@ -183,7 +185,7 @@ export function ProjectStatusBadge({
       }
     } catch (error: any) {
       toast({
-        title: "Error updating status",
+        title: tForms('status.errorUpdatingStatus'),
         description: error.message,
         variant: "destructive"
       });
@@ -201,7 +203,7 @@ export function ProjectStatusBadge({
     return (
       <div className={cn("inline-flex items-center gap-2 bg-muted text-muted-foreground rounded-full", padding, className)}>
         <div className={cn("bg-muted-foreground/30 rounded-full animate-pulse", dotSize)} />
-        <span className={textSize}>Loading...</span>
+        <span className={textSize}>{tForms('status.loading')}</span>
       </div>
     );
   }
@@ -238,7 +240,7 @@ export function ProjectStatusBadge({
             className={cn("rounded-full border-2", dotSize)}
             style={{ borderColor: defaultColor }}
           />
-          <span className={cn("uppercase tracking-wide font-semibold", textSize)}>SELECT STATUS</span>
+          <span className={cn("uppercase tracking-wide font-semibold", textSize)}>{tForms('status.selectStatus')}</span>
           <ChevronDown className={cn("ml-1 transition-transform", isSmall ? "w-3 h-3" : "w-4 h-4", dropdownOpen && "rotate-180")} />
         </Button>
 
@@ -281,7 +283,7 @@ export function ProjectStatusBadge({
     return (
       <div className={cn("inline-flex items-center gap-2 bg-muted text-muted-foreground rounded-full", padding, className)}>
         <div className={cn("bg-muted-foreground/30 rounded-full", dotSize)} />
-        <span className={textSize}>No status available</span>
+        <span className={textSize}>{tForms('status.noStatusAvailable')}</span>
       </div>
     );
   }

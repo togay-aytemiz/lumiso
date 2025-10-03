@@ -317,5 +317,16 @@
     "sessions": "sessions",
     "services": "services",
     "tasks_completed": "tasks completed"
+  },
+  "status": {
+    "loading": "Loading...",
+    "selectStatus": "SELECT STATUS",
+    "noStatusAvailable": "No status available",
+    "statusNotFound": "Status not found",
+    "statusUpdated": "Status Updated",
+    "errorUpdatingStatus": "Error updating status",
+    "sessionUpdated": "Session Updated",
+    "unsupportedStage": "Unsupported stage",
+    "unsupportedStageDesc": "This stage cannot be applied to sessions yet."
   }
 }

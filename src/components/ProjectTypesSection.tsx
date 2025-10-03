@@ -10,7 +10,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { useI18nToast } from "@/lib/toastHelpers";
 import { AddProjectTypeDialog, EditProjectTypeDialog } from "./settings/ProjectTypeDialogs";
 import { cn } from "@/lib/utils";
 import SettingsSection from "./SettingsSection";
@@ -39,7 +39,7 @@ const ProjectTypesSection = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const { toast } = useToast();
+  const toast = useI18nToast();
   const { activeOrganizationId, loading: orgLoading } = useOrganization();
   const { data: types = [], isLoading, refetch } = useProjectTypes();
   const { t } = useTranslation('forms');
@@ -68,11 +68,7 @@ const ProjectTypesSection = () => {
       await refetch();
     } catch (error) {
       console.error('Error creating default types:', error);
-      toast({
-        title: "Error",
-        description: "Failed to create default types",
-        variant: "destructive",
-      });
+      toast.error("Failed to create default types");
     }
   };
 
@@ -85,11 +81,7 @@ const ProjectTypesSection = () => {
 
   const onSubmit = async (data: ProjectTypeForm) => {
     if (!activeOrganizationId) {
-      toast({
-        title: "Error",
-        description: "No active organization found",
-        variant: "destructive",
-      });
+      toast.error("No active organization found");
       return;
     }
 
@@ -113,15 +105,9 @@ const ProjectTypesSection = () => {
 
         // Show appropriate message based on what changed
         if (data.is_default && !editingType.is_default) {
-          toast({
-            title: "Success",
-            description: `"${data.name}" is now the default project type`,
-          });
+          toast.success(`"${data.name}" is now the default project type`);
         } else {
-          toast({
-            title: "Success",
-            description: "Project type updated successfully",
-          });
+          toast.success("Project type updated successfully");
         }
         setIsEditDialogOpen(false);
       } else {
@@ -142,10 +128,7 @@ const ProjectTypesSection = () => {
           throw error;
         }
 
-        toast({
-          title: "Success",
-          description: data.is_default ? `"${data.name}" created and set as default` : "Project type created successfully",
-        });
+        toast.success(data.is_default ? `"${data.name}" created and set as default` : "Project type created successfully");
         setIsAddDialogOpen(false);
       }
 
@@ -154,11 +137,7 @@ const ProjectTypesSection = () => {
       await refetch(); // Refetch data after changes
     } catch (error) {
       console.error('Error saving project type:', error);
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to save project type",
-        variant: "destructive",
-      });
+      toast.error(error instanceof Error ? error.message : "Failed to save project type");
     } finally {
       setSubmitting(false);
     }
@@ -196,18 +175,11 @@ const ProjectTypesSection = () => {
         throw error;
       }
 
-      toast({
-        title: "Success",
-        description: "Project type deleted successfully",
-      });
+      toast.success("Project type deleted successfully");
       await refetch(); // Refetch data after deletion
     } catch (error) {
       console.error('Error deleting project type:', error);
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to delete project type",
-        variant: "destructive",
-      });
+      toast.error(error instanceof Error ? error.message : "Failed to delete project type");
     }
   };
 

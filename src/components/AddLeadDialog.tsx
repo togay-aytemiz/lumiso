@@ -4,11 +4,10 @@ import { AppSheetModal } from "@/components/ui/app-sheet-modal";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
-import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/hooks/use-toast";
+import { useI18nToast } from "@/lib/toastHelpers";
 import { Plus } from "lucide-react";
 import { leadSchema, sanitizeInput, sanitizeHtml } from "@/lib/validation";
 import { ZodError } from "zod";
@@ -28,6 +27,7 @@ interface AddLeadDialogProps {
 
 const AddLeadDialog = ({ onLeadAdded, open, onOpenChange }: AddLeadDialogProps) => {
   const { t } = useTranslation(['forms', 'common']);
+  const toast = useI18nToast();
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [leadStatuses, setLeadStatuses] = useState<any[]>([]);
@@ -101,11 +101,7 @@ const AddLeadDialog = ({ onLeadAdded, open, onOpenChange }: AddLeadDialogProps) 
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
-      toast({
-        title: t('forms:messages.authenticationRequired'),
-        description: t('forms:messages.pleaseSignInToAdd'),
-        variant: "destructive"
-      });
+        toast.error(t('forms:messages.pleaseSignInToAdd'));
         return;
       }
 
@@ -113,11 +109,7 @@ const AddLeadDialog = ({ onLeadAdded, open, onOpenChange }: AddLeadDialogProps) 
       const organizationId = await getUserOrganizationId();
       if (!organizationId) return;
       if (!organizationId) {
-        toast({
-          title: t('forms:messages.organizationRequired'),
-          description: t('forms:messages.ensurePartOfOrg'),
-          variant: "destructive"
-        });
+        toast.error(t('forms:messages.ensurePartOfOrg'));
         return;
       }
 
@@ -138,21 +130,14 @@ const AddLeadDialog = ({ onLeadAdded, open, onOpenChange }: AddLeadDialogProps) 
 
       if (error) throw error;
 
-      toast({
-        title: t('forms:messages.leadAddedSuccessfully'),
-        description: t('forms:messages.leadAddedDesc', { name: formData.name })
-      });
+      toast.success(t('forms:messages.leadAddedDesc', { name: formData.name }));
 
       // Reset form and close dialog
       resetForm();
       onOpenChange(false);
       onLeadAdded();
     } catch (error: any) {
-      toast({
-        title: t('forms:messages.errorAddingLead'),
-        description: error.message,
-        variant: "destructive"
-      });
+      toast.error(error.message);
     } finally {
       setLoading(false);
     }

@@ -11,7 +11,7 @@ import { CalendarIcon, Plus } from "lucide-react";
 import { format } from "date-fns";
 import { cn, getUserLocale, getDateFnsLocale } from "@/lib/utils";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
-import { useToast } from "@/hooks/use-toast";
+import { useI18nToast } from "@/lib/toastHelpers";
 import ReactCalendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import "@/components/react-calendar.css";
@@ -32,7 +32,7 @@ export function AddPaymentDialog({ projectId, onPaymentAdded }: AddPaymentDialog
   const [datePaid, setDatePaid] = useState<Date | undefined>(new Date());
   const [isLoading, setIsLoading] = useState(false);
   
-  const { toast } = useToast();
+  const toast = useI18nToast();
   const { t } = useFormsTranslation();
   const browserLocale = getUserLocale();
 
@@ -40,11 +40,7 @@ export function AddPaymentDialog({ projectId, onPaymentAdded }: AddPaymentDialog
     e.preventDefault();
     
     if (!amount.trim()) {
-      toast({
-        title: t('messages.error.generic'),
-        description: t('payments.amount_required'),
-        variant: "destructive"
-      });
+      toast.error(t('payments.amount_required'));
       return;
     }
 
@@ -74,21 +70,14 @@ export function AddPaymentDialog({ projectId, onPaymentAdded }: AddPaymentDialog
 
       if (error) throw error;
 
-      toast({
-        title: t('messages.success.created'),
-        description: t('payments.payment_added_success')
-      });
+      toast.success(t('payments.payment_added_success'));
 
       // Reset form
       resetForm();
       setOpen(false);
       onPaymentAdded();
     } catch (error: any) {
-      toast({
-        title: t('payments.error_adding_payment'),
-        description: error.message,
-        variant: "destructive"
-      });
+      toast.error(error.message);
     } finally {
       setIsLoading(false);
     }

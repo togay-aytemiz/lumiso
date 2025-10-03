@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Plus, Edit, Trash2, Loader2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { useI18nToast } from "@/lib/toastHelpers";
 import { supabase } from "@/integrations/supabase/client";
 import SettingsSection from "./SettingsSection";
 import { FormLoadingSkeleton } from "@/components/ui/loading-presets";
@@ -32,7 +32,7 @@ const PackagesSection = () => {
   const [showEditPackageDialog, setShowEditPackageDialog] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [packageToDelete, setPackageToDelete] = useState<Package | null>(null);
-  const { toast } = useToast();
+  const toast = useI18nToast();
   const { t } = useTranslation('forms');
   // Permissions removed for single photographer mode - always allow
   const { activeOrganizationId } = useOrganization();
@@ -61,20 +61,13 @@ const PackagesSection = () => {
       // Invalidate cache to refresh data
       queryClient.invalidateQueries({ queryKey: ['packages', activeOrganizationId] });
       
-      toast({
-        title: t('packages.package_deleted'),
-        description: t('packages.package_deleted_desc', { name: packageToDelete.name }),
-      });
+      toast.success(t('packages.package_deleted_desc', { name: packageToDelete.name }));
       
       setDeleteConfirmOpen(false);
       setPackageToDelete(null);
     } catch (error) {
       console.error('Error deleting package:', error);
-      toast({
-        title: t('common:status.error'),
-        description: t('packages.error_deleting'),
-        variant: "destructive",
-      });
+      toast.error(t('packages.error_deleting'));
     }
   };
 

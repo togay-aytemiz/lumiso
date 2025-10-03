@@ -4,7 +4,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Edit2, Save, X, Plus } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { useI18nToast } from "@/lib/toastHelpers";
 import { ServicePicker, type PickerService } from "./ServicePicker";
 import { useFormsTranslation } from '@/hooks/useTypedTranslation';
 interface Service {
@@ -30,9 +30,7 @@ export function ProjectServicesSection({
   const [availableServices, setAvailableServices] = useState<Service[]>([]);
   const [loadingAvailable, setLoadingAvailable] = useState(true);
   const [errorAvailable, setErrorAvailable] = useState<string | null>(null);
-  const {
-    toast
-  } = useToast();
+  const toast = useI18nToast();
   const { t } = useFormsTranslation();
   const sectionRef = useRef<HTMLDivElement>(null);
   const fetchProjectServices = async () => {
@@ -55,11 +53,7 @@ export function ProjectServicesSection({
       setServices(fetchedServices);
     } catch (error: any) {
       console.error('Error fetching project services:', error);
-      toast({
-        title: t('error.generic'),
-        description: error.message,
-        variant: "destructive"
-      });
+      toast.error(error.message);
     } finally {
       setLoading(false);
     }
@@ -143,16 +137,9 @@ export function ProjectServicesSection({
           block: 'start'
         });
       }, 50);
-      toast({
-        title: t('success.saved'),
-        description: t('services.services_updated')
-      });
+      toast.success(t('services.services_updated'));
     } catch (error: any) {
-      toast({
-        title: t('services.error_updating'),
-        description: error.message,
-        variant: "destructive"
-      });
+      toast.error(error.message);
     } finally {
       setSaving(false);
     }

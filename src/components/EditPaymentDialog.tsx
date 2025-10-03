@@ -11,7 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { cn, getDateFnsLocale } from "@/lib/utils";
-import { useToast } from "@/hooks/use-toast";
+import { useI18nToast } from "@/lib/toastHelpers";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { NavigationGuardDialog } from "./settings/NavigationGuardDialog";
 import { useFormsTranslation } from '@/hooks/useTypedTranslation';
@@ -41,7 +41,7 @@ export function EditPaymentDialog({ payment, open, onOpenChange, onPaymentUpdate
   const [datePaid, setDatePaid] = useState<Date | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(false);
   
-  const { toast } = useToast();
+  const toast = useI18nToast();
   const { t } = useFormsTranslation();
 
   // Reset form when payment changes
@@ -56,11 +56,7 @@ export function EditPaymentDialog({ payment, open, onOpenChange, onPaymentUpdate
 
   const handleSubmit = async () => {
     if (!payment || !amount.trim()) {
-      toast({
-        title: t('messages.error.generic'),
-        description: t('edit_payment.amount_required'),
-        variant: "destructive"
-      });
+      toast.error(t('edit_payment.amount_required'));
       return;
     }
 
@@ -93,19 +89,12 @@ export function EditPaymentDialog({ payment, open, onOpenChange, onPaymentUpdate
         }
       }
 
-      toast({
-        title: t('messages.success.updated'),
-        description: t('edit_payment.payment_updated')
-      });
+      toast.success(t('edit_payment.payment_updated'));
 
       onOpenChange(false);
       onPaymentUpdated();
     } catch (error: any) {
-      toast({
-        title: t('messages.error.save'),
-        description: error.message,
-        variant: "destructive"
-      });
+      toast.error(error.message);
     } finally {
       setIsLoading(false);
     }

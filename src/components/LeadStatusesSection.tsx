@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Plus, Edit, Trash2, GripVertical, Settings } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { useI18nToast } from "@/lib/toastHelpers";
 import { supabase } from "@/integrations/supabase/client";
 import { AddLeadStatusDialog, EditLeadStatusDialog } from "./settings/LeadStatusDialogs";
 import { Switch } from "@/components/ui/switch";
@@ -65,7 +65,7 @@ const LeadStatusesSection = () => {
   const [selectedColor, setSelectedColor] = useState<string>(PREDEFINED_COLORS[0]);
   const [saving, setSaving] = useState(false);
 
-  const { toast } = useToast();
+  const toast = useI18nToast();
   const { activeOrganizationId } = useOrganization();
   const queryClient = useQueryClient();
   const { t } = useTranslation('forms');
@@ -82,12 +82,7 @@ const LeadStatusesSection = () => {
       
       if (!hasCompleted || !hasCancelled) {
         const timeoutId = setTimeout(() => {
-          toast({
-            title: "Tip",
-            description: "Add at least one Completed and one Cancelled state to unlock full automations.",
-            variant: "default",
-            duration: 8000,
-          });
+          toast.info("Add at least one Completed and one Cancelled state to unlock full automations.");
         }, 1000);
         
         return () => clearTimeout(timeoutId);
@@ -122,18 +117,11 @@ const LeadStatusesSection = () => {
       // Invalidate cache to refresh data
       queryClient.invalidateQueries({ queryKey: ['organization_settings', activeOrganizationId] });
 
-      toast({
-        title: "Success",
-        description: t('lead_statuses.preferences_updated')
-      });
+      toast.success(t('lead_statuses.preferences_updated'));
     } catch (error: any) {
       console.error('Error updating setting:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update preferences",
-        variant: "destructive"
-      });
-    } finally {
+      toast.error("Failed to update preferences");
+    } finally{
       setSaving(false);
     }
   };
@@ -182,17 +170,10 @@ const LeadStatusesSection = () => {
       // Invalidate cache to refresh data
       queryClient.invalidateQueries({ queryKey: ['lead_statuses', activeOrganizationId] });
 
-      toast({
-        title: "Success",
-        description: "Lead status deleted successfully",
-      });
+      toast.success("Lead status deleted successfully");
     } catch (error) {
       console.error('Error deleting lead status:', error);
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to delete lead status",
-        variant: "destructive",
-      });
+      toast.error(error instanceof Error ? error.message : "Failed to delete lead status");
     }
   };
 
@@ -229,17 +210,10 @@ const LeadStatusesSection = () => {
       // Invalidate cache to refresh data
       queryClient.invalidateQueries({ queryKey: ['lead_statuses', activeOrganizationId] });
 
-      toast({
-        title: "Success",
-        description: "Status order updated successfully",
-      });
+      toast.success("Status order updated successfully");
     } catch (error) {
       console.error('Error updating status order:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update status order",
-        variant: "destructive",
-      });
+      toast.error("Failed to update status order");
     }
   };
 

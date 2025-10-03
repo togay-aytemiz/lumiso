@@ -10,7 +10,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { useI18nToast } from "@/lib/toastHelpers";
 import { AddProjectStageDialog, EditProjectStageDialog } from "./settings/ProjectStageDialogs";
 import { useProjectStatuses } from "@/hooks/useOrganizationData";
 import { useOrganization } from "@/contexts/OrganizationContext";
@@ -59,7 +59,7 @@ const ProjectStatusesSection = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const { toast } = useToast();
+  const toast = useI18nToast();
   const { activeOrganizationId } = useOrganization();
   const { data: statuses = [], isLoading, refetch } = useProjectStatuses();
   // Permissions removed for single photographer mode - always allow
@@ -72,12 +72,7 @@ const ProjectStatusesSection = () => {
       
       if (!hasCompleted || !hasCancelled) {
         const timeoutId = setTimeout(() => {
-          toast({
-            title: "Tip",
-            description: "Add at least one Completed and one Cancelled stage to unlock full automations.",
-            variant: "default",
-            duration: 8000,
-          });
+          toast.info("Add at least one Completed and one Cancelled stage to unlock full automations.");
         }, 1000);
         
         return () => clearTimeout(timeoutId);
@@ -124,11 +119,7 @@ const ProjectStatusesSection = () => {
       await refetch();
     } catch (error) {
       console.error('Error creating default statuses:', error);
-      toast({
-        title: "Error",
-        description: "Failed to create default statuses",
-        variant: "destructive",
-      });
+      toast.error("Failed to create default statuses");
     }
   };
 
@@ -137,11 +128,7 @@ const ProjectStatusesSection = () => {
     try {
       const lowerName = data.name.trim().toLowerCase();
       if (lowerName === 'archived') {
-        toast({
-          title: 'Not allowed',
-          description: 'The "Archived" stage is managed automatically and cannot be created or renamed.',
-          variant: 'destructive',
-        });
+        toast.error('The "Archived" stage is managed automatically and cannot be created or renamed.');
         return;
       }
 
@@ -160,10 +147,7 @@ const ProjectStatusesSection = () => {
 
         if (error) throw error;
 
-        toast({
-          title: "Success",
-          description: "Project status updated successfully",
-        });
+        toast.success("Project status updated successfully");
         setIsEditDialogOpen(false);
       } else {
         // Create new status with the next sort order
@@ -187,10 +171,7 @@ const ProjectStatusesSection = () => {
           throw error;
         }
 
-        toast({
-          title: "Success",
-          description: "Project status created successfully",
-        });
+        toast.success("Project status created successfully");
         setIsAddDialogOpen(false);
       }
 
@@ -199,11 +180,7 @@ const ProjectStatusesSection = () => {
       await refetch();
     } catch (error) {
       console.error('Error saving project status:', error);
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to save project status",
-        variant: "destructive",
-      });
+      toast.error(error instanceof Error ? error.message : "Failed to save project status");
     } finally {
       setSubmitting(false);
     }
@@ -235,7 +212,7 @@ const ProjectStatusesSection = () => {
 
       const status = statuses.find(s => s.id === statusId);
       if (status && isProtectedName(status.name)) {
-        toast({ title: "Not allowed", description: `The "${status.name}" stage cannot be deleted as it's the default stage for new projects.`, variant: "destructive" });
+        toast.error(`The "${status.name}" stage cannot be deleted as it's the default stage for new projects.`);
         return;
       }
 
@@ -252,18 +229,11 @@ const ProjectStatusesSection = () => {
         throw error;
       }
 
-      toast({
-        title: "Success",
-        description: "Project status deleted successfully",
-      });
+      toast.success("Project status deleted successfully");
       await refetch();
     } catch (error) {
       console.error('Error deleting project status:', error);
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to delete project status",
-        variant: "destructive",
-      });
+      toast.error(error instanceof Error ? error.message : "Failed to delete project status");
     }
   };
 
@@ -298,18 +268,11 @@ const ProjectStatusesSection = () => {
         if (error) throw error;
       }
 
-      toast({
-        title: "Success",
-        description: "Status order updated successfully",
-      });
+      toast.success("Status order updated successfully");
       await refetch();
     } catch (error) {
       console.error('Error updating status order:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update status order",
-        variant: "destructive",
-      });
+      toast.error("Failed to update status order");
     }
   };
 

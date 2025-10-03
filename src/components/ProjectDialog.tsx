@@ -5,7 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
-import { toast } from "@/hooks/use-toast";
+import { useI18nToast } from "@/lib/toastHelpers";
 import { SimpleProjectTypeSelect } from "./SimpleProjectTypeSelect";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { NavigationGuardDialog } from "@/components/settings/NavigationGuardDialog";
@@ -27,6 +27,7 @@ export function ProjectDialog({ open, onOpenChange, leadId, onProjectCreated }: 
   const [isSaving, setIsSaving] = useState(false);
   const { t } = useTranslation('forms');
   const { t: tForms } = useFormsTranslation();
+  const toast = useI18nToast();
 
   const resetForm = () => {
     setName("");
@@ -37,20 +38,12 @@ export function ProjectDialog({ open, onOpenChange, leadId, onProjectCreated }: 
 
   const handleSave = async () => {
     if (!name.trim()) {
-      toast({
-        title: t('messages.validationError'),
-        description: t('validation.nameRequired'),
-        variant: "destructive"
-      });
+      toast.error(t('validation.nameRequired'));
       return;
     }
 
     if (!projectTypeId) {
-      toast({
-        title: t('messages.validationError'),
-        description: t('validation.typeRequired'),
-        variant: "destructive"
-      });
+      toast.error(t('validation.typeRequired'));
       return;
     }
 
@@ -58,22 +51,14 @@ export function ProjectDialog({ open, onOpenChange, leadId, onProjectCreated }: 
     try {
       const { data: userData } = await supabase.auth.getUser();
       if (!userData.user) {
-        toast({
-          title: t('messages.authRequired'),
-          description: t('messages.loginToCreateProject'),
-          variant: "destructive"
-        });
+        toast.error(t('messages.loginToCreateProject'));
         return;
       }
 
       // Get user's active organization
       const organizationId = await getUserOrganizationId();
       if (!organizationId) {
-        toast({
-          title: t('messages.organizationRequired'),
-          description: t('messages.ensureOrganization'),
-          variant: "destructive"
-        });
+        toast.error(t('messages.ensureOrganization'));
         return;
       }
 
@@ -117,20 +102,13 @@ export function ProjectDialog({ open, onOpenChange, leadId, onProjectCreated }: 
         if (paymentError) throw paymentError;
       }
 
-      toast({
-        title: tForms('projects.success'),
-        description: t('messages.projectCreated')
-      });
+      toast.success(t('messages.projectCreated'));
 
       resetForm();
       onOpenChange(false);
       onProjectCreated();
     } catch (error: any) {
-      toast({
-        title: t('messages.errorCreatingProject'),
-        description: error.message,
-        variant: "destructive"
-      });
+      toast.error(error.message);
     } finally {
       setIsSaving(false);
     }

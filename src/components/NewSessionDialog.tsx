@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Calendar, Search, ChevronDown, Check } from "lucide-react";
 import { getLeadStatusStyles, formatStatusText } from "@/lib/leadStatusColors";
-import { toast } from "@/hooks/use-toast";
+import { useI18nToast } from "@/lib/toastHelpers";
 import { cn } from "@/lib/utils";
 import { useCalendarSync } from "@/hooks/useCalendarSync";
 import { useWorkflowTriggers } from "@/hooks/useWorkflowTriggers";
@@ -43,6 +43,7 @@ const NewSessionDialog = ({ onSessionScheduled, children }: NewSessionDialogProp
   const { scheduleSessionReminders } = useSessionReminderScheduling();
   const { t: tForms } = useFormsTranslation();
   const { t: tCommon } = useCommonTranslation();
+  const toast = useI18nToast();
   
   const [sessionData, setSessionData] = useState({
     session_date: "",
@@ -123,11 +124,7 @@ const NewSessionDialog = ({ onSessionScheduled, children }: NewSessionDialogProp
       
       setLeads(processedLeads);
     } catch (error: any) {
-      toast({
-        title: tCommon('status.error'),
-        description: error.message,
-        variant: "destructive"
-      });
+      toast.error(error.message);
     } finally {
       setLoadingLeads(false);
     }
@@ -159,29 +156,17 @@ const NewSessionDialog = ({ onSessionScheduled, children }: NewSessionDialogProp
 
   const handleSubmit = async () => {
     if (!sessionData.session_date || !sessionData.session_time) {
-      toast({
-        title: tCommon('status.error'),
-        description: tForms('validation.session_date_time_required'),
-        variant: "destructive"
-      });
+      toast.error(tForms('validation.session_date_time_required'));
       return;
     }
 
     if (!isNewLead && !selectedLeadId) {
-      toast({
-        title: tCommon('status.error'),
-        description: tForms('validation.lead_required'),
-        variant: "destructive"
-      });
+      toast.error(tForms('validation.lead_required'));
       return;
     }
 
     if (isNewLead && !newLeadData.name.trim()) {
-      toast({
-        title: tCommon('status.error'),
-        description: tForms('validation.lead_name_required'),
-        variant: "destructive"
-      });
+      toast.error(tForms('validation.lead_name_required'));
       return;
     }
 
@@ -275,11 +260,7 @@ const NewSessionDialog = ({ onSessionScheduled, children }: NewSessionDialogProp
         });
       } catch (workflowError) {
         console.error('❌ Error triggering session_scheduled workflow:', workflowError);
-        toast({
-          title: tForms('sessions.warningTitle'),
-          description: tForms('sessions.sessionCreatedWarning'),
-          variant: "default"
-        });
+        toast.warning(tForms('sessions.sessionCreatedWarning'));
       }
 
       // Schedule session reminders
@@ -290,10 +271,7 @@ const NewSessionDialog = ({ onSessionScheduled, children }: NewSessionDialogProp
         // Don't block session creation if reminder scheduling fails
       }
 
-      toast({
-        title: tCommon('actions.success'),
-        description: tCommon('messages.success.save'),
-      });
+      toast.success(tCommon('messages.success.save'));
 
       // Reset form and close dialog
       setSessionData({
@@ -327,12 +305,8 @@ const NewSessionDialog = ({ onSessionScheduled, children }: NewSessionDialogProp
         stack: error.stack?.substring(0, 500)
       });
       
-      toast({
-        title: tCommon('status.error'),
-        description: error.message,
-        variant: "destructive"
-      });
-    } finally {
+      toast.error(error.message);
+    } finally{
       setLoading(false);
     }
   };

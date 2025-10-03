@@ -18,7 +18,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
+import { useI18nToast } from "@/lib/toastHelpers";
 import { supabase } from "@/integrations/supabase/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useFormsTranslation, useCommonTranslation } from "@/hooks/useTypedTranslation";
@@ -39,7 +39,7 @@ export const NewServiceDialog = ({ open, onOpenChange, existingCategories, onCat
   const [isCreatingNewCategory, setIsCreatingNewCategory] = useState(false);
   const [newCategoryInput, setNewCategoryInput] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const { toast } = useToast();
+  const toast = useI18nToast();
   const queryClient = useQueryClient();
   const { t: tForms } = useFormsTranslation();
   const { t: tCommon } = useCommonTranslation();
@@ -73,18 +73,11 @@ export const NewServiceDialog = ({ open, onOpenChange, existingCategories, onCat
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['services'] });
-      toast({
-        title: tForms('services.service_created'),
-        description: tForms('services.service_created_desc'),
-      });
+      toast.success(tForms('services.service_created_desc'));
       handleClose();
     },
     onError: (error) => {
-      toast({
-        title: tCommon('labels.error'),
-        description: tForms('services.error_creating'),
-        variant: "destructive",
-      });
+      toast.error(tForms('services.error_creating'));
       console.error('Create service error:', error);
     },
   });
@@ -156,11 +149,7 @@ export const NewServiceDialog = ({ open, onOpenChange, existingCategories, onCat
         // Notify parent component about the new category
         onCategoryAdded?.(trimmedCategory);
       } else {
-        toast({
-          title: tForms('services.category_exists'),
-          description: tForms('services.category_exists_desc'),
-          variant: "destructive",
-        });
+        toast.error(tForms('services.category_exists_desc'));
       }
     }
   };

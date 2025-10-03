@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { toast } from "@/hooks/use-toast";
+import { useI18nToast } from "@/lib/toastHelpers";
 import { supabase } from "@/integrations/supabase/client";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { NavigationGuardDialog } from "./settings/NavigationGuardDialog";
@@ -29,6 +29,7 @@ interface EditLeadDialogProps {
 
 export function EditLeadDialog({ lead, open, onOpenChange, onLeadUpdated }: EditLeadDialogProps) {
   const { t } = useTranslation(['forms', 'common']);
+  const toast = useI18nToast();
   const [loading, setLoading] = useState(false);
   const [leadStatuses, setLeadStatuses] = useState<any[]>([]);
   const [formData, setFormData] = useState({
@@ -78,11 +79,7 @@ export function EditLeadDialog({ lead, open, onOpenChange, onLeadUpdated }: Edit
 
   const handleSubmit = async () => {
     if (!lead || !formData.name.trim()) {
-      toast({
-        title: t('forms:messages.validationError'),
-        description: t('forms:messages.nameRequired'),
-        variant: "destructive"
-      });
+      toast.error(t('forms:messages.nameRequired'));
       return;
     }
 
@@ -105,19 +102,12 @@ export function EditLeadDialog({ lead, open, onOpenChange, onLeadUpdated }: Edit
 
       if (error) throw error;
 
-      toast({
-        title: t('forms:messages.success'),
-        description: t('forms:messages.leadUpdateSuccess')
-      });
+      toast.success(t('forms:messages.leadUpdateSuccess'));
 
       onOpenChange(false);
       onLeadUpdated();
     } catch (error: any) {
-      toast({
-        title: t('forms:messages.errorUpdatingLead'),
-        description: error.message,
-        variant: "destructive"
-      });
+      toast.error(error.message);
     } finally {
       setLoading(false);
     }

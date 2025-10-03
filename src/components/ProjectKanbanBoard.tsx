@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/hooks/use-toast";
+import { useI18nToast } from "@/lib/toastHelpers";
 import { EnhancedProjectDialog } from "@/components/EnhancedProjectDialog";
 import { ViewProjectDialog } from "@/components/ViewProjectDialog";
 import { ProfessionalKanbanCard } from "@/components/ProfessionalKanbanCard";
@@ -127,6 +127,7 @@ const ProjectKanbanBoard = ({
   onQuickView
 }: ProjectKanbanBoardProps) => {
   const { t } = useTranslation('forms');
+  const toast = useI18nToast();
   const [statuses, setStatuses] = useState<ProjectStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedStatusId, setSelectedStatusId] = useState<string | null>(null);
@@ -164,7 +165,7 @@ const ProjectKanbanBoard = ({
       setStatuses((data || []).filter(s => s.name?.toLowerCase?.() !== "archived"));
     } catch (error) {
       console.error("Error fetching project statuses:", error);
-      toast({ title: "Error", description: "Failed to load project statuses", variant: "destructive" });
+      toast.error("Failed to load project statuses");
     } finally {
       setLoading(false);
     }
@@ -196,9 +197,9 @@ const ProjectKanbanBoard = ({
     if (srcStatusId !== dstStatusId) {
       const oldStatus = statuses.find(s => s.id === moving.status_id);
       const newStatus = statuses.find(s => s.id === (dstStatusId || ""));
-      toast({ title: "Project Updated", description: `Project moved to ${newStatus?.name || "No Status"}` });
+      toast.success(`Project moved to ${newStatus?.name || "No Status"}`);
     } else {
-      toast({ title: "Project Reordered", description: "Project position updated" });
+      toast.success("Project position updated");
     }
 
     // BACKGROUND OPERATIONS: Handle all database operations async
@@ -269,11 +270,7 @@ const ProjectKanbanBoard = ({
       } catch (error) {
         console.error("Error in background database operations:", error);
         // Show error but don't revert UI since user has already seen the change
-        toast({ 
-          title: "Sync Warning", 
-          description: "Project moved locally but sync failed. Please refresh if issues persist.", 
-          variant: "destructive" 
-        });
+        toast.error("Project moved locally but sync failed. Please refresh if issues persist.");
       }
     })();
   };

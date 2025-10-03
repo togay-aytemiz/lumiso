@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Check, ChevronDown, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { useI18nToast } from "@/lib/toastHelpers";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
 
 interface ProjectType {
@@ -36,7 +36,7 @@ export function ProjectTypeSelector({
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const { toast } = useToast();
+  const toast = useI18nToast();
 
   const fetchProjectTypes = async () => {
     setLoading(true);
@@ -66,11 +66,7 @@ export function ProjectTypeSelector({
         }
       }
     } catch (error: any) {
-      toast({
-        title: "Error loading project types",
-        description: error.message,
-        variant: "destructive"
-      });
+      toast.error(error.message);
     } finally {
       setLoading(false);
     }

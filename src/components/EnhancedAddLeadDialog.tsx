@@ -14,7 +14,7 @@ import { useLeadFieldValues } from "@/hooks/useLeadFieldValues";
 import { createDynamicLeadSchema } from "@/lib/leadFieldValidation";
 import { supabase } from "@/integrations/supabase/client";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
-import { useToast } from "@/hooks/use-toast";
+import { useI18nToast } from "@/lib/toastHelpers";
 // Assignee components removed - single user organization
 import { useProfile } from "@/contexts/ProfileContext";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
@@ -36,7 +36,7 @@ export function EnhancedAddLeadDialog({
   const { t } = useTranslation('forms');
   const { fieldDefinitions, loading: fieldsLoading } = useLeadFieldDefinitions();
   const { upsertFieldValues } = useLeadFieldValues("");
-  const { toast } = useToast();
+  const toast = useI18nToast();
   const { profile } = useProfile();
   const [loading, setLoading] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
@@ -169,20 +169,13 @@ export function EnhancedAddLeadDialog({
       // Save field values
       await upsertFieldValues(newLead.id, fieldValues);
 
-      toast({
-        title: "Lead created",
-        description: "The lead has been created successfully with custom field data.",
-      });
+      toast.success("The lead has been created successfully with custom field data.");
 
       onSuccess?.();
       onClose();
     } catch (error) {
       console.error('Failed to create lead:', error);
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to create lead",
-        variant: "destructive",
-      });
+      toast.error(error instanceof Error ? error.message : "Failed to create lead");
     } finally {
       setLoading(false);
     }

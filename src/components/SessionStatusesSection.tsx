@@ -10,7 +10,8 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { useI18nToast } from "@/lib/toastHelpers";
+import { toast as toastFn } from "@/hooks/use-toast";
 import { AddSessionStatusDialog, EditSessionStatusDialog } from "./settings/SessionStatusDialogs";
 import { useSessionStatuses } from "@/hooks/useOrganizationData";
 import { useOrganization } from "@/contexts/OrganizationContext";
@@ -58,7 +59,7 @@ const SessionStatusesSection = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const { toast } = useToast();
+  const toast = useI18nToast();
   const { activeOrganizationId } = useOrganization();
   const { data: statuses = [], isLoading, refetch } = useSessionStatuses();
   const { t } = useTranslation('forms');
@@ -71,7 +72,7 @@ const SessionStatusesSection = () => {
       
       if (!hasCompleted || !hasCancelled) {
         const timeoutId = setTimeout(() => {
-          toast({
+          toastFn({
             title: "Tip",
             description: "Add at least one Completed and one Cancelled stage to unlock full automations.",
             variant: "default",
@@ -82,7 +83,7 @@ const SessionStatusesSection = () => {
         return () => clearTimeout(timeoutId);
       }
     }
-  }, [statuses, isLoading, toast]);
+  }, [statuses, isLoading]);
 
   const form = useForm<SessionStatusForm>({
     resolver: zodResolver(sessionStatusSchema),
@@ -111,7 +112,7 @@ const SessionStatusesSection = () => {
       await refetch();
     } catch (error) {
       console.error('Error creating default session statuses:', error);
-      toast({ title: "Error", description: "Failed to create default session statuses", variant: "destructive" });
+      toast.error("Failed to create default session statuses");
     }
   };
 
@@ -130,7 +131,7 @@ const SessionStatusesSection = () => {
           .eq('id', editingStatus.id)
           .eq('organization_id', activeOrganizationId);
         if (error) throw error;
-        toast({ title: "Success", description: "Session stage updated" });
+        toast.success("Session stage updated");
         setIsEditDialogOpen(false);
       } else {
         const maxSortOrder = Math.max(...statuses.map(s => s.sort_order), 0);
@@ -147,7 +148,7 @@ const SessionStatusesSection = () => {
             is_system_initial: false 
           });
         if (error) throw error;
-        toast({ title: "Success", description: "Session stage created" });
+        toast.success("Session stage created");
         setIsAddDialogOpen(false);
       }
 
@@ -156,7 +157,7 @@ const SessionStatusesSection = () => {
       await refetch();
     } catch (error: any) {
       console.error('Error saving session status:', error);
-      toast({ title: "Error", description: error?.message || 'Failed to save session stage', variant: "destructive" });
+      toast.error(error?.message || 'Failed to save session stage');
     } finally {
       setSubmitting(false);
     }
@@ -179,7 +180,7 @@ const SessionStatusesSection = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
       if (isProtectedStatus(status)) {
-        toast({ title: "Not allowed", description: `The "${status.name}" stage cannot be deleted`, variant: "destructive" });
+        toast.error(`The "${status.name}" stage cannot be deleted`);
         return;
       }
       if (!activeOrganizationId) throw new Error('No organization found');
@@ -190,11 +191,11 @@ const SessionStatusesSection = () => {
         .eq('id', status.id)
         .eq('organization_id', activeOrganizationId);
       if (error) throw error;
-      toast({ title: "Success", description: "Session stage deleted" });
+      toast.success("Session stage deleted");
       await refetch();
     } catch (error: any) {
       console.error('Error deleting session status:', error);
-      toast({ title: "Error", description: error?.message || 'Failed to delete session stage', variant: "destructive" });
+      toast.error(error?.message || 'Failed to delete session stage');
     }
   };
 
@@ -220,11 +221,11 @@ const SessionStatusesSection = () => {
           .eq('organization_id', activeOrganizationId);
         if (error) throw error;
       }
-      toast({ title: "Success", description: "Stage order updated" });
+      toast.success("Stage order updated");
       await refetch();
     } catch (error) {
       console.error('Error updating order:', error);
-      toast({ title: "Error", description: 'Failed to update order', variant: "destructive" });
+      toast.error('Failed to update order');
     }
   };
 

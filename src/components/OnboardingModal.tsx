@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { ONBOARDING_STEPS } from "@/constants/onboarding";
-import { toast } from "@/hooks/use-toast";
+import { useI18nToast } from "@/lib/toastHelpers";
+import { toast as toastFn } from "@/hooks/use-toast";
 import { BaseOnboardingModal, type OnboardingAction } from "./shared/BaseOnboardingModal";
 import { SampleDataModal } from "./SampleDataModal";
 import { useTranslation } from "react-i18next";
@@ -18,6 +19,7 @@ const onboardingStepsDisplay = ONBOARDING_STEPS.map(step => step.title);
 
 export function OnboardingModal({ open, onClose }: OnboardingModalProps) {
   const { t } = useTranslation('pages');
+  const toast = useI18nToast();
   const [isLoading, setIsLoading] = useState(false);
   const [showSampleDataModal, setShowSampleDataModal] = useState(false);
   const navigate = useNavigate();
@@ -33,17 +35,13 @@ export function OnboardingModal({ open, onClose }: OnboardingModalProps) {
       
       onClose(); // Close modal
       navigate('/getting-started');
-      toast({
+      toastFn({
         title: t('onboarding.modal.welcome_title'),
         description: t('onboarding.modal.toast.setup_started'),
       });
     } catch (error) {
       console.error('❌ OnboardingModal: Error:', error);
-      toast({
-        title: "Error",
-        description: t('onboarding.modal.toast.setup_failed'),
-        variant: "destructive"
-      });
+      toast.error(t('onboarding.modal.toast.setup_failed'));
     } finally {
       setIsLoading(false);
     }

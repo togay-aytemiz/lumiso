@@ -13,7 +13,7 @@ import { FormLoadingSkeleton } from "@/components/ui/loading-presets";
 import { useLeadFieldValues } from "@/hooks/useLeadFieldValues";
 import { createDynamicLeadSchema } from "@/lib/leadFieldValidation";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { useI18nToast } from "@/lib/toastHelpers";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { NavigationGuardDialog } from "./settings/NavigationGuardDialog";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
@@ -45,7 +45,7 @@ export function EnhancedEditLeadDialog({
   const { t } = useTranslation('forms');
   const { fieldDefinitions, loading: fieldsLoading } = useLeadFieldDefinitions();
   const { fieldValues, loading: valuesLoading, upsertFieldValues } = useLeadFieldValues(lead?.id || "");
-  const { toast } = useToast();
+  const toast = useI18nToast();
   const [loading, setLoading] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
 
@@ -163,20 +163,13 @@ export function EnhancedEditLeadDialog({
       // Save field values
       await upsertFieldValues(lead.id, fieldValuesData);
 
-      toast({
-        title: t('messages.leadUpdated'),
-        description: t('messages.leadUpdatedDesc'),
-      });
+      toast.success(t('messages.leadUpdatedDesc'));
 
       onSuccess?.();
       onClose();
     } catch (error) {
       console.error('Failed to update lead:', error);
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to update lead",
-        variant: "destructive",
-      });
+      toast.error(error instanceof Error ? error.message : "Failed to update lead");
     } finally {
       setLoading(false);
     }

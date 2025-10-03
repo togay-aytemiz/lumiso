@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { useI18nToast } from "@/lib/toastHelpers";
 
 interface Service {
   id: string;
@@ -33,7 +33,7 @@ export function ServiceSelector({
   const [availableServices, setAvailableServices] = useState<Service[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
+  const toast = useI18nToast();
 
   const fetchServices = async () => {
     try {
@@ -55,11 +55,7 @@ export function ServiceSelector({
       setAvailableServices(data || []);
     } catch (error) {
       console.error("Error fetching services:", error);
-      toast({
-        title: "Error loading services",
-        description: "Failed to load available services.",
-        variant: "destructive"
-      });
+      toast.error("Failed to load available services.");
     } finally {
       setLoading(false);
     }

@@ -214,6 +214,9 @@
     "confirm": {
       "discard_changes": "Are you sure you want to discard your changes? Any unsaved information will be lost.",
       "delete": "Are you sure you want to delete this status?"
+    },
+    "buttons": {
+      "adding": "Adding..."
     }
   },
   "project_stage": {

@@ -33,7 +33,7 @@ export default function General() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { completeCurrentStep } = useOnboarding();
-  const { t } = useTranslation("pages");
+  const { t } = useTranslation(['pages', 'common']);
 
   // Check if we're in tutorial mode from Profile onboarding
   const isInTutorial = searchParams.get('tutorial') === 'true';
@@ -373,7 +373,7 @@ export default function General() {
                             className="w-full sm:w-auto flex items-center justify-center gap-2 text-destructive hover:text-destructive"
                           >
                             <X className="h-4 w-4" />
-                            {t('common.buttons.delete')}
+                            {t('buttons.delete', { ns: 'common' })}
                           </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
@@ -384,7 +384,7 @@ export default function General() {
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
-                            <AlertDialogCancel>{t('common.buttons.cancel')}</AlertDialogCancel>
+                            <AlertDialogCancel>{t('buttons.cancel', { ns: 'common' })}</AlertDialogCancel>
                             <AlertDialogAction
                               onClick={handleDeleteLogo}
                               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"

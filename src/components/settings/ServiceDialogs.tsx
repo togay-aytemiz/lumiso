@@ -18,7 +18,7 @@ interface AddServiceDialogProps {
 }
 
 export function AddServiceDialog({ open, onOpenChange, onServiceAdded }: AddServiceDialogProps) {
-  const { t } = useTranslation('forms');
+  const { t } = useTranslation(['forms', 'common']);
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<string[]>([]);
   const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
@@ -171,13 +171,13 @@ export function AddServiceDialog({ open, onOpenChange, onServiceAdded }: AddServ
 
   const footerActions = [
     {
-      label: t('common.buttons.cancel'),
+      label: t('buttons.cancel', { ns: 'common' }),
       onClick: () => onOpenChange(false),
       variant: "outline" as const,
       disabled: loading
     },
     {
-      label: loading ? t('common.buttons.saving') : t('common.buttons.save'),
+      label: loading ? t('actions.saving', { ns: 'common' }) : t('buttons.save', { ns: 'common' }),
       onClick: handleSubmit,
       disabled: loading || !formData.name.trim(),
       loading: loading
@@ -350,7 +350,7 @@ interface EditServiceDialogProps {
 }
 
 export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdated }: EditServiceDialogProps) {
-  const { t } = useTranslation('forms');
+  const { t } = useTranslation(['forms', 'common']);
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<string[]>([]);
   const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
@@ -493,13 +493,13 @@ export function EditServiceDialog({ service, open, onOpenChange, onServiceUpdate
 
   const footerActions = [
     {
-      label: t('common.buttons.cancel'),
+      label: t('buttons.cancel', { ns: 'common' }),
       onClick: () => onOpenChange(false),
       variant: "outline" as const,
       disabled: loading
     },
     {
-      label: loading ? t('common.buttons.updating') : t('common.buttons.update'),
+      label: loading ? t('actions.saving', { ns: 'common' }) : t('buttons.update', { ns: 'common' }),
       onClick: handleSubmit,
       disabled: loading || !formData.name.trim(),
       loading: loading

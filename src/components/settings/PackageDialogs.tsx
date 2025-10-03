@@ -269,7 +269,7 @@ const staticDurationOptions = [
 ];
 
 export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPackageDialogProps) {
-  const { t } = useTranslation('forms');
+  const { t } = useTranslation(['forms', 'common']);
   const [packageData, setPackageData] = useState({
     name: "",
     description: "",
@@ -444,13 +444,13 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
 
   const footerActions = [
     {
-      label: t('common.buttons.cancel'),
+      label: t('buttons.cancel', { ns: 'common' }),
       onClick: () => onOpenChange(false),
       variant: "outline" as const,
       disabled: loading
     },
     {
-      label: loading ? t('common.buttons.creating') : t('common.buttons.save'),
+      label: loading ? t('actions.saving', { ns: 'common' }) : t('buttons.save', { ns: 'common' }),
       onClick: handleSubmit,
       disabled: loading || !packageData.name.trim(),
       loading: loading
@@ -642,7 +642,7 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
 }
 
 export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageUpdated }: EditPackageDialogProps) {
-  const { t } = useTranslation('forms');
+  const { t } = useTranslation(['forms', 'common']);
   const [packageData, setPackageData] = useState({
     name: "",
     description: "",
@@ -844,20 +844,20 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
   );
 
   const handleDirtyCloseEdit = () => {
-    if (window.confirm(t('common.confirm.discard_changes'))) {
+    if (window.confirm(t('confirm.unsaved_changes', { ns: 'common' }))) {
       onOpenChange(false);
     }
   };
 
   const footerActionsEdit = [
     {
-      label: t('common.buttons.cancel'),
+      label: t('buttons.cancel', { ns: 'common' }),
       onClick: () => onOpenChange(false),
       variant: "outline" as const,
       disabled: loading
     },
     {
-      label: loading ? t('common.buttons.updating') : t('package.update_package'),
+      label: loading ? t('actions.saving', { ns: 'common' }) : t('buttons.update', { ns: 'common' }),
       onClick: handleSubmit,
       disabled: loading || !packageData.name.trim(),
       loading: loading

@@ -17,7 +17,7 @@ interface AddLeadStatusDialogProps {
 }
 
 export function AddLeadStatusDialog({ open, onOpenChange, onStatusAdded }: AddLeadStatusDialogProps) {
-  const { t } = useTranslation('forms');
+  const { t } = useTranslation(['forms', 'common']);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -116,13 +116,13 @@ export function AddLeadStatusDialog({ open, onOpenChange, onStatusAdded }: AddLe
 
   const footerActions = [
     {
-      label: t('buttons.cancel'),
+      label: t('buttons.cancel', { ns: 'common' }),
       onClick: () => onOpenChange(false),
       variant: "outline" as const,
       disabled: loading
     },
     {
-      label: loading ? t('buttons.adding') : t('buttons.add'),
+      label: loading ? t('lead_status.buttons.adding') : t('buttons.add', { ns: 'common' }),
       onClick: handleSubmit,
       disabled: loading || !formData.name.trim(),
       loading: loading
@@ -218,7 +218,7 @@ interface EditLeadStatusDialogProps {
 }
 
 export function EditLeadStatusDialog({ status, open, onOpenChange, onStatusUpdated }: EditLeadStatusDialogProps) {
-  const { t } = useTranslation('forms');
+  const { t } = useTranslation(['forms', 'common']);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -346,19 +346,19 @@ export function EditLeadStatusDialog({ status, open, onOpenChange, onStatusUpdat
   const footerActions = [
     // Only show delete for non-system-required statuses  
     ...(!isSystemRequired ? [{
-      label: t('buttons.delete'),
+      label: t('buttons.delete', { ns: 'common' }),
       onClick: handleDelete,
       variant: "destructive" as const,
       disabled: loading
     }] : []),
     {
-      label: t('buttons.cancel'),
+      label: t('buttons.cancel', { ns: 'common' }),
       onClick: () => onOpenChange(false),
       variant: "outline" as const,
       disabled: loading
     },
     {
-      label: loading ? t('buttons.saving') : t('buttons.save'),
+      label: loading ? t('actions.saving', { ns: 'common' }) : t('buttons.save', { ns: 'common' }),
       onClick: handleSubmit,
       disabled: loading || !formData.name.trim(),
       loading: loading

@@ -42,11 +42,12 @@ interface EditPackageDialogProps {
 }
 
 // Service picker component for default add-ons
-const ServiceAddOnsPicker = ({ services, value, onChange, navigate }: {
+const ServiceAddOnsPicker = ({ services, value, onChange, navigate, t }: {
   services: any[];
   value: string[];
   onChange: (addons: string[]) => void;
   navigate: (path: string) => void;
+  t: any;
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [tempValue, setTempValue] = useState<string[]>([]);
@@ -97,13 +98,13 @@ const ServiceAddOnsPicker = ({ services, value, onChange, navigate }: {
   if (services.length === 0) {
     return (
       <div className="text-center py-4 text-muted-foreground">
-        <p className="text-sm">No services yet. Create services to use as add-ons.</p>
+        <p className="text-sm">{t('package.no_services_yet')}</p>
         <button
           type="button"
           onClick={() => navigate("/settings/services")}
           className="text-sm text-primary hover:underline mt-1"
         >
-          Create a Service
+          {t('package.create_service')}
         </button>
       </div>
     );
@@ -186,14 +187,14 @@ const ServiceAddOnsPicker = ({ services, value, onChange, navigate }: {
             onClick={handleCancel}
             className="h-8"
           >
-            Cancel
+            {t('buttons.cancel', { ns: 'common' })}
           </Button>
           <Button
             type="button"
             onClick={handleSave}
             className="h-8"
           >
-            Save
+            {t('buttons.save', { ns: 'common' })}
           </Button>
         </div>
       </div>
@@ -205,27 +206,27 @@ const ServiceAddOnsPicker = ({ services, value, onChange, navigate }: {
     <div className="space-y-3">
       {selectedServices.length === 0 ? (
         <div className="rounded-md border border-dashed p-4 text-center">
-          <p className="text-sm text-muted-foreground mb-2">No add-ons selected</p>
+          <p className="text-sm text-muted-foreground mb-2">{t('package.no_addons_selected')}</p>
           <Button
             type="button"
             variant="outline"
             onClick={handleEdit}
             className="h-8"
           >
-            Add Services
+            {t('package.add_services')}
           </Button>
         </div>
       ) : (
         <div className="rounded-md border p-3">
           <div className="mb-2 flex items-center justify-between">
-            <span className="text-sm font-medium">Selected Add-ons ({selectedServices.length})</span>
+            <span className="text-sm font-medium">{t('package.selected_addons', { count: selectedServices.length })}</span>
             <Button
               type="button"
               variant="outline"
               onClick={handleEdit}
               className="h-8"
             >
-              Edit
+              {t('package.edit_addons')}
             </Button>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -258,18 +259,20 @@ const ServiceAddOnsPicker = ({ services, value, onChange, navigate }: {
   );
 };
 
-const staticDurationOptions = [
-  { value: "30m", label: "30 minutes" },
-  { value: "1h", label: "1 hour" },
-  { value: "2h", label: "2 hours" },
-  { value: "3h", label: "3 hours" },
-  { value: "Half-day", label: "Half day" },
-  { value: "Full-day", label: "Full day" },
-  { value: "Custom", label: "Custom" }
-];
+// Duration options - now provided by translation function
 
 export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPackageDialogProps) {
   const { t } = useTranslation(['forms', 'common']);
+  
+  const staticDurationOptionsAdd = [
+    { value: "30m", label: t('package.duration_options.30m') },
+    { value: "1h", label: t('package.duration_options.1h') },
+    { value: "2h", label: t('package.duration_options.2h') },
+    { value: "3h", label: t('package.duration_options.3h') },
+    { value: "half_day", label: t('package.duration_options.half_day') },
+    { value: "full_day", label: t('package.duration_options.full_day') },
+    { value: "custom", label: t('package.duration_options.custom') },
+  ];
   const [packageData, setPackageData] = useState({
     name: "",
     description: "",
@@ -504,14 +507,14 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
 
         {/* Price */}
         <div className="space-y-2">
-          <Label htmlFor="price">Price (TRY) *</Label>
-          <p className="text-xs text-muted-foreground">Client-facing price. You can override per project.</p>
+          <Label htmlFor="price">{t('package.price')} *</Label>
+          <p className="text-xs text-muted-foreground">{t('package.price_help')}</p>
           <Input
             id="price"
             type="number"
             value={packageData.price}
             onChange={(e) => setPackageData(prev => ({ ...prev, price: e.target.value }))}
-            placeholder="0"
+            placeholder={t('package.price_placeholder')}
             min="0"
             step="100"
           />
@@ -520,14 +523,14 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
 
         {/* Duration */}
         <div className="space-y-2">
-          <Label htmlFor="duration">Duration *</Label>
-          <p className="text-xs text-muted-foreground">Used for scheduling availability and calendar blocking.</p>
+          <Label htmlFor="duration">{t('package.duration')} *</Label>
+          <p className="text-xs text-muted-foreground">{t('package.duration_help')}</p>
           <Select value={packageData.duration} onValueChange={(value) => setPackageData(prev => ({ ...prev, duration: value }))}>
             <SelectTrigger>
-              <SelectValue placeholder="Select duration" />
+              <SelectValue placeholder={t('package.select_duration')} />
             </SelectTrigger>
             <SelectContent>
-              {staticDurationOptions.map((option) => (
+              {staticDurationOptionsAdd.map((option) => (
                 <SelectItem key={option.value} value={option.value}>
                   {option.label}
                 </SelectItem>
@@ -538,14 +541,14 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
         </div>
 
         {/* Custom Duration */}
-        {packageData.duration === "Custom" && (
+        {packageData.duration === "custom" && (
           <div className="space-y-2">
-            <Label htmlFor="customDuration">Custom Duration *</Label>
+            <Label htmlFor="customDuration">{t('package.custom_duration')} *</Label>
             <Input
               id="customDuration"
               value={packageData.customDuration}
               onChange={(e) => setPackageData(prev => ({ ...prev, customDuration: e.target.value }))}
-              placeholder="e.g., 2-3 days"
+              placeholder={t('package.custom_duration_placeholder')}
             />
             {errors.customDuration && <p className="text-sm text-destructive">{errors.customDuration}</p>}
           </div>
@@ -553,49 +556,50 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
 
         {/* Default Add-ons */}
         <div className="space-y-2">
-          <Label>Default Add-ons</Label>
+          <Label>{t('package.default_add_ons')}</Label>
           <p className="text-xs text-muted-foreground mb-3">
-            These are services from your{" "}
+            {t('package.add_ons_help_1')}{" "}
             <button
               type="button"
               onClick={() => navigate("/settings/services")}
               className="text-primary hover:underline"
             >
-              Services section
+              {t('package.services_section')}
             </button>
-            {" "}that can be customized while creating a project
+            {" "}{t('package.add_ons_help_2')}
           </p>
           <ServiceAddOnsPicker
             services={services}
             value={packageData.default_add_ons}
             onChange={(addons) => setPackageData(prev => ({ ...prev, default_add_ons: addons }))}
             navigate={navigate}
+            t={t}
           />
         </div>
 
         {/* Applicable Types */}
         <div className="space-y-2">
-          <Label>Applicable Types</Label>
+          <Label>{t('package.applicable_types')}</Label>
           <p className="text-xs text-muted-foreground mb-3">
-            Select which{" "}
+            {t('package.applicable_types_help_1')}{" "}
             <button
               type="button"
               onClick={() => navigate("/settings/projects")}
               className="text-primary hover:underline"
             >
-              Project Types
+              {t('package.project_types')}
             </button>
-            {" "}this package applies to (none = all types)
+            {" "}{t('package.applicable_types_help_2')}
           </p>
           {projectTypes.length === 0 ? (
             <div className="text-center py-4 text-muted-foreground">
-              <p className="text-sm">No project types exist yet.</p>
+              <p className="text-sm">{t('package.no_project_types_exist')}</p>
               <button
                 type="button"
                 onClick={() => navigate("/settings/projects")}
                 className="text-sm text-primary hover:underline mt-1"
               >
-                Create Project Types
+                {t('package.create_project_types_link')}
               </button>
             </div>
           ) : (
@@ -624,9 +628,9 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
         {/* Visibility */}
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
-            <Label htmlFor="isActive">Visibility</Label>
+            <Label htmlFor="isActive">{t('package.visibility')}</Label>
             <p className="text-xs text-muted-foreground">
-              Active packages are visible to clients
+              {t('package.visibility_help')}
             </p>
           </div>
           <Switch
@@ -643,6 +647,16 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
 
 export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageUpdated }: EditPackageDialogProps) {
   const { t } = useTranslation(['forms', 'common']);
+  
+  const staticDurationOptionsEdit = [
+    { value: "30m", label: t('package.duration_options.30m') },
+    { value: "1h", label: t('package.duration_options.1h') },
+    { value: "2h", label: t('package.duration_options.2h') },
+    { value: "3h", label: t('package.duration_options.3h') },
+    { value: "half_day", label: t('package.duration_options.half_day') },
+    { value: "full_day", label: t('package.duration_options.full_day') },
+    { value: "custom", label: t('package.duration_options.custom') },
+  ];
   const [packageData, setPackageData] = useState({
     name: "",
     description: "",
@@ -897,7 +911,7 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
             id="description"
             value={packageData.description}
             onChange={(e) => setPackageData(prev => ({ ...prev, description: e.target.value }))}
-            placeholder={t('package.description_placeholder')}
+            placeholder={t('package.description')}
             rows={2}
           />
         </div>
@@ -926,9 +940,9 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
             <SelectTrigger>
               <SelectValue placeholder={t('package.select_duration')} />
             </SelectTrigger>
-            <SelectContent className="max-h-60 overflow-y-auto">
+            <SelectContent>
               {durationOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value} className="py-2">
+                <SelectItem key={option.value} value={option.value}>
                   {option.label}
                 </SelectItem>
               ))}
@@ -938,7 +952,7 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
         </div>
 
         {/* Custom Duration */}
-        {packageData.duration === "Custom" && (
+        {packageData.duration === "custom" && (
           <div className="space-y-2">
             <Label htmlFor="customDuration">{t('package.custom_duration')} *</Label>
             <Input
@@ -970,6 +984,7 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
             value={packageData.default_add_ons}
             onChange={(addons) => setPackageData(prev => ({ ...prev, default_add_ons: addons }))}
             navigate={navigate}
+            t={t}
           />
         </div>
 
@@ -989,13 +1004,13 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
           </p>
           {projectTypes.length === 0 ? (
             <div className="text-center py-4 text-muted-foreground">
-              <p className="text-sm">{t('package.no_project_types')}</p>
+              <p className="text-sm">{t('package.no_project_types_exist')}</p>
               <button
                 type="button"
                 onClick={() => navigate("/settings/projects")}
                 className="text-sm text-primary hover:underline mt-1"
               >
-                {t('package.create_project_types')}
+                {t('package.create_project_types_link')}
               </button>
             </div>
           ) : (

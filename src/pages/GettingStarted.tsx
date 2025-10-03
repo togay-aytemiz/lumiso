@@ -134,10 +134,10 @@ const GettingStarted = () => {
         {/* Learning Path Header */}
         <div className="mb-6 sm:mb-8 text-center">
           <h2 className="text-xl sm:text-2xl font-semibold text-foreground mb-2">
-            Your Learning Path
+            {t('onboarding.getting_started.your_learning_path')}
           </h2>
           <p className="text-sm sm:text-base text-muted-foreground">
-            Each step teaches you how to use Lumiso naturally.
+            {t('onboarding.getting_started.learning_path_subtitle')}
           </p>
         </div>
 
@@ -152,7 +152,7 @@ const GettingStarted = () => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-muted-foreground truncate">
-                      {step.title}
+                      {t(`onboarding.steps.step_${step.id}.title`)}
                     </p>
                   </div>
                   <div className="text-xs text-green-600 dark:text-green-400 font-medium flex-shrink-0">
@@ -177,16 +177,16 @@ const GettingStarted = () => {
                       </div>
                       <div className="flex items-center gap-3">
                         <CardTitle className="text-xl">
-                          {currentStepInfo.title}
+                          {t(`onboarding.steps.step_${currentStepInfo.id}.title`)}
                         </CardTitle>
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground">
                           <Clock className="w-3 h-3 mr-1" />
-                          {currentStepInfo.duration}
+                          {t(`onboarding.steps.step_${currentStepInfo.id}.duration`)}
                         </span>
                       </div>
                     </div>
                     <CardDescription className="text-base text-muted-foreground ml-14">
-                      {currentStepInfo.description}
+                      {t(`onboarding.steps.step_${currentStepInfo.id}.description`)}
                     </CardDescription>
                   </div>
                   <div className="ml-8">
@@ -195,7 +195,7 @@ const GettingStarted = () => {
                       onClick={() => handleStepAction(currentStepInfo)}
                       className="hover-scale"
                     >
-                      {currentStepInfo.buttonText}
+                      {t(`onboarding.steps.step_${currentStepInfo.id}.button`)}
                       <ArrowRight className="w-4 h-4 ml-2" />
                     </Button>
                   </div>
@@ -210,7 +210,7 @@ const GettingStarted = () => {
           <div className="mb-6 sm:mb-8">
             <div className="flex items-center gap-2 mb-4">
               <div className="h-px bg-border flex-1"></div>
-              <span className="text-xs text-muted-foreground uppercase tracking-wide px-3">Coming Next</span>
+              <span className="text-xs text-muted-foreground uppercase tracking-wide px-3">{t('onboarding.getting_started.coming_next')}</span>
               <div className="h-px bg-border flex-1"></div>
             </div>
             
@@ -225,16 +225,16 @@ const GettingStarted = () => {
                           {nextStepInfo.id}
                         </div>
                         <CardTitle className="text-lg sm:text-xl text-muted-foreground leading-tight">
-                          {nextStepInfo.title}
+                          {t(`onboarding.steps.step_${nextStepInfo.id}.title`)}
                         </CardTitle>
                       </div>
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted/50 text-muted-foreground/80 w-fit">
                         <Clock className="w-3 h-3 mr-1" />
-                        {nextStepInfo.duration}
+                        {t(`onboarding.steps.step_${nextStepInfo.id}.duration`)}
                       </span>
                     </div>
                     <CardDescription className="text-sm sm:text-base text-muted-foreground/80 pl-0 sm:pl-13">
-                      {nextStepInfo.description}
+                      {t(`onboarding.steps.step_${nextStepInfo.id}.description`)}
                     </CardDescription>
                   </div>
                   <div className="flex-shrink-0">
@@ -244,7 +244,7 @@ const GettingStarted = () => {
                       disabled
                       className="opacity-50 w-full sm:w-auto"
                     >
-                      {nextStepInfo.buttonText}
+                      {t(`onboarding.steps.step_${nextStepInfo.id}.button`)}
                       <ArrowRight className="w-4 h-4 ml-2" />
                     </Button>
                   </div>
@@ -261,17 +261,17 @@ const GettingStarted = () => {
               <CardContent className="py-12">
                 <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4 animate-pulse" />
                 <h2 className="text-2xl font-bold text-green-700 dark:text-green-400 mb-2">
-                  Congratulations! 🎉
+                  {t('onboarding.getting_started.congratulations')}
                 </h2>
                 <p className="text-green-600 dark:text-green-300 mb-6">
-                  You've completed the guided setup!
+                  {t('onboarding.getting_started.setup_complete')}
                 </p>
                 <Button 
                   size="lg" 
                   className="bg-green-600 hover:bg-green-700 hover-scale"
                   onClick={handleComplete}
                 >
-                  Go to Dashboard
+                  {t('onboarding.getting_started.go_to_dashboard')}
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               </CardContent>

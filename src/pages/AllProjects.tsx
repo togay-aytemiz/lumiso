@@ -716,7 +716,7 @@ const AllProjects = () => {
                             onClick={() => handleSort('lead_name')}
                           >
                             <div className="flex items-center gap-2">
-                              Lead Name
+                              {t('projects.table_columns.client')}
                               {getSortIcon('lead_name')}
                             </div>
                           </TableHead>
@@ -725,7 +725,7 @@ const AllProjects = () => {
                             onClick={() => handleSort('name')}
                           >
                             <div className="flex items-center gap-2">
-                              Project Name
+                              {t('projects.table_columns.project_name')}
                               {getSortIcon('name')}
                             </div>
                           </TableHead>
@@ -734,7 +734,7 @@ const AllProjects = () => {
                             onClick={() => handleSort('project_type')}
                           >
                             <div className="flex items-center gap-2">
-                              Type
+                              {t('projects.table_columns.project_type')}
                               {getSortIcon('project_type')}
                             </div>
                           </TableHead>
@@ -745,13 +745,13 @@ const AllProjects = () => {
                                 onClick={() => handleSort('status')}
                               >
                                 <div className="flex items-center gap-2">
-                                  Status
+                                  {t('projects.table_columns.status')}
                                   {getSortIcon('status')}
                                 </div>
                               </TableHead>
-                              <TableHead className="whitespace-nowrap">Sessions</TableHead>
+                              <TableHead className="whitespace-nowrap">{t('projects.table_columns.sessions')}</TableHead>
                               <TableHead className="whitespace-nowrap">Progress</TableHead>
-                              <TableHead className="whitespace-nowrap">Services</TableHead>
+                              <TableHead className="whitespace-nowrap">{t('projects.table_columns.services')}</TableHead>
                             </>
                            ) : (
                             <>
@@ -774,7 +774,7 @@ const AllProjects = () => {
                                onClick={() => handleSort('created_at')}
                              >
                                <div className="flex items-center gap-2">
-                                 Created
+                                 {t('projects.table_columns.created')}
                                  {getSortIcon('created_at')}
                                </div>
                              </TableHead>
@@ -859,11 +859,11 @@ const AllProjects = () => {
                                   </TableCell>
                                 )}
                             </TableRow>
-                          ))
+                           ))
                         ) : (
                            <TableRow>
                              <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
-                              No projects found. Create your first project to get started!
+                              {t('projects.table_columns.no_projects_found')}
                             </TableCell>
                           </TableRow>
                         )}

@@ -5,8 +5,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 export function RestartGuidedModeButton() {
+  const { t } = useTranslation('pages');
   const { user } = useAuth();
   const { resetOnboarding } = useOnboarding();
   const [isLoading, setIsLoading] = useState(false);
@@ -22,15 +24,15 @@ export function RestartGuidedModeButton() {
     try {
       await resetOnboarding(); // This keeps modal permanently disabled
       toast({
-        title: "Guided mode restarted",
-        description: "Starting over from step 1...",
+        title: t('onboarding.buttons.toast.restart_title'),
+        description: t('onboarding.buttons.toast.restart_description'),
       });
       navigate('/getting-started');
     } catch (error) {
       console.error('❌ RestartButton: Error:', error);
       toast({
-        title: "Error",
-        description: "Failed to restart guided mode. Please try again.",
+        title: t('onboarding.buttons.toast.error_title'),
+        description: t('onboarding.buttons.toast.restart_error'),
         variant: "destructive"
       });
     } finally {
@@ -48,7 +50,7 @@ export function RestartGuidedModeButton() {
         className="shadow-lg border-primary/20 bg-background/80 backdrop-blur-sm hover:bg-primary/5"
       >
         <RotateCcw className="w-4 h-4 mr-2" />
-        {isLoading ? "Restarting..." : "Restart Guided Mode"}
+        {isLoading ? t('onboarding.buttons.restarting') : t('onboarding.buttons.restart_guided_mode')}
       </Button>
     </div>
   );

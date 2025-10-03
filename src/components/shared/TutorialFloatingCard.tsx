@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { LongPressButton } from "@/components/ui/long-press-button";
+import { useTranslation } from "react-i18next";
 
 interface TutorialFloatingCardProps {
   stepNumber: number;
@@ -30,6 +31,8 @@ export function TutorialFloatingCard({
   onExit,
   position = "top-right"
 }: TutorialFloatingCardProps) {
+  const { t } = useTranslation('pages');
+  
   const getPositionClasses = () => {
     switch (position) {
       case "top-right":
@@ -55,7 +58,7 @@ export function TutorialFloatingCard({
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <div className="text-xs text-muted-foreground font-medium">
-              Step {stepNumber} of {totalSteps}
+              {t('onboarding.tutorial.step_of', { current: stepNumber, total: totalSteps })}
             </div>
           </div>
           <CardTitle className="text-lg">{title}</CardTitle>
@@ -76,10 +79,10 @@ export function TutorialFloatingCard({
             <LongPressButton
               variant="dangerOutline"
               onConfirm={onExit}
-              label="Exit Tutorial"
+              label={t('onboarding.tutorial.exit_tutorial')}
               duration={3000}
-              holdingLabel="Hold to exit…"
-              completeLabel="Exiting…"
+              holdingLabel={t('onboarding.tutorial.hold_to_exit')}
+              completeLabel={t('onboarding.tutorial.exiting')}
               className="flex-1"
             />
             
@@ -88,7 +91,7 @@ export function TutorialFloatingCard({
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button disabled className="flex-1">
-                      {isLastStep ? "Complete" : "Next"}
+                      {isLastStep ? t('onboarding.tutorial.complete') : t('onboarding.tutorial.next')}
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
@@ -98,7 +101,7 @@ export function TutorialFloatingCard({
               </TooltipProvider>
             ) : (
               <Button onClick={onNext} className="flex-1">
-                {isLastStep ? "Complete" : "Next"}
+                {isLastStep ? t('onboarding.tutorial.complete') : t('onboarding.tutorial.next')}
               </Button>
             )}
           </div>

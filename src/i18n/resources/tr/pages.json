@@ -959,13 +959,72 @@
     "modal": {
       "welcome_title": "Lumiso'ya Hoş Geldiniz! 🎉",
       "welcome_subtitle": "Fotoğrafçılık CRM'inizi adım adım kurmanızda size rehberlik edeceğiz. Her görev bir öncekinin üzerine inşa edilir, böylece doğal olarak öğrenirsiniz.",
-      "what_youll_learn": "Ne öğreneceksiniz:",
+      "what_youll_learn": "Neler öğreneceksiniz:",
       "skip_sample_data": "Atla & Örnek Veri Kullan",
       "start_learning": "Öğrenmeye Başla!",
       "starting": "Başlatılıyor...",
       "toast": {
-        "setup_started": "Adım adım kuruluma başlayalım.",
+        "setup_started": "Sizi adım adım kuralım.",
         "setup_failed": "Rehberli kurulum başlatılamadı. Lütfen tekrar deneyin."
+      }
+    },
+    "sample_data": {
+      "title": "Kurulumu Atla & Örnek Veri Kullan?",
+      "description": "CRM'inizi gerçekçi örnek verilerle dolduracağız, böylece tüm özellikleri hemen keşfedebilirsiniz. Bu verileri daha sonra istediğiniz zaman özelleştirebilir veya silebilirsiniz.",
+      "whats_included": "Neler dahil:",
+      "continue_guided_setup": "Rehberli Kuruluma Devam Et",
+      "start_with_sample_data": "Örnek Veri ile Başla",
+      "starting": "Başlatılıyor...",
+      "setting_up": "Kuruluyor...",
+      "items": {
+        "sample_leads": {
+          "title": "Örnek Potansiyel Müşteriler",
+          "description": "Gerçekçi iletişim bilgileriyle önceden doldurulmuş müşteri adayları"
+        },
+        "example_projects": {
+          "title": "Örnek Projeler",
+          "description": "Farklı tamamlanma aşamalarında fotoğrafçılık projeleri"
+        },
+        "scheduled_sessions": {
+          "title": "Planlanmış Oturumlar",
+          "description": "Keşfedilecek yaklaşan ve geçmiş fotoğraf oturumları"
+        },
+        "photography_packages": {
+          "title": "Fotoğrafçılık Paketleri",
+          "description": "Fiyatlandırmalı kullanıma hazır hizmet paketleri"
+        }
+      },
+      "toast": {
+        "success_title": "Kurulum atlandı!",
+        "success_description": "Lumiso'yu keşfetmeye başlayabilirsiniz. Örnek veriler gelecek bir güncellemede eklenecek.",
+        "error_title": "Hata",
+        "error_description": "Kurulum atlanamadı. Lütfen tekrar deneyin.",
+        "setup_error": "Rehberli kurulum başlatılamadı. Lütfen tekrar deneyin."
+      }
+    },
+    "tutorial": {
+      "step_of": "Adım {{current}} / {{total}}",
+      "step_title": "Adım {{current}} / {{total}}: {{title}}",
+      "exit_tutorial": "Eğitimden Çık",
+      "hold_to_exit": "Çıkmak için basılı tutun…",
+      "exiting": "Çıkılıyor…",
+      "next": "İleri",
+      "complete": "Tamamla",
+      "continue_setup": "Kuruluma Devam Et"
+    },
+    "buttons": {
+      "restart_guided_mode": "Rehberli Modu Yeniden Başlat",
+      "restarting": "Yeniden başlatılıyor...",
+      "exit_guidance": "Rehberlikten Çık",
+      "exiting": "Çıkılıyor...",
+      "toast": {
+        "restart_title": "Rehberli mod yeniden başlatıldı",
+        "restart_description": "1. adımdan baştan başlıyor...",
+        "restart_error": "Rehberli mod yeniden başlatılamadı. Lütfen tekrar deneyin.",
+        "exit_title": "Rehberlik modundan çıkıldı",
+        "exit_description": "Artık tüm özelliklere erişebilirsiniz.",
+        "exit_error": "Rehberlik modundan çıkılamadı. Lütfen tekrar deneyin.",
+        "error_title": "Hata"
       }
     }
   }

@@ -1,4 +1,7 @@
 {
+  "progress": {
+    "tasks_complete": "görev tamamlandı"
+  },
   "validation": {
     "required": "Bu alan zorunludur",
     "email": "Lütfen geçerli bir e-posta adresi girin",
@@ -1162,6 +1165,9 @@
       "cancel": "İptal",
       "confirm": "Alanı Sil"
     }
+  },
+  "progress": {
+    "tasks_complete": "görev tamamlandı"
   },
   "lead_table_columns": {
     "name": "Ad",

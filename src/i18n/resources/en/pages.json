@@ -968,6 +968,65 @@
         "setup_started": "Let's get you set up step by step.",
         "setup_failed": "Failed to start guided setup. Please try again."
       }
+    },
+    "sample_data": {
+      "title": "Skip Setup & Use Sample Data?",
+      "description": "We'll populate your CRM with realistic sample data so you can explore all features immediately. You can always customize or clear this data later.",
+      "whats_included": "What's included:",
+      "continue_guided_setup": "Continue Guided Setup",
+      "start_with_sample_data": "Start with Sample Data",
+      "starting": "Starting...",
+      "setting_up": "Setting up...",
+      "items": {
+        "sample_leads": {
+          "title": "Sample Leads",
+          "description": "Pre-filled client leads with realistic contact information"
+        },
+        "example_projects": {
+          "title": "Example Projects",
+          "description": "Photography projects in different stages of completion"
+        },
+        "scheduled_sessions": {
+          "title": "Scheduled Sessions",
+          "description": "Upcoming and past photo sessions to explore"
+        },
+        "photography_packages": {
+          "title": "Photography Packages",
+          "description": "Ready-to-use service packages with pricing"
+        }
+      },
+      "toast": {
+        "success_title": "Setup skipped!",
+        "success_description": "You can start exploring Lumiso. Sample data will be added in a future update.",
+        "error_title": "Error",
+        "error_description": "Failed to skip setup. Please try again.",
+        "setup_error": "Failed to start guided setup. Please try again."
+      }
+    },
+    "tutorial": {
+      "step_of": "Step {{current}} of {{total}}",
+      "step_title": "Step {{current}} of {{total}}: {{title}}",
+      "exit_tutorial": "Exit Tutorial",
+      "hold_to_exit": "Hold to exit…",
+      "exiting": "Exiting…",
+      "next": "Next",
+      "complete": "Complete",
+      "continue_setup": "Continue Setup"
+    },
+    "buttons": {
+      "restart_guided_mode": "Restart Guided Mode",
+      "restarting": "Restarting...",
+      "exit_guidance": "Exit Guidance",
+      "exiting": "Exiting...",
+      "toast": {
+        "restart_title": "Guided mode restarted",
+        "restart_description": "Starting over from step 1...",
+        "restart_error": "Failed to restart guided mode. Please try again.",
+        "exit_title": "Exited guidance mode",
+        "exit_description": "You can now access all features.",
+        "exit_error": "Failed to exit guidance mode. Please try again.",
+        "error_title": "Error"
+      }
     }
   }
 }

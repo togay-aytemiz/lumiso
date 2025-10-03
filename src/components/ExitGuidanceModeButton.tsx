@@ -5,8 +5,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 export function ExitGuidanceModeButton() {
+  const { t } = useTranslation('pages');
   const { user } = useAuth();
   const { completeOnboarding, shouldLockNavigation } = useOnboarding();
   const [isLoading, setIsLoading] = useState(false);
@@ -22,14 +24,14 @@ export function ExitGuidanceModeButton() {
     try {
       await completeOnboarding();
       toast({
-        title: "Exited guidance mode",
-        description: "You can now access all features.",
+        title: t('onboarding.buttons.toast.exit_title'),
+        description: t('onboarding.buttons.toast.exit_description'),
       });
     } catch (error) {
       console.error('❌ Error exiting guidance mode:', error);
       toast({
-        title: "Error",
-        description: "Failed to exit guidance mode. Please try again.",
+        title: t('onboarding.buttons.toast.error_title'),
+        description: t('onboarding.buttons.toast.exit_error'),
         variant: "destructive"
       });
     } finally {
@@ -47,7 +49,7 @@ export function ExitGuidanceModeButton() {
         className="shadow-lg border-red-500/20 bg-background/80 backdrop-blur-sm hover:bg-red-500/5"
       >
         <X className="w-4 h-4 mr-2" />
-        {isLoading ? "Exiting..." : "Exit Guidance"}
+        {isLoading ? t('onboarding.buttons.exiting') : t('onboarding.buttons.exit_guidance')}
       </Button>
     </div>
   );

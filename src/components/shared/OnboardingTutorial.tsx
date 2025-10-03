@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { BaseOnboardingModal, OnboardingAction } from "./BaseOnboardingModal";
 import { TutorialFloatingCard } from "./TutorialFloatingCard";
 import { useTutorialExit } from "@/hooks/useTutorialExit";
+import { useTranslation } from "react-i18next";
 
 export interface TutorialStep {
   id: number;
@@ -31,6 +32,7 @@ export function OnboardingTutorial({
   isVisible,
   initialStepIndex = 0
 }: OnboardingTutorialProps) {
+  const { t } = useTranslation('pages');
   const [currentStepIndex, setCurrentStepIndex] = useState(initialStepIndex);
   const navigate = useNavigate();
   const currentStep = steps[currentStepIndex];
@@ -115,15 +117,19 @@ export function OnboardingTutorial({
   // Only show Exit Tutorial button if not the last step
   if (!isLastStep) {
     actions.push({
-      label: "Exit Tutorial",
+      label: t('onboarding.tutorial.exit_tutorial'),
       onClick: handleExitNow,
       variant: "dangerOutline",
-      longPress: { duration: 3000, holdingLabel: "Hold to exit…", completeLabel: "Exiting…" }
+      longPress: { 
+        duration: 3000, 
+        holdingLabel: t('onboarding.tutorial.hold_to_exit'), 
+        completeLabel: t('onboarding.tutorial.exiting')
+      }
     });
   }
   
   actions.push({
-    label: isLastStep ? "Continue Setup" : "Next",
+    label: isLastStep ? t('onboarding.tutorial.continue_setup') : t('onboarding.tutorial.next'),
     onClick: handleNext,
     variant: "default",
     disabled: !currentStep.canProceed
@@ -134,7 +140,11 @@ export function OnboardingTutorial({
       <BaseOnboardingModal
         open={isVisible && !isExiting}
         onClose={handleExit}
-        title={`Step ${currentStepIndex + 1} of ${steps.length}: ${typeof currentStep.title === 'string' ? currentStep.title : 'Step'}`}
+        title={t('onboarding.tutorial.step_title', { 
+          current: currentStepIndex + 1, 
+          total: steps.length, 
+          title: typeof currentStep.title === 'string' ? currentStep.title : 'Step'
+        })}
         description={currentStep.description}
         actions={actions}
       >

@@ -4,11 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { toast } from "sonner";
 import { Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useFormsTranslation, useMessagesTranslation } from "@/hooks/useTypedTranslation";
+import { useI18nToast } from "@/lib/toastHelpers";
 
 const Auth = () => {
   const [email, setEmail] = useState("");
@@ -20,6 +20,7 @@ const Auth = () => {
   const navigate = useNavigate();
   const { t: tForm } = useFormsTranslation();
   const { t: tMsg } = useMessagesTranslation();
+  const toast = useI18nToast();
 
   // Redirect if already logged in
   useEffect(() => {
@@ -81,7 +82,7 @@ const Auth = () => {
       }
     } catch (error: any) {
       console.error("Auth error:", error);
-      toast.error(error.message || "An error occurred during authentication");
+      toast.error(error.message || tMsg('auth.auth_error'));
       setLoading(false);
     }
   };

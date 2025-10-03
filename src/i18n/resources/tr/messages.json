@@ -44,5 +44,11 @@
     "selectItem": "Lütfen bir öğe seçin",
     "allFieldsOptional": "Tüm alanlar isteğe bağlıdır",
     "userNotAuthenticated": "Kullanıcı kimlik doğrulaması yapılmadı"
+  },
+  "auth": {
+    "email_confirmation": "Hesabınızı onaylamak için lütfen e-postanızı kontrol edin",
+    "account_created": "Hesap başarıyla oluşturuldu! Hoş geldiniz!",
+    "signed_in": "Tekrar hoş geldiniz! Başarıyla giriş yaptınız",
+    "auth_error": "Kimlik doğrulama sırasında bir hata oluştu"
   }
 }

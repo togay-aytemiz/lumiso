@@ -44,5 +44,11 @@
     "selectItem": "Please select an item",
     "allFieldsOptional": "All fields are optional",
     "userNotAuthenticated": "User not authenticated"
+  },
+  "auth": {
+    "email_confirmation": "Please check your email to confirm your account",
+    "account_created": "Account created successfully! Welcome aboard!",
+    "signed_in": "Welcome back! You've been signed in successfully",
+    "auth_error": "An error occurred during authentication"
   }
 }

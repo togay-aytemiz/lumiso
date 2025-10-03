@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Edit2, Save, X, Plus } from "lucide-react";
 import { useI18nToast } from "@/lib/toastHelpers";
 import { ServicePicker, type PickerService } from "./ServicePicker";
-import { useFormsTranslation } from '@/hooks/useTypedTranslation';
+import { useFormsTranslation, useCommonTranslation } from '@/hooks/useTypedTranslation';
 interface Service {
   id: string;
   name: string;
@@ -32,6 +32,7 @@ export function ProjectServicesSection({
   const [errorAvailable, setErrorAvailable] = useState<string | null>(null);
   const toast = useI18nToast();
   const { t } = useFormsTranslation();
+  const { t: tCommon } = useCommonTranslation();
   const sectionRef = useRef<HTMLDivElement>(null);
   const fetchProjectServices = async () => {
     try {
@@ -206,7 +207,7 @@ export function ProjectServicesSection({
                     disabled={saving}
                     className="h-8"
                   >
-                    {t('buttons.clearAll')}
+                    {tCommon('buttons.clearAll')}
                   </Button>
                 </div>
                 <div className="flex flex-wrap gap-2">

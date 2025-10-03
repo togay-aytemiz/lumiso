@@ -500,13 +500,6 @@
     "unsavedProjectChanges": "Kaydedilmemiş proje değişiklikleriniz var.",
     "updateLeadInfo": "Müşteri adayı bilgilerini ve özel alan verilerini güncelleyin."
   },
-  "search": {
-    "placeholder": "Her şeyi ara...",
-    "clearSearch": "Aramayı temizle",
-    "noResults": "Sonuç bulunamadı",
-    "tryDifferent": "Farklı anahtar kelimeler deneyin veya yazımınızı kontrol edin",
-    "searchError": "Arama hatası"
-  },
   "userMenu": {
     "profileSettings": "Profil ayarları",
     "signOut": "Çıkış yap"

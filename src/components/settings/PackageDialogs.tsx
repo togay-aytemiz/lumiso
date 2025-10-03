@@ -42,13 +42,13 @@ interface EditPackageDialogProps {
 }
 
 // Service picker component for default add-ons
-const ServiceAddOnsPicker = ({ services, value, onChange, navigate, t }: {
+const ServiceAddOnsPicker = ({ services, value, onChange, navigate }: {
   services: any[];
   value: string[];
   onChange: (addons: string[]) => void;
   navigate: (path: string) => void;
-  t: any;
 }) => {
+  const { t } = useTranslation(['forms', 'common']);
   const [isEditing, setIsEditing] = useState(false);
   const [tempValue, setTempValue] = useState<string[]>([]);
   const [openItems, setOpenItems] = useState<string[]>([]);
@@ -573,7 +573,6 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
             value={packageData.default_add_ons}
             onChange={(addons) => setPackageData(prev => ({ ...prev, default_add_ons: addons }))}
             navigate={navigate}
-            t={t}
           />
         </div>
 
@@ -984,7 +983,6 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
             value={packageData.default_add_ons}
             onChange={(addons) => setPackageData(prev => ({ ...prev, default_add_ons: addons }))}
             navigate={navigate}
-            t={t}
           />
         </div>
 

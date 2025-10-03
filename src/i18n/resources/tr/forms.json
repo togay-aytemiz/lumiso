@@ -393,7 +393,7 @@
     "confirm": {
       "discard_changes": "Değişikliklerinizi iptal etmek istediğinizden emin misiniz? Kaydedilmemiş tüm bilgiler kaybolacaktır.",
       "delete": "Bu aşamayı silmek istediğinizden emin misiniz?"
-  },
+    }
   },
   "dateRangePicker": {
     "placeholder": "Tarih aralığı seçin"

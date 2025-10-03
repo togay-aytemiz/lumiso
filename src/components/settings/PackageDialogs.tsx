@@ -98,13 +98,13 @@ const ServiceAddOnsPicker = ({ services, value, onChange, navigate }: {
   if (services.length === 0) {
     return (
       <div className="text-center py-4 text-muted-foreground">
-        <p className="text-sm">{t('package.no_services_yet')}</p>
+        <p className="text-sm">{t('package.no_services_yet', { ns: 'forms' })}</p>
         <button
           type="button"
           onClick={() => navigate("/settings/services")}
           className="text-sm text-primary hover:underline mt-1"
         >
-          {t('package.create_service')}
+          {t('package.create_service', { ns: 'forms' })}
         </button>
       </div>
     );
@@ -206,27 +206,27 @@ const ServiceAddOnsPicker = ({ services, value, onChange, navigate }: {
     <div className="space-y-3">
       {selectedServices.length === 0 ? (
         <div className="rounded-md border border-dashed p-4 text-center">
-          <p className="text-sm text-muted-foreground mb-2">{t('package.no_addons_selected')}</p>
+          <p className="text-sm text-muted-foreground mb-2">{t('package.no_addons_selected', { ns: 'forms' })}</p>
           <Button
             type="button"
             variant="outline"
             onClick={handleEdit}
             className="h-8"
           >
-            {t('package.add_services')}
+            {t('package.add_services', { ns: 'forms' })}
           </Button>
         </div>
       ) : (
         <div className="rounded-md border p-3">
           <div className="mb-2 flex items-center justify-between">
-            <span className="text-sm font-medium">{t('package.selected_addons', { count: selectedServices.length })}</span>
+            <span className="text-sm font-medium">{t('package.selected_addons', { ns: 'forms', count: selectedServices.length })}</span>
             <Button
               type="button"
               variant="outline"
               onClick={handleEdit}
               className="h-8"
             >
-              {t('package.edit_addons')}
+              {t('package.edit_addons', { ns: 'forms' })}
             </Button>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -488,7 +488,7 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
             id="name"
             value={packageData.name}
             onChange={(e) => setPackageData(prev => ({ ...prev, name: e.target.value }))}
-            placeholder={t('package.name_placeholder')}
+            placeholder={t('package.name_placeholder', { ns: 'forms' })}
           />
           {errors.name && <p className="text-sm text-destructive">{errors.name}</p>}
         </div>
@@ -898,7 +898,7 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
             id="name"
             value={packageData.name}
             onChange={(e) => setPackageData(prev => ({ ...prev, name: e.target.value }))}
-            placeholder={t('package.name_placeholder')}
+            placeholder={t('package.name_placeholder', { ns: 'forms' })}
           />
           {errors.name && <p className="text-sm text-destructive">{errors.name}</p>}
         </div>

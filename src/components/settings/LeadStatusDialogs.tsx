@@ -9,6 +9,8 @@ import { Plus } from "lucide-react";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
+import { useModalNavigation } from "@/hooks/useModalNavigation";
+import { NavigationGuardDialog } from "./NavigationGuardDialog";
 
 interface AddLeadStatusDialogProps {
   open: boolean;
@@ -107,8 +109,20 @@ export function AddLeadStatusDialog({ open, onOpenChange, onStatusAdded }: AddLe
 
   const isDirty = Boolean(formData.name.trim() || formData.color !== "#3B82F6" || formData.lifecycle !== "active");
 
+  const navigation = useModalNavigation({
+    isDirty,
+    onDiscard: () => {
+      setFormData({ name: "", color: "#3B82F6", lifecycle: "active" });
+      onOpenChange(false);
+    },
+    onSaveAndExit: async () => {
+      await handleSubmit();
+    }
+  });
+
   const handleDirtyClose = () => {
-    if (window.confirm(t('lead_status.confirm.discard_changes'))) {
+    const canClose = navigation.handleModalClose();
+    if (canClose) {
       setFormData({ name: "", color: "#3B82F6", lifecycle: "active" });
       onOpenChange(false);
     }
@@ -192,7 +206,7 @@ export function AddLeadStatusDialog({ open, onOpenChange, onStatusAdded }: AddLe
                   : "text-muted-foreground hover:text-foreground hover:bg-background/50"
               )}
             >
-              {lifecycle}
+              {t(`lead_status.lifecycle.${lifecycle}`)}
             </button>
           ))}
         </div>

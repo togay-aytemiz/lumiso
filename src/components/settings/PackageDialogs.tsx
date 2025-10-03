@@ -488,7 +488,7 @@ export function AddPackageDialog({ open, onOpenChange, onPackageAdded }: AddPack
             id="name"
             value={packageData.name}
             onChange={(e) => setPackageData(prev => ({ ...prev, name: e.target.value }))}
-            placeholder="e.g., Wedding Standard"
+            placeholder={t('package.name_placeholder')}
           />
           {errors.name && <p className="text-sm text-destructive">{errors.name}</p>}
         </div>

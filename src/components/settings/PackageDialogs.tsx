@@ -206,14 +206,14 @@ const ServiceAddOnsPicker = ({ services, value, onChange, navigate }: {
     <div className="space-y-3">
       {selectedServices.length === 0 ? (
         <div className="rounded-md border border-dashed p-4 text-center">
-          <p className="text-sm text-muted-foreground mb-2">{t('packages.no_addons_selected', { ns: 'forms' })}</p>
+          <p className="text-sm text-muted-foreground mb-2">{t('package.no_addons_selected', { ns: 'forms' })}</p>
           <Button
             type="button"
             variant="outline"
             onClick={handleEdit}
             className="h-8"
           >
-            {t('packages.add_services', { ns: 'forms' })}
+            {t('package.add_services', { ns: 'forms' })}
           </Button>
         </div>
       ) : (

@@ -17,12 +17,18 @@
       "noteMatch": "Not: {{content}}",
       "sessionNoNotes": "{{date}} tarihli seans - Not yok",
       "sessionNotes": "Seans notları: {{notes}}",
-      "descriptionMatch": "Açıklama: {{description}}"
+      "descriptionMatch": "Açıklama: {{description}}",
+      "contentAtTime": " saat "
     },
     "leadLabel": "Müşteri Adayı:",
     "loadingMore": "Daha fazla yükleniyor...",
     "loadMore": "{{count}} sonuç daha yükle ({{remaining}} kaldı)",
-    "showingAll": "Tüm {{count}} sonuç gösteriliyor"
+    "showingAll": "Tüm {{count}} sonuç gösteriliyor",
+    "placeholder": "Ara...",
+    "clearSearch": "Aramayı temizle",
+    "noResults": "Sonuç bulunamadı",
+    "tryDifferent": "Farklı bir arama terimi deneyin",
+    "searchError": "Arama hatası"
   },
   "validation": {
     "required": "Bu alan zorunludur",

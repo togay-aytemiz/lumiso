@@ -17,12 +17,18 @@
       "noteMatch": "Note: {{content}}",
       "sessionNoNotes": "Session on {{date}} - No notes",
       "sessionNotes": "Session notes: {{notes}}",
-      "descriptionMatch": "Description: {{description}}"
+      "descriptionMatch": "Description: {{description}}",
+      "contentAtTime": " at "
     },
     "leadLabel": "Lead:",
     "loadingMore": "Loading more...",
     "loadMore": "Load {{count}} more results ({{remaining}} remaining)",
-    "showingAll": "Showing all {{count}} results"
+    "showingAll": "Showing all {{count}} results",
+    "placeholder": "Search...",
+    "clearSearch": "Clear search",
+    "noResults": "No results found",
+    "tryDifferent": "Try a different search term",
+    "searchError": "Search error"
   },
   "validation": {
     "required": "This field is required",

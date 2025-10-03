@@ -237,7 +237,7 @@ const GlobalSearch = () => {
           const lead = leadMap.get(activity.lead_id);
           if (lead) {
             const isReminder = activity.reminder_date;
-            const contentText = `${activity.content}${activity.reminder_time ? ` at ${activity.reminder_time}` : ''}`;
+            const contentText = `${activity.content}${activity.reminder_time ? `${t('search.resultFormats.contentAtTime')}${activity.reminder_time}` : ''}`;
             const matchedContent = isReminder 
               ? t('search.resultFormats.reminderMatch', { content: contentText })
               : t('search.resultFormats.noteMatch', { content: activity.content });

@@ -716,7 +716,7 @@ const AllProjects = () => {
                             onClick={() => handleSort('lead_name')}
                           >
                             <div className="flex items-center gap-2">
-                              {t('forms:projects.table_columns.client')}
+                              {tForms('projects.table_columns.client')}
                               {getSortIcon('lead_name')}
                             </div>
                           </TableHead>
@@ -725,7 +725,7 @@ const AllProjects = () => {
                             onClick={() => handleSort('name')}
                           >
                             <div className="flex items-center gap-2">
-                              {t('forms:projects.table_columns.project_name')}
+                              {tForms('projects.table_columns.project_name')}
                               {getSortIcon('name')}
                             </div>
                           </TableHead>
@@ -734,7 +734,7 @@ const AllProjects = () => {
                             onClick={() => handleSort('project_type')}
                           >
                             <div className="flex items-center gap-2">
-                              {t('forms:projects.table_columns.project_type')}
+                              {tForms('projects.table_columns.project_type')}
                               {getSortIcon('project_type')}
                             </div>
                           </TableHead>
@@ -745,24 +745,24 @@ const AllProjects = () => {
                                 onClick={() => handleSort('status')}
                               >
                                 <div className="flex items-center gap-2">
-                                  {t('forms:projects.table_columns.status')}
+                                  {tForms('projects.table_columns.status')}
                                   {getSortIcon('status')}
                                 </div>
                               </TableHead>
-                              <TableHead className="whitespace-nowrap">{t('forms:projects.table_columns.sessions')}</TableHead>
-                              <TableHead className="whitespace-nowrap">{t('forms:projects.table_columns.progress')}</TableHead>
-                              <TableHead className="whitespace-nowrap">{t('forms:projects.table_columns.services')}</TableHead>
+                              <TableHead className="whitespace-nowrap">{tForms('projects.table_columns.sessions')}</TableHead>
+                              <TableHead className="whitespace-nowrap">{tForms('projects.table_columns.progress')}</TableHead>
+                              <TableHead className="whitespace-nowrap">{tForms('projects.table_columns.services')}</TableHead>
                             </>
                            ) : (
                             <>
-                              <TableHead className="whitespace-nowrap">{t('forms:projects.table_columns.paid')}</TableHead>
-                              <TableHead className="whitespace-nowrap">{t('forms:projects.table_columns.remaining')}</TableHead>
+                              <TableHead className="whitespace-nowrap">{tForms('projects.table_columns.paid')}</TableHead>
+                              <TableHead className="whitespace-nowrap">{tForms('projects.table_columns.remaining')}</TableHead>
                                <TableHead 
                                  className="cursor-pointer hover:bg-muted/50 whitespace-nowrap"
                                  onClick={() => handleSort('updated_at')}
                                >
                                  <div className="flex items-center gap-2">
-                                   {t('forms:projects.table_columns.last_update')}
+                                   {tForms('projects.table_columns.last_update')}
                                    {getSortIcon('updated_at')}
                                  </div>
                                </TableHead>
@@ -774,7 +774,7 @@ const AllProjects = () => {
                                onClick={() => handleSort('created_at')}
                              >
                                <div className="flex items-center gap-2">
-                                 {t('forms:projects.table_columns.created')}
+                                 {tForms('projects.table_columns.created')}
                                  {getSortIcon('created_at')}
                                </div>
                              </TableHead>

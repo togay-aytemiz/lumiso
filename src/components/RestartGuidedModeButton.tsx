@@ -3,12 +3,13 @@ import { Button } from "@/components/ui/button";
 import { RotateCcw } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOnboarding } from "@/contexts/OnboardingContext";
-import { toast } from "@/hooks/use-toast";
+import { useI18nToast } from "@/lib/toastHelpers";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
 export function RestartGuidedModeButton() {
   const { t } = useTranslation('pages');
+  const toast = useI18nToast();
   const { user } = useAuth();
   const { resetOnboarding } = useOnboarding();
   const [isLoading, setIsLoading] = useState(false);
@@ -23,18 +24,11 @@ export function RestartGuidedModeButton() {
     setIsLoading(true);
     try {
       await resetOnboarding(); // This keeps modal permanently disabled
-      toast({
-        title: t('onboarding.buttons.toast.restart_title'),
-        description: t('onboarding.buttons.toast.restart_description'),
-      });
+      toast.success(t('onboarding.buttons.toast.restart_description'));
       navigate('/getting-started');
     } catch (error) {
       console.error('❌ RestartButton: Error:', error);
-      toast({
-        title: t('onboarding.buttons.toast.error_title'),
-        description: t('onboarding.buttons.toast.restart_error'),
-        variant: "destructive"
-      });
+      toast.error(t('onboarding.buttons.toast.restart_error'));
     } finally {
       setIsLoading(false);
     }

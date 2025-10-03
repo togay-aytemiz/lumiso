@@ -104,5 +104,11 @@
   "client": {
     "title": "Client Details",
     "created_on": "Created on"
+  },
+  "toast": {
+    "error": "Error",
+    "success": "Success",
+    "warning": "Warning",
+    "info": "Information"
   }
 }

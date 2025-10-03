@@ -3,12 +3,13 @@ import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOnboarding } from "@/contexts/OnboardingContext";
-import { toast } from "@/hooks/use-toast";
+import { useI18nToast } from "@/lib/toastHelpers";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
 export function ExitGuidanceModeButton() {
   const { t } = useTranslation('pages');
+  const toast = useI18nToast();
   const { user } = useAuth();
   const { completeOnboarding, shouldLockNavigation } = useOnboarding();
   const [isLoading, setIsLoading] = useState(false);
@@ -23,17 +24,10 @@ export function ExitGuidanceModeButton() {
     setIsLoading(true);
     try {
       await completeOnboarding();
-      toast({
-        title: t('onboarding.buttons.toast.exit_title'),
-        description: t('onboarding.buttons.toast.exit_description'),
-      });
+      toast.success(t('onboarding.buttons.toast.exit_description'));
     } catch (error) {
       console.error('❌ Error exiting guidance mode:', error);
-      toast({
-        title: t('onboarding.buttons.toast.error_title'),
-        description: t('onboarding.buttons.toast.exit_error'),
-        variant: "destructive"
-      });
+      toast.error(t('onboarding.buttons.toast.exit_error'));
     } finally {
       setIsLoading(false);
     }

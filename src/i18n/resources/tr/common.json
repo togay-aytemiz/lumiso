@@ -104,5 +104,11 @@
   "client": {
     "title": "Müşteri Bilgileri",
     "created_on": "Oluşturulma tarihi"
+  },
+  "toast": {
+    "error": "Hata",
+    "success": "Başarılı",
+    "warning": "Uyarı",
+    "info": "Bilgi"
   }
 }

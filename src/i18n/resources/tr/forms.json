@@ -602,7 +602,11 @@
     "no_lead": "Müşteri Yok"
   },
   "reminders": {
-    "reminderBadge": "hatırlatma"
+    "reminderBadge": "Hatırlatıcı",
+    "overdue": "Gecikmiş",
+    "today": "Bugün",
+    "completed": "Tamamlandı",
+    "lead": "Müşteri Adayı"
   },
   "viewProject": {
     "errorLoadingSessions": "Seanslar yüklenirken hata",

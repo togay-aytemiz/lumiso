@@ -328,6 +328,13 @@
     "services": "services",
     "tasks_completed": "tasks completed"
   },
+  "reminders": {
+    "reminderBadge": "Reminder",
+    "overdue": "Overdue",
+    "today": "Today",
+    "completed": "Completed",
+    "lead": "Lead"
+  },
   "status": {
     "loading": "Loading...",
     "selectStatus": "SELECT STATUS",

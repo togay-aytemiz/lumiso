@@ -88,13 +88,13 @@ const ReminderCard = ({
             <div className="flex items-start justify-between gap-2">
               <div className="flex items-center gap-2 flex-wrap flex-1 min-w-0">
                 {!hideStatusBadge && !activity.completed && isOverdue(activity.reminder_date) && <Badge className="bg-red-100 text-red-700 border-red-200 dark:bg-red-950/50 dark:text-red-300 dark:border-red-800 text-xs max-w-20 truncate">
-                    Overdue
+                    {tForms('reminders.overdue')}
                   </Badge>}
                 {!hideStatusBadge && !activity.completed && isToday(activity.reminder_date) && <Badge className="bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600 text-xs max-w-16 truncate">
-                    Today
+                    {tForms('reminders.today')}
                   </Badge>}
                 {activity.completed && showCompletedBadge && <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800 text-xs max-w-24 truncate">
-                    Completed
+                    {tForms('reminders.completed')}
                   </Badge>}
               </div>
               
@@ -114,7 +114,7 @@ const ReminderCard = ({
               </h3>
               
               <p className={`text-xs text-slate-600 dark:text-slate-400 break-words ${activity.completed ? 'opacity-60' : ''}`}>
-                Lead: {leadName}
+                {tForms('reminders.lead')}: {leadName}
               </p>
               
               {activity.reminder_date && <p className={`text-xs text-slate-500 dark:text-slate-500 break-words ${activity.completed ? 'opacity-60' : ''}`}>
@@ -142,7 +142,7 @@ const ReminderCard = ({
                   
                   {/* Lead Name */}
                   <p className={`text-sm text-slate-600 dark:text-slate-400 mt-1 ${activity.completed ? 'opacity-60' : ''}`}>
-                    Lead: {leadName}
+                    {tForms('reminders.lead')}: {leadName}
                   </p>
                   
                   {/* Date and Time */}
@@ -155,13 +155,13 @@ const ReminderCard = ({
                 {/* Status Badge */}
                 <div className="flex items-center justify-center flex-wrap gap-1">
                   {activity.completed && showCompletedBadge ? <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800">
-                      Completed
+                      {tForms('reminders.completed')}
                     </Badge> : <>
                       {!hideStatusBadge && isOverdue(activity.reminder_date) && <Badge className="bg-red-100 text-red-700 border-red-200 dark:bg-red-950/50 dark:text-red-300 dark:border-red-800">
-                          Overdue
+                          {tForms('reminders.overdue')}
                         </Badge>}
                       {!hideStatusBadge && isToday(activity.reminder_date) && <Badge className="bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600">
-                          Today
+                          {tForms('reminders.today')}
                         </Badge>}
                     </>}
                 </div>

@@ -9,10 +9,12 @@ import { GuidedStepProgress } from "@/components/GuidedStepProgress";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useOnboarding } from "@/contexts/OnboardingContext";
+import { useTranslation } from "react-i18next";
 
 // Remove duplicate step definitions - now using centralized ones from hook
 
 const GettingStarted = () => {
+  const { t } = useTranslation('pages');
   const { user } = useAuth();
   const navigate = useNavigate();
   const [showSampleDataModal, setShowSampleDataModal] = useState(false);
@@ -65,7 +67,7 @@ const GettingStarted = () => {
   };
 
   if (loading) {
-    return <div className="min-h-screen bg-background flex items-center justify-center">Loading...</div>;
+    return <div className="min-h-screen bg-background flex items-center justify-center">{t('onboarding.getting_started.loading')}</div>;
   }
 
   return (
@@ -74,20 +76,20 @@ const GettingStarted = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center py-6 gap-6">
             <div className="text-center sm:text-left">
-              <h1 className="text-xl sm:text-2xl font-bold text-foreground">Welcome to Lumiso! 🎉</h1>
-              <p className="text-sm text-muted-foreground mt-2">Let's set up your photography business step by step</p>
+              <h1 className="text-xl sm:text-2xl font-bold text-foreground">{t('onboarding.getting_started.welcome_title')}</h1>
+              <p className="text-sm text-muted-foreground mt-2">{t('onboarding.getting_started.welcome_subtitle')}</p>
             </div>
             <div className="flex items-center justify-center sm:justify-end gap-3">
               <Button variant="outline" size="sm">
                 <HelpCircle className="w-4 h-4 mr-2" />
-                Need Help?
+                {t('onboarding.getting_started.need_help')}
               </Button>
               <Button 
                 variant="outline" 
                 size="sm"
                 onClick={() => setShowSampleDataModal(true)}
               >
-                Skip Setup
+                {t('onboarding.getting_started.skip_setup')}
               </Button>
             </div>
           </div>
@@ -100,7 +102,7 @@ const GettingStarted = () => {
           <Card>
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
-                Setup Progress
+                {t('onboarding.getting_started.setup_progress')}
                 {completedSteps.length > 0 && (
                   <CheckCircle className="w-5 h-5 text-green-500" />
                 )}
@@ -116,11 +118,11 @@ const GettingStarted = () => {
                 />
                 <div className="flex flex-col gap-2 text-sm text-muted-foreground">
                   <div className="font-medium">
-                    <span className="text-foreground">Now:</span> {currentStepInfo ? currentStepInfo.title : "All tasks complete! 🎉"}
+                    <span className="text-foreground">{t('onboarding.getting_started.now_label')}</span> {currentStepInfo ? t(`onboarding.steps.step_${currentStepInfo.id}.title`) : t('onboarding.getting_started.all_tasks_complete')}
                   </div>
                   {nextStepInfo && (
                     <div>
-                      <span className="text-foreground">Next:</span> {nextStepInfo.title}
+                      <span className="text-foreground">{t('onboarding.getting_started.next_label')}</span> {t(`onboarding.steps.step_${nextStepInfo.id}.title`)}
                     </div>
                   )}
                 </div>

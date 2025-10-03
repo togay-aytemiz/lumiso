@@ -6,6 +6,7 @@ import { ONBOARDING_STEPS } from "@/constants/onboarding";
 import { toast } from "@/hooks/use-toast";
 import { BaseOnboardingModal, type OnboardingAction } from "./shared/BaseOnboardingModal";
 import { SampleDataModal } from "./SampleDataModal";
+import { useTranslation } from "react-i18next";
 
 interface OnboardingModalProps {
   open: boolean;
@@ -16,6 +17,7 @@ interface OnboardingModalProps {
 const onboardingStepsDisplay = ONBOARDING_STEPS.map(step => step.title);
 
 export function OnboardingModal({ open, onClose }: OnboardingModalProps) {
+  const { t } = useTranslation('pages');
   const [isLoading, setIsLoading] = useState(false);
   const [showSampleDataModal, setShowSampleDataModal] = useState(false);
   const navigate = useNavigate();
@@ -32,14 +34,14 @@ export function OnboardingModal({ open, onClose }: OnboardingModalProps) {
       onClose(); // Close modal
       navigate('/getting-started');
       toast({
-        title: "Welcome to Lumiso! 🎉",
-        description: "Let's get you set up step by step.",
+        title: t('onboarding.modal.welcome_title'),
+        description: t('onboarding.modal.toast.setup_started'),
       });
     } catch (error) {
       console.error('❌ OnboardingModal: Error:', error);
       toast({
         title: "Error",
-        description: "Failed to start guided setup. Please try again.",
+        description: t('onboarding.modal.toast.setup_failed'),
         variant: "destructive"
       });
     } finally {
@@ -62,13 +64,13 @@ export function OnboardingModal({ open, onClose }: OnboardingModalProps) {
 
   const actions: OnboardingAction[] = [
     {
-      label: "Skip & Use Sample Data",
+      label: t('onboarding.modal.skip_sample_data'),
       onClick: handleShowSampleDataModal,
       variant: "outline",
       disabled: isLoading
     },
     {
-      label: isLoading ? "Starting..." : "Start Learning!",
+      label: isLoading ? t('onboarding.modal.starting') : t('onboarding.modal.start_learning'),
       onClick: handleStartLearning,
       variant: "cta",
       disabled: isLoading
@@ -80,21 +82,21 @@ export function OnboardingModal({ open, onClose }: OnboardingModalProps) {
       <BaseOnboardingModal
         open={open && !showSampleDataModal}
         onClose={onClose} // Simple close handler
-        title="Welcome to Lumiso! 🎉"
-        description="We'll guide you through setting up your photography CRM step by step. Each task builds on the previous one, so you'll learn naturally."
+        title={t('onboarding.modal.welcome_title')}
+        description={t('onboarding.modal.welcome_subtitle')}
         actions={actions}
       >
         <div className="space-y-4">
           <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
-            What you'll learn:
+            {t('onboarding.modal.what_youll_learn')}
           </h4>
           <div className="space-y-3">
-            {onboardingStepsDisplay.map((step, index) => (
+            {onboardingStepsDisplay.map((_, index) => (
               <div key={index} className="flex items-center gap-3">
                 <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
                   <span className="text-sm font-medium text-primary">{index + 1}</span>
                 </div>
-                <span className="text-sm text-foreground">{step}</span>
+                <span className="text-sm text-foreground">{t(`onboarding.steps.step_${index + 1}.title`)}</span>
               </div>
             ))}
           </div>

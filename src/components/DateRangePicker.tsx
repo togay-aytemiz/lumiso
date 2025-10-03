@@ -8,6 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import ReactCalendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import "@/components/react-calendar.css";
+import { useTranslation } from "react-i18next";
 
 interface DateRangePickerProps {
   dateRange?: DateRange;
@@ -16,13 +17,14 @@ interface DateRangePickerProps {
 }
 
 export const DateRangePicker = ({ dateRange, onDateRangeChange, className }: DateRangePickerProps) => {
+  const { t } = useTranslation('forms');
   const [isOpen, setIsOpen] = useState(false);
 
   const browserLocale = getUserLocale();
 
   const formatDateRange = (range: DateRange | undefined) => {
     if (!range?.from) {
-      return "Pick a date range";
+      return t('dateRangePicker.placeholder');
     }
     if (!range.to) {
       return format(range.from, "MMM dd, yyyy");

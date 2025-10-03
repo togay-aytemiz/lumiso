@@ -899,5 +899,74 @@
         "duplicate": "Bu adda bir şablon zaten var. Lütfen farklı bir ad seçin."
       }
     }
+  },
+  "onboarding": {
+    "getting_started": {
+      "welcome_title": "Lumiso'ya Hoş Geldiniz! 🎉",
+      "welcome_subtitle": "Fotoğrafçılık işinizi adım adım kuralım",
+      "need_help": "Yardıma mı ihtiyacınız var?",
+      "skip_setup": "Kurulumu Atla",
+      "setup_progress": "Kurulum İlerlemesi",
+      "now_label": "Şimdi:",
+      "next_label": "Sonraki:",
+      "all_tasks_complete": "Tüm görevler tamamlandı! 🎉",
+      "your_learning_path": "Öğrenme Yolunuz",
+      "learning_path_subtitle": "Her adım, Lumiso'yu doğal olarak kullanmayı öğretir.",
+      "coming_next": "Sırada Ne Var",
+      "congratulations": "Tebrikler! 🎉",
+      "setup_complete": "Rehberli kurulumu tamamladınız!",
+      "go_to_dashboard": "Kontrol Paneline Git",
+      "loading": "Yükleniyor..."
+    },
+    "steps": {
+      "step_1": {
+        "title": "Profil Kurulumunu Tamamlayın",
+        "description": "İşletme bilgilerinizi ve iletişim bilgilerinizi ekleyin",
+        "button": "Profili Ayarla",
+        "duration": "3 dk"
+      },
+      "step_2": {
+        "title": "İlk Potansiyel Müşterinizi Oluşturun",
+        "description": "Fırsatları takip etmek için potansiyel bir müşteri ekleyin",
+        "button": "Potansiyel Müşterilere Git",
+        "duration": "2 dk"
+      },
+      "step_3": {
+        "title": "Fotoğrafçılık Projesi Oluşturun",
+        "description": "Seansları ve teslimatları organize etmek için ilk projenizi oluşturun",
+        "button": "Proje Oluştur",
+        "duration": "4 dk"
+      },
+      "step_4": {
+        "title": "Projeler Sayfasını Keşfedin",
+        "description": "Farklı proje görünümleri hakkında bilgi edinin: Pano, Liste ve Arşivlenmiş projeler",
+        "button": "Projeleri Keşfet",
+        "duration": "3 dk"
+      },
+      "step_5": {
+        "title": "Fotoğraf Seansı Planlayın",
+        "description": "İlk seansınızı ayarlayın ve takviminizi yönetin",
+        "button": "Seans Planla",
+        "duration": "3 dk"
+      },
+      "step_6": {
+        "title": "Paketlerinizi Yapılandırın",
+        "description": "Fotoğrafçılık paketlerini ve fiyatlandırma yapısını ayarlayın",
+        "button": "Paketleri Ayarla",
+        "duration": "5 dk"
+      }
+    },
+    "modal": {
+      "welcome_title": "Lumiso'ya Hoş Geldiniz! 🎉",
+      "welcome_subtitle": "Fotoğrafçılık CRM'inizi adım adım kurmanızda size rehberlik edeceğiz. Her görev bir öncekinin üzerine inşa edilir, böylece doğal olarak öğrenirsiniz.",
+      "what_youll_learn": "Ne öğreneceksiniz:",
+      "skip_sample_data": "Atla & Örnek Veri Kullan",
+      "start_learning": "Öğrenmeye Başla!",
+      "starting": "Başlatılıyor...",
+      "toast": {
+        "setup_started": "Adım adım kuruluma başlayalım.",
+        "setup_failed": "Rehberli kurulum başlatılamadı. Lütfen tekrar deneyin."
+      }
+    }
   }
 }

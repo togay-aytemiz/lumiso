@@ -900,5 +900,74 @@
         "duplicate": "A template with this name already exists. Please choose a different name."
       }
     }
+  },
+  "onboarding": {
+    "getting_started": {
+      "welcome_title": "Welcome to Lumiso! 🎉",
+      "welcome_subtitle": "Let's set up your photography business step by step",
+      "need_help": "Need Help?",
+      "skip_setup": "Skip Setup",
+      "setup_progress": "Setup Progress",
+      "now_label": "Now:",
+      "next_label": "Next:",
+      "all_tasks_complete": "All tasks complete! 🎉",
+      "your_learning_path": "Your Learning Path",
+      "learning_path_subtitle": "Each step teaches you how to use Lumiso naturally.",
+      "coming_next": "Coming Next",
+      "congratulations": "Congratulations! 🎉",
+      "setup_complete": "You've completed the guided setup!",
+      "go_to_dashboard": "Go to Dashboard",
+      "loading": "Loading..."
+    },
+    "steps": {
+      "step_1": {
+        "title": "Complete Your Profile Setup",
+        "description": "Add your business details and contact information",
+        "button": "Set Up Profile",
+        "duration": "3 min"
+      },
+      "step_2": {
+        "title": "Create Your First Lead",
+        "description": "Add a potential client to start tracking opportunities",
+        "button": "Go to Leads",
+        "duration": "2 min"
+      },
+      "step_3": {
+        "title": "Set Up a Photography Project",
+        "description": "Create your first project to organize sessions and deliverables",
+        "button": "Create Project",
+        "duration": "4 min"
+      },
+      "step_4": {
+        "title": "Explore Projects Page",
+        "description": "Learn about different project views: Board, List, and Archived projects",
+        "button": "Explore Projects",
+        "duration": "3 min"
+      },
+      "step_5": {
+        "title": "Schedule a Photo Session",
+        "description": "Book your first session and manage your calendar",
+        "button": "Schedule Session",
+        "duration": "3 min"
+      },
+      "step_6": {
+        "title": "Configure Your Packages",
+        "description": "Set up photography packages and pricing structure",
+        "button": "Set Up Packages",
+        "duration": "5 min"
+      }
+    },
+    "modal": {
+      "welcome_title": "Welcome to Lumiso! 🎉",
+      "welcome_subtitle": "We'll guide you through setting up your photography CRM step by step. Each task builds on the previous one, so you'll learn naturally.",
+      "what_youll_learn": "What you'll learn:",
+      "skip_sample_data": "Skip & Use Sample Data",
+      "start_learning": "Start Learning!",
+      "starting": "Starting...",
+      "toast": {
+        "setup_started": "Let's get you set up step by step.",
+        "setup_failed": "Failed to start guided setup. Please try again."
+      }
+    }
   }
 }

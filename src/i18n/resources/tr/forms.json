@@ -392,10 +392,23 @@
       "delete": "Bu aşamayı silmek istediğinizden emin misiniz?"
     }
   },
-  "lead_fields": {
-    "title": "Özel Müşteri Adayı Alanları",
-    "description": "Ek müşteri adayı bilgilerini yakalamak için özel alanları yapılandırın",
-    "add_field": "Alan Ekle"
+  "dateRangePicker": {
+    "placeholder": "Tarih aralığı seçin"
+  },
+  "projects": {
+    "table_columns": {
+      "project_name": "Proje Adı",
+      "client": "Müşteri",
+      "project_type": "Proje Türü",
+      "status": "Durum",
+      "sessions": "Seanslar",
+      "todos": "Görevler",
+      "services": "Hizmetler",
+      "created": "Oluşturuldu",
+      "updated": "Güncellendi",
+      "no_value": "-",
+      "no_projects_found": "Proje bulunamadı"
+    }
   },
   "lead_field": {
     "add_custom_field": "Özel Alan Ekle",

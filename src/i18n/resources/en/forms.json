@@ -297,7 +297,7 @@
       "active": "Active",
       "completed": "Completed",
       "cancelled": "Cancelled"
-  },
+    }
   },
   "dateRangePicker": {
     "placeholder": "Pick a date range"

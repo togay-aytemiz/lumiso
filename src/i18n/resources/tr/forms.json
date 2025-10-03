@@ -393,7 +393,7 @@
     "confirm": {
       "discard_changes": "Değişikliklerinizi iptal etmek istediğinizden emin misiniz? Kaydedilmemiş tüm bilgiler kaybolacaktır.",
       "delete": "Bu aşamayı silmek istediğinizden emin misiniz?"
-    }
+  },
   },
   "dateRangePicker": {
     "placeholder": "Tarih aralığı seçin"
@@ -404,25 +404,6 @@
     "phone": "Telefon Numarası",
     "status": "Durum",
     "last_updated": "Son Güncelleme"
-  },
-  "projects": {
-    "table_columns": {
-      "project_name": "Proje Adı",
-      "client": "Müşteri",
-      "project_type": "Proje Türü",
-      "status": "Durum",
-      "sessions": "Seanslar",
-      "todos": "Görevler",
-      "services": "Hizmetler",
-      "created": "Oluşturuldu",
-      "updated": "Güncellendi",
-      "progress": "İlerleme",
-      "paid": "Ödenen",
-      "remaining": "Kalan",
-      "last_update": "Son Güncelleme",
-      "no_value": "-",
-      "no_projects_found": "Proje bulunamadı"
-    }
   },
   "lead_field": {
     "add_custom_field": "Özel Alan Ekle",
@@ -550,6 +531,23 @@
     "boardSettings": "Kanban Ayarları",
     "pageTitle": "Projeler",
     "pageSubtitle": "Tüm projelerinizi tek yerde yönetin",
+    "table_columns": {
+      "project_name": "Proje Adı",
+      "client": "Müşteri",
+      "project_type": "Proje Türü",
+      "status": "Durum",
+      "sessions": "Seanslar",
+      "todos": "Görevler",
+      "services": "Hizmetler",
+      "created": "Oluşturuldu",
+      "updated": "Güncellendi",
+      "progress": "İlerleme",
+      "paid": "Ödenen",
+      "remaining": "Kalan",
+      "last_update": "Son Güncelleme",
+      "no_value": "-",
+      "no_projects_found": "Proje bulunamadı"
+    },
     "success": "Başarılı",
     "projectName": "Proje adı",
     "save": "Kaydet",

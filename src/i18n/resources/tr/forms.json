@@ -2,6 +2,24 @@
   "progress": {
     "tasks_complete": "görev tamamlandı"
   },
+  "search": {
+    "typeLabels": {
+      "lead": "Müşteri Adayları",
+      "project": "Projeler",
+      "note": "Notlar",
+      "reminder": "Hatırlatıcılar",
+      "session": "Seanslar"
+    },
+    "resultFormats": {
+      "emailMatch": "E-posta: {{email}}",
+      "phoneMatch": "Telefon: {{phone}}",
+      "reminderMatch": "Hatırlatıcı: {{content}}",
+      "noteMatch": "Not: {{content}}",
+      "sessionNoNotes": "{{date}} tarihli seans - Not yok",
+      "sessionNotes": "Seans notları: {{notes}}",
+      "descriptionMatch": "Açıklama: {{description}}"
+    }
+  },
   "validation": {
     "required": "Bu alan zorunludur",
     "email": "Lütfen geçerli bir e-posta adresi girin",

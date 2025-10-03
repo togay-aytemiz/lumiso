@@ -2,6 +2,24 @@
   "progress": {
     "tasks_complete": "tasks complete"
   },
+  "search": {
+    "typeLabels": {
+      "lead": "Leads",
+      "project": "Projects",
+      "note": "Notes",
+      "reminder": "Reminders",
+      "session": "Sessions"
+    },
+    "resultFormats": {
+      "emailMatch": "Email: {{email}}",
+      "phoneMatch": "Phone: {{phone}}",
+      "reminderMatch": "Reminder: {{content}}",
+      "noteMatch": "Note: {{content}}",
+      "sessionNoNotes": "Session on {{date}} - No notes",
+      "sessionNotes": "Session notes: {{notes}}",
+      "descriptionMatch": "Description: {{description}}"
+    }
+  },
   "validation": {
     "required": "This field is required",
     "email": "Please enter a valid email address",

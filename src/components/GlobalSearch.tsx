@@ -198,9 +198,9 @@ const GlobalSearch = () => {
       leads?.forEach((lead: Lead) => {
         let matchedContent = '';
         if (lead.email?.toLowerCase().includes(searchQuery.toLowerCase())) {
-          matchedContent = `Email: ${lead.email}`;
+          matchedContent = t('search.resultFormats.emailMatch', { email: lead.email });
         } else if (lead.phone?.toLowerCase().includes(searchQuery.toLowerCase())) {
-          matchedContent = `Phone: ${lead.phone}`;
+          matchedContent = t('search.resultFormats.phoneMatch', { phone: lead.phone });
         }
 
         searchResults.push({
@@ -237,9 +237,10 @@ const GlobalSearch = () => {
           const lead = leadMap.get(activity.lead_id);
           if (lead) {
             const isReminder = activity.reminder_date;
+            const contentText = `${activity.content}${activity.reminder_time ? ` at ${activity.reminder_time}` : ''}`;
             const matchedContent = isReminder 
-              ? `Reminder: ${activity.content}${activity.reminder_time ? ` at ${activity.reminder_time}` : ''}`
-              : `Note: ${activity.content}`;
+              ? t('search.resultFormats.reminderMatch', { content: contentText })
+              : t('search.resultFormats.noteMatch', { content: activity.content });
 
             searchResults.push({
               id: activity.id,
@@ -279,12 +280,10 @@ const GlobalSearch = () => {
             let matchedContent: string;
             
             if (searchQuery.toLowerCase().includes('no notes') && !session.notes) {
-              matchedContent = `Session on ${session.session_date} - No notes`;
+              matchedContent = t('search.resultFormats.sessionNoNotes', { date: session.session_date });
             } else if (session.notes?.toLowerCase().includes(searchQuery.toLowerCase())) {
-              matchedContent = `Session notes: ${session.notes}`;
-              if (matchedContent.length > 80) {
-                matchedContent = `${matchedContent.substring(0, 80)}...`;
-              }
+              const notesText = t('search.resultFormats.sessionNotes', { notes: session.notes });
+              matchedContent = notesText.length > 80 ? `${notesText.substring(0, 80)}...` : notesText;
             } else {
               return; // Skip if no match
             }
@@ -325,10 +324,8 @@ const GlobalSearch = () => {
         projects.forEach((project: any) => {
           let matchedContent = '';
           if (project.description?.toLowerCase().includes(searchQuery.toLowerCase())) {
-            matchedContent = `Description: ${project.description}`;
-            if (matchedContent.length > 80) {
-              matchedContent = `${matchedContent.substring(0, 80)}...`;
-            }
+            const descText = t('search.resultFormats.descriptionMatch', { description: project.description });
+            matchedContent = descText.length > 80 ? `${descText.substring(0, 80)}...` : descText;
           }
 
           const lead = projectLeadMap.get(project.lead_id);
@@ -418,11 +415,11 @@ const GlobalSearch = () => {
   }, {} as Record<string, SearchResult[]>);
 
   const typeLabels = {
-    lead: 'Leads',
-    project: 'Projects',
-    note: 'Notes',
-    reminder: 'Reminders',
-    session: 'Sessions'
+    lead: t('search.typeLabels.lead'),
+    project: t('search.typeLabels.project'),
+    note: t('search.typeLabels.note'),
+    reminder: t('search.typeLabels.reminder'),
+    session: t('search.typeLabels.session')
   };
 
   let resultIndex = 0;

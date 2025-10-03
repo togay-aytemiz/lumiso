@@ -60,7 +60,7 @@ export function LeadFieldDialog({ open, onOpenChange, field, onClose }: LeadFiel
   const { createFieldDefinition, updateFieldDefinition } = useLeadFieldDefinitions();
   const [loading, setLoading] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
-  const { t } = useTranslation('forms');
+  const { t } = useTranslation(['forms', 'common']);
   
   const isEdit = !!field;
   const isSystemField = field?.is_system || false;
@@ -162,7 +162,7 @@ export function LeadFieldDialog({ open, onOpenChange, field, onClose }: LeadFiel
 
   const handleClose = () => {
     if (isDirty) {
-      if (confirm(t("forms.lead_field.unsaved_changes"))) {
+      if (confirm(t("lead_field.unsaved_changes"))) {
         onClose();
       }
     } else {
@@ -172,12 +172,12 @@ export function LeadFieldDialog({ open, onOpenChange, field, onClose }: LeadFiel
 
   const footerActions = [
     {
-      label: t("common.buttons.cancel"),
+      label: t("buttons.cancel", { ns: 'common' }),
       onClick: onClose,
       variant: "outline" as const,
     },
     {
-      label: loading ? t("forms.lead_field.saving") : isEdit ? t("forms.lead_field.update_field") : t("forms.lead_field.create_field"),
+      label: loading ? t("lead_field.saving") : isEdit ? t("lead_field.update_field") : t("lead_field.create_field"),
       onClick: form.handleSubmit(onSubmit),
       loading,
       disabled: loading,
@@ -186,7 +186,7 @@ export function LeadFieldDialog({ open, onOpenChange, field, onClose }: LeadFiel
 
   return (
     <AppSheetModal
-      title={isEdit ? t("forms.lead_field.edit_field") : t("forms.lead_field.add_custom_field")}
+      title={isEdit ? t("lead_field.edit_field") : t("lead_field.add_custom_field")}
       isOpen={open}
       onOpenChange={onOpenChange}
       size="lg"
@@ -197,8 +197,8 @@ export function LeadFieldDialog({ open, onOpenChange, field, onClose }: LeadFiel
       <div className="space-y-1 mb-6">
         <p className="text-sm text-muted-foreground">
           {isEdit 
-            ? t("forms.lead_field.edit_description")
-            : t("forms.lead_field.create_description")
+            ? t("lead_field.edit_description")
+            : t("lead_field.create_description")
           }
         </p>
       </div>
@@ -211,16 +211,16 @@ export function LeadFieldDialog({ open, onOpenChange, field, onClose }: LeadFiel
                 name="label"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t("forms.lead_field.field_label")} *</FormLabel>
+                    <FormLabel>{t("lead_field.field_label")} *</FormLabel>
                     <FormControl>
                       <Input 
-                        placeholder={t("forms.lead_field.field_label_placeholder")} 
+                        placeholder={t("lead_field.field_label_placeholder")} 
                         {...field}
                         disabled={isSystemField}
                       />
                     </FormControl>
                     <FormDescription>
-                      {t("forms.lead_field.field_label_description")}
+                      {t("lead_field.field_label_description")}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -232,7 +232,7 @@ export function LeadFieldDialog({ open, onOpenChange, field, onClose }: LeadFiel
                 name="field_type"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t("forms.lead_field.field_type")} *</FormLabel>
+                    <FormLabel>{t("lead_field.field_type")} *</FormLabel>
                     <Select 
                       onValueChange={field.onChange} 
                       defaultValue={field.value}
@@ -240,19 +240,19 @@ export function LeadFieldDialog({ open, onOpenChange, field, onClose }: LeadFiel
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder={t("forms.lead_field.select_field_type")} />
+                          <SelectValue placeholder={t("lead_field.select_field_type")} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {Object.entries(FIELD_TYPE_CONFIG).map(([key, config]) => (
+                        {Object.entries(FIELD_TYPE_CONFIG).map(([key]) => (
                           <SelectItem key={key} value={key}>
-                            {config.label}
+                            {t(`lead_field.field_types.${key}`)}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                     <FormDescription>
-                      {t("forms.lead_field.field_type_description")}
+                      {t("lead_field.field_type_description")}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -266,16 +266,16 @@ export function LeadFieldDialog({ open, onOpenChange, field, onClose }: LeadFiel
                 name="options"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t("forms.lead_field.options")}</FormLabel>
+                    <FormLabel>{t("lead_field.options")}</FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder={t("forms.lead_field.options_placeholder")}
+                        placeholder={t("lead_field.options_placeholder")}
                         {...field}
                         disabled={isSystemField}
                       />
                     </FormControl>
                     <FormDescription>
-                      {t("forms.lead_field.options_description")}
+                      {t("lead_field.options_description")}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -285,9 +285,9 @@ export function LeadFieldDialog({ open, onOpenChange, field, onClose }: LeadFiel
 
             <div className="flex items-center justify-between p-4 border rounded-lg">
               <div className="space-y-1">
-                <h4 className="text-sm font-medium">{t("forms.lead_field.field_settings")}</h4>
+                <h4 className="text-sm font-medium">{t("lead_field.field_settings")}</h4>
                 <p className="text-sm text-muted-foreground">
-                  {t("forms.lead_field.field_settings_description")}
+                  {t("lead_field.field_settings_description")}
                 </p>
               </div>
               <div className="flex items-center gap-6">
@@ -303,7 +303,7 @@ export function LeadFieldDialog({ open, onOpenChange, field, onClose }: LeadFiel
                           disabled={isSystemField}
                         />
                       </FormControl>
-                      <FormLabel className="text-sm font-normal">{t("forms.lead_field.required")}</FormLabel>
+                      <FormLabel className="text-sm font-normal">{t("lead_field.required")}</FormLabel>
                     </FormItem>
                   )}
                 />
@@ -318,7 +318,7 @@ export function LeadFieldDialog({ open, onOpenChange, field, onClose }: LeadFiel
                           onCheckedChange={field.onChange}
                         />
                       </FormControl>
-                      <FormLabel className="text-sm font-normal">{t("forms.lead_field.visible_in_form")}</FormLabel>
+                      <FormLabel className="text-sm font-normal">{t("lead_field.visible_in_form")}</FormLabel>
                     </FormItem>
                   )}
                 />
@@ -327,9 +327,9 @@ export function LeadFieldDialog({ open, onOpenChange, field, onClose }: LeadFiel
 
             {isSystemField && (
               <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
-                <Badge variant="secondary">{t("forms.lead_field.system_field")}</Badge>
+                <Badge variant="secondary">{t("lead_field.system_field")}</Badge>
                 <p className="text-sm text-muted-foreground">
-                  {t("forms.lead_field.system_field_description")}
+                  {t("lead_field.system_field_description")}
                 </p>
               </div>
             )}

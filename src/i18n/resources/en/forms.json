@@ -1084,7 +1084,17 @@
     "system_field_description": "System fields cannot be edited or deleted",
     "create_description": "Add a new custom field to capture additional lead information",
     "edit_description": "Modify the custom field configuration",
-    "unsaved_changes": "You have unsaved changes. Are you sure you want to close?"
+    "unsaved_changes": "You have unsaved changes. Are you sure you want to close?",
+    "field_types": {
+      "text": "Single Line Text",
+      "textarea": "Multi-line Text",
+      "email": "Email Address",
+      "phone": "Phone Number",
+      "date": "Date",
+      "select": "Dropdown",
+      "checkbox": "Checkbox",
+      "number": "Number"
+    }
   },
   "service": {
     "add_title": "Add Service",

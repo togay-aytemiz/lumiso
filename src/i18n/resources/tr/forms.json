@@ -1099,7 +1099,17 @@
     "system_field_description": "Sistem alanları düzenlenemez veya silinemez",
     "create_description": "Ek müşteri adayı bilgisi yakalamak için yeni bir özel alan ekleyin",
     "edit_description": "Özel alan yapılandırmasını değiştirin",
-    "unsaved_changes": "Kaydedilmemiş değişiklikleriniz var. Kapatmak istediğinizden emin misiniz?"
+    "unsaved_changes": "Kaydedilmemiş değişiklikleriniz var. Kapatmak istediğinizden emin misiniz?",
+    "field_types": {
+      "text": "Tek Satırlık Metin",
+      "textarea": "Çok Satırlı Metin",
+      "email": "E-posta Adresi",
+      "phone": "Telefon Numarası",
+      "date": "Tarih",
+      "select": "Açılır Menü",
+      "checkbox": "Onay Kutusu",
+      "number": "Sayı"
+    }
   },
   "service": {
     "add_title": "Hizmet Ekle",

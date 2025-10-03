@@ -365,6 +365,19 @@
     "deleteSession": "Delete Session",
     "deleteWarning": "This will permanently delete the session and all related data."
   },
+  "leadDangerZone": {
+    "deleteLead": "Delete Lead",
+    "deleteWarning": "This will permanently delete the lead and ALL related data: projects, sessions, reminders/notes, payments, services, and activities."
+  },
+  "deleteLeadDialog": {
+    "title": "Delete Lead",
+    "description": "Type the lead's name (\"{{name}}\") or DELETE to confirm. This will permanently delete the lead and ALL related data including projects, sessions, reminders/notes, payments, services, and activities.",
+    "placeholder": "Type \"{{name}}\" or \"DELETE\"",
+    "cannotUndo": "This action cannot be undone.",
+    "deleting": "Deleting...",
+    "deleteLead": "Delete Lead",
+    "successDescription": "Lead and all related data deleted successfully."
+  },
   "status": {
     "loading": "Loading...",
     "selectStatus": "SELECT STATUS",

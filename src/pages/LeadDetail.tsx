@@ -31,7 +31,7 @@ import { useLeadStatusActions } from "@/hooks/useLeadStatusActions";
 import { OnboardingTutorial, TutorialStep } from "@/components/shared/OnboardingTutorial";
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { DetailPageLoadingSkeleton } from "@/components/ui/loading-presets";
-import { useMessagesTranslation } from "@/hooks/useTypedTranslation";
+import { useMessagesTranslation, useFormsTranslation, useCommonTranslation } from "@/hooks/useTypedTranslation";
 interface Lead {
   id: string;
   name: string;
@@ -100,6 +100,8 @@ const LeadDetail = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { t: tMessages } = useMessagesTranslation();
+  const { t: tForms } = useFormsTranslation();
+  const { t: tCommon } = useCommonTranslation();
   const [lead, setLead] = useState<Lead | null>(null);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
@@ -687,13 +689,13 @@ const LeadDetail = () => {
       } = await supabase.from('leads').delete().eq('id', lead.id);
       if (deleteLeadError) throw deleteLeadError;
       toast({
-        title: 'Success',
-        description: 'Lead and all related data deleted successfully.'
+        title: tMessages('success.deleted'),
+        description: tForms('deleteLeadDialog.successDescription')
       });
       navigate('/leads');
     } catch (error: any) {
       toast({
-        title: 'Error deleting lead',
+        title: tMessages('error.generic'),
         description: error.message,
         variant: 'destructive'
       });
@@ -913,10 +915,10 @@ const LeadDetail = () => {
           {true && <div className="border border-destructive/20 bg-destructive/5 rounded-md p-4 max-w-full text-center">
               <div className="space-y-3">
                 <Button variant="outline" onClick={() => setShowDeleteDialog(true)} className="w-full max-w-xs border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground">
-                  Delete Lead
+                  {tForms('leadDangerZone.deleteLead')}
                 </Button>
                 <p className="text-xs text-muted-foreground break-words">
-                  This will permanently delete the lead and ALL related data: projects, sessions, reminders/notes, payments, services, and activities.
+                  {tForms('leadDangerZone.deleteWarning')}
                 </p>
               </div>
             </div>}
@@ -980,20 +982,20 @@ const LeadDetail = () => {
     }}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Lead</AlertDialogTitle>
+            <AlertDialogTitle>{tForms('deleteLeadDialog.title')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Type the lead's name ("{lead.name}") or DELETE to confirm. This will permanently delete the lead and ALL related data including projects, sessions, reminders/notes, payments, services, and activities.
+              {tForms('deleteLeadDialog.description', { name: lead.name })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="py-2">
             <Label htmlFor="confirm-delete" className="sr-only">Confirmation</Label>
-            <Input id="confirm-delete" placeholder={`Type "${lead.name}" or "DELETE"`} value={confirmDeleteText} onChange={e => setConfirmDeleteText(e.target.value)} />
-            <p className="text-xs text-muted-foreground mt-2">This action cannot be undone.</p>
+            <Input id="confirm-delete" placeholder={tForms('deleteLeadDialog.placeholder', { name: lead.name })} value={confirmDeleteText} onChange={e => setConfirmDeleteText(e.target.value)} />
+            <p className="text-xs text-muted-foreground mt-2">{tForms('deleteLeadDialog.cannotUndo')}</p>
           </div>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={deleting}>{tCommon('buttons.cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete} disabled={deleting || ![lead.name, 'DELETE'].includes(confirmDeleteText.trim())} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              {deleting ? 'Deleting...' : 'Delete Lead'}
+              {deleting ? tForms('deleteLeadDialog.deleting') : tForms('deleteLeadDialog.deleteLead')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

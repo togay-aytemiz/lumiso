@@ -1022,6 +1022,19 @@
     "deleteSession": "Seansı Sil",
     "deleteWarning": "Bu işlem seansı ve tüm ilgili verileri kalıcı olarak silecektir."
   },
+  "leadDangerZone": {
+    "deleteLead": "Müşteri Adayını Sil",
+    "deleteWarning": "Bu işlem müşteri adayını ve TÜM ilgili verileri kalıcı olarak silecektir: projeler, seanslar, hatırlatıcılar/notlar, ödemeler, hizmetler ve aktiviteler."
+  },
+  "deleteLeadDialog": {
+    "title": "Müşteri Adayını Sil",
+    "description": "Onaylamak için müşteri adayının adını (\"{{name}}\") veya DELETE yazın. Bu işlem müşteri adayını ve projeler, seanslar, hatırlatıcılar/notlar, ödemeler, hizmetler ve aktiviteler dahil TÜM ilgili verileri kalıcı olarak silecektir.",
+    "placeholder": "\"{{name}}\" veya \"DELETE\" yazın",
+    "cannotUndo": "Bu işlem geri alınamaz.",
+    "deleting": "Siliniyor...",
+    "deleteLead": "Müşteri Adayını Sil",
+    "successDescription": "Müşteri adayı ve tüm ilgili veriler başarıyla silindi."
+  },
   "progress": {
     "todos_completed": "yapılacak tamamlandı"
   },

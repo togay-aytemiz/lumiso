@@ -151,7 +151,7 @@ export function useLeadTableColumns() {
         const nameFieldDef = fieldDefinitions.find(f => f.field_key === 'name');
         return {
           key: 'name',
-          header: nameFieldDef?.label || t('lead_table_columns.name'),
+          header: t('lead_table_columns.name'),
           sortable: true,
           accessor: (lead) => lead.custom_fields['name'] || lead.name,
           render: (lead) => React.createElement('span', {
@@ -164,7 +164,7 @@ export function useLeadTableColumns() {
         const emailFieldDef = fieldDefinitions.find(f => f.field_key === 'email');
         return {
           key: 'email',
-          header: emailFieldDef?.label || t('lead_table_columns.email'),
+          header: t('lead_table_columns.email'),
           sortable: true,
           accessor: (lead) => lead.custom_fields['email'] || lead.email,
           render: (lead) => {
@@ -184,7 +184,7 @@ export function useLeadTableColumns() {
         const phoneFieldDef = fieldDefinitions.find(f => f.field_key === 'phone');
         return {
           key: 'phone',
-          header: phoneFieldDef?.label || t('lead_table_columns.phone'),
+          header: t('lead_table_columns.phone'),
           sortable: true,
           accessor: (lead) => lead.custom_fields['phone'] || lead.phone,
           render: (lead) => {

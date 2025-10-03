@@ -18,7 +18,11 @@
       "sessionNoNotes": "{{date}} tarihli seans - Not yok",
       "sessionNotes": "Seans notları: {{notes}}",
       "descriptionMatch": "Açıklama: {{description}}"
-    }
+    },
+    "leadLabel": "Müşteri Adayı:",
+    "loadingMore": "Daha fazla yükleniyor...",
+    "loadMore": "{{count}} sonuç daha yükle ({{remaining}} kaldı)",
+    "showingAll": "Tüm {{count}} sonuç gösteriliyor"
   },
   "validation": {
     "required": "Bu alan zorunludur",

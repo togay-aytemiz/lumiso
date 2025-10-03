@@ -525,7 +525,7 @@ const GlobalSearch = () => {
                             )}
                             {result.type === 'project' && result.leadName && (
                               <p className="text-xs text-muted-foreground mt-1 truncate">
-                                Lead: {result.leadName}
+                                {t('search.leadLabel')} {result.leadName}
                               </p>
                             )}
                           </div>
@@ -542,24 +542,27 @@ const GlobalSearch = () => {
                      disabled={loadingMore}
                      className="w-full px-4 py-3 text-center text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-50"
                    >
-                     {loadingMore ? (
-                       <div className="flex items-center justify-center gap-2">
-                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-                         Loading more...
-                       </div>
-                     ) : (
-                       `Load ${Math.min(10, allResults.length - results.length)} more results (${allResults.length - results.length} remaining)`
-                     )}
+                      {loadingMore ? (
+                        <div className="flex items-center justify-center gap-2">
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                          {t('search.loadingMore')}
+                        </div>
+                      ) : (
+                        t('search.loadMore', { 
+                          count: Math.min(10, allResults.length - results.length),
+                          remaining: allResults.length - results.length
+                        })
+                      )}
                    </button>
                  </div>
                )}
                {allResults.length > 10 && results.length === allResults.length && (
                  <div className="border-t border-slate-100 dark:border-slate-800 mx-2">
-                   <div className="px-4 py-3 text-center">
-                     <p className="text-xs text-muted-foreground">
-                       Showing all {allResults.length} results
-                     </p>
-                   </div>
+                    <div className="px-4 py-3 text-center">
+                      <p className="text-xs text-muted-foreground">
+                        {t('search.showingAll', { count: allResults.length })}
+                      </p>
+                    </div>
                  </div>
                )}
             </div>

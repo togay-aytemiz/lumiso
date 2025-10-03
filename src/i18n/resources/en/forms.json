@@ -18,7 +18,11 @@
       "sessionNoNotes": "Session on {{date}} - No notes",
       "sessionNotes": "Session notes: {{notes}}",
       "descriptionMatch": "Description: {{description}}"
-    }
+    },
+    "leadLabel": "Lead:",
+    "loadingMore": "Loading more...",
+    "loadMore": "Load {{count}} more results ({{remaining}} remaining)",
+    "showingAll": "Showing all {{count}} results"
   },
   "validation": {
     "required": "This field is required",

@@ -398,6 +398,13 @@
   "dateRangePicker": {
     "placeholder": "Tarih aralığı seçin"
   },
+  "lead_table_columns": {
+    "name": "Tam Ad",
+    "email": "E-posta Adresi",
+    "phone": "Telefon Numarası",
+    "status": "Durum",
+    "last_updated": "Son Güncelleme"
+  },
   "projects": {
     "table_columns": {
       "project_name": "Proje Adı",
@@ -409,6 +416,10 @@
       "services": "Hizmetler",
       "created": "Oluşturuldu",
       "updated": "Güncellendi",
+      "progress": "İlerleme",
+      "paid": "Ödenen",
+      "remaining": "Kalan",
+      "last_update": "Son Güncelleme",
       "no_value": "-",
       "no_projects_found": "Proje bulunamadı"
     }

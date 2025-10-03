@@ -269,6 +269,13 @@
   "dateRangePicker": {
     "placeholder": "Pick a date range"
   },
+  "lead_table_columns": {
+    "name": "Full Name",
+    "email": "Email Address",
+    "phone": "Phone Number",
+    "status": "Status",
+    "last_updated": "Last Updated"
+  },
   "projects": {
     "table_columns": {
       "project_name": "Project Name",
@@ -280,6 +287,10 @@
       "services": "Services",
       "created": "Created",
       "updated": "Updated",
+      "progress": "Progress",
+      "paid": "Paid",
+      "remaining": "Remaining",
+      "last_update": "Last Update",
       "no_value": "-",
       "no_projects_found": "No projects found"
     }

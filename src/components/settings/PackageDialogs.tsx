@@ -761,19 +761,19 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
     const newErrors: Record<string, string> = {};
 
     if (!packageData.name.trim()) {
-      newErrors.name = "Package name is required";
+      newErrors.name = t('package.errors.name_required');
     }
 
     if (!packageData.price || isNaN(Number(packageData.price)) || Number(packageData.price) <= 0) {
-      newErrors.price = "Valid price is required";
+      newErrors.price = t('common.errors.price_required');
     }
 
     if (!packageData.duration) {
-      newErrors.duration = "Duration is required";
+      newErrors.duration = t('common.errors.duration_required');
     }
 
     if (packageData.duration === "Custom" && !packageData.customDuration.trim()) {
-      newErrors.customDuration = "Custom duration is required";
+      newErrors.customDuration = t('common.errors.custom_duration_required');
     }
 
     setErrors(newErrors);
@@ -805,16 +805,16 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
       if (error) throw error;
 
       toast({
-        title: "Package updated",
-        description: `Package "${packageData.name}" has been updated successfully.`,
+        title: t('package.success.updated'),
+        description: t('package.success.updated'),
       });
 
       onPackageUpdated();
     } catch (error) {
       console.error('Error updating package:', error);
       toast({
-        title: "Error",
-        description: "Failed to update package",
+        title: t('common.buttons.error'),
+        description: t('package.errors.update_failed'),
         variant: "destructive",
       });
     } finally {
@@ -844,20 +844,20 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
   );
 
   const handleDirtyCloseEdit = () => {
-    if (window.confirm("Are you sure you want to discard your changes? Any unsaved information will be lost.")) {
+    if (window.confirm(t('common.confirm.discard_changes'))) {
       onOpenChange(false);
     }
   };
 
   const footerActionsEdit = [
     {
-      label: "Cancel",
+      label: t('common.buttons.cancel'),
       onClick: () => onOpenChange(false),
       variant: "outline" as const,
       disabled: loading
     },
     {
-      label: loading ? "Updating..." : "Update Package",
+      label: loading ? t('common.buttons.updating') : t('package.update_package'),
       onClick: handleSubmit,
       disabled: loading || !packageData.name.trim(),
       loading: loading
@@ -869,7 +869,7 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
 
   return (
     <AppSheetModal
-      title="Edit Package"
+      title={t('package.edit_title')}
       isOpen={open}
       onOpenChange={onOpenChange}
       size="default"
@@ -880,38 +880,38 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
       <div className="space-y-6">
         {/* Package Name */}
         <div className="space-y-2">
-          <Label htmlFor="name">Package Name *</Label>
+          <Label htmlFor="name">{t('package.name')} *</Label>
           <Input
             id="name"
             value={packageData.name}
             onChange={(e) => setPackageData(prev => ({ ...prev, name: e.target.value }))}
-            placeholder="e.g., Wedding Standard"
+            placeholder={t('package.name_placeholder')}
           />
           {errors.name && <p className="text-sm text-destructive">{errors.name}</p>}
         </div>
 
         {/* Description */}
         <div className="space-y-2">
-          <Label htmlFor="description">Description</Label>
+          <Label htmlFor="description">{t('package.description')}</Label>
           <Textarea
             id="description"
             value={packageData.description}
             onChange={(e) => setPackageData(prev => ({ ...prev, description: e.target.value }))}
-            placeholder="Brief description of the package"
+            placeholder={t('package.description_placeholder')}
             rows={2}
           />
         </div>
 
         {/* Price */}
         <div className="space-y-2">
-          <Label htmlFor="price">Price (TRY) *</Label>
-          <p className="text-xs text-muted-foreground">Client-facing price. You can override per project.</p>
+          <Label htmlFor="price">{t('package.price')} *</Label>
+          <p className="text-xs text-muted-foreground">{t('package.price_help')}</p>
           <Input
             id="price"
             type="number"
             value={packageData.price}
             onChange={(e) => setPackageData(prev => ({ ...prev, price: e.target.value }))}
-            placeholder="0"
+            placeholder={t('package.price_placeholder')}
             min="0"
             step="100"
           />
@@ -920,11 +920,11 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
 
         {/* Duration */}
         <div className="space-y-2">
-          <Label htmlFor="duration">Duration *</Label>
-          <p className="text-xs text-muted-foreground">Used for scheduling availability and calendar blocking.</p>
+          <Label htmlFor="duration">{t('package.duration')} *</Label>
+          <p className="text-xs text-muted-foreground">{t('package.duration_help')}</p>
           <Select value={packageData.duration} onValueChange={(value) => setPackageData(prev => ({ ...prev, duration: value }))}>
             <SelectTrigger>
-              <SelectValue placeholder="Select duration" />
+              <SelectValue placeholder={t('package.select_duration')} />
             </SelectTrigger>
             <SelectContent className="max-h-60 overflow-y-auto">
               {durationOptions.map((option) => (
@@ -940,12 +940,12 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
         {/* Custom Duration */}
         {packageData.duration === "Custom" && (
           <div className="space-y-2">
-            <Label htmlFor="customDuration">Custom Duration *</Label>
+            <Label htmlFor="customDuration">{t('package.custom_duration')} *</Label>
             <Input
               id="customDuration"
               value={packageData.customDuration}
               onChange={(e) => setPackageData(prev => ({ ...prev, customDuration: e.target.value }))}
-              placeholder="e.g., 2-3 days"
+              placeholder={t('package.custom_duration_placeholder')}
             />
             {errors.customDuration && <p className="text-sm text-destructive">{errors.customDuration}</p>}
           </div>
@@ -953,17 +953,17 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
 
         {/* Default Add-ons */}
         <div className="space-y-2">
-          <Label>Default Add-ons</Label>
+          <Label>{t('package.default_add_ons')}</Label>
           <p className="text-xs text-muted-foreground mb-3">
-            These are services from your{" "}
+            {t('package.add_ons_help_1')}{" "}
             <button
               type="button"
               onClick={() => navigate("/settings/services")}
               className="text-primary hover:underline"
             >
-              Services section
+              {t('package.services_section')}
             </button>
-            {" "}that can be customized while creating a project
+            {" "}{t('package.add_ons_help_2')}
           </p>
           <ServiceAddOnsPicker
             services={services}
@@ -975,27 +975,27 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
 
         {/* Applicable Types */}
         <div className="space-y-2">
-          <Label>Applicable Types</Label>
+          <Label>{t('package.applicable_types')}</Label>
           <p className="text-xs text-muted-foreground mb-3">
-            Select which{" "}
+            {t('package.applicable_types_help_1')}{" "}
             <button
               type="button"
               onClick={() => navigate("/settings/projects")}
               className="text-primary hover:underline"
             >
-              Project Types
+              {t('package.project_types')}
             </button>
-            {" "}this package applies to (none = all types)
+            {" "}{t('package.applicable_types_help_2')}
           </p>
           {projectTypes.length === 0 ? (
             <div className="text-center py-4 text-muted-foreground">
-              <p className="text-sm">No project types exist yet.</p>
+              <p className="text-sm">{t('package.no_project_types')}</p>
               <button
                 type="button"
                 onClick={() => navigate("/settings/projects")}
                 className="text-sm text-primary hover:underline mt-1"
               >
-                Create Project Types
+                {t('package.create_project_types')}
               </button>
             </div>
           ) : (
@@ -1024,9 +1024,9 @@ export function EditPackageDialog({ package: pkg, open, onOpenChange, onPackageU
         {/* Visibility */}
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
-            <Label htmlFor="isActive">Visibility</Label>
+            <Label htmlFor="isActive">{t('package.visibility')}</Label>
             <p className="text-xs text-muted-foreground">
-              Active packages are visible to clients
+              {t('package.visibility_help')}
             </p>
           </div>
           <Switch

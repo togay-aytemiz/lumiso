@@ -228,7 +228,11 @@
     "no_services_in_category": "Bu kategoride hizmet yok",
     "service_deleted": "Hizmet Silindi",
     "service_deleted_desc": "Hizmet kaldırıldı",
-    "error_deleting": "Hizmet silinemedi"
+    "error_deleting": "Hizmet silinemedi",
+    "add": "Hizmet Ekle",
+    "edit": "Hizmetleri Düzenle",
+    "selected_services": "Seçili Hizmetler",
+    "services_updated": "Proje hizmetleri başarıyla güncellendi"
   },
   "project_stages": {
     "title": "Proje Aşamaları",
@@ -476,7 +480,6 @@
     "edit": "Düzenle",
     "delete": "Sil",
     "clearAll": "Tümünü Temizle",
-    "clearAll": "Tümünü Temizle",
     "done": "Bitti",
     "editServices": "Hizmetleri Düzenle",
     "scheduleSession": "Seans Planla",
@@ -490,7 +493,8 @@
     "creating": "Oluşturuluyor...",
     "scheduling": "Planlanıyor...",
     "deleting": "Siliniyor...",
-    "updateLead": "Müşteri Adayını Güncelle"
+    "updateLead": "Müşteri Adayını Güncelle",
+    "today": "Bugün"
   },
   "dialogs": {
     "addNewLead": "Yeni Müşteri Adayı Ekle",
@@ -892,26 +896,6 @@
     "update_payment": "Ödemeyi Güncelle",
     "payment_updated": "Ödeme başarıyla güncellendi"
   },
-  "services": {
-    "title": "Hizmetler",
-    "add": "Ekle",
-    "edit": "Düzenle",
-    "save": "Kaydet",
-    "saving": "Kaydediliyor...",
-    "cancel": "İptal",
-    "clear_all": "Tümünü Temizle",
-    "selected_services": "Seçili Hizmetler",
-    "no_services": "Atanmış hizmet yok",
-    "click_add_service": "Bu projeye hizmet eklemek için Hizmet Ekle'ye tıklayın",
-    "error_loading": "Hizmetler yüklenirken hata",
-    "services_updated": "Proje hizmetleri başarıyla güncellendi.",
-    "error_updating": "Hizmetler güncellenirken hata"
-  },
-  "sessions_section": {
-    "title": "Seanslar",
-    "sessions_count": "{count} seans",
-    "no_sessions": "Seans bulunamadı"
-  },
   "sessions_section": {
     "title": "Seanslar",
     "sessions_count": "{count} seans",
@@ -988,19 +972,6 @@
     "available_times": "Müsait Saatler",
     "slots": "slot"
   },
-  "services": {
-    "title": "Hizmetler",
-    "add": "Hizmet Ekle",
-    "edit": "Hizmetleri Düzenle",
-    "services_updated": "Proje hizmetleri başarıyla güncellendi",
-    "error_updating": "Hizmetler güncellenirken hata",
-    "selected_services": "Seçilen Hizmetler",
-    "cost": "Maliyet",
-    "selling": "Satış"
-  },
-  "buttons": {
-    "today": "Bugün"
-  },
   "success": {
     "saved": "Başarıyla kaydedildi",
     "created": "Başarıyla oluşturuldu",
@@ -1031,6 +1002,25 @@
     "project_sessions_count": "Bu proje için {{count}} seans",
     "project_sessions_count_plural": "Bu proje için {{count}} seans",
     "add_session": "Seans Ekle"
+  },
+  "sessions": {
+    "sessionNotFound": "Seans Bulunamadı",
+    "unableToLoadDetails": "Seans detayları yüklenemedi"
+  },
+  "sessionSheet": {
+    "fullDetails": "Tam Detaylar",
+    "edit": "Düzenle",
+    "close": "Kapat",
+    "overdueWarning": "Bu seans gecikmiş durumda",
+    "overdueDescription": "Lütfen seans durumunu güncelleyin veya gerekirse yeniden planlayın.",
+    "dateTime": "Tarih ve Saat",
+    "project": "Proje",
+    "notes": "Notlar",
+    "location": "Konum",
+    "clientDetails": "Müşteri Detayları",
+    "dangerZone": "Tehlike Bölgesi",
+    "deleteSession": "Seansı Sil",
+    "deleteWarning": "Bu işlem seansı ve tüm ilgili verileri kalıcı olarak silecektir."
   },
   "progress": {
     "todos_completed": "yapılacak tamamlandı"

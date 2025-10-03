@@ -228,7 +228,11 @@
     "no_services_in_category": "No services in this category",
     "service_deleted": "Service Deleted",
     "service_deleted_desc": "The service has been removed",
-    "error_deleting": "Failed to delete service"
+    "error_deleting": "Failed to delete service",
+    "add": "Add Service",
+    "edit": "Edit Services",
+    "selected_services": "Selected Services",
+    "services_updated": "Project services updated successfully"
   },
   "project_stages": {
     "title": "Project Stages",
@@ -334,6 +338,32 @@
     "today": "Today",
     "completed": "Completed",
     "lead": "Lead"
+  },
+  "sessions_form": {
+    "title": "Sessions",
+    "project_sessions_count": "{{count}} session for this project",
+    "project_sessions_count_plural": "{{count}} sessions for this project",
+    "no_sessions": "No sessions scheduled yet",
+    "add_sessions_hint": "Schedule your first session to get started"
+  },
+  "sessions": {
+    "sessionNotFound": "Session Not Found",
+    "unableToLoadDetails": "Unable to load session details"
+  },
+  "sessionSheet": {
+    "fullDetails": "Full Details",
+    "edit": "Edit",
+    "close": "Close",
+    "overdueWarning": "This session is overdue",
+    "overdueDescription": "Please update the session status or reschedule if needed.",
+    "dateTime": "Date & Time",
+    "project": "Project",
+    "notes": "Notes",
+    "location": "Location",
+    "clientDetails": "Client Details",
+    "dangerZone": "Danger Zone",
+    "deleteSession": "Delete Session",
+    "deleteWarning": "This will permanently delete the session and all related data."
   },
   "status": {
     "loading": "Loading...",

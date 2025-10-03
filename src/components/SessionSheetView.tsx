@@ -256,14 +256,14 @@ export default function SessionSheetView({
                   </div>
                   
                   <div className="flex items-center gap-1 shrink-0 self-start">
-                    <Button 
+                      <Button 
                       variant="ghost" 
                       size="sm" 
                       onClick={onViewFullDetails}
                       className="text-muted-foreground hover:bg-accent hover:text-accent-foreground h-8 px-2 gap-1 md:h-10 md:px-3"
                     >
                       <ExternalLink className="h-4 w-4" />
-                      <span className="text-sm hidden md:inline">Full Details</span>
+                      <span className="text-sm hidden md:inline">{tForms('sessionSheet.fullDetails')}</span>
                     </Button>
                     
                     <Button 
@@ -273,7 +273,7 @@ export default function SessionSheetView({
                       className="text-muted-foreground hover:bg-accent hover:text-accent-foreground h-8 px-2 gap-1 md:h-10 md:px-3"
                     >
                       <Edit className="h-4 w-4" />
-                      <span className="text-sm hidden md:inline">Edit</span>
+                      <span className="text-sm hidden md:inline">{tForms('sessionSheet.edit')}</span>
                     </Button>
                     
                     <Button 
@@ -282,7 +282,7 @@ export default function SessionSheetView({
                       onClick={() => onOpenChange(false)} 
                       className="text-muted-foreground hover:bg-accent hover:text-accent-foreground text-sm h-8 px-2 md:h-10 md:px-3"
                     >
-                      <span className="hidden md:inline">Close</span>
+                      <span className="hidden md:inline">{tForms('sessionSheet.close')}</span>
                       <X className="h-4 w-4 md:hidden" />
                     </Button>
                   </div>
@@ -295,8 +295,8 @@ export default function SessionSheetView({
                   <div className="flex items-center gap-3 text-orange-800">
                     <AlertTriangle className="h-5 w-5 text-orange-600" />
                     <div>
-                      <p className="font-medium">This session is overdue</p>
-                      <p className="text-sm text-orange-700">Please update the session status or reschedule if needed.</p>
+                      <p className="font-medium">{tForms('sessionSheet.overdueWarning')}</p>
+                      <p className="text-sm text-orange-700">{tForms('sessionSheet.overdueDescription')}</p>
                     </div>
                   </div>
                 </div>
@@ -308,7 +308,7 @@ export default function SessionSheetView({
                   <div className="flex-shrink-0">
                     <div className="flex items-center gap-2 mb-2">
                       <Calendar className="h-4 w-4 text-muted-foreground" />
-                      <label className="font-medium text-muted-foreground">Date & Time</label>
+                      <label className="font-medium text-muted-foreground">{tForms('sessionSheet.dateTime')}</label>
                     </div>
                     <p>{formatLongDate(session.session_date)} at {formatTime(session.session_time)}</p>
                   </div>
@@ -319,7 +319,7 @@ export default function SessionSheetView({
                       <div className="flex-shrink-0">
                         <div className="flex items-center gap-2 mb-2">
                           <FolderOpen className="h-4 w-4 text-muted-foreground" />
-                          <label className="font-medium text-muted-foreground">Project</label>
+                          <label className="font-medium text-muted-foreground">{tForms('sessionSheet.project')}</label>
                         </div>
                         <button
                           onClick={handleProjectClick}
@@ -340,7 +340,7 @@ export default function SessionSheetView({
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-2">
                                 <FileText className="h-4 w-4 text-muted-foreground" />
-                                <label className="font-medium text-muted-foreground">Notes</label>
+                                <label className="font-medium text-muted-foreground">{tForms('sessionSheet.notes')}</label>
                               </div>
                               <div className="relative group">
                                 <p className="line-clamp-2 cursor-help">{session.notes}</p>
@@ -362,7 +362,7 @@ export default function SessionSheetView({
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                                 </svg>
-                                <label className="font-medium text-muted-foreground">Location</label>
+                                <label className="font-medium text-muted-foreground">{tForms('sessionSheet.location')}</label>
                               </div>
                               <div className="relative group">
                                 <p className="line-clamp-2 cursor-help">{session.location}</p>
@@ -393,7 +393,7 @@ export default function SessionSheetView({
                           phone: session.leads.phone,
                           notes: session.leads.notes,
                         }}
-                        title="Client Details"
+                        title={tForms('sessionSheet.clientDetails')}
                         showQuickActions={true}
                         showClickableNames={true}
                       />
@@ -414,17 +414,17 @@ export default function SessionSheetView({
                     <section className="scroll-mt-[88px] w-full max-w-full overflow-hidden">
                       <div className="border border-destructive/20 bg-destructive/5 rounded-lg p-6">
                         <div className="space-y-4">
-                          <h3 className="font-medium text-destructive">Danger Zone</h3>
+                          <h3 className="font-medium text-destructive">{tForms('sessionSheet.dangerZone')}</h3>
                           <Button 
                             variant="outline" 
                             onClick={() => setIsDeleteDialogOpen(true)}
                             className="w-full border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
                             size="lg"
                           >
-                            Delete Session
+                            {tForms('sessionSheet.deleteSession')}
                           </Button>
                           <p className="text-sm text-muted-foreground text-center">
-                            This will permanently delete the session and all related data.
+                            {tForms('sessionSheet.deleteWarning')}
                           </p>
                         </div>
                       </div>
@@ -464,18 +464,18 @@ export default function SessionSheetView({
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Session</AlertDialogTitle>
+            <AlertDialogTitle>{tForms('sessionSheet.deleteSession')}</AlertDialogTitle>
             <AlertDialogDescription>
               {tMessages('confirm.deleteSession')} {tMessages('confirm.cannotUndo')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{tForms('buttons.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Delete
+              {tForms('buttons.delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

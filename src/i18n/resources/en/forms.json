@@ -1,7 +1,6 @@
 {
   "progress": {
-    "tasks_complete": "tasks complete",
-    "todos_completed": "todos completed"
+    "tasks_complete": "tasks complete"
   },
   "search": {
     "typeLabels": {
@@ -302,15 +301,6 @@
   "dateRangePicker": {
     "placeholder": "Pick a date range"
   },
-  "dateTimePicker": {
-    "placeholder": "Pick date & time",
-    "timeLabel": "Time",
-    "hour": "Hour",
-    "minute": "Min",
-    "today": "Today",
-    "clear": "Clear",
-    "done": "Done"
-  },
   "lead_table_columns": {
     "name": "Full Name",
     "email": "Email Address",
@@ -387,29 +377,6 @@
     "deleting": "Deleting...",
     "deleteLead": "Delete Lead",
     "successDescription": "Lead and all related data deleted successfully."
-  },
-  "sessions": {
-    "schedule_new": "Schedule Session",
-    "sessionNotFound": "Session Not Found",
-    "unableToLoadDetails": "Unable to load session details",
-    "available": "Available",
-    "scheduled": "Scheduled", 
-    "completed": "Completed",
-    "loading_clients": "Loading clients...",
-    "no_clients_match": "No clients match your search",
-    "no_clients_found": "No clients found",
-    "select_existing_client": "Select existing client"
-  },
-  "activities": {
-    "types": {
-      "call": "Call",
-      "email": "Email", 
-      "meeting": "Meeting",
-      "note": "Note",
-      "task": "Task",
-      "follow_up": "Follow Up",
-      "reminder": "Reminder"
-    }
   },
   "status": {
     "loading": "Loading...",

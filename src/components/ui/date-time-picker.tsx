@@ -20,7 +20,6 @@ import { cn, getUserLocale, getDateFnsLocale } from "@/lib/utils";
 import ReactCalendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import "@/components/react-calendar.css";
-import { useFormsTranslation } from '@/hooks/useTypedTranslation';
 
 interface DateTimePickerProps {
   value?: string; // ISO local string: YYYY-MM-DDTHH:mm
@@ -57,9 +56,8 @@ export const DateTimePicker: React.FC<DateTimePickerProps> = ({
   onChange,
   className,
   buttonClassName,
-  placeholder,
+  placeholder = "Pick date & time",
 }) => {
-  const { t } = useFormsTranslation();
   const { date: initialDate, hours: initialHours, minutes: initialMinutes } = useMemo(
     () => parseIsoLocal(value),
     [value]
@@ -96,7 +94,7 @@ export const DateTimePicker: React.FC<DateTimePickerProps> = ({
             )}
           >
             <CalendarIcon className="mr-2 h-4 w-4" />
-            {displayFormat(selectedDate, hours, minutes) || placeholder || t('dateTimePicker.placeholder')}
+            {displayFormat(selectedDate, hours, minutes) || placeholder}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0 rounded-xl border border-border shadow-md" align="start">
@@ -120,7 +118,7 @@ export const DateTimePicker: React.FC<DateTimePickerProps> = ({
             />
             <div className="px-1 pt-2">
               <Label className="text-xs text-muted-foreground flex items-center gap-1">
-                <Clock className="h-3 w-3" /> {t('dateTimePicker.timeLabel')}
+                <Clock className="h-3 w-3" /> Time
               </Label>
               <div className="mt-2 grid grid-cols-2 gap-2">
                 <Select value={String(hours)} onValueChange={(v) => {
@@ -132,7 +130,7 @@ export const DateTimePicker: React.FC<DateTimePickerProps> = ({
                   }
                 }}>
                   <SelectTrigger className="h-9 rounded-md">
-                    <SelectValue placeholder={t('dateTimePicker.hour')} />
+                    <SelectValue placeholder="Hour" />
                   </SelectTrigger>
                   <SelectContent align="start" className="max-h-64">
                     {hourOptions.map((h) => (
@@ -151,7 +149,7 @@ export const DateTimePicker: React.FC<DateTimePickerProps> = ({
                   }
                 }}>
                   <SelectTrigger className="h-9 rounded-md">
-                    <SelectValue placeholder={t('dateTimePicker.minute')} />
+                    <SelectValue placeholder="Min" />
                   </SelectTrigger>
                   <SelectContent align="start" className="max-h-64">
                     {minuteOptions.map((m) => (
@@ -175,7 +173,7 @@ export const DateTimePicker: React.FC<DateTimePickerProps> = ({
                       onChange(toIsoLocal(today, hours, minutes));
                     }}
                   >
-                    {t('dateTimePicker.today')}
+                    Today
                   </Button>
                   <Button
                     type="button"
@@ -189,7 +187,7 @@ export const DateTimePicker: React.FC<DateTimePickerProps> = ({
                       onChange("");
                     }}
                   >
-                    {t('dateTimePicker.clear')}
+                    Clear
                   </Button>
                 </div>
                 <Button
@@ -197,7 +195,7 @@ export const DateTimePicker: React.FC<DateTimePickerProps> = ({
                   size="sm"
                   onClick={() => setOpen(false)}
                 >
-                  {t('dateTimePicker.done')}
+                  Done
                 </Button>
               </div>
             </div>

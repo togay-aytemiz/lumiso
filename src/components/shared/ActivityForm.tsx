@@ -54,11 +54,7 @@ export function ActivityForm({ onSubmit, loading, placeholder }: ActivityFormPro
       {isReminderMode && (
         <div className="space-y-2">
           <Label>{t('activities.date_time_label')}</Label>
-          <DateTimePicker 
-            value={reminderDateTime} 
-            onChange={setReminderDateTime}
-            placeholder={t('dateTimePicker.placeholder')}
-          />
+          <DateTimePicker value={reminderDateTime} onChange={setReminderDateTime} />
         </div>
       )}
 

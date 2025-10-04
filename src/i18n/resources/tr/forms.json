@@ -1,4 +1,22 @@
 {
+  "activities": {
+    "types": {
+      "note": "Not",
+      "reminder": "Hatırlatıcı",
+      "call": "Arama",
+      "email": "E-posta",
+      "meeting": "Toplantı",
+      "task": "Görev",
+      "follow_up": "Takip"
+    }
+  },
+  "dateTimePicker": {
+    "placeholder": "Tarih ve saat seçin",
+    "time": "Saat",
+    "today": "Bugün",
+    "clear": "Temizle",
+    "done": "Tamam"
+  },
   "progress": {
     "tasks_complete": "görev tamamlandı"
   },

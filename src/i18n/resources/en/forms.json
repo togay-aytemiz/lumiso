@@ -1,4 +1,22 @@
 {
+  "activities": {
+    "types": {
+      "note": "Note",
+      "reminder": "Reminder",
+      "call": "Call",
+      "email": "Email",
+      "meeting": "Meeting",
+      "task": "Task",
+      "follow_up": "Follow Up"
+    }
+  },
+  "dateTimePicker": {
+    "placeholder": "Pick date & time",
+    "time": "Time",
+    "today": "Today",
+    "clear": "Clear",
+    "done": "Done"
+  },
   "progress": {
     "tasks_complete": "tasks complete"
   },

@@ -253,12 +253,21 @@
       "call": "Arama",
       "email": "E-posta",
       "meeting": "Toplantı",
-      "reminder": "Hatırlatıcı",
-      "note": "Not"
+      "note": "Not",
+      "task": "Görev",
+      "follow_up": "Takip",
+      "reminder": "Hatırlatıcı"
     },
+    "note_label": "Not",
+    "set_reminder_label": "Hatırlatıcı Kur?",
+    "add_note": "Not Ekle",
+    "add_reminder": "Hatırlatıcı Ekle",
+    "no_activities": "Henüz aktivite yok",
+    "date_time_label": "Tarih ve Saat",
+    "saving": "Kaydediliyor...",
+    "enter_note_placeholder": "Notunuzu girin...",
     "labels": {
       "content": "İçerik",
-      "date_time_label": "Tarih ve Saat",
       "reminder_date_time": "Hatırlatma Tarihi ve Saati"
     },
     "placeholders": {
@@ -286,24 +295,6 @@
     "today": "Bugün",
     "clear": "Temizle",
     "done": "Tamam"
-  },
-  "activities": {
-    "types": {
-      "call": "Arama",
-      "email": "E-posta",
-      "meeting": "Toplantı",
-      "note": "Not",
-      "task": "Görev",
-      "follow_up": "Takip",
-      "reminder": "Hatırlatıcı"
-    },
-    "note_label": "Not",
-    "set_reminder_label": "Hatırlatıcı Kur?",
-    "add_note": "Not Ekle",
-    "add_reminder": "Hatırlatıcı Ekle",
-    "date_time_label": "Tarih ve Saat",
-    "saving": "Kaydediliyor...",
-    "enter_note_placeholder": "Notunuzu girin..."
   },
   "sessions": {
     "schedule_new": "Seans Planla",

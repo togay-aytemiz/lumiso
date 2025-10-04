@@ -409,7 +409,15 @@
       "task": "Task",
       "follow_up": "Follow Up",
       "reminder": "Reminder"
-    }
+    },
+    "note_label": "Note",
+    "set_reminder_label": "Set Reminder?",
+    "add_note": "Add Note",
+    "add_reminder": "Add Reminder",
+    "no_activities": "No activities yet",
+    "date_time_label": "Date & Time",
+    "saving": "Saving...",
+    "enter_note_placeholder": "Enter your note..."
   },
   "status": {
     "loading": "Loading...",

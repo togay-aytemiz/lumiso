@@ -118,7 +118,7 @@ export const DateTimePicker: React.FC<DateTimePickerProps> = ({
             />
             <div className="px-1 pt-2">
               <Label className="text-xs text-muted-foreground flex items-center gap-1">
-                <Clock className="h-3 w-3" /> Time
+                <Clock className="h-3 w-3" /> {placeholder.includes('time') ? placeholder.split('&')[1].trim() : 'Time'}
               </Label>
               <div className="mt-2 grid grid-cols-2 gap-2">
                 <Select value={String(hours)} onValueChange={(v) => {
@@ -173,7 +173,7 @@ export const DateTimePicker: React.FC<DateTimePickerProps> = ({
                       onChange(toIsoLocal(today, hours, minutes));
                     }}
                   >
-                    Today
+                    {placeholder.includes('Bugün') || placeholder.includes('Today') ? (placeholder.includes('Bugün') ? 'Bugün' : 'Today') : 'Today'}
                   </Button>
                   <Button
                     type="button"
@@ -187,7 +187,7 @@ export const DateTimePicker: React.FC<DateTimePickerProps> = ({
                       onChange("");
                     }}
                   >
-                    Clear
+                    {placeholder.includes('Temizle') || placeholder.includes('Clear') ? (placeholder.includes('Temizle') ? 'Temizle' : 'Clear') : 'Clear'}
                   </Button>
                 </div>
                 <Button
@@ -195,7 +195,7 @@ export const DateTimePicker: React.FC<DateTimePickerProps> = ({
                   size="sm"
                   onClick={() => setOpen(false)}
                 >
-                  Done
+                  {placeholder.includes('Tamam') || placeholder.includes('Done') ? (placeholder.includes('Tamam') ? 'Tamam' : 'Done') : 'Done'}
                 </Button>
               </div>
             </div>

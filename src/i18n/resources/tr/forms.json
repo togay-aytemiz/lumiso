@@ -248,144 +248,17 @@
     "sessionNotFound": "Seans Bulunamadı",
     "unableToLoadDetails": "Seans detayları yüklenemedi"
   },
-  "sessions_form": {
-    "title": "Seanslar",
-    "add_session": "Seans Ekle",
-    "project_sessions_count": "Bu proje için {{count}} seans",
-    "project_sessions_count_plural": "Bu proje için {{count}} seans",
-    "no_sessions": "Henüz planlanmış seans yok",
-    "add_sessions_hint": "Başlamak için ilk seansınızı planlayın"
-  },
-  "activitiesHistory": {
-    "title": "Aktiviteler ve Geçmiş",
-    "activity": "Aktivite",
-    "history": "Geçmiş",
-    "enterNote": "Notunuzu girin...",
-    "leadActivities": "Müşteri Adayı Aktiviteleri",
-    "projectActivities": "Proje Aktiviteleri",
-    "noActivitiesYet": "Henüz aktivite yok",
-    "noHistoryAvailable": "Geçmiş bulunmuyor"
-  },
-  "clientDetails": {
-    "title": "Müşteri Detayları",
-    "fullName": "Ad Soyad",
-    "email": "E-posta",
-    "phone": "Telefon",
-    "notes": "Notlar",
-    "edit": "Düzenle",
-    "whatsApp": "WhatsApp",
-    "call": "Ara",
-    "createdOn": "Oluşturulma tarihi",
-    "noInfoAvailable": "Müşteri bilgisi mevcut değil."
-  },
-  "projectCard": {
-    "created": "Oluşturuldu",
-    "updated": "Güncellendi",
-    "remaining": "kalan"
-  },
-  "payments": {
-    "title": "Ödemeler",
-    "add_payment": "Ödeme Ekle",
-    "adding": "Ekleniyor..."
-  },
-  "project_sheet": {
-    "full_details": "Tam Detaylar",
-    "more": "Daha Fazla",
-    "close": "Kapat",
-    "edit_project": "Projeyi Düzenle"
-  },
-  "projectDetails": {
-    "activities": {
-      "title": "Proje Aktiviteleri",
-      "placeholder": "Proje notunuzu girin..."
-    }
-  },
-  "danger_zone": {
-    "title": "Tehlike Bölgesi",
-    "description": "Bu işlemler yıkıcıdır ve geri alınamaz. Dikkatli ilerleyin."
-  },
-  "activityLogs": {
-    "lead_created": "Müşteri adayı oluşturuldu",
-    "lead_updated": "Müşteri adayı güncellendi",
-    "lead_archived": "Müşteri adayı arşivlendi",
-    "lead_restored": "Müşteri adayı geri yüklendi",
-    "status_changed_from_to": "durum \"{{oldStatus}}\" den \"{{newStatus}}\" olarak değiştirildi",
-    "lead_updated_with_changes": "Müşteri adayı güncellendi: {{changes}}",
-    "field_added": "{{field}} eklendi: {{value}}",
-    "field_updated": "{{field}} güncellendi: {{value}}",
-    "field_removed": "{{field}} kaldırıldı: {{value}}",
-    "status_added": "Durum eklendi: {{status}}"
-  },
-  "kanban_settings": {
-    "title": "Kanban Kart Ayarları",
-    "description": "Proje kartlarınızda hangi bilgilerin görüneceğini özelleştirin. Daha temiz bir görünüm isteyen solo fotoğrafçılar için mükemmel.",
-    "project_name": "Proje Adı",
-    "project_name_description": "Kartlarda proje adlarını göster",
-    "client_name": "Müşteri Adı",
-    "client_name_description": "Kartlarda müşteri adlarını göster",
-    "project_type": "Proje Türü",
-    "project_type_description": "Kartlarda proje türü rozetlerini göster",
-    "todo_progress": "Yapılacaklar İlerlemesi",
-    "todo_progress_description": "Kartlarda yapılacaklar ilerleme çubuğunu göster",
-    "session_count": "Seans Sayısı",
-    "session_count_description": "Kartlarda seans sayısı ikonlarını göster",
-    "service_count": "Hizmet Sayısı",
-    "service_count_description": "Kartlarda hizmet sayısı ikonlarını göster",
-    "pro_tip": "İpucu",
-    "pro_tip_description": "Fotoğrafçılık işinizi verimli bir şekilde yönetmek için ihtiyacınız olan şeyleri tam olarak göstermek üzere proje kartlarınızı özelleştirin."
-  },
-  "projects": {
-    "pageTitle": "Projeler",
-    "pageSubtitle": "Tüm projelerinizi tek yerde yönetin",
-    "board": "Kanban",
-    "list": "Liste",
-    "archived": "Arşivlendi",
-    "boardSettings": "Kanban Ayarları",
-    "welcomeTutorialTitle": "Proje Yönetim Merkezinize Hoş Geldiniz",
-    "welcomeTutorialDescription": "Fotoğrafçılık projelerinizi görüntüleme ve organize etmenin üç güçlü yolunu keşfedelim.",
-    "boardViewTitle": "Kanban Görünümü",
-    "boardViewDescription": "Kanban görünümünün nasıl çalıştığını görmek için bir projeyi sürükleyip başka bir sütuna bırakmayı deneyin.",
-    "boardViewTooltip": "Devam etmek için bir projeyi sürükleyip başka bir sütuna bırakın",
-    "listViewTitle": "Liste Görünümü",
-    "listViewDescription": "Proje bilgilerini tablo formatında görmek için yukarıdaki 'Liste' sekmesine tıklayın.",
-    "listViewContent": "Liste görünümü, birden fazla proje hakkında detaylı bilgileri aynı anda görmek, sıralama ve filtreleme yetenekleriyle birlikte görmeniz gerektiğinde mükemmeldir. Bu görünüm veri analizi yapmak ve bilinçli kararlar almak için harikadır.",
-    "listViewTooltip": "Devam etmek için yukarıdaki Liste sekmesine tıklayın",
-    "archivedTitle": "Arşivlenmiş Projeler",
-    "archivedDescription": "Tamamlanan projelerin nasıl organize edildiğini görmek için yukarıdaki 'Arşivlendi' sekmesine tıklayın.",
-    "archivedContent": "Arşivlenmiş görünüm, tamamlanan projeleri aktif olanlardan ayırarak çalışma alanınızı temiz tutar. Bu, referans ve portföy oluşturma için geçmiş projeleri erişilebilir tutarken mevcut işe odaklanmanıza yardımcı olur.",
-    "archivedTooltip": "Devam etmek için yukarıdaki Arşivlendi sekmesine tıklayın",
-    "completionTitle": "Hazırsınız!",
-    "completionContent": "Artık farklı proje görünümleri arasında nasıl gezineceğinizi biliyorsunuz. Her görünümün güçlü yanları var - iş akışı yönetimi için kanbanı, detaylı analiz için listeyi ve tamamlanan projeler için arşivlenmiş görünümü kullanın."
-  },
-  "sessionBanner": {
-    "session": "Seans",
-    "pastDue": "Süresi geçmiş",
-    "needsAttention": "Dikkat gerekli"
-  },
-  "leadDangerZone": {
-    "deleteLead": "Müşteri Adayını Sil",
-    "deleteWarning": "Bu işlem müşteri adayını ve TÜM ilgili verileri kalıcı olarak silecektir: projeler, seanslar, hatırlatıcılar/notlar, ödemeler, hizmetler ve aktiviteler."
-  },
   "activities": {
     "types": {
       "call": "Arama",
       "email": "E-posta",
       "meeting": "Toplantı",
-      "note": "Not",
-      "task": "Görev",
-      "follow_up": "Takip",
-      "reminder": "Hatırlatıcı"
+      "reminder": "Hatırlatıcı",
+      "note": "Not"
     },
-    "note_label": "Not",
-    "set_reminder_label": "Hatırlatıcı Kur?",
-    "add_note": "Not Ekle",
-    "add_reminder": "Hatırlatıcı Ekle",
-    "no_activities": "Henüz aktivite yok",
-    "date_time_label": "Tarih ve Saat",
-    "saving": "Kaydediliyor...",
-    "enter_note_placeholder": "Notunuzu girin...",
     "labels": {
       "content": "İçerik",
+      "date_time_label": "Tarih ve Saat",
       "reminder_date_time": "Hatırlatma Tarihi ve Saati"
     },
     "placeholders": {
@@ -413,6 +286,24 @@
     "today": "Bugün",
     "clear": "Temizle",
     "done": "Tamam"
+  },
+  "activities": {
+    "types": {
+      "call": "Arama",
+      "email": "E-posta",
+      "meeting": "Toplantı",
+      "note": "Not",
+      "task": "Görev",
+      "follow_up": "Takip",
+      "reminder": "Hatırlatıcı"
+    },
+    "note_label": "Not",
+    "set_reminder_label": "Hatırlatıcı Kur?",
+    "add_note": "Not Ekle",
+    "add_reminder": "Hatırlatıcı Ekle",
+    "date_time_label": "Tarih ve Saat",
+    "saving": "Kaydediliyor...",
+    "enter_note_placeholder": "Notunuzu girin..."
   },
   "sessions": {
     "schedule_new": "Seans Planla",

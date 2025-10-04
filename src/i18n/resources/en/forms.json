@@ -456,6 +456,68 @@
     "title": "Danger Zone",
     "description": "These actions are destructive and cannot be undone. Proceed with caution."
   },
+  "activityLogs": {
+    "lead_created": "Lead created",
+    "lead_updated": "Lead updated",
+    "lead_archived": "Lead archived",
+    "lead_restored": "Lead restored",
+    "status_changed_from_to": "status changed from \"{{oldStatus}}\" to \"{{newStatus}}\"",
+    "lead_updated_with_changes": "Lead updated: {{changes}}",
+    "field_added": "{{field}} added: {{value}}",
+    "field_updated": "{{field}} updated: {{value}}",
+    "field_removed": "{{field}} removed: {{value}}",
+    "status_added": "Status added: {{status}}"
+  },
+  "kanban_settings": {
+    "title": "Kanban Card Settings",
+    "description": "Customize what information appears on your project cards. Perfect for solo photographers who want a cleaner view.",
+    "project_name": "Project Name",
+    "project_name_description": "Show project names on cards",
+    "client_name": "Client Name",
+    "client_name_description": "Show client names on cards",
+    "project_type": "Project Type",
+    "project_type_description": "Show project type badges on cards",
+    "todo_progress": "Todo Progress",
+    "todo_progress_description": "Show todo progress bar on cards",
+    "session_count": "Session Count",
+    "session_count_description": "Show session count icons on cards",
+    "service_count": "Service Count",
+    "service_count_description": "Show service count icons on cards",
+    "pro_tip": "Pro Tip",
+    "pro_tip_description": "Customize your project cards to show exactly what you need to manage your photography business efficiently."
+  },
+  "projects": {
+    "pageTitle": "Projects",
+    "pageSubtitle": "Manage all your projects in one place",
+    "board": "Board",
+    "list": "List",
+    "archived": "Archived",
+    "boardSettings": "Board Settings",
+    "welcomeTutorialTitle": "Welcome to Your Project Management Hub",
+    "welcomeTutorialDescription": "Let's explore three powerful ways to view and organize your photography projects.",
+    "boardViewTitle": "Board View",
+    "boardViewDescription": "Try dragging a project to a different column to see how the board view works.",
+    "boardViewTooltip": "Drag a project to a different column to continue",
+    "listViewTitle": "List View",
+    "listViewDescription": "Click the 'List' tab above to see project information in a table format.",
+    "listViewContent": "List view is perfect when you need to see detailed information about multiple projects at once, with sorting and filtering capabilities. This view is great for data analysis and making informed decisions.",
+    "listViewTooltip": "Click the List tab above to continue",
+    "archivedTitle": "Archived Projects",
+    "archivedDescription": "Click the 'Archived' tab above to see how completed projects are organized.",
+    "archivedContent": "The archived view keeps completed projects separate from active ones, helping you keep your workspace clean. This keeps past projects accessible for reference and portfolio building while you focus on current work.",
+    "archivedTooltip": "Click the Archived tab above to continue",
+    "completionTitle": "You're All Set!",
+    "completionContent": "You now know how to navigate between different project views. Each view has its strengths—use the board for workflow management, the list for detailed analysis, and the archived view for completed projects."
+  },
+  "sessionBanner": {
+    "session": "Session",
+    "pastDue": "Past Due",
+    "needsAttention": "Needs Attention"
+  },
+  "leadDangerZone": {
+    "deleteLead": "Delete Lead",
+    "deleteWarning": "This will permanently delete the lead and ALL related data: projects, sessions, reminders/notes, payments, services, and activities."
+  },
   "activities": {
     "types": {
       "call": "Call",

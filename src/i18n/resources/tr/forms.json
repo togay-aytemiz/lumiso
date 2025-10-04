@@ -248,6 +248,62 @@
     "sessionNotFound": "Seans Bulunamadı",
     "unableToLoadDetails": "Seans detayları yüklenemedi"
   },
+  "sessions_form": {
+    "title": "Seanslar",
+    "add_session": "Seans Ekle",
+    "project_sessions_count": "Bu proje için {{count}} seans",
+    "project_sessions_count_plural": "Bu proje için {{count}} seans",
+    "no_sessions": "Henüz planlanmış seans yok",
+    "add_sessions_hint": "Başlamak için ilk seansınızı planlayın"
+  },
+  "activitiesHistory": {
+    "title": "Aktiviteler ve Geçmiş",
+    "activity": "Aktivite",
+    "history": "Geçmiş",
+    "enterNote": "Notunuzu girin...",
+    "leadActivities": "Müşteri Adayı Aktiviteleri",
+    "projectActivities": "Proje Aktiviteleri",
+    "noActivitiesYet": "Henüz aktivite yok",
+    "noHistoryAvailable": "Geçmiş bulunmuyor"
+  },
+  "clientDetails": {
+    "title": "Müşteri Detayları",
+    "fullName": "Ad Soyad",
+    "email": "E-posta",
+    "phone": "Telefon",
+    "notes": "Notlar",
+    "edit": "Düzenle",
+    "whatsApp": "WhatsApp",
+    "call": "Ara",
+    "createdOn": "Oluşturulma tarihi",
+    "noInfoAvailable": "Müşteri bilgisi mevcut değil."
+  },
+  "projectCard": {
+    "created": "Oluşturuldu",
+    "updated": "Güncellendi",
+    "remaining": "kalan"
+  },
+  "payments": {
+    "title": "Ödemeler",
+    "add_payment": "Ödeme Ekle",
+    "adding": "Ekleniyor..."
+  },
+  "project_sheet": {
+    "full_details": "Tam Detaylar",
+    "more": "Daha Fazla",
+    "close": "Kapat",
+    "edit_project": "Projeyi Düzenle"
+  },
+  "projectDetails": {
+    "activities": {
+      "title": "Proje Aktiviteleri",
+      "placeholder": "Proje notunuzu girin..."
+    }
+  },
+  "danger_zone": {
+    "title": "Tehlike Bölgesi",
+    "description": "Bu işlemler yıkıcıdır ve geri alınamaz. Dikkatli ilerleyin."
+  },
   "activities": {
     "types": {
       "call": "Arama",

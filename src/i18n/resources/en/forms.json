@@ -393,12 +393,68 @@
     "sessionNotFound": "Session Not Found",
     "unableToLoadDetails": "Unable to load session details",
     "available": "Available",
-    "scheduled": "Scheduled", 
+    "scheduled": "Scheduled",
     "completed": "Completed",
     "loading_clients": "Loading clients...",
     "no_clients_match": "No clients match your search",
     "no_clients_found": "No clients found",
     "select_existing_client": "Select existing client"
+  },
+  "sessions_form": {
+    "title": "Sessions",
+    "add_session": "Add Session",
+    "project_sessions_count": "{{count}} session for this project",
+    "project_sessions_count_plural": "{{count}} sessions for this project",
+    "no_sessions": "No sessions scheduled yet",
+    "add_sessions_hint": "Schedule your first session to get started"
+  },
+  "activitiesHistory": {
+    "title": "Activities and History",
+    "activity": "Activity",
+    "history": "History",
+    "enterNote": "Enter your note...",
+    "leadActivities": "Lead Activities",
+    "projectActivities": "Project Activities",
+    "noActivitiesYet": "No activities yet",
+    "noHistoryAvailable": "No history available"
+  },
+  "clientDetails": {
+    "title": "Client Details",
+    "fullName": "Full Name",
+    "email": "Email",
+    "phone": "Phone",
+    "notes": "Notes",
+    "edit": "Edit",
+    "whatsApp": "WhatsApp",
+    "call": "Call",
+    "createdOn": "Created on",
+    "noInfoAvailable": "No client information available."
+  },
+  "projectCard": {
+    "created": "Created",
+    "updated": "Updated",
+    "remaining": "remaining"
+  },
+  "payments": {
+    "title": "Payments",
+    "add_payment": "Add Payment",
+    "adding": "Adding..."
+  },
+  "project_sheet": {
+    "full_details": "Full Details",
+    "more": "More",
+    "close": "Close",
+    "edit_project": "Edit Project"
+  },
+  "projectDetails": {
+    "activities": {
+      "title": "Project Activities",
+      "placeholder": "Enter your project note..."
+    }
+  },
+  "danger_zone": {
+    "title": "Danger Zone",
+    "description": "These actions are destructive and cannot be undone. Proceed with caution."
   },
   "activities": {
     "types": {

@@ -302,6 +302,15 @@
   "dateRangePicker": {
     "placeholder": "Pick a date range"
   },
+  "dateTimePicker": {
+    "placeholder": "Pick date & time",
+    "timeLabel": "Time",
+    "hour": "Hour",
+    "minute": "Min",
+    "today": "Today",
+    "clear": "Clear",
+    "done": "Done"
+  },
   "lead_table_columns": {
     "name": "Full Name",
     "email": "Email Address",

@@ -365,6 +365,7 @@
     "add_sessions_hint": "Schedule your first session to get started"
   },
   "sessions": {
+    "schedule_new": "Schedule New Session",
     "sessionNotFound": "Session Not Found",
     "unableToLoadDetails": "Unable to load session details"
   },

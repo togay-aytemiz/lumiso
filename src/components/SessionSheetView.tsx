@@ -146,6 +146,7 @@ export default function SessionSheetView({
     
     const success = await deleteSession(session.id);
     if (success) {
+      onSessionUpdated?.(); // Notify parent to refresh
       onOpenChange(false);
     }
   };

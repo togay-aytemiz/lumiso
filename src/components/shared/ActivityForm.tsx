@@ -58,6 +58,10 @@ export function ActivityForm({ onSubmit, loading, placeholder }: ActivityFormPro
             value={reminderDateTime} 
             onChange={setReminderDateTime}
             placeholder={t('dateTimePicker.placeholder')}
+            timeLabel={t('dateTimePicker.time')}
+            todayLabel={t('dateTimePicker.today')}
+            clearLabel={t('dateTimePicker.clear')}
+            doneLabel={t('dateTimePicker.done')}
           />
         </div>
       )}

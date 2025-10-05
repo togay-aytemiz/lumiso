@@ -27,6 +27,10 @@ interface DateTimePickerProps {
   className?: string;
   buttonClassName?: string;
   placeholder?: string;
+  timeLabel?: string;
+  todayLabel?: string;
+  clearLabel?: string;
+  doneLabel?: string;
 }
 
 function toIsoLocal(date: Date, hours: number, minutes: number) {
@@ -57,6 +61,10 @@ export const DateTimePicker: React.FC<DateTimePickerProps> = ({
   className,
   buttonClassName,
   placeholder = "Pick date & time",
+  timeLabel = "Time",
+  todayLabel = "Today",
+  clearLabel = "Clear",
+  doneLabel = "Done",
 }) => {
   const { date: initialDate, hours: initialHours, minutes: initialMinutes } = useMemo(
     () => parseIsoLocal(value),
@@ -118,7 +126,7 @@ export const DateTimePicker: React.FC<DateTimePickerProps> = ({
             />
             <div className="px-1 pt-2">
               <Label className="text-xs text-muted-foreground flex items-center gap-1">
-                <Clock className="h-3 w-3" /> {placeholder.includes('time') ? placeholder.split('&')[1].trim() : 'Time'}
+                <Clock className="h-3 w-3" /> {timeLabel}
               </Label>
               <div className="mt-2 grid grid-cols-2 gap-2">
                 <Select value={String(hours)} onValueChange={(v) => {
@@ -173,7 +181,7 @@ export const DateTimePicker: React.FC<DateTimePickerProps> = ({
                       onChange(toIsoLocal(today, hours, minutes));
                     }}
                   >
-                    {placeholder.includes('Bugün') || placeholder.includes('Today') ? (placeholder.includes('Bugün') ? 'Bugün' : 'Today') : 'Today'}
+                    {todayLabel}
                   </Button>
                   <Button
                     type="button"
@@ -187,7 +195,7 @@ export const DateTimePicker: React.FC<DateTimePickerProps> = ({
                       onChange("");
                     }}
                   >
-                    {placeholder.includes('Temizle') || placeholder.includes('Clear') ? (placeholder.includes('Temizle') ? 'Temizle' : 'Clear') : 'Clear'}
+                    {clearLabel}
                   </Button>
                 </div>
                 <Button
@@ -195,7 +203,7 @@ export const DateTimePicker: React.FC<DateTimePickerProps> = ({
                   size="sm"
                   onClick={() => setOpen(false)}
                 >
-                  {placeholder.includes('Tamam') || placeholder.includes('Done') ? (placeholder.includes('Tamam') ? 'Tamam' : 'Done') : 'Done'}
+                  {doneLabel}
                 </Button>
               </div>
             </div>

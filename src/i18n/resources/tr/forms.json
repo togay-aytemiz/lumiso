@@ -1021,10 +1021,6 @@
     "project_sessions_count_plural": "Bu proje için {{count}} seans",
     "add_session": "Seans Ekle"
   },
-  "sessions": {
-    "sessionNotFound": "Seans Bulunamadı",
-    "unableToLoadDetails": "Seans detayları yüklenemedi"
-  },
   "sessionSheet": {
     "fullDetails": "Tam Detaylar",
     "edit": "Düzenle",
@@ -1194,21 +1190,6 @@
     "no_addons": "Eklenti yok",
     "delete_package": "Paketi Sil",
     "delete_confirm": "\"{{name}}\" paketini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz."
-  },
-  "services": {
-    "title": "Hizmetler",
-    "description": "Paketlere dahil edilebilecek bireysel hizmetleri yönetin",
-    "service_deleted": "Hizmet Silindi",
-    "service_deleted_desc": "Hizmet başarıyla silindi",
-    "error_deleting": "Hizmet silinirken hata oluştu",
-    "uncategorized": "Kategorisiz",
-    "add_service": "Hizmet Ekle",
-    "no_services": "Henüz hizmet yok",
-    "add_first_service": "İlk hizmetinizi ekleyin",
-    "cost": "Maliyet",
-    "selling": "Satış",
-    "view_only": "Sadece Görüntüle",
-    "no_services_in_category": "Bu kategoride hizmet yok"
   },
   "lead_fields": {
     "title": "Özel Müşteri Adayı Alanları",

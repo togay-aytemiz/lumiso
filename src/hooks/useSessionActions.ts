@@ -19,10 +19,14 @@ export const useSessionActions = () => {
 
       if (error) throw error;
 
-      // Delete from Google Calendar
-      await deleteSessionEvent(sessionId);
+      // Delete from Google Calendar (non-blocking)
+      try {
+        await deleteSessionEvent(sessionId);
+      } catch (calendarError) {
+        console.warn('Calendar deletion failed (non-blocking):', calendarError);
+      }
 
-      // Cancel session reminders
+      // Cancel session reminders (non-blocking) 
       try {
         await cancelSessionReminders(sessionId);
       } catch (reminderError) {

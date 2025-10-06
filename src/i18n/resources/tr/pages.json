@@ -1027,29 +1027,6 @@
         "error_title": "Hata"
       }
     }
-  },
-  {
-  "auth": {
-    "sign_in": {
-      "title": "Giriş yap",
-      "subtitle": "Hesabına eriş",
-      "button": "Giriş yap",
-      "link": "Hesabın yok mu"
-    },
-    "sign_up": {
-      "title": "Kayıt ol",
-      "subtitle": "Yeni hesap oluştur",
-      "button": "Kayıt ol",
-      "link": "Zaten hesabın var mı"
-    }
-  },
-  "labels": {
-    "email": "E-posta",
-    "password": "Şifre"
-  },
-  "placeholders": {
-    "enter_email": "E-posta adresini yaz",
-    "enter_password": "Şifreni yaz"
   }
-}
+
 }

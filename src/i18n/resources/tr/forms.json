@@ -955,6 +955,12 @@
       "title": "Hizmetler",
       "emptyState": "Henüz hizmet eklenmedi",
       "addHint": "Proje çıktılarını takip etmek için hizmet ekleyin"
+    },
+    "dangerZone": {
+      "description": "Bu işlem projeyi ve tüm ilgili verileri kalıcı olarak silecektir.",
+      "confirmDescription": "Bu işlem projeyi ve tüm ilgili verileri kalıcı olarak silecektir. Bu işlem geri alınamaz.",
+      "confirmCancel": "İptal",
+      "confirmDelete": "Projeyi Sil"
     }
   },
   "sessionScheduling": {

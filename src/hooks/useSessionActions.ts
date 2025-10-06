@@ -1,13 +1,11 @@
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useSessionReminderScheduling } from '@/hooks/useSessionReminderScheduling';
-import { useCalendarSync } from './useCalendarSync';
 import { useWorkflowTriggers } from './useWorkflowTriggers';
 
 export const useSessionActions = () => {
   const { toast } = useToast();
   const { cancelSessionReminders } = useSessionReminderScheduling();
-  const { deleteSessionEvent } = useCalendarSync();
   const { triggerSessionCompleted, triggerSessionCancelled } = useWorkflowTriggers();
 
   const deleteSession = async (sessionId: string) => {
@@ -19,14 +17,7 @@ export const useSessionActions = () => {
 
       if (error) throw error;
 
-      // Delete from Google Calendar (non-blocking)
-      try {
-        await deleteSessionEvent(sessionId);
-      } catch (calendarError) {
-        console.warn('Calendar deletion failed (non-blocking):', calendarError);
-      }
-
-      // Cancel session reminders (non-blocking) 
+      // Cancel session reminders (non-blocking)
       try {
         await cancelSessionReminders(sessionId);
       } catch (reminderError) {

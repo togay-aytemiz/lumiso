@@ -5,7 +5,6 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
 import { toast } from "@/hooks/use-toast";
-import { useCalendarSync } from "@/hooks/useCalendarSync";
 import { useFormsTranslation } from "@/hooks/useTypedTranslation";
 
 interface ProjectActivity {
@@ -40,7 +39,6 @@ export function ProjectActivitySection({
   const [activities, setActivities] = useState<ProjectActivity[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const { createReminderEvent } = useCalendarSync();
 
   useEffect(() => {
     fetchProjectActivities();
@@ -116,19 +114,6 @@ export function ProjectActivitySection({
         .select('id')
         .single();
       if (error) throw error;
-
-      // Sync reminder to Google Calendar with project context
-      if (isReminderMode && newActivity) {
-        createReminderEvent({
-          id: newActivity.id,
-          lead_id: leadId,
-          content: `${projectName}: ${content.trim()}`,
-          reminder_date: reminderDateTime!.split('T')[0],
-          reminder_time: reminderDateTime!.split('T')[1]
-        }, {
-          name: leadName
-        });
-      }
 
       toast({
         title: t("success.saved"),

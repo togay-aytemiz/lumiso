@@ -169,13 +169,13 @@ export function EnhancedAddLeadDialog({
       // Save field values
       await upsertFieldValues(newLead.id, fieldValues);
 
-      toast.success(t('messages.leadAddedSuccessfully'));
+      toast.success("The lead has been created successfully with custom field data.");
 
       onSuccess?.();
       onClose();
     } catch (error) {
       console.error('Failed to create lead:', error);
-      toast.error(t('messages.errorAddingLead'));
+      toast.error(error instanceof Error ? error.message : "Failed to create lead");
     } finally {
       setLoading(false);
     }
@@ -205,10 +205,10 @@ export function EnhancedAddLeadDialog({
       variant: "outline" as const,
     },
     {
-     label: loading ? t('leadDialog.creating') : t('leadDialog.createButton'),
-     onClick: form.handleSubmit(onSubmit),
-     loading,
-     disabled: loading || fieldsLoading,
+      label: loading ? "Creating..." : "Create Lead",
+      onClick: form.handleSubmit(onSubmit),
+      loading,
+      disabled: loading || fieldsLoading,
     }
   ];
 
@@ -239,7 +239,7 @@ export function EnhancedAddLeadDialog({
       >
         <div className="space-y-1 mb-6">
           <p className="text-sm text-muted-foreground">
-            {t('leadDialog.addSubtitle')}
+            Create a new lead and capture custom information using your configured fields.
           </p>
         </div>
 
@@ -259,7 +259,7 @@ export function EnhancedAddLeadDialog({
         onDiscard={navigation.handleDiscardChanges}
         onStay={navigation.handleStayOnModal}
         onSaveAndExit={navigation.handleSaveAndExit}
-        message={t('dialogs.unsavedChanges')}
+        message="You have unsaved lead changes."
       />
     </>
   );

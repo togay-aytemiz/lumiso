@@ -765,7 +765,8 @@
   "projectCard": {
     "created": "Oluşturuldu",
     "updated": "Güncellendi",
-    "remaining": "kalan"
+    "remaining": "kalan",
+    "todosCompleted": "görev tamamlandı"
   },
   "activitiesHistory": {
     "title": "Aktiviteler ve Geçmiş",

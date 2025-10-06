@@ -169,13 +169,13 @@ export function EnhancedAddLeadDialog({
       // Save field values
       await upsertFieldValues(newLead.id, fieldValues);
 
-      toast.success("The lead has been created successfully with custom field data.");
+      toast.success(t('messages.leadAddedSuccessfully'));
 
       onSuccess?.();
       onClose();
     } catch (error) {
       console.error('Failed to create lead:', error);
-      toast.error(error instanceof Error ? error.message : "Failed to create lead");
+      toast.error(t('messages.errorAddingLead'));
     } finally {
       setLoading(false);
     }
@@ -198,15 +198,19 @@ export function EnhancedAddLeadDialog({
     }
   };
 
- const footerActions = [
-  { label: t('leadDialog.cancel'), onClick: onClose, variant: 'outline' as const },
-  {
-    label: loading ? t('leadDialog.creating') : t('leadDialog.createButton'),
-    onClick: form.handleSubmit(onSubmit),
-    loading,
-    disabled: loading || fieldsLoading,
-  },
-];
+  const footerActions = [
+    {
+      label: t('leadDialog.cancel'),
+      onClick: onClose,
+      variant: "outline" as const,
+    },
+    {
+     label: loading ? t('leadDialog.creating') : t('leadDialog.createButton'),
+     onClick: form.handleSubmit(onSubmit),
+     loading,
+     disabled: loading || fieldsLoading,
+    }
+  ];
 
   if (fieldsLoading) {
     return (
@@ -234,10 +238,10 @@ export function EnhancedAddLeadDialog({
         footerActions={footerActions}
       >
         <div className="space-y-1 mb-6">
-    <p className="text-sm text-muted-foreground">
-      {t('leadDialog.addSubtitle')}
-    </p>
-  </div>
+          <p className="text-sm text-muted-foreground">
+            {t('leadDialog.addSubtitle')}
+          </p>
+        </div>
 
         <Form {...form}>
           <DynamicLeadFormFields
@@ -251,12 +255,12 @@ export function EnhancedAddLeadDialog({
       </AppSheetModal>
       
       <NavigationGuardDialog
-  open={navigation.showGuard}
-  onDiscard={navigation.handleDiscardChanges}
-  onStay={navigation.handleStayOnModal}
-  onSaveAndExit={navigation.handleSaveAndExit}
-  message={t('dialogs.unsavedChanges')}
-/>
+        open={navigation.showGuard}
+        onDiscard={navigation.handleDiscardChanges}
+        onStay={navigation.handleStayOnModal}
+        onSaveAndExit={navigation.handleSaveAndExit}
+        message={t('dialogs.unsavedChanges')}
+      />
     </>
   );
 }

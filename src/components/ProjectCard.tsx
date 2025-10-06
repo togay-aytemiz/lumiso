@@ -35,7 +35,7 @@ interface ProjectCardProps {
 export function ProjectCard({ project, onView, refreshTrigger, onQuickView }: ProjectCardProps) {
   const { progress, loading } = useProjectProgress(project.id, refreshTrigger);
   const { paymentSummary, loading: paymentsLoading } = useProjectPayments(project.id, refreshTrigger);
-  const { t: tForms } = useFormsTranslation();
+  const { t } = useFormsTranslation();
 
   const [isArchived, setIsArchived] = useState(false);
   useEffect(() => {
@@ -93,11 +93,13 @@ export function ProjectCard({ project, onView, refreshTrigger, onQuickView }: Pr
             
             {/* Progress Summary Text */}
             {!loading && progress.total > 0 && (
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <CheckCircle2 className="h-3 w-3 flex-shrink-0" />
-                <span>{progress.completed}/{progress.total} {tForms("projectCard.todosCompleted")}</span>
-              </div>
-            )}
+    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+      <CheckCircle2 className="h-3 w-3 flex-shrink-0" />
+      <span>
+        {progress.completed}/{progress.total} {t("projectCard.todosCompleted")}
+      </span>
+    </div>
+  )}
 
             {/* Progress Bar */}
             {!loading && progress.total > 0 && (

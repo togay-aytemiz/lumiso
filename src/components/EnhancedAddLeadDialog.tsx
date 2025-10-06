@@ -205,7 +205,7 @@ export function EnhancedAddLeadDialog({
       variant: "outline" as const,
     },
     {
-      label: loading ? "Creating..." : "Create Lead",
+      label: loading ? t('leadDialog.creating') : t('leadDialog.createButton'),
       onClick: form.handleSubmit(onSubmit),
       loading,
       disabled: loading || fieldsLoading,
@@ -239,7 +239,7 @@ export function EnhancedAddLeadDialog({
       >
         <div className="space-y-1 mb-6">
           <p className="text-sm text-muted-foreground">
-            Create a new lead and capture custom information using your configured fields.
+            {t('leadDialog.addSubtitle')}
           </p>
         </div>
 
@@ -259,7 +259,7 @@ export function EnhancedAddLeadDialog({
         onDiscard={navigation.handleDiscardChanges}
         onStay={navigation.handleStayOnModal}
         onSaveAndExit={navigation.handleSaveAndExit}
-        message="You have unsaved lead changes."
+        message={t('dialogs.unsavedChanges')}
       />
     </>
   );

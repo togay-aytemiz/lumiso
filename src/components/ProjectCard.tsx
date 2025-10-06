@@ -93,7 +93,9 @@ export function ProjectCard({ project, onView, refreshTrigger, onQuickView }: Pr
             {!loading && progress.total > 0 && (
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <CheckCircle2 className="h-3 w-3 flex-shrink-0" />
-                <span>{progress.completed}/{progress.total} {t("progress.todos_completed")}</span>
+                <span>
+                  {progress.completed}/{progress.total} {t("forms:progress.todos_completed", { count: progress.completed })}
+                </span>
               </div>
             )}
 

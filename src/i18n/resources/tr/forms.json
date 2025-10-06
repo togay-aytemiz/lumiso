@@ -1369,5 +1369,27 @@
     "DD/MM/YYYY": "GG/AA/YYYY (örn., 31/12/2024)",
     "MM/DD/YYYY": "AA/GG/YYYY (örn., 12/31/2024)",
     "YYYY-MM-DD": "YYYY-AA-GG (örn., 2024-12-31)"
+  },
+  "auth": {
+    "sign_in": {
+      "title": "Giriş yap",
+      "subtitle": "Hesabına eriş",
+      "button": "Giriş yap",
+      "link": "Hesabın yok mu"
+    },
+    "sign_up": {
+      "title": "Kayıt ol",
+      "subtitle": "Yeni hesap oluştur",
+      "button": "Kayıt ol",
+      "link": "Zaten hesabın var mı"
+    }
+  },
+  "labels": {
+    "email": "E-posta",
+    "password": "Şifre"
+  },
+  "placeholders": {
+    "enter_email": "E-posta adresini yaz",
+    "enter_password": "Şifreni yaz"
   }
 }

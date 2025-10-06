@@ -92,10 +92,12 @@
     "noFieldsAvailable": "Kullanılabilir form alanı yok"
   },
   "leadDialog": {
-    "addTitle": "Yeni Müşteri Ekle",
-    "editTitle": "Müşteriyi Düzenle",
-    "createButton": "Müşteri Oluştur",
-    "updateButton": "Müşteriyi Güncelle",
+    "addTitle": "Yeni Müşteri Adayı Ekle",
+    "addSubtitle": "Yapılandırdığınız alanlarla yeni bir müşteri adayı oluşturun.",
+    "createButton": "Müşteri Adayı Oluştur",
+    "creating": "Oluşturuluyor...",
+    "editTitle": "Müşteri Adayını Düzenle",
+    "updateButton": "Müşteri Adayını Güncelle",
     "cancel": "İptal"
   },
   "placeholders": {

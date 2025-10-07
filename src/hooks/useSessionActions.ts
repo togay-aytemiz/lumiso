@@ -10,19 +10,27 @@ export const useSessionActions = () => {
 
   const deleteSession = async (sessionId: string) => {
     try {
-      const { error } = await supabase
+      // Hard-delete any scheduled reminders first to avoid FK constraint issues
+      const { error: remindersError } = await supabase
+        .from('scheduled_session_reminders')
+        .delete()
+        .eq('session_id', sessionId);
+
+      if (remindersError) {
+        console.error('Error deleting scheduled reminders for session:', remindersError);
+        // Continue; if FK prevents deletion we'll catch below
+      }
+
+      // Delete the session and verify deletion affected at least one row
+      const { data: deletedRows, error: deleteError } = await supabase
         .from('sessions')
         .delete()
-        .eq('id', sessionId);
+        .eq('id', sessionId)
+        .select('id');
 
-      if (error) throw error;
-
-      // Cancel session reminders (non-blocking)
-      try {
-        await cancelSessionReminders(sessionId);
-      } catch (reminderError) {
-        console.error('Error cancelling session reminders:', reminderError);
-        // Don't block deletion if reminder cancellation fails
+      if (deleteError) throw deleteError;
+      if (!deletedRows || deletedRows.length === 0) {
+        throw new Error('Session could not be deleted. It may not exist or you may not have permission.');
       }
 
       toast({
@@ -32,9 +40,10 @@ export const useSessionActions = () => {
 
       return true;
     } catch (error: any) {
+      console.error('Failed to delete session:', { sessionId, error });
       toast({
         title: "Error deleting session",
-        description: error.message,
+        description: error?.message || 'Unknown error',
         variant: "destructive",
       });
       return false;

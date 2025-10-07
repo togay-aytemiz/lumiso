@@ -22,6 +22,7 @@ import { ProjectPaymentsSection } from "./ProjectPaymentsSection";
 import ProjectDetailsLayout from "@/components/project-details/ProjectDetailsLayout";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { UnifiedClientDetails } from "@/components/UnifiedClientDetails";
+import { useSessionActions } from "@/hooks/useSessionActions";
 // AssigneesList removed - single user organization
 interface Project {
   id: string;
@@ -266,6 +267,7 @@ export function ViewProjectDialog({
   const {
     toast
   } = useToast();
+  const { deleteSession } = useSessionActions();
   const fetchProjectSessions = async () => {
     if (!project) return;
     setLoading(true);
@@ -463,11 +465,17 @@ export function ViewProjectDialog({
       } = await supabase.from('todos').delete().eq('project_id', project.id);
       if (todosError) throw todosError;
 
-      // Delete sessions
-      const {
-        error: sessionsError
-      } = await supabase.from('sessions').delete().eq('project_id', project.id);
-      if (sessionsError) throw sessionsError;
+      // Delete sessions and their reminders using centralized logic
+      const { data: projectSessions } = await supabase
+        .from('sessions')
+        .select('id')
+        .eq('project_id', project.id);
+      
+      if (projectSessions && projectSessions.length > 0) {
+        for (const session of projectSessions) {
+          await deleteSession(session.id);
+        }
+      }
 
       // Delete activities related to this project
       const {

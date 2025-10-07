@@ -32,6 +32,7 @@ import { OnboardingTutorial, TutorialStep } from "@/components/shared/Onboarding
 import { useOnboarding } from "@/contexts/OnboardingContext";
 import { DetailPageLoadingSkeleton } from "@/components/ui/loading-presets";
 import { useMessagesTranslation, useFormsTranslation, useCommonTranslation } from "@/hooks/useTypedTranslation";
+import { useSessionActions } from "@/hooks/useSessionActions";
 interface Lead {
   id: string;
   name: string;
@@ -130,6 +131,8 @@ const LeadDetail = () => {
       setActivityRefreshKey(prev => prev + 1);
     }
   });
+
+  const { deleteSession } = useSessionActions();
   // Permissions removed for single photographer mode - always allow
   // const {
   //   hasPermission,
@@ -706,22 +709,9 @@ const LeadDetail = () => {
     }
   };
   const handleDeleteSession = async (sessionId: string) => {
-    try {
-      const {
-        error
-      } = await supabase.from('sessions').delete().eq('id', sessionId);
-      if (error) throw error;
-      toast({
-        title: "Success",
-        description: "Session deleted successfully."
-      });
+    const success = await deleteSession(sessionId);
+    if (success) {
       fetchSessions();
-    } catch (error: any) {
-      toast({
-        title: "Error deleting session",
-        description: error.message,
-        variant: "destructive"
-      });
     }
   };
   const handleSessionUpdated = () => {

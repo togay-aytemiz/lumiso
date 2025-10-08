@@ -2,7 +2,7 @@
   "menu": {
     "dashboard": "Gösterge Paneli",
     "projects": "Projeler",
-    "leads": "Müşteri Adayları",
+    "leads": "Kişiler",
     "sessions": "Seanslar",
     "calendar": "Takvim",
     "reminders": "Hatırlatmalar",
@@ -37,7 +37,7 @@
     "integrations": "Entegrasyonlar",
     "services": "Paketler ve Hizmetler",
     "projects": "Projeler ve Seanslar",
-    "leads": "Müşteri Yönetimi",
+    "leads": "Kişi Yönetimi",
     "clientMessaging": "Müşteri Mesajlaşma",
     "contracts": "Sözleşmeler",
     "dangerZone": "Tehlike Bölgesi"

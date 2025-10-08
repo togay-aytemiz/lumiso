@@ -94,7 +94,7 @@
       "project_created": "Proje başarıyla oluşturuldu",
       "project_updated": "Proje başarıyla güncellendi",
       "project_deleted": "Proje başarıyla silindi",
-      "lead_fetching_error": "Müşteri adayları alınırken hata",
+      "lead_fetching_error": "Kişiler alınırken hata",
       "data_fetching_error": "Veri alınırken hata"
     },
     "confirm": {
@@ -103,7 +103,7 @@
   },
   "success": "Başarılı",
   "client": {
-    "title": "Müşteri Bilgileri",
+    "title": "Kişi Bilgileri",
     "created_on": "Oluşturulma tarihi"
   },
   "toast": {

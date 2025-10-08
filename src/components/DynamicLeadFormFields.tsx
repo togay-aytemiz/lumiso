@@ -92,11 +92,13 @@ export function DynamicLeadFormFields({
   };
 
   const renderFieldInput = (fieldDef: LeadFieldDefinition, formField: any) => {
+    const translatedLabel = getFieldLabel(fieldDef);
+    
     switch (fieldDef.field_type) {
       case 'text':
         return (
           <Input
-            placeholder={t('dynamicFields.enterField', { field: fieldDef.label.toLowerCase() })}
+            placeholder={t('dynamicFields.enterField', { field: translatedLabel.toLowerCase() })}
             {...formField}
           />
         );
@@ -104,7 +106,7 @@ export function DynamicLeadFormFields({
       case 'textarea':
         return (
           <Textarea
-            placeholder={t('dynamicFields.enterField', { field: fieldDef.label.toLowerCase() })}
+            placeholder={t('dynamicFields.enterField', { field: translatedLabel.toLowerCase() })}
             rows={3}
             {...formField}
           />
@@ -114,7 +116,7 @@ export function DynamicLeadFormFields({
         return (
           <Input
             type="email"
-            placeholder={t('dynamicFields.enterField', { field: fieldDef.label.toLowerCase() })}
+            placeholder={t('dynamicFields.enterField', { field: translatedLabel.toLowerCase() })}
             {...formField}
           />
         );
@@ -123,7 +125,7 @@ export function DynamicLeadFormFields({
         return (
           <Input
             type="tel"
-            placeholder={t('dynamicFields.enterField', { field: fieldDef.label.toLowerCase() })}
+            placeholder={t('dynamicFields.enterField', { field: translatedLabel.toLowerCase() })}
             {...formField}
           />
         );
@@ -132,7 +134,7 @@ export function DynamicLeadFormFields({
         return (
           <Input
             type="number"
-            placeholder={t('dynamicFields.enterField', { field: fieldDef.label.toLowerCase() })}
+            placeholder={t('dynamicFields.enterField', { field: translatedLabel.toLowerCase() })}
             {...formField}
             onChange={(e) => formField.onChange(e.target.value ? Number(e.target.value) : '')}
           />
@@ -174,7 +176,7 @@ export function DynamicLeadFormFields({
         return (
           <Select onValueChange={formField.onChange} value={formField.value}>
             <SelectTrigger>
-              <SelectValue placeholder={t('dynamicFields.selectField', { field: fieldDef.label.toLowerCase() })} />
+              <SelectValue placeholder={t('dynamicFields.selectField', { field: translatedLabel.toLowerCase() })} />
             </SelectTrigger>
             <SelectContent>
               {options.map((option, index) => (
@@ -194,7 +196,7 @@ export function DynamicLeadFormFields({
               onCheckedChange={formField.onChange}
             />
             <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-              {fieldDef.label}
+              {translatedLabel}
             </label>
           </div>
         );
@@ -202,7 +204,7 @@ export function DynamicLeadFormFields({
       default:
         return (
           <Input
-            placeholder={t('dynamicFields.enterField', { field: fieldDef.label.toLowerCase() })}
+            placeholder={t('dynamicFields.enterField', { field: translatedLabel.toLowerCase() })}
             {...formField}
           />
         );

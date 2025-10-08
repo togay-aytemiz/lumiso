@@ -405,6 +405,13 @@
     "deleteLead": "Delete Lead",
     "successDescription": "Lead and all related data deleted successfully."
   },
+  "leadFormFields": {
+    "status": "Status",
+    "full_name": "Full Name",
+    "email_address": "Email Address",
+    "phone_number": "Phone Number",
+    "notes": "Notes"
+  },
   "status": {
     "loading": "Loading...",
     "selectStatus": "SELECT STATUS",

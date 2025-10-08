@@ -803,9 +803,6 @@
     "yesterday": "Dün",
     "pastDue": "Gecikmiş"
   },
-  "leadDialog": {
-    "edit_lead": "Potansiyel Müşteriyi Düzenle"
-  },
   "labels": {
     "name": "İsim",
     "email": "E-posta",

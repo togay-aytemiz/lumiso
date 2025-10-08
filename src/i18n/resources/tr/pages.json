@@ -5,45 +5,45 @@
     "filterByStatus": "Duruma göre filtrele:",
     "allStatuses": "Tüm Durumlar",
     "noLeadsAllStatuses": "Henüz kişi eklenmemiş. Başlamak için ilk kişinizi ekleyin!",
-    "noLeadsWithStatus": "\"{{status}}\" durumunda kişi adayı bulunamadı.",
+    "noLeadsWithStatus": "\"{{status}}\" durumunda kişi bulunamadı.",
     "addLead": "Kişi Ekle",
     "tutorial": {
       "welcome": {
         "title": "Kişi Yönetimine Hoş Geldiniz",
-        "description": "Burada tüm müşteri ve kişilerinizi kolayca takip edebilir, durumlarını yönetebilirsiniz. Yapabilecekleriniz:",
+        "description": "Burada tüm kişi ve müşterilerinizi kolayca takip edebilir, durumlarını yönetebilirsiniz. Yapabilecekleriniz:",
         "trackLeads": {
           "title": "Kişileri Takip Et",
           "description": "Tüm kişilerinizi iletişim bilgileri ve durumlarıyla birlikte düzenli bir tabloda görün."
         },
         "filterSort": {
           "title": "Filtrele ve Sırala",
-          "description": "Müşteri adayı durumuna göre filtreleyin ve tam olarak ihtiyacınız olanı bulmak için herhangi bir sütuna göre sıralayın."
+          "description": "Kişileri durumuna göre filtreleyin ve ihtiyacınızı bulmak için herhangi bir sütuna göre sıralayın."
         },
         "customizeColumns": {
           "title": "Sütunları Özelleştir",
-          "description": "Hangi sütunların gösterileceğini özelleştirin ve iş akışınıza uyacak şekilde düzenleyin."
+          "description": "Hangi sütunların gösterileceğini seçin ve iş akışınıza uygun şekilde düzenleyin."
         }
       },
       "addFirstLead": {
-        "title": "İlk Müşteri Adayınızı Ekleyin",
-        "description": "Şimdi ilk müşteri adayınızı ekleyelim! Başlamak için sağ üst köşedeki 'Müşteri Adayı Ekle' düğmesine (veya mobilde + simgesine) tıklayın.",
-        "disabledTooltip": "Devam etmek için en az 1 müşteri adayı ekleyin"
+        "title": "İlk Kişinizi Ekleyin",
+        "description": "Şimdi ilk kişinizi ekleyelim. Başlamak için sağ üst köşedeki Kişi Ekle düğmesine tıklayın.",
+        "disabledTooltip": "Devam etmek için en az bir kişi ekleyin"
       },
       "exploreDetails": {
-        "title": "Harika! Şimdi Müşteri Adayı Detaylarını Keşfedelim",
-        "description": "Mükemmel! Artık bir müşteri adayınız var, onunla neler yapabileceğinizi görelim. Detaylı bilgilerini görüntülemek için aşağıdaki tabloda müşteri adayınıza tıklayın.",
-        "disabledTooltip": "Devam etmek için müşteri adayınıza tıklayın"
+        "title": "Harika. Şimdi Kişi Detaylarını Keşfedelim",
+        "description": "Artık bir kişiniz var. Detaylarını görüntülemek için aşağıdaki tabloda kişiye tıklayın.",
+        "disabledTooltip": "Devam etmek için bir kişiye tıklayın"
       },
       "scheduling": {
         "title": "İlk Fotoğraf Seansınızı Planlayın",
-        "description": "Müşteriniz için bir fotoğraf seansı planlama sürecini inceleyelim. Bu süreç fotoğrafçılık iş akışınızı düzenlemenize yardımcı olacak.",
+        "description": "Kişiniz için bir fotoğraf seansı planlama sürecini inceleyelim. Bu adım iş akışınızı düzenlemenize yardımcı olur.",
         "chooseDateTime": {
           "title": "Tarih ve Saat Seçin",
-          "description": "Hem sizin hem de müşteriniz için uygun bir zaman seçin."
+          "description": "Hem sizin hem de müşteriniz için uygun bir zaman belirleyin."
         },
         "selectClient": {
-          "title": "Müşterinizi Seçin",
-          "description": "Listenizden fotoğrafını çekmek istediğiniz müşteri adayı/müşteriyi seçin."
+          "title": "Kişiyi Seçin",
+          "description": "Listenizden seans planlayacağınız kişiyi seçin."
         },
         "addDetails": {
           "title": "Seans Detaylarını Ekleyin",
@@ -51,16 +51,16 @@
         }
       },
       "selectLeadForSession": {
-        "title": "Seans Planlamak İçin Müşteri Adayı Seçin",
-        "description": "Harika! Şimdi seans planlayabileceğiniz detay sayfasını açmak için aşağıdaki tabloda müşteri adaylarınızdan birine tıklayın.",
-        "disabledTooltip": "Devam etmek için bir müşteri adayına tıklayın"
+        "title": "Seans Planlamak İçin Kişi Seçin",
+        "description": "Seans planlayabileceğiniz detay sayfasını açmak için aşağıdaki listeden bir kişiye tıklayın.",
+        "disabledTooltip": "Devam etmek için bir kişiye tıklayın"
       }
     },
     "messages": {
-      "tutorialCompleted": "Müşteri adayı eğitimi tamamlandı! Adım 2 tamamlandı, başlangıç sayfasına dönülüyor",
+      "tutorialCompleted": "Kişi yönetimi eğitimi tamamlandı. Adım 2 tamamlandı, başlangıç sayfasına dönülüyor",
       "errorCompletingTutorial": "Eğitimi tamamlarken hata:",
       "failedToSaveProgress": "İlerleme kaydedilemedi. Lütfen tekrar deneyin.",
-      "errorFetchingStatuses": "Müşteri adayı durumları getirilirken hata:",
+      "errorFetchingStatuses": "Kişi durumları getirilirken hata:",
       "failedToLoadProjects": "Projeler yüklenemedi"
     }
   },
@@ -74,7 +74,7 @@
     "addProject": "Proje Ekle",
     "showArchived": "Arşivleri Göster",
     "archivedProjects": "Arşivlenmiş Projeler",
-    "noProjectsYet": "Bu müşteri adayı için henüz proje yok.",
+    "noProjectsYet": "Bu kişi için henüz proje yok.",
     "deleteProject": "Projeyi Sil",
     "deleteProjectConfirm": "Bu işlem geri alınamaz. Bu, projeyi ve tüm ilgili verileri kalıcı olarak silecektir.",
     "deleting": "Siliniyor...",
@@ -92,7 +92,7 @@
     "updated": "Güncellendi",
     "no_projects_found": "Proje bulunamadı",
     "create_first_project": "Başlamak için ilk projenizi oluşturun",
-    "visual_workflow": "Sürükle-bırak ile görsel iş akışı yönetimi",
+    "visual_workflow": "Sürükle bırak ile görsel iş akışı yönetimi",
     "detailed_table": "Sıralama ve filtreleme ile detaylı tablo görünümü",
     "archived_projects": "Tamamlanan ve arşivlenen projeleri görüntüle",
     "drag_drop_organize": "Durumlarını güncellemek için projeleri sütunlar arasında sürükleyip bırakın",
@@ -100,7 +100,7 @@
     "explore_features": "Farklı özellikleri keşfedin ve tercih ettiğiniz iş akışını bulun",
     "sorting": {
       "name": "Ad",
-      "leadName": "Müşteri Adı",
+      "leadName": "Kişi Adı",
       "projectType": "Proje Türü",
       "status": "Durum",
       "createdAt": "Oluşturulma",
@@ -109,29 +109,29 @@
     "tutorial": {
       "welcome": {
         "title": "Proje Yönetim Merkezinize Hoş Geldiniz",
-        "description": "Fotoğrafçılık projelerinizi görüntülemenin ve düzenlemenin üç güçlü yolunu keşfedelim.",
-        "subtitle": "Bu eğitimde, fotoğrafçılar için proje yönetimi sanatında ustalaşacaksınız:",
-        "boardView": "Tahta Görünümü - Sürükle bırak ile görsel iş akışı yönetimi",
-        "listView": "Liste Görünümü - Sıralama ve filtreleme ile detaylı tablo",
-        "archivedView": "Arşiv Görünümü - Referans için tamamlanmış projeler"
+        "description": "Fotoğrafçılık projelerinizi görüntülemenin ve düzenlemenin üç yolunu keşfedelim.",
+        "subtitle": "Bu eğitimde proje yönetiminde hız kazanacaksınız:",
+        "boardView": "Tahta Görünümü Sürükle bırak ile görsel iş akışı",
+        "listView": "Liste Görünümü Sıralama ve filtreleme ile tablo",
+        "archivedView": "Arşiv Görünümü Referans için tamamlanan projeler"
       },
       "exploreViews": {
         "title": "Farklı Görünümleri Keşfedin",
-        "description": "Farklı görünüm modlarını deneyelim. Tahta, Liste ve Arşiv görünümleri arasında tıklayarak her birinin nasıl çalıştığını görün.",
-        "tip": "Tahta görünümünde bir projeyi farklı aşamalar arasında taşımayı deneyin!"
+        "description": "Pano, Liste ve Arşiv görünümleri arasında geçiş yapın, işleyişlerini görün.",
+        "tip": "Pano görünümünde bir projeyi farklı aşamalar arasında taşıyın."
       },
       "completion": {
-        "title": "Mükemmel! Projeleri Yönetmeye Hazırsınız",
-        "description": "Proje yönetimi arayüzünde ustalaştınız. Artık bu güçlü görünümleri kullanarak fotoğrafçılık işinizi verimli bir şekilde organize edebilirsiniz.",
+        "title": "Mükemmel. Projeleri Yönetmeye Hazırsınız",
+        "description": "Artık bu görünümlerle işinizi verimli şekilde organize edebilirsiniz.",
         "features": "Öğrendiğiniz temel özellikler:",
         "dragDrop": "Projeleri aşamalar arasında sürükle bırak",
-        "tableView": "Sıralama ile detaylı tablo görünümü",
+        "tableView": "Sıralanabilir tablo görünümü",
         "archivedProjects": "Tamamlanan projeleri arşivle"
       }
     },
     "messages": {
       "errorLoading": "Projeler yüklenemedi",
-      "tutorialCompleted": "Projeler eğitimi tamamlandı! Sonraki adıma geçiliyor.",
+      "tutorialCompleted": "Projeler eğitimi tamamlandı. Sonraki adıma geçiliyor.",
       "errorCompletingTutorial": "Eğitimi tamamlarken hata:"
     }
   },
@@ -165,14 +165,14 @@
     },
     "tooltips": {
       "clickSession": "Seans detaylarını görüntülemek için tıklayın",
-      "clickLead": "Potansiyel müşteri detaylarını görüntülemek için tıklayın",
+      "clickLead": "Kişi detaylarını görüntülemek için tıklayın",
       "clickProject": "Proje detaylarını görüntülemek için tıklayın"
     },
     "labels": {
       "today": "Bugün",
       "allDay": "Tüm gün",
       "completed": "Tamamlandı",
-      "lead": "Potansiyel Müşteri",
+      "lead": "Kişi",
       "session": "Seans",
       "project": "Proje",
       "status": "Durum",
@@ -199,7 +199,7 @@
     },
     "table": {
       "project": "Proje",
-      "clientName": "Müşteri Adı",
+      "clientName": "Kişi Adı",
       "date": "Tarih",
       "time": "Saat",
       "status": "Durum",
@@ -225,7 +225,7 @@
     "showCompleted": "Tamamlananları Göster",
     "emptyState": {
       "title": "Hatırlatma bulunamadı",
-      "description": "Seçili filtre için herhangi bir hatırlatmanız yok"
+      "description": "Seçili filtre için hatırlatma yok"
     }
   },
   "settings": {
@@ -269,17 +269,17 @@
         "current_logo": "Mevcut Logo",
         "logo_set": "Logo şu anda ayarlanmış",
         "choose_new_logo": "Yeni Logo Seç",
-        "logo_formats": "Desteklenen: JPG, PNG, SVG (Maks: 2MB)",
+        "logo_formats": "Desteklenen: JPG, PNG, SVG Maks: 2MB",
         "primaryBrandColor": "Birincil Marka Rengi",
-        "brandColorHelp": "Müşteriye yönelik arayüzde ve giden mesajlarda kullanılır. Geçerli bir hex renk olmalıdır (örn., #1EB29F)"
+        "brandColorHelpAlt": "Müşteriye yönelik arayüzde ve giden mesajlarda kullanılır. Geçerli bir hex renk olmalıdır örn. #1EB29F"
       },
       "regional": {
         "title": "Bölgesel Ayarlar",
         "description": "Tarih, saat ve bölgesel tercihleri yapılandırın",
         "dateFormat": "Tarih Formatı",
         "timeFormat": "Saat Formatı",
-        "timeFormat12Hour": "12-saat (örn. 14:00)",
-        "timeFormat24Hour": "24-saat (örn. 14:00)",
+        "timeFormat12Hour": "12 saat örn. 14:00",
+        "timeFormat24Hour": "24 saat örn. 14:00",
         "timezone": "Saat Dilimi"
       },
       "language": {
@@ -294,7 +294,7 @@
           "setBusinessName": "Fotoğrafçılık işletme adınızı belirleyin",
           "uploadLogo": "İşletme logonuzu yükleyin",
           "chooseBrandColors": "Marka renklerinizi seçin",
-          "help": "Tüm bu bilgiler müşteri iletişimleri, faturalar ve sözleşmelerde görünecektir."
+          "help": "Bu bilgiler müşteri iletişimleri, faturalar ve sözleşmelerde görünür."
         },
         "addBusinessName": {
           "title": "İşletme Adınızı Ekleyin",
@@ -304,8 +304,8 @@
           "canChange": "Gerekirse daha sonra değiştirilebilir"
         },
         "setupComplete": {
-          "title": "İşletme Kurulumu Tamamlandı!",
-          "description": "Tebrikler! İşletme bilgilerinizi başarıyla kurdunuz. Fotoğrafçılık CRM kurulumunuzun bir sonraki adımına geçmeye hazırsınız."
+          "title": "İşletme Kurulumu Tamamlandı",
+          "description": "Tebrikler. İşletme bilgilerinizi başarıyla kurdunuz. Sonraki adıma hazırsınız."
         }
       }
     },
@@ -324,7 +324,7 @@
         "chooseFile": "Dosya Seç",
         "chooseNewFile": "Yeni Dosya Seç",
         "uploading": "Yükleniyor...",
-        "fileFormatsHelp": "Yönetici görünümlerinde ve müşteri mesajlarında kullanılır. JPG, PNG, SVG kabul eder. Maksimum dosya boyutu: 2 MB",
+        "fileFormatsHelp": "JPG, PNG, SVG kabul eder. Maksimum dosya boyutu 2 MB",
         "fullName": "Ad Soyad",
         "fullNamePlaceholder": "Ad soyadınızı girin",
         "fullNameHelp": "Müşteri iletişimlerinde görünecek ad soyadınız",
@@ -332,7 +332,7 @@
         "phoneNumberPlaceholder": "Telefon numaranızı girin",
         "phoneNumberHelp": "Randevu ve müşteri iletişimleri için iletişim numaranız",
         "emailAddress": "E-posta Adresi",
-        "emailHelp": "Giriş e-posta adresiniz (burada değiştirilemez)",
+        "emailHelp": "Giriş e-posta adresiniz burada değiştirilemez",
         "deletePhoto": "Profil Fotoğrafını Sil",
         "deletePhotoConfirm": "Profil fotoğrafınızı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
         "deletePhotoButton": "Fotoğraf Sil"
@@ -362,22 +362,22 @@
         },
         "completeInfo": {
           "title": "Profil Bilgilerinizi Tamamlayın",
-          "description": "Lütfen ad soyadınızı ve telefon numaranızı doldurun ve bir profil fotoğrafı yüklemeyi düşünün. Devam etmek için ad soyadınız gereklidir.",
-          "fullNameRequired": "• Ad Soyad: Müşteri iletişimleri için gereklidir",
-          "phoneOptional": "• Telefon Numarası: İsteğe bağlı ancak önerilir",
-          "profilePhoto": "• Profil Fotoğrafı: Yönetici görünümlerinde ve müşteri mesajlarında gösterilir"
+          "description": "Lütfen ad soyadınızı ve telefon numaranızı doldurun, bir profil fotoğrafı yüklemeyi düşünün. Devam etmek için ad soyadınız gereklidir.",
+          "fullNameRequired": "Ad Soyad Müşteri iletişimleri için gereklidir",
+          "phoneOptional": "Telefon Numarası İsteğe bağlı ancak önerilir",
+          "profilePhoto": "Profil Fotoğrafı Yönetici görünümlerinde ve müşteri mesajlarında gösterilir"
         },
         "businessInfo": {
           "title": "İşletme Bilgilerinizi Ayarlayın",
-          "description": "Genel ayarlarda işletme adınızı ekleyelim. Bu, müşteri iletişimlerinde ve faturalarda görünecektir.",
-          "businessNameRequired": "• İşletme Adı: Profesyonel iletişimler için gereklidir",
-          "usedIn": "• Müşteri e-postalarında, faturalarda ve sözleşmelerde kullanılır",
-          "canChange": "• Daha sonra Genel ayarlardan değiştirilebilir"
+          "description": "Genel ayarlarda işletme adınızı ekleyelim. Bu, müşteri iletişimlerinde ve faturalarda görünür.",
+          "businessNameRequired": "İşletme Adı Profesyonel iletişimler için gereklidir",
+          "usedIn": "Müşteri e-postalarında, faturalarda ve sözleşmelerde kullanılır",
+          "canChange": "Daha sonra Genel ayarlardan değiştirilebilir"
         },
         "setupComplete": {
-          "title": "Profil Kurulumu Tamamlandı!",
-          "description": "Tebrikler! Profil ve işletme bilgilerinizi başarıyla kurdunuz. Fotoğrafçılık CRM kurulumunuzun bir sonraki adımına geçmeye hazırsınız.",
-          "success": "Profil kurulumu başarıyla tamamlandı!"
+          "title": "Profil Kurulumu Tamamlandı",
+          "description": "Tebrikler. Profil ve işletme bilgilerinizi kurdunuz. Sonraki adıma hazırsınız.",
+          "success": "Profil kurulumu başarıyla tamamlandı"
         }
       },
       "toasts": {
@@ -395,11 +395,11 @@
       "description": "Harici servisleri bağlayın ve üçüncü parti entegrasyonları yönetin",
       "calendar": {
         "title": "Takvim Entegrasyonu",
-        "description": "Seansları ve hatırlatıcıları senkronize etmek için Google Takvim'inizi bağlayın",
-        "connected": "Google Takvim'e bağlandı",
+        "description": "Seansları ve hatırlatıcıları senkronize etmek için Google Takviminizi bağlayın",
+        "connected": "Google Takvime bağlandı",
         "connectedAs": "Şu hesapla bağlandı:",
         "expired": "Oturum süresi doldu. Lütfen takviminizi yeniden bağlayın.",
-        "connect": "Google Takvim'i Bağla",
+        "connect": "Google Takvimi Bağla",
         "disconnect": "Google Takvim Bağlantısını Kes"
       }
     },
@@ -410,34 +410,34 @@
         "title": "Ana Kontroller",
         "description": "Genel bildirim ayarları ve zamanlama",
         "allNotifications": "Tüm Bildirimler",
-        "allNotificationsHelp": "Tüm bildirim türlerini etkinleştirmek veya devre dışı bırakmak için ana anahtar",
+        "allNotificationsHelp": "Tüm bildirim türlerini tek anahtardan açıp kapatın",
         "scheduledTime": "Zamanlanmış Bildirim Saati",
         "scheduledTimeHelp": "Günlük özetlerin her sabah gönderildiği saat"
       },
       "scheduled": {
         "title": "Zamanlanmış Bildirimler",
-        "description": "Günlük özet otomatik olarak şu saatte gönderilir:",
+        "description": "Günlük özet şu saatte gönderilir:",
         "dailySummary": "Günlük Özet",
         "dailySummaryHelp": "Bugünkü seanslar, gecikmiş öğeler, hatırlatıcılar ve bekleyen görevlerle sabah özeti"
       },
       "immediate": {
         "title": "Anında Bildirimler",
-        "description": "Olaylar gerçekleştiğinde gönderilen gerçek zamanlı uyarılar",
-        "projectMilestone": "Proje Kilometre Taşına Ulaşıldı",
-        "projectMilestoneHelp": "Bir proje Tamamlandı veya İptal Edildi yaşam döngüsüne geçtiğinde bildir"
+        "description": "Olaylar gerçekleştiğinde gönderilen uyarılar",
+        "projectMilestone": "Proje Kilometre Taşı",
+        "projectMilestoneHelp": "Bir proje Tamamlandı veya İptal Edildi durumuna geçtiğinde bildir"
       },
       "sendTest": "Test gönder",
       "sendEmptyTest": "Boş test gönder",
       "testing": "Test ediliyor...",
       "toasts": {
         "allEnabled": "Tüm Bildirimler Etkinleştirildi",
-        "allDisabled": "Tüm Bildirimler Devre Dışı Bırakıldı",
-        "allEnabledDesc": "Tüm bildirim türleri etkinleştirildi",
-        "allDisabledDesc": "Tüm bildirim türleri devre dışı bırakıldı",
+        "allDisabled": "Tüm Bildirimler Devre Dışı",
+        "allEnabledDesc": "Tüm bildirim türleri etkin",
+        "allDisabledDesc": "Tüm bildirim türleri kapalı",
         "updated": "Güncellendi",
-        "updatedDesc": "Bildirim ayarı başarıyla kaydedildi",
+        "updatedDesc": "Bildirim ayarı kaydedildi",
         "testSent": "Test E-postası Gönderildi",
-        "testSentDesc": "bildirim test e-postası gönderildi!",
+        "testSentDesc": "Bildirim test e-postası gönderildi",
         "testFailed": "Test Başarısız",
         "testFailedDesc": "Test bildirimi gönderilemedi. Lütfen ayarlarınızı kontrol edin.",
         "error": "Hata",
@@ -446,16 +446,16 @@
     },
     "dangerZone": {
       "title": "Tehlike Bölgesi",
-      "description": "Bu işlemler yıkıcıdır ve geri alınamaz. Dikkatli ilerleyin.",
+      "description": "Bu işlemler geri alınamaz. Dikkatli ilerleyin.",
       "deleteData": {
         "title": "Tüm Verileri Sil",
         "description": "Tüm verilerinizi sunucularımızdan kalıcı olarak kaldırın",
         "warning": "Tüm Verileri Kalıcı Olarak Sil",
-        "warningDesc": "Bu işlem tüm müşterilerinizi, projelerinizi, seanslarınızı, hatırlatıcılarınızı, ödemelerinizi ve ilişkili verileri kalıcı olarak silecektir. Bu işlem geri alınamaz ve tüm veriler sonsuza kadar kaybolacaktır.",
+        "warningDesc": "Bu işlem tüm kişilerinizi, projelerinizi, seanslarınızı, hatırlatıcılarınızı, ödemelerinizi ve ilişkili verileri kalıcı olarak silecektir.",
         "button": "Tüm Verileri Sil",
         "confirmTitle": "Veri Silmeyi Onayla",
         "confirmDesc": "Bu işlem aşağıdakiler dahil olmak üzere tüm verilerinizi kalıcı olarak silecektir:",
-        "leads": "Tüm müşteriler ve bilgileri",
+        "leads": "Tüm kişiler ve bilgileri",
         "projects": "Tüm projeler ve detayları",
         "sessions": "Tüm seanslar ve randevular",
         "reminders": "Tüm hatırlatıcılar ve etkinlikler",
@@ -475,8 +475,8 @@
       }
     },
     "leads": {
-      "title": "Müşteri Yönetimi",
-      "description": "Müşteri durumlarını ve yönetim ayarlarını yapılandırın"
+      "title": "Kişi Yönetimi",
+      "description": "Kişi durumlarını ve yönetim ayarlarını yapılandırın"
     },
     "projects": {
       "title": "Projeler ve Seanslar",
@@ -491,10 +491,10 @@
       "description": "Müşteri iletişimi için otomatik mesaj şablonlarını ve dağıtım tetikleyicilerini yönetin",
       "silentHours": {
         "title": "Sessiz Saatler",
-        "description": "Bu zaman aralığında mesajlar gönderilmeyecektir. Gece tetiklenen mesajlar ertesi sabaha ertelenecektir.",
+        "description": "Bu zaman aralığında mesajlar gönderilmez. Gece tetiklenen mesajlar ertesi sabaha ertelenir.",
         "enable": "Sessiz Saatleri Etkinleştir",
         "enabledDesc": "Sessiz saatlerde tetiklenen mesajlar ertesi sabaha ertelenecek",
-        "disabledDesc": "Devre dışı bırakıldığında, mesajlar günün saatine bakılmaksızın hemen gönderilir",
+        "disabledDesc": "Devre dışı bırakıldığında mesajlar gönderim anında iletilir",
         "timeWindow": "Zaman Aralığı",
         "startTime": "Başlangıç Saati",
         "endTime": "Bitiş Saati",
@@ -535,7 +535,7 @@
       "date": "Tarih",
       "amount": "Tutar",
       "project": "Proje",
-      "lead": "Müşteri Adayı",
+      "lead": "Kişi",
       "label": "Etiket",
       "status": "Durum",
       "type": "Tür"
@@ -550,7 +550,7 @@
       "manual": "Manuel"
     },
     "emptyState": {
-      "noPaymentsWithLabel": "\"{{labelFilter}}\" içeren etiketle ödeme bulunamadı.",
+      "noPaymentsWithLabel": "\"{{labelFilter}}\" etiketli ödeme bulunamadı.",
       "noPaymentsForPeriod": "Seçili dönem için ödeme bulunamadı."
     },
     "defaultLabel": "Ödeme",
@@ -561,14 +561,14 @@
     "subtitle": "İçgörüleri ve performans metriklerini görüntüleyin",
     "sessionsPerDay": {
       "title": "Günlük Seanslar",
-      "scheduled": "Önümüzdeki 30 gün için planlanan seanslar gösteriliyor",
-      "created": "Son 30 günde oluşturulan seanslar gösteriliyor"
+      "scheduled": "Önümüzdeki 30 gün için planlanan seanslar",
+      "created": "Son 30 günde oluşturulan seanslar"
     },
     "sessionsByStatus": {
       "title": "Duruma Göre Seanslar"
     },
     "leadsByMonth": {
-      "title": "Aylık Yeni Müşteri Adayları (Son 6 Ay)"
+      "title": "Aylık Yeni Kişiler Son 6 Ay"
     },
     "toggle": {
       "scheduled": "Planlanmış",
@@ -576,7 +576,7 @@
     },
     "chartLabels": {
       "sessions": "Seanslar",
-      "leads": "Müşteri Adayları"
+      "leads": "Kişiler"
     },
     "errorFetching": "Analitik verileri alınırken hata oluştu"
   },
@@ -613,7 +613,7 @@
       "session_rescheduled": "Seans Yeniden Planlandı",
       "session_reminder": "Seans Hatırlatması",
       "project_status_change": "Proje Durumu Değişti",
-      "lead_status_change": "Müşteri Adayı Durumu Değişti"
+      "lead_status_change": "Kişi Durumu Değişti"
     },
     "status": {
       "active": "Aktif",
@@ -634,7 +634,7 @@
       "fields": {
         "name": {
           "label": "İş Akışı Adı *",
-          "placeholder": "örn., Seans Onay Bildirimleri"
+          "placeholder": "örn. Seans Onay Bildirimleri"
         },
         "description": {
           "label": "Açıklama",
@@ -678,7 +678,7 @@
         "60": "1 saat önce"
       },
       "channels": {
-        "email": "E-posta",
+        "email": "E posta",
         "whatsapp": "WhatsApp",
         "sms": "SMS"
       },
@@ -694,7 +694,7 @@
   },
   "templates": {
     "title": "Mesaj Şablonları",
-    "subtitle": "Yeniden kullanılabilir e-posta şablonları tasarlayın ve yönetin",
+    "subtitle": "Yeniden kullanılabilir e posta şablonları tasarlayın ve yönetin",
     "search": "Şablonları ara...",
     "buttons": {
       "newTemplate": "Yeni Şablon",
@@ -720,11 +720,11 @@
     "emptyState": {
       "noTemplatesFound": "Şablon bulunamadı",
       "noTemplatesYet": "Henüz şablon oluşturulmadı",
-      "adjustSearch": "Aradığınızı bulmak için arama terimlerinizi ayarlamayı deneyin.",
-      "createFirstMessage": "Otomatik iletişimlere başlamak için ilk e-posta şablonunuzu oluşturun."
+      "adjustSearch": "Aradığınızı bulmak için arama terimlerinizi ayarlayın.",
+      "createFirstMessage": "Otomatik iletişimlere başlamak için ilk e posta şablonunuzu oluşturun."
     },
     "error": {
-      "loadingTemplates": "Şablonlar Yüklenirken Hata"
+      "loadingTemplates": "Şablonlar yüklenirken hata"
     }
   },
   "templateBuilder": {
@@ -744,7 +744,7 @@
     },
     "editor": {
       "title": "Şablon Oluşturucu",
-      "description": "E-posta şablonunuzu oluşturmak için blokları sürükleyip bırakın",
+      "description": "E posta şablonunuzu oluşturmak için blokları sürükleyip bırakın",
       "addBlock": "Blok Ekle"
     },
     "preview": {
@@ -780,34 +780,34 @@
       "testSend": "Test Gönder",
       "sending": "Gönderiliyor...",
       "channels": {
-        "email": "E-posta",
+        "email": "E posta",
         "whatsapp": "WhatsApp",
         "sms": "SMS",
         "plain": "Düz Metin"
       },
-      "emailPreview": "E-posta Önizleme",
+      "emailPreview": "E posta Önizleme",
       "subject": "Konu:",
       "previewText": "Önizleme:",
-      "defaultSubject": "📸 Fotoğraf seansınız onaylandı!",
-      "helloCustomer": "Merhaba {{name}}!",
+      "defaultSubject": "📸 Fotoğraf seansınız onaylandı",
+      "helloCustomer": "Merhaba {{name}}",
       "excitedMessage": "Özel anlarınızı ölümsüzleştirmek için sabırsızlanıyoruz",
-      "lookingForward": "Seansınız için sabırsızlanıyoruz!",
+      "lookingForward": "Seansınız için sabırsızlanıyoruz",
       "addBlocks": "Şablonunuzu oluşturmak için bloklar ekleyin",
       "toast": {
         "errorTitle": "Hata",
-        "noUserEmail": "Kullanıcı e-postası bulunamadı. Lütfen giriş yaptığınızdan emin olun.",
+        "noUserEmail": "Kullanıcı e postası bulunamadı. Lütfen giriş yaptığınızdan emin olun.",
         "noBlocks": "Gönderilecek blok yok. Önce şablonunuza bloklar ekleyin.",
         "successTitle": "Başarılı",
-        "testEmailSent": "Test e-postası {{email}} adresine gönderildi",
-        "sendFailed": "Test e-postası gönderilemedi. Lütfen tekrar deneyin."
+        "testEmailSent": "Test e postası {{email}} adresine gönderildi",
+        "sendFailed": "Test e postası gönderilemedi. Lütfen tekrar deneyin."
       },
       "mockData": {
-        "customerName": "Elif & Mert",
+        "customerName": "Elif ve Mert",
         "sessionDate": "15 Mart 2024",
         "sessionTime": "14:00",
         "sessionLocation": "Merkez Stüdyo",
         "businessName": "Parlak Fotoğrafçılık",
-        "businessPhone": "(555) 123-4567"
+        "businessPhone": "555 123 4567"
       },
       "whatsapp": {
         "online": "çevrimiçi"
@@ -826,11 +826,11 @@
         "time": "Saat:",
         "location": "Konum:",
         "notes": "Notlar:",
-        "defaultNote": "Lütfen 10 dakika erken gelin. Rahat kıyafetler getirin!"
+        "defaultNote": "Lütfen 10 dakika erken gelin. Rahat kıyafetler getirin."
       }
     },
     "warnings": {
-      "tooLong": "{{count}}/60 karakter (çok uzun)",
+      "tooLong": "{{count}} 60 karakter çok uzun",
       "spamWords": "Spam kelimeler:"
     },
     "navigationGuard": {
@@ -838,7 +838,7 @@
     },
     "addBlockSheet": {
       "title": "Blok Kütüphanesi",
-      "description": "Şablonunuza eklemek için bir blok seçin. Bloklar ekledikten sonra yeniden sıralanabilir ve özelleştirilebilir.",
+      "description": "Şablonunuza eklemek için bir blok seçin. Ekledikten sonra yeniden sıralayabilir ve özelleştirebilirsiniz.",
       "blocks": {
         "text": {
           "title": "Metin Bloğu",
@@ -846,7 +846,7 @@
         },
         "sessionDetails": {
           "title": "Seans Detayları",
-          "description": "Tarih, saat, konum isteğe bağlı notlarla düzgün bir şekilde görüntülenir"
+          "description": "Tarih, saat ve konum isteğe bağlı notlarla düzgün şekilde görüntülenir"
         },
         "cta": {
           "title": "Harekete Geçirme",
@@ -854,11 +854,11 @@
         },
         "image": {
           "title": "Resim Bloğu",
-          "description": "Marka resmi, yüklenen dosya veya başlık + bağlantı seçeneği ile kapak ekleyin"
+          "description": "Marka görseli ya da yüklenen dosya ile kapak ekleyin"
         },
         "divider": {
-          "title": "Ayırıcı/Boşluk",
-          "description": "İçerik arasında çizgiler veya boşluklarla görsel ayırma ekleyin"
+          "title": "Ayırıcı Boşluk",
+          "description": "İçerik arasında çizgi ya da boşluklarla görsel ayırma"
         },
         "socialLinks": {
           "title": "Sosyal Bağlantılar",
@@ -866,11 +866,11 @@
         },
         "header": {
           "title": "Başlık Bloğu",
-          "description": "Özel stil ile logo ve slogan başlık bölümü"
+          "description": "Logo ve slogan başlık bölümü"
         },
         "footer": {
           "title": "Alt Bilgi Bloğu",
-          "description": "Logo, stüdyo adı, iletişim bilgileri ve uyumluluk seçenekleri"
+          "description": "Logo, stüdyo adı, iletişim bilgileri ve uyumluluk metinleri"
         }
       }
     },
@@ -894,27 +894,27 @@
       },
       "validation": {
         "required": "Şablon adı gereklidir",
-        "minLength": "Şablon adı en az 2 karakter uzunluğunda olmalıdır",
-        "maxLength": "Şablon adı 100 karakterden az olmalıdır",
-        "duplicate": "Bu adda bir şablon zaten var. Lütfen farklı bir ad seçin."
+        "minLength": "Şablon adı en az 2 karakter olmalıdır",
+        "maxLength": "Şablon adı 100 karakterden kısa olmalıdır",
+        "duplicate": "Bu adda bir şablon var. Lütfen farklı bir ad seçin."
       }
     }
   },
   "onboarding": {
     "getting_started": {
-      "welcome_title": "Lumiso'ya Hoş Geldiniz! 🎉",
+      "welcome_title": "Lumiso'ya Hoş Geldiniz 🎉",
       "welcome_subtitle": "Fotoğrafçılık işinizi adım adım kuralım",
-      "need_help": "Yardıma mı ihtiyacınız var?",
+      "need_help": "Yardıma mı ihtiyacınız var",
       "skip_setup": "Kurulumu Atla",
       "setup_progress": "Kurulum İlerlemesi",
       "now_label": "Şimdi:",
       "next_label": "Sonraki:",
-      "all_tasks_complete": "Tüm görevler tamamlandı! 🎉",
+      "all_tasks_complete": "Tüm görevler tamamlandı 🎉",
       "your_learning_path": "Öğrenme Yolunuz",
-      "learning_path_subtitle": "Her adım, Lumiso'yu doğal olarak kullanmayı öğretir.",
+      "learning_path_subtitle": "Her adım Lumiso'yu doğal olarak kullanmayı öğretir.",
       "coming_next": "Sırada Ne Var",
-      "congratulations": "Tebrikler! 🎉",
-      "setup_complete": "Rehberli kurulumu tamamladınız!",
+      "congratulations": "Tebrikler 🎉",
+      "setup_complete": "Rehberli kurulumu tamamladınız",
       "go_to_dashboard": "Kontrol Paneline Git",
       "loading": "Yükleniyor..."
     },
@@ -926,9 +926,9 @@
         "duration": "3 dk"
       },
       "step_2": {
-        "title": "İlk Potansiyel Müşterinizi Oluşturun",
-        "description": "Fırsatları takip etmek için potansiyel bir müşteri ekleyin",
-        "button": "Potansiyel Müşterilere Git",
+        "title": "İlk Kişinizi Oluşturun",
+        "description": "Fırsatları takip etmek için bir kişi ekleyin",
+        "button": "Kişilere Git",
         "duration": "2 dk"
       },
       "step_3": {
@@ -939,7 +939,7 @@
       },
       "step_4": {
         "title": "Projeler Sayfasını Keşfedin",
-        "description": "Farklı proje görünümleri hakkında bilgi edinin: Pano, Liste ve Arşivlenmiş projeler",
+        "description": "Pano, Liste ve Arşiv görünümlerini öğrenin",
         "button": "Projeleri Keşfet",
         "duration": "3 dk"
       },
@@ -951,17 +951,17 @@
       },
       "step_6": {
         "title": "Paketlerinizi Yapılandırın",
-        "description": "Fotoğrafçılık paketlerini ve fiyatlandırma yapısını ayarlayın",
+        "description": "Fotoğrafçılık paketlerini ve fiyatlandırmayı ayarlayın",
         "button": "Paketleri Ayarla",
         "duration": "5 dk"
       }
     },
     "modal": {
-      "welcome_title": "Lumiso'ya Hoş Geldiniz! 🎉",
-      "welcome_subtitle": "Fotoğrafçılık CRM'inizi adım adım kurmanızda size rehberlik edeceğiz. Her görev bir öncekinin üzerine inşa edilir, böylece doğal olarak öğrenirsiniz.",
+      "welcome_title": "Lumiso'ya Hoş Geldiniz 🎉",
+      "welcome_subtitle": "Fotoğrafçılık CRM'inizi kurmanızda size rehberlik edeceğiz. Her görev bir öncekinin üzerine inşa edilir.",
       "what_youll_learn": "Neler öğreneceksiniz:",
-      "skip_sample_data": "Atla & Örnek Veri Kullan",
-      "start_learning": "Öğrenmeye Başla!",
+      "skip_sample_data": "Atla ve Örnek Veri Kullan",
+      "start_learning": "Öğrenmeye Başla",
       "starting": "Başlatılıyor...",
       "toast": {
         "setup_started": "Sizi adım adım kuralım.",
@@ -969,8 +969,8 @@
       }
     },
     "sample_data": {
-      "title": "Kurulumu Atla & Örnek Veri Kullan?",
-      "description": "CRM'inizi gerçekçi örnek verilerle dolduracağız, böylece tüm özellikleri hemen keşfedebilirsiniz. Bu verileri daha sonra istediğiniz zaman özelleştirebilir veya silebilirsiniz.",
+      "title": "Kurulumu Atla ve Örnek Veri Kullan",
+      "description": "CRM'inizi gerçekçi örnek verilerle dolduracağız. Tüm özellikleri hemen keşfedebilirsiniz. Bu verileri daha sonra özelleştirebilir veya silebilirsiniz.",
       "whats_included": "Neler dahil:",
       "continue_guided_setup": "Rehberli Kuruluma Devam Et",
       "start_with_sample_data": "Örnek Veri ile Başla",
@@ -978,16 +978,16 @@
       "setting_up": "Kuruluyor...",
       "items": {
         "sample_leads": {
-          "title": "Örnek Potansiyel Müşteriler",
-          "description": "Gerçekçi iletişim bilgileriyle önceden doldurulmuş müşteri adayları"
+          "title": "Örnek Kişiler",
+          "description": "Gerçekçi iletişim bilgileriyle önceden doldurulmuş kişi kayıtları"
         },
         "example_projects": {
           "title": "Örnek Projeler",
-          "description": "Farklı tamamlanma aşamalarında fotoğrafçılık projeleri"
+          "description": "Farklı aşamalarda fotoğrafçılık projeleri"
         },
         "scheduled_sessions": {
-          "title": "Planlanmış Oturumlar",
-          "description": "Keşfedilecek yaklaşan ve geçmiş fotoğraf oturumları"
+          "title": "Planlanmış Seanslar",
+          "description": "Keşfetmek için yaklaşan ve geçmiş seanslar"
         },
         "photography_packages": {
           "title": "Fotoğrafçılık Paketleri",
@@ -995,16 +995,16 @@
         }
       },
       "toast": {
-        "success_title": "Kurulum atlandı!",
-        "success_description": "Lumiso'yu keşfetmeye başlayabilirsiniz. Örnek veriler gelecek bir güncellemede eklenecek.",
+        "success_title": "Kurulum atlandı",
+        "success_description": "Lumiso'yu keşfetmeye başlayabilirsiniz. Örnek veriler yakında eklenecek.",
         "error_title": "Hata",
         "error_description": "Kurulum atlanamadı. Lütfen tekrar deneyin.",
         "setup_error": "Rehberli kurulum başlatılamadı. Lütfen tekrar deneyin."
       }
     },
     "tutorial": {
-      "step_of": "Adım {{current}} / {{total}}",
-      "step_title": "Adım {{current}} / {{total}}: {{title}}",
+      "step_of": "Adım {{current}}  {{total}}",
+      "step_title": "Adım {{current}}  {{total}}  {{title}}",
       "exit_tutorial": "Eğitimden Çık",
       "hold_to_exit": "Çıkmak için basılı tutun…",
       "exiting": "Çıkılıyor…",
@@ -1019,7 +1019,7 @@
       "exiting": "Çıkılıyor...",
       "toast": {
         "restart_title": "Rehberli mod yeniden başlatıldı",
-        "restart_description": "1. adımdan baştan başlıyor...",
+        "restart_description": "Birinci adımdan başlanıyor...",
         "restart_error": "Rehberli mod yeniden başlatılamadı. Lütfen tekrar deneyin.",
         "exit_title": "Rehberlik modundan çıkıldı",
         "exit_description": "Artık tüm özelliklere erişebilirsiniz.",

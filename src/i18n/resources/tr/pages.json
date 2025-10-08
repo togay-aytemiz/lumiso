@@ -1,19 +1,19 @@
 {
   "leads": {
-    "title": "Müşteri Adayı Yönetimi",
-    "description": "Tüm potansiyel müşterilerinizi yönetin ve takip edin",
+    "title": "Kişi Yönetimi",
+    "description": "Tüm kişi ve müşterilerinizi yönetin, durumlarını takip edin",
     "filterByStatus": "Duruma göre filtrele:",
     "allStatuses": "Tüm Durumlar",
-    "noLeadsAllStatuses": "Müşteri adayı bulunamadı. Başlamak için ilk müşteri adayınızı ekleyin!",
-    "noLeadsWithStatus": "\"{{status}}\" durumunda müşteri adayı bulunamadı.",
-    "addLead": "Müşteri Adayı Ekle",
+    "noLeadsAllStatuses": "Henüz kişi eklenmemiş. Başlamak için ilk kişinizi ekleyin!",
+    "noLeadsWithStatus": "\"{{status}}\" durumunda kişi adayı bulunamadı.",
+    "addLead": "Kişi Ekle",
     "tutorial": {
       "welcome": {
-        "title": "Müşteri Adayı Yönetimine Hoş Geldiniz",
-        "description": "Bu, tüm potansiyel müşterilerinizi takip edebileceğiniz ve yönetebileceğiniz müşteri adayları panelinizdir. Yapabilecekleriniz:",
+        "title": "Kişi Yönetimine Hoş Geldiniz",
+        "description": "Burada tüm müşteri ve kişilerinizi kolayca takip edebilir, durumlarını yönetebilirsiniz. Yapabilecekleriniz:",
         "trackLeads": {
-          "title": "Müşteri Adaylarını Takip Et",
-          "description": "Tüm müşteri adaylarınızı iletişim bilgileri ve durumlarıyla birlikte düzenli bir tabloda görün."
+          "title": "Kişileri Takip Et",
+          "description": "Tüm kişilerinizi iletişim bilgileri ve durumlarıyla birlikte düzenli bir tabloda görün."
         },
         "filterSort": {
           "title": "Filtrele ve Sırala",
@@ -66,7 +66,7 @@
   },
   "projects": {
     "title": "Projeler",
-    "all_projects": "Tüm Projeler", 
+    "all_projects": "Tüm Projeler",
     "project_management_hub": "Proje Yönetim Merkezi",
     "board_view": "Pano Görünümü",
     "list_view": "Liste Görünümü",
@@ -84,7 +84,7 @@
     "project_name": "Proje Adı",
     "client": "Müşteri",
     "project_type": "Proje Türü",
-    "status": "Durum", 
+    "status": "Durum",
     "sessions": "Seanslar",
     "todos": "Görevler",
     "services": "Hizmetler",
@@ -1028,5 +1028,4 @@
       }
     }
   }
-
 }

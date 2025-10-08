@@ -163,13 +163,13 @@ export function EnhancedEditLeadDialog({
       // Save field values
       await upsertFieldValues(lead.id, fieldValuesData);
 
-      toast.success(t('messages.leadUpdatedDesc'));
+      toast.success(t('leadDialog.successUpdated'));
 
       onSuccess?.();
       onClose();
     } catch (error) {
       console.error('Failed to update lead:', error);
-      toast.error(error instanceof Error ? error.message : "Failed to update lead");
+      toast.error(error instanceof Error ? error.message : t('leadDialog.errorUpdated'));
     } finally {
       setLoading(false);
     }
@@ -196,7 +196,7 @@ export function EnhancedEditLeadDialog({
       variant: "outline" as const,
     },
     {
-      label: loading ? t('buttons.updating') : t('leadDialog.updateButton'),
+      label: loading ? t('leadDialog.updating') : t('leadDialog.updateButton'),
       onClick: form.handleSubmit(onSubmit),
       loading,
       disabled: loading || fieldsLoading || valuesLoading,

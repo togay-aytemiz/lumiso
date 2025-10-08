@@ -98,7 +98,13 @@
     "creating": "Oluşturuluyor...",
     "editTitle": "Müşteri Adayını Düzenle",
     "updateButton": "Müşteri Adayını Güncelle",
-    "cancel": "İptal"
+    "updating": "Güncelleniyor...",
+    "cancel": "İptal",
+    "successCreated": "Müşteri adayı başarıyla oluşturuldu",
+    "successUpdated": "Müşteri adayı başarıyla güncellendi",
+    "errorCreated": "Müşteri adayı oluşturulamadı",
+    "errorUpdated": "Müşteri adayı güncellenemedi",
+    "errorNoOrganization": "Aktif organizasyon bulunamadı"
   },
   "placeholders": {
     "enterName": "Ad girin",

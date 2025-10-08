@@ -115,7 +115,7 @@ export function EnhancedAddLeadDialog({
 
       const organizationId = await getUserOrganizationId();
       if (!organizationId) {
-        throw new Error('No active organization found');
+        throw new Error(t('leadDialog.errorNoOrganization'));
       }
 
       // Get status_id based on selected status or default
@@ -169,13 +169,13 @@ export function EnhancedAddLeadDialog({
       // Save field values
       await upsertFieldValues(newLead.id, fieldValues);
 
-      toast.success("The lead has been created successfully with custom field data.");
+      toast.success(t('leadDialog.successCreated'));
 
       onSuccess?.();
       onClose();
     } catch (error) {
       console.error('Failed to create lead:', error);
-      toast.error(error instanceof Error ? error.message : "Failed to create lead");
+      toast.error(error instanceof Error ? error.message : t('leadDialog.errorCreated'));
     } finally {
       setLoading(false);
     }

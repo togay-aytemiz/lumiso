@@ -93,10 +93,18 @@
   },
   "leadDialog": {
     "addTitle": "Add New Lead",
+    "addSubtitle": "Create a new lead with your configured fields.",
     "editTitle": "Edit Lead",
     "createButton": "Create Lead",
+    "creating": "Creating...",
     "updateButton": "Update Lead",
-    "cancel": "Cancel"
+    "updating": "Updating...",
+    "cancel": "Cancel",
+    "successCreated": "Lead created successfully",
+    "successUpdated": "Lead updated successfully",
+    "errorCreated": "Failed to create lead",
+    "errorUpdated": "Failed to update lead",
+    "errorNoOrganization": "No active organization found"
   },
   "placeholders": {
     "enterName": "Enter name",

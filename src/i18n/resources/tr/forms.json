@@ -22,7 +22,7 @@
   },
   "search": {
     "typeLabels": {
-      "lead": "Müşteri Adayları",
+      "lead": "Kişiler",
       "project": "Projeler",
       "note": "Notlar",
       "reminder": "Hatırlatıcılar",
@@ -38,7 +38,7 @@
       "descriptionMatch": "Açıklama: {{description}}",
       "contentAtTime": " saat "
     },
-    "leadLabel": "Müşteri Adayı:",
+    "leadLabel": "Kişi:",
     "loadingMore": "Daha fazla yükleniyor...",
     "loadMore": "{{count}} sonuç daha yükle ({{remaining}} kaldı)",
     "showingAll": "Tüm {{count}} sonuç gösteriliyor",
@@ -72,8 +72,8 @@
     "future_date_required": "Tarih gelecekte olmalı",
     "positive_number": "Pozitif bir sayı olmalı",
     "session_date_time_required": "Seans tarihi ve saati gerekli.",
-    "lead_required": "Lütfen bir müşteri adayı seçin veya yeni bir tane oluşturun.",
-    "lead_name_required": "Yeni müşteri adayı oluştururken isim gerekli.",
+    "lead_required": "Lütfen bir kişi seçin veya yeni bir tane oluşturun.",
+    "lead_name_required": "Yeni kişi oluştururken isim gerekli.",
     "content_required": "İçerik gerekli.",
     "datetime_required_for_reminders": "Hatırlatıcılar için tarih ve saat gereklidir"
   },
@@ -92,18 +92,18 @@
     "noFieldsAvailable": "Kullanılabilir form alanı yok"
   },
   "leadDialog": {
-    "addTitle": "Yeni Müşteri Adayı Ekle",
-    "addSubtitle": "Yapılandırdığınız alanlarla yeni bir müşteri adayı oluşturun.",
-    "createButton": "Müşteri Adayı Oluştur",
+    "addTitle": "Yeni Kişi Ekle",
+    "addSubtitle": "Yapılandırdığınız alanlarla yeni bir kişi oluşturun.",
+    "createButton": "Kişi Oluştur",
     "creating": "Oluşturuluyor...",
-    "editTitle": "Müşteri Adayını Düzenle",
-    "updateButton": "Müşteri Adayını Güncelle",
+    "editTitle": "Kişiyi Düzenle",
+    "updateButton": "Kişiyi Güncelle",
     "updating": "Güncelleniyor...",
     "cancel": "İptal",
-    "successCreated": "Müşteri adayı başarıyla oluşturuldu",
-    "successUpdated": "Müşteri adayı başarıyla güncellendi",
-    "errorCreated": "Müşteri adayı oluşturulamadı",
-    "errorUpdated": "Müşteri adayı güncellenemedi",
+    "successCreated": "Kişi başarıyla oluşturuldu",
+    "successUpdated": "Kişi başarıyla güncellendi",
+    "errorCreated": "Kişi oluşturulamadı",
+    "errorUpdated": "Kişi güncellenemedi",
     "errorNoOrganization": "Aktif organizasyon bulunamadı"
   },
   "placeholders": {
@@ -115,25 +115,25 @@
     "selectStatus": "Durum seçin",
     "enterNotes": "Not veya açıklama girin",
     "search": "Ara...",
-    "clientFullName": "Müşterinin tam adı",
-    "additionalNotes": "Bu müşteri adayı hakkında ek notlar...",
+    "clientFullName": "Kişinin tam adı",
+    "additionalNotes": "Bu kişi hakkında ek notlar...",
     "enterProjectName": "Proje adı girin",
     "enterProjectDescription": "Proje açıklaması girin (isteğe bağlı)",
     "basePrice": "0",
     "enter_location": "Konum girin",
     "select_project_type": "Proje türü seçin",
     "select_service": "Hizmet seçin",
-    "search_clients": "Müşteri ara...",
+    "search_clients": "Kişi ara...",
     "search_projects": "Proje ara...",
     "no_results": "Sonuç bulunamadı",
     "search_by_name_or_email": "İsim veya e-posta ile ara...",
-    "select_client_placeholder": "Müşteri ara ve seç...",
+    "select_client_placeholder": "Kişi ara ve seç...",
     "enter_activity_content": "Faaliyet detaylarını girin...",
     "searchByName": "İsim ile ara...",
-    "loadingClients": "Müşteriler yükleniyor...",
-    "noClientsMatch": "Aramanızla eşleşen müşteri bulunamadı",
-    "noActiveClients": "Aktif müşteri bulunamadı",
-    "enterClientName": "Müşteri adı girin"
+    "loadingClients": "Kişiler yükleniyor...",
+    "noClientsMatch": "Aramanızla eşleşen kişi bulunamadı",
+    "noActiveClients": "Aktif kişi bulunamadı",
+    "enterClientName": "Kişi adı girin"
   },
   "packages": {
     "title": "Paketler",
@@ -160,7 +160,6 @@
     "active": "Aktif",
     "inactive": "Pasif",
     "view_only": "Sadece Görüntüle",
-    "no_addons": "Ek hizmet yok",
     "failed_to_load": "Paketler yüklenemedi",
     "package_deleted": "Paket Silindi",
     "package_deleted_desc": "{{name}} kaldırıldı",
@@ -213,7 +212,7 @@
     "edit_addons": "Düzenle",
     "no_project_types_exist": "Henüz proje türü mevcut değil.",
     "create_project_types_link": "Proje Türleri Oluştur",
-    "price_help": "Müşteriye gösterilen fiyat. Proje bazında geçersiz kılabilirsiniz.",
+    "price_help": "Kişilere gösterilen fiyat. Proje bazında geçersiz kılabilirsiniz.",
     "duration_help": "Müsaitlik planlaması ve takvim bloklama için kullanılır.",
     "select_duration": "Süre seçin",
     "custom_duration": "Özel Süre",
@@ -224,7 +223,7 @@
     "project_types": "Proje Türlerine",
     "applicable_types_help_2": "bu paketin uygulanacağını seçin (hiçbiri = tüm türler)",
     "visibility": "Görünürlük",
-    "visibility_help": "Aktif paketler müşterilere görünür",
+    "visibility_help": "Aktif paketler kişilere görünür",
     "name_placeholder": "örn. Düğün Standart",
     "description_placeholder": "Paket açıklaması",
     "price_placeholder": "0",
@@ -287,9 +286,9 @@
     "placeholder": "örn. Onaylandı, Tamamlandı, Teslim Edildi"
   },
   "lead_statuses": {
-    "title": "Müşteri Adayı Durumları",
-    "description": "Müşteri adayı iş akışınızı ve sistem durumu tercihlerini yapılandırın.",
-    "show_quick_buttons": "Müşteri adayı detaylarında hızlı sistem durumu düğmelerini göster",
+    "title": "Kişi Durumları",
+    "description": "Kişileriniz için iş akışınızı ve sistem durumu tercihlerini yapılandırın.",
+    "show_quick_buttons": "Kişi detaylarında hızlı sistem durumu düğmelerini göster",
     "show_quick_buttons_help": "{{systemStatuses}} olarak işaretleme gibi hızlı işlemler için kullanılır.",
     "show_quick_buttons_help_default": "Tamamlandı veya kaybedildi olarak işaretleme gibi hızlı işlemler için kullanılır.",
     "system_statuses": "Sistem Durumları",
@@ -322,7 +321,7 @@
     "edit_title": "DURUMU DÜZENLE",
     "name_label": "Ad",
     "name_placeholder": "örn. Nitelikli, Teklif Gönderildi, Kazanıldı",
-    "name_help": "Müşteri adayı iş akışınızı durumlarda düzenleyin.",
+    "name_help": "Kişileriniz için iş akışınızı durumlarda düzenleyin.",
     "color_label": "Durum Rengi",
     "lifecycle": {
       "label": "Yaşam Döngüsü",
@@ -332,23 +331,23 @@
       "help": {
         "title": "Yaşam döngüsü otomasyonları ve raporlamayı yönlendirir:",
         "active": "Durum devam ediyor",
-        "completed": "Müşteri adayı başarıyla dönüştürüldü",
-        "cancelled": "Müşteri adayı kaybedildi veya reddedildi"
+        "completed": "Kişi başarıyla dönüştürüldü",
+        "cancelled": "Kişi kaybedildi veya reddedildi"
       }
     },
-    "system_required_info": "Sistem Gerekli Durum: Bu durum müşteri adayı iş akışları için gereklidir ve Aktif kalmalıdır. Yeniden adlandırabilirsiniz ancak silemez veya yaşam döngüsünü değiştiremezsiniz.",
-    "system_required_note": "Bu, yeni müşteri adayları için sistem gerekli bir durumdur.",
+    "system_required_info": "Sistem Gerekli Durum: Bu durum kişi iş akışları için gereklidir ve Aktif kalmalıdır. Yeniden adlandırabilirsiniz ancak silemez veya yaşam döngüsünü değiştiremezsiniz.",
+    "system_required_note": "Bu, yeni kişiler için gerekli bir durumdur.",
     "errors": {
       "name_required": "Durum adı gereklidir",
       "cannot_delete": "Bu durum gereklidir ve silinemez. Yeniden adlandırabilirsiniz.",
-      "add_failed": "Müşteri adayı durumu eklenirken hata",
-      "update_failed": "Müşteri adayı durumu güncellenirken hata",
-      "delete_failed": "Müşteri adayı durumu silinirken hata"
+      "add_failed": "Kişi durumu eklenirken hata",
+      "update_failed": "Kişi durumu güncellenirken hata",
+      "delete_failed": "Kişi durumu silinirken hata"
     },
     "success": {
-      "added": "Müşteri adayı durumu başarıyla eklendi",
-      "updated": "Müşteri adayı durumu başarıyla güncellendi",
-      "deleted": "Müşteri adayı durumu başarıyla silindi"
+      "added": "Kişi durumu başarıyla eklendi",
+      "updated": "Kişi durumu başarıyla güncellendi",
+      "deleted": "Kişi durumu başarıyla silindi"
     },
     "confirm": {
       "discard_changes": "Değişikliklerinizi iptal etmek istediğinizden emin misiniz? Kaydedilmemiş tüm bilgiler kaybolacaktır.",
@@ -495,7 +494,7 @@
     "visible_in_form": "Formda Görünür",
     "system_field": "Sistem Alanı",
     "system_field_description": "Sistem alanları düzenlenemez veya silinemez",
-    "create_description": "Ek müşteri adayı bilgisi yakalamak için yeni bir özel alan ekleyin",
+    "create_description": "Kişi bilgisi için yeni bir özel alan ekleyin",
     "edit_description": "Özel alan yapılandırmasını değiştirin",
     "unsaved_changes": "Kaydedilmemiş değişiklikleriniz var. Kapatmak istediğinizden emin misiniz?"
   },
@@ -510,8 +509,8 @@
     "editServices": "Hizmetleri Düzenle",
     "scheduleSession": "Seans Planla",
     "createProject": "Proje Oluştur",
-    "createNewClient": "Yeni müşteri oluştur",
-    "addLead": "Müşteri Adayı Ekle",
+    "createNewClient": "Yeni kişi oluştur",
+    "addLead": "Kişi Ekle",
     "adding": "Ekleniyor...",
     "saving": "Kaydediliyor...",
     "loading": "Yükleniyor...",
@@ -519,16 +518,16 @@
     "creating": "Oluşturuluyor...",
     "scheduling": "Planlanıyor...",
     "deleting": "Siliniyor...",
-    "updateLead": "Müşteri Adayını Güncelle",
+    "updateLead": "Kişi Güncelle",
     "today": "Bugün"
   },
   "dialogs": {
-    "addNewLead": "Yeni Müşteri Adayı Ekle",
-    "editLead": "Müşteri Adayını Düzenle",
+    "addNewLead": "Yeni Kişi Ekle",
+    "editLead": "Kişi Düzenle",
     "addProject": "PROJE EKLE",
-    "unsavedChanges": "Kaydedilmemiş müşteri adayı değişiklikleriniz var.",
+    "unsavedChanges": "Kaydedilmemiş kişi değişiklikleriniz var.",
     "unsavedProjectChanges": "Kaydedilmemiş proje değişiklikleriniz var.",
-    "updateLeadInfo": "Müşteri adayı bilgilerini ve özel alan verilerini güncelleyin."
+    "updateLeadInfo": "Kişi bilgilerini ve özel alan verilerini güncelleyin."
   },
   "userMenu": {
     "profileSettings": "Profil ayarları",
@@ -540,11 +539,11 @@
   },
   "sessions": {
     "schedule_new": "Yeni Seans Planla",
-    "select_existing_client": "Mevcut müşteri seç",
+    "select_existing_client": "Kişi seç",
     "available": "Müsait",
     "scheduled": "Planlandı",
-    "completed": "Tamamlandı", 
-    "loading_clients": "Müşteriler yükleniyor...",
+    "completed": "Tamamlandı",
+    "loading_clients": "Kişiler yükleniyor...",
     "warningTitle": "Uyarı",
     "sessionCreatedWarning": "Seans başarıyla oluşturuldu, ancak bildirimler gönderilemeyebilir.",
     "photoSession": "Fotoğraf Seansı",
@@ -556,7 +555,7 @@
     "noSessionsYet": "Henüz hiç seansınız yok.",
     "noSessionsWithStatus": "\"{{status}}\" durumunda seans bulunamadı.",
     "clickToSchedule": "İlk seansınızı eklemek için \"Seans Planla\" düğmesine tıklayın.",
-    "no_clients_found": "Aktif müşteri bulunamadı",
+    "no_clients_found": "Kişi bulunamadı",
     "sessionNotFound": "Seans bulunamadı",
     "unableToLoadDetails": "Seans detayları yüklenemiyor.",
     "sessionNotFoundDescription": "Aradığınız seans mevcut değil.",
@@ -595,7 +594,7 @@
     "pageSubtitle": "Tüm projelerinizi tek yerde yönetin",
     "table_columns": {
       "project_name": "Proje Adı",
-      "client": "Müşteri",
+      "client": "Kişi",
       "project_type": "Proje Türü",
       "status": "Durum",
       "sessions": "Seanslar",
@@ -611,7 +610,7 @@
       "no_projects_found": "Proje bulunamadı",
       "sessions_planned": "planlandı"
     },
-    "no_lead": "Müşteri Yok",
+    "no_lead": "Kişi Yok",
     "sessions": "seans",
     "services": "hizmetler",
     "tasks_completed": "görev tamamlandı",
@@ -629,19 +628,19 @@
     "archived": "Arşivlendi",
     "sessions": "seans",
     "services": "hizmet",
-    "no_lead": "Müşteri Yok"
+    "no_lead": "Kişi Yok"
   },
   "reminders": {
     "reminderBadge": "Hatırlatıcı",
     "overdue": "Gecikmiş",
     "today": "Bugün",
     "completed": "Tamamlandı",
-    "lead": "Müşteri Adayı"
+    "lead": "Kişi"
   },
   "viewProject": {
     "errorLoadingSessions": "Seanslar yüklenirken hata",
     "errorUpdatingProject": "Proje güncellenirken hata",
-    "errorDeletingProject": "Proje silinirken hata", 
+    "errorDeletingProject": "Proje silinirken hata",
     "errorDeletingSession": "Seans silinirken hata",
     "success": "Başarılı",
     "projectUpdated": "Proje başarıyla güncellendi",
@@ -652,26 +651,26 @@
   },
   "messages": {
     "authRequired": "Kimlik doğrulama gerekli",
-    "pleaseSignIn": "Müşteri adayları eklemek için lütfen giriş yapın",
+    "pleaseSignIn": "Kişi eklemek için lütfen giriş yapın",
     "organizationRequired": "Organizasyon gerekli",
     "ensureOrganization": "Lütfen bir organizasyonun üyesi olduğunuzdan emin olun",
-    "leadAddedSuccessfully": "Müşteri adayı başarıyla eklendi",
-    "leadAddedDesc": "{{name}} müşteri adaylarınıza eklendi",
-    "errorAddingLead": "Müşteri adayı eklenirken hata",
-    "leadUpdated": "Müşteri adayı güncellendi",
-    "leadUpdatedDesc": "Müşteri adayı özel alan verileriyle birlikte başarıyla güncellendi.",
+    "leadAddedSuccessfully": "Kişi başarıyla eklendi",
+    "leadAddedDesc": "{{name}} kişilerinize eklendi",
+    "errorAddingLead": "Kişi eklenirken hata",
+    "leadUpdated": "Kişi güncellendi",
+    "leadUpdatedDesc": "Kişi özel alan verileriyle birlikte başarıyla güncellendi.",
     "projectCreated": "Proje başarıyla oluşturuldu.",
     "errorCreatingProject": "Proje oluştururken hata",
     "loginToCreateProject": "Proje oluşturmak için lütfen giriş yapın.",
     "validationError": "Doğrulama Hatası",
     "nameRequired": "Ad gereklidir.",
-    "unsavedLeadChanges": "Kaydedilmemiş müşteri adayı değişiklikleriniz var.",
-    "errorUpdatingLead": "Müşteri adayı güncellenirken hata",
+    "unsavedLeadChanges": "Kaydedilmemiş kişi değişiklikleriniz var.",
+    "errorUpdatingLead": "Kişi güncellenirken hata",
     "authenticationRequired": "Kimlik doğrulama gerekli",
-    "pleaseSignInToAdd": "Müşteri adayı eklemek için lütfen oturum açın",
+    "pleaseSignInToAdd": "Kişi eklemek için lütfen oturum açın",
     "ensurePartOfOrg": "Lütfen bir organizasyonun parçası olduğunuzdan emin olun",
     "success": "Başarılı",
-    "leadUpdateSuccess": "Müşteri adayı başarıyla güncellendi."
+    "leadUpdateSuccess": "Kişi başarıyla güncellendi."
   },
   "status": {
     "loading": "Yükleniyor...",
@@ -691,7 +690,7 @@
     "types": {
       "call": "Arama",
       "email": "E-posta",
-      "meeting": "Toplantı", 
+      "meeting": "Toplantı",
       "note": "Not",
       "task": "Görev",
       "follow_up": "Takip",
@@ -699,7 +698,7 @@
     }
   },
   "clientDetails": {
-    "title": "Müşteri Detayları",
+    "title": "Kişi Detayları",
     "fullName": "Ad Soyad",
     "email": "E-posta",
     "phone": "Telefon",
@@ -708,7 +707,7 @@
     "whatsApp": "WhatsApp",
     "call": "Ara",
     "createdOn": "Oluşturulma tarihi",
-    "noInfoAvailable": "Müşteri bilgisi mevcut değil."
+    "noInfoAvailable": "Kişi mevcut değil."
   },
   "projectBanner": {
     "progress": "İlerleme",
@@ -725,15 +724,15 @@
   },
   "projectValidation": {
     "name_required": "Proje adı zorunludur.",
-    "lead_required": "Lütfen bir müşteri adayı seçin veya yeni bir tane oluşturun.",
-    "lead_name_required": "Yeni müşteri adayı oluştururken isim gerekli.",
+    "lead_required": "Lütfen bir kişi seçin veya yeni bir tane oluşturun.",
+    "lead_name_required": "Yeni kişi oluştururken isim gerekli.",
     "type_required": "Lütfen bir proje türü seçin."
   },
   "projectDialog": {
     "title": "Yeni Proje Oluştur",
     "addProject": "Proje Ekle",
-    "selectExistingClient": "Mevcut müşteri seç",
-    "selectClient": "Müşteri seç",
+    "selectExistingClient": "Mevcut kişilerden seç",
+    "selectClient": "Kişi seç",
     "name": "Ad *",
     "phone": "Telefon",
     "notes": "Notlar",
@@ -780,7 +779,7 @@
     "title": "Aktiviteler ve Geçmiş",
     "activity": "Aktivite",
     "history": "Geçmiş",
-    "leadActivities": "Potansiyel Müşteri Aktiviteleri",
+    "leadActivities": "Kişi Aktiviteleri",
     "projectActivities": "Proje Aktiviteleri",
     "noActivitiesYet": "Henüz aktivite yok",
     "noHistoryAvailable": "Geçmiş bulunmuyor",
@@ -793,7 +792,7 @@
     "scheduleSessionLabel": "Seans Planla *",
     "sessionSummary": "Seans Özeti",
     "project": "Proje",
-    "client": "Müşteri",
+    "client": "Kişi",
     "dateNotSet": "Tarih belirlenmedi",
     "time": "Saat"
   },
@@ -818,7 +817,7 @@
     "notes": "Notlar girin"
   },
   "sessionScheduling": {
-    "client": "Müşteri",
+    "client": "Kişi",
     "project_optional": "Proje (İsteğe Bağlı)",
     "select_project": "Bir proje seçin",
     "session_name": "Seans Adı",
@@ -829,12 +828,12 @@
     "session_date_time": "Seans Tarih ve Saati"
   },
   "activityLogs": {
-    "lead_created": "Müşteri adayı oluşturuldu",
-    "lead_updated": "Müşteri adayı güncellendi",
-    "lead_archived": "Müşteri adayı arşivlendi",
-    "lead_restored": "Müşteri adayı geri yüklendi", 
+    "lead_created": "Kişi oluşturuldu",
+    "lead_updated": "Kişi güncellendi",
+    "lead_archived": "Kişi arşivlendi",
+    "lead_restored": "Kişi geri yüklendi",
     "status_changed_from_to": "durum \"{{oldStatus}}\" den \"{{newStatus}}\" olarak değiştirildi",
-    "lead_updated_with_changes": "Müşteri adayı güncellendi: {{changes}}",
+    "lead_updated_with_changes": "Kişi güncellendi: {{changes}}",
     "field_added": "{{field}} eklendi: {{value}}",
     "field_updated": "{{field}} güncellendi: {{value}}",
     "field_removed": "{{field}} kaldırıldı: {{value}}",
@@ -844,7 +843,7 @@
     "status": "Durum",
     "full_name": "Tam Ad",
     "email_address": "E-posta Adresi",
-    "phone_number": "Telefon Numarası", 
+    "phone_number": "Telefon Numarası",
     "notes": "Notlar"
   },
   "relativeDates": {
@@ -892,8 +891,8 @@
     "description": "Proje kartlarınızda hangi bilgilerin görüneceğini özelleştirin. Daha temiz bir görünüm isteyen solo fotoğrafçılar için mükemmel.",
     "project_name": "Proje Adı",
     "project_name_description": "Kartlarda proje adlarını göster",
-    "client_name": "Müşteri Adı",
-    "client_name_description": "Kartlarda müşteri adlarını göster",
+    "client_name": "Kişi Adı",
+    "client_name_description": "Kartlarda kişi adlarını göster",
     "project_type": "Proje Türü",
     "project_type_description": "Kartlarda proje türü rozetlerini göster",
     "todo_progress": "Yapılacaklar İlerlemesi",
@@ -971,7 +970,7 @@
   },
   "sessionScheduling": {
     "title": "Seans Planla",
-    "client": "Müşteri",
+    "client": "Kişi",
     "project": "Proje",
     "project_optional": "Proje (İsteğe Bağlı)",
     "select_project": "Bir proje seçin",
@@ -994,7 +993,7 @@
     "planned_sessions_on": "Planlanan seanslar:",
     "this_day": "bu gün",
     "no_time": "Saat yok",
-    "unknown_client": "Bilinmeyen müşteri",
+    "unknown_client": "Bilinmeyen kişi",
     "loading_times": "Müsait saatler yükleniyor...",
     "no_working_hours": "Bu gün için çalışma saati belirlenmemiş",
     "configure_working_hours": "Müsait saatleri görmek için ayarlarda çalışma saatlerini yapılandırın",
@@ -1043,23 +1042,23 @@
     "project": "Proje",
     "notes": "Notlar",
     "location": "Konum",
-    "clientDetails": "Müşteri Detayları",
+    "clientDetails": "Kişi Detayları",
     "dangerZone": "Tehlike Bölgesi",
     "deleteSession": "Seansı Sil",
     "deleteWarning": "Bu işlem seansı ve tüm ilgili verileri kalıcı olarak silecektir."
   },
   "leadDangerZone": {
-    "deleteLead": "Müşteri Adayını Sil",
-    "deleteWarning": "Bu işlem müşteri adayını ve TÜM ilgili verileri kalıcı olarak silecektir: projeler, seanslar, hatırlatıcılar/notlar, ödemeler, hizmetler ve aktiviteler."
+    "deleteLead": "Kişiyi Sil",
+    "deleteWarning": "Bu işlem kişi ve TÜM ilgili verileri kalıcı olarak silecektir: projeler, seanslar, hatırlatıcılar/notlar, ödemeler, hizmetler ve aktiviteler."
   },
   "deleteLeadDialog": {
-    "title": "Müşteri Adayını Sil",
-    "description": "Onaylamak için müşteri adayının adını (\"{{name}}\") veya DELETE yazın. Bu işlem müşteri adayını ve projeler, seanslar, hatırlatıcılar/notlar, ödemeler, hizmetler ve aktiviteler dahil TÜM ilgili verileri kalıcı olarak silecektir.",
+    "title": "Kişiyi Sil",
+    "description": "Onaylamak için kişi adını (\"{{name}}\") veya DELETE yazın. Bu işlem kişi, bağlı projeler, seanslar, hatırlatıcılar/notlar, ödemeler, hizmetler ve aktiviteler dahil TÜM ilgili verileri kalıcı olarak silecektir.",
     "placeholder": "\"{{name}}\" veya \"DELETE\" yazın",
     "cannotUndo": "Bu işlem geri alınamaz.",
     "deleting": "Siliniyor...",
-    "deleteLead": "Müşteri Adayını Sil",
-    "successDescription": "Müşteri adayı ve tüm ilgili veriler başarıyla silindi."
+    "deleteLead": "Kişiyi Sil",
+    "successDescription": "Kişi ve tüm ilgili veriler başarıyla silindi."
   },
   "progress": {
     "todos_completed": "yapılacak tamamlandı"
@@ -1126,7 +1125,7 @@
   "project_sheet": {
     "todos_tab": "Yapılacaklar",
     "payments_tab": "Ödemeler",
-    "services_tab": "Hizmetler", 
+    "services_tab": "Hizmetler",
     "sessions_tab": "Seanslar",
     "activities_tab": "Etkinlikler",
     "archived_banner": "Bu proje arşivlendi. Çoğu işlem devre dışı. Arşivlenmiş durumda, seansları ve hatırlatmaları takvimlerden, Seanslar sayfasından ve etkinlik listelerinden gizlenir. Düzenleme ve görünürlüğü yeniden etkinleştirmek için Daha Fazla → Geri Yükle'yi kullanın.",
@@ -1134,7 +1133,7 @@
     "more": "Daha Fazla",
     "edit_project": "Projeyi Düzenle",
     "archive_project": "Projeyi Arşivle",
-    "restore_project": "Projeyi Geri Yükle", 
+    "restore_project": "Projeyi Geri Yükle",
     "close": "Kapat"
   },
   "dangerZone": {
@@ -1143,10 +1142,10 @@
     "delete_all_data": "Tüm Verileri Sil",
     "delete_description": "Tüm verilerinizi sunucularımızdan kalıcı olarak kaldırın",
     "permanently_delete": "Tüm Verileri Kalıcı Olarak Sil",
-    "delete_warning": "Bu işlem tüm müşteri adaylarınızı, projelerinizi, seanslarınızı, hatırlatıcılarınızı, ödemelerinizi ve ilişkili verilerinizi kalıcı olarak silecektir. Bu işlem geri alınamaz ve tüm veriler sonsuza kadar kaybolacaktır.",
+    "delete_warning": "Bu işlem tüm kişilerinizi, projelerinizi, seanslarınızı, hatırlatıcılarınızı, ödemelerinizi ve ilişkili verilerinizi kalıcı olarak silecektir. Bu işlem geri alınamaz ve tüm veriler sonsuza kadar kaybolacaktır.",
     "confirm_deletion": "Veri Silmeyi Onayla",
     "deletion_details": "Bu işlem aşağıdakiler dahil olmak üzere tüm verilerinizi kalıcı olarak silecektir:",
-    "leads_info": "Tüm müşteri adayları ve bilgileri",
+    "leads_info": "Tüm kişi ve bilgileri",
     "projects_info": "Tüm projeler ve detayları",
     "sessions_info": "Tüm seanslar ve randevular",
     "reminders_info": "Tüm hatırlatıcılar ve aktiviteler",
@@ -1204,11 +1203,11 @@
     "delete_confirm": "\"{{name}}\" paketini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz."
   },
   "lead_fields": {
-    "title": "Özel Müşteri Adayı Alanları",
-    "description": "Müşteri adaylarınız için yakalamak istediğiniz alanları özelleştirin. İş akışınıza uyacak şekilde özel alanlar ekleyebilir, düzenleyebilir veya kaldırabilirsiniz.",
+    "title": "Özel Kişi Alanları",
+    "description": "Kişileriniz için eklemek istediğiniz alanları özelleştirin. İş akışınıza uyacak şekilde özel alanlar ekleyebilir, düzenleyebilir veya kaldırabilirsiniz.",
     "add_field": "Özel Alan Ekle",
     "no_fields": "Henüz özel alan yapılandırılmamış.",
-    "no_fields_description": "Ek müşteri adayı bilgilerini toplamaya başlamak için ilk özel alanınızı ekleyin.",
+    "no_fields_description": "Ek kişi bilgilerini toplamaya başlamak için ilk özel alanınızı ekleyin.",
     "table": {
       "field_name": "Alan Adı",
       "type": "Tür",
@@ -1225,7 +1224,7 @@
     },
     "delete_dialog": {
       "title": "Özel Alanı Sil",
-      "description": "\"{{fieldName}}\" alanını silmek istediğinizden emin misiniz? Bu, alan tanımını ve mevcut müşteri adayları için bu alanda depolanan tüm verileri kalıcı olarak kaldıracaktır. Bu eylem geri alınamaz.",
+      "description": "\"{{fieldName}}\" alanını silmek istediğinizden emin misiniz? Bu, alan tanımını ve mevcut kişiler için bu alanda depolanan tüm verileri kalıcı olarak kaldıracaktır. Bu eylem geri alınamaz.",
       "cancel": "İptal",
       "confirm": "Alanı Sil"
     }
@@ -1261,7 +1260,7 @@
     "visible_in_form": "Formda Görünür",
     "system_field": "Sistem Alanı",
     "system_field_description": "Sistem alanları düzenlenemez veya silinemez",
-    "create_description": "Ek müşteri adayı bilgisi yakalamak için yeni bir özel alan ekleyin",
+    "create_description": "Ek kişi bilgisi yakalamak için yeni bir özel alan ekleyin",
     "edit_description": "Özel alan yapılandırmasını değiştirin",
     "unsaved_changes": "Kaydedilmemiş değişiklikleriniz var. Kapatmak istediğinizden emin misiniz?",
     "field_types": {
@@ -1329,7 +1328,7 @@
     "description_placeholder": "Paketin kısa açıklaması",
     "price": "Fiyat (TL)",
     "price_placeholder": "0",
-    "price_help": "Müşteriye gösterilen fiyat. Proje başına değiştirebilirsiniz.",
+    "price_help": "Kişiye gösterilen fiyat. Proje başına değiştirebilirsiniz.",
     "duration": "Süre",
     "duration_help": "Müsaitlik planlaması ve takvim rezervasyonu için kullanılır.",
     "select_duration": "Süre seçin",
@@ -1353,7 +1352,7 @@
     "edit_addons": "Düzenle",
     "is_active": "Aktif",
     "visibility": "Görünürlük",
-    "visibility_help": "Aktif paketler müşterilere görünür",
+    "visibility_help": "Aktif paketler kişilere görünür",
     "errors": {
       "name_required": "Paket adı gereklidir",
       "update_failed": "Paket güncellenemedi",

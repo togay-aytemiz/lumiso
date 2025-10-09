@@ -421,7 +421,11 @@
   "buttons": {
     "cancel": "Cancel",
     "creating": "Creating...",
-    "createProject": "Create Project"
+    "createProject": "Create Project",
+    "createNewClient": "Create New Client",
+    "done": "Done",
+    "clearAll": "Clear All",
+    "editServices": "Edit Services"
   },
   "projectDialog": {
     "title": "Create New Project",
@@ -439,7 +443,31 @@
     "noTypesMatch": "No types match your search",
     "noProjectTypesFound": "No project types found",
     "basePrice": "Base Price (TRY)",
-    "description": "Description"
+    "description": "Description",
+    "packageOptional": "Package (Optional)",
+    "selectPackage": "Select package...",
+    "noPackage": "No package",
+    "noPackagesAvailable": "No packages available for this project type.",
+    "createPackagesSuggestion": "Create packages to offer predefined service bundles and pricing.",
+    "createPackage": "Create Package",
+    "duration": "Duration:",
+    "includes": "Includes:",
+    "services": "services",
+    "noPackageSelected": "No package selected. You can add custom pricing and services.",
+    "setCustomDetails": "Set Custom Details",
+    "packageBasePrice": "Package base price: TRY",
+    "customizeNote": "(you can customize this)",
+    "servicesAddons": "Services and Add-ons",
+    "unsavedChanges": "You have unsaved project changes.",
+    "selectServicesToAdd": "Select services to add:",
+    "addOrRemoveServices": "Add or remove services:",
+    "addServices": "Add Services",
+    "projectSummary": "Project Summary",
+    "basePackage": "Base Package:",
+    "addOns": "Add-ons:",
+    "items": "items",
+    "servicesTotal": "Services Total:",
+    "finalPrice": "Final Price:"
   },
   "status": {
     "loading": "Loading...",

@@ -1021,7 +1021,7 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
             {/* Description - Show if package selected or custom setup enabled */}
             {(projectData.packageId || showCustomSetup) && (
               <div className="space-y-2">
-                <Label htmlFor="project-description">{tForms('labels.description')}</Label>
+                <Label htmlFor="project-description">{tCommon('labels.description')}</Label>
                 <Textarea
                   id="project-description"
                   value={projectData.description}
@@ -1163,8 +1163,8 @@ export function EnhancedProjectDialog({ defaultLeadId, onProjectCreated, childre
                   {projectData.selectedServiceIds.length > 0 && (
                     <>
                       <div className="flex justify-between">
-                        <span>Add-ons:</span>
-                        <span>{projectData.selectedServiceIds.length} items</span>
+                        <span>{tForms('projectDialog.addOns')}</span>
+                        <span>{projectData.selectedServiceIds.length} {tForms('projectDialog.items')}</span>
                       </div>
                       <div className="flex justify-between">
                         <span>{tForms('projectDialog.servicesTotal')}</span>

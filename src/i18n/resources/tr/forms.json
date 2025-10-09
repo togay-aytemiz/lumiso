@@ -737,7 +737,11 @@
   "buttons": {
     "cancel": "İptal",
     "creating": "Oluşturuluyor...",
-    "createProject": "Proje Oluştur"
+    "createProject": "Proje Oluştur",
+    "createNewClient": "Yeni Kişi Oluştur",
+    "done": "Tamam",
+    "clearAll": "Tümünü Temizle",
+    "editServices": "Hizmetleri Düzenle"
   },
   "projectDialog": {
     "title": "Yeni Proje Oluştur",
@@ -777,6 +781,7 @@
     "projectSummary": "Proje Özeti",
     "basePackage": "Temel Paket:",
     "addOns": "Eklentiler:",
+    "items": "öğe",
     "servicesTotal": "Hizmetler Toplamı:",
     "finalPrice": "Nihai Fiyat:"
   },
@@ -818,7 +823,8 @@
     "email": "E-posta",
     "phone": "Telefon",
     "status": "Durum",
-    "notes": "Notlar"
+    "notes": "Notlar",
+    "description": "Açıklama"
   },
   "placeholders": {
     "name": "İsim girin",

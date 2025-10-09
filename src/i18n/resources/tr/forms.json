@@ -728,6 +728,17 @@
     "lead_name_required": "Yeni kişi oluştururken isim gerekli.",
     "type_required": "Lütfen bir proje türü seçin."
   },
+  "project_validation": {
+    "name_required": "Proje adı zorunludur.",
+    "lead_required": "Lütfen bir kişi seçin veya yeni bir tane oluşturun.",
+    "lead_name_required": "Yeni kişi oluştururken isim gerekli.",
+    "type_required": "Lütfen bir proje türü seçin."
+  },
+  "buttons": {
+    "cancel": "İptal",
+    "creating": "Oluşturuluyor...",
+    "createProject": "Proje Oluştur"
+  },
   "projectDialog": {
     "title": "Yeni Proje Oluştur",
     "addProject": "Proje Ekle",

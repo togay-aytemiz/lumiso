@@ -412,6 +412,35 @@
     "phone_number": "Phone Number",
     "notes": "Notes"
   },
+  "project_validation": {
+    "name_required": "Project name is required.",
+    "lead_required": "Please select a lead or create a new one.",
+    "lead_name_required": "Lead name is required when creating a new lead.",
+    "type_required": "Please select a project type."
+  },
+  "buttons": {
+    "cancel": "Cancel",
+    "creating": "Creating...",
+    "createProject": "Create Project"
+  },
+  "projectDialog": {
+    "title": "Create New Project",
+    "addProject": "Add Project",
+    "selectExistingClient": "Select from existing clients",
+    "selectClient": "Select Client",
+    "name": "Name *",
+    "phone": "Phone",
+    "notes": "Notes",
+    "additionalNotes": "Additional notes...",
+    "projectName": "Project Name *",
+    "projectType": "Project Type *",
+    "selectProjectType": "Select project type...",
+    "searchProjectTypes": "Search project types...",
+    "noTypesMatch": "No types match your search",
+    "noProjectTypesFound": "No project types found",
+    "basePrice": "Base Price (TRY)",
+    "description": "Description"
+  },
   "status": {
     "loading": "Loading...",
     "selectStatus": "SELECT STATUS",

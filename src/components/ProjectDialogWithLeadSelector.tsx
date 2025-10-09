@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
 import { useToast } from "@/hooks/use-toast";
 import { ProjectTypeSelector } from "./ProjectTypeSelector";
+import { useFormsTranslation, useCommonTranslation } from "@/hooks/useTypedTranslation";
 
 interface Lead {
   id: string;
@@ -40,6 +41,8 @@ export function ProjectDialogWithLeadSelector({
   const [isSaving, setIsSaving] = useState(false);
   const [loadingLeads, setLoadingLeads] = useState(false);
   const { toast } = useToast();
+  const { t: tForms } = useFormsTranslation();
+  const { t: tCommon } = useCommonTranslation();
 
   useEffect(() => {
     if (open) {
@@ -59,7 +62,7 @@ export function ProjectDialogWithLeadSelector({
       setLeads(data || []);
     } catch (error: any) {
       toast({
-        title: "Error loading leads",
+        title: tCommon('labels.error'),
         description: error.message,
         variant: "destructive"
       });
@@ -84,8 +87,8 @@ export function ProjectDialogWithLeadSelector({
   const handleSave = async () => {
     if (!name.trim()) {
       toast({
-        title: "Validation Error",
-        description: "Project name is required.",
+        title: tCommon('labels.error'),
+        description: tForms('project_validation.name_required'),
         variant: "destructive"
       });
       return;
@@ -93,8 +96,8 @@ export function ProjectDialogWithLeadSelector({
 
     if (!selectedLeadId) {
       toast({
-        title: "Validation Error",
-        description: "Please select a lead for this project.",
+        title: tCommon('labels.error'),
+        description: tForms('project_validation.lead_required'),
         variant: "destructive"
       });
       return;
@@ -102,8 +105,8 @@ export function ProjectDialogWithLeadSelector({
 
     if (!projectTypeId) {
       toast({
-        title: "Validation Error",
-        description: "Please select a project type.",
+        title: tCommon('labels.error'),
+        description: tForms('project_validation.type_required'),
         variant: "destructive"
       });
       return;
@@ -114,8 +117,8 @@ export function ProjectDialogWithLeadSelector({
       const { data: userData } = await supabase.auth.getUser();
       if (!userData.user) {
         toast({
-          title: "Authentication required",
-          description: "Please log in to create a project.",
+          title: tCommon('labels.error'),
+          description: tCommon('messages.error.auth_required'),
           variant: "destructive"
         });
         return;
@@ -125,8 +128,8 @@ export function ProjectDialogWithLeadSelector({
       const organizationId = await getUserOrganizationId();
       if (!organizationId) {
         toast({
-          title: "Organization required",
-          description: "Please ensure you're part of an organization",
+          title: tCommon('labels.error'),
+          description: tCommon('messages.error.organization_required'),
           variant: "destructive"
         });
         return;
@@ -173,8 +176,8 @@ export function ProjectDialogWithLeadSelector({
       }
 
       toast({
-        title: "Success",
-        description: "Project created successfully."
+        title: tCommon('actions.success'),
+        description: tCommon('messages.success.project_created')
       });
 
       resetForm();
@@ -182,7 +185,7 @@ export function ProjectDialogWithLeadSelector({
       onProjectCreated();
     } catch (error: any) {
       toast({
-        title: "Error creating project",
+        title: tCommon('labels.error'),
         description: error.message,
         variant: "destructive"
       });
@@ -206,20 +209,20 @@ export function ProjectDialogWithLeadSelector({
     >
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Add New Project</DialogTitle>
+          <DialogTitle>{tForms('projectDialog.title')}</DialogTitle>
         </DialogHeader>
         
           <div className="-mx-2">
             <ScrollArea className="max-h-[60vh]">
               <div className="px-2 space-y-4 pt-2 pb-2">
                 <div className="space-y-2">
-                  <Label htmlFor="lead-select">Select Lead *</Label>
+                  <Label htmlFor="lead-select">{tForms('projectDialog.selectClient')}</Label>
                   {loadingLeads ? (
                     <CompactLoadingSkeleton />
                   ) : (
                     <Select value={selectedLeadId} onValueChange={setSelectedLeadId} disabled={isSaving}>
                       <SelectTrigger id="lead-select">
-                        <SelectValue placeholder="Choose a lead for this project" />
+                        <SelectValue placeholder={tForms('placeholders.select_client_placeholder')} />
                       </SelectTrigger>
                       <SelectContent>
                         {leads.map((lead) => (
@@ -233,19 +236,19 @@ export function ProjectDialogWithLeadSelector({
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="project-name">Project Name *</Label>
+                  <Label htmlFor="project-name">{tForms('projectDialog.projectName')}</Label>
                   <Input
                     id="project-name"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="Enter project name"
+                    placeholder={tForms('placeholders.enterProjectName')}
                     disabled={isSaving}
                     autoFocus
                   />
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="project-type">Project Type *</Label>
+                  <Label htmlFor="project-type">{tForms('projectDialog.projectType')}</Label>
                   <ProjectTypeSelector
                     value={projectTypeId}
                     onValueChange={setProjectTypeId}
@@ -255,7 +258,7 @@ export function ProjectDialogWithLeadSelector({
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="base-price">Base Price (TRY)</Label>
+                  <Label htmlFor="base-price">{tForms('projectDialog.basePrice')}</Label>
                   <Input
                     id="base-price"
                     type="number"
@@ -263,18 +266,18 @@ export function ProjectDialogWithLeadSelector({
                     min="0"
                     value={basePrice}
                     onChange={(e) => setBasePrice(e.target.value)}
-                    placeholder="0"
+                    placeholder={tForms('placeholders.basePrice')}
                     disabled={isSaving}
                   />
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="project-description">Description</Label>
+                  <Label htmlFor="project-description">{tForms('projectDialog.description')}</Label>
                   <Textarea
                     id="project-description"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Enter project description (optional)"
+                    placeholder={tForms('placeholders.enterProjectDescription')}
                     rows={4}
                     disabled={isSaving}
                     className="resize-none"
@@ -291,14 +294,14 @@ export function ProjectDialogWithLeadSelector({
             disabled={isSaving}
           >
             <X className="h-4 w-4 mr-2" />
-            Cancel
+            {tForms('buttons.cancel')}
           </Button>
           <Button 
             onClick={handleSave}
             disabled={isSaving || !name.trim() || !selectedLeadId || !projectTypeId}
           >
             <Save className="h-4 w-4 mr-2" />
-            {isSaving ? "Creating..." : "Create Project"}
+            {isSaving ? tForms('buttons.creating') : tForms('buttons.createProject')}
           </Button>
         </div>
       </DialogContent>

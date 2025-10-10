@@ -43,6 +43,27 @@ const AllLeadsNew = () => {
 
   const loading = leadsLoading || columnsLoading;
 
+  // Refetch data when page becomes visible (e.g., when navigating back from lead detail)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        refetchLeads();
+      }
+    };
+
+    const handleFocus = () => {
+      refetchLeads();
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [refetchLeads]);
+
   const leadsTutorialSteps: TutorialStep[] = [
     {
       id: 1,

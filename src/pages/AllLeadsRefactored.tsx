@@ -37,6 +37,27 @@ const AllLeadsRefactored = () => {
     fetchFn: () => leadService.fetchLeadsWithCustomFields()
   });
 
+  // Refetch data when page becomes visible (e.g., when navigating back from lead detail)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        refetchLeads();
+      }
+    };
+
+    const handleFocus = () => {
+      refetchLeads();
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [refetchLeads]);
+
   const { 
     columns, 
     columnPreferences, 

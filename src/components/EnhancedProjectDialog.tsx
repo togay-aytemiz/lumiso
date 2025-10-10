@@ -20,6 +20,7 @@ import { useOrganization } from "@/contexts/OrganizationContext";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { NavigationGuardDialog } from "@/components/settings/NavigationGuardDialog";
 import { useFormsTranslation, useCommonTranslation } from "@/hooks/useTypedTranslation";
+import { useTranslation } from "react-i18next";
 
 interface Lead {
   id: string;

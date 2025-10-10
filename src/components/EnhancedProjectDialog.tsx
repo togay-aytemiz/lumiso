@@ -21,6 +21,7 @@ import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { NavigationGuardDialog } from "@/components/settings/NavigationGuardDialog";
 import { useFormsTranslation, useCommonTranslation } from "@/hooks/useTypedTranslation";
 import { useTranslation } from "react-i18next";
+import i18n from "i18next";
 
 interface Lead {
   id: string;
@@ -104,6 +105,11 @@ export function EnhancedProjectDialog({
   const [loadingPackages, setLoadingPackages] = useState(false);
   const [showServicesEditor, setShowServicesEditor] = useState(false);
   const [showCustomSetup, setShowCustomSetup] = useState(false);
+
+  useEffect(() => {
+    console.log("tForms test:", tForms("placeholders.select_client_placeholder", { defaultValue: "__MISS__" }));
+    console.log("i18n direct test:", i18n.t("forms:placeholders.select_client_placeholder"));
+  }, []);
 
   useEffect(() => {
     if (open) {
@@ -606,8 +612,6 @@ export function EnhancedProjectDialog({
                         tForms("placeholders.loadingClients")
                       ) : (
                         tForms("placeholders.select_client_placeholder")
-                        console.log(tForms('placeholders.select_client_placeholder', { defaultValue: '__MISS__' }))
-                        console.log(i18n.t('forms:placeholders.select_client_placeholder'))
                       )}
                       <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>

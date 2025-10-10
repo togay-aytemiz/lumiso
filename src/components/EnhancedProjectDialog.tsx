@@ -606,6 +606,8 @@ export function EnhancedProjectDialog({
                         tForms("placeholders.loadingClients")
                       ) : (
                         tForms("placeholders.select_client_placeholder")
+                        console.log(tForms('placeholders.select_client_placeholder', { defaultValue: '__MISS__' }))
+                        console.log(i18n.t('forms:placeholders.select_client_placeholder'))
                       )}
                       <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>

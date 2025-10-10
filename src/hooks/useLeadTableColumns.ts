@@ -153,10 +153,11 @@ export function useLeadTableColumns() {
           key: 'name',
           header: t('lead_table_columns.name'),
           sortable: true,
-          accessor: (lead) => lead.custom_fields['name'] || lead.name,
+          // Always prioritize core lead.name to avoid stale values from custom fields
+          accessor: (lead) => lead.name || lead.custom_fields['name'],
           render: (lead) => React.createElement('span', {
             className: "font-medium"
-          }, lead.custom_fields['name'] || lead.name || '-'),
+          }, lead.name || lead.custom_fields['name'] || '-'),
         };
       }
 

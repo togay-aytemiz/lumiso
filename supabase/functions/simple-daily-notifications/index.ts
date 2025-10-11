@@ -44,8 +44,7 @@ const handler = async (req: Request): Promise<Response> => {
         user_id, 
         notification_scheduled_time, 
         notification_daily_summary_enabled,
-        notification_global_enabled,
-        active_organization_id
+        notification_global_enabled
       `)
       .eq('notification_global_enabled', true)
       .eq('notification_daily_summary_enabled', true);
@@ -69,8 +68,9 @@ const handler = async (req: Request): Promise<Response> => {
       return new Response(
         JSON.stringify({ 
           success: true, 
-          message: `No users found for ${currentTimeString}`,
-          processed: 0 
+          message: `No users with daily summaries enabled`,
+          processed: 0,
+          timestamp: new Date().toISOString()
         }),
         { headers: { 'Content-Type': 'application/json', ...corsHeaders } }
       );
@@ -78,10 +78,34 @@ const handler = async (req: Request): Promise<Response> => {
 
     let processed = 0;
     let errors = 0;
+    const skippedReasons: Record<string, number> = {
+      noOrganization: 0,
+      noProfile: 0,
+      noEmail: 0,
+      wrongTime: 0,
+      emailFailed: 0
+    };
 
     for (const userSettings of users) {
       try {
         console.log(`Processing user ${userSettings.user_id} with scheduled time ${userSettings.notification_scheduled_time}`);
+        
+        // First, get the user's organization ID
+        const { data: userOrg, error: orgError } = await supabaseAdmin
+          .from('organizations')
+          .select('id')
+          .eq('owner_id', userSettings.user_id)
+          .maybeSingle();
+
+        const organizationId = userOrg?.id;
+
+        if (!organizationId) {
+          console.error(`No organization found for user ${userSettings.user_id}`);
+          skippedReasons.noOrganization++;
+          continue;
+        }
+
+        console.log(`Found organization ${organizationId} for user ${userSettings.user_id}`);
         
         // Skip if testing mode and no specific user ID
         if (action !== 'test') {
@@ -89,7 +113,7 @@ const handler = async (req: Request): Promise<Response> => {
           const { data: orgSettings } = await supabaseAdmin
             .from('organization_settings')
             .select('timezone')
-            .eq('organization_id', userSettings.active_organization_id)
+            .eq('organization_id', organizationId)
             .maybeSingle();
           
           const orgTimezone = orgSettings?.timezone || 'UTC';
@@ -109,7 +133,8 @@ const handler = async (req: Request): Promise<Response> => {
           
           // Skip if it's not time for this user in their timezone
           if (orgTimeString !== userSettings.notification_scheduled_time) {
-            console.log(`Skipping user ${userSettings.user_id} - not their scheduled time`);
+            console.log(`Skipping user ${userSettings.user_id} - not their scheduled time (${orgTimeString} vs ${userSettings.notification_scheduled_time})`);
+            skippedReasons.wrongTime++;
             continue;
           }
         }
@@ -122,7 +147,8 @@ const handler = async (req: Request): Promise<Response> => {
           .single();
 
         if (profileError) {
-          console.error('Error fetching profile:', profileError);
+          console.error(`Error fetching profile for user ${userSettings.user_id}:`, profileError);
+          skippedReasons.noProfile++;
           continue;
         }
 
@@ -130,21 +156,12 @@ const handler = async (req: Request): Promise<Response> => {
         const { data: { user }, error: userError } = await supabaseAdmin.auth.admin.getUserById(userSettings.user_id);
         
         if (userError || !user?.email) {
-          console.error('Error fetching user email:', userError);
+          console.error(`Error fetching user email for ${userSettings.user_id}:`, userError);
+          skippedReasons.noEmail++;
           continue;
         }
 
-        console.log(`Authenticated user: ${user.email}`);
-
-        // Use active organization from user settings
-        const organizationId = userSettings.active_organization_id;
-        
-        if (!organizationId) {
-          console.error('No active organization found for user');
-          continue;
-        }
-
-        console.log('Organization ID:', organizationId);
+        console.log(`Processing email for ${user.email} (Organization: ${organizationId})`);
 
         // Extract user's full name
         const userFullName = profile?.full_name || 
@@ -387,26 +404,41 @@ const handler = async (req: Request): Promise<Response> => {
         });
 
         if (emailResult.error) {
-          console.error('Resend error:', emailResult.error);
+          console.error(`Resend error for ${user.email}:`, emailResult.error);
           errors++;
+          skippedReasons.emailFailed++;
         } else {
-          console.log(`Daily summary sent successfully to ${user.email}`, emailResult.data);
+          console.log(`✅ Daily summary sent successfully to ${user.email} (Email ID: ${emailResult.data?.id})`);
           processed++;
         }
 
       } catch (error) {
-        console.error(`Error processing user ${userSettings.user_id}:`, error);
+        console.error(`❌ Error processing user ${userSettings.user_id}:`, error);
         errors++;
       }
     }
+
+    const totalProcessed = processed + errors + Object.values(skippedReasons).reduce((a, b) => a + b, 0);
+    console.log(`\n📊 Processing Summary:
+      - Total users checked: ${users.length}
+      - Successfully sent: ${processed}
+      - Failed to send: ${errors}
+      - Skipped (no org): ${skippedReasons.noOrganization}
+      - Skipped (no profile): ${skippedReasons.noProfile}
+      - Skipped (no email): ${skippedReasons.noEmail}
+      - Skipped (wrong time): ${skippedReasons.wrongTime}
+      - Skipped (email failed): ${skippedReasons.emailFailed}
+    `);
 
     return new Response(
       JSON.stringify({ 
         success: true,
         processed,
         errors,
-        currentTime: currentTimeString,
-        message: `Processed ${processed} daily summaries${errors > 0 ? `, ${errors} failed` : ''}`
+        skipped: skippedReasons,
+        totalChecked: users.length,
+        timestamp: new Date().toISOString(),
+        message: `Processed ${processed} daily summaries${errors > 0 ? `, ${errors} failed` : ''}${Object.values(skippedReasons).reduce((a, b) => a + b, 0) > 0 ? `, ${Object.values(skippedReasons).reduce((a, b) => a + b, 0)} skipped` : ''}`
       }),
       { 
         headers: { 'Content-Type': 'application/json', ...corsHeaders }

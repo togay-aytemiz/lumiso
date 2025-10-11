@@ -586,7 +586,6 @@ async function handleAssignmentNotification(requestData: any, adminSupabase: any
             entityName = `Project ${entity_id}`;
           }
         }
-      }
     }
 
     // Get organization settings for branding AND notification preferences

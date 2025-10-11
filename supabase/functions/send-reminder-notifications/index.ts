@@ -3,6 +3,13 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { Resend } from "npm:resend@2.0.0";
 import { generateModernDailySummaryEmail } from './_templates/enhanced-daily-summary-modern.ts';
 import { generateEmptyDailySummaryEmail } from './_templates/enhanced-daily-summary-empty.ts';
+import { 
+  generateImmediateNotificationEmail, 
+  generateSubject,
+  type ProjectAssignmentData,
+  type LeadAssignmentData,
+  type ImmediateNotificationEmailData
+} from './_templates/immediate-notifications.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -22,6 +29,14 @@ interface ReminderRequest {
   new_status?: string;
   milestone_user_id?: string;
   milestone_user_name?: string;
+  // Assignment notification specific fields
+  entity_type?: string;
+  entity_id?: string;
+  assignee_id?: string;
+  assignee_email?: string;
+  assignee_name?: string;
+  assigner_name?: string;
+  assigner_id?: string;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -38,17 +53,22 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     const requestData: ReminderRequest = await req.json();
     console.log(`Processing ${requestData.type}, test mode: ${requestData.isTest || false}`);
-    console.log('Available types: daily-summary, daily-summary-empty, project-milestone');
+    console.log('Available types: daily-summary, daily-summary-empty, project-milestone, new-assignment');
 
     // Handle project-milestone notifications
     if (requestData.type === 'project-milestone') {
       return await handleProjectMilestoneNotification(requestData, adminSupabase);
     }
 
+    // Handle assignment notifications
+    if (requestData.type === 'new-assignment') {
+      return await handleAssignmentNotification(requestData, adminSupabase);
+    }
+
     // Handle daily-summary and daily-summary-empty notifications
     if (!['daily-summary', 'daily-summary-empty'].includes(requestData.type)) {
       console.log(`Unsupported type received: ${requestData.type}`);
-      return new Response(JSON.stringify({ message: 'Only daily-summary, daily-summary-empty and project-milestone supported' }), {
+      return new Response(JSON.stringify({ message: 'Only daily-summary, daily-summary-empty, project-milestone, and new-assignment supported' }), {
         status: 200,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });
@@ -435,13 +455,48 @@ const handler = async (req: Request): Promise<Response> => {
   }
 };
 
-        
-        if (lead) {
-          entityName = lead.name;
-          notes = lead.notes;
-          status = lead.status;
-        }
-      } else if (entity_type === 'project') {
+// Handler for assignment notifications (lead or project assignments)
+async function handleAssignmentNotification(requestData: any, adminSupabase: any): Promise<Response> {
+  console.log('Handling assignment notification:', requestData);
+  
+  try {
+    const { 
+      entity_type, 
+      entity_id, 
+      assignee_id, 
+      assignee_email, 
+      assignee_name,
+      assigner_name,
+      organizationId 
+    } = requestData;
+
+    // Initialize variables for entity details
+    let entityName = '';
+    let notes = '';
+    let status = '';
+    let leadName = '';
+    let projectType = '';
+
+    // Fetch entity details based on type
+    if (entity_type === 'lead') {
+      console.log('Fetching lead details for ID:', entity_id);
+      
+      const { data: lead, error: leadError } = await adminSupabase
+        .from('leads')
+        .select('name, notes, status')
+        .eq('id', entity_id)
+        .maybeSingle();
+      
+      if (leadError) {
+        console.error('Error fetching lead:', leadError);
+      }
+      
+      if (lead) {
+        entityName = lead.name;
+        notes = lead.notes;
+        status = lead.status;
+      }
+    } else if (entity_type === 'project') {
         console.log('Fetching project details for ID:', entity_id);
         
         // First get the project details with lead information

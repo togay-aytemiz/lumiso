@@ -41,6 +41,9 @@ export function InlineTextareaEditor({
     setIsSaving(true);
     try {
       await onSave(inputValue.trim());
+    } catch (error) {
+      console.error('Failed to save textarea field:', error);
+      setInputValue(originalValue);
     } finally {
       setIsSaving(false);
     }

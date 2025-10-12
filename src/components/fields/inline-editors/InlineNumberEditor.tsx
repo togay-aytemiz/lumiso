@@ -40,6 +40,9 @@ export function InlineNumberEditor({
     setIsSaving(true);
     try {
       await onSave(inputValue.trim());
+    } catch (error) {
+      console.error('Failed to save number field:', error);
+      setInputValue(originalValue);
     } finally {
       setIsSaving(false);
     }

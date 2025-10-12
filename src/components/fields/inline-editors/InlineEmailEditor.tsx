@@ -34,6 +34,9 @@ export function InlineEmailEditor({
     setIsSaving(true);
     try {
       await onSave(inputValue.trim());
+    } catch (error) {
+      console.error('Failed to save email field:', error);
+      setInputValue(originalValue);
     } finally {
       setIsSaving(false);
     }

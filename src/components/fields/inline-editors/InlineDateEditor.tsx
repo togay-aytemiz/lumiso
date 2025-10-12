@@ -33,6 +33,9 @@ export function InlineDateEditor({
     setIsSaving(true);
     try {
       await onSave(inputValue);
+    } catch (error) {
+      console.error('Failed to save date field:', error);
+      setInputValue(originalValue);
     } finally {
       setIsSaving(false);
     }

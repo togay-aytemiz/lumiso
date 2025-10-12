@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Phone, Mail, MessageCircle } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import { useLeadFieldDefinitions } from "@/hooks/useLeadFieldDefinitions";
 import { useLeadFieldValues } from "@/hooks/useLeadFieldValues";
 import { useLeadUpdate } from "@/hooks/useLeadUpdate";
@@ -81,6 +82,7 @@ export function UnifiedClientDetails({
   showClickableNames = false,
   createdAt
 }: UnifiedClientDetailsProps) {
+  const { toast } = useToast();
   const { fieldDefinitions, loading: fieldsLoading } = useLeadFieldDefinitions();
   const { fieldValues, loading: valuesLoading, refetch: refetchFieldValues } = useLeadFieldValues(lead.id);
   // Permissions removed for single photographer mode - always allow
@@ -133,9 +135,26 @@ export function UnifiedClientDetails({
   const handleFieldSave = async (fieldKey: string, value: string, isCustom: boolean) => {
     const trimmedValue = value.trim();
     
+    // Validate custom fields before saving
     if (isCustom) {
+      const fieldDef = fieldDefinitions.find(f => f.field_key === fieldKey);
+      if (fieldDef) {
+        const validation = validateFieldValue(trimmedValue || null, fieldDef);
+        if (!validation.isValid) {
+          toast({
+            title: "Validation Error",
+            description: validation.error || "Invalid field value",
+            variant: "destructive"
+          });
+          setEditingField(null);
+          return;
+        }
+      }
+      
+      console.log(`Saving custom field "${fieldKey}":`, trimmedValue || null);
       await updateCustomField(fieldKey, trimmedValue || null);
     } else {
+      console.log(`Saving core field "${fieldKey}":`, trimmedValue || null);
       await updateCoreField(fieldKey, trimmedValue || null);
     }
     

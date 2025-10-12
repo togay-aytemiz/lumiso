@@ -36,12 +36,22 @@ export function InlineSelectEditor({
     }
   };
 
-  const handleValueChange = (newValue: string) => {
+  const handleValueChange = async (newValue: string) => {
     setSelectedValue(newValue);
     setIsOpen(false);
-    // Auto-save on selection when not showing buttons
-    if (!showButtons) {
-      setTimeout(() => handleSave(), 100);
+    
+    // Auto-save immediately when not showing buttons
+    if (!showButtons && !isSaving) {
+      setIsSaving(true);
+      try {
+        await onSave(newValue);
+      } catch (error) {
+        console.error('Failed to save select field:', error);
+        // Revert to original value on error
+        setSelectedValue(originalValue);
+      } finally {
+        setIsSaving(false);
+      }
     }
   };
 

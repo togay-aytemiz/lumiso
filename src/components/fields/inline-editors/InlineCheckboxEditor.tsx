@@ -31,20 +31,21 @@ export function InlineCheckboxEditor({
     }
   };
 
-  const handleCheckChange = (newChecked: boolean) => {
+  const handleCheckChange = async (newChecked: boolean) => {
     setChecked(newChecked);
-    // Auto-save on change when not showing buttons
-    if (!showButtons) {
-      setTimeout(async () => {
-        if (!isSaving) {
-          setIsSaving(true);
-          try {
-            await onSave(newChecked.toString());
-          } finally {
-            setIsSaving(false);
-          }
-        }
-      }, 100);
+    
+    // Auto-save immediately when not showing buttons
+    if (!showButtons && !isSaving) {
+      setIsSaving(true);
+      try {
+        await onSave(newChecked.toString());
+      } catch (error) {
+        console.error('Failed to save checkbox field:', error);
+        // Revert to original value on error
+        setChecked(originalValue);
+      } finally {
+        setIsSaving(false);
+      }
     }
   };
 

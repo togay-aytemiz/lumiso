@@ -180,13 +180,15 @@ export function UnifiedClientDetails({
       case 'notes':
         return <InlineTextareaEditor {...commonProps} maxLength={field.fieldDefinition?.validation_rules?.maxLength || 1000} showButtons={true} />;
       case 'select':
-        return <InlineSelectEditor {...commonProps} options={options} showButtons={true} />;
+        // Auto-save on selection for best UX
+        return <InlineSelectEditor {...commonProps} options={options} showButtons={false} />;
       case 'number':
         return <InlineNumberEditor {...commonProps} min={field.fieldDefinition?.validation_rules?.min} max={field.fieldDefinition?.validation_rules?.max} showButtons={true} />;
       case 'date':
         return <InlineDateEditor {...commonProps} showButtons={true} />;
       case 'checkbox':
-        return <InlineCheckboxEditor {...commonProps} showButtons={true} />;
+        // Auto-save on toggle for best UX
+        return <InlineCheckboxEditor {...commonProps} showButtons={false} />;
       default:
         return <InlineTextEditor {...commonProps} maxLength={field.fieldDefinition?.validation_rules?.maxLength || 255} showButtons={true} />;
     }

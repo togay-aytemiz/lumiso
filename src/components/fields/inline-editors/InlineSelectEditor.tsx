@@ -23,7 +23,12 @@ export function InlineSelectEditor({
   const [selectedValue, setSelectedValue] = useState(value || '');
   const [isSaving, setIsSaving] = useState(false);
   const [originalValue] = useState(value || '');
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
+
+  // Keep local state in sync when parent value updates (e.g., after refetch)
+  useEffect(() => {
+    setSelectedValue(value || '');
+  }, [value]);
 
   const handleSave = async () => {
     if (isSaving) return;
@@ -39,12 +44,14 @@ export function InlineSelectEditor({
   const handleValueChange = async (newValue: string) => {
     setSelectedValue(newValue);
     setIsOpen(false);
-    
+
     // Auto-save immediately when not showing buttons
     if (!showButtons && !isSaving) {
       setIsSaving(true);
       try {
         await onSave(newValue);
+        // Exit edit mode to reflect saved value in parent
+        onCancel?.();
       } catch (error) {
         console.error('Failed to save select field:', error);
         // Revert to original value on error
@@ -58,7 +65,7 @@ export function InlineSelectEditor({
   return (
     <div className="flex items-center gap-1">
       <Select
-        value={selectedValue}
+        value={selectedValue || undefined}
         onValueChange={handleValueChange}
         open={isOpen}
         onOpenChange={setIsOpen}
@@ -66,7 +73,7 @@ export function InlineSelectEditor({
         <SelectTrigger className="h-7 text-sm">
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent className="z-50">
           {options.map((option) => (
             <SelectItem key={option} value={option}>
               {option}

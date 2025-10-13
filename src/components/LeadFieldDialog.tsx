@@ -40,6 +40,7 @@ const fieldSchema = z.object({
   is_required: z.boolean().default(false),
   is_visible_in_form: z.boolean().default(true),
   options: z.string().optional(),
+  allow_multiple: z.boolean().default(false),
   validation_rules: z.object({
     min_length: z.number().optional(),
     max_length: z.number().optional(),
@@ -113,6 +114,7 @@ export function LeadFieldDialog({ open, onOpenChange, field, onClose }: LeadFiel
         is_required: field.is_required,
         is_visible_in_form: field.is_visible_in_form,
         options: field.options?.options ? field.options.options.join(", ") : "",
+        allow_multiple: field.allow_multiple || false,
         validation_rules: field.validation_rules as any,
       });
     } else if (!field && open) {
@@ -122,6 +124,7 @@ export function LeadFieldDialog({ open, onOpenChange, field, onClose }: LeadFiel
         is_required: false,
         is_visible_in_form: true,
         options: "",
+        allow_multiple: false,
       });
     }
   }, [field, open, form]);
@@ -144,6 +147,7 @@ export function LeadFieldDialog({ open, onOpenChange, field, onClose }: LeadFiel
         validation_rules: fieldTypeConfig.supportsValidation && data.validation_rules 
           ? data.validation_rules 
           : undefined,
+        allow_multiple: data.field_type === 'select' ? data.allow_multiple : undefined,
       };
 
       if (isEdit) {
@@ -261,26 +265,54 @@ export function LeadFieldDialog({ open, onOpenChange, field, onClose }: LeadFiel
             </div>
 
             {fieldTypeConfig.supportsOptions && (
-              <FormField
-                control={form.control}
-                name="options"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t("lead_field.options")}</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder={t("lead_field.options_placeholder")}
-                        {...field}
-                        disabled={isSystemField}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      {t("lead_field.options_description")}
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
+              <>
+                <FormField
+                  control={form.control}
+                  name="options"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("lead_field.options")}</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder={t("lead_field.options_placeholder")}
+                          {...field}
+                          disabled={isSystemField}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        {t("lead_field.options_description")}
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                {selectedFieldType === 'select' && (
+                  <FormField
+                    control={form.control}
+                    name="allow_multiple"
+                    render={({ field }) => (
+                      <FormItem className="flex items-center justify-between p-4 border rounded-lg">
+                        <div className="space-y-1">
+                          <FormLabel className="text-sm font-medium">
+                            {t("lead_field.allow_multiple_selections")}
+                          </FormLabel>
+                          <FormDescription className="text-sm text-muted-foreground">
+                            {t("lead_field.allow_multiple_description")}
+                          </FormDescription>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            disabled={isSystemField}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
                 )}
-              />
+              </>
             )}
 
             <div className="flex items-center justify-between p-4 border rounded-lg">

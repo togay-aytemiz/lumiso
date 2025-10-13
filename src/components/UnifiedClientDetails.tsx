@@ -16,6 +16,7 @@ import { InlineTextareaEditor } from "@/components/fields/inline-editors/InlineT
 import { InlineEmailEditor } from "@/components/fields/inline-editors/InlineEmailEditor";
 import { InlinePhoneEditor } from "@/components/fields/inline-editors/InlinePhoneEditor";
 import { InlineSelectEditor } from "@/components/fields/inline-editors/InlineSelectEditor";
+import { InlineMultiSelectEditor } from "@/components/fields/inline-editors/InlineMultiSelectEditor";
 import { InlineNumberEditor } from "@/components/fields/inline-editors/InlineNumberEditor";
 import { InlineDateEditor } from "@/components/fields/inline-editors/InlineDateEditor";
 import { InlineCheckboxEditor } from "@/components/fields/inline-editors/InlineCheckboxEditor";
@@ -164,6 +165,7 @@ export function UnifiedClientDetails({
   const getInlineEditor = (field: any) => {
     const fieldType = field.type === 'custom' ? field.fieldDefinition?.field_type : field.key;
     const options = field.fieldDefinition?.options?.options || [];
+    const allowMultiple = field.fieldDefinition?.allow_multiple || false;
 
     const commonProps = {
       value: field.value,
@@ -180,14 +182,16 @@ export function UnifiedClientDetails({
       case 'notes':
         return <InlineTextareaEditor {...commonProps} maxLength={field.fieldDefinition?.validation_rules?.maxLength || 1000} showButtons={true} />;
       case 'select':
-        // Auto-save on selection for best UX
-        return <InlineSelectEditor {...commonProps} options={options} showButtons={false} />;
+        if (allowMultiple) {
+          return <InlineMultiSelectEditor {...commonProps} options={options} showButtons={true} />;
+        } else {
+          return <InlineSelectEditor {...commonProps} options={options} showButtons={true} />;
+        }
       case 'number':
         return <InlineNumberEditor {...commonProps} min={field.fieldDefinition?.validation_rules?.min} max={field.fieldDefinition?.validation_rules?.max} showButtons={true} />;
       case 'date':
         return <InlineDateEditor {...commonProps} showButtons={true} />;
       case 'checkbox':
-        // Auto-save on toggle for best UX
         return <InlineCheckboxEditor {...commonProps} showButtons={false} />;
       default:
         return <InlineTextEditor {...commonProps} maxLength={field.fieldDefinition?.validation_rules?.maxLength || 255} showButtons={true} />;

@@ -23,7 +23,7 @@ export function InlineSelectEditor({
   const [selectedValue, setSelectedValue] = useState(value || '');
   const [isSaving, setIsSaving] = useState(false);
   const [originalValue] = useState(value || '');
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(true); // Auto-open when entering edit mode
 
   // Keep local state in sync when parent value updates (e.g., after refetch)
   useEffect(() => {

@@ -23,6 +23,7 @@ export interface LeadFieldDefinition {
   sort_order: number;
   options?: { options: string[] };
   validation_rules?: Record<string, any>;
+  allow_multiple?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -46,6 +47,7 @@ export interface CreateLeadFieldDefinition {
   sort_order?: number;
   options?: { options: string[] };
   validation_rules?: Record<string, any>;
+  allow_multiple?: boolean;
 }
 
 export interface UpdateLeadFieldDefinition {
@@ -56,6 +58,7 @@ export interface UpdateLeadFieldDefinition {
   sort_order?: number;
   options?: { options: string[] };
   validation_rules?: Record<string, any>;
+  allow_multiple?: boolean;
 }
 
 export interface LeadWithFieldValues {

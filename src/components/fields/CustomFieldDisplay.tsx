@@ -7,6 +7,7 @@ import { FieldEmailDisplay } from "./FieldEmailDisplay";
 import { FieldPhoneDisplay } from "./FieldPhoneDisplay";
 import { FieldDateDisplay } from "./FieldDateDisplay";
 import { FieldSelectDisplay } from "./FieldSelectDisplay";
+import { FieldMultiSelectDisplay } from "./FieldMultiSelectDisplay";
 import { FieldCheckboxDisplay } from "./FieldCheckboxDisplay";
 import { FieldNumberDisplay } from "./FieldNumberDisplay";
 
@@ -75,9 +76,10 @@ export function CustomFieldDisplay({
       );
     
     case 'select':
-      return (
-        <FieldSelectDisplay value={value} />
-      );
+      if (fieldDefinition.allow_multiple) {
+        return <FieldMultiSelectDisplay value={value} />;
+      }
+      return <FieldSelectDisplay value={value} />;
     
     case 'checkbox':
       return (

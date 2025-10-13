@@ -266,6 +266,7 @@ export type Database = {
       }
       lead_field_definitions: {
         Row: {
+          allow_multiple: boolean | null
           created_at: string
           field_key: string
           field_type: string
@@ -282,6 +283,7 @@ export type Database = {
           validation_rules: Json | null
         }
         Insert: {
+          allow_multiple?: boolean | null
           created_at?: string
           field_key: string
           field_type: string
@@ -298,6 +300,7 @@ export type Database = {
           validation_rules?: Json | null
         }
         Update: {
+          allow_multiple?: boolean | null
           created_at?: string
           field_key?: string
           field_type?: string

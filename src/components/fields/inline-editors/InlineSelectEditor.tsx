@@ -24,6 +24,7 @@ export function InlineSelectEditor({
   const [isSaving, setIsSaving] = useState(false);
   const [originalValue] = useState(value || '');
   const [isOpen, setIsOpen] = useState(true); // Auto-open when entering edit mode
+  const selectionChangeRef = useRef(false);
 
   // Keep local state in sync when parent value updates (e.g., after refetch)
   useEffect(() => {
@@ -47,10 +48,17 @@ export function InlineSelectEditor({
 
   const handleValueChange = async (newValue: string) => {
     setSelectedValue(newValue);
-    setIsOpen(false);
 
-    // Auto-save immediately when not showing buttons
-    if (!showButtons && !isSaving) {
+    if (showButtons) {
+      // Keep the dropdown open on selection; user will confirm with the tick button
+      selectionChangeRef.current = true;
+      setIsOpen(true);
+      return;
+    }
+
+    // Close and auto-save when not showing buttons
+    setIsOpen(false);
+    if (!isSaving) {
       setIsSaving(true);
       try {
         await onSave(newValue);
@@ -72,12 +80,20 @@ export function InlineSelectEditor({
         value={selectedValue || undefined}
         onValueChange={handleValueChange}
         open={isOpen}
-        onOpenChange={setIsOpen}
+        onOpenChange={(open) => {
+          if (showButtons && !open && selectionChangeRef.current) {
+            // Prevent auto-close when selection changes; keep it open until user confirms
+            selectionChangeRef.current = false;
+            setIsOpen(true);
+          } else {
+            setIsOpen(open);
+          }
+        }}
       >
         <SelectTrigger className="h-7 text-sm">
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
-        <SelectContent className="z-50">
+        <SelectContent className="z-50 bg-background">
           {options.map((option) => (
             <SelectItem key={option} value={option}>
               {option}

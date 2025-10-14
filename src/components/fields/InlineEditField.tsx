@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect, ReactNode } from 'react';
-import { Edit2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { useState, useRef, useEffect, ReactNode } from "react";
+import { Edit2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface InlineEditFieldProps {
   value: string | null;
@@ -14,6 +14,7 @@ interface InlineEditFieldProps {
   disabled?: boolean;
   clickToEdit?: boolean;
   autoSave?: boolean;
+  disableOutsideCancel?: boolean;
 }
 
 export function InlineEditField({
@@ -27,7 +28,8 @@ export function InlineEditField({
   className,
   disabled = false,
   clickToEdit = true,
-  autoSave = true
+  autoSave = true,
+  disableOutsideCancel = false,
 }: InlineEditFieldProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -35,35 +37,38 @@ export function InlineEditField({
 
   // Handle click outside to cancel edit
   useEffect(() => {
-    if (!isEditing) return;
+    if (!isEditing || disableOutsideCancel) return;
 
     const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      ) {
         onCancel();
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isEditing, onCancel]);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isEditing, onCancel, disableOutsideCancel]);
 
   // Handle keyboard shortcuts
   useEffect(() => {
     if (!isEditing) return;
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
+      if (event.key === "Escape") {
         onCancel();
       }
     };
 
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
   }, [isEditing, onCancel]);
 
   const handleSave = async (newValue: string) => {
     if (isSaving) return;
-    
+
     setIsSaving(true);
     try {
       await onSave(newValue);
@@ -79,25 +84,21 @@ export function InlineEditField({
   return (
     <div
       ref={containerRef}
-      className={cn(
-        "relative group",
-        isEditing && "z-10",
-        className
-      )}
+      className={cn("relative group", isEditing && "z-10", className)}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       {isEditing ? (
-        <div className="w-full">
-          {editComponent}
-        </div>
+        <div className="w-full">{editComponent}</div>
       ) : (
         <>
-          <div 
+          <div
             className={cn(
-              "w-full", 
+              "w-full",
               clickToEdit && !disabled && "cursor-pointer",
-              isHovered && !disabled && "bg-muted/30 rounded px-2 py-1 -mx-2 -my-1"
+              isHovered &&
+                !disabled &&
+                "bg-muted/30 rounded px-2 py-1 -mx-2 -my-1"
             )}
             onClick={clickToEdit && !disabled ? onStartEdit : undefined}
           >

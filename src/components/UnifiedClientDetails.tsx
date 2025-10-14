@@ -45,13 +45,16 @@ interface UnifiedClientDetailsProps {
 }
 
 // Helper functions for validation and phone normalization
-const isValidEmail = (email?: string | null) => !!email && /[^\s@]+@[^\s@]+\.[^\s@]+/.test(email);
+const isValidEmail = (email?: string | null) =>
+  !!email && /[^\s@]+@[^\s@]+\.[^\s@]+/.test(email);
 
-function normalizeTRPhone(phone?: string | null): null | { e164: string; e164NoPlus: string } {
+function normalizeTRPhone(
+  phone?: string | null
+): null | { e164: string; e164NoPlus: string } {
   if (!phone) return null;
   const digits = phone.replace(/\D/g, "");
   let e164 = "";
-  
+
   if (phone.trim().startsWith("+")) {
     if (digits.startsWith("90") && digits.length === 12) {
       e164 = "+" + digits;
@@ -67,25 +70,30 @@ function normalizeTRPhone(phone?: string | null): null | { e164: string; e164NoP
   } else {
     return null;
   }
-  
+
   return {
     e164,
-    e164NoPlus: e164.slice(1)
+    e164NoPlus: e164.slice(1),
   };
 }
 
-export function UnifiedClientDetails({ 
-  lead, 
+export function UnifiedClientDetails({
+  lead,
   title,
   showQuickActions = true,
   onLeadUpdated,
   className,
   showClickableNames = false,
-  createdAt
+  createdAt,
 }: UnifiedClientDetailsProps) {
   const { toast } = useToast();
-  const { fieldDefinitions, loading: fieldsLoading } = useLeadFieldDefinitions();
-  const { fieldValues, loading: valuesLoading, refetch: refetchFieldValues } = useLeadFieldValues(lead.id);
+  const { fieldDefinitions, loading: fieldsLoading } =
+    useLeadFieldDefinitions();
+  const {
+    fieldValues,
+    loading: valuesLoading,
+    refetch: refetchFieldValues,
+  } = useLeadFieldValues(lead.id);
   // Permissions removed for single photographer mode - always allow
   const [editOpen, setEditOpen] = useState(false);
   const [editingField, setEditingField] = useState<string | null>(null);
@@ -97,7 +105,7 @@ export function UnifiedClientDetails({
     onSuccess: () => {
       refetchFieldValues?.();
       onLeadUpdated?.();
-    }
+    },
   });
 
   const loading = fieldsLoading || valuesLoading;
@@ -107,113 +115,192 @@ export function UnifiedClientDetails({
     key: string;
     label: string;
     value: string | null;
-    type: 'core' | 'custom';
+    type: "core" | "custom";
     fieldDefinition?: any;
   }> = [
-    { key: 'name', label: tForms('clientDetails.fullName'), value: lead.name, type: 'core' },
-    { key: 'email', label: tForms('clientDetails.email'), value: lead.email, type: 'core' },
-    { key: 'phone', label: tForms('clientDetails.phone'), value: lead.phone, type: 'core' },
-    { key: 'notes', label: tForms('clientDetails.notes'), value: lead.notes, type: 'core' },
+    {
+      key: "name",
+      label: tForms("clientDetails.fullName"),
+      value: lead.name,
+      type: "core",
+    },
+    {
+      key: "email",
+      label: tForms("clientDetails.email"),
+      value: lead.email,
+      type: "core",
+    },
+    {
+      key: "phone",
+      label: tForms("clientDetails.phone"),
+      value: lead.phone,
+      type: "core",
+    },
+    {
+      key: "notes",
+      label: tForms("clientDetails.notes"),
+      value: lead.notes,
+      type: "core",
+    },
     ...fieldDefinitions
-      .filter(field => !['name', 'email', 'phone', 'notes', 'status'].includes(field.field_key))
+      .filter(
+        (field) =>
+          !["name", "email", "phone", "notes", "status"].includes(
+            field.field_key
+          )
+      )
       .sort((a, b) => a.sort_order - b.sort_order)
-      .map(field => ({
+      .map((field) => ({
         key: field.field_key,
         label: field.label,
-        value: fieldValues.find(fv => fv.field_key === field.field_key)?.value || null,
-        type: 'custom' as const,
-        fieldDefinition: field
-      }))
+        value:
+          fieldValues.find((fv) => fv.field_key === field.field_key)?.value ||
+          null,
+        type: "custom" as const,
+        fieldDefinition: field,
+      })),
   ];
 
   // Show all fields regardless of whether they have values
-  const coreFields = allFields.filter(field => field.type === 'core');
-  const customFields = allFields.filter(field => field.type === 'custom');
+  const coreFields = allFields.filter((field) => field.type === "core");
+  const customFields = allFields.filter((field) => field.type === "custom");
 
   // Handle inline editing - Single photographer has full edit access
   const canEdit = true;
 
-  const handleFieldSave = async (fieldKey: string, value: string, isCustom: boolean) => {
+  const handleFieldSave = async (
+    fieldKey: string,
+    value: string,
+    isCustom: boolean
+  ) => {
     const trimmedValue = value.trim();
-    
+
     // Validate custom fields before saving
     if (isCustom) {
-      const fieldDef = fieldDefinitions.find(f => f.field_key === fieldKey);
+      const fieldDef = fieldDefinitions.find((f) => f.field_key === fieldKey);
       if (fieldDef) {
         const validation = validateFieldValue(trimmedValue || null, fieldDef);
         if (!validation.isValid) {
           toast({
             title: "Validation Error",
             description: validation.error || "Invalid field value",
-            variant: "destructive"
+            variant: "destructive",
           });
           setEditingField(null);
           return;
         }
       }
-      
+
       console.log(`Saving custom field "${fieldKey}":`, trimmedValue || null);
       await updateCustomField(fieldKey, trimmedValue || null);
     } else {
       console.log(`Saving core field "${fieldKey}":`, trimmedValue || null);
       await updateCoreField(fieldKey, trimmedValue || null);
     }
-    
+
     setEditingField(null);
   };
 
   const getInlineEditor = (field: any) => {
-    const fieldType = field.type === 'custom' ? field.fieldDefinition?.field_type : field.key;
+    const fieldType =
+      field.type === "custom" ? field.fieldDefinition?.field_type : field.key;
     const options = field.fieldDefinition?.options?.options || [];
     const allowMultiple = field.fieldDefinition?.allow_multiple || false;
 
     const commonProps = {
       value: field.value,
-      onSave: (value: string) => handleFieldSave(field.key, value, field.type === 'custom'),
-      onCancel: () => setEditingField(null)
+      onSave: (value: string) =>
+        handleFieldSave(field.key, value, field.type === "custom"),
+      onCancel: () => setEditingField(null),
     };
 
     switch (fieldType) {
-      case 'email':
+      case "email":
         return <InlineEmailEditor {...commonProps} showButtons={true} />;
-      case 'phone':
+      case "phone":
         return <InlinePhoneEditor {...commonProps} showButtons={true} />;
-      case 'textarea':
-      case 'notes':
-        return <InlineTextareaEditor {...commonProps} maxLength={field.fieldDefinition?.validation_rules?.maxLength || 1000} showButtons={true} />;
-      case 'select':
+      case "textarea":
+      case "notes":
+        return (
+          <InlineTextareaEditor
+            {...commonProps}
+            maxLength={
+              field.fieldDefinition?.validation_rules?.maxLength || 1000
+            }
+            showButtons={true}
+          />
+        );
+      case "select":
         if (allowMultiple) {
-          return <InlineMultiSelectEditor {...commonProps} options={options} showButtons={true} />;
+          return (
+            <InlineMultiSelectEditor
+              {...commonProps}
+              options={options}
+              showButtons={true}
+            />
+          );
         } else {
-          return <InlineSelectEditor {...commonProps} options={options} showButtons={true} />;
+          return (
+            <InlineSelectEditor
+              {...commonProps}
+              options={options}
+              showButtons={true}
+              keepOpenOnSelect={false}
+            />
+          );
         }
-      case 'number':
-        return <InlineNumberEditor {...commonProps} min={field.fieldDefinition?.validation_rules?.min} max={field.fieldDefinition?.validation_rules?.max} showButtons={true} />;
-      case 'date':
+      case "number":
+        return (
+          <InlineNumberEditor
+            {...commonProps}
+            min={field.fieldDefinition?.validation_rules?.min}
+            max={field.fieldDefinition?.validation_rules?.max}
+            showButtons={true}
+          />
+        );
+      case "date":
         return <InlineDateEditor {...commonProps} showButtons={true} />;
-      case 'checkbox':
+      case "checkbox":
         return <InlineCheckboxEditor {...commonProps} showButtons={false} />;
       default:
-        return <InlineTextEditor {...commonProps} maxLength={field.fieldDefinition?.validation_rules?.maxLength || 255} showButtons={true} />;
+        return (
+          <InlineTextEditor
+            {...commonProps}
+            maxLength={
+              field.fieldDefinition?.validation_rules?.maxLength || 255
+            }
+            showButtons={true}
+          />
+        );
     }
   };
 
   // Get phone and email for quick actions (from any field)
-  const phoneField = allFields.find(field => 
-    (field.key === 'phone' || field.fieldDefinition?.field_type === 'phone') && field.value
+  const phoneField = allFields.find(
+    (field) =>
+      (field.key === "phone" ||
+        field.fieldDefinition?.field_type === "phone") &&
+      field.value
   );
-  const emailField = allFields.find(field => 
-    (field.key === 'email' || field.fieldDefinition?.field_type === 'email') && field.value
+  const emailField = allFields.find(
+    (field) =>
+      (field.key === "email" ||
+        field.fieldDefinition?.field_type === "email") &&
+      field.value
   );
 
-  const normalizedPhone = phoneField ? normalizeTRPhone(phoneField.value) : null;
+  const normalizedPhone = phoneField
+    ? normalizeTRPhone(phoneField.value)
+    : null;
   const validEmail = emailField ? isValidEmail(emailField.value) : false;
 
   if (loading) {
     return (
       <Card className={className}>
         <CardHeader>
-          <h3 className="text-lg font-semibold">{title || tForms('clientDetails.title')}</h3>
+          <h3 className="text-lg font-semibold">
+            {title || tForms("clientDetails.title")}
+          </h3>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
@@ -234,7 +321,9 @@ export function UnifiedClientDetails({
       <Card className={className}>
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold">{title || tForms('clientDetails.title')}</h3>
+            <h3 className="text-lg font-semibold">
+              {title || tForms("clientDetails.title")}
+            </h3>
             {/* Single photographer has full edit access */}
             <Button
               variant="ghost"
@@ -242,17 +331,22 @@ export function UnifiedClientDetails({
               onClick={() => setEditOpen(true)}
               className="text-muted-foreground h-8 px-3"
             >
-              {tForms('clientDetails.edit')}
+              {tForms("clientDetails.edit")}
             </Button>
           </div>
         </CardHeader>
         <CardContent className="space-y-3">
           {coreFields.length === 0 ? (
-            <p className="text-sm text-muted-foreground">{tForms('clientDetails.noInfoAvailable')}</p>
+            <p className="text-sm text-muted-foreground">
+              {tForms("clientDetails.noInfoAvailable")}
+            </p>
           ) : (
             <div className="space-y-3">
-              {coreFields.map(field => (
-                <div key={field.key} className="grid grid-cols-3 gap-3 items-start">
+              {coreFields.map((field) => (
+                <div
+                  key={field.key}
+                  className="grid grid-cols-3 gap-3 items-start"
+                >
                   <label className="text-sm font-medium text-muted-foreground">
                     {field.label}
                   </label>
@@ -261,29 +355,36 @@ export function UnifiedClientDetails({
                       value={field.value}
                       isEditing={editingField === field.key}
                       onStartEdit={() => setEditingField(field.key)}
-                      onSave={(value) => handleFieldSave(field.key, value, false)}
+                      onSave={(value) =>
+                        handleFieldSave(field.key, value, false)
+                      }
                       onCancel={() => setEditingField(null)}
                       disabled={!canEdit}
                       editComponent={getInlineEditor(field)}
                     >
-                      {field.key === 'name' && showClickableNames ? (
-                        <button 
+                      {field.key === "name" && showClickableNames ? (
+                        <button
                           onClick={() => navigate(`/leads/${lead.id}`)}
                           className="text-accent hover:underline font-medium break-words text-left"
                         >
-                          {field.value || ' - '}
+                          {field.value || " - "}
                         </button>
-                      ) : field.key === 'notes' ? (
+                      ) : field.key === "notes" ? (
                         field.value ? (
-                          <FieldTextareaDisplay 
-                            value={field.value} 
+                          <FieldTextareaDisplay
+                            value={field.value}
                             maxLines={2}
                           />
                         ) : (
-                          <span className="break-words text-muted-foreground"> - </span>
+                          <span className="break-words text-muted-foreground">
+                            {" "}
+                            -{" "}
+                          </span>
                         )
                       ) : (
-                        <span className="break-words">{field.value || ' - '}</span>
+                        <span className="break-words">
+                          {field.value || " - "}
+                        </span>
                       )}
                     </InlineEditField>
                   </div>
@@ -303,9 +404,13 @@ export function UnifiedClientDetails({
                     asChild
                     className="text-xs h-7"
                   >
-                    <a href={`https://wa.me/${normalizedPhone.e164NoPlus}`} target="_blank" rel="noopener noreferrer">
+                    <a
+                      href={`https://wa.me/${normalizedPhone.e164NoPlus}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
                       <MessageCircle className="h-3 w-3 mr-1" />
-                      {tForms('clientDetails.whatsApp')}
+                      {tForms("clientDetails.whatsApp")}
                     </a>
                   </Button>
                   <Button
@@ -316,7 +421,7 @@ export function UnifiedClientDetails({
                   >
                     <a href={`tel:${normalizedPhone.e164}`}>
                       <Phone className="h-3 w-3 mr-1" />
-                      {tForms('clientDetails.call')}
+                      {tForms("clientDetails.call")}
                     </a>
                   </Button>
                 </>
@@ -330,7 +435,7 @@ export function UnifiedClientDetails({
                 >
                   <a href={`mailto:${emailField.value}`}>
                     <Mail className="h-3 w-3 mr-1" />
-                    {tForms('clientDetails.email')}
+                    {tForms("clientDetails.email")}
                   </a>
                 </Button>
               )}
@@ -341,8 +446,11 @@ export function UnifiedClientDetails({
           {customFields.length > 0 && (
             <div className="pt-3 border-t">
               <div className="space-y-3">
-                {customFields.map(field => (
-                  <div key={field.key} className="grid grid-cols-3 gap-3 items-start">
+                {customFields.map((field) => (
+                  <div
+                    key={field.key}
+                    className="grid grid-cols-3 gap-3 items-start"
+                  >
                     <label className="text-sm font-medium text-muted-foreground">
                       {field.label}
                     </label>
@@ -351,9 +459,14 @@ export function UnifiedClientDetails({
                         value={field.value}
                         isEditing={editingField === field.key}
                         onStartEdit={() => setEditingField(field.key)}
-                        onSave={(value) => handleFieldSave(field.key, value, true)}
+                        onSave={(value) =>
+                          handleFieldSave(field.key, value, true)
+                        }
                         onCancel={() => setEditingField(null)}
                         disabled={!canEdit}
+                        disableOutsideCancel={
+                          field.fieldDefinition?.field_type === "select"
+                        }
                         editComponent={getInlineEditor(field)}
                       >
                         <CustomFieldDisplayWithEmpty
@@ -375,10 +488,11 @@ export function UnifiedClientDetails({
           {createdAt && (
             <div className="mt-3 text-center">
               <span className="text-[10px] text-muted-foreground/60 font-normal">
-                {tForms('clientDetails.createdOn')} {new Date(createdAt).toLocaleDateString('tr-TR', { 
-                  year: 'numeric', 
-                  month: 'short', 
-                  day: 'numeric' 
+                {tForms("clientDetails.createdOn")}{" "}
+                {new Date(createdAt).toLocaleDateString("tr-TR", {
+                  year: "numeric",
+                  month: "short",
+                  day: "numeric",
                 })}
               </span>
             </div>

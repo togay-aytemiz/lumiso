@@ -1,7 +1,13 @@
-import { useState, useRef, useEffect } from 'react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Button } from '@/components/ui/button';
-import { Check, X } from 'lucide-react';
+import { useState, useRef, useEffect } from "react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Check, X } from "lucide-react";
 
 interface InlineSelectEditorProps {
   value: string | null;
@@ -10,6 +16,7 @@ interface InlineSelectEditorProps {
   onCancel: () => void;
   placeholder?: string;
   showButtons?: boolean;
+  keepOpenOnSelect?: boolean;
 }
 
 export function InlineSelectEditor({
@@ -18,28 +25,29 @@ export function InlineSelectEditor({
   onSave,
   onCancel,
   placeholder = "Select option",
-  showButtons = false
+  showButtons = false,
+  keepOpenOnSelect = false,
 }: InlineSelectEditorProps) {
-  const [selectedValue, setSelectedValue] = useState(value || '');
+  const [selectedValue, setSelectedValue] = useState(value || "");
   const [isSaving, setIsSaving] = useState(false);
-  const [originalValue] = useState(value || '');
+  const [originalValue] = useState(value || "");
   const [isOpen, setIsOpen] = useState(true); // Auto-open when entering edit mode
   const selectionChangeRef = useRef(false);
 
   // Keep local state in sync when parent value updates (e.g., after refetch)
   useEffect(() => {
-    setSelectedValue(value || '');
+    setSelectedValue(value || "");
   }, [value]);
 
   const handleSave = async () => {
     if (isSaving) return;
-    
+
     setIsSaving(true);
     try {
       await onSave(selectedValue);
       onCancel(); // Exit edit mode after successful save
     } catch (error) {
-      console.error('Failed to save select field:', error);
+      console.error("Failed to save select field:", error);
       setSelectedValue(originalValue); // Revert on error
     } finally {
       setIsSaving(false);
@@ -50,9 +58,14 @@ export function InlineSelectEditor({
     setSelectedValue(newValue);
 
     if (showButtons) {
-      // Keep the dropdown open on selection; user will confirm with the tick button
-      selectionChangeRef.current = true;
-      setIsOpen(true);
+      if (keepOpenOnSelect) {
+        // Keep the dropdown open on selection; user will confirm with the tick button
+        selectionChangeRef.current = true;
+        setIsOpen(true);
+      } else {
+        // Close dropdown but keep edit mode active for confirmation (single-select behavior)
+        setIsOpen(false);
+      }
       return;
     }
 
@@ -65,7 +78,7 @@ export function InlineSelectEditor({
         // Exit edit mode to reflect saved value in parent
         onCancel?.();
       } catch (error) {
-        console.error('Failed to save select field:', error);
+        console.error("Failed to save select field:", error);
         // Revert to original value on error
         setSelectedValue(originalValue);
       } finally {

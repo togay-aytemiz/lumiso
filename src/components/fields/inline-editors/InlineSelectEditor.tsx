@@ -36,6 +36,10 @@ export function InlineSelectEditor({
     setIsSaving(true);
     try {
       await onSave(selectedValue);
+      onCancel(); // Exit edit mode after successful save
+    } catch (error) {
+      console.error('Failed to save select field:', error);
+      setSelectedValue(originalValue); // Revert on error
     } finally {
       setIsSaving(false);
     }

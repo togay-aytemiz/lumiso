@@ -479,5 +479,9 @@
     "sessionUpdated": "Session Updated",
     "unsupportedStage": "Unsupported stage",
     "unsupportedStageDesc": "This stage cannot be applied to sessions yet."
+  },
+  "lead_field": {
+    "allow_multiple_selections": "Allow Multiple Selections",
+    "allow_multiple_description": "Enable users to select multiple options from the dropdown. Selected values will be saved as a comma-separated list."
   }
 }

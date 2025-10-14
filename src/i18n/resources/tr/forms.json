@@ -498,7 +498,17 @@
     "system_field_description": "Sistem alanları düzenlenemez veya silinemez",
     "create_description": "Kişi bilgisi için yeni bir özel alan ekleyin",
     "edit_description": "Özel alan yapılandırmasını değiştirin",
-    "unsaved_changes": "Kaydedilmemiş değişiklikleriniz var. Kapatmak istediğinizden emin misiniz?"
+    "unsaved_changes": "Kaydedilmemiş değişiklikleriniz var. Kapatmak istediğinizden emin misiniz?",
+    "field_types": {
+      "text": "Tek Satırlık Metin",
+      "textarea": "Çok Satırlı Metin",
+      "email": "E-posta Adresi",
+      "phone": "Telefon Numarası",
+      "date": "Tarih",
+      "select": "Açılır Menü",
+      "checkbox": "Onay Kutusu",
+      "number": "Sayı"
+    }
   },
   "buttons": {
     "cancel": "İptal",
@@ -1257,41 +1267,6 @@
     "phone": "Telefon",
     "status": "Durum",
     "last_updated": "Son Güncelleme"
-  },
-  "lead_field": {
-    "add_custom_field": "Özel Alan Ekle",
-    "edit_field": "Özel Alanı Düzenle",
-    "create_field": "Alan Oluştur",
-    "update_field": "Alanı Güncelle",
-    "saving": "Kaydediliyor...",
-    "field_label": "Alan Etiketi",
-    "field_label_placeholder": "örn., Düğün Tarihi",
-    "field_label_description": "Bu, kullanıcılara gösterilen isimdir",
-    "field_type": "Alan Türü",
-    "select_field_type": "Alan türü seçin",
-    "field_type_description": "Bu alanın içereceği veri türünü seçin",
-    "options": "Seçenekler",
-    "options_placeholder": "Seçenekleri virgülle ayırarak girin (örn., Seçenek 1, Seçenek 2, Seçenek 3)",
-    "options_description": "Açılır menü için virgülle ayrılmış seçenek listesi",
-    "field_settings": "Alan Ayarları",
-    "field_settings_description": "Alan görünürlüğünü ve gereksinimlerini yapılandırın",
-    "required": "Gerekli",
-    "visible_in_form": "Formda Görünür",
-    "system_field": "Sistem Alanı",
-    "system_field_description": "Sistem alanları düzenlenemez veya silinemez",
-    "create_description": "Ek kişi bilgisi yakalamak için yeni bir özel alan ekleyin",
-    "edit_description": "Özel alan yapılandırmasını değiştirin",
-    "unsaved_changes": "Kaydedilmemiş değişiklikleriniz var. Kapatmak istediğinizden emin misiniz?",
-    "field_types": {
-      "text": "Tek Satırlık Metin",
-      "textarea": "Çok Satırlı Metin",
-      "email": "E-posta Adresi",
-      "phone": "Telefon Numarası",
-      "date": "Tarih",
-      "select": "Açılır Menü",
-      "checkbox": "Onay Kutusu",
-      "number": "Sayı"
-    }
   },
   "service": {
     "add_title": "Hizmet Ekle",

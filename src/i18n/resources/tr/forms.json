@@ -490,6 +490,8 @@
     "options_description": "Açılır menü için virgülle ayrılmış seçenek listesi",
     "allow_multiple_selections": "Çoklu Seçime İzin Ver",
     "allow_multiple_description": "Kullanıcıların açılır listeden birden fazla seçenek seçmesine izin verin. Seçilen değerler virgülle ayrılmış liste olarak kaydedilecektir.",
+    "reserved_key_error": "Ayrılmış Alan Adı",
+    "reserved_key_description": "'{{key}}' alan anahtarı sistem tarafından kullanılmak üzere ayrılmıştır. Lütfen farklı bir alan etiketi seçin.",
     "field_settings": "Alan Ayarları",
     "field_settings_description": "Alan görünürlüğünü ve gereksinimlerini yapılandırın",
     "required": "Gerekli",

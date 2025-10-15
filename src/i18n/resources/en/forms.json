@@ -81,7 +81,7 @@
     "title": "You have unsaved changes",
     "message": "Your changes will be lost if you continue.",
     "stay": "Stay",
-    "saveAndExit": "Save and Exit", 
+    "saveAndExit": "Save and Exit",
     "discardChanges": "Discard Changes"
   },
   "dynamicFields": {
@@ -482,6 +482,8 @@
   },
   "lead_field": {
     "allow_multiple_selections": "Allow Multiple Selections",
-    "allow_multiple_description": "Enable users to select multiple options from the dropdown. Selected values will be saved as a comma-separated list."
+    "allow_multiple_description": "Enable users to select multiple options from the dropdown. Selected values will be saved as a comma-separated list.",
+    "reserved_key_error": "Reserved Field Name",
+    "reserved_key_description": "The field key '{{key}}' is reserved for system use. Please choose a different field label."
   }
 }

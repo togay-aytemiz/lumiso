@@ -8,12 +8,20 @@ import { useNavigate } from "react-router-dom";
 import { ProjectSheetView } from "@/components/ProjectSheetView";
 import { formatDate, formatTime, getUserLocale } from "@/lib/utils";
 import { isToday } from "date-fns";
-import { PageHeader, PageHeaderSearch, PageHeaderActions } from "@/components/ui/page-header";
+import {
+  PageHeader,
+  PageHeaderSearch,
+  PageHeaderActions,
+} from "@/components/ui/page-header";
 import SessionSheetView from "@/components/SessionSheetView";
 import { useOptimizedCalendarData } from "@/hooks/useOptimizedCalendarData";
 import { useOptimizedCalendarEvents } from "@/hooks/useOptimizedCalendarEvents";
 import { CalendarErrorWrapper } from "@/components/calendar/CalendarErrorBoundary";
-import { CalendarSkeleton, CalendarWeekSkeleton, CalendarDaySkeleton } from "@/components/calendar/CalendarSkeleton";
+import {
+  CalendarSkeleton,
+  CalendarWeekSkeleton,
+  CalendarDaySkeleton,
+} from "@/components/calendar/CalendarSkeleton";
 import { CalendarWeek } from "@/components/calendar/CalendarWeek";
 import { CalendarMonthView } from "@/components/calendar/CalendarMonthView";
 import { CalendarDayView } from "@/components/calendar/CalendarDayView";
@@ -56,30 +64,29 @@ export default function Calendar() {
     if (saved) return saved;
     return window.innerWidth <= 768 ? "day" : "month";
   });
-  const { t } = useTranslation('pages');
-  
+  const { t } = useTranslation("pages");
+
   // Use optimized hooks for performance and interaction
-  const { isMobile, isTablet, isDesktop, viewConfig, handleDayClick } = useOptimizedCalendarViewport(
-    viewMode, 
-    setViewMode, 
-    setCurrentDate
-  );
-  
-  const { navigatePrevious, navigateNext, goToToday, viewTitle, handleKeyboardNavigation } = useOptimizedCalendarNavigation(
-    currentDate,
-    viewMode,
-    setCurrentDate
-  );
+  const { isMobile, isTablet, isDesktop, viewConfig, handleDayClick } =
+    useOptimizedCalendarViewport(viewMode, setViewMode, setCurrentDate);
+
+  const {
+    navigatePrevious,
+    navigateNext,
+    goToToday,
+    viewTitle,
+    handleKeyboardNavigation,
+  } = useOptimizedCalendarNavigation(currentDate, viewMode, setCurrentDate);
 
   // Performance monitoring
-  const { 
-    startRenderTiming, 
-    endRenderTiming, 
-    startQueryTiming, 
+  const {
+    startRenderTiming,
+    endRenderTiming,
+    startQueryTiming,
     endQueryTiming,
     startEventProcessing,
     endEventProcessing,
-    getPerformanceSummary 
+    getPerformanceSummary,
   } = useCalendarPerformanceMonitor();
 
   // Organization settings to prevent time format switching during load
@@ -89,9 +96,9 @@ export default function Calendar() {
   const touchHandlers = useOptimizedTouchHandlers({
     onSwipeLeft: navigateNext,
     onSwipeRight: navigatePrevious,
-    enabled: viewConfig.enableSwipeNavigation
+    enabled: viewConfig.enableSwipeNavigation,
   });
-  
+
   useEffect(() => {
     localStorage.setItem("calendar:viewMode", viewMode);
   }, [viewMode]);
@@ -101,15 +108,15 @@ export default function Calendar() {
     startQueryTiming();
   }, []);
 
-  const { 
-    sessions, 
-    activities, 
-    projects, 
-    leads, 
-    projectsMap, 
-    leadsMap, 
-    isLoading, 
-    error 
+  const {
+    sessions,
+    activities,
+    projects,
+    leads,
+    projectsMap,
+    leadsMap,
+    isLoading,
+    error,
   } = useOptimizedCalendarData(currentDate, viewMode);
 
   useEffect(() => {
@@ -122,7 +129,9 @@ export default function Calendar() {
   const [selectedProject, setSelectedProject] = useState<any | null>(null);
   const [selectedProjectLeadName, setSelectedProjectLeadName] = useState("");
   const [sessionSheetOpen, setSessionSheetOpen] = useState(false);
-  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(
+    null
+  );
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const userLocale = getUserLocale();
@@ -133,8 +142,12 @@ export default function Calendar() {
     queryClient.invalidateQueries({ queryKey: ["calendar-reference-data"] });
   };
 
-  const [showSessions, setShowSessions] = useState<boolean>(() => localStorage.getItem("calendar:showSessions") !== "false");
-  const [showReminders, setShowReminders] = useState<boolean>(() => localStorage.getItem("calendar:showReminders") !== "false");
+  const [showSessions, setShowSessions] = useState<boolean>(
+    () => localStorage.getItem("calendar:showSessions") !== "false"
+  );
+  const [showReminders, setShowReminders] = useState<boolean>(
+    () => localStorage.getItem("calendar:showReminders") !== "false"
+  );
   useEffect(() => {
     localStorage.setItem("calendar:showSessions", String(showSessions));
     localStorage.setItem("calendar:showReminders", String(showReminders));
@@ -158,40 +171,59 @@ export default function Calendar() {
       }, 0);
       return () => clearTimeout(timeout);
     }
-  }, [sessions, activities, startEventProcessing, endEventProcessing, eventStats.totalEvents]);
+  }, [
+    sessions,
+    activities,
+    startEventProcessing,
+    endEventProcessing,
+    eventStats.totalEvents,
+  ]);
 
   // Memoized event handlers for better performance
-  const openProjectById = useCallback(async (projectId?: string | null) => {
-    if (!projectId) return;
-    const { data, error } = await supabase
-      .from("projects")
-      .select("*")
-      .eq("id", projectId)
-      .maybeSingle();
-    if (!error && data) {
-      setSelectedProject(data);
-      setSelectedProjectLeadName(leadsMap[data.lead_id]?.name || "");
-      setProjectDialogOpen(true);
+  const openProjectById = useCallback(
+    async (projectId?: string | null) => {
+      if (!projectId) return;
+      const { data, error } = await supabase
+        .from("projects")
+        .select("*")
+        .eq("id", projectId)
+        .maybeSingle();
+      if (!error && data) {
+        setSelectedProject(data);
+        setSelectedProjectLeadName(leadsMap[data.lead_id]?.name || "");
+        setProjectDialogOpen(true);
+      }
+    },
+    [leadsMap]
+  );
+
+  const handleViewFullDetails = useCallback(() => {
+    if (selectedProject) {
+      navigate(`/projects/${selectedProject.id}`);
+      setProjectDialogOpen(false);
     }
-  }, [leadsMap]);
+  }, [selectedProject, navigate]);
 
   const handleSessionClick = useCallback((session: Session) => {
     setSelectedSessionId(session.id);
     setSessionSheetOpen(true);
   }, []);
 
-  const handleActivityClick = useCallback((activity: Activity) => {
-    if (activity.project_id) {
-      openProjectById(activity.project_id);
-    } else {
-      navigate(`/leads/${activity.lead_id}`);
-    }
-  }, [openProjectById, navigate]);
+  const handleActivityClick = useCallback(
+    (activity: Activity) => {
+      if (activity.project_id) {
+        openProjectById(activity.project_id);
+      } else {
+        navigate(`/leads/${activity.lead_id}`);
+      }
+    },
+    [openProjectById, navigate]
+  );
 
   // Performance monitoring for renders
   useEffect(() => {
     startRenderTiming();
-    
+
     return () => {
       endRenderTiming();
     };
@@ -199,8 +231,9 @@ export default function Calendar() {
 
   // Keyboard navigation support
   useEffect(() => {
-    document.addEventListener('keydown', handleKeyboardNavigation);
-    return () => document.removeEventListener('keydown', handleKeyboardNavigation);
+    document.addEventListener("keydown", handleKeyboardNavigation);
+    return () =>
+      document.removeEventListener("keydown", handleKeyboardNavigation);
   }, [handleKeyboardNavigation]);
 
   // Render month view using optimized components
@@ -215,10 +248,14 @@ export default function Calendar() {
         projectsMap={projectsMap}
         onSessionClick={handleSessionClick}
         onActivityClick={handleActivityClick}
-        onDayClick={isMobile ? (date) => {
-          setCurrentDate(date);
-          setViewMode("day");
-        } : undefined}
+        onDayClick={
+          isMobile
+            ? (date) => {
+                setCurrentDate(date);
+                setViewMode("day");
+              }
+            : undefined
+        }
         isMobile={isMobile}
         touchHandlers={touchHandlers}
       />
@@ -238,9 +275,13 @@ export default function Calendar() {
         projectsMap={projectsMap}
         onSessionClick={handleSessionClick}
         onActivityClick={handleActivityClick}
-        onDayClick={isMobile ? (date) => {
-          setCurrentDate(date);
-        } : undefined}
+        onDayClick={
+          isMobile
+            ? (date) => {
+                setCurrentDate(date);
+              }
+            : undefined
+        }
         isMobile={isMobile}
         getEventsForDate={getEventsForDate}
       />
@@ -272,11 +313,11 @@ export default function Calendar() {
   if (isLoading || orgSettingsLoading) {
     return (
       <CalendarErrorWrapper error={error} retry={refreshCalendar}>
-          <>
-            <PageHeader 
-              title={t('calendar.title')}
-              subtitle={t('calendar.description')}
-            />
+        <>
+          <PageHeader
+            title={t("calendar.title")}
+            subtitle={t("calendar.description")}
+          />
 
           {/* Desktop controls in separate row */}
           <div className="hidden lg:block px-4 sm:px-6 lg:px-6">
@@ -286,14 +327,14 @@ export default function Calendar() {
                 <Skeleton className="h-8 w-20" />
                 <Skeleton className="h-8 w-24" />
               </div>
-              
+
               {/* Navigation skeleton */}
               <div className="flex items-center gap-2">
                 <Skeleton className="h-8 w-8" />
                 <Skeleton className="h-8 w-32" />
                 <Skeleton className="h-8 w-8" />
               </div>
-              
+
               {/* View mode skeleton */}
               <div className="flex items-center gap-1">
                 <Skeleton className="h-8 w-16" />
@@ -316,11 +357,11 @@ export default function Calendar() {
 
   return (
     <CalendarErrorWrapper error={error} retry={refreshCalendar}>
-        <>
-          <PageHeader 
-            title={t('calendar.title')}
-            subtitle={t('calendar.description')}
-          />
+      <>
+        <PageHeader
+          title={t("calendar.title")}
+          subtitle={t("calendar.description")}
+        />
 
         {/* Desktop controls in separate row */}
         <div className="hidden lg:block px-4 sm:px-6 lg:px-6">
@@ -332,37 +373,55 @@ export default function Calendar() {
                 aria-pressed={showSessions}
                 onClick={() => setShowSessions((v) => !v)}
                 className={`inline-flex items-center gap-2 px-3 py-2 rounded-md border text-sm font-medium transition-colors
-                  ${showSessions ? 'bg-primary/10 border-primary/30 text-foreground' : 'bg-muted border-border text-muted-foreground hover:bg-accent'}`}
+                  ${
+                    showSessions
+                      ? "bg-primary/10 border-primary/30 text-foreground"
+                      : "bg-muted border-border text-muted-foreground hover:bg-accent"
+                  }`}
               >
-                <span className={`h-2.5 w-2.5 rounded-full ${showSessions ? 'bg-primary' : 'bg-muted-foreground/40'}`} />
-                <span>{t('calendar.filters.sessions')}</span>
+                <span
+                  className={`h-2.5 w-2.5 rounded-full ${
+                    showSessions ? "bg-primary" : "bg-muted-foreground/40"
+                  }`}
+                />
+                <span>{t("calendar.filters.sessions")}</span>
               </button>
               <button
                 type="button"
                 aria-pressed={showReminders}
                 onClick={() => setShowReminders((v) => !v)}
                 className={`inline-flex items-center gap-2 px-3 py-2 rounded-md border text-sm font-medium transition-colors
-                  ${showReminders ? 'bg-primary/10 border-primary/30 text-foreground' : 'bg-muted border-border text-muted-foreground hover:bg-accent'}`}
+                  ${
+                    showReminders
+                      ? "bg-primary/10 border-primary/30 text-foreground"
+                      : "bg-muted border-border text-muted-foreground hover:bg-accent"
+                  }`}
               >
-                <span className={`h-2.5 w-2.5 rounded-full ${showReminders ? 'bg-muted-foreground/60' : 'bg-muted-foreground/40'}`} />
-                <span>{t('calendar.filters.reminders')}</span>
+                <span
+                  className={`h-2.5 w-2.5 rounded-full ${
+                    showReminders
+                      ? "bg-muted-foreground/60"
+                      : "bg-muted-foreground/40"
+                  }`}
+                />
+                <span>{t("calendar.filters.reminders")}</span>
               </button>
             </div>
-            
+
             {/* Navigation controls with title */}
             <div className="flex items-center gap-2">
               <Button variant="outline" size="sm" onClick={navigatePrevious}>
                 <ChevronLeft className="h-4 w-4" />
               </Button>
               <Button variant="outline" size="sm" onClick={goToToday}>
-                {t('calendar.navigation.today')}
+                {t("calendar.navigation.today")}
               </Button>
               <Button variant="outline" size="sm" onClick={navigateNext}>
                 <ChevronRight className="h-4 w-4" />
               </Button>
               <div className="text-lg font-semibold ml-2">{getViewTitle()}</div>
             </div>
-            
+
             {/* View mode toggle */}
             <div className="flex items-center gap-1 bg-muted rounded-md p-1">
               <Button
@@ -371,7 +430,7 @@ export default function Calendar() {
                 onClick={() => setViewMode("day")}
                 className="text-xs"
               >
-                {t('calendar.viewModes.day')}
+                {t("calendar.viewModes.day")}
               </Button>
               <Button
                 variant={viewMode === "week" ? "default" : "ghost"}
@@ -379,7 +438,7 @@ export default function Calendar() {
                 onClick={() => setViewMode("week")}
                 className="text-xs"
               >
-                {t('calendar.viewModes.week')}
+                {t("calendar.viewModes.week")}
               </Button>
               <Button
                 variant={viewMode === "month" ? "default" : "ghost"}
@@ -387,7 +446,7 @@ export default function Calendar() {
                 onClick={() => setViewMode("month")}
                 className="text-xs"
               >
-                {t('calendar.viewModes.month')}
+                {t("calendar.viewModes.month")}
               </Button>
             </div>
           </div>
@@ -404,7 +463,7 @@ export default function Calendar() {
                 onClick={() => setViewMode("day")}
                 className="text-xs px-2"
               >
-                {t('calendar.viewModes.day')}
+                {t("calendar.viewModes.day")}
               </Button>
               <Button
                 variant={viewMode === "week" ? "default" : "ghost"}
@@ -412,7 +471,7 @@ export default function Calendar() {
                 onClick={() => setViewMode("week")}
                 className="text-xs px-2"
               >
-                {t('calendar.viewModes.week')}
+                {t("calendar.viewModes.week")}
               </Button>
               <Button
                 variant={viewMode === "month" ? "default" : "ghost"}
@@ -420,29 +479,34 @@ export default function Calendar() {
                 onClick={() => setViewMode("month")}
                 className="text-xs px-2"
               >
-                {t('calendar.viewModes.month')}
+                {t("calendar.viewModes.month")}
               </Button>
             </div>
-            
+
             {/* Navigation for mobile */}
             <div className="flex items-center gap-2">
               <Button variant="outline" size="sm" onClick={navigatePrevious}>
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <Button variant="outline" size="sm" onClick={goToToday} className="text-xs">
-                {t('calendar.navigation.today')}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={goToToday}
+                className="text-xs"
+              >
+                {t("calendar.navigation.today")}
               </Button>
               <Button variant="outline" size="sm" onClick={navigateNext}>
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
           </div>
-          
+
           {/* Title for mobile */}
           <div className="text-center pb-2">
             <div className="text-lg font-semibold">{getViewTitle()}</div>
           </div>
-          
+
           {/* Filter chips for mobile */}
           <div className="flex items-center gap-2 pb-4">
             <button
@@ -450,20 +514,38 @@ export default function Calendar() {
               aria-pressed={showSessions}
               onClick={() => setShowSessions((v) => !v)}
               className={`inline-flex items-center gap-2 px-3 py-2 rounded-md border text-sm font-medium transition-colors
-                ${showSessions ? 'bg-primary/10 border-primary/30 text-foreground' : 'bg-muted border-border text-muted-foreground hover:bg-accent'}`}
+                ${
+                  showSessions
+                    ? "bg-primary/10 border-primary/30 text-foreground"
+                    : "bg-muted border-border text-muted-foreground hover:bg-accent"
+                }`}
             >
-              <span className={`h-2.5 w-2.5 rounded-full ${showSessions ? 'bg-primary' : 'bg-muted-foreground/40'}`} />
-              <span>{t('calendar.filters.sessions')}</span>
+              <span
+                className={`h-2.5 w-2.5 rounded-full ${
+                  showSessions ? "bg-primary" : "bg-muted-foreground/40"
+                }`}
+              />
+              <span>{t("calendar.filters.sessions")}</span>
             </button>
             <button
               type="button"
               aria-pressed={showReminders}
               onClick={() => setShowReminders((v) => !v)}
               className={`inline-flex items-center gap-2 px-3 py-2 rounded-md border text-sm font-medium transition-colors
-                ${showReminders ? 'bg-primary/10 border-primary/30 text-foreground' : 'bg-muted border-border text-muted-foreground hover:bg-accent'}`}
+                ${
+                  showReminders
+                    ? "bg-primary/10 border-primary/30 text-foreground"
+                    : "bg-muted border-border text-muted-foreground hover:bg-accent"
+                }`}
             >
-              <span className={`h-2.5 w-2.5 rounded-full ${showReminders ? 'bg-muted-foreground/60' : 'bg-muted-foreground/40'}`} />
-              <span>{t('calendar.filters.reminders')}</span>
+              <span
+                className={`h-2.5 w-2.5 rounded-full ${
+                  showReminders
+                    ? "bg-muted-foreground/60"
+                    : "bg-muted-foreground/40"
+                }`}
+              />
+              <span>{t("calendar.filters.reminders")}</span>
             </button>
           </div>
         </div>
@@ -471,11 +553,17 @@ export default function Calendar() {
         {/* Main calendar container with proper structure */}
         <div className="flex-1 px-4 sm:px-6 lg:px-6 pb-4">
           {/* Calendar content */}
-          <div 
+          <div
             className="min-h-96"
-            onTouchStart={viewMode !== 'month' ? touchHandlers.handleTouchStart : undefined}
-            onTouchMove={viewMode !== 'month' ? touchHandlers.handleTouchMove : undefined}
-            onTouchEnd={viewMode !== 'month' ? touchHandlers.handleTouchEnd : undefined}
+            onTouchStart={
+              viewMode !== "month" ? touchHandlers.handleTouchStart : undefined
+            }
+            onTouchMove={
+              viewMode !== "month" ? touchHandlers.handleTouchMove : undefined
+            }
+            onTouchEnd={
+              viewMode !== "month" ? touchHandlers.handleTouchEnd : undefined
+            }
           >
             {viewMode === "month" && renderMonthView()}
             {viewMode === "week" && renderWeekView()}
@@ -488,10 +576,16 @@ export default function Calendar() {
               project={selectedProject}
               leadName={selectedProjectLeadName}
               open={projectDialogOpen}
-              onOpenChange={(open) => { setProjectDialogOpen(open); if (!open) { refreshCalendar(); } }}
+              onOpenChange={(open) => {
+                setProjectDialogOpen(open);
+                if (!open) {
+                  refreshCalendar();
+                }
+              }}
               onProjectUpdated={refreshCalendar}
               onActivityUpdated={refreshCalendar}
               mode="sheet"
+              onViewFullDetails={handleViewFullDetails}
             />
           )}
 

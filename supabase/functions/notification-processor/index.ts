@@ -477,69 +477,157 @@ async function processWorkflowMessage(supabase: any, notification: any) {
 async function scheduleNotifications(supabase: any, organizationId?: string) {
   console.log('Scheduling future notifications...');
 
-  // Get organizations with daily summary enabled
-  let query = supabase
-    .from('organization_settings')
-    .select(`
-      organization_id,
-      notification_scheduled_time,
-      organizations!inner(
-        id,
-        organization_members!inner(
-          user_id,
-          status
-        )
-      )
-    `)
-    .eq('notification_daily_summary_enabled', true)
-    .eq('organizations.organization_members.status', 'active');
+  // Fetch active organization members
+  let membersQuery = supabase
+    .from('organization_members')
+    .select('organization_id, user_id')
+    .eq('status', 'active');
 
   if (organizationId) {
-    query = query.eq('organization_id', organizationId);
+    membersQuery = membersQuery.eq('organization_id', organizationId);
   }
 
-  const { data: organizations, error: orgsError } = await query;
+  const { data: members, error: membersError } = await membersQuery;
 
-  if (orgsError) {
-    throw new Error(`Error fetching organizations: ${orgsError.message}`);
+  if (membersError) {
+    throw new Error(`Error fetching organization members: ${membersError.message}`);
   }
 
-  const scheduledNotifications = [];
+  if (!members || members.length === 0) {
+    console.log('No active organization members found for scheduling');
+    return {
+      organizations_processed: 0,
+      notifications_scheduled: 0,
+      scheduled_for_date: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+    };
+  }
+
+  const userIds = Array.from(new Set(members.map((member: any) => member.user_id)));
+  const organizationIds = Array.from(new Set(members.map((member: any) => member.organization_id)));
+
+  // Fetch user notification preferences
+  const { data: userSettings, error: userSettingsError } = await supabase
+    .from('user_settings')
+    .select('user_id, notification_global_enabled, notification_daily_summary_enabled, notification_scheduled_time')
+    .in('user_id', userIds);
+
+  if (userSettingsError) {
+    throw new Error(`Error fetching user settings: ${userSettingsError.message}`);
+  }
+
+  const userSettingsMap = new Map(
+    (userSettings || []).map((setting: any) => [setting.user_id, setting])
+  );
+
+  // Fetch organization-level notification settings
+  const { data: organizationSettings, error: orgSettingsError } = await supabase
+    .from('organization_settings')
+    .select('organization_id, notification_global_enabled, notification_daily_summary_enabled, timezone')
+    .in('organization_id', organizationIds);
+
+  if (orgSettingsError) {
+    throw new Error(`Error fetching organization settings: ${orgSettingsError.message}`);
+  }
+
+  const organizationSettingsMap = new Map(
+    (organizationSettings || []).map((setting: any) => [setting.organization_id, setting])
+  );
+
   const now = new Date();
-  const tomorrow = new Date(now);
-  tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrow = new Date(now.getTime());
+  tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
 
-  for (const org of organizations || []) {
-    for (const member of org.organizations.organization_members) {
-      const [hour, minute] = org.notification_scheduled_time.split(':').map(Number);
-      
-      const scheduledFor = new Date(tomorrow);
-      scheduledFor.setHours(hour, minute, 0, 0);
+  const tomorrowDate = tomorrow.toISOString().split('T')[0];
+  const tomorrowStart = `${tomorrowDate}T00:00:00Z`;
+  const tomorrowEnd = `${tomorrowDate}T23:59:59Z`;
 
-      // Check if notification already scheduled for tomorrow
-      const { data: existing } = await supabase
-        .from('notifications')
-        .select('id')
-        .eq('organization_id', org.organization_id)
-        .eq('user_id', member.user_id)
-        .eq('notification_type', 'daily-summary')
-        .eq('delivery_method', 'scheduled')
-        .gte('scheduled_for', `${tomorrow.toISOString().split('T')[0]}T00:00:00Z`)
-        .lt('scheduled_for', `${tomorrow.toISOString().split('T')[0]}T23:59:59Z`)
-        .maybeSingle();
+  // Fetch already scheduled notifications for tomorrow
+  let existingQuery = supabase
+    .from('notifications')
+    .select('organization_id, user_id')
+    .eq('notification_type', 'daily-summary')
+    .eq('delivery_method', 'scheduled')
+    .gte('scheduled_for', tomorrowStart)
+    .lt('scheduled_for', tomorrowEnd);
 
-      if (!existing) {
-        scheduledNotifications.push({
-          organization_id: org.organization_id,
-          user_id: member.user_id,
-          notification_type: 'daily-summary',
-          delivery_method: 'scheduled',
-          status: 'pending',
-          scheduled_for: scheduledFor.toISOString(),
-          metadata: {}
-        });
+  if (organizationId) {
+    existingQuery = existingQuery.eq('organization_id', organizationId);
+  } else {
+    existingQuery = existingQuery.in('organization_id', organizationIds);
+  }
+
+  const { data: existingNotifications, error: existingError } = await existingQuery;
+
+  if (existingError) {
+    throw new Error(`Error checking existing scheduled notifications: ${existingError.message}`);
+  }
+
+  const existingKey = new Set(
+    (existingNotifications || []).map((item: any) => `${item.organization_id}:${item.user_id}`)
+  );
+
+  const scheduledNotifications: any[] = [];
+
+  for (const member of members || []) {
+    const userSetting = userSettingsMap.get(member.user_id);
+    if (!userSetting) {
+      continue;
+    }
+
+    if (userSetting.notification_global_enabled === false) {
+      continue;
+    }
+
+    if (userSetting.notification_daily_summary_enabled === false) {
+      continue;
+    }
+
+    const orgSetting = organizationSettingsMap.get(member.organization_id);
+    if (orgSetting) {
+      if (orgSetting.notification_global_enabled === false) {
+        continue;
+      }
+
+      if (orgSetting.notification_daily_summary_enabled === false) {
+        continue;
       }
     }
+
+    const existingIdentifier = `${member.organization_id}:${member.user_id}`;
+    if (existingKey.has(existingIdentifier)) {
+      continue;
+    }
+
+    const scheduledTimeString = typeof userSetting.notification_scheduled_time === 'string'
+      ? userSetting.notification_scheduled_time
+      : '09:00';
+
+    const [hourStr = '09', minuteStr = '00'] = scheduledTimeString.split(':');
+    const hour = Number.parseInt(hourStr, 10);
+    const minute = Number.parseInt(minuteStr, 10);
+
+    const validHour = Number.isFinite(hour) && hour >= 0 && hour <= 23 ? hour : 9;
+    const validMinute = Number.isFinite(minute) && minute >= 0 && minute <= 59 ? minute : 0;
+
+    const scheduledFor = new Date(Date.UTC(
+      tomorrow.getUTCFullYear(),
+      tomorrow.getUTCMonth(),
+      tomorrow.getUTCDate(),
+      validHour,
+      validMinute,
+      0,
+      0
+    ));
+
+    scheduledNotifications.push({
+      organization_id: member.organization_id,
+      user_id: member.user_id,
+      notification_type: 'daily-summary',
+      delivery_method: 'scheduled',
+      status: 'pending',
+      scheduled_for: scheduledFor.toISOString(),
+      metadata: {}
+    });
   }
 
   if (scheduledNotifications.length > 0) {
@@ -553,9 +641,9 @@ async function scheduleNotifications(supabase: any, organizationId?: string) {
   }
 
   return {
-    organizations_processed: organizations?.length || 0,
+    organizations_processed: organizationIds.length,
     notifications_scheduled: scheduledNotifications.length,
-    scheduled_for_date: tomorrow.toISOString().split('T')[0]
+    scheduled_for_date: tomorrowDate
   };
 }
 

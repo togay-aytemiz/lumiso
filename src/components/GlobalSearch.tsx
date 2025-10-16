@@ -633,14 +633,22 @@ const GlobalSearch = () => {
           }}
           className="pl-10 pr-10 w-full truncate"
         />
-        {query && (
-          <button
-            onClick={handleClearSearch}
-            className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-            aria-label={t("search.clearSearch")}
-          >
-            <X className="h-4 w-4" />
-          </button>
+        {loading ? (
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+            <span className="inline-flex h-4 w-4 items-center justify-center">
+              <span className="h-4 w-4 animate-spin rounded-full border-[1.5px] border-muted-foreground/40 border-t-primary" />
+            </span>
+          </div>
+        ) : (
+          query && (
+            <button
+              onClick={handleClearSearch}
+              className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              aria-label={t("search.clearSearch")}
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )
         )}
       </div>
 

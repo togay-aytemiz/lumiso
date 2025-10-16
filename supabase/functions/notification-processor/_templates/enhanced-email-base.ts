@@ -286,12 +286,6 @@ export function createEmailTemplate(
                 color: #0f172a;
               ">${platformName}</div>`
         }
-        <p style="
-          margin: 0;
-          color: #475569;
-          font-size: 14px;
-          letter-spacing: 0.3px;
-        ">${platformName} Business Hub</p>
         ${
           businessName
             ? `<div style="margin-top: 20px;">
@@ -316,7 +310,7 @@ export function createEmailTemplate(
       
       <div class="email-footer">
         <p style="margin: 0 0 12px 0;">
-          ${t('common.footer.notice', { businessName })}
+          ${t('common.footer.notice', { businessName, platformName })}
         </p>
         <p style="margin: 0;">
           ${t('common.footer.reason')}

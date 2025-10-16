@@ -46,7 +46,7 @@ const EMAIL_TRANSLATIONS: Record<EmailLanguage, EmailTranslationNode> = {
         at: 'at',
       },
       footer: {
-        notice: 'This is an automated notification from {{businessName}}.',
+        notice: 'This is an automated notification from {{platformName}} for {{businessName}}.',
         reason:
           "You're receiving this because you have notifications enabled in your account settings.",
       },
@@ -257,7 +257,7 @@ const EMAIL_TRANSLATIONS: Record<EmailLanguage, EmailTranslationNode> = {
       },
       footer: {
         notice:
-          'Bu, {{businessName}} tarafından gönderilen otomatik bir bildiridir.',
+          'Bu e-posta, {{platformName}} tarafından {{businessName}} için gönderilen otomatik bir bildiridir.',
         reason:
           'Hesap ayarlarınızda bildirimleri etkinleştirdiğiniz için bu e-postayı alıyorsunuz.',
       },

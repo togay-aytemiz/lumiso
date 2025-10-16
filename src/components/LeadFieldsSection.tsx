@@ -11,9 +11,17 @@ import { useTranslation } from "react-i18next";
 
 export function LeadFieldsSection() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingField, setEditingField] = useState<LeadFieldDefinition | null>(null);
-  const { fieldDefinitions, loading, refetch } = useLeadFieldDefinitions();
-  const { t } = useTranslation('forms');
+  const [editingField, setEditingField] = useState<LeadFieldDefinition | null>(
+    null
+  );
+  const {
+    fieldDefinitions,
+    loading,
+    refetch,
+    deleteFieldDefinition,
+    reorderFieldDefinitions,
+  } = useLeadFieldDefinitions();
+  const { t } = useTranslation("forms");
 
   const handleEdit = (field: LeadFieldDefinition) => {
     setEditingField(field);
@@ -30,8 +38,8 @@ export function LeadFieldsSection() {
   if (loading) {
     return (
       <SettingsSection
-        title={t('lead_fields.title')}
-        description={t('lead_fields.description')}
+        title={t("lead_fields.title")}
+        description={t("lead_fields.description")}
       >
         <FormLoadingSkeleton rows={3} />
       </SettingsSection>
@@ -41,17 +49,19 @@ export function LeadFieldsSection() {
   return (
     <>
       <SettingsSection
-        title={t('lead_fields.title')}
-        description={t('lead_fields.description')}
+        title={t("lead_fields.title")}
+        description={t("lead_fields.description")}
         action={{
-          label: t('lead_fields.add_field'),
+          label: t("lead_fields.add_field"),
           onClick: () => setIsDialogOpen(true),
-          icon: <Plus className="h-4 w-4" />
+          icon: <Plus className="h-4 w-4" />,
         }}
       >
-        <LeadFieldsList 
+        <LeadFieldsList
           fields={fieldDefinitions}
           onEdit={handleEdit}
+          onDelete={deleteFieldDefinition}
+          onReorder={reorderFieldDefinitions}
         />
       </SettingsSection>
 

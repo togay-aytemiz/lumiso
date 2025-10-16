@@ -1,6 +1,13 @@
 import { useState } from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import { Edit, Trash2, GripVertical, Eye, EyeOff, AlertCircle } from "lucide-react";
+import {
+  Edit,
+  Trash2,
+  GripVertical,
+  Eye,
+  EyeOff,
+  AlertCircle,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -21,19 +28,26 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useLeadFieldDefinitions } from "@/hooks/useLeadFieldDefinitions";
 import { LeadFieldDefinition, FIELD_TYPE_CONFIG } from "@/types/leadFields";
 import { useTranslation } from "react-i18next";
 
 interface LeadFieldsListProps {
   fields: LeadFieldDefinition[];
   onEdit: (field: LeadFieldDefinition) => void;
+  onDelete: (id: string) => Promise<void>;
+  onReorder: (fields: LeadFieldDefinition[]) => Promise<void>;
 }
 
-export function LeadFieldsList({ fields, onEdit }: LeadFieldsListProps) {
-  const { deleteFieldDefinition, reorderFieldDefinitions } = useLeadFieldDefinitions();
-  const [deleteField, setDeleteField] = useState<LeadFieldDefinition | null>(null);
-  const { t } = useTranslation('forms');
+export function LeadFieldsList({
+  fields,
+  onEdit,
+  onDelete,
+  onReorder,
+}: LeadFieldsListProps) {
+  const [deleteField, setDeleteField] = useState<LeadFieldDefinition | null>(
+    null
+  );
+  const { t } = useTranslation("forms");
 
   const handleDragEnd = async (result: any) => {
     if (!result.destination) return;
@@ -43,33 +57,36 @@ export function LeadFieldsList({ fields, onEdit }: LeadFieldsListProps) {
     items.splice(result.destination.index, 0, reorderedItem);
 
     try {
-      await reorderFieldDefinitions(items);
+      await onReorder(items);
     } catch (error) {
-      console.error('Failed to reorder fields:', error);
+      console.error("Failed to reorder fields:", error);
     }
   };
 
   const handleDelete = async () => {
     if (!deleteField) return;
-    
+
     try {
-      await deleteFieldDefinition(deleteField.id);
+      await onDelete(deleteField.id);
       setDeleteField(null);
     } catch (error) {
-      console.error('Failed to delete field:', error);
+      console.error("Failed to delete field:", error);
     }
   };
 
   const getFieldTypeLabel = (fieldType: string) => {
-    return FIELD_TYPE_CONFIG[fieldType as keyof typeof FIELD_TYPE_CONFIG]?.label || fieldType;
+    return (
+      FIELD_TYPE_CONFIG[fieldType as keyof typeof FIELD_TYPE_CONFIG]?.label ||
+      fieldType
+    );
   };
 
   if (fields.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-muted-foreground">{t('lead_fields.no_fields')}</p>
+        <p className="text-muted-foreground">{t("lead_fields.no_fields")}</p>
         <p className="text-sm text-muted-foreground mt-1">
-          {t('lead_fields.no_fields_description')}
+          {t("lead_fields.no_fields_description")}
         </p>
       </div>
     );
@@ -84,12 +101,16 @@ export function LeadFieldsList({ fields, onEdit }: LeadFieldsListProps) {
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-12"></TableHead>
-                  <TableHead>{t('lead_fields.table.field_name')}</TableHead>
-                  <TableHead>{t('lead_fields.table.type')}</TableHead>
-                  <TableHead>{t('lead_fields.table.required')}</TableHead>
-                  <TableHead>{t('lead_fields.table.visible_in_form')}</TableHead>
-                  <TableHead>{t('lead_fields.table.status')}</TableHead>
-                  <TableHead className="w-24">{t('lead_fields.table.actions')}</TableHead>
+                  <TableHead>{t("lead_fields.table.field_name")}</TableHead>
+                  <TableHead>{t("lead_fields.table.type")}</TableHead>
+                  <TableHead>{t("lead_fields.table.required")}</TableHead>
+                  <TableHead>
+                    {t("lead_fields.table.visible_in_form")}
+                  </TableHead>
+                  <TableHead>{t("lead_fields.table.status")}</TableHead>
+                  <TableHead className="w-24">
+                    {t("lead_fields.table.actions")}
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody {...provided.droppableProps} ref={provided.innerRef}>
@@ -110,7 +131,9 @@ export function LeadFieldsList({ fields, onEdit }: LeadFieldsListProps) {
                           <div
                             {...provided.dragHandleProps}
                             className={`flex items-center justify-center ${
-                              field.is_system ? "opacity-30 cursor-not-allowed" : "cursor-grab"
+                              field.is_system
+                                ? "opacity-30 cursor-not-allowed"
+                                : "cursor-grab"
                             }`}
                           >
                             <GripVertical className="h-4 w-4" />
@@ -126,7 +149,9 @@ export function LeadFieldsList({ fields, onEdit }: LeadFieldsListProps) {
                         </TableCell>
                         <TableCell>
                           <span className="text-sm text-muted-foreground">
-                            {field.is_required ? t('lead_fields.table.required_value') : t('lead_fields.table.optional_value')}
+                            {field.is_required
+                              ? t("lead_fields.table.required_value")
+                              : t("lead_fields.table.optional_value")}
                           </span>
                         </TableCell>
                         <TableCell>
@@ -137,13 +162,17 @@ export function LeadFieldsList({ fields, onEdit }: LeadFieldsListProps) {
                               <EyeOff className="h-4 w-4 text-muted-foreground" />
                             )}
                             <span className="text-sm text-muted-foreground">
-                              {field.is_visible_in_form ? t('lead_fields.table.visible_value') : t('lead_fields.table.hidden_value')}
+                              {field.is_visible_in_form
+                                ? t("lead_fields.table.visible_value")
+                                : t("lead_fields.table.hidden_value")}
                             </span>
                           </div>
                         </TableCell>
                         <TableCell>
                           <span className="text-sm text-muted-foreground">
-                            {field.is_system ? t('lead_fields.table.system_value') : t('lead_fields.table.custom_value')}
+                            {field.is_system
+                              ? t("lead_fields.table.system_value")
+                              : t("lead_fields.table.custom_value")}
                           </span>
                         </TableCell>
                         <TableCell>
@@ -177,24 +206,31 @@ export function LeadFieldsList({ fields, onEdit }: LeadFieldsListProps) {
         </Droppable>
       </DragDropContext>
 
-      <AlertDialog open={!!deleteField} onOpenChange={() => setDeleteField(null)}>
+      <AlertDialog
+        open={!!deleteField}
+        onOpenChange={() => setDeleteField(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <AlertCircle className="h-5 w-5 text-destructive" />
-              {t('lead_fields.delete_dialog.title')}
+              {t("lead_fields.delete_dialog.title")}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {t('lead_fields.delete_dialog.description', { fieldName: deleteField?.label })}
+              {t("lead_fields.delete_dialog.description", {
+                fieldName: deleteField?.label,
+              })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{t('lead_fields.delete_dialog.cancel')}</AlertDialogCancel>
+            <AlertDialogCancel>
+              {t("lead_fields.delete_dialog.cancel")}
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {t('lead_fields.delete_dialog.confirm')}
+              {t("lead_fields.delete_dialog.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

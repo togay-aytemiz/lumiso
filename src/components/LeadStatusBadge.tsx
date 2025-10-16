@@ -25,6 +25,7 @@ interface LeadStatusBadgeProps {
   className?: string;
   size?: 'sm' | 'default';
   statuses?: LeadStatus[];
+  statusesLoading?: boolean;
 }
 
 export function LeadStatusBadge({ 
@@ -35,7 +36,8 @@ export function LeadStatusBadge({
   editable = false,
   className,
   size = 'default',
-  statuses: passedStatuses
+  statuses: passedStatuses,
+  statusesLoading
 }: LeadStatusBadgeProps) {
   const [statuses, setStatuses] = useState<LeadStatus[]>([]);
   const [currentStatusData, setCurrentStatusData] = useState<LeadStatus | null>(null);
@@ -50,13 +52,18 @@ export function LeadStatusBadge({
   const { t: tForms } = useFormsTranslation();
 
   useEffect(() => {
-    if (passedStatuses) {
-      setStatuses(passedStatuses);
-      setLoading(false);
-    } else {
+    if (passedStatuses === undefined) {
       fetchLeadStatuses();
+      return;
     }
-  }, [passedStatuses]);
+
+    setStatuses(passedStatuses);
+    if (typeof statusesLoading === 'boolean') {
+      setLoading(statusesLoading);
+    } else {
+      setLoading(false);
+    }
+  }, [passedStatuses, statusesLoading]);
 
   useEffect(() => {
     if (statuses.length > 0) {

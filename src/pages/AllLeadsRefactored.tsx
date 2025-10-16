@@ -18,6 +18,7 @@ import { toast } from "@/hooks/use-toast";
 const AllLeadsRefactored = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [leadStatuses, setLeadStatuses] = useState<any[]>([]);
+  const [leadStatusesLoading, setLeadStatusesLoading] = useState(true);
   const [addLeadDialogOpen, setAddLeadDialogOpen] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
   const [currentTutorialStep, setCurrentTutorialStep] = useState(0);
@@ -65,7 +66,10 @@ const AllLeadsRefactored = () => {
     loading: columnsLoading, 
     saveColumnPreferences, 
     resetToDefault 
-  } = useLeadTableColumns();
+  } = useLeadTableColumns({
+    leadStatuses,
+    leadStatusesLoading,
+  });
 
   const loading = leadsLoading || columnsLoading;
 
@@ -198,6 +202,7 @@ const AllLeadsRefactored = () => {
   // Functions
   const fetchLeadStatuses = async () => {
     try {
+      setLeadStatusesLoading(true);
       const { data, error } = await supabase
         .from('lead_statuses')
         .select('*')
@@ -207,6 +212,8 @@ const AllLeadsRefactored = () => {
       setLeadStatuses(data || []);
     } catch (error: any) {
       console.error('Error fetching lead statuses:', error);
+    } finally {
+      setLeadStatusesLoading(false);
     }
   };
 

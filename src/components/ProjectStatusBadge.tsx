@@ -22,7 +22,8 @@ interface ProjectStatusBadgeProps {
   editable?: boolean;
   className?: string;
   size?: 'sm' | 'default';
-  statuses?: ProjectStatus[]; // Add optional statuses prop
+  statuses?: ProjectStatus[];
+  statusesLoading?: boolean;
 }
 
 export function ProjectStatusBadge({ 
@@ -32,7 +33,8 @@ export function ProjectStatusBadge({
   editable = false,
   className,
   size = 'default',
-  statuses: passedStatuses
+  statuses: passedStatuses,
+  statusesLoading
 }: ProjectStatusBadgeProps) {
   const [statuses, setStatuses] = useState<ProjectStatus[]>([]);
   const [currentStatus, setCurrentStatus] = useState<ProjectStatus | null>(null);
@@ -49,14 +51,19 @@ export function ProjectStatusBadge({
   // Status badge rendered for project
 
   useEffect(() => {
-    if (passedStatuses) {
-      // Keep full list (including Archived) so we can display current status correctly
-      setStatuses(passedStatuses);
-      setLoading(false);
-    } else {
+    if (passedStatuses === undefined) {
       fetchProjectStatuses();
+      return;
     }
-  }, [passedStatuses]);
+
+    // Keep full list (including Archived) so we can display current status correctly
+    setStatuses(passedStatuses);
+    if (typeof statusesLoading === 'boolean') {
+      setLoading(statusesLoading);
+    } else {
+      setLoading(false);
+    }
+  }, [passedStatuses, statusesLoading]);
 
   useEffect(() => {
     if (currentStatusId && statuses.length > 0) {

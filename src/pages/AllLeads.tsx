@@ -22,6 +22,7 @@ import { useTranslation } from "react-i18next";
 const AllLeadsNew = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [leadStatuses, setLeadStatuses] = useState<any[]>([]);
+  const [leadStatusesLoading, setLeadStatusesLoading] = useState(true);
   const [addLeadDialogOpen, setAddLeadDialogOpen] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
   const [currentTutorialStep, setCurrentTutorialStep] = useState(0);
@@ -39,7 +40,10 @@ const AllLeadsNew = () => {
     loading: columnsLoading, 
     saveColumnPreferences, 
     resetToDefault 
-  } = useLeadTableColumns();
+  } = useLeadTableColumns({
+    leadStatuses,
+    leadStatusesLoading,
+  });
 
   const loading = leadsLoading || columnsLoading;
 
@@ -218,6 +222,7 @@ const AllLeadsNew = () => {
 
   const fetchLeadStatuses = async () => {
     try {
+      setLeadStatusesLoading(true);
       const { data, error } = await supabase
         .from('lead_statuses')
         .select('*')
@@ -227,6 +232,8 @@ const AllLeadsNew = () => {
       setLeadStatuses(data || []);
     } catch (error: any) {
       console.error(t('leads.messages.errorFetchingStatuses'), error);
+    } finally {
+      setLeadStatusesLoading(false);
     }
   };
 

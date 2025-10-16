@@ -223,7 +223,7 @@ export class ProjectService extends BaseEntityService {
         projects = projects.filter(project => 
           project.name.toLowerCase().includes(searchLower) ||
           project.description?.toLowerCase().includes(searchLower) ||
-          project.lead?.name.toLowerCase().includes(searchLower)
+          project.lead?.name?.toLowerCase().includes(searchLower)
         );
       }
     }
@@ -506,13 +506,18 @@ export class ProjectService extends BaseEntityService {
   async toggleArchiveStatus(projectId: string, currentlyArchived: boolean): Promise<void> {
     // First get the archived status ID
     const organizationId = await this.getOrganizationId();
-    const { data: archivedStatus } = await supabase
+    if (!organizationId) {
+      throw new Error('No organization ID found');
+    }
+
+    const { data: archivedStatus, error: archivedStatusError } = await supabase
       .from('project_statuses')
       .select('id')
       .eq('organization_id', organizationId)
-      .eq('name', 'Archived')
-      .single();
+      .ilike('name', 'archived')
+      .maybeSingle();
 
+    if (archivedStatusError) throw archivedStatusError;
     if (!archivedStatus) throw new Error('Archived status not found');
 
     if (currentlyArchived) {

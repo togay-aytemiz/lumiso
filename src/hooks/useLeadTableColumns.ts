@@ -27,6 +27,18 @@ interface ColumnConfig {
   order: number;
 }
 
+interface LeadStatusOption {
+  id: string;
+  name: string;
+  color: string;
+  is_system_final?: boolean;
+}
+
+interface LeadTableColumnsOptions {
+  leadStatuses?: LeadStatusOption[];
+  leadStatusesLoading?: boolean;
+}
+
 interface LeadWithCustomFields {
   id: string;
   name: string;
@@ -48,7 +60,7 @@ interface LeadWithCustomFields {
   };
 }
 
-export function useLeadTableColumns() {
+export function useLeadTableColumns(options: LeadTableColumnsOptions = {}) {
   const { t } = useTranslation("forms");
   const [fieldDefinitions, setFieldDefinitions] = useState<
     LeadFieldDefinition[]
@@ -57,6 +69,7 @@ export function useLeadTableColumns() {
     []
   );
   const [loading, setLoading] = useState(true);
+  const { leadStatuses, leadStatusesLoading } = options;
 
   // Fetch field definitions and user preferences
   useEffect(() => {
@@ -296,6 +309,8 @@ export function useLeadTableColumns() {
               onStatusChange: () => {}, // Will be passed from parent
               editable: false,
               size: "sm",
+              statuses: leadStatuses,
+              statusesLoading: leadStatusesLoading,
             }),
         };
       }
@@ -341,7 +356,7 @@ export function useLeadTableColumns() {
         render: () => React.createElement("span", {}, "-"),
       };
     });
-  }, [columnPreferences, fieldDefinitions]);
+  }, [columnPreferences, fieldDefinitions, leadStatuses, leadStatusesLoading]);
 
   // Save column preferences
   const saveColumnPreferences = async (newPreferences: ColumnConfig[]) => {

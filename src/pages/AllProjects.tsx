@@ -83,6 +83,7 @@ const AllProjects = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [archivedProjects, setArchivedProjects] = useState<Project[]>([]);
   const [projectStatuses, setProjectStatuses] = useState<ProjectStatus[]>([]);
+  const [projectStatusesLoading, setProjectStatusesLoading] = useState(true);
   const [loading, setLoading] = useState(true);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [viewMode, setViewMode] = useState<'board' | 'list' | 'archived'>('board');
@@ -212,6 +213,7 @@ const AllProjects = () => {
 
   const fetchProjects = async () => {
     try {
+      setProjectStatusesLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
@@ -384,6 +386,7 @@ const AllProjects = () => {
         variant: "destructive",
       });
     } finally {
+      setProjectStatusesLoading(false);
       setLoading(false);
       setIsInitialLoad(false);
     }
@@ -812,16 +815,18 @@ const AllProjects = () => {
                                 )}
                                </TableCell>
                                {viewMode !== 'archived' && (
-                                 <TableCell>
-                                   <ProjectStatusBadge
-                                     projectId={project.id}
-                                     currentStatusId={project.status_id ?? undefined}
-                                     editable={true}
-                                     size="sm"
-                                     onStatusChange={fetchProjects}
-                                   />
-                                 </TableCell>
-                               )}
+                               <TableCell>
+                                  <ProjectStatusBadge
+                                    projectId={project.id}
+                                    currentStatusId={project.status_id ?? undefined}
+                                    editable={true}
+                                    size="sm"
+                                    onStatusChange={fetchProjects}
+                                    statuses={projectStatuses}
+                                    statusesLoading={projectStatusesLoading}
+                                  />
+                                </TableCell>
+                              )}
                                {viewMode !== 'archived' ? (
                                  <>
                                      <TableCell>

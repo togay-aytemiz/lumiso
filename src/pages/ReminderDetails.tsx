@@ -372,6 +372,7 @@ const ReminderDetails = () => {
                         onToggleCompletion={toggleCompletion}
                         onClick={() => handleReminderClick(activity.lead_id)}
                         hideStatusBadge={!shouldShowStatusBadge(activity)}
+                        hideReminderBadge
                       />
                     ))}
                   </div>

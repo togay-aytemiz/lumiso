@@ -20,6 +20,7 @@ interface ReminderCardProps {
   hideStatusBadge?: boolean;
   showCompletedBadge?: boolean;
   projectName?: string;
+  hideReminderBadge?: boolean;
 }
 const ReminderCard = ({
   activity,
@@ -28,7 +29,8 @@ const ReminderCard = ({
   onClick,
   hideStatusBadge = false,
   showCompletedBadge = true,
-  projectName
+  projectName,
+  hideReminderBadge = false
 }: ReminderCardProps) => {
   const { t: tForms } = useFormsTranslation();
   const isOverdue = (reminderDate?: string) => {
@@ -72,14 +74,20 @@ const ReminderCard = ({
       
       {/* Card content */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-start gap-2 mb-1">
-          <Badge variant="outline" className="text-xs h-5">
-            {tForms('reminders.reminderBadge')}
-          </Badge>
-          {projectName && <Badge variant="secondary" className="text-xs h-5">
-              {projectName}
-            </Badge>}
-        </div>
+        {(projectName || !hideReminderBadge) && (
+          <div className="flex items-start gap-2 mb-1">
+            {!hideReminderBadge && (
+              <Badge variant="outline" className="text-xs h-5">
+                {tForms('reminders.reminderBadge')}
+              </Badge>
+            )}
+            {projectName && (
+              <Badge variant="secondary" className="text-xs h-5">
+                {projectName}
+              </Badge>
+            )}
+          </div>
+        )}
         
         <div className={`rounded-lg border transition-all duration-200 ${onClick ? 'cursor-pointer' : ''} ${getCardBackground()}`} onClick={onClick}>
           {/* Mobile Layout */}

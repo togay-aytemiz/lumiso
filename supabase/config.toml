@@ -1,7 +1,6 @@
 project_id = "rifdykpdubrowzbylffe"
 
 [api]
-enabled = true
 port = 54321
 schemas = ["public", "graphql_public"]
 extra_search_path = ["public", "extensions"]
@@ -17,7 +16,6 @@ verify_jwt = false
 verify_jwt = false
 
 [db]
-enabled = true
 port = 54322
 shadow_port = 54320
 major_version = 15

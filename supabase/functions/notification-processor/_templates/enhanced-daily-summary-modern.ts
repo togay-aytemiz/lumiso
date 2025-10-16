@@ -1,4 +1,14 @@
-import { createEmailTemplate, EmailTemplateData, Session, Todo, Activity, Lead, formatDateTime, formatDate, formatTime } from './enhanced-email-base.ts';
+import {
+  createEmailTemplate,
+  EmailTemplateData,
+  Session,
+  Lead,
+  Activity,
+  formatDateTime,
+  formatDate,
+  formatTime,
+  renderSummaryStatCards,
+} from './enhanced-email-base.ts';
 import { createEmailLocalization } from '../../_shared/email-i18n.ts';
 
 interface OverdueItems {
@@ -76,161 +86,64 @@ export function generateModernDailySummaryEmail(
   const leadsLabel = t('common.cta.leads');
   const projectsLabel = t('common.cta.projects');
   const sessionsLabel = t('common.cta.sessions');
+  const summaryStatsMarkup = renderSummaryStatCards(
+    [
+      { value: upcomingSessions.length, label: statsSessionsLabel },
+      { value: totalTodayReminders, label: statsRemindersLabel },
+      {
+        value: totalOverdue,
+        label: statsOverdueLabel,
+        emphasisColor: totalOverdue > 0 ? '#ef4444' : '#6b7280',
+      },
+      {
+        value: totalPastSessions,
+        label: statsPastLabel,
+        emphasisColor: totalPastSessions > 0 ? '#f59e0b' : '#6b7280',
+      },
+    ],
+    brandColor,
+  );
   
   let content = `
-    <!-- Header Section -->
     <div style="
-      background: linear-gradient(135deg, ${brandColor}15, ${lighterBrandColor}10);
-      border-radius: 16px;
-      padding: 32px;
-      margin: 24px 0;
-      border-left: 4px solid ${brandColor};
+      background: linear-gradient(135deg, ${brandColor}1a, ${lighterBrandColor}0f);
+      border-radius: 20px;
+      padding: 40px 32px 32px;
+      margin: 24px auto;
+      max-width: 560px;
+      border: 1px solid ${brandColor}26;
+      box-shadow: 0 18px 38px rgba(15, 23, 42, 0.08);
     ">
-      <div style="text-align: center; margin-bottom: 24px;">
+      <div style="text-align: center; margin-bottom: 12px;">
         <div style="
-          font-size: 48px;
-          margin-bottom: 8px;
+          font-size: 44px;
+          margin-bottom: 12px;
           line-height: 1;
         ">📊</div>
         <h2 style="
-          color: #1f2937;
+          color: #0f172a;
           font-size: 24px;
           font-weight: 700;
           margin: 0 0 8px 0;
-          line-height: 1.2;
+          line-height: 1.25;
         ">${t('dailySummary.modern.headerTitle')}</h2>
         <p style="
-          color: #6b7280;
-          font-size: 16px;
+          color: #475569;
+          font-size: 15px;
           margin: 0;
-          line-height: 1.4;
+          line-height: 1.45;
         ">${t('dailySummary.modern.headerSubtitle', { date: today })}</p>
       </div>
-      
-      <!-- Summary Stats -->
-      <div style="
-        display: flex;
-        justify-content: space-between;
-        gap: 16px;
-        margin-top: 24px;
-      ">
-        <div style="
-          text-align: center;
-          background: white;
-          padding: 16px 12px;
-          border-radius: 12px;
-          box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
-          flex: 1;
-          min-width: 70px;
-          border: 1px solid #f3f4f6;
-        ">
-          <div style="
-            font-size: 20px;
-            font-weight: 700;
-            color: ${brandColor};
-            margin-bottom: 6px;
-            line-height: 1;
-          ">${upcomingSessions.length}</div>
-          <div style="
-            font-size: 10px;
-            color: #6b7280;
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-            line-height: 1.2;
-          ">${statsSessionsLabel}</div>
-        </div>
-        
-        <div style="
-          text-align: center;
-          background: white;
-          padding: 16px 12px;
-          border-radius: 12px;
-          box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
-          flex: 1;
-          min-width: 70px;
-          border: 1px solid #f3f4f6;
-        ">
-          <div style="
-            font-size: 20px;
-            font-weight: 700;
-            color: ${brandColor};
-            margin-bottom: 6px;
-            line-height: 1;
-          ">${totalTodayReminders}</div>
-          <div style="
-            font-size: 10px;
-            color: #6b7280;
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-            line-height: 1.2;
-          ">${statsRemindersLabel}</div>
-        </div>
-        
-        <div style="
-          text-align: center;
-          background: white;
-          padding: 16px 12px;
-          border-radius: 12px;
-          box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
-          flex: 1;
-          min-width: 70px;
-          border: 1px solid #f3f4f6;
-        ">
-          <div style="
-            font-size: 20px;
-            font-weight: 700;
-            color: ${totalOverdue > 0 ? '#ef4444' : '#6b7280'};
-            margin-bottom: 6px;
-            line-height: 1;
-          ">${totalOverdue}</div>
-          <div style="
-            font-size: 10px;
-            color: #6b7280;
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-            line-height: 1.2;
-          ">${statsOverdueLabel}</div>
-        </div>
-        
-        <div style="
-          text-align: center;
-          background: white;
-          padding: 16px 12px;
-          border-radius: 12px;
-          box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
-          flex: 1;
-          min-width: 70px;
-          border: 1px solid #f3f4f6;
-        ">
-          <div style="
-            font-size: 20px;
-            font-weight: 700;
-            color: ${totalPastSessions > 0 ? '#f59e0b' : '#6b7280'};
-            margin-bottom: 6px;
-            line-height: 1;
-          ">${totalPastSessions}</div>
-          <div style="
-            font-size: 10px;
-            color: #6b7280;
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-            line-height: 1.2;
-          ">${statsPastLabel}</div>
-        </div>
-      </div>
+      ${summaryStatsMarkup}
     </div>
   `;
 
   // Today's Sessions
   if (upcomingSessions.length > 0) {
     content += `
-      <div style="margin: 32px 0;">
+      <div style="margin: 32px auto; max-width: 560px;">
         <h3 style="
-          color: #1f2937;
+          color: #0f172a;
           font-size: 20px;
           font-weight: 600;
           margin: 0 0 16px 0;
@@ -250,12 +163,12 @@ export function generateModernDailySummaryEmail(
       
       content += `
         <div style="
-          background: white;
-          border-radius: 12px;
+          background: #ffffff;
+          border-radius: 18px;
           padding: 24px;
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-          margin-bottom: 16px;
-          border-left: 4px solid ${brandColor};
+          box-shadow: 0 14px 32px rgba(15, 23, 42, 0.08);
+          margin-bottom: 20px;
+          border: 1px solid #e4e8f1;
         ">
           <div style="
             display: flex;
@@ -264,78 +177,82 @@ export function generateModernDailySummaryEmail(
             margin-bottom: 12px;
           ">
             <h4 style="
-              color: #1f2937;
-              font-size: 16px;
+              color: #0f172a;
+              font-size: 17px;
               font-weight: 600;
               margin: 0;
-              line-height: 1.3;
+              line-height: 1.35;
             ">${sessionName}</h4>
             <span style="
-              background: ${brandColor}10;
+              background: ${brandColor}14;
               color: ${brandColor};
-              padding: 4px 8px;
-              border-radius: 6px;
-              font-size: 12px;
-              font-weight: 500;
+              padding: 6px 12px;
+              border-radius: 999px;
+              font-size: 11px;
+              font-weight: 600;
               text-transform: uppercase;
-              letter-spacing: 0.5px;
+              letter-spacing: 0.6px;
             ">${todayBadge}</span>
           </div>
           
           <div style="
-            margin-bottom: 16px;
+            margin-bottom: 20px;
           ">
             <div style="
-              color: #6b7280;
+              color: #475569;
               font-size: 14px;
-              margin-bottom: 8px;
-              line-height: 1.4;
+              margin-bottom: 10px;
+              line-height: 1.5;
             ">⏰ ${sessionTime}</div>
             ${session.leads ? `
               <div style="
-                color: #6b7280;
+                color: #475569;
                 font-size: 14px;
-                margin-bottom: 8px;
-                line-height: 1.4;
-              ">👤 ${clientLabel}: <strong style="color: #374151;">${session.leads.name}</strong></div>
+                margin-bottom: 10px;
+                line-height: 1.5;
+              ">👤 ${clientLabel}: <strong style="color: #0f172a;">${session.leads.name}</strong></div>
             ` : ''}
             ${session.projects ? `
               <div style="
-                color: #6b7280;
+                color: #475569;
                 font-size: 14px;
-                margin-bottom: 8px;
-                line-height: 1.4;
-              ">📋 ${projectLabel}: <strong style="color: #374151;">${session.projects.name}</strong></div>
+                margin-bottom: 10px;
+                line-height: 1.5;
+              ">📋 ${projectLabel}: <strong style="color: #0f172a;">${session.projects.name}</strong></div>
             ` : ''}
             ${session.location ? `
               <div style="
-                color: #6b7280;
+                color: #475569;
                 font-size: 14px;
-                margin-bottom: 8px;
-                line-height: 1.4;
+                margin-bottom: 10px;
+                line-height: 1.5;
               ">📍 ${session.location}</div>
             ` : ''}
             ${session.notes ? `
               <div style="
-                color: #6b7280;
+                color: #475569;
                 font-size: 14px;
-                margin-bottom: 4px;
-                line-height: 1.4;
+                margin-bottom: 0;
+                line-height: 1.5;
               ">📝 ${session.notes}</div>
             ` : ''}
           </div>
           
           ${templateData.baseUrl ? `
-            <div style="text-align: right;">
+            <div style="
+              display: flex;
+              justify-content: flex-end;
+            ">
               <a href="${templateData.baseUrl}/sessions/${session.id}" style="
                 display: inline-block;
                 background: ${brandColor};
                 color: white;
-                padding: 6px 12px;
-                border-radius: 6px;
+                padding: 10px 18px;
+                border-radius: 10px;
                 text-decoration: none;
                 font-weight: 500;
                 font-size: 13px;
+                letter-spacing: 0.3px;
               ">${viewLabel}</a>
             </div>
           ` : ''}
@@ -349,9 +266,9 @@ export function generateModernDailySummaryEmail(
   // Today's Reminders
   if (todayReminders.length > 0) {
     content += `
-      <div style="margin: 32px 0;">
+      <div style="margin: 32px auto; max-width: 560px;">
         <h3 style="
-          color: #1f2937;
+          color: #0f172a;
           font-size: 20px;
           font-weight: 600;
           margin: 0 0 16px 0;
@@ -366,59 +283,63 @@ export function generateModernDailySummaryEmail(
     todayReminders.forEach(reminder => {
       content += `
         <div style="
-          background: white;
-          border-radius: 12px;
+          background: #ffffff;
+          border-radius: 18px;
           padding: 24px;
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-          margin-bottom: 16px;
-          border-left: 4px solid #f59e0b;
+          box-shadow: 0 14px 32px rgba(15, 23, 42, 0.08);
+          margin-bottom: 20px;
+          border: 1px solid #efe5d6;
         ">
           <h4 style="
-            color: #1f2937;
-            font-size: 16px;
+            color: #0f172a;
+            font-size: 17px;
             font-weight: 600;
-            margin: 0 0 12px 0;
-            line-height: 1.3;
+            margin: 0 0 14px 0;
+            line-height: 1.35;
           ">${reminder.content}</h4>
           
           <div style="
-            margin-bottom: 16px;
+            margin-bottom: 20px;
           ">
             <div style="
-              color: #6b7280;
+              color: #475569;
               font-size: 14px;
-              margin-bottom: 8px;
-              line-height: 1.4;
+              margin-bottom: 10px;
+              line-height: 1.5;
             ">📅 ${formatDate(reminder.reminder_date, templateData.dateFormat, templateData.timezone)} ${reminder.reminder_time ? `${atText} ${formatTime(reminder.reminder_time, templateData.timeFormat, templateData.timezone, reminder.reminder_date)}` : ''}</div>
             ${reminder.leads ? `
               <div style="
-                color: #6b7280;
+                color: #475569;
                 font-size: 14px;
-                margin-bottom: 8px;
-                line-height: 1.4;
-              ">👤 ${clientLabel}: <strong style="color: #374151;">${reminder.leads.name}</strong></div>
+                margin-bottom: 10px;
+                line-height: 1.5;
+              ">👤 ${clientLabel}: <strong style="color: #0f172a;">${reminder.leads.name}</strong></div>
             ` : ''}
             ${reminder.projects ? `
               <div style="
-                color: #6b7280;
+                color: #475569;
                 font-size: 14px;
-                margin-bottom: 4px;
-                line-height: 1.4;
-              ">📋 ${projectLabel}: <strong style="color: #374151;">${reminder.projects.name}</strong></div>
+                margin-bottom: 0;
+                line-height: 1.5;
+              ">📋 ${projectLabel}: <strong style="color: #0f172a;">${reminder.projects.name}</strong></div>
             ` : ''}
           </div>
           
           ${templateData.baseUrl ? `
-            <div style="text-align: right;">
+            <div style="
+              display: flex;
+              justify-content: flex-end;
+            ">
               <a href="${templateData.baseUrl}/reminders" style="
                 display: inline-block;
                 background: #f59e0b;
                 color: white;
-                padding: 6px 12px;
-                border-radius: 6px;
+                padding: 10px 18px;
+                border-radius: 10px;
                 text-decoration: none;
                 font-weight: 500;
                 font-size: 13px;
+                letter-spacing: 0.3px;
               ">${viewLabel}</a>
             </div>
           ` : ''}
@@ -433,39 +354,36 @@ export function generateModernDailySummaryEmail(
   if (totalOverdue > 0) {
     content += `
       <div style="
-        background: white;
-        border-radius: 12px;
+        max-width: 560px;
+        margin: 24px auto;
+        background: #ffffff;
+        border-radius: 18px;
         padding: 24px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        margin: 24px 0;
-        border-left: 4px solid #ef4444;
+        border: 1px solid #fecaca;
+        box-shadow: 0 14px 32px rgba(185, 28, 28, 0.12);
       ">
-        <div style="
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          margin-bottom: 12px;
+        <p style="
+          margin: 0 0 12px 0;
+          color: #b91c1c;
+          font-weight: 600;
+          font-size: 15px;
+          line-height: 1.5;
         ">
-          <div style="flex: 1;">
-            <p style="
-              margin: 0;
-              color: #dc2626;
-              font-weight: 600;
-              font-size: 16px;
-            ">
-              ${overdueMessage}
-            </p>
-          </div>
-        </div>
+          ${overdueMessage}
+        </p>
         ${templateData.baseUrl ? `
-          <div style="text-align: left;">
-            <a href="${templateData.baseUrl}/reminders" style="
-              color: #dc2626;
-              text-decoration: underline;
-              font-size: 14px;
-              font-weight: 500;
-            ">${overdueLinkLabel}</a>
-          </div>
+          <a href="${templateData.baseUrl}/reminders" style="
+            display: inline-block;
+            margin-top: 4px;
+            color: #ffffff;
+            background: #dc2626;
+            padding: 10px 18px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 13px;
+            letter-spacing: 0.3px;
+          ">${overdueLinkLabel} →</a>
         ` : ''}
       </div>
     `;
@@ -475,39 +393,36 @@ export function generateModernDailySummaryEmail(
   if (totalPastSessions > 0) {
     content += `
       <div style="
-        background: white;
-        border-radius: 12px;
+        max-width: 560px;
+        margin: 24px auto;
+        background: #ffffff;
+        border-radius: 18px;
         padding: 24px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        margin: 24px 0;
-        border-left: 4px solid #f59e0b;
+        border: 1px solid #fcdca9;
+        box-shadow: 0 14px 32px rgba(217, 119, 6, 0.12);
       ">
-        <div style="
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          margin-bottom: 12px;
+        <p style="
+          margin: 0 0 12px 0;
+          color: #c2410c;
+          font-weight: 600;
+          font-size: 15px;
+          line-height: 1.5;
         ">
-          <div style="flex: 1;">
-            <p style="
-              margin: 0;
-              color: #d97706;
-              font-weight: 600;
-              font-size: 16px;
-            ">
-              ${pastMessage}
-            </p>
-          </div>
-        </div>
+          ${pastMessage}
+        </p>
         ${templateData.baseUrl ? `
-          <div style="text-align: left;">
-            <a href="${templateData.baseUrl}/sessions" style="
-              color: #d97706;
-              text-decoration: underline;
-              font-size: 14px;
-              font-weight: 500;
-            ">${pastLinkLabel}</a>
-          </div>
+          <a href="${templateData.baseUrl}/sessions" style="
+            display: inline-block;
+            margin-top: 4px;
+            color: #ffffff;
+            background: #f59e0b;
+            padding: 10px 18px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 13px;
+            letter-spacing: 0.3px;
+          ">${pastLinkLabel} →</a>
         ` : ''}
       </div>
     `;
@@ -517,79 +432,84 @@ export function generateModernDailySummaryEmail(
   if (templateData.baseUrl) {
     content += `
       <div style="
-        background: white;
-        border-radius: 12px;
-        padding: 24px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        margin: 32px 0;
+        max-width: 560px;
+        margin: 32px auto;
+        background: #ffffff;
+        border-radius: 18px;
+        padding: 28px 24px;
+        box-shadow: 0 18px 38px rgba(15, 23, 42, 0.08);
+        border: 1px solid #e4e8f1;
       ">
         <h3 style="
-          color: #1f2937;
-          font-size: 18px;
+          color: #0f172a;
+          font-size: 19px;
           font-weight: 600;
-          margin: 0 0 16px 0;
+          margin: 0 0 20px 0;
           text-align: center;
         ">${quickActionsTitle}</h3>
         
-        <div style="
-          display: flex;
-          justify-content: space-between;
-          gap: 12px;
-          margin: 0 auto;
-        ">
-          <a href="${templateData.baseUrl}" style="
-            display: inline-block;
-            background: ${brandColor};
-            color: white;
-            padding: 10px 20px;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 14px;
-            text-align: center;
-            flex: 1;
-            min-width: 100px;
-          ">${dashboardLabel}</a>
-          <a href="${templateData.baseUrl}/leads" style="
-            display: inline-block;
-            background: #6b7280;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 14px;
-            text-align: center;
-            flex: 1;
-            min-width: 100px;
-          ">${leadsLabel}</a>
-          <a href="${templateData.baseUrl}/projects" style="
-            display: inline-block;
-            background: #6b7280;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 14px;
-            text-align: center;
-            flex: 1;
-            min-width: 100px;
-          ">${projectsLabel}</a>
-          <a href="${templateData.baseUrl}/sessions" style="
-            display: inline-block;
-            background: #6b7280;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 14px;
-            text-align: center;
-            flex: 1;
-            min-width: 100px;
-          ">${sessionsLabel}</a>
-        </div>
+        <table role="presentation" width="100%" style="max-width: 420px; margin: 0 auto; border-collapse: separate; border-spacing: 0;">
+          <tr>
+            <td style="padding: 6px;">
+              <a href="${templateData.baseUrl}" style="
+                display: block;
+                background: ${brandColor};
+                color: #ffffff;
+                padding: 12px 16px;
+                border-radius: 12px;
+                text-decoration: none;
+                font-weight: 600;
+                font-size: 14px;
+                text-align: center;
+                letter-spacing: 0.3px;
+              ">${dashboardLabel}</a>
+            </td>
+            <td style="padding: 6px;">
+              <a href="${templateData.baseUrl}/leads" style="
+                display: block;
+                background: #1f2937;
+                color: #ffffff;
+                padding: 12px 16px;
+                border-radius: 12px;
+                text-decoration: none;
+                font-weight: 600;
+                font-size: 14px;
+                text-align: center;
+                letter-spacing: 0.3px;
+              ">${leadsLabel}</a>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 6px;">
+              <a href="${templateData.baseUrl}/projects" style="
+                display: block;
+                background: #334155;
+                color: #ffffff;
+                padding: 12px 16px;
+                border-radius: 12px;
+                text-decoration: none;
+                font-weight: 600;
+                font-size: 14px;
+                text-align: center;
+                letter-spacing: 0.3px;
+              ">${projectsLabel}</a>
+            </td>
+            <td style="padding: 6px;">
+              <a href="${templateData.baseUrl}/sessions" style="
+                display: block;
+                background: #475569;
+                color: #ffffff;
+                padding: 12px 16px;
+                border-radius: 12px;
+                text-decoration: none;
+                font-weight: 600;
+                font-size: 14px;
+                text-align: center;
+                letter-spacing: 0.3px;
+              ">${sessionsLabel}</a>
+            </td>
+          </tr>
+        </table>
       </div>
     `;
   }

@@ -197,6 +197,9 @@ export default function Notifications() {
       });
 
       if (error) throw error;
+      if (data?.error) {
+        throw new Error(typeof data.error === 'string' ? data.error : JSON.stringify(data.error));
+      }
 
       toast({
         title: t('settings.notifications.toasts.testSent'),
@@ -206,7 +209,9 @@ export default function Notifications() {
       console.error('Error testing notification:', error);
       toast({
         title: t('settings.notifications.toasts.testFailed'),
-        description: t('settings.notifications.toasts.testFailedDesc'),
+        description: error instanceof Error
+          ? error.message
+          : t('settings.notifications.toasts.testFailedDesc'),
         variant: "destructive",
       });
     } finally {

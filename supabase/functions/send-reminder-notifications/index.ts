@@ -126,7 +126,32 @@ const handler = async (req: Request): Promise<Response> => {
         .maybeSingle();
 
       organizationId = userSettings?.active_organization_id;
-      
+
+      if (!organizationId) {
+        const { data: activeMembership } = await adminSupabase
+          .from('organization_members')
+          .select('organization_id')
+          .eq('user_id', user.id)
+          .eq('status', 'active')
+          .order('joined_at', { ascending: true })
+          .limit(1)
+          .maybeSingle();
+
+        organizationId = activeMembership?.organization_id ?? organizationId;
+      }
+
+      if (!organizationId) {
+        const { data: ownedOrganization } = await adminSupabase
+          .from('organizations')
+          .select('id')
+          .eq('owner_id', user.id)
+          .order('created_at', { ascending: true })
+          .limit(1)
+          .maybeSingle();
+
+        organizationId = ownedOrganization?.id ?? organizationId;
+      }
+
       if (!organizationId) {
         throw new Error('No active organization found for user');
       }
@@ -706,7 +731,7 @@ const handler = async (req: Request): Promise<Response> => {
       failed: 1,
       total: 1
     }), {
-      status: 200,
+      status: 500,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });
   }
@@ -1038,7 +1063,7 @@ async function handleAssignmentNotification(requestData: any, adminSupabase: any
       failed: 1,
       total: 1
     }), {
-      status: 200,
+      status: 500,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });
   }
@@ -1338,7 +1363,7 @@ async function handleProjectMilestoneNotification(requestData: ReminderRequest, 
       failed: 1,
       total: 1
     }), {
-      status: 200,
+      status: 500,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });
   }

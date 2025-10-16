@@ -227,7 +227,17 @@ export function formatTimeInTimezone(
   timeFormat: '12-hour' | '24-hour' = '12-hour'
 ): string {
   try {
+    if (typeof date === 'string') {
+      const trimmed = date.trim();
+      const timeOnlyPattern = /^(\d{1,2}):(\d{2})(?::(\d{2}))?$/;
+      if (timeOnlyPattern.test(trimmed)) {
+        return formatTimeWithOrgSettings(trimmed, timeFormat);
+      }
+    }
     const dateObj = typeof date === 'string' ? new Date(date) : date;
+    if (Number.isNaN(dateObj.getTime())) {
+      return '';
+    }
     const format = timeFormat === '24-hour' ? 'HH:mm' : 'h:mm a';
     return formatInTimeZone(dateObj, timezone, format);
   } catch {

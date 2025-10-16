@@ -170,6 +170,7 @@ export const CalendarDayView = memo<CalendarDayViewProps>(({
                 const leadName = leadsMap[activity.lead_id]?.name || t('calendar.labels.lead');
                 const projectName = activity.project_id ? projectsMap[activity.project_id]?.name : undefined;
                 const timeText = activity.reminder_time ? formatOrgTime(activity.reminder_time) : t('calendar.labels.allDay');
+                const shouldShowTypeBadge = !activity.completed && activity.type && activity.type.toLowerCase() !== 'reminder';
                 
                 return (
                   <Tooltip key={activity.id}>
@@ -192,12 +193,14 @@ export const CalendarDayView = memo<CalendarDayViewProps>(({
                               {timeText}
                             </div>
                           </div>
-                          <Badge 
-                            variant={activity.completed ? 'default' : 'secondary'}
-                            className="text-xs"
-                          >
-                            {activity.completed ? t('calendar.labels.completed') : activity.type}
-                          </Badge>
+                          {(activity.completed || shouldShowTypeBadge) && (
+                            <Badge
+                              variant={activity.completed ? 'default' : 'secondary'}
+                              className="text-xs"
+                            >
+                              {activity.completed ? t('calendar.labels.completed') : activity.type}
+                            </Badge>
+                          )}
                         </div>
                       </button>
                     </TooltipTrigger>

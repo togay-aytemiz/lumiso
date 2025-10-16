@@ -212,6 +212,7 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
                   const leadName = leadsMap[activity.lead_id]?.name || t('calendar.labels.lead');
                   const projectName = activity.project_id ? projectsMap[activity.project_id]?.name : undefined;
                   const timeText = activity.reminder_time ? formatOrgTime(activity.reminder_time) : t('calendar.labels.allDay');
+                  const shouldShowTypeBadge = !activity.completed && activity.type && activity.type.toLowerCase() !== 'reminder';
 
                   return (
                     <button
@@ -233,11 +234,13 @@ export const CalendarWeek = memo<CalendarWeekProps>(function CalendarWeek({
                             {timeText}
                           </div>
                         </div>
-                        <div className={`px-2 py-1 text-xs rounded-md ${
-                          activity.completed ? 'bg-muted text-muted-foreground' : 'bg-secondary text-secondary-foreground'
-                        }`}>
-                          {activity.completed ? t('calendar.labels.completed') : activity.type}
-                        </div>
+                        {(activity.completed || shouldShowTypeBadge) && (
+                          <div className={`px-2 py-1 text-xs rounded-md ${
+                            activity.completed ? 'bg-muted text-muted-foreground' : 'bg-secondary text-secondary-foreground'
+                          }`}>
+                            {activity.completed ? t('calendar.labels.completed') : activity.type}
+                          </div>
+                        )}
                       </div>
                     </button>
                   );

@@ -1,11 +1,17 @@
-import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { getUserOrganizationId } from '@/lib/organizationUtils';
-import { LeadFieldDefinition, CreateLeadFieldDefinition, UpdateLeadFieldDefinition } from '@/types/leadFields';
-import { useToast } from '@/hooks/use-toast';
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { getUserOrganizationId } from "@/lib/organizationUtils";
+import {
+  LeadFieldDefinition,
+  CreateLeadFieldDefinition,
+  UpdateLeadFieldDefinition,
+} from "@/types/leadFields";
+import { useToast } from "@/hooks/use-toast";
 
 export function useLeadFieldDefinitions() {
-  const [fieldDefinitions, setFieldDefinitions] = useState<LeadFieldDefinition[]>([]);
+  const [fieldDefinitions, setFieldDefinitions] = useState<
+    LeadFieldDefinition[]
+  >([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
@@ -17,20 +23,20 @@ export function useLeadFieldDefinitions() {
 
       const organizationId = await getUserOrganizationId();
       if (!organizationId) {
-        throw new Error('No active organization found');
+        throw new Error("No active organization found");
       }
 
       // Ensure default field definitions exist
-      await supabase.rpc('ensure_default_lead_field_definitions', { 
-        org_id: organizationId, 
-        user_uuid: (await supabase.auth.getUser()).data.user?.id 
+      await supabase.rpc("ensure_default_lead_field_definitions", {
+        org_id: organizationId,
+        user_uuid: (await supabase.auth.getUser()).data.user?.id,
       });
 
       const { data, error: fetchError } = await supabase
-        .from('lead_field_definitions')
-        .select('*')
-        .eq('organization_id', organizationId)
-        .order('sort_order', { ascending: true });
+        .from("lead_field_definitions")
+        .select("*")
+        .eq("organization_id", organizationId)
+        .order("sort_order", { ascending: true });
 
       if (fetchError) {
         throw fetchError;
@@ -38,29 +44,36 @@ export function useLeadFieldDefinitions() {
 
       setFieldDefinitions((data || []) as LeadFieldDefinition[]);
     } catch (err) {
-      console.error('Error fetching field definitions:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch field definitions');
+      console.error("Error fetching field definitions:", err);
+      setError(
+        err instanceof Error ? err.message : "Failed to fetch field definitions"
+      );
     } finally {
       setLoading(false);
     }
   };
 
-  const createFieldDefinition = async (definition: CreateLeadFieldDefinition) => {
+  const createFieldDefinition = async (
+    definition: CreateLeadFieldDefinition
+  ) => {
     try {
       const organizationId = await getUserOrganizationId();
       if (!organizationId) {
-        throw new Error('No active organization found');
+        throw new Error("No active organization found");
       }
 
       // Get the highest sort order and add 1
-      const maxSortOrder = Math.max(...fieldDefinitions.map(f => f.sort_order), 0);
-      
+      const maxSortOrder = Math.max(
+        ...fieldDefinitions.map((f) => f.sort_order),
+        0
+      );
+
       const { data, error } = await supabase
-        .from('lead_field_definitions')
+        .from("lead_field_definitions")
         .insert({
           ...definition,
           organization_id: organizationId,
-          sort_order: definition.sort_order ?? maxSortOrder + 1
+          sort_order: definition.sort_order ?? maxSortOrder + 1,
         })
         .select()
         .single();
@@ -69,8 +82,12 @@ export function useLeadFieldDefinitions() {
         throw error;
       }
 
-      setFieldDefinitions(prev => [...prev, data as LeadFieldDefinition].sort((a, b) => a.sort_order - b.sort_order));
-      
+      setFieldDefinitions((prev) =>
+        [...prev, data as LeadFieldDefinition].sort(
+          (a, b) => a.sort_order - b.sort_order
+        )
+      );
+
       toast({
         title: "Field created",
         description: `Field "${definition.label}" has been created successfully.`,
@@ -78,22 +95,26 @@ export function useLeadFieldDefinitions() {
 
       return data;
     } catch (err) {
-      console.error('Error creating field definition:', err);
+      console.error("Error creating field definition:", err);
       toast({
         title: "Error",
-        description: err instanceof Error ? err.message : 'Failed to create field',
+        description:
+          err instanceof Error ? err.message : "Failed to create field",
         variant: "destructive",
       });
       throw err;
     }
   };
 
-  const updateFieldDefinition = async (id: string, updates: UpdateLeadFieldDefinition) => {
+  const updateFieldDefinition = async (
+    id: string,
+    updates: UpdateLeadFieldDefinition
+  ) => {
     try {
       const { data, error } = await supabase
-        .from('lead_field_definitions')
+        .from("lead_field_definitions")
         .update(updates)
-        .eq('id', id)
+        .eq("id", id)
         .select()
         .single();
 
@@ -101,8 +122,11 @@ export function useLeadFieldDefinitions() {
         throw error;
       }
 
-      setFieldDefinitions(prev => 
-        prev.map(field => field.id === id ? data as LeadFieldDefinition : field)
+      setFieldDefinitions((prev) =>
+        prev
+          .map((field) =>
+            field.id === id ? (data as LeadFieldDefinition) : field
+          )
           .sort((a, b) => a.sort_order - b.sort_order)
       );
 
@@ -113,10 +137,11 @@ export function useLeadFieldDefinitions() {
 
       return data;
     } catch (err) {
-      console.error('Error updating field definition:', err);
+      console.error("Error updating field definition:", err);
       toast({
         title: "Error",
-        description: err instanceof Error ? err.message : 'Failed to update field',
+        description:
+          err instanceof Error ? err.message : "Failed to update field",
         variant: "destructive",
       });
       throw err;
@@ -125,60 +150,78 @@ export function useLeadFieldDefinitions() {
 
   const deleteFieldDefinition = async (id: string) => {
     try {
-      const field = fieldDefinitions.find(f => f.id === id);
+      const field = fieldDefinitions.find((f) => f.id === id);
       if (!field) {
-        throw new Error('Field not found');
+        throw new Error("Field not found");
       }
 
       if (field.is_system) {
-        throw new Error('System fields cannot be deleted');
+        throw new Error("System fields cannot be deleted");
       }
 
-      const { error } = await supabase
-        .from('lead_field_definitions')
+      // Delete from lead_field_definitions and verify it was actually deleted
+      const { data: deletedField, error } = await supabase
+        .from("lead_field_definitions")
         .delete()
-        .eq('id', id);
+        .eq("id", id)
+        .select();
 
       if (error) {
         throw error;
       }
 
-      // Also delete all field values for this field
-      await supabase
-        .from('lead_field_values')
-        .delete()
-        .eq('field_key', field.field_key);
+      // Check if the deletion actually happened (RLS policies might prevent it)
+      if (!deletedField || deletedField.length === 0) {
+        throw new Error(
+          "Field could not be deleted. You may not have permission or the field does not exist."
+        );
+      }
 
-      setFieldDefinitions(prev => prev.filter(field => field.id !== id));
+      // Delete all field values for this field and verify
+      const { error: valuesError } = await supabase
+        .from("lead_field_values")
+        .delete()
+        .eq("field_key", field.field_key);
+
+      if (valuesError) {
+        // Log but don't fail - values might not exist
+        console.warn("Error deleting field values:", valuesError);
+      }
+
+      // Only update local state after successful database deletion
+      setFieldDefinitions((prev) => prev.filter((field) => field.id !== id));
 
       toast({
         title: "Field deleted",
         description: `Field "${field.label}" and all its data have been deleted.`,
       });
     } catch (err) {
-      console.error('Error deleting field definition:', err);
+      console.error("Error deleting field definition:", err);
       toast({
         title: "Error",
-        description: err instanceof Error ? err.message : 'Failed to delete field',
+        description:
+          err instanceof Error ? err.message : "Failed to delete field",
         variant: "destructive",
       });
       throw err;
     }
   };
 
-  const reorderFieldDefinitions = async (reorderedFields: LeadFieldDefinition[]) => {
+  const reorderFieldDefinitions = async (
+    reorderedFields: LeadFieldDefinition[]
+  ) => {
     try {
       // Update sort_order for all fields
       const updates = reorderedFields.map((field, index) => ({
         id: field.id,
-        sort_order: index + 1
+        sort_order: index + 1,
       }));
 
       for (const update of updates) {
         await supabase
-          .from('lead_field_definitions')
+          .from("lead_field_definitions")
           .update({ sort_order: update.sort_order })
-          .eq('id', update.id);
+          .eq("id", update.id);
       }
 
       setFieldDefinitions(reorderedFields);
@@ -188,7 +231,7 @@ export function useLeadFieldDefinitions() {
         description: "Field order has been updated successfully.",
       });
     } catch (err) {
-      console.error('Error reordering fields:', err);
+      console.error("Error reordering fields:", err);
       toast({
         title: "Error",
         description: "Failed to reorder fields",
@@ -210,6 +253,6 @@ export function useLeadFieldDefinitions() {
     createFieldDefinition,
     updateFieldDefinition,
     deleteFieldDefinition,
-    reorderFieldDefinitions
+    reorderFieldDefinitions,
   };
 }

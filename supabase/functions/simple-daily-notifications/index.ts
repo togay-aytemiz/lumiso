@@ -3,6 +3,8 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 import { Resend } from "npm:resend@2.0.0";
 import { generateModernDailySummaryEmail } from './_templates/enhanced-daily-summary-modern.ts';
 import { generateEmptyDailySummaryEmail } from './_templates/enhanced-daily-summary-empty.ts';
+import { formatDate } from './_templates/enhanced-email-base.ts';
+import { createEmailLocalization } from '../_shared/email-i18n.ts';
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -169,6 +171,15 @@ const handler = async (req: Request): Promise<Response> => {
                              user.email?.split('@')[0] || 'there';
         console.log(`User full name: ${userFullName}`);
 
+        const { data: languagePreference } = await supabaseAdmin
+          .from('user_language_preferences')
+          .select('language_code')
+          .eq('user_id', userSettings.user_id)
+          .maybeSingle();
+
+        const localization = createEmailLocalization(languagePreference?.language_code);
+        const t = localization.t;
+
         // Get today's date
         const today = new Date();
         const todayStr = today.toISOString().split('T')[0];
@@ -314,7 +325,9 @@ const handler = async (req: Request): Promise<Response> => {
           dateFormat: orgSettings?.date_format || 'DD/MM/YYYY',
           timeFormat: orgSettings?.time_format || '12-hour',
           timezone: orgSettings?.timezone || 'UTC',
-          baseUrl: 'https://my.lumiso.app'
+          baseUrl: 'https://my.lumiso.app',
+          language: localization.language,
+          localization,
         };
 
         // Transform sessions data
@@ -367,11 +380,11 @@ const handler = async (req: Request): Promise<Response> => {
         // Generate enhanced email content using the same templates as test system
         let emailHtml: string;
         let emailSubject: string;
-        const todayFormatted = today.toLocaleDateString('en-GB', { 
-          day: '2-digit', 
-          month: '2-digit', 
-          year: 'numeric' 
-        });
+        const formattedSubjectDate = formatDate(
+          today.toISOString(),
+          templateData.dateFormat,
+          templateData.timezone,
+        );
 
         if (sessions.length === 0 && todayReminders.length === 0) {
           // Use empty template when no sessions or reminders
@@ -380,7 +393,9 @@ const handler = async (req: Request): Promise<Response> => {
             pastSessionsNeedingAction,
             templateData
           );
-          emailSubject = `🌅 Fresh Start Today - ${todayFormatted}`;
+          emailSubject = t('dailySummary.subject.brandedEmpty', {
+            date: formattedSubjectDate,
+          });
         } else {
           // Use regular daily summary template
           emailHtml = generateModernDailySummaryEmail(
@@ -390,7 +405,9 @@ const handler = async (req: Request): Promise<Response> => {
             pastSessionsNeedingAction,
             templateData
           );
-          emailSubject = `📅 Daily Summary - ${todayFormatted}`;
+          emailSubject = t('dailySummary.subject.brandedWithData', {
+            date: formattedSubjectDate,
+          });
         }
 
         // Send email using Resend with EXACT same sender and subject as test system

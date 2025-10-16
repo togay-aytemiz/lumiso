@@ -1,4 +1,5 @@
 import { createEmailTemplate, EmailTemplateData } from './enhanced-email-base.ts';
+import { createEmailLocalization } from '../../_shared/email-i18n.ts';
 
 // Base interface for all immediate notifications
 interface BaseImmediateNotificationData {
@@ -74,7 +75,12 @@ export interface ImmediateNotificationEmailData {
     brandColor?: string;
   };
   notificationData: ImmediateNotificationData;
+  language?: string;
+  localization?: ReturnType<typeof createEmailLocalization>;
+  baseUrl?: string;
 }
+
+type TranslateFn = (key: string, variables?: Record<string, unknown>) => string;
 
 /**
  * Helper function to adjust color brightness
@@ -92,7 +98,11 @@ function adjustBrightness(hex: string, percent: number): string {
 /**
  * Generate the notification header with emoji and title
  */
-function generateNotificationHeader(data: ImmediateNotificationData, brandColor: string): string {
+function generateNotificationHeader(
+  data: ImmediateNotificationData,
+  brandColor: string,
+  t: TranslateFn,
+): string {
   let emoji = '';
   let title = '';
   let subtitle = '';
@@ -100,18 +110,28 @@ function generateNotificationHeader(data: ImmediateNotificationData, brandColor:
   switch (data.type) {
     case 'project-assignment':
       emoji = '📋';
-      title = 'New Project Assignment';
-      subtitle = `${data.triggeredByUser.name} assigned you to a project`;
+      title = t('immediate.header.projectAssignment.title');
+      subtitle = t('immediate.header.projectAssignment.subtitle', {
+        name: data.triggeredByUser.name,
+      });
       break;
     case 'lead-assignment':
       emoji = '👤';
-      title = 'New Lead Assignment';
-      subtitle = `${data.triggeredByUser.name} assigned you to a lead`;
+      title = t('immediate.header.leadAssignment.title');
+      subtitle = t('immediate.header.leadAssignment.subtitle', {
+        name: data.triggeredByUser.name,
+      });
       break;
     case 'project-milestone':
       emoji = data.project.lifecycle === 'completed' ? '🎉' : '⚠️';
-      title = 'Project Milestone Reached';
-      subtitle = `${data.triggeredByUser.name} ${data.project.lifecycle === 'completed' ? 'completed' : 'cancelled'} a project you're assigned to`;
+      title = t('immediate.header.projectMilestone.title');
+      subtitle = data.project.lifecycle === 'completed'
+        ? t('immediate.header.projectMilestone.subtitleCompleted', {
+            name: data.triggeredByUser.name,
+          })
+        : t('immediate.header.projectMilestone.subtitleCancelled', {
+            name: data.triggeredByUser.name,
+          });
       break;
   }
 
@@ -152,19 +172,24 @@ function generateNotificationHeader(data: ImmediateNotificationData, brandColor:
 /**
  * Generate call-to-action button
  */
-function generateCallToAction(data: ImmediateNotificationData, brandColor: string): string {
+function generateCallToAction(
+  data: ImmediateNotificationData,
+  brandColor: string,
+  t: TranslateFn,
+  baseUrl = 'https://my.lumiso.app',
+): string {
   let buttonText = '';
   let url = '';
 
   switch (data.type) {
     case 'project-assignment':
     case 'project-milestone':
-      buttonText = 'View Project Details';
-      url = `https://my.lumiso.app/projects/${data.project.id}`;
+      buttonText = t('immediate.callToAction.project');
+      url = `${baseUrl}/projects/${data.project.id}`;
       break;
     case 'lead-assignment':
-      buttonText = 'View Lead Details';
-      url = `https://my.lumiso.app/leads/${data.lead.id}`;
+      buttonText = t('immediate.callToAction.lead');
+      url = `${baseUrl}/leads/${data.lead.id}`;
       break;
   }
 
@@ -189,10 +214,15 @@ function generateCallToAction(data: ImmediateNotificationData, brandColor: strin
  * Generate unified immediate notification email
  */
 export function generateImmediateNotificationEmail(emailData: ImmediateNotificationEmailData): string {
+  const localization =
+    emailData.localization ||
+    (emailData.localization = createEmailLocalization(emailData.language));
+  const t = localization.t;
   const brandColor = emailData.business.brandColor || '#1EB29F';
   const data = emailData.notificationData;
-  
-  let content = generateNotificationHeader(data, brandColor);
+  const baseUrl = emailData.baseUrl || 'https://my.lumiso.app';
+
+  let content = generateNotificationHeader(data, brandColor, t);
   
   // Add entity-specific details
   switch (data.type) {
@@ -210,13 +240,13 @@ export function generateImmediateNotificationEmail(emailData: ImmediateNotificat
             font-size: 18px;
             font-weight: 600;
             margin: 0 0 16px 0;
-          ">Project Details</h3>
+          ">${t('immediate.sections.projectDetails')}</h3>
           <div style="color: #374151; font-size: 16px; line-height: 1.6;">
-            <strong>Project:</strong> ${data.project.name}<br>
-            ${data.project.type ? `<strong>Type:</strong> ${data.project.type}<br>` : ''}
-            ${data.project.status ? `<strong>Status:</strong> ${data.project.status}<br>` : ''}
-            ${data.project.leadName ? `<strong>Client:</strong> ${data.project.leadName}<br>` : ''}
-            ${data.project.notes ? `<strong>Notes:</strong> ${data.project.notes}` : ''}
+            <strong>${t('common.labels.project')}:</strong> ${data.project.name}<br>
+            ${data.project.type ? `<strong>${t('common.labels.type')}:</strong> ${data.project.type}<br>` : ''}
+            ${data.project.status ? `<strong>${t('immediate.cards.status')}:</strong> ${data.project.status}<br>` : ''}
+            ${data.project.leadName ? `<strong>${t('common.labels.client')}:</strong> ${data.project.leadName}<br>` : ''}
+            ${data.project.notes ? `<strong>${t('common.labels.notes')}:</strong> ${data.project.notes}` : ''}
           </div>
         </div>
       `;
@@ -236,11 +266,11 @@ export function generateImmediateNotificationEmail(emailData: ImmediateNotificat
             font-size: 18px;
             font-weight: 600;
             margin: 0 0 16px 0;
-          ">Lead Details</h3>
+          ">${t('immediate.sections.leadDetails')}</h3>
           <div style="color: #374151; font-size: 16px; line-height: 1.6;">
-            <strong>Lead:</strong> ${data.lead.name}<br>
-            ${data.lead.status ? `<strong>Status:</strong> ${data.lead.status}<br>` : ''}
-            ${data.lead.notes ? `<strong>Notes:</strong> ${data.lead.notes}` : ''}
+            <strong>${t('immediate.cards.lead')}:</strong> ${data.lead.name}<br>
+            ${data.lead.status ? `<strong>${t('immediate.cards.status')}:</strong> ${data.lead.status}<br>` : ''}
+            ${data.lead.notes ? `<strong>${t('common.labels.notes')}:</strong> ${data.lead.notes}` : ''}
           </div>
         </div>
       `;
@@ -261,11 +291,11 @@ export function generateImmediateNotificationEmail(emailData: ImmediateNotificat
             font-size: 18px;
             font-weight: 600;
             margin: 0 0 16px 0;
-          ">Project Update</h3>
+          ">${t('immediate.sections.projectUpdate')}</h3>
           <div style="color: #374151; font-size: 16px; line-height: 1.6;">
-            <strong>Project:</strong> ${data.project.name}<br>
-            ${data.project.type ? `<strong>Type:</strong> ${data.project.type}<br>` : ''}
-            ${data.project.leadName ? `<strong>Client:</strong> ${data.project.leadName}<br>` : ''}
+            <strong>${t('common.labels.project')}:</strong> ${data.project.name}<br>
+            ${data.project.type ? `<strong>${t('common.labels.type')}:</strong> ${data.project.type}<br>` : ''}
+            ${data.project.leadName ? `<strong>${t('common.labels.client')}:</strong> ${data.project.leadName}<br>` : ''}
             <div style="
               background: ${isCompleted ? '#22c55e' : '#f59e0b'}15;
               padding: 12px;
@@ -273,26 +303,27 @@ export function generateImmediateNotificationEmail(emailData: ImmediateNotificat
               margin: 16px 0;
               border-left: 4px solid ${isCompleted ? '#22c55e' : '#f59e0b'};
             ">
-              <strong>Status Update:</strong> ${data.project.oldStatus} → ${data.project.newStatus}
+              <strong>${t('immediate.sections.statusUpdate')}:</strong> ${data.project.oldStatus} → ${data.project.newStatus}
             </div>
-            ${data.project.notes ? `<strong>Notes:</strong> ${data.project.notes}` : ''}
+            ${data.project.notes ? `<strong>${t('common.labels.notes')}:</strong> ${data.project.notes}` : ''}
           </div>
         </div>
       `;
       break;
   }
 
-  content += generateCallToAction(data, brandColor);
+  content += generateCallToAction(data, brandColor, t, baseUrl);
 
   const templateData: EmailTemplateData = {
     userFullName: emailData.user.fullName,
     businessName: emailData.business.businessName,
     brandColor: brandColor,
-    baseUrl: 'https://my.lumiso.app'
+    baseUrl,
+    localization,
   };
 
   return createEmailTemplate(
-    generateSubject(data),
+    generateSubject(data, t),
     content,
     templateData
   );
@@ -301,18 +332,22 @@ export function generateImmediateNotificationEmail(emailData: ImmediateNotificat
 /**
  * Generate email subject based on notification type
  */
-export function generateSubject(data: ImmediateNotificationData): string {
+export function generateSubject(data: ImmediateNotificationData, t: TranslateFn): string {
   switch (data.type) {
     case 'project-assignment':
-      return `📋 New Project Assignment: ${data.project.name}`;
+      return t('immediate.subject.projectAssignment', { name: data.project.name });
     case 'lead-assignment':
-      return `👤 New Lead Assignment: ${data.lead.name}`;
+      return t('immediate.subject.leadAssignment', { name: data.lead.name });
     case 'project-milestone':
       const isCompleted = data.project.lifecycle === 'completed';
-      return isCompleted 
-        ? `🎉 Project Completed: ${data.project.name}`
-        : `⚠️ Project Cancelled: ${data.project.name}`;
+      return isCompleted
+        ? t('immediate.subject.projectMilestoneCompleted', {
+            name: data.project.name,
+          })
+        : t('immediate.subject.projectMilestoneCancelled', {
+            name: data.project.name,
+          });
     default:
-      return 'New Notification';
+      return t('immediate.header.projectAssignment.title');
   }
 }

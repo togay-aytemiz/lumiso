@@ -1,4 +1,5 @@
 import { createEmailTemplate, EmailTemplateData, Session, Todo, Activity, Lead, formatDateTime, formatDate, formatTime } from './enhanced-email-base.ts';
+import { createEmailLocalization } from '../../_shared/email-i18n.ts';
 
 interface OverdueItems {
   leads: Lead[];
@@ -34,6 +35,47 @@ export function generateModernDailySummaryEmail(
   const totalTodayReminders = todayReminders.length;
   const brandColor = templateData.brandColor || '#1EB29F';
   const lighterBrandColor = adjustBrightness(brandColor, 20);
+  const localization =
+    templateData.localization ||
+    (templateData.localization = createEmailLocalization(templateData.language));
+  const t = localization.t;
+  const statsSessionsLabel = t('dailySummary.modern.stats.sessions');
+  const statsRemindersLabel = t('dailySummary.modern.stats.reminders');
+  const statsOverdueLabel = t('dailySummary.modern.stats.overdue');
+  const statsPastLabel = t('dailySummary.modern.stats.past');
+  const sessionsHeading = t('dailySummary.modern.sections.sessionsTitle', {
+    count: upcomingSessions.length,
+  });
+  const remindersHeading = t('dailySummary.modern.sections.remindersTitle', {
+    count: todayReminders.length,
+  });
+  const defaultSessionName = t(
+    'dailySummary.modern.sections.defaultSessionName',
+  );
+  const clientLabel = t('common.labels.client');
+  const projectLabel = t('common.labels.project');
+  const todayBadge = t('common.badges.today');
+  const atText = t('common.prepositions.at');
+  const viewLabel = `${t('common.actions.view')} →`;
+  const overdueMessage =
+    totalOverdue === 1
+      ? t('dailySummary.modern.messages.overdueOne')
+      : t('dailySummary.modern.messages.overdueOther', {
+          count: totalOverdue,
+        });
+  const pastMessage =
+    totalPastSessions === 1
+      ? t('dailySummary.modern.messages.pastOne')
+      : t('dailySummary.modern.messages.pastOther', {
+          count: totalPastSessions,
+        });
+  const overdueLinkLabel = t('dailySummary.modern.links.overdue');
+  const pastLinkLabel = t('dailySummary.modern.links.pastSessions');
+  const quickActionsTitle = t('dailySummary.modern.quickActionsTitle');
+  const dashboardLabel = t('common.cta.dashboard');
+  const leadsLabel = t('common.cta.leads');
+  const projectsLabel = t('common.cta.projects');
+  const sessionsLabel = t('common.cta.sessions');
   
   let content = `
     <!-- Header Section -->
@@ -56,13 +98,13 @@ export function generateModernDailySummaryEmail(
           font-weight: 700;
           margin: 0 0 8px 0;
           line-height: 1.2;
-        ">Daily Summary</h2>
+        ">${t('dailySummary.modern.headerTitle')}</h2>
         <p style="
           color: #6b7280;
           font-size: 16px;
           margin: 0;
           line-height: 1.4;
-        ">Here's your daily summary for <strong>${today}</strong></p>
+        ">${t('dailySummary.modern.headerSubtitle', { date: today })}</p>
       </div>
       
       <!-- Summary Stats -->
@@ -96,7 +138,7 @@ export function generateModernDailySummaryEmail(
             text-transform: uppercase;
             letter-spacing: 0.3px;
             line-height: 1.2;
-          ">Today's Sessions</div>
+          ">${statsSessionsLabel}</div>
         </div>
         
         <div style="
@@ -123,7 +165,7 @@ export function generateModernDailySummaryEmail(
             text-transform: uppercase;
             letter-spacing: 0.3px;
             line-height: 1.2;
-          ">Reminders</div>
+          ">${statsRemindersLabel}</div>
         </div>
         
         <div style="
@@ -150,7 +192,7 @@ export function generateModernDailySummaryEmail(
             text-transform: uppercase;
             letter-spacing: 0.3px;
             line-height: 1.2;
-          ">Overdue</div>
+          ">${statsOverdueLabel}</div>
         </div>
         
         <div style="
@@ -177,7 +219,7 @@ export function generateModernDailySummaryEmail(
             text-transform: uppercase;
             letter-spacing: 0.3px;
             line-height: 1.2;
-          ">Past</div>
+          ">${statsPastLabel}</div>
         </div>
       </div>
     </div>
@@ -196,7 +238,7 @@ export function generateModernDailySummaryEmail(
           align-items: center;
           gap: 8px;
         ">
-          📸 Today's Sessions (${upcomingSessions.length})
+          📸 ${sessionsHeading}
         </h3>
     `;
 
@@ -204,7 +246,7 @@ export function generateModernDailySummaryEmail(
       const sessionTime = formatDateTime(session.session_date, session.session_time, templateData);
       const sessionName = session.projects?.project_types?.name 
         ? `${session.projects.project_types.name} Session`
-        : (session.notes || 'Photography Session');
+        : (session.notes || defaultSessionName);
       
       content += `
         <div style="
@@ -237,7 +279,7 @@ export function generateModernDailySummaryEmail(
               font-weight: 500;
               text-transform: uppercase;
               letter-spacing: 0.5px;
-            ">Today</span>
+            ">${todayBadge}</span>
           </div>
           
           <div style="
@@ -255,7 +297,7 @@ export function generateModernDailySummaryEmail(
                 font-size: 14px;
                 margin-bottom: 8px;
                 line-height: 1.4;
-              ">👤 Client: <strong style="color: #374151;">${session.leads.name}</strong></div>
+              ">👤 ${clientLabel}: <strong style="color: #374151;">${session.leads.name}</strong></div>
             ` : ''}
             ${session.projects ? `
               <div style="
@@ -263,7 +305,7 @@ export function generateModernDailySummaryEmail(
                 font-size: 14px;
                 margin-bottom: 8px;
                 line-height: 1.4;
-              ">📋 Project: <strong style="color: #374151;">${session.projects.name}</strong></div>
+              ">📋 ${projectLabel}: <strong style="color: #374151;">${session.projects.name}</strong></div>
             ` : ''}
             ${session.location ? `
               <div style="
@@ -294,7 +336,7 @@ export function generateModernDailySummaryEmail(
                 text-decoration: none;
                 font-weight: 500;
                 font-size: 13px;
-              ">View →</a>
+              ">${viewLabel}</a>
             </div>
           ` : ''}
         </div>
@@ -317,7 +359,7 @@ export function generateModernDailySummaryEmail(
           align-items: center;
           gap: 8px;
         ">
-          ⏰ Today's Reminders (${todayReminders.length})
+          ⏰ ${remindersHeading}
         </h3>
     `;
 
@@ -347,14 +389,14 @@ export function generateModernDailySummaryEmail(
               font-size: 14px;
               margin-bottom: 8px;
               line-height: 1.4;
-            ">📅 ${formatDate(reminder.reminder_date, templateData.dateFormat)} ${reminder.reminder_time ? `at ${formatTime(reminder.reminder_time, templateData.timeFormat)}` : ''}</div>
+            ">📅 ${formatDate(reminder.reminder_date, templateData.dateFormat, templateData.timezone)} ${reminder.reminder_time ? `${atText} ${formatTime(reminder.reminder_time, templateData.timeFormat, templateData.timezone, reminder.reminder_date)}` : ''}</div>
             ${reminder.leads ? `
               <div style="
                 color: #6b7280;
                 font-size: 14px;
                 margin-bottom: 8px;
                 line-height: 1.4;
-              ">👤 Client: <strong style="color: #374151;">${reminder.leads.name}</strong></div>
+              ">👤 ${clientLabel}: <strong style="color: #374151;">${reminder.leads.name}</strong></div>
             ` : ''}
             ${reminder.projects ? `
               <div style="
@@ -362,7 +404,7 @@ export function generateModernDailySummaryEmail(
                 font-size: 14px;
                 margin-bottom: 4px;
                 line-height: 1.4;
-              ">📋 Project: <strong style="color: #374151;">${reminder.projects.name}</strong></div>
+              ">📋 ${projectLabel}: <strong style="color: #374151;">${reminder.projects.name}</strong></div>
             ` : ''}
           </div>
           
@@ -377,7 +419,7 @@ export function generateModernDailySummaryEmail(
                 text-decoration: none;
                 font-weight: 500;
                 font-size: 13px;
-              ">View →</a>
+              ">${viewLabel}</a>
             </div>
           ` : ''}
         </div>
@@ -411,7 +453,7 @@ export function generateModernDailySummaryEmail(
               font-weight: 600;
               font-size: 16px;
             ">
-              You have <strong>${totalOverdue}</strong> overdue item${totalOverdue > 1 ? 's' : ''} that need attention.
+              ${overdueMessage}
             </p>
           </div>
         </div>
@@ -422,7 +464,7 @@ export function generateModernDailySummaryEmail(
               text-decoration: underline;
               font-size: 14px;
               font-weight: 500;
-            ">View overdue items</a>
+            ">${overdueLinkLabel}</a>
           </div>
         ` : ''}
       </div>
@@ -453,7 +495,7 @@ export function generateModernDailySummaryEmail(
               font-weight: 600;
               font-size: 16px;
             ">
-              You have <strong>${totalPastSessions}</strong> past session${totalPastSessions > 1 ? 's' : ''} that need${totalPastSessions === 1 ? 's' : ''} action.
+              ${pastMessage}
             </p>
           </div>
         </div>
@@ -464,7 +506,7 @@ export function generateModernDailySummaryEmail(
               text-decoration: underline;
               font-size: 14px;
               font-weight: 500;
-            ">View past sessions</a>
+            ">${pastLinkLabel}</a>
           </div>
         ` : ''}
       </div>
@@ -487,7 +529,7 @@ export function generateModernDailySummaryEmail(
           font-weight: 600;
           margin: 0 0 16px 0;
           text-align: center;
-        ">Quick Actions</h3>
+        ">${quickActionsTitle}</h3>
         
         <div style="
           display: flex;
@@ -507,7 +549,7 @@ export function generateModernDailySummaryEmail(
             text-align: center;
             flex: 1;
             min-width: 100px;
-          ">Dashboard</a>
+          ">${dashboardLabel}</a>
           <a href="${templateData.baseUrl}/leads" style="
             display: inline-block;
             background: #6b7280;
@@ -520,7 +562,7 @@ export function generateModernDailySummaryEmail(
             text-align: center;
             flex: 1;
             min-width: 100px;
-          ">Leads</a>
+          ">${leadsLabel}</a>
           <a href="${templateData.baseUrl}/projects" style="
             display: inline-block;
             background: #6b7280;
@@ -533,7 +575,7 @@ export function generateModernDailySummaryEmail(
             text-align: center;
             flex: 1;
             min-width: 100px;
-          ">Projects</a>
+          ">${projectsLabel}</a>
           <a href="${templateData.baseUrl}/sessions" style="
             display: inline-block;
             background: #6b7280;
@@ -546,14 +588,14 @@ export function generateModernDailySummaryEmail(
             text-align: center;
             flex: 1;
             min-width: 100px;
-          ">Sessions</a>
+          ">${sessionsLabel}</a>
         </div>
       </div>
     `;
   }
 
   return createEmailTemplate(
-    `📊 Daily Summary - ${today}`,
+    t('dailySummary.modern.pageTitle', { date: today }),
     content,
     templateData
   );

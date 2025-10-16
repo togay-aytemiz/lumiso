@@ -3,13 +3,16 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { Resend } from "npm:resend@2.0.0";
 import { generateModernDailySummaryEmail } from './_templates/enhanced-daily-summary-modern.ts';
 import { generateEmptyDailySummaryEmail } from './_templates/enhanced-daily-summary-empty.ts';
+import { formatDate } from './_templates/enhanced-email-base.ts';
 import { 
   generateImmediateNotificationEmail, 
   generateSubject,
   type ProjectAssignmentData,
   type LeadAssignmentData,
+  type ProjectMilestoneData,
   type ImmediateNotificationEmailData
 } from './_templates/immediate-notifications.ts';
+import { createEmailLocalization } from '../_shared/email-i18n.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -144,6 +147,259 @@ const handler = async (req: Request): Promise<Response> => {
                          user.user_metadata?.full_name || 
                          user.email?.split('@')[0] || 'there';
     console.log(`User full name: ${userFullName}`);
+
+    const { data: languagePreference } = await adminSupabase
+      .from('user_language_preferences')
+      .select('language_code')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    const localization = createEmailLocalization(languagePreference?.language_code);
+    const t = localization.t;
+
+    const { data: orgSettings } = await adminSupabase
+      .from('organization_settings')
+      .select('photography_business_name, primary_brand_color, date_format, time_format, timezone')
+      .eq('organization_id', organizationId)
+      .maybeSingle();
+
+    if (isTest) {
+      if (type === 'daily-summary' || type === 'daily-summary-empty') {
+        const today = new Date();
+        const todayStr = today.toISOString().split('T')[0];
+        const sampleDaily =
+          (localization.raw('samples.dailySummary') as Record<string, string>) ||
+          {};
+
+        const templateData = {
+          userFullName,
+          businessName: orgSettings?.photography_business_name || 'Lumiso',
+          brandColor: orgSettings?.primary_brand_color || '#1EB29F',
+          dateFormat: orgSettings?.date_format || 'DD/MM/YYYY',
+          timeFormat: orgSettings?.time_format || '12-hour',
+          timezone: orgSettings?.timezone || 'UTC',
+          baseUrl: 'https://my.lumiso.app',
+          language: localization.language,
+          localization,
+        };
+
+        const sampleSessions =
+          type === 'daily-summary'
+            ? [
+                {
+                  id: 'sample-session',
+                  session_date: todayStr,
+                  session_time: '09:30',
+                  notes:
+                    sampleDaily.sessionNotes ||
+                    'Prepare warm-toned presets before the shoot.',
+                  location:
+                    sampleDaily.sessionLocation || 'Downtown studio',
+                  leads: { name: sampleDaily.clientName || 'Emily Carter' },
+                  projects: {
+                    name: sampleDaily.projectName || 'Sunset Wedding',
+                    project_types: {
+                      name: sampleDaily.projectType || 'Wedding',
+                    },
+                  },
+                },
+              ]
+            : [];
+
+        const sampleReminders =
+          type === 'daily-summary'
+            ? [
+                {
+                  id: 'sample-reminder',
+                  content:
+                    sampleDaily.reminderContent ||
+                    'Send the mood board to the couple.',
+                  reminder_date: todayStr,
+                  reminder_time: '13:00',
+                  leads: { name: sampleDaily.clientName || 'Emily Carter' },
+                  projects: {
+                    name: sampleDaily.projectName || 'Sunset Wedding',
+                  },
+                },
+              ]
+            : [];
+
+        const sampleOverdueActivities = sampleDaily.overdueContent
+          ? [
+              {
+                id: 'sample-overdue',
+                content: sampleDaily.overdueContent,
+                reminder_date: todayStr,
+                reminder_time: '10:00',
+                lead_id: null,
+                project_id: null,
+                leads: {
+                  name:
+                    sampleDaily.pastSessionClientName ||
+                    sampleDaily.clientName ||
+                    'Rivera Family',
+                },
+                projects: {
+                  name:
+                    sampleDaily.pastSessionProjectName ||
+                    sampleDaily.projectName ||
+                    'Rivera Family Session',
+                },
+              },
+            ]
+          : [];
+
+        const samplePastSessions = sampleDaily.pastSessionProjectName
+          ? [
+              {
+                id: 'sample-past-session',
+                session_date: todayStr,
+                session_time: '11:00',
+                notes: '',
+                location:
+                  sampleDaily.sessionLocation || 'Downtown studio',
+                leads: {
+                  name:
+                    sampleDaily.pastSessionClientName ||
+                    'Rivera Family',
+                },
+                projects: {
+                  name:
+                    sampleDaily.pastSessionProjectName ||
+                    'Rivera Family Session',
+                  project_types: {
+                    name: sampleDaily.projectType || 'Wedding',
+                  },
+                },
+              },
+            ]
+          : [];
+
+        const formattedSubjectDate = formatDate(
+          today.toISOString(),
+          templateData.dateFormat,
+          templateData.timezone,
+        );
+
+        const emailHtml =
+          type === 'daily-summary-empty'
+            ? generateEmptyDailySummaryEmail(
+                { leads: [], activities: sampleOverdueActivities },
+                samplePastSessions,
+                templateData,
+              )
+            : generateModernDailySummaryEmail(
+                sampleSessions,
+                sampleReminders,
+                { leads: [], activities: sampleOverdueActivities },
+                samplePastSessions,
+                templateData,
+              );
+
+        const subjectKey =
+          type === 'daily-summary-empty'
+            ? 'dailySummary.subject.brandedEmpty'
+            : 'dailySummary.subject.brandedWithData';
+
+        const emailSubject = t(subjectKey, {
+          date: formattedSubjectDate,
+        });
+
+        const emailResponse = await resend.emails.send({
+          from: 'Lumiso <hello@updates.lumiso.app>',
+          to: [user.email],
+          subject: emailSubject,
+          html: emailHtml,
+        });
+
+        if (emailResponse.error) {
+          throw new Error(emailResponse.error.message);
+        }
+
+        return new Response(
+          JSON.stringify({
+            message: 'Test daily summary email sent',
+            type,
+          }),
+          {
+            status: 200,
+            headers: { 'Content-Type': 'application/json', ...corsHeaders },
+          },
+        );
+      }
+
+      if (type === 'project-milestone') {
+        const sampleImmediate =
+          (localization.raw('samples.immediate') as Record<string, string>) ||
+          {};
+
+        const notificationData: ProjectMilestoneData = {
+          type: 'project-milestone',
+          organizationId,
+          triggeredByUser: {
+            name: sampleImmediate.triggeredByName || userFullName,
+            id: 'sample-user',
+          },
+          project: {
+            id: 'sample-project',
+            name: sampleImmediate.projectName || 'Spring Garden Wedding',
+            type: sampleImmediate.projectType || 'Wedding',
+            oldStatus: sampleImmediate.oldStatus || 'Editing',
+            newStatus:
+              sampleImmediate.newStatusCompleted || 'Completed',
+            lifecycle: 'completed',
+            notes:
+              sampleImmediate.projectNotes ||
+              'Plan golden hour portraits on the venue terrace.',
+            leadName: sampleImmediate.leadName || 'Elif Kaya',
+          },
+          assignee: {
+            name: userFullName,
+            email: user.email,
+          },
+        };
+
+        const emailData: ImmediateNotificationEmailData = {
+          user: {
+            fullName: userFullName,
+            email: user.email,
+          },
+          business: {
+            businessName: orgSettings?.photography_business_name || 'Lumiso',
+            brandColor: orgSettings?.primary_brand_color || '#1EB29F',
+          },
+          notificationData,
+          language: localization.language,
+          localization,
+          baseUrl: 'https://my.lumiso.app',
+        };
+
+        const emailHtml = generateImmediateNotificationEmail(emailData);
+        const emailSubject = generateSubject(notificationData, t);
+
+        const emailResponse = await resend.emails.send({
+          from: 'Lumiso <hello@updates.lumiso.app>',
+          to: [user.email],
+          subject: emailSubject,
+          html: emailHtml,
+        });
+
+        if (emailResponse.error) {
+          throw new Error(emailResponse.error.message);
+        }
+
+        return new Response(
+          JSON.stringify({
+            message: 'Test project milestone email sent',
+            type,
+          }),
+          {
+            status: 200,
+            headers: { 'Content-Type': 'application/json', ...corsHeaders },
+          },
+        );
+      }
+    }
 
     // Get today's date
     const today = new Date();
@@ -293,13 +549,6 @@ const handler = async (req: Request): Promise<Response> => {
       console.error('Error fetching todos:', todosError);
     }
 
-    // Get organization settings for branding and timezone
-    const { data: orgSettings } = await adminSupabase
-      .from('organization_settings')
-      .select('photography_business_name, primary_brand_color, date_format, time_format, timezone')
-      .eq('organization_id', organizationId)
-      .maybeSingle();
-
     console.log('Data fetched:', {
       todaySessions: todaySessions?.length || 0,
       pastSessions: pastSessions?.length || 0,
@@ -319,7 +568,9 @@ const handler = async (req: Request): Promise<Response> => {
       dateFormat: orgSettings?.date_format || 'DD/MM/YYYY',
       timeFormat: orgSettings?.time_format || '12-hour',
       timezone: orgSettings?.timezone || 'UTC',
-      baseUrl: 'https://my.lumiso.app'
+      baseUrl: 'https://my.lumiso.app',
+      language: localization.language,
+      localization,
     };
 
     // Transform sessions data
@@ -380,11 +631,11 @@ const handler = async (req: Request): Promise<Response> => {
     // Generate enhanced email content using the appropriate template
     let emailHtml: string;
     let emailSubject: string;
-    const todayFormatted = today.toLocaleDateString('en-GB', { 
-      day: '2-digit', 
-      month: '2-digit', 
-      year: 'numeric' 
-    });
+    const formattedSubjectDate = formatDate(
+      today.toISOString(),
+      templateData.dateFormat,
+      templateData.timezone,
+    );
 
     if (type === 'daily-summary-empty') {
       // Force empty state for testing
@@ -393,7 +644,9 @@ const handler = async (req: Request): Promise<Response> => {
         pastSessionsNeedingAction,
         templateData
       );
-      emailSubject = `🌅 Fresh Start Today - ${todayFormatted}`;
+      emailSubject = t('dailySummary.subject.brandedEmpty', {
+        date: formattedSubjectDate,
+      });
     } else if (sessions.length === 0 && todayReminders.length === 0) {
       // Automatically use empty template when no sessions or reminders
       emailHtml = generateEmptyDailySummaryEmail(
@@ -401,7 +654,9 @@ const handler = async (req: Request): Promise<Response> => {
         pastSessionsNeedingAction,
         templateData
       );
-      emailSubject = `🌅 Fresh Start Today - ${todayFormatted}`;
+      emailSubject = t('dailySummary.subject.brandedEmpty', {
+        date: formattedSubjectDate,
+      });
     } else {
       // Use regular daily summary template
       emailHtml = generateModernDailySummaryEmail(
@@ -411,7 +666,9 @@ const handler = async (req: Request): Promise<Response> => {
         pastSessionsNeedingAction,
         templateData
       );
-      emailSubject = `📅 Daily Summary - ${todayFormatted}`;
+      emailSubject = t('dailySummary.subject.brandedWithData', {
+        date: formattedSubjectDate,
+      });
     }
 
     // Send email using Resend
@@ -681,6 +938,17 @@ async function handleAssignmentNotification(requestData: any, adminSupabase: any
       };
     }
 
+    const { data: assigneeLanguage } = assignee_id
+      ? await adminSupabase
+          .from('user_language_preferences')
+          .select('language_code')
+          .eq('user_id', assignee_id)
+          .maybeSingle()
+      : { data: null } as const;
+
+    const localization = createEmailLocalization(assigneeLanguage?.language_code);
+    const t = localization.t;
+
     // Prepare template data
     const templateData: ImmediateNotificationEmailData = {
       user: {
@@ -691,12 +959,15 @@ async function handleAssignmentNotification(requestData: any, adminSupabase: any
         businessName: orgSettings?.photography_business_name || 'Lumiso',
         brandColor: orgSettings?.primary_brand_color || '#1EB29F'
       },
-      notificationData
+      notificationData,
+      language: localization.language,
+      localization,
+      baseUrl: 'https://my.lumiso.app'
     };
 
     // Generate email HTML and subject
     const emailHtml = generateImmediateNotificationEmail(templateData);
-    const emailSubject = generateSubject(notificationData);
+    const emailSubject = generateSubject(notificationData, t);
 
     // Send email using Resend
     const emailResult = await resend.emails.send({
@@ -913,6 +1184,15 @@ async function handleProjectMilestoneNotification(requestData: ReminderRequest, 
                             assigneeAuth.user.user_metadata?.full_name || 
                             assigneeAuth.user.email.split('@')[0];
 
+        const { data: assigneeLanguage } = await adminSupabase
+          .from('user_language_preferences')
+          .select('language_code')
+          .eq('user_id', assigneeId)
+          .maybeSingle();
+
+        const localization = createEmailLocalization(assigneeLanguage?.language_code);
+        const t = localization.t;
+
         // Get user-level notification settings (takes precedence over org settings)
         const { data: userSettings } = await adminSupabase
           .from('user_settings')
@@ -974,11 +1254,14 @@ async function handleProjectMilestoneNotification(requestData: ReminderRequest, 
             businessName: orgSettings?.photography_business_name || 'Lumiso',
             brandColor: orgSettings?.primary_brand_color || '#1EB29F'
           },
-          notificationData
+          notificationData,
+          language: localization.language,
+          localization,
+          baseUrl: 'https://my.lumiso.app'
         };
         
         const emailHtml = generateImmediateNotificationEmail(emailData);
-        const emailSubject = generateSubject(notificationData);
+        const emailSubject = generateSubject(notificationData, t);
 
         // Send the email
         const emailResult = await resend.emails.send({

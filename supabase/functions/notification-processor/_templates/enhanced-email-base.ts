@@ -1,10 +1,17 @@
+import {
+  createEmailLocalization,
+  type EmailLocalization,
+} from '../../_shared/email-i18n.ts';
+
 export interface EmailTemplateData {
-  userFullName: string;
+  userFullName?: string;
   businessName: string;
   brandColor?: string;
   dateFormat?: string;
   timeFormat?: string;
   baseUrl?: string;
+  language?: string;
+  localization?: EmailLocalization;
 }
 
 export interface Session {
@@ -45,49 +52,111 @@ export interface Lead {
 /**
  * Format date based on preference
  */
-export function formatDate(dateString: string, format: string = 'DD/MM/YYYY'): string {
-  const date = new Date(dateString);
-  const day = date.getDate().toString().padStart(2, '0');
-  const month = (date.getMonth() + 1).toString().padStart(2, '0');
-  const year = date.getFullYear();
-  
-  switch (format) {
-    case 'MM/DD/YYYY':
-      return `${month}/${day}/${year}`;
-    case 'YYYY-MM-DD':
-      return `${year}-${month}-${day}`;
-    case 'DD/MM/YYYY':
-    default:
-      return `${day}/${month}/${year}`;
+export function formatDate(
+  dateString: string,
+  format: string = 'DD/MM/YYYY',
+  timezone: string = 'UTC'
+): string {
+  try {
+    const date = new Date(dateString);
+    if (Number.isNaN(date.getTime())) return dateString;
+
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: timezone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+
+    const parts = formatter.formatToParts(date).reduce<Record<string, string>>(
+      (acc, part) => {
+        if (part.type !== 'literal') {
+          acc[part.type] = part.value;
+        }
+        return acc;
+      },
+      {}
+    );
+
+    const year = parts.year ?? '';
+    const month = parts.month ?? '';
+    const day = parts.day ?? '';
+
+    switch (format) {
+      case 'MM/DD/YYYY':
+        return `${month}/${day}/${year}`;
+      case 'YYYY-MM-DD':
+        return `${year}-${month}-${day}`;
+      case 'DD/MM/YYYY':
+      default:
+        return `${day}/${month}/${year}`;
+    }
+  } catch {
+    return dateString;
   }
 }
 
 /**
  * Format time based on preference
  */
-export function formatTime(timeString: string, format: string = '12-hour'): string {
+export function formatTime(
+  timeString: string,
+  format: string = '12-hour',
+  timezone: string = 'UTC',
+  dateString?: string
+): string {
   if (!timeString) return '';
-  
-  const [hours, minutes] = timeString.split(':').map(Number);
-  
-  if (format === '24-hour') {
-    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+
+  try {
+    const [hours, minutes] = timeString.split(':').map(Number);
+    if (Number.isNaN(hours) || Number.isNaN(minutes)) {
+      return timeString;
+    }
+
+    let referenceDate: Date;
+    if (dateString) {
+      referenceDate = new Date(`${dateString}T${timeString}`);
+    } else {
+      referenceDate = new Date();
+      referenceDate.setHours(hours, minutes, 0, 0);
+    }
+
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: timezone,
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: format === '12-hour',
+    });
+
+    return formatter.format(referenceDate);
+  } catch {
+    return timeString;
   }
-  
-  // 12-hour format
-  const period = hours >= 12 ? 'PM' : 'AM';
-  const displayHours = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
-  return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
 }
 
 /**
  * Format date and time together
  */
 export function formatDateTime(dateString: string, timeString: string | null, templateData: EmailTemplateData): string {
-  const formattedDate = formatDate(dateString, templateData.dateFormat);
-  const formattedTime = timeString ? formatTime(timeString, templateData.timeFormat) : '';
+  const formattedDate = formatDate(
+    dateString,
+    templateData.dateFormat,
+    templateData.timezone
+  );
+  const formattedTime = timeString
+    ? formatTime(
+        timeString,
+        templateData.timeFormat,
+        templateData.timezone,
+        dateString
+      )
+    : '';
+  const localization =
+    templateData.localization ||
+    (templateData.localization = createEmailLocalization(templateData.language));
+  const atText = localization.t('common.prepositions.at');
   
-  return formattedTime ? `${formattedDate} at ${formattedTime}` : formattedDate;
+  return formattedTime ? `${formattedDate} ${atText} ${formattedTime}` : formattedDate;
 }
 
 /**
@@ -98,11 +167,17 @@ export function createEmailTemplate(
   content: string, 
   templateData: EmailTemplateData
 ): string {
+  const localization =
+    templateData.localization ||
+    (templateData.localization = createEmailLocalization(templateData.language));
+  const t = localization.t;
   const brandColor = templateData.brandColor || '#1EB29F';
+  const businessName = templateData.businessName;
+  const baseUrl = templateData.baseUrl;
   
   return `
 <!DOCTYPE html>
-<html>
+<html lang="${localization.language}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -160,7 +235,7 @@ export function createEmailTemplate(
         font-size: 24px;
         font-weight: 700;
         text-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      ">${templateData.businessName}</h1>
+      ">${businessName}</h1>
     </div>
     
     <div class="email-body">
@@ -169,12 +244,15 @@ export function createEmailTemplate(
     
     <div class="email-footer">
       <p style="margin: 0 0 12px 0;">
-        This email was sent by <strong>${templateData.businessName}</strong>
+        ${t('common.footer.notice', { businessName })}
       </p>
-      ${templateData.baseUrl ? `
+      <p style="margin: 0;">
+        ${t('common.footer.reason')}
+      </p>
+      ${baseUrl ? `
         <p style="margin: 0;">
-          <a href="${templateData.baseUrl}" style="color: ${brandColor}; text-decoration: none;">
-            Visit Dashboard
+          <a href="${baseUrl}" style="color: ${brandColor}; text-decoration: none;">
+            ${t('common.cta.dashboard')}
           </a>
         </p>
       ` : ''}

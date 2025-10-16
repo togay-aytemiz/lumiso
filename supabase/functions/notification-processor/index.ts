@@ -3,6 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { Resend } from "npm:resend@2.0.0";
 import { generateModernDailySummaryEmail } from './_templates/enhanced-daily-summary-modern.ts';
 import { generateEmptyDailySummaryEmail } from './_templates/enhanced-daily-summary-empty.ts';
+import { createEmailLocalization } from '../_shared/email-i18n.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -251,6 +252,15 @@ async function processDailySummary(supabase: any, notification: any) {
     throw new Error(`Failed to get user: ${userError?.message || 'User not found'}`);
   }
 
+  const { data: languagePreference } = await supabase
+    .from('user_language_preferences')
+    .select('language_code')
+    .eq('user_id', notification.user_id)
+    .maybeSingle();
+
+  const localization = createEmailLocalization(languagePreference?.language_code);
+  const t = localization.t;
+
   // Get user settings and organization settings
   const { data: userSettings } = await supabase
     .from('user_settings')
@@ -319,7 +329,9 @@ async function processDailySummary(supabase: any, notification: any) {
     dateFormat: orgSettings?.date_format || 'DD/MM/YYYY',
     timeFormat: orgSettings?.time_format || '12-hour',
     timezone: orgSettings?.timezone || 'UTC',
-    baseUrl: 'https://my.lumiso.app'
+    baseUrl: 'https://my.lumiso.app',
+    language: localization.language,
+    localization,
   };
 
   // Check if there's any activity
@@ -343,10 +355,14 @@ async function processDailySummary(supabase: any, notification: any) {
   }
 
   // Send email
+  const subject = hasActivity
+    ? t('dailySummary.subject.defaultWithData')
+    : t('dailySummary.subject.defaultEmpty');
+
   const emailResponse = await resend.emails.send({
     from: `Lumiso <daily-summary@lumiso.app>`,
     to: [userData.user.email!],
-    subject: hasActivity ? 'Your Daily Summary' : 'Daily Summary - Nothing scheduled today',
+    subject,
     html: emailHtml,
   });
 

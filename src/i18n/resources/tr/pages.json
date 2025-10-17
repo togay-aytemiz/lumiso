@@ -64,6 +64,134 @@
       "failedToLoadProjects": "Projeler yüklenemedi"
     }
   },
+  "leadDetail": {
+    "defaultTitle": "Kişi Detayları",
+    "tooltips": {
+      "projectRequired": "Devam etmek için önce bir proje oluşturun",
+      "viewProject": "Devam etmek için projenize tıklayın",
+      "scheduleSession": "Devam etmek için bir seans planlayın",
+      "sessionAlreadyPlanned": "Zaten planlanmış bir seans mevcut."
+    },
+    "messages": {
+      "projectsShortcut": "Projelerinize istediğiniz zaman kenar çubuğundaki Projeler sayfasından erişebilirsiniz!",
+      "sessionAdded": "Seansınız takviminize eklendi ve Takvim sayfasında bulabilirsiniz!"
+    },
+    "tutorial": {
+      "intro": {
+        "title": "Kişi Detaylarına Hoş Geldiniz! 📋",
+        "description": "Belirli bir kişi hakkındaki tüm bilgileri burada yönetirsiniz. Neler yapabileceğinize birlikte bakalım:",
+        "sections": [
+          {
+            "title": "Kişi Bilgileri",
+            "description": "Sol tarafta iletişim bilgilerini, notları ve kişi durumunu görüntüleyin ve düzenleyin."
+          },
+          {
+            "title": "Projeler Bölümü",
+            "description": "Kişileri zaman çizelgeleri, teslimatlar ve iş akışı takibiyle projelere dönüştürün."
+          },
+          {
+            "title": "Aktivite Zaman Çizelgesi",
+            "description": "Tüm etkileşimleri, değişiklikleri ve ilerlemeyi her temas noktasında takip edin."
+          }
+        ]
+      },
+      "createProject": {
+        "title": "İlk Projenizi Oluşturun",
+        "description": "Harika! Bu kişiyi bir projeye dönüştürmek için aşağıdaki “Proje Ekle” düğmesine tıklayın.",
+        "disabledTooltip": "Devam etmek için önce bir proje oluşturun"
+      },
+      "exploreProjects": {
+        "title": "Mükemmel! Şimdi Proje Özelliklerini Keşfedin",
+        "description": "Aşağıdaki proje kartını açarak güçlü proje yönetimi araçlarını keşfedin:",
+        "points": [
+          "Ödemeleri ve faturaları takip edin",
+          "Fotoğraf seanslarını yönetin",
+          "Proje görevlerini ve yapılacakları organize edin"
+        ],
+        "disabledTooltip": "Devam etmek için projenize tıklayın"
+      },
+      "complete": {
+        "title": "🎉 Tebrikler! Eğitim Tamamlandı!",
+        "description": "Harika iş çıkardınız! Kişi oluşturma, projeye dönüştürme, müşteri detaylarını yönetme ve ilerlemeyi takip etme temellerini ustalıkla tamamladınız.",
+        "projectsShortcut": "Projelerinize istediğiniz zaman kenar çubuğundaki Projeler sayfasından erişebilirsiniz!"
+      }
+    },
+    "scheduling": {
+      "scheduleSession": {
+        "title": "Fotoğraf Seansınızı Planlayın",
+        "description": "Bu kişi için bir fotoğraf seansı planlayalım. Formu açmak için aşağıdaki “Seans Planla” düğmesine tıklayın.",
+        "sections": [
+          {
+            "title": "Seans Planlama",
+            "description": "Hem sizin hem de müşteriniz için uygun bir tarih ve saat seçin."
+          },
+          {
+            "title": "Takvim Entegrasyonu",
+            "description": "Seanslarınız planlama kolaylığı için otomatik olarak takviminizle senkronize edilir."
+          }
+        ],
+        "disabledTooltip": "Devam etmek için bir seans planlayın"
+      },
+      "sessionScheduled": {
+        "title": "🎉 Seans Başarıyla Planlandı!",
+        "description": "Harika! Seansınız takvime eklendi ve buradaki seans zaman çizelgesinde görüntülenebilir.",
+        "banner": "Seansınız takviminize eklendi ve Takvim sayfasında bulabilirsiniz!",
+        "tips": [
+          "Seanslar kişi aktivite zaman çizelgesinde görünür",
+          "İlerledikçe seans durumunu güncelleyin",
+          "Daha iyi organizasyon için seansları projelerle ilişkilendirin"
+        ]
+      }
+    },
+    "toast": {
+      "saveProgressFailed": "İlerleme kaydedilemedi. Lütfen tekrar deneyin.",
+      "leadNotFoundTitle": "Kişi bulunamadı",
+      "leadNotFoundDescription": "İstenen kişi bulunamadı.",
+      "fetchLeadTitle": "Kişi getirilirken hata oluştu",
+      "fetchLeadDescription": "Kişi bilgisi alınırken beklenmeyen bir hata oluştu."
+    }
+  },
+  "sessionDetail": {
+    "toast": {
+      "loadErrorTitle": "Hata",
+      "loadErrorDescription": "Seans detayları yüklenemedi"
+    },
+    "emptyState": {
+      "title": "Seans bulunamadı",
+      "description": "Aradığınız seans mevcut değil.",
+      "cta": "Seanslara Dön"
+    },
+    "cards": {
+      "clientDetails": "Kişi Detayları",
+      "sessionDetails": "Seans Detayları"
+    },
+    "labels": {
+      "dateTime": "Tarih ve Saat",
+      "client": "Kişi",
+      "project": "Proje",
+      "projectType": "Proje Türü",
+      "status": "Durum",
+      "notes": "Notlar",
+      "location": "Konum",
+      "at": "saat"
+    },
+    "unknownClient": "Bilinmeyen Kişi",
+    "gallery": {
+      "title": "Seans Galerisi"
+    },
+    "dangerZone": {
+      "title": "Tehlikeli Alan",
+      "button": "Seansı Sil",
+      "description": "Bu işlem seansı ve ilgili tüm verileri kalıcı olarak silecektir."
+    },
+    "overdue": {
+      "title": "Bu seans gecikti",
+      "description": "Lütfen seans durumunu güncelleyin veya gerekiyorsa yeniden planlayın."
+    },
+    "modal": {
+      "deleteTitle": "Seansı Sil"
+    }
+  },
   "projects": {
     "title": "Projeler",
     "all_projects": "Tüm Projeler",

@@ -33,6 +33,7 @@ import { useOnboarding } from "@/contexts/OnboardingContext";
 import { DetailPageLoadingSkeleton } from "@/components/ui/loading-presets";
 import { useMessagesTranslation, useFormsTranslation, useCommonTranslation } from "@/hooks/useTypedTranslation";
 import { useSessionActions } from "@/hooks/useSessionActions";
+import { useTranslation } from "react-i18next";
 interface Lead {
   id: string;
   name: string;
@@ -103,6 +104,7 @@ const LeadDetail = () => {
   const { t: tMessages } = useMessagesTranslation();
   const { t: tForms } = useFormsTranslation();
   const { t: tCommon } = useCommonTranslation();
+  const { t: tPages } = useTranslation("pages");
   const [lead, setLead] = useState<Lead | null>(null);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
@@ -184,132 +186,139 @@ const LeadDetail = () => {
   }, [lead?.id, activityRefreshKey]); // Re-check when activity refreshes (which happens after project creation)
 
   // Dynamically update tutorial steps based on hasProjects
-  const leadDetailsTutorialSteps: TutorialStep[] = useMemo(() => [{
-    id: 4,
-    title: "Welcome to Lead Details! 📋",
-    description: "This is where you manage all information about a specific lead. Let's explore what you can see and do here:",
-    content: <div className="space-y-4">
-          <div className="flex items-start gap-3">
-            <User className="w-5 h-5 text-primary mt-0.5" />
-            <div>
-              <h4 className="font-medium">Client Information</h4>
-              <p className="text-sm text-muted-foreground">View and edit contact details, notes, and lead status on the left side.</p>
-            </div>
+  const leadDetailsTutorialSteps: TutorialStep[] = useMemo(() => {
+    const introSections = tPages("leadDetail.tutorial.intro.sections", { returnObjects: true }) as Array<{ title: string; description: string }>;
+    const introIcons = [User, FolderPlus, Activity];
+    const explorePoints = tPages("leadDetail.tutorial.exploreProjects.points", { returnObjects: true }) as string[];
+
+    return [
+      {
+        id: 4,
+        title: tPages("leadDetail.tutorial.intro.title"),
+        description: tPages("leadDetail.tutorial.intro.description"),
+        content: (
+          <div className="space-y-4">
+            {introSections.map((section, index) => {
+              const Icon = introIcons[index] ?? User;
+              return (
+                <div key={section.title} className="flex items-start gap-3">
+                  <Icon className="w-5 h-5 text-primary mt-0.5" />
+                  <div>
+                    <h4 className="font-medium">{section.title}</h4>
+                    <p className="text-sm text-muted-foreground">{section.description}</p>
+                  </div>
+                </div>
+              );
+            })}
           </div>
-          <div className="flex items-start gap-3">
-            <FolderPlus className="w-5 h-5 text-primary mt-0.5" />
-            <div>
-              <h4 className="font-medium">Projects Section</h4>
-              <p className="text-sm text-muted-foreground">This is where you'll convert leads into actual projects with timelines and deliverables.</p>
-            </div>
+        ),
+        mode: "modal",
+        canProceed: true,
+      },
+      {
+        id: 5,
+        title: tPages("leadDetail.tutorial.createProject.title"),
+        description: tPages("leadDetail.tutorial.createProject.description"),
+        content: null,
+        mode: "floating",
+        canProceed: hasProjects,
+        requiresAction: true,
+        disabledTooltip: tPages("leadDetail.tutorial.createProject.disabledTooltip"),
+      },
+      {
+        id: 6,
+        title: tPages("leadDetail.tutorial.exploreProjects.title"),
+        description: tPages("leadDetail.tutorial.exploreProjects.description"),
+        content: (
+          <div className="text-sm space-y-2">
+            {explorePoints.map(point => (
+              <div key={point} className="flex items-center gap-2">
+                <span className="w-2 h-2 bg-primary rounded-full"></span>
+                <span>{point}</span>
+              </div>
+            ))}
           </div>
-          <div className="flex items-start gap-3">
-            <Activity className="w-5 h-5 text-primary mt-0.5" />
-            <div>
-              <h4 className="font-medium">Activity Timeline</h4>
-              <p className="text-sm text-muted-foreground">Track all interactions, changes, and progress over time.</p>
-            </div>
+        ),
+        mode: "floating",
+        canProceed: hasViewedProject,
+        requiresAction: !hasViewedProject,
+        disabledTooltip: hasViewedProject ? undefined : tPages("leadDetail.tooltips.viewProject"),
+      },
+      {
+        id: 7,
+        title: tPages("leadDetail.tutorial.complete.title"),
+        description: tPages("leadDetail.tutorial.complete.description"),
+        content: (
+          <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-sm font-medium text-blue-800">
+              {tPages("leadDetail.tutorial.complete.projectsShortcut")}
+            </p>
           </div>
-        </div>,
-    mode: "modal",
-    canProceed: true
-  }, {
-    id: 5,
-    title: "Create Your First Project",
-    description: "Great! Now let's turn this lead into a project. Click the 'Add Project' button below to get started!",
-    content: null,
-    mode: "floating",
-    canProceed: hasProjects,
-    // Dynamic based on projects existence
-    requiresAction: true,
-    // Always require action for this step
-    disabledTooltip: "Create a project first to continue"
-  }, {
-    id: 6,
-    title: "Perfect! Now Explore Your Project Features",
-    description: "Excellent! Click on the project card below to explore all the powerful project management features:",
-    content: <div className="text-sm space-y-2">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 bg-primary rounded-full"></span>
-            <span>Track payments and billing</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 bg-primary rounded-full"></span>
-            <span>Manage photography sessions</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 bg-primary rounded-full"></span>
-            <span>Organize project todos and tasks</span>
-          </div>
-        </div>,
-    mode: "floating",
-    canProceed: hasViewedProject,
-    // Dynamic based on whether user viewed project
-    requiresAction: !hasViewedProject,
-    // Only require action if hasn't viewed project
-    disabledTooltip: hasViewedProject ? undefined : "Click on your project to continue"
-  }, {
-    id: 7,
-    title: "🎉 Congratulations! Tutorial Complete!",
-    description: "Amazing work! You've mastered the fundamentals - from creating leads and converting them to projects, to managing client details and tracking progress. You're now equipped with everything you need to grow your photography business efficiently.",
-    content: <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-sm font-medium text-blue-800">You can access all your projects anytime from the Projects page in the sidebar!</p>
-        </div>,
-    mode: "modal",
-    canProceed: true
-  }], [hasProjects, hasViewedProject]);
+        ),
+        mode: "modal",
+        canProceed: true,
+      },
+    ];
+  }, [hasProjects, hasViewedProject, tPages]);
 
   // Scheduling tutorial steps
-  const schedulingTutorialSteps: TutorialStep[] = useMemo(() => [{
-    id: 3,
-    title: "Schedule Your Photo Session",
-    description: "Perfect! Now let's schedule a photo session for this client. Click the 'Schedule Session' button below to open the scheduling form.",
-    content: <div className="space-y-4">
-          <div className="flex items-start gap-3">
-            <Calendar className="w-5 h-5 text-primary mt-0.5" />
-            <div>
-              <h4 className="font-medium">Session Scheduling</h4>
-              <p className="text-sm text-muted-foreground">Choose date and time that works for both you and your client.</p>
+  const schedulingTutorialSteps: TutorialStep[] = useMemo(() => {
+    const schedulingSections = tPages("leadDetail.scheduling.scheduleSession.sections", { returnObjects: true }) as Array<{ title: string; description: string }>;
+    const schedulingIcons = [Calendar, CheckSquare];
+    const scheduledTips = tPages("leadDetail.scheduling.sessionScheduled.tips", { returnObjects: true }) as string[];
+
+    return [
+      {
+        id: 3,
+        title: tPages("leadDetail.scheduling.scheduleSession.title"),
+        description: tPages("leadDetail.scheduling.scheduleSession.description"),
+        content: (
+          <div className="space-y-4">
+            {schedulingSections.map((section, index) => {
+              const Icon = schedulingIcons[index] ?? Calendar;
+              return (
+                <div key={section.title} className="flex items-start gap-3">
+                  <Icon className="w-5 h-5 text-primary mt-0.5" />
+                  <div>
+                    <h4 className="font-medium">{section.title}</h4>
+                    <p className="text-sm text-muted-foreground">{section.description}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ),
+        mode: "floating",
+        canProceed: hasScheduledSession,
+        requiresAction: !hasScheduledSession,
+        disabledTooltip: tPages("leadDetail.scheduling.scheduleSession.disabledTooltip"),
+      },
+      {
+        id: 4,
+        title: tPages("leadDetail.scheduling.sessionScheduled.title"),
+        description: tPages("leadDetail.scheduling.sessionScheduled.description"),
+        content: (
+          <div className="space-y-3">
+            <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+              <p className="text-sm font-medium text-green-800">
+                {tPages("leadDetail.scheduling.sessionScheduled.banner")}
+              </p>
+            </div>
+            <div className="text-sm space-y-2">
+              {scheduledTips.map(tip => (
+                <div key={tip} className="flex items-center gap-2">
+                  <span className="w-2 h-2 bg-primary rounded-full"></span>
+                  <span>{tip}</span>
+                </div>
+              ))}
             </div>
           </div>
-          <div className="flex items-start gap-3">
-            <CheckSquare className="w-5 h-5 text-primary mt-0.5" />
-            <div>
-              <h4 className="font-medium">Calendar Integration</h4>
-              <p className="text-sm text-muted-foreground">Sessions automatically sync with your calendar for better organization.</p>
-            </div>
-          </div>
-        </div>,
-    mode: "floating",
-    canProceed: hasScheduledSession,
-    requiresAction: !hasScheduledSession,
-    disabledTooltip: "Schedule a session to continue"
-  }, {
-    id: 4,
-    title: "🎉 Session Scheduled Successfully!",
-    description: "Excellent! You've successfully scheduled your first photo session. You can now view and manage all your sessions from the Calendar page, and they'll appear in your session timeline here.",
-    content: <div className="space-y-3">
-          <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-            <p className="text-sm font-medium text-green-800">Your session has been added to your calendar and you can find it in the Calendar page!</p>
-          </div>
-          <div className="text-sm space-y-2">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 bg-primary rounded-full"></span>
-              <span>Sessions appear in your lead's activity timeline</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 bg-primary rounded-full"></span>
-              <span>Update session status as you progress</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 bg-primary rounded-full"></span>
-              <span>Associate sessions with projects for better organization</span>
-            </div>
-          </div>
-        </div>,
-    mode: "modal",
-    canProceed: true
-  }], [hasScheduledSession]);
+        ),
+        mode: "modal",
+        canProceed: true,
+      },
+    ];
+  }, [hasScheduledSession, tPages]);
 
   // Check if we should show tutorial when component mounts
   useEffect(() => {
@@ -369,8 +378,8 @@ const LeadDetail = () => {
     } catch (error) {
       console.error('❌ BULLETPROOF LeadDetail: Error completing tutorial:', error);
       toast({
-        title: "Error",
-        description: "Failed to save progress. Please try again.",
+        title: tCommon("toast.error"),
+        description: tPages("leadDetail.toast.saveProgressFailed"),
         variant: "destructive"
       });
     }
@@ -464,8 +473,8 @@ const LeadDetail = () => {
       if (error) throw error;
       if (!data) {
         toast({
-          title: "Lead not found",
-          description: "The requested lead could not be found.",
+          title: tPages("leadDetail.toast.leadNotFoundTitle"),
+          description: tPages("leadDetail.toast.leadNotFoundDescription"),
           variant: "destructive"
         });
         navigate("/leads");
@@ -483,8 +492,8 @@ const LeadDetail = () => {
       setInitialFormData(newFormData);
     } catch (error: any) {
       toast({
-        title: "Error fetching lead",
-        description: error.message,
+        title: tPages("leadDetail.toast.fetchLeadTitle"),
+        description: error.message || tPages("leadDetail.toast.fetchLeadDescription"),
         variant: "destructive"
       });
       navigate("/leads");
@@ -818,7 +827,7 @@ const LeadDetail = () => {
             {/* Header Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
               {/* Always allow session creation in single photographer mode */}
-              {true && <ScheduleSessionDialog leadId={lead.id} leadName={lead.name} onSessionScheduled={handleSessionScheduled} disabled={sessions.some(s => s.status === 'planned')} disabledTooltip="A planned session already exists." />}
+              {true && <ScheduleSessionDialog leadId={lead.id} leadName={lead.name} onSessionScheduled={handleSessionScheduled} disabled={sessions.some(s => s.status === 'planned')} disabledTooltip={tPages("leadDetail.tooltips.sessionAlreadyPlanned")} />}
 
               {!settingsLoading && userSettings.show_quick_status_buttons && completedStatus && formData.status !== completedStatus.name && <Button onClick={handleMarkAsCompleted} disabled={isUpdating} className="bg-green-600 hover:bg-green-700 text-white h-10 w-full sm:w-auto" size="sm">
                   <CheckCircle className="h-4 w-4 mr-2" />
@@ -835,7 +844,7 @@ const LeadDetail = () => {
         {/* Desktop Layout */}
         <div className="hidden lg:flex lg:items-center lg:justify-between lg:gap-6">
           <div className="min-w-0 flex items-center gap-4">
-            <h1 className="text-2xl font-bold truncate min-w-0">{lead.name || 'Lead Details'}</h1>
+            <h1 className="text-2xl font-bold truncate min-w-0">{lead.name || tPages("leadDetail.defaultTitle")}</h1>
             <div className="flex-shrink-0">
               <LeadStatusBadge leadId={lead.id} currentStatusId={lead.status_id} currentStatus={lead.status} onStatusChange={() => {
               fetchLead();
@@ -852,7 +861,7 @@ const LeadDetail = () => {
             {/* Header Action Buttons - Desktop: stays in place */}
             <div className="flex items-center gap-3 flex-shrink-0">
               {/* Always allow session creation in single photographer mode */}
-              {true && <ScheduleSessionDialog leadId={lead.id} leadName={lead.name} onSessionScheduled={handleSessionScheduled} disabled={sessions.some(s => s.status === 'planned')} disabledTooltip="A planned session already exists." />}
+              {true && <ScheduleSessionDialog leadId={lead.id} leadName={lead.name} onSessionScheduled={handleSessionScheduled} disabled={sessions.some(s => s.status === 'planned')} disabledTooltip={tPages("leadDetail.tooltips.sessionAlreadyPlanned")} />}
 
               {!settingsLoading && userSettings.show_quick_status_buttons && completedStatus && formData.status !== completedStatus.name && <Button onClick={handleMarkAsCompleted} disabled={isUpdating} className="bg-green-600 hover:bg-green-700 text-white h-10" size="sm">
                   <CheckCircle className="h-4 w-4 mr-2" />

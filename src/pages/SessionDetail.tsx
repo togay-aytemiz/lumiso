@@ -26,7 +26,8 @@ import ProjectDetailsLayout from '@/components/project-details/ProjectDetailsLay
 import { UnifiedClientDetails } from '@/components/UnifiedClientDetails';
 import SessionGallery from '@/components/SessionGallery';
 import { getDisplaySessionName } from '@/lib/sessionUtils';
-import { useMessagesTranslation } from '@/hooks/useTypedTranslation';
+import { useMessagesTranslation, useCommonTranslation } from '@/hooks/useTypedTranslation';
+import { useTranslation } from 'react-i18next';
 
 interface SessionData {
   id: string;
@@ -62,6 +63,8 @@ export default function SessionDetail() {
   const { toast } = useToast();
   const { deleteSession } = useSessionActions();
   const { t: tMessages } = useMessagesTranslation();
+  const { t: tCommon } = useCommonTranslation();
+  const { t: tPages } = useTranslation("pages");
   
   const [session, setSession] = useState<SessionData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -106,8 +109,8 @@ export default function SessionDetail() {
     } catch (error: any) {
       console.error('SessionDetail: Error fetching session:', error);
       toast({
-        title: "Error",
-        description: "Failed to load session details",
+        title: tCommon('toast.error'),
+        description: tPages('sessionDetail.toast.loadErrorDescription'),
         variant: "destructive",
       });
     } finally {
@@ -180,10 +183,10 @@ export default function SessionDetail() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-xl font-semibold mb-2">Session not found</h2>
-          <p className="text-muted-foreground mb-4">The session you're looking for doesn't exist.</p>
+          <h2 className="text-xl font-semibold mb-2">{tPages("sessionDetail.emptyState.title")}</h2>
+          <p className="text-muted-foreground mb-4">{tPages("sessionDetail.emptyState.description")}</p>
           <Button onClick={() => navigate('/sessions')}>
-            Return to Sessions
+            {tPages("sessionDetail.emptyState.cta")}
           </Button>
         </div>
       </div>
@@ -290,7 +293,7 @@ export default function SessionDetail() {
         phone: session.leads.phone,
         notes: session.leads.notes,
       }}
-      title="Client Details"
+      title={tPages("sessionDetail.cards.clientDetails")}
       showQuickActions={true}
       showClickableNames={true}
     />
@@ -299,31 +302,31 @@ export default function SessionDetail() {
   const sessionDetailsCard = (
     <Card>
       <CardContent className="p-6">
-        <h3 className="text-lg font-semibold mb-4">Session Details</h3>
+        <h3 className="text-lg font-semibold mb-4">{tPages("sessionDetail.cards.sessionDetails")}</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium text-muted-foreground">Date & Time</label>
+              <label className="text-sm font-medium text-muted-foreground">{tPages("sessionDetail.labels.dateTime")}</label>
               <p className="text-sm">
-                {formatLongDate(session.session_date)} at {formatTime(session.session_time)}
+                {formatLongDate(session.session_date)} {tPages("sessionDetail.labels.at")} {formatTime(session.session_time)}
               </p>
             </div>
             
             <div>
-              <label className="text-sm font-medium text-muted-foreground">Client</label>
+              <label className="text-sm font-medium text-muted-foreground">{tPages("sessionDetail.labels.client")}</label>
               <p className="text-sm">
                 <button
                   onClick={handleLeadClick}
                   className="text-primary hover:underline"
                 >
-                  {session.leads?.name || 'Unknown Client'}
+                  {session.leads?.name || tPages("sessionDetail.unknownClient")}
                 </button>
               </p>
             </div>
 
             {session.projects && (
               <div>
-                <label className="text-sm font-medium text-muted-foreground">Project</label>
+                <label className="text-sm font-medium text-muted-foreground">{tPages("sessionDetail.labels.project")}</label>
                 <p className="text-sm">
                   <button
                     onClick={handleProjectClick}
@@ -337,7 +340,7 @@ export default function SessionDetail() {
 
             {session.projects?.project_types && (
               <div>
-                <label className="text-sm font-medium text-muted-foreground">Project Type</label>
+                <label className="text-sm font-medium text-muted-foreground">{tPages("sessionDetail.labels.projectType")}</label>
                 <p className="text-sm">{session.projects.project_types.name}</p>
               </div>
             )}
@@ -345,7 +348,7 @@ export default function SessionDetail() {
 
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium text-muted-foreground">Status</label>
+              <label className="text-sm font-medium text-muted-foreground">{tPages("sessionDetail.labels.status")}</label>
               <div className="mt-1">
                 <SessionStatusBadge
                   sessionId={session.id}
@@ -358,7 +361,7 @@ export default function SessionDetail() {
 
             {session.notes && (
               <div>
-                <label className="text-sm font-medium text-muted-foreground">Notes</label>
+                <label className="text-sm font-medium text-muted-foreground">{tPages("sessionDetail.labels.notes")}</label>
                 <p className="text-sm">{session.notes}</p>
               </div>
             )}
@@ -371,7 +374,7 @@ export default function SessionDetail() {
   const sections = [
     {
       id: 'session-gallery',
-      title: 'Session Gallery',
+      title: tPages("sessionDetail.gallery.title"),
       content: <SessionGallery sessionId={session.id} />
     }
   ];
@@ -379,17 +382,17 @@ export default function SessionDetail() {
   const dangerZone = (
     <div className="border border-destructive/20 bg-destructive/5 rounded-lg p-6">
       <div className="space-y-4">
-        <h3 className="font-medium text-destructive">Danger Zone</h3>
+        <h3 className="font-medium text-destructive">{tPages("sessionDetail.dangerZone.title")}</h3>
         <Button 
           variant="outline" 
           onClick={() => setIsDeleteDialogOpen(true)}
           className="w-full border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
           size="lg"
         >
-          Delete Session
+          {tPages("sessionDetail.dangerZone.button")}
         </Button>
         <p className="text-sm text-muted-foreground text-center">
-          This will permanently delete the session and all related data.
+          {tPages("sessionDetail.dangerZone.description")}
         </p>
       </div>
     </div>
@@ -407,8 +410,8 @@ export default function SessionDetail() {
           <div className="flex items-center gap-3 text-orange-800">
             <AlertTriangle className="h-5 w-5 text-orange-600" />
             <div>
-              <p className="font-medium">This session is overdue</p>
-              <p className="text-sm text-orange-700">Please update the session status or reschedule if needed.</p>
+              <p className="font-medium">{tPages("sessionDetail.overdue.title")}</p>
+              <p className="text-sm text-orange-700">{tPages("sessionDetail.overdue.description")}</p>
             </div>
           </div>
         </div>
@@ -421,9 +424,9 @@ export default function SessionDetail() {
             <div className="flex-shrink-0">
               <div className="flex items-center gap-2 mb-2">
                 <Calendar className="h-4 w-4 text-muted-foreground" />
-                <label className="font-medium text-muted-foreground">Date & Time</label>
+                <label className="font-medium text-muted-foreground">{tPages("sessionDetail.labels.dateTime")}</label>
               </div>
-              <p>{formatLongDate(session.session_date)} at {formatTime(session.session_time)}</p>
+              <p>{formatLongDate(session.session_date)} {tPages("sessionDetail.labels.at")} {formatTime(session.session_time)}</p>
             </div>
 
             {session.projects && (
@@ -432,7 +435,7 @@ export default function SessionDetail() {
                 <div className="flex-shrink-0">
                   <div className="flex items-center gap-2 mb-2">
                     <FolderOpen className="h-4 w-4 text-muted-foreground" />
-                    <label className="font-medium text-muted-foreground">Project</label>
+                    <label className="font-medium text-muted-foreground">{tPages("sessionDetail.labels.project")}</label>
                   </div>
                   <button
                     onClick={handleProjectClick}
@@ -453,7 +456,7 @@ export default function SessionDetail() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-2">
                           <FileText className="h-4 w-4 text-muted-foreground" />
-                          <label className="font-medium text-muted-foreground">Notes</label>
+                          <label className="font-medium text-muted-foreground">{tPages("sessionDetail.labels.notes")}</label>
                         </div>
                         <div className="relative group">
                           <p className="line-clamp-2 cursor-help">{session.notes}</p>
@@ -475,7 +478,7 @@ export default function SessionDetail() {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                           </svg>
-                          <label className="font-medium text-muted-foreground">Location</label>
+                          <label className="font-medium text-muted-foreground">{tPages("sessionDetail.labels.location")}</label>
                         </div>
                         <div className="relative group">
                           <p className="line-clamp-2 cursor-help">{session.location}</p>
@@ -529,18 +532,18 @@ export default function SessionDetail() {
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Session</AlertDialogTitle>
+            <AlertDialogTitle>{tPages("sessionDetail.modal.deleteTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
               {tMessages('confirm.deleteSession')} {tMessages('confirm.cannotUndo')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{tCommon('buttons.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Delete
+              {tPages("sessionDetail.dangerZone.button")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

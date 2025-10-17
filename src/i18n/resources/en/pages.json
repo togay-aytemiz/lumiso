@@ -64,6 +64,134 @@
       "failedToLoadProjects": "Failed to load projects"
     }
   },
+  "leadDetail": {
+    "defaultTitle": "Lead Details",
+    "tooltips": {
+      "projectRequired": "Create a project first to continue",
+      "viewProject": "Click on your project to continue",
+      "scheduleSession": "Schedule a session to continue",
+      "sessionAlreadyPlanned": "A planned session already exists."
+    },
+    "messages": {
+      "projectsShortcut": "You can access all your projects anytime from the Projects page in the sidebar!",
+      "sessionAdded": "Your session has been added to your calendar and you can find it in the Calendar page!"
+    },
+    "tutorial": {
+      "intro": {
+        "title": "Welcome to Lead Details! 📋",
+        "description": "This is where you manage all information about a specific lead. Let's explore what you can see and do here:",
+        "sections": [
+          {
+            "title": "Client Information",
+            "description": "View and edit contact details, notes, and lead status on the left side."
+          },
+          {
+            "title": "Projects Section",
+            "description": "Convert leads into projects with timelines, deliverables, and workflow tracking."
+          },
+          {
+            "title": "Activity Timeline",
+            "description": "Track interactions, changes, and progress across every touchpoint."
+          }
+        ]
+      },
+      "createProject": {
+        "title": "Create Your First Project",
+        "description": "Great! Turn this lead into a project by clicking the “Add Project” button below.",
+        "disabledTooltip": "Create a project first to continue"
+      },
+      "exploreProjects": {
+        "title": "Perfect! Now Explore Your Project Features",
+        "description": "Open the project card below to explore powerful project management tools:",
+        "points": [
+          "Track payments and billing",
+          "Manage photography sessions",
+          "Organize project to-dos and tasks"
+        ],
+        "disabledTooltip": "Click on your project to continue"
+      },
+      "complete": {
+        "title": "🎉 Congratulations! Tutorial Complete!",
+        "description": "Amazing work! You've mastered the fundamentals—from creating leads and converting them to projects, to managing client details and tracking progress.",
+        "projectsShortcut": "You can access all your projects anytime from the Projects page in the sidebar!"
+      }
+    },
+    "scheduling": {
+      "scheduleSession": {
+        "title": "Schedule Your Photo Session",
+        "description": "Let’s schedule a photo session for this client. Click “Schedule Session” below to open the form.",
+        "sections": [
+          {
+            "title": "Session Scheduling",
+            "description": "Choose a date and time that works for both you and your client."
+          },
+          {
+            "title": "Calendar Integration",
+            "description": "Sessions automatically sync with your calendar for effortless planning."
+          }
+        ],
+        "disabledTooltip": "Schedule a session to continue"
+      },
+      "sessionScheduled": {
+        "title": "🎉 Session Scheduled Successfully!",
+        "description": "Excellent! Your session is on the calendar and visible in your session timeline here.",
+        "banner": "Your session has been added to your calendar and you can find it in the Calendar page!",
+        "tips": [
+          "Sessions appear in your lead's activity timeline",
+          "Update session status as you progress",
+          "Associate sessions with projects for better organization"
+        ]
+      }
+    },
+    "toast": {
+      "saveProgressFailed": "Failed to save progress. Please try again.",
+      "leadNotFoundTitle": "Lead not found",
+      "leadNotFoundDescription": "The requested lead could not be found.",
+      "fetchLeadTitle": "Error fetching lead",
+      "fetchLeadDescription": "An unexpected error occurred while fetching the lead."
+    }
+  },
+  "sessionDetail": {
+    "toast": {
+      "loadErrorTitle": "Error",
+      "loadErrorDescription": "Failed to load session details"
+    },
+    "emptyState": {
+      "title": "Session not found",
+      "description": "The session you're looking for doesn't exist.",
+      "cta": "Return to Sessions"
+    },
+    "cards": {
+      "clientDetails": "Client Details",
+      "sessionDetails": "Session Details"
+    },
+    "labels": {
+      "dateTime": "Date & Time",
+      "client": "Client",
+      "project": "Project",
+      "projectType": "Project Type",
+      "status": "Status",
+      "notes": "Notes",
+      "location": "Location",
+      "at": "at"
+    },
+    "unknownClient": "Unknown Client",
+    "gallery": {
+      "title": "Session Gallery"
+    },
+    "dangerZone": {
+      "title": "Danger Zone",
+      "button": "Delete Session",
+      "description": "This will permanently delete the session and all related data."
+    },
+    "overdue": {
+      "title": "This session is overdue",
+      "description": "Please update the session status or reschedule if needed."
+    },
+    "modal": {
+      "deleteTitle": "Delete Session"
+    }
+  },
   "projects": {
     "title": "Projects",
     "all_projects": "All Projects",

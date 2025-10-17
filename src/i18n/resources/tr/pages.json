@@ -905,6 +905,10 @@
     "selectPeriod": "Dönem seçin",
     "filterByLabel": "Etikete göre filtrele:",
     "filterByLabelPlaceholder": "Etikete göre filtrele...",
+    "filterByClient": "Kişiye göre filtrele:",
+    "filterByClientPlaceholder": "Kişi adına göre ara...",
+    "filterByProject": "Projeye göre filtrele:",
+    "filterByProjectPlaceholder": "Proje adına göre ara...",
     "dateFilters": {
       "last7days": "Son 7 gün",
       "last4weeks": "Son 4 hafta",
@@ -918,10 +922,33 @@
       "customRange": "Özel aralık"
     },
     "metrics": {
+      "overviewTitle": "Ödeme Özeti",
+      "totalInvoiced": "Toplam Faturalanan",
       "totalPaid": "Toplam Ödenen",
-      "extraServices": "Ekstra Hizmetler",
-      "remainingBalance": "Kalan Bakiye"
+      "remainingBalance": "Bekleyen Bakiye",
+      "collectionRate": "Tahsilat Oranı"
     },
+    "chart": {
+      "title": "Ödeme Trendleri",
+      "legend": {
+        "paid": "Ödendi",
+        "due": "Bekleyen"
+      },
+      "empty": "Bu dönem için ödeme kaydı olduğunda trend grafiği görünecek.",
+      "groupingLabel": "Görünüm",
+      "grouping": {
+        "day": "Gün",
+        "week": "Hafta",
+        "month": "Ay"
+      }
+    },
+    "range": {
+      "label": "Tarih Aralığı",
+      "summary": "{{range}} dönemi için ödemeler gösteriliyor",
+      "noSelection": "Lütfen bir tarih aralığı seçin",
+      "noData": "Seçilen dönem için henüz ödeme kaydı yok"
+    },
+    "tableTitle": "Ödeme Kayıtları",
     "table": {
       "date": "Tarih",
       "amount": "Tutar",

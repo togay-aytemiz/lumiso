@@ -906,6 +906,10 @@
     "selectPeriod": "Select period",
     "filterByLabel": "Filter by label:",
     "filterByLabelPlaceholder": "Filter by label...",
+    "filterByClient": "Filter by client:",
+    "filterByClientPlaceholder": "Search by client name...",
+    "filterByProject": "Filter by project:",
+    "filterByProjectPlaceholder": "Search by project name...",
     "dateFilters": {
       "last7days": "Last 7 days",
       "last4weeks": "Last 4 weeks",
@@ -919,10 +923,33 @@
       "customRange": "Custom range"
     },
     "metrics": {
+      "overviewTitle": "Payment Overview",
+      "totalInvoiced": "Total Invoiced",
       "totalPaid": "Total Paid",
-      "extraServices": "Extra Services",
-      "remainingBalance": "Remaining Balance"
+      "remainingBalance": "Outstanding Balance",
+      "collectionRate": "Collection Rate"
     },
+    "chart": {
+      "title": "Payment Trend",
+      "legend": {
+        "paid": "Paid",
+        "due": "Outstanding"
+      },
+      "empty": "Trend data will appear once payments are recorded for this period.",
+      "groupingLabel": "Group by",
+      "grouping": {
+        "day": "Day",
+        "week": "Week",
+        "month": "Month"
+      }
+    },
+    "range": {
+      "label": "Date Range",
+      "summary": "Showing payments for {{range}}",
+      "noSelection": "Select a date range to begin",
+      "noData": "No payments recorded for the selected period yet"
+    },
+    "tableTitle": "Payment Records",
     "table": {
       "date": "Date",
       "amount": "Amount",

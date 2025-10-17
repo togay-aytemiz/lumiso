@@ -13,6 +13,8 @@ import { useToast } from "@/hooks/use-toast";
 import { AddPaymentDialog } from "./AddPaymentDialog";
 import { EditPaymentDialog } from "./EditPaymentDialog";
 import { useFormsTranslation } from '@/hooks/useTypedTranslation';
+import { PAYMENT_COLORS } from "@/lib/paymentColors";
+import { cn } from "@/lib/utils";
 interface Payment {
   id: string;
   project_id: string;
@@ -260,7 +262,11 @@ export function ProjectPaymentsSection({
             </div> : payments.length === 0 && (project?.base_price || 0) === 0 ? <div className="text-center py-8 text-muted-foreground">
               {t('payments.no_payments')}
             </div> : <div className="space-y-3">
-              {payments.map(payment => <div key={payment.id} className={`border rounded-lg transition-colors ${payment.type === 'base_price' ? 'bg-muted/30 border-muted-foreground/20' : 'hover:bg-muted/50'}`}>
+              {payments.map(payment => {
+                const isPaid = payment.status === 'paid';
+
+                return (
+                  <div key={payment.id} className={`border rounded-lg transition-colors ${payment.type === 'base_price' ? 'bg-muted/30 border-muted-foreground/20' : 'hover:bg-muted/50'}`}>
                   {/* Desktop Layout */}
                   <div className="hidden md:flex items-center justify-between p-3">
                     <div className="flex items-center gap-4 flex-1">
@@ -278,8 +284,14 @@ export function ProjectPaymentsSection({
                         </div>
                       </div>
                       <div>
-                        <Badge variant={payment.status === 'paid' ? 'default' : 'secondary'} className={payment.status === 'paid' ? 'bg-green-100 text-green-800 hover:bg-green-100' : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100'}>
-                          {payment.status === 'paid' ? t('payments.paid') : t('payments.due')}
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            "px-2 py-0.5 text-xs font-semibold",
+                            isPaid ? PAYMENT_COLORS.paid.badgeClass : PAYMENT_COLORS.due.badgeClass
+                          )}
+                        >
+                          {isPaid ? t('payments.paid') : t('payments.due')}
                         </Badge>
                       </div>
                     </div>
@@ -315,8 +327,14 @@ export function ProjectPaymentsSection({
                     
                     {/* Row 3: Status + Actions */}
                     <div className="flex items-center justify-between">
-                      <Badge variant={payment.status === 'paid' ? 'default' : 'secondary'} className={payment.status === 'paid' ? 'bg-green-100 text-green-800 hover:bg-green-100' : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100'}>
-                        {payment.status === 'paid' ? t('payments.paid') : t('payments.due')}
+                      <Badge
+                        variant="outline"
+                        className={cn(
+                          "px-2 py-0.5 text-xs font-semibold",
+                          isPaid ? PAYMENT_COLORS.paid.badgeClass : PAYMENT_COLORS.due.badgeClass
+                        )}
+                      >
+                        {isPaid ? t('payments.paid') : t('payments.due')}
                       </Badge>
                       <div className="flex items-center gap-1">
                         <Button variant="ghost" size="sm" onClick={() => handleEditPayment(payment)} className="h-8 w-8 p-0">
@@ -331,7 +349,9 @@ export function ProjectPaymentsSection({
                       </div>
                     </div>
                   </div>
-                </div>)}
+                  </div>
+                );
+              })}
             </div>}
         </CardContent>
       </Card>

@@ -16,17 +16,43 @@ import {
 import { DateRangePicker } from "@/components/DateRangePicker";
 import { ViewProjectDialog } from "@/components/ViewProjectDialog";
 import { toast } from "@/hooks/use-toast";
-import { ArrowUpDown, ArrowUp, ArrowDown, AlertCircle } from "lucide-react";
+import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { format, subDays, subMonths, startOfMonth, startOfQuarter, startOfYear } from "date-fns";
+import {
+  format,
+  subDays,
+  subMonths,
+  startOfMonth,
+  startOfQuarter,
+  startOfYear,
+  endOfMonth,
+  eachDayOfInterval,
+  eachWeekOfInterval,
+  eachMonthOfInterval,
+  startOfDay,
+  endOfDay,
+  isSameDay,
+  startOfWeek,
+  endOfWeek,
+} from "date-fns";
 import type { DateRange } from "react-day-picker";
-import { formatDate } from "@/lib/utils";
+import { cn, formatDate, getDateFnsLocale } from "@/lib/utils";
 import GlobalSearch from "@/components/GlobalSearch";
 import { PageHeader, PageHeaderSearch } from "@/components/ui/page-header";
-import { PageLoadingSkeleton, TableLoadingSkeleton } from "@/components/ui/loading-presets";
+import { TableLoadingSkeleton } from "@/components/ui/loading-presets";
 import { AddPaymentDialog } from "@/components/AddPaymentDialog";
 import { EditPaymentDialog } from "@/components/EditPaymentDialog";
 import { useTranslation } from "react-i18next";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from "@/components/ui/chart";
+import { Line, LineChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import { Progress } from "@/components/ui/progress";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { PAYMENT_COLORS } from "@/lib/paymentColors";
 
 interface Payment {
   id: string;
@@ -57,9 +83,18 @@ interface Payment {
 
 interface PaymentMetrics {
   totalPaid: number;
-  extraServices: number;
+  totalInvoiced: number;
   remainingBalance: number;
+  collectionRate: number;
 }
+
+interface PaymentTrendPoint {
+  period: string;
+  paid: number;
+  due: number;
+}
+
+type TrendGrouping = "day" | "week" | "month";
 
 type SortField = 'date_paid' | 'amount' | 'project_name' | 'lead_name' | 'description' | 'status' | 'type';
 type SortDirection = 'asc' | 'desc';
@@ -72,6 +107,8 @@ const Payments = () => {
   const [selectedFilter, setSelectedFilter] = useState<DateFilterType>('allTime');
   const [customDateRange, setCustomDateRange] = useState<DateRange | undefined>();
   const [labelFilter, setLabelFilter] = useState<string>("");
+  const [clientFilter, setClientFilter] = useState<string>("");
+  const [projectFilter, setProjectFilter] = useState<string>("");
   const [sortField, setSortField] = useState<SortField>("date_paid");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [viewingProject, setViewingProject] = useState<any>(null);
@@ -79,11 +116,40 @@ const Payments = () => {
   const [isAddPaymentDialogOpen, setIsAddPaymentDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingPayment, setEditingPayment] = useState<Payment | null>(null);
+  const [trendGrouping, setTrendGrouping] = useState<TrendGrouping>("month");
   const navigate = useNavigate();
+  const dateLocale = useMemo(() => getDateFnsLocale(), []);
+  const compactCurrencyFormatter = useMemo(
+    () =>
+      new Intl.NumberFormat("tr-TR", {
+        notation: "compact",
+        maximumFractionDigits: 1,
+      }),
+    []
+  );
 
   useEffect(() => {
     fetchPayments();
   }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const stored = window.localStorage.getItem("paymentsTrendGrouping") as TrendGrouping | null;
+    if (stored === "day" || stored === "week" || stored === "month") {
+      setTrendGrouping(stored);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    window.localStorage.setItem("paymentsTrendGrouping", trendGrouping);
+  }, [trendGrouping]);
 
   const fetchPayments = async () => {
     try {
@@ -145,29 +211,36 @@ const Payments = () => {
 
   const getDateRangeForFilter = (filter: DateFilterType): { start: Date; end: Date } | null => {
     const now = new Date();
+    const endToday = endOfDay(now);
     
     switch (filter) {
       case 'last7days':
-        return { start: subDays(now, 7), end: now };
+        return { start: startOfDay(subDays(endToday, 6)), end: endToday };
       case 'last4weeks':
-        return { start: subDays(now, 28), end: now };
+        return { start: startOfDay(subDays(endToday, 27)), end: endToday };
       case 'last3months':
-        return { start: subMonths(now, 3), end: now };
+        return { start: startOfDay(subMonths(endToday, 3)), end: endToday };
       case 'last12months':
-        return { start: subMonths(now, 12), end: now };
+        return { start: startOfDay(subMonths(endToday, 12)), end: endToday };
       case 'monthToDate':
-        return { start: startOfMonth(now), end: now };
+        return { start: startOfDay(startOfMonth(now)), end: endToday };
       case 'quarterToDate':
-        return { start: startOfQuarter(now), end: now };
+        return { start: startOfDay(startOfQuarter(now)), end: endToday };
       case 'yearToDate':
-        return { start: startOfYear(now), end: now };
+        return { start: startOfDay(startOfYear(now)), end: endToday };
       case 'lastMonth':
         const lastMonth = subMonths(now, 1);
-        return { start: startOfMonth(lastMonth), end: startOfMonth(now) };
+        return {
+          start: startOfDay(startOfMonth(lastMonth)),
+          end: endOfDay(endOfMonth(lastMonth)),
+        };
       case 'allTime':
       case 'custom':
-        if (customDateRange?.from && customDateRange?.to) {
-          return { start: customDateRange.from, end: customDateRange.to };
+        if (customDateRange?.from) {
+          return {
+            start: startOfDay(customDateRange.from),
+            end: endOfDay(customDateRange.to ?? customDateRange.from),
+          };
         }
         return null;
       default:
@@ -190,10 +263,28 @@ const Payments = () => {
     }
 
     // Apply label filter
-    if (labelFilter.trim()) {
+    const labelTerm = labelFilter.trim().toLowerCase();
+    const clientTerm = clientFilter.trim().toLowerCase();
+    const projectTerm = projectFilter.trim().toLowerCase();
+
+    if (labelTerm) {
       filtered = filtered.filter(payment => {
         const label = payment.description || t("payments.defaultLabel");
-        return label.toLowerCase().includes(labelFilter.toLowerCase());
+        return label.toLowerCase().includes(labelTerm);
+      });
+    }
+
+    if (clientTerm) {
+      filtered = filtered.filter(payment => {
+        const leadName = payment.projects?.leads?.name || "";
+        return leadName.toLowerCase().includes(clientTerm);
+      });
+    }
+
+    if (projectTerm) {
+      filtered = filtered.filter(payment => {
+        const projectName = payment.projects?.name || "";
+        return projectName.toLowerCase().includes(projectTerm);
       });
     }
 
@@ -248,7 +339,47 @@ const Payments = () => {
     });
 
     return filtered;
-  }, [payments, selectedFilter, customDateRange, labelFilter, sortField, sortDirection]);
+  }, [
+    payments,
+    selectedFilter,
+    customDateRange,
+    labelFilter,
+    clientFilter,
+    projectFilter,
+    sortField,
+    sortDirection,
+    t,
+  ]);
+
+  const selectedDateRange = useMemo(() => {
+    const range = getDateRangeForFilter(selectedFilter);
+    if (range) {
+      return range;
+    }
+
+    const paymentsForRange =
+      selectedFilter === "allTime" ? payments : filteredAndSortedPayments;
+
+    const sortedDates = paymentsForRange
+      .map((payment) => new Date(payment.date_paid || payment.created_at))
+      .filter((date) => !Number.isNaN(date.getTime()))
+      .sort((a, b) => a.getTime() - b.getTime());
+
+    if (!sortedDates.length) {
+      return null;
+    }
+
+    const earliest = startOfDay(sortedDates[0]);
+    const latest =
+      selectedFilter === "allTime"
+        ? endOfDay(new Date())
+        : endOfDay(sortedDates[sortedDates.length - 1]);
+
+    return {
+      start: earliest,
+      end: latest,
+    };
+  }, [selectedFilter, filteredAndSortedPayments, customDateRange, payments]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -264,25 +395,204 @@ const Payments = () => {
     return sortDirection === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />;
   };
 
+  const isCustomRangeMissing = selectedFilter === 'custom' && !customDateRange?.from;
+
+  const rangeLabel = useMemo(() => {
+    if (!selectedDateRange) {
+      return "";
+    }
+
+    if (isSameDay(selectedDateRange.start, selectedDateRange.end)) {
+      return format(selectedDateRange.start, "PP", { locale: dateLocale });
+    }
+
+    return `${format(selectedDateRange.start, "PP", { locale: dateLocale })} – ${format(selectedDateRange.end, "PP", { locale: dateLocale })}`;
+  }, [selectedDateRange, dateLocale]);
+
+  const rangeNotice = useMemo(() => {
+    if (isCustomRangeMissing) {
+      return t("payments.range.noSelection");
+    }
+
+    if (!rangeLabel) {
+      return t("payments.range.noData");
+    }
+
+    return "";
+  }, [isCustomRangeMissing, rangeLabel, t]);
+
+  const chartConfig = useMemo<ChartConfig>(
+    () => ({
+      paid: {
+        label: t("payments.chart.legend.paid"),
+        color: PAYMENT_COLORS.paid.hex,
+      },
+      due: {
+        label: t("payments.chart.legend.due"),
+        color: PAYMENT_COLORS.due.hex,
+      },
+    }),
+    [t]
+  );
+
+  const chartLegendLabels = useMemo(
+    () => ({
+      paid: t("payments.chart.legend.paid"),
+      due: t("payments.chart.legend.due"),
+    }),
+    [t]
+  );
+
+  const paymentsTrend = useMemo<PaymentTrendPoint[]>(() => {
+    if (!selectedDateRange) {
+      return [];
+    }
+
+    const { start, end } = selectedDateRange;
+
+    if (start > end) {
+      return [];
+    }
+
+    const interval =
+      trendGrouping === "day"
+        ? eachDayOfInterval({ start, end })
+        : trendGrouping === "week"
+        ? eachWeekOfInterval({ start, end }, { locale: dateLocale })
+        : eachMonthOfInterval({ start, end });
+
+    if (!interval.length) {
+      return [];
+    }
+
+    type Bucket = {
+      paid: number;
+      due: number;
+      labelStart: Date;
+      labelEnd: Date;
+    };
+
+    const getBucketDescriptor = (date: Date) => {
+      switch (trendGrouping) {
+        case "day": {
+          const labelStart = startOfDay(date);
+          const labelEnd = endOfDay(date);
+          return {
+            key: format(labelStart, "yyyy-MM-dd"),
+            labelStart,
+            labelEnd,
+          };
+        }
+        case "week": {
+          const weekStart = startOfWeek(date, { locale: dateLocale });
+          const weekEnd = endOfWeek(weekStart, { locale: dateLocale });
+          return {
+            key: format(weekStart, "yyyy-MM-dd"),
+            labelStart: weekStart,
+            labelEnd: weekEnd,
+          };
+        }
+        default: {
+          const monthStart = startOfMonth(date);
+          const monthEnd = endOfMonth(monthStart);
+          return {
+            key: format(monthStart, "yyyy-MM"),
+            labelStart: monthStart,
+            labelEnd: monthEnd,
+          };
+        }
+      }
+    };
+
+    const buckets = new Map<string, Bucket>();
+
+    interval.forEach((date) => {
+      const { key, labelStart, labelEnd } = getBucketDescriptor(date);
+      if (!buckets.has(key)) {
+        buckets.set(key, { paid: 0, due: 0, labelStart, labelEnd });
+      }
+    });
+
+    filteredAndSortedPayments.forEach((payment) => {
+      const paymentDate = new Date(payment.date_paid || payment.created_at);
+      if (Number.isNaN(paymentDate.getTime())) {
+        return;
+      }
+
+      if (paymentDate < start || paymentDate > end) {
+        return;
+      }
+
+      const { key } = getBucketDescriptor(paymentDate);
+      const bucket = buckets.get(key);
+      if (!bucket) {
+        return;
+      }
+
+      const amount = Number(payment.amount) || 0;
+      const isPaid = (payment.status || "").toLowerCase() === "paid";
+
+      if (isPaid) {
+        bucket.paid += amount;
+      } else {
+        bucket.due += amount;
+      }
+    });
+
+    const clampToRange = (date: Date) => {
+      if (date < start) return start;
+      if (date > end) return end;
+      return date;
+    };
+
+    const formatLabel = (bucket: Bucket) => {
+      const labelStart = clampToRange(bucket.labelStart);
+      const labelEnd = clampToRange(bucket.labelEnd);
+
+      if (trendGrouping === "day") {
+        return format(labelStart, "dd MMM", { locale: dateLocale });
+      }
+
+      if (trendGrouping === "week") {
+        const startLabel = format(labelStart, "dd MMM", { locale: dateLocale });
+        const endLabel = format(labelEnd, "dd MMM", { locale: dateLocale });
+        return startLabel === endLabel ? startLabel : `${startLabel} – ${endLabel}`;
+      }
+
+      return format(labelStart, "LLL yy", { locale: dateLocale });
+    };
+
+    return Array.from(buckets.entries())
+      .sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
+      .map(([, bucket]) => ({
+        period: formatLabel(bucket),
+        paid: bucket.paid,
+        due: bucket.due,
+      }));
+  }, [filteredAndSortedPayments, selectedDateRange, trendGrouping, dateLocale]);
+
   const metrics = useMemo((): PaymentMetrics => {
+    const totalInvoiced = filteredAndSortedPayments.reduce(
+      (sum, p) => sum + Number(p.amount),
+      0
+    );
+
     const totalPaid = filteredAndSortedPayments
-      .filter(p => p.status === 'paid')
+      .filter((p) => (p.status || "").toLowerCase() === "paid")
       .reduce((sum, p) => sum + Number(p.amount), 0);
 
-    const extraServices = filteredAndSortedPayments
-      .filter(p => p.type === 'extra' && p.status === 'paid')
+    const remainingBalance = filteredAndSortedPayments
+      .filter((p) => (p.status || "").toLowerCase() !== "paid")
       .reduce((sum, p) => sum + Number(p.amount), 0);
 
-    // Calculate remaining balance based on base prices and unpaid amounts
-    const totalBaseAndExtras = filteredAndSortedPayments
-      .reduce((sum, p) => sum + Number(p.amount), 0);
-    
-    const remainingBalance = totalBaseAndExtras - totalPaid;
+    const collectionRate =
+      totalInvoiced > 0 ? totalPaid / totalInvoiced : 0;
 
     return {
       totalPaid,
-      extraServices,
-      remainingBalance
+      totalInvoiced,
+      remainingBalance,
+      collectionRate,
     };
   }, [filteredAndSortedPayments]);
 
@@ -293,6 +603,17 @@ const Payments = () => {
       minimumFractionDigits: 0,
     }).format(amount);
   };
+
+  const formatPercent = (value: number) => {
+    return new Intl.NumberFormat("tr-TR", {
+      style: "percent",
+      maximumFractionDigits: 0,
+    }).format(value);
+  };
+
+  const hasTrendData = paymentsTrend.some(
+    (point) => Math.abs(point.paid) > 0 || Math.abs(point.due) > 0
+  );
 
   return (
     <div className="min-h-screen overflow-x-hidden">
@@ -312,8 +633,20 @@ const Payments = () => {
           <>
 
       {/* Date Filter */}
-      <div className="mb-6 flex justify-end">
-        <div className="flex items-center gap-4">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        {rangeLabel ? (
+          <div className="inline-flex flex-col rounded-md border border-border/60 bg-muted/40 px-4 py-2">
+            <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              {t("payments.range.label")}
+            </span>
+            <span className="text-lg font-semibold text-foreground">
+              {rangeLabel}
+            </span>
+          </div>
+        ) : (
+          <span className="text-sm text-muted-foreground">{rangeNotice}</span>
+        )}
+        <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:gap-4">
           <Select
             value={selectedFilter}
             onValueChange={(value) => {
@@ -336,7 +669,7 @@ const Payments = () => {
               <SelectItem value="custom">{t("payments.dateFilters.customRange")}</SelectItem>
             </SelectContent>
           </Select>
-          
+
           {selectedFilter === 'custom' && (
             <DateRangePicker
               dateRange={customDateRange}
@@ -349,31 +682,135 @@ const Payments = () => {
       </div>
 
       {/* Metrics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <Card className="bg-muted/20">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t("payments.metrics.totalPaid")}</CardTitle>
+      <div className="grid gap-6 mb-8 lg:grid-cols-[minmax(0,2fr),minmax(0,1fr)]">
+        <Card className="border border-border/60 shadow-sm">
+          <CardHeader>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <CardTitle className="text-base font-medium">
+                {t("payments.chart.title")}
+              </CardTitle>
+              <div className="flex items-center gap-3">
+                <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  {t("payments.chart.groupingLabel")}
+                </span>
+                <ToggleGroup
+                  type="single"
+                  value={trendGrouping}
+                  onValueChange={(value) => value && setTrendGrouping(value as TrendGrouping)}
+                  className="rounded-md border"
+                  size="sm"
+                >
+                  <ToggleGroupItem value="day" className="text-xs px-3">
+                    {t("payments.chart.grouping.day")}
+                  </ToggleGroupItem>
+                  <ToggleGroupItem value="week" className="text-xs px-3">
+                    {t("payments.chart.grouping.week")}
+                  </ToggleGroupItem>
+                  <ToggleGroupItem value="month" className="text-xs px-3">
+                    {t("payments.chart.grouping.month")}
+                  </ToggleGroupItem>
+                </ToggleGroup>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(metrics.totalPaid)}</div>
+            {hasTrendData ? (
+              <ChartContainer config={chartConfig} className="aspect-auto h-[300px] w-full">
+                <LineChart data={paymentsTrend}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis
+                    dataKey="period"
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={8}
+                  />
+                  <YAxis
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={8}
+                    tickFormatter={(value) => compactCurrencyFormatter.format(Number(value))}
+                  />
+                  <ChartTooltip
+                    content={
+                      <ChartTooltipContent
+                        formatter={(value, name) => (
+                          <div className="flex w-full items-center justify-between gap-6">
+                            <span className="text-muted-foreground">
+                              {typeof name === "string"
+                                ? chartLegendLabels[
+                                    name.toLowerCase() as keyof typeof chartLegendLabels
+                                  ] ?? name
+                                : name}
+                            </span>
+                            <span className="font-semibold text-foreground">
+                              {formatCurrency(Number(value))}
+                            </span>
+                          </div>
+                        )}
+                      />
+                    }
+                  />
+                  <Line
+                    key={`paid-${trendGrouping}-${rangeLabel}`}
+                    type="monotone"
+                    dataKey="paid"
+                    stroke={chartConfig.paid.color}
+                    strokeWidth={2}
+                    dot={false}
+                    activeDot={{ r: 5 }}
+                    isAnimationActive={paymentsTrend.length > 1}
+                    animationDuration={600}
+                  />
+                  <Line
+                    key={`due-${trendGrouping}-${rangeLabel}`}
+                    type="monotone"
+                    dataKey="due"
+                    stroke={chartConfig.due.color}
+                    strokeWidth={2}
+                    dot={false}
+                    strokeDasharray="4 4"
+                    activeDot={{ r: 5 }}
+                    isAnimationActive={paymentsTrend.length > 1}
+                    animationDuration={600}
+                  />
+                </LineChart>
+              </ChartContainer>
+            ) : (
+              <div className="flex h-[220px] items-center justify-center rounded-md border border-dashed border-muted-foreground/20 bg-muted/10 text-sm text-muted-foreground">
+                {t("payments.chart.empty")}
+              </div>
+            )}
           </CardContent>
         </Card>
 
-        <Card className="bg-muted/20">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t("payments.metrics.extraServices")}</CardTitle>
+        <Card className="border border-border/60 shadow-sm">
+          <CardHeader>
+            <CardTitle className="text-base font-medium">{t("payments.metrics.overviewTitle")}</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(metrics.extraServices)}</div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-muted/20">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t("payments.metrics.remainingBalance")}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(metrics.remainingBalance)}</div>
+          <CardContent className="space-y-6">
+            <div className="space-y-1">
+              <span className="text-sm text-muted-foreground">{t("payments.metrics.totalInvoiced")}</span>
+              <div className="text-2xl font-semibold">{formatCurrency(metrics.totalInvoiced)}</div>
+            </div>
+            <div className="space-y-1">
+              <span className="text-sm text-muted-foreground">{t("payments.metrics.totalPaid")}</span>
+              <div className={cn("text-xl font-semibold", PAYMENT_COLORS.paid.textClass)}>
+                {formatCurrency(metrics.totalPaid)}
+              </div>
+            </div>
+            <div className="space-y-1">
+              <span className="text-sm text-muted-foreground">{t("payments.metrics.remainingBalance")}</span>
+              <div className={cn("text-xl font-semibold", PAYMENT_COLORS.due.textClass)}>
+                {formatCurrency(metrics.remainingBalance)}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm text-muted-foreground">
+                <span>{t("payments.metrics.collectionRate")}</span>
+                <span className="font-medium text-foreground">{formatPercent(metrics.collectionRate)}</span>
+              </div>
+              <Progress className="h-2" value={metrics.collectionRate * 100} />
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -381,16 +818,41 @@ const Payments = () => {
       {/* Payments Table */}
       <Card className="min-w-0">
         <CardHeader>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center justify-between gap-4">
+              <CardTitle className="text-base font-medium">
+                {t("payments.tableTitle")}
+              </CardTitle>
+            </div>
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                <span className="text-sm text-muted-foreground whitespace-nowrap">{t("payments.filterByLabel")}</span>
-                <Input
-                  placeholder={t("payments.filterByLabelPlaceholder")}
-                  value={labelFilter}
-                  onChange={(e) => setLabelFilter(e.target.value)}
-                  className="w-full sm:w-48 min-w-0"
-                />
+              <div className="grid w-full gap-4 sm:grid-cols-1 lg:grid-cols-3">
+                <div className="flex flex-col gap-2">
+                  <span className="text-sm text-muted-foreground whitespace-nowrap">{t("payments.filterByClient")}</span>
+                  <Input
+                    placeholder={t("payments.filterByClientPlaceholder")}
+                    value={clientFilter}
+                    onChange={(e) => setClientFilter(e.target.value)}
+                    className="w-full min-w-0"
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <span className="text-sm text-muted-foreground whitespace-nowrap">{t("payments.filterByProject")}</span>
+                  <Input
+                    placeholder={t("payments.filterByProjectPlaceholder")}
+                    value={projectFilter}
+                    onChange={(e) => setProjectFilter(e.target.value)}
+                    className="w-full min-w-0"
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <span className="text-sm text-muted-foreground whitespace-nowrap">{t("payments.filterByLabel")}</span>
+                  <Input
+                    placeholder={t("payments.filterByLabelPlaceholder")}
+                    value={labelFilter}
+                    onChange={(e) => setLabelFilter(e.target.value)}
+                    className="w-full min-w-0"
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -412,11 +874,11 @@ const Payments = () => {
                 </TableHead>
                 <TableHead 
                   className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => handleSort('amount')}
+                  onClick={() => handleSort('lead_name')}
                 >
                   <div className="flex items-center gap-2">
-                    {t("payments.table.amount")}
-                    {getSortIcon('amount')}
+                    {t("payments.table.lead")}
+                    {getSortIcon('lead_name')}
                   </div>
                 </TableHead>
                 <TableHead 
@@ -430,11 +892,11 @@ const Payments = () => {
                 </TableHead>
                 <TableHead 
                   className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => handleSort('lead_name')}
+                  onClick={() => handleSort('amount')}
                 >
                   <div className="flex items-center gap-2">
-                    {t("payments.table.lead")}
-                    {getSortIcon('lead_name')}
+                    {t("payments.table.amount")}
+                    {getSortIcon('amount')}
                   </div>
                 </TableHead>
                 <TableHead 
@@ -468,33 +930,16 @@ const Payments = () => {
             </TableHeader>
             <TableBody>
               {filteredAndSortedPayments.length > 0 ? (
-                filteredAndSortedPayments.map((payment, index) => (
-                  <TableRow 
-                    key={payment.id}
-                    className={`cursor-pointer hover:bg-muted/50 ${index % 2 === 0 ? "" : "bg-muted/30"}`}
-                  >
+                filteredAndSortedPayments.map((payment, index) => {
+                  const isPaid = (payment.status || "").toLowerCase() === "paid";
+
+                  return (
+                    <TableRow 
+                      key={payment.id}
+                      className={`cursor-pointer hover:bg-muted/50 ${index % 2 === 0 ? "" : "bg-muted/30"}`}
+                    >
                     <TableCell>
                       {formatDate(payment.date_paid || payment.created_at)}
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      {formatCurrency(Number(payment.amount))}
-                    </TableCell>
-                    <TableCell>
-                      {payment.projects ? (
-                        <Button
-                          variant="link"
-                          className="p-0 h-auto font-normal text-foreground hover:text-foreground hover:underline"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setViewingProject(payment.projects);
-                            setShowProjectDialog(true);
-                          }}
-                        >
-                          {payment.projects.name}
-                        </Button>
-                      ) : (
-                        <span className="text-muted-foreground">-</span>
-                      )}
                     </TableCell>
                     <TableCell>
                       {payment.projects?.leads ? (
@@ -513,14 +958,37 @@ const Payments = () => {
                       )}
                     </TableCell>
                     <TableCell>
+                      {payment.projects ? (
+                        <Button
+                          variant="link"
+                          className="p-0 h-auto font-normal text-foreground hover:text-foreground hover:underline"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setViewingProject(payment.projects);
+                            setShowProjectDialog(true);
+                          }}
+                        >
+                          {payment.projects.name}
+                        </Button>
+                      ) : (
+                        <span className="text-muted-foreground">-</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      {formatCurrency(Number(payment.amount))}
+                    </TableCell>
+                    <TableCell>
                       {payment.description || t("payments.defaultLabel")}
                     </TableCell>
                     <TableCell>
-                      <Badge 
-                        variant={payment.status === 'paid' ? 'default' : 'secondary'}
-                        className={payment.status === 'paid' ? 'bg-green-100 text-green-800 hover:bg-green-100' : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100'}
+                      <Badge
+                        variant="outline"
+                        className={cn(
+                          "px-2 py-0.5 text-xs font-semibold",
+                          isPaid ? PAYMENT_COLORS.paid.badgeClass : PAYMENT_COLORS.due.badgeClass
+                        )}
                       >
-                        {payment.status === 'paid' ? t("payments.status.paid") : t("payments.status.due")}
+                        {isPaid ? t("payments.status.paid") : t("payments.status.due")}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -529,8 +997,9 @@ const Payments = () => {
                          payment.type === 'extra' ? t("payments.type.extra") : t("payments.type.manual")}
                       </Badge>
                     </TableCell>
-                  </TableRow>
-                ))
+                    </TableRow>
+                  );
+                })
               ) : (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">

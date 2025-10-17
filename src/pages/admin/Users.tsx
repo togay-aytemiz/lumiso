@@ -1,15 +1,17 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useTranslation } from "react-i18next";
 
 export default function AdminUsers() {
+  const { t } = useTranslation("pages");
 
   return (
     <div className="container mx-auto py-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">User Management</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t("admin.users.title")}</h1>
           <p className="text-muted-foreground">
-            Manage user accounts, roles, and permissions
+            {t("admin.users.subtitle")}
           </p>
         </div>
       </div>
@@ -18,31 +20,31 @@ export default function AdminUsers() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Badge variant="secondary">Coming Soon</Badge>
-              User Management Features
+              <Badge variant="secondary">{t("admin.users.badge")}</Badge>
+              {t("admin.users.sectionTitle")}
             </CardTitle>
             <CardDescription>
-              This section will include comprehensive user management capabilities
+              {t("admin.users.sectionDescription")}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div className="p-4 border rounded-lg">
-                <h3 className="font-semibold">User List & Search</h3>
+                <h3 className="font-semibold">{t("admin.users.features.userList.title")}</h3>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Browse and search all users in the system
+                  {t("admin.users.features.userList.description")}
                 </p>
               </div>
               <div className="p-4 border rounded-lg">
-                <h3 className="font-semibold">Role Management</h3>
+                <h3 className="font-semibold">{t("admin.users.features.roleManagement.title")}</h3>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Assign admin, support, or user roles
+                  {t("admin.users.features.roleManagement.description")}
                 </p>
               </div>
               <div className="p-4 border rounded-lg">
-                <h3 className="font-semibold">User Impersonation</h3>
+                <h3 className="font-semibold">{t("admin.users.features.impersonation.title")}</h3>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Switch context to view as any user
+                  {t("admin.users.features.impersonation.description")}
                 </p>
               </div>
             </div>

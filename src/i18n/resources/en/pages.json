@@ -192,6 +192,47 @@
       "deleteTitle": "Delete Session"
     }
   },
+  "projectDetail": {
+    "toast": {
+      "updateSuccess": "Project updated successfully",
+      "deleteSuccess": "Project deleted successfully",
+      "archiveSuccess": "Project archived successfully",
+      "restoreSuccess": "Project restored successfully"
+    },
+    "errors": {
+      "loadFailed": "Failed to load project",
+      "notFound": "Project not found"
+    },
+    "placeholders": {
+      "name": "Project name",
+      "description": "Project description (optional)"
+    },
+    "actions": {
+      "archive": "Archive Project",
+      "restore": "Restore Project",
+      "delete": "Delete Project",
+      "cancel": "Cancel",
+      "deleting": "Deleting..."
+    },
+    "badges": {
+      "noStatus": "No Status"
+    },
+    "sections": {
+      "overview": "Project Overview",
+      "activities": "Activities",
+      "todos": "Todos",
+      "services": "Services",
+      "sessions": "Sessions",
+      "payments": "Payments"
+    },
+    "dialogs": {
+      "deleteTitle": "Delete Project",
+      "deleteDescription": "This action cannot be undone. This will permanently delete the project and all associated data including sessions, todos, and payments."
+    },
+    "placeholder": {
+      "content": "Project details content will be displayed here using existing components."
+    }
+  },
   "admin": {
     "localization": {
       "title": "Localization",
@@ -1287,7 +1328,8 @@
     },
     "warnings": {
       "tooLong": "{{count}}/60 characters (too long)",
-      "spamWords": "Spam words:"
+      "spamWords": "Spam words:",
+      "moreSpamWords": "+{{count}} more"
     },
     "navigationGuard": {
       "unsavedChanges": "You have unsaved changes to this template."
@@ -1481,6 +1523,49 @@
         "exit_description": "You can now access all features.",
         "exit_error": "Failed to exit guidance mode. Please try again.",
         "error_title": "Error"
+      }
+    }
+    ,
+    "users": {
+      "title": "User Management",
+      "subtitle": "Manage user accounts, roles, and permissions",
+      "badge": "Coming Soon",
+      "sectionTitle": "User Management Features",
+      "sectionDescription": "This section will include comprehensive user management capabilities",
+      "features": {
+        "userList": {
+          "title": "User List & Search",
+          "description": "Browse and search all users in the system"
+        },
+        "roleManagement": {
+          "title": "Role Management",
+          "description": "Assign admin, support, or user roles"
+        },
+        "impersonation": {
+          "title": "User Impersonation",
+          "description": "Switch context to view as any user"
+        }
+      }
+    },
+    "system": {
+      "title": "System Overview",
+      "subtitle": "Monitor system health, usage, and analytics",
+      "badge": "Coming Soon",
+      "sectionTitle": "System Monitoring Features",
+      "sectionDescription": "This section will include comprehensive system monitoring and analytics",
+      "features": {
+        "usage": {
+          "title": "Usage Statistics",
+          "description": "Track system usage across all users"
+        },
+        "performance": {
+          "title": "Performance Metrics",
+          "description": "Monitor response times and system health"
+        },
+        "errors": {
+          "title": "Error Tracking",
+          "description": "View and manage system errors and issues"
+        }
       }
     }
   }

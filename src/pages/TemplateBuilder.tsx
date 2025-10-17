@@ -367,7 +367,9 @@ const OptimizedTemplateBuilderContent = React.memo(() => {
                           </Badge>
                         ))}
                         {spamWords.length > 2 && (
-                          <span className="text-amber-600">+{spamWords.length - 2} more</span>
+                          <span className="text-amber-600">
+                            {t("templateBuilder.warnings.moreSpamWords", { count: spamWords.length - 2 })}
+                          </span>
                         )}
                       </div>
                     </div>

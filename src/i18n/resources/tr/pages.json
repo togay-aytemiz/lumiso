@@ -192,6 +192,47 @@
       "deleteTitle": "Seansı Sil"
     }
   },
+  "projectDetail": {
+    "toast": {
+      "updateSuccess": "Proje başarıyla güncellendi",
+      "deleteSuccess": "Proje başarıyla silindi",
+      "archiveSuccess": "Proje arşivlendi",
+      "restoreSuccess": "Proje geri yüklendi"
+    },
+    "errors": {
+      "loadFailed": "Proje yüklenemedi",
+      "notFound": "Proje bulunamadı"
+    },
+    "placeholders": {
+      "name": "Proje adı",
+      "description": "Proje açıklaması (isteğe bağlı)"
+    },
+    "actions": {
+      "archive": "Projeyi Arşivle",
+      "restore": "Projeyi Geri Yükle",
+      "delete": "Projeyi Sil",
+      "cancel": "İptal",
+      "deleting": "Siliniyor..."
+    },
+    "badges": {
+      "noStatus": "Durum Yok"
+    },
+    "sections": {
+      "overview": "Proje Özeti",
+      "activities": "Aktiviteler",
+      "todos": "Yapılacaklar",
+      "services": "Hizmetler",
+      "sessions": "Seanslar",
+      "payments": "Ödemeler"
+    },
+    "dialogs": {
+      "deleteTitle": "Projeyi Sil",
+      "deleteDescription": "Bu işlem geri alınamaz. Projeyi ve seanslar, yapılacaklar, ödemeler dahil tüm ilgili verileri kalıcı olarak siler."
+    },
+    "placeholder": {
+      "content": "Proje detayları mevcut bileşenler kullanılarak burada gösterilecek."
+    }
+  },
   "admin": {
     "localization": {
       "title": "Yerelleştirme",
@@ -318,6 +359,48 @@
         "translationUpdateError": "Çeviri güncellenemedi",
         "uploadSuccess": "{{count}} çeviri dosyası başarıyla yüklendi",
         "uploadPartial": "{{total}} dosyanın {{success}} tanesi başarıyla yüklendi"
+      }
+    },
+    "users": {
+      "title": "Kullanıcı Yönetimi",
+      "subtitle": "Kullanıcı hesaplarını, rolleri ve izinleri yönetin",
+      "badge": "Çok Yakında",
+      "sectionTitle": "Kullanıcı Yönetimi Özellikleri",
+      "sectionDescription": "Bu bölüm kapsamlı kullanıcı yönetimi özellikleri içerecek",
+      "features": {
+        "userList": {
+          "title": "Kullanıcı Listesi ve Arama",
+          "description": "Sistemdeki tüm kullanıcıları görüntüleyin ve arayın"
+        },
+        "roleManagement": {
+          "title": "Rol Yönetimi",
+          "description": "Yönetici, destek veya kullanıcı rolleri atayın"
+        },
+        "impersonation": {
+          "title": "Kullanıcı Taklidi",
+          "description": "Herhangi bir kullanıcı olarak görüntülemek için bağlamı değiştirin"
+        }
+      }
+    },
+    "system": {
+      "title": "Sistem Genel Bakış",
+      "subtitle": "Sistem sağlığını, kullanımını ve analizlerini izleyin",
+      "badge": "Çok Yakında",
+      "sectionTitle": "Sistem İzleme Özellikleri",
+      "sectionDescription": "Bu bölüm kapsamlı sistem izleme ve analizleri içerecek",
+      "features": {
+        "usage": {
+          "title": "Kullanım İstatistikleri",
+          "description": "Sistem kullanımını tüm kullanıcılar için takip edin"
+        },
+        "performance": {
+          "title": "Performans Metrikleri",
+          "description": "Yanıt sürelerini ve sistem sağlığını izleyin"
+        },
+        "errors": {
+          "title": "Hata Takibi",
+          "description": "Sistem hatalarını görüntüleyin ve yönetin"
+        }
       }
     }
   },
@@ -1285,8 +1368,9 @@
       }
     },
     "warnings": {
-      "tooLong": "{{count}} 60 karakter çok uzun",
-      "spamWords": "Spam kelimeler:"
+      "tooLong": "{{count}}/60 karakter (çok uzun)",
+      "spamWords": "Spam kelimeler:",
+      "moreSpamWords": "+{{count}} daha"
     },
     "navigationGuard": {
       "unsavedChanges": "Bu şablonda kaydedilmemiş değişiklikleriniz var."

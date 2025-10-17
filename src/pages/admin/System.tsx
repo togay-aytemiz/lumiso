@@ -1,15 +1,17 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useTranslation } from "react-i18next";
 
 export default function AdminSystem() {
+  const { t } = useTranslation("pages");
 
   return (
     <div className="container mx-auto py-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">System Overview</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t("admin.system.title")}</h1>
           <p className="text-muted-foreground">
-            Monitor system health, usage, and analytics
+            {t("admin.system.subtitle")}
           </p>
         </div>
       </div>
@@ -18,31 +20,31 @@ export default function AdminSystem() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Badge variant="secondary">Coming Soon</Badge>
-              System Monitoring Features
+              <Badge variant="secondary">{t("admin.system.badge")}</Badge>
+              {t("admin.system.sectionTitle")}
             </CardTitle>
             <CardDescription>
-              This section will include comprehensive system monitoring and analytics
+              {t("admin.system.sectionDescription")}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div className="p-4 border rounded-lg">
-                <h3 className="font-semibold">Usage Statistics</h3>
+                <h3 className="font-semibold">{t("admin.system.features.usage.title")}</h3>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Track system usage across all users
+                  {t("admin.system.features.usage.description")}
                 </p>
               </div>
               <div className="p-4 border rounded-lg">
-                <h3 className="font-semibold">Performance Metrics</h3>
+                <h3 className="font-semibold">{t("admin.system.features.performance.title")}</h3>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Monitor response times and system health
+                  {t("admin.system.features.performance.description")}
                 </p>
               </div>
               <div className="p-4 border rounded-lg">
-                <h3 className="font-semibold">Error Tracking</h3>
+                <h3 className="font-semibold">{t("admin.system.features.errors.title")}</h3>
                 <p className="text-sm text-muted-foreground mt-1">
-                  View and manage system errors and issues
+                  {t("admin.system.features.errors.description")}
                 </p>
               </div>
             </div>

@@ -10,6 +10,7 @@ import { useEntityActions } from "@/hooks/useEntityActions";
 import { SimpleProjectTypeSelect } from "@/components/SimpleProjectTypeSelect";
 import { PROJECT_STATUS } from "@/constants/entityConstants";
 import { Archive, ArchiveRestore, Trash2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface ProjectDetailState {
   project: ProjectWithDetails | null;
@@ -19,6 +20,7 @@ interface ProjectDetailState {
 }
 
 export default function ProjectDetailSimplified() {
+  const { t } = useTranslation("pages");
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   
@@ -61,7 +63,7 @@ export default function ProjectDetailSimplified() {
       
       setProjectDetailData({ project, lead, projectType, isArchived });
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to load project';
+      const errorMessage = err instanceof Error ? err.message : t("projectDetail.errors.notFound");
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -91,7 +93,7 @@ export default function ProjectDetailSimplified() {
         project_type_id: editProjectTypeId
       }),
       {
-        successMessage: "Project updated successfully",
+        successMessage: t("projectDetail.toast.updateSuccess"),
         onSuccess: () => {
           setIsEditing(false);
           fetchProjectData();
@@ -116,16 +118,16 @@ export default function ProjectDetailSimplified() {
   if (error || !project) {
     return (
       <EntityErrorState 
-        error={error || 'Project not found'} 
+        error={error || t("projectDetail.errors.notFound")}
         onRetry={fetchProjectData}
-        title="Failed to load project"
+        title={t("projectDetail.errors.loadFailed")}
       />
     );
   }
 
   const badges = [
     {
-      label: project.project_status?.name || 'No Status',
+      label: project.project_status?.name || t("projectDetail.badges.noStatus"),
       variant: 'outline' as const,
       className: 'text-sm'
     }
@@ -145,14 +147,14 @@ export default function ProjectDetailSimplified() {
         <Input 
           value={editName} 
           onChange={e => setEditName(e.target.value)} 
-          placeholder="Project name" 
+          placeholder={t("projectDetail.placeholders.name")}
           className="text-3xl font-bold border rounded-md px-4 py-3 h-auto flex-1" 
         />
       </div>
       <Textarea 
         value={editDescription} 
         onChange={e => setEditDescription(e.target.value)} 
-        placeholder="Project description (optional)" 
+        placeholder={t("projectDetail.placeholders.description")}
         className="text-lg border rounded-md px-4 py-3 resize-none" 
         rows={3} 
       />
@@ -181,7 +183,7 @@ export default function ProjectDetailSimplified() {
         editForm={editForm}
       >
         <div className="text-center py-8 text-muted-foreground">
-          Project details content will be displayed here using existing components.
+          {t("projectDetail.placeholder.content")}
         </div>
       </EntityDetailLayout>
     </ErrorBoundary>

@@ -21,6 +21,7 @@ import { ProjectPaymentsSection } from "@/components/ProjectPaymentsSection";
 import ProjectDetailsLayout from "@/components/project-details/ProjectDetailsLayout";
 import { UnifiedClientDetails } from "@/components/UnifiedClientDetails";
 import { PROJECT_STATUS } from "@/constants/entityConstants";
+import { useTranslation } from "react-i18next";
 
 interface ProjectDetailState {
   project: ProjectWithDetails | null;
@@ -30,6 +31,7 @@ interface ProjectDetailState {
 }
 
 export default function ProjectDetailRefactored() {
+  const { t } = useTranslation("pages");
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   
@@ -67,7 +69,7 @@ export default function ProjectDetailRefactored() {
       
       setProjectDetailData({ project, lead, projectType, isArchived });
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to load project';
+      const errorMessage = err instanceof Error ? err.message : t("projectDetail.errors.loadFailed");
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -106,7 +108,7 @@ export default function ProjectDetailRefactored() {
         project_type_id: editProjectTypeId
       }),
       {
-        successMessage: "Project updated successfully",
+        successMessage: t("projectDetail.toast.updateSuccess"),
         onSuccess: () => {
           setIsEditing(false);
           fetchProjectData();
@@ -122,7 +124,7 @@ export default function ProjectDetailRefactored() {
       'delete',
       () => projectService.deleteProject(project.id),
       {
-        successMessage: "Project deleted successfully",
+        successMessage: t("projectDetail.toast.deleteSuccess"),
         onSuccess: () => navigate('/projects')
       }
     );
@@ -135,12 +137,14 @@ export default function ProjectDetailRefactored() {
   const handleArchive = async () => {
     if (!project) return;
     
-    const action = isArchived ? 'restore' : 'archive';
+    const successMessage = isArchived
+      ? t("projectDetail.toast.restoreSuccess")
+      : t("projectDetail.toast.archiveSuccess");
     const result = await executeAction(
       'archive',
       () => projectService.toggleArchiveStatus(project.id, isArchived),
       {
-        successMessage: `Project ${action}d successfully`,
+        successMessage,
         onSuccess: () => fetchProjectData()
       }
     );
@@ -166,16 +170,16 @@ export default function ProjectDetailRefactored() {
   if (error || !project) {
     return (
       <EntityErrorState 
-        error={error || 'Project not found'} 
+        error={error || t("projectDetail.errors.notFound")}
         onRetry={fetchProjectData}
-        title="Failed to load project"
+        title={t("projectDetail.errors.loadFailed")}
       />
     );
   }
 
   const badges = [
     {
-      label: project.project_status?.name || 'No Status',
+      label: project.project_status?.name || t("projectDetail.badges.noStatus"),
       variant: 'outline' as const,
       className: 'text-sm'
     }
@@ -195,14 +199,14 @@ export default function ProjectDetailRefactored() {
         <Input 
           value={editName} 
           onChange={e => setEditName(e.target.value)} 
-          placeholder="Project name" 
+          placeholder={t("projectDetail.placeholders.name")}
           className="text-3xl font-bold border rounded-md px-4 py-3 h-auto flex-1" 
         />
       </div>
       <Textarea 
         value={editDescription} 
         onChange={e => setEditDescription(e.target.value)} 
-        placeholder="Project description (optional)" 
+        placeholder={t("projectDetail.placeholders.description")}
         className="text-lg border rounded-md px-4 py-3 resize-none" 
         rows={3} 
       />
@@ -217,13 +221,13 @@ export default function ProjectDetailRefactored() {
 
   const actions = [
     {
-      label: isArchived ? 'Restore Project' : 'Archive Project',
+      label: isArchived ? t("projectDetail.actions.restore") : t("projectDetail.actions.archive"),
       onClick: handleArchive,
       icon: isArchived ? <ArchiveRestore className="h-4 w-4" /> : <Archive className="h-4 w-4" />,
       variant: 'outline' as const
     },
     {
-      label: 'Delete Project',
+      label: t("projectDetail.actions.delete"),
       onClick: () => setShowDeleteDialog(true),
       icon: <Trash2 className="h-4 w-4" />,
       variant: 'destructive' as const
@@ -249,7 +253,7 @@ export default function ProjectDetailRefactored() {
         <ProjectDetailsLayout 
           header={
             <div className="space-y-2">
-              <h2 className="text-lg font-semibold">Project Overview</h2>
+              <h2 className="text-lg font-semibold">{t("projectDetail.sections.overview")}</h2>
               <UnifiedClientDetails 
                 lead={lead}
               />
@@ -269,7 +273,7 @@ export default function ProjectDetailRefactored() {
           sections={[
             {
               id: "activities",
-              title: "Activities",
+              title: t("projectDetail.sections.activities"),
               content: (
                 <ProjectActivitySection
                   projectId={project.id}
@@ -282,7 +286,7 @@ export default function ProjectDetailRefactored() {
             },
             {
               id: "todos", 
-              title: "Todos",
+              title: t("projectDetail.sections.todos"),
               content: (
                 <ProjectTodoListEnhanced
                   projectId={project.id}
@@ -291,7 +295,7 @@ export default function ProjectDetailRefactored() {
             },
             {
               id: "services",
-              title: "Services", 
+              title: t("projectDetail.sections.services"), 
               content: (
                 <ProjectServicesSection
                   projectId={project.id}
@@ -304,7 +308,7 @@ export default function ProjectDetailRefactored() {
             },
             {
               id: "sessions",
-              title: "Sessions",
+              title: t("projectDetail.sections.sessions"),
               content: (
                 <SessionsSection
                   sessions={[]}
@@ -323,7 +327,7 @@ export default function ProjectDetailRefactored() {
             },
             {
               id: "payments",
-              title: "Payments",
+              title: t("projectDetail.sections.payments"),
               content: (
                 <ProjectPaymentsSection
                   projectId={project.id}
@@ -339,21 +343,21 @@ export default function ProjectDetailRefactored() {
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Project</AlertDialogTitle>
+            <AlertDialogTitle>{t("projectDetail.dialogs.deleteTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the project and all associated data including sessions, todos, and payments.
+              {t("projectDetail.dialogs.deleteDescription")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={deleteState.loading}>
-              Cancel
+              {t("projectDetail.actions.cancel")}
             </AlertDialogCancel>
             <AlertDialogAction 
               onClick={handleDelete}
               disabled={deleteState.loading}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {deleteState.loading ? "Deleting..." : "Delete Project"}
+              {deleteState.loading ? t("projectDetail.actions.deleting") : t("projectDetail.actions.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

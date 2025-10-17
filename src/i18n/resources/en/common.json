@@ -32,7 +32,8 @@
     "view_details": "View Details",
     "archive": "Archive",
     "restore": "Restore",
-    "add_project": "Add Project"
+    "add_project": "Add Project",
+    "remove": "Remove"
   },
   "labels": {
     "name": "Name",
@@ -111,5 +112,21 @@
     "success": "Success",
     "warning": "Warning",
     "info": "Information"
+  },
+  "pagination": {
+    "previousPage": "Go to previous page",
+    "nextPage": "Go to next page",
+    "morePages": "More pages"
+  },
+  "carousel": {
+    "previousSlide": "Previous slide",
+    "nextSlide": "Next slide"
+  },
+  "sidebar": {
+    "toggle": "Toggle Sidebar"
+  },
+  "timePicker": {
+    "hour": "Hour",
+    "minutes": "Minutes"
   }
 }

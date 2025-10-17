@@ -16,8 +16,9 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { KanbanSettingsSheet } from "@/components/KanbanSettingsSheet";
 import { PROJECT_STATUS } from "@/constants/entityConstants";
 import { formatDate } from "@/lib/utils";
-import { useMeasureRender } from '@/utils/performance';
-import { useScreenReader } from '@/hooks/useAccessibility';
+import { useMeasureRender } from "@/utils/performance";
+import { useScreenReader } from "@/hooks/useAccessibility";
+import { useTranslation } from "react-i18next";
 
 type ViewMode = 'board' | 'list' | 'archived';
 
@@ -42,6 +43,7 @@ const OptimizedProjectsPage = React.memo(() => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const isMobile = useIsMobile();
+  const { t } = useTranslation(["pages", "navigation", "common"]);
 
   // Services - memoized to prevent recreation
   const projectService = useMemo(() => new ProjectService(), []);
@@ -97,18 +99,18 @@ const OptimizedProjectsPage = React.memo(() => {
 
   const handleViewChange = useCallback((view: ViewMode) => {
     setViewMode(view);
-    const viewLabels = {
-      board: 'Board view',
-      list: 'List view', 
-      archived: 'Archived projects'
+    const viewLabels: Record<ViewMode, string> = {
+      board: t("projects.board_view"),
+      list: t("projects.list_view"),
+      archived: t("projects.archived_view"),
     };
-    announce(`Switched to ${viewLabels[view]}`);
-  }, [announce]);
+    announce(t("projects.accessibility.switchView", { view: viewLabels[view] }));
+  }, [announce, t]);
 
   const handleProjectUpdate = useCallback((updatedProject: ProjectWithDetails) => {
     refetchProjects();
-    announce(`Project ${updatedProject.name} updated`);
-  }, [refetchProjects, announce]);
+    announce(t("projects.accessibility.projectUpdated", { name: updatedProject.name }));
+  }, [refetchProjects, announce, t]);
 
   // Keyboard navigation for view mode buttons
   const handleViewModeKeyDown = useCallback((e: React.KeyboardEvent, view: ViewMode) => {
@@ -122,7 +124,7 @@ const OptimizedProjectsPage = React.memo(() => {
   const projectColumns = useMemo(() => [
     {
       key: 'name',
-      header: 'Project Name',
+      header: t("projects.project_name"),
       sortable: true,
       render: (project: ProjectWithDetails) => (
         <div className="font-medium">{project.name}</div>
@@ -130,7 +132,7 @@ const OptimizedProjectsPage = React.memo(() => {
     },
     {
       key: 'lead_name',
-      header: 'Client',
+      header: t("projects.client"),
       sortable: true,
       render: (project: ProjectWithDetails) => (
         <div>{project.lead?.name || '-'}</div>
@@ -138,7 +140,7 @@ const OptimizedProjectsPage = React.memo(() => {
     },
     {
       key: 'project_type',
-      header: 'Type',
+      header: t("common:labels.type"),
       sortable: true,
       render: (project: ProjectWithDetails) => (
         <div>{project.project_type?.name || '-'}</div>
@@ -146,7 +148,7 @@ const OptimizedProjectsPage = React.memo(() => {
     },
     {
       key: 'status',
-      header: 'Status',
+      header: t("common:labels.status"),
       sortable: true,
       render: (project: ProjectWithDetails) => (
         <ProjectStatusBadge 
@@ -160,16 +162,22 @@ const OptimizedProjectsPage = React.memo(() => {
     },
     {
       key: 'sessions',
-      header: 'Sessions',
-      render: (project: ProjectWithDetails) => (
-        <div className="text-sm" aria-label={`${project.session_count || 0} sessions`}>
-          {project.session_count || 0} sessions
-        </div>
-      )
+      header: t("projects.sessions"),
+      render: (project: ProjectWithDetails) => {
+        const count = project.session_count || 0;
+        return (
+          <div
+            className="text-sm"
+            aria-label={t("projects.aria.sessionsCount", { count })}
+          >
+            {t("projects.sessionsCountLabel", { count })}
+          </div>
+        );
+      }
     },
     {
       key: 'created_at',
-      header: 'Created',
+      header: t("projects.created"),
       sortable: true,
       render: (project: ProjectWithDetails) => (
         <div className="text-sm text-muted-foreground">
@@ -177,11 +185,11 @@ const OptimizedProjectsPage = React.memo(() => {
         </div>
       )
     }
-  ], [refetchProjects]);
+  ], [refetchProjects, t]);
 
   // Memoized view mode buttons with accessibility
   const viewModeButtons = useMemo(() => (
-    <div className="flex items-center gap-1" role="tablist" aria-label="View mode selection">
+    <div className="flex items-center gap-1" role="tablist" aria-label={t("projects.aria.viewModeSelection")}>
       <Button
         variant={viewMode === 'board' ? 'default' : 'outline'}
         size="sm"
@@ -193,7 +201,7 @@ const OptimizedProjectsPage = React.memo(() => {
         aria-controls="projects-content"
       >
         <LayoutGrid className="h-4 w-4" aria-hidden="true" />
-        Board
+        {t("projects.board_view")}
       </Button>
       <Button
         variant={viewMode === 'list' ? 'default' : 'outline'}
@@ -206,7 +214,7 @@ const OptimizedProjectsPage = React.memo(() => {
         aria-controls="projects-content"
       >
         <List className="h-4 w-4" aria-hidden="true" />
-        List
+        {t("projects.list_view")}
       </Button>
       <Button
         variant={viewMode === 'archived' ? 'default' : 'outline'}
@@ -219,20 +227,20 @@ const OptimizedProjectsPage = React.memo(() => {
         aria-controls="projects-content"
       >
         <Archive className="h-4 w-4" aria-hidden="true" />
-        Archived ({archivedProjects.length})
+        {t("projects.archived_view")} ({archivedProjects.length})
       </Button>
       <Button
         variant="outline"
         size="sm"
         onClick={() => setShowKanbanSettings(true)}
         className="flex items-center gap-2"
-        aria-label="Open kanban settings"
+        aria-label={t("projects.aria.openKanbanSettings")}
       >
         <Settings className="h-4 w-4" aria-hidden="true" />
-        <span className="hidden sm:inline">Settings</span>
+        <span className="hidden sm:inline">{t("navigation:settings")}</span>
       </Button>
     </div>
-  ), [viewMode, archivedProjects.length, handleViewChange, handleViewModeKeyDown]);
+  ), [viewMode, archivedProjects.length, handleViewChange, handleViewModeKeyDown, t]);
 
   if (loading) {
     return <TableLoadingState />;
@@ -245,13 +253,13 @@ const OptimizedProjectsPage = React.memo(() => {
         <div className="min-h-screen p-4 sm:p-6">
           <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <h1 className="text-2xl font-bold">Projects</h1>
-              <p className="text-muted-foreground">Manage your photography projects</p>
+              <h1 className="text-2xl font-bold">{t("projects.title")}</h1>
+              <p className="text-muted-foreground">{t("projects.page_subtitle")}</p>
             </div>
             {viewModeButtons}
           </div>
           
-          <main id="projects-content" role="tabpanel" aria-label="Projects board view">
+          <main id="projects-content" role="tabpanel" aria-label={t("projects.aria.boardView")}>
             <ProjectKanbanBoard
               projects={projects}
               onProjectsChange={refetchProjects}
@@ -285,16 +293,20 @@ const OptimizedProjectsPage = React.memo(() => {
   // List view
   return (
     <ErrorBoundary>
-      <main id="projects-content" role="tabpanel" aria-label={viewMode === 'archived' ? 'Archived projects list' : 'Projects list view'}>
+      <main
+        id="projects-content"
+        role="tabpanel"
+        aria-label={viewMode === 'archived' ? t("projects.aria.archivedList") : t("projects.aria.listView")}
+      >
         <EntityListView
-          title="Projects"
-          subtitle={viewMode === 'archived' ? "Archived projects" : "Manage your photography projects"}
+          title={t("projects.title")}
+          subtitle={viewMode === 'archived' ? t("projects.archivedProjects") : t("projects.page_subtitle")}
           data={displayProjects}
           columns={projectColumns}
           loading={loading}
           onRowClick={handleProjectClick}
           onAddClick={() => {/* Open add project dialog */}}
-          addButtonText="Add Project"
+          addButtonText={t("projects.addProject")}
           headerActions={viewModeButtons}
           itemsPerPage={20}
         />

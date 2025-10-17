@@ -9,26 +9,28 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { AlertTriangle, Settings } from "lucide-react";
 import { DividerBlockData, ColumnsBlockData, SocialLinksBlockData, HeaderBlockData, RawHTMLBlockData } from "@/types/templateBuilder";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
+import { useTranslation } from "react-i18next";
 
 export function DividerBlockEditor({ data, onUpdate }: { data: DividerBlockData; onUpdate: (data: DividerBlockData) => void }) {
+  const { t } = useTranslation("pages");
   return (
     <div className="space-y-4">
       <div>
-        <Label>Style</Label>
+        <Label>{t("templateBuilder.blockEditor.divider.style")}</Label>
         <Select value={data.style} onValueChange={(value) => onUpdate({ ...data, style: value as "line" | "space" })}>
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="line">Line Divider</SelectItem>
-            <SelectItem value="space">Space/Gap</SelectItem>
+            <SelectItem value="line">{t("templateBuilder.blockEditor.divider.styleOptions.line")}</SelectItem>
+            <SelectItem value="space">{t("templateBuilder.blockEditor.divider.styleOptions.space")}</SelectItem>
           </SelectContent>
         </Select>
       </div>
       
       {data.style === "space" && (
         <div>
-          <Label>Height (px)</Label>
+          <Label>{t("templateBuilder.blockEditor.divider.heightLabel")}</Label>
           <Input
             type="number"
             value={data.height || 20}
@@ -40,7 +42,7 @@ export function DividerBlockEditor({ data, onUpdate }: { data: DividerBlockData;
       
       {data.style === "line" && (
         <div>
-          <Label>Color</Label>
+          <Label>{t("templateBuilder.blockEditor.divider.colorLabel")}</Label>
           <Input
             type="color"
             value={data.color || "#e5e5e5"}
@@ -54,6 +56,7 @@ export function DividerBlockEditor({ data, onUpdate }: { data: DividerBlockData;
 }
 
 export function ColumnsBlockEditor({ data, onUpdate }: { data: ColumnsBlockData; onUpdate: (data: ColumnsBlockData) => void }) {
+  const { t } = useTranslation("pages");
   const updateColumn = (index: number, content: string) => {
     const newContent = [...data.content];
     newContent[index] = content;
@@ -61,22 +64,22 @@ export function ColumnsBlockEditor({ data, onUpdate }: { data: ColumnsBlockData;
   };
 
   const changeColumnCount = (count: number) => {
-    const newContent = Array(count).fill("").map((_, i) => data.content[i] || "Column content...");
+    const newContent = Array.from({ length: count }, (_, i) => data.content[i] ?? t("templateBuilder.blockEditor.columns.columnPlaceholder", { index: i + 1 }));
     onUpdate({ ...data, columns: count, content: newContent });
   };
 
   return (
     <div className="space-y-4">
       <div>
-        <Label>Number of Columns</Label>
+        <Label>{t("templateBuilder.blockEditor.columns.countLabel")}</Label>
         <Select value={data.columns.toString()} onValueChange={(value) => changeColumnCount(parseInt(value))}>
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="1">1 Column</SelectItem>
-            <SelectItem value="2">2 Columns</SelectItem>
-            <SelectItem value="3">3 Columns</SelectItem>
+            <SelectItem value="1">{t("templateBuilder.blockEditor.columns.options.one")}</SelectItem>
+            <SelectItem value="2">{t("templateBuilder.blockEditor.columns.options.two")}</SelectItem>
+            <SelectItem value="3">{t("templateBuilder.blockEditor.columns.options.three")}</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -84,11 +87,11 @@ export function ColumnsBlockEditor({ data, onUpdate }: { data: ColumnsBlockData;
       <div className="space-y-3">
         {data.content.map((content, index) => (
           <div key={index}>
-            <Label>Column {index + 1}</Label>
+            <Label>{t("templateBuilder.blockEditor.columns.columnLabel", { index: index + 1 })}</Label>
             <Textarea
               value={content}
               onChange={(e) => updateColumn(index, e.target.value)}
-              placeholder={`Column ${index + 1} content...`}
+              placeholder={t("templateBuilder.blockEditor.columns.columnPlaceholder", { index: index + 1 })}
               rows={3}
             />
           </div>
@@ -100,6 +103,7 @@ export function ColumnsBlockEditor({ data, onUpdate }: { data: ColumnsBlockData;
 
 export function SocialLinksBlockEditor({ data, onUpdate }: { data: SocialLinksBlockData; onUpdate: (data: SocialLinksBlockData) => void }) {
   const { settings, loading } = useOrganizationSettings();
+  const { t } = useTranslation("pages");
   
   const toggleChannelVisibility = (channelKey: string, visible: boolean) => {
     const newVisibility = { ...(data.channelVisibility || {}) };
@@ -122,7 +126,7 @@ export function SocialLinksBlockEditor({ data, onUpdate }: { data: SocialLinksBl
     return (
       <div className="space-y-4">
         <div className="text-sm text-muted-foreground">
-          Configure which social channels to display in emails:
+          {t("templateBuilder.blockEditor.socialLinks.instructions")}
         </div>
         <div className="space-y-3">
           {Array.from({ length: 3 }).map((_, i) => (
@@ -144,7 +148,7 @@ export function SocialLinksBlockEditor({ data, onUpdate }: { data: SocialLinksBl
       {socialChannelsArray.length > 0 ? (
         <div className="space-y-3">
           <div className="text-sm text-muted-foreground">
-            Configure which social channels to display in emails:
+            {t("templateBuilder.blockEditor.socialLinks.instructions")}
           </div>
           <div className="space-y-3">
             {socialChannelsArray.map(([key, channel]) => (
@@ -165,7 +169,7 @@ export function SocialLinksBlockEditor({ data, onUpdate }: { data: SocialLinksBl
         <Alert>
           <Settings className="h-4 w-4" />
           <AlertDescription>
-            No social channels configured. Go to Settings → General → Social Channels to add your social media links.
+            {t("templateBuilder.blockEditor.socialLinks.emptyDescription")}
           </AlertDescription>
         </Alert>
       )}
@@ -174,10 +178,11 @@ export function SocialLinksBlockEditor({ data, onUpdate }: { data: SocialLinksBl
 }
 
 export function HeaderBlockEditor({ data, onUpdate }: { data: HeaderBlockData; onUpdate: (data: HeaderBlockData) => void }) {
+  const { t } = useTranslation("pages");
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <Label>Show Logo</Label>
+        <Label>{t("templateBuilder.blockEditor.header.showLogo")}</Label>
         <Switch
           checked={data.showLogo}
           onCheckedChange={(checked) => onUpdate({ ...data, showLogo: checked })}
@@ -186,33 +191,33 @@ export function HeaderBlockEditor({ data, onUpdate }: { data: HeaderBlockData; o
       
       {data.showLogo && (
         <div>
-          <Label>Logo Alignment</Label>
+          <Label>{t("templateBuilder.blockEditor.header.logoAlignment")}</Label>
           <Select value={data.logoAlignment || "center"} onValueChange={(value) => onUpdate({ ...data, logoAlignment: value as "left" | "center" | "right" })}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="left">Left</SelectItem>
-              <SelectItem value="center">Center</SelectItem>
-              <SelectItem value="right">Right</SelectItem>
+              <SelectItem value="left">{t("templateBuilder.blockEditor.header.logoAlignmentOptions.left")}</SelectItem>
+              <SelectItem value="center">{t("templateBuilder.blockEditor.header.logoAlignmentOptions.center")}</SelectItem>
+              <SelectItem value="right">{t("templateBuilder.blockEditor.header.logoAlignmentOptions.right")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
       )}
       
       <div>
-        <Label>Tagline (optional)</Label>
+        <Label>{t("templateBuilder.blockEditor.header.tagline")}</Label>
         <Input
           value={data.tagline || ""}
           onChange={(e) => onUpdate({ ...data, tagline: e.target.value })}
-          placeholder="Your photography tagline"
+          placeholder={t("templateBuilder.blockEditor.header.taglinePlaceholder")}
         />
       </div>
       
       <div className="grid grid-cols-2 gap-4">
         {data.tagline && (
           <div>
-            <Label>Tagline Color</Label>
+            <Label>{t("templateBuilder.blockEditor.header.taglineColor")}</Label>
             <Input
               type="color"
               value={data.taglineColor || "#000000"}
@@ -223,7 +228,7 @@ export function HeaderBlockEditor({ data, onUpdate }: { data: HeaderBlockData; o
         )}
         
         <div className={data.tagline ? "" : "col-span-2"}>
-          <Label>Background Color</Label>
+          <Label>{t("templateBuilder.blockEditor.header.backgroundColor")}</Label>
           <Input
             type="color"
             value={data.backgroundColor || "#ffffff"}
@@ -237,21 +242,22 @@ export function HeaderBlockEditor({ data, onUpdate }: { data: HeaderBlockData; o
 }
 
 export function RawHTMLBlockEditor({ data, onUpdate }: { data: RawHTMLBlockData; onUpdate: (data: RawHTMLBlockData) => void }) {
+  const { t } = useTranslation("pages");
   return (
     <div className="space-y-4">
       <Alert>
         <AlertTriangle className="h-4 w-4" />
         <AlertDescription>
-          Raw HTML is for advanced users. Content will be sanitized for security.
+          {t("templateBuilder.blockEditor.rawHtml.alert")}
         </AlertDescription>
       </Alert>
       
       <div>
-        <Label>HTML Content</Label>
+        <Label>{t("templateBuilder.blockEditor.rawHtml.label")}</Label>
         <Textarea
           value={data.html}
           onChange={(e) => onUpdate({ ...data, html: e.target.value, sanitized: false })}
-          placeholder="<div>Your custom HTML here...</div>"
+          placeholder={t("templateBuilder.blockEditor.rawHtml.placeholder")}
           rows={8}
           className="font-mono text-sm"
         />

@@ -22,6 +22,7 @@ import { useOnboarding } from "@/contexts/OnboardingContext";
 import { KanbanSettingsSheet } from "@/components/KanbanSettingsSheet";
 import { PROJECT_STATUS } from "@/constants/entityConstants";
 import { formatDate } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 type ViewMode = 'board' | 'list' | 'archived';
 
@@ -36,6 +37,7 @@ const AllProjectsRefactored = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { completeCurrentStep } = useOnboarding();
   const isMobile = useIsMobile();
+  const { t } = useTranslation(["pages", "navigation"]);
 
   // Tutorial state
   const [showTutorial, setShowTutorial] = useState(false);
@@ -183,7 +185,7 @@ const AllProjectsRefactored = () => {
         className="flex items-center gap-2"
       >
         <LayoutGrid className="h-4 w-4" />
-        Board
+        {t("projects.board_view")}
       </Button>
       <Button
         variant={viewMode === 'list' ? 'default' : 'outline'}
@@ -192,7 +194,7 @@ const AllProjectsRefactored = () => {
         className="flex items-center gap-2"
       >
         <List className="h-4 w-4" />
-        List
+        {t("projects.list_view")}
       </Button>
       <Button
         variant={viewMode === 'archived' ? 'default' : 'outline'}
@@ -201,7 +203,7 @@ const AllProjectsRefactored = () => {
         className="flex items-center gap-2"
       >
         <Archive className="h-4 w-4" />
-        Archived ({archivedProjects.length})
+        {t("projects.archived_view")} ({archivedProjects.length})
       </Button>
       <Button
         variant="outline"
@@ -210,7 +212,7 @@ const AllProjectsRefactored = () => {
         className="flex items-center gap-2"
       >
         <Settings className="h-4 w-4" />
-        <span className="hidden sm:inline">Settings</span>
+        <span className="hidden sm:inline">{t("navigation:settings")}</span>
       </Button>
     </div>
   );
@@ -226,8 +228,8 @@ const AllProjectsRefactored = () => {
         <div className="min-h-screen p-4 sm:p-6">
           <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <h1 className="text-2xl font-bold">Projects</h1>
-              <p className="text-muted-foreground">Manage your photography projects</p>
+              <h1 className="text-2xl font-bold">{t("projects.title")}</h1>
+              <p className="text-muted-foreground">{t("projects.page_subtitle")}</p>
             </div>
             {viewModeButtons}
           </div>

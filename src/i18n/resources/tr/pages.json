@@ -68,6 +68,7 @@
     "title": "Projeler",
     "all_projects": "Tüm Projeler",
     "project_management_hub": "Proje Yönetim Merkezi",
+    "page_subtitle": "Fotoğraf projelerinizi yönetin",
     "board_view": "Pano Görünümü",
     "list_view": "Liste Görünümü",
     "archived_view": "Arşiv Görünümü",
@@ -95,6 +96,26 @@
     "visual_workflow": "Sürükle bırak ile görsel iş akışı yönetimi",
     "detailed_table": "Sıralama ve filtreleme ile detaylı tablo görünümü",
     "archived_projects": "Tamamlanan ve arşivlenen projeleri görüntüle",
+    "board_view_benefit": "Pano Görünümü - Sürükle bırak ile görsel iş akışı yönetimi",
+    "list_view_benefit": "Liste Görünümü - Detaylı proje bilgileri tablo halinde",
+    "archived_view_benefit": "Arşiv Görünümü - Tamamlanan projeler ayrı şekilde düzenlenir",
+    "status_management_benefit": "Proje durum yönetimi ve iş akışı optimizasyonu",
+    "board_view_summary": "Görsel proje yönetimi için pano görünümü",
+    "list_view_summary": "Detaylı analiz için liste görünümü",
+    "archived_view_summary": "Tamamlanan işleri incelemek için arşiv görünümü",
+    "aria": {
+      "viewModeSelection": "Görünüm modu seçimi",
+      "openKanbanSettings": "Kanban ayarlarını aç",
+      "boardView": "Projeler pano görünümü",
+      "archivedList": "Arşivlenmiş projeler listesi",
+      "listView": "Projeler liste görünümü",
+      "sessionsCount": "{{count}} seans"
+    },
+    "sessionsCountLabel": "{{count}} seans",
+    "accessibility": {
+      "switchView": "{{view}} görünümüne geçildi",
+      "projectUpdated": "{{name}} projesi güncellendi"
+    },
     "drag_drop_organize": "Durumlarını güncellemek için projeleri sütunlar arasında sürükleyip bırakın",
     "switch_views": "Pano, Liste ve Arşiv görünümleri arasında geçiş yapın",
     "explore_features": "Farklı özellikleri keşfedin ve tercih ettiğiniz iş akışını bulun",
@@ -270,6 +291,8 @@
         "logo_set": "Logo şu anda ayarlanmış",
         "choose_new_logo": "Yeni Logo Seç",
         "logo_formats": "Desteklenen: JPG, PNG, SVG Maks: 2MB",
+        "logo_preview_alt": "Mevcut logo - büyütmek için tıklayın",
+        "logo_preview_tooltip": "Tam boy görmek için tıklayın",
         "primaryBrandColor": "Birincil Marka Rengi",
         "brandColorHelpAlt": "Müşteriye yönelik arayüzde ve giden mesajlarda kullanılır. Geçerli bir hex renk olmalıdır örn. #1EB29F"
       },
@@ -484,7 +507,35 @@
     },
     "services": {
       "title": "Paketler ve Hizmetler",
-      "description": "İşletmeniz için hizmet paketleri oluşturun ve bireysel hizmetleri yönetin"
+      "description": "İşletmeniz için hizmet paketleri oluşturun ve bireysel hizmetleri yönetin",
+      "highlights": {
+        "reviewPackages": "Varsayılan paketleri gözden geçirip özelleştirin",
+        "setPrices": "Paketleriniz için rekabetçi fiyatlar belirleyin",
+        "customizeOfferings": "Hizmet tekliflerinizi özelleştirin"
+      },
+      "tutorial": {
+        "steps": {
+          "reviewTemplates": {
+            "title": "Paket Şablonlarınızı Gözden Geçirin",
+            "description": "Sizin için varsayılan fotoğrafçılık paketleri oluşturduk. Dilerseniz düzenleyebilir, silebilir veya olduğu gibi bırakabilirsiniz. Detaylarını düzenlemek için herhangi bir pakete tıklayın.",
+            "tip": "İpucu: Paket adlarını, açıklamalarını ve içerikleri düzenleyebilirsiniz"
+          },
+          "setPricing": {
+            "title": "Paket Fiyatlandırmanızı Belirleyin",
+            "description": "Paketleriniz için fiyat ekleyin veya güncelleyin, böylece müşteri teklifleri ve rezervasyon süreci hızlansın.",
+            "tip": "Unutmayın: Gerektiğinde projelere özel fiyatları sonradan güncelleyebilirsiniz"
+          },
+          "configureServices": {
+            "title": "Hizmetlerinizi Yapılandırın",
+            "description": "Paketlerinizi oluşturan bireysel hizmetleri gözden geçirip özelleştirin. Bunlar paketleri oluştururken kullanacağınız yapı taşlarıdır.",
+            "tip": "Hizmetler birden fazla pakette yeniden kullanılabilir"
+          },
+          "complete": {
+            "title": "🎉 Paket Kurulumu Tamamlandı!",
+            "description": "Harika! Fotoğrafçılık paketlerinizi ve hizmetlerinizi başarıyla yapılandırdınız. Artık profesyonel teklif ve rezervasyon süreçlerine hazırsınız."
+          }
+        }
+      }
     },
     "clientMessaging": {
       "title": "Müşteri Mesajlaşması",
@@ -555,6 +606,12 @@
     },
     "defaultLabel": "Ödeme",
     "errorFetching": "Ödemeler alınırken hata oluştu"
+  },
+  "errors": {
+    "notFound": {
+      "title": "Üzgünüz! Sayfa bulunamadı",
+      "cta": "Ana sayfaya dön"
+    }
   },
   "analytics": {
     "title": "Analitik",
@@ -765,6 +822,147 @@
       "header": "Başlık",
       "rawHtml": "Ham HTML",
       "unknown": "Bilinmeyen Blok"
+    },
+    "blockEditor": {
+      "unknownBlock": "Bilinmeyen blok türü",
+      "remove": "Kaldır",
+      "text": {
+        "contentLabel": "İçerik",
+        "contentPlaceholder": "Metninizi buraya yazın...",
+        "formatting": "Biçimlendirme",
+        "fontSize": "Yazı Boyutu",
+        "fontFamily": "Yazı Tipi",
+        "textAlignment": "Metin Hizası",
+        "fontSizeOptions": {
+          "h1": "Başlık 1",
+          "h2": "Başlık 2",
+          "h3": "Başlık 3",
+          "p": "Paragraf"
+        },
+        "fontFamilyOptions": {
+          "arial": "Arial",
+          "helvetica": "Helvetica",
+          "georgia": "Georgia",
+          "timesNewRoman": "Times New Roman"
+        }
+      },
+      "sessionDetails": {
+        "customLabel": "Özel Etiket (isteğe bağlı)",
+        "customLabelPlaceholder": "Seans Detayları",
+        "showFields": "Alanları Göster",
+        "fields": {
+          "date": "Tarih",
+          "time": "Saat",
+          "location": "Konum",
+          "notes": "Notlar"
+        },
+        "customNotes": "Özel Notlar (isteğe bağlı)",
+        "customNotesPlaceholder": "Lütfen 10 dakika erken gelin. Rahat kıyafetler getirin!"
+      },
+      "cta": {
+        "buttonText": "Buton Metni",
+        "buttonTextPlaceholder": "Şimdi Rezervasyon Yap",
+        "buttonStyle": "Buton Stili",
+        "buttonStyles": {
+          "primary": "Birincil",
+          "secondary": "İkincil",
+          "text": "Metin Bağlantısı"
+        },
+        "linkLabel": "Bağlantı URL'si (isteğe bağlı)",
+        "linkPlaceholder": "https://example.com"
+      },
+      "image": {
+        "tabs": {
+          "upload": "Yeni Yükle",
+          "library": "Görsel Kütüphanesi",
+          "url": "URL"
+        },
+        "openLibrary": "Görsel Kütüphanesini Aç",
+        "urlLabel": "Görsel URL'si",
+        "urlPlaceholder": "https://example.com/image.jpg",
+        "currentImage": "Mevcut Görsel",
+        "defaultAlt": "Görsel",
+        "altLabel": "Alternatif Metin (isteğe bağlı)",
+        "altPlaceholder": "Görsel açıklaması",
+        "captionLabel": "Alt Yazı (isteğe bağlı)",
+        "captionPlaceholder": "Görsel alt yazısı",
+        "linkLabel": "Bağlantı URL'si (isteğe bağlı)",
+        "linkPlaceholder": "https://example.com"
+      },
+      "footer": {
+        "customText": "Özel Metin (isteğe bağlı)",
+        "customTextPlaceholder": "Ek alt bilgi içeriği",
+        "showElements": "Ögeleri Göster",
+        "elements": {
+          "logo": "Logo",
+          "studioName": "Stüdyo Adı",
+          "contactInfo": "İletişim Bilgisi"
+        }
+      },
+      "divider": {
+        "style": "Stil",
+        "styleOptions": {
+          "line": "Çizgi Ayırıcı",
+          "space": "Boşluk"
+        },
+        "heightLabel": "Yükseklik (px)",
+        "colorLabel": "Renk"
+      },
+      "columns": {
+        "countLabel": "Sütun Sayısı",
+        "options": {
+          "one": "1 Sütun",
+          "two": "2 Sütun",
+          "three": "3 Sütun"
+        },
+        "columnLabel": "Sütun {{index}}",
+        "columnPlaceholder": "Sütun {{index}} içeriği..."
+      },
+      "socialLinks": {
+        "instructions": "E-postalarda gösterilecek sosyal kanalları yapılandırın:",
+        "emptyDescription": "Henüz sosyal kanal yapılandırılmadı. Sosyal medya bağlantılarınızı eklemek için Ayarlar > Genel > Sosyal Kanallar bölümüne gidin."
+      },
+      "header": {
+        "showLogo": "Logoyu Göster",
+        "logoAlignment": "Logo Hizası",
+        "logoAlignmentOptions": {
+          "left": "Sol",
+          "center": "Orta",
+          "right": "Sağ"
+        },
+        "tagline": "Slogan (isteğe bağlı)",
+        "taglinePlaceholder": "Fotoğrafçılık sloganınız",
+        "taglineColor": "Slogan Rengi",
+        "backgroundColor": "Arka Plan Rengi"
+      },
+      "rawHtml": {
+        "alert": "Ham HTML gelişmiş kullanıcılar içindir. İçerik güvenlik için temizlenecektir.",
+        "label": "HTML İçeriği",
+        "placeholder": "<div>Özel HTML içeriğiniz...</div>"
+      }
+    },
+    "imageManager": {
+      "loading": "Görseller yükleniyor...",
+      "title": "Görsel Kütüphanesi",
+      "titleWithCount": "Görsel Kütüphanesi ({{count}})",
+      "empty": {
+        "title": "Henüz görsel yüklenmemiş",
+        "description": "Başlamak için ilk görselinizi yükleyin"
+      },
+      "actions": {
+        "insert": "Ekle",
+        "deleteTitle": "Görseli Sil",
+        "altPlaceholder": "Alternatif metin"
+      },
+      "messages": {
+        "loadError": "Görseller yüklenemedi",
+        "deleteSuccess": "Görsel başarıyla silindi",
+        "deleteError": "Görsel silinemedi",
+        "altSuccess": "Alternatif metin başarıyla güncellendi",
+        "altError": "Alternatif metin güncellenemedi",
+        "copySuccess": "Görsel URL'si panoya kopyalandı",
+        "noAltText": "Alt metin yok"
+      }
     },
     "email": {
       "subject": "Konu:",

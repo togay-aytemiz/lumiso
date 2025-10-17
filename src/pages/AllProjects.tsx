@@ -494,19 +494,19 @@ const AllProjects = () => {
         <div className="space-y-3">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 bg-primary rounded-full flex-shrink-0"></div>
-            <span className="text-sm">Board View - Visual workflow management with drag & drop</span>
+            <span className="text-sm">{t('projects.board_view_benefit')}</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 bg-primary rounded-full flex-shrink-0"></div>
-            <span className="text-sm">List View - Detailed project information in tables</span>
+            <span className="text-sm">{t('projects.list_view_benefit')}</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 bg-primary rounded-full flex-shrink-0"></div>
-            <span className="text-sm">Archived View - Completed projects organized separately</span>
+            <span className="text-sm">{t('projects.archived_view_benefit')}</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 bg-primary rounded-full flex-shrink-0"></div>
-            <span className="text-sm">Project status management and workflow optimization</span>
+            <span className="text-sm">{t('projects.status_management_benefit')}</span>
           </div>
         </div>
         <div className="p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg mt-4">
@@ -561,15 +561,15 @@ const AllProjects = () => {
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0"></div>
-            <span className="text-sm">Board view for visual project management</span>
+            <span className="text-sm">{t('projects.board_view_summary')}</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0"></div>
-            <span className="text-sm">List view for detailed analysis</span>
+            <span className="text-sm">{t('projects.list_view_summary')}</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0"></div>
-            <span className="text-sm">Archived view to review completed work</span>
+            <span className="text-sm">{t('projects.archived_view_summary')}</span>
           </div>
         </div>
         <div className="p-3 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg">

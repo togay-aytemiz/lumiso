@@ -68,6 +68,7 @@
     "title": "Projects",
     "all_projects": "All Projects",
     "project_management_hub": "Project Management Hub",
+    "page_subtitle": "Manage your photography projects",
     "board_view": "Board View",
     "list_view": "List View",
     "archived_view": "Archived View",
@@ -95,6 +96,26 @@
     "visual_workflow": "Visual workflow management with drag & drop",
     "detailed_table": "Detailed table view with sorting and filtering",
     "archived_projects": "View completed and archived projects",
+    "board_view_benefit": "Board View - Visual workflow management with drag & drop",
+    "list_view_benefit": "List View - Detailed project information in tables",
+    "archived_view_benefit": "Archived View - Completed projects organized separately",
+    "status_management_benefit": "Project status management and workflow optimization",
+    "board_view_summary": "Board view for visual project management",
+    "list_view_summary": "List view for detailed analysis",
+    "archived_view_summary": "Archived view to review completed work",
+    "aria": {
+      "viewModeSelection": "View mode selection",
+      "openKanbanSettings": "Open kanban settings",
+      "boardView": "Projects board view",
+      "archivedList": "Archived projects list",
+      "listView": "Projects list view",
+      "sessionsCount": "{{count}} sessions"
+    },
+    "sessionsCountLabel": "{{count}} sessions",
+    "accessibility": {
+      "switchView": "Switched to {{view}}",
+      "projectUpdated": "Project {{name}} updated"
+    },
     "drag_drop_organize": "Drag and drop projects between columns to update their status",
     "switch_views": "Switch between Board, List, and Archived views",
     "explore_features": "Explore the different features and find your preferred workflow",
@@ -270,6 +291,8 @@
         "logo_set": "Logo is currently set",
         "choose_new_logo": "Choose New Logo",
         "logo_formats": "Supported: JPG, PNG, SVG (Max: 2MB)",
+        "logo_preview_alt": "Current logo - click to enlarge",
+        "logo_preview_tooltip": "Click to view full size",
         "deleteLogoConfirm": "Are you sure you want to delete your logo? This action cannot be undone.",
         "primaryBrandColor": "Primary Brand Color",
         "brandColorHelp": "Used in client-facing UI and outgoing messages. Must be a valid hex color (e.g., #1EB29F)"
@@ -485,7 +508,35 @@
     },
     "services": {
       "title": "Packages & Services",
-      "description": "Create service packages and manage individual services for your business"
+      "description": "Create service packages and manage individual services for your business",
+      "highlights": {
+        "reviewPackages": "Review and customize the default packages",
+        "setPrices": "Set competitive prices for your packages",
+        "customizeOfferings": "Customize your service offerings"
+      },
+      "tutorial": {
+        "steps": {
+          "reviewTemplates": {
+            "title": "Review Your Package Templates",
+            "description": "We've created some default photography packages for you. You can modify, delete, or keep them as they are. Click on any package to edit its details.",
+            "tip": "Tip: You can edit package names, descriptions, and what's included"
+          },
+          "setPricing": {
+            "title": "Set Your Package Pricing",
+            "description": "Add or update pricing for your packages to streamline your client proposals and booking process.",
+            "tip": "Remember: You can always adjust prices later for individual projects"
+          },
+          "configureServices": {
+            "title": "Configure Your Services",
+            "description": "Review and customize the individual services that make up your packages. These are the building blocks you'll use when creating packages.",
+            "tip": "Services can be reused across multiple packages"
+          },
+          "complete": {
+            "title": "🎉 Packages Setup Complete!",
+            "description": "Excellent! You've successfully configured your photography packages and services. Your business is now ready to create professional proposals and manage bookings."
+          }
+        }
+      }
     },
     "clientMessaging": {
       "title": "Client Messaging",
@@ -556,6 +607,12 @@
     },
     "defaultLabel": "Payment",
     "errorFetching": "Error fetching payments"
+  },
+  "errors": {
+    "notFound": {
+      "title": "Oops! Page not found",
+      "cta": "Return to Home"
+    }
   },
   "analytics": {
     "title": "Analytics",
@@ -766,6 +823,147 @@
       "header": "Header",
       "rawHtml": "Raw HTML",
       "unknown": "Unknown Block"
+    },
+    "blockEditor": {
+      "unknownBlock": "Unknown block type",
+      "remove": "Remove",
+      "text": {
+        "contentLabel": "Content",
+        "contentPlaceholder": "Enter your text here...",
+        "formatting": "Formatting",
+        "fontSize": "Font Size",
+        "fontFamily": "Font Family",
+        "textAlignment": "Text Alignment",
+        "fontSizeOptions": {
+          "h1": "Heading 1",
+          "h2": "Heading 2",
+          "h3": "Heading 3",
+          "p": "Paragraph"
+        },
+        "fontFamilyOptions": {
+          "arial": "Arial",
+          "helvetica": "Helvetica",
+          "georgia": "Georgia",
+          "timesNewRoman": "Times New Roman"
+        }
+      },
+      "sessionDetails": {
+        "customLabel": "Custom Label (optional)",
+        "customLabelPlaceholder": "Session Details",
+        "showFields": "Show Fields",
+        "fields": {
+          "date": "Date",
+          "time": "Time",
+          "location": "Location",
+          "notes": "Notes"
+        },
+        "customNotes": "Custom Notes (optional)",
+        "customNotesPlaceholder": "Please arrive 10 minutes early. Bring comfortable outfits!"
+      },
+      "cta": {
+        "buttonText": "Button Text",
+        "buttonTextPlaceholder": "Book Now",
+        "buttonStyle": "Button Style",
+        "buttonStyles": {
+          "primary": "Primary",
+          "secondary": "Secondary",
+          "text": "Text Link"
+        },
+        "linkLabel": "Link URL (optional)",
+        "linkPlaceholder": "https://example.com"
+      },
+      "image": {
+        "tabs": {
+          "upload": "Upload New",
+          "library": "Image Library",
+          "url": "URL"
+        },
+        "openLibrary": "Open Image Library",
+        "urlLabel": "Image URL",
+        "urlPlaceholder": "https://example.com/image.jpg",
+        "currentImage": "Current Image",
+        "defaultAlt": "Image",
+        "altLabel": "Alt Text (optional)",
+        "altPlaceholder": "Image description",
+        "captionLabel": "Caption (optional)",
+        "captionPlaceholder": "Image caption",
+        "linkLabel": "Link URL (optional)",
+        "linkPlaceholder": "https://example.com"
+      },
+      "footer": {
+        "customText": "Custom Text (optional)",
+        "customTextPlaceholder": "Additional footer content",
+        "showElements": "Show Elements",
+        "elements": {
+          "logo": "Logo",
+          "studioName": "Studio Name",
+          "contactInfo": "Contact Info"
+        }
+      },
+      "divider": {
+        "style": "Style",
+        "styleOptions": {
+          "line": "Line Divider",
+          "space": "Space/Gap"
+        },
+        "heightLabel": "Height (px)",
+        "colorLabel": "Color"
+      },
+      "columns": {
+        "countLabel": "Number of Columns",
+        "options": {
+          "one": "1 Column",
+          "two": "2 Columns",
+          "three": "3 Columns"
+        },
+        "columnLabel": "Column {{index}}",
+        "columnPlaceholder": "Column {{index}} content..."
+      },
+      "socialLinks": {
+        "instructions": "Configure which social channels to display in emails:",
+        "emptyDescription": "No social channels configured. Go to Settings > General > Social Channels to add your social media links."
+      },
+      "header": {
+        "showLogo": "Show Logo",
+        "logoAlignment": "Logo Alignment",
+        "logoAlignmentOptions": {
+          "left": "Left",
+          "center": "Center",
+          "right": "Right"
+        },
+        "tagline": "Tagline (optional)",
+        "taglinePlaceholder": "Your photography tagline",
+        "taglineColor": "Tagline Color",
+        "backgroundColor": "Background Color"
+      },
+      "rawHtml": {
+        "alert": "Raw HTML is for advanced users. Content will be sanitized for security.",
+        "label": "HTML Content",
+        "placeholder": "<div>Your custom HTML here...</div>"
+      }
+    },
+    "imageManager": {
+      "loading": "Loading images...",
+      "title": "Image Library",
+      "titleWithCount": "Image Library ({{count}})",
+      "empty": {
+        "title": "No images uploaded yet",
+        "description": "Upload your first image to get started"
+      },
+      "actions": {
+        "insert": "Insert",
+        "deleteTitle": "Delete Image",
+        "altPlaceholder": "Alt text"
+      },
+      "messages": {
+        "loadError": "Failed to load images",
+        "deleteSuccess": "Image deleted successfully",
+        "deleteError": "Failed to delete image",
+        "altSuccess": "Alt text updated successfully",
+        "altError": "Failed to update alt text",
+        "copySuccess": "Image URL copied to clipboard",
+        "noAltText": "No alt text"
+      }
     },
     "email": {
       "subject": "Subject:",

@@ -14,6 +14,7 @@ import { Calendar, MessageSquare, Users, FileText, Filter } from "lucide-react";
 import { LEAD_STATUS } from "@/constants/entityConstants";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 
 const AllLeadsRefactored = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -25,6 +26,7 @@ const AllLeadsRefactored = () => {
   const [isSchedulingTutorial, setIsSchedulingTutorial] = useState(false);
   const navigate = useNavigate();
   const { currentStep, completeCurrentStep } = useOnboarding();
+  const { t } = useTranslation("pages");
 
   // Services
   const leadService = new LeadService();
@@ -77,29 +79,35 @@ const AllLeadsRefactored = () => {
   const leadsTutorialSteps: TutorialStep[] = [
     {
       id: 1,
-      title: "Welcome to Lead Management",
-      description: "This is your leads dashboard where you can track and manage all your potential clients. Here's what you can do:",
+      title: t("leads.tutorial.welcome.title"),
+      description: t("leads.tutorial.welcome.description"),
       content: (
         <div className="space-y-4">
           <div className="flex items-start gap-3">
             <Users className="w-5 h-5 text-primary mt-0.5" />
             <div>
-              <h4 className="font-medium">Track Leads</h4>
-              <p className="text-sm text-muted-foreground">View all your leads in one organized table with contact information and status.</p>
+              <h4 className="font-medium">{t("leads.tutorial.welcome.trackLeads.title")}</h4>
+              <p className="text-sm text-muted-foreground">
+                {t("leads.tutorial.welcome.trackLeads.description")}
+              </p>
             </div>
           </div>
           <div className="flex items-start gap-3">
             <Filter className="w-5 h-5 text-primary mt-0.5" />
             <div>
-              <h4 className="font-medium">Filter & Sort</h4>
-              <p className="text-sm text-muted-foreground">Filter by lead status and sort by any column to find exactly what you need.</p>
+              <h4 className="font-medium">{t("leads.tutorial.welcome.filterSort.title")}</h4>
+              <p className="text-sm text-muted-foreground">
+                {t("leads.tutorial.welcome.filterSort.description")}
+              </p>
             </div>
           </div>
           <div className="flex items-start gap-3">
             <FileText className="w-5 h-5 text-primary mt-0.5" />
             <div>
-              <h4 className="font-medium">Customize Columns</h4>
-              <p className="text-sm text-muted-foreground">Customize which columns to show and arrange them to match your workflow.</p>
+              <h4 className="font-medium">{t("leads.tutorial.welcome.customizeColumns.title")}</h4>
+              <p className="text-sm text-muted-foreground">
+                {t("leads.tutorial.welcome.customizeColumns.description")}
+              </p>
             </div>
           </div>
         </div>
@@ -109,52 +117,64 @@ const AllLeadsRefactored = () => {
     },
     {
       id: 2,
-      title: "Add Your First Lead",
-      description: "Now let's add your first lead! Click the 'Add Lead' button (or + icon on mobile) in the top right corner to get started.",
+      title: t("leads.tutorial.addFirstLead.title"),
+      description: t("leads.tutorial.addFirstLead.description"),
       content: null,
       mode: "floating",
       canProceed: leads.length > 0,
       requiresAction: leads.length === 0,
-      disabledTooltip: "Add at least 1 lead to continue"
+      disabledTooltip: t("leads.tutorial.addFirstLead.disabledTooltip")
     },
     {
       id: 3,
-      title: "Great! Now Let's Explore Lead Details",
-      description: "Perfect! Now that you have a lead, let's see what you can do with it. Click on your lead in the table below to view its detailed information.",
+      title: t("leads.tutorial.exploreDetails.title"),
+      description: t("leads.tutorial.exploreDetails.description"),
       content: null,
       mode: "floating",
       canProceed: false,
       requiresAction: true,
-      disabledTooltip: "Click on your lead to continue"
+      disabledTooltip: t("leads.tutorial.exploreDetails.disabledTooltip")
     }
   ];
 
   const schedulingTutorialSteps: TutorialStep[] = [
     {
       id: 1,
-      title: "Schedule Your First Photo Session",
-      description: "Let's walk through scheduling a photo session for your client. This process will help you organize your photography workflow.",
+      title: t("leads.tutorial.scheduling.title"),
+      description: t("leads.tutorial.scheduling.description"),
       content: (
         <div className="space-y-4">
           <div className="flex items-start gap-3">
             <Calendar className="w-5 h-5 text-primary mt-0.5" />
             <div>
-              <h4 className="font-medium">Choose Date & Time</h4>
-              <p className="text-sm text-muted-foreground">Pick a convenient time that works for both you and your client.</p>
+              <h4 className="font-medium">
+                {t("leads.tutorial.scheduling.chooseDateTime.title")}
+              </h4>
+              <p className="text-sm text-muted-foreground">
+                {t("leads.tutorial.scheduling.chooseDateTime.description")}
+              </p>
             </div>
           </div>
           <div className="flex items-start gap-3">
             <Users className="w-5 h-5 text-primary mt-0.5" />
             <div>
-              <h4 className="font-medium">Select Your Client</h4>
-              <p className="text-sm text-muted-foreground">Choose the lead/client you want to photograph from your list.</p>
+              <h4 className="font-medium">
+                {t("leads.tutorial.scheduling.selectClient.title")}
+              </h4>
+              <p className="text-sm text-muted-foreground">
+                {t("leads.tutorial.scheduling.selectClient.description")}
+              </p>
             </div>
           </div>
           <div className="flex items-start gap-3">
             <MessageSquare className="w-5 h-5 text-primary mt-0.5" />
             <div>
-              <h4 className="font-medium">Add Session Details</h4>
-              <p className="text-sm text-muted-foreground">Include notes, special requirements, and optional project association.</p>
+              <h4 className="font-medium">
+                {t("leads.tutorial.scheduling.addDetails.title")}
+              </h4>
+              <p className="text-sm text-muted-foreground">
+                {t("leads.tutorial.scheduling.addDetails.description")}
+              </p>
             </div>
           </div>
         </div>
@@ -164,13 +184,13 @@ const AllLeadsRefactored = () => {
     },
     {
       id: 2,
-      title: "Select a Lead to Schedule Session",
-      description: "Great! Now click on one of your leads in the table below to open their details page where you can schedule a session.",
+      title: t("leads.tutorial.selectLeadForSession.title"),
+      description: t("leads.tutorial.selectLeadForSession.description"),
       content: null,
       mode: "floating",
       canProceed: false,
       requiresAction: true,
-      disabledTooltip: "Click on a lead to continue"
+      disabledTooltip: t("leads.tutorial.selectLeadForSession.disabledTooltip")
     }
   ];
 

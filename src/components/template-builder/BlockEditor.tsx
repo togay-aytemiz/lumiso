@@ -16,6 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useRef, useState } from "react";
 import { emojis } from "@/lib/templateUtils";
 import { DividerBlockEditor, SocialLinksBlockEditor, HeaderBlockEditor, RawHTMLBlockEditor } from "./NewBlockEditors";
+import { useTranslation } from "react-i18next";
 
 interface BlockEditorProps {
   block: TemplateBlock;
@@ -28,6 +29,7 @@ interface BlockEditorProps {
 }
 
 export function BlockEditor({ block, onUpdate, onRemove, onMoveUp, onMoveDown, canMoveUp, canMoveDown }: BlockEditorProps) {
+  const { t } = useTranslation("pages");
   const renderEditor = () => {
     switch (block.type) {
       case "text":
@@ -49,7 +51,7 @@ export function BlockEditor({ block, onUpdate, onRemove, onMoveUp, onMoveDown, c
       case "raw-html":
         return <RawHTMLBlockEditor data={block.data as any} onUpdate={onUpdate} />;
       default:
-        return <div>Unknown block type</div>;
+        return <div>{t("templateBuilder.blockEditor.unknownBlock")}</div>;
     }
   };
 
@@ -71,7 +73,7 @@ export function BlockEditor({ block, onUpdate, onRemove, onMoveUp, onMoveDown, c
         
         <Button size="sm" variant="destructive" onClick={onRemove}>
           <Trash2 className="h-3 w-3" />
-          Remove
+          {t("templateBuilder.blockEditor.remove")}
         </Button>
       </div>
     </div>
@@ -80,6 +82,7 @@ export function BlockEditor({ block, onUpdate, onRemove, onMoveUp, onMoveDown, c
 
 function TextBlockEditor({ data, onUpdate }: { data: TextBlockData; onUpdate: (data: TextBlockData) => void }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const { t } = useTranslation("pages");
   
   const updateFormatting = (key: keyof TextBlockData["formatting"], value: any) => {
     onUpdate({
@@ -128,7 +131,7 @@ function TextBlockEditor({ data, onUpdate }: { data: TextBlockData; onUpdate: (d
     <div className="space-y-4">
       <div>
         <div className="flex items-center justify-between mb-2">
-          <Label>Content</Label>
+          <Label>{t("templateBuilder.blockEditor.text.contentLabel")}</Label>
           <div className="flex items-center gap-2">
             <EmojiPicker onEmojiSelect={insertEmoji} />
             <VariablePicker onVariableSelect={insertVariable} />
@@ -138,13 +141,13 @@ function TextBlockEditor({ data, onUpdate }: { data: TextBlockData; onUpdate: (d
           ref={textareaRef}
           value={data.content}
           onChange={(e) => onUpdate({ ...data, content: e.target.value })}
-          placeholder="Enter your text here..."
+          placeholder={t("templateBuilder.blockEditor.text.contentPlaceholder")}
           rows={4}
         />
       </div>
       
       <div className="space-y-3">
-        <Label>Formatting</Label>
+        <Label>{t("templateBuilder.blockEditor.text.formatting")}</Label>
         
         {/* First row: Bold, Italic, Bullets */}
         <div className="flex items-center gap-2">
@@ -174,31 +177,31 @@ function TextBlockEditor({ data, onUpdate }: { data: TextBlockData; onUpdate: (d
         {/* Second row: Font size, Font family on same row */}
         <div className="grid grid-cols-2 gap-2">
           <div>
-            <Label className="text-xs">Font Size</Label>
+            <Label className="text-xs">{t("templateBuilder.blockEditor.text.fontSize")}</Label>
             <Select value={data.formatting.fontSize} onValueChange={(value) => updateFormatting("fontSize", value)}>
               <SelectTrigger className="h-8">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="h1">Heading 1</SelectItem>
-                <SelectItem value="h2">Heading 2</SelectItem>
-                <SelectItem value="h3">Heading 3</SelectItem>
-                <SelectItem value="p">Paragraph</SelectItem>
+                <SelectItem value="h1">{t("templateBuilder.blockEditor.text.fontSizeOptions.h1")}</SelectItem>
+                <SelectItem value="h2">{t("templateBuilder.blockEditor.text.fontSizeOptions.h2")}</SelectItem>
+                <SelectItem value="h3">{t("templateBuilder.blockEditor.text.fontSizeOptions.h3")}</SelectItem>
+                <SelectItem value="p">{t("templateBuilder.blockEditor.text.fontSizeOptions.p")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
           
           <div>
-            <Label className="text-xs">Font Family</Label>
+            <Label className="text-xs">{t("templateBuilder.blockEditor.text.fontFamily")}</Label>
             <Select value={data.formatting.fontFamily} onValueChange={(value) => updateFormatting("fontFamily", value)}>
               <SelectTrigger className="h-8">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Arial">Arial</SelectItem>
-                <SelectItem value="Helvetica">Helvetica</SelectItem>
-                <SelectItem value="Georgia">Georgia</SelectItem>
-                <SelectItem value="Times New Roman">Times New Roman</SelectItem>
+                <SelectItem value="Arial">{t("templateBuilder.blockEditor.text.fontFamilyOptions.arial")}</SelectItem>
+                <SelectItem value="Helvetica">{t("templateBuilder.blockEditor.text.fontFamilyOptions.helvetica")}</SelectItem>
+                <SelectItem value="Georgia">{t("templateBuilder.blockEditor.text.fontFamilyOptions.georgia")}</SelectItem>
+                <SelectItem value="Times New Roman">{t("templateBuilder.blockEditor.text.fontFamilyOptions.timesNewRoman")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -206,7 +209,7 @@ function TextBlockEditor({ data, onUpdate }: { data: TextBlockData; onUpdate: (d
 
         {/* Third row: Text alignment */}
         <div>
-          <Label className="text-xs mb-2 block">Text Alignment</Label>
+          <Label className="text-xs mb-2 block">{t("templateBuilder.blockEditor.text.textAlignment")}</Label>
           <div className="flex items-center gap-1">
             <Button
               size="sm"
@@ -244,44 +247,45 @@ function TextBlockEditor({ data, onUpdate }: { data: TextBlockData; onUpdate: (d
 }
 
 function SessionDetailsBlockEditor({ data, onUpdate }: { data: SessionDetailsBlockData; onUpdate: (data: SessionDetailsBlockData) => void }) {
+  const { t } = useTranslation("pages");
   return (
     <div className="space-y-4">
       <div>
-        <Label>Custom Label (optional)</Label>
+        <Label>{t("templateBuilder.blockEditor.sessionDetails.customLabel")}</Label>
         <Input
           value={data.customLabel || ""}
           onChange={(e) => onUpdate({ ...data, customLabel: e.target.value })}
-          placeholder="Session Details"
+          placeholder={t("templateBuilder.blockEditor.sessionDetails.customLabelPlaceholder")}
         />
       </div>
       
       <div className="space-y-3">
-        <Label>Show Fields</Label>
+        <Label>{t("templateBuilder.blockEditor.sessionDetails.showFields")}</Label>
         
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <Label className="text-sm">Date</Label>
+            <Label className="text-sm">{t("templateBuilder.blockEditor.sessionDetails.fields.date")}</Label>
             <Switch
               checked={data.showDate}
               onCheckedChange={(checked) => onUpdate({ ...data, showDate: checked })}
             />
           </div>
           <div className="flex items-center justify-between">
-            <Label className="text-sm">Time</Label>
+            <Label className="text-sm">{t("templateBuilder.blockEditor.sessionDetails.fields.time")}</Label>
             <Switch
               checked={data.showTime}
               onCheckedChange={(checked) => onUpdate({ ...data, showTime: checked })}
             />
           </div>
           <div className="flex items-center justify-between">
-            <Label className="text-sm">Location</Label>
+            <Label className="text-sm">{t("templateBuilder.blockEditor.sessionDetails.fields.location")}</Label>
             <Switch
               checked={data.showLocation}
               onCheckedChange={(checked) => onUpdate({ ...data, showLocation: checked })}
             />
           </div>
           <div className="flex items-center justify-between">
-            <Label className="text-sm">Notes</Label>
+            <Label className="text-sm">{t("templateBuilder.blockEditor.sessionDetails.fields.notes")}</Label>
             <Switch
               checked={data.showNotes}
               onCheckedChange={(checked) => onUpdate({ ...data, showNotes: checked })}
@@ -292,11 +296,11 @@ function SessionDetailsBlockEditor({ data, onUpdate }: { data: SessionDetailsBlo
       
       {data.showNotes && (
         <div>
-          <Label>Custom Notes (optional)</Label>
+          <Label>{t("templateBuilder.blockEditor.sessionDetails.customNotes")}</Label>
           <Textarea
             value={data.customNotes || ""}
             onChange={(e) => onUpdate({ ...data, customNotes: e.target.value })}
-            placeholder="Please arrive 10 minutes early. Bring comfortable outfits!"
+            placeholder={t("templateBuilder.blockEditor.sessionDetails.customNotesPlaceholder")}
             rows={2}
           />
         </div>
@@ -306,37 +310,38 @@ function SessionDetailsBlockEditor({ data, onUpdate }: { data: SessionDetailsBlo
 }
 
 function CTABlockEditor({ data, onUpdate }: { data: CTABlockData; onUpdate: (data: CTABlockData) => void }) {
+  const { t } = useTranslation("pages");
   return (
     <div className="space-y-4">
       <div>
-        <Label>Button Text</Label>
+        <Label>{t("templateBuilder.blockEditor.cta.buttonText")}</Label>
         <Input
           value={data.text}
           onChange={(e) => onUpdate({ ...data, text: e.target.value })}
-          placeholder="Book Now"
+          placeholder={t("templateBuilder.blockEditor.cta.buttonTextPlaceholder")}
         />
       </div>
       
       <div>
-        <Label>Button Style</Label>
+        <Label>{t("templateBuilder.blockEditor.cta.buttonStyle")}</Label>
         <Select value={data.variant} onValueChange={(value) => onUpdate({ ...data, variant: value as CTABlockData["variant"] })}>
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="primary">Primary</SelectItem>
-            <SelectItem value="secondary">Secondary</SelectItem>
-            <SelectItem value="text">Text Link</SelectItem>
+            <SelectItem value="primary">{t("templateBuilder.blockEditor.cta.buttonStyles.primary")}</SelectItem>
+            <SelectItem value="secondary">{t("templateBuilder.blockEditor.cta.buttonStyles.secondary")}</SelectItem>
+            <SelectItem value="text">{t("templateBuilder.blockEditor.cta.buttonStyles.text")}</SelectItem>
           </SelectContent>
         </Select>
       </div>
       
       <div>
-        <Label>Link URL (optional)</Label>
+        <Label>{t("templateBuilder.blockEditor.cta.linkLabel")}</Label>
         <Input
           value={data.link || ""}
           onChange={(e) => onUpdate({ ...data, link: e.target.value })}
-          placeholder="https://example.com"
+          placeholder={t("templateBuilder.blockEditor.cta.linkPlaceholder")}
         />
       </div>
     </div>
@@ -345,13 +350,14 @@ function CTABlockEditor({ data, onUpdate }: { data: CTABlockData; onUpdate: (dat
 
 function ImageBlockEditor({ data, onUpdate }: { data: ImageBlockData; onUpdate: (data: ImageBlockData) => void }) {
   const [isLibraryOpen, setIsLibraryOpen] = useState(false);
+  const { t } = useTranslation("pages");
   
   const handleImageSelect = (imageUrl: string, altText?: string) => {
     onUpdate({ 
       ...data, 
       src: imageUrl, 
       placeholder: false,
-      alt: altText || data.alt || 'Image'
+      alt: altText || data.alt || t("templateBuilder.blockEditor.image.defaultAlt")
     });
   };
 
@@ -359,9 +365,9 @@ function ImageBlockEditor({ data, onUpdate }: { data: ImageBlockData; onUpdate: 
     <div className="space-y-4">
       <Tabs defaultValue="upload" className="w-full">
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="upload">Upload New</TabsTrigger>
-          <TabsTrigger value="library">Image Library</TabsTrigger>
-          <TabsTrigger value="url">URL</TabsTrigger>
+          <TabsTrigger value="upload">{t("templateBuilder.blockEditor.image.tabs.upload")}</TabsTrigger>
+          <TabsTrigger value="library">{t("templateBuilder.blockEditor.image.tabs.library")}</TabsTrigger>
+          <TabsTrigger value="url">{t("templateBuilder.blockEditor.image.tabs.url")}</TabsTrigger>
         </TabsList>
         
         <TabsContent value="upload" className="space-y-4">
@@ -374,17 +380,17 @@ function ImageBlockEditor({ data, onUpdate }: { data: ImageBlockData; onUpdate: 
             onClick={() => setIsLibraryOpen(true)}
             className="w-full"
           >
-            Open Image Library
+            {t("templateBuilder.blockEditor.image.openLibrary")}
           </Button>
         </TabsContent>
         
         <TabsContent value="url" className="space-y-4">
           <div>
-            <Label>Image URL</Label>
+            <Label>{t("templateBuilder.blockEditor.image.urlLabel")}</Label>
             <Input
               value={data.src || ""}
               onChange={(e) => onUpdate({ ...data, src: e.target.value, placeholder: !e.target.value })}
-              placeholder="https://example.com/image.jpg"
+              placeholder={t("templateBuilder.blockEditor.image.urlPlaceholder")}
             />
           </div>
         </TabsContent>
@@ -393,11 +399,11 @@ function ImageBlockEditor({ data, onUpdate }: { data: ImageBlockData; onUpdate: 
       {/* Show current image if exists */}
       {data.src && !data.placeholder && (
         <div className="border rounded-lg p-3">
-          <Label className="text-sm text-muted-foreground">Current Image</Label>
+          <Label className="text-sm text-muted-foreground">{t("templateBuilder.blockEditor.image.currentImage")}</Label>
           <div className="mt-2">
             <img 
               src={data.src} 
-              alt={data.alt || 'Preview'} 
+              alt={data.alt || t("templateBuilder.blockEditor.image.defaultAlt")} 
               className="max-w-full h-32 object-cover rounded border"
             />
           </div>
@@ -405,29 +411,29 @@ function ImageBlockEditor({ data, onUpdate }: { data: ImageBlockData; onUpdate: 
       )}
       
       <div>
-        <Label>Alt Text (optional)</Label>
+        <Label>{t("templateBuilder.blockEditor.image.altLabel")}</Label>
         <Input
           value={data.alt || ""}
           onChange={(e) => onUpdate({ ...data, alt: e.target.value })}
-          placeholder="Image description"
+          placeholder={t("templateBuilder.blockEditor.image.altPlaceholder")}
         />
       </div>
       
       <div>
-        <Label>Caption (optional)</Label>
+        <Label>{t("templateBuilder.blockEditor.image.captionLabel")}</Label>
         <Input
           value={data.caption || ""}
           onChange={(e) => onUpdate({ ...data, caption: e.target.value })}
-          placeholder="Image caption"
+          placeholder={t("templateBuilder.blockEditor.image.captionPlaceholder")}
         />
       </div>
       
       <div>
-        <Label>Link URL (optional)</Label>
+        <Label>{t("templateBuilder.blockEditor.image.linkLabel")}</Label>
         <Input
           value={data.link || ""}
           onChange={(e) => onUpdate({ ...data, link: e.target.value })}
-          placeholder="https://example.com"
+          placeholder={t("templateBuilder.blockEditor.image.linkPlaceholder")}
         />
       </div>
 
@@ -441,38 +447,39 @@ function ImageBlockEditor({ data, onUpdate }: { data: ImageBlockData; onUpdate: 
 }
 
 function FooterBlockEditor({ data, onUpdate }: { data: FooterBlockData; onUpdate: (data: FooterBlockData) => void }) {
+  const { t } = useTranslation("pages");
   return (
     <div className="space-y-4">
       <div>
-        <Label>Custom Text (optional)</Label>
+        <Label>{t("templateBuilder.blockEditor.footer.customText")}</Label>
         <Textarea
           value={data.customText || ""}
           onChange={(e) => onUpdate({ ...data, customText: e.target.value })}
-          placeholder="Additional footer content"
+          placeholder={t("templateBuilder.blockEditor.footer.customTextPlaceholder")}
           rows={2}
         />
       </div>
       
       <div className="space-y-3">
-        <Label>Show Elements</Label>
+        <Label>{t("templateBuilder.blockEditor.footer.showElements")}</Label>
         
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <Label className="text-sm">Logo</Label>
+            <Label className="text-sm">{t("templateBuilder.blockEditor.footer.elements.logo")}</Label>
             <Switch
               checked={data.showLogo}
               onCheckedChange={(checked) => onUpdate({ ...data, showLogo: checked })}
             />
           </div>
           <div className="flex items-center justify-between">
-            <Label className="text-sm">Studio Name</Label>
+            <Label className="text-sm">{t("templateBuilder.blockEditor.footer.elements.studioName")}</Label>
             <Switch
               checked={data.showStudioName}
               onCheckedChange={(checked) => onUpdate({ ...data, showStudioName: checked })}
             />
           </div>
           <div className="flex items-center justify-between">
-            <Label className="text-sm">Contact Info</Label>
+            <Label className="text-sm">{t("templateBuilder.blockEditor.footer.elements.contactInfo")}</Label>
             <Switch
               checked={data.showContactInfo}
               onCheckedChange={(checked) => onUpdate({ ...data, showContactInfo: checked })}

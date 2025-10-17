@@ -335,14 +335,14 @@ export default function General() {
                       <div className="relative cursor-pointer" onClick={() => setIsLogoModalOpen(true)}>
                         <img 
                           src={settings.logo_url} 
-                          alt="Current logo - click to enlarge" 
+                          alt={t("settings.general.branding.logo_preview_alt")}
                           className="w-12 h-12 object-contain bg-white border rounded hover:opacity-80 transition-opacity"
-                          title="Click to view full size"
+                          title={t("settings.general.branding.logo_preview_tooltip")}
                         />
                       </div>
                       <div className="flex-1">
-                        <p className="text-sm font-medium">Current Logo</p>
-                        <p className="text-xs text-muted-foreground">Logo is currently set</p>
+                        <p className="text-sm font-medium">{t("settings.general.branding.current_logo")}</p>
+                        <p className="text-xs text-muted-foreground">{t("settings.general.branding.logo_set")}</p>
                       </div>
                     </div>
                     
@@ -351,14 +351,14 @@ export default function General() {
                       <div className="relative cursor-pointer" onClick={() => setIsLogoModalOpen(true)}>
                         <img 
                           src={settings.logo_url} 
-                          alt="Current logo - click to enlarge" 
+                          alt={t("settings.general.branding.logo_preview_alt")}
                           className="w-16 h-16 object-contain bg-white border rounded hover:opacity-80 transition-opacity"
-                          title="Click to view full size"
+                          title={t("settings.general.branding.logo_preview_tooltip")}
                         />
                       </div>
                       <div className="flex-1">
-                        <p className="text-sm font-medium">Current Logo</p>
-                        <p className="text-xs text-muted-foreground">Logo is currently set</p>
+                        <p className="text-sm font-medium">{t("settings.general.branding.current_logo")}</p>
+                        <p className="text-xs text-muted-foreground">{t("settings.general.branding.logo_set")}</p>
                       </div>
                     </div>
 

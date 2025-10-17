@@ -17,6 +17,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { useTranslation } from 'react-i18next';
 
 interface TemplateAsset {
   id: string;
@@ -42,6 +43,8 @@ export function ImageManager({ onImageSelect, templateId, className }: ImageMana
   const { toast } = useToast();
   const { t: tMessages } = useMessagesTranslation();
   const { activeOrganization } = useOrganization();
+  const { t } = useTranslation("pages");
+  const { t: tCommon } = useTranslation("common");
 
   const loadAssets = async () => {
     if (!activeOrganization?.id) return;
@@ -59,8 +62,8 @@ export function ImageManager({ onImageSelect, templateId, className }: ImageMana
     } catch (error) {
       console.error('Error loading assets:', error);
       toast({
-        title: 'Error',
-        description: 'Failed to load images',
+        title: tCommon('toast.error'),
+        description: t('templateBuilder.imageManager.messages.loadError'),
         variant: 'destructive',
       });
     } finally {
@@ -92,14 +95,14 @@ export function ImageManager({ onImageSelect, templateId, className }: ImageMana
       setAssets(prev => prev.filter(a => a.id !== asset.id));
       
       toast({
-        title: 'Success',
-        description: 'Image deleted successfully',
+        title: tCommon('toast.success'),
+        description: t('templateBuilder.imageManager.messages.deleteSuccess'),
       });
     } catch (error) {
       console.error('Error deleting asset:', error);
       toast({
-        title: 'Error',
-        description: 'Failed to delete image',
+        title: tCommon('toast.error'),
+        description: t('templateBuilder.imageManager.messages.deleteError'),
         variant: 'destructive',
       });
     }
@@ -119,14 +122,14 @@ export function ImageManager({ onImageSelect, templateId, className }: ImageMana
       ));
 
       toast({
-        title: 'Success',
-        description: 'Alt text updated successfully',
+        title: tCommon('toast.success'),
+        description: t('templateBuilder.imageManager.messages.altSuccess'),
       });
     } catch (error) {
       console.error('Error updating alt text:', error);
       toast({
-        title: 'Error',
-        description: 'Failed to update alt text',
+        title: tCommon('toast.error'),
+        description: t('templateBuilder.imageManager.messages.altError'),
         variant: 'destructive',
       });
     }
@@ -143,8 +146,8 @@ export function ImageManager({ onImageSelect, templateId, className }: ImageMana
     const url = getImageUrl(filePath);
     navigator.clipboard.writeText(url);
     toast({
-      title: 'Copied',
-      description: 'Image URL copied to clipboard',
+      title: tCommon('toast.success'),
+      description: t('templateBuilder.imageManager.messages.copySuccess'),
     });
   };
 
@@ -161,7 +164,7 @@ export function ImageManager({ onImageSelect, templateId, className }: ImageMana
       <div className={`space-y-4 ${className}`}>
         <div className="flex items-center gap-2">
           <ImageIcon className="w-5 h-5" />
-          <h3 className="font-medium">Loading images...</h3>
+          <h3 className="font-medium">{t('templateBuilder.imageManager.loading')}</h3>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           {[...Array(6)].map((_, i) => (
@@ -176,14 +179,14 @@ export function ImageManager({ onImageSelect, templateId, className }: ImageMana
     <div className={`space-y-4 ${className}`}>
       <div className="flex items-center gap-2">
         <ImageIcon className="w-5 h-5" />
-        <h3 className="font-medium">Image Library ({assets.length})</h3>
+        <h3 className="font-medium">{t('templateBuilder.imageManager.titleWithCount', { count: assets.length })}</h3>
       </div>
 
       {assets.length === 0 ? (
         <div className="text-center py-8 text-muted-foreground">
           <ImageIcon className="w-12 h-12 mx-auto mb-3 opacity-50" />
-          <p>No images uploaded yet</p>
-          <p className="text-sm">Upload your first image to get started</p>
+          <p>{t('templateBuilder.imageManager.empty.title')}</p>
+          <p className="text-sm">{t('templateBuilder.imageManager.empty.description')}</p>
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -204,7 +207,7 @@ export function ImageManager({ onImageSelect, templateId, className }: ImageMana
                     variant="secondary"
                     onClick={() => onImageSelect(getImageUrl(asset.file_path), asset.alt_text || undefined)}
                   >
-                    Insert
+                    {t('templateBuilder.imageManager.actions.insert')}
                   </Button>
                   <Button
                     size="sm"
@@ -221,15 +224,15 @@ export function ImageManager({ onImageSelect, templateId, className }: ImageMana
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
-                        <AlertDialogTitle>Delete Image</AlertDialogTitle>
+                        <AlertDialogTitle>{t('templateBuilder.imageManager.actions.deleteTitle')}</AlertDialogTitle>
                         <AlertDialogDescription>
                           {tMessages('confirm.deleteImage')} {tMessages('confirm.cannotUndo')}
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogCancel>{tCommon('buttons.cancel')}</AlertDialogCancel>
                         <AlertDialogAction onClick={() => deleteAsset(asset)}>
-                          Delete
+                          {tCommon('buttons.delete')}
                         </AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
@@ -258,7 +261,7 @@ export function ImageManager({ onImageSelect, templateId, className }: ImageMana
                     <Input
                       value={altText}
                       onChange={(e) => setAltText(e.target.value)}
-                      placeholder="Alt text"
+                      placeholder={t('templateBuilder.imageManager.actions.altPlaceholder')}
                       className="text-xs h-7"
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
@@ -279,12 +282,12 @@ export function ImageManager({ onImageSelect, templateId, className }: ImageMana
                       }}
                       className="h-7 px-2"
                     >
-                      Save
+                      {tCommon('buttons.save')}
                     </Button>
                   </div>
                 ) : (
                   <p className="text-xs text-muted-foreground truncate">
-                    {asset.alt_text || 'No alt text'}
+                    {asset.alt_text || t('templateBuilder.imageManager.messages.noAltText')}
                   </p>
                 )}
                 

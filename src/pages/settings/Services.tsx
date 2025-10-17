@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import SettingsPageWrapper from "@/components/settings/SettingsPageWrapper";
 import { SettingsLoadingSkeleton } from "@/components/ui/loading-presets";
 import SettingsHeader from "@/components/settings/SettingsHeader";
@@ -11,74 +11,76 @@ import { OnboardingTutorial, TutorialStep } from "@/components/shared/Onboarding
 import { Package, DollarSign, Target } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { TFunction } from "i18next";
 
-const packagesSetupSteps: TutorialStep[] = [
+const createPackagesSetupSteps = (t: TFunction<"pages">): TutorialStep[] => [
   {
     id: 1,
-    title: "Review Your Package Templates",
-    description: "We've created some default photography packages for you. You can modify, delete, or keep them as they are. Click on any package to edit its details.",
+    title: t("settings.services.tutorial.steps.reviewTemplates.title"),
+    description: t("settings.services.tutorial.steps.reviewTemplates.description"),
     content: (
       <div className="space-y-3">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Package className="w-4 h-4" />
-          <span>Review and customize the default packages</span>
+          <span>{t("settings.services.highlights.reviewPackages")}</span>
         </div>
         <div className="text-xs text-muted-foreground">
-          Tip: You can edit package names, descriptions, and what's included
+          {t("settings.services.tutorial.steps.reviewTemplates.tip")}
         </div>
       </div>
     ),
     canProceed: true,
-    mode: 'floating'
+    mode: "floating",
   },
   {
     id: 2,
-    title: "Set Your Package Pricing",
-    description: "Add or update pricing for your packages to streamline your client proposals and booking process.",
+    title: t("settings.services.tutorial.steps.setPricing.title"),
+    description: t("settings.services.tutorial.steps.setPricing.description"),
     content: (
       <div className="space-y-3">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <DollarSign className="w-4 h-4" />
-          <span>Set competitive prices for your packages</span>
+          <span>{t("settings.services.highlights.setPrices")}</span>
         </div>
         <div className="text-xs text-muted-foreground">
-          Remember: You can always adjust prices later for individual projects
+          {t("settings.services.tutorial.steps.setPricing.tip")}
         </div>
       </div>
     ),
     canProceed: true,
-    mode: 'floating'
+    mode: "floating",
   },
   {
     id: 3,
-    title: "Configure Your Services",
-    description: "Review and customize the individual services that make up your packages. These are the building blocks you'll use when creating packages.",
+    title: t("settings.services.tutorial.steps.configureServices.title"),
+    description: t("settings.services.tutorial.steps.configureServices.description"),
     content: (
       <div className="space-y-3">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Target className="w-4 h-4" />
-          <span>Customize your service offerings</span>
+          <span>{t("settings.services.highlights.customizeOfferings")}</span>
         </div>
         <div className="text-xs text-muted-foreground">
-          Services can be reused across multiple packages
+          {t("settings.services.tutorial.steps.configureServices.tip")}
         </div>
       </div>
     ),
     canProceed: true,
-    mode: 'floating'
+    mode: "floating",
   },
   {
     id: 4,
-    title: "🎉 Packages Setup Complete!",
-    description: "Excellent! You've successfully configured your photography packages and services. Your business is now ready to create professional proposals and manage bookings.",
-    content: null, // Remove the content section
+    title: t("settings.services.tutorial.steps.complete.title"),
+    description: t("settings.services.tutorial.steps.complete.description"),
+    content: null,
     canProceed: true,
-    mode: 'modal'
-  }
+    mode: "modal",
+  },
 ];
 
 export default function Services() {
   const { t } = useTranslation("pages");
+  const packagesSetupSteps = useMemo(() => createPackagesSetupSteps(t), [t]);
   // Permissions removed for single photographer mode - always allow
   // const { hasPermission, loading } = usePermissions();
   const { currentStep, completeCurrentStep } = useOnboarding();

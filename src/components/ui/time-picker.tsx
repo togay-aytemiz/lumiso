@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 interface TimePickerProps {
   value?: string;
@@ -12,6 +13,7 @@ interface TimePickerProps {
 }
 
 export function TimePicker({ value, onChange, className, disabled }: TimePickerProps) {
+  const { t } = useTranslation("common");
   const [selectedHour, setSelectedHour] = useState<number>(() => {
     if (value) {
       const [hour] = value.split(':');
@@ -97,7 +99,7 @@ export function TimePicker({ value, onChange, className, disabled }: TimePickerP
       <div className="grid grid-cols-2 gap-3">
         {/* Hour Selection */}
         <div className="space-y-1">
-          <Label className="text-xs text-muted-foreground">Hour</Label>
+          <Label className="text-xs text-muted-foreground">{t("timePicker.hour")}</Label>
           <div className="grid grid-cols-3 gap-1 max-h-24 overflow-y-auto border rounded p-1">
             {hours.map((hour) => (
               <Button
@@ -116,7 +118,7 @@ export function TimePicker({ value, onChange, className, disabled }: TimePickerP
 
         {/* Minute Selection */}
         <div className="space-y-1">
-          <Label className="text-xs text-muted-foreground">Minutes</Label>
+          <Label className="text-xs text-muted-foreground">{t("timePicker.minutes")}</Label>
           <div className="grid grid-cols-2 gap-1">
             {minutes.map((minute) => (
               <Button

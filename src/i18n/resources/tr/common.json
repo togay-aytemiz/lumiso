@@ -32,7 +32,8 @@
     "view_details": "Detayları Görüntüle",
     "archive": "Arşivle",
     "restore": "Geri Yükle",
-    "add_project": "Proje Ekle"
+    "add_project": "Proje Ekle",
+    "remove": "Kaldır"
   },
   "labels": {
     "name": "Ad",
@@ -111,5 +112,21 @@
     "success": "Başarılı",
     "warning": "Uyarı",
     "info": "Bilgi"
+  },
+  "pagination": {
+    "previousPage": "Önceki sayfaya git",
+    "nextPage": "Sonraki sayfaya git",
+    "morePages": "Daha fazla sayfa"
+  },
+  "carousel": {
+    "previousSlide": "Önceki slayt",
+    "nextSlide": "Sonraki slayt"
+  },
+  "sidebar": {
+    "toggle": "Yan paneli aç/kapat"
+  },
+  "timePicker": {
+    "hour": "Saat",
+    "minutes": "Dakika"
   }
 }

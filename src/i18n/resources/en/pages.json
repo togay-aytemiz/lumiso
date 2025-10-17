@@ -192,6 +192,135 @@
       "deleteTitle": "Delete Session"
     }
   },
+  "admin": {
+    "localization": {
+      "title": "Localization",
+      "loading": "Loading...",
+      "subtitle": "Manage languages and translations for your application",
+      "buttons": {
+        "upload": "Upload",
+        "processing": "Processing...",
+        "download": "Download",
+        "downloadAll": "Download All Translations",
+        "addKey": "Add Key"
+      },
+      "dialog": {
+        "title": "Download Translation Files",
+        "individual": "Individual Files",
+        "packs": "Language Packs",
+        "completePack": "{{code}} Complete Pack"
+      },
+      "alert": {
+        "title": "Translation Workflow:",
+        "description": "Download existing files, translate them in your preferred tool, and upload the updated files back.",
+        "formatLabel": "File format:",
+        "formatCode": "{\"key\": \"value\", \"nested\": {\"key\": \"value\"}}",
+        "proTipsTitle": "Pro Tips:",
+        "proTipsDescription": "Use translation tools like Crowdin, Weblate, or even Google Translate for bulk translations. Always test your translations in the app after uploading to ensure proper formatting."
+      },
+      "tabs": {
+        "jsonManager": "JSON Translation Manager",
+        "languages": "Languages (DB)",
+        "translations": "Translations (DB)",
+        "settings": "Settings"
+      },
+      "cards": {
+        "status": {
+          "title": "Translation Status",
+          "description": "Current translation file statistics",
+          "keysBadge": "{{count}} keys"
+        },
+        "quickActions": {
+          "title": "Quick Actions",
+          "description": "Common translation management tasks",
+          "downloadIndividual": "Download Individual Files",
+          "downloadPacks": "Download Language Packs"
+        },
+        "workflow": {
+          "title": "Translation Workflow Guide",
+          "description": "Step-by-step guide for managing translations",
+          "steps": [
+            {
+              "title": "Download",
+              "description": "Download the translation file(s) you want to work with. Choose individual files or complete language packs."
+            },
+            {
+              "title": "Translate",
+              "description": "Edit the JSON files using any text editor or translation tool. Maintain the structure and only change the values."
+            },
+            {
+              "title": "Upload",
+              "description": "Upload the modified files back to the system. The changes will be validated and applied."
+            }
+          ],
+          "exampleTitle": "Example JSON Structure:",
+          "exampleCode": "{\n  \"buttons\": {\n    \"save\": \"Save\",\n    \"cancel\": \"Cancel\"\n  },\n  \"labels\": {\n    \"name\": \"Name\",\n    \"email\": \"Email\"\n  }\n}",
+          "alertTitle": "Pro Tips:"
+        }
+      },
+      "languagesTable": {
+        "title": "Available Languages",
+        "description": "Configure which languages are available in your application",
+        "headers": {
+          "language": "Language",
+          "code": "Code",
+          "nativeName": "Native Name",
+          "default": "Default",
+          "status": "Status",
+          "actions": "Actions"
+        },
+        "badges": {
+          "default": "Default",
+          "pending": "Pending"
+        }
+      },
+      "translations": {
+        "namespaceLabel": "Namespace",
+        "namespacePlaceholder": "Select namespace",
+        "searchLabel": "Search",
+        "searchPlaceholder": "Search keys or translations...",
+        "table": {
+          "title": "Translation Keys",
+          "description": "Manage translation keys and their values across languages",
+          "headers": {
+            "key": "Key",
+            "actions": "Actions"
+          },
+          "inputPlaceholder": "Enter {{language}} translation",
+          "empty": "No translation keys found.",
+          "emptySearch": "No translation keys match your search.",
+          "clickToAdd": "Click to add translation...",
+          "showing": "Showing {{count}} keys",
+          "filtered": " (filtered from {{total}})"
+        }
+      },
+      "settings": {
+        "title": "Localization Settings",
+        "description": "Configure global localization preferences",
+        "autoDetect": {
+          "label": "Auto-detect browser language",
+          "description": "Automatically set user language based on browser settings"
+        },
+        "fallback": {
+          "label": "Fallback language"
+        },
+        "threshold": {
+          "label": "Translation progress threshold",
+          "description": "Minimum percentage of translations required to show a language"
+        }
+      },
+      "toast": {
+        "loadError": "Failed to load localization data",
+        "languageActivated": "Language activated successfully",
+        "languageDeactivated": "Language deactivated successfully",
+        "languageUpdateError": "Failed to update language",
+        "translationUpdated": "Translation updated successfully",
+        "translationUpdateError": "Failed to update translation",
+        "uploadSuccess": "Successfully uploaded {{count}} translation file(s)",
+        "uploadPartial": "Uploaded {{success}}/{{total}} files successfully"
+      }
+    }
+  },
   "projects": {
     "title": "Projects",
     "all_projects": "All Projects",

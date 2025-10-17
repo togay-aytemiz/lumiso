@@ -192,6 +192,135 @@
       "deleteTitle": "Seansı Sil"
     }
   },
+  "admin": {
+    "localization": {
+      "title": "Yerelleştirme",
+      "loading": "Yükleniyor...",
+      "subtitle": "Uygulamanızdaki dilleri ve çevirileri yönetin",
+      "buttons": {
+        "upload": "Yükle",
+        "processing": "İşleniyor...",
+        "download": "İndir",
+        "downloadAll": "Tüm Çevirileri İndir",
+        "addKey": "Anahtar Ekle"
+      },
+      "dialog": {
+        "title": "Çeviri Dosyalarını İndir",
+        "individual": "Bireysel Dosyalar",
+        "packs": "Dil Paketleri",
+        "completePack": "{{code}} Tam Paket"
+      },
+      "alert": {
+        "title": "Çeviri İş Akışı:",
+        "description": "Mevcut dosyaları indirin, tercihinize göre çevirin ve güncellenen dosyaları tekrar yükleyin.",
+        "formatLabel": "Dosya formatı:",
+        "formatCode": "{\"key\": \"value\", \"nested\": {\"key\": \"value\"}}",
+        "proTipsTitle": "Uzman İpuçları:",
+        "proTipsDescription": "Toplu çeviriler için Crowdin, Weblate veya Google Translate gibi araçları kullanın. Yükledikten sonra çevirilerinizi uygulamada test ederek biçimlendirmeyi doğrulayın."
+      },
+      "tabs": {
+        "jsonManager": "JSON Çeviri Yöneticisi",
+        "languages": "Diller (DB)",
+        "translations": "Çeviriler (DB)",
+        "settings": "Ayarlar"
+      },
+      "cards": {
+        "status": {
+          "title": "Çeviri Durumu",
+          "description": "Mevcut çeviri dosyası istatistikleri",
+          "keysBadge": "{{count}} anahtar"
+        },
+        "quickActions": {
+          "title": "Hızlı İşlemler",
+          "description": "Sık kullanılan çeviri yönetimi görevleri",
+          "downloadIndividual": "Bireysel Dosyaları İndir",
+          "downloadPacks": "Dil Paketlerini İndir"
+        },
+        "workflow": {
+          "title": "Çeviri İş Akışı Rehberi",
+          "description": "Çevirileri yönetmek için adım adım rehber",
+          "steps": [
+            {
+              "title": "İndir",
+              "description": "Çalışmak istediğiniz çeviri dosyalarını indirin. Bireysel dosyaları veya tam dil paketlerini seçebilirsiniz."
+            },
+            {
+              "title": "Çevir",
+              "description": "JSON dosyalarını herhangi bir metin düzenleyici veya çeviri aracıyla düzenleyin. Yapıyı koruyun ve sadece değerleri değiştirin."
+            },
+            {
+              "title": "Yükle",
+              "description": "Düzenlenmiş dosyaları sisteme geri yükleyin. Değişiklikler doğrulanacak ve uygulanacaktır."
+            }
+          ],
+          "exampleTitle": "Örnek JSON Yapısı:",
+          "exampleCode": "{\n  \"buttons\": {\n    \"save\": \"Kaydet\",\n    \"cancel\": \"İptal\"\n  },\n  \"labels\": {\n    \"name\": \"Ad\",\n    \"email\": \"E-posta\"\n  }\n}",
+          "alertTitle": "Uzman İpuçları:"
+        }
+      },
+      "languagesTable": {
+        "title": "Kullanılabilir Diller",
+        "description": "Uygulamada hangi dillerin kullanılabilir olduğunu yapılandırın",
+        "headers": {
+          "language": "Dil",
+          "code": "Kod",
+          "nativeName": "Yerel Ad",
+          "default": "Varsayılan",
+          "status": "Durum",
+          "actions": "İşlemler"
+        },
+        "badges": {
+          "default": "Varsayılan",
+          "pending": "Beklemede"
+        }
+      },
+      "translations": {
+        "namespaceLabel": "Ad alanı",
+        "namespacePlaceholder": "Ad alanı seçin",
+        "searchLabel": "Ara",
+        "searchPlaceholder": "Anahtar veya çeviri ara...",
+        "table": {
+          "title": "Çeviri Anahtarları",
+          "description": "Çeviri anahtarlarını ve değerlerini diller arasında yönetin",
+          "headers": {
+            "key": "Anahtar",
+            "actions": "İşlemler"
+          },
+          "inputPlaceholder": "{{language}} çevirisini girin",
+          "empty": "Çeviri anahtarı bulunamadı.",
+          "emptySearch": "Aramanızla eşleşen çeviri anahtarı yok.",
+          "clickToAdd": "Çeviri eklemek için tıklayın...",
+          "showing": "{{count}} anahtar görüntüleniyor",
+          "filtered": " (toplam {{total}} içinden filtrelendi)"
+        }
+      },
+      "settings": {
+        "title": "Yerelleştirme Ayarları",
+        "description": "Genel yerelleştirme tercihlerini yapılandırın",
+        "autoDetect": {
+          "label": "Tarayıcı dilini otomatik algıla",
+          "description": "Kullanıcı dilini tarayıcı ayarlarına göre otomatik ayarla"
+        },
+        "fallback": {
+          "label": "Yedek dil"
+        },
+        "threshold": {
+          "label": "Çeviri ilerleme eşiği",
+          "description": "Bir dilin görüntülenmesi için gereken minimum çeviri yüzdesi"
+        }
+      },
+      "toast": {
+        "loadError": "Yerelleştirme verileri yüklenemedi",
+        "languageActivated": "Dil başarıyla etkinleştirildi",
+        "languageDeactivated": "Dil başarıyla devre dışı bırakıldı",
+        "languageUpdateError": "Dil güncellenemedi",
+        "translationUpdated": "Çeviri başarıyla güncellendi",
+        "translationUpdateError": "Çeviri güncellenemedi",
+        "uploadSuccess": "{{count}} çeviri dosyası başarıyla yüklendi",
+        "uploadPartial": "{{total}} dosyanın {{success}} tanesi başarıyla yüklendi"
+      }
+    }
+  },
   "projects": {
     "title": "Projeler",
     "all_projects": "Tüm Projeler",

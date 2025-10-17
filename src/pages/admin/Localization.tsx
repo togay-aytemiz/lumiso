@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,8 @@ import { toast } from "@/hooks/use-toast";
 import { Language, TranslationNamespace, TranslationKey, Translation } from "@/i18n/types";
 import { useTranslationFiles } from "@/hooks/useTranslationFiles";
 import { Globe, Languages, FileText, Upload, Download, Plus, Edit, Trash, Info, FileDown, Package } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { useCommonTranslation } from "@/hooks/useTypedTranslation";
 
 export default function AdminLocalization() {
   const [languages, setLanguages] = useState<Language[]>([]);
@@ -38,6 +40,15 @@ export default function AdminLocalization() {
     getTranslationStats,
     isProcessing,
   } = useTranslationFiles();
+  const { t: tCommon } = useCommonTranslation();
+  const { t, i18n } = useTranslation("pages");
+  const workflowSteps = useMemo(
+    () =>
+      t("admin.localization.cards.workflow.steps", {
+        returnObjects: true,
+      }) as Array<{ title: string; description: string }>,
+    [t, i18n.language]
+  );
 
   useEffect(() => {
     loadData();
@@ -81,8 +92,8 @@ export default function AdminLocalization() {
     } catch (error) {
       console.error('Error loading data:', error);
       toast({
-        title: "Error",
-        description: "Failed to load localization data",
+        title: tCommon("toast.error"),
+        description: t("admin.localization.toast.loadError"),
         variant: "destructive",
       });
     } finally {
@@ -104,14 +115,16 @@ export default function AdminLocalization() {
       ));
 
       toast({
-        title: "Success",
-        description: `Language ${isActive ? 'activated' : 'deactivated'} successfully`,
+        title: tCommon("toast.success"),
+        description: isActive
+          ? t("admin.localization.toast.languageActivated")
+          : t("admin.localization.toast.languageDeactivated"),
       });
     } catch (error) {
       console.error('Error updating language:', error);
       toast({
-        title: "Error",
-        description: "Failed to update language",
+        title: tCommon("toast.error"),
+        description: t("admin.localization.toast.languageUpdateError"),
         variant: "destructive",
       });
     }
@@ -165,14 +178,14 @@ export default function AdminLocalization() {
       }
       
       toast({
-        title: "Success",
-        description: "Translation updated successfully",
+        title: tCommon("toast.success"),
+        description: t("admin.localization.toast.translationUpdated"),
       });
     } catch (error) {
       console.error('Error updating translation:', error);
       toast({
-        title: "Error",
-        description: "Failed to update translation",
+        title: tCommon("toast.error"),
+        description: t("admin.localization.toast.translationUpdateError"),
         variant: "destructive",
       });
     }
@@ -200,13 +213,13 @@ export default function AdminLocalization() {
 
     if (successCount === totalCount) {
       toast({
-        title: "Success",
-        description: `Successfully uploaded ${successCount} translation file(s)`,
+        title: tCommon("toast.success"),
+        description: t("admin.localization.toast.uploadSuccess", { count: successCount }),
       });
     } else {
       toast({
-        title: "Partial Success",
-        description: `Uploaded ${successCount}/${totalCount} files successfully`,
+        title: tCommon("toast.warning"),
+        description: t("admin.localization.toast.uploadPartial", { success: successCount, total: totalCount }),
         variant: "destructive",
       });
     }
@@ -245,8 +258,8 @@ export default function AdminLocalization() {
       <div className="container mx-auto py-6 space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Localization</h1>
-            <p className="text-muted-foreground">Loading...</p>
+            <h1 className="text-3xl font-bold tracking-tight">{t("admin.localization.title")}</h1>
+            <p className="text-muted-foreground">{t("admin.localization.loading")}</p>
           </div>
         </div>
       </div>
@@ -257,9 +270,9 @@ export default function AdminLocalization() {
     <div className="container mx-auto py-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Localization</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t("admin.localization.title")}</h1>
           <p className="text-muted-foreground">
-            Manage languages and translations for your application
+            {t("admin.localization.subtitle")}
           </p>
         </div>
         <div className="flex gap-2">
@@ -278,22 +291,22 @@ export default function AdminLocalization() {
             disabled={isProcessing}
           >
             <Upload className="w-4 h-4 mr-2" />
-            {isProcessing ? "Processing..." : "Upload"}
+            {isProcessing ? t("admin.localization.buttons.processing") : t("admin.localization.buttons.upload")}
           </Button>
           <Dialog>
             <DialogTrigger asChild>
               <Button variant="outline" size="sm">
                 <Download className="w-4 h-4 mr-2" />
-                Download
+                {t("admin.localization.buttons.download")}
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-md">
               <DialogHeader>
-                <DialogTitle>Download Translation Files</DialogTitle>
+                <DialogTitle>{t("admin.localization.dialog.title")}</DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <h4 className="font-medium">Individual Files</h4>
+                  <h4 className="font-medium">{t("admin.localization.dialog.individual")}</h4>
                   <div className="grid grid-cols-2 gap-2">
                     {getAvailableLanguages().map(lang => 
                       getAvailableNamespaces().map(ns => (
@@ -312,7 +325,7 @@ export default function AdminLocalization() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <h4 className="font-medium">Language Packs</h4>
+                  <h4 className="font-medium">{t("admin.localization.dialog.packs")}</h4>
                   <div className="space-y-1">
                     {getAvailableLanguages().map(lang => (
                       <Button
@@ -323,7 +336,7 @@ export default function AdminLocalization() {
                         className="w-full justify-start"
                       >
                         <Package className="w-4 h-4 mr-2" />
-                        {lang.toUpperCase()} Complete Pack
+                        {t("admin.localization.dialog.completePack", { code: lang.toUpperCase() })}
                       </Button>
                     ))}
                   </div>
@@ -334,7 +347,7 @@ export default function AdminLocalization() {
                   className="w-full"
                 >
                   <Download className="w-4 h-4 mr-2" />
-                  Download All Translations
+                  {t("admin.localization.buttons.downloadAll")}
                 </Button>
               </div>
             </DialogContent>
@@ -345,9 +358,14 @@ export default function AdminLocalization() {
       <Alert className="mb-6">
         <Info className="h-4 w-4" />
         <AlertDescription>
-          <strong>Translation Workflow:</strong> This system uses JSON files for translations. 
-          Download existing files, translate them in your preferred tool, and upload the updated files back. 
-          File format: <code className="bg-muted px-1 rounded">{`{"key": "value", "nested": {"key": "value"}}`}</code>
+          <strong>{t("admin.localization.alert.title")}</strong>{" "}
+          {t("admin.localization.alert.description")}
+          <div className="mt-2">
+            <span>{t("admin.localization.alert.formatLabel")} </span>
+            <code className="bg-muted px-1 rounded">
+              {t("admin.localization.alert.formatCode")}
+            </code>
+          </div>
         </AlertDescription>
       </Alert>
 
@@ -355,19 +373,19 @@ export default function AdminLocalization() {
         <TabsList>
           <TabsTrigger value="json-manager" className="flex items-center gap-2">
             <FileText className="w-4 h-4" />
-            JSON Translation Manager
+            {t("admin.localization.tabs.jsonManager")}
           </TabsTrigger>
           <TabsTrigger value="languages" className="flex items-center gap-2">
             <Globe className="w-4 h-4" />
-            Languages (DB)
+            {t("admin.localization.tabs.languages")}
           </TabsTrigger>
           <TabsTrigger value="translations" className="flex items-center gap-2">
             <FileText className="w-4 h-4" />
-            Translations (DB)
+            {t("admin.localization.tabs.translations")}
           </TabsTrigger>
           <TabsTrigger value="settings" className="flex items-center gap-2">
             <Languages className="w-4 h-4" />
-            Settings
+            {t("admin.localization.tabs.settings")}
           </TabsTrigger>
         </TabsList>
 
@@ -375,8 +393,8 @@ export default function AdminLocalization() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
-                <CardTitle>Translation Status</CardTitle>
-                <CardDescription>Current translation file statistics</CardDescription>
+                <CardTitle>{t("admin.localization.cards.status.title")}</CardTitle>
+                <CardDescription>{t("admin.localization.cards.status.description")}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -384,7 +402,11 @@ export default function AdminLocalization() {
                     <div key={lang} className="border rounded-lg p-3">
                       <div className="flex items-center justify-between mb-2">
                         <h4 className="font-medium">{lang.toUpperCase()}</h4>
-                        <Badge variant="outline">{Object.values(namespaces).reduce((a, b) => a + b, 0)} keys</Badge>
+                        <Badge variant="outline">
+                          {t("admin.localization.cards.status.keysBadge", {
+                            count: Object.values(namespaces).reduce((a, b) => a + b, 0),
+                          })}
+                        </Badge>
                       </div>
                       <div className="grid grid-cols-2 gap-2 text-sm">
                         {Object.entries(namespaces).map(([ns, count]) => (
@@ -402,12 +424,12 @@ export default function AdminLocalization() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Quick Actions</CardTitle>
-                <CardDescription>Common translation management tasks</CardDescription>
+                <CardTitle>{t("admin.localization.cards.quickActions.title")}</CardTitle>
+                <CardDescription>{t("admin.localization.cards.quickActions.description")}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="space-y-2">
-                  <h4 className="font-medium text-sm">Download Individual Files</h4>
+                  <h4 className="font-medium text-sm">{t("admin.localization.cards.quickActions.downloadIndividual")}</h4>
                   <div className="grid grid-cols-2 gap-2">
                     {getAvailableLanguages().map(lang => 
                       getAvailableNamespaces().slice(0, 4).map(ns => (
@@ -427,7 +449,7 @@ export default function AdminLocalization() {
                 </div>
                 
                 <div className="space-y-2">
-                  <h4 className="font-medium text-sm">Download Language Packs</h4>
+                  <h4 className="font-medium text-sm">{t("admin.localization.cards.quickActions.downloadPacks")}</h4>
                   {getAvailableLanguages().map(lang => (
                     <Button
                       key={lang}
@@ -437,7 +459,7 @@ export default function AdminLocalization() {
                       className="w-full justify-start"
                     >
                       <Package className="w-4 h-4 mr-2" />
-                      {lang.toUpperCase()} Complete Pack
+                      {t("admin.localization.dialog.completePack", { code: lang.toUpperCase() })}
                     </Button>
                   ))}
                 </div>
@@ -447,7 +469,7 @@ export default function AdminLocalization() {
                   className="w-full"
                 >
                   <Download className="w-4 h-4 mr-2" />
-                  Download All Translations
+                  {t("admin.localization.buttons.downloadAll")}
                 </Button>
               </CardContent>
             </Card>
@@ -455,64 +477,36 @@ export default function AdminLocalization() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Translation Workflow Guide</CardTitle>
-              <CardDescription>Step-by-step guide for managing translations</CardDescription>
+              <CardTitle>{t("admin.localization.cards.workflow.title")}</CardTitle>
+              <CardDescription>{t("admin.localization.cards.workflow.description")}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="border rounded-lg p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">1</div>
-                      <h4 className="font-medium">Download</h4>
+                  {workflowSteps.map((step, index) => (
+                    <div key={step.title} className="border rounded-lg p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">
+                          {index + 1}
+                        </div>
+                        <h4 className="font-medium">{step.title}</h4>
+                      </div>
+                      <p className="text-sm text-muted-foreground">{step.description}</p>
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      Download the translation file(s) you want to work with. Choose individual files or complete language packs.
-                    </p>
-                  </div>
-                  
-                  <div className="border rounded-lg p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">2</div>
-                      <h4 className="font-medium">Translate</h4>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      Edit the JSON files using any text editor or translation tool. Maintain the structure and only change the values.
-                    </p>
-                  </div>
-                  
-                  <div className="border rounded-lg p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">3</div>
-                      <h4 className="font-medium">Upload</h4>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      Upload the modified files back to the system. The changes will be validated and applied.
-                    </p>
-                  </div>
+                  ))}
                 </div>
 
                 <div className="border-l-4 border-primary pl-4">
-                  <h4 className="font-medium mb-2">Example JSON Structure:</h4>
+                  <h4 className="font-medium mb-2">{t("admin.localization.cards.workflow.exampleTitle")}</h4>
                   <pre className="bg-muted p-3 rounded text-sm overflow-x-auto">
-{`{
-  "buttons": {
-    "save": "Save",
-    "cancel": "Cancel"
-  },
-  "labels": {
-    "name": "Name",
-    "email": "Email"
-  }
-}`}
+{t("admin.localization.cards.workflow.exampleCode")}
                   </pre>
                 </div>
 
                 <Alert>
                   <Info className="h-4 w-4" />
                   <AlertDescription>
-                    <strong>Pro Tips:</strong> Use translation tools like Crowdin, Weblate, or even Google Translate for bulk translations. 
-                    Always test your translations in the app after uploading to ensure proper formatting.
+                    <strong>{t("admin.localization.cards.workflow.alertTitle")}</strong> {t("admin.localization.alert.proTipsDescription")}
                   </AlertDescription>
                 </Alert>
               </div>
@@ -523,21 +517,21 @@ export default function AdminLocalization() {
         <TabsContent value="languages" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Available Languages</CardTitle>
+              <CardTitle>{t("admin.localization.languagesTable.title")}</CardTitle>
               <CardDescription>
-                Configure which languages are available in your application
+                {t("admin.localization.languagesTable.description")}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Language</TableHead>
-                    <TableHead>Code</TableHead>
-                    <TableHead>Native Name</TableHead>
-                    <TableHead>Default</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
+                    <TableHead>{t("admin.localization.languagesTable.headers.language")}</TableHead>
+                    <TableHead>{t("admin.localization.languagesTable.headers.code")}</TableHead>
+                    <TableHead>{t("admin.localization.languagesTable.headers.nativeName")}</TableHead>
+                    <TableHead>{t("admin.localization.languagesTable.headers.default")}</TableHead>
+                    <TableHead>{t("admin.localization.languagesTable.headers.status")}</TableHead>
+                    <TableHead>{t("admin.localization.languagesTable.headers.actions")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -550,7 +544,7 @@ export default function AdminLocalization() {
                       <TableCell>{language.native_name}</TableCell>
                       <TableCell>
                         {language.is_default && (
-                          <Badge variant="secondary">Default</Badge>
+                          <Badge variant="secondary">{t("admin.localization.languagesTable.badges.default")}</Badge>
                         )}
                       </TableCell>
                       <TableCell>
@@ -576,10 +570,10 @@ export default function AdminLocalization() {
           <div className="flex items-center justify-between">
             <div className="flex gap-4 items-end">
               <div>
-                <Label htmlFor="namespace">Namespace</Label>
+                <Label htmlFor="namespace">{t("admin.localization.translations.namespaceLabel")}</Label>
                 <Select value={selectedNamespace} onValueChange={setSelectedNamespace}>
                   <SelectTrigger className="w-[200px] mt-1">
-                    <SelectValue placeholder="Select namespace" />
+                    <SelectValue placeholder={t("admin.localization.translations.namespacePlaceholder")} />
                   </SelectTrigger>
                   <SelectContent>
                     {namespaces.map((namespace) => (
@@ -591,10 +585,10 @@ export default function AdminLocalization() {
                 </Select>
               </div>
               <div>
-                <Label htmlFor="search">Search</Label>
+                <Label htmlFor="search">{t("admin.localization.translations.searchLabel")}</Label>
                 <Input
                   id="search"
-                  placeholder="Search keys or translations..."
+                  placeholder={t("admin.localization.translations.searchPlaceholder")}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-[250px] mt-1"
@@ -603,15 +597,15 @@ export default function AdminLocalization() {
             </div>
             <Button size="sm">
               <Plus className="w-4 h-4 mr-2" />
-              Add Key
+              {t("admin.localization.buttons.addKey")}
             </Button>
           </div>
 
           <Card>
             <CardHeader>
-              <CardTitle>Translation Keys</CardTitle>
+              <CardTitle>{t("admin.localization.translations.table.title")}</CardTitle>
               <CardDescription>
-                Manage translation keys and their values across languages
+                {t("admin.localization.translations.table.description")}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -619,7 +613,7 @@ export default function AdminLocalization() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-[200px]">Key</TableHead>
+                      <TableHead className="w-[200px]">{t("admin.localization.translations.table.headers.key")}</TableHead>
                       {languages
                         .filter(lang => lang.is_active)
                         .map(language => (
@@ -630,7 +624,7 @@ export default function AdminLocalization() {
                             </Badge>
                           </TableHead>
                         ))}
-                      <TableHead>Actions</TableHead>
+                      <TableHead>{t("admin.localization.translations.table.headers.actions")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -652,7 +646,7 @@ export default function AdminLocalization() {
                                         updateTranslation(key.id, language.code, e.target.value);
                                       }}
                                       onBlur={() => setEditingTranslation(null)}
-                                      placeholder={`Enter ${language.native_name} translation`}
+                                      placeholder={t("admin.localization.translations.table.inputPlaceholder", { language: language.native_name })}
                                       className="text-sm min-h-[60px] resize-none"
                                       autoFocus
                                     />
@@ -661,18 +655,18 @@ export default function AdminLocalization() {
                                       className="min-h-[40px] p-2 border rounded cursor-pointer hover:bg-muted/50 text-sm"
                                       onClick={() => setEditingTranslation({keyId: key.id, languageCode: language.code})}
                                     >
-                                      {translation?.value || (
-                                        <span className="text-muted-foreground italic">
-                                          Click to add translation...
-                                        </span>
-                                      )}
-                                    </div>
+                                  {translation?.value || (
+                                    <span className="text-muted-foreground italic">
+                                      {t("admin.localization.translations.table.clickToAdd")}
+                                    </span>
                                   )}
-                                  {translation && !translation.is_approved && (
-                                    <Badge variant="outline" className="text-xs">
-                                      Pending
-                                    </Badge>
-                                  )}
+                                </div>
+                              )}
+                              {translation && !translation.is_approved && (
+                                <Badge variant="outline" className="text-xs">
+                                  {t("admin.localization.languagesTable.badges.pending")}
+                                </Badge>
+                              )}
                                 </div>
                               </TableCell>
                             );
@@ -696,7 +690,9 @@ export default function AdminLocalization() {
               {searchFilteredKeys.length === 0 && (
                 <div className="mt-4 text-center py-8">
                   <p className="text-muted-foreground">
-                    {searchQuery ? 'No translation keys match your search.' : 'No translation keys found.'}
+                    {searchQuery
+                      ? t("admin.localization.translations.table.emptySearch")
+                      : t("admin.localization.translations.table.empty")}
                   </p>
                 </div>
               )}
@@ -704,8 +700,9 @@ export default function AdminLocalization() {
               {searchFilteredKeys.length > 0 && (
                 <div className="mt-4 text-center">
                   <Badge variant="secondary">
-                    Showing {searchFilteredKeys.length} keys
-                    {searchQuery && ` (filtered from ${filteredKeys.length})`}
+                    {t("admin.localization.translations.table.showing", { count: searchFilteredKeys.length })}
+                    {searchQuery &&
+                      t("admin.localization.translations.table.filtered", { total: filteredKeys.length })}
                   </Badge>
                 </div>
               )}
@@ -716,24 +713,24 @@ export default function AdminLocalization() {
         <TabsContent value="settings" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Localization Settings</CardTitle>
+              <CardTitle>{t("admin.localization.settings.title")}</CardTitle>
               <CardDescription>
-                Configure global localization preferences
+                {t("admin.localization.settings.description")}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label>Auto-detect browser language</Label>
+                <Label>{t("admin.localization.settings.autoDetect.label")}</Label>
                 <div className="flex items-center space-x-2">
                   <Switch defaultChecked />
                   <span className="text-sm text-muted-foreground">
-                    Automatically set user language based on browser settings
+                    {t("admin.localization.settings.autoDetect.description")}
                   </span>
                 </div>
               </div>
               
               <div className="space-y-2">
-                <Label>Fallback language</Label>
+                <Label>{t("admin.localization.settings.fallback.label")}</Label>
                 <Select defaultValue="en">
                   <SelectTrigger className="w-[200px]">
                     <SelectValue />
@@ -749,14 +746,14 @@ export default function AdminLocalization() {
               </div>
               
               <div className="space-y-2">
-                <Label>Translation progress threshold</Label>
+                <Label>{t("admin.localization.settings.threshold.label")}</Label>
                 <Input 
                   type="number" 
                   defaultValue="80" 
                   className="w-[200px]"
                 />
                 <span className="text-sm text-muted-foreground">
-                  Minimum percentage of translations required to show a language
+                  {t("admin.localization.settings.threshold.description")}
                 </span>
               </div>
             </CardContent>

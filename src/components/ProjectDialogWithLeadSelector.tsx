@@ -167,7 +167,7 @@ export function ProjectDialogWithLeadSelector({
             user_id: userData.user.id,
             organization_id: organizationId,
             amount: basePriceValue,
-            description: 'Base Price',
+            description: tForms('payments.base_price'),
             status: 'due',
             type: 'base_price'
           });

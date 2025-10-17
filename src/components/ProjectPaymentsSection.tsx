@@ -207,6 +207,12 @@ export function ProjectPaymentsSection({
   const totalPaid = payments.filter(p => p.status === 'paid').reduce((sum, p) => sum + p.amount, 0);
   const totalDue = payments.filter(p => p.status === 'due').reduce((sum, p) => sum + p.amount, 0);
   const extraServices = services.reduce((sum, s) => sum + (s.selling_price || s.price || 0), 0);
+  const getPaymentDescription = (payment: Payment) => {
+    if (payment.type === 'base_price') {
+      return t('payments.base_price_label');
+    }
+    return payment.description?.trim() || t('payments.no_description');
+  };
 
   // Remaining Balance = Base Price + Due Payments + Extra Services - Paid Payments
   const remainingBalance = totalDue + extraServices - totalPaid;
@@ -268,7 +274,7 @@ export function ProjectPaymentsSection({
                       </div>
                       <div className="flex-1 min-w-0 flex items-center gap-2">
                         <div className="text-sm text-muted-foreground truncate">
-                          {payment.description || t('payments.no_description')}
+                          {getPaymentDescription(payment)}
                         </div>
                       </div>
                       <div>
@@ -301,9 +307,11 @@ export function ProjectPaymentsSection({
                     </div>
                     
                     {/* Row 2: Description (if exists) */}
-                    {payment.description && <div className="text-sm text-muted-foreground truncate">
-                        {payment.description}
-                      </div>}
+                    {getPaymentDescription(payment) && (
+                      <div className="text-sm text-muted-foreground truncate">
+                        {getPaymentDescription(payment)}
+                      </div>
+                    )}
                     
                     {/* Row 3: Status + Actions */}
                     <div className="flex items-center justify-between">

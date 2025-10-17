@@ -133,7 +133,9 @@
     "loadingClients": "Kişiler yükleniyor...",
     "noClientsMatch": "Aramanızla eşleşen kişi bulunamadı",
     "noActiveClients": "Aktif kişi bulunamadı",
-    "enterClientName": "Kişi adı girin"
+    "enterClientName": "Kişi adı girin",
+    "enter_email": "E-posta adresini yaz",
+    "enter_password": "Şifreni yaz"
   },
   "packages": {
     "title": "Paketler",
@@ -915,7 +917,12 @@
     "delete_payment": "Ödemeyi Sil",
     "delete_payment_confirm": "Bu ödemeyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
     "deleting": "Siliniyor...",
-    "payment_deleted": "Ödeme başarıyla silindi"
+    "payment_deleted": "Ödeme başarıyla silindi",
+    "error_loading": "Ödemeler yüklenirken hata oluştu",
+    "error_deleting": "Ödeme silinirken hata oluştu",
+    "no_description": "Açıklama eklenmedi",
+    "base_price": "Temel Fiyat",
+    "base_price_label": "Temel Fiyat"
   },
   "kanban_settings": {
     "title": "Kanban Kart Ayarları",
@@ -1388,9 +1395,5 @@
   "labels": {
     "email": "E-posta",
     "password": "Şifre"
-  },
-  "placeholders": {
-    "enter_email": "E-posta adresini yaz",
-    "enter_password": "Şifreni yaz"
   }
 }

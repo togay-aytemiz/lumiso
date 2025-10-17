@@ -94,7 +94,7 @@ export function ProjectDialog({ open, onOpenChange, leadId, onProjectCreated }: 
             user_id: userData.user.id,
             organization_id: organizationId,
             amount: basePriceValue,
-            description: 'Base Price',
+            description: t('payments.base_price'),
             status: 'due',
             type: 'base_price'
           });

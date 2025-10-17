@@ -362,7 +362,7 @@ export function EnhancedProjectDialog({
           user_id: user.id,
           organization_id: organizationId,
           amount: basePrice,
-          description: "Base Price",
+          description: tForms("payments.base_price"),
           status: "due",
           type: "base_price",
         });

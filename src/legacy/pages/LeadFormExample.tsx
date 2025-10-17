@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { EntityForm, EntityFormField } from '@/components/common/EntityForm';
+import { EntityForm, EntityFormField } from '@/legacy/components/common/EntityForm';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 import { useLeadActions } from '@/hooks/useLeadActions';
 import { CreateLeadData } from '@/services/LeadService';
-import { entityFormFields, commonValidationRules } from '@/utils/validationUtils';
+import { entityFormFields, commonValidationRules } from '@/legacy/utils/validationUtils';
 import { LEAD_STATUS_OPTIONS } from '@/constants/entityConstants';
 
 const LeadFormExample = () => {

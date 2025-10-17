@@ -1,0 +1,11 @@
+{
+  "$schema": "https://unpkg.com/knip@latest/schema.json",
+  "workspaces": {
+    ".": {
+      "ignore": [
+        "src/legacy/**",
+        "dist/**"
+      ]
+    }
+  }
+}

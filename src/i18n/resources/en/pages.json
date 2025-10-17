@@ -360,6 +360,48 @@
         "uploadSuccess": "Successfully uploaded {{count}} translation file(s)",
         "uploadPartial": "Uploaded {{success}}/{{total}} files successfully"
       }
+    },
+    "users": {
+      "title": "User Management",
+      "subtitle": "Manage user accounts, roles, and permissions",
+      "badge": "Coming Soon",
+      "sectionTitle": "User Management Features",
+      "sectionDescription": "This section will include comprehensive user management capabilities",
+      "features": {
+        "userList": {
+          "title": "User List & Search",
+          "description": "Browse and search all users in the system"
+        },
+        "roleManagement": {
+          "title": "Role Management",
+          "description": "Assign admin, support, or user roles"
+        },
+        "impersonation": {
+          "title": "User Impersonation",
+          "description": "Switch context to view as any user"
+        }
+      }
+    },
+    "system": {
+      "title": "System Overview",
+      "subtitle": "Monitor system health, usage, and analytics",
+      "badge": "Coming Soon",
+      "sectionTitle": "System Monitoring Features",
+      "sectionDescription": "This section will include comprehensive system monitoring and analytics",
+      "features": {
+        "usage": {
+          "title": "Usage Statistics",
+          "description": "Track system usage across all users"
+        },
+        "performance": {
+          "title": "Performance Metrics",
+          "description": "Monitor response times and system health"
+        },
+        "errors": {
+          "title": "Error Tracking",
+          "description": "View and manage system errors and issues"
+        }
+      }
     }
   },
   "projects": {

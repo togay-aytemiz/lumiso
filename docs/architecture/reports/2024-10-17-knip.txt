@@ -1,0 +1,248 @@
+Unused files (101)
+src/components/ActivitySection.tsx                                                              
+src/components/AddLeadDialog.tsx                                                                
+src/components/ClientDetailsCard.tsx                                                            
+src/components/ClientDetailsList.tsx                                                            
+src/components/common/ErrorBoundary.tsx                                                         
+src/components/EditLeadDialog.tsx                                                               
+src/components/LeadFieldValuesDisplay.tsx                                                       
+src/components/MobileStickyNav.tsx                                                              
+src/components/NewServiceDialog.tsx                                                             
+src/components/project-details/Section.tsx                                                      
+src/components/project-details/Summary/ClientCard.tsx                                           
+src/components/project-details/Summary/CompactProjectBanner.tsx                                 
+src/components/project-details/Summary/FinancialSummaryCard.tsx                                 
+src/components/project-details/Summary/ProjectSummaryCard.tsx                                   
+src/components/project-details/Summary/QuickActionsCard.tsx                                     
+src/components/project-details/Summary/SessionsSummaryCard.tsx                                  
+src/components/ProjectDialog.tsx                                                                
+src/components/ProjectDialogWithLeadSelector.tsx                                                
+src/components/ProjectSheetPreview.tsx                                                          
+src/components/ServiceSelector.tsx                                                              
+src/components/SessionBanner.tsx                                                                
+src/components/settings/AutoSaveToggle.tsx                                                      
+src/components/settings/CategoryFloatingActionBar.tsx                                           
+src/components/settings/EnhancedSettingsSection.tsx                                             
+src/components/shared/TutorialExitGuardDialog.tsx                                               
+src/components/ui/aspect-ratio.tsx                                                              
+src/components/ui/breadcrumb.tsx                                                                
+src/components/ui/carousel.tsx                                                                  
+src/components/ui/context-menu.tsx                                                              
+src/components/ui/drawer.tsx                                                                    
+src/components/ui/hover-card.tsx                                                                
+src/components/ui/input-otp.tsx                                                                 
+src/components/ui/menubar.tsx                                                                   
+src/components/ui/navigation-menu.tsx                                                           
+src/components/ui/resizable.tsx                                                                 
+src/components/ui/slider.tsx                                                                    
+src/components/ui/time-picker.tsx                                                               
+src/components/ui/use-toast.ts                                                                  
+src/components/UnifiedActivityArea.tsx                                                          
+src/components/WorkflowHealthDashboard.tsx                                                      
+src/constants/entityConstants.ts                                                                
+src/hooks/useAccessibility.ts                                                                   
+src/hooks/useDebounce.ts                                                                        
+src/hooks/useEntityActions.ts                                                                   
+src/hooks/useEntityData.ts                                                                      
+src/hooks/useLeadActions.ts                                                                     
+src/hooks/useLeadStatusWorkflows.ts                                                             
+src/hooks/useLifecycle.ts                                                                       
+src/hooks/useMilestoneNotifications.ts                                                          
+src/hooks/useOnboardingBulletproofTest.ts                                                       
+src/hooks/useProjectActions.ts                                                                  
+src/hooks/useReminderActions.ts                                                                 
+src/hooks/useSettingsSectionWithContext.ts                                                      
+src/hooks/useTemplateValidation.ts                                                              
+src/hooks/useUserSettings.ts                                                                    
+src/hooks/useWorkflowHealth.ts                                                                  
+src/pages/settings/Account_old.tsx                                                              
+src/services/BaseEntityService.ts                                                               
+src/services/LeadService.ts                                                                     
+src/services/ProjectService.ts                                                                  
+src/services/SessionService.ts                                                                  
+src/theme/tokens.ts                                                                             
+src/utils/entityUtils.ts                                                                        
+src/utils/onboardingCleanup.ts                                                                  
+src/utils/onboardingValidation.ts                                                               
+src/utils/testUtils.tsx                                                                         
+supabase/functions/_shared/email-i18n.ts                                                        
+supabase/functions/get-users-email/index.ts                                                     
+supabase/functions/notification-processor/_templates/enhanced-daily-summary-empty.ts            
+supabase/functions/notification-processor/_templates/enhanced-daily-summary-modern.ts           
+supabase/functions/notification-processor/_templates/enhanced-email-base.ts                     
+supabase/functions/notification-processor/_templates/immediate-notifications.ts                 
+supabase/functions/notification-processor/index.ts                                              
+supabase/functions/process-session-reminders/index.ts                                           
+supabase/functions/schedule-daily-notifications/index.ts                                        
+supabase/functions/send-reminder-notifications/_templates/daily-summary-template.ts             
+supabase/functions/send-reminder-notifications/_templates/delivery-template.ts                  
+supabase/functions/send-reminder-notifications/_templates/email-base.ts                         
+supabase/functions/send-reminder-notifications/_templates/enhanced-daily-summary-empty.ts       
+supabase/functions/send-reminder-notifications/_templates/enhanced-daily-summary-modern.ts      
+supabase/functions/send-reminder-notifications/_templates/enhanced-daily-summary-template.ts    
+supabase/functions/send-reminder-notifications/_templates/enhanced-email-base.ts                
+supabase/functions/send-reminder-notifications/_templates/enhanced-milestone-template.ts        
+supabase/functions/send-reminder-notifications/_templates/enhanced-overdue-template.ts          
+supabase/functions/send-reminder-notifications/_templates/enhanced-session-template.ts          
+supabase/functions/send-reminder-notifications/_templates/enhanced-task-nudge-template.ts       
+supabase/functions/send-reminder-notifications/_templates/immediate-notifications.ts            
+supabase/functions/send-reminder-notifications/_templates/overdue-template.ts                   
+supabase/functions/send-reminder-notifications/_templates/session-template.ts                   
+supabase/functions/send-reminder-notifications/_templates/simplified-daily-summary-template.ts  
+supabase/functions/send-reminder-notifications/_templates/simplified-weekly-recap-template.ts   
+supabase/functions/send-reminder-notifications/_templates/task-nudge-template.ts                
+supabase/functions/send-reminder-notifications/_templates/weekly-recap-template.ts              
+supabase/functions/send-reminder-notifications/index.ts                                         
+supabase/functions/send-template-email/index.ts                                                 
+supabase/functions/simple-daily-notifications/_templates/enhanced-daily-summary-empty.ts        
+supabase/functions/simple-daily-notifications/_templates/enhanced-daily-summary-modern.ts       
+supabase/functions/simple-daily-notifications/_templates/enhanced-email-base.ts                 
+supabase/functions/simple-daily-notifications/index.ts                                          
+supabase/functions/test-callback/index.ts                                                       
+supabase/functions/workflow-executor/index.ts                                                   
+Unused dependencies (20)
+@radix-ui/react-aspect-ratio     package.json:18:6
+@radix-ui/react-context-menu     package.json:22:6
+@radix-ui/react-hover-card       package.json:25:6
+@radix-ui/react-menubar          package.json:27:6
+@radix-ui/react-navigation-menu  package.json:28:6
+@radix-ui/react-slider           package.json:35:6
+@testing-library/react           package.json:46:6
+@testing-library/user-event      package.json:47:6
+@types/dompurify                 package.json:48:6
+@types/react-i18next             package.json:50:6
+@types/react-window              package.json:51:6
+caniuse-lite                     package.json:52:6
+embla-carousel-react             package.json:59:6
+i18next-resources-to-backend     package.json:62:6
+input-otp                        package.json:63:6
+jest                             package.json:64:6
+react-resizable-panels           package.json:74:6
+react-window                     package.json:76:6
+resend                           package.json:78:6
+vaul                             package.json:82:6
+Unused devDependencies (1)
+@tailwindcss/typography  package.json:87:6
+Unresolved imports (3)
+ts-jest/jest-preset     jest.config.js
+jest-environment-jsdom  jest.config.js
+ts-jest                 jest.config.js
+Unused exports (82)
+CalendarErrorBoundary      class     src/components/calendar/CalendarErrorBoundary.tsx:21:14      
+ColumnsBlockEditor         function  src/components/template-builder/NewBlockEditors.tsx:58:17    
+StorageQuotaDisplay        function  src/components/template-builder/StorageQuotaDisplay.tsx:37:17
+AlertDialogPortal                    src/components/ui/alert-dialog.tsx:129:15                    
+AlertDialogOverlay                   src/components/ui/alert-dialog.tsx:130:21                    
+badgeVariants                        src/components/ui/badge.tsx:42:16                            
+CardFooter                           src/components/ui/card.tsx:79:27                             
+ChartStyle                           src/components/ui/chart.tsx:361:22                           
+CommandDialog                        src/components/ui/command.tsx:144:11                         
+CommandShortcut                      src/components/ui/command.tsx:150:15                         
+CommandSeparator                     src/components/ui/command.tsx:151:19                         
+DateTimePicker                       src/components/ui/date-time-picker.tsx:58:14                 
+DialogPortal                         src/components/ui/dialog.tsx:120:10                          
+DialogOverlay                        src/components/ui/dialog.tsx:121:16                          
+DialogClose                          src/components/ui/dialog.tsx:122:17                          
+DropdownMenuCheckboxItem             src/components/ui/dropdown-menu.tsx:186:20                   
+DropdownMenuRadioItem                src/components/ui/dropdown-menu.tsx:187:28                   
+DropdownMenuLabel                    src/components/ui/dropdown-menu.tsx:188:25                   
+DropdownMenuSeparator                src/components/ui/dropdown-menu.tsx:189:21                   
+DropdownMenuShortcut                 src/components/ui/dropdown-menu.tsx:190:25                   
+DropdownMenuGroup                    src/components/ui/dropdown-menu.tsx:191:24                   
+DropdownMenuPortal                   src/components/ui/dropdown-menu.tsx:192:21                   
+DropdownMenuSub                      src/components/ui/dropdown-menu.tsx:193:22                   
+DropdownMenuSubContent               src/components/ui/dropdown-menu.tsx:194:19                   
+DropdownMenuSubTrigger               src/components/ui/dropdown-menu.tsx:195:26                   
+DropdownMenuRadioGroup               src/components/ui/dropdown-menu.tsx:196:26                   
+useFormField                         src/components/ui/form.tsx:167:9                             
+CompactLoadingSkeleton               src/components/ui/loading-presets.tsx:51:14                  
+CardGridLoadingSkeleton              src/components/ui/loading-presets.tsx:58:14                  
+default                              src/components/ui/long-press-button.tsx:116:8                
+PaginationEllipsis                   src/components/ui/pagination.tsx:121:21                      
+ScrollBar                            src/components/ui/scroll-area.tsx:46:21                      
+SelectGroup                          src/components/ui/select.tsx:148:10                          
+SelectLabel                          src/components/ui/select.tsx:152:17                          
+SelectScrollUpButton                 src/components/ui/select.tsx:155:19                          
+SelectScrollDownButton               src/components/ui/select.tsx:156:24                          
+SheetClose                           src/components/ui/sheet.tsx:124:9                            
+SheetOverlay                         src/components/ui/sheet.tsx:125:60                           
+SheetPortal                          src/components/ui/sheet.tsx:125:74                           
+SidebarGroupAction                   src/components/ui/sidebar.tsx:743:16                         
+SidebarInput                         src/components/ui/sidebar.tsx:747:17                         
+SidebarInset                         src/components/ui/sidebar.tsx:748:16                         
+SidebarMenuAction                    src/components/ui/sidebar.tsx:750:15                         
+SidebarMenuBadge                     src/components/ui/sidebar.tsx:751:21                         
+SidebarMenuSkeleton                  src/components/ui/sidebar.tsx:754:19                         
+SidebarMenuSub                       src/components/ui/sidebar.tsx:755:23                         
+SidebarMenuSubButton                 src/components/ui/sidebar.tsx:756:18                         
+SidebarMenuSubItem                   src/components/ui/sidebar.tsx:757:24                         
+SidebarRail                          src/components/ui/sidebar.tsx:759:19                         
+SidebarSeparator                     src/components/ui/sidebar.tsx:760:15                         
+useSidebar                           src/components/ui/sidebar.tsx:762:18                         
+toast                                src/components/ui/sonner.tsx:29:18                           
+TableFooter                          src/components/ui/table.tsx:111:13                           
+TableCaption                         src/components/ui/table.tsx:115:13                           
+Toggle                               src/components/ui/toggle.tsx:43:9                            
+reducer                              src/hooks/use-toast.ts:74:14                                 
+useOrganizationData        function  src/hooks/useOrganizationData.ts:6:17                        
+useTypedTranslation        function  src/hooks/useTypedTranslation.ts:205:17                      
+useT                                 src/hooks/useTypedTranslation.ts:219:14                      
+default                              src/i18n/index.ts:63:8                                       
+Constants                            src/integrations/supabase/types.ts:2315:14                   
+formatDateWithOrgSettings  function  src/lib/dateFormatUtils.ts:9:17                              
+formatTimeWithOrgSettings  function  src/lib/dateFormatUtils.ts:34:17                             
+createTrimmedInputHandler            src/lib/inputUtils.ts:18:14                                  
+sanitizeFieldValue         function  src/lib/leadFieldValidation.ts:106:17                        
+parseFieldValue            function  src/lib/leadFieldValidation.ts:132:17                        
+StatusBadge                function  src/lib/leadStatusColors.ts:98:17                            
+clearOrganizationCache     function  src/lib/organizationUtils.ts:109:17                          
+getSessionQueryWithStatus            src/lib/sessionSorting.ts:110:14                             
+previewDataSets                      src/lib/templateUtils.ts:137:14                              
+passwordSchema                       src/lib/validation.ts:9:14                                   
+nameSchema                           src/lib/validation.ts:24:14                                  
+notesSchema                          src/lib/validation.ts:30:14                                  
+signInSchema                         src/lib/validation.ts:36:14                                  
+signUpSchema                         src/lib/validation.ts:41:14                                  
+leadSchema                           src/lib/validation.ts:47:14                                  
+SYSTEM_FIELD_KEYS                    src/types/leadFields.ts:77:14                                
+cleanupAuthState                     src/utils/authUtils.ts:3:14                                  
+signInSafely                         src/utils/authUtils.ts:49:14                                 
+measurePerformance         function  src/utils/performance.ts:69:17                               
+useMeasureRender           function  src/utils/performance.ts:98:17                               
+checkMemoryUsage           function  src/utils/performance.ts:111:17                              
+Unused exported types (29)
+BadgeProps                interface  src/components/ui/badge.tsx:32:18         
+CalendarProps             type       src/components/ui/calendar.tsx:8:13       
+ChartConfig               type       src/components/ui/chart.tsx:9:13          
+TextareaProps             interface  src/components/ui/textarea.tsx:5:18       
+UseDataTableProps         interface  src/hooks/useDataTable.ts:12:18           
+SortDirection             type       src/hooks/useDataTable.ts:18:13           
+KanbanSettings            interface  src/hooks/useKanbanSettings.ts:7:18       
+OrganizationSettings      interface  src/hooks/useOrganizationSettings.ts:16:18
+UserPreferences           interface  src/hooks/useUserPreferences.ts:6:18      
+UserLanguagePreference    interface  src/i18n/types.ts:40:18                   
+TranslationNamespaceType  type       src/i18n/types.ts:46:13                   
+Json                      type       src/integrations/supabase/types.ts:1:13   
+Tables                    type       src/integrations/supabase/types.ts:2202:13
+TablesInsert              type       src/integrations/supabase/types.ts:2231:13
+TablesUpdate              type       src/integrations/supabase/types.ts:2256:13
+Enums                     type       src/integrations/supabase/types.ts:2281:13
+CompositeTypes            type       src/integrations/supabase/types.ts:2298:13
+DateFormatOptions         interface  src/lib/dateFormatUtils.ts:4:18           
+OrgSettings               interface  src/lib/dateFormatUtils.ts:131:18         
+LeadStatus                type       src/lib/leadStatusColors.ts:8:13          
+StatusStyles              interface  src/lib/leadStatusColors.ts:17:18         
+StatusBadgeProps          interface  src/lib/leadStatusColors.ts:92:18         
+SettingsHelpContent       interface  src/lib/settingsHelpContent.ts:1:18       
+LeadWithFieldValues       interface  src/types/leadFields.ts:64:18             
+TemplateChannelView       interface  src/types/template.ts:63:18               
+TemplateBuilderState      interface  src/types/templateBuilder.ts:101:18       
+PreviewDataSet            interface  src/types/templateBuilder.ts:110:18       
+WorkflowExecution         interface  src/types/workflow.ts:33:18               
+PerformanceMetric         interface  src/utils/performance.ts:7:18             
+Duplicate exports (4)
+ErrorBoundary|default       src/components/ErrorBoundary.tsx       
+SessionStatusBadge|default  src/components/SessionStatusBadge.tsx  
+DateTimePicker|default      src/components/ui/date-time-picker.tsx 
+LongPressButton|default     src/components/ui/long-press-button.tsx
+Configuration hints (1)

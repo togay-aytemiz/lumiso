@@ -1,3 +1,4 @@
+// @deprecated Use `ProjectDetailRefactored` instead. Kept for historical reference.
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";

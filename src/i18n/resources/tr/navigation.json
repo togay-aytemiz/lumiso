@@ -25,6 +25,25 @@
     "bookings": "Rezervasyonlar",
     "automation": "Otomasyon"
   },
+  "help": {
+    "title": "Yardım ve Destek",
+    "description": "Destek mi lazım? Aşağıdaki seçeneklerden birini seçerek yardım alın.",
+    "close": "Kapat",
+    "options": {
+      "documentation": {
+        "title": "Dokümantasyon",
+        "description": "Kılavuzlarımızı, eğitimlerimizi ve en iyi uygulamalarımızı inceleyin."
+      },
+      "support": {
+        "title": "Destek ile İletişim",
+        "description": "Destek ekibimizle e-posta üzerinden iletişime geçin."
+      },
+      "chat": {
+        "title": "Canlı Sohbet",
+        "description": "Destek ekibimizle gerçek zamanlı sohbet başlatın."
+      }
+    }
+  },
   "settings": {
     "title": "Ayarlar",
     "personalSettings": "Kişisel Ayarlar",

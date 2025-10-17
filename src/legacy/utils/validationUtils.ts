@@ -1,5 +1,5 @@
 import { VALIDATION_MESSAGES } from '@/constants/entityConstants';
-import { EntityFormField } from '@/components/common/EntityForm';
+import { EntityFormField } from '@/legacy/components/common/EntityForm';
 
 export interface ValidationRule {
   type: 'required' | 'email' | 'phone' | 'minLength' | 'maxLength' | 'min' | 'max' | 'pattern' | 'custom';

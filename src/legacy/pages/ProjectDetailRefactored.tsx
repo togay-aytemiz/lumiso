@@ -1,15 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";
 import { Archive, ArchiveRestore, Trash2 } from "lucide-react";
-import { EntityDetailLayout } from "@/components/common/EntityDetailLayout";
+import { EntityDetailLayout } from "@/legacy/components/common/EntityDetailLayout";
 import { ErrorBoundary, EntityErrorState } from "@/components/common/ErrorBoundary";
-import { DetailLoadingState } from "@/components/common/LoadingStates";
+import { DetailLoadingState } from "@/legacy/components/common/LoadingStates";
 import { ProjectService, ProjectWithDetails } from "@/services/ProjectService";
-import { useEntityData } from "@/hooks/useEntityData";
 import { useEntityActions } from "@/hooks/useEntityActions";
 import { ProjectActivitySection } from "@/components/ProjectActivitySection";
 import { ProjectTodoListEnhanced } from "@/components/ProjectTodoListEnhanced";
@@ -40,10 +38,9 @@ export default function ProjectDetailRefactored() {
   const [editDescription, setEditDescription] = useState("");
   const [editProjectTypeId, setEditProjectTypeId] = useState("");
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [servicesVersion, setServicesVersion] = useState(0);
 
   // Services
-  const projectService = new ProjectService();
+  const projectService = useMemo(() => new ProjectService(), []);
   const { executeAction, getActionState } = useEntityActions();
 
   // Data state management
@@ -56,7 +53,7 @@ export default function ProjectDetailRefactored() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchProjectData = async () => {
+  const fetchProjectData = useCallback(async () => {
     if (!id) return;
     
     try {
@@ -74,11 +71,11 @@ export default function ProjectDetailRefactored() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, projectService, t]);
 
   useEffect(() => {
     fetchProjectData();
-  }, [id]);
+  }, [fetchProjectData]);
 
   const project = projectDetailData.project;
   const lead = projectDetailData.lead;
@@ -299,10 +296,7 @@ export default function ProjectDetailRefactored() {
               content: (
                 <ProjectServicesSection
                   projectId={project.id}
-                  onServicesUpdated={() => {
-                    setServicesVersion(prev => prev + 1);
-                    fetchProjectData();
-                  }}
+                  onServicesUpdated={fetchProjectData}
                 />
               )
             },

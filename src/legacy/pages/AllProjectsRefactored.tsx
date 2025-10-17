@@ -1,24 +1,18 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { LayoutGrid, List, Archive, Settings } from "lucide-react";
-import { EntityListView } from "@/components/common/EntityListView";
-import { EntityFilters } from "@/components/common/EntityFilters";
+import { EntityListView } from "@/legacy/components/common/EntityListView";
 import { ErrorBoundary } from "@/components/common/ErrorBoundary";
-import { TableLoadingState } from "@/components/common/LoadingStates";
+import { TableLoadingState } from "@/legacy/components/common/LoadingStates";
 import { ProjectService, ProjectWithDetails } from "@/services/ProjectService";
 import { useEntityData } from "@/hooks/useEntityData";
-import { useEntityActions } from "@/hooks/useEntityActions";
 import { EnhancedProjectDialog } from "@/components/EnhancedProjectDialog";
 import { ViewProjectDialog } from "@/components/ViewProjectDialog";
 import { ProjectSheetView } from "@/components/ProjectSheetView";
 import ProjectKanbanBoard from "@/components/ProjectKanbanBoard";
 import { ProjectStatusBadge } from "@/components/ProjectStatusBadge";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { OnboardingTutorial } from "@/components/shared/OnboardingTutorial";
-import { useOnboarding } from "@/contexts/OnboardingContext";
 import { KanbanSettingsSheet } from "@/components/KanbanSettingsSheet";
 import { PROJECT_STATUS } from "@/constants/entityConstants";
 import { formatDate } from "@/lib/utils";
@@ -32,10 +26,8 @@ const AllProjectsRefactored = () => {
   const [showViewDialog, setShowViewDialog] = useState(false);
   const [quickViewProject, setQuickViewProject] = useState<ProjectWithDetails | null>(null);
   const [showQuickView, setShowQuickView] = useState(false);
-  const [showKanbanSettings, setShowKanbanSettings] = useState(false);
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { completeCurrentStep } = useOnboarding();
   const isMobile = useIsMobile();
   const { t } = useTranslation(["pages", "navigation"]);
 
@@ -44,8 +36,8 @@ const AllProjectsRefactored = () => {
   const [currentTutorialStep, setCurrentTutorialStep] = useState(0);
   
   // Services
-  const projectService = new ProjectService();
-  const { executeAction, getActionState } = useEntityActions();
+  const projectService = useMemo(() => new ProjectService(), []);
+  const fetchProjects = useCallback(() => projectService.fetchProjectsWithDetails(), [projectService]);
 
   // Data hooks
   const { 
@@ -53,7 +45,7 @@ const AllProjectsRefactored = () => {
     loading, 
     refetch: refetchProjects 
   } = useEntityData<ProjectWithDetails>({
-    fetchFn: () => projectService.fetchProjectsWithDetails()
+    fetchFn: fetchProjects
   });
 
   // Separate projects and archived projects

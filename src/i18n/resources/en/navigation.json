@@ -25,6 +25,25 @@
     "bookings": "Bookings",
     "automation": "Automation"
   },
+  "help": {
+    "title": "Help & Support",
+    "description": "Need assistance? Choose from the options below to get help.",
+    "close": "Close",
+    "options": {
+      "documentation": {
+        "title": "Documentation",
+        "description": "Browse our guides, tutorials, and best practices."
+      },
+      "support": {
+        "title": "Contact Support",
+        "description": "Get help from our support team via email."
+      },
+      "chat": {
+        "title": "Live Chat",
+        "description": "Chat with our support team in real-time."
+      }
+    }
+  },
   "settings": {
     "title": "Settings",
     "personalSettings": "Personal Settings",

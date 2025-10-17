@@ -269,6 +269,44 @@
     "stage_color": "Stage Color",
     "placeholder": "e.g. Inquiry, Post Production, Completed"
   },
+  "project_stage": {
+    "add_title": "ADD STAGE",
+    "edit_title": "EDIT STAGE",
+    "name_label": "Name",
+    "name_placeholder": "e.g. Inquiry, Post Production, Completed",
+    "name_help": "Organize your workflow through clear project stages.",
+    "color_label": "Stage Color",
+    "lifecycle": {
+      "label": "Lifecycle",
+      "active": "Active",
+      "completed": "Completed",
+      "cancelled": "Cancelled",
+      "help": {
+        "title": "Lifecycle drives automations and reporting:",
+        "active": "Stage represents work currently in progress",
+        "completed": "Project has been successfully wrapped up",
+        "cancelled": "Project was stopped or cancelled"
+      }
+    },
+    "system_required_info": "System Required Stage: This stage is required for project workflows and must remain Active. You can rename it but cannot delete it or change its lifecycle.",
+    "system_required_note": "This is a system required stage for new projects.",
+    "errors": {
+      "name_required": "Stage name is required",
+      "cannot_delete": "This stage is required and cannot be deleted. You can rename it instead.",
+      "add_failed": "Error adding project stage",
+      "update_failed": "Error updating project stage",
+      "delete_failed": "Error deleting project stage"
+    },
+    "success": {
+      "added": "Project stage added successfully",
+      "updated": "Project stage updated successfully",
+      "deleted": "Project stage deleted successfully"
+    },
+    "confirm": {
+      "discard_changes": "Are you sure you want to discard your changes? Any unsaved information will be lost.",
+      "delete": "Are you sure you want to delete this stage?"
+    }
+  },
   "project_types": {
     "title": "Project Types",
     "description": "Customize your project types to reflect the type of work you offer.",

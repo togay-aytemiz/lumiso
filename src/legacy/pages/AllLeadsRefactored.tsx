@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { EntityListView } from "@/components/common/EntityListView";
-import { EntityFilters } from "@/components/common/EntityFilters";
+import { EntityListView } from "@/legacy/components/common/EntityListView";
+import { EntityFilters } from "@/legacy/components/common/EntityFilters";
 import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 import { EnhancedAddLeadDialog } from "@/components/EnhancedAddLeadDialog";
 import { OnboardingTutorial, TutorialStep } from "@/components/shared/OnboardingTutorial";

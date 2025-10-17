@@ -61,7 +61,7 @@ const ProjectStatusesSection = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const toast = useI18nToast();
-  const { t } = useTranslation();
+  const { t } = useTranslation("forms");
   const { t: tMessages } = useMessagesTranslation();
   const { activeOrganizationId } = useOrganization();
 

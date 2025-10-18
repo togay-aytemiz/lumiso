@@ -83,7 +83,19 @@
     "customizeTableColumns": "Tablo Sütunlarını Özelleştir",
     "chooseColumnsDescription": "Hangi sütunların görüntüleneceğini seçin ve sıralarını düzenleyin. Sütunları yeniden sıralamak için sürükleyin.",
     "coreColumnsNote": "Temel sütunlar her zaman görünür ve yeniden sıralanabilir ancak gizlenemez.",
-    "core": "Temel"
+    "core": "Temel",
+    "filters": "Filtreler",
+    "clearFilters": "Filtreleri temizle",
+    "clearSearch": "Aramayı temizle",
+    "closeFilters": "Bitti",
+    "activeFilters": "{{count}} aktif",
+    "searchLabel": "Ara",
+    "searchPlaceholder": "Ara...",
+    "paginationSummary": "{{start}}-{{end}} / {{total}} sonuç",
+    "rowsPerPage": "Sayfa başına satır",
+    "previousPage": "Önceki",
+    "nextPage": "Sonraki",
+    "pageIndicator": "Sayfa {{page}} / {{pages}}"
   },
   "messages": {
     "info": {

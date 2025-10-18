@@ -1,22 +1,12 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
 import { DateRangePicker } from "@/components/DateRangePicker";
-import { ViewProjectDialog } from "@/components/ViewProjectDialog";
+import { ProjectSheetView } from "@/components/ProjectSheetView";
 import { toast } from "@/hooks/use-toast";
-import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
   format,
@@ -40,8 +30,6 @@ import { cn, formatDate, getDateFnsLocale } from "@/lib/utils";
 import GlobalSearch from "@/components/GlobalSearch";
 import { PageHeader, PageHeaderSearch } from "@/components/ui/page-header";
 import { TableLoadingSkeleton } from "@/components/ui/loading-presets";
-import { AddPaymentDialog } from "@/components/AddPaymentDialog";
-import { EditPaymentDialog } from "@/components/EditPaymentDialog";
 import { useTranslation } from "react-i18next";
 import {
   ChartContainer,
@@ -52,73 +40,68 @@ import {
 import { Line, LineChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { Progress } from "@/components/ui/progress";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { FileDown, Loader2 } from "lucide-react";
+import { writeFileXLSX, utils as XLSXUtils } from "xlsx/xlsx.mjs";
 import { PAYMENT_COLORS } from "@/lib/paymentColors";
-
-interface Payment {
-  id: string;
-  amount: number;
-  date_paid: string | null;
-  status: string;
-  description: string | null;
-  type: string;
-  project_id: string;
-  created_at: string;
-  projects: {
-    id: string;
-    name: string;
-    base_price: number | null;
-    lead_id: string;
-    status_id?: string | null;
-    project_type_id?: string | null;
-    description?: string | null;
-    updated_at?: string;
-    created_at?: string;
-    user_id?: string;
-    leads: {
-      id: string;
-      name: string;
-    } | null;
-  } | null;
-}
-
-interface PaymentMetrics {
-  totalPaid: number;
-  totalInvoiced: number;
-  remainingBalance: number;
-  collectionRate: number;
-}
-
-interface PaymentTrendPoint {
-  period: string;
-  paid: number;
-  due: number;
-}
-
-type TrendGrouping = "day" | "week" | "month";
-
-type SortField = 'date_paid' | 'amount' | 'project_name' | 'lead_name' | 'description' | 'status' | 'type';
-type SortDirection = 'asc' | 'desc';
-type DateFilterType = 'last7days' | 'last4weeks' | 'last3months' | 'last12months' | 'monthToDate' | 'quarterToDate' | 'yearToDate' | 'lastMonth' | 'allTime' | 'custom';
+import {
+  AdvancedDataTable,
+  type AdvancedTableColumn,
+  type AdvancedDataTableSortState,
+} from "@/components/data-table";
+import { TableSearchInput } from "@/components/data-table/TableSearchInput";
+import {
+  PAGE_SIZE,
+  SEARCH_MIN_CHARS,
+  STATUS_FILTER_OPTIONS,
+  TYPE_FILTER_OPTIONS,
+} from "@/pages/payments/constants";
+import {
+  DateFilterType,
+  Payment,
+  PaymentMetrics,
+  PaymentStatusFilter,
+  PaymentTrendPoint,
+  PaymentTypeFilter,
+  ProjectDetails,
+  SortDirection,
+  SortField,
+  TrendGrouping,
+} from "@/pages/payments/types";
+import { usePaymentsData } from "@/pages/payments/hooks/usePaymentsData";
+import { usePaymentsTableColumns } from "@/pages/payments/hooks/usePaymentsTableColumns";
 
 const Payments = () => {
   const { t } = useTranslation("pages");
-  const [payments, setPayments] = useState<Payment[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(PAGE_SIZE);
+  const [exporting, setExporting] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<DateFilterType>('allTime');
   const [customDateRange, setCustomDateRange] = useState<DateRange | undefined>();
-  const [labelFilter, setLabelFilter] = useState<string>("");
-  const [clientFilter, setClientFilter] = useState<string>("");
-  const [projectFilter, setProjectFilter] = useState<string>("");
+  const [statusFilters, setStatusFilters] = useState<PaymentStatusFilter[]>([]);
+  const [statusDraft, setStatusDraft] = useState<PaymentStatusFilter[]>([]);
+  const [typeFilters, setTypeFilters] = useState<PaymentTypeFilter[]>([]);
+  const [typeDraft, setTypeDraft] = useState<PaymentTypeFilter[]>([]);
+  const [amountMinFilter, setAmountMinFilter] = useState<number | null>(null);
+  const [amountMaxFilter, setAmountMaxFilter] = useState<number | null>(null);
+  const [amountMinDraft, setAmountMinDraft] = useState<string>("");
+  const [amountMaxDraft, setAmountMaxDraft] = useState<string>("");
   const [sortField, setSortField] = useState<SortField>("date_paid");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
-  const [viewingProject, setViewingProject] = useState<any>(null);
-  const [showProjectDialog, setShowProjectDialog] = useState(false);
-  const [isAddPaymentDialogOpen, setIsAddPaymentDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [editingPayment, setEditingPayment] = useState<Payment | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchDraft, setSearchDraft] = useState("");
+  const [selectedProject, setSelectedProject] = useState<ProjectDetails | null>(null);
+  const [projectSheetOpen, setProjectSheetOpen] = useState(false);
   const [trendGrouping, setTrendGrouping] = useState<TrendGrouping>("month");
+  const sheetCloseTimeoutRef = useRef<number | null>(null);
   const navigate = useNavigate();
   const dateLocale = useMemo(() => getDateFnsLocale(), []);
+  const handleDataError = useCallback((error: Error) => {
+    toast({
+      title: t("payments.errorFetching"),
+      description: error.message,
+      variant: "destructive",
+    });
+  }, [t]);
   const compactCurrencyFormatter = useMemo(
     () =>
       new Intl.NumberFormat("tr-TR", {
@@ -127,10 +110,6 @@ const Payments = () => {
       }),
     []
   );
-
-  useEffect(() => {
-    fetchPayments();
-  }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -144,6 +123,10 @@ const Payments = () => {
   }, []);
 
   useEffect(() => {
+    setSearchDraft(searchTerm);
+  }, [searchTerm]);
+
+  useEffect(() => {
     if (typeof window === "undefined") {
       return;
     }
@@ -151,68 +134,17 @@ const Payments = () => {
     window.localStorage.setItem("paymentsTrendGrouping", trendGrouping);
   }, [trendGrouping]);
 
-  const fetchPayments = async () => {
-    try {
-      setLoading(true);
-      // First get payments
-      const { data: paymentsData, error: paymentsError } = await supabase
-        .from('payments')
-        .select('*')
-        .order('created_at', { ascending: false });
+  useEffect(() => {
+    return () => {
+      if (sheetCloseTimeoutRef.current) {
+        window.clearTimeout(sheetCloseTimeoutRef.current);
+      }
+    };
+  }, []);
 
-      if (paymentsError) throw paymentsError;
-
-      // Get unique project IDs
-      const projectIds = Array.from(new Set(paymentsData?.map(p => p.project_id).filter(Boolean) || []));
-      
-      // Fetch projects with more detailed info
-      const { data: projectsData, error: projectsError } = await supabase
-        .from('projects')
-        .select('id, name, base_price, lead_id, status_id, project_type_id, description, updated_at, created_at, user_id')
-        .in('id', projectIds);
-
-      if (projectsError) throw projectsError;
-
-      // Get unique lead IDs
-      const leadIds = Array.from(new Set(projectsData?.map(p => p.lead_id).filter(Boolean) || []));
-      
-      // Fetch leads
-      const { data: leadsData, error: leadsError } = await supabase
-        .from('leads')
-        .select('id, name')
-        .in('id', leadIds);
-
-      if (leadsError) throw leadsError;
-
-      // Create maps for quick lookup
-      const leadsMap = new Map(leadsData?.map(l => [l.id, l]) || []);
-      const projectsMap = new Map(projectsData?.map(p => [p.id, {
-        ...p,
-        leads: leadsMap.get(p.lead_id) || null
-      }]) || []);
-
-      // Combine payments with project and lead data
-      const paymentsWithProjects = paymentsData?.map(payment => ({
-        ...payment,
-        projects: projectsMap.get(payment.project_id) || null
-      })) || [];
-
-      setPayments(paymentsWithProjects);
-    } catch (error: any) {
-      toast({
-        title: t("payments.errorFetching"),
-        description: error.message,
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const getDateRangeForFilter = (filter: DateFilterType): { start: Date; end: Date } | null => {
+  const getDateRangeForFilter = useCallback((filter: DateFilterType): { start: Date; end: Date } | null => {
     const now = new Date();
     const endToday = endOfDay(now);
-    
     switch (filter) {
       case 'last7days':
         return { start: startOfDay(subDays(endToday, 6)), end: endToday };
@@ -246,121 +178,127 @@ const Payments = () => {
       default:
         return null;
     }
-  };
+  }, [customDateRange]);
 
-  const filteredAndSortedPayments = useMemo(() => {
-    let filtered = payments;
+  const activeDateRange = useMemo(
+    () => getDateRangeForFilter(selectedFilter),
+    [getDateRangeForFilter, selectedFilter]
+  );
 
-    // Apply date filter
-    if (selectedFilter !== 'allTime') {
-      const dateRange = getDateRangeForFilter(selectedFilter);
-      if (dateRange) {
-        filtered = filtered.filter(payment => {
-          const paymentDate = new Date(payment.date_paid || payment.created_at);
-          return paymentDate >= dateRange.start && paymentDate <= dateRange.end;
-        });
-      }
-    }
-
-    // Apply label filter
-    const labelTerm = labelFilter.trim().toLowerCase();
-    const clientTerm = clientFilter.trim().toLowerCase();
-    const projectTerm = projectFilter.trim().toLowerCase();
-
-    if (labelTerm) {
-      filtered = filtered.filter(payment => {
-        const label = payment.description || t("payments.defaultLabel");
-        return label.toLowerCase().includes(labelTerm);
-      });
-    }
-
-    if (clientTerm) {
-      filtered = filtered.filter(payment => {
-        const leadName = payment.projects?.leads?.name || "";
-        return leadName.toLowerCase().includes(clientTerm);
-      });
-    }
-
-    if (projectTerm) {
-      filtered = filtered.filter(payment => {
-        const projectName = payment.projects?.name || "";
-        return projectName.toLowerCase().includes(projectTerm);
-      });
-    }
-
-    // Apply sorting
-    filtered.sort((a, b) => {
-      let aValue: any;
-      let bValue: any;
-
-      switch (sortField) {
-        case 'date_paid':
-          aValue = new Date(a.date_paid || a.created_at).getTime();
-          bValue = new Date(b.date_paid || b.created_at).getTime();
-          break;
-        case 'amount':
-          aValue = Number(a.amount);
-          bValue = Number(b.amount);
-          break;
-        case 'project_name':
-          aValue = a.projects?.name?.toLowerCase() || '';
-          bValue = b.projects?.name?.toLowerCase() || '';
-          break;
-        case 'lead_name':
-          aValue = a.projects?.leads?.name?.toLowerCase() || '';
-          bValue = b.projects?.leads?.name?.toLowerCase() || '';
-          break;
-        case 'description':
-          aValue = (a.description || 'Payment').toLowerCase();
-          bValue = (b.description || 'Payment').toLowerCase();
-          break;
-        case 'status':
-          aValue = a.status.toLowerCase();
-          bValue = b.status.toLowerCase();
-          break;
-        case 'type':
-          aValue = a.type.toLowerCase();
-          bValue = b.type.toLowerCase();
-          break;
-        default:
-          aValue = a[sortField];
-          bValue = b[sortField];
-      }
-
-      // Handle string values
-      if (typeof aValue === 'string' && typeof bValue === 'string') {
-        aValue = aValue.toLowerCase();
-        bValue = bValue.toLowerCase();
-      }
-
-      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
-      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
-      return 0;
-    });
-
-    return filtered;
-  }, [
-    payments,
-    selectedFilter,
-    customDateRange,
-    labelFilter,
-    clientFilter,
-    projectFilter,
+  const {
+    paginatedPayments,
+    metricsPayments,
+    totalCount,
+    initialLoading,
+    tableLoading,
+    fetchPayments,
+    fetchPaymentsData,
+  } = usePaymentsData({
+    page,
+    pageSize,
     sortField,
     sortDirection,
+    statusFilters,
+    typeFilters,
+    amountMinFilter,
+    amountMaxFilter,
+    searchTerm,
+    activeDateRange,
+    onError: handleDataError,
+  });
+
+  useEffect(() => {
+    setPage(1);
+  }, [selectedFilter, customDateRange, statusFilters, typeFilters, amountMinFilter, amountMaxFilter]);
+
+  useEffect(() => {
+    const computedTotalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+    if (page > computedTotalPages) {
+      setPage(computedTotalPages);
+    }
+  }, [totalCount, page, pageSize]);
+
+  const handleExport = useCallback(async () => {
+    if (exporting) return;
+
+    const totalRecords = totalCount || paginatedPayments.length;
+    if (totalRecords === 0) {
+      toast({
+        title: t("payments.export.noDataTitle"),
+        description: t("payments.export.noDataDescription"),
+      });
+      return;
+    }
+
+    try {
+      setExporting(true);
+      const range = { from: 0, to: totalRecords - 1 };
+      const { payments: exportPayments } = await fetchPaymentsData({
+        range,
+        includeMetrics: false,
+        includeCount: false,
+      });
+
+      if (!exportPayments.length) {
+        toast({
+          title: t("payments.export.noDataTitle"),
+          description: t("payments.export.noDataDescription"),
+        });
+        return;
+      }
+
+      const rows = exportPayments.map((payment) => ({
+        [t("payments.table.date")]: formatDate(payment.date_paid || payment.created_at),
+        [t("payments.table.project")]: payment.projects?.name ?? "",
+        [t("payments.table.lead")]: payment.projects?.leads?.name ?? "",
+        [t("payments.table.amount")]: Number(payment.amount),
+        [t("payments.table.status")]:
+          (payment.status || "").toLowerCase() === "paid"
+            ? t("payments.status.paid")
+            : t("payments.status.due"),
+        [t("payments.table.type")]:
+          payment.type === "base_price"
+            ? t("payments.type.base")
+            : payment.type === "extra"
+              ? t("payments.type.extra")
+              : t("payments.type.manual"),
+        [t("payments.table.description")]: payment.description?.trim() ?? "",
+      }));
+
+      const worksheet = XLSXUtils.json_to_sheet(rows);
+      const workbook = XLSXUtils.book_new();
+      XLSXUtils.book_append_sheet(workbook, worksheet, "Payments");
+
+      const timestamp = format(new Date(), "yyyy-MM-dd_HHmm");
+      writeFileXLSX(workbook, `payments-${timestamp}.xlsx`);
+
+      toast({
+        title: t("payments.export.successTitle"),
+        description: t("payments.export.successDescription"),
+      });
+    } catch (error: any) {
+      toast({
+        title: t("payments.export.errorTitle"),
+        description: error.message ?? t("payments.export.errorDescription"),
+        variant: "destructive",
+      });
+    } finally {
+      setExporting(false);
+    }
+  }, [
+    exporting,
+    fetchPaymentsData,
+    paginatedPayments.length,
     t,
+    totalCount,
   ]);
 
   const selectedDateRange = useMemo(() => {
-    const range = getDateRangeForFilter(selectedFilter);
-    if (range) {
-      return range;
+    if (activeDateRange) {
+      return activeDateRange;
     }
 
-    const paymentsForRange =
-      selectedFilter === "allTime" ? payments : filteredAndSortedPayments;
-
-    const sortedDates = paymentsForRange
+    const sortedDates = metricsPayments
       .map((payment) => new Date(payment.date_paid || payment.created_at))
       .filter((date) => !Number.isNaN(date.getTime()))
       .sort((a, b) => a.getTime() - b.getTime());
@@ -379,21 +317,7 @@ const Payments = () => {
       start: earliest,
       end: latest,
     };
-  }, [selectedFilter, filteredAndSortedPayments, customDateRange, payments]);
-
-  const handleSort = (field: SortField) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortDirection('asc');
-    }
-  };
-
-  const getSortIcon = (field: SortField) => {
-    if (sortField !== field) return <ArrowUpDown className="h-4 w-4" />;
-    return sortDirection === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />;
-  };
+  }, [activeDateRange, metricsPayments, selectedFilter]);
 
   const isCustomRangeMissing = selectedFilter === 'custom' && !customDateRange?.from;
 
@@ -513,7 +437,7 @@ const Payments = () => {
       }
     });
 
-    filteredAndSortedPayments.forEach((payment) => {
+    metricsPayments.forEach((payment) => {
       const paymentDate = new Date(payment.date_paid || payment.created_at);
       if (Number.isNaN(paymentDate.getTime())) {
         return;
@@ -569,19 +493,19 @@ const Payments = () => {
         paid: bucket.paid,
         due: bucket.due,
       }));
-  }, [filteredAndSortedPayments, selectedDateRange, trendGrouping, dateLocale]);
+  }, [metricsPayments, selectedDateRange, trendGrouping, dateLocale]);
 
   const metrics = useMemo((): PaymentMetrics => {
-    const totalInvoiced = filteredAndSortedPayments.reduce(
+    const totalInvoiced = metricsPayments.reduce(
       (sum, p) => sum + Number(p.amount),
       0
     );
 
-    const totalPaid = filteredAndSortedPayments
+    const totalPaid = metricsPayments
       .filter((p) => (p.status || "").toLowerCase() === "paid")
       .reduce((sum, p) => sum + Number(p.amount), 0);
 
-    const remainingBalance = filteredAndSortedPayments
+    const remainingBalance = metricsPayments
       .filter((p) => (p.status || "").toLowerCase() !== "paid")
       .reduce((sum, p) => sum + Number(p.amount), 0);
 
@@ -594,7 +518,7 @@ const Payments = () => {
       remainingBalance,
       collectionRate,
     };
-  }, [filteredAndSortedPayments]);
+  }, [metricsPayments]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('tr-TR', {
@@ -615,6 +539,381 @@ const Payments = () => {
     (point) => Math.abs(point.paid) > 0 || Math.abs(point.due) > 0
   );
 
+  const hasSearchTerm = searchTerm.trim().length >= SEARCH_MIN_CHARS;
+  const hasStatusFilter =
+    statusFilters.length > 0 && statusFilters.length < STATUS_FILTER_OPTIONS.length;
+  const hasTypeFilter =
+    typeFilters.length > 0 && typeFilters.length < TYPE_FILTER_OPTIONS.length;
+  const hasMinAmountFilter = amountMinFilter !== null;
+  const hasMaxAmountFilter = amountMaxFilter !== null;
+  const activeFilterCount = [
+    hasStatusFilter,
+    hasTypeFilter,
+    hasMinAmountFilter,
+    hasMaxAmountFilter,
+  ].filter(Boolean).length;
+
+  const statusFilterOptions = useMemo(
+    () =>
+      STATUS_FILTER_OPTIONS.map((value) => ({
+        value,
+        label: value === "paid" ? t("payments.status.paid") : t("payments.status.due"),
+      })),
+    [t]
+  );
+
+  const typeFilterOptions = useMemo(
+    () =>
+      TYPE_FILTER_OPTIONS.map((value) => ({
+        value,
+        label:
+          value === "base_price"
+            ? t("payments.type.base")
+            : value === "extra"
+              ? t("payments.type.extra")
+              : t("payments.type.manual"),
+      })),
+    [t]
+  );
+
+  const handleStatusFilterChange = useCallback((values: string[]) => {
+    setStatusDraft(values as PaymentStatusFilter[]);
+  }, []);
+
+  const handleTypeFilterChange = useCallback((values: string[]) => {
+    setTypeDraft(values as PaymentTypeFilter[]);
+  }, []);
+
+  const applySearchIfNeeded = useCallback(
+    (rawValue: string) => {
+      const normalized = rawValue.trim();
+      if (normalized.length === 0) {
+        if (searchTerm !== "") {
+          setSearchTerm("");
+          setPage(1);
+        }
+        return;
+      }
+
+      if (normalized.length >= SEARCH_MIN_CHARS && normalized !== searchTerm) {
+        setSearchTerm(normalized);
+        setPage(1);
+      }
+    },
+    [searchTerm]
+  );
+
+  const handleSearchDraftChange = useCallback(
+    (value: string) => {
+      setSearchDraft(value);
+      applySearchIfNeeded(value);
+    },
+    [applySearchIfNeeded]
+  );
+
+  const handleClearSearchDraft = useCallback(() => {
+    setSearchDraft("");
+    applySearchIfNeeded("");
+  }, [applySearchIfNeeded]);
+
+  const parseAmountInputValue = useCallback((value: string): number | null => {
+    const trimmed = value.trim();
+    if (trimmed === "") return null;
+    const parsed = Number(trimmed);
+    return Number.isFinite(parsed) ? parsed : null;
+  }, []);
+
+  const handleApplyFilters = useCallback(() => {
+    const nextMin = parseAmountInputValue(amountMinDraft);
+    const nextMax = parseAmountInputValue(amountMaxDraft);
+    const normalizedSearch = searchDraft.trim();
+
+    setStatusFilters([...statusDraft]);
+    setTypeFilters([...typeDraft]);
+    setAmountMinFilter(nextMin);
+    setAmountMaxFilter(nextMax);
+    setSearchTerm(normalizedSearch);
+    if (normalizedSearch.length >= SEARCH_MIN_CHARS || normalizedSearch.length === 0) {
+      setSearchDraft(normalizedSearch);
+    }
+    setPage(1);
+  }, [amountMaxDraft, amountMinDraft, parseAmountInputValue, searchDraft, statusDraft, typeDraft]);
+
+  const handleResetFilters = useCallback(() => {
+    setStatusFilters([]);
+    setTypeFilters([]);
+    setAmountMinFilter(null);
+    setAmountMaxFilter(null);
+    setStatusDraft([]);
+    setTypeDraft([]);
+    setAmountMinDraft("");
+    setAmountMaxDraft("");
+    setSearchTerm("");
+    setSearchDraft("");
+    setPage(1);
+  }, []);
+
+  useEffect(() => {
+    setStatusDraft(statusFilters);
+  }, [statusFilters]);
+
+  useEffect(() => {
+    setTypeDraft(typeFilters);
+  }, [typeFilters]);
+
+  useEffect(() => {
+    setAmountMinDraft(amountMinFilter != null ? String(amountMinFilter) : "");
+  }, [amountMinFilter]);
+
+  useEffect(() => {
+    setAmountMaxDraft(amountMaxFilter != null ? String(amountMaxFilter) : "");
+  }, [amountMaxFilter]);
+
+  const arraysMatch = useCallback((a: string[], b: string[]) => {
+    if (a.length !== b.length) return false;
+    const sortedA = [...a].sort();
+    const sortedB = [...b].sort();
+    return sortedA.every((value, index) => value === sortedB[index]);
+  }, []);
+
+  const amountDraftMin = parseAmountInputValue(amountMinDraft);
+  const amountDraftMax = parseAmountInputValue(amountMaxDraft);
+
+  const statusFiltersDirty = useMemo(() => !arraysMatch(statusFilters, statusDraft), [arraysMatch, statusDraft, statusFilters]);
+  const typeFiltersDirty = useMemo(() => !arraysMatch(typeFilters, typeDraft), [arraysMatch, typeDraft, typeFilters]);
+  const amountFiltersDirty = useMemo(
+    () => amountDraftMin !== amountMinFilter || amountDraftMax !== amountMaxFilter,
+    [amountDraftMax, amountDraftMin, amountMaxFilter, amountMinFilter]
+  );
+
+  const filtersDirty = statusFiltersDirty || typeFiltersDirty || amountFiltersDirty;
+  const canClearSearchDraft = searchDraft.trim().length > 0;
+
+  const toggleItemClasses =
+    "rounded-full border border-border/60 bg-background px-3 py-1 text-sm font-medium transition-colors hover:border-border hover:bg-muted/20 data-[state=on]:bg-primary/10 data-[state=on]:text-primary data-[state=on]:border-primary/40";
+
+  const filtersContent = useMemo(
+    () => (
+      <div className="space-y-6">
+        <div className="space-y-2">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            {t("payments.filters.statusHeading")}
+          </p>
+          <ToggleGroup
+            type="multiple"
+            value={statusDraft}
+            onValueChange={handleStatusFilterChange}
+            className="flex flex-wrap justify-start gap-2"
+            size="sm"
+          >
+            {statusFilterOptions.map((option) => (
+              <ToggleGroupItem key={option.value} value={option.value} className={toggleItemClasses}>
+                {option.label}
+              </ToggleGroupItem>
+            ))}
+          </ToggleGroup>
+        </div>
+        <div className="space-y-2">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            {t("payments.filters.typeHeading")}
+          </p>
+          <ToggleGroup
+            type="multiple"
+            value={typeDraft}
+            onValueChange={handleTypeFilterChange}
+            className="flex flex-wrap justify-start gap-2"
+            size="sm"
+          >
+            {typeFilterOptions.map((option) => (
+              <ToggleGroupItem key={option.value} value={option.value} className={toggleItemClasses}>
+                {option.label}
+              </ToggleGroupItem>
+            ))}
+          </ToggleGroup>
+        </div>
+        <div className="space-y-2">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            {t("payments.filters.amountHeading")}
+          </p>
+          <div className="grid gap-2 sm:grid-cols-2">
+            <Input
+              type="number"
+              inputMode="decimal"
+              step="0.01"
+              min="0"
+              value={amountMinDraft}
+              onChange={(event) => setAmountMinDraft(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  handleApplyFilters();
+                }
+              }}
+              placeholder={t("payments.filters.amountMinPlaceholder")}
+            />
+            <Input
+              type="number"
+              inputMode="decimal"
+              step="0.01"
+              min="0"
+              value={amountMaxDraft}
+              onChange={(event) => setAmountMaxDraft(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  handleApplyFilters();
+                }
+              }}
+              placeholder={t("payments.filters.amountMaxPlaceholder")}
+            />
+          </div>
+        </div>
+      </div>
+    ),
+    [
+      amountMaxDraft,
+      amountMinDraft,
+      handleApplyFilters,
+      handleStatusFilterChange,
+      handleTypeFilterChange,
+      statusDraft,
+      statusFilterOptions,
+      t,
+      toggleItemClasses,
+      typeDraft,
+      typeFilterOptions,
+    ]
+  );
+
+  const filtersFooter = useMemo(
+    () => (
+      <div className="flex w-full flex-col gap-2">
+        <Button
+          type="button"
+          size="sm"
+          onClick={handleApplyFilters}
+          disabled={!filtersDirty}
+        >
+          {t("payments.filters.applyButton")}
+        </Button>
+      </div>
+    ),
+    [filtersDirty, handleApplyFilters, t]
+  );
+
+  const tableToolbar = useMemo(
+    () => (
+      <TableSearchInput
+        value={searchDraft}
+        onChange={handleSearchDraftChange}
+        onClear={handleClearSearchDraft}
+        placeholder={t("payments.searchPlaceholder")}
+        loading={tableLoading}
+        clearAriaLabel={t("payments.filters.searchClear")}
+        className="w-full sm:max-w-xs lg:max-w-sm"
+      />
+    ),
+    [handleClearSearchDraft, handleSearchDraftChange, searchDraft, tableLoading, t]
+  );
+
+  const hasAnyResults = totalCount > 0 || paginatedPayments.length > 0;
+
+  const exportActions = useMemo(
+    () => (
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={handleExport}
+        disabled={!hasAnyResults || tableLoading || exporting}
+        className="flex items-center gap-2"
+      >
+        {exporting ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <FileDown className="h-4 w-4" />
+        )}
+        <span>{t("payments.export.button")}</span>
+      </Button>
+    ),
+    [exporting, handleExport, hasAnyResults, tableLoading, t]
+  );
+
+  const filtersConfig = useMemo(
+    () => ({
+      title: t("payments.filterPanel.title"),
+      triggerLabel: t("payments.filterPanel.title"),
+      content: filtersContent,
+      activeCount: activeFilterCount,
+      onReset: activeFilterCount ? handleResetFilters : undefined,
+      collapsedByDefault: true,
+      footer: filtersFooter,
+    }),
+    [filtersContent, filtersFooter, activeFilterCount, handleResetFilters, t]
+  );
+
+  const emptyStateMessage =
+    hasSearchTerm || activeFilterCount > 0
+      ? t("payments.emptyState.noPaymentsWithFilters")
+      : t("payments.emptyState.noPaymentsForPeriod");
+
+  const handleProjectSheetOpenChange = useCallback((open: boolean) => {
+    if (sheetCloseTimeoutRef.current) {
+      window.clearTimeout(sheetCloseTimeoutRef.current);
+      sheetCloseTimeoutRef.current = null;
+    }
+    setProjectSheetOpen(open);
+    if (!open) {
+      sheetCloseTimeoutRef.current = window.setTimeout(() => {
+        setSelectedProject(null);
+        sheetCloseTimeoutRef.current = null;
+      }, 300);
+    }
+  }, []);
+
+  const handleProjectOpen = useCallback(
+    (payment: Payment) => {
+      if (!payment.project_id || !payment.projects) {
+        return;
+      }
+      setSelectedProject(payment.projects);
+      handleProjectSheetOpenChange(true);
+    },
+    [handleProjectSheetOpenChange]
+  );
+
+  const handleViewFullDetails = useCallback(() => {
+    if (!selectedProject) return;
+    navigate(`/projects/${selectedProject.id}`);
+    handleProjectSheetOpenChange(false);
+  }, [handleProjectSheetOpenChange, navigate, selectedProject]);
+
+  const tableColumns = usePaymentsTableColumns({
+    onProjectSelect: handleProjectOpen,
+    onNavigateToLead: (leadId) => navigate(`/leads/${leadId}`),
+    formatAmount: (value) => formatCurrency(value),
+  });
+
+  const sortStateForTable = useMemo<AdvancedDataTableSortState>(
+    () => ({ columnId: sortField, direction: sortDirection }),
+    [sortField, sortDirection]
+  );
+
+  const handleTableSortChange = useCallback(
+    (next: AdvancedDataTableSortState) => {
+      if (!next.columnId) return;
+      setSortField(next.columnId as SortField);
+      setSortDirection(next.direction as SortDirection);
+      setPage(1);
+    },
+    []
+  );
+
+  const handlePageSizeChange = useCallback((size: number) => {
+    setPageSize(size);
+    setPage(1);
+  }, []);
+
   return (
     <div className="min-h-screen overflow-x-hidden">
       <PageHeader
@@ -627,7 +926,7 @@ const Payments = () => {
       </PageHeader>
 
       <div className="p-4 sm:p-6">
-        {loading ? (
+        {initialLoading ? (
           <TableLoadingSkeleton />
         ) : (
           <>
@@ -816,236 +1115,46 @@ const Payments = () => {
       </div>
 
       {/* Payments Table */}
-      <Card className="min-w-0">
-        <CardHeader>
-          <div className="flex flex-col gap-4">
-            <div className="flex items-center justify-between gap-4">
-              <CardTitle className="text-base font-medium">
-                {t("payments.tableTitle")}
-              </CardTitle>
-            </div>
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-              <div className="grid w-full gap-4 sm:grid-cols-1 lg:grid-cols-3">
-                <div className="flex flex-col gap-2">
-                  <span className="text-sm text-muted-foreground whitespace-nowrap">{t("payments.filterByClient")}</span>
-                  <Input
-                    placeholder={t("payments.filterByClientPlaceholder")}
-                    value={clientFilter}
-                    onChange={(e) => setClientFilter(e.target.value)}
-                    className="w-full min-w-0"
-                  />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <span className="text-sm text-muted-foreground whitespace-nowrap">{t("payments.filterByProject")}</span>
-                  <Input
-                    placeholder={t("payments.filterByProjectPlaceholder")}
-                    value={projectFilter}
-                    onChange={(e) => setProjectFilter(e.target.value)}
-                    className="w-full min-w-0"
-                  />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <span className="text-sm text-muted-foreground whitespace-nowrap">{t("payments.filterByLabel")}</span>
-                  <Input
-                    placeholder={t("payments.filterByLabelPlaceholder")}
-                    value={labelFilter}
-                    onChange={(e) => setLabelFilter(e.target.value)}
-                    className="w-full min-w-0"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="p-0">
-          <div className="w-full overflow-x-auto overflow-y-hidden" style={{ maxWidth: '100vw' }}>
-            <div className="min-w-max">
-              <Table style={{ minWidth: '900px' }}>
-                <TableHeader>
-              <TableRow>
-                <TableHead 
-                  className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => handleSort('date_paid')}
-                >
-                  <div className="flex items-center gap-2">
-                    {t("payments.table.date")}
-                    {getSortIcon('date_paid')}
-                  </div>
-                </TableHead>
-                <TableHead 
-                  className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => handleSort('lead_name')}
-                >
-                  <div className="flex items-center gap-2">
-                    {t("payments.table.lead")}
-                    {getSortIcon('lead_name')}
-                  </div>
-                </TableHead>
-                <TableHead 
-                  className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => handleSort('project_name')}
-                >
-                  <div className="flex items-center gap-2">
-                    {t("payments.table.project")}
-                    {getSortIcon('project_name')}
-                  </div>
-                </TableHead>
-                <TableHead 
-                  className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => handleSort('amount')}
-                >
-                  <div className="flex items-center gap-2">
-                    {t("payments.table.amount")}
-                    {getSortIcon('amount')}
-                  </div>
-                </TableHead>
-                <TableHead 
-                  className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => handleSort('description')}
-                >
-                  <div className="flex items-center gap-2">
-                    {t("payments.table.label")}
-                    {getSortIcon('description')}
-                  </div>
-                </TableHead>
-                <TableHead 
-                  className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => handleSort('status')}
-                >
-                  <div className="flex items-center gap-2">
-                    {t("payments.table.status")}
-                    {getSortIcon('status')}
-                  </div>
-                </TableHead>
-                <TableHead 
-                  className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => handleSort('type')}
-                >
-                  <div className="flex items-center gap-2">
-                    {t("payments.table.type")}
-                    {getSortIcon('type')}
-                  </div>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredAndSortedPayments.length > 0 ? (
-                filteredAndSortedPayments.map((payment, index) => {
-                  const isPaid = (payment.status || "").toLowerCase() === "paid";
-
-                  return (
-                    <TableRow 
-                      key={payment.id}
-                      className={`cursor-pointer hover:bg-muted/50 ${index % 2 === 0 ? "" : "bg-muted/30"}`}
-                    >
-                    <TableCell>
-                      {formatDate(payment.date_paid || payment.created_at)}
-                    </TableCell>
-                    <TableCell>
-                      {payment.projects?.leads ? (
-                        <Button
-                          variant="link"
-                          className="p-0 h-auto font-normal text-foreground hover:text-foreground hover:underline"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigate(`/leads/${payment.projects?.leads?.id}`);
-                          }}
-                        >
-                          {payment.projects.leads.name}
-                        </Button>
-                      ) : (
-                        <span className="text-muted-foreground">-</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {payment.projects ? (
-                        <Button
-                          variant="link"
-                          className="p-0 h-auto font-normal text-foreground hover:text-foreground hover:underline"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setViewingProject(payment.projects);
-                            setShowProjectDialog(true);
-                          }}
-                        >
-                          {payment.projects.name}
-                        </Button>
-                      ) : (
-                        <span className="text-muted-foreground">-</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      {formatCurrency(Number(payment.amount))}
-                    </TableCell>
-                    <TableCell>
-                      {payment.description || t("payments.defaultLabel")}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant="outline"
-                        className={cn(
-                          "px-2 py-0.5 text-xs font-semibold",
-                          isPaid ? PAYMENT_COLORS.paid.badgeClass : PAYMENT_COLORS.due.badgeClass
-                        )}
-                      >
-                        {isPaid ? t("payments.status.paid") : t("payments.status.due")}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">
-                        {payment.type === 'base_price' ? t("payments.type.base") : 
-                         payment.type === 'extra' ? t("payments.type.extra") : t("payments.type.manual")}
-                      </Badge>
-                    </TableCell>
-                    </TableRow>
-                  );
-                })
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                    {labelFilter 
-                      ? t("payments.emptyState.noPaymentsWithLabel", { labelFilter })
-                      : t("payments.emptyState.noPaymentsForPeriod")
-                    }
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-            </Table>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <AdvancedDataTable
+        title={t("payments.tableTitle")}
+        data={paginatedPayments}
+        columns={tableColumns}
+        rowKey={(row) => row.id}
+        isLoading={tableLoading}
+        loadingState={<TableLoadingSkeleton />}
+        zebra
+        filters={filtersConfig}
+        toolbar={tableToolbar}
+        actions={exportActions}
+        columnCustomization={{ storageKey: "payments.table.columns" }}
+        sortState={sortStateForTable}
+        onSortChange={handleTableSortChange}
+        pagination={{
+          page,
+          pageSize,
+          totalCount,
+          onPageChange: setPage,
+          onPageSizeChange: handlePageSizeChange,
+          pageSizeOptions: [10, 25, 50, 100],
+        }}
+        emptyState={<div className="text-muted-foreground">{emptyStateMessage}</div>}
+        onRowClick={handleProjectOpen}
+      />
 
       {/* Project Details Dialog */}
-      <ViewProjectDialog
-        project={viewingProject}
-        open={showProjectDialog}
-        onOpenChange={setShowProjectDialog}
+      <ProjectSheetView
+        project={selectedProject}
+        open={projectSheetOpen}
+        onOpenChange={handleProjectSheetOpenChange}
         onProjectUpdated={fetchPayments}
-        leadName={viewingProject?.leads?.name || ""}
+        leadName={selectedProject?.leads?.name ?? ""}
+        mode="sheet"
+        onViewFullDetails={handleViewFullDetails}
       />
           </>
         )}
       </div>
 
-      {/* Payment dialogs - temporarily removed due to interface mismatch */}
-      {/*
-      <AddPaymentDialog
-        projectId=""
-        onPaymentAdded={fetchPayments}
-      />
-      
-      <EditPaymentDialog
-        payment={editingPayment}
-        isOpen={isEditDialogOpen}
-        onClose={() => {
-          setIsEditDialogOpen(false);
-          setEditingPayment(null);
-        }}
-        onPaymentUpdated={fetchPayments}
-      />
-      */}
     </div>
   );
 };

@@ -948,13 +948,36 @@
       "noSelection": "Lütfen bir tarih aralığı seçin",
       "noData": "Seçilen dönem için henüz ödeme kaydı yok"
     },
+    "searchPlaceholder": "Ödemeleri, projeleri veya kişileri ara...",
+    "filterPanel": {
+      "title": "Filtreler"
+    },
+    "filters": {
+      "searchHeading": "Arama",
+      "searchClear": "Temizle",
+      "statusHeading": "Ödeme durumu",
+      "typeHeading": "Ödeme türü",
+      "amountHeading": "Tutar",
+      "amountMinPlaceholder": "Min tutar",
+      "amountMaxPlaceholder": "Max tutar",
+      "applyButton": "Filtreleri uygula"
+    },
+    "export": {
+      "button": "Excel'e aktar",
+      "successTitle": "Dışa aktarma hazır",
+      "successDescription": "Filtrelenmiş ödemeler indirildi.",
+      "errorTitle": "Dışa aktarma başarısız",
+      "errorDescription": "Excel dosyası oluşturulamadı. Lütfen tekrar deneyin.",
+      "noDataTitle": "Aktarılacak kayıt yok",
+      "noDataDescription": "En az bir ödeme görmek için filtreleri veya aramayı güncelleyin."
+    },
     "tableTitle": "Ödeme Kayıtları",
     "table": {
       "date": "Tarih",
       "amount": "Tutar",
       "project": "Proje",
       "lead": "Kişi",
-      "label": "Etiket",
+      "description": "Açıklama",
       "status": "Durum",
       "type": "Tür"
     },
@@ -969,6 +992,7 @@
     },
     "emptyState": {
       "noPaymentsWithLabel": "\"{{labelFilter}}\" etiketli ödeme bulunamadı.",
+      "noPaymentsWithFilters": "Seçilen filtrelerle eşleşen ödeme bulunamadı.",
       "noPaymentsForPeriod": "Seçili dönem için ödeme bulunamadı."
     },
     "defaultLabel": "Ödeme",

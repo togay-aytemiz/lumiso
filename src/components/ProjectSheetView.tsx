@@ -220,18 +220,13 @@ export function ProjectSheetView({
       const isMobileCheck = window.innerWidth <= 768;
       if (isMobileCheck) {
         onOpenChange(newOpen);
-        onProjectUpdated();
-        onActivityUpdated?.();
         return;
       }
       setIsFullscreen(false);
       return;
     }
-    if (!newOpen) {
-      onOpenChange(newOpen);
-      onProjectUpdated();
-      onActivityUpdated?.();
-    }
+
+    onOpenChange(newOpen);
   };
 
   const toggleFullscreen = () => {

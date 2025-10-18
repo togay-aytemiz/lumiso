@@ -83,7 +83,19 @@
     "customizeTableColumns": "Customize Table Columns",
     "chooseColumnsDescription": "Choose which columns to display and arrange their order. Drag to reorder columns.",
     "coreColumnsNote": "Core columns are always visible and can be reordered but not hidden.",
-    "core": "Core"
+    "core": "Core",
+    "filters": "Filters",
+    "clearFilters": "Clear filters",
+    "clearSearch": "Clear search",
+    "closeFilters": "Done",
+    "activeFilters": "{{count}} active",
+    "searchLabel": "Search",
+    "searchPlaceholder": "Search...",
+    "paginationSummary": "{{start}}–{{end}} of {{total}} results",
+    "rowsPerPage": "Rows per page",
+    "previousPage": "Previous",
+    "nextPage": "Next",
+    "pageIndicator": "Page {{page}} of {{pages}}"
   },
   "messages": {
     "info": {

@@ -949,13 +949,36 @@
       "noSelection": "Select a date range to begin",
       "noData": "No payments recorded for the selected period yet"
     },
+    "searchPlaceholder": "Search payments, projects, or clients...",
+    "filterPanel": {
+      "title": "Filters"
+    },
+    "filters": {
+      "searchHeading": "Search",
+      "searchClear": "Clear",
+      "statusHeading": "Payment status",
+      "typeHeading": "Payment type",
+      "amountHeading": "Amount",
+      "amountMinPlaceholder": "Min amount",
+      "amountMaxPlaceholder": "Max amount",
+      "applyButton": "Apply filters"
+    },
+    "export": {
+      "button": "Export to Excel",
+      "successTitle": "Export ready",
+      "successDescription": "Your filtered payments have been downloaded.",
+      "errorTitle": "Export failed",
+      "errorDescription": "We couldn't generate the Excel file. Please try again.",
+      "noDataTitle": "Nothing to export",
+      "noDataDescription": "Adjust your filters or search to include at least one payment."
+    },
     "tableTitle": "Payment Records",
     "table": {
       "date": "Date",
       "amount": "Amount",
       "project": "Project",
       "lead": "Lead",
-      "label": "Label",
+      "description": "Description",
       "status": "Status",
       "type": "Type"
     },
@@ -970,6 +993,7 @@
     },
     "emptyState": {
       "noPaymentsWithLabel": "No payments found with label containing \"{{labelFilter}}\".",
+      "noPaymentsWithFilters": "No payments match your current filters.",
       "noPaymentsForPeriod": "No payments found for selected period."
     },
     "defaultLabel": "Payment",

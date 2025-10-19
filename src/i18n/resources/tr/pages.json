@@ -1034,7 +1034,17 @@
     "stats": {
       "totalWorkflows": "Toplam İş Akışları",
       "active": "Aktif",
-      "paused": "Duraklatılmış"
+      "paused": "Duraklatılmış",
+      "summary": "{{active}} aktif • {{paused}} duraklatılmış",
+      "activeDescription": "Şu anda çalışan otomasyonlar.",
+      "pausedDescription": "İnceleme veya onay bekleyen iş akışları.",
+      "coverageLabel": "Kapsama",
+      "coverageAriaLabel": "Toplam iş akışları içinde aktif olanların yüzdesi",
+      "pausedShareLabel": "Duraklatma oranı",
+      "pausedShareAriaLabel": "Toplam iş akışları içinde duraklatılanların yüzdesi",
+      "viewAll": "Tümünü görüntüle",
+      "quickFilterActive": "Aktifleri göster",
+      "quickFilterPaused": "Duraklatılanları göster"
     },
     "search": "İş akışlarını ara...",
     "tabs": {

@@ -1,13 +1,11 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { PageHeader } from "@/components/ui/page-header";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   AdvancedDataTable,
   type AdvancedTableColumn,
   type AdvancedDataTableSortState,
-  type AdvancedDataTableFiltersConfig,
   TableSearchInput,
 } from "@/components/data-table";
 import { PageLoadingSkeleton } from "@/components/ui/loading-presets";
@@ -15,14 +13,13 @@ import { useWorkflows } from "@/hooks/useWorkflows";
 import { CreateWorkflowSheet } from "@/components/CreateWorkflowSheet";
 import { WorkflowDeleteDialog } from "@/components/WorkflowDeleteDialog";
 import { Workflow } from "@/types/workflow";
-import { Plus, Zap, CheckCircle, Clock, AlertTriangle, Edit, Trash2, Mail, MessageCircle, Phone, FileDown, Loader2 } from "lucide-react";
+import { Plus, Zap, CheckCircle, Clock, AlertTriangle, Edit, Trash2, Mail, MessageCircle, Phone } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
-import { formatDistanceToNow, format } from "date-fns";
+import { formatDistanceToNow } from "date-fns";
 import { enUS, tr } from 'date-fns/locale';
 import { useTranslation } from "react-i18next";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { writeFileXLSX, utils as XLSXUtils } from "xlsx/xlsx.mjs";
-import { toast } from "@/hooks/use-toast";
+import { KpiCard } from "@/components/ui/kpi-card";
 
 export default function Workflows() {
   const { t, i18n } = useTranslation("pages");
@@ -36,7 +33,6 @@ export default function Workflows() {
     columnId: "name",
     direction: "asc",
   });
-  const [exporting, setExporting] = useState(false);
 
   const filteredWorkflows = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
@@ -188,6 +184,20 @@ export default function Workflows() {
     }),
     [workflows]
   );
+
+  const totalSummary = useMemo(
+    () =>
+      t("workflows.stats.summary", {
+        active: stats.active,
+        paused: stats.paused,
+      }),
+    [stats.active, stats.paused, t]
+  );
+
+  const activeCoverage = stats.total > 0 ? (stats.active / stats.total) * 100 : 0;
+  const pausedShare = stats.total > 0 ? (stats.paused / stats.total) * 100 : 0;
+  const kpiActionButtonClass =
+    "h-8 rounded-full border border-border/60 bg-background/85 px-4 text-sm font-medium text-foreground shadow-sm transition-colors duration-200 hover:bg-muted/60 hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2";
 
   const workflowColumns: AdvancedTableColumn<Workflow>[] = useMemo(
     () => [
@@ -396,40 +406,71 @@ export default function Workflows() {
       
       <div className="p-4 space-y-6">
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card>
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <Zap className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">{t("workflows.stats.totalWorkflows")}</p>
-                <p className="text-2xl font-bold">{stats.total}</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="p-2 bg-green-500/10 rounded-lg">
-                <CheckCircle className="h-5 w-5 text-green-600" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">{t("workflows.stats.active")}</p>
-                <p className="text-2xl font-bold">{stats.active}</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="p-2 bg-orange-500/10 rounded-lg">
-                <Clock className="h-5 w-5 text-orange-600" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">{t("workflows.stats.paused")}</p>
-                <p className="text-2xl font-bold">{stats.paused}</p>
-              </div>
-            </CardContent>
-          </Card>
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+          <KpiCard
+            icon={Zap}
+            iconBackground="bg-primary/10"
+            iconForeground="text-primary"
+            title={t("workflows.stats.totalWorkflows")}
+            value={stats.total}
+            description={totalSummary}
+            footer={
+              <Button
+                size="xs"
+                variant="outline"
+                className={kpiActionButtonClass}
+                onClick={() => handleStatusFilterChange("all")}
+              >
+                {t("workflows.stats.viewAll")}
+              </Button>
+            }
+          />
+          <KpiCard
+            icon={CheckCircle}
+            iconBackground="bg-emerald-500/10"
+            iconForeground="text-emerald-600"
+            title={t("workflows.stats.active")}
+            value={stats.active}
+            description={t("workflows.stats.activeDescription")}
+            progress={{
+              value: activeCoverage,
+              label: t("workflows.stats.coverageLabel"),
+              ariaLabel: t("workflows.stats.coverageAriaLabel"),
+              action: (
+                <Button
+                  size="xs"
+                  variant="outline"
+                  className={kpiActionButtonClass}
+                  onClick={() => handleStatusFilterChange("active")}
+                >
+                  {t("workflows.stats.quickFilterActive")}
+                </Button>
+              ),
+            }}
+          />
+          <KpiCard
+            icon={Clock}
+            iconBackground="bg-amber-500/10"
+            iconForeground="text-amber-600"
+            title={t("workflows.stats.paused")}
+            value={stats.paused}
+            description={t("workflows.stats.pausedDescription")}
+            progress={{
+              value: pausedShare,
+              label: t("workflows.stats.pausedShareLabel"),
+              ariaLabel: t("workflows.stats.pausedShareAriaLabel"),
+              action: (
+                <Button
+                  size="xs"
+                  variant="outline"
+                  className={kpiActionButtonClass}
+                  onClick={() => handleStatusFilterChange("paused")}
+                >
+                  {t("workflows.stats.quickFilterPaused")}
+                </Button>
+              ),
+            }}
+          />
         </div>
 
         <AdvancedDataTable

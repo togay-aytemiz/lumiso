@@ -1035,7 +1035,17 @@
     "stats": {
       "totalWorkflows": "Total Workflows",
       "active": "Active",
-      "paused": "Paused"
+      "paused": "Paused",
+      "summary": "{{active}} active • {{paused}} paused",
+      "activeDescription": "Automations currently running.",
+      "pausedDescription": "Workflows waiting for tweaks or approval.",
+      "coverageLabel": "Coverage",
+      "coverageAriaLabel": "Percentage of active workflows out of total",
+      "pausedShareLabel": "Share paused",
+      "pausedShareAriaLabel": "Percentage of paused workflows out of total",
+      "viewAll": "View all",
+      "quickFilterActive": "Show active",
+      "quickFilterPaused": "Show paused"
     },
     "search": "Search workflows...",
     "tabs": {

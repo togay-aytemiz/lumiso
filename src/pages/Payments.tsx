@@ -1,9 +1,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
 import { DateRangePicker } from "@/components/DateRangePicker";
 import { ProjectSheetView } from "@/components/ProjectSheetView";
 import { toast } from "@/hooks/use-toast";
@@ -39,36 +37,32 @@ import {
 } from "@/components/ui/chart";
 import { Line, LineChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { Progress } from "@/components/ui/progress";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { FileDown, Loader2 } from "lucide-react";
 import { writeFileXLSX, utils as XLSXUtils } from "xlsx/xlsx.mjs";
 import { PAYMENT_COLORS } from "@/lib/paymentColors";
 import {
   AdvancedDataTable,
-  type AdvancedTableColumn,
   type AdvancedDataTableSortState,
 } from "@/components/data-table";
 import { TableSearchInput } from "@/components/data-table/TableSearchInput";
-import {
-  PAGE_SIZE,
-  SEARCH_MIN_CHARS,
-  STATUS_FILTER_OPTIONS,
-  TYPE_FILTER_OPTIONS,
-} from "@/pages/payments/constants";
+import { PAGE_SIZE, SEARCH_MIN_CHARS } from "@/pages/payments/constants";
 import {
   DateFilterType,
   Payment,
   PaymentMetrics,
-  PaymentStatusFilter,
   PaymentTrendPoint,
-  PaymentTypeFilter,
   ProjectDetails,
   SortDirection,
   SortField,
   TrendGrouping,
 } from "@/pages/payments/types";
 import { usePaymentsData } from "@/pages/payments/hooks/usePaymentsData";
+import { usePaymentsFilters } from "@/pages/payments/hooks/usePaymentsFilters";
 import { usePaymentsTableColumns } from "@/pages/payments/hooks/usePaymentsTableColumns";
+import { PaymentsDateControls } from "@/pages/payments/components/PaymentsDateControls";
+import { PaymentsTrendChart } from "@/pages/payments/components/PaymentsTrendChart";
+import { PaymentsMetricsSummary } from "@/pages/payments/components/PaymentsMetricsSummary";
+import { PaymentsTableSection } from "@/pages/payments/components/PaymentsTableSection";
 
 const Payments = () => {
   const { t } = useTranslation("pages");
@@ -77,18 +71,8 @@ const Payments = () => {
   const [exporting, setExporting] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<DateFilterType>('allTime');
   const [customDateRange, setCustomDateRange] = useState<DateRange | undefined>();
-  const [statusFilters, setStatusFilters] = useState<PaymentStatusFilter[]>([]);
-  const [statusDraft, setStatusDraft] = useState<PaymentStatusFilter[]>([]);
-  const [typeFilters, setTypeFilters] = useState<PaymentTypeFilter[]>([]);
-  const [typeDraft, setTypeDraft] = useState<PaymentTypeFilter[]>([]);
-  const [amountMinFilter, setAmountMinFilter] = useState<number | null>(null);
-  const [amountMaxFilter, setAmountMaxFilter] = useState<number | null>(null);
-  const [amountMinDraft, setAmountMinDraft] = useState<string>("");
-  const [amountMaxDraft, setAmountMaxDraft] = useState<string>("");
   const [sortField, setSortField] = useState<SortField>("date_paid");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [searchDraft, setSearchDraft] = useState("");
   const [selectedProject, setSelectedProject] = useState<ProjectDetails | null>(null);
   const [projectSheetOpen, setProjectSheetOpen] = useState(false);
   const [trendGrouping, setTrendGrouping] = useState<TrendGrouping>("month");
@@ -102,6 +86,18 @@ const Payments = () => {
       variant: "destructive",
     });
   }, [t]);
+  const {
+    state: filtersState,
+    filtersConfig,
+    searchValue,
+    onSearchChange,
+    onSearchClear,
+    activeFilterCount,
+  } = usePaymentsFilters({
+    onStateChange: () => {
+      setPage(1);
+    },
+  });
   const compactCurrencyFormatter = useMemo(
     () =>
       new Intl.NumberFormat("tr-TR", {
@@ -123,16 +119,16 @@ const Payments = () => {
   }, []);
 
   useEffect(() => {
-    setSearchDraft(searchTerm);
-  }, [searchTerm]);
-
-  useEffect(() => {
     if (typeof window === "undefined") {
       return;
     }
 
     window.localStorage.setItem("paymentsTrendGrouping", trendGrouping);
   }, [trendGrouping]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [selectedFilter, customDateRange]);
 
   useEffect(() => {
     return () => {
@@ -198,18 +194,14 @@ const Payments = () => {
     pageSize,
     sortField,
     sortDirection,
-    statusFilters,
-    typeFilters,
-    amountMinFilter,
-    amountMaxFilter,
-    searchTerm,
+    statusFilters: filtersState.status,
+    typeFilters: filtersState.type,
+    amountMinFilter: filtersState.amountMin,
+    amountMaxFilter: filtersState.amountMax,
+    searchTerm: filtersState.search,
     activeDateRange,
     onError: handleDataError,
   });
-
-  useEffect(() => {
-    setPage(1);
-  }, [selectedFilter, customDateRange, statusFilters, typeFilters, amountMinFilter, amountMaxFilter]);
 
   useEffect(() => {
     const computedTotalPages = Math.max(1, Math.ceil(totalCount / pageSize));
@@ -539,283 +531,7 @@ const Payments = () => {
     (point) => Math.abs(point.paid) > 0 || Math.abs(point.due) > 0
   );
 
-  const hasSearchTerm = searchTerm.trim().length >= SEARCH_MIN_CHARS;
-  const hasStatusFilter =
-    statusFilters.length > 0 && statusFilters.length < STATUS_FILTER_OPTIONS.length;
-  const hasTypeFilter =
-    typeFilters.length > 0 && typeFilters.length < TYPE_FILTER_OPTIONS.length;
-  const hasMinAmountFilter = amountMinFilter !== null;
-  const hasMaxAmountFilter = amountMaxFilter !== null;
-  const activeFilterCount = [
-    hasStatusFilter,
-    hasTypeFilter,
-    hasMinAmountFilter,
-    hasMaxAmountFilter,
-  ].filter(Boolean).length;
-
-  const statusFilterOptions = useMemo(
-    () =>
-      STATUS_FILTER_OPTIONS.map((value) => ({
-        value,
-        label: value === "paid" ? t("payments.status.paid") : t("payments.status.due"),
-      })),
-    [t]
-  );
-
-  const typeFilterOptions = useMemo(
-    () =>
-      TYPE_FILTER_OPTIONS.map((value) => ({
-        value,
-        label:
-          value === "base_price"
-            ? t("payments.type.base")
-            : value === "extra"
-              ? t("payments.type.extra")
-              : t("payments.type.manual"),
-      })),
-    [t]
-  );
-
-  const handleStatusFilterChange = useCallback((values: string[]) => {
-    setStatusDraft(values as PaymentStatusFilter[]);
-  }, []);
-
-  const handleTypeFilterChange = useCallback((values: string[]) => {
-    setTypeDraft(values as PaymentTypeFilter[]);
-  }, []);
-
-  const applySearchIfNeeded = useCallback(
-    (rawValue: string) => {
-      const normalized = rawValue.trim();
-      if (normalized.length === 0) {
-        if (searchTerm !== "") {
-          setSearchTerm("");
-          setPage(1);
-        }
-        return;
-      }
-
-      if (normalized.length >= SEARCH_MIN_CHARS && normalized !== searchTerm) {
-        setSearchTerm(normalized);
-        setPage(1);
-      }
-    },
-    [searchTerm]
-  );
-
-  const handleSearchDraftChange = useCallback(
-    (value: string) => {
-      setSearchDraft(value);
-      applySearchIfNeeded(value);
-    },
-    [applySearchIfNeeded]
-  );
-
-  const handleClearSearchDraft = useCallback(() => {
-    setSearchDraft("");
-    applySearchIfNeeded("");
-  }, [applySearchIfNeeded]);
-
-  const parseAmountInputValue = useCallback((value: string): number | null => {
-    const trimmed = value.trim();
-    if (trimmed === "") return null;
-    const parsed = Number(trimmed);
-    return Number.isFinite(parsed) ? parsed : null;
-  }, []);
-
-  const handleApplyFilters = useCallback(() => {
-    const nextMin = parseAmountInputValue(amountMinDraft);
-    const nextMax = parseAmountInputValue(amountMaxDraft);
-    const normalizedSearch = searchDraft.trim();
-
-    setStatusFilters([...statusDraft]);
-    setTypeFilters([...typeDraft]);
-    setAmountMinFilter(nextMin);
-    setAmountMaxFilter(nextMax);
-    setSearchTerm(normalizedSearch);
-    if (normalizedSearch.length >= SEARCH_MIN_CHARS || normalizedSearch.length === 0) {
-      setSearchDraft(normalizedSearch);
-    }
-    setPage(1);
-  }, [amountMaxDraft, amountMinDraft, parseAmountInputValue, searchDraft, statusDraft, typeDraft]);
-
-  const handleResetFilters = useCallback(() => {
-    setStatusFilters([]);
-    setTypeFilters([]);
-    setAmountMinFilter(null);
-    setAmountMaxFilter(null);
-    setStatusDraft([]);
-    setTypeDraft([]);
-    setAmountMinDraft("");
-    setAmountMaxDraft("");
-    setSearchTerm("");
-    setSearchDraft("");
-    setPage(1);
-  }, []);
-
-  useEffect(() => {
-    setStatusDraft(statusFilters);
-  }, [statusFilters]);
-
-  useEffect(() => {
-    setTypeDraft(typeFilters);
-  }, [typeFilters]);
-
-  useEffect(() => {
-    setAmountMinDraft(amountMinFilter != null ? String(amountMinFilter) : "");
-  }, [amountMinFilter]);
-
-  useEffect(() => {
-    setAmountMaxDraft(amountMaxFilter != null ? String(amountMaxFilter) : "");
-  }, [amountMaxFilter]);
-
-  const arraysMatch = useCallback((a: string[], b: string[]) => {
-    if (a.length !== b.length) return false;
-    const sortedA = [...a].sort();
-    const sortedB = [...b].sort();
-    return sortedA.every((value, index) => value === sortedB[index]);
-  }, []);
-
-  const amountDraftMin = parseAmountInputValue(amountMinDraft);
-  const amountDraftMax = parseAmountInputValue(amountMaxDraft);
-
-  const statusFiltersDirty = useMemo(() => !arraysMatch(statusFilters, statusDraft), [arraysMatch, statusDraft, statusFilters]);
-  const typeFiltersDirty = useMemo(() => !arraysMatch(typeFilters, typeDraft), [arraysMatch, typeDraft, typeFilters]);
-  const amountFiltersDirty = useMemo(
-    () => amountDraftMin !== amountMinFilter || amountDraftMax !== amountMaxFilter,
-    [amountDraftMax, amountDraftMin, amountMaxFilter, amountMinFilter]
-  );
-
-  const filtersDirty = statusFiltersDirty || typeFiltersDirty || amountFiltersDirty;
-  const canClearSearchDraft = searchDraft.trim().length > 0;
-
-  const toggleItemClasses =
-    "rounded-full border border-border/60 bg-background px-3 py-1 text-sm font-medium transition-colors hover:border-border hover:bg-muted/20 data-[state=on]:bg-primary/10 data-[state=on]:text-primary data-[state=on]:border-primary/40";
-
-  const filtersContent = useMemo(
-    () => (
-      <div className="space-y-6">
-        <div className="space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            {t("payments.filters.statusHeading")}
-          </p>
-          <ToggleGroup
-            type="multiple"
-            value={statusDraft}
-            onValueChange={handleStatusFilterChange}
-            className="flex flex-wrap justify-start gap-2"
-            size="sm"
-          >
-            {statusFilterOptions.map((option) => (
-              <ToggleGroupItem key={option.value} value={option.value} className={toggleItemClasses}>
-                {option.label}
-              </ToggleGroupItem>
-            ))}
-          </ToggleGroup>
-        </div>
-        <div className="space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            {t("payments.filters.typeHeading")}
-          </p>
-          <ToggleGroup
-            type="multiple"
-            value={typeDraft}
-            onValueChange={handleTypeFilterChange}
-            className="flex flex-wrap justify-start gap-2"
-            size="sm"
-          >
-            {typeFilterOptions.map((option) => (
-              <ToggleGroupItem key={option.value} value={option.value} className={toggleItemClasses}>
-                {option.label}
-              </ToggleGroupItem>
-            ))}
-          </ToggleGroup>
-        </div>
-        <div className="space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            {t("payments.filters.amountHeading")}
-          </p>
-          <div className="grid gap-2 sm:grid-cols-2">
-            <Input
-              type="number"
-              inputMode="decimal"
-              step="0.01"
-              min="0"
-              value={amountMinDraft}
-              onChange={(event) => setAmountMinDraft(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  event.preventDefault();
-                  handleApplyFilters();
-                }
-              }}
-              placeholder={t("payments.filters.amountMinPlaceholder")}
-            />
-            <Input
-              type="number"
-              inputMode="decimal"
-              step="0.01"
-              min="0"
-              value={amountMaxDraft}
-              onChange={(event) => setAmountMaxDraft(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  event.preventDefault();
-                  handleApplyFilters();
-                }
-              }}
-              placeholder={t("payments.filters.amountMaxPlaceholder")}
-            />
-          </div>
-        </div>
-      </div>
-    ),
-    [
-      amountMaxDraft,
-      amountMinDraft,
-      handleApplyFilters,
-      handleStatusFilterChange,
-      handleTypeFilterChange,
-      statusDraft,
-      statusFilterOptions,
-      t,
-      toggleItemClasses,
-      typeDraft,
-      typeFilterOptions,
-    ]
-  );
-
-  const filtersFooter = useMemo(
-    () => (
-      <div className="flex w-full flex-col gap-2">
-        <Button
-          type="button"
-          size="sm"
-          onClick={handleApplyFilters}
-          disabled={!filtersDirty}
-        >
-          {t("payments.filters.applyButton")}
-        </Button>
-      </div>
-    ),
-    [filtersDirty, handleApplyFilters, t]
-  );
-
-  const tableToolbar = useMemo(
-    () => (
-      <TableSearchInput
-        value={searchDraft}
-        onChange={handleSearchDraftChange}
-        onClear={handleClearSearchDraft}
-        placeholder={t("payments.searchPlaceholder")}
-        loading={tableLoading}
-        clearAriaLabel={t("payments.filters.searchClear")}
-        className="w-full sm:max-w-xs lg:max-w-sm"
-      />
-    ),
-    [handleClearSearchDraft, handleSearchDraftChange, searchDraft, tableLoading, t]
-  );
-
+  const hasSearchTerm = filtersState.search.trim().length >= SEARCH_MIN_CHARS;
   const hasAnyResults = totalCount > 0 || paginatedPayments.length > 0;
 
   const exportActions = useMemo(
@@ -839,17 +555,19 @@ const Payments = () => {
     [exporting, handleExport, hasAnyResults, tableLoading, t]
   );
 
-  const filtersConfig = useMemo(
-    () => ({
-      title: t("payments.filterPanel.title"),
-      triggerLabel: t("payments.filterPanel.title"),
-      content: filtersContent,
-      activeCount: activeFilterCount,
-      onReset: activeFilterCount ? handleResetFilters : undefined,
-      collapsedByDefault: true,
-      footer: filtersFooter,
-    }),
-    [filtersContent, filtersFooter, activeFilterCount, handleResetFilters, t]
+  const tableToolbar = useMemo(
+    () => (
+      <TableSearchInput
+        value={searchValue}
+        onChange={onSearchChange}
+        onClear={onSearchClear}
+        placeholder={t("payments.searchPlaceholder")}
+        loading={tableLoading}
+        clearAriaLabel={t("payments.filters.searchClear")}
+        className="w-full sm:max-w-xs lg:max-w-sm"
+      />
+    ),
+    [onSearchChange, onSearchClear, searchValue, tableLoading, t]
   );
 
   const emptyStateMessage =
@@ -932,201 +650,43 @@ const Payments = () => {
           <>
 
       {/* Date Filter */}
-      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        {rangeLabel ? (
-          <div className="inline-flex flex-col rounded-md border border-border/60 bg-muted/40 px-4 py-2">
-            <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              {t("payments.range.label")}
-            </span>
-            <span className="text-lg font-semibold text-foreground">
-              {rangeLabel}
-            </span>
-          </div>
-        ) : (
-          <span className="text-sm text-muted-foreground">{rangeNotice}</span>
-        )}
-        <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:gap-4">
-          <Select
-            value={selectedFilter}
-            onValueChange={(value) => {
-              setSelectedFilter(value as DateFilterType);
-            }}
-          >
-            <SelectTrigger className="w-48">
-              <SelectValue placeholder={t("payments.selectPeriod")} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="last7days">{t("payments.dateFilters.last7days")}</SelectItem>
-              <SelectItem value="last4weeks">{t("payments.dateFilters.last4weeks")}</SelectItem>
-              <SelectItem value="last3months">{t("payments.dateFilters.last3months")}</SelectItem>
-              <SelectItem value="last12months">{t("payments.dateFilters.last12months")}</SelectItem>
-              <SelectItem value="monthToDate">{t("payments.dateFilters.monthToDate")}</SelectItem>
-              <SelectItem value="quarterToDate">{t("payments.dateFilters.quarterToDate")}</SelectItem>
-              <SelectItem value="yearToDate">{t("payments.dateFilters.yearToDate")}</SelectItem>
-              <SelectItem value="lastMonth">{t("payments.dateFilters.lastMonth")}</SelectItem>
-              <SelectItem value="allTime">{t("payments.dateFilters.allTime")}</SelectItem>
-              <SelectItem value="custom">{t("payments.dateFilters.customRange")}</SelectItem>
-            </SelectContent>
-          </Select>
-
-          {selectedFilter === 'custom' && (
-            <DateRangePicker
-              dateRange={customDateRange}
-              onDateRangeChange={(range) => {
-                setCustomDateRange(range);
-              }}
-            />
-          )}
-        </div>
-      </div>
+      <PaymentsDateControls
+        rangeLabel={rangeLabel}
+        rangeNotice={rangeNotice}
+        selectedFilter={selectedFilter}
+        onSelectedFilterChange={setSelectedFilter}
+        customDateRange={customDateRange}
+        onCustomDateRangeChange={setCustomDateRange}
+      />
 
       {/* Metrics Cards */}
       <div className="grid gap-6 mb-8 lg:grid-cols-[minmax(0,2fr),minmax(0,1fr)]">
-        <Card className="border border-border/60 shadow-sm">
-          <CardHeader>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <CardTitle className="text-base font-medium">
-                {t("payments.chart.title")}
-              </CardTitle>
-              <div className="flex items-center gap-3">
-                <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  {t("payments.chart.groupingLabel")}
-                </span>
-                <ToggleGroup
-                  type="single"
-                  value={trendGrouping}
-                  onValueChange={(value) => value && setTrendGrouping(value as TrendGrouping)}
-                  className="rounded-md border"
-                  size="sm"
-                >
-                  <ToggleGroupItem value="day" className="text-xs px-3">
-                    {t("payments.chart.grouping.day")}
-                  </ToggleGroupItem>
-                  <ToggleGroupItem value="week" className="text-xs px-3">
-                    {t("payments.chart.grouping.week")}
-                  </ToggleGroupItem>
-                  <ToggleGroupItem value="month" className="text-xs px-3">
-                    {t("payments.chart.grouping.month")}
-                  </ToggleGroupItem>
-                </ToggleGroup>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {hasTrendData ? (
-              <ChartContainer config={chartConfig} className="aspect-auto h-[300px] w-full">
-                <LineChart data={paymentsTrend}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis
-                    dataKey="period"
-                    tickLine={false}
-                    axisLine={false}
-                    tickMargin={8}
-                  />
-                  <YAxis
-                    tickLine={false}
-                    axisLine={false}
-                    tickMargin={8}
-                    tickFormatter={(value) => compactCurrencyFormatter.format(Number(value))}
-                  />
-                  <ChartTooltip
-                    content={
-                      <ChartTooltipContent
-                        formatter={(value, name) => (
-                          <div className="flex w-full items-center justify-between gap-6">
-                            <span className="text-muted-foreground">
-                              {typeof name === "string"
-                                ? chartLegendLabels[
-                                    name.toLowerCase() as keyof typeof chartLegendLabels
-                                  ] ?? name
-                                : name}
-                            </span>
-                            <span className="font-semibold text-foreground">
-                              {formatCurrency(Number(value))}
-                            </span>
-                          </div>
-                        )}
-                      />
-                    }
-                  />
-                  <Line
-                    key={`paid-${trendGrouping}-${rangeLabel}`}
-                    type="monotone"
-                    dataKey="paid"
-                    stroke={chartConfig.paid.color}
-                    strokeWidth={2}
-                    dot={false}
-                    activeDot={{ r: 5 }}
-                    isAnimationActive={paymentsTrend.length > 1}
-                    animationDuration={600}
-                  />
-                  <Line
-                    key={`due-${trendGrouping}-${rangeLabel}`}
-                    type="monotone"
-                    dataKey="due"
-                    stroke={chartConfig.due.color}
-                    strokeWidth={2}
-                    dot={false}
-                    strokeDasharray="4 4"
-                    activeDot={{ r: 5 }}
-                    isAnimationActive={paymentsTrend.length > 1}
-                    animationDuration={600}
-                  />
-                </LineChart>
-              </ChartContainer>
-            ) : (
-              <div className="flex h-[220px] items-center justify-center rounded-md border border-dashed border-muted-foreground/20 bg-muted/10 text-sm text-muted-foreground">
-                {t("payments.chart.empty")}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="border border-border/60 shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-base font-medium">{t("payments.metrics.overviewTitle")}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-1">
-              <span className="text-sm text-muted-foreground">{t("payments.metrics.totalInvoiced")}</span>
-              <div className="text-2xl font-semibold">{formatCurrency(metrics.totalInvoiced)}</div>
-            </div>
-            <div className="space-y-1">
-              <span className="text-sm text-muted-foreground">{t("payments.metrics.totalPaid")}</span>
-              <div className={cn("text-xl font-semibold", PAYMENT_COLORS.paid.textClass)}>
-                {formatCurrency(metrics.totalPaid)}
-              </div>
-            </div>
-            <div className="space-y-1">
-              <span className="text-sm text-muted-foreground">{t("payments.metrics.remainingBalance")}</span>
-              <div className={cn("text-xl font-semibold", PAYMENT_COLORS.due.textClass)}>
-                {formatCurrency(metrics.remainingBalance)}
-              </div>
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm text-muted-foreground">
-                <span>{t("payments.metrics.collectionRate")}</span>
-                <span className="font-medium text-foreground">{formatPercent(metrics.collectionRate)}</span>
-              </div>
-              <Progress className="h-2" value={metrics.collectionRate * 100} />
-            </div>
-          </CardContent>
-        </Card>
+        <PaymentsTrendChart
+          hasTrendData={hasTrendData}
+          chartConfig={chartConfig}
+          chartLegendLabels={chartLegendLabels}
+          paymentsTrend={paymentsTrend}
+          trendGrouping={trendGrouping}
+          onTrendGroupingChange={setTrendGrouping}
+          rangeLabel={rangeLabel}
+          compactCurrencyFormatter={compactCurrencyFormatter}
+          formatCurrency={formatCurrency}
+        />
+        <PaymentsMetricsSummary
+          metrics={metrics}
+          formatCurrency={formatCurrency}
+          formatPercent={formatPercent}
+        />
       </div>
 
       {/* Payments Table */}
-      <AdvancedDataTable
+      <PaymentsTableSection
         title={t("payments.tableTitle")}
         data={paginatedPayments}
         columns={tableColumns}
-        rowKey={(row) => row.id}
-        isLoading={tableLoading}
-        loadingState={<TableLoadingSkeleton />}
-        zebra
         filters={filtersConfig}
         toolbar={tableToolbar}
         actions={exportActions}
-        columnCustomization={{ storageKey: "payments.table.columns" }}
         sortState={sortStateForTable}
         onSortChange={handleTableSortChange}
         pagination={{
@@ -1139,6 +699,7 @@ const Payments = () => {
         }}
         emptyState={<div className="text-muted-foreground">{emptyStateMessage}</div>}
         onRowClick={handleProjectOpen}
+        isLoading={tableLoading}
       />
 
       {/* Project Details Dialog */}

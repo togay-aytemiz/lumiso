@@ -201,7 +201,7 @@ export const KpiCard = React.forwardRef<HTMLDivElement, KpiCardProps>(
       <Card
         ref={ref}
         className={cn(
-          "group relative isolate overflow-hidden border-border/60 bg-gradient-to-br from-muted/60 via-background to-background shadow-sm transition-all duration-300 ease-out",
+          "group relative isolate overflow-hidden border-border/60 bg-white dark:bg-slate-950 shadow-sm transition-all duration-300 ease-out",
           onClick
             ? "cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 hover:-translate-y-1 hover:shadow-xl"
             : "hover:-translate-y-0.5 hover:shadow-xl",

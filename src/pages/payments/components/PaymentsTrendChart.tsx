@@ -1,6 +1,5 @@
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   ChartContainer,
   ChartTooltip,
@@ -9,6 +8,7 @@ import {
 } from "@/components/ui/chart";
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 import type { TrendGrouping, PaymentTrendPoint } from "../types";
+import { SegmentedControl } from "@/components/ui/segmented-control";
 
 interface PaymentsTrendChartProps {
   hasTrendData: boolean;
@@ -42,27 +42,20 @@ export function PaymentsTrendChart({
           <CardTitle className="text-base font-medium">
             {t("payments.chart.title")}
           </CardTitle>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               {t("payments.chart.groupingLabel")}
             </span>
-            <ToggleGroup
-              type="single"
-              value={trendGrouping}
-              onValueChange={(value) => value && onTrendGroupingChange(value as TrendGrouping)}
-              className="rounded-md border"
+            <SegmentedControl
               size="sm"
-            >
-              <ToggleGroupItem value="day" className="text-xs px-3">
-                {t("payments.chart.grouping.day")}
-              </ToggleGroupItem>
-              <ToggleGroupItem value="week" className="text-xs px-3">
-                {t("payments.chart.grouping.week")}
-              </ToggleGroupItem>
-              <ToggleGroupItem value="month" className="text-xs px-3">
-                {t("payments.chart.grouping.month")}
-              </ToggleGroupItem>
-            </ToggleGroup>
+              value={trendGrouping}
+              onValueChange={(value) => onTrendGroupingChange(value as TrendGrouping)}
+              options={[
+                { value: "day", label: t("payments.chart.grouping.day") },
+                { value: "week", label: t("payments.chart.grouping.week") },
+                { value: "month", label: t("payments.chart.grouping.month") },
+              ]}
+            />
           </div>
         </div>
       </CardHeader>

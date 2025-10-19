@@ -18,8 +18,8 @@ import { Switch } from "@/components/ui/switch";
 import { formatDistanceToNow } from "date-fns";
 import { enUS, tr } from 'date-fns/locale';
 import { useTranslation } from "react-i18next";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { KpiCard } from "@/components/ui/kpi-card";
+import { SegmentedControl } from "@/components/ui/segmented-control";
 
 export default function Workflows() {
   const { t, i18n } = useTranslation("pages");
@@ -292,8 +292,7 @@ export default function Workflows() {
 
   const tableToolbar = useMemo(
     () => (
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-3">
-        <div className="w-full sm:max-w-xs lg:max-w-sm">
+      <div className="w-full sm:max-w-xs lg:max-w-sm">
         <TableSearchInput
           value={searchQuery}
           onChange={handleSearchChange}
@@ -302,32 +301,32 @@ export default function Workflows() {
           clearAriaLabel={t("workflows.clearSearch", { defaultValue: "Clear search" })}
           loading={loading}
         />
-        </div>
-        <ToggleGroup
-          type="single"
+      </div>
+    ),
+    [handleSearchChange, handleSearchClear, loading, searchQuery, t]
+  );
+
+  const headerActions = useMemo(
+    () => (
+      <div className="flex flex-wrap items-center justify-end gap-3">
+        <SegmentedControl
+          size="md"
           value={statusFilter}
-          onValueChange={(value) => handleStatusFilterChange(value ?? "all")}
-          className="inline-flex rounded-md border p-1"
-          size="sm"
-        >
-          <ToggleGroupItem value="all" className="px-3">
-            {t("workflows.tabs.all")}
-          </ToggleGroupItem>
-          <ToggleGroupItem value="active" className="px-3">
-            {t("workflows.tabs.active")}
-          </ToggleGroupItem>
-          <ToggleGroupItem value="paused" className="px-3">
-            {t("workflows.tabs.paused")}
-          </ToggleGroupItem>
-        </ToggleGroup>
+          onValueChange={(value) => handleStatusFilterChange(value as typeof statusFilter)}
+          options={[
+            { value: "all", label: t("workflows.tabs.all") },
+            { value: "active", label: t("workflows.tabs.active") },
+            { value: "paused", label: t("workflows.tabs.paused") },
+          ]}
+        />
         <CreateWorkflowSheet
           onCreateWorkflow={createWorkflow}
           editWorkflow={editingWorkflow}
           onUpdateWorkflow={updateWorkflow}
           setEditingWorkflow={setEditingWorkflow}
         >
-          <Button size="sm" className="whitespace-nowrap">
-            <Plus className="h-4 w-4 mr-2" />
+          <Button className="flex items-center gap-2 whitespace-nowrap">
+            <Plus className="h-4 w-4" />
             {t("workflows.buttons.createWorkflow")}
           </Button>
         </CreateWorkflowSheet>
@@ -336,13 +335,9 @@ export default function Workflows() {
     [
       createWorkflow,
       editingWorkflow,
-      handleSearchChange,
-      handleSearchClear,
       handleStatusFilterChange,
-      loading,
-      searchQuery,
-      setEditingWorkflow,
       statusFilter,
+      setEditingWorkflow,
       t,
       updateWorkflow,
     ]
@@ -481,6 +476,7 @@ export default function Workflows() {
           isLoading={loading}
           zebra
           toolbar={tableToolbar}
+          actions={headerActions}
           columnCustomization={{ storageKey: "workflows.table.columns" }}
           sortState={sortState}
           onSortChange={handleTableSortChange}

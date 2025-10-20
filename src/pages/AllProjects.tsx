@@ -104,6 +104,10 @@ const AllProjects = () => {
   const [sortField, setSortField] = useState<SortField>('created_at');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [sortState, setSortState] = useState<AdvancedDataTableSortState>({ columnId: 'created_at', direction: 'desc' });
+  const [listPage, setListPage] = useState(1);
+  const [listPageSize, setListPageSize] = useState(25);
+  const [archivedPage, setArchivedPage] = useState(1);
+  const [archivedPageSize, setArchivedPageSize] = useState(25);
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { completeCurrentStep } = useOnboarding();
@@ -274,73 +278,15 @@ const AllProjects = () => {
     serviceOptions: listFilterOptions.services,
   });
 
-  const listSummaryLabel = listActiveCount
-    ? t('projects.filters.summaryActive', { count: listActiveCount })
-    : t('projects.filters.summaryNone');
+  // Derived labels no longer used; header summary now handled by AdvancedDataTable
 
-  const archivedSummaryLabel = archivedActiveCount
-    ? t('projects.filters.summaryActive', { count: archivedActiveCount })
-    : t('projects.filters.summaryNone');
+  // Header summary placeholders; defined after filtered rows below
+  let listHeaderSummary: { text?: string; chips: typeof listSummaryChips };
+  let archivedHeaderSummary: { text?: string; chips: typeof archivedSummaryChips };
 
-  const listFiltersToolbar = useMemo(() => {
-    if (viewMode !== 'list') return null;
-
-    return (
-      <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm">
-        <span className="text-muted-foreground">{listSummaryLabel}</span>
-        {listActiveCount > 0 && (
-          <Button
-            type="button"
-            size="sm"
-            variant="ghost"
-            className="h-8 px-2 text-xs text-muted-foreground hover:text-primary"
-            onClick={resetListFilters}
-          >
-            {t('projects.resetFilters')}
-          </Button>
-        )}
-        {listSummaryChips.map((chip) => (
-          <Badge
-            key={chip.id}
-            variant="secondary"
-            className="bg-secondary/50 px-2.5 py-1 text-xs font-medium tracking-wide text-foreground"
-          >
-            {chip.label}
-          </Badge>
-        ))}
-      </div>
-    );
-  }, [listActiveCount, listSummaryChips, listSummaryLabel, resetListFilters, t, viewMode]);
-
-  const archivedFiltersToolbar = useMemo(() => {
-    if (viewMode !== 'archived') return null;
-
-    return (
-      <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm">
-        <span className="text-muted-foreground">{archivedSummaryLabel}</span>
-        {archivedActiveCount > 0 && (
-          <Button
-            type="button"
-            size="sm"
-            variant="ghost"
-            className="h-8 px-2 text-xs text-muted-foreground hover:text-primary"
-            onClick={resetArchivedFilters}
-          >
-            {t('projects.resetFilters')}
-          </Button>
-        )}
-        {archivedSummaryChips.map((chip) => (
-          <Badge
-            key={chip.id}
-            variant="secondary"
-            className="bg-secondary/50 px-2.5 py-1 text-xs font-medium tracking-wide text-foreground"
-          >
-            {chip.label}
-          </Badge>
-        ))}
-      </div>
-    );
-  }, [archivedActiveCount, archivedSummaryChips, archivedSummaryLabel, resetArchivedFilters, t, viewMode]);
+  // Pagination: reset page when filters change
+  useEffect(() => { setListPage(1); }, [listFiltersState]);
+  useEffect(() => { setArchivedPage(1); }, [archivedFiltersState]);
 
   const applyListFilters = useCallback(
     (rows: Project[]) => {
@@ -428,6 +374,41 @@ const AllProjects = () => {
     },
     [archivedFiltersState]
   );
+
+  // Derived filtered and paginated datasets for list and archived
+  const filteredListRows = useMemo(
+    () => applyListFilters(sortedProjects),
+    [applyListFilters, sortedProjects, listFiltersState]
+  );
+  const filteredArchivedRows = useMemo(
+    () => applyArchivedFilters(sortedProjects),
+    [applyArchivedFilters, sortedProjects, archivedFiltersState]
+  );
+
+  const paginatedListRows = useMemo(() => {
+    const start = (listPage - 1) * listPageSize;
+    return filteredListRows.slice(start, start + listPageSize);
+  }, [filteredListRows, listPage, listPageSize]);
+
+  const paginatedArchivedRows = useMemo(() => {
+    const start = (archivedPage - 1) * archivedPageSize;
+    return filteredArchivedRows.slice(start, start + archivedPageSize);
+  }, [filteredArchivedRows, archivedPage, archivedPageSize]);
+
+  // Now that filtered counts are known, compute summary strips
+  listHeaderSummary = useMemo(() => {
+    const text = listActiveCount > 0
+      ? t('leads.tableSummaryFiltered', { visible: filteredListRows.length, total: sortedProjects.length })
+      : undefined;
+    return { text, chips: listSummaryChips };
+  }, [filteredListRows.length, listActiveCount, listSummaryChips, sortedProjects.length, t]);
+
+  archivedHeaderSummary = useMemo(() => {
+    const text = archivedActiveCount > 0
+      ? t('leads.tableSummaryFiltered', { visible: filteredArchivedRows.length, total: sortedProjects.length })
+      : undefined;
+    return { text, chips: archivedSummaryChips };
+  }, [archivedActiveCount, archivedSummaryChips, filteredArchivedRows.length, sortedProjects.length, t]);
 
   const fetchProjects = async () => {
     try {
@@ -927,7 +908,7 @@ const AllProjects = () => {
             {viewMode === 'list' && (
               <AdvancedDataTable
                 title={t('projects.list_view')}
-                data={applyListFilters(sortedProjects)}
+                data={paginatedListRows}
                 columns={[
                   {
                     id: 'lead_name',
@@ -938,7 +919,7 @@ const AllProjects = () => {
                       row.lead?.id ? (
                         <Button
                           variant="link"
-                          className="p-0 h-auto font-medium text-primary underline underline-offset-4 decoration-dashed"
+                          className="p-0 h-auto font-medium"
                           onClick={(event) => {
                             event.stopPropagation();
                             handleLeadClick(row.lead!.id);
@@ -960,7 +941,7 @@ const AllProjects = () => {
                       <div>
                         <Button
                           variant="link"
-                          className="p-0 h-auto font-medium text-primary"
+                          className="p-0 h-auto font-medium"
                           onClick={(event) => {
                             event.preventDefault();
                             event.stopPropagation();
@@ -1036,14 +1017,22 @@ const AllProjects = () => {
                 onSortChange={handleTableSortChange}
                 filters={listFiltersConfig}
                 columnCustomization={{ storageKey: 'projects.table.columns' }}
-                toolbar={listFiltersToolbar}
+                summary={listHeaderSummary}
+                pagination={{
+                  page: listPage,
+                  pageSize: listPageSize,
+                  totalCount: filteredListRows.length,
+                  onPageChange: setListPage,
+                  onPageSizeChange: (size) => { setListPageSize(size); setListPage(1); },
+                  pageSizeOptions: [10, 25, 50, 100],
+                }}
               />
             )}
 
             {viewMode === 'archived' && (
               <AdvancedDataTable
                 title={t('projects.archived_view')}
-                data={applyArchivedFilters(sortedProjects)}
+                data={paginatedArchivedRows}
                 columns={[
                   {
                     id: 'lead_name',
@@ -1054,7 +1043,7 @@ const AllProjects = () => {
                       row.lead?.id ? (
                         <Button
                           variant="link"
-                          className="p-0 h-auto font-medium text-primary underline underline-offset-4 decoration-dashed"
+                          className="p-0 h-auto font-medium"
                           onClick={(event) => {
                             event.stopPropagation();
                             handleLeadClick(row.lead!.id);
@@ -1132,7 +1121,15 @@ const AllProjects = () => {
                 onSortChange={handleTableSortChange}
                 columnCustomization={{ storageKey: 'projects.archived.table.columns' }}
                 filters={archivedFiltersConfig}
-                toolbar={archivedFiltersToolbar}
+                summary={archivedHeaderSummary}
+                pagination={{
+                  page: archivedPage,
+                  pageSize: archivedPageSize,
+                  totalCount: filteredArchivedRows.length,
+                  onPageChange: setArchivedPage,
+                  onPageSizeChange: (size) => { setArchivedPageSize(size); setArchivedPage(1); },
+                  pageSizeOptions: [10, 25, 50, 100],
+                }}
               />
             )}
           </div>

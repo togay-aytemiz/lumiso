@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import type { AdvancedDataTableFiltersConfig } from "@/components/data-table";
 
 export type SessionPresenceFilter =
@@ -250,124 +251,134 @@ export function useProjectsListFilters({
       "rounded-full border border-border/60 bg-background px-3 py-1 text-sm font-medium transition-colors hover:border-border hover:bg-muted/20 data-[state=on]:bg-primary/10 data-[state=on]:text-primary data-[state=on]:border-primary/40";
 
     return (
-      <div className="space-y-6">
-        <div className="space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+      <Accordion type="multiple" className="divide-y divide-border/60 border-y border-border/60">
+        <AccordionItem value="types" className="border-b border-border/40">
+          <AccordionTrigger className="text-sm font-semibold text-foreground">
             {t("projects.filters.typesHeading")}
-          </p>
-          {typeOptions.length > 0 ? (
-            <div className="space-y-2 rounded-md border border-border/40 p-3">
-              {typeOptions.map((option) => (
-                <label key={option.id} className="flex items-center gap-2 text-sm">
-                  <Checkbox
-                    checked={state.types.includes(option.id)}
-                    onCheckedChange={(checked) =>
-                      handleTypeToggle(option.id, Boolean(checked))
-                    }
-                  />
-                  <span>{option.name}</span>
-                </label>
-              ))}
-            </div>
-          ) : (
-            <p className="text-xs italic text-muted-foreground">
-              {t("projects.filters.noOptions")}
-            </p>
-          )}
-        </div>
+          </AccordionTrigger>
+          <AccordionContent className="overflow-visible">
+            {typeOptions.length > 0 ? (
+              <div className="space-y-2 rounded-md border border-border/40 p-3">
+                {typeOptions.map((option) => (
+                  <label key={option.id} className="flex items-center gap-2 text-sm">
+                    <Checkbox
+                      checked={state.types.includes(option.id)}
+                      onCheckedChange={(checked) =>
+                        handleTypeToggle(option.id, Boolean(checked))
+                      }
+                    />
+                    <span>{option.name}</span>
+                  </label>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs italic text-muted-foreground">
+                {t("projects.filters.noOptions")}
+              </p>
+            )}
+          </AccordionContent>
+        </AccordionItem>
 
-        <div className="space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        <AccordionItem value="stages" className="border-b border-border/40">
+          <AccordionTrigger className="text-sm font-semibold text-foreground">
             {t("projects.filters.stagesHeading")}
-          </p>
-          {stageOptions.length > 0 ? (
-            <div className="space-y-2 rounded-md border border-border/40 p-3">
-              {stageOptions.map((option) => (
-                <label key={option.id} className="flex items-center gap-2 text-sm">
-                  <Checkbox
-                    checked={state.stages.includes(option.id)}
-                    onCheckedChange={(checked) =>
-                      handleStageToggle(option.id, Boolean(checked))
-                    }
-                  />
-                  <span>{option.name}</span>
-                </label>
-              ))}
-            </div>
-          ) : (
-            <p className="text-xs italic text-muted-foreground">
-              {t("projects.filters.noOptions")}
-            </p>
-          )}
-        </div>
+          </AccordionTrigger>
+          <AccordionContent className="overflow-visible">
+            {stageOptions.length > 0 ? (
+              <div className="space-y-2 rounded-md border border-border/40 p-3">
+                {stageOptions.map((option) => (
+                  <label key={option.id} className="flex items-center gap-2 text-sm">
+                    <Checkbox
+                      checked={state.stages.includes(option.id)}
+                      onCheckedChange={(checked) =>
+                        handleStageToggle(option.id, Boolean(checked))
+                      }
+                    />
+                    <span>{option.name}</span>
+                  </label>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs italic text-muted-foreground">
+                {t("projects.filters.noOptions")}
+              </p>
+            )}
+          </AccordionContent>
+        </AccordionItem>
 
-        <div className="space-y-3">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        <AccordionItem value="sessions" className="border-b border-border/40">
+          <AccordionTrigger className="text-sm font-semibold text-foreground">
             {t("projects.filters.sessionsHeading")}
-          </p>
-          <ToggleGroup
-            type="single"
-            value={state.sessionPresence}
-            onValueChange={(value) =>
-              handleSessionPresenceChange((value as SessionPresenceFilter) || "any")
-            }
-            className="flex flex-wrap gap-2"
-            size="sm"
-          >
-            {(["any", "none", "hasAny", "hasPlanned", "hasUpcoming"] as SessionPresenceFilter[]).map((value) => (
-              <ToggleGroupItem key={value} value={value} className={toggleItemClasses}>
-                {t(`projects.filters.presence.${value}`)}
-              </ToggleGroupItem>
-            ))}
-          </ToggleGroup>
-        </div>
-
-        <div className="space-y-3">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            {t("projects.filters.progressHeading")}
-          </p>
-          <ToggleGroup
-            type="single"
-            value={state.progress}
-            onValueChange={(value) =>
-              handleProgressChange((value as ProgressFilter) || "any")
-            }
-            className="flex flex-wrap gap-2"
-            size="sm"
-          >
-            {(["any", "not_started", "in_progress", "completed"] as ProgressFilter[]).map((value) => (
-              <ToggleGroupItem key={value} value={value} className={toggleItemClasses}>
-                {t(`projects.filters.progressOptions.${value}`)}
-              </ToggleGroupItem>
-            ))}
-          </ToggleGroup>
-        </div>
-
-        <div className="space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            {t("projects.filters.servicesHeading")}
-          </p>
-          {serviceOptions.length > 0 ? (
-            <div className="space-y-2 rounded-md border border-border/40 p-3">
-              {serviceOptions.map((option) => (
-                <label key={option.id} className="flex items-center gap-2 text-sm">
-                  <Checkbox
-                    checked={state.services.includes(option.id)}
-                    onCheckedChange={(checked) =>
-                      handleServicesToggle(option.id, Boolean(checked))
-                    }
-                  />
-                  <span>{option.name}</span>
-                </label>
+          </AccordionTrigger>
+          <AccordionContent className="overflow-visible">
+            <ToggleGroup
+              type="single"
+              value={state.sessionPresence}
+              onValueChange={(value) =>
+                handleSessionPresenceChange((value as SessionPresenceFilter) || "any")
+              }
+              className="flex flex-wrap justify-start gap-2"
+              size="sm"
+            >
+              {(["any", "none", "hasAny", "hasPlanned", "hasUpcoming"] as SessionPresenceFilter[]).map((value) => (
+                <ToggleGroupItem key={value} value={value} className={toggleItemClasses}>
+                  {t(`projects.filters.presence.${value}`)}
+                </ToggleGroupItem>
               ))}
-            </div>
-          ) : (
-            <p className="text-xs italic text-muted-foreground">
-              {t("projects.filters.noOptions")}
-            </p>
-          )}
-        </div>
-      </div>
+            </ToggleGroup>
+          </AccordionContent>
+        </AccordionItem>
+
+        <AccordionItem value="progress" className="border-b border-border/40">
+          <AccordionTrigger className="text-sm font-semibold text-foreground">
+            {t("projects.filters.progressHeading")}
+          </AccordionTrigger>
+          <AccordionContent className="overflow-visible">
+            <ToggleGroup
+              type="single"
+              value={state.progress}
+              onValueChange={(value) =>
+                handleProgressChange((value as ProgressFilter) || "any")
+              }
+              className="flex flex-wrap justify-start gap-2"
+              size="sm"
+            >
+              {(["any", "not_started", "in_progress", "completed"] as ProgressFilter[]).map((value) => (
+                <ToggleGroupItem key={value} value={value} className={toggleItemClasses}>
+                  {t(`projects.filters.progressOptions.${value}`)}
+                </ToggleGroupItem>
+              ))}
+            </ToggleGroup>
+          </AccordionContent>
+        </AccordionItem>
+
+        <AccordionItem value="services" className="border-b border-border/40">
+          <AccordionTrigger className="text-sm font-semibold text-foreground">
+            {t("projects.filters.servicesHeading")}
+          </AccordionTrigger>
+          <AccordionContent className="overflow-visible">
+            {serviceOptions.length > 0 ? (
+              <div className="space-y-2 rounded-md border border-border/40 p-3">
+                {serviceOptions.map((option) => (
+                  <label key={option.id} className="flex items-center gap-2 text-sm">
+                    <Checkbox
+                      checked={state.services.includes(option.id)}
+                      onCheckedChange={(checked) =>
+                        handleServicesToggle(option.id, Boolean(checked))
+                      }
+                    />
+                    <span>{option.name}</span>
+                  </label>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs italic text-muted-foreground">
+                {t("projects.filters.noOptions")}
+              </p>
+            )}
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
     );
   }, [
     handleProgressChange,
@@ -518,94 +529,100 @@ export function useProjectsArchivedFilters({
       "rounded-full border border-border/60 bg-background px-3 py-1 text-sm font-medium transition-colors hover:border-border hover:bg-muted/20 data-[state=on]:bg-primary/10 data-[state=on]:text-primary data-[state=on]:border-primary/40";
 
     return (
-      <div className="space-y-6">
-        <div className="space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+      <Accordion type="multiple" className="divide-y divide-border/60 border-y border-border/60">
+        <AccordionItem value="types" className="border-b border-border/40">
+          <AccordionTrigger className="text-sm font-semibold text-foreground">
             {t("projects.filters.typesHeading")}
-          </p>
-          {typeOptions.length > 0 ? (
-            <div className="space-y-2 rounded-md border border-border/40 p-3">
-              {typeOptions.map((option) => (
-                <label key={option.id} className="flex items-center gap-2 text-sm">
-                  <Checkbox
-                    checked={state.types.includes(option.id)}
-                    onCheckedChange={(checked) =>
-                      handleTypeToggle(option.id, Boolean(checked))
-                    }
-                  />
-                  <span>{option.name}</span>
-                </label>
-              ))}
-            </div>
-          ) : (
-            <p className="text-xs italic text-muted-foreground">
-              {t("projects.filters.noOptions")}
-            </p>
-          )}
-        </div>
+          </AccordionTrigger>
+          <AccordionContent className="overflow-visible">
+            {typeOptions.length > 0 ? (
+              <div className="space-y-2 rounded-md border border-border/40 p-3">
+                {typeOptions.map((option) => (
+                  <label key={option.id} className="flex items-center gap-2 text-sm">
+                    <Checkbox
+                      checked={state.types.includes(option.id)}
+                      onCheckedChange={(checked) =>
+                        handleTypeToggle(option.id, Boolean(checked))
+                      }
+                    />
+                    <span>{option.name}</span>
+                  </label>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs italic text-muted-foreground">
+                {t("projects.filters.noOptions")}
+              </p>
+            )}
+          </AccordionContent>
+        </AccordionItem>
 
-        <div className="space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        <AccordionItem value="services" className="border-b border-border/40">
+          <AccordionTrigger className="text-sm font-semibold text-foreground">
             {t("projects.filters.servicesHeading")}
-          </p>
-          {serviceOptions.length > 0 ? (
-            <div className="space-y-2 rounded-md border border-border/40 p-3">
-              {serviceOptions.map((option) => (
-                <label key={option.id} className="flex items-center gap-2 text-sm">
-                  <Checkbox
-                    checked={state.services.includes(option.id)}
-                    onCheckedChange={(checked) =>
-                      handleServicesToggle(option.id, Boolean(checked))
-                    }
-                  />
-                  <span>{option.name}</span>
-                </label>
-              ))}
-            </div>
-          ) : (
-            <p className="text-xs italic text-muted-foreground">
-              {t("projects.filters.noOptions")}
-            </p>
-          )}
-        </div>
+          </AccordionTrigger>
+          <AccordionContent className="overflow-visible">
+            {serviceOptions.length > 0 ? (
+              <div className="space-y-2 rounded-md border border-border/40 p-3">
+                {serviceOptions.map((option) => (
+                  <label key={option.id} className="flex items-center gap-2 text-sm">
+                    <Checkbox
+                      checked={state.services.includes(option.id)}
+                      onCheckedChange={(checked) =>
+                        handleServicesToggle(option.id, Boolean(checked))
+                      }
+                    />
+                    <span>{option.name}</span>
+                  </label>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs italic text-muted-foreground">
+                {t("projects.filters.noOptions")}
+              </p>
+            )}
+          </AccordionContent>
+        </AccordionItem>
 
-        <div className="space-y-3">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        <AccordionItem value="balance" className="border-b border-border/40">
+          <AccordionTrigger className="text-sm font-semibold text-foreground">
             {t("projects.filters.balanceHeading")}
-          </p>
-          <ToggleGroup
-            type="single"
-            value={state.balancePreset}
-            onValueChange={(value) =>
-              handleBalancePresetChange((value as BalancePreset) || "any")
-            }
-            className="flex flex-wrap gap-2"
-            size="sm"
-          >
-            {(["any", "zero", "due", "credit"] as BalancePreset[]).map((value) => (
-              <ToggleGroupItem key={value} value={value} className={toggleItemClasses}>
-                {t(`projects.filters.balancePresets.${value}`)}
-              </ToggleGroupItem>
-            ))}
-          </ToggleGroup>
-          <div className="grid gap-2 sm:grid-cols-2">
-            <Input
-              type="number"
-              value={state.balanceMin ?? ""}
-              onChange={(event) => handleBalanceInputChange("balanceMin", event.target.value)}
-              placeholder={t("projects.filters.balanceMinPlaceholder")}
-              min={0}
-            />
-            <Input
-              type="number"
-              value={state.balanceMax ?? ""}
-              onChange={(event) => handleBalanceInputChange("balanceMax", event.target.value)}
-              placeholder={t("projects.filters.balanceMaxPlaceholder")}
-              min={0}
-            />
-          </div>
-        </div>
-      </div>
+          </AccordionTrigger>
+          <AccordionContent className="overflow-visible">
+            <ToggleGroup
+              type="single"
+              value={state.balancePreset}
+              onValueChange={(value) =>
+                handleBalancePresetChange((value as BalancePreset) || "any")
+              }
+              className="flex flex-wrap justify-start gap-2"
+              size="sm"
+            >
+              {(["any", "zero", "due", "credit"] as BalancePreset[]).map((value) => (
+                <ToggleGroupItem key={value} value={value} className={toggleItemClasses}>
+                  {t(`projects.filters.balancePresets.${value}`)}
+                </ToggleGroupItem>
+              ))}
+            </ToggleGroup>
+            <div className="grid gap-2 sm:grid-cols-2 mt-3">
+              <Input
+                type="number"
+                value={state.balanceMin ?? ""}
+                onChange={(event) => handleBalanceInputChange("balanceMin", event.target.value)}
+                placeholder={t("projects.filters.balanceMinPlaceholder")}
+                min={0}
+              />
+              <Input
+                type="number"
+                value={state.balanceMax ?? ""}
+                onChange={(event) => handleBalanceInputChange("balanceMax", event.target.value)}
+                placeholder={t("projects.filters.balanceMaxPlaceholder")}
+                min={0}
+              />
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
     );
   }, [
     handleBalanceInputChange,
@@ -633,4 +650,3 @@ export function useProjectsArchivedFilters({
 
   return { state, filtersConfig, activeCount, summaryChips, reset };
 }
-

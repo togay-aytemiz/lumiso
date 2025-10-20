@@ -821,17 +821,10 @@ const AllLeadsNew = () => {
   );
 
   const tableSummaryText = useMemo(() => {
-    if (leads.length === 0) {
-      return t("leads.tableSummaryEmpty");
-    }
-    if (sortedLeads.length === leads.length) {
-      return t("leads.tableSummaryTotal", { total: leads.length });
-    }
-    return t("leads.tableSummaryFiltered", {
-      visible: sortedLeads.length,
-      total: leads.length,
-    });
-  }, [leads.length, sortedLeads.length, t]);
+    if (activeFilterCount === 0) return undefined;
+    if (sortedLeads.length === leads.length) return undefined;
+    return t("leads.tableSummaryFiltered", { visible: sortedLeads.length, total: leads.length });
+  }, [activeFilterCount, leads.length, sortedLeads.length, t]);
 
   const filtersSummaryText = useMemo(() => {
     if (activeFilterCount === 0) {
@@ -872,56 +865,9 @@ const AllLeadsNew = () => {
     resetFilters?.();
   }, [resetFilters]);
 
-  const tableToolbar = useMemo(
-    () => (
-      <div className="flex w-full flex-col gap-2">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-            <span className="text-sm text-muted-foreground">{tableSummaryText}</span>
-            {activeFilterCount > 0 && (
-              <>
-                <span className="hidden text-muted-foreground/50 sm:inline">•</span>
-                <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground/80 sm:text-sm">
-                  {filtersSummaryText}
-                </span>
-              </>
-            )}
-          </div>
-        </div>
-        {activeFilterChips.length > 0 && (
-          <div className="flex flex-wrap items-center gap-2">
-            {activeFilterCount > 0 && (
-              <Button
-                type="button"
-                variant="default"
-                size="sm"
-                className="h-7 rounded-full px-3 font-medium shadow-sm"
-                onClick={handleToolbarReset}
-              >
-                {t("leads.resetFilters")}
-              </Button>
-            )}
-            {activeFilterChips.map((chip) => (
-              <Badge
-                key={chip.id}
-                variant="secondary"
-                className="bg-secondary/50 px-2.5 py-1 text-xs font-medium tracking-wide text-foreground"
-              >
-                {chip.label}
-              </Badge>
-            ))}
-          </div>
-        )}
-      </div>
-    ),
-    [
-      activeFilterChips,
-      activeFilterCount,
-      filtersSummaryText,
-      handleToolbarReset,
-      t,
-      tableSummaryText,
-    ]
+  const leadsHeaderSummary = useMemo(
+    () => ({ text: tableSummaryText, chips: activeFilterChips }),
+    [activeFilterChips, tableSummaryText]
   );
 
   const handleRowClick = (lead: LeadWithCustomFields) => {
@@ -1146,7 +1092,7 @@ const AllLeadsNew = () => {
                 defaultState: advancedDefaultPreferences,
                 onChange: handleColumnPreferencesChange,
               }}
-              toolbar={tableToolbar}
+              summary={leadsHeaderSummary}
             />
           )}
         </section>

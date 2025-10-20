@@ -42,7 +42,7 @@ export function usePaymentsTableColumns({
           row.projects?.leads ? (
             <Button
               variant="link"
-              className="p-0 h-auto font-medium text-primary underline underline-offset-4 decoration-dashed"
+              className="p-0 h-auto font-medium"
               onClick={(event) => {
                 event.stopPropagation();
                 if (row.projects?.leads?.id) {
@@ -67,7 +67,7 @@ export function usePaymentsTableColumns({
           row.projects ? (
             <Button
               variant="link"
-              className="p-0 h-auto font-medium text-primary underline underline-offset-4 decoration-dashed"
+              className="p-0 h-auto font-medium"
               onClick={(event) => {
                 event.preventDefault();
                 event.stopPropagation();

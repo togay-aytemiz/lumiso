@@ -16,7 +16,7 @@ export default function SessionsSummaryCard({ count, onViewAll }: SessionsSummar
           <div className="text-sm text-muted-foreground">
             {count} session{count === 1 ? '' : 's'}
           </div>
-          <button onClick={onViewAll} className="text-sm underline underline-offset-4">View all</button>
+          <button onClick={onViewAll} className="text-sm hover:underline underline-offset-4">View all</button>
         </div>
       </CardContent>
     </Card>

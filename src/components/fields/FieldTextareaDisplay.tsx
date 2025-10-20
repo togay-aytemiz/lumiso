@@ -53,7 +53,7 @@ export function FieldTextareaDisplay({
       {(isTruncatable || isExpanded) && (
         <button
           type="button"
-          className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-4 transition-colors inline"
+          className="text-xs text-muted-foreground hover:text-foreground hover:underline underline-offset-4 transition-colors inline"
           onClick={(e) => { 
             e.stopPropagation(); 
             setIsExpanded(prev => !prev);

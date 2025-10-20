@@ -16,6 +16,7 @@ interface PaymentsTableSectionProps {
   filters: AdvancedDataTableFiltersConfig;
   toolbar: ReactNode;
   actions: ReactNode;
+  summary?: { text?: ReactNode; chips?: { id: string | number; label: ReactNode }[] };
   sortState: AdvancedDataTableSortState;
   onSortChange: (next: AdvancedDataTableSortState) => void;
   pagination: AdvancedDataTablePagination;
@@ -30,6 +31,7 @@ export function PaymentsTableSection({
   filters,
   toolbar,
   actions,
+  summary,
   sortState,
   onSortChange,
   pagination,
@@ -49,6 +51,7 @@ export function PaymentsTableSection({
       zebra
       filters={filters}
       toolbar={toolbar}
+      summary={summary}
       actions={actions}
       columnCustomization={{ storageKey: "payments.table.columns" }}
       sortState={sortState}

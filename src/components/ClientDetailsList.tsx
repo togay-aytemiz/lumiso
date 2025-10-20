@@ -143,7 +143,7 @@ export function ClientDetailsList({ name, email, phone, notes, createdAt, clicka
                 {clampNotes && (isNotesTruncatable || notesExpanded) && (
                   <button
                     type="button"
-                    className="text-xs text-muted-foreground underline underline-offset-4 mt-1"
+                    className="text-xs text-muted-foreground hover:underline underline-offset-4 mt-1"
                     onClick={() => setNotesExpanded((v) => !v)}
                   >
                     {notesExpanded ? t("forms.client_details.show_less") : t("forms.client_details.show_more")}

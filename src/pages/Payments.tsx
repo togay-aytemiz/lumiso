@@ -686,6 +686,7 @@ const Payments = () => {
         columns={tableColumns}
         filters={filtersConfig}
         toolbar={tableToolbar}
+        summary={{ text: undefined }}
         actions={exportActions}
         sortState={sortStateForTable}
         onSortChange={handleTableSortChange}

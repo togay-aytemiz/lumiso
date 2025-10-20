@@ -75,6 +75,16 @@ export interface AdvancedDataTablePagination {
   summaryFormatter?: (info: { start: number; end: number; total: number }) => ReactNode;
 }
 
+export interface HeaderSummaryChip {
+  id: string | number;
+  label: ReactNode;
+}
+
+export interface AdvancedDataTableHeaderSummary {
+  text?: ReactNode;
+  chips?: HeaderSummaryChip[];
+}
+
 export interface ColumnCustomizationOptions {
   storageKey?: string;
   onChange?: (preferences: ColumnPreference[]) => void;
@@ -96,6 +106,7 @@ export interface AdvancedDataTableProps<T> {
   description?: ReactNode;
   actions?: ReactNode;
   toolbar?: ReactNode;
+  summary?: AdvancedDataTableHeaderSummary;
   filters?: AdvancedDataTableFiltersConfig;
   data: T[];
   columns: AdvancedTableColumn<T>[];
@@ -141,6 +152,7 @@ export function AdvancedDataTable<T>({
   description,
   actions,
   toolbar,
+  summary,
   filters,
   data,
   columns,
@@ -349,7 +361,7 @@ export function AdvancedDataTable<T>({
       )}
     >
       {(title || description || actions || toolbar || showColumnManager || filters || onSearchChange) && (
-        <CardHeader className="space-y-2 px-4 py-3 sm:px-6">
+        <CardHeader className="space-y-1 px-4 py-2 sm:px-6">
           {/* Title + primary actions on one row */}
           <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
             {(title || description) && (
@@ -375,11 +387,9 @@ export function AdvancedDataTable<T>({
                   >
                     <Filter className="h-4 w-4" />
                     <span className="whitespace-nowrap">{filterTriggerLabel}</span>
-                    {hasActiveFilters && (
-                      <Badge variant="secondary" className="ml-1">
-                        {activeFilterCount}
-                      </Badge>
-                    )}
+                    <Badge variant="secondary" className="ml-1">
+                      {activeFilterCount}
+                    </Badge>
                   </Button>
                 )}
                 {actions}
@@ -408,13 +418,57 @@ export function AdvancedDataTable<T>({
 
           {/* Secondary controls: search + toolbar row (compact spacing) */}
           {(onSearchChange || toolbar) && (
-            <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex flex-col gap-1 lg:flex-row lg:items-center lg:justify-between">
               <div className="flex flex-1 flex-col gap-2 sm:flex-row sm:items-center">
                 {showHeaderSearch && renderSearchInput()}
                 {toolbar}
               </div>
             </div>
           )}
+          {(() => {
+            const hasChips = Boolean(summary?.chips && summary.chips.length > 0);
+            const hasText = Boolean(summary?.text);
+            const hasActive = activeFilterCount > 0;
+            const shouldShow = hasText || hasChips || (filters && hasActive);
+            if (!shouldShow) return null;
+            return (
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                {hasText && (
+                  <span className="text-sm text-muted-foreground">{summary!.text}</span>
+                )}
+                {filters && hasActive && (
+                  <>
+                    {hasText && (
+                      <span className="hidden text-muted-foreground/50 sm:inline">•</span>
+                    )}
+                    <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground/80 sm:text-sm">
+                      {t("table.activeFilters", { count: activeFilterCount })}
+                    </span>
+                  </>
+                )}
+                {filters?.onReset && hasActive && (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    className="h-7 rounded-full px-3"
+                    onClick={filters.onReset}
+                  >
+                    {t("table.clearFilters")}
+                  </Button>
+                )}
+                {hasChips && summary!.chips!.map((chip) => (
+                  <Badge
+                    key={chip.id}
+                    variant="secondary"
+                    className="bg-secondary/50 px-2.5 py-1 text-xs font-medium tracking-wide text-foreground"
+                  >
+                    {chip.label}
+                  </Badge>
+                ))}
+              </div>
+            );
+          })()}
         </CardHeader>
       )}
 
@@ -449,7 +503,7 @@ export function AdvancedDataTable<T>({
         </Sheet>
       )}
 
-      <CardContent className="px-4 md:px-6 pt-2 pb-0 sm:pt-3">
+      <CardContent className="px-4 md:px-6 pt-1 pb-0">
         {isLoading ? (
           loadingState || <TableLoadingSkeleton />
         ) : (

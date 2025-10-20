@@ -198,6 +198,10 @@ export default function Workflows() {
   const pausedShare = stats.total > 0 ? (stats.paused / stats.total) * 100 : 0;
   const kpiActionButtonClass =
     "h-8 rounded-full border border-border/60 bg-background/85 px-4 text-sm font-medium text-foreground shadow-sm transition-colors duration-200 hover:bg-muted/60 hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2";
+  const gradientIconBaseClass =
+    "inline-flex h-12 w-12 items-center justify-center rounded-full p-0 backdrop-blur-sm ring-1 ring-white/60 dark:ring-white/15 transition-all duration-300";
+  const gradientIconSvgClass =
+    "h-7 w-7 drop-shadow-[0_3px_8px_rgba(15,23,42,0.2)]";
 
   const workflowColumns: AdvancedTableColumn<Workflow>[] = useMemo(
     () => [
@@ -404,8 +408,10 @@ export default function Workflows() {
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
           <KpiCard
             icon={Zap}
-            iconBackground="bg-primary/10"
-            iconForeground="text-primary"
+            iconBackground="bg-[linear-gradient(135deg,#c084fc,#6366f1)] dark:bg-[linear-gradient(135deg,#8b5cf6,#4338ca)]"
+            iconForeground="text-white"
+            iconClassName={`${gradientIconBaseClass} shadow-[0_18px_35px_rgba(99,102,241,0.28)] dark:shadow-[0_18px_35px_rgba(99,102,241,0.45)]`}
+            iconSvgClassName={gradientIconSvgClass}
             title={t("workflows.stats.totalWorkflows")}
             value={stats.total}
             description={totalSummary}
@@ -422,8 +428,10 @@ export default function Workflows() {
           />
           <KpiCard
             icon={CheckCircle}
-            iconBackground="bg-emerald-500/10"
-            iconForeground="text-emerald-600"
+            iconBackground="bg-[linear-gradient(135deg,#60a5fa,#38bdf8)] dark:bg-[linear-gradient(135deg,#3b82f6,#0ea5e9)]"
+            iconForeground="text-white"
+            iconClassName={`${gradientIconBaseClass} shadow-[0_18px_35px_rgba(56,189,248,0.28)] dark:shadow-[0_18px_35px_rgba(56,189,248,0.5)]`}
+            iconSvgClassName={gradientIconSvgClass}
             title={t("workflows.stats.active")}
             value={stats.active}
             description={t("workflows.stats.activeDescription")}
@@ -445,8 +453,10 @@ export default function Workflows() {
           />
           <KpiCard
             icon={Clock}
-            iconBackground="bg-amber-500/10"
-            iconForeground="text-amber-600"
+            iconBackground="bg-[linear-gradient(135deg,#6ee7b7,#34d399)] dark:bg-[linear-gradient(135deg,#34d399,#059669)]"
+            iconForeground="text-white"
+            iconClassName={`${gradientIconBaseClass} shadow-[0_18px_35px_rgba(52,211,153,0.28)] dark:shadow-[0_18px_35px_rgba(16,185,129,0.5)]`}
+            iconSvgClassName={gradientIconSvgClass}
             title={t("workflows.stats.paused")}
             value={stats.paused}
             description={t("workflows.stats.pausedDescription")}

@@ -195,49 +195,54 @@ export function useLeadsData({
   const fetchLeadsData = useCallback(async ({ from, to, includeCount = false }: { from: number; to: number; includeCount?: boolean }) => {
     const organizationId = await getUserOrganizationId();
     if (!organizationId) throw new Error('No active organization found');
-
-    let base = supabase
-      .from('leads')
-      .select(
-        `id, name, email, phone, status, status_id, updated_at, created_at,
-         lead_statuses ( id, name, color, is_system_final )`,
-        { count: includeCount ? 'exact' : undefined }
-      )
-      .eq('organization_id', organizationId);
-
-    if (statusIds && statusIds.length) base = base.in('status_id', statusIds);
-
-    const matched = await resolveLeadIdsForCustomFilters(organizationId);
-    if (matched) {
-      if (matched.size === 0) return { leads: [], count: includeCount ? 0 : 0 };
-      base = base.in('id', Array.from(matched));
+    try {
+      const { data, error } = await supabase.rpc('leads_filter_page', {
+        org: organizationId,
+        p_page: Math.floor(from / Math.max(to - from + 1, 1)) + 1,
+        p_size: to - from + 1,
+        p_sort_field: sortField,
+        p_sort_dir: sortDirection,
+        p_status_ids: (statusIds && statusIds.length ? statusIds : null),
+        p_filters: customFieldFilters ?? {}
+      });
+      if (error) throw error;
+      const rows = (data as any[]) ?? [];
+      const total = rows.length ? Number(rows[0].total_count) : 0;
+      const leads: LeadWithCustomFields[] = rows.map((r) => ({
+        id: r.id,
+        name: r.name,
+        email: r.email,
+        phone: r.phone,
+        status: r.status,
+        status_id: r.status_id,
+        updated_at: r.updated_at,
+        created_at: r.created_at,
+        assignees: [],
+        custom_fields: {},
+        lead_statuses: r.lead_statuses
+      }));
+      return { leads, count: includeCount ? total : leads.length };
+    } catch (e) {
+      // Fallback to previous set-based approach (still server-side) if RPC unavailable
+      const matched = await resolveLeadIdsForCustomFilters(organizationId);
+      if (matched && matched.size === 0) return { leads: [], count: 0 };
+      let base = supabase
+        .from('leads')
+        .select(`id, name, email, phone, status, status_id, updated_at, created_at, lead_statuses ( id, name, color, is_system_final )`, { count: includeCount ? 'exact' : undefined })
+        .eq('organization_id', organizationId);
+      if (statusIds && statusIds.length) base = base.in('status_id', statusIds);
+      if (matched) base = base.in('id', Array.from(matched));
+      const asc = sortDirection === 'asc';
+      const sortCol = sortField === 'name' ? 'name' : sortField === 'created_at' ? 'created_at' : 'updated_at';
+      base = base.order(sortCol, { ascending: asc, nullsFirst: !asc });
+      const table = await base.range(from, to);
+      if (table.error) throw table.error;
+      const raw = (table.data as any[]) ?? [];
+      const count = includeCount ? (table.count ?? raw.length) : raw.length;
+      const leads: LeadWithCustomFields[] = raw.map((lead: any) => ({ ...lead, assignees: [], custom_fields: {} }));
+      return { leads, count };
     }
-
-    const asc = sortDirection === 'asc';
-    const sortCol = sortField === 'name' ? 'name' : sortField === 'created_at' ? 'created_at' : 'updated_at';
-    base = base.order(sortCol, { ascending: asc, nullsFirst: !asc });
-
-    const table = await base.range(from, to);
-    if (table.error) throw table.error;
-
-    const raw = (table.data as any[]) ?? [];
-    const ids = raw.map(r => r.id);
-    let cfByLead: Record<string, Record<string, string | null>> = {};
-    if (ids.length) {
-      const cf = await supabase
-        .from('lead_field_values')
-        .select('lead_id, field_key, value')
-        .in('lead_id', ids);
-      if (cf.error) throw cf.error;
-      cfByLead = (cf.data ?? []).reduce((acc, row) => {
-        (acc[row.lead_id] ||= {} as Record<string, string | null>)[row.field_key] = row.value;
-        return acc;
-      }, {} as Record<string, Record<string, string | null>>);
-    }
-    const merged: LeadWithCustomFields[] = raw.map(lead => ({ ...lead, assignees: [], custom_fields: cfByLead[lead.id] || {} }));
-    const count = includeCount ? table.count ?? merged.length : merged.length;
-    return { leads: merged, count };
-  }, [resolveLeadIdsForCustomFilters, sortDirection, sortField, statusIds]);
+  }, [customFieldFilters, resolveLeadIdsForCustomFilters, sortDirection, sortField, statusIds]);
 
   const fetchLeads = useCallback(async () => {
     const first = firstLoadRef.current;

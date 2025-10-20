@@ -349,24 +349,21 @@ export function AdvancedDataTable<T>({
       )}
     >
       {(title || description || actions || toolbar || showColumnManager || filters || onSearchChange) && (
-        <CardHeader className="space-y-4 px-4 py-4 sm:px-6">
-          {(title || description) && (
-            <div className="space-y-1">
-              {title && <CardTitle className="text-base font-semibold">{title}</CardTitle>}
-              {description && (
-                <CardDescription className="text-muted-foreground">
-                  {description}
-                </CardDescription>
-              )}
-            </div>
-          )}
-
-          {(onSearchChange || filters || toolbar || actions || showColumnManager) && (
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-              <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:items-center">
-                {showHeaderSearch && renderSearchInput()}
-                {toolbar}
+        <CardHeader className="space-y-2 px-4 py-3 sm:px-6">
+          {/* Title + primary actions on one row */}
+          <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+            {(title || description) && (
+              <div className="min-w-0">
+                {title && <CardTitle className="text-base font-semibold leading-tight">{title}</CardTitle>}
+                {description && (
+                  <CardDescription className="text-muted-foreground">
+                    {description}
+                  </CardDescription>
+                )}
               </div>
+            )}
+
+            {(filters || actions || showColumnManager) && (
               <div className="flex flex-wrap items-center gap-2">
                 {filters && (
                   <Button
@@ -406,6 +403,16 @@ export function AdvancedDataTable<T>({
                   />
                 )}
               </div>
+            )}
+          </div>
+
+          {/* Secondary controls: search + toolbar row (compact spacing) */}
+          {(onSearchChange || toolbar) && (
+            <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex flex-1 flex-col gap-2 sm:flex-row sm:items-center">
+                {showHeaderSearch && renderSearchInput()}
+                {toolbar}
+              </div>
             </div>
           )}
         </CardHeader>
@@ -442,7 +449,7 @@ export function AdvancedDataTable<T>({
         </Sheet>
       )}
 
-      <CardContent className="px-4 md:px-6 pt-3 pb-0 sm:pt-4">
+      <CardContent className="px-4 md:px-6 pt-2 pb-0 sm:pt-3">
         {isLoading ? (
           loadingState || <TableLoadingSkeleton />
         ) : (

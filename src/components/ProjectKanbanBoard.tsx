@@ -13,6 +13,7 @@ import { useNotificationTriggers } from "@/hooks/useNotificationTriggers";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { useKanbanSettings } from "@/hooks/useKanbanSettings";
 import { useTranslation } from 'react-i18next';
+import { LIFECYCLE_STATES, PROJECT_STATUS } from "@/constants/entityConstants";
 import type { ProjectListItem, ProjectStatusSummary } from "@/pages/projects/types";
 
 interface ProjectKanbanBoardProps {
@@ -96,7 +97,7 @@ const ProjectKanbanBoard = ({
 
   useEffect(() => {
     if (projectStatuses && projectStatuses.length > 0) {
-      setStatuses(projectStatuses.filter(s => s.name?.toLowerCase?.() !== "archived"));
+      setStatuses(projectStatuses.filter(s => s.name?.toLowerCase?.() !== PROJECT_STATUS.ARCHIVED));
       setLoading(false);
     } else {
       fetchStatuses();
@@ -118,10 +119,10 @@ const ProjectKanbanBoard = ({
         .order("sort_order", { ascending: true });
 
       if (error) throw error;
-      setStatuses(((data || []) as ProjectStatusSummary[]).filter(s => s.name?.toLowerCase?.() !== "archived"));
+      setStatuses(((data || []) as ProjectStatusSummary[]).filter(s => s.name?.toLowerCase?.() !== PROJECT_STATUS.ARCHIVED));
     } catch (error) {
       console.error("Error fetching project statuses:", error);
-      toast.error("Failed to load project statuses");
+      toast.error(t('forms:projects.toasts.statuses_load_failed'));
     } finally {
       setLoading(false);
     }
@@ -145,24 +146,23 @@ const ProjectKanbanBoard = ({
     const moving = projects.find(p => p.id === projectId);
     if (!moving) return;
 
-    // OPTIMISTIC UPDATE: Update UI immediately
-    onProjectsChange();
+    // OPTIMISTIC UPDATE: Update UI immediately (defer server refetch until after DB writes)
     if (onProjectUpdate) onProjectUpdate({ ...moving, status_id: dstStatusId });
 
     // Show immediate feedback
     if (srcStatusId !== dstStatusId) {
       const oldStatus = statuses.find(s => s.id === moving.status_id);
       const newStatus = statuses.find(s => s.id === (dstStatusId || ""));
-      toast.success(`Project moved to ${newStatus?.name || "No Status"}`);
+      toast.success(t('forms:projects.toasts.moved_to', { status: newStatus?.name || t('pages:projects.noStatus') }));
     } else {
-      toast.success("Project position updated");
+      toast.success(t('forms:projects.toasts.position_updated'));
     }
 
     // BACKGROUND OPERATIONS: Handle all database operations async
     (async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) throw new Error("Not authenticated");
+        if (!user) throw new Error(t('forms:user_not_authenticated'));
 
         const dstBase = orderProjects(projects.filter(p => p.status_id === dstStatusId && p.id !== moving.id));
         const insertIndex = Math.min(Math.max(destination.index, 0), dstBase.length);
@@ -202,7 +202,7 @@ const ProjectKanbanBoard = ({
           });
 
           // TEMPORARILY SKIP milestone notifications for completed/cancelled to test performance
-          const shouldSkipNotification = newStatus?.lifecycle === 'completed' || newStatus?.lifecycle === 'cancelled';
+          const shouldSkipNotification = newStatus?.lifecycle === LIFECYCLE_STATES.COMPLETED || newStatus?.lifecycle === LIFECYCLE_STATES.CANCELLED;
           
           const notificationPromise = !shouldSkipNotification && activeOrganization?.id && triggerProjectMilestone 
             ? triggerProjectMilestone(
@@ -222,11 +222,13 @@ const ProjectKanbanBoard = ({
           await Promise.all([activityPromise, notificationPromise]);
         }
 
-        // Background database operations completed
+        // Background database operations completed, now refresh from server to ensure consistency
+        onProjectsChange();
       } catch (error) {
         console.error("Error in background database operations:", error);
-        // Show error but don't revert UI since user has already seen the change
-        toast.error("Project moved locally but sync failed. Please refresh if issues persist.");
+        // Sync with server to reflect actual state
+        onProjectsChange();
+        toast.error(t('forms:projects.toasts.move_sync_failed'));
       }
     })();
   };
@@ -266,7 +268,7 @@ const ProjectKanbanBoard = ({
 
   const renderColumn = (status: ProjectStatusSummary | null, columnProjects: ProjectListItem[]) => {
     const statusId = status?.id || "no-status";
-    const statusName = status?.name || "No Status";
+    const statusName = status?.name || t('pages:projects.noStatus');
     const statusColor = status?.color || "#6B7280";
 
     const ordered = orderProjects(columnProjects);
@@ -343,7 +345,7 @@ const ProjectKanbanBoard = ({
                   {provided.placeholder}
                   {snapshot.isDraggingOver && (
                     <div className="absolute inset-0 border-2 border-dashed border-primary/50 rounded-lg bg-primary/5 flex items-center justify-center">
-                      <span className="text-muted-foreground text-sm">Drop project here</span>
+                      <span className="text-muted-foreground text-sm">{t('forms:projects.drop_here')}</span>
                     </div>
                   )}
                 </div>

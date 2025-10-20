@@ -6,7 +6,7 @@ do $$
 begin
   if to_regclass('public.project_field_values') is not null
      and to_regclass('public.project_field_definitions') is not null then
-    execute $$
+    execute $v$
       create or replace view public.project_field_values_typed as
       select
         v.project_id,
@@ -38,9 +38,9 @@ begin
         on d.field_key = v.field_key
       join public.projects p
         on p.id = v.project_id;
-    $$;
+    $v$;
   else
-    execute $$
+    execute $v$
       create or replace view public.project_field_values_typed as
       select
         null::uuid as project_id,
@@ -52,7 +52,7 @@ begin
         null::date as value_date,
         null::boolean as value_bool
       where false;
-    $$;
+    $v$;
   end if;
 end $$;
 
@@ -60,8 +60,8 @@ end $$;
 do $$
 begin
   if to_regclass('public.project_field_values') is not null then
-    execute $$create index if not exists idx_project_field_values_field_key on public.project_field_values (field_key);$$;
-    execute $$create index if not exists idx_project_field_values_value_trgm on public.project_field_values using gin (value gin_trgm_ops);$$;
+    execute $v$ create index if not exists idx_project_field_values_field_key on public.project_field_values (field_key); $v$;
+    execute $v$ create index if not exists idx_project_field_values_value_trgm on public.project_field_values using gin (value gin_trgm_ops); $v$;
   end if;
 end $$;
 
@@ -287,6 +287,7 @@ filtered as (
     base.*,
     (coalesce(base.base_price, 0)::numeric - coalesce(base.paid_amount, 0)::numeric) as remaining_amount
   from base
+  cross join params
   where (
     params.session_presence is null or params.session_presence = ''
     or case params.session_presence
@@ -352,7 +353,6 @@ with_counts as (
     coalesce(filtered.open_items, '[]'::jsonb) as open_todos,
     coalesce(filtered.paid_amount, 0)::numeric as paid_amount_numeric,
     coalesce(filtered.services, '[]'::jsonb) as services_json,
-    filtered.remaining_amount,
     count(*) over() as total_count
   from filtered
 ),

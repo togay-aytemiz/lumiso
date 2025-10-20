@@ -490,7 +490,14 @@
     "close": "Close",
     "board": "Kanban",
     "list": "List",
-    "archived": "Archived"
+    "archived": "Archived",
+    "drop_here": "Drop project here",
+    "toasts": {
+      "moved_to": "Project moved to {{status}}",
+      "position_updated": "Project position updated",
+      "statuses_load_failed": "Failed to load project statuses",
+      "move_sync_failed": "Project move failed to sync. Board reloaded."
+    }
   },
   "reminders": {
     "reminderBadge": "Reminder",

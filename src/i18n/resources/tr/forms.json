@@ -672,7 +672,14 @@
     "close": "Kapat",
     "board": "Kanban",
     "list": "Liste",
-    "archived": "Arşivlendi"
+    "archived": "Arşivlendi",
+    "drop_here": "Projeyi buraya bırakın",
+    "toasts": {
+      "moved_to": "Proje {{status}} durumuna taşındı",
+      "position_updated": "Proje konumu güncellendi",
+      "statuses_load_failed": "Proje durumları yüklenemedi",
+      "move_sync_failed": "Proje taşıma eşitlemesi başarısız. Pano yenilendi."
+    }
   },
   "reminders": {
     "reminderBadge": "Hatırlatıcı",

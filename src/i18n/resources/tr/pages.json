@@ -37,6 +37,36 @@
       "start": "Başlangıç tarihi",
       "end": "Bitiş tarihi"
     },
+    "kpis": {
+      "sectionTitle": "Pipeline özeti",
+      "infoLabel": "{{metric}} hakkında ayrıntıları göster",
+      "timeframes": {
+        "newLast7Days": "Yeni adaylar · Son 7 gün",
+        "recent30Days": "Son 30 gün",
+        "inactive14Days": "14+ gündür pasif"
+      },
+      "totalLeads": {
+        "title": "Toplam aday",
+        "tooltip": "Çalışma alanınızdaki tüm adayları sayar. Rozet, son 7 günde eklenen yeni adayları önceki 7 günlük dönemle karşılaştırır.",
+        "trendLabel": "Bu hafta {{count}} yeni",
+        "trendAria": "Yeni aday sayısı önceki 7 güne göre {{delta}} değişti ({{current}} / {{previous}})."
+      },
+      "conversionRate": {
+        "title": "Dönüşüm oranı",
+        "tooltip": "Son 30 günde temas edilen adaylardan rezervasyon veya tamamlanma durumuna geçenlerin oranı. Önceki 30 günlük dönemle karşılaştırılır.",
+        "trendAria": "Dönüşüm oranı önceki 30 güne göre {{delta}} değişti ({{current}} / {{previous}})."
+      },
+      "noActivity": {
+        "title": "Etkin olmayan adaylar",
+        "tooltip": "Son 14 günde güncellenmeyen adaylar; tamamlandı veya kaybedildi durumunda olanlar hariçtir. Pipeline'ı canlı tutmak için takip edin.",
+        "trendAria": "Pasif aday sayısı önceki haftaya göre {{delta}} değişti ({{current}} / {{previous}})."
+      },
+      "lost": {
+        "title": "Kaybedilen / kapanan",
+        "tooltip": "Son 30 günde tamamlandı veya kaybedildi gibi nihai bir duruma taşınan adaylar. Kapanan sonuçları takip etmek için kullanılır.",
+        "trendAria": "Kaybedilen veya kapanan aday sayısı önceki 30 güne göre {{delta}} değişti ({{current}} / {{previous}})."
+      }
+    },
     "tutorial": {
       "welcome": {
         "title": "Kişi Yönetimine Hoş Geldiniz",

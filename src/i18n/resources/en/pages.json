@@ -37,6 +37,36 @@
       "start": "Start date",
       "end": "End date"
     },
+    "kpis": {
+      "sectionTitle": "Pipeline snapshot",
+      "infoLabel": "Show details about {{metric}}",
+      "timeframes": {
+        "newLast7Days": "New leads · Last 7 days",
+        "recent30Days": "Last 30 days",
+        "inactive14Days": "14+ days inactive"
+      },
+      "totalLeads": {
+        "title": "Total leads",
+        "tooltip": "Counts every lead in your workspace. The badge shows how many new leads were created in the last 7 days compared with the previous 7-day period.",
+        "trendLabel": "{{count}} new this week",
+        "trendAria": "New leads changed by {{delta}} compared with the previous 7 days ({{current}} vs {{previous}})."
+      },
+      "conversionRate": {
+        "title": "Conversion rate",
+        "tooltip": "Share of leads touched in the last 30 days that moved to a booked or completed status. Compared to the prior 30-day period.",
+        "trendAria": "Conversion rate changed by {{delta}} compared with the previous 30 days ({{current}} vs {{previous}})."
+      },
+      "noActivity": {
+        "title": "No recent activity",
+        "tooltip": "Leads with no updates in the last 14 days, excluding those marked as completed or lost. Follow up to keep your pipeline healthy.",
+        "trendAria": "Inactive leads changed by {{delta}} compared with the previous week ({{current}} vs {{previous}})."
+      },
+      "lost": {
+        "title": "Lost / closed",
+        "tooltip": "Leads moved into a final status such as completed or lost during the last 30 days. Useful for tracking closed outcomes.",
+        "trendAria": "Lost or closed leads changed by {{delta}} compared with the previous 30 days ({{current}} vs {{previous}})."
+      }
+    },
     "tutorial": {
       "welcome": {
         "title": "Welcome to Lead Management",

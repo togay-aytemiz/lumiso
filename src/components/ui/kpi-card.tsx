@@ -4,12 +4,19 @@ import {
   ArrowDownRight,
   ArrowRight,
   ArrowUpRight,
+  HelpCircle,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 type TrendTone = "positive" | "negative" | "neutral";
 type TrendDirection = "up" | "down" | "flat";
@@ -19,7 +26,7 @@ interface TrendConfig {
    * Textual representation of the trend such as "+12%" or "▼ 4 sessions".
    * Provide translations in the calling component.
    */
-  label: React.ReactNode;
+  label?: React.ReactNode;
   /**
    * Visual tone that adjusts styling. Positive → success, Negative → destructive, Neutral → subtle.
    */
@@ -60,6 +67,19 @@ interface TrendConfig {
    * Useful when a decrease is positive (e.g., response time).
    */
   invert?: boolean;
+}
+
+type KpiDensity = "default" | "compact";
+
+interface InfoConfig {
+  /**
+   * Tooltip content describing how the KPI is calculated.
+   */
+  content: React.ReactNode;
+  /**
+   * Accessible label for the information trigger button.
+   */
+  ariaLabel?: string;
 }
 
 interface ProgressConfig {
@@ -144,6 +164,14 @@ export interface KpiCardProps
    */
   trend?: TrendConfig;
   /**
+   * Optional tooltip trigger that explains how the KPI is calculated.
+   */
+  info?: InfoConfig;
+  /**
+   * Controls padding and typography density.
+   */
+  density?: KpiDensity;
+  /**
    * Optional aria label when the surrounding context does not provide one.
    */
   ariaLabel?: string;
@@ -181,6 +209,8 @@ export const KpiCard = React.forwardRef<HTMLDivElement, KpiCardProps>(
       progress,
       footer,
       trend,
+      info,
+      density = "default",
       onClick,
       ariaLabel,
       tabIndex,
@@ -221,6 +251,18 @@ export const KpiCard = React.forwardRef<HTMLDivElement, KpiCardProps>(
 
     const HeadingTag = headingLevel;
 
+    const containerSpacing =
+      density === "compact"
+        ? "flex flex-col gap-4 p-4 sm:gap-5 sm:p-5"
+        : "flex flex-col gap-5 p-5 sm:gap-6";
+
+    const valueClassName =
+      density === "compact"
+        ? "text-2xl font-semibold leading-none text-foreground sm:text-3xl"
+        : "text-3xl font-semibold leading-none text-foreground";
+
+    const infoAriaLabel = info?.ariaLabel ?? "More information";
+
     // Compute trend display pieces when provided
     const tone: TrendTone = React.useMemo(() => {
       if (!trend) return "neutral";
@@ -250,21 +292,22 @@ export const KpiCard = React.forwardRef<HTMLDivElement, KpiCardProps>(
       if (!trend) return null;
       if (trend.label != null) return null;
       if (typeof trend.value !== "number") return null;
-      const decimals = trend.decimals ?? (trend.valueFormat === "percent" ? 0 : 0);
+      const decimals = trend.decimals ?? (trend.valueFormat === "percent" ? 1 : 0);
       const showSign = trend.showSign ?? true;
       const v = trend.value;
-      const prefix = v > 0 && showSign ? "+" : "";
-      const absStr = Math.abs(v).toLocaleString(undefined, {
-        minimumFractionDigits: decimals,
-         maximumFractionDigits: decimals,
-      });
+      const abs = Math.abs(v);
       if (typeof trend.valueFormat === "function") {
         return trend.valueFormat(v);
       }
+      const formatted = abs.toLocaleString(undefined, {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals,
+      });
+      const sign = v < 0 ? "-" : v > 0 && showSign ? "+" : "";
       if (trend.valueFormat === "percent") {
-        return `${prefix}${absStr}%`;
+        return `${sign}${formatted}%`;
       }
-      return `${prefix}${absStr}`;
+      return `${sign}${formatted}`;
     }, [trend]);
 
     const autoAriaLabel: string | undefined = React.useMemo(() => {
@@ -310,7 +353,7 @@ export const KpiCard = React.forwardRef<HTMLDivElement, KpiCardProps>(
         }
         {...rest}
       >
-        <div className="flex flex-col gap-5 p-5 sm:gap-6">
+        <div className={containerSpacing}>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex flex-1 items-start gap-3">
               {Icon && (
@@ -344,10 +387,34 @@ export const KpiCard = React.forwardRef<HTMLDivElement, KpiCardProps>(
                   id={titleId}
                   className="text-sm font-medium text-muted-foreground"
                 >
-                  {title}
+                  <span className="flex items-center gap-2">
+                    <span className="truncate">{title}</span>
+                    {info && (
+                      <TooltipProvider delayDuration={150}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              type="button"
+                              className="inline-flex h-5 w-5 items-center justify-center rounded-full text-muted-foreground/80 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                              aria-label={infoAriaLabel}
+                            >
+                              <HelpCircle className="h-4 w-4" aria-hidden="true" />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent
+                            align="start"
+                            side="top"
+                            className="max-w-xs text-sm leading-relaxed"
+                          >
+                            {info.content}
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
+                  </span>
                 </HeadingTag>
                 <div className="flex flex-wrap items-baseline gap-2">
-                  <span className="text-3xl font-semibold leading-none text-foreground">
+                  <span className={valueClassName}>
                     {value}
                   </span>
                   {trend && (

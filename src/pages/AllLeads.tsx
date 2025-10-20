@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Plus, Filter } from "lucide-react";
 import { EnhancedAddLeadDialog } from "@/components/EnhancedAddLeadDialog";
 import { useNavigate } from "react-router-dom";
@@ -8,7 +9,15 @@ import GlobalSearch from "@/components/GlobalSearch";
 import { PageHeader, PageHeaderSearch } from "@/components/ui/page-header";
 import { OnboardingTutorial, TutorialStep } from "@/components/shared/OnboardingTutorial";
 import { useOnboarding } from "@/contexts/OnboardingContext";
-import { Calendar, MessageSquare, Users, FileText } from "lucide-react";
+import {
+  Calendar,
+  MessageSquare,
+  Users,
+  FileText,
+  TrendingUp,
+  AlertCircle,
+  XCircle,
+} from "lucide-react";
 import {
   useLeadsWithCustomFields,
   type LeadWithCustomFields,
@@ -27,6 +36,8 @@ import { useLeadsFilters, type CustomFieldFilterValue } from "@/pages/leads/hook
 import { LEAD_TABLE_COLUMN_STORAGE_KEY } from "@/hooks/useLeadTableColumns";
 import type { LeadFieldDefinition } from "@/types/leadFields";
 import { formatDate } from "@/lib/utils";
+import { KpiCard } from "@/components/ui/kpi-card";
+import { getKpiIconPreset } from "@/components/ui/kpi-presets";
 
 type LeadStatusOption = {
   id: string;
@@ -185,6 +196,173 @@ const AllLeadsNew = () => {
     });
     return map;
   }, [fieldDefinitions]);
+
+  const totalIconPreset = useMemo(() => getKpiIconPreset("indigo"), []);
+  const conversionIconPreset = useMemo(() => getKpiIconPreset("violet"), []);
+  const inactivityIconPreset = useMemo(() => getKpiIconPreset("amber"), []);
+  const closedIconPreset = useMemo(() => getKpiIconPreset("rose"), []);
+
+  const formatNumber = (value: number) =>
+    value.toLocaleString(undefined, { maximumFractionDigits: 0 });
+
+  const formatPercent = (value: number) =>
+    `${value.toLocaleString(undefined, {
+      minimumFractionDigits: value > 0 && value < 10 ? 1 : 0,
+      maximumFractionDigits: 1,
+    })}%`;
+
+  const formatSignedNumber = (value: number) => {
+    if (value === 0) return "0";
+    const formatted = formatNumber(Math.abs(value));
+    return value > 0 ? `+${formatted}` : `-${formatted}`;
+  };
+
+  const formatSignedPercent = (value: number) => {
+    if (value === 0) return "0%";
+    const abs = Math.abs(value);
+    const formatted = abs.toLocaleString(undefined, {
+      minimumFractionDigits: abs > 0 && abs < 10 ? 1 : 0,
+      maximumFractionDigits: 1,
+    });
+    return value > 0 ? `+${formatted}%` : `-${formatted}%`;
+  };
+
+  const getTrendDirection = (value: number): "up" | "down" | "flat" => {
+    if (value > 0) return "up";
+    if (value < 0) return "down";
+    return "flat";
+  };
+
+  const leadKpiMetrics = useMemo(() => {
+    const now = Date.now();
+    const dayInMs = 1000 * 60 * 60 * 24;
+    const last7Start = now - 7 * dayInMs;
+    const previous7Start = now - 14 * dayInMs;
+    const last30Start = now - 30 * dayInMs;
+    const previous30Start = now - 60 * dayInMs;
+    const inactiveThreshold = now - 14 * dayInMs;
+    const inactivePreviousThreshold = now - 21 * dayInMs;
+
+    const normalizeStatus = (status: string | null | undefined) =>
+      (status ?? "").toLowerCase();
+
+    const toMs = (value: string | null | undefined) => {
+      if (!value) return null;
+      const date = new Date(value);
+      const ms = date.getTime();
+      return Number.isNaN(ms) ? null : ms;
+    };
+
+    const convertedKeywords = [
+      "booked",
+      "completed",
+      "won",
+      "converted",
+      "signed",
+    ];
+    const lostKeywords = ["lost", "canceled", "cancelled"];
+    const closedKeywords = ["closed", "finished"];
+
+    let newCurrent = 0;
+    let newPrevious = 0;
+    let currentEligible = 0;
+    let currentConverted = 0;
+    let previousEligible = 0;
+    let previousConverted = 0;
+    let inactiveCurrent = 0;
+    let inactivePrevious = 0;
+    let closedCurrent = 0;
+    let closedPrevious = 0;
+
+    leads.forEach((lead) => {
+      const createdMs = toMs(lead.created_at);
+      if (createdMs != null) {
+        if (createdMs >= last7Start) {
+          newCurrent += 1;
+        } else if (createdMs >= previous7Start) {
+          newPrevious += 1;
+        }
+      }
+
+      const updatedMs = toMs(lead.updated_at) ?? createdMs;
+      if (updatedMs == null) {
+        return;
+      }
+
+      const statusName = normalizeStatus(lead.lead_statuses?.name ?? lead.status);
+      const isLost = lostKeywords.some((keyword) => statusName.includes(keyword));
+      const isCompleted = statusName.includes("completed");
+      const isConverted = convertedKeywords.some((keyword) =>
+        statusName.includes(keyword),
+      );
+      const isClosed =
+        Boolean(lead.lead_statuses?.is_system_final) ||
+        isLost ||
+        isCompleted ||
+        closedKeywords.some((keyword) => statusName.includes(keyword)) ||
+        isConverted;
+
+      if (updatedMs >= last30Start) {
+        if (!isLost) {
+          currentEligible += 1;
+          if (isConverted) {
+            currentConverted += 1;
+          }
+        }
+        if (isClosed) {
+          closedCurrent += 1;
+        }
+      } else if (updatedMs >= previous30Start) {
+        if (!isLost) {
+          previousEligible += 1;
+          if (isConverted) {
+            previousConverted += 1;
+          }
+        }
+        if (isClosed) {
+          closedPrevious += 1;
+        }
+      }
+
+      if (!isCompleted && !isLost) {
+        if (updatedMs < inactiveThreshold) {
+          inactiveCurrent += 1;
+          if (updatedMs < inactivePreviousThreshold) {
+            inactivePrevious += 1;
+          }
+        }
+      }
+    });
+
+    const currentRate =
+      currentEligible > 0 ? (currentConverted / currentEligible) * 100 : 0;
+    const previousRate =
+      previousEligible > 0 ? (previousConverted / previousEligible) * 100 : 0;
+
+    return {
+      totals: {
+        total: leads.length,
+        newCurrent,
+        newPrevious,
+        delta: newCurrent - newPrevious,
+      },
+      conversion: {
+        currentRate,
+        previousRate,
+        delta: currentRate - previousRate,
+      },
+      inactivity: {
+        current: inactiveCurrent,
+        previous: inactivePrevious,
+        delta: inactiveCurrent - inactivePrevious,
+      },
+      closed: {
+        current: closedCurrent,
+        previous: closedPrevious,
+        delta: closedCurrent - closedPrevious,
+      },
+    };
+  }, [leads]);
 
   // Refetch data when page becomes visible (e.g., when navigating back from lead detail)
   useEffect(() => {
@@ -778,6 +956,18 @@ const AllLeadsNew = () => {
     </div>
   );
 
+  const { totals, conversion: conversionMetrics, inactivity, closed } =
+    leadKpiMetrics;
+
+  const buildInfoLabel = (metricKey: string) =>
+    t('leads.kpis.infoLabel', {
+      metric: t(`leads.kpis.${metricKey}.title`),
+    });
+
+  const timeframeNew = t('leads.kpis.timeframes.newLast7Days');
+  const timeframe30 = t('leads.kpis.timeframes.recent30Days');
+  const timeframeInactive = t('leads.kpis.timeframes.inactive14Days');
+
   return (
     <div className="min-h-screen">
       <PageHeader
@@ -802,30 +992,164 @@ const AllLeadsNew = () => {
         </PageHeaderSearch>
       </PageHeader>
       
-      <div className="p-4 sm:p-6">
-        {columnsLoading ? (
-          <TableLoadingSkeleton />
-        ) : (
-          <AdvancedDataTable
-            data={paginatedLeads}
-            columns={advancedColumns}
-            rowKey={(lead) => lead.id}
-            onRowClick={handleRowClick}
-            isLoading={leadsLoading}
-            loadingState={<TableLoadingSkeleton />}
-            filters={filtersConfig}
-            emptyState={emptyState}
-            sortState={sortState}
-            onSortChange={handleSortChange}
-            pagination={pagination}
-            columnCustomization={{
-              storageKey: LEAD_TABLE_COLUMN_STORAGE_KEY,
-              defaultState: advancedDefaultPreferences,
-              onChange: handleColumnPreferencesChange,
-            }}
-            toolbar={tableToolbar}
-          />
-        )}
+      <div className="space-y-6 p-4 sm:p-6">
+        <section className="space-y-4">
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+            <h2 className="text-base font-semibold text-foreground">
+              {t('leads.kpis.sectionTitle')}
+            </h2>
+          </div>
+          {leadsLoading ? (
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+              {Array.from({ length: 4 }).map((_, index) => (
+                <div
+                  key={index}
+                  className="h-full rounded-2xl border border-border/60 bg-muted/40 p-4 sm:p-5"
+                >
+                  <div className="flex items-center justify-between">
+                    <Skeleton className="h-10 w-10 rounded-xl" />
+                    <Skeleton className="h-4 w-16" />
+                  </div>
+                  <div className="mt-6 space-y-3">
+                    <Skeleton className="h-3 w-24" />
+                    <Skeleton className="h-7 w-20" />
+                    <Skeleton className="h-4 w-16" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+              <KpiCard
+                className="h-full"
+                density="compact"
+                icon={Users}
+                {...totalIconPreset}
+                subtitle={timeframeNew}
+                title={t('leads.kpis.totalLeads.title')}
+                value={formatNumber(totals.total)}
+                trend={{
+                  label: t('leads.kpis.totalLeads.trendLabel', {
+                    count: formatNumber(totals.newCurrent),
+                  }),
+                  value: totals.delta,
+                  direction: getTrendDirection(totals.delta),
+                  valueFormat: "number",
+                  showSign: true,
+                  ariaLabel: t('leads.kpis.totalLeads.trendAria', {
+                    delta: formatSignedNumber(totals.delta),
+                    current: formatNumber(totals.newCurrent),
+                    previous: formatNumber(totals.newPrevious),
+                  }),
+                }}
+                info={{
+                  content: t('leads.kpis.totalLeads.tooltip'),
+                  ariaLabel: buildInfoLabel('totalLeads'),
+                }}
+              />
+              <KpiCard
+                className="h-full"
+                density="compact"
+                icon={TrendingUp}
+                {...conversionIconPreset}
+                subtitle={timeframe30}
+                title={t('leads.kpis.conversionRate.title')}
+                value={formatPercent(conversionMetrics.currentRate)}
+                trend={{
+                  value: conversionMetrics.delta,
+                  direction: getTrendDirection(conversionMetrics.delta),
+                  valueFormat: "percent",
+                  decimals: 1,
+                  showSign: true,
+                  ariaLabel: t('leads.kpis.conversionRate.trendAria', {
+                    delta: formatSignedPercent(conversionMetrics.delta),
+                    current: formatPercent(conversionMetrics.currentRate),
+                    previous: formatPercent(conversionMetrics.previousRate),
+                  }),
+                }}
+                info={{
+                  content: t('leads.kpis.conversionRate.tooltip'),
+                  ariaLabel: buildInfoLabel('conversionRate'),
+                }}
+              />
+              <KpiCard
+                className="h-full"
+                density="compact"
+                icon={AlertCircle}
+                {...inactivityIconPreset}
+                subtitle={timeframeInactive}
+                title={t('leads.kpis.noActivity.title')}
+                value={formatNumber(inactivity.current)}
+                trend={{
+                  value: inactivity.delta,
+                  direction: getTrendDirection(inactivity.delta),
+                  valueFormat: "number",
+                  showSign: true,
+                  invert: true,
+                  ariaLabel: t('leads.kpis.noActivity.trendAria', {
+                    delta: formatSignedNumber(inactivity.delta),
+                    current: formatNumber(inactivity.current),
+                    previous: formatNumber(inactivity.previous),
+                  }),
+                }}
+                info={{
+                  content: t('leads.kpis.noActivity.tooltip'),
+                  ariaLabel: buildInfoLabel('noActivity'),
+                }}
+              />
+              <KpiCard
+                className="h-full"
+                density="compact"
+                icon={XCircle}
+                {...closedIconPreset}
+                subtitle={timeframe30}
+                title={t('leads.kpis.lost.title')}
+                value={formatNumber(closed.current)}
+                trend={{
+                  value: closed.delta,
+                  direction: getTrendDirection(closed.delta),
+                  valueFormat: "number",
+                  showSign: true,
+                  ariaLabel: t('leads.kpis.lost.trendAria', {
+                    delta: formatSignedNumber(closed.delta),
+                    current: formatNumber(closed.current),
+                    previous: formatNumber(closed.previous),
+                  }),
+                }}
+                info={{
+                  content: t('leads.kpis.lost.tooltip'),
+                  ariaLabel: buildInfoLabel('lost'),
+                }}
+              />
+            </div>
+          )}
+        </section>
+
+        <section>
+          {columnsLoading ? (
+            <TableLoadingSkeleton />
+          ) : (
+            <AdvancedDataTable
+              data={paginatedLeads}
+              columns={advancedColumns}
+              rowKey={(lead) => lead.id}
+              onRowClick={handleRowClick}
+              isLoading={leadsLoading}
+              loadingState={<TableLoadingSkeleton />}
+              filters={filtersConfig}
+              emptyState={emptyState}
+              sortState={sortState}
+              onSortChange={handleSortChange}
+              pagination={pagination}
+              columnCustomization={{
+                storageKey: LEAD_TABLE_COLUMN_STORAGE_KEY,
+                defaultState: advancedDefaultPreferences,
+                onChange: handleColumnPreferencesChange,
+              }}
+              toolbar={tableToolbar}
+            />
+          )}
+        </section>
       </div>
       
       <EnhancedAddLeadDialog 

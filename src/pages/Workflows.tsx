@@ -19,6 +19,10 @@ import { formatDistanceToNow } from "date-fns";
 import { enUS, tr } from 'date-fns/locale';
 import { useTranslation } from "react-i18next";
 import { KpiCard } from "@/components/ui/kpi-card";
+import {
+  KPI_ACTION_BUTTON_CLASS,
+  getKpiIconPreset,
+} from "@/components/ui/kpi-presets";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 
 export default function Workflows() {
@@ -196,12 +200,10 @@ export default function Workflows() {
 
   const activeCoverage = stats.total > 0 ? (stats.active / stats.total) * 100 : 0;
   const pausedShare = stats.total > 0 ? (stats.paused / stats.total) * 100 : 0;
-  const kpiActionButtonClass =
-    "h-8 rounded-full border border-border/60 bg-background/85 px-4 text-sm font-medium text-foreground shadow-sm transition-colors duration-200 hover:bg-muted/60 hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2";
-  const gradientIconBaseClass =
-    "inline-flex h-12 w-12 items-center justify-center rounded-full p-0 backdrop-blur-sm ring-1 ring-white/60 dark:ring-white/15 transition-all duration-300";
-  const gradientIconSvgClass =
-    "h-7 w-7 drop-shadow-[0_3px_8px_rgba(15,23,42,0.2)]";
+  // Prefab icon style sets for KPI cards (shared across the app)
+  const iconIndigo = getKpiIconPreset("indigo");
+  const iconSky = getKpiIconPreset("sky");
+  const iconEmerald = getKpiIconPreset("emerald");
 
   const workflowColumns: AdvancedTableColumn<Workflow>[] = useMemo(
     () => [
@@ -408,10 +410,7 @@ export default function Workflows() {
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
           <KpiCard
             icon={Zap}
-            iconBackground="bg-[linear-gradient(135deg,#c084fc,#6366f1)] dark:bg-[linear-gradient(135deg,#8b5cf6,#4338ca)]"
-            iconForeground="text-white"
-            iconClassName={`${gradientIconBaseClass} shadow-[0_18px_35px_rgba(99,102,241,0.28)] dark:shadow-[0_18px_35px_rgba(99,102,241,0.45)]`}
-            iconSvgClassName={gradientIconSvgClass}
+            {...iconIndigo}
             title={t("workflows.stats.totalWorkflows")}
             value={stats.total}
             description={totalSummary}
@@ -419,7 +418,7 @@ export default function Workflows() {
               <Button
                 size="xs"
                 variant="outline"
-                className={kpiActionButtonClass}
+                className={KPI_ACTION_BUTTON_CLASS}
                 onClick={() => handleStatusFilterChange("all")}
               >
                 {t("workflows.stats.viewAll")}
@@ -428,10 +427,7 @@ export default function Workflows() {
           />
           <KpiCard
             icon={CheckCircle}
-            iconBackground="bg-[linear-gradient(135deg,#60a5fa,#38bdf8)] dark:bg-[linear-gradient(135deg,#3b82f6,#0ea5e9)]"
-            iconForeground="text-white"
-            iconClassName={`${gradientIconBaseClass} shadow-[0_18px_35px_rgba(56,189,248,0.28)] dark:shadow-[0_18px_35px_rgba(56,189,248,0.5)]`}
-            iconSvgClassName={gradientIconSvgClass}
+            {...iconSky}
             title={t("workflows.stats.active")}
             value={stats.active}
             description={t("workflows.stats.activeDescription")}
@@ -443,7 +439,7 @@ export default function Workflows() {
                 <Button
                   size="xs"
                   variant="outline"
-                  className={kpiActionButtonClass}
+                  className={KPI_ACTION_BUTTON_CLASS}
                   onClick={() => handleStatusFilterChange("active")}
                 >
                   {t("workflows.stats.quickFilterActive")}
@@ -453,10 +449,7 @@ export default function Workflows() {
           />
           <KpiCard
             icon={Clock}
-            iconBackground="bg-[linear-gradient(135deg,#6ee7b7,#34d399)] dark:bg-[linear-gradient(135deg,#34d399,#059669)]"
-            iconForeground="text-white"
-            iconClassName={`${gradientIconBaseClass} shadow-[0_18px_35px_rgba(52,211,153,0.28)] dark:shadow-[0_18px_35px_rgba(16,185,129,0.5)]`}
-            iconSvgClassName={gradientIconSvgClass}
+            {...iconEmerald}
             title={t("workflows.stats.paused")}
             value={stats.paused}
             description={t("workflows.stats.pausedDescription")}
@@ -468,7 +461,7 @@ export default function Workflows() {
                 <Button
                   size="xs"
                   variant="outline"
-                  className={kpiActionButtonClass}
+                  className={KPI_ACTION_BUTTON_CLASS}
                   onClick={() => handleStatusFilterChange("paused")}
                 >
                   {t("workflows.stats.quickFilterPaused")}

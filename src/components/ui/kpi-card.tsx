@@ -12,6 +12,7 @@ import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 
 type TrendTone = "positive" | "negative" | "neutral";
+type TrendDirection = "up" | "down" | "flat";
 
 interface TrendConfig {
   /**
@@ -24,13 +25,41 @@ interface TrendConfig {
    */
   tone?: TrendTone;
   /**
-   * Optional custom icon. When omitted, the tone controls a default arrow icon.
+   * Optional custom icon. When omitted, the direction controls a default arrow icon.
    */
   icon?: React.ReactNode;
   /**
    * Accessible description for assistive technologies.
    */
   ariaLabel?: string;
+  /**
+   * Direction of change to control the default arrow glyph when no custom icon is provided.
+   * If omitted and a numeric value is given, it is derived from the sign of `value`.
+   */
+  direction?: TrendDirection;
+  /**
+   * Optional numeric change value used to generate a label when `label` is not provided.
+   * Example: 12 (percent) or -4 (absolute count).
+   */
+  value?: number;
+  /**
+   * Controls how a numeric value is formatted when `label` is omitted.
+   * "percent" appends a % sign; a custom formatter can return a React node.
+   */
+  valueFormat?: "percent" | "number" | ((n: number) => React.ReactNode);
+  /**
+   * Number of fraction digits for numeric formatting when using the built-in formatter.
+   */
+  decimals?: number;
+  /**
+   * Show a leading plus sign for positive numbers when the label is generated.
+   */
+  showSign?: boolean;
+  /**
+   * Invert the good/bad tone semantics for automatic tone inference from `value`.
+   * Useful when a decrease is positive (e.g., response time).
+   */
+  invert?: boolean;
 }
 
 interface ProgressConfig {
@@ -129,10 +158,10 @@ const trendToneStyles: Record<TrendTone, string> = {
     "bg-muted text-muted-foreground border border-border/60",
 };
 
-const fallbackTrendIcon: Record<TrendTone, React.ReactNode> = {
-  positive: <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />,
-  negative: <ArrowDownRight className="h-3.5 w-3.5" aria-hidden="true" />,
-  neutral: <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />,
+const fallbackDirectionIcon: Record<TrendDirection, React.ReactNode> = {
+  up: <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />,
+  down: <ArrowDownRight className="h-3.5 w-3.5" aria-hidden="true" />,
+  flat: <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />,
 };
 
 export const KpiCard = React.forwardRef<HTMLDivElement, KpiCardProps>(
@@ -192,10 +221,63 @@ export const KpiCard = React.forwardRef<HTMLDivElement, KpiCardProps>(
 
     const HeadingTag = headingLevel;
 
-    const tone = trend?.tone ?? "neutral";
-    const trendIcon =
-      trend?.icon ??
-      (trend ? fallbackTrendIcon[tone] : null);
+    // Compute trend display pieces when provided
+    const tone: TrendTone = React.useMemo(() => {
+      if (!trend) return "neutral";
+      if (trend.tone) return trend.tone;
+      if (typeof trend.value === "number") {
+        const v = trend.value;
+        const positiveIsGood = !(trend.invert ?? false);
+        const isGood = positiveIsGood ? v > 0 : v < 0;
+        if (v === 0) return "neutral";
+        return isGood ? "positive" : "negative";
+      }
+      return "neutral";
+    }, [trend]);
+
+    const direction: TrendDirection | null = React.useMemo(() => {
+      if (!trend) return null;
+      if (trend.direction) return trend.direction;
+      if (typeof trend.value === "number") {
+        if (trend.value > 0) return "up";
+        if (trend.value < 0) return "down";
+        return "flat";
+      }
+      return "flat";
+    }, [trend]);
+
+    const autoTrendLabel: React.ReactNode | null = React.useMemo(() => {
+      if (!trend) return null;
+      if (trend.label != null) return null;
+      if (typeof trend.value !== "number") return null;
+      const decimals = trend.decimals ?? (trend.valueFormat === "percent" ? 0 : 0);
+      const showSign = trend.showSign ?? true;
+      const v = trend.value;
+      const prefix = v > 0 && showSign ? "+" : "";
+      const absStr = Math.abs(v).toLocaleString(undefined, {
+        minimumFractionDigits: decimals,
+         maximumFractionDigits: decimals,
+      });
+      if (typeof trend.valueFormat === "function") {
+        return trend.valueFormat(v);
+      }
+      if (trend.valueFormat === "percent") {
+        return `${prefix}${absStr}%`;
+      }
+      return `${prefix}${absStr}`;
+    }, [trend]);
+
+    const autoAriaLabel: string | undefined = React.useMemo(() => {
+      if (!trend) return undefined;
+      if (trend.ariaLabel) return trend.ariaLabel;
+      if (autoTrendLabel == null) return undefined;
+      const dirLabel = direction === "up" ? "up" : direction === "down" ? "down" : "no change";
+      return typeof autoTrendLabel === "string" ? `${dirLabel} ${autoTrendLabel}` : undefined;
+    }, [trend, autoTrendLabel, direction]);
+
+    const trendIcon = trend
+      ? trend.icon ?? (direction ? fallbackDirectionIcon[direction] : null)
+      : null;
 
     return (
       <Card
@@ -279,10 +361,10 @@ export const KpiCard = React.forwardRef<HTMLDivElement, KpiCardProps>(
                     >
                       {trendIcon}
                       <span>
-                        {trend.label}
+                        {trend.label ?? autoTrendLabel}
                       </span>
-                      {trend.ariaLabel && (
-                        <span className="sr-only">{trend.ariaLabel}</span>
+                      {(trend.ariaLabel || autoAriaLabel) && (
+                        <span className="sr-only">{trend.ariaLabel ?? autoAriaLabel}</span>
                       )}
                     </Badge>
                   )}

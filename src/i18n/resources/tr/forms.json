@@ -1,13 +1,21 @@
 {
   "activities": {
+    "note_label": "Not",
+    "set_reminder_label": "Hatırlatıcı Kur?",
+    "add_note": "Not Ekle",
+    "add_reminder": "Hatırlatıcı Ekle",
+    "no_activities": "Henüz aktivite yok",
+    "date_time_label": "Tarih ve Saat",
+    "saving": "Kaydediliyor...",
+    "enter_note_placeholder": "Notunuzu girin...",
     "types": {
-      "note": "Not",
-      "reminder": "Hatırlatıcı",
       "call": "Arama",
       "email": "E-posta",
+      "follow_up": "Takip",
       "meeting": "Toplantı",
-      "task": "Görev",
-      "follow_up": "Takip"
+      "note": "Not",
+      "reminder": "Hatırlatıcı",
+      "task": "Görev"
     }
   },
   "dateTimePicker": {
@@ -18,7 +26,8 @@
     "done": "Tamam"
   },
   "progress": {
-    "tasks_complete": "görev tamamlandı"
+    "tasks_complete": "görev tamamlandı",
+    "todos_completed": "yapılacak tamamlandı"
   },
   "search": {
     "typeLabels": {
@@ -107,140 +116,154 @@
     "errorNoOrganization": "Aktif organizasyon bulunamadı"
   },
   "placeholders": {
-    "enterName": "Ad girin",
-    "enterEmail": "E-posta adresi girin",
-    "enterPhone": "Telefon numarası girin",
-    "selectDate": "Tarih seçin",
-    "selectTime": "Saat seçin",
-    "selectStatus": "Durum seçin",
-    "enterNotes": "Not veya açıklama girin",
-    "search": "Ara...",
-    "clientFullName": "Kişinin tam adı",
+    "name": "İsim girin",
+    "email": "E-posta girin",
+    "phone": "Telefon girin",
+    "status": "Durum seçin",
+    "notes": "Notlar girin",
     "additionalNotes": "Bu kişi hakkında ek notlar...",
-    "enterProjectName": "Proje adı girin",
-    "enterProjectDescription": "Proje açıklaması girin (isteğe bağlı)",
     "basePrice": "0",
+    "clientFullName": "Kişinin tam adı",
+    "enterClientName": "Kişi adı girin",
+    "enterEmail": "E-posta adresi girin",
+    "enterName": "Ad girin",
+    "enterNotes": "Not veya açıklama girin",
+    "enterPhone": "Telefon numarası girin",
+    "enterProjectDescription": "Proje açıklaması girin (isteğe bağlı)",
+    "enterProjectName": "Proje adı girin",
+    "enter_activity_content": "Faaliyet detaylarını girin...",
+    "enter_email": "E-posta adresini yaz",
     "enter_location": "Konum girin",
-    "select_project_type": "Proje türü seçin",
-    "select_service": "Hizmet seçin",
+    "enter_password": "Şifreni yaz",
+    "loadingClients": "Kişiler yükleniyor...",
+    "noActiveClients": "Aktif kişi bulunamadı",
+    "noClientsMatch": "Aramanızla eşleşen kişi bulunamadı",
+    "no_results": "Sonuç bulunamadı",
+    "search": "Ara...",
+    "searchByName": "İsme göre ara...",
+    "search_by_name_or_email": "İsim veya e-posta ile ara...",
     "search_clients": "Kişi ara...",
     "search_projects": "Proje ara...",
-    "no_results": "Sonuç bulunamadı",
-    "search_by_name_or_email": "İsim veya e-posta ile ara...",
+    "selectDate": "Tarih seçin",
+    "selectStatus": "Durum seçin",
+    "selectTime": "Saat seçin",
     "select_client_placeholder": "Kişi ara ve seç...",
-    "enter_activity_content": "Faaliyet detaylarını girin...",
-    "searchByName": "İsme göre ara...",
-    "loadingClients": "Kişiler yükleniyor...",
-    "noClientsMatch": "Aramanızla eşleşen kişi bulunamadı",
-    "noActiveClients": "Aktif kişi bulunamadı",
-    "enterClientName": "Kişi adı girin",
-    "enter_email": "E-posta adresini yaz",
-    "enter_password": "Şifreni yaz"
+    "select_project_type": "Proje türü seçin",
+    "select_service": "Hizmet seçin"
   },
   "packages": {
     "title": "Paketler",
-    "description": "Belirli fiyat ve süre ile önceden yapılandırılmış hizmet paketleri",
+    "description": "Fotoğrafçılık işletmeniz için hizmet paketleri oluşturun ve yönetin",
+    "package_deleted": "Paket Silindi",
+    "package_deleted_desc": "\"{{name}}\" paketi başarıyla silindi",
+    "error_deleting": "Paket silinirken hata oluştu",
+    "failed_to_load": "Paketler yüklenemedi",
     "add_package": "Paket Ekle",
-    "create_first": "İlk Paketi Oluştur",
-    "no_packages": "Henüz paket yapılandırılmadı.",
+    "no_packages": "Henüz paket yok",
+    "create_first": "Başlamak için ilk paketinizi oluşturun",
     "package_name": "Paket Adı",
     "price": "Fiyat",
     "duration": "Süre",
     "applicable_types": "Uygulanabilir Türler",
-    "default_addons": "Varsayılan Ek Hizmetler",
+    "default_addons": "Varsayılan Eklentiler",
     "visibility": "Görünürlük",
     "actions": "İşlemler",
     "all_types": "Tüm Türler",
     "none": "Yok",
-    "addons_count": "{{count}} ek hizmet",
-    "default_addons_tooltip": "Varsayılan Ek Hizmetler:",
+    "addons_count": "{{count}} eklenti",
+    "default_addons_tooltip": "Bu paket için varsayılan eklentiler:",
     "unknown_service": "Bilinmeyen Hizmet",
     "no_services_selected": "Hizmet seçilmedi",
-    "no_addons": "Ek hizmet yok",
-    "no_addons_selected": "Ek hizmet seçilmedi",
-    "add_services": "Hizmet Ekle",
     "active": "Aktif",
     "inactive": "Pasif",
     "view_only": "Sadece Görüntüle",
-    "failed_to_load": "Paketler yüklenemedi",
-    "package_deleted": "Paket Silindi",
-    "package_deleted_desc": "{{name}} kaldırıldı",
-    "error_deleting": "Paket silinemedi"
+    "no_addons": "Eklenti yok",
+    "delete_package": "Paketi Sil",
+    "delete_confirm": "\"{{name}}\" paketini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
+    "add_services": "Hizmet Ekle",
+    "no_addons_selected": "Ek hizmet seçilmedi"
   },
   "package": {
-    "title": "Paketler",
-    "description": "Hizmet paketlerinizi ve fiyatlandırma seviyelerinizi yönetin",
-    "add_package": "Paket Ekle",
     "add_title": "Paket Ekle",
     "edit_title": "Paketi Düzenle",
-    "edit_package": "Paketi Düzenle",
-    "delete_package": "Paketi Sil",
-    "name": "Paket Adı",
-    "description": "Açıklama",
-    "description_label": "Açıklama",
-    "price": "Fiyat (TL)",
-    "duration": "Süre",
-    "applicable_types": "Uygulanabilir Türler",
-    "default_addons": "Varsayılan Ek Hizmetler",
-    "default_add_ons": "Varsayılan Ek Hizmetler",
-    "all_types": "Tüm Proje Türleri",
-    "select_types": "Proje Türlerini Seçin",
-    "no_packages": "Paket bulunamadı",
-    "delete_confirm": "Bu paketi silmek istediğinizden emin misiniz?",
-    "delete_success": "Paket başarıyla silindi",
-    "delete_error": "Paket silinirken hata oluştu",
-    "add_success": "Paket başarıyla oluşturuldu",
-    "add_error": "Paket oluşturulurken hata oluştu",
-    "update_success": "Paket başarıyla güncellendi",
-    "update_error": "Paket güncellenirken hata oluştu",
     "update_package": "Paketi Güncelle",
-    "buttons": {
-      "adding": "Ekleniyor..."
-    },
-    "duration_options": {
-      "30m": "30 dakika",
-      "1h": "1 saat",
-      "2h": "2 saat",
-      "3h": "3 saat",
-      "half_day": "Yarım gün",
-      "full_day": "Tam gün",
-      "custom": "Özel"
-    },
-    "no_services_yet": "Henüz hizmet yok. Ek hizmet olarak kullanmak için hizmetler oluşturun.",
+    "name": "Paket Adı",
+    "name_placeholder": "örn., Düğün Standart",
+    "description": "Açıklama",
+    "description_placeholder": "Paketin kısa açıklaması",
+    "price": "Fiyat (TL)",
+    "price_placeholder": "0",
+    "price_help": "Kişiye gösterilen fiyat. Proje başına değiştirebilirsiniz.",
+    "duration": "Süre",
+    "duration_help": "Müsaitlik planlaması ve takvim rezervasyonu için kullanılır.",
+    "select_duration": "Süre seçin",
+    "custom_duration": "Özel Süre",
+    "custom_duration_placeholder": "örn., 2-3 gün",
+    "applicable_types": "Uygulanabilir Türler",
+    "applicable_types_help_1": "Bu paketin hangi",
+    "applicable_types_help_2": "için geçerli olduğunu seçin (hiçbiri = tüm türler)",
+    "project_types": "Proje Türleri",
+    "no_project_types": "Henüz proje türü mevcut değil.",
+    "create_project_types": "Proje Türleri Oluştur",
+    "default_add_ons": "Varsayılan Ek Hizmetler",
+    "add_ons_help_1": "Bunlar",
+    "add_ons_help_2": "bölümünüzden hizmetlerdir ve proje oluştururken özelleştirilebilir",
+    "services_section": "Hizmetler",
+    "no_services_yet": "Henüz hizmet yok. Ek hizmet olarak kullanmak için hizmet oluşturun.",
     "create_service": "Hizmet Oluştur",
     "no_addons_selected": "Ek hizmet seçilmedi",
     "add_services": "Hizmet Ekle",
     "selected_addons": "Seçili Ek Hizmetler ({{count}})",
     "edit_addons": "Düzenle",
-    "no_project_types_exist": "Henüz proje türü mevcut değil.",
-    "create_project_types_link": "Proje Türleri Oluştur",
-    "price_help": "Kişilere gösterilen fiyat. Proje bazında geçersiz kılabilirsiniz.",
-    "duration_help": "Müsaitlik planlaması ve takvim bloklama için kullanılır.",
-    "select_duration": "Süre seçin",
-    "custom_duration": "Özel Süre",
-    "add_ons_help_1": "Bunlar",
-    "services_section": "Hizmetler bölümünüzden",
-    "add_ons_help_2": "proje oluştururken özelleştirilebilecek hizmetlerdir",
-    "applicable_types_help_1": "Hangi",
-    "project_types": "Proje Türlerine",
-    "applicable_types_help_2": "bu paketin uygulanacağını seçin (hiçbiri = tüm türler)",
+    "is_active": "Aktif",
     "visibility": "Görünürlük",
     "visibility_help": "Aktif paketler kişilere görünür",
-    "name_placeholder": "örn. Düğün Standart",
-    "description_placeholder": "Paket açıklaması",
-    "price_placeholder": "0",
-    "custom_duration_placeholder": "örn. 2-3 gün",
     "errors": {
       "name_required": "Paket adı gereklidir",
-      "update_failed": "Paket güncellenemedi"
+      "update_failed": "Paket güncellenemedi",
+      "delete_failed": "Paket silinemedi"
     },
     "success": {
-      "added": "Paket başarıyla oluşturuldu",
-      "updated": "Paket başarıyla güncellendi"
+      "added": "Paket başarıyla eklendi",
+      "updated": "Paket başarıyla güncellendi",
+      "deleted": "Paket başarıyla silindi"
     },
     "delete_confirmation": {
-      "description": "Kaydedilmemiş değişiklikleriniz var. İptal etmek istiyor musunuz?"
-    }
+      "title": "Paketi Sil",
+      "description": "Bu paketi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
+      "cancel": "İptal",
+      "confirm": "Sil"
+    },
+    "add_error": "Paket oluşturulurken hata",
+    "add_package": "Paket Ekle",
+    "add_success": "Paket başarıyla oluşturuldu",
+    "all_types": "Tüm Proje Türleri",
+    "buttons": {
+      "adding": "Ekleniyor..."
+    },
+    "create_project_types_link": "Proje Türleri Oluştur",
+    "default_addons": "Varsayılan Ek Hizmetler",
+    "delete_confirm": "Bu paketi silmek istediğinizden emin misiniz?",
+    "delete_error": "Paket silinirken hata",
+    "delete_package": "Paketi Sil",
+    "delete_success": "Paket başarıyla silindi",
+    "description_label": "Açıklama",
+    "duration_options": {
+      "30m": "30 dakika",
+      "1h": "1 saat",
+      "2h": "2 saat",
+      "3h": "3 saat",
+      "custom": "Özel",
+      "full_day": "Tam gün",
+      "half_day": "Yarım gün"
+    },
+    "edit_package": "Paketi Düzenle",
+    "no_packages": "Paket bulunamadı",
+    "no_project_types_exist": "Henüz proje türü mevcut değil.",
+    "select_types": "Proje Türlerini Seçin",
+    "title": "Paketler",
+    "update_error": "Paket güncellenirken hata",
+    "update_success": "Paket başarıyla güncellendi"
   },
   "services": {
     "title": "Hizmetler",
@@ -361,14 +384,14 @@
   },
   "status": {
     "loading": "Yükleniyor...",
-    "selectStatus": "DURUM SEÇİN",
-    "noStatusAvailable": "Durum mevcut değil",
-    "statusNotFound": "Durum bulunamadı",
+    "selectStatus": "DURUM SEÇ",
+    "noStatusAvailable": "Mevcut durum yok",
     "statusUpdated": "Durum Güncellendi",
     "errorUpdatingStatus": "Durum güncellenirken hata",
+    "statusNotFound": "Durum bulunamadı",
     "sessionUpdated": "Seans Güncellendi",
     "unsupportedStage": "Desteklenmeyen aşama",
-    "unsupportedStageDesc": "Bu aşama henüz seanslara uygulanamıyor."
+    "unsupportedStageDesc": "Bu aşama henüz seanslara uygulanamaz."
   },
   "project_stage": {
     "add_title": "AŞAMA EKLE",
@@ -469,9 +492,9 @@
     "placeholder": "Tarih aralığı seçin"
   },
   "lead_table_columns": {
-    "name": "Tam Ad",
-    "email": "E-posta Adresi",
-    "phone": "Telefon Numarası",
+    "name": "Ad",
+    "email": "E-posta",
+    "phone": "Telefon",
     "status": "Durum",
     "last_updated": "Son Güncelleme"
   },
@@ -516,26 +539,26 @@
   },
   "buttons": {
     "cancel": "İptal",
-    "save": "Kaydet",
-    "add": "Ekle",
-    "edit": "Düzenle",
-    "delete": "Sil",
-    "clearAll": "Tümünü Temizle",
-    "done": "Bitti",
-    "editServices": "Hizmetleri Düzenle",
-    "scheduleSession": "Seans Planla",
+    "creating": "Oluşturuluyor...",
     "createProject": "Proje Oluştur",
-    "createNewClient": "Yeni kişi oluştur",
+    "createNewClient": "Yeni Kişi Oluştur",
+    "done": "Tamam",
+    "clearAll": "Tümünü Temizle",
+    "editServices": "Hizmetleri Düzenle",
+    "add": "Ekle",
     "addLead": "Kişi Ekle",
     "adding": "Ekleniyor...",
-    "saving": "Kaydediliyor...",
-    "loading": "Yükleniyor...",
-    "updating": "Güncelleniyor...",
-    "creating": "Oluşturuluyor...",
-    "scheduling": "Planlanıyor...",
+    "delete": "Sil",
     "deleting": "Siliniyor...",
+    "edit": "Düzenle",
+    "loading": "Yükleniyor...",
+    "save": "Kaydet",
+    "saving": "Kaydediliyor...",
+    "scheduleSession": "Seans Planla",
+    "scheduling": "Planlanıyor...",
+    "today": "Bugün",
     "updateLead": "Kişi Güncelle",
-    "today": "Bugün"
+    "updating": "Güncelleniyor..."
   },
   "dialogs": {
     "addNewLead": "Yeni Kişi Ekle",
@@ -628,7 +651,7 @@
     },
     "no_lead": "Kişi Yok",
     "sessions": "seans",
-    "services": "hizmetler",
+    "services": "hizmet",
     "tasks_completed": "görev tamamlandı",
     "success": "Başarılı",
     "projectName": "Proje adı",
@@ -641,10 +664,7 @@
     "close": "Kapat",
     "board": "Kanban",
     "list": "Liste",
-    "archived": "Arşivlendi",
-    "sessions": "seans",
-    "services": "hizmet",
-    "no_lead": "Kişi Yok"
+    "archived": "Arşivlendi"
   },
   "reminders": {
     "reminderBadge": "Hatırlatıcı",
@@ -688,30 +708,11 @@
     "success": "Başarılı",
     "leadUpdateSuccess": "Kişi başarıyla güncellendi."
   },
-  "status": {
-    "loading": "Yükleniyor...",
-    "selectStatus": "DURUM SEÇ",
-    "noStatusAvailable": "Mevcut durum yok",
-    "statusUpdated": "Durum Güncellendi",
-    "errorUpdatingStatus": "Durum güncellenirken hata",
-    "statusNotFound": "Durum bulunamadı"
-  },
   "table": {
     "customizeTableColumns": "Tablo Sütunlarını Özelleştir",
     "chooseColumnsDescription": "Hangi sütunların görüntüleneceğini seçin ve sürükleyerek yeniden sıralayın.",
     "core": "TEMEL",
     "coreColumnsNote": "Temel sütunlar temel bilgileri içerdiği için gizlenemez."
-  },
-  "activities": {
-    "types": {
-      "call": "Arama",
-      "email": "E-posta",
-      "meeting": "Toplantı",
-      "note": "Not",
-      "task": "Görev",
-      "follow_up": "Takip",
-      "reminder": "Hatırlatıcı"
-    }
   },
   "clientDetails": {
     "title": "Kişi Detayları",
@@ -749,15 +750,6 @@
     "lead_required": "Lütfen bir kişi seçin veya yeni bir tane oluşturun.",
     "lead_name_required": "Yeni kişi oluştururken isim gerekli.",
     "type_required": "Lütfen bir proje türü seçin."
-  },
-  "buttons": {
-    "cancel": "İptal",
-    "creating": "Oluşturuluyor...",
-    "createProject": "Proje Oluştur",
-    "createNewClient": "Yeni Kişi Oluştur",
-    "done": "Tamam",
-    "clearAll": "Tümünü Temizle",
-    "editServices": "Hizmetleri Düzenle"
   },
   "projectDialog": {
     "title": "Yeni Proje Oluştur",
@@ -821,12 +813,36 @@
   },
   "sessionScheduling": {
     "title": "Seans Planla",
-    "scheduleSessionLabel": "Seans Planla *",
-    "sessionSummary": "Seans Özeti",
-    "project": "Proje",
     "client": "Kişi",
+    "project": "Proje",
+    "project_optional": "Proje (İsteğe Bağlı)",
+    "select_project": "Bir proje seçin",
+    "no_projects_yet": "Henüz proje oluşturulmadı",
+    "sessionName": "Seans Adı",
+    "session_name": "Seans Adı",
+    "enter_session_name": "Seans adını girin...",
+    "locationAddress": "Konum / Adres",
+    "location_address": "Konum / Adres",
+    "enter_location": "Seans konumunu veya adresini girin...",
+    "sessionNotes": "Seans Notları (Opsiyonel)",
+    "session_notes_optional": "Seans Notları (Opsiyonel)",
+    "special_requirements": "Bu seans için özel gereksinimler veya notlar...",
+    "scheduleSessionLabel": "Seans Tarihi ve Saati",
+    "session_date_time": "Seans Tarihi ve Saati",
+    "selectDateHint": "Müsait saatleri görmek için bir tarih seçin",
+    "sessionSummary": "Seans Özeti",
     "dateNotSet": "Tarih belirlenmedi",
-    "time": "Saat"
+    "time": "Saat",
+    "planned_sessions_on": "Planlanan seanslar:",
+    "this_day": "bu gün",
+    "no_time": "Saat yok",
+    "unknown_client": "Bilinmeyen kişi",
+    "loading_times": "Müsait saatler yükleniyor...",
+    "no_working_hours": "Bu gün için çalışma saati belirlenmemiş",
+    "configure_working_hours": "Müsait saatleri görmek için ayarlarda çalışma saatlerini yapılandırın",
+    "no_time_slots": "Müsait saat dilimi yok",
+    "available_times": "Müsait Saatler",
+    "slots": "slot"
   },
   "timeRelative": {
     "today": "Bugün",
@@ -835,30 +851,13 @@
     "pastDue": "Gecikmiş"
   },
   "labels": {
-    "name": "İsim",
     "email": "E-posta",
-    "phone": "Telefon",
-    "status": "Durum",
+    "password": "Şifre",
+    "description": "Açıklama",
+    "name": "Ad",
     "notes": "Notlar",
-    "description": "Açıklama"
-  },
-  "placeholders": {
-    "name": "İsim girin",
-    "email": "E-posta girin",
-    "phone": "Telefon girin",
-    "status": "Durum seçin",
-    "notes": "Notlar girin"
-  },
-  "sessionScheduling": {
-    "client": "Kişi",
-    "project_optional": "Proje (İsteğe Bağlı)",
-    "select_project": "Bir proje seçin",
-    "session_name": "Seans Adı",
-    "location_address": "Konum / Adres",
-    "enter_location": "Seans konumu veya adresini girin...",
-    "session_notes_optional": "Seans Notları (İsteğe Bağlı)",
-    "special_requirements": "Bu seans için özel gereksinimler veya notlar...",
-    "session_date_time": "Seans Tarih ve Saati"
+    "phone": "Telefon",
+    "status": "Durum"
   },
   "activityLogs": {
     "lead_created": "Kişi oluşturuldu",
@@ -963,12 +962,18 @@
     "no_sessions": "Seans bulunamadı"
   },
   "project_sheet": {
+    "todos_tab": "Yapılacaklar",
+    "payments_tab": "Ödemeler",
+    "services_tab": "Hizmetler",
+    "sessions_tab": "Seanslar",
+    "activities_tab": "Etkinlikler",
+    "archived_banner": "Bu proje arşivlendi. Çoğu işlem devre dışı. Arşivlenmiş durumda, seansları ve hatırlatmaları takvimlerden, Seanslar sayfasından ve etkinlik listelerinden gizlenir. Düzenleme ve görünürlüğü yeniden etkinleştirmek için Daha Fazla → Geri Yükle'yi kullanın.",
     "full_details": "Tam Detaylar",
     "more": "Daha Fazla",
-    "close": "Kapat",
     "edit_project": "Projeyi Düzenle",
     "archive_project": "Projeyi Arşivle",
-    "restore_project": "Projeyi Geri Yükle"
+    "restore_project": "Projeyi Geri Yükle",
+    "close": "Kapat"
   },
   "projectDetails": {
     "header": {
@@ -1005,39 +1010,6 @@
       "confirmCancel": "İptal",
       "confirmDelete": "Projeyi Sil"
     }
-  },
-  "sessionScheduling": {
-    "title": "Seans Planla",
-    "client": "Kişi",
-    "project": "Proje",
-    "project_optional": "Proje (İsteğe Bağlı)",
-    "select_project": "Bir proje seçin",
-    "no_projects_yet": "Henüz proje oluşturulmadı",
-    "sessionName": "Seans Adı",
-    "session_name": "Seans Adı",
-    "enter_session_name": "Seans adını girin...",
-    "locationAddress": "Konum / Adres",
-    "location_address": "Konum / Adres",
-    "enter_location": "Seans konumunu veya adresini girin...",
-    "sessionNotes": "Seans Notları (Opsiyonel)",
-    "session_notes_optional": "Seans Notları (Opsiyonel)",
-    "special_requirements": "Bu seans için özel gereksinimler veya notlar...",
-    "scheduleSessionLabel": "Seans Tarihi ve Saati",
-    "session_date_time": "Seans Tarihi ve Saati",
-    "selectDateHint": "Müsait saatleri görmek için bir tarih seçin",
-    "sessionSummary": "Seans Özeti",
-    "dateNotSet": "Tarih belirlenmedi",
-    "time": "Saat",
-    "planned_sessions_on": "Planlanan seanslar:",
-    "this_day": "bu gün",
-    "no_time": "Saat yok",
-    "unknown_client": "Bilinmeyen kişi",
-    "loading_times": "Müsait saatler yükleniyor...",
-    "no_working_hours": "Bu gün için çalışma saati belirlenmemiş",
-    "configure_working_hours": "Müsait saatleri görmek için ayarlarda çalışma saatlerini yapılandırın",
-    "no_time_slots": "Müsait saat dilimi yok",
-    "available_times": "Müsait Saatler",
-    "slots": "slot"
   },
   "success": {
     "saved": "Başarıyla kaydedildi",
@@ -1098,47 +1070,6 @@
     "deleteLead": "Kişiyi Sil",
     "successDescription": "Kişi ve tüm ilgili veriler başarıyla silindi."
   },
-  "progress": {
-    "todos_completed": "yapılacak tamamlandı"
-  },
-  "activities": {
-    "note_label": "Not",
-    "set_reminder_label": "Hatırlatıcı Kur?",
-    "add_note": "Not Ekle",
-    "add_reminder": "Hatırlatıcı Ekle",
-    "no_activities": "Henüz aktivite yok",
-    "date_time_label": "Tarih ve Saat",
-    "saving": "Kaydediliyor...",
-    "enter_note_placeholder": "Notunuzu girin..."
-  },
-  "todos": {
-    "title": "Yapılacaklar Listesi",
-    "add_placeholder": "Yeni yapılacak öğe ekle...",
-    "no_todos": "Henüz yapılacak öğe yok",
-    "add_first_todo": "Başlamak için ilk yapılacağınızı ekleyin",
-    "add_todo": "Yapılacak ekle",
-    "todo": "Yapılacak",
-    "completed": "tamamlandı",
-    "reopened": "yeniden açıldı",
-    "todo_added": "Yapılacak öğe başarıyla eklendi",
-    "todo_updated": "Yapılacak öğe başarıyla güncellendi",
-    "todo_deleted": "Yapılacak öğe başarıyla silindi",
-    "error_loading": "Yapılacaklar yüklenirken hata",
-    "error_adding": "Yapılacak öğe eklenirken hata",
-    "error_updating": "Yapılacak öğe güncellenirken hata",
-    "error_deleting": "Yapılacak öğe silinirken hata"
-  },
-  "archivedProject": {
-    "banner": "Bu proje arşivlenmiş durumda. Çoğu işlem devre dışı bırakılmıştır. Arşivlenmiş durumdayken seansları ve hatırlatıcıları takvimlerden, Seanslar sayfasından ve aktivite listelerinden gizlenir. Düzenleme ve görünürlüğü yeniden etkinleştirmek için Daha Fazla → Geri Yükle'yi kullanın.",
-    "actions_disabled": "Arşivlenmiş proje - işlemler devre dışı"
-  },
-  "deleteDialog": {
-    "title": "Projeyi Sil",
-    "description": "'{name}' projesini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz. Bu işlem projeyi ve seanslar, ödemeler, görevler, hizmetler ve aktiviteler dahil TÜM ilgili verileri kalıcı olarak silecektir.",
-    "cancel": "İptal",
-    "delete": "Projeyi Sil",
-    "deleting": "Siliniyor..."
-  },
   "todos": {
     "title": "Yapılacaklar",
     "add_placeholder": "Yeni yapılacak ekle...",
@@ -1156,23 +1087,20 @@
     "error_updating": "Yapılacak güncellenirken hata",
     "error_deleting": "Yapılacak silinirken hata"
   },
+  "archivedProject": {
+    "banner": "Bu proje arşivlenmiş durumda. Çoğu işlem devre dışı bırakılmıştır. Arşivlenmiş durumdayken seansları ve hatırlatıcıları takvimlerden, Seanslar sayfasından ve aktivite listelerinden gizlenir. Düzenleme ve görünürlüğü yeniden etkinleştirmek için Daha Fazla → Geri Yükle'yi kullanın.",
+    "actions_disabled": "Arşivlenmiş proje - işlemler devre dışı"
+  },
+  "deleteDialog": {
+    "title": "Projeyi Sil",
+    "description": "'{name}' projesini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz. Bu işlem projeyi ve seanslar, ödemeler, görevler, hizmetler ve aktiviteler dahil TÜM ilgili verileri kalıcı olarak silecektir.",
+    "cancel": "İptal",
+    "delete": "Projeyi Sil",
+    "deleting": "Siliniyor..."
+  },
   "danger_zone": {
     "title": "Tehlikeli Bölge",
     "description": "Bu işlemler yıkıcıdır ve geri alınamaz. Dikkatli ilerleyin."
-  },
-  "project_sheet": {
-    "todos_tab": "Yapılacaklar",
-    "payments_tab": "Ödemeler",
-    "services_tab": "Hizmetler",
-    "sessions_tab": "Seanslar",
-    "activities_tab": "Etkinlikler",
-    "archived_banner": "Bu proje arşivlendi. Çoğu işlem devre dışı. Arşivlenmiş durumda, seansları ve hatırlatmaları takvimlerden, Seanslar sayfasından ve etkinlik listelerinden gizlenir. Düzenleme ve görünürlüğü yeniden etkinleştirmek için Daha Fazla → Geri Yükle'yi kullanın.",
-    "full_details": "Tam Detaylar",
-    "more": "Daha Fazla",
-    "edit_project": "Projeyi Düzenle",
-    "archive_project": "Projeyi Arşivle",
-    "restore_project": "Projeyi Geri Yükle",
-    "close": "Kapat"
   },
   "dangerZone": {
     "title": "Tehlikeli Bölge",
@@ -1210,36 +1138,6 @@
       "description": "Bu, projeyi ve TÜM ilgili verileri kalıcı olarak silecektir: seanslar, ödemeler, yapılacaklar, hizmetler ve etkinlikler."
     }
   },
-  "packages": {
-    "title": "Paketler",
-    "description": "Fotoğrafçılık işletmeniz için hizmet paketleri oluşturun ve yönetin",
-    "package_deleted": "Paket Silindi",
-    "package_deleted_desc": "\"{{name}}\" paketi başarıyla silindi",
-    "error_deleting": "Paket silinirken hata oluştu",
-    "failed_to_load": "Paketler yüklenemedi",
-    "add_package": "Paket Ekle",
-    "no_packages": "Henüz paket yok",
-    "create_first": "Başlamak için ilk paketinizi oluşturun",
-    "package_name": "Paket Adı",
-    "price": "Fiyat",
-    "duration": "Süre",
-    "applicable_types": "Uygulanabilir Türler",
-    "default_addons": "Varsayılan Eklentiler",
-    "visibility": "Görünürlük",
-    "actions": "İşlemler",
-    "all_types": "Tüm Türler",
-    "none": "Yok",
-    "addons_count": "{{count}} eklenti",
-    "default_addons_tooltip": "Bu paket için varsayılan eklentiler:",
-    "unknown_service": "Bilinmeyen Hizmet",
-    "no_services_selected": "Hizmet seçilmedi",
-    "active": "Aktif",
-    "inactive": "Pasif",
-    "view_only": "Sadece Görüntüle",
-    "no_addons": "Eklenti yok",
-    "delete_package": "Paketi Sil",
-    "delete_confirm": "\"{{name}}\" paketini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz."
-  },
   "lead_fields": {
     "title": "Özel Kişi Alanları",
     "description": "Kişileriniz için eklemek istediğiniz alanları özelleştirin. İş akışınıza uyacak şekilde özel alanlar ekleyebilir, düzenleyebilir veya kaldırabilirsiniz.",
@@ -1266,16 +1164,6 @@
       "cancel": "İptal",
       "confirm": "Alanı Sil"
     }
-  },
-  "progress": {
-    "tasks_complete": "görev tamamlandı"
-  },
-  "lead_table_columns": {
-    "name": "Ad",
-    "email": "E-posta",
-    "phone": "Telefon",
-    "status": "Durum",
-    "last_updated": "Son Güncelleme"
   },
   "service": {
     "add_title": "Hizmet Ekle",
@@ -1321,58 +1209,6 @@
       "confirm": "Değişiklikleri İptal Et"
     }
   },
-  "package": {
-    "add_title": "Paket Ekle",
-    "edit_title": "Paketi Düzenle",
-    "update_package": "Paketi Güncelle",
-    "name": "Paket Adı",
-    "name_placeholder": "örn., Düğün Standart",
-    "description": "Açıklama",
-    "description_placeholder": "Paketin kısa açıklaması",
-    "price": "Fiyat (TL)",
-    "price_placeholder": "0",
-    "price_help": "Kişiye gösterilen fiyat. Proje başına değiştirebilirsiniz.",
-    "duration": "Süre",
-    "duration_help": "Müsaitlik planlaması ve takvim rezervasyonu için kullanılır.",
-    "select_duration": "Süre seçin",
-    "custom_duration": "Özel Süre",
-    "custom_duration_placeholder": "örn., 2-3 gün",
-    "applicable_types": "Uygulanabilir Türler",
-    "applicable_types_help_1": "Bu paketin hangi",
-    "applicable_types_help_2": "için geçerli olduğunu seçin (hiçbiri = tüm türler)",
-    "project_types": "Proje Türleri",
-    "no_project_types": "Henüz proje türü mevcut değil.",
-    "create_project_types": "Proje Türleri Oluştur",
-    "default_add_ons": "Varsayılan Ek Hizmetler",
-    "add_ons_help_1": "Bunlar",
-    "add_ons_help_2": "bölümünüzden hizmetlerdir ve proje oluştururken özelleştirilebilir",
-    "services_section": "Hizmetler",
-    "no_services_yet": "Henüz hizmet yok. Ek hizmet olarak kullanmak için hizmet oluşturun.",
-    "create_service": "Hizmet Oluştur",
-    "no_addons_selected": "Ek hizmet seçilmedi",
-    "add_services": "Hizmet Ekle",
-    "selected_addons": "Seçili Ek Hizmetler ({{count}})",
-    "edit_addons": "Düzenle",
-    "is_active": "Aktif",
-    "visibility": "Görünürlük",
-    "visibility_help": "Aktif paketler kişilere görünür",
-    "errors": {
-      "name_required": "Paket adı gereklidir",
-      "update_failed": "Paket güncellenemedi",
-      "delete_failed": "Paket silinemedi"
-    },
-    "success": {
-      "added": "Paket başarıyla eklendi",
-      "updated": "Paket başarıyla güncellendi",
-      "deleted": "Paket başarıyla silindi"
-    },
-    "delete_confirmation": {
-      "title": "Paketi Sil",
-      "description": "Bu paketi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
-      "cancel": "İptal",
-      "confirm": "Sil"
-    }
-  },
   "date_formats": {
     "DD/MM/YYYY": "GG/AA/YYYY (örn., 31/12/2024)",
     "MM/DD/YYYY": "AA/GG/YYYY (örn., 12/31/2024)",
@@ -1391,9 +1227,5 @@
       "button": "Kayıt ol",
       "link": "Zaten hesabın var mı"
     }
-  },
-  "labels": {
-    "email": "E-posta",
-    "password": "Şifre"
   }
 }

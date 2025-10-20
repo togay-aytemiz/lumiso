@@ -506,6 +506,26 @@
     "board_view_summary": "Board view for visual project management",
     "list_view_summary": "List view for detailed analysis",
     "archived_view_summary": "Archived view to review completed work",
+    "filters": {
+      "title": "Filters",
+      "typesHeading": "Project type",
+      "stagesHeading": "Stage",
+      "sessionsHeading": "Sessions",
+      "plannedMinPlaceholder": "Min planned",
+      "plannedMaxPlaceholder": "Max planned",
+      "presence": {
+        "any": "Any",
+        "none": "No sessions",
+        "hasAny": "Has sessions",
+        "hasPlanned": "Has planned",
+        "hasUpcoming": "Has upcoming"
+      },
+      "progressHeading": "Todo progress",
+      "progressMinPlaceholder": "Min %",
+      "progressMaxPlaceholder": "Max %",
+      "servicesHeading": "Services",
+      "applyButton": "Apply"
+    },
     "aria": {
       "viewModeSelection": "View mode selection",
       "openKanbanSettings": "Open kanban settings",

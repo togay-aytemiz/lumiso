@@ -506,6 +506,26 @@
     "board_view_summary": "Görsel proje yönetimi için pano görünümü",
     "list_view_summary": "Detaylı analiz için liste görünümü",
     "archived_view_summary": "Tamamlanan işleri incelemek için arşiv görünümü",
+    "filters": {
+      "title": "Filtreler",
+      "typesHeading": "Proje türü",
+      "stagesHeading": "Aşama",
+      "sessionsHeading": "Seanslar",
+      "plannedMinPlaceholder": "En az planlı",
+      "plannedMaxPlaceholder": "En çok planlı",
+      "presence": {
+        "any": "Farketmez",
+        "none": "Seans yok",
+        "hasAny": "Seansı olan",
+        "hasPlanned": "Planlı seansı var",
+        "hasUpcoming": "Yaklaşan seansı var"
+      },
+      "progressHeading": "Görev ilerlemesi",
+      "progressMinPlaceholder": "En az %",
+      "progressMaxPlaceholder": "En çok %",
+      "servicesHeading": "Hizmetler",
+      "applyButton": "Uygula"
+    },
     "aria": {
       "viewModeSelection": "Görünüm modu seçimi",
       "openKanbanSettings": "Kanban ayarlarını aç",

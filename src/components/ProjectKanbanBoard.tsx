@@ -1,9 +1,7 @@
 import { useState, useEffect } from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18nToast } from "@/lib/toastHelpers";
@@ -15,61 +13,19 @@ import { useNotificationTriggers } from "@/hooks/useNotificationTriggers";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { useKanbanSettings } from "@/hooks/useKanbanSettings";
 import { useTranslation } from 'react-i18next';
-
-interface ProjectStatus {
-  id: string;
-  name: string;
-  color: string;
-  sort_order: number;
-  lifecycle?: string;
-  created_at?: string;
-  updated_at?: string;
-  user_id?: string;
-}
-
-interface Project {
-  id: string;
-  name: string;
-  description: string | null;
-  lead_id: string;
-  user_id: string;
-  created_at: string;
-  updated_at: string;
-  status_id?: string | null;
-  project_type_id?: string | null;
-  sort_order?: number;
-  lead?: {
-    id: string;
-    name: string;
-    status: string;
-    email: string | null;
-    phone: string | null;
-  } | null;
-  project_type?: {
-    id: string;
-    name: string;
-  } | null;
-  session_count?: number;
-  upcoming_session_count?: number;
-  planned_session_count?: number;
-  next_session_date?: string | null;
-  todo_count?: number;
-  completed_todo_count?: number;
-  services?: Array<{ id: string; name: string }>;
-  assignees?: string[];
-}
+import type { ProjectListItem, ProjectStatusSummary } from "@/pages/projects/types";
 
 interface ProjectKanbanBoardProps {
-  projects: Project[];
-  projectStatuses?: ProjectStatus[];
+  projects: ProjectListItem[];
+  projectStatuses?: ProjectStatusSummary[];
   onProjectsChange: () => void;
-  onProjectUpdate?: (project: Project) => void;
-  onQuickView?: (project: Project) => void;
+  onProjectUpdate?: (project: ProjectListItem) => void;
+  onQuickView?: (project: ProjectListItem) => void;
 }
 
 const GAP = 1000;
 
-const orderProjects = (list: Project[]) =>
+const orderProjects = (list: ProjectListItem[]) =>
   [...list].sort((a, b) => {
     const ao = a.sort_order ?? Number.MAX_SAFE_INTEGER;
     const bo = b.sort_order ?? Number.MAX_SAFE_INTEGER;
@@ -80,7 +36,7 @@ const orderProjects = (list: Project[]) =>
   });
 
 function computeSortForInsert(
-  withMoving: Project[],
+  withMoving: ProjectListItem[],
   index: number
 ): { value: number | null; needReindex: boolean } {
   const prev = index > 0 ? withMoving[index - 1] : undefined;
@@ -107,7 +63,7 @@ function computeSortForInsert(
 
 async function reindexColumn(
   statusId: string | null,
-  ordered: Project[]
+  ordered: ProjectListItem[]
 ) {
   await Promise.all(
     ordered.map((p, i) =>
@@ -128,10 +84,10 @@ const ProjectKanbanBoard = ({
 }: ProjectKanbanBoardProps) => {
   const { t } = useTranslation('forms');
   const toast = useI18nToast();
-  const [statuses, setStatuses] = useState<ProjectStatus[]>([]);
+  const [statuses, setStatuses] = useState<ProjectStatusSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedStatusId, setSelectedStatusId] = useState<string | null>(null);
-  const [viewingProject, setViewingProject] = useState<Project | null>(null);
+  const [viewingProject, setViewingProject] = useState<ProjectListItem | null>(null);
   const [showViewDialog, setShowViewDialog] = useState(false);
 
   const { triggerProjectMilestone } = useNotificationTriggers();
@@ -162,7 +118,7 @@ const ProjectKanbanBoard = ({
         .order("sort_order", { ascending: true });
 
       if (error) throw error;
-      setStatuses((data || []).filter(s => s.name?.toLowerCase?.() !== "archived"));
+      setStatuses(((data || []) as ProjectStatusSummary[]).filter(s => s.name?.toLowerCase?.() !== "archived"));
     } catch (error) {
       console.error("Error fetching project statuses:", error);
       toast.error("Failed to load project statuses");
@@ -211,7 +167,7 @@ const ProjectKanbanBoard = ({
         const dstBase = orderProjects(projects.filter(p => p.status_id === dstStatusId && p.id !== moving.id));
         const insertIndex = Math.min(Math.max(destination.index, 0), dstBase.length);
 
-        const dstWithMoving: Project[] = [...dstBase];
+        const dstWithMoving: ProjectListItem[] = [...dstBase];
         dstWithMoving.splice(insertIndex, 0, { ...moving, status_id: dstStatusId });
 
         const { value, needReindex } = computeSortForInsert(dstWithMoving, insertIndex);
@@ -281,7 +237,7 @@ const ProjectKanbanBoard = ({
     triggerButton?.click();
   };
 
-  const handleProjectClick = (project: Project) => {
+  const handleProjectClick = (project: ProjectListItem) => {
     if (onQuickView) onQuickView(project);
     else {
       setViewingProject(project);
@@ -289,7 +245,7 @@ const ProjectKanbanBoard = ({
     }
   };
 
-  const renderProjectCard = (project: Project, index: number) => (
+  const renderProjectCard = (project: ProjectListItem, index: number) => (
     <Draggable key={project.id} draggableId={project.id} index={index}>
       {(provided) => (
         <div
@@ -308,7 +264,7 @@ const ProjectKanbanBoard = ({
     </Draggable>
   );
 
-  const renderColumn = (status: ProjectStatus | null, columnProjects: Project[]) => {
+  const renderColumn = (status: ProjectStatusSummary | null, columnProjects: ProjectListItem[]) => {
     const statusId = status?.id || "no-status";
     const statusName = status?.name || "No Status";
     const statusColor = status?.color || "#6B7280";

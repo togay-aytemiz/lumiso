@@ -1,9 +1,8 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
-import { Plus, LayoutGrid, List, Archive, ArrowUpDown, ArrowUp, ArrowDown, Settings, FileDown, Loader2 } from "lucide-react";
+import { Plus, LayoutGrid, List, Archive, Settings, FileDown, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { writeFileXLSX, utils as XLSXUtils } from "xlsx/xlsx.mjs";
@@ -18,8 +17,6 @@ import { formatDate } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { OnboardingTutorial, TutorialStep } from "@/components/shared/OnboardingTutorial";
 import { useOnboarding } from "@/contexts/OnboardingContext";
-import { Calendar, MessageSquare, CheckSquare } from "lucide-react";
-import { PageLoadingSkeleton } from "@/components/ui/loading-presets";
 import { KanbanSettingsSheet } from "@/components/KanbanSettingsSheet";
 import { useTranslation } from 'react-i18next';
 import { useDashboardTranslation, useFormsTranslation } from '@/hooks/useTypedTranslation';
@@ -36,79 +33,22 @@ import {
 } from "@/pages/projects/hooks/useProjectsFilters";
 import { useProjectsColumnPreferences } from "@/pages/projects/hooks/useProjectsColumnPreferences";
 import { useProjectTypes, useProjectStatuses, useServices } from "@/hooks/useOrganizationData";
-
-interface ProjectStatus {
-  id: string;
-  name: string;
-  color: string;
-  sort_order: number;
-}
-
-interface Project {
-  id: string;
-  name: string;
-  description: string | null;
-  lead_id: string;
-  user_id: string;
-  created_at: string;
-  updated_at: string;
-  status_id?: string | null;
-  project_type_id?: string | null;
-  base_price?: number | null;
-  sort_order?: number;
-  lead: {
-    id: string;
-    name: string;
-    status: string;
-    email: string | null;
-    phone: string | null;
-  } | null;
-  project_status?: {
-    id: string;
-    name: string;
-    color: string;
-  } | null;
-  project_type?: {
-    id: string;
-    name: string;
-  } | null;
-  session_count?: number;
-  upcoming_session_count?: number;
-  planned_session_count?: number;
-  next_session_date?: string | null;
-  todo_count?: number;
-  completed_todo_count?: number;
-  total_payment_amount?: number;
-  paid_amount?: number;
-  remaining_amount?: number;
-  services?: Array<{
-    id: string;
-    name: string;
-  }>;
-  open_todos?: Array<{
-    id: string;
-    content: string;
-  }>;
-  assignees?: string[];
-}
-
-type SortField = 'name' | 'lead_name' | 'project_type' | 'status' | 'created_at' | 'updated_at';
-type SortDirection = 'asc' | 'desc';
+import {
+  useProjectsData,
+  type ProjectSortDirection,
+  type ProjectSortField,
+} from "@/pages/projects/hooks/useProjectsData";
+import type { ProjectListItem, ProjectStatusSummary } from "@/pages/projects/types";
 
 const AllProjects = () => {
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [archivedProjects, setArchivedProjects] = useState<Project[]>([]);
-  const [projectStatuses, setProjectStatuses] = useState<ProjectStatus[]>([]);
-  const [projectStatusesLoading, setProjectStatusesLoading] = useState(true);
-  const [loading, setLoading] = useState(true);
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [boardProjects, setBoardProjects] = useState<ProjectListItem[]>([]);
   const [viewMode, setViewMode] = useState<'board' | 'list' | 'archived'>('board');
-  const [viewingProject, setViewingProject] = useState<Project | null>(null);
+  const [viewingProject, setViewingProject] = useState<ProjectListItem | null>(null);
   const [showViewDialog, setShowViewDialog] = useState(false);
-  const [quickViewProject, setQuickViewProject] = useState<Project | null>(null);
+  const [quickViewProject, setQuickViewProject] = useState<ProjectListItem | null>(null);
   const [showQuickView, setShowQuickView] = useState(false);
-  const [sortField, setSortField] = useState<SortField>('created_at');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  const [sortField, setSortField] = useState<ProjectSortField>('created_at');
+  const [sortDirection, setSortDirection] = useState<ProjectSortDirection>('desc');
   const [sortState, setSortState] = useState<AdvancedDataTableSortState>({ columnId: 'created_at', direction: 'desc' });
   const [listPage, setListPage] = useState(1);
   const [listPageSize, setListPageSize] = useState(25);
@@ -116,15 +56,26 @@ const AllProjects = () => {
   const [archivedPageSize, setArchivedPageSize] = useState(25);
   const [exporting, setExporting] = useState(false);
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const { completeCurrentStep } = useOnboarding();
   const isMobile = useIsMobile();
   const { t } = useTranslation(['pages', 'common']);
   const { t: tForms } = useFormsTranslation();
   const { t: tDashboard } = useDashboardTranslation();
   const { data: typeOptions = [] } = useProjectTypes();
-  const { data: statusOptions = [] } = useProjectStatuses();
+  const { data: statusOptions = [], isLoading: statusesLoading } = useProjectStatuses();
   const { data: serviceOptions = [] } = useServices();
+
+  const projectStatuses = useMemo<ProjectStatusSummary[]>(
+    () =>
+      (statusOptions ?? []).map((status: any) => ({
+        id: status.id,
+        name: status.name,
+        color: status.color,
+        sort_order: status.sort_order,
+      })),
+    [statusOptions]
+  );
 
   // Tutorial state
   const [showTutorial, setShowTutorial] = useState(false);
@@ -146,10 +97,6 @@ const AllProjects = () => {
     }
     setSortDirection('desc');
   }, [viewMode]);
-
-  useEffect(() => {
-    fetchProjects();
-  }, []);
 
   // Handle tutorial launch
   useEffect(() => {
@@ -181,76 +128,19 @@ const AllProjects = () => {
     }
   }, [shouldLockNavigation, currentStepInfo, showTutorial, navigate]);
 
-  const handleSort = (field: SortField) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortDirection('asc');
-    }
-  };
-
   const handleTableSortChange = (next: AdvancedDataTableSortState) => {
     setSortState(next);
-    const field = (next.columnId as SortField) ?? 'created_at';
+    const field = (next.columnId as ProjectSortField) ?? 'created_at';
     setSortField(field);
-    setSortDirection(next.direction as SortDirection);
+    setSortDirection(next.direction as ProjectSortDirection);
   };
-
-  const getSortIcon = (field: SortField) => {
-    if (sortField !== field) return <ArrowUpDown className="h-4 w-4" />;
-    return sortDirection === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />;
-  };
-
-  const sortedProjects = (viewMode === 'archived' ? archivedProjects : projects).sort((a, b) => {
-    let aValue: any;
-    let bValue: any;
-
-    switch (sortField) {
-      case 'name':
-        aValue = a.name;
-        bValue = b.name;
-        break;
-      case 'lead_name':
-        aValue = a.lead?.name || '';
-        bValue = b.lead?.name || '';
-        break;
-      case 'project_type':
-        aValue = a.project_type?.name || '';
-        bValue = b.project_type?.name || '';
-        break;
-      case 'status':
-        aValue = a.project_status?.name || '';
-        bValue = b.project_status?.name || '';
-        break;
-      case 'created_at':
-        aValue = new Date(a.created_at).getTime();
-        bValue = new Date(b.created_at).getTime();
-        break;
-      case 'updated_at':
-        aValue = new Date(a.updated_at).getTime();
-        bValue = new Date(b.updated_at).getTime();
-        break;
-      default:
-        return 0;
-    }
-
-    if (typeof aValue === 'string' && typeof bValue === 'string') {
-      aValue = aValue.toLowerCase();
-      bValue = bValue.toLowerCase();
-    }
-
-    if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
-    if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
-    return 0;
-  });
 
   const stageOptionsForView = useMemo(
     () =>
-      statusOptions
-        .filter((s: any) => (viewMode === 'list' ? (s.name || '').toLowerCase() !== 'archived' : true))
-        .map((s: any) => ({ id: s.id, name: s.name })),
-    [statusOptions, viewMode]
+      projectStatuses
+        .filter((s) => (viewMode === 'list' ? (s.name || '').toLowerCase() !== 'archived' : true))
+        .map((s) => ({ id: s.id, name: s.name })),
+    [projectStatuses, viewMode]
   );
 
   const listFilterOptions = useMemo(
@@ -285,6 +175,26 @@ const AllProjects = () => {
   });
 
   const {
+    listProjects,
+    archivedProjects,
+    listTotalCount,
+    archivedTotalCount,
+    listLoading,
+    archivedLoading,
+    refetch: refetchProjects,
+    fetchProjectsData,
+  } = useProjectsData({
+    listPage,
+    listPageSize,
+    archivedPage,
+    archivedPageSize,
+    sortField,
+    sortDirection,
+    listFilters: listFiltersState,
+    archivedFilters: archivedFiltersState,
+  });
+
+  const {
     listDefaultPreferences,
     archivedDefaultPreferences,
     saveListPreferences,
@@ -301,111 +211,8 @@ const AllProjects = () => {
   useEffect(() => { setListPage(1); }, [listFiltersState]);
   useEffect(() => { setArchivedPage(1); }, [archivedFiltersState]);
 
-  const applyListFilters = useCallback(
-    (rows: Project[]) => {
-      const f: ProjectsListFiltersState = listFiltersState;
-      return rows.filter((p) => {
-        if (f.types.length > 0 && (!p.project_type_id || !f.types.includes(p.project_type_id))) return false;
-        if (f.stages.length > 0 && (!p.status_id || !f.stages.includes(p.status_id))) return false;
-
-        switch (f.sessionPresence) {
-          case 'none':
-            if ((p.session_count || 0) !== 0) return false;
-            break;
-          case 'hasAny':
-            if ((p.session_count || 0) === 0) return false;
-            break;
-          case 'hasPlanned':
-            if ((p.planned_session_count || 0) === 0) return false;
-            break;
-          case 'hasUpcoming':
-            if ((p.upcoming_session_count || 0) === 0) return false;
-            break;
-        }
-
-        if (f.progress !== 'any') {
-          const total = p.todo_count ?? 0;
-          const completed = p.completed_todo_count ?? 0;
-
-          if (f.progress === 'not_started') {
-            // Show only projects with todos present but none completed (0/N where N>0)
-            if (!(total > 0 && completed === 0)) return false;
-          }
-
-          if (f.progress === 'in_progress') {
-            // At least one completed but not all
-            if (!(total > 0 && completed > 0 && completed < total)) return false;
-          }
-
-          if (f.progress === 'completed') {
-            // All todos completed; exclude 0/0 from completed
-            if (!(total > 0 && completed === total)) return false;
-          }
-        }
-
-        if (f.services.length > 0) {
-          const serviceIds = (p.services || []).map((s) => s.id);
-          const hasAny = f.services.some((id) => serviceIds.includes(id));
-          if (!hasAny) return false;
-        }
-
-        return true;
-      });
-    },
-    [listFiltersState]
-  );
-
-  const applyArchivedFilters = useCallback(
-    (rows: Project[]) => {
-      const f: ProjectsArchivedFiltersState = archivedFiltersState;
-      return rows.filter((p) => {
-        if (f.types.length > 0 && (!p.project_type_id || !f.types.includes(p.project_type_id))) return false;
-
-        const remaining = p.remaining_amount ?? 0;
-
-        switch (f.balancePreset) {
-          case 'zero':
-            if (Math.abs(remaining) > 0.01) return false;
-            break;
-          case 'due':
-            if (!(remaining > 0.01)) return false;
-            break;
-          case 'credit':
-            if (!(remaining < -0.01)) return false;
-            break;
-        }
-
-        if (f.balanceMin !== null && remaining < f.balanceMin) return false;
-        if (f.balanceMax !== null && remaining > f.balanceMax) return false;
-
-        return true;
-      });
-    },
-    [archivedFiltersState]
-  );
-
-  // Derived filtered and paginated datasets for list and archived
-  const filteredListRows = useMemo(
-    () => applyListFilters(sortedProjects),
-    [applyListFilters, sortedProjects, listFiltersState]
-  );
-  const filteredArchivedRows = useMemo(
-    () => applyArchivedFilters(sortedProjects),
-    [applyArchivedFilters, sortedProjects, archivedFiltersState]
-  );
-
-  const paginatedListRows = useMemo(() => {
-    const start = (listPage - 1) * listPageSize;
-    return filteredListRows.slice(start, start + listPageSize);
-  }, [filteredListRows, listPage, listPageSize]);
-
-  const paginatedArchivedRows = useMemo(() => {
-    const start = (archivedPage - 1) * archivedPageSize;
-    return filteredArchivedRows.slice(start, start + archivedPageSize);
-  }, [filteredArchivedRows, archivedPage, archivedPageSize]);
-
   // Helpers moved above first usage to avoid TDZ errors
-  const handleQuickView = (project: Project) => {
+  const handleQuickView = (project: ProjectListItem) => {
     setQuickViewProject(project);
     setShowQuickView(true);
   };
@@ -414,7 +221,7 @@ const AllProjects = () => {
     navigate(`/leads/${leadId}`);
   };
 
-  const renderProgressCell = useCallback((row: Project) => {
+  const renderProgressCell = useCallback((row: ProjectListItem) => {
     const total = row.todo_count || 0;
     const completed = row.completed_todo_count || 0;
     const pending = Math.max(0, total - completed);
@@ -520,7 +327,7 @@ const AllProjects = () => {
     }
   }, []);
 
-  const listTableColumns = useMemo<AdvancedTableColumn<Project>[]>(
+  const listTableColumns = useMemo<AdvancedTableColumn<ProjectListItem>[]>(
     () => [
       {
         id: "lead_name",
@@ -528,7 +335,7 @@ const AllProjects = () => {
         sortable: true,
         sortId: "lead_name",
         accessor: (row) => row.lead?.name ?? "",
-        render: (row: Project) =>
+        render: (row: ProjectListItem) =>
           row.lead?.id ? (
             <Button
               variant="link"
@@ -550,7 +357,7 @@ const AllProjects = () => {
         sortable: true,
         sortId: "name",
         accessor: (row) => row.name ?? "",
-        render: (row: Project) => (
+        render: (row: ProjectListItem) => (
           <div>
             <Button
               variant="link"
@@ -575,7 +382,7 @@ const AllProjects = () => {
         sortable: true,
         sortId: "project_type",
         accessor: (row) => row.project_type?.name ?? "",
-        render: (row: Project) =>
+        render: (row: ProjectListItem) =>
           row.project_type ? (
             <span className="text-sm text-foreground">{row.project_type.name}</span>
           ) : (
@@ -588,15 +395,15 @@ const AllProjects = () => {
         sortable: true,
         sortId: "status",
         accessor: (row) => row.project_status?.name ?? "",
-        render: (row: Project) => (
+        render: (row: ProjectListItem) => (
           <ProjectStatusBadge
             projectId={row.id}
             currentStatusId={row.status_id ?? undefined}
             editable={false}
             size="sm"
-            onStatusChange={fetchProjects}
+            onStatusChange={refreshAll}
             statuses={projectStatuses}
-            statusesLoading={projectStatusesLoading}
+            statusesLoading={statusesLoading}
           />
         ),
       },
@@ -605,7 +412,7 @@ const AllProjects = () => {
         label: tForms("projects.table_columns.sessions"),
         accessor: (row) =>
           `${row.session_count || 0} ${tForms("projects.table_columns.sessions_planned")}`,
-        render: (row: Project) => (
+        render: (row: ProjectListItem) => (
           <div className="text-sm">
             {row.session_count || 0} {tForms("projects.table_columns.sessions_planned")}
           </div>
@@ -615,13 +422,13 @@ const AllProjects = () => {
         id: "progress",
         label: tForms("projects.table_columns.progress"),
         accessor: (row) => `${row.completed_todo_count ?? 0}/${row.todo_count ?? 0}`,
-        render: (row: Project) => renderProgressCell(row),
+        render: (row: ProjectListItem) => renderProgressCell(row),
       },
       {
         id: "services",
         label: tForms("projects.table_columns.services"),
         accessor: (row) => formatServicesList(row.services ?? []),
-        render: (row: Project) => renderServicesChips(row.services || []),
+        render: (row: ProjectListItem) => renderServicesChips(row.services || []),
       },
       {
         id: "created_at",
@@ -630,7 +437,7 @@ const AllProjects = () => {
         sortId: "created_at",
         align: "right",
         accessor: (row) => formatDate(row.created_at),
-        render: (row: Project) => formatDate(row.created_at),
+        render: (row: ProjectListItem) => formatDate(row.created_at),
       },
     ],
     [
@@ -638,7 +445,7 @@ const AllProjects = () => {
       handleLeadClick,
       handleQuickView,
       projectStatuses,
-      projectStatusesLoading,
+      statusesLoading,
       renderServicesChips,
       renderProgressCell,
       t,
@@ -646,7 +453,7 @@ const AllProjects = () => {
     ]
   );
 
-  const archivedTableColumns = useMemo<AdvancedTableColumn<Project>[]>(
+  const archivedTableColumns = useMemo<AdvancedTableColumn<ProjectListItem>[]>(
     () => [
       {
         id: "lead_name",
@@ -654,7 +461,7 @@ const AllProjects = () => {
         sortable: true,
         sortId: "lead_name",
         accessor: (row) => row.lead?.name ?? "",
-        render: (row: Project) =>
+        render: (row: ProjectListItem) =>
           row.lead?.id ? (
             <Button
               variant="link"
@@ -676,7 +483,7 @@ const AllProjects = () => {
         sortable: true,
         sortId: "name",
         accessor: (row) => row.name ?? "",
-        render: (row: Project) => (
+        render: (row: ProjectListItem) => (
           <div>
             <Button
               variant="link"
@@ -701,7 +508,7 @@ const AllProjects = () => {
         sortable: true,
         sortId: "project_type",
         accessor: (row) => row.project_type?.name ?? "",
-        render: (row: Project) =>
+        render: (row: ProjectListItem) =>
           row.project_type ? (
             <span className="text-sm text-foreground">{row.project_type.name}</span>
           ) : (
@@ -712,7 +519,7 @@ const AllProjects = () => {
         id: "paid_amount",
         label: tForms("projects.table_columns.paid"),
         accessor: (row) => formatCurrency(row.paid_amount || 0),
-        render: (row: Project) => (
+        render: (row: ProjectListItem) => (
           <span className="font-medium text-green-600">
             {formatCurrency(row.paid_amount || 0)}
           </span>
@@ -722,7 +529,7 @@ const AllProjects = () => {
         id: "remaining_amount",
         label: tForms("projects.table_columns.remaining"),
         accessor: (row) => formatCurrency(row.remaining_amount || 0),
-        render: (row: Project) => (
+        render: (row: ProjectListItem) => (
           <span
             className={
               row.remaining_amount && row.remaining_amount > 0
@@ -741,33 +548,35 @@ const AllProjects = () => {
         sortId: "updated_at",
         align: "right",
         accessor: (row) => (row.updated_at ? formatDate(row.updated_at) : ""),
-        render: (row: Project) => (row.updated_at ? formatDate(row.updated_at) : ""),
+        render: (row: ProjectListItem) => (row.updated_at ? formatDate(row.updated_at) : ""),
       },
     ],
     [formatCurrency, handleLeadClick, handleQuickView, t, tForms]
   );
 
-  // Now that filtered counts are known, compute summary strips
+  const paginatedListRows = listProjects;
+  const paginatedArchivedRows = archivedProjects;
+
   listHeaderSummary = useMemo(() => {
     const text = listActiveCount > 0
-      ? t('leads.tableSummaryFiltered', { visible: filteredListRows.length, total: sortedProjects.length })
+      ? t('leads.tableSummaryFiltered', { visible: listProjects.length, total: listTotalCount })
       : undefined;
     return { text, chips: listSummaryChips };
-  }, [filteredListRows.length, listActiveCount, listSummaryChips, sortedProjects.length, t]);
+  }, [listActiveCount, listProjects.length, listSummaryChips, listTotalCount, t]);
 
   archivedHeaderSummary = useMemo(() => {
     const text = archivedActiveCount > 0
-      ? t('leads.tableSummaryFiltered', { visible: filteredArchivedRows.length, total: sortedProjects.length })
+      ? t('leads.tableSummaryFiltered', { visible: archivedProjects.length, total: archivedTotalCount })
       : undefined;
     return { text, chips: archivedSummaryChips };
-  }, [archivedActiveCount, archivedSummaryChips, filteredArchivedRows.length, sortedProjects.length, t]);
+  }, [archivedActiveCount, archivedProjects.length, archivedSummaryChips, archivedTotalCount, t]);
 
   const handleExportProjects = useCallback(
     async (mode: 'list' | 'archived') => {
       if (exporting) return;
 
-      const source = mode === 'list' ? filteredListRows : filteredArchivedRows;
-      if (source.length === 0) {
+      const total = mode === 'list' ? listTotalCount : archivedTotalCount;
+      if (total === 0) {
         toast({
           title: t('projects.export.noDataTitle'),
           description: t('projects.export.noDataDescription'),
@@ -817,7 +626,16 @@ const AllProjects = () => {
           .sort((a, b) => a.order - b.order)
           .map((entry) => entry.col);
 
-        const rows = source.map((project) => {
+        const scope = mode === 'list' ? 'active' : 'archived';
+        const CHUNK = 500;
+        const collected: ProjectListItem[] = [];
+        for (let from = 0; from < total; from += CHUNK) {
+          const to = Math.min(from + CHUNK - 1, total - 1);
+          const { projects } = await fetchProjectsData(scope, { from, to, includeCount: false });
+          collected.push(...projects);
+        }
+
+        const rows = collected.map((project) => {
           const row: Record<string, string | number> = {};
           visibleOrderedColumns.forEach((column) => {
             const header =
@@ -887,15 +705,17 @@ const AllProjects = () => {
     [
       archivedDefaultPreferences,
       archivedTableColumns,
+      archivedTotalCount,
       exporting,
-      filteredArchivedRows,
-      filteredListRows,
+      fetchProjectsData,
       formatCurrency,
       formatServicesList,
       listDefaultPreferences,
       listTableColumns,
+      listTotalCount,
       t,
       tForms,
+      toast,
     ]
   );
 
@@ -906,7 +726,7 @@ const AllProjects = () => {
         variant="outline"
         size="sm"
         onClick={() => handleExportProjects('list')}
-        disabled={exporting || loading || filteredListRows.length === 0}
+        disabled={exporting || listLoading || listProjects.length === 0}
         className="flex items-center gap-2"
       >
         {exporting ? (
@@ -917,7 +737,7 @@ const AllProjects = () => {
         <span>{t('projects.export.button')}</span>
       </Button>
     ),
-    [exporting, filteredListRows.length, handleExportProjects, loading, t]
+    [exporting, handleExportProjects, listLoading, listProjects.length, t]
   );
 
   const archivedExportActions = useMemo(
@@ -927,7 +747,7 @@ const AllProjects = () => {
         variant="outline"
         size="sm"
         onClick={() => handleExportProjects('archived')}
-        disabled={exporting || loading || filteredArchivedRows.length === 0}
+        disabled={exporting || archivedLoading || archivedProjects.length === 0}
         className="flex items-center gap-2"
       >
         {exporting ? (
@@ -938,243 +758,83 @@ const AllProjects = () => {
         <span>{t('projects.export.button')}</span>
       </Button>
     ),
-    [exporting, filteredArchivedRows.length, handleExportProjects, loading, t]
+    [archivedLoading, archivedProjects.length, exporting, handleExportProjects, t]
   );
 
-  const fetchProjects = async () => {
+  const loadBoardProjects = useCallback(async () => {
     try {
-      setProjectStatusesLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      // Get user's active organization ID
-      const { data: organizationId } = await supabase.rpc('get_user_active_organization_id');
-      if (!organizationId) return;
-
-      const { data: projectsData, error } = await supabase
-        .from('projects')
-        .select('*')
-        .eq('organization_id', organizationId)
-        .order('sort_order', { ascending: true })
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Supabase error:', error);
-        throw error;
+      const INITIAL_CHUNK = 200;
+      const { projects, count } = await fetchProjectsData('active', {
+        from: 0,
+        to: INITIAL_CHUNK - 1,
+        includeCount: true,
+      });
+      const collected = [...projects];
+      for (let from = collected.length; from < count; from += INITIAL_CHUNK) {
+        const to = Math.min(from + INITIAL_CHUNK - 1, count - 1);
+        const { projects: chunk } = await fetchProjectsData('active', {
+          from,
+          to,
+          includeCount: false,
+        });
+        collected.push(...chunk);
       }
-
-      // Fetch all related data separately
-      const projectIds = (projectsData || []).map(p => p.id);
-      const leadIds = (projectsData || []).map(p => p.lead_id).filter(Boolean);
-      
-      const [sessionsData, todosData, servicesData, paymentsData, leadsData, projectStatusesData, projectTypesData] = await Promise.all([
-        // Get session counts
-        projectIds.length > 0 ? supabase
-          .from('sessions')
-          .select('project_id, status')
-          .in('project_id', projectIds) : Promise.resolve({ data: [] }),
-        
-        // Get todo counts  
-        projectIds.length > 0 ? supabase
-          .from('todos')
-          .select('id, project_id, is_completed, content')
-          .in('project_id', projectIds) : Promise.resolve({ data: [] }),
-          
-        // Get services
-        projectIds.length > 0 ? supabase
-          .from('project_services')
-          .select(`
-            project_id,
-            service:services(id, name)
-          `)
-          .in('project_id', projectIds) : Promise.resolve({ data: [] }),
-          
-        // Get payments
-        projectIds.length > 0 ? supabase
-          .from('payments')
-          .select('project_id, amount, status')
-          .in('project_id', projectIds) : Promise.resolve({ data: [] }),
-          
-        // Get leads
-        leadIds.length > 0 ? supabase
-          .from('leads')
-          .select('id, name, status, email, phone')
-          .in('id', leadIds) : Promise.resolve({ data: [] }),
-          
-        // Get project statuses
-        supabase
-          .from('project_statuses')
-          .select('id, name, color, sort_order')
-          .eq('organization_id', organizationId)
-          .order('sort_order', { ascending: true }),
-          
-        // Get project types
-        supabase
-          .from('project_types')
-          .select('id, name')
-          .eq('organization_id', organizationId)
-      ]);
-
-      // Process the data to handle archived projects
-      // Find the archived status ID
-      const archivedStatus = (projectStatusesData.data || []).find(status => status.name.toLowerCase() === 'archived');
-      const archivedStatusId = archivedStatus?.id;
-      
-      const activeProjects = (projectsData || []).filter(project => project.status_id !== archivedStatusId);
-      const archived = (projectsData || []).filter(project => project.status_id === archivedStatusId);
-
-      // Create count maps for efficient lookup
-      const sessionCounts = (sessionsData.data || []).reduce((acc, session) => {
-        if (!acc[session.project_id]) {
-          acc[session.project_id] = { total: 0, upcoming: 0, planned: 0 };
-        }
-        acc[session.project_id].total++;
-        if (session.status === 'upcoming') acc[session.project_id].upcoming++;
-        if (session.status === 'planned') acc[session.project_id].planned++;
-        return acc;
-      }, {});
-
-      const todoCounts = (todosData.data || []).reduce((acc, todo) => {
-        if (!acc[todo.project_id]) {
-          acc[todo.project_id] = { total: 0, completed: 0 };
-        }
-        acc[todo.project_id].total++;
-        if (todo.is_completed) acc[todo.project_id].completed++;
-        return acc;
-      }, {});
-
-      const pendingTodosMap = (todosData.data || []).reduce((acc, todo) => {
-        if (!todo.is_completed) {
-          if (!acc[todo.project_id]) acc[todo.project_id] = [] as Array<{ id: string; content: string }>;
-          acc[todo.project_id].push({ id: todo.id, content: todo.content });
-        }
-        return acc;
-      }, {} as Record<string, Array<{ id: string; content: string }>>);
-
-      const projectServices = (servicesData.data || []).reduce((acc, ps) => {
-        if (!acc[ps.project_id]) acc[ps.project_id] = [];
-        if (ps.service) acc[ps.project_id].push(ps.service);
-        return acc;
-      }, {});
-
-      const paymentTotals = (paymentsData.data || []).reduce((acc, payment) => {
-        if (!acc[payment.project_id]) {
-          acc[payment.project_id] = { paid: 0 };
-        }
-        if (payment.status === 'paid') {
-          acc[payment.project_id].paid += Number(payment.amount || 0);
-        }
-        return acc;
-      }, {});
-
-      // Create lookup maps
-      const leadsMap = (leadsData.data || []).reduce((acc, lead) => {
-        acc[lead.id] = lead;
-        return acc;
-      }, {});
-      
-      const statusesMap = (projectStatusesData.data || []).reduce((acc, status) => {
-        acc[status.id] = status;
-        return acc;
-      }, {});
-      
-      const typesMap = (projectTypesData.data || []).reduce((acc, type) => {
-        acc[type.id] = type;
-        return acc;
-      }, {});
-
-      // Store project statuses for reuse
-      setProjectStatuses(projectStatusesData.data || []);
-
-      setProjects(activeProjects.map(project => ({
-        ...project,
-        lead: leadsMap[project.lead_id] || null,
-        project_status: statusesMap[project.status_id] || null,
-        project_type: typesMap[project.project_type_id] || null,
-        session_count: sessionCounts[project.id]?.total || 0,
-        upcoming_session_count: sessionCounts[project.id]?.upcoming || 0,
-        planned_session_count: sessionCounts[project.id]?.planned || 0,
-        todo_count: todoCounts[project.id]?.total || 0,
-        completed_todo_count: todoCounts[project.id]?.completed || 0,
-        paid_amount: paymentTotals[project.id]?.paid || 0,
-        remaining_amount: (Number(project.base_price || 0)) - (paymentTotals[project.id]?.paid || 0),
-        services: projectServices[project.id] || [],
-        open_todos: pendingTodosMap[project.id] || []
-      })) as Project[]);
-
-      setArchivedProjects(archived.map(project => ({
-        ...project,
-        lead: leadsMap[project.lead_id] || null,
-        project_status: statusesMap[project.status_id] || null,
-        project_type: typesMap[project.project_type_id] || null,
-        session_count: sessionCounts[project.id]?.total || 0,
-        upcoming_session_count: sessionCounts[project.id]?.upcoming || 0,
-        planned_session_count: sessionCounts[project.id]?.planned || 0,
-        todo_count: todoCounts[project.id]?.total || 0,
-        completed_todo_count: todoCounts[project.id]?.completed || 0,
-        paid_amount: paymentTotals[project.id]?.paid || 0,
-        remaining_amount: (Number(project.base_price || 0)) - (paymentTotals[project.id]?.paid || 0),
-        services: projectServices[project.id] || [],
-        open_todos: pendingTodosMap[project.id] || []
-      })) as Project[]);
-
+      setBoardProjects(collected);
     } catch (error) {
-      console.error('Error fetching projects:', error);
+      console.error('Failed to load board projects', error);
       toast({
         title: t('common:labels.error'),
         description: t('pages:projects.failedToLoadProjects'),
-        variant: "destructive",
+        variant: 'destructive',
       });
-    } finally {
-      setProjectStatusesLoading(false);
-      setLoading(false);
-      setIsInitialLoad(false);
     }
-  };
+  }, [fetchProjectsData, t, toast]);
 
-  const handleProjectClick = (project: Project) => {
+  useEffect(() => {
+    if (viewMode === 'board') {
+      loadBoardProjects();
+    }
+  }, [loadBoardProjects, viewMode]);
+
+  const refreshAll = useCallback(async () => {
+    await Promise.all([refetchProjects(), loadBoardProjects()]);
+  }, [loadBoardProjects, refetchProjects]);
+
+  const handleProjectClick = useCallback((project: ProjectListItem) => {
     setQuickViewProject(project);
     setShowQuickView(true);
-  };
+  }, []);
 
-  const handleViewFullDetails = () => {
+  const handleViewFullDetails = useCallback(() => {
     if (quickViewProject) {
       navigate(`/projects/${quickViewProject.id}`);
       setShowQuickView(false);
     }
-  };
+  }, [navigate, quickViewProject]);
 
-  
+  const handleViewChange = useCallback(
+    (view: 'board' | 'list' | 'archived') => {
+      setViewMode(view);
 
-  const handleSearchResult = (result: any) => {
-    if (result.type === 'project') {
-      navigate(`/projects/${result.id}`);
-    } else if (result.type === 'lead') {
-      navigate(`/leads/${result.id}`);
-    }
-  };
+      if (view === 'board') {
+        loadBoardProjects();
+      }
 
+      if (view === 'list') {
+        setHasClickedListView(true);
+      } else if (view === 'archived') {
+        setHasClickedArchivedView(true);
+      }
+    },
+    [loadBoardProjects]
+  );
 
-
-  const handleViewChange = (view: 'board' | 'list' | 'archived') => {
-    setViewMode(view);
-    
-    // Track tutorial interactions
-    if (view === 'list') {
-      setHasClickedListView(true);
-    } else if (view === 'archived') {
-      setHasClickedArchivedView(true);
-    }
-  };
-
-  const handleProjectUpdate = (updatedProject: Project) => {
-    setProjects(prev => prev.map(p => 
-      p.id === updatedProject.id ? updatedProject : p
-    ));
-    
-    // Track project movement for tutorial
+  const handleProjectUpdate = useCallback((updatedProject: ProjectListItem) => {
+    setBoardProjects((prev) =>
+      prev.map((project) => (project.id === updatedProject.id ? { ...project, ...updatedProject } : project))
+    );
     setHasMovedProject(true);
-  };
+  }, []);
 
   // Tutorial steps
   const tutorialSteps = [
@@ -1306,11 +966,7 @@ const AllProjects = () => {
               <div className="flex-1 min-w-0">
                 <GlobalSearch />
               </div>
-              <EnhancedProjectDialog
-                onProjectCreated={() => {
-                  fetchProjects();
-                }}
-              >
+              <EnhancedProjectDialog onProjectCreated={refreshAll}>
                 <Button 
                   size="sm"
                   className="h-10 flex items-center gap-2 whitespace-nowrap flex-shrink-0 px-3 sm:px-4"
@@ -1363,7 +1019,7 @@ const AllProjects = () => {
                 <Archive className="h-4 w-4" />
                 <span className="hidden sm:inline">{tForms('projects.archived')}</span>
                 <span className="text-xs bg-muted text-muted-foreground px-1.5 py-0.5 rounded ml-1">
-                  {archivedProjects.length}
+                  {archivedTotalCount}
                 </span>
               </button>
             </div>
@@ -1383,10 +1039,10 @@ const AllProjects = () => {
       {/* Content area - board manages its own scroll, lists get contained scroll */}
       <div className="flex-1 min-h-0">
         {viewMode === 'board' ? (
-          <ProjectKanbanBoard 
-            projects={projects} 
+          <ProjectKanbanBoard
+            projects={boardProjects}
             projectStatuses={projectStatuses}
-            onProjectsChange={fetchProjects}
+            onProjectsChange={refreshAll}
             onProjectUpdate={handleProjectUpdate}
             onQuickView={handleQuickView}
           />
@@ -1401,6 +1057,7 @@ const AllProjects = () => {
                 onRowClick={handleProjectClick}
                 sortState={sortState}
                 onSortChange={handleTableSortChange}
+                isLoading={listLoading}
                 filters={listFiltersConfig}
                 columnCustomization={{
                   storageKey: 'projects.table.columns',
@@ -1412,7 +1069,7 @@ const AllProjects = () => {
                 pagination={{
                   page: listPage,
                   pageSize: listPageSize,
-                  totalCount: filteredListRows.length,
+                  totalCount: listTotalCount,
                   onPageChange: setListPage,
                   onPageSizeChange: (size) => {
                     setListPageSize(size);
@@ -1432,6 +1089,7 @@ const AllProjects = () => {
                 onRowClick={handleProjectClick}
                 sortState={sortState}
                 onSortChange={handleTableSortChange}
+                isLoading={archivedLoading}
                 columnCustomization={{
                   storageKey: 'projects.archived.table.columns',
                   defaultState: archivedDefaultPreferences,
@@ -1443,7 +1101,7 @@ const AllProjects = () => {
                 pagination={{
                   page: archivedPage,
                   pageSize: archivedPageSize,
-                  totalCount: filteredArchivedRows.length,
+                  totalCount: archivedTotalCount,
                   onPageChange: setArchivedPage,
                   onPageSizeChange: (size) => {
                     setArchivedPageSize(size);
@@ -1462,7 +1120,7 @@ const AllProjects = () => {
         project={quickViewProject}
         open={showQuickView}
         onOpenChange={setShowQuickView}
-        onProjectUpdated={fetchProjects}
+        onProjectUpdated={refreshAll}
         leadName={quickViewProject?.lead?.name || ""}
         mode="sheet"
         onViewFullDetails={handleViewFullDetails}
@@ -1473,7 +1131,7 @@ const AllProjects = () => {
         project={viewingProject}
         open={showViewDialog}
         onOpenChange={setShowViewDialog}
-        onProjectUpdated={fetchProjects}
+        onProjectUpdated={refreshAll}
         onActivityUpdated={() => {}} // Not needed in this context
         leadName={viewingProject?.lead?.name || ""}
       />

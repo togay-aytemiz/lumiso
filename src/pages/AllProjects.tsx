@@ -1,10 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, LayoutGrid, List, Archive, ArrowUpDown, ArrowUp, ArrowDown, Settings } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -29,7 +27,12 @@ import {
   type AdvancedDataTableSortState,
   type AdvancedTableColumn,
 } from "@/components/data-table";
-import { useProjectsFilters } from "@/pages/projects/hooks/useProjectsFilters";
+import {
+  useProjectsListFilters,
+  useProjectsArchivedFilters,
+  type ProjectsListFiltersState,
+  type ProjectsArchivedFiltersState,
+} from "@/pages/projects/hooks/useProjectsFilters";
 import { useProjectTypes, useProjectStatuses, useServices } from "@/hooks/useOrganizationData";
 
 interface ProjectStatus {
@@ -231,56 +234,200 @@ const AllProjects = () => {
     return 0;
   });
 
-  // Build list-view filters using AdvancedDataTable’s panel
-  const { state: listFiltersState, filtersConfig: listFiltersConfig } = useProjectsFilters({
-    typeOptions: typeOptions.map((t: any) => ({ id: t.id, name: t.name })),
-    stageOptions: statusOptions
-      .filter((s: any) => (viewMode === 'list' ? (s.name || '').toLowerCase() !== 'archived' : true))
-      .map((s: any) => ({ id: s.id, name: s.name })),
-    serviceOptions: serviceOptions.map((s: any) => ({ id: s.id, name: s.name })),
+  const stageOptionsForView = useMemo(
+    () =>
+      statusOptions
+        .filter((s: any) => (viewMode === 'list' ? (s.name || '').toLowerCase() !== 'archived' : true))
+        .map((s: any) => ({ id: s.id, name: s.name })),
+    [statusOptions, viewMode]
+  );
+
+  const listFilterOptions = useMemo(
+    () => ({
+      types: typeOptions.map((t: any) => ({ id: t.id, name: t.name })),
+      stages: stageOptionsForView,
+      services: serviceOptions.map((s: any) => ({ id: s.id, name: s.name })),
+    }),
+    [serviceOptions, stageOptionsForView, typeOptions]
+  );
+
+  const {
+    state: listFiltersState,
+    filtersConfig: listFiltersConfig,
+    activeCount: listActiveCount,
+    summaryChips: listSummaryChips,
+    reset: resetListFilters,
+  } = useProjectsListFilters({
+    typeOptions: listFilterOptions.types,
+    stageOptions: listFilterOptions.stages,
+    serviceOptions: listFilterOptions.services,
   });
 
-  const applyListFilters = (rows: Project[]) => {
-    const f = listFiltersState;
-    return rows.filter((p) => {
-      if (f.types.length > 0 && (!p.project_type_id || !f.types.includes(p.project_type_id))) return false;
-      if (f.stages.length > 0 && (!p.status_id || !f.stages.includes(p.status_id))) return false;
+  const {
+    state: archivedFiltersState,
+    filtersConfig: archivedFiltersConfig,
+    activeCount: archivedActiveCount,
+    summaryChips: archivedSummaryChips,
+    reset: resetArchivedFilters,
+  } = useProjectsArchivedFilters({
+    typeOptions: listFilterOptions.types,
+    serviceOptions: listFilterOptions.services,
+  });
 
-      if (f.plannedMin !== null && (p.planned_session_count || 0) < f.plannedMin) return false;
-      if (f.plannedMax !== null && (p.planned_session_count || 0) > f.plannedMax) return false;
+  const listSummaryLabel = listActiveCount
+    ? t('projects.filters.summaryActive', { count: listActiveCount })
+    : t('projects.filters.summaryNone');
 
-      switch (f.sessionPresence) {
-        case 'none':
-          if ((p.session_count || 0) !== 0) return false;
-          break;
-        case 'hasAny':
-          if ((p.session_count || 0) === 0) return false;
-          break;
-        case 'hasPlanned':
-          if ((p.planned_session_count || 0) === 0) return false;
-          break;
-        case 'hasUpcoming':
-          if ((p.upcoming_session_count || 0) === 0) return false;
-          break;
-      }
+  const archivedSummaryLabel = archivedActiveCount
+    ? t('projects.filters.summaryActive', { count: archivedActiveCount })
+    : t('projects.filters.summaryNone');
 
-      if (f.progressMin !== null || f.progressMax !== null) {
-        const total = p.todo_count || 0;
-        const completed = p.completed_todo_count || 0;
-        const progress = total === 0 ? 0 : (completed / total) * 100;
-        if (f.progressMin !== null && progress < f.progressMin) return false;
-        if (f.progressMax !== null && progress > f.progressMax) return false;
-      }
+  const listFiltersToolbar = useMemo(() => {
+    if (viewMode !== 'list') return null;
 
-      if (f.services.length > 0) {
-        const serviceIds = (p.services || []).map((s) => s.id);
-        const hasAny = f.services.some((id) => serviceIds.includes(id));
-        if (!hasAny) return false;
-      }
+    return (
+      <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm">
+        <span className="text-muted-foreground">{listSummaryLabel}</span>
+        {listActiveCount > 0 && (
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            className="h-8 px-2 text-xs text-muted-foreground hover:text-primary"
+            onClick={resetListFilters}
+          >
+            {t('projects.resetFilters')}
+          </Button>
+        )}
+        {listSummaryChips.map((chip) => (
+          <Badge
+            key={chip.id}
+            variant="secondary"
+            className="bg-secondary/50 px-2.5 py-1 text-xs font-medium tracking-wide text-foreground"
+          >
+            {chip.label}
+          </Badge>
+        ))}
+      </div>
+    );
+  }, [listActiveCount, listSummaryChips, listSummaryLabel, resetListFilters, t, viewMode]);
 
-      return true;
-    });
-  };
+  const archivedFiltersToolbar = useMemo(() => {
+    if (viewMode !== 'archived') return null;
+
+    return (
+      <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm">
+        <span className="text-muted-foreground">{archivedSummaryLabel}</span>
+        {archivedActiveCount > 0 && (
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            className="h-8 px-2 text-xs text-muted-foreground hover:text-primary"
+            onClick={resetArchivedFilters}
+          >
+            {t('projects.resetFilters')}
+          </Button>
+        )}
+        {archivedSummaryChips.map((chip) => (
+          <Badge
+            key={chip.id}
+            variant="secondary"
+            className="bg-secondary/50 px-2.5 py-1 text-xs font-medium tracking-wide text-foreground"
+          >
+            {chip.label}
+          </Badge>
+        ))}
+      </div>
+    );
+  }, [archivedActiveCount, archivedSummaryChips, archivedSummaryLabel, resetArchivedFilters, t, viewMode]);
+
+  const applyListFilters = useCallback(
+    (rows: Project[]) => {
+      const f: ProjectsListFiltersState = listFiltersState;
+      return rows.filter((p) => {
+        if (f.types.length > 0 && (!p.project_type_id || !f.types.includes(p.project_type_id))) return false;
+        if (f.stages.length > 0 && (!p.status_id || !f.stages.includes(p.status_id))) return false;
+
+        switch (f.sessionPresence) {
+          case 'none':
+            if ((p.session_count || 0) !== 0) return false;
+            break;
+          case 'hasAny':
+            if ((p.session_count || 0) === 0) return false;
+            break;
+          case 'hasPlanned':
+            if ((p.planned_session_count || 0) === 0) return false;
+            break;
+          case 'hasUpcoming':
+            if ((p.upcoming_session_count || 0) === 0) return false;
+            break;
+        }
+
+        if (f.progress !== 'any') {
+          const total = p.todo_count || 0;
+          const completed = p.completed_todo_count || 0;
+          const progress = total === 0 ? 0 : (completed / total) * 100;
+
+          if (f.progress === 'not_started' && progress !== 0) {
+            return false;
+          }
+
+          if (f.progress === 'in_progress' && (progress === 0 || progress === 100)) {
+            return false;
+          }
+
+          if (f.progress === 'completed' && progress !== 100) {
+            return false;
+          }
+        }
+
+        if (f.services.length > 0) {
+          const serviceIds = (p.services || []).map((s) => s.id);
+          const hasAny = f.services.some((id) => serviceIds.includes(id));
+          if (!hasAny) return false;
+        }
+
+        return true;
+      });
+    },
+    [listFiltersState]
+  );
+
+  const applyArchivedFilters = useCallback(
+    (rows: Project[]) => {
+      const f: ProjectsArchivedFiltersState = archivedFiltersState;
+      return rows.filter((p) => {
+        if (f.types.length > 0 && (!p.project_type_id || !f.types.includes(p.project_type_id))) return false;
+
+        if (f.services.length > 0) {
+          const serviceIds = (p.services || []).map((s) => s.id);
+          const hasAny = f.services.some((id) => serviceIds.includes(id));
+          if (!hasAny) return false;
+        }
+
+        const remaining = p.remaining_amount ?? 0;
+
+        switch (f.balancePreset) {
+          case 'zero':
+            if (Math.abs(remaining) > 0.01) return false;
+            break;
+          case 'due':
+            if (!(remaining > 0.01)) return false;
+            break;
+          case 'credit':
+            if (!(remaining < -0.01)) return false;
+            break;
+        }
+
+        if (f.balanceMin !== null && remaining < f.balanceMin) return false;
+        if (f.balanceMax !== null && remaining > f.balanceMax) return false;
+
+        return true;
+      });
+    },
+    [archivedFiltersState]
+  );
 
   const fetchProjects = async () => {
     try {
@@ -464,8 +611,8 @@ const AllProjects = () => {
   };
 
   const handleProjectClick = (project: Project) => {
-    // Navigate to full project page instead of showing dialog
-    navigate(`/projects/${project.id}`);
+    setQuickViewProject(project);
+    setShowQuickView(true);
   };
 
   const handleQuickView = (project: Project) => {
@@ -779,7 +926,7 @@ const AllProjects = () => {
           <div className="h-full overflow-y-auto p-4 sm:p-6">
             {viewMode === 'list' && (
               <AdvancedDataTable
-                title={tForms('projects.list_view')}
+                title={t('projects.list_view')}
                 data={applyListFilters(sortedProjects)}
                 columns={[
                   {
@@ -788,7 +935,20 @@ const AllProjects = () => {
                     sortable: true,
                     sortId: 'lead_name',
                     render: (row: Project) => (
-                      <span className="font-medium text-foreground">{row.lead?.name || t('projects.no_lead')}</span>
+                      row.lead?.id ? (
+                        <Button
+                          variant="link"
+                          className="p-0 h-auto font-medium text-primary underline underline-offset-4 decoration-dashed"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            handleLeadClick(row.lead!.id);
+                          }}
+                        >
+                          {row.lead?.name}
+                        </Button>
+                      ) : (
+                        <span className="text-muted-foreground">{t('projects.no_lead')}</span>
+                      )
                     ),
                   },
                   {
@@ -798,8 +958,20 @@ const AllProjects = () => {
                     sortId: 'name',
                     render: (row: Project) => (
                       <div>
-                        <div className="font-medium text-foreground">{row.name}</div>
-                        <div className="text-xs text-muted-foreground">{row.description || '-'}</div>
+                        <Button
+                          variant="link"
+                          className="p-0 h-auto font-medium text-primary"
+                          onClick={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            handleQuickView(row);
+                          }}
+                        >
+                          {row.name}
+                        </Button>
+                        {row.description ? (
+                          <div className="text-xs text-muted-foreground">{row.description}</div>
+                        ) : null}
                       </div>
                     ),
                   },
@@ -810,7 +982,7 @@ const AllProjects = () => {
                     sortId: 'project_type',
                     render: (row: Project) =>
                       row.project_type ? (
-                        <Badge variant="outline" className="text-xs">{row.project_type.name}</Badge>
+                        <span className="text-sm text-foreground">{row.project_type.name}</span>
                       ) : (
                         <span className="text-muted-foreground">-</span>
                       ),
@@ -824,7 +996,7 @@ const AllProjects = () => {
                       <ProjectStatusBadge
                         projectId={row.id}
                         currentStatusId={row.status_id ?? undefined}
-                        editable={true}
+                        editable={false}
                         size="sm"
                         onStatusChange={fetchProjects}
                         statuses={projectStatuses}
@@ -864,13 +1036,14 @@ const AllProjects = () => {
                 onSortChange={handleTableSortChange}
                 filters={listFiltersConfig}
                 columnCustomization={{ storageKey: 'projects.table.columns' }}
+                toolbar={listFiltersToolbar}
               />
             )}
 
             {viewMode === 'archived' && (
               <AdvancedDataTable
-                title={tForms('projects.archived_view')}
-                data={sortedProjects}
+                title={t('projects.archived_view')}
+                data={applyArchivedFilters(sortedProjects)}
                 columns={[
                   {
                     id: 'lead_name',
@@ -878,7 +1051,20 @@ const AllProjects = () => {
                     sortable: true,
                     sortId: 'lead_name',
                     render: (row: Project) => (
-                      <span className="font-medium text-foreground">{row.lead?.name || t('projects.no_lead')}</span>
+                      row.lead?.id ? (
+                        <Button
+                          variant="link"
+                          className="p-0 h-auto font-medium text-primary underline underline-offset-4 decoration-dashed"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            handleLeadClick(row.lead!.id);
+                          }}
+                        >
+                          {row.lead?.name}
+                        </Button>
+                      ) : (
+                        <span className="text-muted-foreground">{t('projects.no_lead')}</span>
+                      )
                     ),
                   },
                   {
@@ -888,8 +1074,20 @@ const AllProjects = () => {
                     sortId: 'name',
                     render: (row: Project) => (
                       <div>
-                        <div className="font-medium text-foreground">{row.name}</div>
-                        <div className="text-xs text-muted-foreground">{row.description || '-'}</div>
+                        <Button
+                          variant="link"
+                          className="p-0 h-auto font-medium text-primary"
+                          onClick={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            handleQuickView(row);
+                          }}
+                        >
+                          {row.name}
+                        </Button>
+                        {row.description ? (
+                          <div className="text-xs text-muted-foreground">{row.description}</div>
+                        ) : null}
                       </div>
                     ),
                   },
@@ -900,7 +1098,7 @@ const AllProjects = () => {
                     sortId: 'project_type',
                     render: (row: Project) =>
                       row.project_type ? (
-                        <Badge variant="outline" className="text-xs">{row.project_type.name}</Badge>
+                        <span className="text-sm text-foreground">{row.project_type.name}</span>
                       ) : (
                         <span className="text-muted-foreground">-</span>
                       ),
@@ -933,6 +1131,8 @@ const AllProjects = () => {
                 sortState={sortState}
                 onSortChange={handleTableSortChange}
                 columnCustomization={{ storageKey: 'projects.archived.table.columns' }}
+                filters={archivedFiltersConfig}
+                toolbar={archivedFiltersToolbar}
               />
             )}
           </div>

@@ -511,8 +511,6 @@
       "typesHeading": "Proje türü",
       "stagesHeading": "Aşama",
       "sessionsHeading": "Seanslar",
-      "plannedMinPlaceholder": "En az planlı",
-      "plannedMaxPlaceholder": "En çok planlı",
       "presence": {
         "any": "Farketmez",
         "none": "Seans yok",
@@ -521,11 +519,47 @@
         "hasUpcoming": "Yaklaşan seansı var"
       },
       "progressHeading": "Görev ilerlemesi",
-      "progressMinPlaceholder": "En az %",
-      "progressMaxPlaceholder": "En çok %",
+      "progressOptions": {
+        "any": "Herhangi bir ilerleme",
+        "not_started": "Başlanmadı",
+        "in_progress": "Devam ediyor",
+        "completed": "Tamamlandı"
+      },
       "servicesHeading": "Hizmetler",
-      "applyButton": "Uygula"
+      "noOptions": "Henüz seçenek tanımlı değil",
+      "balanceHeading": "Bakiye",
+      "balancePresets": {
+        "any": "Herhangi bir bakiye",
+        "zero": "Bakiye sıfır",
+        "due": "Bakiyesi olan",
+        "credit": "Fazla ödenmiş"
+      },
+      "balanceMinPlaceholder": "En az bakiye",
+      "balanceMaxPlaceholder": "En çok bakiye",
+      "chips": {
+        "types": "Proje türü: {{value}}",
+        "stages": "Aşama: {{value}}",
+        "sessionPresence": {
+          "none": "Seans yok",
+          "hasAny": "Seansı olan",
+          "hasPlanned": "Planlı seansı var",
+          "hasUpcoming": "Yaklaşan seansı var"
+        },
+        "progress": {
+          "not_started": "Başlanmadı",
+          "in_progress": "Devam ediyor",
+          "completed": "Tamamlandı"
+        },
+        "services": "Hizmetler: {{value}}",
+        "balanceRange": "{{min}} ile {{max}} arası bakiye"
+      },
+      "balanceRangeMin": "min",
+      "balanceRangeMax": "maks",
+      "summaryActive": "{{count}} aktif filtre",
+      "summaryActive_plural": "{{count}} aktif filtre",
+      "summaryNone": "Filtre uygulanmadı"
     },
+    "resetFilters": "Filtreleri sıfırla",
     "aria": {
       "viewModeSelection": "Görünüm modu seçimi",
       "openKanbanSettings": "Kanban ayarlarını aç",

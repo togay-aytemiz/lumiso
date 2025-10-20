@@ -1,10 +1,9 @@
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import type { AdvancedDataTableFiltersConfig } from "@/components/data-table";
-import { useDraftFilters } from "@/components/data-table";
 
 export type SessionPresenceFilter =
   | "any"
@@ -13,260 +12,625 @@ export type SessionPresenceFilter =
   | "hasPlanned"
   | "hasUpcoming";
 
-export type ProjectsFiltersState = {
+export type ProgressFilter = "any" | "not_started" | "in_progress" | "completed";
+
+export type BalancePreset = "any" | "zero" | "due" | "credit";
+
+type Option = { id: string; name: string };
+
+export type ProjectsListFiltersState = {
   types: string[];
   stages: string[];
-  plannedMin: number | null;
-  plannedMax: number | null;
   sessionPresence: SessionPresenceFilter;
-  progressMin: number | null;
-  progressMax: number | null;
+  progress: ProgressFilter;
   services: string[];
 };
 
-interface UseProjectsFiltersOptions {
-  typeOptions: { id: string; name: string }[];
-  stageOptions: { id: string; name: string }[];
-  serviceOptions: { id: string; name: string }[];
-  initialState?: ProjectsFiltersState;
-  onStateChange?: (next: ProjectsFiltersState, meta: { reason: "apply" | "reset" }) => void;
+export type ProjectsArchivedFiltersState = {
+  types: string[];
+  services: string[];
+  balancePreset: BalancePreset;
+  balanceMin: number | null;
+  balanceMax: number | null;
+};
+
+export type FilterSummaryChip = {
+  id: string;
+  label: string;
+};
+
+interface UseProjectsListFiltersOptions {
+  typeOptions: Option[];
+  stageOptions: Option[];
+  serviceOptions: Option[];
+  initialState?: ProjectsListFiltersState;
+  onStateChange?: (next: ProjectsListFiltersState) => void;
 }
 
-interface UseProjectsFiltersResult {
-  state: ProjectsFiltersState;
+interface UseProjectsArchivedFiltersOptions {
+  typeOptions: Option[];
+  serviceOptions: Option[];
+  initialState?: ProjectsArchivedFiltersState;
+  onStateChange?: (next: ProjectsArchivedFiltersState) => void;
+}
+
+interface UseProjectsListFiltersResult {
+  state: ProjectsListFiltersState;
   filtersConfig: AdvancedDataTableFiltersConfig;
   activeCount: number;
+  summaryChips: FilterSummaryChip[];
+  reset: () => void;
 }
 
-const defaultState: ProjectsFiltersState = {
+interface UseProjectsArchivedFiltersResult {
+  state: ProjectsArchivedFiltersState;
+  filtersConfig: AdvancedDataTableFiltersConfig;
+  activeCount: number;
+  summaryChips: FilterSummaryChip[];
+  reset: () => void;
+}
+
+const defaultListState: ProjectsListFiltersState = {
   types: [],
   stages: [],
-  plannedMin: null,
-  plannedMax: null,
   sessionPresence: "any",
-  progressMin: null,
-  progressMax: null,
+  progress: "any",
   services: [],
 };
 
-const arraysMatch = (a: string[], b: string[]) => {
-  if (a.length !== b.length) return false;
-  const aSet = new Set(a);
-  return b.every((v) => aSet.has(v));
+const defaultArchivedState: ProjectsArchivedFiltersState = {
+  types: [],
+  services: [],
+  balancePreset: "any",
+  balanceMin: null,
+  balanceMax: null,
 };
 
-export function useProjectsFilters({
+const toggleInArray = (values: string[], value: string, checked: boolean) => {
+  if (checked) {
+    if (values.includes(value)) {
+      return values;
+    }
+    return [...values, value];
+  }
+  return values.filter((item) => item !== value);
+};
+
+const sanitizeSelections = (selections: string[], options: Option[]) => {
+  if (selections.length === 0) return selections;
+  const allowed = new Set(options.map((option) => option.id));
+  return selections.filter((selection) => allowed.has(selection));
+};
+
+export function useProjectsListFilters({
   typeOptions,
   stageOptions,
   serviceOptions,
-  initialState = defaultState,
+  initialState = defaultListState,
   onStateChange,
-}: UseProjectsFiltersOptions): UseProjectsFiltersResult {
+}: UseProjectsListFiltersOptions): UseProjectsListFiltersResult {
   const { t } = useTranslation("pages");
 
-  const applied = useDraftFilters<ProjectsFiltersState>({
-    initialState,
-    isEqual: (a, b) =>
-      arraysMatch(a.types, b.types) &&
-      arraysMatch(a.stages, b.stages) &&
-      a.plannedMin === b.plannedMin &&
-      a.plannedMax === b.plannedMax &&
-      a.sessionPresence === b.sessionPresence &&
-      a.progressMin === b.progressMin &&
-      a.progressMax === b.progressMax &&
-      arraysMatch(a.services, b.services),
-    onApply: (next) => onStateChange?.(next, { reason: "apply" }),
-    onReset: (next) => onStateChange?.(next, { reason: "reset" }),
-  });
+  const [state, setState] = useState<ProjectsListFiltersState>(initialState);
 
-  const { state, draft, updateDraft, apply, reset, dirty } = applied;
+  useEffect(() => {
+    setState((prev) => ({
+      ...prev,
+      types: sanitizeSelections(prev.types, typeOptions),
+      stages: sanitizeSelections(prev.stages, stageOptions),
+      services: sanitizeSelections(prev.services, serviceOptions),
+    }));
+  }, [serviceOptions, stageOptions, typeOptions]);
 
-  const handleToggleArray = useCallback(
-    (key: keyof ProjectsFiltersState, values: string[]) => {
-      updateDraft((prev) => ({ ...prev, [key]: values }));
+  useEffect(() => {
+    onStateChange?.(state);
+  }, [onStateChange, state]);
+
+  const setStateAndNotify = useCallback((updater: (prev: ProjectsListFiltersState) => ProjectsListFiltersState) => {
+    setState((prev) => {
+      const next = updater(prev);
+      return next;
+    });
+  }, []);
+
+  const reset = useCallback(() => {
+    setState(defaultListState);
+  }, []);
+
+  const handleTypeToggle = useCallback(
+    (value: string, checked: boolean) => {
+      setStateAndNotify((prev) => ({
+        ...prev,
+        types: toggleInArray(prev.types, value, checked),
+      }));
     },
-    [updateDraft]
+    [setStateAndNotify]
+  );
+
+  const handleStageToggle = useCallback(
+    (value: string, checked: boolean) => {
+      setStateAndNotify((prev) => ({
+        ...prev,
+        stages: toggleInArray(prev.stages, value, checked),
+      }));
+    },
+    [setStateAndNotify]
+  );
+
+  const handleServicesToggle = useCallback(
+    (value: string, checked: boolean) => {
+      setStateAndNotify((prev) => ({
+        ...prev,
+        services: toggleInArray(prev.services, value, checked),
+      }));
+    },
+    [setStateAndNotify]
+  );
+
+  const handleSessionPresenceChange = useCallback(
+    (value: SessionPresenceFilter) => {
+      setStateAndNotify((prev) => ({ ...prev, sessionPresence: value }));
+    },
+    [setStateAndNotify]
+  );
+
+  const handleProgressChange = useCallback(
+    (value: ProgressFilter) => {
+      setStateAndNotify((prev) => ({ ...prev, progress: value }));
+    },
+    [setStateAndNotify]
   );
 
   const activeCount = useMemo(() => {
-    const s = state;
-    return [
-      s.types.length > 0,
-      s.stages.length > 0,
-      s.plannedMin !== null,
-      s.plannedMax !== null,
-      s.sessionPresence !== "any",
-      s.progressMin !== null,
-      s.progressMax !== null,
-      s.services.length > 0,
-    ].filter(Boolean).length;
+    const counters = [
+      state.types.length > 0,
+      state.stages.length > 0,
+      state.sessionPresence !== "any",
+      state.progress !== "any",
+      state.services.length > 0,
+    ];
+    return counters.filter(Boolean).length;
   }, [state]);
 
-  const toggleItemClasses =
-    "rounded-full border border-border/60 bg-background px-3 py-1 text-sm font-medium transition-colors hover:border-border hover:bg-muted/20 data-[state=on]:bg-primary/10 data-[state=on]:text-primary data-[state=on]:border-primary/40";
+  const summaryChips = useMemo<FilterSummaryChip[]>(() => {
+    const chips: FilterSummaryChip[] = [];
+
+    if (state.types.length > 0) {
+      const names = typeOptions
+        .filter((option) => state.types.includes(option.id))
+        .map((option) => option.name)
+        .join(", ");
+      chips.push({
+        id: "types",
+        label: t("projects.filters.chips.types", { value: names }),
+      });
+    }
+
+    if (state.stages.length > 0) {
+      const names = stageOptions
+        .filter((option) => state.stages.includes(option.id))
+        .map((option) => option.name)
+        .join(", ");
+      chips.push({
+        id: "stages",
+        label: t("projects.filters.chips.stages", { value: names }),
+      });
+    }
+
+    if (state.sessionPresence !== "any") {
+      chips.push({
+        id: "sessionPresence",
+        label: t(`projects.filters.chips.sessionPresence.${state.sessionPresence}`),
+      });
+    }
+
+    if (state.progress !== "any") {
+      chips.push({
+        id: "progress",
+        label: t(`projects.filters.chips.progress.${state.progress}`),
+      });
+    }
+
+    if (state.services.length > 0) {
+      const names = serviceOptions
+        .filter((option) => state.services.includes(option.id))
+        .map((option) => option.name)
+        .join(", ");
+      chips.push({
+        id: "services",
+        label: t("projects.filters.chips.services", { value: names }),
+      });
+    }
+
+    return chips;
+  }, [serviceOptions, stageOptions, state, t, typeOptions]);
 
   const filtersContent = useMemo(() => {
+    const toggleItemClasses =
+      "rounded-full border border-border/60 bg-background px-3 py-1 text-sm font-medium transition-colors hover:border-border hover:bg-muted/20 data-[state=on]:bg-primary/10 data-[state=on]:text-primary data-[state=on]:border-primary/40";
+
     return (
       <div className="space-y-6">
-        {/* Types */}
         <div className="space-y-2">
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             {t("projects.filters.typesHeading")}
           </p>
-          <ToggleGroup
-            type="multiple"
-            value={draft.types}
-            onValueChange={(v) => handleToggleArray("types", v as string[])}
-            className="flex flex-wrap justify-start gap-2"
-            size="sm"
-          >
-            {typeOptions.map((opt) => (
-              <ToggleGroupItem key={opt.id} value={opt.id} className={toggleItemClasses}>
-                {opt.name}
-              </ToggleGroupItem>
-            ))}
-          </ToggleGroup>
+          {typeOptions.length > 0 ? (
+            <div className="space-y-2 rounded-md border border-border/40 p-3">
+              {typeOptions.map((option) => (
+                <label key={option.id} className="flex items-center gap-2 text-sm">
+                  <Checkbox
+                    checked={state.types.includes(option.id)}
+                    onCheckedChange={(checked) =>
+                      handleTypeToggle(option.id, Boolean(checked))
+                    }
+                  />
+                  <span>{option.name}</span>
+                </label>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs italic text-muted-foreground">
+              {t("projects.filters.noOptions")}
+            </p>
+          )}
         </div>
 
-        {/* Stages */}
         <div className="space-y-2">
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             {t("projects.filters.stagesHeading")}
           </p>
-          <ToggleGroup
-            type="multiple"
-            value={draft.stages}
-            onValueChange={(v) => handleToggleArray("stages", v as string[])}
-            className="flex flex-wrap justify-start gap-2"
-            size="sm"
-          >
-            {stageOptions.map((opt) => (
-              <ToggleGroupItem key={opt.id} value={opt.id} className={toggleItemClasses}>
-                {opt.name}
-              </ToggleGroupItem>
-            ))}
-          </ToggleGroup>
+          {stageOptions.length > 0 ? (
+            <div className="space-y-2 rounded-md border border-border/40 p-3">
+              {stageOptions.map((option) => (
+                <label key={option.id} className="flex items-center gap-2 text-sm">
+                  <Checkbox
+                    checked={state.stages.includes(option.id)}
+                    onCheckedChange={(checked) =>
+                      handleStageToggle(option.id, Boolean(checked))
+                    }
+                  />
+                  <span>{option.name}</span>
+                </label>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs italic text-muted-foreground">
+              {t("projects.filters.noOptions")}
+            </p>
+          )}
         </div>
 
-        {/* Sessions */}
-        <div className="space-y-2">
+        <div className="space-y-3">
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             {t("projects.filters.sessionsHeading")}
           </p>
-          <div className="grid gap-2 sm:grid-cols-2">
-            <Input
-              type="number"
-              min={0}
-              value={draft.plannedMin ?? ""}
-              onChange={(e) => updateDraft({ plannedMin: e.target.value === "" ? null : Number(e.target.value) })}
-              placeholder={t("projects.filters.plannedMinPlaceholder")}
-            />
-            <Input
-              type="number"
-              min={0}
-              value={draft.plannedMax ?? ""}
-              onChange={(e) => updateDraft({ plannedMax: e.target.value === "" ? null : Number(e.target.value) })}
-              placeholder={t("projects.filters.plannedMaxPlaceholder")}
-            />
-          </div>
           <ToggleGroup
             type="single"
-            value={draft.sessionPresence}
-            onValueChange={(v) => updateDraft({ sessionPresence: (v as SessionPresenceFilter) || "any" })}
-            className="flex flex-wrap justify-start gap-2"
+            value={state.sessionPresence}
+            onValueChange={(value) =>
+              handleSessionPresenceChange((value as SessionPresenceFilter) || "any")
+            }
+            className="flex flex-wrap gap-2"
             size="sm"
           >
-            {(["any", "none", "hasAny", "hasPlanned", "hasUpcoming"] as SessionPresenceFilter[]).map((key) => (
-              <ToggleGroupItem key={key} value={key} className={toggleItemClasses}>
-                {t(`projects.filters.presence.${key}`)}
+            {(["any", "none", "hasAny", "hasPlanned", "hasUpcoming"] as SessionPresenceFilter[]).map((value) => (
+              <ToggleGroupItem key={value} value={value} className={toggleItemClasses}>
+                {t(`projects.filters.presence.${value}`)}
               </ToggleGroupItem>
             ))}
           </ToggleGroup>
         </div>
 
-        {/* Progress */}
-        <div className="space-y-2">
+        <div className="space-y-3">
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             {t("projects.filters.progressHeading")}
           </p>
-          <div className="grid gap-2 sm:grid-cols-2">
-            <Input
-              type="number"
-              min={0}
-              max={100}
-              value={draft.progressMin ?? ""}
-              onChange={(e) => updateDraft({ progressMin: e.target.value === "" ? null : Number(e.target.value) })}
-              placeholder={t("projects.filters.progressMinPlaceholder")}
-            />
-            <Input
-              type="number"
-              min={0}
-              max={100}
-              value={draft.progressMax ?? ""}
-              onChange={(e) => updateDraft({ progressMax: e.target.value === "" ? null : Number(e.target.value) })}
-              placeholder={t("projects.filters.progressMaxPlaceholder")}
-            />
-          </div>
+          <ToggleGroup
+            type="single"
+            value={state.progress}
+            onValueChange={(value) =>
+              handleProgressChange((value as ProgressFilter) || "any")
+            }
+            className="flex flex-wrap gap-2"
+            size="sm"
+          >
+            {(["any", "not_started", "in_progress", "completed"] as ProgressFilter[]).map((value) => (
+              <ToggleGroupItem key={value} value={value} className={toggleItemClasses}>
+                {t(`projects.filters.progressOptions.${value}`)}
+              </ToggleGroupItem>
+            ))}
+          </ToggleGroup>
         </div>
 
-        {/* Services */}
         <div className="space-y-2">
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             {t("projects.filters.servicesHeading")}
           </p>
-          <ToggleGroup
-            type="multiple"
-            value={draft.services}
-            onValueChange={(v) => handleToggleArray("services", v as string[])}
-            className="flex flex-wrap justify-start gap-2"
-            size="sm"
-          >
-            {serviceOptions.map((opt) => (
-              <ToggleGroupItem key={opt.id} value={opt.id} className={toggleItemClasses}>
-                {opt.name}
-              </ToggleGroupItem>
-            ))}
-          </ToggleGroup>
+          {serviceOptions.length > 0 ? (
+            <div className="space-y-2 rounded-md border border-border/40 p-3">
+              {serviceOptions.map((option) => (
+                <label key={option.id} className="flex items-center gap-2 text-sm">
+                  <Checkbox
+                    checked={state.services.includes(option.id)}
+                    onCheckedChange={(checked) =>
+                      handleServicesToggle(option.id, Boolean(checked))
+                    }
+                  />
+                  <span>{option.name}</span>
+                </label>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs italic text-muted-foreground">
+              {t("projects.filters.noOptions")}
+            </p>
+          )}
         </div>
       </div>
     );
   }, [
-    draft.types,
-    draft.stages,
-    draft.plannedMin,
-    draft.plannedMax,
-    draft.sessionPresence,
-    draft.progressMin,
-    draft.progressMax,
-    draft.services,
-    handleToggleArray,
+    handleProgressChange,
+    handleServicesToggle,
+    handleSessionPresenceChange,
+    handleStageToggle,
+    handleTypeToggle,
     serviceOptions,
     stageOptions,
+    state.progress,
+    state.services,
+    state.sessionPresence,
+    state.stages,
+    state.types,
     t,
-    toggleItemClasses,
     typeOptions,
-    updateDraft,
   ]);
 
-  const filtersConfig: AdvancedDataTableFiltersConfig = useMemo(
-    () => ({
-      title: t("projects.filters.title"),
-      triggerLabel: t("projects.filters.title"),
-      content: filtersContent,
-      activeCount,
-      onReset: activeCount ? () => reset() : undefined,
-      collapsedByDefault: true,
-      footer: (
-        <div className="flex w-full flex-col gap-2">
-          <Button type="button" size="sm" onClick={() => apply()} disabled={!dirty}>
-            {t("projects.filters.applyButton")}
-          </Button>
-        </div>
-      ),
-    }),
-    [activeCount, apply, dirty, filtersContent, reset, t]
-  );
+  const filtersConfig = useMemo<AdvancedDataTableFiltersConfig>(() => ({
+    title: t("projects.filters.title"),
+    triggerLabel: t("projects.filters.title"),
+    content: filtersContent,
+    activeCount,
+    onReset: activeCount ? reset : undefined,
+    collapsedByDefault: true,
+  }), [activeCount, filtersContent, reset, t]);
 
-  return { state, filtersConfig, activeCount };
+  return { state, filtersConfig, activeCount, summaryChips, reset };
+}
+
+export function useProjectsArchivedFilters({
+  typeOptions,
+  serviceOptions,
+  initialState = defaultArchivedState,
+  onStateChange,
+}: UseProjectsArchivedFiltersOptions): UseProjectsArchivedFiltersResult {
+  const { t } = useTranslation("pages");
+
+  const [state, setState] = useState<ProjectsArchivedFiltersState>(initialState);
+
+  useEffect(() => {
+    setState((prev) => ({
+      ...prev,
+      types: sanitizeSelections(prev.types, typeOptions),
+      services: sanitizeSelections(prev.services, serviceOptions),
+    }));
+  }, [serviceOptions, typeOptions]);
+
+  useEffect(() => {
+    onStateChange?.(state);
+  }, [onStateChange, state]);
+
+  const reset = useCallback(() => {
+    setState(defaultArchivedState);
+  }, []);
+
+  const handleTypeToggle = useCallback((value: string, checked: boolean) => {
+    setState((prev) => ({
+      ...prev,
+      types: toggleInArray(prev.types, value, checked),
+    }));
+  }, []);
+
+  const handleServicesToggle = useCallback((value: string, checked: boolean) => {
+    setState((prev) => ({
+      ...prev,
+      services: toggleInArray(prev.services, value, checked),
+    }));
+  }, []);
+
+  const handleBalancePresetChange = useCallback((value: BalancePreset) => {
+    setState((prev) => ({ ...prev, balancePreset: value }));
+  }, []);
+
+  const handleBalanceInputChange = useCallback((key: "balanceMin" | "balanceMax", value: string) => {
+    const parsed = value.trim() === "" ? null : Number(value);
+    setState((prev) => ({
+      ...prev,
+      balancePreset: value.trim() === "" ? prev.balancePreset : "any",
+      [key]: Number.isFinite(parsed) ? (parsed as number) : null,
+    }));
+  }, []);
+
+  const activeCount = useMemo(() => {
+    const counters = [
+      state.types.length > 0,
+      state.services.length > 0,
+      state.balancePreset !== "any",
+      state.balanceMin !== null,
+      state.balanceMax !== null,
+    ];
+    return counters.filter(Boolean).length;
+  }, [state]);
+
+  const summaryChips = useMemo<FilterSummaryChip[]>(() => {
+    const chips: FilterSummaryChip[] = [];
+
+    if (state.types.length > 0) {
+      const names = typeOptions
+        .filter((option) => state.types.includes(option.id))
+        .map((option) => option.name)
+        .join(", ");
+      chips.push({
+        id: "types",
+        label: t("projects.filters.chips.types", { value: names }),
+      });
+    }
+
+    if (state.services.length > 0) {
+      const names = serviceOptions
+        .filter((option) => state.services.includes(option.id))
+        .map((option) => option.name)
+        .join(", ");
+      chips.push({
+        id: "services",
+        label: t("projects.filters.chips.services", { value: names }),
+      });
+    }
+
+    if (state.balancePreset !== "any") {
+      chips.push({
+        id: "balancePreset",
+        label: t(`projects.filters.balancePresets.${state.balancePreset}`),
+      });
+    }
+
+    if (state.balanceMin !== null || state.balanceMax !== null) {
+      chips.push({
+        id: "balanceRange",
+        label: t("projects.filters.chips.balanceRange", {
+          min:
+            state.balanceMin !== null
+              ? state.balanceMin.toLocaleString()
+              : t("projects.filters.balanceRangeMin"),
+          max:
+            state.balanceMax !== null
+              ? state.balanceMax.toLocaleString()
+              : t("projects.filters.balanceRangeMax"),
+        }),
+      });
+    }
+
+    return chips;
+  }, [serviceOptions, state, t, typeOptions]);
+
+  const filtersContent = useMemo(() => {
+    const toggleItemClasses =
+      "rounded-full border border-border/60 bg-background px-3 py-1 text-sm font-medium transition-colors hover:border-border hover:bg-muted/20 data-[state=on]:bg-primary/10 data-[state=on]:text-primary data-[state=on]:border-primary/40";
+
+    return (
+      <div className="space-y-6">
+        <div className="space-y-2">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            {t("projects.filters.typesHeading")}
+          </p>
+          {typeOptions.length > 0 ? (
+            <div className="space-y-2 rounded-md border border-border/40 p-3">
+              {typeOptions.map((option) => (
+                <label key={option.id} className="flex items-center gap-2 text-sm">
+                  <Checkbox
+                    checked={state.types.includes(option.id)}
+                    onCheckedChange={(checked) =>
+                      handleTypeToggle(option.id, Boolean(checked))
+                    }
+                  />
+                  <span>{option.name}</span>
+                </label>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs italic text-muted-foreground">
+              {t("projects.filters.noOptions")}
+            </p>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            {t("projects.filters.servicesHeading")}
+          </p>
+          {serviceOptions.length > 0 ? (
+            <div className="space-y-2 rounded-md border border-border/40 p-3">
+              {serviceOptions.map((option) => (
+                <label key={option.id} className="flex items-center gap-2 text-sm">
+                  <Checkbox
+                    checked={state.services.includes(option.id)}
+                    onCheckedChange={(checked) =>
+                      handleServicesToggle(option.id, Boolean(checked))
+                    }
+                  />
+                  <span>{option.name}</span>
+                </label>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs italic text-muted-foreground">
+              {t("projects.filters.noOptions")}
+            </p>
+          )}
+        </div>
+
+        <div className="space-y-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            {t("projects.filters.balanceHeading")}
+          </p>
+          <ToggleGroup
+            type="single"
+            value={state.balancePreset}
+            onValueChange={(value) =>
+              handleBalancePresetChange((value as BalancePreset) || "any")
+            }
+            className="flex flex-wrap gap-2"
+            size="sm"
+          >
+            {(["any", "zero", "due", "credit"] as BalancePreset[]).map((value) => (
+              <ToggleGroupItem key={value} value={value} className={toggleItemClasses}>
+                {t(`projects.filters.balancePresets.${value}`)}
+              </ToggleGroupItem>
+            ))}
+          </ToggleGroup>
+          <div className="grid gap-2 sm:grid-cols-2">
+            <Input
+              type="number"
+              value={state.balanceMin ?? ""}
+              onChange={(event) => handleBalanceInputChange("balanceMin", event.target.value)}
+              placeholder={t("projects.filters.balanceMinPlaceholder")}
+              min={0}
+            />
+            <Input
+              type="number"
+              value={state.balanceMax ?? ""}
+              onChange={(event) => handleBalanceInputChange("balanceMax", event.target.value)}
+              placeholder={t("projects.filters.balanceMaxPlaceholder")}
+              min={0}
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }, [
+    handleBalanceInputChange,
+    handleBalancePresetChange,
+    handleServicesToggle,
+    handleTypeToggle,
+    serviceOptions,
+    state.balanceMax,
+    state.balanceMin,
+    state.balancePreset,
+    state.services,
+    state.types,
+    t,
+    typeOptions,
+  ]);
+
+  const filtersConfig = useMemo<AdvancedDataTableFiltersConfig>(() => ({
+    title: t("projects.filters.title"),
+    triggerLabel: t("projects.filters.title"),
+    content: filtersContent,
+    activeCount,
+    onReset: activeCount ? reset : undefined,
+    collapsedByDefault: true,
+  }), [activeCount, filtersContent, reset, t]);
+
+  return { state, filtersConfig, activeCount, summaryChips, reset };
 }
 

@@ -511,8 +511,6 @@
       "typesHeading": "Project type",
       "stagesHeading": "Stage",
       "sessionsHeading": "Sessions",
-      "plannedMinPlaceholder": "Min planned",
-      "plannedMaxPlaceholder": "Max planned",
       "presence": {
         "any": "Any",
         "none": "No sessions",
@@ -521,11 +519,47 @@
         "hasUpcoming": "Has upcoming"
       },
       "progressHeading": "Todo progress",
-      "progressMinPlaceholder": "Min %",
-      "progressMaxPlaceholder": "Max %",
+      "progressOptions": {
+        "any": "Any progress",
+        "not_started": "Not started",
+        "in_progress": "In progress",
+        "completed": "Completed"
+      },
       "servicesHeading": "Services",
-      "applyButton": "Apply"
+      "noOptions": "No options configured",
+      "balanceHeading": "Balance",
+      "balancePresets": {
+        "any": "Any balance",
+        "zero": "Zero balance",
+        "due": "Balance due",
+        "credit": "Overpaid"
+      },
+      "balanceMinPlaceholder": "Min balance",
+      "balanceMaxPlaceholder": "Max balance",
+      "chips": {
+        "types": "Project type: {{value}}",
+        "stages": "Stage: {{value}}",
+        "sessionPresence": {
+          "none": "No sessions",
+          "hasAny": "Has sessions",
+          "hasPlanned": "Has planned sessions",
+          "hasUpcoming": "Has upcoming sessions"
+        },
+        "progress": {
+          "not_started": "Not started",
+          "in_progress": "In progress",
+          "completed": "Completed"
+        },
+        "services": "Services: {{value}}",
+        "balanceRange": "Balance between {{min}} and {{max}}"
+      },
+      "balanceRangeMin": "min",
+      "balanceRangeMax": "max",
+      "summaryActive": "{{count}} active filter",
+      "summaryActive_plural": "{{count}} active filters",
+      "summaryNone": "No filters applied"
     },
+    "resetFilters": "Reset filters",
     "aria": {
       "viewModeSelection": "View mode selection",
       "openKanbanSettings": "Open kanban settings",

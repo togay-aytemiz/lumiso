@@ -128,6 +128,9 @@
     "warning": "Uyarı",
     "info": "Bilgi"
   },
+  "legal": {
+    "all_rights_reserved": "Tüm hakları saklıdır."
+  },
   "pagination": {
     "previousPage": "Önceki sayfaya git",
     "nextPage": "Sonraki sayfaya git",

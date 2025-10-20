@@ -193,6 +193,42 @@ All colors MUST be HSL.
   }
 }
 
+/* Elegant aurora gradient + animation utilities for Auth highlight */
+@keyframes aurora-move {
+  0% { background-position: 0% 0%, 100% 0%, 50% 100%; }
+  50% { background-position: 20% 10%, 80% 10%, 55% 90%; }
+  100% { background-position: 40% 20%, 60% 20%, 60% 80%; }
+}
+
+.aurora-bg {
+  background: radial-gradient(900px 500px at 15% 10%, rgba(20,184,166,0.28), transparent 60%),
+              radial-gradient(700px 500px at 85% 0%, rgba(2,132,199,0.20), transparent 60%),
+              radial-gradient(800px 600px at 50% 100%, rgba(217,70,239,0.12), transparent 60%),
+              radial-gradient(1200px 800px at 50% 50%, rgba(255,255,255,0.06), transparent 70%);
+  background-repeat: no-repeat;
+  background-size: 200% 200%, 200% 200%, 200% 200%;
+  animation: aurora-move 16s ease-in-out infinite alternate;
+}
+
+@keyframes float-slow {
+  0% { transform: translateY(0) translateX(0); }
+  50% { transform: translateY(-8px) translateX(6px); }
+  100% { transform: translateY(0) translateX(0); }
+}
+
+.float-slow {
+  animation: float-slow 10s ease-in-out infinite;
+}
+
+@keyframes fade-in-up {
+  0% { opacity: 0; transform: translateY(6px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in-up {
+  animation: fade-in-up 600ms ease-out both;
+}
+
 @layer base {
   * {
     @apply border-border;

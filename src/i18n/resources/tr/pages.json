@@ -1,4 +1,43 @@
 {
+  "auth": {
+    "platformHighlights": "Öne çıkan özellikler",
+    "welcome": {
+      "signIn": "Hoşgeldiniz 👋🏻",
+      "signUp": "Başlayalım 🚀"
+    },
+    "copy": {
+      "signIn": "Ekip olarak kaldığınız yerden devam etmek için giriş yapın.",
+      "signUp": "İşbirlikçi iş akışlarını ve kusursuz müşteri deneyimlerini açmak için Lumiso hesabınızı oluşturun."
+    },
+    "featurePreview": {
+      "title": "Özellik önizlemesi",
+      "subtitle": "Buraya ürün görsellerinizi ekleyin"
+    },
+    "features": [
+      {
+        "title": "Tüm müşteri etkileşimlerini kolaylaştırın",
+        "description": "İletişimi, notları ve fırsat durumlarını modern ekipler için tasarlanmış tek bir sezgisel çalışma alanında toplayın."
+      },
+      {
+        "title": "Güvenle gelir tahmini yapın",
+        "description": "Dönüşüm içgörülerini takip edin, öngörülebilir boru hatları oluşturun ve Lumiso'dan ayrılmadan güçlü raporlar elde edin."
+      },
+      {
+        "title": "Kolayca otomatik karşılama",
+        "description": "Özelleştirilmiş iş akışları başlatın, hatırlatıcıları otomatikleştirin ve ilk günden itibaren harika müşteri deneyimleri sunun."
+      }
+    ],
+    "toggle": {
+      "existingAccount": "Zaten hesabınız var mı?",
+      "newToBrand": "{{brand}} hesabınız yok mu?"
+    },
+    "controls": {
+      "showFeature": "{{index}}. özelliği göster",
+      "progress": "{{index}}. özellik için ilerleme",
+      "prev": "Önceki özellik",
+      "next": "Sonraki özellik"
+    }
+  },
   "leads": {
     "title": "Kişi Yönetimi",
     "description": "Tüm kişi ve müşterilerinizi yönetin, durumlarını takip edin",

@@ -3,11 +3,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, ChevronLeft, ChevronRight, CheckCircle2, Circle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useFormsTranslation, useMessagesTranslation } from "@/hooks/useTypedTranslation";
 import { useI18nToast } from "@/lib/toastHelpers";
+import { useTranslation } from "react-i18next";
 
 const Auth = () => {
   const [email, setEmail] = useState("");
@@ -16,11 +17,34 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [activeFeatureIndex, setActiveFeatureIndex] = useState(0);
+  const [progress, setProgress] = useState(0);
+  const [prevFeatureIndex, setPrevFeatureIndex] = useState<number | null>(null);
   const { user } = useAuth();
   const navigate = useNavigate();
   const { t: tForm } = useFormsTranslation();
   const { t: tMsg } = useMessagesTranslation();
+  const { t: tPages } = useTranslation('pages');
+  const { t: tCommon } = useTranslation('common');
   const toast = useI18nToast();
+
+  // Password strength helpers (sign-up only UI)
+  const getPasswordStrength = (pwd: string) => {
+    let score = 0;
+    if (pwd.length >= 8) score++;
+    if (/[A-Z]/.test(pwd)) score++;
+    if (/[a-z]/.test(pwd)) score++;
+    if (/[0-9]/.test(pwd)) score++;
+    if (/[^A-Za-z0-9]/.test(pwd)) score++;
+    if (pwd.length >= 12) score++;
+    const percent = Math.min(100, Math.round((score / 6) * 100));
+    let color = "bg-red-500";
+    let label: 'weak' | 'fair' | 'good' | 'strong' = 'weak';
+    if (percent >= 66) { color = 'bg-emerald-500'; label = 'strong'; }
+    else if (percent >= 50) { color = 'bg-yellow-500'; label = 'good'; }
+    else if (percent >= 33) { color = 'bg-orange-500'; label = 'fair'; }
+    return { percent, color, label };
+  };
+  const pwdStrength = getPasswordStrength(password);
 
   // Redirect if already logged in
   useEffect(() => {
@@ -40,29 +64,47 @@ const Auth = () => {
 
   const featureSlides = [
     {
-      title: "Streamline every client interaction",
-      description:
-        "Centralize your communication, notes, and deal status in one intuitive workspace designed for modern agencies.",
+      title: tPages('auth.features.0.title', 'Streamline every client interaction'),
+      description: tPages(
+        'auth.features.0.description',
+        'Centralize your communication, notes, and deal status in one intuitive workspace designed for modern agencies.'
+      ),
     },
     {
-      title: "Forecast revenue with confidence",
-      description:
-        "Track conversion insights, build predictable pipelines, and unlock powerful reporting without leaving Lumiso.",
+      title: tPages('auth.features.1.title', 'Forecast revenue with confidence'),
+      description: tPages(
+        'auth.features.1.description',
+        "Track conversion insights, build predictable pipelines, and unlock powerful reporting without leaving Lumiso."
+      ),
     },
     {
-      title: "Automate onboarding with ease",
-      description:
-        "Launch tailored workflows, automate reminders, and deliver delightful client experiences from day one.",
+      title: tPages('auth.features.2.title', 'Automate onboarding with ease'),
+      description: tPages(
+        'auth.features.2.description',
+        'Launch tailored workflows, automate reminders, and deliver delightful client experiences from day one.'
+      ),
     },
   ];
 
+  // Animate progress for feature slides and auto-advance
   useEffect(() => {
+    const SLIDE_DURATION = 7000; // At least 5s per image
+    const start = Date.now();
+    setProgress(0);
+
     const interval = window.setInterval(() => {
-      setActiveFeatureIndex((prev) => (prev + 1) % featureSlides.length);
-    }, 6000);
+      const elapsed = Date.now() - start;
+      const pct = Math.min((elapsed / SLIDE_DURATION) * 100, 100);
+      setProgress(pct);
+      if (pct >= 100) {
+        window.clearInterval(interval);
+        setPrevFeatureIndex(activeFeatureIndex);
+        setActiveFeatureIndex((prev) => (prev + 1) % featureSlides.length);
+      }
+    }, 50);
 
     return () => window.clearInterval(interval);
-  }, [featureSlides.length]);
+  }, [activeFeatureIndex, featureSlides.length]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -114,35 +156,32 @@ const Auth = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-100 px-4 py-10">
-      <div className="relative flex w-full max-w-6xl flex-col overflow-hidden rounded-[32px] bg-white shadow-2xl ring-1 ring-slate-100 lg:flex-row">
-        <div className="relative flex w-full flex-col justify-between px-8 py-12 sm:px-12 lg:w-[52%] lg:px-16">
-          <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-br from-primary/10 via-white to-transparent" aria-hidden="true" />
+    <div className="flex min-h-screen w-full bg-white">
+      <div className="relative flex min-h-screen w-full flex-col overflow-hidden lg:flex-row">
+        <div className="relative flex w-full flex-col px-6 py-8 sm:px-10 lg:w-1/2 lg:px-12">
+          <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-br from-primary/10 via-white to-transparent" aria-hidden="true" />
 
-          <div className="relative flex items-center gap-3 pb-12">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-lg font-semibold text-primary shadow-sm">
-              L
-            </div>
-            <div>
-              <p className="text-sm font-medium uppercase tracking-[0.2em] text-slate-400">Welcome to</p>
-              <p className="text-xl font-semibold text-slate-900">Lumiso</p>
-            </div>
+          {/* Logo pinned to top-left */}
+          <div className="absolute left-6 top-6 sm:left-10">
+            <img src="/lumiso-logo.png" alt={tCommon('branding.app_name', 'Lumiso')} className="h-10 w-auto" loading="eager" />
           </div>
 
-          <div className="relative">
-            <div className="mb-10 space-y-4">
-              <div className="inline-flex items-center rounded-full bg-primary/10 px-4 py-2 text-sm font-medium text-primary">
-                {isSignUp ? tForm('auth.sign_up.title') : tForm('auth.sign_in.title')}
+          {/* Centered form area */}
+          <div className="flex flex-1 items-center">
+            <div key={isSignUp ? 'signup' : 'signin'} className="relative mx-auto w-full max-w-md fade-in-up">
+              <div className="mb-8 space-y-3">
+                <div className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary">
+                  {isSignUp ? tForm('auth.sign_up.title') : tForm('auth.sign_in.title')}
+                </div>
+                <h1 className="text-3xl font-semibold text-slate-900 sm:text-4xl">
+                {isSignUp ? tPages('auth.welcome.signUp', "Let's get started 🚀") : tPages('auth.welcome.signIn', 'Welcome back 👋🏻')}
+                </h1>
+                <p className="text-base text-slate-500">
+                  {isSignUp
+                    ? tPages('auth.copy.signUp', 'Create your Lumiso account to unlock collaborative workflows and beautiful client experiences.')
+                    : tPages('auth.copy.signIn', 'Sign in with your credentials to pick up exactly where your team left off.')}
+                </p>
               </div>
-              <h1 className="text-3xl font-semibold text-slate-900 sm:text-4xl">
-                {isSignUp ? tForm('auth.sign_up.subtitle') : tForm('auth.sign_in.subtitle')}
-              </h1>
-              <p className="text-base text-slate-500">
-                {isSignUp
-                  ? "Create your Lumiso account to unlock collaborative workflows and beautiful client experiences."
-                  : "Sign in with your credentials to pick up exactly where your team left off."}
-              </p>
-            </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
@@ -186,7 +225,56 @@ const Auth = () => {
                     {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                   </Button>
                 </div>
+                {isSignUp && (
+                  <div className="mt-2">
+                    <div
+                      className="h-1.5 w-full overflow-hidden rounded-full bg-slate-200/70"
+                      role="progressbar"
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                      aria-valuenow={pwdStrength.percent}
+                      aria-label={tForm('password_tips.strength', 'Password strength')}
+                    >
+                      <div
+                        className={`h-full rounded-full transition-[width,background-color] duration-300 ease-out ${pwdStrength.color}`}
+                        style={{ width: `${pwdStrength.percent}%` }}
+                      />
+                    </div>
+                    <div className="mt-1 flex justify-between text-[10px] text-slate-500">
+                      <span>{tForm('password_tips.strength', 'Password strength')}</span>
+                      <span>
+                        {pwdStrength.label === 'weak' && tForm('password_tips.weak', 'Weak')}
+                        {pwdStrength.label === 'fair' && tForm('password_tips.fair', 'Fair')}
+                        {pwdStrength.label === 'good' && tForm('password_tips.good', 'Good')}
+                        {pwdStrength.label === 'strong' && tForm('password_tips.strong', 'Strong')}
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
+              {/* Password recommendations (optional, sign-up only) */}
+              {isSignUp && (
+                <div className="mt-3">
+                  <p className="mb-1 text-xs font-medium text-slate-500">{tForm('password_tips.title', 'For a stronger password')}</p>
+                  <div className="grid grid-cols-1 gap-1 text-xs text-slate-500">
+                    {[
+                      { key: 'length', label: tForm('password_tips.eight_chars', 'At least 8 characters'), valid: password.length >= 8 },
+                      { key: 'uppercase', label: tForm('password_tips.uppercase', 'At least 1 uppercase letter'), valid: /[A-Z]/.test(password) },
+                      { key: 'special', label: tForm('password_tips.special', 'At least 1 special character'), valid: /[^A-Za-z0-9]/.test(password) },
+                    ].map((item) => (
+                      <div key={item.key} className="flex items-center gap-2">
+                        {item.valid ? (
+                          <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                        ) : (
+                          <Circle className="h-4 w-4 text-slate-300" />
+                        )}
+                        <span>{item.label}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="mt-1 text-[10px] text-slate-400">{tForm('password_tips.optional', 'Optional recommendations, not required')}</p>
+                </div>
+              )}
               <Button
                 type="submit"
                 className="group flex h-12 w-full items-center justify-center rounded-xl bg-primary text-base font-semibold text-white shadow-lg shadow-primary/20 transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
@@ -201,67 +289,122 @@ const Auth = () => {
             </form>
 
             <div className="mt-8 flex flex-wrap items-center gap-x-2 text-sm text-slate-500">
-              <span>{isSignUp ? "Already have an account?" : "New to Lumiso?"}</span>
+              <span>
+                {isSignUp
+                  ? tPages('auth.toggle.existingAccount', 'Already have an account?')
+                  : tPages('auth.toggle.newToBrand', { brand: tCommon('branding.app_name', 'Lumiso') })}
+              </span>
               <Button
                 variant="link"
                 onClick={() => setIsSignUp(!isSignUp)}
                 disabled={loading}
                 className="px-0 text-sm font-semibold text-primary hover:text-primary/80"
               >
-                {isSignUp ? tForm('auth.sign_in.link') : tForm('auth.sign_up.link')}
+                {isSignUp ? tForm('auth.sign_in.button') : tForm('auth.sign_up.button')}
               </Button>
+            </div>
             </div>
           </div>
 
-          <div className="relative mt-16 hidden text-xs text-slate-400 sm:flex">
-            <span>© {new Date().getFullYear()} Lumiso. All rights reserved.</span>
+          <div className="absolute bottom-6 left-6 hidden text-xs text-slate-400 sm:flex">
+            <span>© {new Date().getFullYear()} {tCommon('branding.app_name', 'Lumiso')}. {tCommon('legal.all_rights_reserved', 'All rights reserved.')}</span>
           </div>
         </div>
 
         <div className="relative hidden min-h-full flex-1 flex-col justify-between overflow-hidden bg-slate-900 text-white lg:flex">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(30,178,159,0.45),_transparent_60%)]" aria-hidden="true" />
-          <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(148,163,184,0.2),transparent)]" aria-hidden="true" />
+          {/* Aurora gradient background with floating blobs */}
+          <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
+            <div className="absolute -inset-24 opacity-80 blur-3xl aurora-bg" />
+            <div className="absolute -bottom-20 left-10 h-72 w-72 rounded-full bg-emerald-400/25 blur-3xl float-slow" />
+            <div className="absolute top-16 right-10 h-80 w-80 rounded-full bg-cyan-400/25 blur-3xl float-slow [animation-delay:1.2s]" />
+            <div className="absolute -top-10 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-fuchsia-400/15 blur-3xl float-slow [animation-delay:2.4s]" />
+          </div>
 
           <div className="relative flex flex-1 flex-col px-12 py-14">
             <div className="mb-12 flex flex-col gap-3">
-              <span className="w-fit rounded-full bg-white/10 px-4 py-1 text-sm font-medium text-white/80 backdrop-blur">
-                Platform highlights
+              <span className="w-fit rounded-full bg-white/15 px-4 py-1 text-sm font-medium text-white/85 backdrop-blur">
+                {tPages('auth.platformHighlights', 'Platform highlights')}
               </span>
-              <h2 className="text-3xl font-semibold leading-tight">{featureSlides[activeFeatureIndex].title}</h2>
-              <p className="max-w-sm text-base text-white/70">
-                {featureSlides[activeFeatureIndex].description}
-              </p>
+              <div className="relative h-[96px] max-w-xl">
+                {featureSlides.map((slide, index) => (
+                  <div
+                    key={`title-${index}`}
+                    className={`absolute inset-0 transition-all duration-700 ${
+                      index === activeFeatureIndex
+                        ? 'opacity-100 translate-y-0'
+                        : 'pointer-events-none opacity-0 translate-y-3'
+                    }`}
+                  >
+                    <h2 className="text-3xl font-semibold leading-tight fade-in-up">
+                      {slide.title}
+                    </h2>
+                    <p className="mt-2 max-w-xl text-base text-white/80">
+                      {slide.description}
+                    </p>
+                  </div>
+                ))}
+              </div>
             </div>
 
-            <div className="relative mt-auto flex flex-1 items-center justify-center">
-              <div className="relative w-full max-w-md rounded-3xl border border-white/10 bg-white/5 p-6 text-left shadow-[0_40px_80px_-40px_rgba(15,118,110,0.45)] backdrop-blur">
-                <div className="mb-4 flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-2xl bg-primary/20" />
-                  <div>
-                    <p className="text-sm font-semibold text-white/90">Feature preview</p>
-                    <p className="text-xs text-white/60">Replace with your product imagery</p>
-                  </div>
-                </div>
-                <div className="h-48 w-full rounded-2xl bg-gradient-to-br from-primary/30 via-primary/10 to-white/10" />
+            <div className="relative mt-auto flex flex-1 items-center">
+              <div key={activeFeatureIndex} className="relative w-full transition-transform duration-700 will-change-transform fade-in-up">
+                <img
+                  src="/placeholder.svg"
+                  alt="Showcase placeholder"
+                  className="h-[520px] w-full rounded-[28px] object-cover"
+                  loading="lazy"
+                />
               </div>
             </div>
           </div>
 
           <div className="relative flex items-center justify-between px-12 pb-10">
-            <div className="flex gap-2">
-              {featureSlides.map((_, index) => (
-                <button
-                  key={index}
-                  type="button"
-                  onClick={() => setActiveFeatureIndex(index)}
-                  className={`h-2 rounded-full transition-all ${
-                    index === activeFeatureIndex ? "w-10 bg-white" : "w-6 bg-white/40 hover:bg-white/60"
-                  }`}
-                  aria-label={`Show feature ${index + 1}`}
-                />
-              ))}
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setPrevFeatureIndex(activeFeatureIndex);
+                  setActiveFeatureIndex((prev) => (prev - 1 + featureSlides.length) % featureSlides.length);
+                }}
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-white/20 text-white/80 hover:bg-white/10 hover:text-white transition"
+                aria-label={tPages('auth.controls.prev', 'Previous feature')}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              {featureSlides.map((_, index) => {
+                const segmentPct = index < activeFeatureIndex ? 100 : index === activeFeatureIndex ? progress : 0;
+                return (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={() => {
+                      setPrevFeatureIndex(activeFeatureIndex);
+                      setActiveFeatureIndex(index);
+                    }}
+                    className="group relative h-2 w-24 overflow-hidden rounded-full bg-white/25"
+                    aria-label={tPages('auth.controls.showFeature', { index: index + 1, defaultValue: `Show feature ${index + 1}` }) as string}
+                  >
+                    <span
+                      className="absolute left-0 top-0 h-full bg-white transition-[width] duration-100 ease-linear"
+                      style={{ width: `${segmentPct}%` }}
+                    />
+                    <span className="sr-only">{tPages('auth.controls.progress', { index: index + 1, defaultValue: `Progress for feature ${index + 1}` }) as string}</span>
+                  </button>
+                );
+              })}
+              <button
+                type="button"
+                onClick={() => {
+                  setPrevFeatureIndex(activeFeatureIndex);
+                  setActiveFeatureIndex((prev) => (prev + 1) % featureSlides.length);
+                }}
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-white/20 text-white/80 hover:bg-white/10 hover:text-white transition"
+                aria-label={tPages('auth.controls.next', 'Next feature')}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
             </div>
-            <span className="text-sm font-medium text-white/70">
+            <span className="text-sm font-medium text-white/80">
               {String(activeFeatureIndex + 1).padStart(2, "0")} / {String(featureSlides.length).padStart(2, "0")}
             </span>
           </div>

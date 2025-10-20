@@ -1222,6 +1222,18 @@
     "MM/DD/YYYY": "AA/GG/YYYY (örn., 12/31/2024)",
     "YYYY-MM-DD": "YYYY-AA-GG (örn., 2024-12-31)"
   },
+  "password_tips": {
+    "title": "Daha güçlü bir şifre için",
+    "eight_chars": "En az 8 karakter",
+    "uppercase": "En az 1 büyük harf",
+    "special": "En az 1 özel karakter",
+    "optional": "Zorunlu değil, öneridir",
+    "strength": "Şifre gücü",
+    "weak": "Zayıf",
+    "fair": "Orta",
+    "good": "İyi",
+    "strong": "Güçlü"
+  },
   "auth": {
     "sign_in": {
       "title": "Giriş yap",

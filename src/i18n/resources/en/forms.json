@@ -1222,6 +1222,18 @@
     "MM/DD/YYYY": "MM/DD/YYYY (e.g., 12/31/2024)",
     "YYYY-MM-DD": "YYYY-MM-DD (e.g., 2024-12-31)"
   },
+  "password_tips": {
+    "title": "For a stronger password",
+    "eight_chars": "At least 8 characters",
+    "uppercase": "At least 1 uppercase letter",
+    "special": "At least 1 special character",
+    "optional": "Optional recommendations, not required",
+    "strength": "Password strength",
+    "weak": "Weak",
+    "fair": "Fair",
+    "good": "Good",
+    "strong": "Strong"
+  },
   "auth": {
     "sign_in": {
       "title": "Sign in",

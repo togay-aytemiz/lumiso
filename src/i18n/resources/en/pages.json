@@ -1,4 +1,43 @@
 {
+  "auth": {
+    "platformHighlights": "Platform highlights",
+    "welcome": {
+      "signIn": "Welcome back 👋🏻",
+      "signUp": "Let's get started 🚀"
+    },
+    "copy": {
+      "signIn": "Sign in with your credentials to pick up exactly where your team left off.",
+      "signUp": "Create your Lumiso account to unlock collaborative workflows and beautiful client experiences."
+    },
+    "featurePreview": {
+      "title": "Feature preview",
+      "subtitle": "Replace with your product imagery"
+    },
+    "features": [
+      {
+        "title": "Streamline every client interaction",
+        "description": "Centralize your communication, notes, and deal status in one intuitive workspace designed for modern agencies."
+      },
+      {
+        "title": "Forecast revenue with confidence",
+        "description": "Track conversion insights, build predictable pipelines, and unlock powerful reporting without leaving Lumiso."
+      },
+      {
+        "title": "Automate onboarding with ease",
+        "description": "Launch tailored workflows, automate reminders, and deliver delightful client experiences from day one."
+      }
+    ],
+    "toggle": {
+      "existingAccount": "Already have an account?",
+      "newToBrand": "Don't have a {{brand}} account?"
+    },
+    "controls": {
+      "showFeature": "Show feature {{index}}",
+      "progress": "Progress for feature {{index}}",
+      "prev": "Previous feature",
+      "next": "Next feature"
+    }
+  },
   "leads": {
     "title": "Lead Management",
     "description": "Manage and track all your potential clients",

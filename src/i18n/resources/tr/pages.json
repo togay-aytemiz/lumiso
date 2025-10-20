@@ -1122,7 +1122,7 @@
       "noSelection": "Lütfen bir tarih aralığı seçin",
       "noData": "Seçilen dönem için henüz ödeme kaydı yok"
     },
-    "searchPlaceholder": "Ödemeleri, projeleri veya kişileri ara...",
+    "searchPlaceholder": "Ödemeleri ara",
     "filterPanel": {
       "title": "Filtreler"
     },

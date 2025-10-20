@@ -325,20 +325,20 @@ export function AdvancedDataTable<T>({
   const showHeaderSearch = Boolean(onSearchChange);
 
   const renderSearchInput = () => (
-    <div className="relative w-full sm:max-w-xs lg:max-w-sm">
+    <div className="relative w-full h-9 sm:max-w-sm md:max-w-md lg:max-w-lg">
       <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
       <Input
         value={searchInputValue}
         onChange={(event) => handleSearchInputChange(event.target.value)}
         placeholder={searchPlaceholder ?? t("table.searchPlaceholder")}
         className={cn(
-          "pl-9 pr-3 h-8 rounded-full",
+          "pl-9 pr-3 h-9 rounded-full",
           (searchLoading || canClearSearch) && "pr-10"
         )}
         aria-label={searchPlaceholder ?? t("table.searchPlaceholder")}
       />
       {searchLoading && (
-        <span className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin rounded-full border-[1.5px] border-muted-foreground/40 border-t-primary" />
+        <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin rounded-full border-[1.5px] border-muted-foreground/40 border-t-primary" />
       )}
       {!searchLoading && canClearSearch && (
         <button

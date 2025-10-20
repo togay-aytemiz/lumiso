@@ -1122,7 +1122,7 @@
       "noSelection": "Select a date range to begin",
       "noData": "No payments recorded for the selected period yet"
     },
-    "searchPlaceholder": "Search payments, projects, or clients...",
+    "searchPlaceholder": "Search payments",
     "filterPanel": {
       "title": "Filters"
     },

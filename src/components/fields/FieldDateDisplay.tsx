@@ -1,6 +1,7 @@
 import { Calendar } from "lucide-react";
 import { format } from "date-fns";
 import { getDateFnsLocale } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 interface FieldDateDisplayProps {
   value: string;
@@ -11,8 +12,9 @@ export function FieldDateDisplay({
   value, 
   formatString = "PPP" 
 }: FieldDateDisplayProps) {
+  const { t } = useTranslation("common");
   if (!value) {
-    return <span className="text-muted-foreground italic">Not provided</span>;
+    return <span className="text-muted-foreground italic">{t("notProvided")}</span>;
   }
 
   const formatDate = (dateValue: string) => {

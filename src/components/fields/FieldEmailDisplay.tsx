@@ -2,6 +2,7 @@ import { Mail, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 
 interface FieldEmailDisplayProps {
   value: string;
@@ -13,22 +14,23 @@ export function FieldEmailDisplay({
   showCopyButton = true 
 }: FieldEmailDisplayProps) {
   const { toast } = useToast();
+  const { t } = useTranslation("common");
 
   if (!value) {
-    return <span className="text-muted-foreground italic">Not provided</span>;
+    return <span className="text-muted-foreground italic">{t("notProvided")}</span>;
   }
 
   const copyToClipboard = async () => {
     try {
       await navigator.clipboard.writeText(value);
       toast({
-        title: "Copied",
-        description: "Email address copied to clipboard",
+        title: t("copy.copied"),
+        description: t("copy.emailCopied"),
       });
     } catch (err) {
       toast({
-        title: "Failed to copy",
-        description: "Could not copy email address",
+        title: t("copy.failed"),
+        description: t("copy.emailError"),
         variant: "destructive",
       });
     }
@@ -42,13 +44,15 @@ export function FieldEmailDisplay({
             <a 
               href={`mailto:${value}`} 
               className="text-sm text-primary hover:text-primary/80 hover:underline transition-colors flex items-center gap-1 min-w-0"
+              onClick={(e) => e.stopPropagation()}
+              onMouseDown={(e) => e.stopPropagation()}
             >
               <Mail className="h-3 w-3 flex-shrink-0" />
               <span className="truncate">{value}</span>
             </a>
           </TooltipTrigger>
           <TooltipContent>
-            Send email to {value}
+            {t("tooltips.sendEmailTo", { value })}
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
@@ -61,13 +65,14 @@ export function FieldEmailDisplay({
                 variant="ghost"
                 size="sm"
                 className="h-6 w-6 p-0"
-                onClick={copyToClipboard}
+                onClick={(e) => { e.stopPropagation(); void copyToClipboard(); }}
+                onMouseDown={(e) => e.stopPropagation()}
               >
                 <Copy className="h-3 w-3" />
               </Button>
             </TooltipTrigger>
             <TooltipContent>
-              Copy email address
+              {t("copy.emailTooltip")}
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>

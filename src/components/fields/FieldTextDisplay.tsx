@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 interface FieldTextDisplayProps {
   value: string;
@@ -13,6 +14,7 @@ export function FieldTextDisplay({
   maxLines = 3, 
   allowTruncation = true 
 }: FieldTextDisplayProps) {
+  const { t } = useTranslation("common");
   const [isExpanded, setIsExpanded] = useState(false);
   const [isTruncatable, setIsTruncatable] = useState(false);
   const textRef = useRef<HTMLDivElement>(null);
@@ -36,7 +38,7 @@ export function FieldTextDisplay({
   }, [value, isExpanded, allowTruncation]);
 
   if (!value) {
-    return <span className="text-muted-foreground italic">Not provided</span>;
+    return <span className="text-muted-foreground italic">{t("notProvided")}</span>;
   }
 
   const maxHeight = `${maxLines * 1.5}rem`; // Assuming 1.5rem line height
@@ -76,7 +78,7 @@ export function FieldTextDisplay({
                   setIsExpanded(prev => !prev);
                 }}
               >
-                {isExpanded ? "Show less" : "Show more"}
+                {isExpanded ? t("showLess") : t("showMore")}
               </button>
       )}
     </div>

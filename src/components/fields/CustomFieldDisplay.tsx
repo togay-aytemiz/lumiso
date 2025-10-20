@@ -10,6 +10,7 @@ import { FieldSelectDisplay } from "./FieldSelectDisplay";
 import { FieldMultiSelectDisplay } from "./FieldMultiSelectDisplay";
 import { FieldCheckboxDisplay } from "./FieldCheckboxDisplay";
 import { FieldNumberDisplay } from "./FieldNumberDisplay";
+import { useTranslation } from "react-i18next";
 
 interface CustomFieldDisplayProps {
   fieldDefinition: LeadFieldDefinition;
@@ -28,8 +29,9 @@ export function CustomFieldDisplay({
   maxLines = 3,
   tableContext = false
 }: CustomFieldDisplayProps) {
+  const { t } = useTranslation("common");
   if (!value) {
-    return <span className="text-muted-foreground italic">Not provided</span>;
+    return <span className="text-muted-foreground italic">{t("notProvided")}</span>;
   }
 
   switch (fieldDefinition.field_type) {

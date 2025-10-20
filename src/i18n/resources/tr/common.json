@@ -140,5 +140,24 @@
   "timePicker": {
     "hour": "Saat",
     "minutes": "Dakika"
-  }
+  },
+  "notProvided": "Bilgi yok",
+  "yes": "Evet",
+  "no": "Hayır",
+  "copy": {
+    "copied": "Kopyalandı",
+    "failed": "Kopyalama başarısız",
+    "emailTooltip": "E-posta adresini kopyala",
+    "phoneTooltip": "Telefon numarasını kopyala",
+    "emailCopied": "E-posta adresi panoya kopyalandı",
+    "emailError": "E-posta adresi kopyalanamadı",
+    "phoneCopied": "Telefon numarası panoya kopyalandı",
+    "phoneError": "Telefon numarası kopyalanamadı"
+  },
+  "tooltips": {
+    "sendEmailTo": "{{value}} adresine e-posta gönder",
+    "call": "{{value}} numarasını ara"
+  },
+  "showMore": "Daha fazla",
+  "showLess": "Daha az"
 }

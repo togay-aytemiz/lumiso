@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next";
+
 interface FieldNumberDisplayProps {
   value: string;
   formatOptions?: Intl.NumberFormatOptions;
@@ -9,8 +11,9 @@ export function FieldNumberDisplay({
   formatOptions,
   locale = "en-US"
 }: FieldNumberDisplayProps) {
+  const { t } = useTranslation("common");
   if (!value) {
-    return <span className="text-muted-foreground italic">Not provided</span>;
+    return <span className="text-muted-foreground italic">{t("notProvided")}</span>;
   }
 
   const formatNumber = (numValue: string) => {

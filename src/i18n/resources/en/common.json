@@ -140,5 +140,24 @@
   "timePicker": {
     "hour": "Hour",
     "minutes": "Minutes"
-  }
+  },
+  "notProvided": "Not provided",
+  "yes": "Yes",
+  "no": "No",
+  "copy": {
+    "copied": "Copied",
+    "failed": "Failed to copy",
+    "emailTooltip": "Copy email address",
+    "phoneTooltip": "Copy phone number",
+    "emailCopied": "Email address copied to clipboard",
+    "emailError": "Could not copy email address",
+    "phoneCopied": "Phone number copied to clipboard",
+    "phoneError": "Could not copy phone number"
+  },
+  "tooltips": {
+    "sendEmailTo": "Send email to {{value}}",
+    "call": "Call {{value}}"
+  },
+  "showMore": "Show more",
+  "showLess": "Show less"
 }

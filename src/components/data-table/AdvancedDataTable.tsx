@@ -442,7 +442,7 @@ export function AdvancedDataTable<T>({
         </Sheet>
       )}
 
-      <CardContent className="px-0 pt-3 pb-0 sm:pt-4">
+      <CardContent className="px-4 md:px-6 pt-3 pb-0 sm:pt-4">
         {isLoading ? (
           loadingState || <TableLoadingSkeleton />
         ) : (
@@ -450,8 +450,8 @@ export function AdvancedDataTable<T>({
         {filters && !isMobile && (
           <div
             className={cn(
-              "hidden flex-shrink-0 transition-[max-width] duration-300 ease-in-out lg:block lg:pr-4",
-              desktopFiltersOpen ? "max-w-[18rem]" : "max-w-0"
+              "hidden flex-shrink-0 transition-[max-width] duration-300 ease-in-out lg:block",
+              desktopFiltersOpen ? "max-w-[18rem] lg:pr-4" : "max-w-0"
             )}
           >
             <aside
@@ -504,7 +504,7 @@ export function AdvancedDataTable<T>({
                 </aside>
               </div>
             )}
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <div className="rounded-md border border-border/60 bg-background overflow-hidden">
                 <DataTableContainer>
                   <Table className="min-w-full border-separate border-spacing-0 text-sm">

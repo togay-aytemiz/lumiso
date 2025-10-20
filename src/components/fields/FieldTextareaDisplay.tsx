@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 interface FieldTextareaDisplayProps {
   value: string;
@@ -10,6 +11,7 @@ export function FieldTextareaDisplay({
   value, 
   maxLines = 2 
 }: FieldTextareaDisplayProps) {
+  const { t } = useTranslation("common");
   const [isExpanded, setIsExpanded] = useState(false);
   const [isTruncatable, setIsTruncatable] = useState(false);
   const textRef = useRef<HTMLDivElement>(null);
@@ -28,7 +30,7 @@ export function FieldTextareaDisplay({
   }, [value, isExpanded]);
 
   if (!value) {
-    return <span className="text-muted-foreground italic">Not provided</span>;
+    return <span className="text-muted-foreground italic">{t("notProvided")}</span>;
   }
 
   const maxHeight = `${maxLines * 1.5}rem`; // Assuming 1.5rem line height
@@ -57,7 +59,7 @@ export function FieldTextareaDisplay({
             setIsExpanded(prev => !prev);
           }}
         >
-          {isExpanded ? "Show less" : "Show more"}
+          {isExpanded ? t("showLess") : t("showMore")}
         </button>
       )}
     </div>

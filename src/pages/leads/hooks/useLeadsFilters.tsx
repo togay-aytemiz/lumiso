@@ -459,8 +459,9 @@ export function useLeadsFilters({
   );
 
   const autoOpenSections = useMemo(() => {
-    const sections: string[] = [];
-    if (appliedState.status.length > 0) {
+    // Always show Status section by default (high priority filter)
+    const sections: string[] = ["status"]; 
+    if (appliedState.status.length > 0 && !sections.includes("status")) {
       sections.push("status");
     }
     filterableFields.forEach((field) => {

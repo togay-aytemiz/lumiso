@@ -190,6 +190,22 @@ export function useLeadTableColumns(options: LeadTableColumnsOptions = {}) {
               visible: !!pref.visible,
             }));
 
+          // Append any new custom fields marked visible_in_table that are missing from user prefs
+          const visibleCustomFieldKeys = ((fields || []) as LeadFieldDefinition[])
+            .filter((f) => f.is_visible_in_table && !RESERVED_CORE_KEYS.has(f.field_key))
+            .map((f) => f.field_key);
+          const sanitizedKeys = new Set(sanitized.map((p) => p.key));
+          const missingVisible = visibleCustomFieldKeys.filter((k) => !sanitizedKeys.has(k));
+          if (missingVisible.length) {
+            const baseOrder = sanitized.length + 1;
+            const additions: ColumnConfig[] = missingVisible.map((key, idx) => ({
+              key,
+              visible: true,
+              order: baseOrder + idx,
+            }));
+            sanitized.push(...additions);
+          }
+
           if (sanitized.length === 0) {
             const defaultPrefs = generateDefaultColumnPreferences(
               (fields || []) as LeadFieldDefinition[]
@@ -257,7 +273,7 @@ export function useLeadTableColumns(options: LeadTableColumnsOptions = {}) {
       )
       .map((field, index) => ({
         key: field.field_key,
-        visible: false, // Default to hidden for additional custom fields
+        visible: true, // Show fields marked visible in table by default
         order: 6 + index,
       }));
 

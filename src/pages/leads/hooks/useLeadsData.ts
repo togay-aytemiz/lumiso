@@ -208,7 +208,7 @@ export function useLeadsData({
       if (error) throw error;
       const rows = (data as any[]) ?? [];
       const total = rows.length ? Number(rows[0].total_count) : 0;
-      const leads: LeadWithCustomFields[] = rows.map((r) => ({
+      let leads: LeadWithCustomFields[] = rows.map((r) => ({
         id: r.id,
         name: r.name,
         email: r.email,
@@ -221,6 +221,36 @@ export function useLeadsData({
         custom_fields: {},
         lead_statuses: r.lead_statuses
       }));
+      // Populate custom field values for the current page to display in table columns
+      if (leads.length) {
+        const leadIds = leads.map((l) => l.id);
+        // Try typed view first for better performance
+        const { data: cfTyped, error: cfTypedErr } = await supabase
+          .from('lead_field_values_typed')
+          .select('lead_id, field_key, value')
+          .eq('organization_id', organizationId)
+          .in('lead_id', leadIds);
+        let cfRows: any[] | null = null;
+        if (!cfTypedErr) {
+          cfRows = cfTyped as any[];
+        } else {
+          const { data: cfRaw, error: cfRawErr } = await supabase
+            .from('lead_field_values')
+            .select('lead_id, field_key, value, leads!inner(organization_id)')
+            .eq('leads.organization_id', organizationId)
+            .in('lead_id', leadIds);
+          if (!cfRawErr) cfRows = cfRaw as any[];
+        }
+        if (cfRows && cfRows.length) {
+          const byLead: Record<string, Record<string, string | null>> = {};
+          for (const r of cfRows) {
+            const lid = r.lead_id;
+            if (!byLead[lid]) byLead[lid] = {};
+            byLead[lid][r.field_key] = r.value;
+          }
+          leads = leads.map((l) => ({ ...l, custom_fields: byLead[l.id] || {} }));
+        }
+      }
       return { leads, count: includeCount ? total : leads.length };
     } catch (e) {
       // Fallback to previous set-based approach (still server-side) if RPC unavailable
@@ -239,7 +269,40 @@ export function useLeadsData({
       if (table.error) throw table.error;
       const raw = (table.data as any[]) ?? [];
       const count = includeCount ? (table.count ?? raw.length) : raw.length;
-      const leads: LeadWithCustomFields[] = raw.map((lead: any) => ({ ...lead, assignees: [], custom_fields: {} }));
+      let leads: LeadWithCustomFields[] = raw.map((lead: any) => ({ ...lead, assignees: [], custom_fields: {} }));
+      // Populate custom field values for the fetched leads (fallback path)
+      if (leads.length) {
+        const leadIds = leads.map((l) => l.id);
+        try {
+          const { data: cfTyped, error: cfTypedErr } = await supabase
+            .from('lead_field_values_typed')
+            .select('lead_id, field_key, value')
+            .eq('organization_id', organizationId)
+            .in('lead_id', leadIds);
+          let cfRows: any[] | null = null;
+          if (!cfTypedErr) {
+            cfRows = cfTyped as any[];
+          } else {
+            const { data: cfRaw, error: cfRawErr } = await supabase
+              .from('lead_field_values')
+              .select('lead_id, field_key, value, leads!inner(organization_id)')
+              .eq('leads.organization_id', organizationId)
+              .in('lead_id', leadIds);
+            if (!cfRawErr) cfRows = cfRaw as any[];
+          }
+          if (cfRows && cfRows.length) {
+            const byLead: Record<string, Record<string, string | null>> = {};
+            for (const r of cfRows) {
+              const lid = r.lead_id;
+              if (!byLead[lid]) byLead[lid] = {};
+              byLead[lid][r.field_key] = r.value;
+            }
+            leads = leads.map((l) => ({ ...l, custom_fields: byLead[l.id] || {} }));
+          }
+        } catch {
+          // ignore
+        }
+      }
       return { leads, count };
     }
   }, [customFieldFilters, resolveLeadIdsForCustomFilters, sortDirection, sortField, statusIds]);

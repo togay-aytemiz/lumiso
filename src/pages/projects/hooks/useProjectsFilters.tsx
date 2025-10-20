@@ -87,6 +87,9 @@ const defaultArchivedState: ProjectsArchivedFiltersState = {
   balanceMax: null,
 };
 
+const LIST_FILTER_CATEGORY_COUNT = 5;
+const ARCHIVED_FILTER_CATEGORY_COUNT = 4;
+
 const toggleInArray = (values: string[], value: string, checked: boolean) => {
   if (checked) {
     if (values.includes(value)) {
@@ -403,7 +406,7 @@ export function useProjectsListFilters({
     content: filtersContent,
     activeCount,
     onReset: activeCount ? reset : undefined,
-    collapsedByDefault: true,
+    collapsedByDefault: LIST_FILTER_CATEGORY_COUNT > 4,
   }), [activeCount, filtersContent, reset, t]);
 
   return { state, filtersConfig, activeCount, summaryChips, reset };
@@ -645,7 +648,7 @@ export function useProjectsArchivedFilters({
     content: filtersContent,
     activeCount,
     onReset: activeCount ? reset : undefined,
-    collapsedByDefault: true,
+    collapsedByDefault: ARCHIVED_FILTER_CATEGORY_COUNT > 4,
   }), [activeCount, filtersContent, reset, t]);
 
   return { state, filtersConfig, activeCount, summaryChips, reset };

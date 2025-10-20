@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Filter } from "lucide-react";
+import { Plus, Filter, FileDown, Loader2 } from "lucide-react";
 import { EnhancedAddLeadDialog } from "@/components/EnhancedAddLeadDialog";
 import { useNavigate } from "react-router-dom";
 import GlobalSearch from "@/components/GlobalSearch";
@@ -27,6 +27,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { TableLoadingSkeleton } from "@/components/ui/loading-presets";
 import { useTranslation } from "react-i18next";
+import { writeFileXLSX, utils as XLSXUtils } from "xlsx/xlsx.mjs";
 import {
   AdvancedDataTable,
   type AdvancedDataTableSortState,
@@ -36,6 +37,7 @@ import { useLeadsFilters, type CustomFieldFilterValue } from "@/pages/leads/hook
 import { LEAD_TABLE_COLUMN_STORAGE_KEY } from "@/hooks/useLeadTableColumns";
 import type { LeadFieldDefinition } from "@/types/leadFields";
 import { formatDate, getStartOfWeek } from "@/lib/utils";
+import { format } from "date-fns";
 import { KpiCard } from "@/components/ui/kpi-card";
 import { getKpiIconPreset } from "@/components/ui/kpi-presets";
 
@@ -155,9 +157,11 @@ const AllLeadsNew = () => {
   const [showTutorial, setShowTutorial] = useState(false);
   const [currentTutorialStep, setCurrentTutorialStep] = useState(0);
   const [isSchedulingTutorial, setIsSchedulingTutorial] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const navigate = useNavigate();
   const { currentStep, completeCurrentStep } = useOnboarding();
   const { t } = useTranslation('pages');
+  const { t: tCommon } = useTranslation('common');
 
   // Use new hooks
   const { leads, loading: leadsLoading, refetch: refetchLeads } = useLeadsWithCustomFields();
@@ -820,6 +824,75 @@ const AllLeadsNew = () => {
     ]
   );
 
+  const handleExportLeads = useCallback(async () => {
+    if (exporting) return;
+
+    if (sortedLeads.length === 0) {
+      toast({
+        title: t("leads.export.noDataTitle"),
+        description: t("leads.export.noDataDescription"),
+      });
+      return;
+    }
+
+    try {
+      setExporting(true);
+
+      const rows = sortedLeads.map((lead) => ({
+        [tCommon("labels.name")]: lead.name ?? "",
+        [tCommon("labels.email")]: lead.email ?? "",
+        [tCommon("labels.phone")]: lead.phone ?? "",
+        [tCommon("labels.status")]: lead.lead_statuses?.name ?? lead.status ?? "",
+        [tCommon("labels.date")]: formatDate(lead.created_at),
+      }));
+
+      const worksheet = XLSXUtils.json_to_sheet(rows);
+      const workbook = XLSXUtils.book_new();
+      XLSXUtils.book_append_sheet(workbook, worksheet, "Leads");
+
+      const timestamp = format(new Date(), "yyyy-MM-dd_HHmm");
+      writeFileXLSX(workbook, `leads-${timestamp}.xlsx`);
+
+      toast({
+        title: t("leads.export.successTitle"),
+        description: t("leads.export.successDescription"),
+      });
+    } catch (error) {
+      console.error("Error exporting leads", error);
+      toast({
+        title: t("leads.export.errorTitle"),
+        description:
+          error instanceof Error
+            ? error.message
+            : t("leads.export.errorDescription"),
+        variant: "destructive",
+      });
+    } finally {
+      setExporting(false);
+    }
+  }, [exporting, sortedLeads, t, tCommon]);
+
+  const exportActions = useMemo(
+    () => (
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={handleExportLeads}
+        disabled={exporting || leadsLoading || sortedLeads.length === 0}
+        className="flex items-center gap-2"
+      >
+        {exporting ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <FileDown className="h-4 w-4" />
+        )}
+        <span>{t("leads.export.button")}</span>
+      </Button>
+    ),
+    [exporting, handleExportLeads, leadsLoading, sortedLeads.length, t]
+  );
+
   const tableSummaryText = useMemo(() => {
     if (activeFilterCount === 0) return undefined;
     if (sortedLeads.length === leads.length) return undefined;
@@ -1086,6 +1159,7 @@ const AllLeadsNew = () => {
               emptyState={emptyState}
               sortState={sortState}
               onSortChange={handleSortChange}
+              actions={exportActions}
               pagination={pagination}
               columnCustomization={{
                 storageKey: LEAD_TABLE_COLUMN_STORAGE_KEY,

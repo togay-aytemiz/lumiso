@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import type { AdvancedDataTableFiltersConfig } from "@/components/data-table";
-import { useDraftFilters } from "@/components/data-table";
 import {
   SEARCH_MIN_CHARS,
   STATUS_FILTER_OPTIONS,
@@ -50,8 +49,6 @@ const defaultState: PaymentsFiltersState = {
   search: "",
 };
 
-type AppliedFiltersState = Omit<PaymentsFiltersState, "search">;
-
 const arraysMatch = (a: string[], b: string[]) => {
   if (a.length !== b.length) return false;
   const sortedA = [...a].sort();
@@ -59,49 +56,48 @@ const arraysMatch = (a: string[], b: string[]) => {
   return sortedA.every((value, index) => value === sortedB[index]);
 };
 
-const buildAppliedInitialState = (state: PaymentsFiltersState): AppliedFiltersState => ({
-  status: state.status ?? [],
-  type: state.type ?? [],
-  amountMin: state.amountMin ?? null,
-  amountMax: state.amountMax ?? null,
-});
-
 export function usePaymentsFilters({
   onStateChange,
   initialState = defaultState,
 }: UsePaymentsFiltersOptions = {}): UsePaymentsFiltersResult {
   const { t } = useTranslation("pages");
 
-  const [filtersState, setFiltersState] = useState<PaymentsFiltersState>(initialState);
-  const [searchDraft, setSearchDraft] = useState<string>(initialState.search);
+  const normalizedInitialState = useMemo(
+    () => ({ ...defaultState, ...initialState }),
+    [initialState]
+  );
+
+  const [filtersState, setFiltersState] = useState<PaymentsFiltersState>(
+    normalizedInitialState
+  );
+  const [searchDraft, setSearchDraft] = useState<string>(
+    normalizedInitialState.search
+  );
   const [amountMinDraft, setAmountMinDraft] = useState<string>(
-    initialState.amountMin != null ? String(initialState.amountMin) : ""
+    normalizedInitialState.amountMin != null
+      ? String(normalizedInitialState.amountMin)
+      : ""
   );
   const [amountMaxDraft, setAmountMaxDraft] = useState<string>(
-    initialState.amountMax != null ? String(initialState.amountMax) : ""
+    normalizedInitialState.amountMax != null
+      ? String(normalizedInitialState.amountMax)
+      : ""
   );
 
-  const appliedFilters = useDraftFilters<AppliedFiltersState>({
-    initialState: buildAppliedInitialState(initialState),
-    isEqual: (a, b) =>
-      arraysMatch(a.status, b.status) &&
-      arraysMatch(a.type, b.type) &&
-      a.amountMin === b.amountMin &&
-      a.amountMax === b.amountMax,
-    onApply: (next) => {
-      const nextState: PaymentsFiltersState = { ...next, search: filtersState.search };
-      setFiltersState(nextState);
-      onStateChange?.(nextState, { reason: "apply" });
-    },
-    onReset: (next) => {
-      const nextState: PaymentsFiltersState = { ...next, search: "" };
-      setFiltersState(nextState);
-      setSearchDraft("");
-      onStateChange?.(nextState, { reason: "reset" });
-    },
-  });
-
-  const { state: appliedState, draft: appliedDraft, updateDraft: updateAppliedDraft, apply: commitDraft, reset: resetDraft, dirty: filtersDirty } = appliedFilters;
+  useEffect(() => {
+    setFiltersState(normalizedInitialState);
+    setSearchDraft(normalizedInitialState.search);
+    setAmountMinDraft(
+      normalizedInitialState.amountMin != null
+        ? String(normalizedInitialState.amountMin)
+        : ""
+    );
+    setAmountMaxDraft(
+      normalizedInitialState.amountMax != null
+        ? String(normalizedInitialState.amountMax)
+        : ""
+    );
+  }, [normalizedInitialState]);
 
   const parseAmountInputValue = useCallback((value: string): number | null => {
     const trimmed = value.trim();
@@ -111,97 +107,127 @@ export function usePaymentsFilters({
   }, []);
 
   useEffect(() => {
-    setAmountMinDraft(appliedDraft.amountMin != null ? String(appliedDraft.amountMin) : "");
-  }, [appliedDraft.amountMin]);
+    setAmountMinDraft(
+      filtersState.amountMin != null ? String(filtersState.amountMin) : ""
+    );
+  }, [filtersState.amountMin]);
 
   useEffect(() => {
-    setAmountMaxDraft(appliedDraft.amountMax != null ? String(appliedDraft.amountMax) : "");
-  }, [appliedDraft.amountMax]);
+    setAmountMaxDraft(
+      filtersState.amountMax != null ? String(filtersState.amountMax) : ""
+    );
+  }, [filtersState.amountMax]);
+
+  const updateState = useCallback(
+    (
+      updater: (prev: PaymentsFiltersState) => PaymentsFiltersState,
+      reason: PaymentsFiltersChangeReason = "apply"
+    ) => {
+      setFiltersState((prev) => {
+        const next = updater(prev);
+        const unchanged =
+          arraysMatch(prev.status, next.status) &&
+          arraysMatch(prev.type, next.type) &&
+          prev.amountMin === next.amountMin &&
+          prev.amountMax === next.amountMax &&
+          prev.search === next.search;
+        if (unchanged) {
+          return prev;
+        }
+        onStateChange?.(next, { reason });
+        return next;
+      });
+    },
+    [onStateChange]
+  );
 
   const activeFilterCount = useMemo(() => {
-    const hasStatus = appliedState.status.length > 0 && appliedState.status.length < STATUS_FILTER_OPTIONS.length;
-    const hasType = appliedState.type.length > 0 && appliedState.type.length < TYPE_FILTER_OPTIONS.length;
-    const hasMin = appliedState.amountMin !== null;
-    const hasMax = appliedState.amountMax !== null;
+    const hasStatus =
+      filtersState.status.length > 0 &&
+      filtersState.status.length < STATUS_FILTER_OPTIONS.length;
+    const hasType =
+      filtersState.type.length > 0 &&
+      filtersState.type.length < TYPE_FILTER_OPTIONS.length;
+    const hasMin = filtersState.amountMin !== null;
+    const hasMax = filtersState.amountMax !== null;
     return [hasStatus, hasType, hasMin, hasMax].filter(Boolean).length;
-  }, [appliedState]);
-
-  const handleApplyFilters = useCallback(() => {
-    commitDraft();
-  }, [commitDraft]);
+  }, [filtersState]);
 
   const handleResetFilters = useCallback(() => {
-    const resetPerformed = resetDraft();
-    if (!resetPerformed && filtersState.search !== "") {
-      const nextState: PaymentsFiltersState = {
-        ...buildAppliedInitialState(filtersState),
-        search: "",
-      };
-      setFiltersState(nextState);
-      setSearchDraft("");
-      onStateChange?.(nextState, { reason: "reset" });
-    }
-  }, [filtersState, onStateChange, resetDraft]);
+    const resetState: PaymentsFiltersState = {
+      ...normalizedInitialState,
+      search: "",
+    };
+    setFiltersState(resetState);
+    setSearchDraft("");
+    setAmountMinDraft(
+      resetState.amountMin != null ? String(resetState.amountMin) : ""
+    );
+    setAmountMaxDraft(
+      resetState.amountMax != null ? String(resetState.amountMax) : ""
+    );
+    onStateChange?.(resetState, { reason: "reset" });
+  }, [normalizedInitialState, onStateChange]);
 
-  const handleStatusDraftChange = useCallback(
+  const handleStatusChange = useCallback(
     (values: PaymentStatusFilter[]) => {
-      updateAppliedDraft({ status: values });
+      updateState((prev) => ({ ...prev, status: values }));
     },
-    [updateAppliedDraft]
+    [updateState]
   );
 
-  const handleTypeDraftChange = useCallback(
+  const handleTypeChange = useCallback(
     (values: PaymentTypeFilter[]) => {
-      updateAppliedDraft({ type: values });
+      updateState((prev) => ({ ...prev, type: values }));
     },
-    [updateAppliedDraft]
+    [updateState]
   );
 
-  const handleAmountMinDraftChange = useCallback(
-    (value: string) => {
-      setAmountMinDraft(value);
-      updateAppliedDraft({ amountMin: parseAmountInputValue(value) });
-    },
-    [parseAmountInputValue, updateAppliedDraft]
-  );
+  const handleAmountMinDraftChange = useCallback((value: string) => {
+    setAmountMinDraft(value);
+  }, []);
 
-  const handleAmountMaxDraftChange = useCallback(
-    (value: string) => {
-      setAmountMaxDraft(value);
-      updateAppliedDraft({ amountMax: parseAmountInputValue(value) });
-    },
-    [parseAmountInputValue, updateAppliedDraft]
-  );
+  const handleAmountMaxDraftChange = useCallback((value: string) => {
+    setAmountMaxDraft(value);
+  }, []);
+
+  const handleApplyAmountFilters = useCallback(() => {
+    const nextMin = parseAmountInputValue(amountMinDraft);
+    const nextMax = parseAmountInputValue(amountMaxDraft);
+    updateState(
+      (prev) => ({ ...prev, amountMin: nextMin, amountMax: nextMax })
+    );
+  }, [amountMaxDraft, amountMinDraft, parseAmountInputValue, updateState]);
+
+  const amountDirty = useMemo(() => {
+    const parsedMin = parseAmountInputValue(amountMinDraft);
+    const parsedMax = parseAmountInputValue(amountMaxDraft);
+    return (
+      parsedMin !== filtersState.amountMin || parsedMax !== filtersState.amountMax
+    );
+  }, [
+    amountMaxDraft,
+    amountMinDraft,
+    filtersState.amountMax,
+    filtersState.amountMin,
+    parseAmountInputValue,
+  ]);
 
   const handleSearchDraftChange = useCallback(
     (value: string) => {
       setSearchDraft(value);
       const trimmed = value.trim();
       if (trimmed.length >= SEARCH_MIN_CHARS || trimmed.length === 0) {
-        setFiltersState((prev) => {
-          if (prev.search === trimmed) {
-            return prev;
-          }
-          const next = { ...prev, search: trimmed };
-          onStateChange?.(next, { reason: "search" });
-          return next;
-        });
+        updateState((prev) => ({ ...prev, search: trimmed }), "search");
       }
     },
-    [onStateChange]
+    [updateState]
   );
 
   const handleClearSearchDraft = useCallback(() => {
     setSearchDraft("");
-    setFiltersState((prev) => {
-      if (prev.search === "") {
-        return prev;
-      }
-      const next = { ...prev, search: "" };
-      onStateChange?.(next, { reason: "search" });
-      return next;
-    });
-  }, [onStateChange]);
+    updateState((prev) => ({ ...prev, search: "" }), "search");
+  }, [updateState]);
 
   const statusFilterOptions = useMemo(
     () =>
@@ -238,8 +264,8 @@ export function usePaymentsFilters({
           </p>
           <ToggleGroup
             type="multiple"
-            value={appliedDraft.status}
-            onValueChange={(values) => handleStatusDraftChange(values as PaymentStatusFilter[])}
+            value={filtersState.status}
+            onValueChange={(values) => handleStatusChange(values as PaymentStatusFilter[])}
             className="flex flex-wrap justify-start gap-2"
             size="sm"
           >
@@ -256,8 +282,8 @@ export function usePaymentsFilters({
           </p>
           <ToggleGroup
             type="multiple"
-            value={appliedDraft.type}
-            onValueChange={(values) => handleTypeDraftChange(values as PaymentTypeFilter[])}
+            value={filtersState.type}
+            onValueChange={(values) => handleTypeChange(values as PaymentTypeFilter[])}
             className="flex flex-wrap justify-start gap-2"
             size="sm"
           >
@@ -283,7 +309,7 @@ export function usePaymentsFilters({
               onKeyDown={(event) => {
                 if (event.key === "Enter") {
                   event.preventDefault();
-                  handleApplyFilters();
+                  handleApplyAmountFilters();
                 }
               }}
               placeholder={t("payments.filters.amountMinPlaceholder")}
@@ -298,7 +324,7 @@ export function usePaymentsFilters({
               onKeyDown={(event) => {
                 if (event.key === "Enter") {
                   event.preventDefault();
-                  handleApplyFilters();
+                  handleApplyAmountFilters();
                 }
               }}
               placeholder={t("payments.filters.amountMaxPlaceholder")}
@@ -310,19 +336,21 @@ export function usePaymentsFilters({
     [
       amountMaxDraft,
       amountMinDraft,
-      appliedDraft.status,
-      appliedDraft.type,
+      filtersState.status,
+      filtersState.type,
       handleAmountMaxDraftChange,
       handleAmountMinDraftChange,
-      handleApplyFilters,
-      handleStatusDraftChange,
-      handleTypeDraftChange,
+      handleApplyAmountFilters,
+      handleStatusChange,
+      handleTypeChange,
       statusFilterOptions,
       t,
       toggleItemClasses,
       typeFilterOptions,
     ]
   );
+
+  const FILTER_CATEGORY_COUNT = 3;
 
   const filtersConfig: AdvancedDataTableFiltersConfig = useMemo(
     () => ({
@@ -331,16 +359,28 @@ export function usePaymentsFilters({
       content: filtersContent,
       activeCount: activeFilterCount,
       onReset: activeFilterCount ? handleResetFilters : undefined,
-      collapsedByDefault: true,
+      collapsedByDefault: FILTER_CATEGORY_COUNT > 4,
       footer: (
         <div className="flex w-full flex-col gap-2">
-          <Button type="button" size="sm" onClick={handleApplyFilters} disabled={!filtersDirty}>
+          <Button
+            type="button"
+            size="sm"
+            onClick={handleApplyAmountFilters}
+            disabled={!amountDirty}
+          >
             {t("payments.filters.applyButton")}
           </Button>
         </div>
       ),
     }),
-    [activeFilterCount, filtersContent, filtersDirty, handleApplyFilters, handleResetFilters, t]
+    [
+      activeFilterCount,
+      amountDirty,
+      filtersContent,
+      handleApplyAmountFilters,
+      handleResetFilters,
+      t,
+    ]
   );
 
   return {

@@ -20,6 +20,15 @@
       "statusLabel": "Status"
     },
     "resetFilters": "Reset filters",
+    "export": {
+      "button": "Export to Excel",
+      "successTitle": "Export ready",
+      "successDescription": "Your filtered leads have been downloaded.",
+      "errorTitle": "Export failed",
+      "errorDescription": "We couldn't generate the Excel file. Please try again.",
+      "noDataTitle": "Nothing to export",
+      "noDataDescription": "Adjust your filters or search to include at least one lead."
+    },
     "addLead": "Add Lead",
     "filtersTitle": "Filter leads",
     "filtersTriggerLabel": "Filters",
@@ -558,6 +567,15 @@
       "summaryActive": "{{count}} active filter",
       "summaryActive_plural": "{{count}} active filters",
       "summaryNone": "No filters applied"
+    },
+    "export": {
+      "button": "Export to Excel",
+      "successTitle": "Export ready",
+      "successDescription": "Your filtered projects have been downloaded.",
+      "errorTitle": "Export failed",
+      "errorDescription": "We couldn't generate the Excel file. Please try again.",
+      "noDataTitle": "Nothing to export",
+      "noDataDescription": "Adjust your filters or search to include at least one project."
     },
     "resetFilters": "Reset filters",
     "aria": {

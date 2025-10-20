@@ -361,9 +361,9 @@ export function AdvancedDataTable<T>({
       )}
     >
       {(title || description || actions || toolbar || showColumnManager || filters || onSearchChange) && (
-        <CardHeader className="space-y-1 px-4 py-2 sm:px-6">
-          {/* Title + primary actions on one row */}
-          <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+        <CardHeader className="space-y-2 px-4 py-2 sm:px-6">
+          {/* Title + controls */}
+          <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
             {(title || description) && (
               <div className="min-w-0">
                 {title && <CardTitle className="text-base font-semibold leading-tight">{title}</CardTitle>}
@@ -375,55 +375,54 @@ export function AdvancedDataTable<T>({
               </div>
             )}
 
-            {(filters || actions || showColumnManager) && (
-              <div className="flex flex-wrap items-center gap-2">
-                {filters && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={handleToggleFilters}
-                    className="flex items-center gap-2"
-                  >
-                    <Filter className="h-4 w-4" />
-                    <span className="whitespace-nowrap">{filterTriggerLabel}</span>
-                    <Badge variant="secondary" className="ml-1">
-                      {activeFilterCount}
-                    </Badge>
-                  </Button>
-                )}
-                {actions}
-                {showColumnManager && (
-                  <ColumnSettingsButton
-                    columns={columns.map<ColumnSettingsMeta>((column) => ({
-                      id: column.id,
-                      label:
-                        typeof column.label === "string"
-                          ? column.label
-                          : String(column.label),
-                      description:
-                        typeof column.description === "string"
-                          ? column.description
-                          : undefined,
-                      hideable: column.hideable !== false,
-                    }))}
-                    defaultPreferences={defaultPreferences}
-                    preferences={columnPreferences}
-                    onChange={handleColumnPreferencesChange}
-                  />
+            {(showHeaderSearch || filters || actions || showColumnManager) && (
+              <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-end lg:max-w-xl">
+                {showHeaderSearch && <div className="w-full sm:w-auto">{renderSearchInput()}</div>}
+                {(filters || actions || showColumnManager) && (
+                  <div className="flex flex-wrap items-center justify-end gap-2">
+                    {filters && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleToggleFilters}
+                        className="flex items-center gap-2"
+                      >
+                        <Filter className="h-4 w-4" />
+                        <span className="whitespace-nowrap">{filterTriggerLabel}</span>
+                        <Badge variant="secondary" className="ml-1">
+                          {activeFilterCount}
+                        </Badge>
+                      </Button>
+                    )}
+                    {actions}
+                    {showColumnManager && (
+                      <ColumnSettingsButton
+                        columns={columns.map<ColumnSettingsMeta>((column) => ({
+                          id: column.id,
+                          label:
+                            typeof column.label === "string"
+                              ? column.label
+                              : String(column.label),
+                          description:
+                            typeof column.description === "string"
+                              ? column.description
+                              : undefined,
+                          hideable: column.hideable !== false,
+                        }))}
+                        defaultPreferences={defaultPreferences}
+                        preferences={columnPreferences}
+                        onChange={handleColumnPreferencesChange}
+                      />
+                    )}
+                  </div>
                 )}
               </div>
             )}
           </div>
 
-          {/* Secondary controls: search + toolbar row (compact spacing) */}
-          {(onSearchChange || toolbar) && (
-            <div className="flex flex-col gap-1 lg:flex-row lg:items-center lg:justify-between">
-              <div className="flex flex-1 flex-col gap-2 sm:flex-row sm:items-center">
-                {showHeaderSearch && renderSearchInput()}
-                {toolbar}
-              </div>
-            </div>
+          {toolbar && (
+            <div className="flex flex-wrap items-center gap-2">{toolbar}</div>
           )}
           {(() => {
             const hasChips = Boolean(summary?.chips && summary.chips.length > 0);
@@ -607,7 +606,7 @@ export function AdvancedDataTable<T>({
                           const zebraClass =
                             zebra && index % 2 === 1
                               ? "bg-muted/40 dark:bg-muted/70"
-                              : "bg-background";
+                              : "bg-white dark:bg-background";
                           const userRowClass = rowClassName?.(row, index);
                           return (
                             <TableRow

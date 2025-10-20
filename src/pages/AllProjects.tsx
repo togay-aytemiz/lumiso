@@ -3,9 +3,11 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, LayoutGrid, List, Archive, ArrowUpDown, ArrowUp, ArrowDown, Settings } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Plus, LayoutGrid, List, Archive, ArrowUpDown, ArrowUp, ArrowDown, Settings, FileDown, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { writeFileXLSX, utils as XLSXUtils } from "xlsx/xlsx.mjs";
 import { EnhancedProjectDialog } from "@/components/EnhancedProjectDialog";
 import { ViewProjectDialog } from "@/components/ViewProjectDialog";
 import { ProjectSheetView } from "@/components/ProjectSheetView";
@@ -108,6 +110,7 @@ const AllProjects = () => {
   const [listPageSize, setListPageSize] = useState(25);
   const [archivedPage, setArchivedPage] = useState(1);
   const [archivedPageSize, setArchivedPageSize] = useState(25);
+  const [exporting, setExporting] = useState(false);
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { completeCurrentStep } = useOnboarding();
@@ -410,6 +413,130 @@ const AllProjects = () => {
     return { text, chips: archivedSummaryChips };
   }, [archivedActiveCount, archivedSummaryChips, filteredArchivedRows.length, sortedProjects.length, t]);
 
+  const handleExportProjects = useCallback(
+    async (mode: 'list' | 'archived') => {
+      if (exporting) return;
+
+      const source = mode === 'list' ? filteredListRows : filteredArchivedRows;
+      if (source.length === 0) {
+        toast({
+          title: t('projects.export.noDataTitle'),
+          description: t('projects.export.noDataDescription'),
+        });
+        return;
+      }
+
+      try {
+        setExporting(true);
+
+        const rows = source.map((project) => {
+          const servicesLabel = (project.services ?? [])
+            .map((service) => service.name)
+            .filter(Boolean)
+            .join(', ');
+
+          const baseRow: Record<string, string | number> = {
+            [tForms('projects.table_columns.project_name')]: project.name ?? '',
+            [tForms('projects.table_columns.client')]: project.lead?.name ?? '',
+            [tForms('projects.table_columns.project_type')]: project.project_type?.name ?? '',
+            [tForms('projects.table_columns.status')]: project.project_status?.name ?? '',
+            [tForms('projects.table_columns.services')]: servicesLabel,
+            [tForms('projects.table_columns.created')]: formatDate(project.created_at),
+          };
+
+          if (mode === 'list') {
+            return {
+              ...baseRow,
+              [tForms('projects.table_columns.sessions')]: project.session_count ?? 0,
+              [tForms('projects.table_columns.progress')]: `${project.completed_todo_count ?? 0}/${project.todo_count ?? 0}`,
+            };
+          }
+
+          return {
+            ...baseRow,
+            [tForms('projects.table_columns.paid')]: project.paid_amount ?? 0,
+            [tForms('projects.table_columns.remaining')]: project.remaining_amount ?? 0,
+            [tForms('projects.table_columns.last_update')]: project.updated_at
+              ? formatDate(project.updated_at)
+              : '',
+          };
+        });
+
+        const worksheet = XLSXUtils.json_to_sheet(rows);
+        const workbook = XLSXUtils.book_new();
+        XLSXUtils.book_append_sheet(
+          workbook,
+          worksheet,
+          mode === 'list' ? 'Projects' : 'Archived Projects'
+        );
+
+        const timestamp = format(new Date(), 'yyyy-MM-dd_HHmm');
+        const suffix = mode === 'list' ? 'list' : 'archived';
+        writeFileXLSX(workbook, `projects-${suffix}-${timestamp}.xlsx`);
+
+        toast({
+          title: t('projects.export.successTitle'),
+          description: t('projects.export.successDescription'),
+        });
+      } catch (error) {
+        console.error('Error exporting projects', error);
+        toast({
+          title: t('projects.export.errorTitle'),
+          description:
+            error instanceof Error
+              ? error.message
+              : t('projects.export.errorDescription'),
+          variant: 'destructive',
+        });
+      } finally {
+        setExporting(false);
+      }
+    },
+    [exporting, filteredArchivedRows, filteredListRows, t, tForms]
+  );
+
+  const listExportActions = useMemo(
+    () => (
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={() => handleExportProjects('list')}
+        disabled={exporting || loading || filteredListRows.length === 0}
+        className="flex items-center gap-2"
+      >
+        {exporting ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <FileDown className="h-4 w-4" />
+        )}
+        <span>{t('projects.export.button')}</span>
+      </Button>
+    ),
+    [exporting, filteredListRows.length, handleExportProjects, loading, t]
+  );
+
+  const archivedExportActions = useMemo(
+    () => (
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={() => handleExportProjects('archived')}
+        disabled={exporting || loading || filteredArchivedRows.length === 0}
+        className="flex items-center gap-2"
+      >
+        {exporting ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <FileDown className="h-4 w-4" />
+        )}
+        <span>{t('projects.export.button')}</span>
+      </Button>
+    ),
+    [exporting, filteredArchivedRows.length, handleExportProjects, loading, t]
+  );
+
   const fetchProjects = async () => {
     try {
       setProjectStatusesLoading(true);
@@ -641,22 +768,30 @@ const AllProjects = () => {
       return <span className="text-muted-foreground text-xs">-</span>;
     }
 
-    const displayServices = services.slice(0, 3);
-    const overflowCount = services.length - 3;
+    const serviceNames = services.map((service) => service.name).filter(Boolean);
+    const trigger = (
+      <Badge
+        variant="secondary"
+        className="cursor-default px-2.5 py-1 text-xs font-semibold"
+        aria-label={serviceNames.join(", ")}
+      >
+        {services.length}
+      </Badge>
+    );
+
+    if (serviceNames.length === 0) {
+      return trigger;
+    }
 
     return (
-      <div className="flex flex-wrap gap-1">
-        {displayServices.map((service) => (
-          <Badge key={service.id} variant="outline" className="text-xs">
-            {service.name}
-          </Badge>
-        ))}
-        {overflowCount > 0 && (
-          <Badge variant="secondary" className="text-xs">
-            +{overflowCount}
-          </Badge>
-        )}
-      </div>
+      <Tooltip>
+        <TooltipTrigger asChild>{trigger}</TooltipTrigger>
+        <TooltipContent className="max-w-xs space-y-1 p-3 text-xs leading-relaxed">
+          {services.map((service) => (
+            <div key={service.id}>{service.name}</div>
+          ))}
+        </TooltipContent>
+      </Tooltip>
     );
   };
 
@@ -1017,6 +1152,7 @@ const AllProjects = () => {
                 onSortChange={handleTableSortChange}
                 filters={listFiltersConfig}
                 columnCustomization={{ storageKey: 'projects.table.columns' }}
+                actions={listExportActions}
                 summary={listHeaderSummary}
                 pagination={{
                   page: listPage,
@@ -1121,6 +1257,7 @@ const AllProjects = () => {
                 onSortChange={handleTableSortChange}
                 columnCustomization={{ storageKey: 'projects.archived.table.columns' }}
                 filters={archivedFiltersConfig}
+                actions={archivedExportActions}
                 summary={archivedHeaderSummary}
                 pagination={{
                   page: archivedPage,

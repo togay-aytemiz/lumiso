@@ -20,6 +20,15 @@
       "statusLabel": "Durum"
     },
     "resetFilters": "Filtreleri sıfırla",
+    "export": {
+      "button": "Excel'e aktar",
+      "successTitle": "Dışa aktarma hazır",
+      "successDescription": "Filtrelenen kişiler indirildi.",
+      "errorTitle": "Dışa aktarma başarısız",
+      "errorDescription": "Excel dosyası oluşturulamadı. Lütfen tekrar deneyin.",
+      "noDataTitle": "Aktarılacak kayıt yok",
+      "noDataDescription": "En az bir kişi görmek için filtreleri veya aramayı güncelleyin."
+    },
     "addLead": "Kişi Ekle",
     "filtersTitle": "Kişileri filtrele",
     "filtersTriggerLabel": "Filtreler",
@@ -558,6 +567,15 @@
       "summaryActive": "{{count}} aktif filtre",
       "summaryActive_plural": "{{count}} aktif filtre",
       "summaryNone": "Filtre uygulanmadı"
+    },
+    "export": {
+      "button": "Excel'e aktar",
+      "successTitle": "Dışa aktarma hazır",
+      "successDescription": "Filtrelenen projeler indirildi.",
+      "errorTitle": "Dışa aktarma başarısız",
+      "errorDescription": "Excel dosyası oluşturulamadı. Lütfen tekrar deneyin.",
+      "noDataTitle": "Aktarılacak kayıt yok",
+      "noDataDescription": "En az bir proje görmek için filtreleri veya aramayı güncelleyin."
     },
     "resetFilters": "Filtreleri sıfırla",
     "aria": {

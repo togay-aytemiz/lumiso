@@ -35,7 +35,7 @@ import {
 import { useLeadsFilters, type CustomFieldFilterValue } from "@/pages/leads/hooks/useLeadsFilters";
 import { LEAD_TABLE_COLUMN_STORAGE_KEY } from "@/hooks/useLeadTableColumns";
 import type { LeadFieldDefinition } from "@/types/leadFields";
-import { formatDate } from "@/lib/utils";
+import { formatDate, getStartOfWeek } from "@/lib/utils";
 import { KpiCard } from "@/components/ui/kpi-card";
 import { getKpiIconPreset } from "@/components/ui/kpi-presets";
 
@@ -197,8 +197,8 @@ const AllLeadsNew = () => {
     return map;
   }, [fieldDefinitions]);
 
-  const totalIconPreset = useMemo(() => getKpiIconPreset("indigo"), []);
-  const conversionIconPreset = useMemo(() => getKpiIconPreset("violet"), []);
+  const totalIconPreset = useMemo(() => getKpiIconPreset("sky"), []);
+  const conversionIconPreset = useMemo(() => getKpiIconPreset("emerald"), []);
   const inactivityIconPreset = useMemo(() => getKpiIconPreset("amber"), []);
   const closedIconPreset = useMemo(() => getKpiIconPreset("rose"), []);
 
@@ -234,10 +234,14 @@ const AllLeadsNew = () => {
   };
 
   const leadKpiMetrics = useMemo(() => {
-    const now = Date.now();
+    const nowDate = new Date();
+    const now = nowDate.getTime();
     const dayInMs = 1000 * 60 * 60 * 24;
-    const last7Start = now - 7 * dayInMs;
-    const previous7Start = now - 14 * dayInMs;
+
+    // Locale-aware week boundaries for "this week" vs "last week"
+    const startOfThisWeek = getStartOfWeek(nowDate).getTime();
+    const startOfLastWeek = startOfThisWeek - 7 * dayInMs;
+
     const last30Start = now - 30 * dayInMs;
     const previous30Start = now - 60 * dayInMs;
     const inactiveThreshold = now - 14 * dayInMs;
@@ -277,9 +281,9 @@ const AllLeadsNew = () => {
     leads.forEach((lead) => {
       const createdMs = toMs(lead.created_at);
       if (createdMs != null) {
-        if (createdMs >= last7Start) {
+        if (createdMs >= startOfThisWeek) {
           newCurrent += 1;
-        } else if (createdMs >= previous7Start) {
+        } else if (createdMs >= startOfLastWeek && createdMs < startOfThisWeek) {
           newPrevious += 1;
         }
       }
@@ -994,11 +998,6 @@ const AllLeadsNew = () => {
       
       <div className="space-y-6 p-4 sm:p-6">
         <section className="space-y-4">
-          <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-            <h2 className="text-base font-semibold text-foreground">
-              {t('leads.kpis.sectionTitle')}
-            </h2>
-          </div>
           {leadsLoading ? (
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
               {Array.from({ length: 4 }).map((_, index) => (
@@ -1130,6 +1129,7 @@ const AllLeadsNew = () => {
             <TableLoadingSkeleton />
           ) : (
             <AdvancedDataTable
+              title={t('leads.tableTitle')}
               data={paginatedLeads}
               columns={advancedColumns}
               rowKey={(lead) => lead.id}

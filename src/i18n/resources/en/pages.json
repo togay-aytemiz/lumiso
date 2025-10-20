@@ -38,35 +38,36 @@
       "end": "End date"
     },
     "kpis": {
-      "sectionTitle": "Pipeline snapshot",
+      "sectionTitle": "",
       "infoLabel": "Show details about {{metric}}",
       "timeframes": {
-        "newLast7Days": "New leads · Last 7 days",
+        "newLast7Days": "New clients · This week",
         "recent30Days": "Last 30 days",
         "inactive14Days": "14+ days inactive"
       },
       "totalLeads": {
-        "title": "Total leads",
-        "tooltip": "Counts every lead in your workspace. The badge shows how many new leads were created in the last 7 days compared with the previous 7-day period.",
+        "title": "Total clients",
+        "tooltip": "Counts every client in your workspace. The badge shows how many new clients were added this week compared with the previous week.",
         "trendLabel": "{{count}} new this week",
-        "trendAria": "New leads changed by {{delta}} compared with the previous 7 days ({{current}} vs {{previous}})."
+        "trendAria": "New clients changed by {{delta}} compared with last week ({{current}} vs {{previous}})."
       },
       "conversionRate": {
         "title": "Conversion rate",
-        "tooltip": "Share of leads touched in the last 30 days that moved to a booked or completed status. Compared to the prior 30-day period.",
+        "tooltip": "Share of clients contacted in the last 30 days that moved to a booked or completed status. Compared to the prior 30-day period.",
         "trendAria": "Conversion rate changed by {{delta}} compared with the previous 30 days ({{current}} vs {{previous}})."
       },
       "noActivity": {
         "title": "No recent activity",
-        "tooltip": "Leads with no updates in the last 14 days, excluding those marked as completed or lost. Follow up to keep your pipeline healthy.",
-        "trendAria": "Inactive leads changed by {{delta}} compared with the previous week ({{current}} vs {{previous}})."
+        "tooltip": "Clients with no updates in the last 14 days, excluding those marked as completed or lost. Follow up to keep your pipeline healthy.",
+        "trendAria": "Inactive clients changed by {{delta}} compared with the previous week ({{current}} vs {{previous}})."
       },
       "lost": {
         "title": "Lost / closed",
-        "tooltip": "Leads moved into a final status such as completed or lost during the last 30 days. Useful for tracking closed outcomes.",
-        "trendAria": "Lost or closed leads changed by {{delta}} compared with the previous 30 days ({{current}} vs {{previous}})."
+        "tooltip": "Clients moved into a final status such as completed or lost during the last 30 days. Useful for tracking closed outcomes.",
+        "trendAria": "Lost or closed clients changed by {{delta}} compared with the previous 30 days ({{current}} vs {{previous}})."
       }
     },
+    "tableTitle": "Client Records",
     "tutorial": {
       "welcome": {
         "title": "Welcome to Lead Management",

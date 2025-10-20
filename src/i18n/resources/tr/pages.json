@@ -1215,6 +1215,49 @@
     "channels": {
       "noChannels": "Kanal yok"
     },
+    "health": {
+      "unableToLoad": "İş akışı sağlık verileri yüklenemedi",
+      "status": {
+        "title": "İş Akışı Sistem Sağlığı",
+        "description": "Genel sistem durumu ve performans metrikleri",
+        "labels": {
+          "healthy": "SAĞLIKLI",
+          "warning": "UYARI",
+          "critical": "KRİTİK"
+        }
+      },
+      "critical": {
+        "title": "⚠️ Kritik Sorunlar Tespit Edildi",
+        "stuckExecutions": "• {{count}} iş akışı yürütmesi takıldı",
+        "lowSuccessRate": "• Başarı oranı %80'in altında ({{rate}}%)"
+      },
+      "warning": {
+        "title": "⚠️ Performans Sorunları",
+        "improveSuccessRate": "• Başarı oranı iyileştirilebilir ({{rate}}%)",
+        "allPaused": "• Tüm iş akışları duraklatıldı"
+      },
+      "metrics": {
+        "totalWorkflows": "Toplam İş Akışı",
+        "totalSubtitle": "{{active}} aktif, {{paused}} duraklatıldı",
+        "successRate": "Başarı Oranı",
+        "successRateSubtitle": "Son 7 gün",
+        "recentExecutions": "Son Yürütmeler",
+        "recentExecutionsSubtitle": "Son 24 saat",
+        "averageExecutionTime": "Ort. Yürütme Süresi",
+        "averageExecutionTimeSubtitle": "Ortalama yanıt süresi",
+        "dailyTitle": "Günlük Yürütme Metrikleri",
+        "dailyDescription": "Son 7 güne ait iş akışı yürütme istatistikleri",
+        "dailyTotal": "{{count}} toplam yürütme",
+        "dailySuccess": "{{rate}}% başarı",
+        "dailyAverage": "{{time}}ms ort."
+      },
+      "actions": {
+        "refresh": "Metrikleri Yenile",
+        "cleanup": "Takılı Yürütmeleri Temizle",
+        "systemTitle": "Sistem İşlemleri",
+        "systemDescription": "Bakım ve sorun giderme araçları"
+      }
+    },
     "emptyState": {
       "noWorkflowsYet": "Henüz iş akışı yok",
       "createFirstMessage": "Müşteri iletişimlerinizi kolaylaştırmak için ilk otomatik iş akışınızı oluşturun.",
@@ -1318,6 +1361,13 @@
     },
     "error": {
       "loadingTemplates": "Şablonlar yüklenirken hata"
+    },
+    "errorBoundary": {
+      "title": "Şablon Sistemi Hatası",
+      "description": "Şablon sisteminde bir sorun oluştu. Bu durum genellikle veri tutarsızlığı veya ağ sorunları nedeniyle ortaya çıkar.",
+      "errorDetails": "Hata Ayrıntıları:",
+      "returnToTemplates": "Şablonlara Dön",
+      "showStackTrace": "Yığın İzini Göster (Geliştirme)"
     }
   },
   "templateBuilder": {

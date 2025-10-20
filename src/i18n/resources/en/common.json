@@ -33,7 +33,10 @@
     "archive": "Archive",
     "restore": "Restore",
     "add_project": "Add Project",
-    "remove": "Remove"
+    "remove": "Remove",
+    "copy": "Copy",
+    "tryAgain": "Try Again",
+    "reload": "Reload Page"
   },
   "labels": {
     "name": "Name",
@@ -141,6 +144,9 @@
     "hour": "Hour",
     "minutes": "Minutes"
   },
+  "abbreviations": {
+    "notAvailable": "N/A"
+  },
   "notProvided": "Not provided",
   "yes": "Yes",
   "no": "No",
@@ -153,6 +159,16 @@
     "emailError": "Could not copy email address",
     "phoneCopied": "Phone number copied to clipboard",
     "phoneError": "Could not copy phone number"
+  },
+  "errorBoundary": {
+    "title": "Something went wrong",
+    "description": "An unexpected error occurred. Please try refreshing the page.",
+    "unexpected": "Unexpected error",
+    "missingReference": "Missing reference: “{{reference}}” is not defined. Check your imports or variable declarations.",
+    "missingReferenceGeneric": "Missing reference detected. Ensure required variables or modules are defined.",
+    "stackTrace": "Stack trace",
+    "errorDetails": "Error details",
+    "entityDefaultTitle": "Failed to load data"
   },
   "tooltips": {
     "sendEmailTo": "Send email to {{value}}",

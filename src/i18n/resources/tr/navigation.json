@@ -62,6 +62,8 @@
     "dangerZone": "Tehlike Bölgesi"
   },
   "admin": {
+    "title": "Yönetim",
+    "sectionTitle": "Sistem Yönetimi",
     "localization": "Yerelleştirme",
     "users": "Kullanıcılar",
     "system": "Sistem"

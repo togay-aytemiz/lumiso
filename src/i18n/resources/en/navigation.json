@@ -62,6 +62,8 @@
     "dangerZone": "Danger Zone"
   },
   "admin": {
+    "title": "Administration",
+    "sectionTitle": "System Management",
     "localization": "Localization",
     "users": "Users",
     "system": "System"

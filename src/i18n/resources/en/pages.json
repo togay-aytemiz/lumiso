@@ -1215,6 +1215,49 @@
     "channels": {
       "noChannels": "No channels"
     },
+    "health": {
+      "unableToLoad": "Unable to load workflow health data",
+      "status": {
+        "title": "Workflow System Health",
+        "description": "Overall system status and performance metrics",
+        "labels": {
+          "healthy": "HEALTHY",
+          "warning": "WARNING",
+          "critical": "CRITICAL"
+        }
+      },
+      "critical": {
+        "title": "⚠️ Critical Issues Detected",
+        "stuckExecutions": "• {{count}} workflow execution(s) are stuck",
+        "lowSuccessRate": "• Success rate is below 80% ({{rate}}%)"
+      },
+      "warning": {
+        "title": "⚠️ Performance Issues",
+        "improveSuccessRate": "• Success rate could be improved ({{rate}}%)",
+        "allPaused": "• All workflows are paused"
+      },
+      "metrics": {
+        "totalWorkflows": "Total Workflows",
+        "totalSubtitle": "{{active}} active, {{paused}} paused",
+        "successRate": "Success Rate",
+        "successRateSubtitle": "Last 7 days",
+        "recentExecutions": "Recent Executions",
+        "recentExecutionsSubtitle": "Last 24 hours",
+        "averageExecutionTime": "Avg Execution Time",
+        "averageExecutionTimeSubtitle": "Average response time",
+        "dailyTitle": "Daily Execution Metrics",
+        "dailyDescription": "Workflow execution statistics for the last 7 days",
+        "dailyTotal": "{{count}} total executions",
+        "dailySuccess": "{{rate}}% success",
+        "dailyAverage": "{{time}}ms avg"
+      },
+      "actions": {
+        "refresh": "Refresh Metrics",
+        "cleanup": "Cleanup Stuck Executions",
+        "systemTitle": "System Actions",
+        "systemDescription": "Maintenance and troubleshooting tools"
+      }
+    },
     "emptyState": {
       "noWorkflowsYet": "No workflows yet",
       "createFirstMessage": "Create your first automated workflow to streamline your client communications.",
@@ -1318,6 +1361,13 @@
     },
     "error": {
       "loadingTemplates": "Error Loading Templates"
+    },
+    "errorBoundary": {
+      "title": "Template System Error",
+      "description": "Something went wrong with the template system. This usually happens due to data inconsistency or network issues.",
+      "errorDetails": "Error Details:",
+      "returnToTemplates": "Return to Templates",
+      "showStackTrace": "Show Stack Trace (Development)"
     }
   },
   "templateBuilder": {

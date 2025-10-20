@@ -4,6 +4,7 @@ import { useLeadFieldDefinitions } from "@/hooks/useLeadFieldDefinitions";
 import { useLeadFieldValues } from "@/hooks/useLeadFieldValues";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CustomFieldDisplay } from "@/components/fields/CustomFieldDisplay";
+import { useTranslation } from "react-i18next";
 
 interface LeadFieldValuesDisplayProps {
   leadId: string;
@@ -13,6 +14,7 @@ interface LeadFieldValuesDisplayProps {
 export function LeadFieldValuesDisplay({ leadId, className }: LeadFieldValuesDisplayProps) {
   const { fieldDefinitions, loading: fieldsLoading } = useLeadFieldDefinitions();
   const { fieldValues, loading: valuesLoading } = useLeadFieldValues(leadId);
+  const { t } = useTranslation("forms");
 
   const loading = fieldsLoading || valuesLoading;
 
@@ -20,7 +22,7 @@ export function LeadFieldValuesDisplay({ leadId, className }: LeadFieldValuesDis
     return (
       <Card className={className}>
         <CardHeader>
-          <CardTitle>Custom Fields</CardTitle>
+          <CardTitle>{t("customFields.title")}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
@@ -48,11 +50,11 @@ export function LeadFieldValuesDisplay({ leadId, className }: LeadFieldValuesDis
     return (
       <Card className={className}>
         <CardHeader>
-          <CardTitle>Custom Fields</CardTitle>
+          <CardTitle>{t("customFields.title")}</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">
-            No custom field data available for this lead.
+            {t("customFields.empty")}
           </p>
         </CardContent>
       </Card>
@@ -63,7 +65,7 @@ export function LeadFieldValuesDisplay({ leadId, className }: LeadFieldValuesDis
   return (
     <Card className={className}>
       <CardHeader>
-        <CardTitle>Custom Fields</CardTitle>
+        <CardTitle>{t("customFields.title")}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
@@ -78,12 +80,12 @@ export function LeadFieldValuesDisplay({ leadId, className }: LeadFieldValuesDis
                   </label>
                   {field.is_required && (
                     <Badge variant="secondary" className="text-xs">
-                      Required
+                      {t("customFields.badges.required")}
                     </Badge>
                   )}
                   {field.is_system && (
                     <Badge variant="secondary" className="text-xs">
-                      System
+                      {t("customFields.badges.system")}
                     </Badge>
                   )}
                 </div>

@@ -33,7 +33,10 @@
     "archive": "Arşivle",
     "restore": "Geri Yükle",
     "add_project": "Proje Ekle",
-    "remove": "Kaldır"
+    "remove": "Kaldır",
+    "copy": "Kopyala",
+    "tryAgain": "Tekrar Dene",
+    "reload": "Sayfayı Yenile"
   },
   "labels": {
     "name": "Ad",
@@ -141,6 +144,9 @@
     "hour": "Saat",
     "minutes": "Dakika"
   },
+  "abbreviations": {
+    "notAvailable": "Yok"
+  },
   "notProvided": "Bilgi yok",
   "yes": "Evet",
   "no": "Hayır",
@@ -153,6 +159,16 @@
     "emailError": "E-posta adresi kopyalanamadı",
     "phoneCopied": "Telefon numarası panoya kopyalandı",
     "phoneError": "Telefon numarası kopyalanamadı"
+  },
+  "errorBoundary": {
+    "title": "Bir sorun oluştu",
+    "description": "Beklenmeyen bir hata oluştu. Lütfen sayfayı yenilemeyi deneyin.",
+    "unexpected": "Beklenmeyen hata",
+    "missingReference": "Eksik referans: “{{reference}}” tanımlı değil. İçe aktarmalarınızı veya değişken tanımlarınızı kontrol edin.",
+    "missingReferenceGeneric": "Eksik referans tespit edildi. Gerekli değişken veya modüllerin tanımlı olduğundan emin olun.",
+    "stackTrace": "Yığın izi",
+    "errorDetails": "Hata ayrıntıları",
+    "entityDefaultTitle": "Veriler yüklenemedi"
   },
   "tooltips": {
     "sendEmailTo": "{{value}} adresine e-posta gönder",

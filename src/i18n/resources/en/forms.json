@@ -100,6 +100,14 @@
     "selectField": "Select {{field}}",
     "noFieldsAvailable": "No form fields available"
   },
+  "customFields": {
+    "title": "Custom Fields",
+    "empty": "No custom field data available for this lead.",
+    "badges": {
+      "required": "Required",
+      "system": "System"
+    }
+  },
   "leadDialog": {
     "addTitle": "Add New Lead",
     "addSubtitle": "Create a new lead with your configured fields.",

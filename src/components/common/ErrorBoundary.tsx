@@ -2,19 +2,22 @@ import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { withTranslation, WithTranslation, useTranslation } from 'react-i18next';
 
-interface Props {
+interface CommonErrorBoundaryProps {
   children: ReactNode;
   fallback?: ReactNode;
   onError?: (error: Error, errorInfo: ErrorInfo) => void;
 }
+
+type Props = CommonErrorBoundaryProps & WithTranslation<'common'>;
 
 interface State {
   hasError: boolean;
   error?: Error;
 }
 
-export class ErrorBoundary extends Component<Props, State> {
+class CommonErrorBoundaryComponent extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = { hasError: false };
@@ -45,16 +48,16 @@ export class ErrorBoundary extends Component<Props, State> {
             <div className="mx-auto mb-4 w-12 h-12 text-destructive">
               <AlertTriangle className="w-full h-full" />
             </div>
-            <CardTitle>Something went wrong</CardTitle>
+            <CardTitle>{this.props.t('errorBoundary.title')}</CardTitle>
             <CardDescription>
-              An unexpected error occurred. Please try refreshing the page.
+              {this.props.t('errorBoundary.description')}
             </CardDescription>
           </CardHeader>
           <CardContent className="text-center space-y-4">
             {process.env.NODE_ENV === 'development' && this.state.error && (
               <div className="text-left">
                 <details className="text-xs bg-muted p-2 rounded">
-                  <summary className="cursor-pointer font-medium">Error details</summary>
+                  <summary className="cursor-pointer font-medium">{this.props.t('errorBoundary.errorDetails')}</summary>
                   <pre className="mt-2 whitespace-pre-wrap">
                     {this.state.error.message}
                   </pre>
@@ -63,7 +66,7 @@ export class ErrorBoundary extends Component<Props, State> {
             )}
             <Button onClick={this.handleReset} className="flex items-center gap-2">
               <RefreshCw className="w-4 h-4" />
-              Try Again
+              {this.props.t('buttons.tryAgain')}
             </Button>
           </CardContent>
         </Card>
@@ -74,26 +77,29 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 }
 
-export function EntityErrorState({ 
-  error, 
+export function EntityErrorState({
+  error,
   onRetry,
-  title = "Failed to load data"
-}: { 
+  title
+}: {
   error?: string;
   onRetry?: () => void;
   title?: string;
 }) {
+  const { t } = useTranslation('common');
+  const resolvedTitle = title ?? t('errorBoundary.entityDefaultTitle');
+
   return (
     <Card className="max-w-md mx-auto">
       <CardHeader className="text-center">
         <div className="mx-auto mb-4 w-12 h-12 text-destructive">
           <AlertTriangle className="w-full h-full" />
         </div>
-        <CardTitle>{title}</CardTitle>
+        <CardTitle>{resolvedTitle}</CardTitle>
         {error && (
           <CardDescription className="text-left">
             <details>
-              <summary className="cursor-pointer">Error details</summary>
+              <summary className="cursor-pointer">{t('errorBoundary.errorDetails')}</summary>
               <p className="mt-2 text-sm font-mono bg-muted p-2 rounded">
                 {error}
               </p>
@@ -105,10 +111,14 @@ export function EntityErrorState({
         <CardContent className="text-center">
           <Button onClick={onRetry} className="flex items-center gap-2">
             <RefreshCw className="w-4 h-4" />
-            Try Again
+            {t('buttons.tryAgain')}
           </Button>
         </CardContent>
       )}
     </Card>
   );
 }
+
+const ErrorBoundary = withTranslation<'common'>('common')(CommonErrorBoundaryComponent);
+
+export { ErrorBoundary };

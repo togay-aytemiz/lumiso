@@ -100,6 +100,14 @@
     "selectField": "{{field}} seçin",
     "noFieldsAvailable": "Kullanılabilir form alanı yok"
   },
+  "customFields": {
+    "title": "Özel Alanlar",
+    "empty": "Bu kişi için özel alan verisi bulunmuyor.",
+    "badges": {
+      "required": "Gerekli",
+      "system": "Sistem"
+    }
+  },
   "leadDialog": {
     "addTitle": "Yeni Kişi Ekle",
     "addSubtitle": "Yapılandırdığınız alanlarla yeni bir kişi oluşturun.",

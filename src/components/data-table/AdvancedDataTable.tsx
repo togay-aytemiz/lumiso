@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useMemo, useState } from "react";
+import { ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import {
   Card,
   CardContent,
@@ -47,7 +47,7 @@ export interface AdvancedTableColumn<T> {
   label: ReactNode;
   description?: ReactNode;
   accessorKey?: keyof T | string;
-  accessor?: (row: T) => any;
+  accessor?: (row: T) => ReactNode;
   render?: (row: T) => ReactNode;
   sortable?: boolean;
   sortId?: string;
@@ -121,14 +121,19 @@ export interface AdvancedDataTableProps<T> {
   className?: string;
 }
 
-function getNestedValue(obj: any, path: string | undefined) {
-  if (!path) return undefined;
-  const keys = path.split(".");
-  let current = obj;
-  for (const key of keys) {
-    current = current?.[key];
+function getNestedValue(
+  obj: unknown,
+  path: string | undefined
+): unknown {
+  if (!path || obj === null || typeof obj !== "object") {
+    return undefined;
   }
-  return current;
+  return path.split(".").reduce<unknown>((current, key) => {
+    if (current !== null && typeof current === "object") {
+      return (current as Record<string, unknown>)[key];
+    }
+    return undefined;
+  }, obj);
 }
 
 export function AdvancedDataTable<T>({
@@ -187,6 +192,7 @@ export function AdvancedDataTable<T>({
     filters ? !filters.collapsedByDefault : false
   );
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const userToggledDesktopFiltersRef = useRef(false);
 
   const {
     searchInputValue,
@@ -201,11 +207,30 @@ export function AdvancedDataTable<T>({
     searchMinChars,
   });
 
+  const hasFiltersConfig = Boolean(filters);
+  const activeFiltersCount = Number(filters?.activeCount ?? 0);
+  const collapsedByDefault = Boolean(filters?.collapsedByDefault);
+
   useEffect(() => {
-    if (filters) {
-      setDesktopFiltersOpen((prev) => prev || !filters.collapsedByDefault);
+    if (!hasFiltersConfig) {
+      if (desktopFiltersOpen) {
+        setDesktopFiltersOpen(false);
+      }
+      userToggledDesktopFiltersRef.current = false;
+      return;
     }
-  }, [filters]);
+
+    if (userToggledDesktopFiltersRef.current) {
+      return;
+    }
+
+    if (activeFiltersCount > 0 && !desktopFiltersOpen) {
+      setDesktopFiltersOpen(true);
+      return;
+    }
+
+    setDesktopFiltersOpen((prev) => (collapsedByDefault ? false : prev || true));
+  }, [collapsedByDefault, activeFiltersCount, desktopFiltersOpen, hasFiltersConfig]);
 
   const handleColumnPreferencesChange = (next: ColumnPreference[]) => {
     setColumnPreferences(next);
@@ -260,10 +285,10 @@ export function AdvancedDataTable<T>({
     }
     if (column.accessorKey) {
       const value = getNestedValue(row, column.accessorKey as string);
-      return value == null || value === "" ? "—" : value;
+      return value == null || value === "" ? "—" : (value as ReactNode);
     }
-    const direct = (row as any)[column.id];
-    return direct == null || direct === "" ? "—" : direct;
+    const direct = (row as Record<string, unknown>)[column.id as string];
+    return direct == null || direct === "" ? "—" : (direct as ReactNode);
   };
 
   const showColumnManager =
@@ -272,11 +297,12 @@ export function AdvancedDataTable<T>({
 
   const handleToggleFilters = () => {
     if (!filters) return;
+    userToggledDesktopFiltersRef.current = true;
     if (isMobile) {
       setMobileFiltersOpen(true);
-    } else {
-      setDesktopFiltersOpen((prev) => !prev);
+      return;
     }
+    setDesktopFiltersOpen((prev) => !prev);
   };
 
   const activeFilterCount =
@@ -316,9 +342,14 @@ export function AdvancedDataTable<T>({
   );
 
   return (
-    <Card className={cn("border border-border/60 shadow-sm", className)}>
+    <Card
+      className={cn(
+        "border border-border/60 shadow-sm",
+        className
+      )}
+    >
       {(title || description || actions || toolbar || showColumnManager || filters || onSearchChange) && (
-        <CardHeader className="space-y-4">
+        <CardHeader className="space-y-4 px-4 py-4 sm:px-6">
           {(title || description) && (
             <div className="space-y-1">
               {title && <CardTitle className="text-base font-semibold">{title}</CardTitle>}
@@ -411,57 +442,60 @@ export function AdvancedDataTable<T>({
         </Sheet>
       )}
 
-      <CardContent className="px-0 pt-4 pb-0">
+      <CardContent className="px-0 pt-3 pb-0 sm:pt-4">
         {isLoading ? (
           loadingState || <TableLoadingSkeleton />
         ) : (
-          <div className="flex flex-col lg:flex-row">
-            {filters && !isMobile && (
-              <div
-                className={cn(
-                  "hidden flex-shrink-0 overflow-hidden transition-[max-width] duration-300 ease-in-out lg:block",
-                  desktopFiltersOpen ? "max-w-[18rem]" : "max-w-0"
-                )}
-              >
-                <aside
-                  className={cn(
-                    "flex h-full w-[18rem] flex-col border-b border-border/60 bg-muted/20 px-4 py-4 transition-all duration-300 ease-in-out lg:border-b-0 lg:border-r",
-                    desktopFiltersOpen
-                      ? "translate-x-0 opacity-100"
-                      : "-translate-x-4 opacity-0 pointer-events-none"
-                  )}
-                >
+      <div className="flex flex-col lg:flex-row">
+        {filters && !isMobile && (
+          <div
+            className={cn(
+              "hidden flex-shrink-0 transition-[max-width] duration-300 ease-in-out lg:block lg:pr-4",
+              desktopFiltersOpen ? "max-w-[18rem]" : "max-w-0"
+            )}
+          >
+            <aside
+              className={cn(
+                "flex h-full w-[18rem] flex-col border-b border-border/60 bg-muted/20 px-4 py-4 transition-all duration-300 ease-in-out lg:border-b-0",
+                desktopFiltersOpen
+                  ? "translate-x-0 opacity-100"
+                  : "-translate-x-4 opacity-0 pointer-events-none"
+              )}
+            >
                   <div className="mb-4 flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-foreground">{filterPanelTitle}</p>
-                      {hasActiveFilters && (
-                        <p className="text-xs text-muted-foreground">
-                          {t("table.activeFilters", { count: activeFilterCount })}
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {filters.onReset && hasActiveFilters && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 text-muted-foreground hover:text-foreground"
-                          onClick={filters.onReset}
-                        >
-                          {t("table.clearFilters")}
-                        </Button>
-                      )}
+                    <p className="text-sm font-medium text-foreground">{filterPanelTitle}</p>
+                    {hasActiveFilters && (
+                      <p className="text-xs text-muted-foreground">
+                        {t("table.activeFilters", { count: activeFilterCount })}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {filters.onReset && hasActiveFilters && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 text-muted-foreground hover:bg-primary/80 hover:text-primary-foreground"
+                        onClick={filters.onReset}
+                      >
+                        {t("table.clearFilters")}
+                      </Button>
+                    )}
                       <Button
                         type="button"
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                        onClick={() => setDesktopFiltersOpen(false)}
+                        className="h-8 w-8 text-muted-foreground hover:bg-primary/80 hover:text-primary-foreground"
+                        onClick={() => {
+                          userToggledDesktopFiltersRef.current = true;
+                          setDesktopFiltersOpen(false);
+                        }}
                       >
-                        <ChevronLeft className="h-4 w-4" />
-                      </Button>
-                    </div>
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                  </div>
                   </div>
                   <div className="space-y-4">
                     {filters.content}
@@ -471,7 +505,7 @@ export function AdvancedDataTable<T>({
               </div>
             )}
             <div className="flex-1">
-              <div className="rounded-md border border-border/60 bg-background">
+              <div className="rounded-md border border-border/60 bg-background overflow-hidden">
                 <DataTableContainer>
                   <Table className="min-w-full border-separate border-spacing-0 text-sm">
                     <TableHeader>

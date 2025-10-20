@@ -23,9 +23,8 @@ export function DataTableContainer({
         "data-table-container",
         className
       )}
-      style={{ maxWidth: '100vw' }}
     >
-      <div className="min-w-max">
+      <div className="min-w-full md:min-w-max">
         {children}
       </div>
     </div>

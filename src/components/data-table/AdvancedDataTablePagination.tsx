@@ -50,7 +50,7 @@ export function AdvancedDataTablePaginationFooter({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {(pagination.pageSizeOptions ?? [10, 25, 50, 100]).map((size) => (
+                {(pagination.pageSizeOptions ?? [25, 50, 100]).map((size) => (
                   <SelectItem key={size} value={String(size)}>
                     {size}
                   </SelectItem>
@@ -91,4 +91,3 @@ export function AdvancedDataTablePaginationFooter({
     </div>
   );
 }
-

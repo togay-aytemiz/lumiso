@@ -695,7 +695,6 @@ const Payments = () => {
           totalCount,
           onPageChange: setPage,
           onPageSizeChange: handlePageSizeChange,
-          pageSizeOptions: [10, 25, 50, 100],
         }}
         emptyState={<div className="text-muted-foreground">{emptyStateMessage}</div>}
         onRowClick={handleProjectOpen}

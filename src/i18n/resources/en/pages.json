@@ -6,7 +6,37 @@
     "allStatuses": "All Statuses",
     "noLeadsAllStatuses": "No leads found. Add your first lead to get started!",
     "noLeadsWithStatus": "No leads found with status \"{{status}}\".",
+    "noLeadsWithFilters": "No leads match your current filters.",
+    "noLeadsWithStatuses": "No leads found with statuses {{statuses}}.",
+    "tableSummaryEmpty": "No leads yet",
+    "tableSummaryTotal": "{{total}} leads",
+    "tableSummaryFiltered": "{{visible}} of {{total}} leads visible",
+    "tableNoActiveFilters": "No filters applied",
+    "tableActiveFilters": "{{count}} active filter",
+    "tableActiveFilters_plural": "{{count}} active filters",
+    "selectedStatusCount": "{{count}} statuses selected",
+    "noStatusesSelected": "All statuses",
+    "filterChip": {
+      "statusLabel": "Status"
+    },
+    "resetFilters": "Reset filters",
     "addLead": "Add Lead",
+    "filtersTitle": "Filter leads",
+    "filtersTriggerLabel": "Filters",
+    "customFieldsFilters": "Custom field filters",
+    "noOptionsConfigured": "No options configured for this field",
+    "checkboxFilter": {
+      "any": "Any",
+      "checked": "Selected",
+      "unchecked": "Not selected"
+    },
+    "textFilterPlaceholder": "Contains...",
+    "filtersPlaceholders": {
+      "min": "Minimum",
+      "max": "Maximum",
+      "start": "Start date",
+      "end": "End date"
+    },
     "tutorial": {
       "welcome": {
         "title": "Welcome to Lead Management",
@@ -61,8 +91,10 @@
       "errorCompletingTutorial": "Error completing tutorial:",
       "failedToSaveProgress": "Failed to save progress. Please try again.",
       "errorFetchingStatuses": "Error fetching lead statuses:",
-      "failedToLoadProjects": "Failed to load projects"
-    }
+      "failedToLoadProjects": "Failed to load projects",
+      "columnPreferencesError": "Failed to save column preferences. Please try again."
+    },
+    "multiSelectHint": "Select multiple options"
   },
   "leadDetail": {
     "defaultTitle": "Lead Details",
@@ -424,7 +456,7 @@
     "failedToLoadProjects": "Failed to load projects",
     "project_name": "Project Name",
     "client": "Client",
-    "project_type": "Project Type", 
+    "project_type": "Project Type",
     "status": "Status",
     "sessions": "Sessions",
     "todos": "Todos",
@@ -616,7 +648,7 @@
         "deleteLogoConfirm": "Are you sure you want to delete your logo? This action cannot be undone.",
         "deleteLogoButton": "Delete Logo",
         "brandColor": "Brand Color",
-        "brandColorHelp": "Choose your primary brand color for the interface",
+        "brandColorHelp": "Used in client-facing UI and outgoing messages. Must be a valid hex color (e.g., #1EB29F)",
         "company_name": "Company Name",
         "company_name_placeholder": "e.g., Sweet Dreams Photography",
         "company_name_help": "Your business name as it appears to clients",
@@ -633,9 +665,7 @@
         "logo_formats": "Supported: JPG, PNG, SVG (Max: 2MB)",
         "logo_preview_alt": "Current logo - click to enlarge",
         "logo_preview_tooltip": "Click to view full size",
-        "deleteLogoConfirm": "Are you sure you want to delete your logo? This action cannot be undone.",
-        "primaryBrandColor": "Primary Brand Color",
-        "brandColorHelp": "Used in client-facing UI and outgoing messages. Must be a valid hex color (e.g., #1EB29F)"
+        "primaryBrandColor": "Primary Brand Color"
       },
       "regional": {
         "title": "Regional Settings",
@@ -1207,10 +1237,61 @@
       "addBlock": "Add Block"
     },
     "preview": {
+      "title": "Live Preview",
+      "description": "See how your template looks across channels",
+      "desktop": "Desktop",
+      "mobile": "Mobile",
+      "testSend": "Test Send",
+      "sending": "Sending...",
+      "channels": {
+        "email": "Email",
+        "whatsapp": "WhatsApp",
+        "sms": "SMS",
+        "plain": "Plain"
+      },
+      "emailPreview": "Email Preview",
+      "subject": "Subject:",
+      "previewText": "Preview:",
+      "defaultSubject": "📸 Your photography session is confirmed!",
       "helloCustomer": "Hello {{name}}!",
       "excitedMessage": "We're excited to capture your special moments",
       "lookingForward": "Looking forward to your session!",
-      "addBlocks": "Add blocks to build your template"
+      "addBlocks": "Add blocks to build your template",
+      "toast": {
+        "errorTitle": "Error",
+        "noUserEmail": "User email not found. Please make sure you're logged in.",
+        "noBlocks": "No blocks to send. Add some blocks to your template first.",
+        "successTitle": "Success",
+        "testEmailSent": "Test email sent to {{email}}",
+        "sendFailed": "Failed to send test email. Please try again."
+      },
+      "mockData": {
+        "customerName": "Sarah Johnson",
+        "sessionDate": "March 15, 2024",
+        "sessionTime": "2:00 PM",
+        "sessionLocation": "Studio Downtown",
+        "businessName": "Radiant Photography",
+        "businessPhone": "(555) 123-4567"
+      },
+      "whatsapp": {
+        "online": "online"
+      },
+      "sms": {
+        "label": "SMS",
+        "now": "now",
+        "characters": "characters",
+        "message": "message",
+        "messages": "messages",
+        "longMessageWarning": "Long messages may be split"
+      },
+      "sessionDetails": {
+        "defaultLabel": "Session Details",
+        "date": "Date:",
+        "time": "Time:",
+        "location": "Location:",
+        "notes": "Notes:",
+        "defaultNote": "Please arrive 10 minutes early. Bring comfortable outfits!"
+      }
     },
     "blockTitles": {
       "text": "Text Block",
@@ -1371,63 +1452,6 @@
       "preheader": "Preheader:",
       "addSubject": "Click to add subject",
       "addPreheader": "Click to add preheader"
-    },
-    "preview": {
-      "title": "Live Preview",
-      "description": "See how your template looks across channels",
-      "desktop": "Desktop",
-      "mobile": "Mobile",
-      "testSend": "Test Send",
-      "sending": "Sending...",
-      "channels": {
-        "email": "Email",
-        "whatsapp": "WhatsApp",
-        "sms": "SMS",
-        "plain": "Plain"
-      },
-      "emailPreview": "Email Preview",
-      "subject": "Subject:",
-      "previewText": "Preview:",
-      "defaultSubject": "📸 Your photography session is confirmed!",
-      "helloCustomer": "Hello {{name}}!",
-      "excitedMessage": "We're excited to capture your special moments",
-      "lookingForward": "Looking forward to your session!",
-      "addBlocks": "Add blocks to build your template",
-      "toast": {
-        "errorTitle": "Error",
-        "noUserEmail": "User email not found. Please make sure you're logged in.",
-        "noBlocks": "No blocks to send. Add some blocks to your template first.",
-        "successTitle": "Success",
-        "testEmailSent": "Test email sent to {{email}}",
-        "sendFailed": "Failed to send test email. Please try again."
-      },
-      "mockData": {
-        "customerName": "Sarah Johnson",
-        "sessionDate": "March 15, 2024",
-        "sessionTime": "2:00 PM",
-        "sessionLocation": "Studio Downtown",
-        "businessName": "Radiant Photography",
-        "businessPhone": "(555) 123-4567"
-      },
-      "whatsapp": {
-        "online": "online"
-      },
-      "sms": {
-        "label": "SMS",
-        "now": "now",
-        "characters": "characters",
-        "message": "message",
-        "messages": "messages",
-        "longMessageWarning": "Long messages may be split"
-      },
-      "sessionDetails": {
-        "defaultLabel": "Session Details",
-        "date": "Date:",
-        "time": "Time:",
-        "location": "Location:",
-        "notes": "Notes:",
-        "defaultNote": "Please arrive 10 minutes early. Bring comfortable outfits!"
-      }
     },
     "warnings": {
       "tooLong": "{{count}}/60 characters (too long)",
@@ -1627,8 +1651,7 @@
         "exit_error": "Failed to exit guidance mode. Please try again.",
         "error_title": "Error"
       }
-    }
-    ,
+    },
     "users": {
       "title": "User Management",
       "subtitle": "Manage user accounts, roles, and permissions",

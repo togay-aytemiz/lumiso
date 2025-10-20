@@ -28,7 +28,7 @@ export default function Workflows() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "paused">("all");
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(25);
   const [sortState, setSortState] = useState<AdvancedDataTableSortState>({
     columnId: "name",
     direction: "asc",
@@ -486,7 +486,6 @@ export default function Workflows() {
             totalCount,
             onPageChange: setPage,
             onPageSizeChange: setPageSize,
-            pageSizeOptions: [10, 25, 50],
           }}
           emptyState={
             workflows.length === 0 ? (

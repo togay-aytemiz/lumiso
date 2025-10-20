@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { getUserOrganizationId } from '@/lib/organizationUtils';
 import { useToast } from '@/hooks/use-toast';
 
-interface LeadWithCustomFields {
+export interface LeadWithCustomFields {
   id: string;
   name: string;
   email: string;

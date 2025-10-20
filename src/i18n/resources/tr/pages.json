@@ -6,7 +6,37 @@
     "allStatuses": "Tüm Durumlar",
     "noLeadsAllStatuses": "Henüz kişi eklenmemiş. Başlamak için ilk kişinizi ekleyin!",
     "noLeadsWithStatus": "\"{{status}}\" durumunda kişi bulunamadı.",
+    "noLeadsWithFilters": "Mevcut filtrelerinizle eşleşen kişi bulunmuyor.",
+    "noLeadsWithStatuses": "\"{{statuses}}\" durumlarında kişi bulunamadı.",
+    "tableSummaryEmpty": "Henüz kişi bulunmuyor",
+    "tableSummaryTotal": "{{total}} kişi",
+    "tableSummaryFiltered": "{{total}} kişiden {{visible}} tanesi görüntüleniyor",
+    "tableNoActiveFilters": "Aktif filtre yok",
+    "tableActiveFilters": "{{count}} aktif filtre",
+    "tableActiveFilters_plural": "{{count}} aktif filtre",
+    "selectedStatusCount": "{{count}} durum seçildi",
+    "noStatusesSelected": "Tüm durumlar",
+    "filterChip": {
+      "statusLabel": "Durum"
+    },
+    "resetFilters": "Filtreleri sıfırla",
     "addLead": "Kişi Ekle",
+    "filtersTitle": "Kişileri filtrele",
+    "filtersTriggerLabel": "Filtreler",
+    "customFieldsFilters": "Özel alan filtreleri",
+    "noOptionsConfigured": "Bu alan için tanımlı seçenek yok",
+    "checkboxFilter": {
+      "any": "Tümü",
+      "checked": "Seçili",
+      "unchecked": "Seçili değil"
+    },
+    "textFilterPlaceholder": "İçerir...",
+    "filtersPlaceholders": {
+      "min": "En az",
+      "max": "En çok",
+      "start": "Başlangıç tarihi",
+      "end": "Bitiş tarihi"
+    },
     "tutorial": {
       "welcome": {
         "title": "Kişi Yönetimine Hoş Geldiniz",
@@ -61,8 +91,10 @@
       "errorCompletingTutorial": "Eğitimi tamamlarken hata:",
       "failedToSaveProgress": "İlerleme kaydedilemedi. Lütfen tekrar deneyin.",
       "errorFetchingStatuses": "Kişi durumları getirilirken hata:",
-      "failedToLoadProjects": "Projeler yüklenemedi"
-    }
+      "failedToLoadProjects": "Projeler yüklenemedi",
+      "columnPreferencesError": "Sütun tercihleri kaydedilemedi. Lütfen tekrar deneyin."
+    },
+    "multiSelectHint": "Birden fazla seçenek seçin"
   },
   "leadDetail": {
     "defaultTitle": "Kişi Detayları",
@@ -1206,10 +1238,61 @@
       "addBlock": "Blok Ekle"
     },
     "preview": {
-      "helloCustomer": "Merhaba {{name}}!",
+      "title": "Canlı Önizleme",
+      "description": "Şablonunuzun tüm kanallarda nasıl göründüğünü görün",
+      "desktop": "Masaüstü",
+      "mobile": "Mobil",
+      "testSend": "Test Gönder",
+      "sending": "Gönderiliyor...",
+      "channels": {
+        "email": "E posta",
+        "whatsapp": "WhatsApp",
+        "sms": "SMS",
+        "plain": "Düz Metin"
+      },
+      "emailPreview": "E posta Önizleme",
+      "subject": "Konu:",
+      "previewText": "Önizleme:",
+      "defaultSubject": "📸 Fotoğraf seansınız onaylandı",
+      "helloCustomer": "Merhaba {{name}}",
       "excitedMessage": "Özel anlarınızı ölümsüzleştirmek için sabırsızlanıyoruz",
-      "lookingForward": "Seansınız için sabırsızlanıyoruz!",
-      "addBlocks": "Şablonunuzu oluşturmak için bloklar ekleyin"
+      "lookingForward": "Seansınız için sabırsızlanıyoruz",
+      "addBlocks": "Şablonunuzu oluşturmak için bloklar ekleyin",
+      "toast": {
+        "errorTitle": "Hata",
+        "noUserEmail": "Kullanıcı e postası bulunamadı. Lütfen giriş yaptığınızdan emin olun.",
+        "noBlocks": "Gönderilecek blok yok. Önce şablonunuza bloklar ekleyin.",
+        "successTitle": "Başarılı",
+        "testEmailSent": "Test e postası {{email}} adresine gönderildi",
+        "sendFailed": "Test e postası gönderilemedi. Lütfen tekrar deneyin."
+      },
+      "mockData": {
+        "customerName": "Elif ve Mert",
+        "sessionDate": "15 Mart 2024",
+        "sessionTime": "14:00",
+        "sessionLocation": "Merkez Stüdyo",
+        "businessName": "Parlak Fotoğrafçılık",
+        "businessPhone": "555 123 4567"
+      },
+      "whatsapp": {
+        "online": "çevrimiçi"
+      },
+      "sms": {
+        "label": "SMS",
+        "now": "şimdi",
+        "characters": "karakter",
+        "message": "mesaj",
+        "messages": "mesaj",
+        "longMessageWarning": "Uzun mesajlar bölünebilir"
+      },
+      "sessionDetails": {
+        "defaultLabel": "Seans Detayları",
+        "date": "Tarih:",
+        "time": "Saat:",
+        "location": "Konum:",
+        "notes": "Notlar:",
+        "defaultNote": "Lütfen 10 dakika erken gelin. Rahat kıyafetler getirin."
+      }
     },
     "blockTitles": {
       "text": "Metin Bloğu",
@@ -1370,63 +1453,6 @@
       "preheader": "Ön Başlık:",
       "addSubject": "Konu eklemek için tıklayın",
       "addPreheader": "Ön başlık eklemek için tıklayın"
-    },
-    "preview": {
-      "title": "Canlı Önizleme",
-      "description": "Şablonunuzun tüm kanallarda nasıl göründüğünü görün",
-      "desktop": "Masaüstü",
-      "mobile": "Mobil",
-      "testSend": "Test Gönder",
-      "sending": "Gönderiliyor...",
-      "channels": {
-        "email": "E posta",
-        "whatsapp": "WhatsApp",
-        "sms": "SMS",
-        "plain": "Düz Metin"
-      },
-      "emailPreview": "E posta Önizleme",
-      "subject": "Konu:",
-      "previewText": "Önizleme:",
-      "defaultSubject": "📸 Fotoğraf seansınız onaylandı",
-      "helloCustomer": "Merhaba {{name}}",
-      "excitedMessage": "Özel anlarınızı ölümsüzleştirmek için sabırsızlanıyoruz",
-      "lookingForward": "Seansınız için sabırsızlanıyoruz",
-      "addBlocks": "Şablonunuzu oluşturmak için bloklar ekleyin",
-      "toast": {
-        "errorTitle": "Hata",
-        "noUserEmail": "Kullanıcı e postası bulunamadı. Lütfen giriş yaptığınızdan emin olun.",
-        "noBlocks": "Gönderilecek blok yok. Önce şablonunuza bloklar ekleyin.",
-        "successTitle": "Başarılı",
-        "testEmailSent": "Test e postası {{email}} adresine gönderildi",
-        "sendFailed": "Test e postası gönderilemedi. Lütfen tekrar deneyin."
-      },
-      "mockData": {
-        "customerName": "Elif ve Mert",
-        "sessionDate": "15 Mart 2024",
-        "sessionTime": "14:00",
-        "sessionLocation": "Merkez Stüdyo",
-        "businessName": "Parlak Fotoğrafçılık",
-        "businessPhone": "555 123 4567"
-      },
-      "whatsapp": {
-        "online": "çevrimiçi"
-      },
-      "sms": {
-        "label": "SMS",
-        "now": "şimdi",
-        "characters": "karakter",
-        "message": "mesaj",
-        "messages": "mesaj",
-        "longMessageWarning": "Uzun mesajlar bölünebilir"
-      },
-      "sessionDetails": {
-        "defaultLabel": "Seans Detayları",
-        "date": "Tarih:",
-        "time": "Saat:",
-        "location": "Konum:",
-        "notes": "Notlar:",
-        "defaultNote": "Lütfen 10 dakika erken gelin. Rahat kıyafetler getirin."
-      }
     },
     "warnings": {
       "tooLong": "{{count}}/60 karakter (çok uzun)",

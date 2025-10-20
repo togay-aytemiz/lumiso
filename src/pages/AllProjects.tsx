@@ -324,20 +324,22 @@ const AllProjects = () => {
         }
 
         if (f.progress !== 'any') {
-          const total = p.todo_count || 0;
-          const completed = p.completed_todo_count || 0;
-          const progress = total === 0 ? 0 : (completed / total) * 100;
+          const total = p.todo_count ?? 0;
+          const completed = p.completed_todo_count ?? 0;
 
-          if (f.progress === 'not_started' && progress !== 0) {
-            return false;
+          if (f.progress === 'not_started') {
+            // Show only projects with todos present but none completed (0/N where N>0)
+            if (!(total > 0 && completed === 0)) return false;
           }
 
-          if (f.progress === 'in_progress' && (progress === 0 || progress === 100)) {
-            return false;
+          if (f.progress === 'in_progress') {
+            // At least one completed but not all
+            if (!(total > 0 && completed > 0 && completed < total)) return false;
           }
 
-          if (f.progress === 'completed' && progress !== 100) {
-            return false;
+          if (f.progress === 'completed') {
+            // All todos completed; exclude 0/0 from completed
+            if (!(total > 0 && completed === total)) return false;
           }
         }
 

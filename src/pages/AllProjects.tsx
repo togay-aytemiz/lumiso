@@ -279,7 +279,6 @@ const AllProjects = () => {
     reset: resetArchivedFilters,
   } = useProjectsArchivedFilters({
     typeOptions: listFilterOptions.types,
-    serviceOptions: listFilterOptions.services,
   });
 
   const {
@@ -357,12 +356,6 @@ const AllProjects = () => {
       return rows.filter((p) => {
         if (f.types.length > 0 && (!p.project_type_id || !f.types.includes(p.project_type_id))) return false;
 
-        if (f.services.length > 0) {
-          const serviceIds = (p.services || []).map((s) => s.id);
-          const hasAny = f.services.some((id) => serviceIds.includes(id));
-          if (!hasAny) return false;
-        }
-
         const remaining = p.remaining_amount ?? 0;
 
         switch (f.balancePreset) {
@@ -405,6 +398,93 @@ const AllProjects = () => {
     const start = (archivedPage - 1) * archivedPageSize;
     return filteredArchivedRows.slice(start, start + archivedPageSize);
   }, [filteredArchivedRows, archivedPage, archivedPageSize]);
+
+  // Helpers moved above first usage to avoid TDZ errors
+  const handleQuickView = (project: Project) => {
+    setQuickViewProject(project);
+    setShowQuickView(true);
+  };
+
+  const handleLeadClick = (leadId: string) => {
+    navigate(`/leads/${leadId}`);
+  };
+
+  const getProgressBadge = (completed: number, total: number) => {
+    if (total === 0) return <span className="text-muted-foreground text-xs">0/0</span>;
+
+    const percentage = (completed / total) * 100;
+    const isComplete = percentage === 100;
+
+    return (
+      <Badge
+        variant={isComplete ? "default" : "secondary"}
+        className={`text-xs ${isComplete ? 'bg-green-600 text-white' : ''}`}
+      >
+        {completed}/{total}
+      </Badge>
+    );
+  };
+
+  const formatServicesList = useCallback(
+    (services: Array<{ id: string; name: string }> = []) =>
+      services
+        .map((service) => service?.name)
+        .filter((name): name is string => Boolean(name && name.trim().length > 0))
+        .join(", "),
+    []
+  );
+
+  const renderServicesChips = useCallback(
+    (services: Array<{ id: string; name: string }>) => {
+      if (!services || services.length === 0) {
+        return <span className="text-muted-foreground text-sm">-</span>;
+      }
+
+      const validServices = services.filter((service) => Boolean(service?.name));
+
+      if (validServices.length === 0) {
+        return <span className="text-sm font-semibold text-foreground">{services.length}</span>;
+      }
+
+      const label = formatServicesList(validServices);
+
+      return (
+        <HoverCard openDelay={120} closeDelay={100}>
+          <HoverCardTrigger asChild>
+            <span
+              className="cursor-help text-sm font-semibold text-foreground"
+              aria-label={label}
+            >
+              {services.length}
+            </span>
+          </HoverCardTrigger>
+          <HoverCardContent
+            side="top"
+            align="start"
+            sideOffset={8}
+            className="max-w-xs space-y-1 p-3 text-xs leading-relaxed"
+          >
+            {validServices.map((service) => (
+              <div key={service.id}>{service.name}</div>
+            ))}
+          </HoverCardContent>
+        </HoverCard>
+      );
+    },
+    [formatServicesList]
+  );
+
+  const formatCurrency = useCallback((amount: string | number | null) => {
+    const value = Number(amount || 0);
+    try {
+      return new Intl.NumberFormat("tr-TR", {
+        style: "currency",
+        currency: "TRY",
+      }).format(value);
+    } catch {
+      return `${value.toFixed(2)} TRY`;
+    }
+  }, []);
 
   const listTableColumns = useMemo<AdvancedTableColumn<Project>[]>(
     () => [
@@ -1014,11 +1094,6 @@ const AllProjects = () => {
     setShowQuickView(true);
   };
 
-  const handleQuickView = (project: Project) => {
-    setQuickViewProject(project);
-    setShowQuickView(true);
-  };
-
   const handleViewFullDetails = () => {
     if (quickViewProject) {
       navigate(`/projects/${quickViewProject.id}`);
@@ -1026,9 +1101,7 @@ const AllProjects = () => {
     }
   };
 
-  const handleLeadClick = (leadId: string) => {
-    navigate(`/leads/${leadId}`);
-  };
+  
 
   const handleSearchResult = (result: any) => {
     if (result.type === 'project') {
@@ -1038,82 +1111,7 @@ const AllProjects = () => {
     }
   };
 
-  const getProgressBadge = (completed: number, total: number) => {
-    if (total === 0) return <span className="text-muted-foreground text-xs">0/0</span>;
-    
-    const percentage = (completed / total) * 100;
-    const isComplete = percentage === 100;
-    
-    return (
-      <Badge 
-        variant={isComplete ? "default" : "secondary"}
-        className={`text-xs ${isComplete ? 'bg-green-600 text-white' : ''}`}
-      >
-        {completed}/{total}
-      </Badge>
-    );
-  };
 
-  const formatServicesList = useCallback(
-    (services: Array<{ id: string; name: string }> = []) =>
-      services
-        .map((service) => service?.name)
-        .filter((name): name is string => Boolean(name && name.trim().length > 0))
-        .join(", "),
-    []
-  );
-
-  const renderServicesChips = useCallback(
-    (services: Array<{ id: string; name: string }>) => {
-      if (!services || services.length === 0) {
-        return <span className="text-muted-foreground text-sm">-</span>;
-      }
-
-      const validServices = services.filter((service) => Boolean(service?.name));
-
-      if (validServices.length === 0) {
-        return <span className="text-sm font-semibold text-foreground">{services.length}</span>;
-      }
-
-      const label = formatServicesList(validServices);
-
-      return (
-        <HoverCard openDelay={120} closeDelay={100}>
-          <HoverCardTrigger asChild>
-            <span
-              className="cursor-help text-sm font-semibold text-foreground"
-              aria-label={label}
-            >
-              {services.length}
-            </span>
-          </HoverCardTrigger>
-          <HoverCardContent
-            side="top"
-            align="start"
-            sideOffset={8}
-            className="max-w-xs space-y-1 p-3 text-xs leading-relaxed"
-          >
-            {validServices.map((service) => (
-              <div key={service.id}>{service.name}</div>
-            ))}
-          </HoverCardContent>
-        </HoverCard>
-      );
-    },
-    [formatServicesList]
-  );
-
-  const formatCurrency = useCallback((amount: string | number | null) => {
-    const value = Number(amount || 0);
-    try {
-      return new Intl.NumberFormat("tr-TR", {
-        style: "currency",
-        currency: "TRY",
-      }).format(value);
-    } catch {
-      return `${value.toFixed(2)} TRY`;
-    }
-  }, []);
 
   const handleViewChange = (view: 'board' | 'list' | 'archived') => {
     setViewMode(view);

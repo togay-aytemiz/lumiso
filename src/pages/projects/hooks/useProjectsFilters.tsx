@@ -29,7 +29,6 @@ export type ProjectsListFiltersState = {
 
 export type ProjectsArchivedFiltersState = {
   types: string[];
-  services: string[];
   balancePreset: BalancePreset;
   balanceMin: number | null;
   balanceMax: number | null;
@@ -50,7 +49,6 @@ interface UseProjectsListFiltersOptions {
 
 interface UseProjectsArchivedFiltersOptions {
   typeOptions: Option[];
-  serviceOptions: Option[];
   initialState?: ProjectsArchivedFiltersState;
   onStateChange?: (next: ProjectsArchivedFiltersState) => void;
 }
@@ -81,7 +79,6 @@ const defaultListState: ProjectsListFiltersState = {
 
 const defaultArchivedState: ProjectsArchivedFiltersState = {
   types: [],
-  services: [],
   balancePreset: "any",
   balanceMin: null,
   balanceMax: null,
@@ -95,7 +92,7 @@ const LIST_FILTER_CATEGORY_KEYS = [
   "services",
 ] as const;
 
-const ARCHIVED_FILTER_CATEGORY_KEYS = ["types", "services", "balance"] as const;
+const ARCHIVED_FILTER_CATEGORY_KEYS = ["types", "balance"] as const;
 
 const LIST_FILTER_DEFAULT_EXPANDED_SECTIONS: string[] | undefined =
   LIST_FILTER_CATEGORY_KEYS.length < 4
@@ -450,7 +447,6 @@ export function useProjectsListFilters({
 
 export function useProjectsArchivedFilters({
   typeOptions,
-  serviceOptions,
   initialState = defaultArchivedState,
   onStateChange,
 }: UseProjectsArchivedFiltersOptions): UseProjectsArchivedFiltersResult {
@@ -462,9 +458,8 @@ export function useProjectsArchivedFilters({
     setState((prev) => ({
       ...prev,
       types: sanitizeSelections(prev.types, typeOptions),
-      services: sanitizeSelections(prev.services, serviceOptions),
     }));
-  }, [serviceOptions, typeOptions]);
+  }, [typeOptions]);
 
   useEffect(() => {
     onStateChange?.(state);
@@ -478,13 +473,6 @@ export function useProjectsArchivedFilters({
     setState((prev) => ({
       ...prev,
       types: toggleInArray(prev.types, value, checked),
-    }));
-  }, []);
-
-  const handleServicesToggle = useCallback((value: string, checked: boolean) => {
-    setState((prev) => ({
-      ...prev,
-      services: toggleInArray(prev.services, value, checked),
     }));
   }, []);
 
@@ -504,7 +492,6 @@ export function useProjectsArchivedFilters({
   const activeCount = useMemo(() => {
     const counters = [
       state.types.length > 0,
-      state.services.length > 0,
       state.balancePreset !== "any",
       state.balanceMin !== null,
       state.balanceMax !== null,
@@ -532,17 +519,6 @@ export function useProjectsArchivedFilters({
       chips.push({
         id: "types",
         label: renderLabel(t("projects.filters.typesHeading"), names),
-      });
-    }
-
-    if (state.services.length > 0) {
-      const names = serviceOptions
-        .filter((option) => state.services.includes(option.id))
-        .map((option) => option.name)
-        .join(", ");
-      chips.push({
-        id: "services",
-        label: renderLabel(t("projects.filters.servicesHeading"), names),
       });
     }
 
@@ -574,11 +550,9 @@ export function useProjectsArchivedFilters({
 
     return chips;
   }, [
-    serviceOptions,
     state.balanceMax,
     state.balanceMin,
     state.balancePreset,
-    state.services,
     state.types,
     t,
     typeOptions,
@@ -607,33 +581,6 @@ export function useProjectsArchivedFilters({
                       checked={state.types.includes(option.id)}
                       onCheckedChange={(checked) =>
                         handleTypeToggle(option.id, Boolean(checked))
-                      }
-                    />
-                    <span>{option.name}</span>
-                  </label>
-                ))}
-              </div>
-            ) : (
-              <p className="text-xs italic text-muted-foreground">
-                {t("projects.filters.noOptions")}
-              </p>
-            )}
-          </AccordionContent>
-        </AccordionItem>
-
-        <AccordionItem value="services" className="border-b border-border/40">
-          <AccordionTrigger className="text-sm font-semibold text-foreground">
-            {t("projects.filters.servicesHeading")}
-          </AccordionTrigger>
-          <AccordionContent className="overflow-visible">
-            {serviceOptions.length > 0 ? (
-              <div className="space-y-2 rounded-md border border-border/40 p-3">
-                {serviceOptions.map((option) => (
-                  <label key={option.id} className="flex items-center gap-2 text-sm">
-                    <Checkbox
-                      checked={state.services.includes(option.id)}
-                      onCheckedChange={(checked) =>
-                        handleServicesToggle(option.id, Boolean(checked))
                       }
                     />
                     <span>{option.name}</span>
@@ -691,13 +638,10 @@ export function useProjectsArchivedFilters({
   }, [
     handleBalanceInputChange,
     handleBalancePresetChange,
-    handleServicesToggle,
     handleTypeToggle,
-    serviceOptions,
     state.balanceMax,
     state.balanceMin,
     state.balancePreset,
-    state.services,
     state.types,
     t,
     typeOptions,

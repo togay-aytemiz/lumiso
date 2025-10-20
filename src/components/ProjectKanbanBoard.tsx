@@ -22,6 +22,7 @@ interface ProjectKanbanBoardProps {
   onProjectsChange: () => void;
   onProjectUpdate?: (project: ProjectListItem) => void;
   onQuickView?: (project: ProjectListItem) => void;
+  isLoading?: boolean;
 }
 
 const GAP = 1000;
@@ -81,7 +82,8 @@ const ProjectKanbanBoard = ({
   projectStatuses,
   onProjectsChange,
   onProjectUpdate,
-  onQuickView
+  onQuickView,
+  isLoading
 }: ProjectKanbanBoardProps) => {
   const { t } = useTranslation('forms');
   const toast = useI18nToast();
@@ -357,7 +359,7 @@ const ProjectKanbanBoard = ({
     );
   };
 
-  if (loading) return <KanbanLoadingSkeleton />;
+  if (loading || isLoading) return <KanbanLoadingSkeleton />;
 
   return (
     <>

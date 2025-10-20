@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
+import { startTimer, logInfo } from "@/lib/debug";
 import type {
   ProjectsArchivedFiltersState,
   ProjectsListFiltersState,
@@ -304,8 +305,16 @@ export function useProjectsData({
       const pageSize = Math.max(range.to - range.from + 1, 1);
       const page = Math.floor(range.from / pageSize) + 1;
       const filtersPayload = range.filters ?? (scope === "archived" ? archivedFilterPayload : listFilterPayload);
+      const t = startTimer('Projects.fetchPage', {
+        scope,
+        page,
+        pageSize,
+        sortField,
+        sortDirection,
+      });
 
       const fetchViaRpc = async () => {
+        const tRpc = startTimer('Projects.rpc.projects_filter_page');
         const { data, error } = await supabase.rpc("projects_filter_page", {
           org: organizationId,
           p_page: page,
@@ -315,10 +324,15 @@ export function useProjectsData({
           p_scope: scope,
           p_filters: filtersPayload,
         });
-        if (error) throw error;
+        if (error) {
+          tRpc.end({ error: String(error?.message || error) });
+          throw error;
+        }
         const rows = (data as any[]) ?? [];
         const total = rows.length ? Number(rows[0].total_count ?? 0) : 0;
         const projects = rows.map(mapRowToProject);
+        tRpc.end({ rows: rows.length, total });
+        t.end({ rows: projects.length, total });
         return { projects, count: range.includeCount ? total : projects.length };
       };
 
@@ -474,8 +488,12 @@ export function useProjectsData({
       try {
         return await fetchViaRpc();
       } catch (error) {
-        console.warn("projects_filter_page RPC failed, falling back to manual queries", error);
-        return fetchViaFallback();
+        logInfo("Projects.rpc.fallback", { reason: (error as any)?.message || String(error) });
+        const tFb = startTimer('Projects.fallback.query');
+        const res = await fetchViaFallback();
+        tFb.end({ rows: res.projects.length, count: res.count });
+        t.end({ rows: res.projects.length, total: res.count });
+        return res;
       }
     },
     [
@@ -497,6 +515,7 @@ export function useProjectsData({
       const pageSize = listPageSize || DEFAULT_PAGE_SIZE;
       const from = (listPage - 1) * pageSize;
       const to = from + pageSize - 1;
+      const t = startTimer('Projects.listLoad', { page: listPage, pageSize });
       const { projects, count } = await fetchProjectsData("active", {
         from,
         to,
@@ -504,6 +523,7 @@ export function useProjectsData({
       });
       setListProjects(projects);
       setListTotalCount(count);
+      t.end({ rows: projects.length, total: count });
     } finally {
       setListLoading(false);
       if (first) {
@@ -519,6 +539,7 @@ export function useProjectsData({
       const pageSize = archivedPageSize || DEFAULT_PAGE_SIZE;
       const from = (archivedPage - 1) * pageSize;
       const to = from + pageSize - 1;
+      const t = startTimer('Projects.archivedLoad', { page: archivedPage, pageSize });
       const { projects, count } = await fetchProjectsData("archived", {
         from,
         to,
@@ -526,6 +547,7 @@ export function useProjectsData({
       });
       setArchivedProjects(projects);
       setArchivedTotalCount(count);
+      t.end({ rows: projects.length, total: count });
     } finally {
       setArchivedLoading(false);
     }

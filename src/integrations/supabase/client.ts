@@ -15,3 +15,37 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     autoRefreshToken: true,
   }
 });
+
+// Lightweight cache wrapper to reduce repetitive auth.getUser network calls
+// Many components call getUser during mount; cache the result briefly to avoid floods.
+try {
+  // @ts-expect-error augment runtime method
+  const originalGetUser = supabase.auth.getUser.bind(supabase.auth);
+  let cachedUser: any = null;
+  let cachedAt = 0;
+  let inflight: Promise<any> | null = null;
+  const TTL = 30_000; // 30 seconds
+
+  // @ts-expect-error override runtime method
+  supabase.auth.getUser = async () => {
+    const now = Date.now();
+    if (cachedUser && now - cachedAt < TTL) {
+      return { data: { user: cachedUser }, error: null };
+    }
+    if (inflight) {
+      return inflight;
+    }
+    inflight = originalGetUser().then((res: any) => {
+      cachedUser = res?.data?.user ?? null;
+      cachedAt = Date.now();
+      inflight = null;
+      return res;
+    }).catch((err: any) => {
+      inflight = null;
+      return { data: { user: null }, error: err };
+    });
+    return inflight;
+  };
+} catch {
+  // no-op: if override fails, fall back to default behavior
+}

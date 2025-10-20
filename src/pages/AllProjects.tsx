@@ -39,6 +39,7 @@ import {
   type ProjectSortField,
 } from "@/pages/projects/hooks/useProjectsData";
 import type { ProjectListItem, ProjectStatusSummary } from "@/pages/projects/types";
+import { startTimer } from "@/lib/debug";
 
 const AllProjects = () => {
   const [boardProjects, setBoardProjects] = useState<ProjectListItem[]>([]);
@@ -55,6 +56,7 @@ const AllProjects = () => {
   const [archivedPage, setArchivedPage] = useState(1);
   const [archivedPageSize, setArchivedPageSize] = useState(25);
   const [exporting, setExporting] = useState(false);
+  const [boardLoading, setBoardLoading] = useState(false);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { completeCurrentStep } = useOnboarding();
@@ -763,6 +765,8 @@ const AllProjects = () => {
 
   const loadBoardProjects = useCallback(async () => {
     try {
+      setBoardLoading(true);
+      const t = startTimer('Projects.boardLoad');
       const INITIAL_CHUNK = 200;
       const { projects, count } = await fetchProjectsData('active', {
         from: 0,
@@ -770,6 +774,7 @@ const AllProjects = () => {
         includeCount: true,
       });
       const collected = [...projects];
+      let chunks = 1;
       for (let from = collected.length; from < count; from += INITIAL_CHUNK) {
         const to = Math.min(from + INITIAL_CHUNK - 1, count - 1);
         const { projects: chunk } = await fetchProjectsData('active', {
@@ -778,8 +783,10 @@ const AllProjects = () => {
           includeCount: false,
         });
         collected.push(...chunk);
+        chunks += 1;
       }
       setBoardProjects(collected);
+      t.end({ total: collected.length, chunks });
     } catch (error) {
       console.error('Failed to load board projects', error);
       toast({
@@ -787,6 +794,8 @@ const AllProjects = () => {
         description: t('pages:projects.failedToLoadProjects'),
         variant: 'destructive',
       });
+    } finally {
+      setBoardLoading(false);
     }
   }, [fetchProjectsData, t, toast]);
 
@@ -1045,6 +1054,7 @@ const AllProjects = () => {
             onProjectsChange={refreshAll}
             onProjectUpdate={handleProjectUpdate}
             onQuickView={handleQuickView}
+            isLoading={boardLoading}
           />
         ) : (
           <div className="h-full overflow-y-auto p-4 sm:p-6">

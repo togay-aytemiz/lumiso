@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getUserOrganizationId } from "@/lib/organizationUtils";
+import { DEV, startTimer, logInfo } from "@/lib/debug";
 import type { LeadWithCustomFields } from "@/hooks/useLeadsWithCustomFields";
 import type { CustomFieldFilterValue } from "@/pages/leads/hooks/useLeadsFilters";
 
@@ -195,11 +196,23 @@ export function useLeadsData({
   const fetchLeadsData = useCallback(async ({ from, to, includeCount = false }: { from: number; to: number; includeCount?: boolean }) => {
     const organizationId = await getUserOrganizationId();
     if (!organizationId) throw new Error('No active organization found');
+    const page = Math.floor(from / Math.max(to - from + 1, 1)) + 1;
+    const size = to - from + 1;
+    const t = startTimer('Leads.fetchPage', {
+      page,
+      size,
+      includeCount,
+      sortField,
+      sortDirection,
+      statusIdsCount: statusIds?.length ?? 0,
+      customFieldFilterKeys: Object.keys(customFieldFilters || {}).length,
+    });
     try {
+      const tRpc = startTimer('Leads.rpc.leads_filter_page');
       const { data, error } = await supabase.rpc('leads_filter_page', {
         org: organizationId,
-        p_page: Math.floor(from / Math.max(to - from + 1, 1)) + 1,
-        p_size: to - from + 1,
+        p_page: page,
+        p_size: size,
         p_sort_field: sortField,
         p_sort_dir: sortDirection,
         p_status_ids: (statusIds && statusIds.length ? statusIds : null),
@@ -208,6 +221,7 @@ export function useLeadsData({
       if (error) throw error;
       const rows = (data as any[]) ?? [];
       const total = rows.length ? Number(rows[0].total_count) : 0;
+      tRpc.end({ rows: rows.length, total });
       let leads: LeadWithCustomFields[] = rows.map((r) => ({
         id: r.id,
         name: r.name,
@@ -225,6 +239,7 @@ export function useLeadsData({
       if (leads.length) {
         const leadIds = leads.map((l) => l.id);
         // Try typed view first for better performance
+        const tCF = startTimer('Leads.customFields.pageFetch');
         const { data: cfTyped, error: cfTypedErr } = await supabase
           .from('lead_field_values_typed')
           .select('lead_id, field_key, value')
@@ -250,12 +265,16 @@ export function useLeadsData({
           }
           leads = leads.map((l) => ({ ...l, custom_fields: byLead[l.id] || {} }));
         }
+        tCF.end({ leadIds: leadIds.length, values: cfRows?.length ?? 0 });
       }
+      t.end({ leads: leads.length, total });
       return { leads, count: includeCount ? total : leads.length };
     } catch (e) {
+      logInfo('Leads.rpc.fallback', { reason: (e as any)?.message || String(e) });
       // Fallback to previous set-based approach (still server-side) if RPC unavailable
       const matched = await resolveLeadIdsForCustomFilters(organizationId);
       if (matched && matched.size === 0) return { leads: [], count: 0 };
+      const tFallback = startTimer('Leads.fallback.query');
       let base = supabase
         .from('leads')
         .select(`id, name, email, phone, status, status_id, updated_at, created_at, lead_statuses ( id, name, color, is_system_final )`, { count: includeCount ? 'exact' : undefined })
@@ -274,6 +293,7 @@ export function useLeadsData({
       if (leads.length) {
         const leadIds = leads.map((l) => l.id);
         try {
+          const tCF2 = startTimer('Leads.fallback.customFields.pageFetch');
           const { data: cfTyped, error: cfTypedErr } = await supabase
             .from('lead_field_values_typed')
             .select('lead_id, field_key, value')
@@ -299,10 +319,13 @@ export function useLeadsData({
             }
             leads = leads.map((l) => ({ ...l, custom_fields: byLead[l.id] || {} }));
           }
+          tCF2.end({ leadIds: leadIds.length });
         } catch {
           // ignore
         }
       }
+      tFallback.end({ leads: leads.length, count });
+      t.end({ leads: leads.length, total: count });
       return { leads, count };
     }
   }, [customFieldFilters, resolveLeadIdsForCustomFilters, sortDirection, sortField, statusIds]);
@@ -312,6 +335,7 @@ export function useLeadsData({
     try {
       if (first) setInitialLoading(true);
       setTableLoading(true);
+      const t = startTimer('Leads.pageLoad', { page, pageSize });
       const organizationId = await getUserOrganizationId();
       if (!organizationId) throw new Error('No active organization found');
       const from = (page - 1) * pageSize;
@@ -333,15 +357,18 @@ export function useLeadsData({
       if (statusIds && statusIds.length) {
         metricsQuery = metricsQuery.in("status_id", statusIds);
       }
+      const tMetrics = startTimer('Leads.metrics.window60d');
       const metricsResult = await metricsQuery;
       if (metricsResult.error) throw metricsResult.error;
       setMetricsLeads((metricsResult.data as any[]) ?? []);
+      tMetrics.end({ metrics: metricsResult.data?.length ?? 0 });
     } finally {
       setTableLoading(false);
       if (first) {
         setInitialLoading(false);
         firstLoadRef.current = false;
       }
+      t.end({ totalCount, leads: pageLeads.length });
     }
   }, [fetchLeadsData, page, pageSize, statusIds]);
 

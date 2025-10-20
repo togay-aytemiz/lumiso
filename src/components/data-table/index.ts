@@ -4,6 +4,7 @@ export type {
   AdvancedDataTablePagination,
   AdvancedDataTableSortState,
   SortDirection,
+  AdvancedDataTableFiltersConfig,
 } from "./AdvancedDataTable";
 
 export { AdvancedDataTable } from "./AdvancedDataTable";

@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
+import { Check } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import type { AdvancedDataTableFiltersConfig } from "@/components/data-table";
@@ -298,37 +299,50 @@ export function usePaymentsFilters({
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             {t("payments.filters.amountHeading")}
           </p>
-          <div className="grid gap-2 sm:grid-cols-2">
-            <Input
-              type="number"
-              inputMode="decimal"
-              step="0.01"
-              min="0"
-              value={amountMinDraft}
-              onChange={(event) => handleAmountMinDraftChange(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  event.preventDefault();
-                  handleApplyAmountFilters();
-                }
-              }}
+          <div className="flex items-center gap-2">
+            <div className="grid flex-1 gap-2 sm:grid-cols-2">
+              <Input
+                type="number"
+                inputMode="decimal"
+                step="0.01"
+                min="0"
+                value={amountMinDraft}
+                onChange={(event) => handleAmountMinDraftChange(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    handleApplyAmountFilters();
+                  }
+                }}
               placeholder={t("payments.filters.amountMinPlaceholder")}
-            />
-            <Input
-              type="number"
-              inputMode="decimal"
-              step="0.01"
-              min="0"
-              value={amountMaxDraft}
-              onChange={(event) => handleAmountMaxDraftChange(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  event.preventDefault();
-                  handleApplyAmountFilters();
-                }
-              }}
+              className="h-9 rounded-full"
+              />
+              <Input
+                type="number"
+                inputMode="decimal"
+                step="0.01"
+                min="0"
+                value={amountMaxDraft}
+                onChange={(event) => handleAmountMaxDraftChange(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    handleApplyAmountFilters();
+                  }
+                }}
               placeholder={t("payments.filters.amountMaxPlaceholder")}
-            />
+              className="h-9 rounded-full"
+              />
+            </div>
+            <Button
+              type="button"
+              size="icon"
+              className="h-9 w-9 shrink-0"
+              onClick={handleApplyAmountFilters}
+              disabled={!amountDirty}
+            >
+              <Check className="h-4 w-4" />
+            </Button>
           </div>
         </div>
       </div>
@@ -360,27 +374,8 @@ export function usePaymentsFilters({
       activeCount: activeFilterCount,
       onReset: activeFilterCount ? handleResetFilters : undefined,
       collapsedByDefault: FILTER_CATEGORY_COUNT > 4,
-      footer: (
-        <div className="flex w-full flex-col gap-2">
-          <Button
-            type="button"
-            size="sm"
-            onClick={handleApplyAmountFilters}
-            disabled={!amountDirty}
-          >
-            {t("payments.filters.applyButton")}
-          </Button>
-        </div>
-      ),
     }),
-    [
-      activeFilterCount,
-      amountDirty,
-      filtersContent,
-      handleApplyAmountFilters,
-      handleResetFilters,
-      t,
-    ]
+    [activeFilterCount, filtersContent, handleResetFilters, t]
   );
 
   return {

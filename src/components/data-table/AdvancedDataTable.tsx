@@ -91,7 +91,7 @@ export interface ColumnCustomizationOptions {
   defaultState?: ColumnPreference[];
 }
 
-interface AdvancedDataTableFiltersConfig {
+export interface AdvancedDataTableFiltersConfig {
   content: ReactNode;
   title?: ReactNode;
   triggerLabel?: ReactNode;
@@ -225,24 +225,24 @@ export function AdvancedDataTable<T>({
 
   useEffect(() => {
     if (!hasFiltersConfig) {
-      if (desktopFiltersOpen) {
-        setDesktopFiltersOpen(false);
-      }
+      if (desktopFiltersOpen) setDesktopFiltersOpen(false);
       userToggledDesktopFiltersRef.current = false;
       return;
     }
 
-    if (userToggledDesktopFiltersRef.current) {
-      return;
-    }
+    if (userToggledDesktopFiltersRef.current) return;
 
+    let nextOpen = desktopFiltersOpen;
     if (activeFiltersCount > 0 && !desktopFiltersOpen) {
-      setDesktopFiltersOpen(true);
-      return;
+      nextOpen = true;
+    } else {
+      nextOpen = collapsedByDefault ? false : desktopFiltersOpen || true;
     }
 
-    setDesktopFiltersOpen((prev) => (collapsedByDefault ? false : prev || true));
-  }, [collapsedByDefault, activeFiltersCount, desktopFiltersOpen, hasFiltersConfig]);
+    if (nextOpen !== desktopFiltersOpen) {
+      setDesktopFiltersOpen(nextOpen);
+    }
+  }, [collapsedByDefault, activeFiltersCount, hasFiltersConfig, desktopFiltersOpen]);
 
   const handleColumnPreferencesChange = (next: ColumnPreference[]) => {
     setColumnPreferences(next);
@@ -332,7 +332,7 @@ export function AdvancedDataTable<T>({
         onChange={(event) => handleSearchInputChange(event.target.value)}
         placeholder={searchPlaceholder ?? t("table.searchPlaceholder")}
         className={cn(
-          "pl-9 pr-3",
+          "pl-9 pr-3 h-8 rounded-full",
           (searchLoading || canClearSearch) && "pr-10"
         )}
         aria-label={searchPlaceholder ?? t("table.searchPlaceholder")}
@@ -361,12 +361,16 @@ export function AdvancedDataTable<T>({
       )}
     >
       {(title || description || actions || toolbar || showColumnManager || filters || onSearchChange) && (
-        <CardHeader className="space-y-2 px-4 py-2 sm:px-6">
+        <CardHeader className="space-y-1 px-4 py-1 sm:px-6">
           {/* Title + controls */}
-          <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
+          <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
             {(title || description) && (
-              <div className="min-w-0">
-                {title && <CardTitle className="text-base font-semibold leading-tight">{title}</CardTitle>}
+              <div className="min-w-0 flex-1">
+                {title && (
+                  <CardTitle className="text-base font-semibold leading-tight whitespace-nowrap">
+                    {title}
+                  </CardTitle>
+                )}
                 {description && (
                   <CardDescription className="text-muted-foreground">
                     {description}
@@ -376,7 +380,7 @@ export function AdvancedDataTable<T>({
             )}
 
             {(showHeaderSearch || filters || actions || showColumnManager) && (
-              <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-end lg:max-w-xl">
+              <div className="flex w-full sm:w-auto flex-col gap-2 sm:flex-row sm:items-center sm:justify-end sm:flex-shrink-0">
                 {showHeaderSearch && <div className="w-full sm:w-auto">{renderSearchInput()}</div>}
                 {(filters || actions || showColumnManager) && (
                   <div className="flex flex-wrap items-center justify-end gap-2">
@@ -502,7 +506,7 @@ export function AdvancedDataTable<T>({
         </Sheet>
       )}
 
-      <CardContent className="px-4 md:px-6 pt-1 pb-0">
+      <CardContent className="px-4 md:px-6 pt-0 pb-0">
         {isLoading ? (
           loadingState || <TableLoadingSkeleton />
         ) : (

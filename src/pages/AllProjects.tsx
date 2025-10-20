@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { Plus, LayoutGrid, List, Archive, ArrowUpDown, ArrowUp, ArrowDown, Settings, FileDown, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -784,14 +784,16 @@ const AllProjects = () => {
     }
 
     return (
-      <Tooltip>
-        <TooltipTrigger asChild>{trigger}</TooltipTrigger>
-        <TooltipContent className="max-w-xs space-y-1 p-3 text-xs leading-relaxed">
-          {services.map((service) => (
-            <div key={service.id}>{service.name}</div>
-          ))}
-        </TooltipContent>
-      </Tooltip>
+      <TooltipProvider delayDuration={150}>
+        <Tooltip>
+          <TooltipTrigger asChild>{trigger}</TooltipTrigger>
+          <TooltipContent className="max-w-xs space-y-1 p-3 text-xs leading-relaxed" side="top" align="start">
+            {services.map((service) => (
+              <div key={service.id}>{service.name}</div>
+            ))}
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     );
   };
 

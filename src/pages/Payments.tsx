@@ -44,7 +44,6 @@ import {
   AdvancedDataTable,
   type AdvancedDataTableSortState,
 } from "@/components/data-table";
-import { TableSearchInput } from "@/components/data-table/TableSearchInput";
 import { PAGE_SIZE, SEARCH_MIN_CHARS } from "@/pages/payments/constants";
 import {
   DateFilterType,
@@ -91,7 +90,6 @@ const Payments = () => {
     filtersConfig,
     searchValue,
     onSearchChange,
-    onSearchClear,
     activeFilterCount,
   } = usePaymentsFilters({
     onStateChange: () => {
@@ -210,6 +208,39 @@ const Payments = () => {
     }
   }, [totalCount, page, pageSize]);
 
+  // Project row open/close handlers (define before columns so columns can reference them)
+  const handleProjectSheetOpenChange = useCallback((open: boolean) => {
+    if (sheetCloseTimeoutRef.current) {
+      window.clearTimeout(sheetCloseTimeoutRef.current);
+      sheetCloseTimeoutRef.current = null;
+    }
+    setProjectSheetOpen(open);
+    if (!open) {
+      sheetCloseTimeoutRef.current = window.setTimeout(() => {
+        setSelectedProject(null);
+        sheetCloseTimeoutRef.current = null;
+      }, 300);
+    }
+  }, []);
+
+  const handleProjectOpen = useCallback(
+    (payment: Payment) => {
+      if (!payment.project_id || !payment.projects) {
+        return;
+      }
+      setSelectedProject(payment.projects);
+      handleProjectSheetOpenChange(true);
+    },
+    [handleProjectSheetOpenChange]
+  );
+
+  // Columns are needed for export mapping; define before handleExport
+  const tableColumns = usePaymentsTableColumns({
+    onProjectSelect: handleProjectOpen,
+    onNavigateToLead: (leadId) => navigate(`/leads/${leadId}`),
+    formatAmount: (value) => formatCurrency(value),
+  });
+
   const handleExport = useCallback(async () => {
     if (exporting) return;
 
@@ -239,23 +270,84 @@ const Payments = () => {
         return;
       }
 
-      const rows = exportPayments.map((payment) => ({
-        [t("payments.table.date")]: formatDate(payment.date_paid || payment.created_at),
-        [t("payments.table.project")]: payment.projects?.name ?? "",
-        [t("payments.table.lead")]: payment.projects?.leads?.name ?? "",
-        [t("payments.table.amount")]: Number(payment.amount),
-        [t("payments.table.status")]:
-          (payment.status || "").toLowerCase() === "paid"
-            ? t("payments.status.paid")
-            : t("payments.status.due"),
-        [t("payments.table.type")]:
-          payment.type === "base_price"
-            ? t("payments.type.base")
-            : payment.type === "extra"
-              ? t("payments.type.extra")
-              : t("payments.type.manual"),
-        [t("payments.table.description")]: payment.description?.trim() ?? "",
-      }));
+      // Build export columns based on current column preferences/order
+      type ColumnPreference = { id: string; visible: boolean; order: number };
+      let prefs: ColumnPreference[] | null = null;
+      if (typeof window !== "undefined") {
+        try {
+          const raw = window.localStorage.getItem("payments.table.columns");
+          if (raw) prefs = JSON.parse(raw) as ColumnPreference[];
+        } catch {}
+      }
+      // Fallback to DB-stored preferences if local is missing
+      if (!prefs) {
+        try {
+          const { data: user } = await supabase.auth.getUser();
+          const userId = user.user?.id;
+          if (userId) {
+            const { data } = await supabase
+              .from("user_column_preferences")
+              .select("column_config")
+              .eq("user_id", userId)
+              .eq("table_name", "payments")
+              .maybeSingle();
+            if (data?.column_config) {
+              prefs = data.column_config as ColumnPreference[];
+            }
+          }
+        } catch {}
+      }
+
+      const visibleOrderedColumns = [...tableColumns]
+        .map((col, idx) => {
+          const pref = prefs?.find((p) => p.id === col.id);
+          const hideable = col.hideable !== false; // non-hideable must always be visible
+          const visible = hideable ? pref?.visible ?? true : true;
+          const order = pref?.order ?? idx;
+          return { col, visible, order };
+        })
+        .filter((entry) => entry.visible)
+        .sort((a, b) => a.order - b.order)
+        .map((entry) => entry.col);
+
+      const valueForColumn = (payment: Payment, columnId: string) => {
+        switch (columnId) {
+          case "date_paid":
+            return formatDate(payment.date_paid || payment.created_at);
+          case "project":
+            return payment.projects?.name ?? "";
+          case "lead":
+            return payment.projects?.leads?.name ?? "";
+          case "amount":
+            return Number(payment.amount);
+          case "description":
+            return payment.description?.trim() ?? "";
+          case "status": {
+            const isPaid = (payment.status || "").toLowerCase() === "paid";
+            return isPaid ? t("payments.status.paid") : t("payments.status.due");
+          }
+          case "type":
+            return payment.type === "base_price"
+              ? t("payments.type.base")
+              : payment.type === "extra"
+                ? t("payments.type.extra")
+                : t("payments.type.manual");
+          default:
+            return (payment as any)[columnId] ?? "";
+        }
+      };
+
+      const columnLabels = visibleOrderedColumns.map((c) =>
+        typeof c.label === "string" ? c.label : String(c.label)
+      );
+
+      const rows = exportPayments.map((payment) => {
+        const obj: Record<string, any> = {};
+        visibleOrderedColumns.forEach((col, index) => {
+          obj[columnLabels[index]] = valueForColumn(payment, col.id);
+        });
+        return obj;
+      });
 
       const worksheet = XLSXUtils.json_to_sheet(rows);
       const workbook = XLSXUtils.book_new();
@@ -281,6 +373,7 @@ const Payments = () => {
     exporting,
     fetchPaymentsData,
     paginatedPayments.length,
+    tableColumns,
     t,
     totalCount,
   ]);
@@ -555,50 +648,84 @@ const Payments = () => {
     [exporting, handleExport, hasAnyResults, tableLoading, t]
   );
 
-  const tableToolbar = useMemo(
-    () => (
-      <TableSearchInput
-        value={searchValue}
-        onChange={onSearchChange}
-        onClear={onSearchClear}
-        placeholder={t("payments.searchPlaceholder")}
-        loading={tableLoading}
-        clearAriaLabel={t("payments.filters.searchClear")}
-        className="w-full sm:max-w-xs lg:max-w-sm"
-      />
-    ),
-    [onSearchChange, onSearchClear, searchValue, tableLoading, t]
-  );
+  // Use AdvancedDataTable's built-in header search instead of toolbar
 
   const emptyStateMessage =
     hasSearchTerm || activeFilterCount > 0
       ? t("payments.emptyState.noPaymentsWithFilters")
       : t("payments.emptyState.noPaymentsForPeriod");
 
-  const handleProjectSheetOpenChange = useCallback((open: boolean) => {
-    if (sheetCloseTimeoutRef.current) {
-      window.clearTimeout(sheetCloseTimeoutRef.current);
-      sheetCloseTimeoutRef.current = null;
+  // Build filter summary chips similar to leads/projects
+  const filterSummaryChips = useMemo(() => {
+    const chips: { id: string; label: React.ReactNode }[] = [];
+    if (filtersState.status.length) {
+      const label =
+        filtersState.status[0] === "paid"
+          ? t("payments.status.paid")
+          : t("payments.status.due");
+      chips.push({
+        id: `status-${filtersState.status.join("-")}`,
+        label: (
+          <span>
+            <span className="text-xs uppercase tracking-wide text-muted-foreground mr-1">
+              {t("payments.filters.statusHeading")}:
+            </span>
+            {filtersState.status.length > 1 ? `${t("payments.status.paid")}, ${t("payments.status.due")}` : label}
+          </span>
+        ),
+      });
     }
-    setProjectSheetOpen(open);
-    if (!open) {
-      sheetCloseTimeoutRef.current = window.setTimeout(() => {
-        setSelectedProject(null);
-        sheetCloseTimeoutRef.current = null;
-      }, 300);
-    }
-  }, []);
 
-  const handleProjectOpen = useCallback(
-    (payment: Payment) => {
-      if (!payment.project_id || !payment.projects) {
-        return;
-      }
-      setSelectedProject(payment.projects);
-      handleProjectSheetOpenChange(true);
-    },
-    [handleProjectSheetOpenChange]
-  );
+    if (filtersState.type.length) {
+      const map: Record<string, string> = {
+        base_price: t("payments.type.base"),
+        extra: t("payments.type.extra"),
+        manual: t("payments.type.manual"),
+      } as any;
+      const typeLabel = filtersState.type.map((v) => map[v]).join(", ");
+      chips.push({
+        id: `type-${filtersState.type.join("-")}`,
+        label: (
+          <span>
+            <span className="text-xs uppercase tracking-wide text-muted-foreground mr-1">
+              {t("payments.filters.typeHeading")}:
+            </span>
+            {typeLabel}
+          </span>
+        ),
+      });
+    }
+
+    if (filtersState.amountMin != null) {
+      chips.push({
+        id: "amount-min",
+        label: (
+          <span>
+            <span className="text-xs uppercase tracking-wide text-muted-foreground mr-1">
+              {t("payments.filters.amountHeading")}:
+            </span>
+            {`${t("payments.filters.amountMinPlaceholder")}: ${formatCurrency(filtersState.amountMin)}`}
+          </span>
+        ),
+      });
+    }
+    if (filtersState.amountMax != null) {
+      chips.push({
+        id: "amount-max",
+        label: (
+          <span>
+            <span className="text-xs uppercase tracking-wide text-muted-foreground mr-1">
+              {t("payments.filters.amountHeading")}:
+            </span>
+            {`${t("payments.filters.amountMaxPlaceholder")}: ${formatCurrency(filtersState.amountMax)}`}
+          </span>
+        ),
+      });
+    }
+    return chips;
+  }, [filtersState.amountMax, filtersState.amountMin, filtersState.status, filtersState.type, t]);
+
+  // (moved up above columns)
 
   const handleViewFullDetails = useCallback(() => {
     if (!selectedProject) return;
@@ -606,11 +733,7 @@ const Payments = () => {
     handleProjectSheetOpenChange(false);
   }, [handleProjectSheetOpenChange, navigate, selectedProject]);
 
-  const tableColumns = usePaymentsTableColumns({
-    onProjectSelect: handleProjectOpen,
-    onNavigateToLead: (leadId) => navigate(`/leads/${leadId}`),
-    formatAmount: (value) => formatCurrency(value),
-  });
+  // tableColumns defined above (before handleExport)
 
   const sortStateForTable = useMemo<AdvancedDataTableSortState>(
     () => ({ columnId: sortField, direction: sortDirection }),
@@ -685,11 +808,16 @@ const Payments = () => {
         data={paginatedPayments}
         columns={tableColumns}
         filters={filtersConfig}
-        toolbar={tableToolbar}
-        summary={{ text: undefined }}
+        toolbar={undefined}
+        summary={{ text: undefined, chips: filterSummaryChips }}
         actions={exportActions}
         sortState={sortStateForTable}
         onSortChange={handleTableSortChange}
+        searchValue={searchValue}
+        onSearchChange={onSearchChange}
+        searchPlaceholder={t("payments.searchPlaceholder")}
+        searchLoading={tableLoading}
+        searchMinChars={SEARCH_MIN_CHARS}
         pagination={{
           page,
           pageSize,

@@ -122,13 +122,25 @@ export function useLeadTableColumns(options: LeadTableColumnsOptions = {}) {
         if (fieldsError) throw fieldsError;
         setFieldDefinitions((fields || []) as LeadFieldDefinition[]);
 
-        // Fetch user column preferences (safely handle multiple rows)
+        const { data: auth } = await supabase.auth.getUser();
+        const userId = auth.user?.id;
+
+        // If we don't have an authenticated user, fall back to defaults
+        if (!userId) {
+          const defaultPrefs = generateDefaultColumnPreferences(
+            (fields || []) as LeadFieldDefinition[]
+          );
+          setColumnPreferences(defaultPrefs);
+          setLoading(false);
+          return;
+        }
+
+        // Fetch user column preferences (safely handle legacy rows)
         const { data: prefs, error: prefsError } = await supabase
           .from("user_column_preferences")
           .select("column_config, updated_at")
+          .eq("user_id", userId)
           .eq("table_name", "leads")
-          .order("updated_at", { ascending: false })
-          .limit(1)
           .maybeSingle();
 
         if (prefsError && prefsError.code !== "PGRST116") {
@@ -191,11 +203,11 @@ export function useLeadTableColumns(options: LeadTableColumnsOptions = {}) {
               sanitized.some((p, i) => p.key !== rawPrefs[i]?.key);
             if (changed) {
               try {
-                const { data: user } = await supabase.auth.getUser();
-                if (user.user?.id) {
+                const { data: authUser } = await supabase.auth.getUser();
+                if (authUser.user?.id) {
                   await supabase.from("user_column_preferences").upsert(
                     {
-                      user_id: user.user.id,
+                      user_id: authUser.user.id,
                       table_name: "leads",
                       column_config: sanitized,
                     },
@@ -652,8 +664,6 @@ export function useLeadTableColumns(options: LeadTableColumnsOptions = {}) {
   // Save column preferences
   const saveColumnPreferences = async (newPreferences: ColumnConfig[]) => {
     try {
-      console.log("Saving column preferences:", newPreferences);
-
       // Deduplicate preferences by key (keep first occurrence)
       const seen = new Set<string>();
       const deduplicatedPreferences = newPreferences.filter((pref) => {
@@ -686,7 +696,6 @@ export function useLeadTableColumns(options: LeadTableColumnsOptions = {}) {
         throw error;
       }
 
-      console.log("Successfully saved preferences, updating state");
       setColumnPreferences(deduplicatedPreferences);
     } catch (error) {
       console.error("Error saving column preferences:", error);

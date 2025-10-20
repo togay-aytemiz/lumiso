@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { ColumnPreference } from "./ColumnSettingsButton";
 import type {
   AdvancedTableColumn,
@@ -35,19 +35,27 @@ export function useColumnPreferences<T>(
     [columns, options?.defaultState]
   );
 
-  const [columnPreferences, setColumnPreferences] = useState<ColumnPreference[]>(() => {
-    if (options?.storageKey && typeof window !== "undefined") {
-      try {
-        const stored = window.localStorage.getItem(options.storageKey);
-        if (stored) {
-          const parsed = JSON.parse(stored) as ColumnPreference[];
-          if (Array.isArray(parsed) && parsed.length) {
-            return parsed;
-          }
+  const hydratedFromStorageRef = useRef(false);
+
+  let storedPreferences: ColumnPreference[] | null = null;
+  if (!hydratedFromStorageRef.current && options?.storageKey && typeof window !== "undefined") {
+    try {
+      const stored = window.localStorage.getItem(options.storageKey);
+      if (stored) {
+        const parsed = JSON.parse(stored) as ColumnPreference[];
+        if (Array.isArray(parsed) && parsed.length) {
+          storedPreferences = parsed;
         }
-      } catch (error) {
-        console.warn("Failed to read column preferences from storage", error);
       }
+    } catch (error) {
+      console.warn("Failed to read column preferences from storage", error);
+    }
+  }
+
+  const [columnPreferences, setColumnPreferences] = useState<ColumnPreference[]>(() => {
+    if (storedPreferences) {
+      hydratedFromStorageRef.current = true;
+      return storedPreferences;
     }
     return defaultPreferences;
   });
@@ -69,6 +77,17 @@ export function useColumnPreferences<T>(
       return next;
     });
   }, [columns]);
+
+  useEffect(() => {
+    if (hydratedFromStorageRef.current) {
+      return;
+    }
+    if (!options?.defaultState || options.defaultState.length === 0) {
+      return;
+    }
+    setColumnPreferences(initializePreferences(columns, options.defaultState));
+    hydratedFromStorageRef.current = true;
+  }, [columns, options?.defaultState]);
 
   useEffect(() => {
     if (!options?.storageKey || typeof window === "undefined") {

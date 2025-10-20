@@ -361,9 +361,9 @@ export function AdvancedDataTable<T>({
       )}
     >
       {(title || description || actions || toolbar || showColumnManager || filters || onSearchChange) && (
-        <CardHeader className="space-y-1 px-4 py-1 sm:px-6">
+        <CardHeader className="space-y-0.5 px-4 pt-2.5 pb-0 sm:px-6 sm:pt-3">
           {/* Title + controls */}
-          <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-col gap-1.5 lg:flex-row lg:items-center lg:justify-between">
             {(title || description) && (
               <div className="min-w-0 flex-1">
                 {title && (
@@ -380,7 +380,7 @@ export function AdvancedDataTable<T>({
             )}
 
             {(showHeaderSearch || filters || actions || showColumnManager) && (
-              <div className="flex w-full sm:w-auto flex-col gap-2 sm:flex-row sm:items-center sm:justify-end sm:flex-shrink-0">
+              <div className="flex w-full sm:w-auto flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-end sm:flex-shrink-0">
                 {showHeaderSearch && <div className="w-full sm:w-auto">{renderSearchInput()}</div>}
                 {(filters || actions || showColumnManager) && (
                   <div className="flex flex-wrap items-center justify-end gap-2">
@@ -435,7 +435,7 @@ export function AdvancedDataTable<T>({
             const shouldShow = hasText || hasChips || (filters && hasActive);
             if (!shouldShow) return null;
             return (
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+              <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
                 {hasText && (
                   <span className="text-sm text-muted-foreground">{summary!.text}</span>
                 )}
@@ -506,7 +506,7 @@ export function AdvancedDataTable<T>({
         </Sheet>
       )}
 
-      <CardContent className="px-4 md:px-6 pt-0 pb-0">
+      <CardContent className="px-4 md:px-6 pt-0 pb-0 -mt-1.5 sm:-mt-2">
         {isLoading ? (
           loadingState || <TableLoadingSkeleton />
         ) : (

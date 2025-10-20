@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { Plus, LayoutGrid, List, Archive, ArrowUpDown, ArrowUp, ArrowDown, Settings, FileDown, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -35,6 +35,7 @@ import {
   type ProjectsListFiltersState,
   type ProjectsArchivedFiltersState,
 } from "@/pages/projects/hooks/useProjectsFilters";
+import { useProjectsColumnPreferences } from "@/pages/projects/hooks/useProjectsColumnPreferences";
 import { useProjectTypes, useProjectStatuses, useServices } from "@/hooks/useOrganizationData";
 
 interface ProjectStatus {
@@ -281,6 +282,13 @@ const AllProjects = () => {
     serviceOptions: listFilterOptions.services,
   });
 
+  const {
+    listDefaultPreferences,
+    archivedDefaultPreferences,
+    saveListPreferences,
+    saveArchivedPreferences,
+  } = useProjectsColumnPreferences();
+
   // Derived labels no longer used; header summary now handled by AdvancedDataTable
 
   // Header summary placeholders; defined after filtered rows below
@@ -398,6 +406,234 @@ const AllProjects = () => {
     return filteredArchivedRows.slice(start, start + archivedPageSize);
   }, [filteredArchivedRows, archivedPage, archivedPageSize]);
 
+  const listTableColumns = useMemo<AdvancedTableColumn<Project>[]>(
+    () => [
+      {
+        id: "lead_name",
+        label: tForms("projects.table_columns.client"),
+        sortable: true,
+        sortId: "lead_name",
+        accessor: (row) => row.lead?.name ?? "",
+        render: (row: Project) =>
+          row.lead?.id ? (
+            <Button
+              variant="link"
+              className="p-0 h-auto font-medium"
+              onClick={(event) => {
+                event.stopPropagation();
+                handleLeadClick(row.lead!.id);
+              }}
+            >
+              {row.lead?.name}
+            </Button>
+          ) : (
+            <span className="text-muted-foreground">{t("projects.no_lead")}</span>
+          ),
+      },
+      {
+        id: "name",
+        label: tForms("projects.table_columns.project_name"),
+        sortable: true,
+        sortId: "name",
+        accessor: (row) => row.name ?? "",
+        render: (row: Project) => (
+          <div>
+            <Button
+              variant="link"
+              className="p-0 h-auto font-medium"
+              onClick={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                handleQuickView(row);
+              }}
+            >
+              {row.name}
+            </Button>
+            {row.description ? (
+              <div className="text-xs text-muted-foreground">{row.description}</div>
+            ) : null}
+          </div>
+        ),
+      },
+      {
+        id: "project_type",
+        label: tForms("projects.table_columns.project_type"),
+        sortable: true,
+        sortId: "project_type",
+        accessor: (row) => row.project_type?.name ?? "",
+        render: (row: Project) =>
+          row.project_type ? (
+            <span className="text-sm text-foreground">{row.project_type.name}</span>
+          ) : (
+            <span className="text-muted-foreground">-</span>
+          ),
+      },
+      {
+        id: "status",
+        label: tForms("projects.table_columns.status"),
+        sortable: true,
+        sortId: "status",
+        accessor: (row) => row.project_status?.name ?? "",
+        render: (row: Project) => (
+          <ProjectStatusBadge
+            projectId={row.id}
+            currentStatusId={row.status_id ?? undefined}
+            editable={false}
+            size="sm"
+            onStatusChange={fetchProjects}
+            statuses={projectStatuses}
+            statusesLoading={projectStatusesLoading}
+          />
+        ),
+      },
+      {
+        id: "sessions",
+        label: tForms("projects.table_columns.sessions"),
+        accessor: (row) =>
+          `${row.session_count || 0} ${tForms("projects.table_columns.sessions_planned")}`,
+        render: (row: Project) => (
+          <div className="text-sm">
+            {row.session_count || 0} {tForms("projects.table_columns.sessions_planned")}
+          </div>
+        ),
+      },
+      {
+        id: "progress",
+        label: tForms("projects.table_columns.progress"),
+        accessor: (row) =>
+          `${row.completed_todo_count ?? 0}/${row.todo_count ?? 0}`,
+        render: (row: Project) =>
+          getProgressBadge(row.completed_todo_count || 0, row.todo_count || 0),
+      },
+      {
+        id: "services",
+        label: tForms("projects.table_columns.services"),
+        accessor: (row) => formatServicesList(row.services ?? []),
+        render: (row: Project) => renderServicesChips(row.services || []),
+      },
+      {
+        id: "created_at",
+        label: tForms("projects.table_columns.created"),
+        sortable: true,
+        sortId: "created_at",
+        align: "right",
+        accessor: (row) => formatDate(row.created_at),
+        render: (row: Project) => formatDate(row.created_at),
+      },
+    ],
+    [
+      formatServicesList,
+      handleLeadClick,
+      handleQuickView,
+      projectStatuses,
+      projectStatusesLoading,
+      renderServicesChips,
+      t,
+      tForms,
+    ]
+  );
+
+  const archivedTableColumns = useMemo<AdvancedTableColumn<Project>[]>(
+    () => [
+      {
+        id: "lead_name",
+        label: tForms("projects.table_columns.client"),
+        sortable: true,
+        sortId: "lead_name",
+        accessor: (row) => row.lead?.name ?? "",
+        render: (row: Project) =>
+          row.lead?.id ? (
+            <Button
+              variant="link"
+              className="p-0 h-auto font-medium"
+              onClick={(event) => {
+                event.stopPropagation();
+                handleLeadClick(row.lead!.id);
+              }}
+            >
+              {row.lead?.name}
+            </Button>
+          ) : (
+            <span className="text-muted-foreground">{t("projects.no_lead")}</span>
+          ),
+      },
+      {
+        id: "name",
+        label: tForms("projects.table_columns.project_name"),
+        sortable: true,
+        sortId: "name",
+        accessor: (row) => row.name ?? "",
+        render: (row: Project) => (
+          <div>
+            <Button
+              variant="link"
+              className="p-0 h-auto font-medium text-primary"
+              onClick={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                handleQuickView(row);
+              }}
+            >
+              {row.name}
+            </Button>
+            {row.description ? (
+              <div className="text-xs text-muted-foreground">{row.description}</div>
+            ) : null}
+          </div>
+        ),
+      },
+      {
+        id: "project_type",
+        label: tForms("projects.table_columns.project_type"),
+        sortable: true,
+        sortId: "project_type",
+        accessor: (row) => row.project_type?.name ?? "",
+        render: (row: Project) =>
+          row.project_type ? (
+            <span className="text-sm text-foreground">{row.project_type.name}</span>
+          ) : (
+            <span className="text-muted-foreground">-</span>
+          ),
+      },
+      {
+        id: "paid_amount",
+        label: tForms("projects.table_columns.paid"),
+        accessor: (row) => formatCurrency(row.paid_amount || 0),
+        render: (row: Project) => (
+          <span className="font-medium text-green-600">
+            {formatCurrency(row.paid_amount || 0)}
+          </span>
+        ),
+      },
+      {
+        id: "remaining_amount",
+        label: tForms("projects.table_columns.remaining"),
+        accessor: (row) => formatCurrency(row.remaining_amount || 0),
+        render: (row: Project) => (
+          <span
+            className={
+              row.remaining_amount && row.remaining_amount > 0
+                ? "font-medium text-orange-600"
+                : "text-muted-foreground"
+            }
+          >
+            {formatCurrency(row.remaining_amount || 0)}
+          </span>
+        ),
+      },
+      {
+        id: "updated_at",
+        label: tForms("projects.table_columns.last_update"),
+        sortable: true,
+        sortId: "updated_at",
+        align: "right",
+        accessor: (row) => (row.updated_at ? formatDate(row.updated_at) : ""),
+        render: (row: Project) => (row.updated_at ? formatDate(row.updated_at) : ""),
+      },
+    ],
+    [formatCurrency, handleLeadClick, handleQuickView, t, tForms]
+  );
+
   // Now that filtered counts are known, compute summary strips
   listHeaderSummary = useMemo(() => {
     const text = listActiveCount > 0
@@ -429,37 +665,80 @@ const AllProjects = () => {
       try {
         setExporting(true);
 
-        const rows = source.map((project) => {
-          const servicesLabel = (project.services ?? [])
-            .map((service) => service.name)
-            .filter(Boolean)
-            .join(', ');
+        type ColumnPreference = { id: string; visible: boolean; order: number };
+        const storageKey =
+          mode === 'list' ? 'projects.table.columns' : 'projects.archived.table.columns';
+        const fallbackPrefs =
+          mode === 'list' ? listDefaultPreferences : archivedDefaultPreferences;
 
-          const baseRow: Record<string, string | number> = {
-            [tForms('projects.table_columns.project_name')]: project.name ?? '',
-            [tForms('projects.table_columns.client')]: project.lead?.name ?? '',
-            [tForms('projects.table_columns.project_type')]: project.project_type?.name ?? '',
-            [tForms('projects.table_columns.status')]: project.project_status?.name ?? '',
-            [tForms('projects.table_columns.services')]: servicesLabel,
-            [tForms('projects.table_columns.created')]: formatDate(project.created_at),
-          };
-
-          if (mode === 'list') {
-            return {
-              ...baseRow,
-              [tForms('projects.table_columns.sessions')]: project.session_count ?? 0,
-              [tForms('projects.table_columns.progress')]: `${project.completed_todo_count ?? 0}/${project.todo_count ?? 0}`,
-            };
+        let prefs: ColumnPreference[] | null = null;
+        if (typeof window !== 'undefined') {
+          try {
+            const raw = storageKey ? window.localStorage.getItem(storageKey) : null;
+            if (raw) {
+              const parsed = JSON.parse(raw) as ColumnPreference[];
+              if (Array.isArray(parsed) && parsed.length) {
+                prefs = parsed;
+              }
+            }
+          } catch {
+            // ignore parsing/storage errors
           }
+        }
 
-          return {
-            ...baseRow,
-            [tForms('projects.table_columns.paid')]: project.paid_amount ?? 0,
-            [tForms('projects.table_columns.remaining')]: project.remaining_amount ?? 0,
-            [tForms('projects.table_columns.last_update')]: project.updated_at
-              ? formatDate(project.updated_at)
-              : '',
-          };
+        if (!prefs || prefs.length === 0) {
+          prefs = fallbackPrefs ?? null;
+        }
+
+        const columnsForMode = mode === 'list' ? listTableColumns : archivedTableColumns;
+
+        const visibleOrderedColumns = columnsForMode
+          .map((col, idx) => {
+            const pref = prefs?.find((p) => p.id === col.id);
+            const hideable = col.hideable !== false;
+            const visible = hideable ? pref?.visible ?? true : true;
+            const order = pref?.order ?? idx;
+            return { col, visible, order };
+          })
+          .filter((entry) => entry.visible)
+          .sort((a, b) => a.order - b.order)
+          .map((entry) => entry.col);
+
+        const rows = source.map((project) => {
+          const row: Record<string, string | number> = {};
+          visibleOrderedColumns.forEach((column) => {
+            const header =
+              typeof column.label === 'string' ? column.label : String(column.label);
+            let value: unknown = '';
+            if (column.accessor) {
+              value = column.accessor(project);
+            } else if (column.id === 'services') {
+              value = formatServicesList(project.services ?? []);
+            } else if (column.id === 'progress') {
+              value = `${project.completed_todo_count ?? 0}/${project.todo_count ?? 0}`;
+            } else if (column.id === 'sessions') {
+              value = `${project.session_count || 0} ${tForms('projects.table_columns.sessions_planned')}`;
+            } else if (column.id === 'created_at') {
+              value = formatDate(project.created_at);
+            } else if (column.id === 'updated_at') {
+              value = project.updated_at ? formatDate(project.updated_at) : '';
+            } else if (column.id === 'paid_amount') {
+              value = formatCurrency(project.paid_amount || 0);
+            } else if (column.id === 'remaining_amount') {
+              value = formatCurrency(project.remaining_amount || 0);
+            } else {
+              value = (project as Record<string, unknown>)[column.id];
+            }
+
+            if (value == null) {
+              row[header] = '';
+            } else if (typeof value === 'number') {
+              row[header] = value;
+            } else {
+              row[header] = String(value);
+            }
+          });
+          return row;
         });
 
         const worksheet = XLSXUtils.json_to_sheet(rows);
@@ -492,7 +771,19 @@ const AllProjects = () => {
         setExporting(false);
       }
     },
-    [exporting, filteredArchivedRows, filteredListRows, t, tForms]
+    [
+      archivedDefaultPreferences,
+      archivedTableColumns,
+      exporting,
+      filteredArchivedRows,
+      filteredListRows,
+      formatCurrency,
+      formatServicesList,
+      listDefaultPreferences,
+      listTableColumns,
+      t,
+      tForms,
+    ]
   );
 
   const listExportActions = useMemo(
@@ -763,39 +1054,66 @@ const AllProjects = () => {
     );
   };
 
-  const renderServicesChips = (services: Array<{ id: string; name: string }>) => {
-    if (!services || services.length === 0) {
-      return <span className="text-muted-foreground text-xs">-</span>;
-    }
+  const formatServicesList = useCallback(
+    (services: Array<{ id: string; name: string }> = []) =>
+      services
+        .map((service) => service?.name)
+        .filter((name): name is string => Boolean(name && name.trim().length > 0))
+        .join(", "),
+    []
+  );
 
-    const serviceNames = services.map((service) => service.name).filter(Boolean);
-    const trigger = (
-      <Badge
-        variant="secondary"
-        className="cursor-default px-2.5 py-1 text-xs font-semibold"
-        aria-label={serviceNames.join(", ")}
-      >
-        {services.length}
-      </Badge>
-    );
+  const renderServicesChips = useCallback(
+    (services: Array<{ id: string; name: string }>) => {
+      if (!services || services.length === 0) {
+        return <span className="text-muted-foreground text-sm">-</span>;
+      }
 
-    if (serviceNames.length === 0) {
-      return trigger;
-    }
+      const validServices = services.filter((service) => Boolean(service?.name));
 
-    return (
-      <TooltipProvider delayDuration={150}>
-        <Tooltip>
-          <TooltipTrigger asChild>{trigger}</TooltipTrigger>
-          <TooltipContent className="max-w-xs space-y-1 p-3 text-xs leading-relaxed" side="top" align="start">
-            {services.map((service) => (
+      if (validServices.length === 0) {
+        return <span className="text-sm font-semibold text-foreground">{services.length}</span>;
+      }
+
+      const label = formatServicesList(validServices);
+
+      return (
+        <HoverCard openDelay={120} closeDelay={100}>
+          <HoverCardTrigger asChild>
+            <span
+              className="cursor-help text-sm font-semibold text-foreground"
+              aria-label={label}
+            >
+              {services.length}
+            </span>
+          </HoverCardTrigger>
+          <HoverCardContent
+            side="top"
+            align="start"
+            sideOffset={8}
+            className="max-w-xs space-y-1 p-3 text-xs leading-relaxed"
+          >
+            {validServices.map((service) => (
               <div key={service.id}>{service.name}</div>
             ))}
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-    );
-  };
+          </HoverCardContent>
+        </HoverCard>
+      );
+    },
+    [formatServicesList]
+  );
+
+  const formatCurrency = useCallback((amount: string | number | null) => {
+    const value = Number(amount || 0);
+    try {
+      return new Intl.NumberFormat("tr-TR", {
+        style: "currency",
+        currency: "TRY",
+      }).format(value);
+    } catch {
+      return `${value.toFixed(2)} TRY`;
+    }
+  }, []);
 
   const handleViewChange = (view: 'board' | 'list' | 'archived') => {
     setViewMode(view);
@@ -934,15 +1252,6 @@ const AllProjects = () => {
     setShowTutorial(false);
   };
 
-  const formatCurrency = (amount: string | number | null) => {
-    const value = Number(amount || 0);
-    try {
-      return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(value);
-    } catch {
-      return `${value.toFixed(2)} TRY`;
-    }
-  };
-
   return (
     <div className="flex flex-col h-screen overflow-x-hidden">
       {/* Header */}
@@ -1046,114 +1355,17 @@ const AllProjects = () => {
               <AdvancedDataTable
                 title={t('projects.list_view')}
                 data={paginatedListRows}
-                columns={[
-                  {
-                    id: 'lead_name',
-                    label: tForms('projects.table_columns.client'),
-                    sortable: true,
-                    sortId: 'lead_name',
-                    render: (row: Project) => (
-                      row.lead?.id ? (
-                        <Button
-                          variant="link"
-                          className="p-0 h-auto font-medium"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            handleLeadClick(row.lead!.id);
-                          }}
-                        >
-                          {row.lead?.name}
-                        </Button>
-                      ) : (
-                        <span className="text-muted-foreground">{t('projects.no_lead')}</span>
-                      )
-                    ),
-                  },
-                  {
-                    id: 'name',
-                    label: tForms('projects.table_columns.project_name'),
-                    sortable: true,
-                    sortId: 'name',
-                    render: (row: Project) => (
-                      <div>
-                        <Button
-                          variant="link"
-                          className="p-0 h-auto font-medium"
-                          onClick={(event) => {
-                            event.preventDefault();
-                            event.stopPropagation();
-                            handleQuickView(row);
-                          }}
-                        >
-                          {row.name}
-                        </Button>
-                        {row.description ? (
-                          <div className="text-xs text-muted-foreground">{row.description}</div>
-                        ) : null}
-                      </div>
-                    ),
-                  },
-                  {
-                    id: 'project_type',
-                    label: tForms('projects.table_columns.project_type'),
-                    sortable: true,
-                    sortId: 'project_type',
-                    render: (row: Project) =>
-                      row.project_type ? (
-                        <span className="text-sm text-foreground">{row.project_type.name}</span>
-                      ) : (
-                        <span className="text-muted-foreground">-</span>
-                      ),
-                  },
-                  {
-                    id: 'status',
-                    label: tForms('projects.table_columns.status'),
-                    sortable: true,
-                    sortId: 'status',
-                    render: (row: Project) => (
-                      <ProjectStatusBadge
-                        projectId={row.id}
-                        currentStatusId={row.status_id ?? undefined}
-                        editable={false}
-                        size="sm"
-                        onStatusChange={fetchProjects}
-                        statuses={projectStatuses}
-                        statusesLoading={projectStatusesLoading}
-                      />
-                    ),
-                  },
-                  {
-                    id: 'sessions',
-                    label: tForms('projects.table_columns.sessions'),
-                    render: (row: Project) => (
-                      <div className="text-sm">{row.session_count || 0} {tForms('projects.table_columns.sessions_planned')}</div>
-                    ),
-                  },
-                  {
-                    id: 'progress',
-                    label: tForms('projects.table_columns.progress'),
-                    render: (row: Project) => getProgressBadge(row.completed_todo_count || 0, row.todo_count || 0),
-                  },
-                  {
-                    id: 'services',
-                    label: tForms('projects.table_columns.services'),
-                    render: (row: Project) => renderServicesChips(row.services || []),
-                  },
-                  {
-                    id: 'created_at',
-                    label: tForms('projects.table_columns.created'),
-                    sortable: true,
-                    sortId: 'created_at',
-                    render: (row: Project) => formatDate(row.created_at),
-                    align: 'right',
-                  },
-                ] as AdvancedTableColumn<Project>[]}
+                columns={listTableColumns}
                 rowKey={(row) => row.id}
                 onRowClick={handleProjectClick}
                 sortState={sortState}
                 onSortChange={handleTableSortChange}
                 filters={listFiltersConfig}
-                columnCustomization={{ storageKey: 'projects.table.columns' }}
+                columnCustomization={{
+                  storageKey: 'projects.table.columns',
+                  defaultState: listDefaultPreferences,
+                  onChange: saveListPreferences,
+                }}
                 actions={listExportActions}
                 summary={listHeaderSummary}
                 pagination={{
@@ -1161,7 +1373,10 @@ const AllProjects = () => {
                   pageSize: listPageSize,
                   totalCount: filteredListRows.length,
                   onPageChange: setListPage,
-                  onPageSizeChange: (size) => { setListPageSize(size); setListPage(1); },
+                  onPageSizeChange: (size) => {
+                    setListPageSize(size);
+                    setListPage(1);
+                  },
                   pageSizeOptions: [10, 25, 50, 100],
                 }}
               />
@@ -1171,93 +1386,16 @@ const AllProjects = () => {
               <AdvancedDataTable
                 title={t('projects.archived_view')}
                 data={paginatedArchivedRows}
-                columns={[
-                  {
-                    id: 'lead_name',
-                    label: tForms('projects.table_columns.client'),
-                    sortable: true,
-                    sortId: 'lead_name',
-                    render: (row: Project) => (
-                      row.lead?.id ? (
-                        <Button
-                          variant="link"
-                          className="p-0 h-auto font-medium"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            handleLeadClick(row.lead!.id);
-                          }}
-                        >
-                          {row.lead?.name}
-                        </Button>
-                      ) : (
-                        <span className="text-muted-foreground">{t('projects.no_lead')}</span>
-                      )
-                    ),
-                  },
-                  {
-                    id: 'name',
-                    label: tForms('projects.table_columns.project_name'),
-                    sortable: true,
-                    sortId: 'name',
-                    render: (row: Project) => (
-                      <div>
-                        <Button
-                          variant="link"
-                          className="p-0 h-auto font-medium text-primary"
-                          onClick={(event) => {
-                            event.preventDefault();
-                            event.stopPropagation();
-                            handleQuickView(row);
-                          }}
-                        >
-                          {row.name}
-                        </Button>
-                        {row.description ? (
-                          <div className="text-xs text-muted-foreground">{row.description}</div>
-                        ) : null}
-                      </div>
-                    ),
-                  },
-                  {
-                    id: 'project_type',
-                    label: tForms('projects.table_columns.project_type'),
-                    sortable: true,
-                    sortId: 'project_type',
-                    render: (row: Project) =>
-                      row.project_type ? (
-                        <span className="text-sm text-foreground">{row.project_type.name}</span>
-                      ) : (
-                        <span className="text-muted-foreground">-</span>
-                      ),
-                  },
-                  {
-                    id: 'paid_amount',
-                    label: tForms('projects.table_columns.paid'),
-                    render: (row: Project) => <span className="font-medium text-green-600">{formatCurrency(row.paid_amount || 0)}</span>,
-                  },
-                  {
-                    id: 'remaining_amount',
-                    label: tForms('projects.table_columns.remaining'),
-                    render: (row: Project) => (
-                      <span className={row.remaining_amount && row.remaining_amount > 0 ? "font-medium text-orange-600" : "text-muted-foreground"}>
-                        {formatCurrency(row.remaining_amount || 0)}
-                      </span>
-                    ),
-                  },
-                  {
-                    id: 'updated_at',
-                    label: tForms('projects.table_columns.last_update'),
-                    sortable: true,
-                    sortId: 'updated_at',
-                    render: (row: Project) => formatDate(row.updated_at),
-                    align: 'right',
-                  },
-                ] as AdvancedTableColumn<Project>[]}
+                columns={archivedTableColumns}
                 rowKey={(row) => row.id}
                 onRowClick={handleProjectClick}
                 sortState={sortState}
                 onSortChange={handleTableSortChange}
-                columnCustomization={{ storageKey: 'projects.archived.table.columns' }}
+                columnCustomization={{
+                  storageKey: 'projects.archived.table.columns',
+                  defaultState: archivedDefaultPreferences,
+                  onChange: saveArchivedPreferences,
+                }}
                 filters={archivedFiltersConfig}
                 actions={archivedExportActions}
                 summary={archivedHeaderSummary}
@@ -1266,7 +1404,10 @@ const AllProjects = () => {
                   pageSize: archivedPageSize,
                   totalCount: filteredArchivedRows.length,
                   onPageChange: setArchivedPage,
-                  onPageSizeChange: (size) => { setArchivedPageSize(size); setArchivedPage(1); },
+                  onPageSizeChange: (size) => {
+                    setArchivedPageSize(size);
+                    setArchivedPage(1);
+                  },
                   pageSizeOptions: [10, 25, 50, 100],
                 }}
               />

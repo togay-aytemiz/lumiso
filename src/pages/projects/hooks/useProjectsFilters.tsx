@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { ReactNode, useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -37,7 +37,7 @@ export type ProjectsArchivedFiltersState = {
 
 export type FilterSummaryChip = {
   id: string;
-  label: string;
+  label: ReactNode;
 };
 
 interface UseProjectsListFiltersOptions {
@@ -87,8 +87,25 @@ const defaultArchivedState: ProjectsArchivedFiltersState = {
   balanceMax: null,
 };
 
-const LIST_FILTER_CATEGORY_COUNT = 5;
-const ARCHIVED_FILTER_CATEGORY_COUNT = 4;
+const LIST_FILTER_CATEGORY_KEYS = [
+  "types",
+  "stages",
+  "sessions",
+  "progress",
+  "services",
+] as const;
+
+const ARCHIVED_FILTER_CATEGORY_KEYS = ["types", "services", "balance"] as const;
+
+const LIST_FILTER_DEFAULT_EXPANDED_SECTIONS: string[] | undefined =
+  LIST_FILTER_CATEGORY_KEYS.length < 4
+    ? [...LIST_FILTER_CATEGORY_KEYS]
+    : undefined;
+
+const ARCHIVED_FILTER_DEFAULT_EXPANDED_SECTIONS: string[] | undefined =
+  ARCHIVED_FILTER_CATEGORY_KEYS.length < 4
+    ? [...ARCHIVED_FILTER_CATEGORY_KEYS]
+    : undefined;
 
 const toggleInArray = (values: string[], value: string, checked: boolean) => {
   if (checked) {
@@ -199,6 +216,15 @@ export function useProjectsListFilters({
   const summaryChips = useMemo<FilterSummaryChip[]>(() => {
     const chips: FilterSummaryChip[] = [];
 
+    const renderLabel = (heading: string, value: string) => (
+      <span>
+        <span className="mr-1 text-xs uppercase tracking-wide text-muted-foreground">
+          {heading}:
+        </span>
+        {value}
+      </span>
+    );
+
     if (state.types.length > 0) {
       const names = typeOptions
         .filter((option) => state.types.includes(option.id))
@@ -206,7 +232,7 @@ export function useProjectsListFilters({
         .join(", ");
       chips.push({
         id: "types",
-        label: t("projects.filters.chips.types", { value: names }),
+        label: renderLabel(t("projects.filters.typesHeading"), names),
       });
     }
 
@@ -217,21 +243,27 @@ export function useProjectsListFilters({
         .join(", ");
       chips.push({
         id: "stages",
-        label: t("projects.filters.chips.stages", { value: names }),
+        label: renderLabel(t("projects.filters.stagesHeading"), names),
       });
     }
 
     if (state.sessionPresence !== "any") {
       chips.push({
         id: "sessionPresence",
-        label: t(`projects.filters.chips.sessionPresence.${state.sessionPresence}`),
+        label: renderLabel(
+          t("projects.filters.sessionsHeading"),
+          t(`projects.filters.presence.${state.sessionPresence}`)
+        ),
       });
     }
 
     if (state.progress !== "any") {
       chips.push({
         id: "progress",
-        label: t(`projects.filters.chips.progress.${state.progress}`),
+        label: renderLabel(
+          t("projects.filters.progressHeading"),
+          t(`projects.filters.progressOptions.${state.progress}`)
+        ),
       });
     }
 
@@ -242,19 +274,23 @@ export function useProjectsListFilters({
         .join(", ");
       chips.push({
         id: "services",
-        label: t("projects.filters.chips.services", { value: names }),
+        label: renderLabel(t("projects.filters.servicesHeading"), names),
       });
     }
 
     return chips;
-  }, [serviceOptions, stageOptions, state, t, typeOptions]);
+  }, [serviceOptions, stageOptions, state.progress, state.sessionPresence, state.services, state.stages, state.types, t, typeOptions]);
 
   const filtersContent = useMemo(() => {
     const toggleItemClasses =
       "rounded-full border border-border/60 bg-background px-3 py-1 text-sm font-medium transition-colors hover:border-border hover:bg-muted/20 data-[state=on]:bg-primary/10 data-[state=on]:text-primary data-[state=on]:border-primary/40";
 
     return (
-      <Accordion type="multiple" className="divide-y divide-border/60 border-y border-border/60">
+      <Accordion
+        type="multiple"
+        defaultValue={LIST_FILTER_DEFAULT_EXPANDED_SECTIONS}
+        className="divide-y divide-border/60 border-y border-border/60"
+      >
         <AccordionItem value="types" className="border-b border-border/40">
           <AccordionTrigger className="text-sm font-semibold text-foreground">
             {t("projects.filters.typesHeading")}
@@ -406,7 +442,7 @@ export function useProjectsListFilters({
     content: filtersContent,
     activeCount,
     onReset: activeCount ? reset : undefined,
-    collapsedByDefault: LIST_FILTER_CATEGORY_COUNT > 4,
+    collapsedByDefault: true,
   }), [activeCount, filtersContent, reset, t]);
 
   return { state, filtersConfig, activeCount, summaryChips, reset };
@@ -479,6 +515,15 @@ export function useProjectsArchivedFilters({
   const summaryChips = useMemo<FilterSummaryChip[]>(() => {
     const chips: FilterSummaryChip[] = [];
 
+    const renderLabel = (heading: string, value: string) => (
+      <span>
+        <span className="mr-1 text-xs uppercase tracking-wide text-muted-foreground">
+          {heading}:
+        </span>
+        {value}
+      </span>
+    );
+
     if (state.types.length > 0) {
       const names = typeOptions
         .filter((option) => state.types.includes(option.id))
@@ -486,7 +531,7 @@ export function useProjectsArchivedFilters({
         .join(", ");
       chips.push({
         id: "types",
-        label: t("projects.filters.chips.types", { value: names }),
+        label: renderLabel(t("projects.filters.typesHeading"), names),
       });
     }
 
@@ -497,42 +542,58 @@ export function useProjectsArchivedFilters({
         .join(", ");
       chips.push({
         id: "services",
-        label: t("projects.filters.chips.services", { value: names }),
+        label: renderLabel(t("projects.filters.servicesHeading"), names),
       });
     }
 
     if (state.balancePreset !== "any") {
       chips.push({
         id: "balancePreset",
-        label: t(`projects.filters.balancePresets.${state.balancePreset}`),
+        label: renderLabel(
+          t("projects.filters.balanceHeading"),
+          t(`projects.filters.balancePresets.${state.balancePreset}`)
+        ),
       });
     }
 
     if (state.balanceMin !== null || state.balanceMax !== null) {
+      const minLabel =
+        state.balanceMin !== null
+          ? state.balanceMin.toLocaleString()
+          : t("projects.filters.balanceRangeMin");
+      const maxLabel =
+        state.balanceMax !== null
+          ? state.balanceMax.toLocaleString()
+          : t("projects.filters.balanceRangeMax");
+      const rangeValue = `${minLabel} – ${maxLabel}`;
       chips.push({
         id: "balanceRange",
-        label: t("projects.filters.chips.balanceRange", {
-          min:
-            state.balanceMin !== null
-              ? state.balanceMin.toLocaleString()
-              : t("projects.filters.balanceRangeMin"),
-          max:
-            state.balanceMax !== null
-              ? state.balanceMax.toLocaleString()
-              : t("projects.filters.balanceRangeMax"),
-        }),
+        label: renderLabel(t("projects.filters.balanceHeading"), rangeValue),
       });
     }
 
     return chips;
-  }, [serviceOptions, state, t, typeOptions]);
+  }, [
+    serviceOptions,
+    state.balanceMax,
+    state.balanceMin,
+    state.balancePreset,
+    state.services,
+    state.types,
+    t,
+    typeOptions,
+  ]);
 
   const filtersContent = useMemo(() => {
     const toggleItemClasses =
       "rounded-full border border-border/60 bg-background px-3 py-1 text-sm font-medium transition-colors hover:border-border hover:bg-muted/20 data-[state=on]:bg-primary/10 data-[state=on]:text-primary data-[state=on]:border-primary/40";
 
     return (
-      <Accordion type="multiple" className="divide-y divide-border/60 border-y border-border/60">
+      <Accordion
+        type="multiple"
+        defaultValue={ARCHIVED_FILTER_DEFAULT_EXPANDED_SECTIONS}
+        className="divide-y divide-border/60 border-y border-border/60"
+      >
         <AccordionItem value="types" className="border-b border-border/40">
           <AccordionTrigger className="text-sm font-semibold text-foreground">
             {t("projects.filters.typesHeading")}
@@ -648,7 +709,7 @@ export function useProjectsArchivedFilters({
     content: filtersContent,
     activeCount,
     onReset: activeCount ? reset : undefined,
-    collapsedByDefault: ARCHIVED_FILTER_CATEGORY_COUNT > 4,
+    collapsedByDefault: true,
   }), [activeCount, filtersContent, reset, t]);
 
   return { state, filtersConfig, activeCount, summaryChips, reset };

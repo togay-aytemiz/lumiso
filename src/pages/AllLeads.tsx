@@ -92,32 +92,48 @@ const isCustomFilterValueEmpty = (value?: CustomFieldFilterValue): boolean => {
   }
 };
 
-const formatNumericBoundary = (label: string, min?: string, max?: string) => {
+interface FilterChipDetail {
+  label: string;
+  value: string;
+}
+
+const formatNumericBoundary = (
+  label: string,
+  min?: string,
+  max?: string
+): FilterChipDetail | null => {
   const trimmedMin = (min ?? "").trim();
   const trimmedMax = (max ?? "").trim();
   if (trimmedMin && trimmedMax) {
-    return `${label}: ${trimmedMin} – ${trimmedMax}`;
+    return { label, value: `${trimmedMin} – ${trimmedMax}` };
   }
   if (trimmedMin) {
-    return `${label}: ≥ ${trimmedMin}`;
+    return { label, value: `≥ ${trimmedMin}` };
   }
   if (trimmedMax) {
-    return `${label}: ≤ ${trimmedMax}`;
+    return { label, value: `≤ ${trimmedMax}` };
   }
   return null;
 };
 
-const formatDateBoundary = (label: string, start?: string, end?: string) => {
+const formatDateBoundary = (
+  label: string,
+  start?: string,
+  end?: string
+): FilterChipDetail | null => {
   const trimmedStart = (start ?? "").trim();
   const trimmedEnd = (end ?? "").trim();
   if (trimmedStart && trimmedEnd) {
-    return `${label}: ${formatDate(trimmedStart)} – ${formatDate(trimmedEnd)}`;
+    return {
+      label,
+      value: `${formatDate(trimmedStart)} – ${formatDate(trimmedEnd)}`,
+    };
   }
   if (trimmedStart) {
-    return `${label}: ≥ ${formatDate(trimmedStart)}`;
+    return { label, value: `≥ ${formatDate(trimmedStart)}` };
   }
   if (trimmedEnd) {
-    return `${label}: ≤ ${formatDate(trimmedEnd)}`;
+    return { label, value: `≤ ${formatDate(trimmedEnd)}` };
   }
   return null;
 };
@@ -126,11 +142,11 @@ const describeCustomFieldFilterChip = (
   field: LeadFieldDefinition,
   filter: CustomFieldFilterValue,
   tPages: (key: string, options?: Record<string, unknown>) => string
-): string | null => {
+): FilterChipDetail | null => {
   switch (filter.type) {
     case "text": {
       const trimmed = filter.value.trim();
-      return trimmed ? `${field.label}: ${trimmed}` : null;
+      return trimmed ? { label: field.label, value: trimmed } : null;
     }
     case "number":
       return formatNumericBoundary(field.label, filter.min, filter.max);
@@ -138,12 +154,14 @@ const describeCustomFieldFilterChip = (
       return formatDateBoundary(field.label, filter.start, filter.end);
     case "select": {
       const values = filter.values.filter(Boolean);
-      return values.length ? `${field.label}: ${values.join(", ")}` : null;
+      return values.length
+        ? { label: field.label, value: values.join(", ") }
+        : null;
     }
     case "checkbox": {
       if (filter.value === "any") return null;
       const checkboxLabel = tPages(`leads.checkboxFilter.${filter.value}`);
-      return `${field.label}: ${checkboxLabel}`;
+      return { label: field.label, value: checkboxLabel };
     }
     default:
       return null;
@@ -168,6 +186,7 @@ const AllLeadsNew = () => {
   const {
     advancedColumns,
     advancedDefaultPreferences,
+    advancedColumnPreferences,
     fieldDefinitions,
     sortAccessors,
     loading: columnsLoading,
@@ -807,6 +826,28 @@ const AllLeadsNew = () => {
     return sortedLeads.slice(start, end);
   }, [page, pageSize, sortedLeads]);
 
+  const exportColumns = useMemo(() => {
+    const preferences =
+      (advancedColumnPreferences && advancedColumnPreferences.length > 0
+        ? advancedColumnPreferences
+        : advancedDefaultPreferences) ?? [];
+
+    const prefMap = new Map(preferences.map((pref) => [pref.id, pref]));
+
+    const ordered = advancedColumns
+      .map((column, index) => {
+        const pref = prefMap.get(column.id);
+        const visible = column.hideable === false ? true : pref?.visible ?? true;
+        const order = pref?.order ?? index;
+        return { column, visible, order };
+      })
+      .filter((entry) => entry.visible)
+      .sort((a, b) => a.order - b.order)
+      .map((entry) => entry.column);
+
+    return ordered.length > 0 ? ordered : advancedColumns;
+  }, [advancedColumnPreferences, advancedColumns, advancedDefaultPreferences]);
+
   const pagination = useMemo(
     () => ({
       page,
@@ -838,13 +879,28 @@ const AllLeadsNew = () => {
     try {
       setExporting(true);
 
-      const rows = sortedLeads.map((lead) => ({
-        [tCommon("labels.name")]: lead.name ?? "",
-        [tCommon("labels.email")]: lead.email ?? "",
-        [tCommon("labels.phone")]: lead.phone ?? "",
-        [tCommon("labels.status")]: lead.lead_statuses?.name ?? lead.status ?? "",
-        [tCommon("labels.date")]: formatDate(lead.created_at),
-      }));
+      const rows = sortedLeads.map((lead) => {
+        const row: Record<string, string | number> = {};
+        exportColumns.forEach((column) => {
+          const header =
+            typeof column.label === "string" ? column.label : String(column.label);
+          let value: unknown = "";
+          if (column.accessor) {
+            value = column.accessor(lead as any);
+          } else if (typeof column.accessorKey === "string") {
+            value = (lead as Record<string, unknown>)[column.accessorKey];
+          }
+
+          if (value == null) {
+            row[header] = "";
+          } else if (typeof value === "number") {
+            row[header] = value;
+          } else {
+            row[header] = String(value);
+          }
+        });
+        return row;
+      });
 
       const worksheet = XLSXUtils.json_to_sheet(rows);
       const workbook = XLSXUtils.book_new();
@@ -870,7 +926,7 @@ const AllLeadsNew = () => {
     } finally {
       setExporting(false);
     }
-  }, [exporting, sortedLeads, t, tCommon]);
+  }, [exportColumns, exporting, sortedLeads, t, tCommon]);
 
   const exportActions = useMemo(
     () => (
@@ -907,13 +963,20 @@ const AllLeadsNew = () => {
   }, [activeFilterCount, t]);
 
   const activeFilterChips = useMemo(() => {
-    const chips: { id: string; label: string }[] = [];
+    const chips: { id: string; label: React.ReactNode }[] = [];
 
     if (filtersState.status.length > 0) {
       filtersState.status.forEach((statusName, index) => {
         chips.push({
           id: `status-${statusName}-${index}`,
-          label: `${t("leads.filterChip.statusLabel")}: ${statusName}`,
+          label: (
+            <span>
+              <span className="mr-1 text-xs uppercase tracking-wide text-muted-foreground">
+                {t("leads.filterChip.statusLabel")}:
+              </span>
+              {statusName}
+            </span>
+          ),
         });
       });
     }
@@ -923,9 +986,19 @@ const AllLeadsNew = () => {
       if (!filterValue || isCustomFilterValueEmpty(filterValue)) {
         return;
       }
-      const description = describeCustomFieldFilterChip(field, filterValue, t);
-      if (description) {
-        chips.push({ id: `custom-${field.field_key}`, label: description });
+      const detail = describeCustomFieldFilterChip(field, filterValue, t);
+      if (detail) {
+        chips.push({
+          id: `custom-${field.field_key}`,
+          label: (
+            <span>
+              <span className="mr-1 text-xs uppercase tracking-wide text-muted-foreground">
+                {detail.label}:
+              </span>
+              {detail.value}
+            </span>
+          ),
+        });
       }
     });
 

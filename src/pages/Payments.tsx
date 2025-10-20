@@ -658,72 +658,85 @@ const Payments = () => {
   // Build filter summary chips similar to leads/projects
   const filterSummaryChips = useMemo(() => {
     const chips: { id: string; label: React.ReactNode }[] = [];
+
+    const renderLabel = (
+      heading: string,
+      value: string
+    ) => (
+      <span>
+        <span className="mr-1 text-xs uppercase tracking-wide text-muted-foreground">
+          {heading}:
+        </span>
+        {value}
+      </span>
+    );
+
     if (filtersState.status.length) {
-      const label =
-        filtersState.status[0] === "paid"
-          ? t("payments.status.paid")
-          : t("payments.status.due");
+      const statusLabel = filtersState.status
+        .map((value) =>
+          value === "paid"
+            ? t("payments.status.paid")
+            : t("payments.status.due")
+        )
+        .join(", ");
+
       chips.push({
-        id: `status-${filtersState.status.join("-")}`,
-        label: (
-          <span>
-            <span className="text-xs uppercase tracking-wide text-muted-foreground mr-1">
-              {t("payments.filters.statusHeading")}:
-            </span>
-            {filtersState.status.length > 1 ? `${t("payments.status.paid")}, ${t("payments.status.due")}` : label}
-          </span>
-        ),
+        id: "status",
+        label: renderLabel(t("payments.filters.statusHeading"), statusLabel),
       });
     }
 
     if (filtersState.type.length) {
-      const map: Record<string, string> = {
-        base_price: t("payments.type.base"),
-        extra: t("payments.type.extra"),
-        manual: t("payments.type.manual"),
-      } as any;
-      const typeLabel = filtersState.type.map((v) => map[v]).join(", ");
+      const typeLabel = filtersState.type
+        .map((value) => {
+          switch (value) {
+            case "base_price":
+              return t("payments.type.base");
+            case "extra":
+              return t("payments.type.extra");
+            default:
+              return t("payments.type.manual");
+          }
+        })
+        .join(", ");
+
       chips.push({
-        id: `type-${filtersState.type.join("-")}`,
-        label: (
-          <span>
-            <span className="text-xs uppercase tracking-wide text-muted-foreground mr-1">
-              {t("payments.filters.typeHeading")}:
-            </span>
-            {typeLabel}
-          </span>
+        id: "type",
+        label: renderLabel(t("payments.filters.typeHeading"), typeLabel),
+      });
+    }
+
+    if (filtersState.amountMin != null || filtersState.amountMax != null) {
+      const amountParts: string[] = [];
+      if (filtersState.amountMin != null) {
+        amountParts.push(
+          `${t("payments.filters.amountMinPlaceholder")}: ${formatCurrency(filtersState.amountMin)}`
+        );
+      }
+      if (filtersState.amountMax != null) {
+        amountParts.push(
+          `${t("payments.filters.amountMaxPlaceholder")}: ${formatCurrency(filtersState.amountMax)}`
+        );
+      }
+
+      chips.push({
+        id: "amount",
+        label: renderLabel(
+          t("payments.filters.amountHeading"),
+          amountParts.join(" • ")
         ),
       });
     }
 
-    if (filtersState.amountMin != null) {
-      chips.push({
-        id: "amount-min",
-        label: (
-          <span>
-            <span className="text-xs uppercase tracking-wide text-muted-foreground mr-1">
-              {t("payments.filters.amountHeading")}:
-            </span>
-            {`${t("payments.filters.amountMinPlaceholder")}: ${formatCurrency(filtersState.amountMin)}`}
-          </span>
-        ),
-      });
-    }
-    if (filtersState.amountMax != null) {
-      chips.push({
-        id: "amount-max",
-        label: (
-          <span>
-            <span className="text-xs uppercase tracking-wide text-muted-foreground mr-1">
-              {t("payments.filters.amountHeading")}:
-            </span>
-            {`${t("payments.filters.amountMaxPlaceholder")}: ${formatCurrency(filtersState.amountMax)}`}
-          </span>
-        ),
-      });
-    }
     return chips;
-  }, [filtersState.amountMax, filtersState.amountMin, filtersState.status, filtersState.type, t]);
+  }, [
+    filtersState.amountMax,
+    filtersState.amountMin,
+    filtersState.status,
+    filtersState.type,
+    formatCurrency,
+    t,
+  ]);
 
   // (moved up above columns)
 

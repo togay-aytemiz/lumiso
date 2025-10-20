@@ -17,14 +17,25 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
 });
 
 // Lightweight cache wrapper to reduce repetitive auth.getUser network calls
-// Many components call getUser during mount; cache the result briefly to avoid floods.
+// Many components call getUser during mount; cache successful responses briefly and
+// update cache on auth state changes. Avoid caching null users to prevent stale state.
 try {
   // @ts-expect-error augment runtime method
   const originalGetUser = supabase.auth.getUser.bind(supabase.auth);
   let cachedUser: any = null;
   let cachedAt = 0;
   let inflight: Promise<any> | null = null;
-  const TTL = 30_000; // 30 seconds
+  const TTL = 5_000; // 5 seconds
+
+  // Keep cache in sync with auth events
+  const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    cachedUser = session?.user ?? null;
+    cachedAt = Date.now();
+  });
+  // Best-effort cleanup on hot reload
+  if (import.meta && import.meta.hot) {
+    import.meta.hot.on('supabase-auth-cache-dispose', () => subscription.unsubscribe());
+  }
 
   // @ts-expect-error override runtime method
   supabase.auth.getUser = async () => {
@@ -36,8 +47,12 @@ try {
       return inflight;
     }
     inflight = originalGetUser().then((res: any) => {
-      cachedUser = res?.data?.user ?? null;
-      cachedAt = Date.now();
+      const user = res?.data?.user ?? null;
+      // Only cache if we actually have a user; avoid caching null
+      if (user) {
+        cachedUser = user;
+        cachedAt = Date.now();
+      }
       inflight = null;
       return res;
     }).catch((err: any) => {

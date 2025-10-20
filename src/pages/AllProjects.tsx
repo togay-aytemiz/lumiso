@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
@@ -100,26 +100,19 @@ const AllProjects = () => {
     setSortDirection('desc');
   }, [viewMode]);
 
-  // Handle tutorial launch
+  // Handle tutorial launch (run once; avoid re-render loops)
+  const tutorialInitRef = useRef(false);
   useEffect(() => {
-    const tutorial = searchParams.get('tutorial');
-    console.log('🔍 Tutorial check:', {
-      tutorial,
-      includes_true: tutorial?.includes('true'),
-      currentURL: window.location.href,
-      searchParams: searchParams.toString()
-    });
-    
-    // Check if tutorial parameter contains 'true' (handles malformed URLs)
+    if (tutorialInitRef.current) return;
+    tutorialInitRef.current = true;
+    const tutorial = new URLSearchParams(window.location.search).get('tutorial');
     if (tutorial?.includes('true')) {
-      console.log('✅ Starting tutorial');
       setShowTutorial(true);
-      // Clean up URL completely
       const url = new URL(window.location.href);
       url.searchParams.delete('tutorial');
       window.history.replaceState({}, '', url.toString());
     }
-  }, [searchParams]);
+  }, []);
 
   // Check if user is in guided mode but missing tutorial parameter
   const { shouldLockNavigation, currentStepInfo } = useOnboarding();
